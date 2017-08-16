@@ -243,14 +243,19 @@ def merge_overlapping_annotations(tier, separator=' '):
             new_tier.SetCtrlVocab( None )
             # must disable CtrlVocab or, eventually, add new labels in its entries...
 
+            # a ends after prev => join a's label to prev
+            #                      and reduce a to the remaining part [prev.end, a.end]
             if a.GetLocation().GetEnd() > prev.GetLocation().GetEnd():
                 a.GetLocation().SetBegin( prev.GetLocation().GetEnd() )
                 prev.GetLabel().SetValue( prev.GetLabel().GetValue() + separator + a.GetLabel().GetValue())
                 new_tier.Append(a)
                 prev = a
 
+            # a ends before prev => join a's label to prev, reduced to [prev.begin, a.end]
+            #                       and create a2 for the remaining part [a.end, prev.end]
             elif a.GetLocation().GetEnd() < prev.GetLocation().GetEnd():
                 a2 = Annotation(TimeInterval(a.GetLocation().GetEnd(), prev.GetLocation().GetEnd()), Label(prev.GetLabel().GetValue()))
+                #TODO? a2.metadata = a.metadata # a2 shares a's metadata
                 if prev.GetLocation().GetBegin() < a.GetLocation().GetEnd():
                     prev.GetLocation().SetEnd( a.GetLocation().GetEnd() )
                 prev.GetLabel().SetValue( prev.GetLabel().GetValue() + separator + a.GetLabel().GetValue())
@@ -260,6 +265,7 @@ def merge_overlapping_annotations(tier, separator=' '):
                     pass
                 prev = a2
 
+            # a ends with prev => join the label
             else:
                 prev.GetLabel().SetValue( prev.GetLabel().GetValue() + separator + a.GetLabel().GetValue())
 
@@ -268,6 +274,9 @@ def merge_overlapping_annotations(tier, separator=' '):
             new_tier.SetCtrlVocab( None )
             # must disable CtrlVocab or, eventually, add new labels in its entries...
 
+            # a ends before prev => reduce prev to [prev.begin, a.begin]
+            #                       join the prev's label to a
+            #                       and create a2 for [a.end, prev.end]
             if a.GetLocation().GetEnd() < prev.GetLocation().GetEnd():
                 a2 = Annotation(TimeInterval(a.GetLocation().GetEnd(),prev.GetLocation().GetEnd()),Label(prev.GetLabel().GetValue()))
                 a.GetLabel().SetValue( a.GetLabel().GetValue() + separator + prev.GetLabel().GetValue() )
@@ -276,6 +285,9 @@ def merge_overlapping_annotations(tier, separator=' '):
                 new_tier.Append(a2)
                 prev = a2
 
+            # a ends after prev => reduce prev to [prev.begin, a.begin]
+            #                      create a2 for [a.begin, prev.end], with the 2 labels
+            #                      reduce a to [prev.end, a.end]
             elif a.GetLocation().GetEnd() > prev.GetLocation().GetEnd():
                 a2 = Annotation(TimeInterval(a.GetLocation().GetBegin(),prev.GetLocation().GetEnd()),Label(prev.GetLabel().GetValue() + separator + a.GetLabel().GetValue()))
                 prev.GetLocation().SetEnd( a2.GetLocation().GetBegin() )
@@ -284,6 +296,8 @@ def merge_overlapping_annotations(tier, separator=' '):
                 new_tier.Append(a)
                 prev = a
 
+            # a ends with prev => reduce prev to [prev.begin, a.begin]
+            #                     join prev's label to a
             else:
                 a.GetLabel().SetValue( a.GetLabel().GetValue() + separator + prev.GetLabel().GetValue() )
                 prev.GetLocation().SetEnd( a.GetLocation().GetBegin() )
@@ -301,6 +315,8 @@ def point2interval(tier, fixradius=None):
     Ensure the radius to be always >= 1 millisecond.
 
     Do not convert alternatives.
+
+    (!) Result interval annotations share the metadata of the original point annotation
 
     @param tier: (Tier)
     @return Tier
@@ -329,7 +345,7 @@ def point2interval(tier, fixradius=None):
         end   = TimePoint(midpoint+radius,radius)
 
         new_a=Annotation(TimeInterval(begin,end),Label(a.GetLabel().GetValue()))
-        new_a.metadata = a.metadata
+        new_a.metadata = a.metadata # new annotation shares original annotation's metadata
         new_tier.Append( new_a )
 
     return new_tier
