@@ -309,16 +309,18 @@ def merge_overlapping_annotations(tier, separator=' '):
 # ------------------------------------------------------------------------
 
 
-def point2interval(tier, fixradius=None):
+def point2interval(tier, fixradius=None, minradius=0.001):
     """
     Convert localization.
-    Ensure the radius to be always >= 1 millisecond.
+    Ensure the radius to be always >= minradius (1 millisecond).
 
     Do not convert alternatives.
 
     (!) Result interval annotations share the metadata of the original point annotation
 
     @param tier: (Tier)
+    @param fixradius: the radius to use for all interval (if not None, else the point radius)
+    @param minradius: a minimal radius
     @return Tier
 
     """
@@ -338,8 +340,8 @@ def point2interval(tier, fixradius=None):
         point = a.GetLocation().GetPoint()
         midpoint = point.GetMidpoint()
         radius = fixradius if fixradius is not None else point.GetRadius()
-        if radius < 0.001:
-            radius = 0.001
+        if radius < minradius:
+            radius = minradius
 
         begin = TimePoint(midpoint-radius,radius)
         end   = TimePoint(midpoint+radius,radius)
