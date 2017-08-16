@@ -38,14 +38,14 @@
 import xml.etree.cElementTree as ET
 import datetime
 
-from sppas.src.annotationdata.transcription import Transcription
-from sppas.src.annotationdata.label.label import Label
-from sppas.src.annotationdata.ptime.location import Location
-import sppas.src.annotationdata.ptime.point
-from sppas.src.annotationdata.ptime.interval import TimeInterval
-from sppas.src.annotationdata.ptime.localization import Localization
-from sppas.src.annotationdata.annotation import Annotation
-from sppas.src.annotationdata.media import Media
+from ..transcription import Transcription
+from ..label.label import Label
+from ..ptime.location import Location
+from ..ptime.point import TimePoint as pTimePoint
+from ..ptime.interval import TimeInterval
+from ..ptime.localization import Localization
+from ..annotation import Annotation
+from ..media import Media
 
 from utils import indent
 from utils import gen_id
@@ -127,7 +127,7 @@ UpperLowerDict['projectnoises'] = "ProjectNoises"
 
 
 def TimePoint(time):
-    return sppas.src.annotationdata.ptime.point.TimePoint(time, ANTX_RADIUS)
+    return pTimePoint(time, ANTX_RADIUS)
 
 # ---------------------------------------------------------------------------
 

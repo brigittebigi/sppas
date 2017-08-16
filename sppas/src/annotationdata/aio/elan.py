@@ -48,13 +48,13 @@ import datetime
 import xml.etree.cElementTree as ET
 from collections import OrderedDict
 
-from sppas.src.annotationdata.transcription  import Transcription
-from sppas.src.annotationdata.ctrlvocab      import CtrlVocab
-from sppas.src.annotationdata.media          import Media
-from sppas.src.annotationdata.label.label    import Label
-import sppas.src.annotationdata.ptime.point
-from sppas.src.annotationdata.ptime.interval import TimeInterval
-from sppas.src.annotationdata.annotation     import Annotation
+from ..transcription  import Transcription
+from ..ctrlvocab      import CtrlVocab
+from ..media          import Media
+from ..label.label    import Label
+from ..ptime.point    import TimePoint as pTimePoint
+from ..ptime.interval import TimeInterval
+from ..annotation     import Annotation
 
 from utils import indent
 from utils import gen_id
@@ -74,7 +74,7 @@ ELAN_RADIUS = 0.02
 # -----------------------------------------------------------------
 
 def TimePoint(time, radius=ELAN_RADIUS):
-    return sppas.src.annotationdata.ptime.point.TimePoint(time, radius)
+    return pTimePoint(time, radius)
 
 def linguistic_type_from_tier(tier):
     return (tier.metadata['LINGUISTIC_TYPE_REF']
