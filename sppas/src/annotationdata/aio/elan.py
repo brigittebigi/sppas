@@ -431,6 +431,7 @@ class Elan( Transcription ):
         self.__write_ctrl_vocabs(root)
 
         del self.timeSlotIds
+        del self.changedTiers
 
         indent(root)
         tree = ET.ElementTree(root)
@@ -514,11 +515,10 @@ class Elan( Transcription ):
     # -----------------------------------------------------------------
 
     def __format_timeslots(self, timeOrderRoot):
-        for timeSlot, annotation in self.timeSlotIds:
-            timeSlotId = self.timeSlotIds[timeSlot, annotation]
+        for key, timeSlotId in self.timeSlotIds.iteritems():    #nota: as timeSlotIds is an OrderedDict, iterate in insertion order
             timeSlotNode = ET.SubElement(timeOrderRoot, 'TIME_SLOT')
             timeSlotNode.set('TIME_SLOT_ID', timeSlotId)
-            timeSlotNode.set('TIME_VALUE', str(int(timeSlot*1000)))
+            timeSlotNode.set('TIME_VALUE', str(int(key[0]*1000)))   #nota: key is a pair (time, annotation)
 
     # -----------------------------------------------------------------
 
@@ -531,9 +531,12 @@ class Elan( Transcription ):
             if key in tier.metadata.keys():
                 tierRoot.set(key, tier.metadata[key])
 
-        if tier.IsPoint():
-            tier = point2interval(tier, ELAN_RADIUS)
-        tier = merge_overlapping_annotations(tier)
+        # recover changed tier (point2interval, merge_overlapping_annotations), see __build_timeslots
+        if tier in self.changedTiers:
+            tier = self.changedTiers[tier]
+        #if tier.IsPoint():
+        #    tier = point2interval(tier, ELAN_RADIUS)
+        #tier = merge_overlapping_annotations(tier)
 
         parentTier = self._hierarchy.get_parent(tier)
         if parentTier is not None:
@@ -613,6 +616,9 @@ class Elan( Transcription ):
     def __build_annotation_ids(self):
         i = 0
         for tier in self:
+            # recover changed tier (point2interval, merge_overlapping_annotations), see __build_timeslots
+            if tier in self.changedTiers:
+                tier = self.changedTiers[tier]
             for annotation in tier:
                 ida = 'a%s' % i
                 i += 1
@@ -623,25 +629,34 @@ class Elan( Transcription ):
     def __build_timeslots(self):
         from operator import itemgetter
         self.timeSlotIds = OrderedDict()
-        timeSlotIds = list()
-
+        self.changedTiers = dict()
+	
+        # build a list of all (begin/end) timeslots associated to the annotation
+        timeSlotKeys = list()
         for tier in self:
-
+            init_tier = tier # check if tier change
+            
+            # ELAN didn't use point tier => convert to interval
             if tier.IsPoint():
-                tier = point2interval(tier, ELAN_RADIUS)
+                tier = point2interval(tier, None)
+            # Avoid overlapping => split annotations and merge labels on common parts
             tier = merge_overlapping_annotations(tier)
+            
+            # record the changed tiers
+            if (tier is not init_tier):
+                self.changedTiers[init_tier] = tier
 
             for annotation in tier:
                 location = annotation.GetLocation()
                 begin = round(location.GetBeginMidpoint(), 4)
                 end = round(location.GetEndMidpoint(), 4)
 
-                timeSlotIds.append((begin, annotation))
-                timeSlotIds.append((end, annotation))
+                timeSlotKeys.append((begin, annotation))
+                timeSlotKeys.append((end, annotation))
 
-        # sort by time values and assign the TS
+        # sort by time values and assign the 'ts<num>' id
         i = 0
-        for key in sorted(timeSlotIds, key=itemgetter(0)):
+        for key in sorted(timeSlotKeys, key=itemgetter(0)):
             i += 1
             ts = 'ts%s' % i
             self.timeSlotIds[key] = ts
