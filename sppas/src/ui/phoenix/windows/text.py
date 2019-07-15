@@ -104,10 +104,11 @@ class sppasTextCtrl(wx.TextCtrl):
         # Fix Look&Feel
         try:
             settings = wx.GetApp().settings
+            self.SetForegroundColour(settings.fg_color)
             self.SetFont(settings.text_font)
             self.SetBackgroundColour(settings.bg_color)
-            self.SetForegroundColour(settings.fg_color)
         except:
+            logging.debug("TextCtrl error. Settings not set.")
             pass
 
         # the message is not send to the base class when init but after
@@ -116,7 +117,6 @@ class sppasTextCtrl(wx.TextCtrl):
 
     def SetForegroundColour(self, colour):
         wx.Window.SetForegroundColour(self, colour)
-
         attr = wx.TextAttr()
         attr.SetTextColour(colour)
         attr.SetBackgroundColour(self.GetBackgroundColour())
@@ -126,7 +126,6 @@ class sppasTextCtrl(wx.TextCtrl):
 
     def SetBackgroundColour(self, colour):
         wx.Window.SetBackgroundColour(self, colour)
-
         attr = wx.TextAttr()
         attr.SetTextColour(self.GetForegroundColour())
         attr.SetBackgroundColour(colour)
@@ -136,9 +135,8 @@ class sppasTextCtrl(wx.TextCtrl):
 
     def SetFont(self, font):
         wx.Window.SetFont(self, font)
-
         attr = wx.TextAttr()
-        attr.SetTextColour(self.GetForegroundColour())
+        attr.SetTextColour(wx.GetApp().settings.fg_color)
         attr.SetBackgroundColour(self.GetBackgroundColour())
         attr.SetFont(font)
         self.SetDefaultStyle(attr)

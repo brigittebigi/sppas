@@ -111,20 +111,20 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
     def run(self):
         """Perform the automatic annotations of param on data."""
         logging.info('Perform automatic annotations')
-        self.progress = sppasProgressDialog()
-        self.progress.Show(True)
-        self.progress.set_new()
+        progress = sppasProgressDialog()
+        progress.Show(True)
+        progress.set_new()
 
         # The procedure outcome report file.
         self.__param.set_report_filename(self.__log_report.get_filename())
         self.__log_report.increment()
 
         # Create the progress bar then run the annotations
-        self.__manager.annotate(self.__param, self.progress)
+        self.__manager.annotate(self.__param, progress)
 
         self.__update_log_text()
         self.Refresh()
-        self.progress.close()
+        progress.close()
 
         # send to parent
         evt = DataChangedEvent(data=self.__param.get_workspace())

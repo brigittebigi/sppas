@@ -292,7 +292,7 @@ class sppasAnalyzePanel(sppasPanel):
 
         new_page = ViewFilesPanel(book, name=page_name, files=())
         if color is not None:
-            new_page.SetBackgroundColour(color)
+            new_page.SetHighLightColor(color)
 
         book.AddPage(new_page, text="")
 

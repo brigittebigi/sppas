@@ -38,17 +38,14 @@ import logging
 import wx
 
 from ..windows import sppasPanel
-from ..windows import CheckButton
 
-from .anz_tabs import TabsManager
+from .baseview import BaseViewPanel
 
-# ----------------------------------------------------------------------------
-# Panel to display the list of opened files
 # ----------------------------------------------------------------------------
 
 
 class ViewFilesPanel(sppasPanel):
-    """Display the content of annotated/audio files.
+    """Panel to display the list of opened files and their content.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -69,9 +66,16 @@ class ViewFilesPanel(sppasPanel):
 
         # The files of this panel (key=name, value=wx.SizerItem)
         self.__files = dict()
+        self.__hicolor = self.GetForegroundColour()
 
         self._create_content(files)
         self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def SetHighLightColor(self, color):
+        """Set a color to highlight buttons, and for the focus."""
+        self.__hicolor = color
 
     # -----------------------------------------------------------------------
     # Manage the files
@@ -88,8 +92,9 @@ class ViewFilesPanel(sppasPanel):
         if name in self.__files:
             raise ValueError('Name {:s} is already in the list of files.')
 
-        panel = BaseViewPanel(self, filename="panel_" + name)
-        item = self.GetSizer().Add(panel, 0, wx.EXPAND | wx.ALL, 2)
+        panel = BaseViewPanel(self, filename=name)
+        panel.SetHighLightColor(self.__hicolor)
+        item = self.GetSizer().Add(panel, 1, wx.EXPAND)
         self.__files[name] = item
         self.Layout()
         self.Refresh()
@@ -144,118 +149,3 @@ class ViewFilesPanel(sppasPanel):
             self.append(f)
         self.SetMinSize(wx.Size(sppasPanel.fix_size(128),
                                 sppasPanel.fix_size(32)*len(self.__files)))
-
-# ----------------------------------------------------------------------------
-# Panel to display the list of opened files
-# ----------------------------------------------------------------------------
-
-
-class BaseViewPanel(sppasPanel):
-    """Base class to display the content of one file.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    def __init__(self, parent, name="baseview", filename=""):
-        super(BaseViewPanel, self).__init__(
-            parent,
-            id=wx.ID_ANY,
-            pos=wx.DefaultPosition,
-            size=wx.DefaultSize,
-            style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
-            name=name)
-
-        # The file this panel is displaying
-        self.__filename = filename
-
-        self._create_content()
-        self._setup_events()
-        self.Layout()
-
-    # -----------------------------------------------------------------------
-
-    def is_checked(self):
-        """Return True if this file is checked."""
-        return self.FindWindow("checkbtn").GetValue()
-
-    # -----------------------------------------------------------------------
-    # Private methods to construct the panel.
-    # -----------------------------------------------------------------------
-
-    def _create_content(self):
-        """Create the main content."""
-        sizer = wx.BoxSizer(wx.VERTICAL)
-
-        btn = CheckButton(self, label=self.__filename, name="checkbtn")
-        btn.SetSpacing(sppasPanel.fix_size(12))
-        btn.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
-        btn.SetSize(wx.Size(-1, sppasPanel.fix_size(32)))
-        btn.SetValue(False)
-        self.__set_normal_btn_style(btn)
-        sizer.Add(btn, 0, wx.EXPAND | wx.ALL, 2)
-
-        view = sppasPanel(self)
-        sizer.Add(view, 1, wx.EXPAND | wx.ALL, 2)
-
-        self.SetSizer(sizer)
-        self.SetMinSize(wx.Size(sppasPanel.fix_size(128),
-                                sppasPanel.fix_size(32)))
-
-    # -----------------------------------------------------------------------
-
-    def __set_normal_btn_style(self, button):
-        """Set a normal style to a button."""
-        button.BorderWidth = 0
-        button.BorderColour = self.GetForegroundColour()
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = TabsManager.HIGHLIGHT_COLOUR
-
-    # -----------------------------------------------------------------------
-
-    def __set_active_btn_style(self, button):
-        """Set a special style to the button."""
-        button.BorderWidth = 1
-        button.BorderColour = TabsManager.HIGHLIGHT_COLOUR
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = self.GetForegroundColour()
-
-    # -----------------------------------------------------------------------
-    # Events management
-    # -----------------------------------------------------------------------
-
-    def _setup_events(self):
-        """Associate a handler function with the events.
-
-        It means that when an event occurs then the process handler function
-        will be called.
-
-        """
-        self.Bind(wx.EVT_RADIOBUTTON, self.__process_checked)
-
-    # -----------------------------------------------------------------------
-
-    def __process_checked(self, event):
-        """Process a checkbox event.
-
-        Skip the event in order to allow the parent to handle it: it's to
-        update the other windows with data of the new selected workspace.
-
-        :param event: (wx.Event)
-
-        """
-        # the button we want to switch on
-        btn = event.GetButtonObj()
-        state = btn.GetValue()
-        if state is True:
-            self.__set_active_btn_style(btn)
-        else:
-            self.__set_normal_btn_style(btn)
-        btn.SetValue(state)
-        btn.Refresh()
-        logging.debug('Button {:s} is checked: {:s}'
-                      ''.format(btn.GetLabel(), str(state)))
