@@ -48,7 +48,8 @@ from ..windows import sppasPanel
 from ..windows import sppasStaticLine
 from ..windows.book import sppasSimplebook
 
-from .tabs import TabsManager
+from .anz_tabs import TabsManager
+from .anz_views import ViewFilesPanel
 
 # ---------------------------------------------------------------------------
 
@@ -71,6 +72,10 @@ class sppasAnalyzePanel(sppasPanel):
             style=wx.BORDER_NONE
         )
 
+        # The data all tabs are working on
+        self.__data = FileData()
+
+        # Construct the GUI
         self._create_content()
         self._setup_events()
 
@@ -90,7 +95,7 @@ class sppasAnalyzePanel(sppasPanel):
         :returns: (FileData) data of the files-viewer model.
 
         """
-        return self.FindWindow("tabsview").get_data()
+        return self.__data
 
     # ------------------------------------------------------------------------
 
@@ -104,7 +109,7 @@ class sppasAnalyzePanel(sppasPanel):
             raise sppasTypeError("FileData", type(data))
         logging.debug('New data to set in the analyze page. '
                       'Id={:s}'.format(data.id))
-        self.__send_data(self.GetParent(), data)
+        self.__data = data
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -150,6 +155,14 @@ class sppasAnalyzePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
     # Events management
+    # -----------------------------------------------------------------------
+
+    def notify(self):
+        """The parent has to be informed of a change of content."""
+        evt = DataChangedEvent(data=self.__data)
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
     # -----------------------------------------------------------------------
 
     def _setup_events(self):
@@ -201,8 +214,7 @@ class sppasAnalyzePanel(sppasPanel):
             logging.error('Data were not sent in the event emitted by {:s}'
                           '.'.format(emitted.GetName()))
             return
-
-        self.__send_data(emitted, data)
+        self.__data = data
 
     # -----------------------------------------------------------------------
 
@@ -226,32 +238,58 @@ class sppasAnalyzePanel(sppasPanel):
 
         # Append a page to the book
         if action == "append":
-            new_page = sppasPanel(book, name=cur_page_name)
+            new_page = ViewFilesPanel(book, name=cur_page_name, files=())
             new_page.SetBackgroundColour(
                 wx.Colour(random.randint(50, 255), random.randint(50, 255), random.randint(50, 255))
-
             )
             book.AddPage(new_page, text="")
 
-        # Delete the page, without deleting the associated window
         if action == "remove":
             w = book.FindWindow(cur_page_name)
             if w is None:
                 return
-            book.RemovePage(w)
+
+            # Unlock files
+            i = 0
+            for fname in w.get_files():
+                try:
+                    fn = self.__data.get_object(fname)
+                    self.__data.set_object_state(fn, States.CHECKED)
+                    i += 1
+                except:
+                    logging.error("Error")
+            if i > 0:
+                self.notify()
+
+            # Delete the page then the associated window
+            p = book.FindPage(w)
+            if p != wx.NOT_FOUND:
+                book.RemovePage(p)
+            w.Destroy()
 
         if action == "open":
             w = book.FindWindow(cur_page_name)
             if w is None:
                 return
-            # TODO: implement the opening of files in pages...
-            # set checked files as locked
+            # the opening of checked files in the pages
+            checked = self.__data.get_files(States().CHECKED)
+            i = 0
+            for fn in checked:
+                try:
+                    w.append(fn.get_id())
+                    self.__data.set_object_state(fn, States().LOCKED)
+                    i += 1
+                except:
+                    logging.error("Error")
             # send data to the parent
+            if i > 0:
+                self.notify()
 
         # Show a page of the book
         if dest_page_name is not None:
-            w = book.FindWindow(dest_page_name)
-            self.show_page(w)
+            if dest_page_name != cur_page_name:
+                w = book.FindWindow(dest_page_name)
+                self.show_page(w)
 
     # -----------------------------------------------------------------------
     # Management of the book
@@ -275,11 +313,11 @@ class sppasAnalyzePanel(sppasPanel):
 
         # assign the effect
         if c < p:
-            book.SetEffects(showEffect=wx.SHOW_EFFECT_SLIDE_TO_LEFT,
-                            hideEffect=wx.SHOW_EFFECT_SLIDE_TO_LEFT)
+            book.SetEffects(showEffect=wx.SHOW_EFFECT_SLIDE_TO_TOP,
+                            hideEffect=wx.SHOW_EFFECT_SLIDE_TO_TOP)
         elif c > p:
-            book.SetEffects(showEffect=wx.SHOW_EFFECT_SLIDE_TO_RIGHT,
-                            hideEffect=wx.SHOW_EFFECT_SLIDE_TO_RIGHT)
+            book.SetEffects(showEffect=wx.SHOW_EFFECT_SLIDE_TO_BOTTOM,
+                            hideEffect=wx.SHOW_EFFECT_SLIDE_TO_BOTTOM)
         else:
             book.SetEffects(showEffect=wx.SHOW_EFFECT_NONE,
                             hideEffect=wx.SHOW_EFFECT_NONE)
@@ -291,23 +329,3 @@ class sppasAnalyzePanel(sppasPanel):
     # -----------------------------------------------------------------------
     # Private
     # -----------------------------------------------------------------------
-
-    def __send_data(self, emitted, data):
-        """Set a change of data to the children, send to the parent.
-
-        :param emitted: (wx.Window) The panel the data are coming from
-        :param data: (FileData)
-
-        """
-        # Set the data to appropriate children panels
-        panel = self.FindWindow("tabsview")
-        if emitted != panel:
-            panel.set_data(data)
-
-        # Send the data to the parent
-        pm = self.GetParent()
-        if pm is not None and emitted != pm:
-            data.set_state(States().CHECKED)
-            evt = DataChangedEvent(data=data)
-            evt.SetEventObject(self)
-            wx.PostEvent(self.GetParent(), evt)
