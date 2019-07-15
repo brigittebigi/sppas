@@ -543,21 +543,35 @@ class FileData(FileBase):
         """Unlock the given list of files.
 
         :param entries: (list, None) List of FileName to unlock
+        :returns: number of unlocked entries
 
         """
+        i = 0
         if entries is None:
             for fp in self.__data:
                 for fr in fp:
                     for fn in fr:
                         if fn.get_state() == States().LOCKED:
-                            fn.set_state(States().UNUSED)
-                    fr.update_state()
-                fp.update_state()
+                            fn.set_state(States().CHECKED)
+                            i += 1
+                    if i > 0:
+                        fr.update_state()
+                if i > 0:
+                    fp.update_state()
 
         elif isinstance(entries, list):
-            for fn in entries:
-                if fn.get_state() == States().LOCKED:
-                    self.set_object_state(States().UNUSED, fn)
+            for fp in self.__data:
+                for fr in fp:
+                    for fn in fr:
+                        if fn in entries and fn.get_state() == States().LOCKED:
+                            fn.set_state(States().CHECKED)
+                            i += 1
+                    if i > 0:
+                        fr.update_state()
+                if i > 0:
+                    fp.update_state()
+
+        return i
 
     # -----------------------------------------------------------------------
     # Read/Write the data into/from a file

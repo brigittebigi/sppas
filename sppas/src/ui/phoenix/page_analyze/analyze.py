@@ -34,7 +34,6 @@
 
 """
 
-import random
 import logging
 import wx
 
@@ -236,96 +235,126 @@ class sppasAnalyzePanel(sppasPanel):
 
         book = self.FindWindow("content")
 
-        # Append a page to the book
         if action == "append":
-            new_page = ViewFilesPanel(book, name=cur_page_name, files=())
-            new_page.SetBackgroundColour(
-                wx.Colour(random.randint(50, 255), random.randint(50, 255), random.randint(50, 255))
-            )
-            book.AddPage(new_page, text="")
+            color = event.color
+            self.append(cur_page_name, color)
 
         if action == "remove":
             w = book.FindWindow(cur_page_name)
             if w is None:
                 return
-
-            # Unlock files
-            i = 0
-            for fname in w.get_files():
-                try:
-                    fn = self.__data.get_object(fname)
-                    self.__data.set_object_state(fn, States.CHECKED)
-                    i += 1
-                except:
-                    logging.error("Error")
-            if i > 0:
-                self.notify()
-
-            # Delete the page then the associated window
-            p = book.FindPage(w)
-            if p != wx.NOT_FOUND:
-                book.RemovePage(p)
-            w.Destroy()
+            self.remove(w)
 
         if action == "open":
             w = book.FindWindow(cur_page_name)
             if w is None:
                 return
-            # the opening of checked files in the pages
-            checked = self.__data.get_files(States().CHECKED)
-            i = 0
-            for fn in checked:
-                try:
-                    w.append(fn.get_id())
-                    self.__data.set_object_state(fn, States().LOCKED)
-                    i += 1
-                except:
-                    logging.error("Error")
-            # send data to the parent
-            if i > 0:
-                self.notify()
+            self.open_files(w)
 
         # Show a page of the book
         if dest_page_name is not None:
             if dest_page_name != cur_page_name:
-                w = book.FindWindow(dest_page_name)
-                self.show_page(w)
+                self.show_page(dest_page_name)
 
     # -----------------------------------------------------------------------
     # Management of the book
     # -----------------------------------------------------------------------
 
-    def show_page(self, page):
-        """Show a page of the content panel.
+    def open_files(self, page):
+        """Open the checked files in the given page.
 
-        :param page:
+        :param page: (ViewFilesPanel)
+
+        """
+        checked = self.__data.get_filename_from_state(States().CHECKED)
+        i = 0
+        for fn in checked:
+            try:
+                page.append(fn.get_id())
+                self.__data.set_object_state(States().LOCKED, fn)
+                i += 1
+            except Exception as e:
+                logging.error(str(e))
+        # send data to the parent
+        if i > 0:
+            self.notify()
+
+    # -----------------------------------------------------------------------
+
+    def append(self, page_name, color=None):
+        """Remove a page of the content panel.
+
+        :param page_name: (str)
+        :param color: (wx.Colour)
 
         """
         book = self.FindWindow("content")
 
-        # the page number to switch on
-        p = book.FindPage(page)
-        if p == wx.NOT_FOUND:
+        new_page = ViewFilesPanel(book, name=page_name, files=())
+        if color is not None:
+            new_page.SetBackgroundColour(color)
+
+        book.AddPage(new_page, text="")
+
+    # -----------------------------------------------------------------------
+
+    def remove(self, page):
+        """Remove a page of the content panel.
+
+        :param page: (ViewFilesPanel)
+
+        """
+        # Unlock files
+        fns = [self.__data.get_object(fname) for fname in page.get_files()]
+        try:
+            i = self.__data.unlock(fns)
+        except Exception as e:
+            logging.error(str(e))
             return
+
+        # Delete the page then the associated window
+        book = self.FindWindow("content")
+        p = book.FindPage(page)
+        if p != wx.NOT_FOUND:
+            book.RemovePage(p)
+        page.Destroy()
+
+        if i > 0:
+            self.notify()
+
+    # -----------------------------------------------------------------------
+
+    def show_page(self, page_name):
+        """Show a page of the content panel.
+
+        :param page_name: (str)
+
+        """
+        book = self.FindWindow("content")
 
         # the current page number
         c = book.FindPage(book.GetCurrentPage())
 
+        # the page number to switch on
+        page = book.FindWindow(page_name)
+        if page is None:
+            logging.error("No page with name {:s} found in the book."
+                          "".format(page_name))
+            return
+        p = book.FindPage(page)
+        if p == wx.NOT_FOUND:
+            return
+
         # assign the effect
-        if c < p:
+        if c == p:
+            return
+        elif c < p:
             book.SetEffects(showEffect=wx.SHOW_EFFECT_SLIDE_TO_TOP,
                             hideEffect=wx.SHOW_EFFECT_SLIDE_TO_TOP)
-        elif c > p:
+        else:
             book.SetEffects(showEffect=wx.SHOW_EFFECT_SLIDE_TO_BOTTOM,
                             hideEffect=wx.SHOW_EFFECT_SLIDE_TO_BOTTOM)
-        else:
-            book.SetEffects(showEffect=wx.SHOW_EFFECT_NONE,
-                            hideEffect=wx.SHOW_EFFECT_NONE)
 
         # then change the current tab
         book.ChangeSelection(p)
         self.Refresh()
-
-    # -----------------------------------------------------------------------
-    # Private
-    # -----------------------------------------------------------------------

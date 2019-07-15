@@ -178,7 +178,7 @@ class FileName(FileBase):
         if value not in FILENAME_STATES:
             raise sppasTypeError(value, str(FILENAME_STATES))
 
-        if self._state == States().LOCKED and value != States().UNUSED:
+        if self._state == States().LOCKED and value != States().CHECKED:
             return False
         if self._state == value:
             return False

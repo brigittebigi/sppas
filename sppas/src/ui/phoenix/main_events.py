@@ -48,3 +48,10 @@ DataChangedCommandEvent, EVT_DATA_CHANGED_COMMAND = wx.lib.newevent.NewCommandEv
 
 TabChangeEvent, EVT_TAB_CHANGE = wx.lib.newevent.NewEvent()
 TabChangeCommandEvent, EVT_TAB_CHANGE_COMMAND = wx.lib.newevent.NewCommandEvent()
+
+# ---------------------------------------------------------------------------
+# Event to be used when a change has to be done on a view of files.
+# the event must contain 1 member: the name of the view to switch on
+# among: list, timeline, text, grid, stats
+ViewChangeEvent, EVT_VIEW_CHANGE = wx.lib.newevent.NewEvent()
+ViewChangeCommandEvent, EVT_VIEW_CHANGE_COMMAND = wx.lib.newevent.NewCommandEvent()

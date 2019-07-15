@@ -36,6 +36,7 @@
 
 import logging
 import wx
+import random
 import wx.lib.newevent
 
 from sppas import msg
@@ -46,7 +47,9 @@ from ..windows import sppasPanel
 from ..windows import sppasToolbar
 from ..windows import sppasStaticLine
 from ..windows import RadioButton
+
 from ..main_events import TabChangeEvent
+from ..main_events import ViewChangeEvent
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when the tab has changed.
@@ -66,22 +69,23 @@ def _(message):
     return u(msg(message, "ui"))
 
 
-TAB_TITLE = "Tabs: "
-TAB_ACT_OPEN = "Open files"
-TAB_ACT_NEW_TAB = "New tab"
-TAB_ACT_CLOSE_TAB = "Close tab"
-TAB_VIEW_LIST = "Summary"
-TAB_VIEW_TIME = "Time line"
-TAB_VIEW_TEXT = "Text edit"
-TAB_VIEW_GRID = "Grid details"
-TAB_VIEW_STAT = "Statistics"
+TAB_TITLE = _("Tabs: ")
+TAB = _("Tab")
+TAB_ACT_OPEN = _("Open files")
+TAB_ACT_NEW_TAB = _("New tab")
+TAB_ACT_CLOSE_TAB = _("Close tab")
+TAB_VIEW_LIST = _("Summary")
+TAB_VIEW_TIME = _("Time line")
+TAB_VIEW_TEXT = _("Text edit")
+TAB_VIEW_GRID = _("Grid details")
+TAB_VIEW_STAT = _("Statistics")
 
-TAB_MSG_CONFIRM_SWITCH = "Confirm switch of tab?"
-TAB_MSG_CONFIRM = "The current tab contains not saved work that " \
-                  "will be lost. Are you sure you want to change tab?"
-TAB_ACT_SAVECURRENT_ERROR = "The current tab can not be saved due to " \
-                     "the following error: {:s}\nAre you sure you want " \
-                     "to change tab?"
+TAB_MSG_CONFIRM_SWITCH = _("Confirm switch of tab?")
+TAB_MSG_CONFIRM = _("The current tab contains not saved work that "
+                    "will be lost. Are you sure you want to change tab?")
+TAB_ACT_SAVECURRENT_ERROR = _(
+    "The current tab can not be saved due to "
+    "the following error: {:s}\nAre you sure you want to change tab?")
 
 # ---------------------------------------------------------------------------
 
@@ -108,8 +112,6 @@ class TabsManager(sppasPanel):
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
-        self.__counter = 0
-
         # Construct the panel
         self._create_content()
         self._setup_events()
@@ -122,12 +124,12 @@ class TabsManager(sppasPanel):
     def _create_content(self):
         """Create the main content."""
         tb = self.__create_toolbar()
-        cv = TabsPanel(self, name="tabslist")
+        tabs = TabsPanel(self, name="tabslist")
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(tb, 0, wx.EXPAND, 0)
         sizer.Add(self.__create_hline(), 0, wx.EXPAND, 0)
-        sizer.Add(cv, 2, wx.EXPAND, 0)
+        sizer.Add(tabs, 2, wx.EXPAND, 0)
 
         self.SetMinSize(wx.Size(128, -1))
         self.SetSizer(sizer)
@@ -175,8 +177,11 @@ class TabsManager(sppasPanel):
         # The user pressed a key of its keyboard
         self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
 
-        # The user clicked (LeftDown - LeftUp) an action button of the toolbar
+        # The user clicked an action button of the toolbar
         self.Bind(wx.EVT_BUTTON, self._process_action)
+
+        # The user clicked a toggle button
+        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_view_changed)
 
         # The tab has changed.
         # This event is sent by the 'tabslist' child window.
@@ -214,6 +219,23 @@ class TabsManager(sppasPanel):
 
     # ------------------------------------------------------------------------
 
+    def _process_view_changed(self, event):
+        """Process a change of view event: the active view changed.
+
+        Notify the parent of this change.
+
+        :param event: (wx.Event)
+
+        """
+        event_name = event.GetButtonObj().GetName()
+        if event_name.startswith("data-view-"):
+            view_name = event_name[len("data-view-"):]
+            evt = ViewChangeEvent(view=view_name)
+            evt.SetEventObject(self)
+            wx.PostEvent(self.GetParent(), evt)
+
+    # ------------------------------------------------------------------------
+
     def _process_action(self, event):
         """Process a button event: an action has to be performed.
 
@@ -221,7 +243,6 @@ class TabsManager(sppasPanel):
 
         """
         event_name = event.GetButtonObj().GetName()
-        logging.debug('action {:s}'.format(event_name))
 
         if event_name == "files-edit-file":
             self.open_files()
@@ -232,9 +253,6 @@ class TabsManager(sppasPanel):
         elif event_name == "tab-del":
             self.remove_tab()
 
-        elif event_name.startswith("view-"):
-            pass
-
         event.Skip()
 
     # ------------------------------------------------------------------------
@@ -242,15 +260,16 @@ class TabsManager(sppasPanel):
     # ------------------------------------------------------------------------
 
     def open_files(self):
-        """Open the checked files into the current tab."""
-        logging.debug("Open checked file(s).")
+        """Notify the parent to open files into the current tab."""
         tabs = self.FindWindow("tabslist")
         current = tabs.get_current()
+
         # we did not created a tab anymore
         if current == -1:
             Error("No tab is checked to open files.")
-        else:
 
+        # a tab is active
+        else:
             cur_name = tabs.get_name(current)
             if cur_name is not None:
                 evt = TabChangeEvent(action="open",
@@ -264,33 +283,37 @@ class TabsManager(sppasPanel):
     def append_tab(self):
         """Append a tab to the list."""
         tabs = self.FindWindow("tabslist")
-        self.__counter += 1
-        page_name = "page_analyze_{:d}".format(self.__counter)
-        dest = None
 
-        # Append in the list of tabs
-        tabs.append(page_name)
+        # Append a new tab in the list of tabs
+        index = tabs.append()
 
         # If this is the first tab, we have to switch on it.
+        dest = None
         if tabs.get_count() == 1:
             tabs.switch_to(0)
-            dest = page_name
+            dest = tabs.get_name(0)
+
+        page_color = tabs.get_color(index)
+        page_name = tabs.get_name(index)
 
         # Send the new page name to the parent
         evt = TabChangeEvent(action="append",
                              cur_tab=page_name,
-                             dest_tab=dest)
+                             dest_tab=dest,
+                             color=page_color)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
 
     # -----------------------------------------------------------------------
 
     def remove_tab(self):
-        """Remove a tab to the list."""
+        """Remove the currently checked tab to the list."""
         tabs = self.FindWindow("tabslist")
+
         nb_tabs = tabs.get_count()
-        # we never created a tab before or we have only one tab
-        if nb_tabs <= 1:
+        # we never created a tab before
+        if nb_tabs == 0:
+            logging.info("There's no tab in the list to remove")
             return
 
         # Remove of the list of tabs (if we can)
@@ -301,15 +324,17 @@ class TabsManager(sppasPanel):
         except Exception:
             return
 
-        # We have to switch to the previous tab (or the next one)
-        if current > 0:
-            dest_index = current - 1
-            dest = tabs.get_name(current - 1)
-        else:
-            dest = tabs.get_name(0)
-            dest_index = 0
+        # We have to switch to the previous tab or to the next one
+        dest = None
+        if tabs.get_count() > 0:
+            if current > 0:
+                dest_index = current - 1
+                dest = tabs.get_name(current - 1)
+            else:
+                dest = tabs.get_name(0)
+                dest_index = 0
 
-        tabs.switch_to(dest_index)
+            tabs.switch_to(dest_index)
 
         # Send the removed and destination page names to the parent
         evt = TabChangeEvent(action="remove",
@@ -337,7 +362,7 @@ class TabsPanel(sppasPanel):
 
     """
 
-    def __init__(self, parent, name="tabslist", tabs=list()):
+    def __init__(self, parent, name="tabslist"):
         super(TabsPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
@@ -346,8 +371,9 @@ class TabsPanel(sppasPanel):
             style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
-        self.__tabs = tabs
         self.__current = -1
+        self.__counter = 0
+        self.__colors = dict()
 
         self._create_content()
         self._setup_events()
@@ -357,9 +383,23 @@ class TabsPanel(sppasPanel):
     # Manage the tabs
     # -----------------------------------------------------------------------
 
+    def check_index(self, index):
+        """Check if the given index is matching a tab.
+
+        :param index: (int) Index to check
+
+        """
+        index = int(index)
+        if index < 0 or index >= self.GetSizer().GetItemCount():
+            raise IndexError("Tab index {:d} out of range (0..{:d})"
+                             "".format(index, self.GetSizer().GetItemCount()-1))
+        return index
+
+    # -----------------------------------------------------------------------
+
     def get_count(self):
         """Return the number of tabs."""
-        return len(self.__tabs)
+        return self.GetSizer().GetItemCount()
 
     # -----------------------------------------------------------------------
 
@@ -370,74 +410,77 @@ class TabsPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def get_name(self, index):
-        """Return the name of the tab or None."""
-        try:
-            return self.__tabs[index]
-        except IndexError:
-            return None
+        """Return the name of the page.
 
-    # -----------------------------------------------------------------------
-
-    def set_value(self, name, value=False):
-        """"""
-        index = self.__tabs.index(name)
-        item = self.GetSizer().GetItem(index)
-        btn = item.GetWindow()
-        btn.SetValue(value)
-        if value is False:
-            self.__set_normal_btn_style(btn)
-        else:
-            self.__set_active_btn_style(btn)
-        btn.Refresh()
-
-    # -----------------------------------------------------------------------
-
-    def append(self, name):
-        """Add a button corresponding to the name of a tab.
-
-        :param name: (str)
-        :param value: (bool)
-        :returns: index of the newly created workspace
+        :param index: (int) Index of the tab to get the name
+        :raise: IndexError
 
         """
-        logging.debug('APPEND BUTTON {:s}'.format(name))
-        if name in self.__tabs:
-            raise ValueError('Name {:s} is already in the list of tabs.')
+        index = self.check_index(index)
+        btn_name = self.GetSizer().GetItem(index).GetWindow().GetName()
+        return btn_name.replace("btn_", "page_")
 
-        btn = RadioButton(self, label=name, name=name)
+    # -----------------------------------------------------------------------
+
+    def get_color(self, index):
+        """Return the highlight color of the button.
+
+        :param index: (int) Index of the tab to get the name
+        :raise: IndexError
+
+        """
+        index = self.check_index(index)
+        btn = self.GetSizer().GetItem(index).GetWindow()
+        return self.__colors[btn]
+
+    # -----------------------------------------------------------------------
+
+    def append(self):
+        """Add a button corresponding to the name of a tab.
+
+        :returns: Index of the button in the sizer
+
+        """
+        self.__counter += 1
+        name = "btn_analyze_{:d}".format(self.__counter)
+        label = TAB + " #{:d}".format(self.__counter)
+
+        btn = RadioButton(self, label=label, name=name)
         btn.SetValue(False)
         btn.SetSpacing(sppasPanel.fix_size(12))
         btn.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
         btn.SetSize(wx.Size(-1, sppasPanel.fix_size(32)))
-        self.__tabs.append(name)
+        self.__colors[btn] = wx.Colour(random.randint(50, 255),
+                                       random.randint(50, 255),
+                                       random.randint(50, 255))
         self.__set_normal_btn_style(btn)
         self.GetSizer().Add(btn, 0, wx.EXPAND | wx.ALL, 2)
         self.Layout()
         self.Refresh()
+        logging.debug('APPENDED BUTTON {:s} with color {:s}'.format(label, str(self.__colors[btn])))
+        return self.GetSizer().GetItemCount() - 1
 
     # -----------------------------------------------------------------------
 
     def remove(self, index):
         """Remove a button corresponding to the name of a tab.
 
-        :param index: (str)
+        :param index: (int) Index of the tab to remove
+        :raise: IndexError
 
         """
-        index = int(index)
-        if index < 0 or index >= len(self.__tabs):
-            raise IndexError("Tab index {:d} out of range (0..{:d})"
-                             "".format(index, len(self.__tabs)-1))
+        index = self.check_index(index)
 
-        if len(self.__tabs) == 1:
-            raise ValueError("At least one tab must exist")
+        # Delete windows and remove of the list
+        item = self.GetSizer().GetItem(index)
+        btn = item.GetWindow()
+        self.__colors.pop(btn)
 
-        self.GetSizer().GetItem(index).DeleteWindows()
+        item.DeleteWindows()
         self.GetSizer().Remove(index)
         self.Layout()
         self.Refresh()
 
-        # Delete of the list
-        self.__tabs.pop(index)
         if index == self.__current:
             self.__current = -1
 
@@ -449,10 +492,7 @@ class TabsPanel(sppasPanel):
         :param index: (int) Index of the tab to switch on
 
         """
-        index = int(index)
-        if index < 0 or index >= len(self.__tabs):
-            raise IndexError("Tab index {:d} out of range (0..{:d})"
-                             "".format(index, len(self.__tabs)-1))
+        index = self.check_index(index)
 
         # set the current button in a normal state
         if self.__current != -1:
@@ -472,16 +512,14 @@ class TabsPanel(sppasPanel):
         """Create the main content."""
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
-        for name in self.__tabs:
-            self.append(name)
         self.SetMinSize(wx.Size(sppasPanel.fix_size(128),
-                                sppasPanel.fix_size(32)*len(self.__tabs)))
+                                sppasPanel.fix_size(32)*self.GetSizer().GetItemCount()))
 
     # -----------------------------------------------------------------------
 
     def __set_normal_btn_style(self, button):
         """Set a normal style to a button."""
-        button.BorderWidth = 1
+        button.BorderWidth = 0
         button.BorderColour = self.GetForegroundColour()
         button.BorderStyle = wx.PENSTYLE_SOLID
         button.FocusColour = TabsManager.HIGHLIGHT_COLOUR
@@ -490,8 +528,8 @@ class TabsPanel(sppasPanel):
 
     def __set_active_btn_style(self, button):
         """Set a special style to the button."""
-        button.BorderWidth = 2
-        button.BorderColour = TabsManager.HIGHLIGHT_COLOUR
+        button.BorderWidth = 1
+        button.BorderColour = self.__colors[button]
         button.BorderStyle = wx.PENSTYLE_SOLID
         button.FocusColour = self.GetForegroundColour()
 
@@ -521,8 +559,6 @@ class TabsPanel(sppasPanel):
         """
         # the button we want to switch on
         tab_btn = event.GetButtonObj()
-        tab_name = tab_btn.GetLabel()
-        tab_index = self.__tabs.index(tab_name)
 
         # the current button
         if self.__current != -1:
@@ -535,25 +571,25 @@ class TabsPanel(sppasPanel):
         # user clicked a different tab
         if cur_btn != tab_btn:
 
-            evt = TabChangedEvent(cur_tab=cur_name,
-                                  dest_tab=tab_name)
-            evt.SetEventObject(self)
-
+            # set the current button in a normal state
             if cur_btn is not None:
-                # set the current button in a normal state
                 self.__btn_set_state(cur_btn, False)
 
             # assign the new tab
+            tab_index = 0
+            while self.GetSizer().GetItem(tab_index).GetWindow() != tab_btn:
+                tab_index += 1
             self.__current = tab_index
             self.__btn_set_state(tab_btn, True)
 
             # the parent will decide what to exactly do with this change
+            evt = TabChangedEvent(cur_tab=cur_name,
+                                  dest_tab=self.get_name(tab_index))
+            evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)
 
         else:
             # user clicked the current tab
-            logging.info('Tab {:s} is already active.'
-                         ''.format(tab_btn.GetLabel()))
             tab_btn.SetValue(True)
 
     # -----------------------------------------------------------------------
@@ -567,8 +603,6 @@ class TabsPanel(sppasPanel):
             self.__set_normal_btn_style(btn)
         btn.SetValue(state)
         btn.Refresh()
-        logging.debug('Tab {:s} is checked: {:s}'
-                      ''.format(btn.GetLabel(), str(state)))
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py

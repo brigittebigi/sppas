@@ -49,7 +49,7 @@ from ..dialogs import sppasFileDialog
 from ..windows import sppasStaticLine
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
-from ..windows import CheckButton
+from ..windows import RadioButton
 from ..main_events import DataChangedEvent
 
 # ---------------------------------------------------------------------------
@@ -659,7 +659,7 @@ class WorkspacesPanel(sppasPanel):
         :returns: index of the newly created workspace
 
         """
-        btn = CheckButton(self, label=name, name=name)
+        btn = RadioButton(self, label=name, name=name)
         btn.SetSpacing(sppasPanel.fix_size(12))
         btn.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
         btn.SetSize(wx.Size(-1, sppasPanel.fix_size(32)))
@@ -677,7 +677,7 @@ class WorkspacesPanel(sppasPanel):
 
     def __set_normal_btn_style(self, button):
         """Set a normal style to a button."""
-        button.BorderWidth = 1
+        button.BorderWidth = 0
         button.BorderColour = self.GetForegroundColour()
         button.BorderStyle = wx.PENSTYLE_SOLID
         button.FocusColour = WorkspacesManager.HIGHLIGHT_COLOUR
@@ -686,7 +686,7 @@ class WorkspacesPanel(sppasPanel):
 
     def __set_active_btn_style(self, button):
         """Set a special style to the button."""
-        button.BorderWidth = 2
+        button.BorderWidth = 1
         button.BorderColour = WorkspacesManager.HIGHLIGHT_COLOUR
         button.BorderStyle = wx.PENSTYLE_SOLID
         button.FocusColour = self.GetForegroundColour()
@@ -702,7 +702,7 @@ class WorkspacesPanel(sppasPanel):
         will be called.
 
         """
-        self.Bind(wx.EVT_CHECKBOX, self.__process_checked)
+        self.Bind(wx.EVT_RADIOBUTTON, self.__process_checked)
 
     # -----------------------------------------------------------------------
 
