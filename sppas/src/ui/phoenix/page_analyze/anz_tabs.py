@@ -455,9 +455,8 @@ class TabsPanel(sppasPanel):
                                        random.randint(50, 255))
         self.__set_normal_btn_style(btn)
         self.GetSizer().Add(btn, 0, wx.EXPAND | wx.ALL, 2)
-        self.Layout()
         self.Refresh()
-        logging.debug('APPENDED BUTTON {:s} with color {:s}'.format(label, str(self.__colors[btn])))
+        self.Layout()
         return self.GetSizer().GetItemCount() - 1
 
     # -----------------------------------------------------------------------
@@ -487,7 +486,7 @@ class TabsPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def switch_to(self, index):
-        """Set the current tab at the given index.
+        """Switch from the current tab to the one at the given index.
 
         :param index: (int) Index of the tab to switch on
 
@@ -496,13 +495,13 @@ class TabsPanel(sppasPanel):
 
         # set the current button in a normal state
         if self.__current != -1:
-            cur_btn = self.GetSizer().GetItem(self.__current).GetWindow()
-            self.__btn_set_state(cur_btn, False)
+            btn = self.GetSizer().GetItem(self.__current).GetWindow()
+            self.__btn_set_state(btn, False)
 
         # the one we want to switch on
-        idx_btn = self.GetSizer().GetItem(index).GetWindow()
-        self.__btn_set_state(idx_btn, True)
         self.__current = index
+        btn = self.GetSizer().GetItem(self.__current).GetWindow()
+        self.__btn_set_state(btn, True)
 
     # -----------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -529,9 +528,10 @@ class TabsPanel(sppasPanel):
     def __set_active_btn_style(self, button):
         """Set a special style to the button."""
         button.BorderWidth = 1
-        button.BorderColour = self.__colors[button]
         button.BorderStyle = wx.PENSTYLE_SOLID
         button.FocusColour = self.GetForegroundColour()
+        if button in self.__colors:
+            button.SetBorderColour(self.__colors[button])
 
     # -----------------------------------------------------------------------
     # Events management

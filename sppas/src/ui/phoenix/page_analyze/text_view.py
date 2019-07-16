@@ -88,7 +88,8 @@ class TextViewPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def load_text(self):
-        """ """
+        """Load the file and display it."""
+        # TODO: progress bar while loading and highlighting
         try:
             with codecs.open(self.__filename, 'r', sg.__encoding__) as fp:
                 lines = fp.readlines()
@@ -102,16 +103,6 @@ class TextViewPanel(sppasPanel):
 
         # required under Windows
         txtctrl.SetStyle(0, len(content), txtctrl.GetDefaultStyle())
-
-        # Highlight some special chars
-        self.__highlight(txtctrl, content, "(", PARENTHESIS_COLOUR)
-        self.__highlight(txtctrl, content, ")", PARENTHESIS_COLOUR)
-        self.__highlight(txtctrl, content, "[", BRACKET_COLOUR)
-        self.__highlight(txtctrl, content, "]", BRACKET_COLOUR)
-        self.__highlight(txtctrl, content, "{", BRACES_COLOUR)
-        self.__highlight(txtctrl, content, "}", BRACES_COLOUR)
-        self.__highlight(txtctrl, content, "<", TAG_COLOUR)
-        self.__highlight(txtctrl, content, ">", TAG_COLOUR)
 
     # -----------------------------------------------------------------------
 

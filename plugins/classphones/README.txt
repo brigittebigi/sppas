@@ -3,8 +3,8 @@
 program:    classphones
 author:     Brigitte Bigi
 contact:    develop@sppas.org
-date:       2018-10-23
-version:    2.1
+date:       2019-07-16
+version:    2.2
 copyright:  Copyright (C) 2017-2019 Brigitte Bigi
 license:    GNU Public License version 3 or any later version
 brief:      SPPAS plugin to create tiers with the classification of phonemes.

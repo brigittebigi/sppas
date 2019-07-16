@@ -479,10 +479,13 @@ class BaseButton(wx.Window):
         value = int(value)
         w, h = self.GetClientSize()
         if value < 0:
+            # logging.warning("Invalid border width {:d} (negative value).".format(value))
             return
-        if value >= (w // 2):
+        if w > 0 and value >= (w // 2):
+            # logging.warning("Invalid border width {:d} (highter than width {:d}).".format(value, w))
             return
-        if value >= (h // 2):
+        if h > 0 and value >= (h // 2):
+            # logging.warning("Invalid border width {:d} (highter than height {:d}).".format(value, h))
             return
         self._borderwidth = value
 
@@ -526,7 +529,7 @@ class BaseButton(wx.Window):
         :returns: (int)
 
         """
-        return self._borderwidth
+        return self._bordercolor
 
     def SetBorderColour(self, color):
         self._bordercolor = color

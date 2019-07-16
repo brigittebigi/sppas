@@ -181,6 +181,7 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
 
         txtctrl = self.FindWindow("log_textctrl")
         txtctrl.SetValue(logcontent)
+        txtctrl.SetStyle(0, len(logcontent), txtctrl.GetDefaultStyle())
 
         # Highlight the name of the file.
         i = logcontent.find("\n", 0)

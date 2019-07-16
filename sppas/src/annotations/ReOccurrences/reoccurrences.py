@@ -28,7 +28,9 @@
         This banner notice must not be removed.
 
         ---------------------------------------------------------------------
+
 """
+
 from sppas import sppasTier, sppasLocation
 from sppas import sppasInterval, sppasPoint
 from sppas import sppasLabel, sppasTag

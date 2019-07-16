@@ -82,7 +82,11 @@ class sppasAnalyzePanel(sppasPanel):
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
 
+        # Organize items and fix a size for each of them
         self.Layout()
+
+        # Add a first empty tab/page
+        self.FindWindow("tabsview").append_tab()
 
     # ------------------------------------------------------------------------
     # Public methods to access the data
@@ -125,7 +129,6 @@ class sppasAnalyzePanel(sppasPanel):
         sizer.Add(tm, 0, wx.EXPAND, 0)
         sizer.Add(self.__create_vline(), 0, wx.EXPAND, 0)
         sizer.Add(book, 2, wx.EXPAND, 0)
-
         self.SetSizer(sizer)
 
     # ------------------------------------------------------------------------
@@ -282,7 +285,7 @@ class sppasAnalyzePanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def append(self, page_name, color=None):
-        """Remove a page of the content panel.
+        """Append a page to the content panel.
 
         :param page_name: (str)
         :param color: (wx.Colour)
