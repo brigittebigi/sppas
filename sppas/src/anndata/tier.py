@@ -1102,3 +1102,14 @@ class sppasTier(sppasMetaData):
 
     def __len__(self):
         return len(self.__ann)
+
+    def __contains__(self, value):
+        """Value can be either an annotation or an annotation identifier."""
+        if isinstance(value, sppasAnnotation):
+            return value in self.__ann
+        else:
+            for a in self.__ann:
+                if a.get_meta("id") == value:
+                    return True
+        return False
+

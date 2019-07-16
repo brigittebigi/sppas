@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 from sppas.src.config import symbols
 from sppas.src.config import annots
 from sppas.src.config import info
@@ -45,7 +46,7 @@ from sppas import sppasLocation
 from sppas import sppasTag
 from sppas import sppasLabel
 
-from sppas.src.utils.makeunicode import sppasUnicode
+from sppas.src.utils import sppasUnicode
 
 from ..baseannot import sppasBaseAnnotation
 from ..searchtier import sppasFindTier

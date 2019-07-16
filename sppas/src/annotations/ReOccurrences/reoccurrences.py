@@ -35,44 +35,75 @@ from sppas import sppasTier, sppasLocation
 from sppas import sppasInterval, sppasPoint
 from sppas import sppasLabel, sppasTag
 
+# ---------------------------------------------------------------------------
 
-class Reoccurences(object):
+
+class ReOccurences(object):
+    """Manager for a set of re-occurrences annotations.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
 
     def __init__(self):
-        super(Reoccurences, self).__init__()
+        super(ReOccurences, self).__init__()
+
+    # -----------------------------------------------------------------------
 
     @staticmethod
-    def make_reoccurrences(ref_window, comp_window, delta):
-        occ = dict()
+    def compare_labels(label1, label2):
+        """Compare two labels.
+
+        :param label1: (sppasLabel)
+        :param label2: (sppasLabel)
+        :returns: (bool) Number of tags they have in common
+
+        """
+        tags1 = [tag for tag in label1]
+        tags2 = [tag for tag in label2]
+
+        return len(tags1 and tags2)
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def eval(ann1, anns2):
+        """Return the list of re-occurrences.
+
+        An annotation in anns2 is matching ann1 if all labels of ann1 are
+        in ann2. It is not bijective: some labels of ann2 could not match
+        those of ann1.
+
+        :param ann1: (sppasAnnotation)
+        :param anns2: (list of sppasAnnotation)
+        :returns: (list of sppasAnnotation)
+
+        """
         reocc = list()
-        reoccTier = sppasTier()
+        for ann2 in anns2:
 
-        for ann_set_ref in ref_window:
-            occ[ann_set_ref] = 0
+            # Evaluate if all labels of ann1 are also in ann2
+            match = False
+            for label1 in ann1.get_labels():
+                match = False
+                for label2 in ann2.get_labels():
+                    equals = ReOccurences.compare_labels(label1, label2)
+                    # we've found that a label of ann2 is matching label1
+                    # we can stop to search it anymore. label1 == label2
+                    if equals > 0:
+                        match = True
+                        break
 
-        for ann_set_ref in ref_window:
-            for ann_set_comp in comp_window:
-                if len(ann_set_ref & ann_set_comp) != 0 and \
-                        len(ann_set_ref & ann_set_comp) / len(ann_set_ref):
-                    occ[ann_set_ref] += 1
-                    reocc.append(ann_set_comp)
+                # As soon as a label1 is missing in ann2, we can stop:
+                # ann2 is not a re-occurrence of ann1
+                if match is False:
+                    break
 
-        for ann_set in occ.keys():
-            curr_reocc = list()
-            for ann_set_comp in reocc:
-                if len(ann_set & ann_set_comp) / len(ann_set):
-                    curr_reocc.append(ann_set_comp)
+            if match is True:
+                reocc.append(ann2)
 
-            begin = 0.0
-            end = 0.0
-            i = 0
-            for ann in ann_set:
-                if i == 0:
-                    begin = ann.get_location().get_best().get_begin().get_value()
-                elif i == len(ann_set) - 1:
-                    end = ann.get_location().get_best().get_end().get_value()
-
-            reoccTier.create_annotation(
-                sppasLocation(sppasInterval(sppasPoint(begin), sppasPoint(end))),
-                [sppasLabel(sppasTag(begin)), sppasLabel(sppasTag())]
-            )
+        return list(set(reocc))
