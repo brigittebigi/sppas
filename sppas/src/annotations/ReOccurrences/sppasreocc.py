@@ -34,6 +34,8 @@
 
 """
 
+import logging
+
 from sppas import IndexRangeException
 
 from sppas.src.utils import sppasUnicode
@@ -62,7 +64,7 @@ class sppasReOcc(sppasBaseAnnotation):
     """
 
     def __init__(self, log=None):
-        """Create a new sppasSyll instance with only the general rules.
+        """Create a new sppasReOcc instance with only the general rules.
 
         Log is used for a better communication of the annotation process and its
         results. If None, logs are redirected to the default logging system.
@@ -128,6 +130,7 @@ class sppasReOcc(sppasBaseAnnotation):
             raise IndexRangeException(span, 0, self.max_span)
 
     # ----------------------------------------------------------------------
+    # The search for re-occurrences is here
     # ----------------------------------------------------------------------
 
     def detection(self, tier_spk1, tier_spk2):
@@ -138,8 +141,10 @@ class sppasReOcc(sppasBaseAnnotation):
 
         """
         annset = sppasAnnReOccSet()
-        tier_spk1.set_radius(0.04)
-        tier_spk2.set_radius(0.04)
+        if tier_spk1.is_float():
+            tier_spk1.set_radius(0.04)
+        if tier_spk1.is_float():
+            tier_spk2.set_radius(0.04)
 
         end_loc = tier_spk2[-1].get_highest_localization()
         for ann1 in tier_spk1:
@@ -190,6 +195,10 @@ class sppasReOcc(sppasBaseAnnotation):
 
         tier_spk1 = trs_input1.find(self._options['tiername'], case_sensitive=False)
         tier_spk2 = trs_input2.find(self._options['tiername'], case_sensitive=False)
+
+        if tier_spk1 is None or tier_spk2 is None:
+            raise Exception("Tier with name '{:s}' not found in input files."
+                            "".format(self._options['tiername']))
 
         # Re-occurrences Automatic Detection
         new_tiers = self.detection(tier_spk1, tier_spk2)

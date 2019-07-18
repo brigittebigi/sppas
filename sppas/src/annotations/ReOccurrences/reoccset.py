@@ -34,6 +34,8 @@
 
 """
 
+import logging
+
 from sppas import sppasTier, sppasLocation
 from sppas import sppasInterval, sppasPoint
 from sppas import sppasLabel, sppasTag
@@ -80,7 +82,7 @@ class sppasAnnReOccSet(sppasBaseSet):
     # -----------------------------------------------------------------------
 
     def to_tier(self):
-        """Create a tier from the data set.
+        """Create tiers from the data set.
 
         :returns: (List of sppasTier)
 
@@ -94,22 +96,22 @@ class sppasAnnReOccSet(sppasBaseSet):
             anns_reocc = self._data_set[ann]
 
             # the "source" annotation
-            new_ann = tier_nb.create_annotation(
+            new_ann1 = tier_src.create_annotation(
                 ann.get_location().copy(),
                 sppasLabel(sppasTag("S" + str(i))))
-            self.__ann_copy_metadata(ann, new_ann)
+            self.__ann_copy_metadata(ann, new_ann1)
 
             # the "nb re-occ" annotation
-            new_ann = tier_nb.create_annotation(
+            new_ann2 = tier_nb.create_annotation(
                 ann.get_location().copy(),
                 sppasLabel(sppasTag(len(anns_reocc), "int")))
-            self.__ann_copy_metadata(ann, new_ann)
+            self.__ann_copy_metadata(ann, new_ann2)
 
             # the "values", i.e. the re-occurrences themselves
             for reocc in anns_reocc:
                 label = sppasLabel(sppasTag("R" + str(i)))
-                already = tier_reocc.find(ann.get_lowest_localization(),
-                                          ann.get_highest_localization(),
+                already = tier_reocc.find(reocc.get_lowest_localization(),
+                                          reocc.get_highest_localization(),
                                           overlaps=False)
                 if len(already) == 0:
                     tier_reocc.create_annotation(

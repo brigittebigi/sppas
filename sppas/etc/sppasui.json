@@ -70,6 +70,12 @@
       "id": "otherrepet",
       "config": "otherrepet.json",
       "cli": "otherrepetition.py"
+    },
+
+    {
+      "id": "reoccurrences",
+      "config": "reoccurrences.json",
+      "cli": ""
     }
   ],
 

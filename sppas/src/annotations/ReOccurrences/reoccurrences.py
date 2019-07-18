@@ -63,10 +63,12 @@ class ReOccurences(object):
         :returns: (bool) Number of tags they have in common
 
         """
-        tags1 = [tag for tag in label1]
-        tags2 = [tag for tag in label2]
+        tags1 = [tag.get_typed_content() for tag, score in label1]
+        tags2 = [tag.get_typed_content() for tag, score in label2]
+        union = tags1 + tags2
+        diff = set(union)
 
-        return len(tags1 and tags2)
+        return len(union) - len(diff)
 
     # -----------------------------------------------------------------------
 
@@ -75,7 +77,7 @@ class ReOccurences(object):
         """Return the list of re-occurrences.
 
         An annotation in anns2 is matching ann1 if all labels of ann1 are
-        in ann2. It is not bijective: some labels of ann2 could not match
+        in ann2. It is not one-to-one: some labels of ann2 could not match
         those of ann1.
 
         :param ann1: (sppasAnnotation)

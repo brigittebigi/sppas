@@ -319,10 +319,12 @@ class sppasTier(sppasMetaData):
                     if self.__ann[index].get_lowest_localization().get_midpoint() == \
                             annotation.get_lowest_localization().get_midpoint():
                         raise TierAddError(index)
+                    self.__ann.insert(index + 1, annotation)
+                    return index + 1
                 else:
                     index = self.near(annotation.get_lowest_localization(), direction=-1)
-                self.__ann.insert(index + 1, annotation)
-                return index + 1
+                    self.__ann.insert(index, annotation)
+                    return index
 
             else:
                 index = self.mindex(annotation.get_lowest_localization(), bound=0)

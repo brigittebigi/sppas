@@ -67,6 +67,7 @@ from .Align import sppasAlign
 from .SelfRepet import sppasSelfRepet
 from .Activity import sppasActivity
 from .OtherRepet import sppasOtherRepet
+from .ReOccurrences import sppasReOcc
 
 from .searchtier import sppasFindTier
 from .param import sppasParam

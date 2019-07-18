@@ -1,0 +1,30 @@
+{
+  "id": "reoccurrences",
+  "name": "Re-Occurrences",
+  "descr": "Search for re-occurrences of an annotation of a speaker in the next N annotations of the interlocutor (M. Karpinski et al. 2018).",
+  "required": "",
+  "api": "sppasReOcc",
+
+  "resources": [
+  ],
+
+  "anntype": [
+    "INTERACTION"
+  ],
+
+  "options": [
+    {
+      "id": "tiername",
+      "type": "str",
+      "value": "",
+      "text": "Tier to search for re-occurrences"
+    },
+    {
+      "id": "span",
+      "type": "int",
+      "value": 10,
+      "text": "Span window length in number of annotations"
+    }
+  ]
+}
+

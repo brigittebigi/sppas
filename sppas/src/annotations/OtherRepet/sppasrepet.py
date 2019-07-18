@@ -96,8 +96,10 @@ class sppasOtherRepet(sppasBaseRepet):
         :param inputtier2: (Tier)
 
         """
-        inputtier1.set_radius(0.04)
-        inputtier2.set_radius(0.04)
+        if inputtier1.is_float():
+            inputtier1.set_radius(0.04)
+        if inputtier2.is_float():
+            inputtier2.set_radius(0.04)
         # Use the appropriate stop-list: add un-relevant tokens of the echoing speaker
         stop_words = self.fix_stop_list(inputtier2)
         # Create repeat objects

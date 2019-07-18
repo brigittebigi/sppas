@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    bin.otherrepetition.py
+    bin.reoccurrences.py
     ~~~~~~~~~~~~~~~~~~~~~
 
 :author:       Brigitte Bigi
@@ -37,7 +37,7 @@
 :contact:      contact@sppas.org
 :license:      GPL, v3
 :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-:summary:      Other-Repetitions automatic annotation.
+:summary:      Re-occurrences automatic annotation.
 
 """
 import sys
@@ -49,10 +49,11 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas import sg
-from sppas import sppasOtherRepet
-from sppas import sppasParam
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
+
+from sppas.src.annotations import sppasReOcc
+from sppas.src.annotations import sppasParam
 
 if __name__ == "__main__":
 
@@ -60,8 +61,8 @@ if __name__ == "__main__":
     # Fix initial annotation parameters
     # -----------------------------------------------------------------------
 
-    parameters = sppasParam(["otherrepet.json"])
-    ann_step_idx = parameters.activate_annotation("otherrepet")
+    parameters = sppasParam(["reoccurrences.json"])
+    ann_step_idx = parameters.activate_annotation("reoccurrences")
     ann_options = parameters.get_options(ann_step_idx)
 
     # -----------------------------------------------------------------------
@@ -90,21 +91,17 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-i",
         metavar="file",
-        help='Input file name with time-aligned tokens of the main speaker.')
+        help='Input file name with time-aligned annotations of the main speaker.')
 
     group_io.add_argument(
         "-s",
         metavar="file",
-        help='Input file name with time-aligned tokens of the echoing speaker')
+        help='Input file name with time-aligned annotations of the echoing speaker')
 
     group_io.add_argument(
         "-o",
         metavar="file",
-        help='Output file name with other-repetitions.')
-
-    group_io.add_argument(
-        "-r",
-        help='List of stop-words')
+        help='Output file name with re-occurrences.')
 
     # Add arguments from the options of the annotation
     # ------------------------------------------------
@@ -148,7 +145,7 @@ if __name__ == "__main__":
 
     arguments = vars(args)
     for a in arguments:
-        if a not in ('i', 'o', 's', 'r', 'quiet'):
+        if a not in ('i', 'o', 's', 'quiet'):
             parameters.set_option_value(ann_step_idx, a, str(arguments[a]))
             o = parameters.get_step(ann_step_idx).get_option_by_key(a)
 
@@ -161,8 +158,7 @@ if __name__ == "__main__":
         # Perform the annotation on a single file
         # ---------------------------------------
 
-        ann = sppasOtherRepet(log=None)
-        ann.load_resources(args.r)
+        ann = sppasReOcc(log=None)
         ann.fix_options(parameters.get_options(ann_step_idx))
         if args.o:
             ann.run([args.i, args.s], output_file=args.o)
@@ -173,7 +169,7 @@ if __name__ == "__main__":
                     print("{} {} {:s}".format(
                         a.get_location().get_best().get_begin().get_midpoint(),
                         a.get_location().get_best().get_end().get_midpoint(),
-                        a.get_best_tag().get_content()))
+                        a.serialize_labels(separator=" ")))
 
     else:
 
