@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 from sppas.src.config import symbols
 from sppas.src.config import separators
 from sppas.src.config import annots
@@ -112,6 +113,9 @@ class sppasPhon(sppasBaseAnnotation):
 
             elif key == "usestdtokens":
                 self.set_usestdtokens(opt.get_value())
+
+            elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
+                self._options[key] = opt.get_value()
 
             else:
                 raise AnnotationOptionError(key)
@@ -316,12 +320,10 @@ class sppasPhon(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def get_pattern():
+    def get_pattern(self):
         """Pattern this annotation uses in an output filename."""
-        return '-phon'
+        return self._options.get("outputpattern", "-phon")
 
-    @staticmethod
-    def get_input_pattern():
-        """Pattern that annotation expects for its input filename."""
-        return '-token'
+    def get_input_pattern(self):
+        """Pattern this annotation expects for its input filename."""
+        return self._options.get("inputpattern", "-token")

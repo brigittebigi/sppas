@@ -43,6 +43,7 @@ from sppas.src.config import paths
 from sppas.src.config import info
 from sppas.src.files import sppasFileUtils
 
+from .annotationsexc import AnnotationOptionError
 from .diagnosis import sppasDiagnosis
 from .log import sppasLog
 
@@ -140,7 +141,14 @@ class sppasBaseAnnotation(object):
         :param options: (list of sppasOption)
 
         """
-        pass
+        for opt in options:
+
+            key = opt.get_key()
+            if key in ("inputpattern", "outputpattern", "inputoptpattern"):
+                self._options[key] = opt.get_value()
+
+            else:
+                raise AnnotationOptionError(key)
 
     # -----------------------------------------------------------------------
 
@@ -165,20 +173,17 @@ class sppasBaseAnnotation(object):
     # Perform automatic annotation:
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def get_pattern():
+    def get_pattern(self):
         """Pattern that the annotation uses for its output filename."""
-        return ''
+        return self._options.get("outputpattern", "")
 
-    @staticmethod
-    def get_input_pattern():
+    def get_input_pattern(self):
         """Pattern that the annotation expects for its input filename."""
-        return ''
+        return self._options.get("inputpattern", "")
 
-    @staticmethod
-    def get_opt_input_pattern():
+    def get_opt_input_pattern(self):
         """Pattern that the annotation can optionally use as input."""
-        return ''
+        return self._options.get("inputoptpattern", "")
 
     # -----------------------------------------------------------------------
 

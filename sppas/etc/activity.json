@@ -13,6 +13,18 @@
 
   "options": [
     {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-palign",
+      "text": "Input file pattern (time-aligned tokens)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-activity",
+      "text": "Output file pattern"
+    },
+    {
       "id": "duration",
       "type": "bool",
       "value": true,

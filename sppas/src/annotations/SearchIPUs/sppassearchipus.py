@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import os
 
 from sppas.src.config import symbols
@@ -132,6 +133,9 @@ class sppasSearchIPUs(sppasBaseAnnotation):
 
             elif "shift_end" == key:
                 self.set_shift_end(opt.get_value())
+
+            elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
+                self._options[key] = opt.get_value()
 
             else:
                 raise AnnotationOptionError(key)
@@ -401,14 +405,15 @@ class sppasSearchIPUs(sppasBaseAnnotation):
 
         """
         # Fix input/output file name
-        out_name = self.get_out_name(input_file[0], output_format)
+        root_pattern = self.get_out_name(input_file[0], "")
+        out_name = root_pattern + output_format
 
         # Is there already an existing output file (in any format)!
         ext = []
         for e in sppas.src.anndata.aio.extensions_in:
             if e not in ('.txt', '.hz', '.PitchTier', '.IntensityTier'):
                 ext.append(e)
-        exist_out_name = sppasBaseAnnotation._get_filename(input_file[0], ext)
+        exist_out_name = sppasBaseAnnotation._get_filename(root_pattern, ext)
 
         # it's existing... but not in the expected format: convert!
         if exist_out_name is not None:

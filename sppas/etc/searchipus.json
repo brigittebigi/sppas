@@ -9,6 +9,12 @@
   ],
 
   "options": [
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "",
+      "text": "Output file pattern"
+    },
 
     {
       "id": "win_length",

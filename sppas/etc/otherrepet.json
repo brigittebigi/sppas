@@ -20,6 +20,18 @@
 
   "options": [
     {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-palign",
+      "text": "Input file pattern (time-aligned words or lemmas)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-orepet",
+      "text": "Output file pattern"
+    },
+    {
       "id": "span",
       "type": "int",
       "value": 5,

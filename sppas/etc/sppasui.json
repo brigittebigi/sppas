@@ -75,7 +75,7 @@
     {
       "id": "reoccurrences",
       "config": "reoccurrences.json",
-      "cli": ""
+      "cli": "reoccurrences.py"
     }
   ],
 

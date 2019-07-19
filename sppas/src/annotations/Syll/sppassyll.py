@@ -124,6 +124,9 @@ class sppasSyll(sppasBaseAnnotation):
             elif "createclasses" == key:
                 self.set_create_tier_classes(opt.get_value())
 
+            elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
+                self._options[key] = opt.get_value()
+
             else:
                 raise AnnotationOptionError(key)
 
@@ -336,15 +339,13 @@ class sppasSyll(sppasBaseAnnotation):
 
     # ----------------------------------------------------------------------
 
-    @staticmethod
-    def get_pattern():
+    def get_pattern(self):
         """Pattern this annotation uses in an output filename."""
-        return '-syll'
+        return self._options.get("outputpattern", "-syll")
 
-    @staticmethod
-    def get_input_pattern():
+    def get_input_pattern(self):
         """Pattern this annotation expects for its input filename."""
-        return '-palign'
+        return self._options.get("inputpattern", "-palign")
 
     # -----------------------------------------------------------------------
     # Utilities:

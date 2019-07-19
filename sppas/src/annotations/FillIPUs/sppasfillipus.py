@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import os
 
 import sppas.src.audiodata.aio
@@ -124,6 +125,9 @@ class sppasFillIPUs(sppasBaseAnnotation):
 
             elif "min_ipu" == key:
                 self.set_min_ipu(opt.get_value())
+
+            elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
+                self._options[key] = opt.get_value()
 
             else:
                 raise AnnotationOptionError(key)
@@ -280,14 +284,15 @@ class sppasFillIPUs(sppasBaseAnnotation):
 
         """
         # Fix the output file name
-        out_name = self.get_out_name(input_file[0], output_format)
+        root_pattern = self.get_out_name(input_file[0], "")
+        out_name = root_pattern + output_format
 
         # Is there already an existing IPU-seg (in any format)!
         ext = []
         for e in sppas.src.anndata.aio.extensions_in:
             if e not in ('.txt', '.hz', '.PitchTier', '.IntensityTier'):
                 ext.append(e)
-        exists_out_name = sppasBaseAnnotation._get_filename(input_file[0], ext)
+        exists_out_name = sppasBaseAnnotation._get_filename(root_pattern, ext)
 
         # it's existing... but not in the expected format: we convert!
         if exists_out_name is not None:

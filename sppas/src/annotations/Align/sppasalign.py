@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import shutil
 import os
 import logging
@@ -186,6 +187,9 @@ class sppasAlign(sppasBaseAnnotation):
 
             elif "aligner" == key:
                 self.set_aligner(opt.get_value())
+
+            elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
+                self._options[key] = opt.get_value()
 
             else:
                 raise AnnotationOptionError(key)
@@ -472,17 +476,14 @@ class sppasAlign(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def get_pattern():
+    def get_pattern(self):
         """Pattern this annotation uses in an output filename."""
-        return '-palign'
+        return self._options.get("outputpattern", "-palign")
 
-    @staticmethod
-    def get_input_pattern():
+    def get_input_pattern(self):
         """Pattern this annotation expects for its input filename."""
-        return '-phon'
+        return self._options.get("inputpattern", "-phon")
 
-    @staticmethod
-    def get_opt_input_pattern():
+    def get_opt_input_pattern(self):
         """Pattern that the annotation can optionally use as input."""
-        return '-token'
+        return self._options.get("inputoptpattern", '-token')

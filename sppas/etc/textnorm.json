@@ -16,6 +16,18 @@
 
   "options": [
     {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "",
+      "text": "Input file pattern (orthographic transcription)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-token",
+      "text": "Output file pattern"
+    },
+    {
       "id": "faked",
       "type": "bool",
       "value": true,

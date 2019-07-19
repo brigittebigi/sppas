@@ -1,3 +1,4 @@
+"A new version of the GUI based on wxpython 4 is available. Try it and send your feedback!"
 "The documentation is available in the package of SPPAS."
 "Each automatic annotation can be configured to fix specific parameters."
 "SPPAS supports Enriched Orthographic Transcription."

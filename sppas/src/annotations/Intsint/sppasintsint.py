@@ -32,6 +32,9 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
+import logging
+
 from sppas import sppasRW
 from sppas import sppasTranscription
 from sppas import sppasTier
@@ -173,14 +176,10 @@ class sppasIntsint(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def get_pattern():
+    def get_pattern(self):
         """Pattern this annotation uses in an output filename."""
-        return '-intsint'
+        return self._options.get("outputpattern", "-intsint")
 
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def get_input_pattern():
+    def get_input_pattern(self):
         """Pattern this annotation expects for its input filename."""
-        return '-momel'
+        return self._options.get("inputpattern", "-momel")

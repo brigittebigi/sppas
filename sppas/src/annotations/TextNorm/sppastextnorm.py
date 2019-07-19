@@ -35,6 +35,7 @@
     SPPAS integration of Text Normalization.
 
 """
+
 import os
 import logging
 
@@ -157,12 +158,18 @@ class sppasTextNorm(sppasBaseAnnotation):
             key = opt.get_key()
             if key == "faked":
                 self.set_faked(opt.get_value())
+
             elif key == "std":
                 self.set_std(opt.get_value())
+
             elif key == "custom":
                 self.set_custom(opt.get_value())
+
             elif key == "occ_dur":
                 self.set_occ_dur(opt.get_value())
+
+            elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
+                self._options[key] = opt.get_value()
 
             else:
                 raise AnnotationOptionError(key)
@@ -339,10 +346,9 @@ class sppasTextNorm(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def get_pattern():
-        """Pattern this annotation adds to an output filename."""
-        return '-token'
+    def get_pattern(self):
+        """Pattern this annotation uses in an output filename."""
+        return self._options.get("outputpattern", "-token")
 
     # -----------------------------------------------------------------------
     # Private: some workers...

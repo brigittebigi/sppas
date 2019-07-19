@@ -34,8 +34,6 @@
 
 """
 
-import shutil
-import os
 import logging
 
 from sppas.src.config import info, annots
@@ -66,7 +64,7 @@ class sppasActivity(sppasBaseAnnotation):
     """
 
     def __init__(self, log=None):
-        """Create a new sppasAlign instance.
+        """Create a new sppasActivity instance.
 
         Log is used for a better communication of the annotation process and
         its results.
@@ -87,11 +85,7 @@ class sppasActivity(sppasBaseAnnotation):
 
         Available options are:
 
-            - clean
-            - basic
-            - aligner
-            - activity
-            - activityduration
+            - duration
 
         :param options: (sppasOption)
 
@@ -102,6 +96,9 @@ class sppasActivity(sppasBaseAnnotation):
 
             if "duration" == key:
                 self.set_duration_tier(opt.get_value())
+
+            elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
+                self._options[key] = opt.get_value()
 
             else:
                 raise AnnotationOptionError(key)
@@ -122,7 +119,7 @@ class sppasActivity(sppasBaseAnnotation):
     # -----------------------------------------------------------------------
 
     def convert(self, tier, tmin, tmax):
-        """Create an activity and ActivityDuration tier.
+        """Create an Activity and ActivityDuration tier.
 
         :param tier: (sppasTier)
         :param tmin: (sppasPoint)
@@ -195,12 +192,10 @@ class sppasActivity(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def get_pattern():
+    def get_pattern(self):
         """Pattern this annotation uses in an output filename."""
-        return '-activity'
+        return self._options.get("outputpattern", "-activity")
 
-    @staticmethod
-    def get_input_pattern():
+    def get_input_pattern(self):
         """Pattern this annotation expects for its input filename."""
-        return '-palign'
+        return self._options.get("inputpattern", '-palign')

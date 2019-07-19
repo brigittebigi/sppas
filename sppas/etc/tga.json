@@ -10,6 +10,18 @@
 
   "options": [
     {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-syll",
+      "text": "Input file pattern (syllabification)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-tga",
+      "text": "Output file pattern"
+    },
+    {
       "id": "original",
       "type": "bool",
       "value": false,

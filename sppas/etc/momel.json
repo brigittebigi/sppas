@@ -10,6 +10,12 @@
 
   "options": [
     {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-momel",
+      "text": "Output file pattern"
+    },
+    {
       "id": "win1",
       "type": "int",
       "value": 30,

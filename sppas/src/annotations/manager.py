@@ -58,6 +58,7 @@ from sppas.src.annotations.TGA import sppasTGA
 from sppas.src.annotations.Activity import sppasActivity
 from sppas.src.annotations.SelfRepet import sppasSelfRepet
 from sppas.src.annotations.OtherRepet import sppasOtherRepet
+from sppas.src.annotations.ReOccurrences import sppasReOcc
 
 from .infotier import sppasMetaInfoTier
 from .log import sppasLog
@@ -181,7 +182,7 @@ class sppasAnnotationsManager(Thread):
     # Private
     # ------------------------------------------------------------------------
 
-    def _get_instance(self, annotation_key):
+    def _get_instance_name(self, annotation_key):
         class_name = None
         for i in range(self._parameters.get_step_numbers()):
             a = self._parameters.get_step(i)
@@ -206,7 +207,7 @@ class sppasAnnotationsManager(Thread):
         step_idx = self._parameters.get_step_idx(annotation_key)
 
         # Create the instance and fix options
-        auto_annot = self._get_instance(annotation_key)(self._logfile)
+        auto_annot = self._get_instance_name(annotation_key)(self._logfile)
         self._fix_ann_options(annotation_key, auto_annot)
 
         # Load language resources
@@ -392,7 +393,9 @@ class sppasAnnotationsManager(Thread):
             nbfiles += self.__add_trs(trs, basef + output_format)
             for s in range(self._parameters.get_step_numbers()):
                 ann_key = self._parameters.get_step_key(s)
-                a = self._get_instance(ann_key)
+
+                # create an instance of the annotation to get its pattern
+                a = self._get_instance_name(ann_key)()
                 pattern = a.get_pattern()
                 if len(pattern) > 0:
                     nbfiles += self.__add_trs(trs, basef + pattern + output_format)

@@ -16,6 +16,18 @@
 
   "options": [
     {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-token",
+      "text": "Input file pattern (tokenization)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-phon",
+      "text": "Output file pattern"
+    },
+    {
       "id": "phonunk",
       "type": "bool",
       "value": true,

@@ -20,6 +20,24 @@
 
   "options": [
     {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-phon",
+      "text": "Input file pattern (phonetization)"
+    },
+    {
+      "id": "inputoptpattern",
+      "type": "str",
+      "value": "-token",
+      "text": "Optional input file pattern (tokenization)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-palign",
+      "text": "Output file pattern"
+    },
+    {
       "id": "aligner",
       "type": "string",
       "value": "julius",

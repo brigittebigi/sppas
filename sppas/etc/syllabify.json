@@ -16,6 +16,18 @@
 
   "options": [
     {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-palign",
+      "text": "Input file pattern (time-aligned phonemes)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-syll",
+      "text": "Output file pattern"
+    },
+    {
       "id": "usesphons",
       "type": "bool",
       "value": true,

@@ -9,5 +9,17 @@
   ],
 
   "options": [
+    {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-momel",
+      "text": "Input file pattern (momel anchors)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-intsint",
+      "text": "Output file pattern"
+    }
   ]
 }

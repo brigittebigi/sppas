@@ -109,6 +109,9 @@ class sppasBaseRepet(sppasBaseAnnotation):
             elif "alpha" == key:
                 self.set_alpha(opt.get_value())
 
+            elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
+                self._options[key] = opt.get_value()
+
             else:
                 raise AnnotationOptionError(key)
 
