@@ -98,7 +98,7 @@ class sppasAlign(sppasBaseAnnotation):
     >>> a = sppasAlign()
     >>> a.set_aligner('julius')
     >>> a.load_resources(model_dirname)
-    >>> a.run([audio, phones], [tokens], output)
+    >>> a.run([phones], [audio, tokens], output)
 
     """
 
