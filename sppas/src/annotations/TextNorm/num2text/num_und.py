@@ -40,7 +40,7 @@ class sppasNumUnd(sppasNumBase):
     def __init__(self):
         """Create an instance of sppasNumUnd.
 
-        :retruns: (sppasNumUnd)
+        :returns: (sppasNumUnd)
 
         """
         super(sppasNumUnd, self).__init__('und', None)

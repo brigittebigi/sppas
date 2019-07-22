@@ -54,7 +54,6 @@ from .num_europ_lang import sppasNumEuropeanType
 class sppasNumConstructor(object):
 
     LANGUAGES_DICT = {
-        "und": sppasNumUnd,
         "fra": sppasNumFrench,
         "ita": sppasNumItalian,
         "spa": sppasNumSpanish,
@@ -76,13 +75,20 @@ class sppasNumConstructor(object):
         :raises: sppasTypeError, sppasValueError
 
         """
-        if lang in sppasNumConstructor.LANGUAGES_DICT:
+        if lang == "und":
+            # Instantiate with nothing
+            instance = sppasNumUnd()
+
+        elif lang in sppasNumConstructor.LANGUAGES_DICT:
+            # Instantiate with only the dictionary
             instance = sppasNumConstructor.LANGUAGES_DICT[lang](dictionary)
 
         elif lang in sppasNumBase.ASIAN_TYPED_LANGUAGES:
+            # Instantiate with the language and the dictionary
             instance = sppasNumAsianType(lang, dictionary)
 
         elif lang in sppasNumBase.EUROPEAN_TYPED_LANGUAGES:
+            # Instantiate with the language and the dictionary
             instance = sppasNumEuropeanType(lang, dictionary)
 
         else:

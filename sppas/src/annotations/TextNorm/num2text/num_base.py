@@ -58,24 +58,25 @@ class sppasNumBase(object):
         else:
             self.__lang = lang
 
-        if dictionary is None or isinstance(dictionary, sppasDictRepl) is False:
-            raise sppasTypeError(dictionary, "sppasDictRepl")
-
         self._lang_dict = sppasDictRepl()
-        if self.__lang is not "und" and dictionary is not None:
-            has_tenth_of_thousand = False
-            lang_except = ('vie', 'khm')
-            if dictionary.is_key('10000') and lang not in lang_except:
-                has_tenth_of_thousand = True
+        if self.__lang != "und":
+            if dictionary is None or isinstance(dictionary, sppasDictRepl) is False:
+                raise sppasTypeError(dictionary, "sppasDictRepl")
 
-            if has_tenth_of_thousand is True\
-                    and self.__lang not in sppasNumBase.ASIAN_TYPED_LANGUAGES:
-                raise sppasValueError(dictionary, str(sppasNumBase.ASIAN_TYPED_LANGUAGES))
-            elif has_tenth_of_thousand is False\
-                    and self.__lang in sppasNumBase.ASIAN_TYPED_LANGUAGES:
-                raise sppasValueError(dictionary, str(sppasNumBase.EUROPEAN_TYPED_LANGUAGES))
+            if dictionary is not None:
+                has_tenth_of_thousand = False
+                lang_except = ('vie', 'khm')
+                if dictionary.is_key('10000') and lang not in lang_except:
+                    has_tenth_of_thousand = True
 
-            self._lang_dict = dictionary
+                if has_tenth_of_thousand is True\
+                        and self.__lang not in sppasNumBase.ASIAN_TYPED_LANGUAGES:
+                    raise sppasValueError(dictionary, str(sppasNumBase.ASIAN_TYPED_LANGUAGES))
+                elif has_tenth_of_thousand is False\
+                        and self.__lang in sppasNumBase.ASIAN_TYPED_LANGUAGES:
+                    raise sppasValueError(dictionary, str(sppasNumBase.EUROPEAN_TYPED_LANGUAGES))
+
+                self._lang_dict = dictionary
 
     # ---------------------------------------------------------------------------
 
