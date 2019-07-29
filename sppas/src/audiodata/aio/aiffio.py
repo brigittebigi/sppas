@@ -35,10 +35,11 @@
     Apple Inc. in 1988.
 
 """
+
 import struct
 import aifc
 
-from sppas.src.utils.makeunicode import u
+from sppas.src.utils import u
 
 from ..audio import sppasAudioPCM
 from ..audiodataexc import AudioDataError

@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """
     ..
         ---------------------------------------------------------------------
@@ -201,7 +202,7 @@ class sppasApp(wx.App):
         A splash screen is displayed while a background initialization is
         doing things, then the main frame is created.
 
-        :return: (int) Exit status
+        :returns: (int) Exit status
 
         """
         try:

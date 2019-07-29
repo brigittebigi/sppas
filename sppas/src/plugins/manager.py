@@ -42,8 +42,8 @@ from threading import Thread
 
 from sppas.src.config import paths
 from sppas.src.config import info
-from sppas.src.utils.makeunicode import u
-from sppas.src.files.fileutils import sppasDirUtils
+from sppas.src.utils import u
+from sppas.src.files import sppasDirUtils
 
 from .pluginsexc import PluginArchiveFileError
 from .pluginsexc import PluginArchiveIOError
@@ -52,7 +52,7 @@ from .pluginsexc import PluginConfigFileError
 from .pluginsexc import PluginIdError
 from .pluginsexc import PluginFolderError
 from .pluginsexc import PluginKeyError
-from .param import sppasPluginParam
+from .plugin import sppasPluginParam
 from .process import sppasPluginProcess
 
 # ----------------------------------------------------------------------------
@@ -130,19 +130,17 @@ class sppasPluginsManager(Thread):
             try:
                 self.append(plugin_folder)
             except Exception as e:
-                logging.info("Plugin {:s} loading error: {:s}"
-                             "".format(plugin_folder, str(e)))
-                logging.error(traceback.format_exc())
+                logging.error("Plugin {:s} loading error: {:s}"
+                              "".format(plugin_folder, str(e)))
+                logging.debug(traceback.format_exc())
 
     # ------------------------------------------------------------------------
 
     def install(self, plugin_archive, plugin_folder):
         """Install a plugin into the plugin directory.
 
-        :param plugin_archive: (str) File name of the plugin to be
-        installed (ZIP).
-        :param plugin_folder: (str) Destination folder name of the plugin
-        to be installed.
+        :param plugin_archive: (str) File name of the plugin to be installed (ZIP).
+        :param plugin_folder: (str) Destination folder name of the plugin to be installed.
 
         """
         if zipfile.is_zipfile(plugin_archive) is False:
@@ -222,8 +220,7 @@ class sppasPluginsManager(Thread):
         """Apply a given plugin on a list of files.
 
         :param plugin_id: (str) Identifier of the plugin to apply.
-        :param file_names: (list) List of files on which the plugin has to
-        be applied.
+        :param file_names: (list) List of files on which the plugin has to be applied.
 
         """
         if self._progress is not None:
@@ -270,7 +267,6 @@ class sppasPluginsManager(Thread):
         # Indicate completed!
         if self._progress is not None:
             self._progress.update(1, info(4020, "plugins") + "\n")
-            self._progress.set_header("")
 
         return output_lines
 

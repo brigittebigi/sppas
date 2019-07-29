@@ -43,6 +43,7 @@ A collection of basic frequency functions for python.
 """
 
 import math
+
 from ..calculusexc import EmptyError, ProbabilityError
 
 # ---------------------------------------------------------------------------

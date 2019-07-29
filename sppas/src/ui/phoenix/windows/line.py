@@ -113,7 +113,7 @@ class sppasStaticLine(wx.Window):
     def GetDefaultAttributes(self):
         """Overridden base class virtual.
 
-        :return: an instance of wx.VisualAttributes.
+        :returns: an instance of wx.VisualAttributes.
 
         """
         return self.GetParent().GetClassDefaultAttributes()
@@ -147,7 +147,7 @@ class sppasStaticLine(wx.Window):
     def GetDepth(self):
         """Return the width of the border all around the button.
 
-        :return: (int)
+        :returns: (int)
 
         """
         return self.__depth
@@ -232,7 +232,7 @@ class sppasStaticLine(wx.Window):
     def GetBackgroundBrush(self):
         """Get the brush for drawing the background of the button.
 
-        :return: (wx.Brush)
+        :returns: (wx.Brush)
 
         """
         color = self.GetParent().GetBackgroundColour()
@@ -258,7 +258,7 @@ class sppasStaticLine(wx.Window):
     def PrepareDraw(self):
         """Prepare the DC to draw the button.
 
-        :return: (tuple) dc, gc
+        :returns: (tuple) dc, gc
 
         """
         # Create the Graphic Context

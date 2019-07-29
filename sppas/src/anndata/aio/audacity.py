@@ -203,7 +203,7 @@ class sppasAudacity(sppasBaseIO):
         <!ATTLIST project rate CDATA #REQUIRED>
 
         :param root: (ET) Main XML Element tree root of a TRS file.
-        :return:
+        :returns:
 
         """
         pass

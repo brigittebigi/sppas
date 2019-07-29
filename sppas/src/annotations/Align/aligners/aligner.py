@@ -88,7 +88,7 @@ class sppasAligners(object):
         """Return the list of aligner classes.
 
         :param aligner_name: (str) A specific aligner
-        :return: BasicAligner, or a list if no aligner name is given
+        :returns: BasicAligner, or a list if no aligner name is given
 
         """
         if aligner_name is not None:
@@ -103,7 +103,7 @@ class sppasAligners(object):
         """Return the list of supported extensions of each aligner.
 
         :param aligner_name: (str) A specific aligner
-        :return: list of str, or a dict of list if no aligner name is given
+        :returns: list of str, or a dict of list if no aligner name is given
 
         """
         if aligner_name is not None:
@@ -121,7 +121,7 @@ class sppasAligners(object):
         """Return the default extension of each aligner.
 
         :param aligner_name: (str) A specific aligner
-        :return: str, or a dict of str if no aligner name is given
+        :returns: str, or a dict of str if no aligner name is given
 
         """
         if aligner_name is not None:

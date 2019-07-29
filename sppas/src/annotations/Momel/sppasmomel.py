@@ -137,6 +137,9 @@ class sppasMomel(sppasBaseAnnotation):
             elif "elim_glitch" == key:
                 self.set_option_elim_glitch(value)
 
+            elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
+                self._options[key] = opt.get_value()
+
             else:
                 raise AnnotationOptionError(key)
 
@@ -352,10 +355,9 @@ class sppasMomel(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def get_pattern():
-        """Pattern this annotation adds to an output filename."""
-        return '-momel'
+    def get_pattern(self):
+        """Pattern this annotation uses in an output filename."""
+        return self._options.get("outputpattern", "-momel")
 
     @staticmethod
     def get_input_extensions():

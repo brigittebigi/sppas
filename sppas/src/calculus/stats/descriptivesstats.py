@@ -34,17 +34,17 @@
 
 """
 
-from sppas.src.calculus.stats.central import fsum
-from sppas.src.calculus.stats.central import fmin
-from sppas.src.calculus.stats.central import fmax
-from sppas.src.calculus.stats.central import fmean
-from sppas.src.calculus.stats.central import fmedian
+from .central import fsum
+from .central import fmin
+from .central import fmax
+from .central import fmean
+from .central import fmedian
 
-from sppas.src.calculus.stats.variability import lvariance
-from sppas.src.calculus.stats.variability import lstdev
-from sppas.src.calculus.stats.variability import lzs
+from .variability import lvariance
+from .variability import lstdev
+from .variability import lzs
 
-from sppas.src.calculus.stats.moment import lvariation
+from .moment import lvariation
 
 # ----------------------------------------------------------------------------
 

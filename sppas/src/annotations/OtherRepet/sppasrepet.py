@@ -96,8 +96,10 @@ class sppasOtherRepet(sppasBaseRepet):
         :param inputtier2: (Tier)
 
         """
-        inputtier1.set_radius(0.04)
-        inputtier2.set_radius(0.04)
+        if inputtier1.is_float():
+            inputtier1.set_radius(0.04)
+        if inputtier2.is_float():
+            inputtier2.set_radius(0.04)
         # Use the appropriate stop-list: add un-relevant tokens of the echoing speaker
         stop_words = self.fix_stop_list(inputtier2)
         # Create repeat objects
@@ -223,7 +225,7 @@ class sppasOtherRepet(sppasBaseRepet):
         Input file is a tuple with 2 files: the main speaker and the echoing
         speaker.
 
-        :param input_file: (list of str) time-aligned tokens
+        :param input_file: (list of str) (time-aligned token, time-aligned token)
         :param opt_input_file: (list of str) ignored
         :param output_file: (str) the output file name
         :returns: (sppasTranscription)
@@ -276,22 +278,10 @@ class sppasOtherRepet(sppasBaseRepet):
 
     # ----------------------------------------------------------------------
 
-    @staticmethod
-    def get_pattern():
+    def get_pattern(self):
         """Pattern this annotation uses in an output filename."""
-        return '-orepet'
+        return self._options.get("outputpattern", "-orepet")
 
-    @staticmethod
-    def get_input_pattern():
+    def get_input_pattern(self):
         """Pattern this annotation expects for its input filename."""
-        return '-palign'
-
-    @staticmethod
-    def get_dependent_reference_type():
-        """Return the type of the reference required in a sppasCatalog.
-
-        This annotation is expecting an echo-ing speaker, i.e. a file with
-        time-aligned tokens of the same interaction as the given one.
-
-        """
-        return "interaction"
+        return self._options.get("inputpattern", "-palign")

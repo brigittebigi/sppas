@@ -86,7 +86,7 @@ def log_level_to_wx(log_level):
         10000 LOG_Max
 
     :param log_level: (int) python logging log level
-    :return: (int) wx log level
+    :returns: (int) wx log level
 
     """
     if log_level == logging.CRITICAL:

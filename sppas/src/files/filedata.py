@@ -32,13 +32,18 @@
     Description:
     ============
 
-    Use instances of these classes to hold data related to a filename. 
+    Use instances of these classes to hold data related to filenames and
+    references.
     
     Files are structured in a fixed tree-like structure:
         - a FileData contains a list of FilePath,
         - a FilePath contains a list of FileRoot,
         - a FileRoot contains a list of FileName,
         - a FileName is limited to regular file names (no links, etc).
+
+    References are structured as:
+        - a FileData contains a list of FileReference,
+        - a FileReference contains a list of sppasAttribute.
 
     Example:
     ========
@@ -74,863 +79,23 @@
         - python 2.7.15
         - python 3.7.0
 
-        More tests should be implemented, particularly FileData is not tested
-        at all.
-
-    How to use these classes to filter data:
-    ========================================
-
-    A comparator must be implemented to define comparison functions. Then
-    the method 'match' of the FileBase class can be invoked.
-    The FileDataFilter() class is based on the use of this solution. It allows
-    to combine results and is a simplified way to write a request.
-    The use of the FileBase().match() is described in the next examples.
-
-    :Example: Search if a FilePath() is exactly matching "my_path":
-
-        >>> cmp = sppasPathCompare()
-        >>> fp.match([(cmp.exact, "my_path", False)])
-
-    :Example: Search if a FilePath() is starting with "my_path" and is checked:
-
-        >>> fp.match(
-        >>>     [(cmp.startswith, "my_path", False),
-        >>>      (cmp.check, True, False)],
-        >>>     logic_bool="and")
-
-
-    :Example: Search if a FileRoot() is exactly matching "my_path/toto":
-
-        >>> cmp = sppasRootCompare()
-        >>> fr.match([(cmp.exact, "my_path", False)])
-
-    :Example: Search if a FileRoot() is starting with "my_path/toto"
-    and is checked:
-
-        >>> fr.match(
-        >>>     [(cmp.startswith, "my_path/toto", False),
-        >>>      (cmp.check, True, False)],
-        >>>     logic_bool="and")
-
-    :Example: Search if a FileName() is starting with "toto" and is not
-    a TextGrid and is checked:
-
-        >>> cmpn = sppasNameCompare()
-        >>> cmpe = sppasExtensionCompare()
-        >>> cmpp = sppasFileCompare()
-        >>> fn.match(
-        >>>    [(cmpn.startswith, "toto", False),
-        >>>     (cmpe.iexact, "textgrid", True),
-        >>>     (cmpp.check, True, False)],
-        >>>    logic_bool="and")
-
 """
 
-import unittest
-import mimetypes
+import json
+import os
 
-from os.path import isfile, isdir, exists
-from os.path import splitext, abspath, join
-from os.path import getsize, getmtime
-from os.path import basename, dirname
-from datetime import datetime
+from sppas import sppasTypeError
+from sppas.src.config import sg
 
-from .fileexc import FileOSError, FileTypeError, PathTypeError
-from .fileexc import FileRootValueError
-
-# -----------------------------------------------------------------------
-
-    
-class FileBase(object):
-    """Represents any type of data linked to a filename.
-    
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    def __init__(self, filename):
-        """Constructor of a FileBase.
-        
-        :param `filename`: (str) Full name of a file/directory
-        :raise: OSError if filename does not match a file nor a directory
-        
-        The following members are stored:
-
-            - id (str) Identifier - the absolute filename [private]
-
-        """
-        self.__id = filename
-
-    # -----------------------------------------------------------------------
-
-    def get_id(self):
-        """Return the identifier of the file, i.e. the full name."""
-        return self.__id
-
-    # -----------------------------------------------------------------------
-
-    def match(self, functions, logic_bool="and"):
-        """Return True if the file matches all or any of the functions.
-
-        Functions are defined in a comparator. They return a boolean.
-        The type of the value depends on the function.
-        The logical not is used to reverse the result of the function.
-
-        :param functions: list of (function, value, logical_not)
-        :param logic_bool: (str) Apply a logical "and" or a logical "or" between the functions.
-        :returns: (bool)
-
-        """
-        matches = list()
-        for func, value, logical_not in functions:
-            if logical_not is True:
-                matches.append(not func(self, value))
-            else:
-                matches.append(func(self, value))
-
-        if logic_bool == "and":
-            is_matching = all(matches)
-        else:
-            is_matching = any(matches)
-
-        return is_matching
-
-    # -----------------------------------------------------------------------
-    # Properties
-    # -----------------------------------------------------------------------
-
-    id = property(get_id, None)
-
-    # -----------------------------------------------------------------------
-    # Overloads
-    # -----------------------------------------------------------------------
-
-    def __format__(self, fmt):
-        return str(self).__format__(fmt)
-
-    def __str__(self):
-        return '{!s:s}'.format(self.__id)
-
-    def __repr__(self):
-        return 'File: {!s:s}'.format(self.__id)
-
-# ---------------------------------------------------------------------------
-
-    
-class FileName(FileBase):
-    """Represent the data linked to a filename.
-
-    Use instances of this class to hold data related to a filename.
-    
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    def __init__(self, filename):
-        """Constructor of a FileName.
-
-        From the filename, the following properties are extracted:
-
-            0. id (str) Identifier - the absolute filename (from FileBase)
-            1. filename (str) The base name of the file, without path nor ext
-            2. ext (str) The extension of the file, or the mime type
-            3. date (str) Time of the last modification
-            4. filesize (str) Size of the file
-        
-        Some states of the file are also stored:
-
-            - check (bool) File is selected or not
-            - lock (bool) File is locked or not (enable/disable)
-
-        :param `filename`: (str) Full name of a file (from FileBase)
-        :raise: OSError if filename does not match a file (not dir/link)
-
-        """
-        super(FileName, self).__init__(filename)
-        if exists(filename) is False:
-            raise FileOSError(filename)
-        if isfile(self.get_id()) is False:
-            raise FileTypeError(filename)
-
-        # Properties of the file (protected)
-        # ----------------------------------
-
-        # The displayed filename (no path, no extension) 
-        fn, ext = splitext(self.get_id())
-        self.__name = basename(fn)
-
-        # The extension is forced to be in upper case
-        self.__extension = ext.upper()
-
-        # Modified date/time and file size
-        self.__date = " -- "
-        self.__filesize = 0
-        self.update_properties()
-        
-        # States of the file
-        # ------------------
-
-        self.__check = False
-        self.lock = False
-
-    # -----------------------------------------------------------------------
-
-    def folder(self):
-        """Return the name of the directory of this file."""
-        return dirname(self.get_id())
-
-    # -----------------------------------------------------------------------
-
-    def get_name(self):
-        """Return the short name of the file., i.e. without path nor extension."""
-        return self.__name
-
-    # -----------------------------------------------------------------------
-
-    def get_extension(self):
-        """Return the extension of the file."""
-        return self.__extension
-
-    def get_mime(self):
-        """Return the mime type of the file."""
-        m = mimetypes.guess_type(self.id)
-        if m[0] is not None:
-            return m[0]
-        
-        return "unknown"
-
-    # -----------------------------------------------------------------------
-
-    def get_date(self):
-        """Return a string representing the date of the last modification."""
-        return self.__date
-    
-    # -----------------------------------------------------------------------
-
-    def get_size(self):
-        """Return a string representing the size of the file."""
-        unit = " Ko"
-        filesize = self.__filesize / 1024
-        if filesize > (1024*1024):
-            filesize /= 1024
-            unit = " Mo"
-
-        return str(int(filesize)) + unit
-    
-    # -----------------------------------------------------------------------
-
-    def get_check(self):
-        """Return true if the file is checked."""
-        return self.__check
-    
-    def set_check(self, value):
-        """Set a value to represent a toggle meaning the file is checked.
-        
-        :param value: (bool)
-
-        """
-        self.__check = bool(value)
-
-    # -----------------------------------------------------------------------
-
-    def update_properties(self):
-        """Update properties of the file (modified, filesize).
-        
-        :raise: FileTypeError if the file is not existing
-
-        """
-        # test if the file is still existing
-        if isfile(self.get_id()) is False:
-            raise FileTypeError(self.get_id())
-
-        # get time and size
-        self.__date = datetime.fromtimestamp(getmtime(self.get_id()))
-        self.__filesize = getsize(self.get_id())
-
-    # -----------------------------------------------------------------------
-    # Properties
-    # -----------------------------------------------------------------------
-
-    check = property(get_check, set_check)
-    size = property(get_size, None)
-    date = property(get_date, None)
-    extension = property(get_extension, None)
-    name = property(get_name, None)
+from .fileutils import sppasGUID
+from .filebase import FileBase, States
+from .fileref import FileReference
+from .filestructure import FileName, FileRoot, FilePath
 
 # ---------------------------------------------------------------------------
 
 
-class FileRoot(FileBase):
-    """Represent the data linked to the basename of a file.
-
-    We'll use instances of this class to hold data related to the root
-    base name of a file. The root of a file is its name without the pattern.
-    
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    # if we create dynamically this list from the existing annotations, we'll
-    # have circular imports.
-    # solutions to implement are either:
-    #     - add this info in each annotation json file (preferred), or
-    #     - add this information in the sppasui.json file
-    FilePatterns = (
-        "-token", "-phon", "-palign", "-syll", "-tga", 
-        "-momel", "-intsint", "-ralign")
-
-    # -----------------------------------------------------------------------
-
-    def __init__(self, name):
-        """Constructor of a FileRoot.
-        
-        :param `name`: (str) Filename or rootname
-        :raise: OSError if filepath does not match a directory (not file/link)
-
-        """
-        root_name = FileRoot.root(name)
-        super(FileRoot, self).__init__(root_name)
-    
-        # A list of FileName instances, i.e. files sharing this root.
-        self.__files = list()
-
-        # States of the path
-        # ------------------
-
-        self.__check = False
-        self.expand = True
-        self.__bgcolor = (30, 30, 30)
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def pattern(filename):
-        """Return the pattern of the given filename."""
-        fn = basename(filename)
-        fn = splitext(fn)[0]
-        for pattern in FileRoot.FilePatterns:
-            if fn.endswith(pattern) is True:
-                return pattern
-        return ""
-    
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def root(filename):
-        """Return the root of the given filename."""
-        fn = splitext(filename)[0]
-        for pattern in FileRoot.FilePatterns:
-            if fn.endswith(pattern) is True:
-                fn = fn[:len(fn)-len(pattern)]
-        return fn
-
-    # -----------------------------------------------------------------------
-
-    def get_check(self):
-        """Return true if the fileroot is checked."""
-        return self.__check
-    
-    def set_check(self, value):
-        """Set a value to represent a toggle meaning the fileroot is checked.
-        
-        :param value: (bool)
-
-        """
-        self.__check = bool(value)
-        for fn in self.__files:
-            fn.check = value
-
-    def get_bgcolor(self):
-        return self.__bgcolor
-
-    def set_bgcolor(self, r, g, b):
-        # Can be used only by a FilePath.
-        # we should check values (0-255)
-        self.__bgcolor = (r, g, b)
-
-    # -----------------------------------------------------------------------
-    # Properties
-    # -----------------------------------------------------------------------
-
-    check = property(get_check, set_check)
-    bg_color = property(get_bgcolor, set_bgcolor)
-
-    # -----------------------------------------------------------------------
-    # -----------------------------------------------------------------------
-
-    def get_object(self, filename):
-        """Return the instance matching the given filename.
-
-        Return self if filename is matching the id.
-
-        :param filename: Full name of a file
-
-        """
-        fr = FileRoot.root(filename)
-
-        # Does this filename matches this root
-        if fr != self.id:
-            return None
-        
-        # Does it match only the root (no file name)
-        if fr == filename:
-            return self
-        
-        # Check if this file is in the list of known files
-        for fn in self.__files:
-            if fn.id == filename:
-                return fn
-        
-        return None
-
-    # -----------------------------------------------------------------------
-
-    def append(self, filename):
-        """Append a filename in the list of files.
-
-        Given filename must be the absolute name of a file or an instance 
-        of FileName.
-
-        :param filename: (str, FileName) Absolute name of a file
-        :return: (FileName) the appended FileName or None
-
-        """
-        # Get or create the FileName instance
-        fn = filename
-        if isinstance(filename, FileName) is False:
-            fn = FileName(filename)
-        
-        # Check if root is ok
-        if self.id != FileRoot.root(fn.id):
-            raise FileRootValueError(fn.id, self.id)
-
-        # Check if this filename is not already in the list
-        for efn in self.__files:
-            if efn.id == fn.id:
-                return efn
-        
-        # Nothings wrong. filename is appended
-        self.__files.append(fn)
-        return fn
-
-    # -----------------------------------------------------------------------
-
-    def remove(self, filename):
-        """Remove a filename of the list of files.
-
-        Given filename must be the absolute name of a file or an instance 
-        of FileName.
-
-        :param filename: (str, FileName) Absolute name of a file
-        :return: (int) Index of the removed FileName or -1 if nothing removed.
-
-        """
-        idx = -1
-        if isinstance(filename, FileName):
-            try:
-                idx = self.__files.index(filename)
-            except ValueError:
-                idx = -1
-        else:
-            # Search for this filename in the list
-            for i, fn in enumerate(self.__files):
-                if fn.id == filename:
-                    idx = i
-                    break
-
-        if idx != -1:
-            self.__files.pop(idx)
-        
-        return idx
-
-    # -----------------------------------------------------------------------
-
-    def do_check(self, value=True, filename=None):
-        """Check or uncheck all or any file.
-
-        :param filename: (str) Absolute name of a file
-        :param value: (bool) Toggle value
-
-        """
-        if filename is None:
-            for fn in self.__files:
-                fn.check = bool(value)
-        else:
-            root_id = FileRoot.root(filename)
-            if root_id != self.id:
-                raise FileRootValueError(filename, root_id)
-            for fn in self.__files:
-                if fn.id == filename:
-                    fn.check = bool(value)
-                    self.update_check()
-
-    # -----------------------------------------------------------------------
-
-    def update_check(self):
-        """Modify check depending on the checked filenames."""
-        if len(self.__files) == 0:
-            self.check = False
-            return
-        all_checked = True
-        all_unchecked = True
-        for fn in self.__files:
-            if fn.check is True:
-                all_unchecked = False
-            else:
-                all_checked = False
-
-        if all_checked:
-            self.check = True
-        if all_unchecked:
-            self.check = False
-
-    # -----------------------------------------------------------------------
-    # Overloads
-    # -----------------------------------------------------------------------
-
-    def __repr__(self):
-        return 'Root: ' + self.id + \
-               ' contains ' + str(len(self.__files)) + ' files\n'
-
-    def __iter__(self):
-        for a in self.__files:
-            yield a
-
-    def __getitem__(self, i):
-        return self.__files[i]
-
-    def __len__(self):
-        return len(self.__files)
-    
-    def __contains__(self, value):
-        # The given value is a FileName instance
-        if isinstance(value, FileName):
-            return value in self.__files
-        
-        # The given value is a filename
-        for fn in self.__files:
-            if fn.id == value:
-                return True
-
-        # nothing is matching this value
-        return False
-
-# ---------------------------------------------------------------------------
-
-
-class FilePath(FileBase):
-    """Represent the data linked to a folder name.
-
-    We'll use instances of this class to hold data related to the path of
-    a filename. Items in the tree will get associated back to the 
-    corresponding FileName and this FilePath object.
-    
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    def __init__(self, filepath):
-        """Constructor of a FilePath.
-        
-        :param `filepath`: (str) Absolute or relative name of a folder
-        :raise: OSError if filepath does not match a directory (not file/link)
-
-        """
-        super(FilePath, self).__init__(abspath(filepath))
-        if exists(filepath) is False:
-            raise FileOSError(filepath)
-        if isdir(self.get_id()) is False:
-            raise PathTypeError(filepath)
-
-        # A list of FileRoot instances
-        self.__roots = list()
-
-        # States of the path
-        # ------------------
-
-        self.__check = False
-        self.expand = True
-        self.__fgcolor = (230, 230, 230)
-        self.__bgcolor = (30, 30, 30)
-
-    # -----------------------------------------------------------------------
-
-    def get_check(self):
-        return self.__check
-    
-    def set_check(self, value):
-        self.__check = value
-        for fr in self.__roots:
-            fr.check = value
-
-    check = property(get_check, set_check)
-    
-    # -----------------------------------------------------------------------
-
-    def get_bgcolor(self):
-        return self.__bgcolor
-    
-    def set_bgcolor(self, r, g, b):
-        # we should check values (0-255)
-        self.__bgcolor = (r, g, b)
-        for fr in self.__roots:
-            self.set_root_bgcolor(fr)
-
-    bg_color = property(get_bgcolor, set_bgcolor)
-
-    # -----------------------------------------------------------------------
-
-    def get_fgcolor(self):
-        return self.__fgcolor
-
-    def set_fgcolor(self, r, g, b):
-        # we should check values (0-255)
-        self.__fgcolor = (r, g, b)
-
-    fg_color = property(get_fgcolor, set_fgcolor)
-
-    # -----------------------------------------------------------------------
-
-    def get_object(self, filename):
-        """Return the instance matching the given filename.
-
-        :param filename: Name of a file (absolute of relative)
-
-        Notice that it returns `self` if filename is a directory matching 
-        self.id.
-
-        """
-        fp = abspath(filename)
-        if isdir(fp) and fp == self.id:
-            return self
-        
-        elif isfile(filename):
-            idt = self.identifier(filename)
-            for fr in self.__roots:
-                fn = fr.get_object(idt)
-                if fn is not None:
-                    return fn
-
-        return None
-
-    # -----------------------------------------------------------------------
-
-    def identifier(self, filename):
-        """Return the identifier, i.e. the full name of the file.
-
-        :param filename: (str) Absolute or relative name of a file
-        :return: (str) Identifier for this filename
-        :raise: FileOSError if filename does not match a regular file
-
-        """
-        f = abspath(filename)
-
-        if isfile(f) is False:
-            f = join(self.id, filename)
-
-        if isfile(f) is False:
-            raise FileOSError(filename)
-
-        return f
-
-    # -----------------------------------------------------------------------
-
-    def get_root(self, name):
-        """Return the FileRoot matching the given id (root or file).
-        
-        :param name: (str) Identifier name of a root or a file.
-        :return: FileRoot or None
- 
-        """
-        for fr in self.__roots:
-            if fr.id == name:
-                return fr
-
-        for fr in self.__roots:
-            for fn in fr:
-                if fn.id == name:
-                    return fr
-
-        return None
-
-    # -----------------------------------------------------------------------
-
-    def append(self, filename):
-        """Append a filename in the list of files.
-
-        Given filename can be either an absolute or relative name of a file
-        or an instance of FileName.
-
-        :param filename: (str, FileName) Absolute or relative name of a file
-        :return: (FileName) the appended FileName of None
-
-        """
-        if isinstance(filename, FileName):
-            file_id = filename.id
-        else:
-            file_id = self.identifier(filename)
-            filename = FileName(file_id)
-        root_id = FileRoot.root(file_id)
-
-        # Get or create the corresponding FileRoot
-        fr = self.get_root(root_id)
-        if fr is None:
-            fr = FileRoot(root_id)
-            self.__roots.append(fr)
-            self.set_root_bgcolor(fr)
-        
-        # Append this file to the root
-        return fr.append(filename)
-
-    # -----------------------------------------------------------------------
-
-    def set_root_bgcolor(self, root):
-        """Fix the bgcolor of a root."""
-        index = self.__roots.index(root)
-        if index % 2:
-            r = max(10, min(245, self.__bgcolor[0] + 4))
-            g = max(10, min(245, self.__bgcolor[1] + 4))
-            b = max(10, min(245, self.__bgcolor[2] + 4))
-            root.set_bgcolor(r, g, b)
-
-        else:
-            r = max(10, min(245, self.__bgcolor[0] - 4))
-            g = max(10, min(245, self.__bgcolor[1] - 4))
-            b = max(10, min(245, self.__bgcolor[2] - 4))
-            root.set_bgcolor(r, g, b)
-
-    # -----------------------------------------------------------------------
-
-    def remove(self, fileroot):
-        """Remove a fileroot of the list of roots.
-
-        Given fileroot can be either the identifier of a root or an instance 
-        of FileRoot.
-
-        :param fileroot: (str or FileRoot)
-        :return: (int) Index of the removed FileRoot or -1 if nothing removed.
-        
-        """
-        if isinstance(fileroot, FileRoot):
-            root = fileroot
-        else:
-            root = self.get_root(fileroot)
-
-        try:
-            idx = self.__roots.index(root)
-            self.__roots.pop(idx)
-        except ValueError:
-            idx = -1
-
-        return idx
-
-    # -----------------------------------------------------------------------
-
-    def do_check(self, value=True, entry=None):
-        """Check or uncheck all or any file.
-
-        :param value: (bool) Toggle value
-        :param entry: (str) Absolute or relative name of a file or a file root
-
-        """
-        change = False
-        if entry is None:
-            for fr in self.__roots:
-                fr.check = bool(value)
-            change = True
-
-        elif isinstance(entry, FileRoot):
-            if entry in self.__roots:
-                entry.check = bool(value)
-                change = True
-
-        else:
-            fr = self.get_root(entry)
-            if fr is not None:
-                fr.do_check(value, entry)
-                change = True
-
-        if change:    
-            self.update_check()
-    
-    # -----------------------------------------------------------------------
-
-    def update_check(self):
-        """Modify check depending on the checked root names."""
-        if len(self.__roots) == 0:
-            self.check = False
-            return
-        all_checked = True
-        all_unchecked = True
-        for fr in self.__roots:
-            if fr.check is True:
-                all_unchecked = False
-            else:
-                all_checked = False
-
-        if all_checked:
-            self.check = True
-        if all_unchecked:
-            self.check = False
-
-    # -----------------------------------------------------------------------
-    # Overloads
-    # -----------------------------------------------------------------------
-
-    def __repr__(self):
-        return 'Path: ' + self.get_id() + \
-               ' contains ' + str(len(self.__roots)) + ' file roots\n'
-
-    def __iter__(self):
-        for a in self.__roots:
-            yield a
-
-    def __getitem__(self, i):
-        return self.__roots[i]
-
-    def __len__(self):
-        return len(self.__roots)
-    
-    def __contains__(self, value):
-        # The given value is a FileRoot instance
-        if isinstance(value, FileRoot):
-            return value in self.__roots
-        
-        # The given value is a FileName instance or a string
-        for fr in self.__roots:
-            x = value in fr
-            if x is True:
-                return True
-
-        # Value could be the name of a root
-        root_id = FileRoot.root(value)
-        fr = self.get_root(root_id)
-        if fr is not None:
-            return True
-
-        # nothing is matching this value
-        return False
-
-# ---------------------------------------------------------------------------
-
-
-class FileData(object):
+class FileData(FileBase):
     """Represent the data linked to a list of files.
 
     :author:       Brigitte Bigi
@@ -939,169 +104,566 @@ class FileData(object):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-    FileData is the manager of a list of file names.
-    It organizes them hierarchically as a collection of FilePath instances, 
+    FileData is the container for a  list of files and a catalog.
+    It organizes files hierarchically as a collection of FilePath instances,
     each of which is a collection of FileRoot instances, each of which is a 
-    collection of FileName. 
+    collection of FileName. The catalog is a list of FileReference instances
+    each of which is a list of key/att-value.
 
     """
 
-    def __init__(self):
+    def __init__(self, identifier=sppasGUID().get()):
         """Constructor of a FileData."""
+        super(FileData, self).__init__(identifier)
         self.__data = list()
+        self.__refs = list()
+
+    # -----------------------------------------------------------------------
+    # Methods to add data
+    # -----------------------------------------------------------------------
+
+    def add(self, object):
+        """Add a file object into the data.
+
+        :param object: (FileBase)
+        :raise: sppasTypeError,
+
+        """
+        if isinstance(object, (FileName, FileRoot, FilePath, FileReference)) is False:
+            raise sppasTypeError(object.id, "FileBase-subclass")
+
+        test_obj = self.get_object(object.id)
+        if test_obj is not None:
+            raise Exception('Object {:s} is already in the data.'.format(object.id))
+
+        if isinstance(object, FilePath):
+            self.__data.append(object)
 
     # -----------------------------------------------------------------------
 
-    def add_file(self, filename):
-        """Add a file in the list from its file name.
+    def add_file(self, filename, brothers=False, ctime=0.):
+        """Add file(s) in the list from a file name.
 
         :param filename: (str) Absolute or relative name of a file
-        :return: (FileName)
+        :param brothers: (bool) Add also all files sharing the same root as the given file
+        :param ctime: (float) Add files only if created/modified after time in seconds since the epoch
+        :returns: (list of FileName or None)
         :raises: OSError
 
         """
-        new_fp = FilePath(dirname(filename))
+        # get or create the corresponding FilePath()
+        new_fp = FilePath(os.path.dirname(filename))
         for fp in self.__data:
             if fp.id == new_fp.id:
                 new_fp = fp
-        
-        if new_fp not in self.__data:
-            # this is a new path to add
+
+        # add the file(s) into the FilePath() structure
+        added = new_fp.append(filename, brothers, ctime)
+
+        # this is a new path to add into the workspace
+        if added is not None and new_fp not in self.__data:
             self.__data.append(new_fp)
 
-        return new_fp.append(filename)
+        return added
+
+    # -----------------------------------------------------------------------
+
+    def remove_file(self, filename):
+        """Remove a file in the list from its file name.
+
+        :param filename: (str) Absolute or relative name of a file
+        :returns: (FileName)
+        :raises: OSError
+
+        """
+        given_fp = FilePath(os.path.dirname(filename))
+        for fp in self.__data:
+            if fp.id == given_fp.id:
+                for fr in fp:
+                    fr.remove(filename)
+
+    # -----------------------------------------------------------------------
+
+    def add_ref(self, ref):
+        """Add a reference in the list from its file name.
+
+        :param ref: (FileReference) Reference to add
+
+        """
+        if isinstance(ref, FileReference) is False:
+            raise sppasTypeError(ref, 'FileReference')
+
+        for refe in self.__refs:
+            if refe.id == ref.id:
+                raise ValueError(
+                    "A reference with the identifier '{:s}' is "
+                    "already in the data.".format(refe.id))
+
+        self.__refs.append(ref)
+
+    # -----------------------------------------------------------------------
+
+    def remove_refs(self, state=States().CHECKED):
+        """Remove all references of the given state.
+
+        :param state: (States)
+        :returns: (int) Number of removed refs
+
+        """
+        # Fix the list of references to be removed
+        removes = list()
+        for ref in self.__refs:
+            if ref.state == state:
+                removes.append(ref)
+
+        # Remove these references of the roots
+        for fp in self.__data:
+            for fr in fp:
+                for fc in removes:
+                    fr.remove_ref(fc)
+
+        # Remove these references of the list of existing references
+        nb = len(removes)
+        for ref in reversed(removes):
+            self.__refs.remove(ref)
+
+        return nb
+
+    # -----------------------------------------------------------------------
+
+    def get_refs(self):
+        """Return the list of references."""
+        return self.__refs
 
     # -----------------------------------------------------------------------
 
     def update(self):
-        """Update the data: missing files, properties changed."""
+        """Update the data: missing files, properties changed.
+
+        Empty FileRoot and FilePath are removed.
+
+        """
         for fp in self.__data:
             for fr in reversed(fp):
                 for fn in reversed(fr):
-                    if exists(fn.id):
+                    if os.path.exists(fn.id):
                         fn.update_properties()
                     else:
-                        fp.remove(fn)
+                        fr.remove(fn)
                 if len(fr) == 0:
                     fp.remove(fr)
-            # reset bg colors of the roots
-            for fr in fp:
-                fp.set_root_bgcolor(fr)
 
         # Remove empty FilePath
         for fp in reversed(self.__data):
             if len(fp) == 0:
                 self.__data.remove(fp)
-    
+
+        for fp in self.__data:
+            for fr in reversed(fp):
+                fr.update_state()
+            fp.update_state()
+
     # -----------------------------------------------------------------------
 
-    def remove_checked_files(self):
-        """Remove all checked files.
-        
+    def remove_files(self, state=States().CHECKED):
+        """Remove all files of the given state.
+
         Do not update: empty roots or paths are not removed.
 
+        :param state: (States)
+        :returns: (int) Number of removed files
+
         """
+        nb = 0
         for fp in self.__data:
             for fr in reversed(fp):
                 for fn in reversed(fr):
-                    if fn.check is True:
+                    if fn.get_state() == state:
                         fr.remove(fn)
- 
+                        nb += 1
+                fr.update_state()
+            fp.update_state()
+
+        return nb
+
     # -----------------------------------------------------------------------
 
-    def get_checked_files(self, value=True):
-        """Return the list of checked or unchecked file names.
+    def get_files(self, value=States().CHECKED):
+        """Return the list of file names of the given state.
 
         :param value: (bool) Toggle state
-        :return: (list of str)
+        :returns: (list of str)
 
         """
         checked = list()
         for fp in self.__data:
             for fr in fp:
                 for fn in fr:
-                    if fn.check == value:
+                    if fn.get_state() == value:
                         checked.append(fn.id)
         return checked
 
     # -----------------------------------------------------------------------
 
-    def check(self, value=True, entry=None):
-        """Check or uncheck all or any entry.
+    def get_object(self, identifier):
+        """Return the file object matching the given identifier.
 
-        If no entry is given, this method toggles all the data.
-
-        :param value: (bool) Toggle value
-        :param entry: (str) Absolute or relative name of a file or a file root
+        :param identifier: (str)
+        :returns: (FileData, FilePath, FileRoot, FileName, FileReference)
 
         """
-        if entry is not None:
-            try:
-                path = dirname(entry)
-            except TypeError:
-                raise FileOSError(entry)
+        if self.id == identifier:
+            return self
 
-            new_fp = FilePath(path)
-            for fp in self.__data:
-                if fp.id == new_fp.id:
-                    fp.do_check(value, entry)
-        else:
-            for fp in self.__data:
-                fp.do_check(value)
+        for ref in self.get_refs():
+            if ref.id == identifier:
+                return ref
 
-    # -----------------------------------------------------------------------
-
-    def get_expanded_objects(self, value=True):
-        """Return the list of expanded or collapsed FilePath and FileRoot.
-
-        :param value: (bool) Toggle state
-        :return: (list of FilePath and FileRoot objects)
-
-        """
-        expanded = list()
         for fp in self.__data:
-            if fp.expand == value:
-                expanded.append(fp)
+            if fp.id == identifier:
+                return fp
             for fr in fp:
-                if fr.expand == value:
-                    expanded.append(fr)
-        return expanded
+                if fr.id == identifier:
+                    return fr
+                for fn in fr:
+                    if fn.id == identifier:
+                        return fn
 
-    # -----------------------------------------------------------------------
-
-    def expand(self, value=True):
-        """Expand or collapse all the FilePath instances."""
-        for fp in self.__data:
-            fp.expand = bool(value)
-
-    # -----------------------------------------------------------------------
-
-    def expand_all(self, value=True):
-        """Expand or collapse all the FilePath and FileRoot instances."""
-        for fp in self.__data:
-            fp.expand = bool(value)
-            for fr in fp:
-                fr.expand = bool(value)
-
-    # -----------------------------------------------------------------------
-
-    def get_object(self, entry):
-        """Return the file object matching the given entry.
-        
-        :return: (FilePath, FileRoot, FileName)
-
-        """
-        try:
-            path = dirname(entry)
-            new_fp = FilePath(path)
-        except TypeError:
-            return None
-
-        for fp in self.__data:
-            if fp.id == new_fp.id:
-                return fp.get_object(entry)
-        
         return None
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def get_object_state(file_obj):
+        """Return the state of any FileBase within the FileData.
+
+        :param file_obj: (FileBase) The object which one enquire the state
+        :returns: States
+
+        """
+        if not isinstance(file_obj, FilePath)\
+            and not isinstance(file_obj, FileRoot)\
+                and not isinstance(file_obj, FileName):
+            raise sppasTypeError(file_obj, 'FilePath or FileRoot or FileName')
+        else:
+            return file_obj.get_state()
+
+    # -----------------------------------------------------------------------
+
+    def set_object_state(self, state, file_obj=None):
+        """Set the state of any FileBase within FileData.
+
+        The default case is to set the state to all FilePath and FileRefence.
+
+        It is not allowed to manually assign one of the "AT_LEAST" states.
+        They are automatically fixed depending on the paths states.
+
+        :param state: (States) state to set the file to
+        :param file_obj: (FileBase) the specific file to set the state to
+        :raises: sppasTypeError, sppasValueError
+
+        """
+        modified = False
+        if file_obj is None:
+            for fp in self.__data:
+                modified = fp.set_state(state)
+            for ref in self.__refs:
+                modified = ref.set_state(state)
+
+        else:
+            if isinstance(file_obj, (FilePath, FileReference)):
+                modified = file_obj.set_state(state)
+
+            elif isinstance(file_obj, (FileRoot, FileName)):
+                # search for the FilePath matching with the file_obj
+                for fp in self.__data:
+                    # test if file_obj is a root or name in this fp
+                    cur_obj = fp.get_object(file_obj.id)
+                    if cur_obj is not None:
+                        # this object is one of this fp
+                        modified = fp.set_object_state(state, file_obj)
+                        break
+
+            else:
+                raise sppasTypeError(file_obj, 'FileBase')
+
+        return modified
+
+    # -----------------------------------------------------------------------
+
+    def set_state(self, value):
+        """Set the state of this FileData instance.
+
+        :param value: (States)
+
+        """
+        self._state = int(value)
+
+    # -----------------------------------------------------------------------
+
+    def associate(self):
+        ref_checked = self.get_reference_from_state(States().CHECKED)
+        if len(ref_checked) == 0:
+            return 0
+
+        associed = 0
+        for fp in self.__data:
+            for fr in fp:
+                if fr.get_state() in (States().AT_LEAST_ONE_CHECKED, States().CHECKED):
+                    associed += 1
+                    if fr.get_references() is not None:
+                        ref_extended = fr.get_references()
+                        ref_extended.extend(ref_checked)
+                        fr.set_references(list(set(ref_extended)))
+                    else:
+                        fr.set_references(ref_checked)
+
+        return associed
+
+    # -----------------------------------------------------------------------
+
+    def dissociate(self):
+        ref_checked = self.get_reference_from_state(States().CHECKED)
+        if len(ref_checked) == 0:
+            return 0
+
+        dissocied = 0
+        for fp in self.__data:
+            for fr in fp:
+                if fr.get_state() in (States().AT_LEAST_ONE_CHECKED, States().CHECKED):
+                    for ref in ref_checked:
+                        removed = fr.remove_ref(ref)
+                        if removed is True:
+                            dissocied += 1
+        return dissocied
+
+    # -----------------------------------------------------------------------
+
+    def is_empty(self):
+        """Return if the instance contains information."""
+        return len(self.__data) + len(self.__refs) == 0
+
+    # -----------------------------------------------------------------------
+
+    def get_filepath_from_state(self, state):
+        """Return every FilePath of the given state.
+
+        """
+        paths = list()
+        for fp in self.__data:
+            if fp.get_state() == state:
+                paths.append(fp)
+        return paths
+
+    # -----------------------------------------------------------------------
+
+    def get_fileroot_from_state(self, state):
+        """Return every FileRoot in the given state."""
+        roots = list()
+        for fp in self.__data:
+            for fr in fp:
+                if fr.get_state() == state:
+                    roots.append(fr)
+        return roots
+
+    # -----------------------------------------------------------------------
+
+    def get_fileroot_with_ref(self, ref):
+        """Return every FileRoot with the given reference."""
+        roots = list()
+        for fp in self.__data:
+            for fr in fp:
+                if fr.has_ref(ref) is True:
+                    roots.append(fr)
+        return roots
+
+    # -----------------------------------------------------------------------
+
+    def get_filename_from_state(self, state):
+        """Return every FileName in the given state.
+
+        """
+        if len(self.__data) == 0:
+            return list()
+
+        files = list()
+        for fp in self.__data:
+            for fr in fp:
+                for fn in fr:
+                    if fn.get_state() == state:
+                        files.append(fn)
+        return files
+
+    # -----------------------------------------------------------------------
+
+    def get_reference_from_state(self, state):
+        """Return every Reference in the given state.
+
+        """
+        if len(self.__refs) == 0:
+            return list()
+
+        refs = list()
+        for r in self.__refs:
+            if r.get_state() == state:
+                refs.append(r)
+        return refs
+
+    # -----------------------------------------------------------------------
+
+    def has_locked_files(self):
+        for fp in self.__data:
+            if fp.get_state() in (States().AT_LEAST_ONE_LOCKED, States().LOCKED):
+                return True
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def get_parent(self, filebase):
+        """Return the parent of an object.
+
+        :param filebase: (FileName or FileRoot).
+        :returns: (FileRoot or FilePath)
+        :raises: sppasTypeError
+
+        """
+        if isinstance(filebase, FileName):
+            fr = FileRoot(filebase.id)
+            return self.get_object(fr.id)
+
+        if isinstance(filebase, FileRoot):
+            fp = FilePath(filebase.id)
+            return self.get_object(fp.id)
+
+        raise sppasTypeError(filebase, "FileName, FileRoot")
+
+    # -----------------------------------------------------------------------
+
+    def unlock(self, entries=None):
+        """Unlock the given list of files.
+
+        :param entries: (list, None) List of FileName to unlock
+        :returns: number of unlocked entries
+
+        """
+        i = 0
+        if entries is None:
+            for fp in self.__data:
+                for fr in fp:
+                    for fn in fr:
+                        if fn.get_state() == States().LOCKED:
+                            fn.set_state(States().CHECKED)
+                            i += 1
+                    if i > 0:
+                        fr.update_state()
+                if i > 0:
+                    fp.update_state()
+
+        elif isinstance(entries, list):
+            for fp in self.__data:
+                for fr in fp:
+                    for fn in fr:
+                        if fn in entries and fn.get_state() == States().LOCKED:
+                            fn.set_state(States().CHECKED)
+                            i += 1
+                    if i > 0:
+                        fr.update_state()
+                if i > 0:
+                    fp.update_state()
+
+        return i
+
+    # -----------------------------------------------------------------------
+    # Read/Write the data into/from a file
+    # -----------------------------------------------------------------------
+
+    def serialize(self):
+        """Convert this FileData() into a serializable data structure.
+
+        :returns: (dict) a dictionary that can be serialized (without classes).
+
+        """
+        d = dict()
+
+        # Factual information about this file and this FileData()
+        d['wjson'] = "1.0"
+        d['software'] = sg.__name__
+        d['version'] = sg.__version__
+        d['id'] = self.id
+
+        # The list of paths/roots/files stored in this FileData()
+        d['paths'] = list()
+        for fp in self.__data:
+            d['paths'].append(fp.serialize())
+
+        # The list of references/attributes stored in this FileData()
+        d['catalogue'] = list()
+        for ref in self.__refs:
+            d['catalogue'].append(ref.serialize())
+
+        return d
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def parse(d):
+        wjson_version = d.get("wjson", "1.0")
+        soft_name = d.get("software", None)
+        soft_version = d.get("version", None)
+
+        if 'id' not in d:
+            raise KeyError("Workspace 'id' is missing of the dictionary to parse.")
+        data = FileData(d['id'])
+
+        # The list of references/attributes stored in the given dict
+        if 'catalogue' in d:
+            for dictref in d['catalogue']:
+                r = FileReference.parse(dictref)
+                data.add_ref(r)
+
+        # The list of paths/roots/files stored in the given dict
+        if 'paths' in d:
+            for dict_path in d['paths']:
+                fp = FilePath.parse(dict_path)
+                data.add(fp)
+
+                # append references in roots from the 'refsids" of the dict
+                for dict_root in dict_path['roots']:
+                    fr = data.get_object(dict_root['id'])
+                    if fr is not None and 'refids' in dict_root:
+                        for ref_id in dict_root['refids']:
+                            ref = data.get_object(ref_id)
+                            if ref is not None:
+                                fr.add_ref(ref)
+
+        # Fix the state to roots and paths (from the ones of files)
+        data.update()
+        return data
+
+    # -----------------------------------------------------------------------
+
+    def save(self, filename):
+        """Save the current FileData in a serialized file.
+
+        :param filename: (str) the name of the save file.
+
+        """
+        with open(filename, 'w') as fd:
+            json.dump(self.serialize(), fd, indent=4, separators=(',', ': '))
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def load(filename):
+        """Load a saved FileData object from a save file.
+
+        :param filename: (str) the name of the save file.
+        :returns: FileData
+
+        """
+        with open(filename, "r") as fd:
+            d = json.load(fd)
+            return FileData.parse(d)
 
     # -----------------------------------------------------------------------
     # Overloads
@@ -1116,158 +678,3 @@ class FileData(object):
 
     def __len__(self):
         return len(self.__data)
-    
-# ---------------------------------------------------------------------------
-# Unittests
-# ---------------------------------------------------------------------------
-
-
-class TestFileBase(unittest.TestCase):
-
-    def test_init(self):
-        f = FileBase(__file__)
-        self.assertEqual(__file__, f.get_id())
-    
-    def test_overloads(self):
-        f = FileBase(__file__)
-        self.assertEqual(__file__, str(f))
-        self.assertEqual(__file__, "{!s:s}".format(f))
-
-# ---------------------------------------------------------------------------
-
-
-class TestFileName(unittest.TestCase):
-
-    def test_init(self):
-        # Attempt to instantiate with an unexisting file
-        with self.assertRaises(FileOSError):
-            FileName("toto")
-
-        # Attempt to instantiate with a directory
-        with self.assertRaises(FileTypeError):
-            FileName(dirname(__file__))
-
-        # Normal situation
-        fn = FileName(__file__)
-        self.assertEqual(__file__, fn.get_id())
-        self.assertFalse(fn.check)
-    
-    def test_extension(self):
-        fn = FileName(__file__)
-        self.assertEqual(".PY", fn.get_extension())
-        self.assertEqual("text/plain", fn.get_mime())
-
-# ---------------------------------------------------------------------------
-
-
-class TestFileRoot(unittest.TestCase):
-
-    def test_init(self):        
-        fr = FileRoot(__file__)
-        root = __file__.replace('.py', '')
-        self.assertEqual(root, fr.id)
-        fr = FileRoot("toto")
-        self.assertEqual("toto", fr.id)
-
-    def test_pattern(self):
-        self.assertEqual('', FileRoot.pattern('filename.wav'))
-        self.assertEqual('', FileRoot.pattern('filename-unk.xra'))
-        self.assertEqual('-phon', FileRoot.pattern('filename-phon.xra'))
-  
-    def test_root(self):
-        self.assertEqual('filename', FileRoot.root('filename.wav'))
-        self.assertEqual('filename', FileRoot.root('filename-phon.xra'))
-        self.assertEqual('filename-unk', FileRoot.root('filename-unk.xra'))
-        self.assertEqual('filename-unk-unk', FileRoot.root('filename-unk-unk.xra'))
-        self.assertEqual('filename.unk-unk', FileRoot.root('filename.unk-unk.xra'))
-        self.assertEqual(
-            'e:\\bigi\\__pycache__\\filedata.cpython-37',   
-            FileRoot.root('e:\\bigi\\__pycache__\\filedata.cpython-37.pyc'))
-    
-# ---------------------------------------------------------------------------
-
-
-class TestFilePath(unittest.TestCase):
-
-    def test_init(self):
-        # Attempt to instantiate with an unexisting file
-        with self.assertRaises(FileOSError):
-            FilePath("toto")
-
-        # Attempt to instantiate with a file
-        with self.assertRaises(PathTypeError):
-            FilePath(__file__)
-
-        # Normal situation
-        d = dirname(__file__)
-        fp = FilePath(d)
-        self.assertEqual(d, fp.id)
-        self.assertFalse(fp.check)
-        self.assertEqual(fp.id, fp.get_id())
-
-        # Property is only defined for 'get' (set is not implemented).
-        with self.assertRaises(AttributeError):
-            fp.id = "toto"
-    
-    def test_append_remove(self):
-        d = dirname(__file__)
-        fp = FilePath(d)
-
-        # Attempt to append an unexisting file
-        with self.assertRaises(FileOSError):
-            fp.append("toto")
-
-        # Normal situation
-        fn = fp.append(__file__)
-        self.assertIsNotNone(fn)
-        self.assertIsInstance(fn, FileName)
-        self.assertEqual(__file__, fn.id)
-
-        fr = fp.get_root(FileRoot.root(fn.id))
-        self.assertIsNotNone(fr)
-        self.assertIsInstance(fr, FileRoot)
-        self.assertEqual(FileRoot.root(__file__), fr.id)
-
-        self.assertEqual(1, len(fp))
-        self.assertEqual(1, len(fr))
-
-        # Attempt to add again the same file
-        fn2 = fp.append(__file__)
-        self.assertEqual(1, len(fp))
-        self.assertEqual(fn, fn2)
-        fn3 = fp.append(FileName(__file__))
-        self.assertEqual(1, len(fp))
-        self.assertEqual(fn, fn3)
-
-        # Remove the file from its name
-        fp.remove(fp.get_root(FileRoot.root(__file__)))
-        self.assertEqual(0, len(fp))
-
-        # Append an instance of FileName
-        fn = FileName(__file__)
-        rfn = fp.append(fn)
-        self.assertIsNotNone(rfn)
-        self.assertEqual(fn, rfn)
-        self.assertEqual(1, len(fp))
-
-        # Attempt to add again the same file
-        fp.append(FileName(__file__))
-        self.assertEqual(1, len(fp))
-
-        # Remove the file from its instance
-        i = fp.remove(fp.get_root(fn.id))
-        self.assertEqual(0, len(fp))
-        self.assertEqual(i, 0)
-
-        # Remove an un-existing file
-        self.assertEqual(-1, fp.remove("toto"))
-    
-        # Remove a file not in the list!
-        i = fp.remove(FileName(__file__))
-        self.assertEqual(-1, i)
-
-# ---------------------------------------------------------------------------
-
-
-if __name__ == '__main__':
-    unittest.main()

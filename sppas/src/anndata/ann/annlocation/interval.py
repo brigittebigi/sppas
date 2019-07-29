@@ -218,7 +218,7 @@ class sppasInterval(sppasBaseLocalization):
     # -----------------------------------------------------------------------
 
     def duration(self):
-        """Overrides. Return the duration of the time interval.
+        """Overridden. Return the duration of the time interval.
 
         :returns: (sppasDuration) Duration and its vagueness.
 
@@ -234,6 +234,19 @@ class sppasInterval(sppasBaseLocalization):
             vagueness += self.__end.get_radius()
 
         return sppasDuration(value, vagueness)
+
+    # -----------------------------------------------------------------------
+
+    def middle_value(self):
+        """Return the middle value of the time interval.
+
+        Return a float value even if points are integers.
+
+        :returns: (float) value.
+
+        """
+        duration = self.__end.get_midpoint() - self.__begin.get_midpoint()
+        return float(self.__begin.get_midpoint()) + float(duration) / 2.
 
     # -----------------------------------------------------------------------
 
@@ -282,7 +295,7 @@ class sppasInterval(sppasBaseLocalization):
 
         :param begin: any kind of data
         :param end: any kind of data
-        :return: Boolean
+        :returns: Boolean
 
         """
         try:

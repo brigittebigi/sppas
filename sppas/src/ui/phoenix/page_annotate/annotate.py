@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """
     ..
         ---------------------------------------------------------------------
@@ -28,29 +29,53 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_files.annotate.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ui.phoenix.page_annotate.annotate.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    One of the main pages of the wx4-based GUI of SPPAS: the one to annotate.
+    It's content is organized with a wxSimpleBook() with:
+        - a page to fix parameters then run, then save the report,
+        - 3 pages with the lists of annotations to select and configure,
+        - a page with the progress bar and the procedure outcome report.
 
 """
 
 import logging
 import wx
 
-from sppas.src.ui.phoenix.windows import sppasTitleText
-from sppas.src.ui.phoenix.windows import sppasMessageText
-from sppas.src.ui.phoenix.windows import sppasPanel
+from sppas import sppasTypeError
+from sppas import annots
+from sppas import msg
+from sppas import u
+
+from sppas.src.annotations import sppasParam
+from sppas.src.files import FileData, States
+
+from ..windows.book import sppasSimplebook
+from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
+from .annotevent import EVT_PAGE_CHANGE
+
+from .annotselect import sppasAnnotationsPanel
+from .annotaction import sppasActionAnnotatePanel
+from .annotlog import sppasLogAnnotatePanel
+
+# -----------------------------------------------------------------------
+
+
+def _(message):
+    return u(msg(message, "ui"))
 
 # ---------------------------------------------------------------------------
 
 
-class sppasAnnotatePanel(sppasPanel):
-    """Create a panel to annotate automatically the selected files.
+class sppasAnnotatePanel(sppasSimplebook):
+    """Create a book to annotate automatically the selected files.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     """
 
@@ -58,37 +83,59 @@ class sppasAnnotatePanel(sppasPanel):
         super(sppasAnnotatePanel, self).__init__(
             parent=parent,
             name="page_annotate",
-            style=wx.BORDER_NONE
+            style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS
         )
-        self._create_content()
-        self._setup_events()
+        self.SetEffectsTimeouts(150, 150)
 
+        # The annotations the system can perform
+        self.__param = sppasParam()
+        self.__pages_annot = dict()
+
+        # 1st page: the buttons to perform actions
+        self.ShowNewPage(sppasActionAnnotatePanel(self, self.__param))
+
+        # list of "ann_types" annotations
+        for ann_type in annots.types:
+            page = sppasAnnotationsPanel(self, self.__param, ann_type)
+            self.AddPage(page, text="")
+            self.__pages_annot[ann_type] = page
+
+        # 5th page: procedure outcome report
+        page = sppasLogAnnotatePanel(self, self.__param)
+        self.AddPage(page, text="")
+
+        self._setup_events()
         self.SetBackgroundColour(wx.GetApp().settings.bg_color)
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
 
     # ------------------------------------------------------------------------
+    # Public methods to access the data
+    # ------------------------------------------------------------------------
 
-    def _create_content(self):
-        """"""
-        # Create a title
-        st = sppasTitleText(
-            parent=self,
-            label="Not implemented...")
-        st.SetName("title")
+    def get_data(self):
+        """Return the data currently displayed.
 
-        # Create the welcome message
-        txt = sppasMessageText(
-            self,
-            "In future versions, automatic annotations will be here!."
-        )
+        :returns: (FileData) The workspace with files to annotate/annotated
 
-        # Organize the title and message
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(st, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER_HORIZONTAL, 15)
-        sizer.Add(txt, 6, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
+        """
+        return self.__param.get_workspace()
 
-        self.SetSizer(sizer)
+    # ------------------------------------------------------------------------
+
+    def set_data(self, data):
+        """Assign new data to this page.
+
+        :param data: (FileData) The workspace with files to annotate/annotated
+
+        """
+        if isinstance(data, FileData) is False:
+            raise sppasTypeError("FileData", type(data))
+        logging.debug('New data to set in the annotate page. '
+                      'Id={:s}'.format(data.id))
+
+        self.__param.set_workspace(data)
+        self.__send_data(self.GetParent())
 
     # -----------------------------------------------------------------------
     # Events management
@@ -102,27 +149,128 @@ class sppasAnnotatePanel(sppasPanel):
 
         """
         # Capture keys
-        self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
+        # self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
 
-    # -----------------------------------------------------------------------
+        # The data have changed.
+        # This event is sent by any of the children or by the parent
+        self.Bind(EVT_DATA_CHANGED, self._process_data_changed)
 
-    def _process_key_event(self, event):
-        """Process a key event.
+        # Change the displayed page
+        self.Bind(EVT_PAGE_CHANGE, self._process_page_change)
+
+    # ------------------------------------------------------------------------
+
+    def _process_page_change(self, event):
+        """Process a PageChangeEvent.
 
         :param event: (wx.Event)
 
         """
-        key_code = event.GetKeyCode()
-        cmd_down = event.CmdDown()
-        shift_down = event.ShiftDown()
-        logging.debug('Annotate page received a key event. key_code={:d}'.format(key_code))
+        logging.debug('Page changed')
+        try:
+            destination = event.to_page
+            fct = event.fct
+        except AttributeError:
+            logging.debug('ERROR ERROR')
+            destination = "page_annot_actions"
+            fct = ""
 
-        event.Skip()
+        self.show_page(destination, fct)
 
     # -----------------------------------------------------------------------
 
-    def SetFont(self, font):
-        sppasPanel.SetFont(self, font)
-        self.FindWindow("title").SetFont(wx.GetApp().settings.header_text_font)
-        self.Layout()
+    def _process_data_changed(self, event):
+        """Process a change of data.
 
+        Set the data of the event to the other panels.
+
+        :param event: (wx.Event)
+
+        """
+        emitted = event.GetEventObject()
+        try:
+            wkp = event.data
+        except AttributeError:
+            logging.error('Data were not sent in the event emitted by {:s}'
+                          '.'.format(emitted.GetName()))
+            return
+        self.__param.set_workspace(wkp)
+        self.__send_data(emitted)
+
+    # -----------------------------------------------------------------------
+    # Private
+    # -----------------------------------------------------------------------
+
+    def __send_data(self, emitted):
+        """Set a change of data to the children, send to the parent.
+
+        :param emitted: (wx.Window) The panel the data are coming from
+
+        """
+        # Set the data to appropriate children panels
+        for panel in self.GetChildren():
+            if emitted != panel:
+                try:
+                    panel.set_param(self.__param)
+                except:
+                    pass
+
+        # Send the data to the parent
+        pm = self.GetParent()
+        if pm is not None and emitted != pm:
+            data = self.__param.get_workspace()
+            data.set_state(States().CHECKED)
+            evt = DataChangedEvent(data=data)
+            evt.SetEventObject(self)
+            wx.PostEvent(self.GetParent(), evt)
+
+    # -----------------------------------------------------------------------
+    # Public methods to navigate
+    # -----------------------------------------------------------------------
+
+    def show_page(self, page_name, fct=""):
+        """Show a page of the book.
+
+        :param page_name: (str) one of 'page_annot_actions', 'page_...', ...
+        :param fct: (str) a method of the page
+
+        """
+        # Find the page number to switch on
+        dest_w = self.FindWindow(page_name)
+        if dest_w is None:
+            dest_w = self.FindWindow("page_annot_actions")
+        p = self.FindPage(dest_w)
+        if p == -1:
+            p = 0
+
+        # Current page number
+        c = self.FindPage(self.GetCurrentPage())  # current page position
+        cur_w = self.GetPage(c)  # Returns the window at the given page position
+
+        # Showing the current page is already done!
+        if c == p:
+            return
+
+        # Assign the effect
+        if c < p:
+            self.SetEffects(showEffect=wx.SHOW_EFFECT_SLIDE_TO_TOP,
+                            hideEffect=wx.SHOW_EFFECT_SLIDE_TO_TOP)
+        elif c > p:
+            self.SetEffects(showEffect=wx.SHOW_EFFECT_SLIDE_TO_BOTTOM,
+                            hideEffect=wx.SHOW_EFFECT_SLIDE_TO_BOTTOM)
+
+        # update param
+        self.__param = cur_w.get_param()
+        #self.__send_data(cur_w)
+        dest_w.set_param(self.__param)
+
+        # Change to the destination page
+        self.ChangeSelection(p)
+        dest_w.Refresh()
+
+        # Call a method of the class
+        if len(fct) > 0:
+            try:
+                getattr(dest_w, fct)()
+            except AttributeError as e:
+                logging.error("{:s}".format(str(e)))

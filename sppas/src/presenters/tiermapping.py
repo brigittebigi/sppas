@@ -33,9 +33,9 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
-from sppas.src.utils.makeunicode import u
-from sppas.src.resources.mapping import sppasMapping
-from sppas.src.resources.mapping import DEFAULT_SEP
+
+from sppas.src.utils import u
+from sppas.src.resources import sppasMapping
 from sppas.src.anndata import sppasLabel, sppasTag
 from sppas.src.anndata import sppasAnnotation, sppasTier
 
@@ -59,6 +59,7 @@ class sppasMappingTier(sppasMapping):
     table is replaced by a specific symbol (by default '*').
 
     """
+
     def __init__(self, dict_name=None):
         """Create a sppasMappingTier instance.
 
@@ -66,7 +67,7 @@ class sppasMappingTier(sppasMapping):
 
         """
         super(sppasMappingTier, self).__init__(dict_name)
-        self._delimiters = DEFAULT_SEP
+        self._delimiters = sppasMapping.DEFAULT_SEP
         self._map_symbols = False
 
     # -----------------------------------------------------------------------

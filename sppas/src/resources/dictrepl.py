@@ -36,7 +36,8 @@ import codecs
 import logging
 
 from sppas.src.config import sg
-from sppas.src.utils.makeunicode import sppasUnicode, u
+from sppas.src.utils import sppasUnicode, u
+
 from .dumpfile import sppasDumpFile
 from .resourcesexc import FileUnicodeError
 
@@ -117,18 +118,6 @@ class sppasDictRepl(object):
 
     def is_key(self, entry):
         """Return True if entry is exactly a key in the dictionary.
-        This method can sometimes return a different value compared to "in".
-
-        >>>d = sppasMapping()
-        >>>d.add("a", " & ")
-        >>>" a " in d
-        >>>True
-        >>>" A " in d
-        >>> True
-        >>>d.is_key("a ")
-        >>>False
-        >>>d.is_key("A")
-        >>>False
 
         :param entry: (str) Unicode string.
 
@@ -195,8 +184,7 @@ class sppasDictRepl(object):
         """Return the value of a key of the dictionary or substitution.
 
         :param entry: (str) A token to find in the dictionary
-        :param substitution: (str) String to return if token is missing
-        of the dict
+        :param substitution: (str) String to return if token is missing of the dict
         :returns: unicode of the replacement or the substitution.
 
         """
@@ -215,8 +203,7 @@ class sppasDictRepl(object):
         """Return the key(s) of a value or an empty string.
 
         :param value: (str) value to search
-        :returns: a unicode string with all keys, separated by '_', or an
-        empty string if value does not exists.
+        :returns: a unicode string with all keys, separated by '_', or an empty string if value does not exists.
 
         """
         s = sppasDictRepl.format_token(value)
@@ -381,3 +368,9 @@ class sppasDictRepl(object):
     def __iter__(self):
         for a in self._dict:
             yield a
+
+    # ------------------------------------------------------------------------
+
+    def __getitem__(self, item):
+        s = sppasDictRepl.format_token(str(item))
+        return self._dict[s]

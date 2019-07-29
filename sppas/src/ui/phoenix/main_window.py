@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """
     ..
         ---------------------------------------------------------------------
@@ -58,6 +59,7 @@ from .dialogs import YesNoQuestion
 from .dialogs import About
 from .dialogs import Settings
 from .main_log import sppasLogWindow
+from .main_events import DataChangedEvent, EVT_DATA_CHANGED
 
 # ---------------------------------------------------------------------------
 
@@ -107,7 +109,8 @@ class sppasMainWindow(sppasDialog):
         super(sppasMainWindow, self).__init__(
             parent=None,
             title=wx.GetApp().GetAppDisplayName(),
-            style=wx.WANTS_CHARS | wx.TAB_TRAVERSAL | wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT)
+            style=wx.WANTS_CHARS | wx.TAB_TRAVERSAL | wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT,
+            name="sppas_main")
 
         # Members
         self._init_infos()
@@ -131,15 +134,15 @@ class sppasMainWindow(sppasDialog):
     # ------------------------------------------------------------------------
 
     def _init_infos(self):
-        """Initialize the main frame.
+        """Overridden. Initialize the main frame.
 
         Set the title, the icon and the properties of the frame.
 
         """
         sppasDialog._init_infos(self)
 
-        # Fix other frame properties
-        self.SetMinSize(wx.Size(640, 480))
+        # Fix some frame properties
+        self.SetMinSize(wx.Size(640, 480))   # Enlarge compared to the base class
         self.SetSize(wx.GetApp().settings.frame_size)
         self.SetName('{:s}'.format(sg.__name__))
 
@@ -180,7 +183,7 @@ class sppasMainWindow(sppasDialog):
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS,
             name="content"
         )
-        book.SetEffectsTimeouts(200, 200)
+        book.SetEffectsTimeouts(100, 200)
 
         # 1st page: a panel with a welcome message
         book.ShowNewPage(sppasHomePanel(book))
@@ -197,7 +200,6 @@ class sppasMainWindow(sppasDialog):
         # 5th: plugins
         book.AddPage(sppasPluginsPanel(book), text="")
 
-        book.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
         return book
 
     # -----------------------------------------------------------------------
@@ -217,8 +219,13 @@ class sppasMainWindow(sppasDialog):
         # Bind all events from our buttons (including 'exit')
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
+        # The data have changed.
+        # This event was sent by any of the children
+        self.FindWindow("content").Bind(EVT_DATA_CHANGED, self._process_data_changed)
+
         # Capture keys
-        self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
+        # self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
+        #self.FindWindow("content").Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
 
     # -----------------------------------------------------------------------
 
@@ -255,6 +262,35 @@ class sppasMainWindow(sppasDialog):
 
     # -----------------------------------------------------------------------
 
+    def _process_data_changed(self, event):
+        """Process a change of data.
+
+        Set the data of the event to the other panels.
+
+        :param event: (wx.Event) An event with a FileData()
+
+        """
+        # Names of the page panels which are requiring the workspace
+        pages = ("page_files", "page_annotate", "page_analyze", "page_plugins")
+
+        # The object the event comes from
+        emitted = event.GetEventObject()
+        try:
+            wkp = event.data
+        except AttributeError:
+            logging.error("Workspace wasn't sent in the event emitted by {:s}"
+                          "".format(emitted.GetName()))
+            return
+
+        # Set the data to appropriate children panels
+        book = self.FindWindow('content')
+        for i in range(book.GetPageCount()):
+            page = book.GetPage(i)
+            if emitted != page and page.GetName() in pages:
+                page.set_data(wkp)
+
+    # -----------------------------------------------------------------------
+
     def _process_key_event(self, event):
         """Process a key event.
 
@@ -278,6 +314,7 @@ class sppasMainWindow(sppasDialog):
 
         else:
             # Keeps on going the event to the current page of the book.
+            logging.debug('Key event skipped by the main window.')
             event.Skip()
 
     # -----------------------------------------------------------------------
@@ -328,13 +365,14 @@ class sppasMainWindow(sppasDialog):
         :param page_name: (str) one of 'page_home', 'page_files', ...
 
         """
-        # Find the page number to switch on
         book = self.FindWindow("content")
+
+        # Find the page number to switch on
         w = book.FindWindow(page_name)
         if w is None:
             w = book.FindWindow("page_home")
         p = book.FindPage(w)
-        if p == -1:
+        if p == wx.NOT_FOUND:
             p = 0
 
         # current page number
@@ -353,7 +391,7 @@ class sppasMainWindow(sppasDialog):
 
         # then change to the page
         book.ChangeSelection(p)
-        w.Refresh()
+        self.Refresh()
 
 # ---------------------------------------------------------------------------
 

@@ -41,7 +41,7 @@ from sppas import sppasKeyError
 
 
 class sppasBaseFilters(object):
-    """Base class for any 'SPPAS filter system'.
+    """Base class for any filter system.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France

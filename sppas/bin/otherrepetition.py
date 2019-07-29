@@ -100,7 +100,7 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-o",
         metavar="file",
-        help='Output file name with syllables.')
+        help='Output file name with other-repetitions.')
 
     group_io.add_argument(
         "-r",

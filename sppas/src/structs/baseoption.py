@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 from distutils.util import strtobool
 from sppas.src.utils.makeunicode import u, text_type, binary_type
 
@@ -46,7 +47,7 @@ class sppasBaseOption(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     In many situations, we have to store an un-typed data and its type
     separately, plus eventually other information like a description.
@@ -78,10 +79,13 @@ class sppasBaseOption(object):
     def __init__(self, option_type, option_value=""):
         """Create a sppasBaseOption instance.
 
-        :param option_type: (str) Type of the option (i.e. 'int', 'bool',
-        'float', ...). Notice that the type will be normalized. For example,
-        'int, 'integer', 'long or 'short' will be all stored into 'int' type.
-        :param option_value: (str) The value of the option.
+        The type of an option is one of the key of type_mapping (i.e. 'int',
+        'bool', 'float', ...). Notice that the type will be normalized. For
+        example, 'int, 'integer', 'long or 'short' will be all stored into
+        'int' type.
+
+        :param option_type: (str) Type of the option.
+        :param option_value: (str) Value of the option.
 
         """
         self._type = ""
@@ -264,7 +268,7 @@ class sppasOption(sppasBaseOption):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     """
 
@@ -272,9 +276,7 @@ class sppasOption(sppasBaseOption):
         """Create a sppasOption instance.
 
         :param option_key: (any type) An identifier for that option.
-        :param option_type: (str) Type of the option (i.e. 'int', 'bool',
-        'float', ...). Notice that the type will be normalized. For example,
-        'int, 'integer', 'long or 'short' will be all stored into 'int' type.
+        :param option_type: (str) Type of the option.
         :param option_value: (str) The value of the option.
 
         """

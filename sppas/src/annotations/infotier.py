@@ -38,8 +38,8 @@ from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasLabel, sppasTag
 from sppas.src.anndata import sppasLocation, sppasPoint, sppasInterval
 
-from sppas.src.structs.metainfo import sppasMetaInfo
-from sppas.src.utils.datatype import sppasTime
+from sppas.src.structs import sppasMetaInfo
+from sppas.src.utils import sppasTime
 
 # ---------------------------------------------------------------------------
 

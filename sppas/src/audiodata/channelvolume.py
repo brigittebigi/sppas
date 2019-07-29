@@ -33,7 +33,9 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import logging
+
 from .audioframes import sppasAudioFrames
 from .basevolume import sppasBaseVolume
 

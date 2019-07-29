@@ -3,6 +3,11 @@
   "name": "Other-Repetitions",
   "descr": "Searches for sources and echos of two speakers. Requires time-aligned tokens of 2 speakers.",
   "required": "alignment",
+  "api": "sppasOtherRepet",
+
+  "anntype": [
+    "INTERACTION"
+  ],
 
   "resources": [
     {
@@ -14,6 +19,18 @@
   ],
 
   "options": [
+    {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-palign",
+      "text": "Input file pattern (time-aligned words or lemmas)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-orepet",
+      "text": "Output file pattern"
+    },
     {
       "id": "span",
       "type": "int",

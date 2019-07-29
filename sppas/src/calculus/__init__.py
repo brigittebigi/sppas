@@ -29,18 +29,27 @@
 
         ---------------------------------------------------------------------
 
-calculus: perform some math on data.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
 
-:author:       Brigitte Bigi
-:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-:contact:      develop@sppas.org
-:license:      GPL, v3
-:copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+*****************************************************************************
+calculus: proposes some math on data.
+*****************************************************************************
+
+This package includes mathematical functions to estimate descriptive
+statistics, for the scoring or in the domain of the information theory.
+
+No required other package.
 
 """
+
 from .stats.descriptivesstats import sppasDescriptiveStatistics
 from .scoring.kappa import sppasKappa
+from .scoring.ubpa import ubpa
+
 from .geometry.distances import squared_euclidian, euclidian, manathan, minkowski, chi_squared
 from .geometry.linear_fct import linear_fct, linear_values, slope, intercept
 from .stats.central import fsum, fmult, fmin, fmax, fmean, fgeometricmean, fharmonicmean
@@ -49,7 +58,6 @@ from .stats.linregress import tga_linear_regression, tansey_linear_regression
 from .stats.linregress import gradient_descent, gradient_descent_linear_regression, compute_error_for_line_given_points
 from .stats.moment import lmoment, lvariation, lskew, lkurtosis
 from .stats.variability import lvariance, lstdev, lz, rPVI, nPVI
-from .scoring.ubpa import ubpa
 from .infotheory import sppasKullbackLeibler
 from .infotheory import sppasEntropy
 from .infotheory.utilit import find_ngrams

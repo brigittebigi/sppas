@@ -4,7 +4,7 @@ import unittest
 
 from sppas.src.config import symbols
 from sppas.src.anndata import sppasTranscription
-from ..Align.activity import sppasActivity
+from sppas.src.annotations.Activity.activity import sppasActivity
 
 # ---------------------------------------------------------------------------
 

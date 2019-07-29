@@ -30,10 +30,12 @@
         ---------------------------------------------------------------------
 
     utils.datatype.py
-    ~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~
 
 """
+
 import time
+
 from .utilsexc import UtilsDataTypeError
 
 # ---------------------------------------------------------------------------
@@ -99,8 +101,10 @@ class sppasTime(object):
     def __init__(self, now=None):
         """Create a sppasTime() instance.
 
-        :param now: (str) String representing the current time, formatted
-        like: '%Y-%m-%dT%H:%M:%S{:0=+3d}:{:0=2d}'
+        Given time must be formatted exactly like:
+        '%Y-%m-%dT%H:%M:%S{:0=+3d}:{:0=2d}'
+
+        :param now: (str) String representing the current time
 
         :Example:
 

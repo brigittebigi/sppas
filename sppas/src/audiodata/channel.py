@@ -32,7 +32,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
-from sppas.src.utils.makeunicode import b
+
 from .audioframes import sppasAudioFrames
 from .audiodataexc import IntervalError, SampleWidthError, FrameRateError
 

@@ -156,6 +156,12 @@ class sppasLogSetup(object):
 
         self._log_level = int(log_level)
         self._formatter = logging.Formatter(format_msg)
+
+        # Remove all existing handlers in the logging
+        for h in reversed(list(logging.getLogger().handlers)):
+            logging.getLogger().removeHandler(h)
+
+        # Add our own handler in the logging
         self._handler = logging.NullHandler()
         logging.getLogger().addHandler(self._handler)
         logging.getLogger().setLevel(self._log_level)

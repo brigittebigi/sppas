@@ -35,6 +35,7 @@
     Exceptions for audiodata package.
 
 """
+
 from sppas.src.config import error
 
 # -----------------------------------------------------------------------

@@ -92,17 +92,11 @@ class ProcessProgressDialog(spBaseDialog):
 
     # ------------------------------------------------------------------------
 
-    def set_new(self, label="", text="", fraction=0.):
-        """Initialize a new progress box.
-
-        :param label:    progress box label (default: None)
-        :param text:     progress bar text  (default: None)
-        :param fraction: progress bar value (default: 0)
-
-        """
-        self.set_header(label)
-        self.set_text(text)
-        self.set_fraction(fraction)
+    def set_new(self):
+        """Initialize a new progress box."""
+        self.set_header("")
+        self.set_text("")
+        self.set_fraction(0)
         self.Refresh()
         self.Update()
 
@@ -166,5 +160,3 @@ class ProcessProgressDialog(spBaseDialog):
         """Close the progress box."""
 
         self.Destroy()
-
-# ----------------------------------------------------------------------------

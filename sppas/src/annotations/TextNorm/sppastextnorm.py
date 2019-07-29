@@ -35,7 +35,9 @@
     SPPAS integration of Text Normalization.
 
 """
+
 import os
+import logging
 
 from sppas.src.config import paths
 from sppas.src.config import symbols
@@ -99,7 +101,11 @@ class sppasTextNorm(sppasBaseAnnotation):
         :param lang: (str) the language code
 
         """
-        voc = sppasVocabulary(vocab_filename)
+        if os.path.isfile(vocab_filename) is True:
+            voc = sppasVocabulary(vocab_filename)
+        else:
+            voc = sppasVocabulary()
+            logging.warning('Vocabulary file {:s} for language {:s} not found.'.format(vocab_filename, lang))
         self.__normalizer = TextNormalizer(voc, lang)
         self.logfile.print_message(
             (info(1164, "annotations")).format(len(voc)),
@@ -107,21 +113,31 @@ class sppasTextNorm(sppasBaseAnnotation):
 
         # Replacement dictionary
         replace_filename = os.path.join(paths.resources, "repl", lang + ".repl")
-        if os.path.exists(replace_filename) is True:
+        if os.path.isfile(replace_filename) is True:
             dict_replace = sppasDictRepl(replace_filename, nodump=True)
         else:
             dict_replace = sppasDictRepl()
+            logging.warning('Replacement vocabulary not found.')
         self.__normalizer.set_repl(dict_replace)
         self.logfile.print_message(
             (info(1166, "annotations")).format(len(dict_replace)), indent=0)
 
         # Punctuations dictionary
         punct_filename = os.path.join(paths.resources, "vocab", "Punctuations.txt")
-        if os.path.exists(punct_filename) is True:
+        if os.path.isfile(punct_filename) is True:
             vocab_punct = sppasVocabulary(punct_filename, nodump=True)
         else:
             vocab_punct = sppasVocabulary()
         self.__normalizer.set_punct(vocab_punct)
+
+        # Number dictionary
+        number_filename = os.path.join(paths.resources, 'num', lang.lower() + '_num.repl')
+        if os.path.exists(number_filename) is True:
+            numbers = sppasDictRepl(number_filename, nodump=True)
+        else:
+            numbers = sppasDictRepl()
+            logging.warning('Dictionary of numbers not found.')
+        self.__normalizer.set_num(numbers)
 
     # -----------------------------------------------------------------------
     # Methods to fix options
@@ -142,10 +158,18 @@ class sppasTextNorm(sppasBaseAnnotation):
             key = opt.get_key()
             if key == "faked":
                 self.set_faked(opt.get_value())
+
             elif key == "std":
                 self.set_std(opt.get_value())
+
             elif key == "custom":
                 self.set_custom(opt.get_value())
+
+            elif key == "occ_dur":
+                self.set_occ_dur(opt.get_value())
+
+            elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
+                self._options[key] = opt.get_value()
 
             else:
                 raise AnnotationOptionError(key)
@@ -179,6 +203,16 @@ class sppasTextNorm(sppasBaseAnnotation):
 
         """
         self._options['custom'] = value
+
+    # -----------------------------------------------------------------------
+
+    def set_occ_dur(self, value):
+        """Fix the occurrences and duration tiers generation option.
+
+        :param value: (bool) Create a tier with nb of tokens and duration
+
+        """
+        self._options['occ_dur'] = value
 
     # -----------------------------------------------------------------------
     # Methods to tokenize series of data
@@ -227,6 +261,31 @@ class sppasTextNorm(sppasBaseAnnotation):
         return tokens_faked, tokens_std, tokens_custom
 
     # ------------------------------------------------------------------------
+
+    def occ_dur(self, tier):
+        """Create a tier with labels and duration of each annotation.
+
+        :param tier:
+
+        """
+        occ = sppasTier('Occ-%s' % tier.get_name())
+        dur = sppasTier('Dur-%s' % tier.get_name())
+        for ann in tier:
+            labels = ann.get_labels()
+            nb_occ = len(labels)
+            location = ann.get_location()
+            duration = location.get_best().duration().get_value()
+            occ.create_annotation(
+                location.copy(),
+                sppasLabel(sppasTag(nb_occ, tag_type="int"))
+            )
+            dur.create_annotation(
+                ann.get_location().copy(),
+                sppasLabel(sppasTag(round(duration, 4), tag_type="float"))
+            )
+        return occ, dur
+
+    # ------------------------------------------------------------------------
     # Apply the annotation on one given file
     # -----------------------------------------------------------------------
 
@@ -256,6 +315,16 @@ class sppasTextNorm(sppasBaseAnnotation):
         if tier_custom is not None:
             trs_output.append(tier_custom)
 
+        if len(trs_output) > 0:
+            if self._options["occ_dur"] is True:
+                tier_occ, tier_dur = self.occ_dur(trs_output[0])
+                trs_output.append(tier_occ)
+                trs_output.append(tier_dur)
+                trs_output.add_hierarchy_link(
+                    "TimeAssociation", trs_output[0], tier_occ)
+                trs_output.add_hierarchy_link(
+                    "TimeAssociation", trs_output[0], tier_dur)
+
         trs_output.set_meta('text_normalization_result_of', input_file[0])
         trs_output.set_meta('text_normalization_vocab',
                             self.__normalizer.get_vocab_filename())
@@ -277,10 +346,9 @@ class sppasTextNorm(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def get_pattern():
-        """Pattern this annotation adds to an output filename."""
-        return '-token'
+    def get_pattern(self):
+        """Pattern this annotation uses in an output filename."""
+        return self._options.get("outputpattern", "-token")
 
     # -----------------------------------------------------------------------
     # Private: some workers...

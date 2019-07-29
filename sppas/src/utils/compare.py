@@ -33,7 +33,9 @@
     ~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import logging
+
 from .makeunicode import u
 from .makeunicode import text_type
 from .makeunicode import binary_type

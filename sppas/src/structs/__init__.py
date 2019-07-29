@@ -29,24 +29,40 @@
 
         ---------------------------------------------------------------------
 
-structs: access and manage data structures used into SPPAS.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-:author:       Brigitte Bigi
-:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-:contact:      develop@sppas.org
-:license:      GPL, v3
-:copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+*****************************************************************************
+structs: access and manage data structures.
+*****************************************************************************
+
+This package includes classes to manage data like un-typed options, a
+language, a dag...
+
+Requires the following other packages:
+
+* config
+* utils
 
 """
+
+from .basecompare import sppasBaseCompare
+from .basefilters import sppasBaseFilters
+from .basefset import sppasBaseSet
 from .baseoption import sppasBaseOption
 from .baseoption import sppasOption
 from .lang import sppasLangResource
 from .metainfo import sppasMetaInfo
 
 __all__ = (
-    'sppasBaseOption',
-    'sppasOption',
-    'sppasLangResource',
-    'sppasMetaInfo',
+    "sppasBaseCompare",
+    "sppasBaseFilters",
+    "sppasBaseSet",
+    "sppasBaseOption",
+    "sppasOption",
+    "sppasLangResource",
+    "sppasMetaInfo",
 )

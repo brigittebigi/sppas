@@ -46,7 +46,7 @@ def log2(x):
     """Estimate log in base 2.
 
     :param x: (int, float) value
-    :return: (float)
+    :returns: (float)
     """
     x = float(x)
     return math.log(x)/math.log(2)

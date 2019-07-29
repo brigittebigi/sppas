@@ -144,10 +144,10 @@ class sppasPatterns(object):
         """n-gram matches between ref and hyp.
 
         Search for common n-gram sequences of hyp in ref.
+        The scores are supposed to range in [0;1] values.
 
         :param ref: (list of tokens) List of references
         :param hyp: (list of tuples) List of hypothesis with their scores
-        The scores are supposed to range in [0;1] values.
 
         :returns: List of matching indexes as tuples (i_ref, i_hyp)
 

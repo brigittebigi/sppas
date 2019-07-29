@@ -128,7 +128,7 @@ class sppasLocation(object):
         """Return the score of a localization or None if it is not in.
 
         :param loc: (sppasLocalization)
-        :return: score: (float)
+        :returns: score: (float)
 
         """
         if not isinstance(loc, sppasBaseLocalization):

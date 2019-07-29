@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import wx
 import webbrowser
 try:
@@ -80,6 +81,7 @@ class sppasFeedbackDialog(sppasDialog):
     :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
 
     """
+
     def __init__(self, parent):
         """Create a feedback dialog.
 
@@ -131,17 +133,17 @@ class sppasFeedbackDialog(sppasDialog):
         grid.AddGrowableCol(1)
         grid.AddGrowableRow(2)
 
-        grid.Add(to, 0)
+        grid.Add(to, 0, wx.LEFT, 4)
         grid.Add(self.to_text, 0, flag=wx.EXPAND)
 
-        grid.Add(subject, 0)
+        grid.Add(subject, 0, wx.LEFT, 4)
         grid.Add(self.subject_text, 0, flag=wx.EXPAND)
 
-        grid.Add(body, 0, flag=wx.TOP)
+        grid.Add(body, 0, wx.TOP | wx.LEFT, 4)
         grid.Add(self.body_text, 2, flag=wx.EXPAND)
 
         s = wx.StaticText(panel, label=MSG_EMAIL_SEND_WITH)
-        grid.Add(s, 0)
+        grid.Add(s, 0, wx.LEFT | wx.BOTTOM, 4)
 
         panel.SetAutoLayout(True)
         panel.SetSizer(grid)
@@ -150,15 +152,15 @@ class sppasFeedbackDialog(sppasDialog):
     # -----------------------------------------------------------------------
 
     def _create_buttons(self):
-        """Create the buttons and bind events."""
+        """Create the buttons."""
         panel = sppasPanel(self, name="actions")
         panel.SetMinSize(wx.Size(-1, wx.GetApp().settings.action_height))
 
         # Create the buttons
         gmail_btn = sppasBitmapTextButton(panel, "Gmail", name="gmail")
-        default_btn = sppasBitmapTextButton(panel, "E-mail", name="email-window")
+        default_btn = sppasBitmapTextButton(panel, "E-mail", name="window-email")
         other_btn = sppasBitmapTextButton(panel, MSG_ACTION_OTHER, name="at")
-        close_btn = sppasBitmapTextButton(panel, MSG_ACTION_CLOSE, name="close-window")
+        close_btn = sppasBitmapTextButton(panel, MSG_ACTION_CLOSE, name="window-close")
 
         # Create vertical lines to separate buttons
         vertical_line_1 = wx.StaticLine(panel, style=wx.LI_VERTICAL)
@@ -191,11 +193,11 @@ class sppasFeedbackDialog(sppasDialog):
         event_obj = event.GetEventObject()
         event_name = event_obj.GetName()
 
-        if event_name == "close-window":
+        if event_name == "window-close":
             self.SetReturnCode(wx.ID_CLOSE)
             self.Close()
 
-        elif event_name == "email-window":
+        elif event_name == "window-email":
             self.SendWithDefault()
 
         elif event_name == "gmail":

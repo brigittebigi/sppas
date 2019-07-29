@@ -2,6 +2,7 @@
   "id": "textnorm",
   "name": "Text Normalization",
   "descr": "Converts orthography into a tokenized form: word segmented, numerals converted into words, expanded abbreviations, punctuation removed, etc. Requires IPUs with the orthographic transcription.",
+  "api": "sppasTextNorm",
   "required": "",
 
   "resources": [
@@ -14,6 +15,18 @@
   ],
 
   "options": [
+    {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "",
+      "text": "Input file pattern (orthographic transcription)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-token",
+      "text": "Output file pattern"
+    },
     {
       "id": "faked",
       "type": "bool",
@@ -33,6 +46,13 @@
       "type": "bool",
       "value": false,
       "text": "Create a customized tier (useful if EOT)"
+    },
+
+    {
+      "id": "occ_dur",
+      "type": "bool",
+      "value": true,
+      "text": "Create tiers with number of tokens and duration of each IPU"
     }
 
   ]

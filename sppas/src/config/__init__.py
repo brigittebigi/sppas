@@ -28,16 +28,21 @@
 
         ---------------------------------------------------------------------
 
-config: SPPAS configuration for global things.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-:author:       Brigitte Bigi
-:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-:contact:      develop@sppas.org
-:license:      GPL, v3
-:copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+*****************************************************************************
+config: configuration for all global things.
+*****************************************************************************
+
+This package includes classes to fix all global parameters. It does not
+requires any other package but all other packages of SPPAS are requiring it!
 
 """
+
 import sys
 try:
     reload  # Python 2.7
@@ -145,7 +150,6 @@ def msg(msg, domain=None):
             pass
 
     return msg
-
 
 # ---------------------------------------------------------------------------
 

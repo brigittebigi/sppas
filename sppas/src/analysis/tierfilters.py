@@ -36,8 +36,8 @@
 
 from sppas import sppasKeyError
 
-from sppas.src.utils.makeunicode import u
-from sppas.src.structs.basefilters import sppasBaseFilters
+from sppas.src.utils import u
+from sppas.src.structs import sppasBaseFilters
 
 from sppas.src.anndata.ann.annset import sppasAnnSet
 from sppas.src.anndata.ann.annlabel import sppasTagCompare
@@ -269,7 +269,7 @@ class sppasTierFilters(sppasBaseFilters):
         :param tier: (sppasTier)
         :param sfilter: (str) Name of the filter (tag, loc, ...)
         :param entry: (str) The entry to cast
-        :return: typed entry
+        :returns: typed entry
 
         """
         if sfilter == "tag":

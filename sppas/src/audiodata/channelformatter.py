@@ -32,6 +32,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 from .channelframes import sppasChannelFrames
 from .channel import sppasChannel
 from .audioframes import sppasAudioFrames

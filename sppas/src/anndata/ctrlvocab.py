@@ -33,9 +33,10 @@
     ~~~~~~~~~~~~~~~~~~~~
 
 """
+
 from collections import OrderedDict
 
-from sppas.src.utils.makeunicode import sppasUnicode
+from sppas.src.utils import sppasUnicode
 from .anndataexc import AnnDataTypeError
 from .anndataexc import CtrlVocabContainsError
 from .ann.annlabel import sppasTag

@@ -195,9 +195,8 @@ if __name__ == "__main__":
         # ----------------------------------------
 
         # Fix input files
-        files = list()
         for f in args.I:
-            parameters.add_sppasinput(os.path.abspath(f))
+            parameters.add_to_workspace(os.path.abspath(f))
 
         # Fix the output file extension
         parameters.set_output_format(args.e)

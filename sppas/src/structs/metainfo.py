@@ -30,12 +30,13 @@
         ---------------------------------------------------------------------
 
     structs.metainfo.py
-    ~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import collections
 
-from sppas.src.utils.makeunicode import u
+from sppas.src.utils import u
 
 from .structsexc import MetaKeyError
 
@@ -49,7 +50,7 @@ class sppasMetaInfo(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     Meta-information is a sorted collection of pairs (key, value) where
     value is a tuple with first argument of type boolean to indicate the
@@ -65,7 +66,9 @@ class sppasMetaInfo(object):
     """
 
     def __init__(self):
-        """Create a new sppasMetaInfo instance."""
+        """Create a new sppasMetaInfo instance.
+
+        """
         super(sppasMetaInfo, self).__init__()
         self._metainfo = collections.OrderedDict()
 

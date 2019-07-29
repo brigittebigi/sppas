@@ -3,10 +3,23 @@
   "name": "INTSINT",
   "descr": "Codes the intonation by means of an alphabet of 8 discrete symbols: INternational Transcription System for INTonation. Proposed by D. Hirst. Requires Momel anchors.",
   "required": "momel",
+  "api": "sppasIntsint",
 
   "resources": [
   ],
 
   "options": [
+    {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-momel",
+      "text": "Input file pattern (momel anchors)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-intsint",
+      "text": "Output file pattern"
+    }
   ]
 }

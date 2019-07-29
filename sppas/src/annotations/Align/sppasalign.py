@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import shutil
 import os
 import logging
@@ -44,7 +45,6 @@ from sppas.src.config import annots
 from sppas.src.config import info
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
-from sppas.src.anndata import sppasLabel, sppasTag, sppasLocation
 from sppas.src.anndata import sppasMedia
 import sppas.src.audiodata.aio as audioaio
 from sppas.src.resources.mapping import sppasMapping
@@ -59,7 +59,6 @@ from ..annotationsexc import NoInputError
 
 from .tracksio import TracksReaderWriter
 from .tracksgmt import TrackSegmenter
-from .activity import sppasActivity
 
 # ---------------------------------------------------------------------------
 
@@ -93,15 +92,13 @@ class sppasAlign(sppasBaseAnnotation):
         - PhonAlign
         - TokensAlign (if tokens are given in the input)
         - PhnTokAlign - option (if tokens are given in the input)
-        - Activity - option (if tokens are given in the input)
-        - ActivityDuration - option (if tokens are given in the input)
 
     How to use sppasAlign?
 
     >>> a = sppasAlign()
     >>> a.set_aligner('julius')
     >>> a.load_resources(model_dirname)
-    >>> a.run([audio, phones], [tokens], output)
+    >>> a.run([phones], [audio, tokens], output)
 
     """
 
@@ -174,8 +171,6 @@ class sppasAlign(sppasBaseAnnotation):
             - clean
             - basic
             - aligner
-            - activity
-            - activityduration
 
         :param options: (sppasOption)
 
@@ -193,11 +188,8 @@ class sppasAlign(sppasBaseAnnotation):
             elif "aligner" == key:
                 self.set_aligner(opt.get_value())
 
-            elif "activity" == key:
-                self.set_activity_tier(opt.get_value())
-
-            elif "activityduration" == key:
-                self.set_activity_duration_tier(opt.get_value())
+            elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
+                self._options[key] = opt.get_value()
 
             else:
                 raise AnnotationOptionError(key)
@@ -233,26 +225,6 @@ class sppasAlign(sppasBaseAnnotation):
 
         """
         self._options['basic'] = basic
-
-    # -----------------------------------------------------------------------
-
-    def set_activity_tier(self, value):
-        """Fix the activity option.
-
-        :param value: (bool) Activity tier generation.
-
-        """
-        self._options['activity'] = bool(value)
-
-    # -----------------------------------------------------------------------
-
-    def set_activity_duration_tier(self, value):
-        """Fix the activity duration option.
-
-        :param value: (bool) Activity tier generation.
-
-        """
-        self._options['activityduration'] = bool(value)
 
     # -----------------------------------------------------------------------
     # Automatic Speech Segmentation
@@ -354,51 +326,6 @@ class sppasAlign(sppasBaseAnnotation):
             self._tracksrw.read_aligned_tracks(workdir)
 
         return tier_phn, tier_tok, tier_pron
-
-    # -----------------------------------------------------------------------
-
-    def append_extra(self, trs):
-        """Append extra tiers in trs.
-
-        :param trs: (Transcription)
-
-        """
-        if self._options['activity'] is False and \
-                self._options['activityduration'] is False:
-            return
-
-        token_align = trs.find("TokensAlign")
-        if token_align is None:
-            self.logfile.print_message(
-                MSG_NO_TOKENS_ALIGN, indent=1, status=annots.warning)
-            return trs
-
-        # Activity tier
-        try:
-            self.logfile.print_message(MSG_ACTION_EXTRA_TIER, indent=1)
-            activity = sppasActivity()
-            tier = activity.get_tier(trs)
-            if self._options['activity'] is True:
-                trs.append(tier)
-                trs.add_hierarchy_link("TimeAlignment", token_align, tier)
-
-            if self._options['activityduration'] is True:
-                dur_tier = trs.create_tier('ActivityDuration')
-                for a in tier:
-                    interval = a.get_location().get_best()
-                    dur = interval.duration().get_value()
-                    dur_tier.create_annotation(
-                        sppasLocation(interval.copy()),
-                        sppasLabel(sppasTag(dur, tag_type="float"))
-                    )
-                trs.add_hierarchy_link("TimeAssociation",
-                                       tier, dur_tier)
-        except Exception as e:
-            logging.error(traceback.format_exc())
-            self.logfile.print_message(
-                MSG_EXTRA_TIER.format(
-                    tiername="Activities", message=str(e)),
-                indent=2, status=annots.warning)
 
     # -----------------------------------------------------------------------
 
@@ -530,9 +457,6 @@ class sppasAlign(sppasBaseAnnotation):
                 shutil.rmtree(workdir)
             raise
 
-        if input_audio_filename is not None:
-            self.append_extra(trs_output)
-
         # Save results
         if output_file is not None:
             try:
@@ -552,13 +476,14 @@ class sppasAlign(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def get_pattern():
+    def get_pattern(self):
         """Pattern this annotation uses in an output filename."""
-        return '-palign'
+        return self._options.get("outputpattern", "-palign")
 
-    @staticmethod
-    def get_input_pattern():
+    def get_input_pattern(self):
         """Pattern this annotation expects for its input filename."""
-        return '-phon'
+        return self._options.get("inputpattern", "-phon")
 
+    def get_opt_input_pattern(self):
+        """Pattern that the annotation can optionally use as input."""
+        return self._options.get("inputoptpattern", '-token')

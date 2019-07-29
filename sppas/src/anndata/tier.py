@@ -33,8 +33,9 @@
     ~~~~~~~~~~~~~~~~
 
 """
-from sppas.src.files.fileutils import sppasGUID
-from sppas.src.utils.makeunicode import sppasUnicode
+
+from sppas.src.files import sppasGUID
+from sppas.src.utils import sppasUnicode
 
 from .anndataexc import AnnDataTypeError
 from .anndataexc import AnnDataIndexError
@@ -318,10 +319,12 @@ class sppasTier(sppasMetaData):
                     if self.__ann[index].get_lowest_localization().get_midpoint() == \
                             annotation.get_lowest_localization().get_midpoint():
                         raise TierAddError(index)
+                    self.__ann.insert(index + 1, annotation)
+                    return index + 1
                 else:
                     index = self.near(annotation.get_lowest_localization(), direction=-1)
-                self.__ann.insert(index + 1, annotation)
-                return index + 1
+                    self.__ann.insert(index, annotation)
+                    return index
 
             else:
                 index = self.mindex(annotation.get_lowest_localization(), bound=0)
@@ -1101,3 +1104,14 @@ class sppasTier(sppasMetaData):
 
     def __len__(self):
         return len(self.__ann)
+
+    def __contains__(self, value):
+        """Value can be either an annotation or an annotation identifier."""
+        if isinstance(value, sppasAnnotation):
+            return value in self.__ann
+        else:
+            for a in self.__ann:
+                if a.get_meta("id") == value:
+                    return True
+        return False
+

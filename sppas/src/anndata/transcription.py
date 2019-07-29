@@ -33,8 +33,9 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
-from sppas.src.files.fileutils import sppasGUID
-from sppas.src.utils.makeunicode import sppasUnicode
+
+from sppas.src.files import sppasGUID
+from sppas.src.utils import sppasUnicode
 
 from .anndataexc import AnnDataTypeError
 from .anndataexc import TrsAddError
@@ -534,7 +535,7 @@ class sppasTranscription(sppasMetaData):
         and returns the last tier in the transcription.
 
         :param index: (int) Index of the transcription to remove.
-        :return: (sppasTier)
+        :returns: (sppasTier)
         :raise: AnnDataIndexError
 
         """

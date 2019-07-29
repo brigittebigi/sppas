@@ -162,7 +162,7 @@ class sppasLabel(object):
         """Return the score of a tag or None if tag is not in the label.
 
         :param tag: (sppasTag)
-        :return: score: (float)
+        :returns: score: (float)
 
         """
         if not isinstance(tag, sppasTag):

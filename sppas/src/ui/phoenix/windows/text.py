@@ -33,6 +33,9 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
+import re
+import logging
 import wx
 
 # ---------------------------------------------------------------------------
@@ -91,21 +94,53 @@ class sppasTextCtrl(wx.TextCtrl):
 
     """
 
-    def __init__(self, *args, **kw):
-        super(sppasTextCtrl, self).__init__(*args, **kw)
+    def __init__(self, parent, id=wx.ID_ANY, value="", pos=wx.DefaultPosition,
+                 size=wx.DefaultSize, style=0, validator=wx.DefaultValidator,
+                 name=wx.TextCtrlNameStr):
+        super(sppasTextCtrl, self).__init__(
+            parent, id, value="", pos=pos, size=size, style=style,
+            validator=validator, name=name)
 
         # Fix Look&Feel
-        settings = wx.GetApp().settings
-        self.SetFont(settings.text_font)
-        self.SetBackgroundColour(settings.bg_color)
-        self.SetForegroundColour(settings.fg_color)
+        try:
+            settings = wx.GetApp().settings
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
+            self.SetBackgroundColour(settings.bg_color)
+        except:
+            logging.debug("TextCtrl error. Settings not set.")
+            pass
 
-        # Fix Look&Feel for the new text to be added
+        # the message is not send to the base class when init but after
+        # in order to apply the appropriate colors&font
+        self.SetValue(value)
+
+    def SetForegroundColour(self, colour):
+        wx.Window.SetForegroundColour(self, colour)
         attr = wx.TextAttr()
-        attr.SetTextColour(settings.fg_color)
-        attr.SetBackgroundColour(settings.bg_color)
-        attr.SetFont(settings.text_font)
+        attr.SetTextColour(colour)
+        attr.SetBackgroundColour(self.GetBackgroundColour())
+        attr.SetFont(self.GetFont())
         self.SetDefaultStyle(attr)
+        self.SetStyle(0, len(self.GetValue()), attr)
+
+    def SetBackgroundColour(self, colour):
+        wx.Window.SetBackgroundColour(self, colour)
+        attr = wx.TextAttr()
+        attr.SetTextColour(self.GetForegroundColour())
+        attr.SetBackgroundColour(colour)
+        attr.SetFont(self.GetFont())
+        self.SetDefaultStyle(attr)
+        self.SetStyle(0, len(self.GetValue()), attr)
+
+    def SetFont(self, font):
+        wx.Window.SetFont(self, font)
+        attr = wx.TextAttr()
+        attr.SetTextColour(wx.GetApp().settings.fg_color)
+        attr.SetBackgroundColour(self.GetBackgroundColour())
+        attr.SetFont(font)
+        self.SetDefaultStyle(attr)
+        self.SetStyle(0, len(self.GetValue()), attr)
 
 # ---------------------------------------------------------------------------
 
@@ -175,4 +210,99 @@ class sppasMessageText(sppasTextCtrl):
         # the message is not send to the base class when init but after
         # in order to apply the appropriate colors
         self.SetValue(message)
+
+
+# ---------------------------------------------------------------------------
+# Validators for a sppasTextCtrl or wx.TextCtrl.
+# ---------------------------------------------------------------------------
+
+
+class NotEmptyTextValidator(wx.Validator):
+    """Check if the TextCtrl contains characters.
+
+    If the TextCtrl does not contains characters, the background becomes
+    pinky, Either, it is set to the system background colour.
+
+    """
+
+    def __init__(self):
+        super(NotEmptyTextValidator, self).__init__()
+
+    def Clone(self):
+        # Required method for validator
+        return NotEmptyTextValidator()
+
+    def TransferToWindow(self):
+        # Prevent wxDialog from complaining.
+        return True
+
+    def TransferFromWindow(self):
+        # Prevent wxDialog from complaining.
+        return True
+
+    def Validate(self, win=None):
+        text_ctrl = self.GetWindow()
+        text = text_ctrl.GetValue().strip()
+        if len(text) == 0:
+            text_ctrl.SetBackgroundColour("pink")
+            text_ctrl.SetFocus()
+            text_ctrl.Refresh()
+            return False
+
+        try:
+            text_ctrl.SetBackgroundColour(wx.GetApp().settings.bg_colour)
+        except:
+            text_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
+
+        text_ctrl.Refresh()
+        return True
+
+# ---------------------------------------------------------------------------
+
+
+class ASCIITextValidator(wx.Validator):
+    """Check if the TextCtrl contains only ASCII characters.
+
+    If the TextCtrl does not contains characters, the background becomes
+    pinky, Either, it is set to the system background colour.
+
+    """
+
+    def __init__(self):
+        super(ASCIITextValidator, self).__init__()
+
+    def Clone(self):
+        # Required method for validator
+        return ASCIITextValidator()
+
+    def TransferToWindow(self):
+        # Prevent wxDialog from complaining.
+        return True
+
+    def TransferFromWindow(self):
+        # Prevent wxDialog from complaining.
+        return True
+
+    @staticmethod
+    def is_restricted_ascii(text):
+        # change any other character than a to z and underscore in the key
+        ra = re.sub(r'[^a-zA-Z0-9_]', '*', text)
+        return text == ra
+
+    def Validate(self, win=None):
+        text_ctrl = self.GetWindow()
+        text = text_ctrl.GetValue().strip()
+        if ASCIITextValidator.is_restricted_ascii(text) is False:
+            text_ctrl.SetBackgroundColour("pink")
+            text_ctrl.SetFocus()
+            text_ctrl.Refresh()
+            return False
+
+        try:
+            text_ctrl.SetBackgroundColour(wx.GetApp().settings.bg_colour)
+        except:
+            text_ctrl.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
+
+        text_ctrl.Refresh()
+        return True
 

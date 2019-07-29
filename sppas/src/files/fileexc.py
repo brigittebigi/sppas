@@ -51,7 +51,7 @@ except ImportError:
 
         :param index: (int) Index of the error.
         :param domain: (str) Translation domain [not used]
-        :return: (str) Error message. 
+        :returns: (str) Error message. 
 
         """          
         if domain is not None:
@@ -65,6 +65,8 @@ except ImportError:
                 return "{:s} has no attribute '{:s}'"
             if index == 9030:
                 return "'{:s}' does not match root '{:s}'"
+            if index == 9040:
+                return "{!s:s} is locked."
 
         return ":ERROR " + str(index) + ": "
 
@@ -144,6 +146,22 @@ class FileRootValueError(ValueError):
 
     def __init__(self, filename, rootname):
         self.parameter = error(9030) + (error(9030, "ui")).format(filename, rootname)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class FileLockedError(IOError):
+    """:ERROR 9040:.
+
+    '{!s:s}' is locked.'
+
+    """
+
+    def __init__(self, filename):
+        self.parameter = error(9040) + (error(9040, "ui")).format(filename)
 
     def __str__(self):
         return repr(self.parameter)

@@ -62,6 +62,14 @@ parser.add_argument("-n",
                     type=str,
                     help='One or several tier name separated by commas.')
 
+parser.add_argument("--reverse",
+                    action='store_true',
+                    help='Reverse the conversion (ipa to sampa).')
+
+parser.add_argument("--nopraat",
+                    action='store_true',
+                    help='Use the standard table even if textgrid file.')
+
 if len(sys.argv) <= 1:
     sys.argv.append('-h')
 
@@ -75,16 +83,25 @@ parser = sppasRW(args.i)
 trs_input = parser.read()
 
 # fix table
-if args.i.lower().endswith('textgrid') is True:
-    print('Converted with Praat-IPA mapping table.')
-    table = os.path.join(os.path.dirname(PROGRAM), "sampa2praat.repl")
-else:
+if args.nopraat:
     print('Converted with standard-IPA mapping table.')
     table = os.path.join(os.path.dirname(PROGRAM), 'sampa2ipa.repl')
+else:
+    if args.i.lower().endswith('textgrid') is True:
+        print('Converted with Praat-IPA mapping table.')
+        table = os.path.join(os.path.dirname(PROGRAM), "sampa2praat.repl")
+    else:
+        print('Converted with standard-IPA mapping table.')
+        table = os.path.join(os.path.dirname(PROGRAM), 'sampa2ipa.repl')
 
 # load table
 mapping = sppasMappingTier(table)
-mapping.set_reverse(False)    # from sampa to ipa direction
+if args.reverse:
+    mapping.set_reverse(True)    # from ipa to sampa direction
+    print("Convert from IPA to SAMPA (reverse option enabled)")
+else:
+    mapping.set_reverse(False)    # from sampa to ipa direction
+
 mapping.set_keep_miss(True)   # keep unknown entries as given
 mapping.set_miss_symbol("")   # not used!
 mapping.set_delimiters([])    # will use longest matching
@@ -99,7 +116,10 @@ for n in args.n.split(','):
     tier = trs_input.find(n, case_sensitive=False)
     if tier is not None:
         new_tier = mapping.map_tier(tier)
-        new_tier.set_name(n+"-IPA")
+        if args.reverse:
+            new_tier.set_name(n+"-SAMPA")
+        else:
+            new_tier.set_name(n+"-IPA")
         trs.append(new_tier)
     else:
         print(" [IGNORED] Wrong tier name.")
@@ -112,7 +132,10 @@ if len(trs) == 0:
     sys.exit(1)
 
 infile, inext = os.path.splitext(args.i)
-filename = infile + "-ipa" + inext
-parser.set_filename(infile + "-ipa" + inext)
+if args.reverse:
+    filename = infile + "-sampa" + inext
+else:
+    filename = infile + "-ipa" + inext
+parser.set_filename(filename)
 parser.write(trs)
 print("File {:s} created.".format(filename))

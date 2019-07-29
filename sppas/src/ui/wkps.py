@@ -70,6 +70,8 @@ class sppasWorkspaces(object):
 
     ext = ".wjson"
 
+    # -----------------------------------------------------------------------
+
     def __init__(self):
         """Create a sppasWorkspaces instance.
 
@@ -131,6 +133,8 @@ class sppasWorkspaces(object):
         try:
             dest = os.path.join(paths.wkps, u_name + sppasWorkspaces.ext)
             shutil.copyfile(filename, dest)
+            with open(dest, 'r'):
+                pass
         except:
             raise
 
@@ -158,39 +162,9 @@ class sppasWorkspaces(object):
         # create the empty workspace data & save
         fn = os.path.join(paths.wkps, u_name) + sppasWorkspaces.ext
         data = FileData()
-        # data.save(fn)
+        data.save(fn)
 
         self.__wkps.append(u_name)
-        return u_name
-
-    # -----------------------------------------------------------------------
-
-    def save(self, data, index=-1):
-        """Save data into a workspace.
-
-        The data can already match an existing workspace or a new workspace
-        is created. Raises indexerror if is attempted to save the 'Blank'
-        workspace.
-
-        :param data: (FileData) Data of a workspace to save
-        :param index: (int) Index of the workspace to save data in
-        :returns: The real name used to save the workspace
-        :raises: IOError, IndexError
-
-        """
-        if index == 0:
-            raise IndexError("It is not allowed to save the 'Blank' workspace.")
-
-        if index == -1:
-            u_name = self.new("New workspace")
-        else:
-            u_name = self[index]
-
-        fn = os.path.join(paths.wkps, u_name) + sppasWorkspaces.ext
-        # data.save(fn)
-        with open(fn, "w") as fp:
-            fp.write("[]")
-
         return u_name
 
     # -----------------------------------------------------------------------
@@ -314,13 +288,38 @@ class sppasWorkspaces(object):
             return FileData()
 
         try:
-            fn = self.check_filename(index)
+            filename = self.check_filename(index)
         except OSError:
             return FileData()
 
-        data = FileData()
-        #data.load(fn)
-        return data
+        return FileData().load(filename)
+
+    # -----------------------------------------------------------------------
+
+    def save_data(self, data, index=-1):
+        """Save data into a workspace.
+
+        The data can already match an existing workspace or a new workspace
+        is created. Raises indexerror if is attempted to save the 'Blank'
+        workspace.
+
+        :param data: (FileData) Data of a workspace to save
+        :param index: (int) Index of the workspace to save data in
+        :returns: The real name used to save the workspace
+        :raises: IOError, IndexError
+
+        """
+        if index == 0:
+            raise IndexError("It is not allowed to save the 'Blank' workspace.")
+
+        if index == -1:
+            u_name = self.new("New workspace")
+        else:
+            u_name = self[index]
+
+        filename = os.path.join(paths.wkps, u_name) + sppasWorkspaces.ext
+        data.save(filename)
+        return u_name
 
     # -----------------------------------------------------------------------
     # Overloads

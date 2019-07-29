@@ -1,0 +1,66 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 23.8410884354 
+tiers? <exists> 
+size = 1 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "Transcription" 
+        xmin = 0 
+        xmax = 23.8410884354 
+        intervals: size = 13 
+        intervals [1]:
+            xmin = 0 
+            xmax = 1.02216793013 
+            text = "#" 
+        intervals [2]:
+            xmin = 1.02216793013 
+            xmax = 4.27087813531 
+            text = "dastgahe abtasfiyekone khane yek moshkele asasi darad" 
+        intervals [3]:
+            xmin = 4.27087813531 
+            xmax = 4.69189274989 
+            text = "#" 
+        intervals [4]:
+            xmin = 4.69189274989 
+            xmax = 9.17098893136 
+            text = "sathe ab besiyar balast va in jaryane ezafiye ab baese nashtiye dastgah mishavad" 
+        intervals [5]:
+            xmin = 9.17098893136 
+            xmax = 9.86727475819 
+            text = "#" 
+        intervals [6]:
+            xmin = 9.86727475819 
+            xmax = 14.5628197899 
+            text = "aya shoma mitavanid ruze seshanbe yek teknesiyan baraye barresiye dastgah beferestid" 
+        intervals [7]:
+            xmin = 14.5628197899 
+            xmax = 15.0813174801 
+            text = "#" 
+        intervals [8]:
+            xmin = 15.0813174801 
+            xmax = 19.250989441 
+            text = "seshanbe tanha ruzi ast ke man mitavanam baraye anjame in kar ekhtesas daham" 
+        intervals [9]:
+            xmin = 19.250989441 
+            xmax = 19.3629459316 
+            text = "#" 
+        intervals [10]:
+            xmin = 19.3629459316 
+            xmax = 21.6537245707 
+            text = "mamnun khaham shod agar in qarar ra katban" 
+        intervals [11]:
+            xmin = 21.6537245707 
+            xmax = 22.0574798305 
+            text = "#" 
+        intervals [12]:
+            xmin = 22.0574798305 
+            xmax = 23.3228413721 
+            text = "be ettelae man beresanid" 
+        intervals [13]:
+            xmin = 23.3228413721 
+            xmax = 23.8410884354 
+            text = "#" 

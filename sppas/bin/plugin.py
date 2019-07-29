@@ -55,6 +55,7 @@ An "all-in-one" solution:
 >>> ./sppas/bin/plugin.py --install --apply --remove -p sppas/src/plugins/tests/data/soxplugin.zip -i samples/samples-eng/oriana1.wav -o resampled.wav
 
 """
+
 import sys
 import os
 from argparse import ArgumentParser
@@ -64,8 +65,8 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas import sg
-from sppas.src.ui.term.terminalcontroller import TerminalController
-from sppas import sppasPluginsManager
+from sppas.src.ui import TerminalController
+from sppas.src.plugins import sppasPluginsManager
 
 
 if __name__ == "__main__":
@@ -167,22 +168,26 @@ if __name__ == "__main__":
         # install the plugin.
         plugin_id = manager.install(args.p, plugin_folder)
 
-    if args.apply and args.i:
+    if args.apply:
+        if args.i:
+            # Get the plugin
+            p = manager.get_plugin(plugin_id)
 
-        # Get the plugin
-        p = manager.get_plugin(plugin_id)
+            # Set the output file name (if any)
+            if args.o:
+                options = p.get_options()
+                for opt in options.values():
+                    if opt.get_key() == "output":
+                        opt.set_value(args.o)
+                p.set_options(options)
 
-        # Set the output file name (if any)
-        if args.o:
-            options = p.get_options()
-            for opt in options.values():
-                if opt.get_key() == "output":
-                    opt.set_value(args.o)
-            p.set_options(options)
+            # Run
+            message = manager.run_plugin(plugin_id, [args.i])
+            print(message)
 
-        # Run
-        message = manager.run_plugin(plugin_id, [args.i])
-        print(message)
+        else:
+            print("Error: argument -i is required with argument --apply")
+            sys.exit(1)
 
     if args.remove:
         manager.delete(plugin_id)

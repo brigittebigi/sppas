@@ -3,6 +3,11 @@
   "name": "Alignment",
   "descr": "Time aligns the phonetization to audio, and also the tokenizetion if available.",
   "required": "phonetize",
+  "api": "sppasAlign",
+
+  "anntype": [
+    "STANDALONE"
+  ],
 
   "resources": [
     {
@@ -14,6 +19,24 @@
   ],
 
   "options": [
+    {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-phon",
+      "text": "Input file pattern (phonetization)"
+    },
+    {
+      "id": "inputoptpattern",
+      "type": "str",
+      "value": "-token",
+      "text": "Optional input file pattern (tokenization)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-palign",
+      "text": "Output file pattern"
+    },
     {
       "id": "aligner",
       "type": "string",
@@ -33,21 +56,6 @@
       "type": "bool",
       "value": true,
       "text": "Remove working directory"
-    },
-
-    {
-      "id": "activity",
-      "type": "bool",
-      "value": true,
-      "text": "Create the Activity tier"
-    },
-
-    {
-      "id": "activityduration",
-      "type": "bool",
-      "value": false,
-      "text": "Create the ActivityDuration tier"
     }
-
   ]
 }

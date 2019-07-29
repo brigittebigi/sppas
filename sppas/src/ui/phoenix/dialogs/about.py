@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import os
 import wx
 import webbrowser
@@ -236,7 +237,8 @@ class AboutPluginPanel(sppasBaseAbout):
         super(AboutPluginPanel, self).__init__(parent)
 
         self.program = plugin.get_name()
-        # self.logo = os.path.join(plugin.get_directory(), plugin.get_icon())
+        if len(plugin.get_icon()) > 0:
+            self.logo = os.path.join(plugin.get_directory(), plugin.get_icon())
 
         self.brief = ""
         self.version = ""
@@ -281,8 +283,8 @@ class sppasAboutDialog(sppasDialog):
         self.CreateActions([wx.ID_OK])
         self.LayoutComponents()
 
-        w = self.GetFont().GetPixelSize()[1]
-        self.SetSize((w*50, -1))
+        h = self.GetFont().GetPixelSize()[1] * 50
+        self.SetSize(wx.Size(h, h))
         self.FadeIn(deltaN=-8)
 
 # ------------------------------------------------------------------------
@@ -310,8 +312,8 @@ class sppasAboutPluginDialog(sppasDialog):
         self.CreateActions([wx.ID_OK])
         self.LayoutComponents()
 
-        w = self.GetFont().GetPixelSize()[1]
-        self.SetSize((w*50, -1))
+        h = self.GetFont().GetPixelSize()[1] * 50
+        self.SetSize(wx.Size(h, h))
         self.FadeIn(deltaN=-8)
 
 # -------------------------------------------------------------------------

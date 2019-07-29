@@ -394,6 +394,15 @@ class TestTimeInterval(unittest.TestCase):
 
     # -----------------------------------------------------------------------
 
+    def test_middle(self):
+        interval = sppasInterval(self.point1000, self.point1002)
+        self.assertEqual(1.001, interval.middle_value())
+
+        interval = sppasInterval(sppasPoint(1), sppasPoint(3))
+        self.assertEqual(2., interval.middle_value())
+
+    # -----------------------------------------------------------------------
+
     def test__eq__(self):
         """
         x = y iff

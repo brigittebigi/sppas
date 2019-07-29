@@ -91,6 +91,22 @@ class sppasPanel(wx.Panel):
             c.SetFont(font)
         self.Layout()
 
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def fix_size(value):
+        """Return a proportional size value.
+
+        :param value: (int)
+        :returns: (int)
+
+        """
+        try:
+            obj_size = int(float(value) * wx.GetApp().settings.size_coeff)
+        except AttributeError:
+            obj_size = int(value)
+        return obj_size
+
 # ---------------------------------------------------------------------------
 
 
@@ -110,6 +126,7 @@ class sppasScrolledPanel(sc.ScrolledPanel):
             size=DefaultSize, style=TAB_TRAVERSAL, name=PanelNameStr)
 
     """
+
     def __init_(self, *args, **kw):
         super(sppasScrolledPanel, self).__init__(*args, **kw)
         s = wx.GetApp().settings
@@ -142,3 +159,18 @@ class sppasScrolledPanel(sc.ScrolledPanel):
             c.SetFont(font)
         self.Layout()
 
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def fix_size(value):
+        """Return a proportional size value.
+
+        :param value: (int)
+        :returns: (int)
+
+        """
+        try:
+            obj_size = int(float(value) * wx.GetApp().settings.size_coeff)
+        except AttributeError:
+            obj_size = int(value)
+        return obj_size

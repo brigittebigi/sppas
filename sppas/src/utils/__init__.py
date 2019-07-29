@@ -29,24 +29,41 @@
 
         ---------------------------------------------------------------------
 
-utils: utility functions used into SPPAS.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-:author:       Brigitte Bigi
-:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-:contact:      develop@sppas.org
-:license:      GPL, v3
-:copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+*****************************************************************************
+utils: utility classes.
+*****************************************************************************
+
+This package includes any utility class to extend python features.
+Currently, it implements a class to manage identically unicode data
+with all versions of python. It also includes a comparator of data
+which is very powerful for lists and dictionaries, a bidirectional
+dictionary, a representation of time, etc.
+
+Requires the following other packages:
+
+* config
 
 """
 
+from .datatype import sppasTime
+from .datatype import sppasType
+from .datatype import bidict
 from .compare import sppasCompare
 from .makeunicode import u, b
 from .makeunicode import sppasUnicode
 
 __all__ = (
-    'sppasCompare',
-    'sppasUnicode',
-    'u',
-    'b',
+    "sppasTime",
+    "sppasType",
+    "sppasCompare",
+    "sppasUnicode",
+    "u",
+    "b",
+    "bidict"
 )

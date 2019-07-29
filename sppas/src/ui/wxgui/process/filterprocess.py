@@ -85,7 +85,7 @@ class FilterProcess(object):
 
         :param tier: (sppasTier)
         :param tierY: (sppasTier)
-        :return: (sppasTier)
+        :returns: (sppasTier)
 
         """
         raise NotImplementedError
@@ -130,7 +130,7 @@ class FilterProcess(object):
 
         # Indicate completed!
         progress.update(1, "Completed.\n")
-        progress.set_header("")
+        # progress.set_header("")
         progress.close()
         wx.EndBusyCursor()
 
@@ -145,7 +145,7 @@ class SingleFilterProcess(FilterProcess):
 
         :param tier: (sppasTier) tier to be filtered
         :param tier_y: (sppasTier) ignored
-        :return: (sppasTier)
+        :returns: (sppasTier)
 
         """
         logging.info("Apply sppasFilter() on tier: {:s}".format(tier.get_name()))
@@ -204,7 +204,7 @@ class RelationFilterProcess(FilterProcess):
 
         :param tier: (sppasTier) tier to be filtered
         :param tier_y: (sppasTier) required
-        :return: (sppasTier)
+        :returns: (sppasTier)
 
         """
         if tier_y is None:

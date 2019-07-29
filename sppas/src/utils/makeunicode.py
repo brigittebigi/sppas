@@ -42,6 +42,7 @@ Python 2.7 and Python > 3.2.
 >>> True
 
 """
+
 from __future__ import unicode_literals
 import sys
 import re
@@ -63,7 +64,7 @@ if sys.version_info < (3,):
         """Convert to unicode using decode().
 
         :param x: a string
-        :return: a unicode string
+        :returns: a unicode string
 
         """
         # here we take care to not raise "AttributeError", like:
@@ -78,7 +79,7 @@ if sys.version_info < (3,):
         """Convert to byte using encode().
 
         :param x: a unicode string
-        :return: a string
+        :returns: a string
 
         """
         s = str(x)
@@ -98,7 +99,7 @@ else:
         """Convert to unicode (i.e. do nothing).
 
         :param x: a string
-        :return: a unicode string
+        :returns: a unicode string
 
         """
         return str(x)
@@ -107,7 +108,7 @@ else:
         """Convert to byte using encode().
 
         :param x: a unicode string
-        :return: a string
+        :returns: a string
 
         """
         s = str(x)
@@ -124,7 +125,7 @@ class sppasUnicode(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     """
 
@@ -179,7 +180,7 @@ class sppasUnicode(object):
         self._entry = re.sub("[\s]+", r" ", e)
 
         # Remove whitespace at beginning and end
-        if self._entry.startswith(' '):
+        if self._entry.startswith(" "):
             self._entry = re.sub("^[ ]+", r"", self._entry)
         if self._entry.endswith(' '):
             self._entry = re.sub("[ ]+$", r"", self._entry)
@@ -215,3 +216,14 @@ class sppasUnicode(object):
         self._entry = e
 
         return self._entry
+
+    # ------------------------------------------------------------------------
+
+    def is_restricted_ascii(self):
+        """Check if the entry key is using only a-Z_ characters.
+
+        :returns: (bool)
+
+        """
+        ra = re.sub(r'[^a-zA-Z0-9_]', '', self._entry)
+        return self._entry == ra

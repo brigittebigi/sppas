@@ -32,21 +32,21 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import logging
 import json
 import os
 
 from sppas import paths
 from sppas import annots
+from sppas import sppasTypeError
 
 from sppas.src.config import msg
-from sppas.src.structs.baseoption import sppasOption
-from sppas.src.structs.lang import sppasLangResource
-from sppas.src.structs.lang import UNDETERMINED
+from sppas.src.structs import sppasOption
+from sppas.src.structs import sppasLangResource
 from sppas.src.anndata.aio import extensions_out as annots_ext
-from sppas.src.audiodata.aio import extensions as audio_ext
-from sppas.src.files.fileutils import sppasDirUtils
-from sppas.src.files.fileutils import sppasFileUtils
+
+from sppas.src.files import FileData, States
 
 # ----------------------------------------------------------------------------
 
@@ -77,6 +77,10 @@ class annotationParam(object):
         self.__name = ""
         # The description of the annotation
         self.__descr = ""
+        # Name of the instance class of this annotation
+        self.__api = None
+        # The types this annotation can support
+        self.__types = []
         # The status of the annotation
         self.__enabled = False
         self.__invalid = False
@@ -111,6 +115,11 @@ class annotationParam(object):
             self.__key = conf['id']
             self.__name = msg(conf.get('name', ''), "annotations)")  # translate the name
             self.__descr = conf.get('descr', "")
+            self.__types = conf.get('anntype', ["STANDALONE"])
+            self.__api = conf.get('api', None)
+            if self.__api is None:
+                self.__enabled = False
+                self.__invalid = True
 
             for new_option in conf['options']:
                 opt = sppasOption(new_option['id'])
@@ -181,6 +190,12 @@ class annotationParam(object):
 
     # -----------------------------------------------------------------------
 
+    def get_types(self):
+        """Return the list of types the annotation can support (list of str)."""
+        return self.__types
+
+    # -----------------------------------------------------------------------
+
     def get_descr(self):
         """Return the description of the annotation (str)."""
         return self.__descr
@@ -193,11 +208,19 @@ class annotationParam(object):
 
     # -----------------------------------------------------------------------
 
+    def get_api(self):
+        """Return the name of the class to instantiate to perform this annotation."""
+        return self.__api
+
+    # -----------------------------------------------------------------------
+
     def get_lang(self):
-        """Return the language or an empty string."""
+        """Return the language or an empty string or None."""
         if len(self.__resources) > 0:
             return self.__resources[0].get_lang()
-        return ""
+
+        # this annotation does not require a lang to be defined
+        return None
 
     # -----------------------------------------------------------------------
 
@@ -282,7 +305,7 @@ class sppasParam(object):
         self._output_ext = annots.extension
 
         # Input files to annotate
-        self._inputs = []
+        self._workspace = FileData()
 
         # The parameters of all the annotations
         self.annotations = []
@@ -326,8 +349,7 @@ class sppasParam(object):
 
         # Load annotation configurations
         for ann in dict_cfg["annotate"]:
-            if ann["gui"] is True:
-                self.__load(os.path.join(paths.etc, ann["config"]))
+            self.__load(os.path.join(paths.etc, ann["config"]))
 
     # -----------------------------------------------------------------------
 
@@ -337,88 +359,65 @@ class sppasParam(object):
             a = annotationParam(cfg_file)
             self.annotations.append(a)
         except:
+            a = None
             logging.error('Configuration file {:s} not loaded.'
                           ''.format(cfg_file))
+        return a
 
     # -----------------------------------------------------------------------
     # Input entries to annotate
     # -----------------------------------------------------------------------
 
-    def get_sppasinput(self):
-        """Return the list of entries to annotate."""
-        return self._inputs
+    def get_workspace(self):
+        """Return the workspace."""
+        return self._workspace
 
     # -----------------------------------------------------------------------
 
-    def add_sppasinput(self, entry):
-        """Add a new entry to annotate.
+    def set_workspace(self, wkp):
+        if isinstance(wkp, FileData) is False:
+            raise sppasTypeError("FileData", type(wkp))
+        logging.debug('New data to set in sppasParam. '
+                      'Id={:s}'.format(wkp.id))
+        self._workspace = wkp
 
-        If no report file name was previously fixed, it will be assigned to
-        the given entry with the extension '.log'.
+    # -----------------------------------------------------------------------
 
-        :param entry: (str) Filename or directory
+    def add_to_workspace(self, files):
+        """Add a list of files or directories into the workspace.
+
+        The state of all the added files is set to CHECKED.
+
+        :param files: (str or list of str)
 
         """
-        base_ext = ['.txt', '.hz', '.pitchtier']
-        for e in audio_ext:
-            base_ext.append(e.lower())
-        ann_ext = [e.lower() for e in annots_ext]
+        if isinstance(files, list) is False:
+            try:
+                if os.path.isfile(files):
+                    objs = self._workspace.add_file(files)
+                    if objs is not None:
+                        for obj in objs:
+                            self._workspace.set_object_state(States().CHECKED, obj)
 
-        # Create a full list of files to add, without any kind of filter
-        initial_files = list()
-        if os.path.isdir(entry):
-            # Get the list of files from the input directory
-            for ae in base_ext:
-                initial_files.extend(sppasDirUtils(entry).get_files(ae))
+                elif os.path.isdir(files):
+                    for f in os.listdir(files):
+                        self.add_to_workspace(os.path.join(files, f))
+
+            except Exception as e:
+                logging.error('File {!s:s} not added into the workspace: {:s}'
+                              ''.format(files, str(e)))
         else:
-            initial_files.append(entry)
-
-        # Create a list with the basename of the files
-        for entry_file in initial_files:
-            fn, e = os.path.splitext(entry_file)
-            if fn in self._inputs:
-                continue
-
-            if len(e) == 0:
-                # the entry is already the basename
-                self.__append_input(fn, base_ext)
-
-            elif e.lower() in base_ext:
-                # the entry is a primary file (audio/text/pitch)
-                self._inputs.append(fn)
-
-            elif e.lower() in ann_ext:
-                # the entry is an annotated file
-                appended = self.__append_input(fn, base_ext)
-                if appended is False:
-                    # the entry is an annotated file with a pattern
-                    fn = self.__remove_pattern(fn)
-                    if fn not in self._inputs:
-                        self.__append_input(fn, base_ext)
-
-        for f in self._inputs:
-            logging.debug(f)
+            for f in files:
+                self.add_to_workspace(f)
 
     # -----------------------------------------------------------------------
-
-    def __append_input(self, base_fn, base_ext):
-        for ae in base_ext:
-            if sppasFileUtils(base_fn + ae).exists() \
-                    and base_fn not in self._inputs:
-                self._inputs.append(base_fn)
-                return True
-        return False
-
+    # deprecated:
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def __remove_pattern(entry):
-        minus = entry.rfind('-')
-        if minus != -1:
-            sep = entry.rfind(os.path.sep)
-            if minus > sep:
-                return entry[:minus]
-        return entry
+    def get_checked_roots(self):
+        """Return the list of entries to annotate."""
+        roots = self._workspace.get_fileroot_from_state(States().CHECKED) + self._workspace.get_fileroot_from_state(States().AT_LEAST_ONE_CHECKED)
+        return [r.id for r in roots]
 
     # -----------------------------------------------------------------------
     # Procedure Outcome Report file name
@@ -452,9 +451,10 @@ class sppasParam(object):
     def get_lang(self, step=None):
         if step is None:
             for a in self.annotations:
-                if a.get_lang() != UNDETERMINED:
+                lang = a.get_lang()
+                if lang is not None and lang != annots.UNDETERMINED:
                     return a.get_lang()
-            return UNDETERMINED
+            return annots.UNDETERMINED
         return self.annotations[step].get_lang()
 
     def get_langresource(self, step):
@@ -472,18 +472,27 @@ class sppasParam(object):
         return -1
 
     def activate_step(self, step):
+        step = self.__check_step(step)
         self.annotations[step].set_activate(True)
 
     def disable_step(self, step):
+        step = self.__check_step(step)
         self.annotations[step].set_activate(False)
 
     def get_step_status(self, step):
+        step = self.__check_step(step)
         return self.annotations[step].get_activate()
 
     def get_step_name(self, step):
+        step = self.__check_step(step)
         return self.annotations[step].get_name()
 
+    def get_step_types(self, step):
+        step = self.__check_step(step)
+        return self.annotations[step].get_types()
+
     def get_step_descr(self, step):
+        step = self.__check_step(step)
         return self.annotations[step].get_descr()
 
     # ------------------------------------------------------------------------
@@ -504,7 +513,18 @@ class sppasParam(object):
 
     # ------------------------------------------------------------------------
 
+    @staticmethod
+    def __check_step(step):
+        try:
+            step = int(step)
+        except TypeError:
+            raise sppasTypeError(step, "int")
+        return step
+
+    # ------------------------------------------------------------------------
+
     def get_step_key(self, step):
+        step = self.__check_step(step)
         return self.annotations[step].get_key()
 
     def get_step_numbers(self):
@@ -517,16 +537,20 @@ class sppasParam(object):
         return steps
 
     def get_langlist(self, step=2):
+        step = self.__check_step(step)
         return self.annotations[step].get_langlist()
 
     def get_step(self, step):
         """Return the 'sppasParam' instance of the annotation."""
+        step = self.__check_step(step)
         return self.annotations[step]
 
     def get_options(self, step):
+        step = self.__check_step(step)
         return self.annotations[step].get_options()
 
     def set_option_value(self, step, key, value):
+        step = self.__check_step(step)
         self.annotations[step].set_option_value(key, value)
 
     # -----------------------------------------------------------------------

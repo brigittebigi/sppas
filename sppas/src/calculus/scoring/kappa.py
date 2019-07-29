@@ -41,22 +41,23 @@
     magnitude of agreement between observers.
 
 """
+
 from __future__ import division
 
-from sppas.src.calculus.geometry.distances import squared_euclidian as sq
-from sppas.src.calculus.calculusexc import VectorsError, EuclidianDistanceError
+from ..geometry.distances import squared_euclidian as sq
+from ..calculusexc import VectorsError, EuclidianDistanceError
 
 # ----------------------------------------------------------------------------
 
 
 class sppasKappa(object):
-    """
+    """Inter-observer variation estimation.
+
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2016  Brigitte Bigi
-    :summary:      Inter-observer variation estimation.
 
     The calculation is based on the difference between how much agreement is
     actually present (“observed” agreement) compared to how much agreement

@@ -3,11 +3,18 @@
   "name": "Momel",
   "descr": "Modelizes fundamental frequency (F0) curves based on a technique called assymetric modal quadratic regression. Proposed by D. Hirst and R. Espesser. Requires pitch values.",
   "required": "",
+  "api": "sppasMomel",
 
   "resources": [
   ],
 
   "options": [
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-momel",
+      "text": "Output file pattern"
+    },
     {
       "id": "win1",
       "type": "int",

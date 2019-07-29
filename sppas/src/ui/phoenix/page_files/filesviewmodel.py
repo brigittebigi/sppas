@@ -26,10 +26,10 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.filespck.filesviewmodel.py
+    src.ui.phoenix.page_files.filesviewmodel.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    This model acts as a bridge between a DataViewCtrl and a FileData instance. 
+    This model acts as a bridge between a DataViewCtrl and a FileData.
 
 """
 
@@ -40,13 +40,14 @@ import wx
 import wx.dataview
 
 from sppas import sppasTypeError
+from sppas.src.ui.trash import sppasTrash
 from sppas.src.anndata import sppasRW
-from sppas.src.files.filedata import FileName, FileRoot, FilePath, FileData
+from sppas.src.files import States, FileName, FileRoot, FilePath, FileData
 
-from sppas.src.ui.phoenix import sppasSwissKnife
-from .basectrls import ColumnProperties
+from ..tools import sppasSwissKnife
+from .basectrls import ColumnProperties, StateIconRenderer
 
-# -----------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
    
 class FileAnnotIcon(object):
@@ -58,6 +59,8 @@ class FileAnnotIcon(object):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
+    All supported file formats of 'anndata' are linked to an icon file.
+
     """
 
     def __init__(self):
@@ -65,7 +68,7 @@ class FileAnnotIcon(object):
 
         Set the name of the icon for all known extensions of annotations.
 
-        Create a dictionary linking a file extension to the name of the 
+        Create a dictionary linking a file extension to the name of the
         software it comes from. It is supposed this name is matching an
         an icon in PNG format.
 
@@ -83,6 +86,12 @@ class FileAnnotIcon(object):
     # -----------------------------------------------------------------------
 
     def get_icon_name(self, ext):
+        """Return the name of the icon matching the given extension.
+
+        :param ext: (str) An extension of an annotated or an audio file.
+        :returns: (str) Name of an icon
+
+        """
         if ext.startswith(".") is False:
             ext = "." + ext
         return self.__exticon.get(ext.upper(), "")
@@ -92,7 +101,7 @@ class FileAnnotIcon(object):
 
 class FileIconRenderer(wx.dataview.DataViewCustomRenderer):
     """Draw an icon matching a known file extension.
-    
+
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
@@ -100,6 +109,7 @@ class FileIconRenderer(wx.dataview.DataViewCustomRenderer):
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     """
+
     def __init__(self,
                  varianttype="wxBitmap",
                  mode=wx.dataview.DATAVIEW_CELL_INERT,
@@ -126,11 +136,11 @@ class FileIconRenderer(wx.dataview.DataViewCustomRenderer):
 
         x, y, w, h = rect
         s = min(w, h)
-        s = int(0.6 * s)
+        s = int(0.8 * s)
 
         bmp = sppasSwissKnife.get_bmp_icon(self.value, s)
         dc.DrawBitmap(bmp, x + (w-s)//2, y + (h-s)//2)
-        
+
         return True
 
 # ----------------------------------------------------------------------------
@@ -151,17 +161,19 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
 
         0. icon:     wxBitmap
         1. file:     string
-        2. check:    bool
+        2. state:    int (one of the States() class)
         3. type:     string
-        4. data:     string
-        5. size:     string
+        4. refs:     string
+        5. data:     string
+        6. size:     string
 
     """
 
     def __init__(self):
         """Constructor of a fileTreeModel.
 
-        :param data: (FileData) Workspace to be managed by the mapper
+        No data is given at the initialization.
+        Use set_data() method.
 
         """
         wx.dataview.PyDataViewModel.__init__(self)
@@ -170,21 +182,21 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
         except AttributeError:
             pass
 
-        # The icons to display depending on the file extension
-        self.exticon = FileAnnotIcon()
-
         # The workspace to display
         self.__data = FileData()
 
-        # Map between displayed columns and workspace
+        # The icons to display depending on the file extension
+        self.exticon = FileAnnotIcon()
+
+        # Map between the displayed columns and the workspace data
         self.__mapper = dict()
         self.__mapper[0] = FilesTreeViewModel.__create_col('icon')
         self.__mapper[1] = FilesTreeViewModel.__create_col('file')
-        self.__mapper[2] = FilesTreeViewModel.__create_col('check')
+        self.__mapper[2] = FilesTreeViewModel.__create_col('state')
         self.__mapper[3] = FilesTreeViewModel.__create_col('type')
-        self.__mapper[4] = FilesTreeViewModel.__create_col('date')
-        self.__mapper[5] = FilesTreeViewModel.__create_col('size')
-        self.__mapper[6] = FilesTreeViewModel.__create_col('')
+        self.__mapper[4] = FilesTreeViewModel.__create_col('refs')
+        self.__mapper[5] = FilesTreeViewModel.__create_col('date')
+        self.__mapper[6] = FilesTreeViewModel.__create_col('size')
 
         # GUI information which can be managed by the mapper
         self._bgcolor = None
@@ -201,30 +213,36 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
     def set_data(self, data):
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        logging.debug('New data to set in the filesview.')
+        logging.debug('New data to set in the files panel. '
+                      'Id={:s}'.format(data.id))
         self.__data = data
-        self.Cleared()
+        self.update()
 
     # -----------------------------------------------------------------------
     # Manage column properties
     # -----------------------------------------------------------------------
 
     def GetColumnCount(self):
-        """Override. Report how many columns this model provides data for."""
+        """Overridden. Report how many columns this model provides data for."""
         return len(self.__mapper)
 
     # -----------------------------------------------------------------------
 
     def GetExpanderColumn(self):
-        """Returns column which have to contain the expanders."""
+        """Returns column which have to contain the expanders.
+
+        On MacOS it should be the first one... because of the display of the
+        expander symbol.
+
+        """
         return 1
 
     # -----------------------------------------------------------------------
 
     def GetColumnType(self, col):
-        """Override. Map the data column number to the data type.
+        """Overridden. Map the data column number to the data type.
 
-        :param col: (int)
+        :param col: (int)FileData()
 
         """
         return self.__mapper[col].stype
@@ -233,8 +251,8 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
 
     def GetColumnName(self, col):
         """Map the data column number to the data name.
-        
-        :param col: (int)
+
+        :param col: (int) Column index.
 
         """
         return self.__mapper[col].name
@@ -244,7 +262,7 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
     def GetColumnMode(self, col):
         """Map the data column number to the cell mode.
 
-        :param col: (int)
+        :param col: (int) Column index.
 
         """
         return self.__mapper[col].mode
@@ -253,8 +271,8 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
 
     def GetColumnWidth(self, col):
         """Map the data column number to the col width.
-        
-        :param col: (int)
+
+        :param col: (int) Column index.
 
         """
         return self.__mapper[col].width
@@ -263,8 +281,8 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
 
     def GetColumnRenderer(self, col):
         """Map the data column numbers to the col renderer.
-        
-        :param col: (int)
+
+        :param col: (int) Column index.
 
         """
         return self.__mapper[col].renderer
@@ -273,8 +291,8 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
 
     def GetColumnAlign(self, col):
         """Map the data column numbers to the col alignment.
-        
-        :param col: (int)
+
+        :param col: (int) Column index.
 
         """
         return self.__mapper[col].align
@@ -295,9 +313,9 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
 
     def GetChildren(self, parent, children):
         """The view calls this method to find the children of any node.
-        
+
         There is an implicit hidden root node, and the top level
-        item(s) should be reported as children of this node. 
+        item(s) should be reported as children of this node.
 
         """
         if not parent:
@@ -319,19 +337,19 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
 
     def IsContainer(self, item):
         """Return True if the item has children, False otherwise.
-        
+
         :param item: (wx.dataview.DataViewItem)
 
         """
         # The hidden root is a container
         if not item:
             return True
-        
+
         # In this model the path and root objects are containers
         node = self.ItemToObject(item)
         if isinstance(node, (FilePath, FileRoot)):
             return True
-        
+
         # but everything else (the file objects) are not
         return False
 
@@ -339,25 +357,24 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
 
     def GetParent(self, item):
         """Return the item which is this item's parent.
-        
+
         :param item: (wx.dataview.DataViewItem)
 
         """
         # The hidden root does not have a parent
-        if not item:
+        if item is None:
             return wx.dataview.NullDataViewItem
 
         node = self.ItemToObject(item)
-        
+
         # A FilePath does not have a parent
         if isinstance(node, FilePath):
             return wx.dataview.NullDataViewItem
-        
+
         # A FileRoot has a FilePath parent
         elif isinstance(node, FileRoot):
             for fp in self.__data:
                 if node in fp:
-                    #  if fp.id == node.folder():
                     return self.ObjectToItem(fp)
 
         # A FileName has a FileRoot parent
@@ -367,22 +384,32 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
                     #  if fp.get_id() == node.folder():
                     if node in fr:
                         return self.ObjectToItem(fr)
-        
+
         return wx.dataview.NullDataViewItem
 
     # -----------------------------------------------------------------------
     # Manage the values to display
     # -----------------------------------------------------------------------
 
+    def HasValue(self, item, col):
+        """Overridden.
+
+        Return True if there is a value in the given column of this item.
+
+        """
+        return True
+
+    # -----------------------------------------------------------------------
+
     def GetValue(self, item, col):
-        """Return the value to be displayed for this item and column. 
-        
+        """Return the value to be displayed for this item and column.
+
         :param item: (wx.dataview.DataViewItem)
-        :param col: (int)
-        
-        Pull the values from the data objects we associated with the items 
+        :param col: (int) Column index.
+
+        Pull the values from the data objects we associated with the items
         in GetChildren.
-        
+
         """
         # Fetch the data object for this item.
         node = self.ItemToObject(item)
@@ -396,21 +423,28 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
                 return icon_name
             return ""
 
+        if self.__mapper[col].id == "refs":
+            if isinstance(node, FileRoot) is True:
+                # convert the list of FileReference instances into a string
+                refs_ids = [ref.id for ref in node.get_references()]
+                return " ".join(sorted(refs_ids))
+            return ""
+
         return self.__mapper[col].get_value(node)
 
     # -----------------------------------------------------------------------
- 
+
     def HasContainerColumns(self, item):
-        """Override.
-        
+        """Overridden.
+
         :param item: (wx.dataview.DataViewItem)
 
-        We override this method to indicate if a container item merely acts 
-        as a headline (or for categorisation) or if it also acts a normal 
+        We override this method to indicate if a container item merely acts
+        as a headline (or for categorisation) or if it also acts a normal
         item with entries for further columns.
-        
+
         """
-        node = self.ItemToObject(item)        
+        node = self.ItemToObject(item)
         if isinstance(node, FileRoot):
             return True
         if isinstance(node, FilePath):
@@ -419,18 +453,8 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
 
     # -----------------------------------------------------------------------
 
-    def HasValue(self, item, col):
-        """Override.
-        
-        Return True if there is a value in the given column of this item.
-        
-        """
-        return True
-
-    # -----------------------------------------------------------------------
-
     def SetValue(self, value, item, col):
-        """Override. 
+        """Overridden.
 
         :param value:
         :param item: (wx.dataview.DataViewItem)
@@ -438,36 +462,35 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
 
         """
         logging.debug("SetValue: %s\n" % value)
-        
+
         node = self.ItemToObject(item)
         if isinstance(node, (FileName, FileRoot, FilePath)) is False:
             raise RuntimeError("Unknown node type {:s}".format(type(node)))
 
-        if self.__mapper[col].id == "check":
-            node.check = value
-            # Search for the parent. It has to verify if it's check value
-            # is still correct.
-            if isinstance(node, FileName):
-                root_parent = self.GetParent(item)
-                fr = self.ItemToObject(root_parent)
-                # instead of simply updating the root, we set the check
-                # value to all files of this root
-                # fr.update_check() is replaced by
-                fr.check = value
-                path_parent = self.GetParent(root_parent)
-                fp = self.ItemToObject(path_parent)
-                fp.update_check()
+        if self.__mapper[col].id == "state":
+            if isinstance(value, (States, int)):
+                v = value
+            else:
+                logging.error("Can't set state {:d} to object {:s}".format(value, node))
+                return False
 
-            if isinstance(node, FileRoot):
-                path_parent = self.GetParent(item)
-                fp = self.ItemToObject(path_parent)
-                fp.update_check()
+            self.__data.set_object_state(v, node)
 
         return True
 
     # -----------------------------------------------------------------------
 
     def GetAttr(self, item, col, attr):
+        """Overridden. Indicate that the item has special font attributes.
+
+        This only affects the DataViewTextRendererText renderer.
+
+        :param item: (wx.dataview.DataViewItem) – The item for which the attribute is requested.
+        :param col: (int) – The column of the item for which the attribute is requested.
+        :param attr: (wx.dataview.DataViewItemAttr) – The attribute to be filled in if the function returns True.
+        :returns: (bool) True if this item has an attribute or False otherwise.
+
+        """
         node = self.ItemToObject(item)
 
         # default colors for foreground and background
@@ -490,71 +513,250 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
             # if node.lock:
             #    attr.SetColour(wx.Colour(128, 128, 128))
             return True
-        
+
         return False
 
     # -----------------------------------------------------------------------
     # Manage the data
     # -----------------------------------------------------------------------
 
-    def AddFile(self, filename):
-        """Add a file in the data."""
-        self.__data.add_file(filename)
+    def change_value(self, col, item):
+        """Change state value.
+
+        :param col: (int) Column index.
+        :param item: (wx.dataview.DataViewItem)
+
+        """
+        if item is None:
+            return
+        node = self.ItemToObject(item)
+        cur_state = node.get_state()
+        if cur_state in (States().UNUSED, States().AT_LEAST_ONE_CHECKED, States().AT_LEAST_ONE_LOCKED):
+            try:
+                modified = self.__data.set_object_state(States().CHECKED, node)
+                if modified is False and cur_state == States().AT_LEAST_ONE_LOCKED:
+                    modified = self.__data.set_object_state(States().UNUSED, node)
+                if modified:
+                    self.__item_changed(item)
+
+            except Exception as e:
+                logging.info('Value not modified for node {:s}'.format(node))
+                logging.error(str(e))
+
+        elif cur_state == States().CHECKED:
+            try:
+                self.__data.set_object_state(States().UNUSED, node)
+                self.__item_changed(self.ObjectToItem(node))
+            except Exception as e:
+                logging.info('Value not modified for node {:s}'.format(node))
+                logging.error(str(e))
+
+        else:
+            logging.warning("{:s} is locked. It's state can't be changed "
+                            "until it is un-locked.".format(node))
 
     # -----------------------------------------------------------------------
 
-    def UpdateFiles(self):
+    def __item_changed(self, item):
+        node = self.ItemToObject(item)
+        self.ItemChanged(item)
+        if isinstance(node, FileName):
+            parent_item = self.GetParent(item)
+            self.ItemChanged(parent_item)
+            self.ItemChanged(self.GetParent(parent_item))
+        if isinstance(node, FileRoot):
+            self.ItemChanged(self.GetParent(item))
+            for fn in node:
+                self.ItemChanged(self.ObjectToItem(fn))
+        if isinstance(node, FilePath):
+            for fr in node:
+                self.ItemChanged(self.ObjectToItem(fr))
+                for fn in fr:
+                    self.ItemChanged(self.ObjectToItem(fn))
+
+    # -----------------------------------------------------------------------
+
+    def update(self):
         """Update the data and refresh the tree."""
         self.__data.update()
         self.Cleared()
 
     # -----------------------------------------------------------------------
 
-    def RemoveCheckedFiles(self):
-        self.__data.remove(FileName.CHECKED)
+    def add_files(self, entries):
+        """Add a set of files or folders in the data.
+
+        :param entries: (list of str) FileName or folder with absolute path.
+
+        """
+        added_files = list()
+        for entry in entries:
+            fns = self.__add(entry)
+            if len(fns) > 0:
+                added_files.extend(fns)
+
+        added_items = list()
+        if len(added_files) > 0:
+            self.update()
+            for f in added_files:
+                added_items.append(self.ObjectToItem(f))
+
+        return added_items
 
     # -----------------------------------------------------------------------
 
-    def GetCheckedFiles(self):
-        return self.__data.get_state(FileName.CHECKED)
+    def __add(self, entry):
+        """Add a file or a folder in the data.
+
+        :param entry: (str)
+
+        """
+        fns = list()
+        if os.path.isdir(entry):
+            for f in sorted(os.listdir(entry)):
+                fullname = os.path.join(entry, f)
+                try:
+                    new_fns = self.__data.add_file(fullname)
+                    if new_fns is not None:
+                        fns.extend(new_fns)
+                        logging.debug('{:s} added. '.format(entry))
+                except OSError:
+                    logging.error('{:s} not added.'.format(fullname))
+
+        elif os.path.isfile(entry):
+            try:
+                new_fns = self.__data.add_file(entry, brothers=True)
+                if new_fns is not None:
+                    fns.extend(new_fns)
+                    logging.debug('{:s} added. {:d} brother files added.'
+                                  ''.format(entry, len(new_fns)))
+            except:
+                logging.error('{:s} not added.'.format(entry))
+
+        else:
+            logging.error('{:s} not added.'.format(entry))
+
+        return fns
 
     # -----------------------------------------------------------------------
 
-    def Check(self, value=True, entry=None):
+    def remove_checked_files(self):
+        """Remove all FileName with state CHECKED."""
+        nb_removed = self.__data.remove_files(States().CHECKED)
+        if nb_removed > 0:
+            self.update()
+        return nb_removed
+
+    # -----------------------------------------------------------------------
+
+    def delete_checked_files(self):
+        """Delete all FileName with state CHECKED."""
+        checked = self.__data.get_filename_from_state(States().CHECKED)
+        if len(checked) == 0:
+            return
+
+        nb_deleted = 0
+        for fn in checked:
+            try:
+                # move the file into the trash of SPPAS
+                sppasTrash().put_file_into(fn.id)
+                nb_deleted += 1
+
+            except Exception as e:
+                logging.error("File {!s:s} can't be deleted due to the "
+                              "following error: {:s}.".format(fn.id, str(e)))
+
+        if nb_deleted > 0:
+            self.update()
+            logging.info('{:d} files moved into the trash.'
+                         ''.format(nb_deleted))
+
+        return nb_deleted
+
+    # -----------------------------------------------------------------------
+
+    def get_checked_files(self):
+        """Return the list of FileName with state CHECKED."""
+        return self.__data.get_filename_from_state(States().CHECKED)
+
+    # -----------------------------------------------------------------------
+
+    def lock(self, entries):
+        """Change state to LOCKED of a list of entries.
+
+        :param entries: (list of FileBase)
+
+        """
+        for entry in entries:
+            if isinstance(entry, FileName) is False:
+                node = self.__data.get_object(entry)
+            else:
+                node = entry
+            self.__data.set_object_state(States().LOCKED, node)
+            self.ItemChanged(self.ObjectToItem(node))
+
+    # -----------------------------------------------------------------------
+
+    def set_state(self, value=States().CHECKED, entry=None):
         """Check or uncheck all or any file.
 
-        :param value: (bool) Toggle value
+        :param value: (int) One of the States()
         :param entry: (str) Absolute or relative name of a file or a file root
-        
+
         """
-        self.__data.check(value, entry)
+        self.__data.set_object_state(value, entry)
+        self.update()
 
     # -----------------------------------------------------------------------
 
-    def Expand(self, value=True, item=None):
-        """Expand or collapse an item or all items.
+    def expand(self, value=True, item=None):
+        """Set the expand value to the object matching the item or to all.
 
         :param value: (bool) Expanded (True) or Collapsed (False)
-        :param item: (wx.dataview.DataViewItem)
+        :param item: (wx.dataview.DataViewItem or None)
 
         """
         if item is None:
-            self.__data.expand_all(bool(value))
+            for fp in self.__data:
+                if fp.subjoined is None:
+                    fp.subjoined = dict()
+                fp.subjoined['expand'] = bool(value)
+
+                for fr in fp:
+                    if fr.subjoined is None:
+                        fr.subjoined = dict()
+                    fr.subjoined['expand'] = bool(value)
+
         else:
             obj = self.ItemToObject(item)
             if isinstance(obj, (FileRoot, FilePath)):
-                obj.expand = bool(value)
+                if obj.subjoined is None:
+                    obj.subjoined = dict()
+                obj.subjoined['expand'] = bool(value)
 
     # -----------------------------------------------------------------------
 
-    def GetExpandedItems(self, value=True):
+    def get_expanded_items(self, value=True):
+        """Return the list of expanded or collapsed items.
+
+        :param value: (bool)
+
+        """
         items = list()
-        for obj in self.__data.get_expanded_objects(value):
-            items.append(self.ObjectToItem(obj))
+        for fp in self.__data:
+            if fp.subjoined is not None:
+                if 'expand' in fp.subjoined:
+                    if fp.subjoined['expand'] is value:
+                        items.append(self.ObjectToItem(fp))
+
+            for fr in fp:
+                if fr.subjoined is not None:
+                    if 'expand' in fr.subjoined:
+                        if fr.subjoined['expand'] is value:
+                            items.append(self.ObjectToItem(fr))
 
         return items
 
-    # -----------------------------------------------------------------------
     # -----------------------------------------------------------------------
 
     def FileToItem(self, entry):
@@ -574,34 +776,41 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
     @staticmethod
     def __create_col(name):
         if name == "icon":
-            col = ColumnProperties("Soft", name, "wxBitmap")
+            col = ColumnProperties(" ", name, "wxBitmap")
             col.width = 36
             col.align = wx.ALIGN_CENTRE
             col.renderer = FileIconRenderer()
             return col
 
         if name == "file":
-            col_file = ColumnProperties("File", name)
+            col_file = ColumnProperties("Path Root Name", name)
             col_file.add_fct_name(FilePath, "get_id")
             col_file.add_fct_name(FileRoot, "get_id")
             col_file.add_fct_name(FileName, "get_name")
             col_file.width = 320
             return col_file
 
-        if name == "check":
-            col = ColumnProperties("Check", name, "bool")
-            col.mode = wx.dataview.DATAVIEW_CELL_ACTIVATABLE
-            col.align = wx.ALIGN_CENTRE
+        if name == "state":
+            col = ColumnProperties("State", name, "wxBitmap")
             col.width = 36
-            col.add_fct_name(FileName, "get_check")
-            col.add_fct_name(FileRoot, "get_check")
-            col.add_fct_name(FilePath, "get_check")
+            col.align = wx.ALIGN_CENTRE
+            col.renderer = StateIconRenderer()
+            col.add_fct_name(FileName, "get_state")
+            col.add_fct_name(FileRoot, "get_state")
+            col.add_fct_name(FilePath, "get_state")
             return col
 
         if name == "type":
             col = ColumnProperties("Type", name)
             col.add_fct_name(FileName, "get_extension")
-            col.width = 120
+            col.width = 100
+            return col
+
+        if name == "refs":
+            col = ColumnProperties("Ref.", name)
+            # col.add_fct_name(FileRoot, "get_references")
+            col.width = 80
+            col.align = wx.ALIGN_LEFT
             return col
 
         if name == "date":

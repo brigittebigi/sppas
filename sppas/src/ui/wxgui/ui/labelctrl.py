@@ -195,7 +195,7 @@ class LabelCtrl(wx.Window):
     def GetAlign(self):
         """Return the label alignment value.
 
-        :return: one of wx.ALIGN_LEFT, wx.ALIGN_CENTRE or wx.ALIGN_RIGHT
+        :returns: one of wx.ALIGN_LEFT, wx.ALIGN_CENTRE or wx.ALIGN_RIGHT
 
         """
         return self._align

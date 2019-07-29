@@ -3,11 +3,18 @@
   "name": "Search for IPUs",
   "descr": "Marks segments containing speech activity in the audio recording: search for Inter-Pausal Units. Requires an audio file",
   "required": "",
+  "api": "sppasSearchIPUs",
 
   "resources": [
   ],
 
   "options": [
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "",
+      "text": "Output file pattern"
+    },
 
     {
       "id": "win_length",

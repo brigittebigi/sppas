@@ -35,8 +35,10 @@
     Factory class for creating an sppasAudioPCM.
 
 """
+
 from .waveio import WaveIO
 from .sunauio import SunauIO
+
 from ..audiodataexc import AudioTypeError
 
 # ----------------------------------------------------------------------------

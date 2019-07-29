@@ -29,17 +29,18 @@
 
         ---------------------------------------------------------------------
 
-    src.utils.tests.test_makeunicode
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.utils.tests.test_makeunicode.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2017  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
     :summary:      Test the "unicode maker" of SPPAS.
 
 """
+
 import unittest
 import sys
 

@@ -3,11 +3,24 @@
   "name": "Time Group Analysis",
   "descr": "Calculates mean, median, nPVI, slope and intercept functions within inter-unit groups. Proposed by D. Gibbon. Requires time aligned syllables.",
   "required": "syllabify",
+  "api": "sppasTGA",
 
   "resources": [
   ],
 
   "options": [
+    {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-syll",
+      "text": "Input file pattern (syllabification)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-tga",
+      "text": "Output file pattern"
+    },
     {
       "id": "original",
       "type": "bool",

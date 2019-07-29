@@ -60,10 +60,11 @@ class sppasBaseMessageDialog(sppasDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     """
-    def __init__(self, parent, message, title=None, style=wx.ICON_INFORMATION):
+
+    def __init__(self, parent, message, title=None, style=wx.ICON_INFORMATION, **kwargs):
         """Create a dialog with a message.
 
         :param parent: (wx.Window)
@@ -75,25 +76,24 @@ class sppasBaseMessageDialog(sppasDialog):
         super(sppasBaseMessageDialog, self).__init__(
             parent=parent,
             title="Message",
-            style=wx.DEFAULT_FRAME_STYLE | wx.DIALOG_NO_PARENT)
+            style=wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.STAY_ON_TOP)  # | wx.DIALOG_NO_PARENT)
 
-        self._create_content(style, message, title)
+        self._create_header(style, title)
+        self._create_content(message, **kwargs)
         self._create_buttons()
 
         # Fix frame properties
-        #self.SetMinSize(wx.Size(320, 200))
-        w = int(wx.GetApp().settings.frame_size[0] * 0.4)
-        h = int(wx.GetApp().settings.frame_size[1] * 0.4)
-        self.SetSize(wx.Size(w, h))
-
+        self.SetMinSize(wx.Size(sppasDialog.fix_size(256),
+                                sppasDialog.fix_size(164)))
         self.LayoutComponents()
         self.CenterOnParent()
-        self.FadeIn(deltaN=-10)
+        self.GetSizer().Fit(self)
+        self.FadeIn(deltaN=-5)
 
     # -----------------------------------------------------------------------
 
-    def _create_content(self, style, message, title):
-        """Create the content of the message dialog."""
+    def _create_header(self, style, title):
+        """Create the header of the message dialog."""
         # Create the header
         if style == wx.ICON_ERROR:
             icon = "error"
@@ -117,14 +117,17 @@ class sppasBaseMessageDialog(sppasDialog):
 
         self.CreateHeader(title, icon_name=icon)
 
-        # Create the message content
+    # -----------------------------------------------------------------------
+
+    def _create_content(self, message, **kwargs):
+        """Create the content of the message dialog."""
         p = sppasPanel(self)
         s = wx.BoxSizer(wx.HORIZONTAL)
         txt = sppasMessageText(p, message)
         s.Add(txt, 1, wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 10)
         p.SetSizer(s)
         p.SetName("content")
-        p.SetMinSize(wx.Size(-1, 128))
+        p.SetMinSize(wx.Size(-1, sppasDialog.fix_size(96)))
 
     # -----------------------------------------------------------------------
 
@@ -181,8 +184,7 @@ class sppasYesNoDialog(sppasBaseMessageDialog):
         event_obj = event.GetEventObject()
         event_id = event_obj.GetId()
         if event_id == wx.ID_NO:
-            self.SetReturnCode(wx.ID_NO)
-            self.Close()
+            self.EndModal(wx.ID_NO)
         else:
             event.Skip()
 
@@ -198,7 +200,7 @@ class sppasConfirm(sppasBaseMessageDialog):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-    wx.ID_YES is returned if ok is clicked.
+    wx.ID_YES is returned if 'yes' is clicked.
     wx.ID_CANCEL is returned if the dialog is destroyed or cancel is clicked.
 
     >>> dialog = sppasConfirm("Confirm..."))
@@ -234,8 +236,7 @@ class sppasConfirm(sppasBaseMessageDialog):
         event_obj = event.GetEventObject()
         event_id = event_obj.GetId()
         if event_id == wx.ID_CANCEL:
-            self.SetReturnCode(wx.ID_CANCEL)
-            self.Close()
+            self.EndModal(wx.ID_CANCEL)
         else:
             event.Skip()
 
@@ -307,6 +308,88 @@ class sppasErrorDialog(sppasBaseMessageDialog):
         self.SetAffirmativeId(wx.ID_OK)
 
 # ---------------------------------------------------------------------------
+
+
+class sppasChoiceDialog(sppasBaseMessageDialog):
+    """Create a message and a list of choices.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    wx.ID_OK is returned if the button is clicked.
+    wx.ID_CANCEL is returned if the dialog is destroyed.
+
+    >>> dialog = sppasChoiceDialog("a message", choices=["apples", "pears"])
+    >>> dialog.ShowModal()
+    >>> dialog.Destroy()
+
+    """
+
+    def __init__(self, message, title=None, **kwargs):
+        super(sppasChoiceDialog, self).__init__(
+            parent=None,
+            message=message,
+            title=title,
+            style=wx.ICON_QUESTION,
+            **kwargs)
+
+    # -----------------------------------------------------------------------
+
+    def GetSelection(self):
+        return self.FindWindow("choices").GetSelection()
+
+    # -----------------------------------------------------------------------
+
+    def GetStringSelection(self):
+        return self.FindWindow("choices").GetStringSelection()
+
+    # -----------------------------------------------------------------------
+
+    def _create_content(self, message, **kwargs):
+        """Overridden. Create the content of the message dialog."""
+        c = ["None"]
+        if "choices" in kwargs:
+            c = kwargs["choices"]
+
+        p = sppasPanel(self)
+        txt = sppasMessageText(p, message)
+        choice = wx.Choice(p, choices=c, name="choices")
+        choice.SetSelection(0)
+
+        s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(txt, 0, wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 10)
+        s.Add(choice, 1, wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 10)
+
+        p.SetSizer(s)
+        p.SetName("content")
+        p.SetMinSize(wx.Size(-1, sppasDialog.fix_size(96)))
+
+    # -----------------------------------------------------------------------
+
+    def _create_buttons(self):
+        self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
+        self.Bind(wx.EVT_BUTTON, self._process_event)
+        self.SetAffirmativeId(wx.ID_OK)
+
+    # -----------------------------------------------------------------------
+
+    def _process_event(self, event):
+        """Process any kind of events.
+
+        :param event: (wx.Event)
+
+        """
+        event_obj = event.GetEventObject()
+        event_id = event_obj.GetId()
+        if event_id == wx.ID_CANCEL:
+            self.EndModal(wx.ID_CANCEL)
+        else:
+            event.Skip()
+
+# ---------------------------------------------------------------------------
 # Ready-to-use functions to display messages
 # ---------------------------------------------------------------------------
 
@@ -345,6 +428,7 @@ def Confirm(message, title=None):
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     :param message: (str) The error and confirmation question
+    :param title: (str) Title of the dialog window
     :returns: the response
 
     wx.ID_YES if ok button is clicked.
@@ -355,11 +439,11 @@ def Confirm(message, title=None):
     dialog = sppasConfirm(message, title)
     response = dialog.ShowModal()
     dialog.Destroy()
-    logging.info("Confirmed by user" if response == wx.ID_YES else "User cancelled")
+    logging.info("Confirmed by user." if response == wx.ID_YES else "User cancelled.")
     return response
 
 
-def Error(message, title):
+def Error(message, title=None):
     """Display a error.
 
     :author:       Brigitte Bigi
@@ -376,7 +460,7 @@ def Error(message, title):
 
     """
     logging.error(message)
-    dialog = sppasErrorDialog(message, title)
+    dialog = sppasErrorDialog(message, title=None)
     response = dialog.ShowModal()
     dialog.Destroy()
     return response

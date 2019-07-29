@@ -720,7 +720,7 @@ class PyImageList(object):
 
         :param `bitmap`: a valid :class:`Bitmap` object.
 
-        :return: The new zero-based image index.
+        :returns: The new zero-based image index.
 
         :note: If the bitmap is wider than the images in the list and you are not using
          the ``IL_VARIABLE_SIZE`` style, then the bitmap will automatically be split
@@ -763,7 +763,7 @@ class PyImageList(object):
 
         :param `icon`: a valid :class:`Icon` object.
 
-        :return: The new zero-based image index.
+        :returns: The new zero-based image index.
 
         :note: If the icon is wider than the images in the list and you are not using
          the ``IL_VARIABLE_SIZE`` style, then the icon will automatically be split
@@ -781,7 +781,7 @@ class PyImageList(object):
         :param `colour`: an instance of :class:`Colour`, a colour indicating which parts
          of the image are transparent.
 
-        :return: The new zero-based image index.
+        :returns: The new zero-based image index.
 
         :note: If the bitmap is wider than the images in the list and you are not using
          the ``IL_VARIABLE_SIZE`` style, then the bitmap will automatically be split
@@ -878,7 +878,7 @@ class PyImageList(object):
 
         :param `index`: the zero-based index of the image.
 
-        :return: a tuple of `(width, height)` properties of the chosen bitmap.        
+        :returns: a tuple of `(width, height)` properties of the chosen bitmap.        
         """
                 
         if index >= len(self._images):

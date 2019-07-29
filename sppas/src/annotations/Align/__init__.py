@@ -68,12 +68,9 @@ from .tracksgmt import TrackSegmenter
 from .tracksio import TracksReaderWriter
 from .sppasalign import sppasAlign
 
-from .activity import sppasActivity
-
 __all__ = (
     'sppasAligners',
     'TrackSegmenter',
     'TracksReaderWriter',
-    'sppasAlign',
-    'sppasActivity'
+    'sppasAlign'
 )

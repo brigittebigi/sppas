@@ -32,11 +32,12 @@
     ~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import codecs
 import logging
 
 from sppas.src.config import sg
-from sppas.src.utils.makeunicode import sppasUnicode
+from sppas.src.utils import sppasUnicode
 
 from .resourcesexc import FileIOError, FileUnicodeError, FileFormatError
 from .dumpfile import sppasDumpFile

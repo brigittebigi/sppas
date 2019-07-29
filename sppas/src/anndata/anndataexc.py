@@ -41,6 +41,7 @@
     :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
 
 """
+
 from sppas.src.config import sg
 from sppas.src.config import error
 

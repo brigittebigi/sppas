@@ -44,7 +44,7 @@ import tempfile
 from datetime import date
 
 from sppas.src.config import paths
-from sppas.src.utils.makeunicode import sppasUnicode
+from sppas.src.utils import sppasUnicode
 from sppas import NoDirectoryError
 
 

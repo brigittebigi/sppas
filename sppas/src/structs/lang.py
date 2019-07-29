@@ -33,19 +33,16 @@
     ~~~~~~~~~~~~~~~~~~~
 
 """
-import os.path
+
+import os
 
 from sppas.src.config import paths
-from sppas.src.files.fileutils import sppasDirUtils
+from sppas.src.config import annots
+from sppas.src.files import sppasDirUtils
 
 from .structsexc import LangTypeError
 from .structsexc import LangPathError
 from .structsexc import LangNameError
-
-# ----------------------------------------------------------------------------
-
-# standard iso639-3 code for an undetermined language.
-UNDETERMINED = "und"
 
 # ----------------------------------------------------------------------------
 
@@ -68,7 +65,9 @@ class sppasLangResource(object):
     RESOURCES_TYPES = ["file", "directory"]
 
     def __init__(self):
-        """Create a sppasLangResource instance."""
+        """Create a sppasLangResource instance.
+
+        """
         # All available language resources (type, path, filename, extension)
         self._rtype = ""
         self._rpath = ""
@@ -263,7 +262,7 @@ class sppasLangResource(object):
             self.lang = ""
             return
 
-        if lang.lower() != UNDETERMINED and lang not in self.langlist:
+        if lang.lower() != annots.UNDETERMINED and lang not in self.langlist:
             raise LangNameError(lang)
 
         self.lang = lang

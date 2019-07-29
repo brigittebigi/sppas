@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 from ..calculusexc import EmptyError, InsideIntervalError
 from ..calculusexc import SumProbabilityError, ProbabilityError
 from .utilit import log2

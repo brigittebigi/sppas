@@ -222,5 +222,13 @@ class sppasAnnotationsSettings(sppasBaseSettings):
             warning=1,
             ignore=2,
             info=3,
-            extension=".xra"
+
+            extension=".xra",
+
+            # all the types of the annotations implemented into SPPAS
+            types=("STANDALONE", "SPEAKER", "INTERACTION"),
+
+            # standard iso639-3 code for an undetermined language.
+            UNDETERMINED="und"
+
         )

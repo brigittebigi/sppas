@@ -284,7 +284,7 @@ class PointCtrl(wx.Window):
     def GetWidth(self):
         """Return the current width.
 
-        :return: (int) the current width in pixels.
+        :returns: (int) the current width in pixels.
 
         """
         return self.GetSize().width

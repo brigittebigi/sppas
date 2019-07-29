@@ -35,8 +35,8 @@
 """
 import sys
 
+from ..progress import sppasBaseProgress
 from .terminalcontroller import TerminalController
-
 
 # ----------------------------------------------------------------------------
 
@@ -47,7 +47,7 @@ HEADER = '${BOLD}${CYAN}%s${NORMAL}\n\n'
 # ----------------------------------------------------------------------------
 
 
-class ProcessProgressTerminal(object):
+class ProcessProgressTerminal(sppasBaseProgress):
     """A 3-lines progress bar to be used while processing from a terminal.
 
     :author:       Brigitte Bigi
@@ -69,41 +69,49 @@ class ProcessProgressTerminal(object):
 
     def __init__(self):
         """Create a ProcessProgressTerminal instance."""
+        super(ProcessProgressTerminal, self).__init__()
         try:
             self._term = TerminalController()
-        except:
-            self._term = None
-
-        if not (self._term.CLEAR_EOL and self._term.UP and self._term.BOL):
-            self._term = None
-
-        self._bar = BAR
-        if self._term:
+            if not (self._term.CLEAR_EOL and self._term.UP and self._term.BOL):
+                self._term = None
             self._bar = self._term.render(BAR)
-        
-        self._cleared = 1  # true if we haven't drawn the self._bar yet.
-        self._percent = 0
-        self._text = ""
-        self._header = ""
+        except:
+            print('[WARNING] The progress bar is disabled because this terminal'
+                  ' does not support colors, EOL, UP, etc.')
+            self._term = None
+            self._bar = ""
+
+        self._cleared = True  # We haven't drawn the self._bar yet.
 
     # ------------------------------------------------------------------
 
-    def update(self, percent, message):
+    def update(self, percent=None, message=None):
         """Update the progress.
 
         :param message: (str) progress bar value (default: 0)
-        :param percent: (float) progress bar text  (default: None)
+        :param percent: (float) progress bar text (default: None)
 
         """
-        n = int((WIDTH-10)*percent)
+        if percent is None:
+            percent = self._percent
+        if message is None:
+            message = self._text
 
         if self._term:
+            n = int((WIDTH - 10) * percent)
+            if self._cleared is True:
+                self._cleared = False
+
+                sys.stdout.write(self._term.BOL + self._term.CLEAR_EOL +
+                                 self._term.UP + self._term.CLEAR_EOL +
+                                 self._term.UP + self._term.CLEAR_EOL)
+
             sys.stdout.write(
                 self._term.BOL + self._term.UP + self._term.CLEAR_EOL +
                 (self._bar % (100*percent, '='*n, '-'*(WIDTH-10-n))) +
                 self._term.CLEAR_EOL + message.center(WIDTH))
         else:
-            sys.stdout.write('  => ' + message + " \n")
+            print('  => ' + message)
 
         self._percent = percent
         self._text = message
@@ -112,34 +120,9 @@ class ProcessProgressTerminal(object):
 
     def clear(self):
         """Clear."""
-        if not self._cleared:
-            if self._term:
-                sys.stdout.write(self._term.BOL + self._term.CLEAR_EOL +
-                                 self._term.UP + self._term.CLEAR_EOL +
-                                 self._term.UP + self._term.CLEAR_EOL)
-            else:
-                sys.stdout.write('\n' * 50)
-            self._cleared = 1
-
-    # ------------------------------------------------------------------
-
-    def set_fraction(self, percent):
-        """Set a new progress value.
-
-        :param percent: (float) new progress value
-
-        """
-        self.update(percent, self._text)
-
-    # ------------------------------------------------------------------
-
-    def set_text(self, text):
-        """Set a new progress message text.
-
-        :param text: (str) new progress text
-
-        """
-        self.update(self._percent, text)
+        if self._cleared is False:
+            sys.stdout.write("\n\n")
+            self._cleared = True
 
     # ------------------------------------------------------------------
 
@@ -151,16 +134,18 @@ class ProcessProgressTerminal(object):
         """
         if self._term:
             self._header = self._term.render(HEADER % header.center(WIDTH))
-        else:
-            self._header = "          " + header
+            sys.stdout.write("\n" + self._header + "\n")
+            sys.stdout.write("\n")
 
-        sys.stdout.write(self._header)
+        else:
+            self._header = "\n         * * *  " + header + "  * * *  "
+            print(self._header)
 
     # ------------------------------------------------------------------
 
     def set_new(self):
         """Initialize a new progress line."""
-        sys.stdout.write('\n')
         self.clear()
         self._text = ""
         self._percent = 0
+        self._header = ""

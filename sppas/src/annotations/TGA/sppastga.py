@@ -122,6 +122,9 @@ class sppasTGA(sppasBaseAnnotation):
             elif "tg_prefix_label" == key:
                 self.set_tg_prefix_label(opt.get_value())
 
+            elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
+                self._options[key] = opt.get_value()
+
             else:
                 raise AnnotationOptionError(key)
 
@@ -447,12 +450,10 @@ class sppasTGA(sppasBaseAnnotation):
 
     # ----------------------------------------------------------------------
 
-    @staticmethod
-    def get_pattern():
+    def get_pattern(self):
         """Pattern this annotation uses in an output filename."""
-        return '-tga'
+        return self._options.get("outputpattern", "-tga")
 
-    @staticmethod
-    def get_input_pattern():
+    def get_input_pattern(self):
         """Pattern this annotation expects for its input filename."""
-        return '-syll'
+        return self._options.get("inputpattern", "-syll")

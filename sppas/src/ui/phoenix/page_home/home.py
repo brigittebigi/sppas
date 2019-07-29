@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """
     ..
         ---------------------------------------------------------------------
@@ -90,10 +91,10 @@ class sppasHomePanel(sppasPanel):
         # Create the welcome message
         message = \
             "This is the new and experimental version of the GUI - "\
-            "The Graphical User Interface, of {:s}. This version is" \
-            "using WxPython version 4.\n\n"\
+            "The Graphical User Interface, of {:s}. This version is " \
+            "based on WxPython version 4.\n\n"\
             "The stable version of the GUI requires WxPython version 3.\n\n" \
-            "For any help, see the web page for installation instructions " \
+            "For any help, see the web page with the installation instructions " \
             "and chapter 2 of the documentation.\n\n"\
             "{:s}".format(sg.__name__, sg.__url__)
         txt = sppasMessageText(self, message)

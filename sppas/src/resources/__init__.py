@@ -29,14 +29,23 @@
 
         ---------------------------------------------------------------------
 
-resources: access and manage linguistic resources like lexicons, etc.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-:author:       Brigitte Bigi
-:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-:contact:      develop@sppas.org
-:license:      GPL, v3
-:copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+*****************************************************************************
+resources: access and manage linguistic resources
+*****************************************************************************
+
+This package includes classes to manage the data of linguistic types like
+lexicons, pronunciation dictionaries, patterns, etc.
+
+Requires the following other packages:
+
+* config
+* utils
 
 """
 from .dictpron import sppasDictPron

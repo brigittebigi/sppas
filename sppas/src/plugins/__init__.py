@@ -28,14 +28,19 @@
 
         ---------------------------------------------------------------------
 
-plugins: access and manage external programs to plug into SPPAS.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
 
-:author:       Brigitte Bigi
-:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-:contact:      develop@sppas.org
-:license:      GPL, v3
-:copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+*****************************************************************************
+plugins: access and manage external programs.
+*****************************************************************************
+
+This package includes classes to manage external program to plug into SPPAS.
+
+:Example:
 
 >>> # Create a plugin manager (it will explore the installed plugins).
 >>> manager = sppasPluginsManager()
@@ -50,10 +55,17 @@ plugins: access and manage external programs to plug into SPPAS.
 >>> # Delete an installed plugin
 >>> manager.delete(plugin_id)
 
+Requires the following other packages:
+
+* config
+* utils
+* files
+* structs
+
 """
 
 from .manager import sppasPluginsManager
-from .param import sppasPluginParam
+from .plugin import sppasPluginParam
 from .process import sppasPluginProcess
 
 __all__ = (

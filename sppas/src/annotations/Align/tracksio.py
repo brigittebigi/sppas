@@ -271,7 +271,7 @@ class TracksReader:
         """Read a set of alignment files and set as tiers.
 
         :param dir_name: (str) input directory containing a set of units
-        :return: PhonAlign, TokensAlign
+        :returns: PhonAlign, TokensAlign
 
         """
         # Read the time values of each track from a file

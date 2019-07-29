@@ -31,8 +31,6 @@
 
 """
 
-import os
-import logging
 import wx
 import wx.dataview
 
@@ -62,8 +60,8 @@ class FilesTreeViewCtrl(BaseTreeViewCtrl):
     def __init__(self, parent, name=wx.PanelNameStr):
         """Constructor of the FileTreeCtrl.
 
-        :param `parent`: (wx.Window)
-        :param `data`: (FileData)
+        :param parent: (wx.Window)
+        :param name: (str)
 
         """
         super(FilesTreeViewCtrl, self).__init__(parent, name)
@@ -82,121 +80,141 @@ class FilesTreeViewCtrl(BaseTreeViewCtrl):
 
         # Bind events.
         # Used to remember the expend/collapse status of items after a refresh.
-        self.Bind(wx.dataview.EVT_DATAVIEW_ITEM_EXPANDED, self.__onExpanded)        
-        self.Bind(wx.dataview.EVT_DATAVIEW_ITEM_COLLAPSED, self.__onCollapsed)
+        self.Bind(wx.dataview.EVT_DATAVIEW_ITEM_EXPANDED, self._on_item_expanded)
+        self.Bind(wx.dataview.EVT_DATAVIEW_ITEM_COLLAPSED, self._on_item_collapsed)
+        self.Bind(wx.dataview.EVT_DATAVIEW_ITEM_ACTIVATED, self._on_item_activated)
+        self.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED, self._on_item_selection_changed)
 
     # ------------------------------------------------------------------------
     # Public methods
     # ------------------------------------------------------------------------
 
     def get_data(self):
-        """Return the data displayed into the tree."""
+        """Return the data of the model."""
         return self._model.get_data()
 
     # ------------------------------------------------------------------------
 
-    def GetChecked(self):
-        """Return checked filenames."""
-        return self._model.GetCheckedFiles(True)
+    def set_data(self, data):
+        """Set the data of the model."""
+        self._model.set_data(data)
+        self.__refresh()
 
     # ------------------------------------------------------------------------
 
-    def GetUnChecked(self):
-        """Return un-checked filenames."""
-        return self._model.GetCheckedFiles(False)
-
-    # ------------------------------------------------------------------------
-
-    def Add(self, filename):
-        """Add a file in the tree.
+    def AddFiles(self, entries):
+        """Add a list of files in the model.
         
-        The given filename must include its absolute path.
+        The given filenames must include theirs absolute path.
 
-        :param filename: (str) Name of a file or a directory.
+        :param entries: (list of str) Filename or folder with absolute path.
 
         """
-        do_refresh = False
-        if os.path.isdir(filename):
-            for f in os.listdir(filename):
-                fullname = os.path.join(filename, f)
-                try:
-                    self._model.AddFile(fullname)
-                    do_refresh = True  
-                except OSError:
-                    logging.info('{:s} not added.'.format(fullname))
-
-        elif os.path.isfile(filename):
-            try:
-                self._model.AddFile(filename)
-                do_refresh = True  
-            except OSError:
-                logging.error('{:s} not added.'.format(filename))
-
-        else:
-            logging.error('{:s} not added.'.format(filename))
-        
-        if do_refresh:
-            self.RefreshData()
-        logging.debug('{:s} added.'.format(filename))
+        items = self._model.add_files(entries)
+        if len(items) > 0:
+            self.__refresh()
+            return True
+        return False
 
     # ------------------------------------------------------------------------
 
-    def Remove(self):
+    def RemoveCheckedFiles(self):
         """Remove all checked files."""
-        self._model.RemoveCheckedFiles()
-        self.RefreshData()
+        nb = self._model.remove_checked_files()
+        if nb > 0:
+            self.__refresh()
+            return True
+        return False
 
     # ------------------------------------------------------------------------
 
-    def ExpandAll(self):
-        self._model.Expand(True)
-        for item in self._model.GetExpandedItems(True):
-            self.Expand(item)
+    def DeleteCheckedFiles(self):
+        """Delete all checked files."""
+        nb = self._model.delete_checked_files()
+        if nb > 0:
+            self.__refresh()
+            return True
+        return False
 
     # ------------------------------------------------------------------------
 
-    def CollapseAll(self):
-        self._model.Expand(False)
-        for item in self._model.GetExpandedItems(False):
-            self.Expand(item)
+    def GetCheckedFiles(self):
+        """Return the list of checked files.
+
+        :returns: List of FileName
+
+        """
+        return self._model.get_checked_files()
 
     # ------------------------------------------------------------------------
 
-    def __update_expand(self):
-        for item in self._model.GetExpandedItems(True):
-            self.Expand(item)
-        for item in self._model.GetExpandedItems(False):
-            self.Collapse(item)
+    def LockFiles(self, entries):
+        """Lock a list of files.
+
+        Entries are a list of filenames with absolute path or FileName
+        instances or both.
+
+        :param entries: (list of str/FileName)
+
+        """
+        self._model.lock(entries)
 
     # ------------------------------------------------------------------------
 
-    def RefreshData(self):
-        # Update the data and clear the tree
-        self._model.UpdateFiles()
-        # But clearing the tree means to forget which are the expanded items!
-        # so, re-expand/re-collapse properly.
-        self.__update_expand()
+    def update_data(self):
+        """Overridden. Update the currently displayed data."""
+        self._model.update()
+        self.__refresh()
 
     # ------------------------------------------------------------------------
     # Callbacks to events
     # ------------------------------------------------------------------------
 
-    def __onExpanded(self, evt):
+    def _on_item_expanded(self, evt):
         """Happens when the user cliched a '+' button of the tree.
 
         We have to update the corresponding object 'expand' value to True.
-        
+
         """
-        self._model.Expand(True, evt.GetItem())
-        evt.Skip()
+        self._model.expand(True, evt.GetItem())
 
     # ------------------------------------------------------------------------
 
-    def __onCollapsed(self, evt):
+    def _on_item_collapsed(self, evt):
         """Happens when the user cliched a '-' button of the tree.
 
         We have to update the corresponding object 'expand' value to False.
-        
+
         """
-        self._model.Expand(False, evt.GetItem())
-        evt.Skip()
+        self._model.expand(False, evt.GetItem())
+
+    # ------------------------------------------------------------------------
+
+    def _on_item_activated(self, event):
+        """Happens when the user activated a cell (double-click).
+
+        This event is triggered by double clicking an item or pressing some
+        special key (usually "Enter") when it is focused.
+
+        """
+        item = event.GetItem()
+        if item is not None:
+            self._model.change_value(event.GetColumn(), item)
+
+    # ------------------------------------------------------------------------
+
+    def _on_item_selection_changed(self, event):
+        """Happens when the user simple-click a cell.
+
+        """
+        item = event.GetItem()
+        if item is not None:
+            self._model.change_value(event.GetColumn(), item)
+
+    # ------------------------------------------------------------------------
+
+    def __refresh(self):
+        for item in self._model.get_expanded_items(True):
+            self.Expand(item)
+        for item in self._model.get_expanded_items(False):
+            self.Collapse(item)

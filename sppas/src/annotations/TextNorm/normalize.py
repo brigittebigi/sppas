@@ -35,15 +35,17 @@
     Multilingual text normalization system.
 
 """
-import re
 
+import re
+import logging
+
+from .num2text import sppasNumConstructor
 from sppas.src.utils.makeunicode import sppasUnicode, u
 from sppas.src.resources.vocab import sppasVocabulary
 from sppas.src.resources.dictrepl import sppasDictRepl
 
 from .orthotranscription import sppasOrthoTranscription
 from .tokenize import sppasTokenSegmenter
-from .num2letter import sppasNum
 from .language import sppasLangISO
 from .splitter import sppasSimpleSplitter
 
@@ -101,6 +103,7 @@ class TextNormalizer(object):
         self.vocab = vocab
         if vocab is None:
             self.vocab = sppasVocabulary()
+        self.num_dict = sppasDictRepl(None)
 
         # members
         self.lang = lang
@@ -170,6 +173,23 @@ class TextNormalizer(object):
         self.lang = lang
 
     # -----------------------------------------------------------------------
+
+    def set_num(self, num_dict):
+        """Set the dictionary of numbers.
+
+        :param num_dict: (sppasDictRepl)
+
+        """
+        self.num_dict = num_dict
+        try:
+            sppasNumConstructor.construct(self.lang, self.num_dict)
+            logging.info('Conversion of numbers enabled for language {:s}'
+                         ''.format(self.lang))
+        except Exception as e:
+            logging.error('Conversion of numbers will be disabled due to the '
+                          'following error: {:s}'.format(str(e)))
+
+    # -----------------------------------------------------------------------
     # Language independent modules (or not!)
     # -----------------------------------------------------------------------
 
@@ -236,16 +256,25 @@ class TextNormalizer(object):
         :returns: (list)
 
         """
-        num2letter = sppasNum(self.lang)
+        try:
+            num2letter = sppasNumConstructor.construct(self.lang, self.num_dict)
+        except:
+            return utt
 
-        _result = list()
-        for token in utt:
-            if token.isdigit():
-                _result.append(num2letter.convert(token))
-            else:
-                _result.append(token)
+        try:
+            _result = list()
+            for token in utt:
+                if token.isdigit():
+                    _result.append(num2letter.convert(token))
+                else:
+                    _result.append(token)
 
-        return _result
+            return _result
+
+        except Exception as e:
+            logging.error('Conversion of numbers disabled due to the '
+                          'following error: {:s}'.format(str(e)))
+            return utt
 
     # -----------------------------------------------------------------------
 

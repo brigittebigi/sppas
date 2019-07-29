@@ -28,22 +28,49 @@
         This banner notice must not be removed.
 
         ---------------------------------------------------------------------
+    
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-files: management of files in SPPAS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*****************************************************************************
+files: management of files into workspaces
+*****************************************************************************
 
-:author:       Brigitte Bigi
-:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-:contact:      develop@sppas.org
-:license:      GPL, v3
-:copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+This package includes classes to manage a bunch of files organized into
+workspaces. A workspace is made of data related to the filenames and a
+list of references to make relations between files.
+
+Requires the following other packages:
+
+* config
+* utils
 
 """
 
+from .fileutils import sppasGUID
 from .fileutils import sppasFileUtils
 from .fileutils import sppasDirUtils
+from .filebase import FileBase
+from .filebase import States
+from .filedata import FileData
+from .filestructure import FileName, FileRoot, FilePath
+from .fileref import FileReference, sppasAttribute
+from .filedatafilters import sppasFileDataFilters
 
 __all__ = (
-    'sppasFileUtils',
-    'sppasDirUtils'
+    "FileBase",
+    "States",
+    "FileData",
+    "FileName",
+    "FileRoot",
+    "FilePath",
+    "sppasAttribute",
+    "FileReference",
+    "sppasFileDataFilters",
+    "sppasFileUtils",
+    "sppasDirUtils",
+    "sppasGUID"
 )

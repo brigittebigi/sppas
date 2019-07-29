@@ -50,6 +50,7 @@
     analysis) per sample.
 
 """
+
 from .audioframes import sppasAudioFrames
 from .audioconvert import sppasAudioConverter
 from .audiodataexc import AudioError

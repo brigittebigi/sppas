@@ -36,6 +36,7 @@
     *TO BE VALIDATED.*
 
 """
+
 class Matrix(object):
      """Simple matrix data type.
 

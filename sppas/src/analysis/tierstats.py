@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 from sppas.src.calculus.stats.descriptivesstats import sppasDescriptiveStatistics
 from sppas.src.calculus.infotheory.utilit import MAX_NGRAM
 from sppas.src.calculus.calculusexc import InsideIntervalError

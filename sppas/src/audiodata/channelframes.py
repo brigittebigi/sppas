@@ -32,7 +32,8 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
-from sppas.src.utils.makeunicode import b
+
+from sppas.src.utils import b
 from .audioframes import sppasAudioFrames
 
 # ---------------------------------------------------------------------------

@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """
     ..
         ---------------------------------------------------------------------
@@ -59,7 +60,7 @@ class sppasSwissKnife:
 
         :param name: (str) Name of an icon.
         :param height: (int) Height of the bitmap. Width=height.
-        :return: (wx.Bitmap)
+        :returns: (wx.Bitmap)
 
         """
         # fix the icon file name with the current theme
@@ -94,20 +95,23 @@ class sppasSwissKnife:
 
     @staticmethod
     def get_image(name):
-        # fix the image file name
-        img_name = os.path.join(paths.etc, "images", name + ".png")
-
-        # instead, use the logo of SPPAS!
-        if os.path.exists(img_name) is False:
-            # fix the image file name with the current icon's theme
-            img_name = os.path.join(
-                paths.etc, "icons",
-                wx.GetApp().settings.icons_theme,
-                name + ".png")
-            # ... not found in the icons....
+        # Given "name" is already a filename
+        if os.path.exists(name):
+            img_name = name
+        else:
+            # search in the images file names
+            img_name = os.path.join(paths.etc, "images", name + ".png")
             if os.path.exists(img_name) is False:
-                logging.info('Image {:s} not found.'.format(img_name))
-                img_name = os.path.join(paths.etc, "images", "sppas.png")
+                # fix the image file name with the current icon's theme
+                img_name = os.path.join(
+                    paths.etc, "icons",
+                    wx.GetApp().settings.icons_theme,
+                    name + ".png")
+                # ... not found in the icons ...
+                # instead, use the logo of SPPAS!
+                if os.path.exists(img_name) is False:
+                    logging.warning('Image {:s} not found.'.format(img_name))
+                    img_name = os.path.join(paths.etc, "images", "sppas.png")
 
         return wx.Image(img_name, wx.BITMAP_TYPE_ANY)
 
@@ -128,7 +132,7 @@ class sppasSwissKnife:
 
         :param name: (str) Name of an image or an icon.
         :param height: (int) Height of the bitmap, Width is proportional.
-        :return: (wx.Bitmap)
+        :returns: (wx.Bitmap)
 
         """
         img = sppasSwissKnife.get_image(name)

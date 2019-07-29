@@ -38,6 +38,7 @@ sppas: Global imports and some settings for external use.
 :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
 """
+
 from sppas.src.config import *
 from sppas.src.exc import *
 from sppas.src.structs import *

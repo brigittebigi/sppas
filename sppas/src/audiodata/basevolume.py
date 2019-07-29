@@ -34,6 +34,7 @@
     The volume is the estimation of RMS values, sampled with a window of 10ms.
 
 """
+
 import sppas.src.calculus.stats.central as central
 import sppas.src.calculus.stats.variability as variability
 import sppas.src.calculus.stats.moment as moment
@@ -42,7 +43,7 @@ import sppas.src.calculus.stats.moment as moment
 
 
 class sppasBaseVolume(object):
-    """A base class to estimates the volume.
+    """A base class to estimate the volume.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France

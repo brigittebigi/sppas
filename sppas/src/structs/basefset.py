@@ -61,7 +61,6 @@ class sppasBaseSet(object):
 
     It implements the operators '|' and '&'.
 
-
     """
 
     def __init__(self):

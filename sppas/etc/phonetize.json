@@ -3,6 +3,7 @@
   "name": "Phonetization",
   "descr": "Converts a tokenized text into phonetic signs from a pronunciation dictionary. Requires Text Normalization.",
   "required": "textnorm",
+  "api": "sppasPhon",
 
   "resources": [
     {
@@ -14,6 +15,18 @@
   ],
 
   "options": [
+    {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-token",
+      "text": "Input file pattern (tokenization)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-phon",
+      "text": "Output file pattern"
+    },
     {
       "id": "phonunk",
       "type": "bool",

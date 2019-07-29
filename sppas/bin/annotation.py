@@ -33,14 +33,16 @@
     bin.annotation.py
     ~~~~~~~~~~~~~~~~
 
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
-    :summary:      Run any or all automatic annotations.
+:author:       Brigitte Bigi
+:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+:contact:      contact@sppas.org
+:license:      GPL, v3
+:copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+:summary:      Run any or all the automatic annotations.
 
 """
+
+import logging
 import sys
 import os
 from argparse import ArgumentParser
@@ -49,142 +51,188 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas import sg
+from sppas import sg, annots
 from sppas import sppasParam
 from sppas import sppasAnnotationsManager
+from sppas import sppasLogSetup
+
 from sppas.src.anndata.aio import extensions_out
 from sppas.src.ui.term.textprogress import ProcessProgressTerminal
 from sppas.src.ui.term.terminalcontroller import TerminalController
 
+if __name__ == "__main__":
 
-# ----------------------------------------------------------------------------
-# Verify and extract args:
-# ----------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
+    # Fix initial annotation parameters (parse spasui.json)
+    # -----------------------------------------------------------------------
 
-parameters = sppasParam()
-parser = ArgumentParser(usage="{:s} -w file|folder [options]"
-                              "".format(os.path.basename(PROGRAM)),
-                        prog=PROGRAM,
-                        description="Automatic annotations.")
+    parameters = sppasParam()
+    manager = sppasAnnotationsManager()
 
-parser.add_argument("-w",
-                    required=True,
-                    metavar="file|folder",
-                    help='Input wav file name, or directory')
+    all_langs = list()
+    for i in range(parameters.get_step_numbers()):
+        a = parameters.get_step(i)
+        all_langs.extend(a.get_langlist())
+    all_langs = list(set(all_langs))
 
-parser.add_argument("-l",
-                    metavar="lang",
-                    help='Input language, using iso639-3 code')
+    # ----------------------------------------------------------------------------
+    # Verify and extract args:
+    # ----------------------------------------------------------------------------
 
-parser.add_argument("-e",
-                    default=".xra",
-                    metavar="extension",
-                    help='Output extension. One of: {:s}'
-                         ''.format(" ".join(extensions_out)))
+    parser = ArgumentParser(
+        usage="%(prog)s -I file|folder [options]",
+        description="Automatic annotations.",
+        epilog="This program is part of {:s} version {:s}. {:s}. Contact the "
+               "author at: {:s}".format(sg.__name__, sg.__version__,
+                                        sg.__copyright__, sg.__contact__)
+    )
 
-parser.add_argument("--momel", action='store_true',
-                    help="Activate Momel")
-parser.add_argument("--intsint", action='store_true',
-                    help="Activate INTSINT")
-parser.add_argument("--ipus", action='store_true',
-                    help="Activate Search for IPUs")
-parser.add_argument("--tok", action='store_true',
-                    help="Activate Tokenization")
-parser.add_argument("--phon", action='store_true',
-                    help="Activate Phonetization")
-parser.add_argument("--chunks", action='store_true',
-                    help="Activate Chunks alignment")
-parser.add_argument("--align", action='store_true',
-                    help="Activate Phones alignment")
-parser.add_argument("--syll", action='store_true',
-                    help="Activate Syllabification")
-parser.add_argument("--tga", action='store_true',
-                    help="Activate TimeGroupAnalyzer")
-parser.add_argument("--repet", action='store_true',
-                    help="Activate Self-Repetitions")
-parser.add_argument("--all", action='store_true',
-                    help="Activate ALL automatic annotations")
+    parser.add_argument(
+        "--log",
+        metavar="file",
+        help="File name for a Procedure Outcome Report (default: None)")
 
-parser.add_argument("--merge",
-                    action='store_true',
-                    help="Create a merged file with all annotations")
+    # Add arguments for input/output files
+    # ------------------------------------
 
-if len(sys.argv) <= 1:
-    sys.argv.append('-h')
+    group_io = parser.add_argument_group('Files')
 
-args = parser.parse_args()
+    group_io.add_argument(
+        "-I",
+        required=True,
+        metavar="file|folder",
+        action='append',
+        help='Input transcription file name (append).')
 
+    group_io.add_argument(
+        "-l",
+        required=True,
+        metavar="lang",
+        choices=all_langs,
+        help='Language code (iso8859-3). One of: {:s}.'
+             ''.format(" ".join(all_langs)))
 
-# ----------------------------------------------------------------------------
-# Automatic Annotations are here:
-# ----------------------------------------------------------------------------
+    group_io.add_argument(
+        "-e",
+        metavar=".ext",
+        default=annots.extension,
+        choices=extensions_out,
+        help='Output file extension. One of: {:s}'
+             ''.format(" ".join(extensions_out)))
 
-sep = "-"*72
+    # Add the annotations
+    # ------------------------------------------------
 
-parameters.add_sppasinput(os.path.abspath(args.w))
+    for i in range(parameters.get_step_numbers()):
+        parser.add_argument(
+            "--" + parameters.get_step_key(i),
+            action='store_true',
+            help="Activate " + parameters.get_step_name(i))
 
-if args.l:
+    parser.add_argument(
+        "--merge",
+        action='store_true',
+        help="Create a merged file with all the annotations")
+
+    # Force to print help if no argument is given then parse
+    # ------------------------------------------------------
+
+    if len(sys.argv) <= 1:
+        sys.argv.append('-h')
+
+    args = parser.parse_args()
+
+    # ----------------------------------------------------------------------------
+    # Automatic annotations configuration
+    # ----------------------------------------------------------------------------
+
+    # Fix user communication way
+    # -------------------------------
+
+    sep = "-"*72
+    try:
+        term = TerminalController()
+        print(term.render('${GREEN}{:s}${NORMAL}').format(sep))
+        print(term.render('${RED} {} - Version {}${NORMAL}'
+                          '').format(sg.__name__, sg.__version__))
+        print(term.render('${BLUE} {} ${NORMAL}').format(sg.__copyright__))
+        print(term.render('${BLUE} {} ${NORMAL}').format(sg.__url__))
+        print(term.render('${GREEN}{:s}${NORMAL}\n').format(sep))
+
+        # Redirect all messages to a quiet logging
+        # ----------------------------------------
+        lgs = sppasLogSetup(50)
+        lgs.null_handler()
+
+    except:
+        print('{:s}\n'.format(sep))
+        print('{}   -  Version {}'.format(sg.__name__, sg.__version__))
+        print(sg.__copyright__)
+        print(sg.__url__+'\n')
+        print('{:s}\n'.format(sep))
+
+        # Redirect all messages to a quiet logging
+        # ----------------------------------------
+        lgs = sppasLogSetup(50)
+        lgs.stream_handler()
+
+    # Get annotations from arguments
+    # -------------------------------
+
+    print("Annotations: ")
+    x = 0
+    arguments = vars(args)
+    for a in arguments:
+        if arguments[a] is True:
+            ann = a.replace('--', '')
+            for i in range(parameters.get_step_numbers()):
+                key = parameters.get_step_key(i)
+                if ann == key:
+                    parameters.activate_step(i)
+                    print(" - {:s}: enabled.".format(ann))
+                    x += 1
+    print("")
+    if x == 0:
+        print('No annotation enabled. Nothing to do.')
+        sys.exit(1)
+
+    # Get files from arguments
+    # -------------------------------
+
+    print("Files and folders: ")
+    for f in args.I:
+        parameters.add_to_workspace(os.path.abspath(f))
+        print(" - {:s}".format(f))
+    print("")
+
+    # Get others from arguments
+    # -------------------------------
+
     parameters.set_lang(args.l)
-parameters.set_output_format(args.e)
+    parameters.set_output_format(args.e)
+    parameters.set_report_filename(args.log)
 
-if args.momel:
-    parameters.activate_annotation("momel")
-if args.intsint:
-    parameters.activate_annotation("intsint")
-if args.ipus:
-    parameters.activate_annotation("searchipus")
-if args.tok:
-    parameters.activate_annotation("textnorm")
-if args.phon:
-    parameters.activate_annotation("phonetize")
-if args.chunks:
-    parameters.activate_annotation("chunks")
-if args.align:
-    parameters.activate_annotation("alignment")
-if args.syll:
-    parameters.activate_annotation("syllabify")
-if args.tga:
-    parameters.activate_annotation("tga")
-if args.repet:
-    parameters.activate_annotation("selfrepet")
-if args.all:
-    for step in range(parameters.get_step_numbers()):
-        parameters.activate_step(step)
+    # ----------------------------------------------------------------------------
+    # Annotations are running here
+    # ----------------------------------------------------------------------------
 
-try:
-    term = TerminalController()
-    print(term.render('${GREEN}{:s}${NORMAL}').format(sep))
-    print(term.render('${RED} {} - Version {}${NORMAL}'
-                      '').format(sg.__name__, sg.__version__))
-    print(term.render('${BLUE} {} ${NORMAL}').format(sg.__copyright__))
-    print(term.render('${BLUE} {} ${NORMAL}').format(sg.__url__))
-    print(term.render('${GREEN}{:s}${NORMAL}\n').format(sep))
-except:
-    print('{:s}\n'.format(sep))
-    print('{}   -  Version {}'.format(sg.__name__, sg.__version__))
-    print(sg.__copyright__)
-    print(sg.__url__+'\n')
-    print('{:s}\n'.format(sep))
+    p = ProcessProgressTerminal()
+    if args.merge:
+        manager.set_do_merge(True)
+    manager.annotate(parameters, p)
+
+    try:
+        term = TerminalController()
+        print(term.render('\n${GREEN}{:s}${NORMAL}').format(sep))
+        print(term.render('${RED}See {}.').format(parameters.get_report_filename()))
+        print(term.render('${GREEN}Thank you for using {}.').format(sg.__name__))
+        print(term.render('${GREEN}{:s}${NORMAL}').format(sep))
+    except:
+        print('\n{:s}\n'.format(sep))
+        print("See {} for details.\nThank you for using {}."
+              "".format(parameters.get_report_filename(), sg.__name__))
+        print('{:s}\n'.format(sep))
+
+    p.close()
 
 
-# ----------------------------------------------------------------------------
-# Annotation is here
-# ----------------------------------------------------------------------------
-
-p = ProcessProgressTerminal()
-manager = sppasAnnotationsManager()
-if args.merge:
-    manager.set_do_merge(True)
-manager.annotate(parameters, p)
-
-try:
-    term = TerminalController()
-    print(term.render('\n${GREEN}{:s}${NORMAL}').format(sep))
-    print(term.render('${RED}See {}.').format(parameters.get_report_filename()))
-    print(term.render('${GREEN}Thank you for using {}.').format(sg.__name__))
-    print(term.render('${GREEN}{:s}${NORMAL}').format(sep))
-except:
-    print('\n{:s}\n'.format(sep))
-    print("See {} for details.\nThank you for using {}."
-          "".format(parameters.get_report_filename(), sg.__name__))
-    print('{:s}\n'.format(sep))

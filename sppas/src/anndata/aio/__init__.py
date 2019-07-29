@@ -41,6 +41,7 @@
     :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
 
 """
+
 from .annotationpro import sppasANT
 from .annotationpro import sppasANTX
 from .anvil import sppasAnvil
@@ -73,7 +74,7 @@ ext_sppas = ['.xra', '.[Xx][Rr][Aa]']
 ext_praat = ['.TextGrid', '.PitchTier', '.[Tt][eE][xX][tT][Gg][Rr][Ii][dD]','.[Pp][Ii][tT][cC][hH][Tt][Ii][Ee][rR]']
 ext_transcriber = ['.trs','.[tT][rR][sS]']
 ext_elan = ['.eaf', '[eE][aA][fF]']
-ext_ascii = ['.txt','.csv', '.[cC][sS][vV]', '.[tT][xX][Tt]', '.info']
+ext_ascii = ['.txt', '.csv', '.[cC][sS][vV]', '.[tT][xX][Tt]', '.info']
 ext_phonedit = ['.mrk', '.[mM][rR][kK]']
 ext_signaix = ['.hz', '.[Hh][zZ]']
 ext_sclite = ['.stm', '.ctm', '.[sScC][tT][mM]']
@@ -93,7 +94,7 @@ extensions = ['.xra', '.textgrid', '.pitchtier', '.hz', '.eaf', '.trs', '.csv', 
 extensionsul = ext_sppas + ext_praat + ext_transcriber + ext_elan + ext_ascii + ext_phonedit + ext_signaix + ext_sclite + ext_htk + ext_subtitles + ext_anvil + ext_annotationpro + ext_xtrans + ext_audacity + ext_weka
 extensions_in = primary_in + annotations_in
 extensions_out = ['.xra', '.TextGrid', '.eaf', '.csv', '.mrk', '.txt', '.stm', '.ctm', '.lab', '.mlf', '.sub', '.srt', '.antx', '.arff', '.xrff']
-extensions_out_multitiers = ['.xra', '.TextGrid', '.eaf', '.csv', '.mrk', '.antx', '.mlf', '.arff', '.xrff']
+extensions_out_multitiers = ['.xra', '.TextGrid', '.eaf', '.csv', '.mrk', '.antx', '.arff', '.xrff']
 
 # ----------------------------------------------------------------------------
 

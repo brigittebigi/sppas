@@ -303,13 +303,15 @@ class AnnotationsPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.steplist_panel = wx.Panel(self)
         self.steplist_panel.SetBackgroundColour(self._prefsIO.GetValue('M_BG_COLOUR'))
         sbox = wx.BoxSizer(wx.VERTICAL)
-        for i in range(len(self.parameters.get_steplist())):
-            p = sppasStepPanel(self.steplist_panel, self.parameters, self._prefsIO, i)
-            p.Bind(EVT_STEP_EVENT, self.on_check_changed)
-            p.Bind(EVT_LANG_EVENT, self.on_lang_changed)
-            self.step_panels.append(p)
-            self.activated.append(False)
-            sbox.Add(p, 1, wx.EXPAND | wx.ALL, border=4)
+        for i in range(self.parameters.get_step_numbers()):
+            a = self.parameters.get_step(i)
+            if "STANDALONE" in a.get_types():
+                p = sppasStepPanel(self.steplist_panel, self.parameters, self._prefsIO, i)
+                p.Bind(EVT_STEP_EVENT, self.on_check_changed)
+                p.Bind(EVT_LANG_EVENT, self.on_lang_changed)
+                self.step_panels.append(p)
+                self.activated.append(False)
+                sbox.Add(p, 1, wx.EXPAND | wx.ALL, border=4)
         self.steplist_panel.SetSizer(sbox)
 
         lnk_bmp = spBitmap(LINK_ICON, theme=self._prefsIO.GetValue('M_ICON_THEME'))

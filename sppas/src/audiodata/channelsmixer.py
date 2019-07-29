@@ -32,6 +32,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import struct
 
 from .channel import sppasChannel

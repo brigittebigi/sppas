@@ -102,7 +102,7 @@ def log_level_to_wx(log_level):
         10000 LOG_Max
 
     :param log_level: (int) python logging log level
-    :return: (int) wx log level
+    :returns: (int) wx log level
 
     """
     if log_level == logging.CRITICAL:
@@ -241,15 +241,15 @@ class sppasLogWindow(wx.TopLevelWindow):
         settings = wx.GetApp().settings
 
         # Fix frame properties
-        self.SetMinSize((320, 200))
+        self.SetMinSize(wx.Size(320, 200))
         w = int(settings.frame_size[0] * 0.7)
-        h = int(settings.frame_size[1] * 0.8)
+        h = int(settings.frame_size[1] * 0.7)
         self.SetSize(wx.Size(w, h))
         self.SetName('{:s}-log'.format(sg.__name__))
 
         # icon
         _icon = wx.Icon()
-        bmp = sppasSwissKnife.get_bmp_icon("sppas_32", height=32)
+        bmp = sppasSwissKnife.get_bmp_icon("sppas_32", height=64)
         _icon.CopyFromBitmap(bmp)
         self.SetIcon(_icon)
 
@@ -435,7 +435,11 @@ class sppasLogWindow(wx.TopLevelWindow):
             'ERROR': wx.LogError,
             'CRITICAL': wx.LogFatalError
         }
-        levels[event.record.levelname](event.record.message)
+        try:
+            levels[event.record.levelname](event.record.message)
+        except AttributeError:
+            # we received a log record without message...
+            pass
         event.Skip()
 
     # -----------------------------------------------------------------------
@@ -549,6 +553,8 @@ class sppasLogTextCtrl(wx.LogTextCtrl):
         Display the message with colors.
 
         """
+        if not self:
+            return
         # Display time with the default color
         self.textctrl.SetDefaultStyle(self.textctrl.default)
         self.textctrl.write("{:s} ".format(sppasTime().now[:-6]))

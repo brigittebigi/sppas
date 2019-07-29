@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 from .channel import sppasChannel
 from .channelvolume import sppasChannelVolume
 

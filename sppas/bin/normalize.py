@@ -233,9 +233,8 @@ if __name__ == "__main__":
             sys.exit(1)
 
         # Fix input files
-        files = list()
         for f in args.I:
-            parameters.add_sppasinput(os.path.abspath(f))
+            parameters.add_to_workspace(os.path.abspath(f))
 
         # Fix the output file extension and others
         parameters.set_lang(args.l)
@@ -272,6 +271,12 @@ if __name__ == "__main__":
         if os.path.exists(punct_file):
             punct = sppasVocabulary(punct_file, nodump=True)
             normalizer.set_punct(punct)
+
+        # Number dictionary
+        number_filename = os.path.join(paths.resources, 'num', lang.lower() + '_num.repl')
+        if os.path.exists(number_filename) is True:
+            numbers = sppasDictRepl(number_filename, nodump=True)
+            normalizer.set_num(numbers)
 
         # Will output the faked orthography
         for line in sys.stdin:

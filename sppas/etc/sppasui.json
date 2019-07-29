@@ -3,89 +3,79 @@
     {
       "id": "momel",
       "config": "momel.json",
-      "api": "sppasMomel",
-      "cli": "momel.py",
-      "gui": true
+      "cli": "momel.py"
     },
 
     {
       "id": "intsint",
       "config": "intsint.json",
-      "api": "sppasIntsint",
-      "cli": "intsint.py",
-      "gui": true
+      "cli": "intsint.py"
     },
 
     {
       "id": "fillipus",
       "config": "fillipus.json",
-      "api": "sppasFillIPUs",
-      "cli": "fillipus.py",
-      "gui": true
+      "cli": "fillipus.py"
     },
 
     {
       "id": "searchipus",
       "config": "searchipus.json",
-      "api": "sppasSearchIPUs",
-      "cli": "searchipus.py",
-      "gui": true
+      "cli": "searchipus.py"
     },
 
     {
       "id": "textnorm",
       "config": "textnorm.json",
-      "api": "sppasTextNorm",
-      "cli": "normalize.py",
-      "gui": true
+      "cli": "normalize.py"
     },
 
     {
       "id": "phonetize",
       "config": "phonetize.json",
-      "api": "sppasPhon",
-      "cli": "phonetize.py",
-      "gui": true
+      "cli": "phonetize.py"
     },
 
     {
       "id": "alignment",
       "config": "alignment.json",
-      "api": "sppasAlign",
-      "cli": "alignment.py",
-      "gui": true
+      "cli": "alignment.py"
     },
 
     {
       "id": "syllabify",
       "config": "syllabify.json",
-      "api": "sppasSyll",
-      "cli": "syllabify.py",
-      "gui": true
+      "cli": "syllabify.py"
     },
 
     {
       "id": "tga",
       "config": "tga.json",
-      "api": "sppasTGA",
-      "cli": "tga.py",
-      "gui": true
+      "cli": "tga.py"
+    },
+
+    {
+      "id": "activity",
+      "config": "activity.json",
+      "cli": ""
     },
 
     {
       "id": "selfrepet",
       "config": "selfrepet.json",
-      "api": "sppasSelfRepet",
-      "cli": "selfrepetition.py",
-      "gui": true
+      "cli": "selfrepetition.py"
     },
 
     {
       "id": "otherrepet",
       "config": "otherrepet.json",
-      "api": "sppasOtherRepet",
-      "cli": "otherrepetition.py",
-      "gui": false
+      "cli": "otherrepetition.py"
+    },
+
+    {
+      "id": "reoccurrences",
+      "config": "reoccurrences.json",
+      "cli": "reoccurrences.py"
     }
   ],
 

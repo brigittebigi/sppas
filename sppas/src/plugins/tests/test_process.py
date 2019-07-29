@@ -37,7 +37,7 @@ import os
 
 from sppas import paths
 
-from ..param import sppasPluginParam
+from ..plugin import sppasPluginParam
 from ..process import sppasPluginProcess
 
 # ---------------------------------------------------------------------------

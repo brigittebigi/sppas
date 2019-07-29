@@ -33,14 +33,11 @@
     ~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import re
 import logging
 
 from .dictrepl import sppasDictRepl
-
-# ----------------------------------------------------------------------------
-
-DEFAULT_SEP = (";", ",", "\n", " ", ".", "|", "+", "-")
 
 # ----------------------------------------------------------------------------
 
@@ -59,6 +56,8 @@ class sppasMapping(sppasDictRepl):
     of strings.
 
     """
+
+    DEFAULT_SEP = (";", ",", "\n", " ", ".", "|", "+", "-")
 
     def __init__(self, dict_name=None):
         """Create a new sppasMapping instance.

@@ -36,7 +36,7 @@ import codecs
 import logging
 
 from sppas.src.config import sg
-from sppas.src.utils.makeunicode import sppasUnicode
+from sppas.src.utils import sppasUnicode
 
 from .dumpfile import sppasDumpFile
 from .resourcesexc import PositiveValueError

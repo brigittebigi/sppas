@@ -35,6 +35,7 @@
     The volume is the estimation of RMS values, sampled with a window of 10ms.
 
 """
+
 from .audioframes import sppasAudioFrames
 from .basevolume import sppasBaseVolume
 
@@ -42,15 +43,16 @@ from .basevolume import sppasBaseVolume
 
 
 class sppasAudioVolume(sppasBaseVolume):
-    """
+    """Estimate the volume of an audio file.
+
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2017  Brigitte Bigi
-    :summary:      A class to estimates the volume of an audio file.
 
     """
+
     def __init__(self, audio, win_len=0.01):
         """Create a sppasAudioVolume instance.
 

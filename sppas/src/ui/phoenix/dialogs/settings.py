@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import wx
 
 from sppas.src.config import ui_translation
@@ -111,14 +112,16 @@ class sppasSettingsDialog(sppasDialog):
         self._back_up = dict()
         self._backup_settings()
 
+        self.CreateHeader(MSG_HEADER_SETTINGS, "settings")
+        self._create_content()
+        self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
+
         # Bind events
         self.Bind(wx.EVT_CLOSE, self.on_cancel)
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
-        self.CreateHeader(MSG_HEADER_SETTINGS, "settings")
-        self._create_content()
-        self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
         self.LayoutComponents()
+        self.GetSizer().Fit(self)
         self.CenterOnParent()
         self.FadeIn(deltaN=-8)
 
@@ -228,10 +231,10 @@ class WxSettingsPanel(sppasPanel):
         """"""
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer_top = self._create_content_colors_fonts()
-        sizer.Add(sizer_top, 3, wx.EXPAND)
+        sizer.Add(sizer_top, 0, wx.EXPAND)
         # btn = sppasBitmapTextButton(
         #     parent=self,
-        #     name="apply",
+        #     name="window-apply",
         #     label="Test on this window",
         #     style=wx.BORDER_SIMPLE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
         # btn.SetSize((-1, wx.GetApp().settings.action_height))
@@ -359,7 +362,6 @@ class WxSettingsPanel(sppasPanel):
 
         dlg.Destroy()
 
-
 # ---------------------------------------------------------------------------
 
 
@@ -426,6 +428,7 @@ class sppasColoursFontPanel(sppasPanel):
 
         gbs.AddGrowableCol(1)
         self.SetSizer(gbs)
+        self.SetMinSize(wx.Size(180, 200))
 
     # -----------------------------------------------------------------------
 

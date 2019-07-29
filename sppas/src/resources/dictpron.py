@@ -32,6 +32,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import os
 import codecs
 import logging
@@ -41,7 +42,7 @@ from sppas.src.config import symbols
 from sppas.src.config import sg
 from sppas.src.config import paths
 from sppas.src.config import separators
-from sppas.src.utils.makeunicode import sppasUnicode
+from sppas.src.utils import sppasUnicode
 
 from .dumpfile import sppasDumpFile
 from .resourcesexc import FileIOError, FileUnicodeError, FileFormatError
@@ -56,7 +57,7 @@ class sppasDictPron(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2017  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     A pronunciation dictionary contains a list of tokens, each one with a list
     of possible pronunciations.
@@ -93,12 +94,12 @@ class sppasDictPron(object):
     def __init__(self, dict_filename=None, nodump=False):
         """Create a sppasDictPron instance.
 
-        :param dict_filename: (str) Name of the file of the pronunciation dict
-        :param nodump: (bool) Create or not a dump file.
-
         A dump file is a binary version of the dictionary. Its size is greater
         than the original ASCII dictionary but the time to load is divided
         by two or three.
+
+        :param dict_filename: (str) Name of the file of the pronunciation dict
+        :param nodump: (bool) Create or not a dump file.
 
         """
         self._filename = ""
@@ -219,8 +220,7 @@ class sppasDictPron(object):
         """Add a token/pron to the dict.
 
         :param token: (str) Unicode string of the token to add
-        :param pron: (str) A pronunciation in which the phonemes are separated
-        by whitespace
+        :param pron: (str) A pronunciation in which the phonemes are separated by whitespace
 
         """
         entry = sppasDictPron.format_token(token)

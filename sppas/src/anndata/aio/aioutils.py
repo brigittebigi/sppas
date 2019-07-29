@@ -104,7 +104,7 @@ def is_ortho_tier(tier_name):
     i.e. is containing either "ipu", "trans", "trs", "toe" or "ortho" in its name.
 
     :param tier_name: (str)
-    :return: (bool)
+    :returns: (bool)
 
     """
     tier_name = tier_name.lower()

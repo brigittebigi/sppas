@@ -26,10 +26,10 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.filespck.basectrls.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.page_files.basectrls.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Base classes to manage a workspace and utilities.
+    Base classes to manage a workspace and some utilities.
 
 """
 
@@ -37,7 +37,11 @@ import wx
 import wx.dataview
 import logging
 
+from sppas.src.files.filebase import States
 from sppas.src.files.fileexc import FileAttributeError
+
+from ..tools import sppasSwissKnife
+from ..windows.image import ColorizeImage
 
 # ----------------------------------------------------------------------------
 
@@ -49,6 +53,72 @@ default_renderers = {
     "wxBitmap": wx.dataview.DataViewBitmapRenderer,
     "wxDataViewIconText": wx.dataview.DataViewIconTextRenderer
 }
+
+# ---------------------------------------------------------------------------
+
+
+class StateIconRenderer(wx.dataview.DataViewCustomRenderer):
+    """Draw an icon matching a state of a file.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
+
+    ICON_NAMES = {
+        States().UNUSED: "choice_checkbox",
+        States().CHECKED: "choice_checked",
+        States().LOCKED: "locked",
+        States().AT_LEAST_ONE_CHECKED: "choice_pos",
+        States().AT_LEAST_ONE_LOCKED: "choice_neg"
+    }
+
+    def __init__(self,
+                 varianttype="wxBitmap",
+                 mode=wx.dataview.DATAVIEW_CELL_INERT,
+                 align=wx.dataview.DVR_DEFAULT_ALIGNMENT):
+        super(StateIconRenderer, self).__init__(varianttype, mode, align)
+        self.value = ""
+
+    def SetValue(self, value):
+        self.value = value
+        return True
+
+    def GetValue(self):
+        return self.value
+
+    def GetSize(self):
+        """Return the size needed to display the value."""
+        size = self.GetTextExtent('TT')
+        return size[1]*2, size[1]*2
+
+    def Render(self, rect, dc, state):
+        """Draw the bitmap, adjusting its size. """
+        if self.value == "":
+            return False
+
+        x, y, w, h = rect
+        s = min(w, h)
+        s = int(0.9 * s)
+
+        if self.value in StateIconRenderer.ICON_NAMES:
+            icon_value = StateIconRenderer.ICON_NAMES[self.value]
+
+            # get the image from its name
+            img = sppasSwissKnife.get_image(icon_value)
+            # re-scale the image to the expected size
+            sppasSwissKnife.rescale_image(img, s)
+            # re-colorize
+            ColorizeImage(img, wx.BLACK, wx.Colour(128, 128, 128, 128))
+            # convert to bitmap
+            bitmap = wx.Bitmap(img)
+            # render it at the center
+            dc.DrawBitmap(bitmap, x + (w-s)//2, y + (h-s)//2)
+
+        return True
 
 # ---------------------------------------------------------------------------
 
@@ -72,6 +142,17 @@ class ColumnProperties(object):
         All members are private so that the get/set methods are always called
         and they have properties in order to be able to access them in a
         simplest way. These members can't be modified by inheritance.
+
+        The properties of a column are:
+
+            - an identifier: an integer to represent the column number,
+            - a name of the column,
+            - the type of the data to be displayed in the column,
+            - the initial width of the column,
+            - the mode of the cell (inert, activatable, editable),
+            - a renderer,
+            - an alignment,
+            - the functions to get values in the data of the model.
 
         :param name: (str) Name of the column
         :param stype: (str) String representing the type of the data
@@ -197,6 +278,8 @@ class ColumnProperties(object):
     def add_fct_name(self, key, fct_name):
         self.__fct[key] = fct_name
 
+    # -----------------------------------------------------------------------
+
     def get_value(self, data):
         for key in self.__fct:
             if key == type(data):
@@ -240,13 +323,13 @@ class BaseTreeViewCtrl(wx.dataview.DataViewCtrl):
     def __init__(self, parent, name=wx.PanelNameStr):
         """Constructor of the FileTreeCtrl.
 
-        :param `parent`: (wx.Window)
-        :param `data`: (FileData)
+        :param parent: (wx.Window)
+        :param name: (str)
 
         """
         super(BaseTreeViewCtrl, self).__init__(
             parent,
-            style=wx.BORDER_NONE | wx.dataview.DV_MULTIPLE,  # wx.dataview.DV_VERT_RULES |
+            style=wx.BORDER_NONE | wx.dataview.DV_MULTIPLE,  # | wx.dataview.DV_NO_HEADER,  # wx.dataview.DV_VERT_RULES
             name=name
         )
 
@@ -271,7 +354,6 @@ class BaseTreeViewCtrl(wx.dataview.DataViewCtrl):
         wx.Window.SetBackgroundColour(self, color)
         if self._model is not None:
             self._model.SetBackgroundColour(color)
-            self.RefreshData()
 
     # ------------------------------------------------------------------------
 
@@ -279,12 +361,11 @@ class BaseTreeViewCtrl(wx.dataview.DataViewCtrl):
         wx.Window.SetForegroundColour(self, color)
         if self._model is not None:
             self._model.SetForegroundColour(color)
-            self.RefreshData()
 
     # ------------------------------------------------------------------------
 
-    def RefreshData(self):
-        """To be overridden."""
+    def update_data(self):
+        """To be overridden. Update the currently displayed data."""
         return
 
     # ------------------------------------------------------------------------
@@ -298,10 +379,10 @@ class BaseTreeViewCtrl(wx.dataview.DataViewCtrl):
         :param model:
         :param index: (int) Index of the column to create. It must match an
         existing column number of the model.
-        :return: (wx.dataview.DataViewColumn)
+        :returns: (wx.dataview.DataViewColumn)
 
         """
-        logging.debug('Create column: {:d}: {:s}'
+        logging.debug('Create column: {:d} {:s}'
                       ''.format(index, model.GetColumnName(index)))
 
         stype = model.GetColumnType(index)

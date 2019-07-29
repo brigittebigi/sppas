@@ -30,9 +30,10 @@
         ---------------------------------------------------------------------
 
     src.ui.phoenix.tests.test_glob.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import wx
 import logging
 
@@ -40,11 +41,16 @@ from sppas.src.ui.cfg import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
+import sppas.src.ui.phoenix.windows.toolbar
 import sppas.src.ui.phoenix.windows.line
 import sppas.src.ui.phoenix.windows.button
+import sppas.src.ui.phoenix.panels.option
 import sppas.src.ui.phoenix.page_files.filesmanager
-import sppas.src.ui.phoenix.page_files.catsmanager
+import sppas.src.ui.phoenix.page_files.refsmanager
 import sppas.src.ui.phoenix.page_files.wksmanager
+import sppas.src.ui.phoenix.page_analyze.anz_tabs
+import sppas.src.ui.phoenix.page_analyze.text_view
+import sppas.src.ui.phoenix.windows.buttonbox
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -59,9 +65,14 @@ class TestPanel(wx.Choicebook):
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
         # Make the bunch of test panels for the choice book
-        self.AddPage(sppas.src.ui.phoenix.page_files.wksmanager.TestPanel(self), "Workspaces manager")
-        self.AddPage(sppas.src.ui.phoenix.page_files.catsmanager.TestPanel(self), "Catalogues manager")
+        self.AddPage(sppas.src.ui.phoenix.page_analyze.text_view.TestPanel(self), "Text view")
+        self.AddPage(sppas.src.ui.phoenix.page_analyze.anz_tabs.TestPanel(self), "Tabs analyze")
+        self.AddPage(sppas.src.ui.phoenix.page_files.refsmanager.TestPanel(self), "References manager")
         self.AddPage(sppas.src.ui.phoenix.page_files.filesmanager.TestPanel(self), "Files manager")
+        self.AddPage(sppas.src.ui.phoenix.page_files.wksmanager.TestPanel(self), "Workspaces manager")
+        self.AddPage(sppas.src.ui.phoenix.panels.option.TestPanel(self), "Configure options")
+        self.AddPage(sppas.src.ui.phoenix.windows.toolbar.TestPanel(self), "Toolbar")
+        self.AddPage(sppas.src.ui.phoenix.windows.buttonbox.TestPanel(self), "ButtonBox")
         self.AddPage(sppas.src.ui.phoenix.windows.button.TestPanel(self), "Buttons")
         self.AddPage(sppas.src.ui.phoenix.windows.line.TestPanel(self), "Lines")
 

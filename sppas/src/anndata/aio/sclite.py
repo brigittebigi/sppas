@@ -231,7 +231,7 @@ class sppasCTM(sppasBaseSclite):
 
         :param line: (str)
         :param line_number: (int)
-        :return: (bool)
+        :returns: (bool)
 
         """
         # Comment
@@ -278,7 +278,7 @@ class sppasCTM(sppasBaseSclite):
         Find the tier or create it.
 
         :param line: (str)
-        :return: (sppasTier)
+        :returns: (sppasTier)
 
         """
         tab_line = line.split()
@@ -309,7 +309,7 @@ class sppasCTM(sppasBaseSclite):
         """Return the score of the label of a given line.
 
         :param line: (str)
-        :return: (float) or None if no score is given
+        :returns: (float) or None if no score is given
 
         """
         tab_line = line.split()
@@ -632,7 +632,7 @@ class sppasSTM(sppasBaseSclite):
 
         :param line: (str)
         :param line_number: (int)
-        :return: (bool)
+        :returns: (bool)
 
         """
         # Comment
@@ -677,7 +677,7 @@ class sppasSTM(sppasBaseSclite):
         Find the tier or create it.
 
         :param line: (str)
-        :return: (sppasTier)
+        :returns: (sppasTier)
 
         """
         tab_line = line.split()

@@ -3,6 +3,7 @@
   "name": "Self-Repetitions",
   "descr": "Searches for sources and echos of a speaker. Requires time-aligned tokens",
   "required": "alignment",
+  "api": "sppasSelfRepet",
 
   "resources": [
     {
@@ -14,6 +15,18 @@
   ],
 
   "options": [
+    {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-palign",
+      "text": "Input file pattern (time-aligned words or lemmas)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-srepet",
+      "text": "Output file pattern"
+    },
     {
       "id": "span",
       "type": "int",

@@ -33,9 +33,10 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import wave
 
-from sppas.src.utils.makeunicode import u
+from sppas.src.utils import u
 
 from ..audio import sppasAudioPCM
 

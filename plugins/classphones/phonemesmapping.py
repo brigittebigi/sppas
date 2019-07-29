@@ -3,7 +3,7 @@
 # ---------------------------------------------------------------------------
 #       Laboratoire Parole et Langage
 #
-#       Copyright (C) 2017  Brigitte Bigi
+#       Copyright (C) 2017-2019  Brigitte Bigi
 #
 #       Use of this software is governed by the GPL, v3
 #       This banner notice must not be removed
@@ -47,9 +47,9 @@ from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 from sppas.src.presenters.tiermapping import sppasMappingTier
 
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Verify and extract args:
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 parser = ArgumentParser(usage="%s -i file -m table" %
                         os.path.basename(PROGRAM),
@@ -80,12 +80,13 @@ if len(sys.argv) <= 1:
 
 args = parser.parse_args()
 
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Load input data
 
 fname, fext = os.path.splitext(args.i)
 if fname.endswith("-palign") is False:
-    print("ERROR: this plugin requires SPPAS alignment files (i.e. with -palign in its name).")
+    print("ERROR: this plugin requires SPPAS alignment files "
+          "(i.e. with -palign in its name).")
     sys.exit(1)
 
 # read content
@@ -120,9 +121,9 @@ with codecs.open(args.m, "r", sg.__encoding__) as fp:
         phones.pop(0)
         if not args.quiet:
             if len(phones) != len(mappings):
-                sys.stdout.write("{:s} (ignored) ".format(phoneme))
+                print("{:s} (ignored) ".format(phoneme))
             else:
-                sys.stdout.write("{:s} ".format(phoneme))
+                print("{:s} ".format(phoneme))
 
         for name, value in zip(tier_names, phones):
             mappings[name].add(phoneme, value)
@@ -132,7 +133,7 @@ with codecs.open(args.m, "r", sg.__encoding__) as fp:
 if not args.quiet:
     print("\ndone...")
 
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Convert input file
 
 trs = sppasTranscription(name="PhonemesClassification")
@@ -147,12 +148,12 @@ for name in mappings.keys():
     trs.append(new_tier)
 print("done...")
 
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Write converted tiers
 
 if not args.quiet:
     print("Saving...")
-filename = fname + "-class" + fext
+filename = fname.replace("-palign", "-pclass") + fext
 parser = sppasRW(filename)
 parser.write(trs)
 print("File {:s} created.".format(filename))

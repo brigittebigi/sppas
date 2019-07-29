@@ -254,7 +254,7 @@ class sppasPoint(sppasBaseLocalization):
 
         :param x: any kind of data
         :param y: any kind of data
-        :return: Boolean
+        :returns: Boolean
 
         """
         return isinstance(x, type(y))

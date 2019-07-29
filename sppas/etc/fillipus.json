@@ -3,11 +3,19 @@
   "name": "Fill in IPUs",
   "descr": "Searches for Inter-Pausal Units and fills in with a transcription. Requires an audio file and a .txt file with the transcription.",
   "required": "",
+  "api": "sppasFillIPUs",
 
   "resources": [
   ],
 
   "options": [
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "",
+      "text": "Output file pattern"
+    },
+
     {
       "id": "min_ipu",
       "type": "float",

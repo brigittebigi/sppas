@@ -236,9 +236,8 @@ if __name__ == "__main__":
             sys.exit(1)
 
         # Fix input files
-        files = list()
         for f in args.I:
-            parameters.add_sppasinput(os.path.abspath(f))
+            parameters.add_to_workspace(os.path.abspath(f))
 
         # Fix the output file extension and others
         parameters.set_lang(args.l)
@@ -255,7 +254,7 @@ if __name__ == "__main__":
         # an argument 'unk' must exists (which is in the options).
         # -------------------------------
 
-        if not args.unk:
+        if not args.phonunk:
             print("argparse.py: error: option -unk is required")
             sys.exit(1)
 
@@ -269,4 +268,4 @@ if __name__ == "__main__":
             map_table = sppasMapping(args.m)
         phonetizer = sppasDictPhonetizer(pdict, mapping)
         for line in sys.stdin:
-            print("{:s}".format(phonetizer.phonetize(line, args.unk)))
+            print("{:s}".format(phonetizer.phonetize(line, args.phonunk)))

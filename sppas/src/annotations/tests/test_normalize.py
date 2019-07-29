@@ -36,7 +36,7 @@
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
     :summary:      Test the SPPAS Text Normalization.
 
 """
@@ -54,55 +54,8 @@ from sppas.src.anndata import sppasRW
 from ..TextNorm.normalize import TextNormalizer
 from ..TextNorm.orthotranscription import sppasOrthoTranscription
 from ..TextNorm.tokenize import sppasTokenSegmenter
-from ..TextNorm.num2letter import sppasNum
 from ..TextNorm.splitter import sppasSimpleSplitter
 from ..TextNorm.sppastextnorm import sppasTextNorm
-
-# ---------------------------------------------------------------------------
-
-ref_es = [
-    u("cero"),
-    u("uno"),
-    u("dos"),
-    u("tres"),
-    u("cuatro"),
-    u("cinco"),
-    u("seis"),
-    u("siete"),
-    u("ocho"),
-    u("nueve"),
-    u("diez"),
-    u("once"),
-    u("doce"),
-    u("trece"),
-    u("catorce"),
-    u("quince"),
-    u("dieciséis"),
-    u("diecisiete"),
-    u("dieciocho"),
-    u("diecinueve"),
-    u("veinte"),
-    u("veintiuno"),
-    u("veintidós"),
-    u("veintitrés"),
-    u("veinticuatro"),
-    u("veinticinco"),
-    u("veintiséis"),
-    u("veintisiete"),
-    u("veintiocho"),
-    u("veintinueve"),
-    u("treinta"),
-    u("treinta-y-uno"),
-    u("treinta-y-dos"),
-    u("treinta-y-tres"),
-    u("treinta-y-cuatro"),
-    u("treinta-y-cinco"),
-    u("treinta-y-seis"),
-    u("treinta-y-siete"),
-    u("treinta-y-ocho"),
-    u("treinta-y-nueve"),
-    u("cuarenta")
-]
 
 # ---------------------------------------------------------------------------
 
@@ -239,54 +192,6 @@ class TestSimpleSplitter(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestNum2Letter(unittest.TestCase):
-    """Convert number to their written form."""
-
-    def test_init(self):
-        # Unknown language
-        num = sppasNum('zzz')
-        with self.assertRaises(ValueError):
-            num.convert('3')
-        # Known language
-        num = sppasNum('fra')
-        num.convert("03")
-        num.convert("3")
-        with self.assertRaises(ValueError):
-            num.convert('3.0')
-
-    # -----------------------------------------------------------------------
-
-    def test_num2letter_fra(self):
-        """... number to letter in French """
-
-        num = sppasNum('fra')
-        self.assertEquals(u("cent-vingt-trois"),
-                          num.convert("123"))
-
-    # -----------------------------------------------------------------------
-
-    def test_num2letter_spa(self):
-        """... number to letter in Spanish  """
-
-        num = sppasNum('spa')
-        ret = [num.convert(i) for i in range(41)]
-        self.assertEquals(ref_es, ret)
-
-        self.assertEquals(u("mil-doscientos-cuarenta-y-uno"),
-                          num.convert(1241))
-
-        self.assertEquals(u("dos-millones-trescientos-cuarenta-y-seis-mil-veintidós"),
-                          num.convert(2346022))
-
-        self.assertEquals(u("trescientos-ochenta-y-dos-mil-ciento-veintiuno"),
-                          num.convert(382121))
-
-        self.assertEquals(u("setecientos-treinta-y-nueve-mil-cuatrocientos-noventa-y-nueve"),
-                          num.convert(739499))
-
-# ---------------------------------------------------------------------------
-
-
 class TestNormalizer(unittest.TestCase):
 
     def setUp(self):
@@ -306,7 +211,7 @@ class TestNormalizer(unittest.TestCase):
         repl = sppasDictRepl(os.path.join(paths.resources, "repl", "fra.repl"), nodump=True)
         self.tok.set_repl(repl)
         s = self.tok.replace([u("un"), u("taux"), u("de"), u("croissance"), u("de"), u("0,5"), u("%")])
-        self.assertEquals(s, [u("un"), u("taux"), u("de"), u("croissance"), u("de"), u("0"), u("virgule"), u("5"),
+        self.assertEqual(s, [u("un"), u("taux"), u("de"), u("croissance"), u("de"), u("0"), u("virgule"), u("5"),
                               u("pourcents")])
 
         text = [u("² % °c  km/h  etc   €  ¥ $ ")]
@@ -314,31 +219,31 @@ class TestNormalizer(unittest.TestCase):
         repl = sppasDictRepl(os.path.join(paths.resources, "repl", "eng.repl"), nodump=True)
         self.tok.set_repl(repl)
         s = self.tok.replace(text)
-        self.assertEquals(u("square percent degrees_Celsius km/h etc euros yens dollars"),
+        self.assertEqual(u("square percent degrees_Celsius km/h etc euros yens dollars"),
                           " ".join(s))
 
         repl = sppasDictRepl(os.path.join(paths.resources, "repl", "spa.repl"), nodump=True)
         self.tok.set_repl(repl)
         s = self.tok.replace(text)
-        self.assertEquals(u("quadrados por_ciento grados_Celsius km/h etc euros yens dollars"),
+        self.assertEqual(u("quadrados por_ciento grados_Celsius km/h etc euros yens dollars"),
                           " ".join(s))
 
         repl = sppasDictRepl(os.path.join(paths.resources, "repl", "fra.repl"), nodump=True)
         self.tok.set_repl(repl)
         s = self.tok.replace(text)
-        self.assertEquals(u("carrés pourcents degrés_celcius kilomètres_heure etcetera euros yens dollars"),
+        self.assertEqual(u("carrés pourcents degrés_celcius kilomètres_heure etcetera euros yens dollars"),
                           " ".join(s))
 
         repl = sppasDictRepl(os.path.join(paths.resources, "repl", "ita.repl"), nodump=True)
         self.tok.set_repl(repl)
         s = self.tok.replace(text)
-        self.assertEquals(u("quadrato percento gradi_Celsius km/h etc euros yens dollars"),
+        self.assertEqual(u("quadrato percento gradi_Celsius km/h etc euros yens dollars"),
                           " ".join(s))
 
         repl = sppasDictRepl(os.path.join(paths.resources, "repl", "cmn.repl"), nodump=True)
         self.tok.set_repl(repl)
         s = self.tok.replace(text)
-        self.assertEquals(u("的平方 个百分比 摄氏度 公里每小时 etc € ¥ $"),
+        self.assertEqual(u("的平方 个百分比 摄氏度 公里每小时 etc € ¥ $"),
                           " ".join(s))
 
     # -----------------------------------------------------------------------
@@ -363,17 +268,21 @@ class TestNormalizer(unittest.TestCase):
     def test_num2letter(self):
         """... Integration of num2letter into the TextNormalizer."""
 
+        num = sppasDictRepl(os.path.join(paths.resources, "num", "fra_num.repl"), nodump=True)
         repl = sppasDictRepl(os.path.join(paths.resources, "repl", "fra.repl"), nodump=True)
         self.tok.set_repl(repl)
+        self.tok.set_num(num)
         self.tok.set_lang("fra")
 
-        self.assertEquals([u("cent-vingt-trois")], self.tok.normalize(u("123")))
+        self.assertEqual([u("cent_vingt_trois")], self.tok.normalize(u("123")))
 
-        self.assertEquals(u("un virgule vingt-quatre").split(), self.tok.normalize(u("1,24")))
+        self.assertEqual([u("un")], self.tok.normalize(u("1")))
+        self.assertEqual([u("vingt_quatre")], self.tok.normalize(u("24")))
+        self.assertEqual(u("un virgule vingt_quatre").split(), self.tok.normalize(u("1,24")))
 
-        self.tok.set_lang("deu")
-        with self.assertRaises(ValueError):
-            self.tok.normalize(u("123"))
+        # self.tok.set_lang("deu")
+        # with self.assertRaises(ValueError):
+        #     self.tok.normalize(u("123"))
 
     # -----------------------------------------------------------------------
 
@@ -381,7 +290,7 @@ class TestNormalizer(unittest.TestCase):
         """... Remove data of an utterance if included in a dictionary."""
 
         self.tok.set_lang("fra")
-        self.assertEquals(u("un deux").split(), self.tok.normalize(u("/un, deux!!!")))
+        self.assertEqual(u("un deux").split(), self.tok.normalize(u("/un, deux!!!")))
 
     # -----------------------------------------------------------------------
 
@@ -390,11 +299,11 @@ class TestNormalizer(unittest.TestCase):
 
         t = sppasTokenSegmenter(self.tok.vocab)
         s = t.bind([u("123")])
-        self.assertEquals(s, [u("123")])
+        self.assertEqual(s, [u("123")])
         s = t.bind([u("au fur et à mesure")])
-        self.assertEquals(s, [u("au_fur_et_à_mesure")])
+        self.assertEqual(s, [u("au_fur_et_à_mesure")])
         s = t.bind([u("rock'n roll")])   # not in lexicon
-        self.assertEquals(s, [u("rock'n")])
+        self.assertEqual(s, [u("rock'n")])
 
     # -----------------------------------------------------------------------
 
@@ -420,13 +329,13 @@ class TestNormalizer(unittest.TestCase):
     def test_code_switching(self):
         """... [TO DO] support of language switching."""
 
-        dictdir  = os.path.join(paths.resources, "vocab")
+        dictdir = os.path.join(paths.resources, "vocab")
         vocabfra = os.path.join(dictdir, "fra.vocab")
         vocabcmn = os.path.join(dictdir, "cmn.vocab")
 
         wds = sppasVocabulary(vocabfra)
         wds.load_from_ascii(vocabcmn)
-        self.assertEquals(len(wds), 456382)
+        self.assertEqual(len(wds), 456382)
 
         #self.tok.set_vocab(wds)
         #splitswitch = self.tok.tokenize(u'et il m\'a dit : "《干脆就把那部蒙人的闲法给废了拉倒！》RT @laoshipukong : 27日"')

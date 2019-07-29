@@ -32,6 +32,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 from sppas import symbols
 from sppas import sppasRW
 from sppas import sppasTranscription
@@ -247,12 +248,10 @@ class sppasSelfRepet(sppasBaseRepet):
 
     # ----------------------------------------------------------------------
 
-    @staticmethod
-    def get_pattern():
+    def get_pattern(self):
         """Pattern this annotation uses in an output filename."""
-        return '-srepet'
+        return self._options.get("outputpattern", "-srepet")
 
-    @staticmethod
-    def get_input_pattern():
+    def get_input_pattern(self):
         """Pattern this annotation expects for its input filename."""
-        return '-palign'
+        return self._options.get("inputpattern", "-palign")
