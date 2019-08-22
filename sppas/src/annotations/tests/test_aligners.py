@@ -49,7 +49,6 @@ from ..Align.aligners.alignerio import palign, walign, mlf
 # ---------------------------------------------------------------------------
 
 MODELDIR = os.path.join(paths.resources, "models")
-sample_1 = os.path.join(paths.samples, "samples-eng", "oriana1.wav")  # mono; 16000Hz; 16bits
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 # ---------------------------------------------------------------------------

@@ -61,6 +61,12 @@
     },
 
     {
+      "id": "rms",
+      "config": "rms.json",
+      "cli": ""
+    },
+
+    {
       "id": "selfrepet",
       "config": "selfrepet.json",
       "cli": "selfrepetition.py"
