@@ -34,6 +34,7 @@
 
 """
 
+import logging
 import json
 import os
 import platform
@@ -228,6 +229,7 @@ class sppasPluginParam(object):
         Test only the main command (i.e. the first string, without args).
 
         """
+        logging.debug("Test of the command: {:s}".format(command))
         command_args = shlex.split(command)
         test_command = command_args[0]
 
