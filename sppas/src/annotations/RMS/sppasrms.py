@@ -218,10 +218,6 @@ class sppasRMS(sppasBaseAnnotation):
         :returns: (sppasTranscription)
 
         """
-        self.print_options()
-        self.print_diagnosis(input_file[0])
-        self.print_diagnosis(input_file[1])
-
         # Get the tier with the intervals we'll estimate rms values
         tier = self.input_tier(input_file[1])
 

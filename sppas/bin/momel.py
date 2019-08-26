@@ -111,7 +111,7 @@ if __name__ == "__main__":
         "-I",
         metavar="file",
         action='append',
-        help='Input file name with pitch (append).')
+        help='Input file name (append).')
 
     group_io.add_argument(
         "-e",

@@ -115,7 +115,7 @@ if __name__ == "__main__":
         "-I",
         metavar="file",
         action='append',
-        help='Input transcription file name (append).')
+        help='Input file name (append).')
 
     group_io.add_argument(
         "-e",

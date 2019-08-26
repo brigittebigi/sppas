@@ -30,15 +30,15 @@
 
         ---------------------------------------------------------------------
 
-    bin.fillipus.py
-    ~~~~~~~~~~~~~~~~
+    bin.rms.py
+    ~~~~~~~~~~~
 
 :author:       Brigitte Bigi
 :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
 :contact:      contact@sppas.org
 :license:      GPL, v3
 :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-:summary:      Search IPUs and fill in with a transcription
+:summary:      RMS estimator on intervals of a tier
 
 """
 
@@ -52,7 +52,7 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas import sg, annots
-from sppas import sppasFillIPUs
+from sppas import sppasRMS
 from sppas.src.anndata.aio import extensions_out
 from sppas import sppasParam
 from sppas import sppasAnnotationsManager
@@ -65,8 +65,8 @@ if __name__ == "__main__":
     # Fix initial annotation parameters
     # -----------------------------------------------------------------------
 
-    parameters = sppasParam(["fillipus.json"])
-    ann_step_idx = parameters.activate_annotation("fillipus")
+    parameters = sppasParam(["rms.json"])
+    ann_step_idx = parameters.activate_annotation("rms")
     ann_options = parameters.get_options(ann_step_idx)
 
     # -----------------------------------------------------------------------
@@ -106,12 +106,13 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-t",
         metavar="file",
-        help='Input transcription file name.')
+        help='Input annotated file name.')
 
     group_io.add_argument(
         "-o",
         metavar="file",
-        help='Annotated file with filled IPUs ')
+        help='Annotated file with RMS values '
+             '(default: None)')
 
     group_io.add_argument(
         "-I",
@@ -189,7 +190,7 @@ if __name__ == "__main__":
             print("argparse.py: error: option -t is required with option -i")
             sys.exit(1)
 
-        ann = sppasFillIPUs(log=None)
+        ann = sppasRMS(log=None)
         ann.fix_options(parameters.get_options(ann_step_idx))
         if args.o:
             ann.run((args.i, args.t), output_file=args.o)
@@ -199,7 +200,7 @@ if __name__ == "__main__":
                 print("{} {} {:s}".format(
                     a.get_location().get_best().get_begin().get_midpoint(),
                     a.get_location().get_best().get_end().get_midpoint(),
-                    a.get_best_tag().get_typed_content()))
+                    a.get_best_tag().get_content()))
 
     elif args.I:
 
