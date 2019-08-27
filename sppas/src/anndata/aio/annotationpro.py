@@ -163,6 +163,7 @@ class sppasANTX(sppasBaseIO):
         super(sppasANTX, self).__init__(name)
 
         self.default_extension = "antx"
+        self.software = "Annotation Pro"
 
         self._accept_multi_tiers = True
         self._accept_no_tiers = True
@@ -685,6 +686,7 @@ class sppasANT(sppasBaseIO):
         super(sppasANT, self).__init__(name)
 
         self.default_extension = "ant"
+        self.software = "Annotation Pro"
 
         self._accept_multi_tiers = True
         self._accept_no_tiers = True

@@ -98,6 +98,9 @@ class AssociatePanel(sppasPanel):
         # Construct the panel
         self._create_content()
         self._setup_events()
+
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(28), -1))
+        self.SetAutoLayout(True)
         self.Layout()
 
     # ------------------------------------------------------------------------
@@ -134,7 +137,6 @@ class AssociatePanel(sppasPanel):
         sizer.Add(unlink, 1, wx.BOTTOM | wx.ALIGN_CENTRE, 0)
         sizer.AddStretchSpacer(4)
 
-        self.SetMinSize(wx.Size(sppasPanel.fix_size(32), -1))
         self.SetSizer(sizer)
 
     # ------------------------------------------------------------------------

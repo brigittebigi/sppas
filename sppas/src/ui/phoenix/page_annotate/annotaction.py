@@ -34,7 +34,6 @@
 
 """
 
-import logging
 import wx
 import os
 
@@ -96,7 +95,7 @@ class sppasActionAnnotatePanel(sppasPanel):
         for f in os.listdir(paths.logs):
             if os.path.isfile(os.path.join(paths.logs, f)) and f.endswith('.txt'):
                 reports.append(f)
-                logging.debug('Found report: {:s}'.format(f))
+                wx.LogDebug('Found report: {:s}'.format(f))
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         action_sizer = self._create_action_content()
@@ -206,7 +205,7 @@ class sppasActionAnnotatePanel(sppasPanel):
         w = sppasPanel.fix_size(80)
         all_formats = ['.xra', '.TextGrid', '.eaf', '.antx', '.mrk', '.csv']
         default = self.__param.get_output_format()
-        logging.debug("Default output format is {:s}".format(default))
+        wx.LogDebug("Default output format is {:s}".format(default))
 
         choice = wx.ComboBox(self, -1, choices=all_formats, name="format_choice")
         choice.SetSelection(choice.GetItems().index(default))
@@ -237,7 +236,8 @@ class sppasActionAnnotatePanel(sppasPanel):
     def notify(self, destination, fct_name=""):
         """Send the EVT_PAGE_CHANGE to the parent."""
         if self.GetParent() is not None:
-            logging.debug('NOTIFY from={:s} to={:s}, fct={:s}'.format(self.GetName(), destination, fct_name))
+            wx.LogDebug('NOTIFY from={:s} to={:s}, fct={:s}'
+                        ''.format(self.GetName(), destination, fct_name))
             evt = PageChangeEvent(from_page=self.GetName(),
                                   to_page=destination,
                                   fct=fct_name)
@@ -311,7 +311,7 @@ class sppasActionAnnotatePanel(sppasPanel):
         choice = event.GetEventObject()
         new_format = choice.GetValue()
         self.__param.set_output_format(new_format)
-        logging.debug("New output format is {:s}".format(new_format))
+        wx.LogDebug("New output format is {:s}".format(new_format))
 
     # -----------------------------------------------------------------------
 
@@ -527,6 +527,6 @@ class ReportsPanel(sppasScrolledPanel):
             self.__set_normal_btn_style(btn)
         btn.SetValue(state)
         btn.Refresh()
-        logging.debug('Report {:s} is checked: {:s}'
+        wx.LogDebug('Report {:s} is checked: {:s}'
                       ''.format(btn.GetLabel(), str(state)))
 

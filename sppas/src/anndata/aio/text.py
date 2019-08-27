@@ -35,8 +35,9 @@
 Text readers and writers for raw text, column-based text, csv.
 
 """
+
 import codecs
-import os.path
+import os
 import datetime
 import re
 
@@ -69,7 +70,7 @@ class sppasBaseText(sppasBaseIO):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     """
 
@@ -82,6 +83,8 @@ class sppasBaseText(sppasBaseIO):
         if name is None:
             name = self.__class__.__name__
         super(sppasBaseText, self).__init__(name)
+
+        self.software = ""
 
         self._accept_multi_tiers = True
         self._accept_no_tiers = True
@@ -97,8 +100,6 @@ class sppasBaseText(sppasBaseIO):
         self._accept_radius = False
         self._accept_gaps = True
         self._accept_overlaps = True
-
-        self.software = "Text"
 
     # -----------------------------------------------------------------------
 

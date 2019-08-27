@@ -77,8 +77,8 @@ class FileAnnotIcon(object):
         self.__exticon['.WAV'] = "Audio"
         self.__exticon['.WAVE'] = "Audio"
 
-        for ext in sppasRW.TRANSCRIPTION_SOFTWARE:
-            software = sppasRW.TRANSCRIPTION_SOFTWARE[ext]
+        for ext in sppasRW.TRANSCRIPTION_TYPES:
+            software = sppasRW.TRANSCRIPTION_TYPES[ext]().software
             if ext.startswith(".") is False:
                 ext = "." + ext
             self.__exticon[ext.upper()] = software

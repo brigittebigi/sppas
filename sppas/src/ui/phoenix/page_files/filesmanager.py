@@ -86,6 +86,9 @@ class FilesManager(sppasPanel):
         self.__current_dir = paths.samples
         self._create_content()
         self._setup_events()
+
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(320), -1))
+        self.SetAutoLayout(True)
         self.Layout()
 
     # -----------------------------------------------------------------------
@@ -120,10 +123,6 @@ class FilesManager(sppasPanel):
         sizer.Add(tb, proportion=0, flag=wx.EXPAND, border=0)
         sizer.Add(fv, proportion=1, flag=wx.EXPAND, border=0)
         self.SetSizer(sizer)
-
-        self.SetMinSize(wx.Size(sppasPanel.fix_size(320),
-                                sppasPanel.fix_size(200)))
-        self.SetAutoLayout(True)
 
     # -----------------------------------------------------------------------
 
@@ -178,8 +177,8 @@ class FilesManager(sppasPanel):
         key_code = event.GetKeyCode()
         cmd_down = event.CmdDown()
         shift_down = event.ShiftDown()
-        logging.debug('Files manager received the key event {:d}'
-                      ''.format(key_code))
+        #logging.debug('Files manager received the key event {:d}'
+        #              ''.format(key_code))
 
         #if key_code == wx.WXK_F5 and cmd_down is False and shift_down is False:
         #    loggingFindWindow.debug('Refresh all the files [F5 keys pressed]')
@@ -197,7 +196,6 @@ class FilesManager(sppasPanel):
 
         """
         name = event.GetButtonObj().GetName()
-        logging.debug("Event received of button: {:s}".format(name))
 
         if name == "files-add":
             self._add()
@@ -236,7 +234,7 @@ class FilesManager(sppasPanel):
         """Remove the checked files of the fileviewer."""
         data = self.get_data()
         if data.is_empty():
-            logging.info('No files in data. Nothing to remove.')
+            wx.LogMessage('No files in data. Nothing to remove.')
             return
 
         removed = self.FindWindow("filestree").RemoveCheckedFiles()
@@ -249,7 +247,7 @@ class FilesManager(sppasPanel):
         """Move into the trash the checked files of the fileviewer."""
         data = self.get_data()
         if data.is_empty():
-            logging.info('No files in data. Nothing to delete.')
+            wx.LogMessage('No files in data. Nothing to delete.')
             return
 
         checked_files = self.FindWindow("filestree").GetCheckedFiles()
@@ -266,7 +264,7 @@ class FilesManager(sppasPanel):
             if deleted:
                 self.notify()
         elif response == wx.ID_NO:
-            logging.info('Response is no. No file deleted.')
+            wx.LogMessage('Response is no. No file deleted.')
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py

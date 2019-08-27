@@ -95,6 +95,7 @@ class sppasFilesPanel(sppasPanel):
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
 
+        self.SetAutoLayout(True)
         self.Layout()
 
     # ------------------------------------------------------------------------
@@ -138,13 +139,13 @@ class sppasFilesPanel(sppasPanel):
 
         # Organize all the panels vertically, separated by 2px grey lines.
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(wp, 0, wx.EXPAND, 0)
+        sizer.Add(wp, 1, wx.EXPAND, 0)
         sizer.Add(self.__create_vline(), 0, wx.EXPAND, 0)
-        sizer.Add(fm, 2, wx.EXPAND, 0)
+        sizer.Add(fm, 5, wx.EXPAND, 0)
         sizer.Add(self.__create_vline(), 0, wx.EXPAND, 0)
         sizer.Add(ap, 0, wx.EXPAND, 0)
         sizer.Add(self.__create_vline(), 0, wx.EXPAND, 0)
-        sizer.Add(cm, 1, wx.EXPAND, 0)
+        sizer.Add(cm, 3, wx.EXPAND, 0)
 
         self.SetSizer(sizer)
 

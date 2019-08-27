@@ -33,7 +33,8 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
-import os.path
+
+import os
 from collections import OrderedDict
 
 from sppas.src.utils.makeunicode import u
@@ -105,30 +106,6 @@ class sppasRW(object):
     TRANSCRIPTION_TYPES[sppasTDF().default_extension.lower()] = sppasTDF
     TRANSCRIPTION_TYPES[sppasCSV().default_extension.lower()] = sppasCSV
     TRANSCRIPTION_TYPES[sppasRawText().default_extension.lower()] = sppasRawText
-
-    TRANSCRIPTION_SOFTWARE = dict()
-    TRANSCRIPTION_SOFTWARE[sppasXRA().default_extension] = sppasXRA().software
-    TRANSCRIPTION_SOFTWARE[sppasTextGrid().default_extension] = sppasTextGrid().software
-    TRANSCRIPTION_SOFTWARE[sppasARFF().default_extension] = sppasARFF().software
-    TRANSCRIPTION_SOFTWARE[sppasXRFF().default_extension] = sppasXRFF().software
-    TRANSCRIPTION_SOFTWARE[sppasAnvil().default_extension] = sppasAnvil().software
-    TRANSCRIPTION_SOFTWARE[sppasEAF().default_extension] = sppasEAF().software
-    TRANSCRIPTION_SOFTWARE[sppasANT().default_extension] = sppasANT().software
-    TRANSCRIPTION_SOFTWARE[sppasANTX().default_extension] = sppasANTX().software
-    TRANSCRIPTION_SOFTWARE[sppasTRS().default_extension] = sppasTRS().software
-    TRANSCRIPTION_SOFTWARE[sppasMRK().default_extension] = sppasMRK().software
-    TRANSCRIPTION_SOFTWARE[sppasSignaix().default_extension] = sppasSignaix().software
-    TRANSCRIPTION_SOFTWARE[sppasLab().default_extension] = sppasLab().software
-    TRANSCRIPTION_SOFTWARE[sppasSubRip().default_extension] = sppasSubRip().software
-    TRANSCRIPTION_SOFTWARE[sppasSubViewer().default_extension] = sppasSubViewer().software
-    TRANSCRIPTION_SOFTWARE[sppasCTM().default_extension] = sppasCTM().software
-    TRANSCRIPTION_SOFTWARE[sppasSTM().default_extension] = sppasSTM().software
-    TRANSCRIPTION_SOFTWARE[sppasIntensityTier().default_extension] = sppasIntensityTier().software
-    TRANSCRIPTION_SOFTWARE[sppasPitchTier().default_extension] = sppasPitchTier().software
-    TRANSCRIPTION_SOFTWARE[sppasAudacity().default_extension] = sppasAudacity().software
-    TRANSCRIPTION_SOFTWARE[sppasTDF().default_extension] = sppasTDF().software
-    TRANSCRIPTION_SOFTWARE[sppasCSV().default_extension] = sppasCSV().software
-    TRANSCRIPTION_SOFTWARE[sppasRawText().default_extension] = sppasRawText().software
 
     # -----------------------------------------------------------------------
 

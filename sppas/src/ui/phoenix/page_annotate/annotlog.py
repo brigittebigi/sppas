@@ -34,7 +34,6 @@
 
 """
 
-import logging
 import wx
 import codecs
 
@@ -110,7 +109,7 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
 
     def run(self):
         """Perform the automatic annotations of param on data."""
-        logging.info('Perform automatic annotations')
+        wx.LogMessage('Perform automatic annotations')
         progress = sppasProgressDialog()
         progress.Show(True)
         progress.set_new()

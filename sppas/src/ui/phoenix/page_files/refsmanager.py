@@ -84,7 +84,8 @@ class ReferencesManager(sppasPanel):
 
     """
 
-    HIGHLIGHT_COLOUR = wx.Colour(128, 128, 250, 196)  # blue
+    # light blue
+    HIGHLIGHT_COLOUR = wx.Colour(128, 128, 250, 196)
 
     # ------------------------------------------------------------------------
 
@@ -99,6 +100,9 @@ class ReferencesManager(sppasPanel):
 
         self._create_content()
         self._setup_events()
+
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(160), -1))
+        self.SetAutoLayout(True)
         self.Layout()
 
     # ------------------------------------------------------------------------
@@ -126,9 +130,6 @@ class ReferencesManager(sppasPanel):
         sizer.Add(tb, proportion=0, flag=wx.EXPAND, border=0)
         sizer.Add(cv, proportion=1, flag=wx.EXPAND, border=0)
         self.SetSizer(sizer)
-
-        self.SetMinSize((220, 200))
-        self.SetAutoLayout(True)
 
     # -----------------------------------------------------------------------
 

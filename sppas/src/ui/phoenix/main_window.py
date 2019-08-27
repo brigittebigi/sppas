@@ -53,6 +53,7 @@ from .page_home import sppasHomePanel
 from .page_files import sppasFilesPanel
 from .page_annotate import sppasAnnotatePanel
 from .page_analyze import sppasAnalyzePanel
+from .page_convert import sppasConvertPanel
 from .page_plugins import sppasPluginsPanel
 
 from .dialogs import YesNoQuestion
@@ -67,6 +68,7 @@ MSG_ACTION_HOME = ui_translation.gettext('Home')
 MSG_ACTION_FILES = ui_translation.gettext('Files')
 MSG_ACTION_ANNOTATE = ui_translation.gettext('Annotate')
 MSG_ACTION_ANALYZE = ui_translation.gettext('Analyze')
+MSG_ACTION_CONVERT = ui_translation.gettext('Convert')
 MSG_ACTION_PLUGINS = ui_translation.gettext('Plugins')
 MSG_ACTION_EXIT = ui_translation.gettext('Exit')
 MSG_ACTION_ABOUT = ui_translation.gettext('About')
@@ -142,7 +144,8 @@ class sppasMainWindow(sppasDialog):
         sppasDialog._init_infos(self)
 
         # Fix some frame properties
-        self.SetMinSize(wx.Size(640, 480))   # Enlarge compared to the base class
+        min_width = sppasPanel.fix_size(620)
+        self.SetMinSize(wx.Size(min_width, 480))
         self.SetSize(wx.GetApp().settings.frame_size)
         self.SetName('{:s}'.format(sg.__name__))
 
@@ -174,8 +177,8 @@ class sppasMainWindow(sppasDialog):
     def _create_book(self):
         """Create the simple book to manage the several pages of the frame.
 
-        Names of the page_files are:
-        page_welcome, page_files, page_annotate, page_analyze, page_plugins
+        Names of the pages are: page_welcome, page_files, page_annotate,
+        page_analyze, page_convert, and page_plugins.
 
         """
         book = sppasSimplebook(
@@ -197,7 +200,10 @@ class sppasMainWindow(sppasDialog):
         # 4th: analyze selected files
         book.AddPage(sppasAnalyzePanel(book), text="")
 
-        # 5th: plugins
+        # 5th: convert checked files
+        book.AddPage(sppasConvertPanel(book), text="")
+
+        # 6th: plugins
         book.AddPage(sppasPluginsPanel(book), text="")
 
         return book
@@ -254,7 +260,7 @@ class sppasMainWindow(sppasDialog):
         elif event_name == "settings":
             self.on_settings()
 
-        elif event_name in ("home", "files", "annotate", "analyze", "plugins"):
+        elif event_name in ("home", "files", "annotate", "analyze", "convert", "plugins"):
             self.show_page("page_" + event_name)
 
         else:
@@ -271,7 +277,7 @@ class sppasMainWindow(sppasDialog):
 
         """
         # Names of the page panels which are requiring the workspace
-        pages = ("page_files", "page_annotate", "page_analyze", "page_plugins")
+        pages = ("page_files", "page_annotate", "page_analyze", "page_convert", "page_plugins")
 
         # The object the event comes from
         emitted = event.GetEventObject()
@@ -417,21 +423,25 @@ class sppasMenuPanel(sppasPanel):
         self.SetMinSize(wx.Size(-1, wx.GetApp().settings.title_height))
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
+        bord = sppasPanel.fix_size(6)
 
         home = sppasTextButton(self, MSG_ACTION_HOME, name="home")
-        sizer.Add(home, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=10)
+        sizer.Add(home, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
 
         files = sppasTextButton(self, MSG_ACTION_FILES, name="files")
-        sizer.Add(files, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=10)
+        sizer.Add(files, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
 
         annotate = sppasTextButton(self, MSG_ACTION_ANNOTATE, name="annotate")
-        sizer.Add(annotate, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=10)
+        sizer.Add(annotate, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
 
         analyze = sppasTextButton(self, MSG_ACTION_ANALYZE, name="analyze")
-        sizer.Add(analyze, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=10)
+        sizer.Add(analyze, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
+
+        convert = sppasTextButton(self, MSG_ACTION_CONVERT, name="convert")
+        sizer.Add(convert, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
 
         plugins = sppasTextButton(self, MSG_ACTION_PLUGINS, name="plugins")
-        sizer.Add(plugins, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=10)
+        sizer.Add(plugins, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
 
         sizer.AddStretchSpacer(2)
 
@@ -442,7 +452,7 @@ class sppasMenuPanel(sppasPanel):
         )
         sppas_logo.SetToolTip(MSG_TOOLTIP_WEBSITE + sg.__url__)
         sizer.Add(sppas_logo, 0,
-                  wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, border=10)
+                  wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, border=bord)
 
         self.Bind(wx.EVT_BUTTON, self._process_event)
         self.SetSizer(sizer)
@@ -514,7 +524,9 @@ class sppasActionsPanel(sppasPanel):
         btn.Spacing = 12
         btn.BorderWidth = 0
         btn.BitmapColour = self.GetForegroundColour()
-        btn.SetMinSize((32, 32))
+
+        min_size = sppasPanel.fix_size(28)
+        btn.SetMinSize(wx.Size(min_size, min_size))
 
         return btn
 

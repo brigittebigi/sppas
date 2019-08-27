@@ -34,7 +34,6 @@
 
 """
 
-import logging
 import wx
 import os
 import time
@@ -128,7 +127,7 @@ class sppasPluginsList(sppasScrolledPanel):
         """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        logging.debug('New data to set in the plugins page. '
+        wx.LogMessage('New data to set in the plugins page. '
                       'Id={:s}'.format(data.id))
         self.__data = data
 
@@ -199,8 +198,8 @@ class sppasPluginsList(sppasScrolledPanel):
         """
         # Get the list of checked FileName() instances
         checked = self.__data.get_filename_from_state(States().CHECKED)
-        logging.info("Apply plugin {:s} on {:d} files."
-                     "".format(plugin_id, len(checked)))
+        wx.LogMessage("Apply plugin {:s} on {:d} files."
+                      "".format(plugin_id, len(checked)))
         if len(checked) == 0:
             Information("No file(s) selected to apply the plugin on!")
             return
@@ -234,8 +233,8 @@ class sppasPluginsList(sppasScrolledPanel):
 
                 # Notify the data changed (if any)
                 if added > 0:
-                    logging.info("{:d} files added into the workspace"
-                                 "".format(added))
+                    wx.LogMessage("{:d} files added into the workspace"
+                                  "".format(added))
                     evt = DataChangedEvent(data=self.__data)
                     evt.SetEventObject(self)
                     wx.PostEvent(self.GetParent(), evt)
@@ -317,7 +316,7 @@ class sppasPluginsList(sppasScrolledPanel):
 
         for plugin_id in self._manager.get_plugin_ids():
             if event_name == plugin_id:
-                logging.debug("User clicked plugin {:s}".format(plugin_id))
+                # logging.debug("User clicked plugin {:s}".format(plugin_id))
                 self.apply(plugin_id)
                 event.Skip()
                 break

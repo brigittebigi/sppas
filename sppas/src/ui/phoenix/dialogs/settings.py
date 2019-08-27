@@ -93,7 +93,7 @@ class sppasSettingsDialog(sppasDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     Returns either wx.ID_CANCEL or wx.ID_OK if ShowModal().
 
@@ -122,6 +122,7 @@ class sppasSettingsDialog(sppasDialog):
 
         self.LayoutComponents()
         self.GetSizer().Fit(self)
+
         self.CenterOnParent()
         self.FadeIn(deltaN=-8)
 
