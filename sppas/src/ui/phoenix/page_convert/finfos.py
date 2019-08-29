@@ -81,41 +81,56 @@ class FileSupports:
 
 
 class FileFormatProperty:
+    """Represent one format and its properties.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
 
     def __init__(self, extension):
+        """Create a FileFormatProperty instance.
 
-        self.extension = "." + extension
-        self.instance = sppasRW.TRANSCRIPTION_TYPES[extension]()
-        self.software = self.instance.software
+        :param extension: (str) File name extension.
+
+        """
+        self.__extension = "." + extension
+        self.__instance = sppasRW.TRANSCRIPTION_TYPES[extension]()
+        self.__software = self.__instance.software
 
         try:
-            self.instance.read("")
+            self.__instance.read("")
         except NotImplementedError:
-            self.reader = False
+            self.__reader = False
         except Exception:
-            self.reader = True
+            self.__reader = True
         try:
-            self.instance.write("")
+            self.__instance.write("")
         except NotImplementedError:
-            self.writer = False
+            self.__writer = False
         except Exception:
-            self.writer = True
+            self.__writer = True
+
+    # -----------------------------------------------------------------------
 
     def get_extension(self):
-        return self.extension
+        return self.__extension
 
     def get_software(self):
-        return self.software
+        return self.__software
 
     def get_reader(self):
-        return self.reader
+        return self.__reader
 
     def get_writer(self):
-        return self.writer
+        return self.__writer
 
     def get_support(self, name):
-        if name in FileSupports.supports:
-            return getattr(self.instance, name)()
+        if name in list(FileSupports.supports.keys()):
+            return getattr(self.__instance, name)()
         return False
 
     # -----------------------------------------------------------------------
@@ -126,7 +141,8 @@ class FileFormatProperty:
     # -----------------------------------------------------------------------
 
     def __str__(self):
-        return 'FileFormatProperty of extension {!s:s}'.format(self.extension)
+        return 'FileFormatProperty() of extension {!s:s}' \
+               ''.format(self.__extension)
 
 # ---------------------------------------------------------------------------
 # The DataViewCtrl to display the list of file formats and to select one.
@@ -168,9 +184,11 @@ class FormatsViewCtrl(BaseTreeViewCtrl):
             wx.dataview.DataViewCtrl.AppendColumn(self, col)
 
         # Bind events.
-        # Used to remember the expend/collapse status of items after a refresh.
-        self.Bind(wx.dataview.EVT_DATAVIEW_ITEM_ACTIVATED, self._on_item_activated)
-        self.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED, self._on_item_selection_changed)
+        # Used to select/unselect one of the displayed file formats
+        self.Bind(wx.dataview.EVT_DATAVIEW_ITEM_ACTIVATED,
+                  self._on_item_activated)
+        self.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED,
+                  self._on_item_selection_changed)
 
     # ------------------------------------------------------------------------
 
@@ -183,7 +201,12 @@ class FormatsViewCtrl(BaseTreeViewCtrl):
         """
         item = event.GetItem()
         if item is not None:
-            self._model.change_value(item)
+            changed = self._model.change_value(item)
+            if changed is True:
+                # the parent will decide what to exactly do with this change
+                evt = FormatChangedEvent(extension=self._model.get_selected())
+                evt.SetEventObject(self)
+                wx.PostEvent(self.GetParent(), evt)
 
     # ------------------------------------------------------------------------
 
@@ -193,7 +216,22 @@ class FormatsViewCtrl(BaseTreeViewCtrl):
         """
         item = event.GetItem()
         if item is not None:
-            self._model.change_value(item)
+            changed = self._model.change_value(item)
+            if changed is True:
+                # the parent will decide what to exactly do with this change
+                evt = FormatChangedEvent(extension=self._model.get_selected())
+                evt.SetEventObject(self)
+                wx.PostEvent(self.GetParent(), evt)
+
+    # ------------------------------------------------------------------------
+
+    def CancelSelected(self):
+        self._model.cancel_selected()
+
+    # ------------------------------------------------------------------------
+
+    def GetExtension(self):
+        return self._model.get_selected()
 
 # ----------------------------------------------------------------------------
 # Model
@@ -209,15 +247,6 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-    This model mapper provides these data columns identifiers:
-
-        0. radio:      wxBitmap
-        1. ext:        string
-        2. software:   string
-        3. reader:     string
-        4. writer:     string
-        5- all supported properties
-
     """
 
     def __init__(self):
@@ -229,10 +258,10 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
         # Map between the displayed columns and the workspace data
         self.__mapper = dict()
         self.__mapper[0] = FormatsViewModel.__create_col("", "icon")
-        self.__mapper[1] = FormatsViewModel.__create_col(ui_translation.gettext('Extension'), "get_extension")
-        self.__mapper[2] = FormatsViewModel.__create_col(ui_translation.gettext('Software'), "get_software")
-        self.__mapper[3] = FormatsViewModel.__create_col(ui_translation.gettext('Reader'), 'get_reader')
-        self.__mapper[4] = FormatsViewModel.__create_col(ui_translation.gettext('Writer'), 'get_writer')
+        self.__mapper[1] = FormatsViewModel.__create_col(ui_translation.gettext('Extension'), "extension")
+        self.__mapper[2] = FormatsViewModel.__create_col(ui_translation.gettext('Software'), "software")
+        self.__mapper[3] = FormatsViewModel.__create_col(ui_translation.gettext('Reader'), 'reader')
+        self.__mapper[4] = FormatsViewModel.__create_col(ui_translation.gettext('Writer'), 'writer')
         for i, c in enumerate(FileSupports.supports):
             t = FileSupports.supports[c]
             self.__mapper[i+5] = FormatsViewModel.__create_col(t, c)
@@ -243,6 +272,7 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
 
         # The items to display
         self.__extensions = list(sppasRW.TRANSCRIPTION_TYPES.keys())
+        self.__selected = None
 
     # -----------------------------------------------------------------------
     # Manage the data
@@ -259,9 +289,23 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
             return
         node = self.ItemToObject(item)
         # Node is a FileFormatProperty
-        logging.debug("CHANGE VALUE for NODE {:s}".format(node))
+        if node.get_extension() != self.__selected:
+            self.__selected = node.get_extension()
+            self.Cleared()
+            return True
+        return False
 
-        self.Cleared()
+    # -----------------------------------------------------------------------
+
+    def get_selected(self):
+        return self.__selected
+
+    # -----------------------------------------------------------------------
+
+    def cancel_selected(self):
+        if self.__selected is not None:
+            self.__selected = None
+            self.Cleared()
 
     # -----------------------------------------------------------------------
     # Manage column properties
@@ -341,7 +385,6 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
         item(s) should be reported as children of this node.
 
         """
-        logging.debug("GetChildren")
         if not parent:
             i = 0
             for ext in self.__extensions:
@@ -349,6 +392,9 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
                 children.append(self.ObjectToItem(ext_object))
                 i += 1
             return i
+
+        # Otherwise we'll fetch the python object associated with the parent
+        # item and make DV items for each of its child objects.
         return 0
 
     # -----------------------------------------------------------------------
@@ -433,19 +479,28 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
         in GetChildren.
 
         """
+        # Fetch the data object for this item.
+        node = self.ItemToObject(item)
+
         if self.__mapper[col].get_id() == "icon":
+            if self.__selected == node.get_extension():
+                return True
             return False
 
+        # Get the value of the object
+        if self.__mapper[col].get_id() == "extension":
+            return node.get_extension()
+
+        elif self.__mapper[col].get_id() == "software":
+            return node.get_software()
+
         else:
-            # Fetch the data object for this item.
-            node = self.ItemToObject(item)
-            value = str(self.__mapper[col].get_value(node))
-            if value == "true":
+            value = self.__mapper[col].get_value(node)
+            if value is True:
                 value = "X"
-            elif value == "false":
+            elif value is False:
                 value = ""
-            # Return the value of the function we defined when column was created
-        logging.debug("GetValue of col={:d} = {:s}".format(col, value))
+        # logging.debug("GetValue of col={:d} = {:s}".format(col, str(value)))
 
         return value
 
@@ -479,99 +534,22 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
         elif name == "extension":
             col = ColumnProperties(title, name)
             col.width = sppasPanel.fix_size(50)
-            col.add_fct_name("string", "get_extension")
 
         elif name == "software":
             col = ColumnProperties(title, name)
             col.width = sppasPanel.fix_size(80)
-            col.add_fct_name("string", "get_software")
+            col.align = wx.ALIGN_CENTRE
 
         elif name in ["reader", "writer"]:
             col = ColumnProperties(title, name)
-            col.width = sppasPanel.fix_size(80)
-            col.add_fct_name("bool", "get_"+name)
+            col.width = sppasPanel.fix_size(40)
+            col.align = wx.ALIGN_CENTRE
+            col.add_fct_name(FileFormatProperty, "get_"+name)
 
         else:
             col = ColumnProperties(title, name)
-            col.width = sppasPanel.fix_size(60)
-            col.add_fct_name("bool", "get_support", name)
+            col.width = sppasPanel.fix_size(40)
+            col.align = wx.ALIGN_CENTRE
+            col.add_fct_name(FileFormatProperty, "get_support", name)
 
         return col
-
-# ---------------------------------------------------------------------------
-
-
-class sppasFormatInfos(sppasPanel):
-    """Create the list of file formats with their capabilities.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    def __init__(self, parent, name="panel_format_infos"):
-        super(sppasFormatInfos, self).__init__(
-            parent=parent,
-            style=wx.BORDER_NONE,
-            name=name
-        )
-
-        self.__selected = -1
-        self._create_content()
-        self.Layout()
-
-    # -----------------------------------------------------------------------
-
-    def CancelSelected(self):
-        """Unselect the currently selected format."""
-        # We already had a selected row
-        if self.__selected != -1:
-            self.FindWindow("dvlc").SetValue(False, self.__selected, 0)
-
-        # OK. No selected row.
-        self.__selected = -1
-
-    # -----------------------------------------------------------------------
-    # Create and manage the GUI
-    # -----------------------------------------------------------------------
-
-    def _create_content(self):
-        """Create the main content."""
-        info_txt = sppasStaticText(
-            self,
-            label="Select the file type to convert to: ")
-        dvlc = FormatsViewCtrl(self)
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(info_txt, 0, wx.EXPAND | wx.BOTTOM, 4)
-        sizer.Add(dvlc, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 8)
-        self.SetSizer(sizer)
-
-    # -----------------------------------------------------------------------
-
-    def __set_selected(self, event):
-        dvlc = self.FindWindow("dvlc")
-        selected = dvlc.GetSelectedRow()
-        if selected == self.__selected:
-            return
-
-        # We already had a selected row
-        if self.__selected != -1:
-            #dvlc.SetValue(False, self.__selected, 0)
-            pass
-
-        # Set the new selected row
-        self.__selected = selected
-        #dvlc.SetValue(True, self.__selected, 0)
-
-        # Unselect the row in the dataview to remove the "highlighted" color
-        dvlc.UnselectRow(selected)
-
-        # the parent will decide what to exactly do with this change
-        evt = FormatChangedEvent(extension=self.__extensions[self.__selected])
-        evt.SetEventObject(self)
-        wx.PostEvent(self.GetParent(), evt)
-

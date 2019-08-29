@@ -44,9 +44,10 @@ from sppas.src.anndata import sppasRW
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 from ..dialogs import Information
+from ..windows import sppasStaticText
 from ..windows import sppasScrolledPanel
 from ..windows import BitmapTextButton, CheckButton
-from .finfos import sppasFormatInfos, EVT_FORMAT_CHANGED
+from .finfos import FormatsViewCtrl, EVT_FORMAT_CHANGED
 
 # ---------------------------------------------------------------------------
 
@@ -71,7 +72,6 @@ class sppasConvertPanel(sppasScrolledPanel):
 
         # The data all tabs are working on
         self.__data = FileData()
-        self.__extension = None
 
         # Construct the GUI
         self._create_content()
@@ -115,8 +115,11 @@ class sppasConvertPanel(sppasScrolledPanel):
 
     def _create_content(self):
         """Create the main content."""
+        info_txt = sppasStaticText(
+            self,
+            label="Select the file type to convert to: ")
         # The list of file formats, to select one of them
-        pinfo = sppasFormatInfos(self)
+        dvlc_formats = FormatsViewCtrl(self, name="dvlc_formats")
 
         # The button to perform conversion
         self.btn_run = self.__create_convert_btn("Perform the conversion")
@@ -148,7 +151,8 @@ class sppasConvertPanel(sppasScrolledPanel):
         heuristic.SetValue(False)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(pinfo, 3, wx.EXPAND | wx.ALL, 4)
+        sizer.Add(info_txt, 0, wx.EXPAND | wx.ALL, 4)
+        sizer.Add(dvlc_formats, 3, wx.EXPAND | wx.ALL, 4)
         sizer.Add(force, 0, wx.EXPAND | wx.ALL, 4)
         sizer.Add(heuristic, 0, wx.EXPAND | wx.ALL, 4)
         sizer.Add(self.btn_run, 0, wx.ALIGN_CENTRE | wx.ALL, 4)
@@ -277,8 +281,6 @@ class sppasConvertPanel(sppasScrolledPanel):
             return
         # we did not had already a format. we can now enable conversion.
         self.__set_run_enabled()
-        # and we store the file format to convert to
-        self.__extension = ext
 
     # -----------------------------------------------------------------------
 
@@ -303,12 +305,16 @@ class sppasConvertPanel(sppasScrolledPanel):
     def _process_convert(self):
         """Convert checked files."""
         dvlc = self.FindWindow("dvlc_files")
+        dvlc_formats = self.FindWindow("dvlc_formats")
+        if dvlc_formats.GetExtension() is None:
+            wx.LogError("A file format must be selected before convert.")
+            return
         # Remove all rows currently displayed
         dvlc.DeleteAllItems()
         # Disable run button
         self.__set_run_disabled()
         # Cancel the currently selected file format
-        self.FindWindow("panel_format_infos").CancelSelected()
+        dvlc_formats.CancelSelected()
 
         # Get the list of checked FileName() instances
         checked = self.__data.get_filename_from_state(States().CHECKED)
@@ -333,7 +339,7 @@ class sppasConvertPanel(sppasScrolledPanel):
 
             # Fix output filename
             fname, fext = os.path.splitext(f)
-            out_fname = fname + "." + self.__extension
+            out_fname = fname + "." + dvlc_formats.GetExtension()
             dvlc.SetValue("", i, 1)
 
             # Do not override an existing file
