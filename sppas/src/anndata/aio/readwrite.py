@@ -142,7 +142,7 @@ class sppasRW(object):
         
     # -----------------------------------------------------------------------
 
-    def read(self, heuristic=True):
+    def read(self, heuristic=False):
         """Read a transcription from a file.
 
         :param heuristic: (bool) if the extension of the file is unknown, use

@@ -1711,7 +1711,7 @@ class CheckButton(BaseCheckButton):
         self._label = label
         self._radio = False
 
-        # Set the spacing between the check bitmap and the label to 4 by default.
+        # Set the spacing between the check bitmap and the label to 6.
         # This can be changed using SetSpacing later.
         self._spacing = 6
 
@@ -1730,16 +1730,16 @@ class CheckButton(BaseCheckButton):
     def SetSpacing(self, spacing):
         """Set a new spacing between the check bitmap and the text.
 
-        :param spacing: (int) Value between 0 and 20.
+        :param spacing: (int) Value between 0 and 30.
 
         """
         spacing = int(spacing)
         if spacing < 0:
             spacing = 0
-        if spacing > 20:
-            logging.warning('Spacing of a button is maximum 20px width. '
+        if spacing > 30:
+            logging.warning('Spacing of a button is maximum 30px width. '
                             'Got {:d}.'.format(spacing))
-            spacing = 20
+            spacing = 30
         # we should check if spacing < self height or width
         self._spacing = spacing
 

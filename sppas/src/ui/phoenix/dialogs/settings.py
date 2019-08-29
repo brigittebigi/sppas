@@ -98,6 +98,7 @@ class sppasSettingsDialog(sppasDialog):
     Returns either wx.ID_CANCEL or wx.ID_OK if ShowModal().
 
     """
+
     def __init__(self, parent):
         """Create a dialog to fix settings.
 
@@ -122,7 +123,6 @@ class sppasSettingsDialog(sppasDialog):
 
         self.LayoutComponents()
         self.GetSizer().Fit(self)
-
         self.CenterOnParent()
         self.FadeIn(deltaN=-8)
 

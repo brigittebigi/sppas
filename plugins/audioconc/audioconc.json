@@ -8,7 +8,7 @@
   "commands": {
     "windows": "python.exe PLUGIN_PATH/audioconc.py",
     "macos": "audioconc.py",
-    "linux": "audioconc.py"
+    "linux": "python audioconc.py"
   },
   
   "options": [

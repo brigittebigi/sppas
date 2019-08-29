@@ -48,14 +48,16 @@ class WxAppSettings(sppasBaseSettings):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     """
 
     def __init__(self):
         """Create the dictionary of settings."""
         super(WxAppSettings, self).__init__()
-        self.size_coeff = float(self.__get_font_height()) / 10.
+        fh = self.__get_font_height()
+        wx.LogDebug("Font height of the system: {:d}".format(fh))
+        self.size_coeff = float(fh) / 10.
 
     # -----------------------------------------------------------------------
 
@@ -184,6 +186,9 @@ class WxAppSettings(sppasBaseSettings):
 
     def __frame_size(self):
         (w, h) = wx.GetDisplaySize()
-        w = float(w) * 0.6 * self.size_coeff
-        h = min(0.7*float(h), float(w)*9./16.)
-        return wx.Size(max(int(w), 320), max(int(h), 200))
+        w = float(w)
+        h = float(h)
+        ratio = h / w
+        w = min(0.9 * w, w * 0.6 * self.size_coeff)
+        h = min(0.9 * h, w * ratio)
+        return wx.Size(max(int(w), 520), max(int(h), 480))

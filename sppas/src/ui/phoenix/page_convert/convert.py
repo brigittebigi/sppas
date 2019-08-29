@@ -34,17 +34,21 @@
 
 """
 
+import os
+import time
 import wx
 import wx.dataview
 
 from sppas import sppasTypeError
 from sppas.src.files import FileData, States
+from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasTranscription
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 from ..dialogs import Error, Information
 from ..windows import sppasScrolledPanel
 from ..windows import BitmapTextButton, CheckButton
-from .finfos import sppasFormatInfos
+from .finfos import sppasFormatInfos, EVT_FORMAT_CHANGED
 
 # ---------------------------------------------------------------------------
 
@@ -56,7 +60,7 @@ class sppasConvertPanel(sppasScrolledPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     """
 
@@ -69,6 +73,7 @@ class sppasConvertPanel(sppasScrolledPanel):
 
         # The data all tabs are working on
         self.__data = FileData()
+        self.__extension = None
 
         # Construct the GUI
         self._create_content()
@@ -117,32 +122,47 @@ class sppasConvertPanel(sppasScrolledPanel):
 
         # The button to perform conversion
         self.btn_run = self.__create_convert_btn("Perform the conversion")
-        self.btn_run.SetName("convert")
-        self.btn_run.SetImage("convert")
-        self.btn_run.Enable(False)
-        self.btn_run.BorderColour = wx.Colour(228, 24, 24, 128)
+        self.__set_run_disabled()
 
         # The list of converted files
-        self.dvlc = wx.dataview.DataViewListCtrl(
+        dvlc = wx.dataview.DataViewListCtrl(
             self,
             style=wx.dataview.DV_SINGLE | wx.dataview.DV_NO_HEADER | wx.dataview.DV_HORIZ_RULES | wx.NO_BORDER)
-        self.dvlc.SetName("dvlc_files")
-        self.dvlc.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED, self.__cancel_selected)
-        self.dvlc.AppendTextColumn("filename", width=sppasScrolledPanel.fix_size(300))
-        self.dvlc.AppendTextColumn("convert", width=sppasScrolledPanel.fix_size(300))
+        dvlc.SetName("dvlc_files")
+        dvlc.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED,
+                       self.__cancel_selected)
+        dvlc.AppendTextColumn("filename",
+                                   width=sppasScrolledPanel.fix_size(300))
+        dvlc.AppendTextColumn("convert",
+                                   width=sppasScrolledPanel.fix_size(300))
+
+        # Options to convert files
+        force = CheckButton(
+            self,
+            label="Override if the output file already exists.",
+            name="override")
+        force.SetValue(False)
+        heuristic = CheckButton(
+            self,
+            label="If the extension of the input file is unknown, try to automatically detect the format.",
+            name="heuristic")
+        heuristic.SetValue(False)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(pinfo, 2, wx.EXPAND, 0)
-        sizer.Add(self.btn_run, 0, wx.ALIGN_CENTRE, 4)
-        sizer.Add(self.dvlc, 1, wx.EXPAND, 0)
+        sizer.Add(pinfo, 3, wx.EXPAND | wx.ALL, 4)
+        sizer.Add(force, 0, wx.EXPAND | wx.ALL, 4)
+        sizer.Add(heuristic, 0, wx.EXPAND | wx.ALL, 4)
+        sizer.Add(self.btn_run, 0, wx.ALIGN_CENTRE | wx.ALL, 4)
+        sizer.Add(dvlc, 1, wx.EXPAND | wx.ALL, 4)
 
         self.SetSizer(sizer)
 
     # ------------------------------------------------------------------------
 
-    def __cancel_selected(self):
+    def __cancel_selected(self, event):
         """"""
-        self.dvlc.UnselectRow(self.dvlc.GetSelectedRow())
+        dvlc = self.FindWindow("dvlc_files")
+        dvlc.UnselectRow(dvlc.GetSelectedRow())
 
     # ------------------------------------------------------------------------
 
@@ -153,12 +173,27 @@ class sppasConvertPanel(sppasScrolledPanel):
 
         btn = BitmapTextButton(self, label=label)
         btn.LabelPosition = wx.RIGHT
-        btn.Spacing = 12
+        btn.Spacing = sppasScrolledPanel.fix_size(8)
         btn.BorderWidth = 2
-        btn.BorderColour = wx.Colour(128, 128, 128, 128)
         btn.BitmapColour = self.GetForegroundColour()
         btn.SetMinSize(wx.Size(w, h))
+
+        btn.SetName("convert")
+        btn.SetImage("convert")
+
         return btn
+
+    # -----------------------------------------------------------------------
+
+    def __set_run_enabled(self):
+        """Enable the run button."""
+        self.btn_run.Enable(True)
+        self.btn_run.BorderColour = wx.Colour(24, 228, 24, 128)
+
+    def __set_run_disabled(self):
+        """Disable the run button."""
+        self.btn_run.Enable(False)
+        self.btn_run.BorderColour = wx.Colour(228, 24, 24, 128)
 
     # -----------------------------------------------------------------------
     # Events management
@@ -188,6 +223,10 @@ class sppasConvertPanel(sppasScrolledPanel):
 
         # There's only one button in this page
         self.Bind(wx.EVT_BUTTON, self._process_event)
+
+        # The selected format has changed.
+        # This event is sent by the 'sppasFormatInfos' child window.
+        self.Bind(EVT_FORMAT_CHANGED, self._process_format_changed)
 
     # -----------------------------------------------------------------------
 
@@ -224,6 +263,26 @@ class sppasConvertPanel(sppasScrolledPanel):
 
     # -----------------------------------------------------------------------
 
+    def _process_format_changed(self, event):
+        """Process a change of file format to convert to.
+
+        :param event: (wx.Event)
+
+        """
+        emitted = event.GetEventObject()
+        try:
+            ext = event.extension
+        except AttributeError:
+            wx.LogError('Extension were not sent in the event emitted by {:s}'
+                        '.'.format(emitted.GetName()))
+            return
+        # we did not had already a format. we can now enable conversion.
+        self.__set_run_enabled()
+        # and we store the file format to convert to
+        self.__extension = ext
+
+    # -----------------------------------------------------------------------
+
     def _process_event(self, event):
         """Process any kind of events.
 
@@ -232,6 +291,7 @@ class sppasConvertPanel(sppasScrolledPanel):
         """
         event_obj = event.GetEventObject()
         event_name = event_obj.GetName()
+        wx.LogDebug("Convert: event received")
 
         if event_name == "convert":
             self._process_convert()
@@ -243,8 +303,13 @@ class sppasConvertPanel(sppasScrolledPanel):
 
     def _process_convert(self):
         """Convert checked files."""
+        dvlc = self.FindWindow("dvlc_files")
         # Remove all rows currently displayed
-        self.dvlc.DeleteAllItems()
+        dvlc.DeleteAllItems()
+        # Disable run button
+        self.__set_run_disabled()
+        # Cancel the currently selected file format
+        self.FindWindow("panel_format_infos").CancelSelected()
 
         # Get the list of checked FileName() instances
         checked = self.__data.get_filename_from_state(States().CHECKED)
@@ -257,8 +322,48 @@ class sppasConvertPanel(sppasScrolledPanel):
 
         # Add each file into the 1st column of the list
         for f in checked_fns:
-            self.dvlc.AppendItem([f, "to do"])
+            dvlc.AppendItem([f, "to do"])
 
-        # Get the file extension we want to convert to
-        ext = self.FindWindow("page_format_infos").get_extension()
-        wx.LogDebug("Convert files into {:s}".format(ext))
+        # Get options
+        override = self.FindWindow("override").GetValue()
+        heuristic = self.FindWindow("heuristic").GetValue()
+
+        # Convert each file. Displays a message in the 2nd column.
+        changed = False
+        for i, f in enumerate(checked_fns):
+
+            # Fix output filename
+            fname, fext = os.path.splitext(f)
+            out_fname = fname + "." + self.__extension
+            dvlc.SetValue("", i, 1)
+
+            # Do not override an existing file
+            if override is False and os.path.exists(out_fname) is True:
+                dvlc.SetValue(out_fname, i, 0)
+                dvlc.SetValue("File is already existing.", i, 1)
+                continue
+
+            # Read input file
+            try:
+                dvlc.SetValue("reading...", i, 1)
+                parser = sppasRW(f)
+                trs = parser.read(heuristic=heuristic)
+            except Exception as e:
+                dvlc.SetValue(str(e), i, 1)
+                continue
+
+            # Write output file
+            try:
+                dvlc.SetValue(out_fname, i, 0)
+                dvlc.SetValue("writing...", i, 1)
+                parser = sppasRW(out_fname)
+                parser.write(trs)
+                dvlc.SetValue("done.", i, 1)
+                self.__data.add_file(out_fname, brothers=False)
+                changed = True
+            except Exception as e:
+                dvlc.SetValue(str(e), i, 1)
+
+        # Notify the parent that the workspace changed.
+        if changed is True:
+            self.notify()
