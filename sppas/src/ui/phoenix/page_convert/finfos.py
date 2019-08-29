@@ -36,6 +36,7 @@
 
 """
 
+import logging
 import wx
 import wx.lib.newevent
 import wx.dataview
@@ -43,11 +44,11 @@ import wx.dataview
 from sppas.src.config import ui_translation
 from sppas.src.anndata import sppasRW
 
-
-from ..tools import sppasSwissKnife
-from ..windows.image import ColorizeImage
 from ..windows import sppasPanel
 from ..windows import sppasStaticText
+from ..windows.baseviewctrl import BaseTreeViewCtrl
+from ..windows.baseviewctrl import SelectedIconRenderer
+from ..windows.baseviewctrl import ColumnProperties
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when a format is selected
@@ -58,84 +59,9 @@ FormatChangedCommandEvent, EVT_FORMAT_CHANGED_COMMAND = wx.lib.newevent.NewComma
 # ---------------------------------------------------------------------------
 
 
-class SelectedIconRenderer(wx.dataview.DataViewCustomRenderer):
-    """Draw an icon matching the state of a row (select/unselect).
+class FileSupports:
 
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    ICON_NAMES = {
-        True: "radio_checked",
-        False: "radio_unchecked",
-    }
-
-    def __init__(self):
-        super(SelectedIconRenderer, self).__init__(
-            varianttype="wxBitmap",
-            mode=wx.dataview.DATAVIEW_CELL_INERT,
-            align=wx.dataview.DVR_DEFAULT_ALIGNMENT)
-        self.value = False
-
-    def SetValue(self, value):
-        """Assign a boolean value."""
-        self.value = bool(value)
-        return True
-
-    def GetValue(self):
-        """Return the boolean value."""
-        return self.value
-
-    def GetSize(self):
-        """Return the size needed to display the value."""
-        size = self.GetTextExtent('TT')
-        return size[1]*2, size[1]*2
-
-    def Render(self, rect, dc, state):
-        """Draw the bitmap, adjusting its size. """
-        if self.value == "":
-            return False
-
-        x, y, w, h = rect
-        s = min(w, h)
-        s = int(0.7 * s)
-
-        if self.value in SelectedIconRenderer.ICON_NAMES:
-            icon_value = SelectedIconRenderer.ICON_NAMES[self.value]
-
-            # get the image from its name
-            img = sppasSwissKnife.get_image(icon_value)
-            # re-scale the image to the expected size
-            sppasSwissKnife.rescale_image(img, s)
-            # re-colorize
-            ColorizeImage(img, wx.BLACK, wx.Colour(128, 128, 128, 128))
-            # convert to bitmap
-            bitmap = wx.Bitmap(img)
-            # render it at the center
-            dc.DrawBitmap(bitmap, x + (w-s)//2, y + (h-s)//2)
-
-        return True
-
-# ---------------------------------------------------------------------------
-
-
-class sppasFormatInfos(sppasPanel):
-    """Create the list of file formats with their capabilities.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    # Name of the method <-> header to display for the column
-    cols = {
+    supports = {
         "metadata_support": ui_translation.gettext('Metadata'),
         "point_support": ui_translation.gettext('Point'),
         "interval_support": ui_translation.gettext('Interval'),
@@ -151,7 +77,440 @@ class sppasFormatInfos(sppasPanel):
         "media_support": ui_translation.gettext('Media'),
     }
 
+# ---------------------------------------------------------------------------
+
+
+class FileFormatProperty:
+
+    def __init__(self, extension):
+
+        self.extension = "." + extension
+        self.instance = sppasRW.TRANSCRIPTION_TYPES[extension]()
+        self.software = self.instance.software
+
+        try:
+            self.instance.read("")
+        except NotImplementedError:
+            self.reader = False
+        except Exception:
+            self.reader = True
+        try:
+            self.instance.write("")
+        except NotImplementedError:
+            self.writer = False
+        except Exception:
+            self.writer = True
+
+    def get_extension(self):
+        return self.extension
+
+    def get_software(self):
+        return self.software
+
+    def get_reader(self):
+        return self.reader
+
+    def get_writer(self):
+        return self.writer
+
+    def get_support(self, name):
+        if name in FileSupports.supports:
+            return getattr(self.instance, name)()
+        return False
+
     # -----------------------------------------------------------------------
+
+    def __format__(self, fmt):
+        return str(self).__format__(fmt)
+
+    # -----------------------------------------------------------------------
+
+    def __str__(self):
+        return 'FileFormatProperty of extension {!s:s}'.format(self.extension)
+
+# ---------------------------------------------------------------------------
+# The DataViewCtrl to display the list of file formats and to select one.
+# ---------------------------------------------------------------------------
+
+
+class FormatsViewCtrl(BaseTreeViewCtrl):
+    """A control to display data file formats and their properties.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    Columns of this class are defined by the model and created by the
+    constructor. No parent nor children will have the possibility to
+    Append/Insert/Prepend/Delete columns: such methods are disabled.
+
+    """
+
+    def __init__(self, parent, name=wx.PanelNameStr):
+        """Constructor of the FormatsViewCtrl.
+
+        :param parent: (wx.Window)
+        :param name: (str)
+
+        """
+        super(FormatsViewCtrl, self).__init__(parent, name)
+
+        # Create an instance of our model and associate to the view.
+        self._model = FormatsViewModel()
+        self.AssociateModel(self._model)
+        self._model.DecRef()
+
+        # Create the columns that the model wants in the view.
+        for i in range(self._model.GetColumnCount()):
+            col = BaseTreeViewCtrl._create_column(self._model, i)
+            wx.dataview.DataViewCtrl.AppendColumn(self, col)
+
+        # Bind events.
+        # Used to remember the expend/collapse status of items after a refresh.
+        self.Bind(wx.dataview.EVT_DATAVIEW_ITEM_ACTIVATED, self._on_item_activated)
+        self.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED, self._on_item_selection_changed)
+
+    # ------------------------------------------------------------------------
+
+    def _on_item_activated(self, event):
+        """Happens when the user activated a cell (double-click).
+
+        This event is triggered by double clicking an item or pressing some
+        special key (usually "Enter") when it is focused.
+
+        """
+        item = event.GetItem()
+        if item is not None:
+            self._model.change_value(item)
+
+    # ------------------------------------------------------------------------
+
+    def _on_item_selection_changed(self, event):
+        """Happens when the user simple-click a cell.
+
+        """
+        item = event.GetItem()
+        if item is not None:
+            self._model.change_value(item)
+
+# ----------------------------------------------------------------------------
+# Model
+# ----------------------------------------------------------------------------
+
+
+class FormatsViewModel(wx.dataview.PyDataViewModel):
+    """A class that is a DataViewModel combined with an object mapper.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    This model mapper provides these data columns identifiers:
+
+        0. radio:      wxBitmap
+        1. ext:        string
+        2. software:   string
+        3. reader:     string
+        4. writer:     string
+        5- all supported properties
+
+    """
+
+    def __init__(self):
+        """Constructor of a FormatsViewModel.
+
+        """
+        wx.dataview.PyDataViewModel.__init__(self)
+
+        # Map between the displayed columns and the workspace data
+        self.__mapper = dict()
+        self.__mapper[0] = FormatsViewModel.__create_col("", "icon")
+        self.__mapper[1] = FormatsViewModel.__create_col(ui_translation.gettext('Extension'), "get_extension")
+        self.__mapper[2] = FormatsViewModel.__create_col(ui_translation.gettext('Software'), "get_software")
+        self.__mapper[3] = FormatsViewModel.__create_col(ui_translation.gettext('Reader'), 'get_reader')
+        self.__mapper[4] = FormatsViewModel.__create_col(ui_translation.gettext('Writer'), 'get_writer')
+        for i, c in enumerate(FileSupports.supports):
+            t = FileSupports.supports[c]
+            self.__mapper[i+5] = FormatsViewModel.__create_col(t, c)
+
+        # GUI information which can be managed by the mapper
+        self._bgcolor = None
+        self._fgcolor = None
+
+        # The items to display
+        self.__extensions = list(sppasRW.TRANSCRIPTION_TYPES.keys())
+
+    # -----------------------------------------------------------------------
+    # Manage the data
+    # -----------------------------------------------------------------------
+
+    def change_value(self, item):
+        """Change state value.
+
+        :param item: (wx.dataview.DataViewItem)
+
+        """
+        logging.debug("CHANGE VALUE")
+        if item is None:
+            return
+        node = self.ItemToObject(item)
+        # Node is a FileFormatProperty
+        logging.debug("CHANGE VALUE for NODE {:s}".format(node))
+
+        self.Cleared()
+
+    # -----------------------------------------------------------------------
+    # Manage column properties
+    # -----------------------------------------------------------------------
+
+    def GetColumnCount(self):
+        """Overridden. Report how many columns this model provides data for."""
+        logging.debug("GetColumnCount")
+        return len(self.__mapper)
+
+    # -----------------------------------------------------------------------
+
+    def GetColumnType(self, col):
+        """Overridden. Map the data column number to the data type.
+
+        :param col: (int)FileData()
+
+        """
+        return self.__mapper[col].stype
+
+    # -----------------------------------------------------------------------
+
+    def GetColumnName(self, col):
+        """Map the data column number to the data name.
+
+        :param col: (int) Column index.
+
+        """
+        return self.__mapper[col].name
+
+    # -----------------------------------------------------------------------
+
+    def GetColumnMode(self, col):
+        """Map the data column number to the cell mode.
+
+        :param col: (int) Column index.
+
+        """
+        return self.__mapper[col].mode
+
+    # -----------------------------------------------------------------------
+
+    def GetColumnWidth(self, col):
+        """Map the data column number to the col width.
+
+        :param col: (int) Column index.
+
+        """
+        return self.__mapper[col].width
+
+    # -----------------------------------------------------------------------
+
+    def GetColumnRenderer(self, col):
+        """Map the data column numbers to the col renderer.
+
+        :param col: (int) Column index.
+
+        """
+        return self.__mapper[col].renderer
+
+    # -----------------------------------------------------------------------
+
+    def GetColumnAlign(self, col):
+        """Map the data column numbers to the col alignment.
+
+        :param col: (int) Column index.
+
+        """
+        return self.__mapper[col].align
+
+    # -----------------------------------------------------------------------
+
+    def GetChildren(self, parent, children):
+        """The view calls this method to find the children of any node.
+
+        There is an implicit hidden root node, and the top level
+        item(s) should be reported as children of this node.
+
+        """
+        logging.debug("GetChildren")
+        if not parent:
+            i = 0
+            for ext in self.__extensions:
+                ext_object = FileFormatProperty(ext)
+                children.append(self.ObjectToItem(ext_object))
+                i += 1
+            return i
+        return 0
+
+    # -----------------------------------------------------------------------
+
+    def GetParent(self, item):
+        """Return the item which is this item's parent.
+
+        :param item: (wx.dataview.DataViewItem)
+
+        """
+        return wx.dataview.NullDataViewItem
+
+    # -----------------------------------------------------------------------
+
+    def IsContainer(self, item):
+        """Return True if the item has children, False otherwise.
+
+        :param item: (wx.dataview.DataViewItem)
+
+        """
+        # The hidden root is a container
+        if not item:
+            return True
+
+        # but everything else are not
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def GetAttr(self, item, col, attr):
+        """Overridden. Indicate that the item has special font attributes.
+
+        This only affects the DataViewTextRendererText renderer.
+
+        :param item: (wx.dataview.DataViewItem) – The item for which the attribute is requested.
+        :param col: (int) – The column of the item for which the attribute is requested.
+        :param attr: (wx.dataview.DataViewItemAttr) – The attribute to be filled in if the function returns True.
+        :returns: (bool) True if this item has an attribute or False otherwise.
+
+        """
+        if self._fgcolor is not None:
+            attr.SetColour(self._fgcolor)
+        if self._bgcolor is not None:
+            attr.SetBackgroundColour(self._bgcolor)
+
+        if self.__mapper[col].get_id() == "extension":
+            attr.SetBold(True)
+
+        return True
+
+    # -----------------------------------------------------------------------
+    # Manage the items
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, color):
+        self._bgcolor = color
+
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, color):
+        self._fgcolor = color
+
+    # -----------------------------------------------------------------------
+
+    def HasValue(self, item, col):
+        """Overridden.
+
+        Return True if there is a value in the given column of this item.
+
+        """
+        return True
+
+    # -----------------------------------------------------------------------
+
+    def GetValue(self, item, col):
+        """Return the value to be displayed for this item and column.
+
+        :param item: (wx.dataview.DataViewItem)
+        :param col: (int) Column index.
+
+        Pull the values from the data objects we associated with the items
+        in GetChildren.
+
+        """
+        if self.__mapper[col].get_id() == "icon":
+            return False
+
+        else:
+            # Fetch the data object for this item.
+            node = self.ItemToObject(item)
+            value = str(self.__mapper[col].get_value(node))
+            if value == "true":
+                value = "X"
+            elif value == "false":
+                value = ""
+            # Return the value of the function we defined when column was created
+        logging.debug("GetValue of col={:d} = {:s}".format(col, value))
+
+        return value
+
+    # -----------------------------------------------------------------------
+
+    def SetValue(self, value, item, col):
+        """Overridden.
+
+        :param value:
+        :param item: (wx.dataview.DataViewItem)
+        :param col: (int)
+
+        """
+        logging.debug("SetValue of col={:d}".format(col))
+        node = self.ItemToObject(item)
+        logging.debug("Set value to node: {:s}".format(str(node)))
+        node[col] = value
+
+        return True
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def __create_col(title, name):
+        if name == "icon":
+            col = ColumnProperties(title, name, "wxBitmap")
+            col.width = sppasPanel.fix_size(30)
+            col.align = wx.ALIGN_CENTRE
+            col.renderer = SelectedIconRenderer()
+
+        elif name == "extension":
+            col = ColumnProperties(title, name)
+            col.width = sppasPanel.fix_size(50)
+            col.add_fct_name("string", "get_extension")
+
+        elif name == "software":
+            col = ColumnProperties(title, name)
+            col.width = sppasPanel.fix_size(80)
+            col.add_fct_name("string", "get_software")
+
+        elif name in ["reader", "writer"]:
+            col = ColumnProperties(title, name)
+            col.width = sppasPanel.fix_size(80)
+            col.add_fct_name("bool", "get_"+name)
+
+        else:
+            col = ColumnProperties(title, name)
+            col.width = sppasPanel.fix_size(60)
+            col.add_fct_name("bool", "get_support", name)
+
+        return col
+
+# ---------------------------------------------------------------------------
+
+
+class sppasFormatInfos(sppasPanel):
+    """Create the list of file formats with their capabilities.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
 
     def __init__(self, parent, name="panel_format_infos"):
         super(sppasFormatInfos, self).__init__(
@@ -160,7 +519,6 @@ class sppasFormatInfos(sppasPanel):
             name=name
         )
 
-        self.__extensions = list(sppasRW.TRANSCRIPTION_TYPES.keys())
         self.__selected = -1
         self._create_content()
         self.Layout()
@@ -185,103 +543,12 @@ class sppasFormatInfos(sppasPanel):
         info_txt = sppasStaticText(
             self,
             label="Select the file type to convert to: ")
+        dvlc = FormatsViewCtrl(self)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(info_txt, 0, wx.EXPAND | wx.BOTTOM, 4)
-        sizer.Add(self._create_table(), 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 8)
+        sizer.Add(dvlc, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 8)
         self.SetSizer(sizer)
-
-    # -----------------------------------------------------------------------
-
-    def _create_table(self):
-        """Create the table to display information on each format."""
-        dvlc = wx.dataview.DataViewListCtrl(
-            self,
-            style=wx.dataview.DV_SINGLE | wx.dataview.DV_HORIZ_RULES | wx.NO_BORDER)
-        dvlc.SetName("dvlc")
-
-        # Append the required columns
-        self.__append_selection_column(dvlc)
-        self.__append_format_columns(dvlc)
-        # Optional columns are properties of each file format.
-        self.__append_property_columns(dvlc)
-
-        # Load the data.
-        self.__fill_rows(dvlc)
-
-        dvlc.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED,
-                  self.__set_selected)
-        return dvlc
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def __append_selection_column(dvlc):
-        """Append the selection column to the table at given index."""
-        col = wx.dataview.DataViewColumn(
-            title="",
-            renderer=SelectedIconRenderer(),
-            model_column=0,
-            width=sppasPanel.fix_size(30))
-        dvlc.AppendColumn(col, varianttype="bool")
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def __append_format_columns(dvlc):
-        """Append the columns to indicate the format."""
-        w = sppasPanel.fix_size(60)
-        dvlc.AppendTextColumn(ui_translation.gettext('Extension'),
-                              width=int(1.3*w)),
-        dvlc.AppendTextColumn(ui_translation.gettext('Software'),
-                              width=int(1.7*w),
-                              align=wx.ALIGN_CENTER)
-        dvlc.AppendTextColumn(ui_translation.gettext('Reader'),
-                              width=w, align=wx.ALIGN_CENTER)
-        dvlc.AppendTextColumn(ui_translation.gettext('Writer'),
-                              width=w, align=wx.ALIGN_CENTER)
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def __append_property_columns(dvlc):
-        """Append the columns to indicate the properties of a format."""
-        w = sppasPanel.fix_size(60)
-        for c in sppasFormatInfos.cols:
-            dvlc.AppendTextColumn(
-                sppasFormatInfos.cols[c],
-                width=w, align=wx.ALIGN_CENTER)
-
-    # -----------------------------------------------------------------------
-
-    def __fill_rows(self, dvlc):
-        """"""
-        # Each item (row) is added as a sequence of values
-        # whose order matches the columns.
-        for extension in self.__extensions:
-            items = [""]*(5+len(sppasFormatInfos.cols))
-            items[1] = " ." + extension
-            instance = sppasRW.TRANSCRIPTION_TYPES[extension]()
-            items[2] = instance.software
-            try:
-                instance.read("")
-            except NotImplementedError:
-                items[3] = ""
-            except Exception:
-                items[3] = "X"
-            try:
-                instance.write("")
-            except NotImplementedError:
-                items[4] = ""
-            except Exception:
-                items[4] = "X"
-
-            for i, method in enumerate(sppasFormatInfos.cols):
-                support = getattr(instance, method)()
-                if support is True:
-                    items[i+5] = "X"
-
-            dvlc.AppendItem(items)
 
     # -----------------------------------------------------------------------
 
@@ -293,11 +560,12 @@ class sppasFormatInfos(sppasPanel):
 
         # We already had a selected row
         if self.__selected != -1:
-            dvlc.SetValue(False, self.__selected, 0)
+            #dvlc.SetValue(False, self.__selected, 0)
+            pass
 
         # Set the new selected row
         self.__selected = selected
-        dvlc.SetValue(True, self.__selected, 0)
+        #dvlc.SetValue(True, self.__selected, 0)
 
         # Unselect the row in the dataview to remove the "highlighted" color
         dvlc.UnselectRow(selected)

@@ -45,7 +45,7 @@ from sppas.src.anndata import sppasRW
 from sppas.src.files import States, FileName, FileRoot, FilePath, FileData
 
 from ..tools import sppasSwissKnife
-from .basectrls import ColumnProperties, StateIconRenderer
+from sppas.src.ui.phoenix.windows.baseviewctrl import ColumnProperties, StateIconRenderer
 
 # ---------------------------------------------------------------------------
 
@@ -416,14 +416,14 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
         if isinstance(node, (FileName, FileRoot, FilePath)) is False:
             raise RuntimeError("Unknown node type {:s}".format(type(node)))
 
-        if self.__mapper[col].id == "icon":
+        if self.__mapper[col].get_id() == "icon":
             if isinstance(node, FileName) is True:
                 ext = node.get_extension()
                 icon_name = self.exticon.get_icon_name(ext)
                 return icon_name
             return ""
 
-        if self.__mapper[col].id == "refs":
+        if self.__mapper[col].get_id() == "refs":
             if isinstance(node, FileRoot) is True:
                 # convert the list of FileReference instances into a string
                 refs_ids = [ref.id for ref in node.get_references()]
@@ -467,7 +467,7 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
         if isinstance(node, (FileName, FileRoot, FilePath)) is False:
             raise RuntimeError("Unknown node type {:s}".format(type(node)))
 
-        if self.__mapper[col].id == "state":
+        if self.__mapper[col].get_id() == "state":
             if isinstance(value, (States, int)):
                 v = value
             else:

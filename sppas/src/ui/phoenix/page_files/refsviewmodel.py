@@ -42,7 +42,7 @@ from sppas.src.files.filebase import States
 from sppas.src.files.filedata import FileData
 from sppas.src.files.fileref import FileReference, sppasAttribute
 
-from .basectrls import ColumnProperties, StateIconRenderer
+from sppas.src.ui.phoenix.windows.baseviewctrl import ColumnProperties, StateIconRenderer
 
 # ----------------------------------------------------------------------------
 # Model

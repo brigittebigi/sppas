@@ -35,7 +35,7 @@ import logging
 import wx
 import wx.dataview
 
-from .basectrls import BaseTreeViewCtrl
+from sppas.src.ui.phoenix.windows.baseviewctrl import BaseTreeViewCtrl
 from .refsviewmodel import ReferencesTreeViewModel
 
 # ----------------------------------------------------------------------------

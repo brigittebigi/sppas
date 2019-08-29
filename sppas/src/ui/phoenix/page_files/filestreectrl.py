@@ -35,10 +35,10 @@ import wx
 import wx.dataview
 
 from .filesviewmodel import FilesTreeViewModel
-from .basectrls import BaseTreeViewCtrl
+from ..windows.baseviewctrl import BaseTreeViewCtrl
 
 # ----------------------------------------------------------------------------
-# Control to store the data matching the model
+# Control to display the data matching the model
 # ----------------------------------------------------------------------------
 
 

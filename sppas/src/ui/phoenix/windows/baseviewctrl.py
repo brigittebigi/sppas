@@ -40,8 +40,8 @@ import logging
 from sppas.src.files.filebase import States
 from sppas.src.files.fileexc import FileAttributeError
 
-from ..tools import sppasSwissKnife
-from ..windows.image import ColorizeImage
+from sppas.src.ui.phoenix.tools import sppasSwissKnife
+from sppas.src.ui.phoenix.windows.image import ColorizeImage
 
 # ----------------------------------------------------------------------------
 
@@ -53,6 +53,69 @@ default_renderers = {
     "wxBitmap": wx.dataview.DataViewBitmapRenderer,
     "wxDataViewIconText": wx.dataview.DataViewIconTextRenderer
 }
+
+# ---------------------------------------------------------------------------
+
+
+class SelectedIconRenderer(wx.dataview.DataViewCustomRenderer):
+    """Draw an icon matching the 2 states of a row (select/unselect).
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
+
+    def __init__(self):
+        super(SelectedIconRenderer, self).__init__(
+            varianttype="bool",
+            mode=wx.dataview.DATAVIEW_CELL_INERT,
+            align=wx.dataview.DVR_DEFAULT_ALIGNMENT)
+        self.value = False
+
+    def SetValue(self, value):
+        """Assign a boolean value."""
+        # The given value is not valid
+        if value is None or len(str(value)) == 0:
+            return False
+        # The given value sounds good
+        self.value = value
+        return True
+
+    def GetValue(self):
+        """Return the boolean value."""
+        return self.value
+
+    def GetSize(self):
+        """Return the size needed to display the value."""
+        size = self.GetTextExtent('TT')
+        return size[1]*2, size[1]*2
+
+    def Render(self, rect, dc, state):
+        """Draw the bitmap, adjusting its size. """
+        x, y, w, h = rect
+        s = min(w, h)
+        s = int(0.7 * s)
+
+        if self.value is True:
+            icon_value = "radio_checked"
+        else:
+            icon_value = "radio_unchecked"
+
+        # get the image from its name
+        img = sppasSwissKnife.get_image(icon_value)
+        # re-scale the image to the expected size
+        sppasSwissKnife.rescale_image(img, s)
+        # re-colorize
+        ColorizeImage(img, wx.BLACK, wx.Colour(128, 128, 128, 128))
+        # convert to bitmap
+        bitmap = wx.Bitmap(img)
+        # render it at the center
+        dc.DrawBitmap(bitmap, x + (w-s)//2, y + (h-s)//2)
+
+        return True
 
 # ---------------------------------------------------------------------------
 
@@ -182,7 +245,8 @@ class ColumnProperties(object):
         self.__mode = wx.dataview.DATAVIEW_CELL_INERT
         self.__renderer = None
         self.__align = wx.ALIGN_LEFT
-        self.__fct = dict()  # functions to get values
+        self.__fct = dict()       # functions to get values
+        self.__fct_args = dict()  # args of the function to get values
 
     # -----------------------------------------------------------------------
 
@@ -275,15 +339,20 @@ class ColumnProperties(object):
 
     # -----------------------------------------------------------------------
 
-    def add_fct_name(self, key, fct_name):
+    def add_fct_name(self, key, fct_name, fct_arg=None):
+        """key is a data type."""
         self.__fct[key] = fct_name
+        self.__fct_args[key] = fct_arg
 
     # -----------------------------------------------------------------------
 
     def get_value(self, data):
         for key in self.__fct:
             if key == type(data):
-                return getattr(data, self.__fct[key])()
+                if self.__fct_args[key] is None:
+                    return getattr(data, self.__fct[key])()
+                else:
+                    return getattr(data, self.__fct[key])(self.__fct_args[key])
         # return the default value of this column type
         return self.default[self.__stype]
 

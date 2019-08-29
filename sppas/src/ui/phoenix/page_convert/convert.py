@@ -35,17 +35,15 @@
 """
 
 import os
-import time
 import wx
 import wx.dataview
 
 from sppas import sppasTypeError
 from sppas.src.files import FileData, States
 from sppas.src.anndata import sppasRW
-from sppas.src.anndata import sppasTranscription
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
-from ..dialogs import Error, Information
+from ..dialogs import Information
 from ..windows import sppasScrolledPanel
 from ..windows import BitmapTextButton, CheckButton
 from .finfos import sppasFormatInfos, EVT_FORMAT_CHANGED
@@ -129,12 +127,13 @@ class sppasConvertPanel(sppasScrolledPanel):
             self,
             style=wx.dataview.DV_SINGLE | wx.dataview.DV_NO_HEADER | wx.dataview.DV_HORIZ_RULES | wx.NO_BORDER)
         dvlc.SetName("dvlc_files")
+
         dvlc.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED,
-                       self.__cancel_selected)
+                  self.__cancel_selected)
         dvlc.AppendTextColumn("filename",
-                                   width=sppasScrolledPanel.fix_size(300))
+                              width=sppasScrolledPanel.fix_size(300))
         dvlc.AppendTextColumn("convert",
-                                   width=sppasScrolledPanel.fix_size(300))
+                              width=sppasScrolledPanel.fix_size(300))
 
         # Options to convert files
         force = CheckButton(
