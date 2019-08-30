@@ -26,10 +26,10 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.page_files.basectrls.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.windows.basectrls.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Base classes to manage a workspace and some utilities.
+    Base classes to manage a dataviewctrl and some utilities.
 
 """
 
@@ -97,7 +97,7 @@ class SelectedIconRenderer(wx.dataview.DataViewCustomRenderer):
         """Draw the bitmap, adjusting its size. """
         x, y, w, h = rect
         s = min(w, h)
-        s = int(0.7 * s)
+        s = int(0.8 * s)
 
         if self.value is True:
             icon_value = "radio_checked"

@@ -137,7 +137,7 @@ class WxAppSettings(sppasBaseSettings):
                             wx.FONTSTYLE_NORMAL,    # style,
                             wx.FONTWEIGHT_NORMAL,   # weight,
                             underline=False,
-                            faceName="Calibri",
+                            faceName="Lucida sans",
                             encoding=wx.FONTENCODING_SYSTEM)
         return text_font
 
@@ -151,7 +151,7 @@ class WxAppSettings(sppasBaseSettings):
                              wx.FONTSTYLE_NORMAL,    # style,
                              wx.FONTWEIGHT_BOLD,     # weight,
                              underline=False,
-                             faceName="Calibri",
+                             faceName="Lucida sans",
                              encoding=wx.FONTENCODING_SYSTEM)
         return title_font
 
@@ -165,7 +165,7 @@ class WxAppSettings(sppasBaseSettings):
                               wx.FONTSTYLE_NORMAL,    # style,
                               wx.FONTWEIGHT_NORMAL,   # weight,
                               underline=False,
-                              faceName="Calibri",
+                              faceName="Lucida sans",
                               encoding=wx.FONTENCODING_SYSTEM)
         return button_font
 

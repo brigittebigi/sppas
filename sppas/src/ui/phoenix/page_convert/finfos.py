@@ -190,6 +190,18 @@ class FormatsViewCtrl(BaseTreeViewCtrl):
         self.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED,
                   self._on_item_selection_changed)
 
+
+        # Ensure the whole table is visible (no scrollbar)
+        try:
+            nb_rows = 2 + len(sppasRW.TRANSCRIPTION_TYPES.keys())
+            font = wx.GetApp().settings.text_font
+            font_height = font.GetPointSize()
+            self.SetRowHeight(font_height * 2)
+            h = font_height * 2 * nb_rows
+            self.SetMinSize(wx.Size(-1, h))
+        except:
+            self.SetMinSize(wx.Size(-1, 200))
+
     # ------------------------------------------------------------------------
 
     def _on_item_activated(self, event):
@@ -533,7 +545,7 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
 
         elif name == "extension":
             col = ColumnProperties(title, name)
-            col.width = sppasPanel.fix_size(50)
+            col.width = sppasPanel.fix_size(60)
 
         elif name == "software":
             col = ColumnProperties(title, name)

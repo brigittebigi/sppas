@@ -51,6 +51,13 @@ from .finfos import FormatsViewCtrl, EVT_FORMAT_CHANGED
 
 # ---------------------------------------------------------------------------
 
+MSG_CONVERT_SELECT="Select the file type to convert to: "
+MSG_OPT_OVERRIDE = "Override if the output file already exists."
+MSG_OPT_HEURISTIC = "If the extension of the input file is unknown, " \
+                    "try to automatically detect the format."
+
+# ---------------------------------------------------------------------------
+
 
 class sppasConvertPanel(sppasScrolledPanel):
     """Create a panel to analyze the selected files.
@@ -70,20 +77,21 @@ class sppasConvertPanel(sppasScrolledPanel):
             style=wx.BORDER_NONE
         )
 
-        # The data all tabs are working on
+        # The data we are working on
         self.__data = FileData()
 
         # Construct the GUI
         self._create_content()
         self._setup_events()
 
+        # Look&feel
         self.SetBackgroundColour(wx.GetApp().settings.bg_color)
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
 
         # Organize items and fix a size for each of them
-        self.Layout()
         self.SetupScrolling(scroll_x=True, scroll_y=True)
+        self.Layout()
 
     # ------------------------------------------------------------------------
     # Public methods to access the data
@@ -115,10 +123,9 @@ class sppasConvertPanel(sppasScrolledPanel):
 
     def _create_content(self):
         """Create the main content."""
-        info_txt = sppasStaticText(
-            self,
-            label="Select the file type to convert to: ")
+
         # The list of file formats, to select one of them
+        txt_select = sppasStaticText(self, label=MSG_CONVERT_SELECT)
         dvlc_formats = FormatsViewCtrl(self, name="dvlc_formats")
 
         # The button to perform conversion
@@ -126,39 +133,37 @@ class sppasConvertPanel(sppasScrolledPanel):
         self.__set_run_disabled()
 
         # The list of converted files
-        dvlc = wx.dataview.DataViewListCtrl(
-            self,
-            style=wx.dataview.DV_SINGLE | wx.dataview.DV_NO_HEADER | wx.dataview.DV_HORIZ_RULES | wx.NO_BORDER)
+        dvlc = self.__create_viewctrl_converted()
         dvlc.SetName("dvlc_files")
 
-        dvlc.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED,
-                  self.__cancel_selected)
-        dvlc.AppendTextColumn("filename",
-                              width=sppasScrolledPanel.fix_size(300))
-        dvlc.AppendTextColumn("convert",
-                              width=sppasScrolledPanel.fix_size(300))
-
         # Options to convert files
-        force = CheckButton(
-            self,
-            label="Override if the output file already exists.",
-            name="override")
-        force.SetValue(False)
-        heuristic = CheckButton(
-            self,
-            label="If the extension of the input file is unknown, try to automatically detect the format.",
-            name="heuristic")
-        heuristic.SetValue(False)
+        opt_force = CheckButton(self, label=MSG_OPT_OVERRIDE, name="override")
+        opt_force.SetValue(False)
+        opt_heuristic = CheckButton(self, label=MSG_OPT_HEURISTIC, name="heuristic")
+        opt_heuristic.SetValue(False)
 
+        # Organize all objects into a sizer
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(info_txt, 0, wx.EXPAND | wx.ALL, 4)
-        sizer.Add(dvlc_formats, 3, wx.EXPAND | wx.ALL, 4)
-        sizer.Add(force, 0, wx.EXPAND | wx.ALL, 4)
-        sizer.Add(heuristic, 0, wx.EXPAND | wx.ALL, 4)
+        sizer.Add(txt_select, 0, wx.EXPAND | wx.ALL, 4)
+        sizer.Add(dvlc_formats, 1, wx.EXPAND | wx.ALL, 4)
+        sizer.Add(opt_force, 0, wx.EXPAND | wx.ALL, 4)
+        sizer.Add(opt_heuristic, 0, wx.EXPAND | wx.ALL, 4)
         sizer.Add(self.btn_run, 0, wx.ALIGN_CENTRE | wx.ALL, 4)
         sizer.Add(dvlc, 1, wx.EXPAND | wx.ALL, 4)
 
         self.SetSizer(sizer)
+
+    # ------------------------------------------------------------------------
+
+    def __create_viewctrl_converted(self):
+        """Create a dataview.listctrl to display converted files."""
+        dvlc = wx.dataview.DataViewListCtrl(self,
+            style=wx.dataview.DV_SINGLE | wx.dataview.DV_NO_HEADER | wx.dataview.DV_HORIZ_RULES | wx.NO_BORDER)
+
+        dvlc.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED, self.__cancel_selected)
+        dvlc.AppendTextColumn("filename", width=sppasScrolledPanel.fix_size(340))
+        dvlc.AppendTextColumn("convert", width=sppasScrolledPanel.fix_size(200))
+        return dvlc
 
     # ------------------------------------------------------------------------
 
@@ -279,7 +284,8 @@ class sppasConvertPanel(sppasScrolledPanel):
             wx.LogError('Extension were not sent in the event emitted by {:s}'
                         '.'.format(emitted.GetName()))
             return
-        # we did not had already a format. we can now enable conversion.
+        # we did not had already a format, but now we have one so we can
+        # enable conversion.
         self.__set_run_enabled()
 
     # -----------------------------------------------------------------------
@@ -306,7 +312,10 @@ class sppasConvertPanel(sppasScrolledPanel):
         """Convert checked files."""
         dvlc = self.FindWindow("dvlc_files")
         dvlc_formats = self.FindWindow("dvlc_formats")
-        if dvlc_formats.GetExtension() is None:
+        out_ext = dvlc_formats.GetExtension()
+        if out_ext is None:
+            # this should never occur because the run button is disabled
+            # if no extension is selected.
             wx.LogError("A file format must be selected before convert.")
             return
         # Remove all rows currently displayed
@@ -316,30 +325,35 @@ class sppasConvertPanel(sppasScrolledPanel):
         # Cancel the currently selected file format
         dvlc_formats.CancelSelected()
 
-        # Get the list of checked FileName() instances
-        checked = self.__data.get_filename_from_state(States().CHECKED)
-        if len(checked) == 0:
-            Information("No file(s) selected to be converted.")
-            return
-
-        # Convert the list of FileName() instances into a list of filenames
-        checked_fns = [f.get_id() for f in checked]
-
         # Add each file into the 1st column of the list
+        checked_fns = self.get_checked_filenames()
         for f in checked_fns:
             dvlc.AppendItem([f, "to do"])
+
+        try:
+            nb_rows = 2 + len(checked_fns)
+            font = wx.GetApp().settings.text_font
+            font_height = font.GetPointSize()
+            dvlc.SetRowHeight(font_height * 2)
+            h = font_height * 2 * nb_rows
+            dvlc.SetMinSize(wx.Size(-1, h))
+        except:
+            dvlc.SetMinSize(wx.Size(-1, 200))
+
+        self.Layout()
+        self.Refresh()
 
         # Get options
         override = self.FindWindow("override").GetValue()
         heuristic = self.FindWindow("heuristic").GetValue()
 
-        # Convert each file. Displays a message in the 2nd column.
+        # Convert each file.
         changed = False
         for i, f in enumerate(checked_fns):
 
             # Fix output filename
             fname, fext = os.path.splitext(f)
-            out_fname = fname + "." + dvlc_formats.GetExtension()
+            out_fname = fname + "." + out_ext
             dvlc.SetValue("", i, 1)
 
             # Do not override an existing file
@@ -372,3 +386,17 @@ class sppasConvertPanel(sppasScrolledPanel):
         # Notify the parent that the workspace changed.
         if changed is True:
             self.notify()
+
+    # -----------------------------------------------------------------------
+
+    def get_checked_filenames(self):
+        """Return the list of checked filenames in data."""
+
+        # Get the list of checked FileName() instances
+        checked = self.__data.get_filename_from_state(States().CHECKED)
+        if len(checked) == 0:
+            Information("No file(s) selected to be converted.")
+            return
+
+        # Convert the list of FileName() instances into a list of filenames
+        return [f.get_id() for f in checked]
