@@ -88,6 +88,7 @@ class sppasFilesPanel(sppasPanel):
             name="page_files"
         )
 
+        # Construct the GUI
         self._create_content()
         self._setup_events()
 
@@ -95,7 +96,7 @@ class sppasFilesPanel(sppasPanel):
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
 
-        self.SetAutoLayout(True)
+        # Organize items and fix a size for each of them
         self.Layout()
 
     # ------------------------------------------------------------------------

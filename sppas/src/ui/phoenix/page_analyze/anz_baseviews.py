@@ -38,13 +38,12 @@ import logging
 import wx
 
 from ..windows import sppasPanel
-
-from .baseview import BaseViewPanel
+from ..windows import sppasStaticText
 
 # ----------------------------------------------------------------------------
 
 
-class ViewFilesPanel(sppasPanel):
+class BaseViewFilesPanel(sppasPanel):
     """Panel to display the list of opened files and their content.
 
     :author:       Brigitte Bigi
@@ -56,7 +55,7 @@ class ViewFilesPanel(sppasPanel):
     """
 
     def __init__(self, parent, name="viewfiles", files=tuple()):
-        super(ViewFilesPanel, self).__init__(
+        super(BaseViewFilesPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
@@ -65,77 +64,70 @@ class ViewFilesPanel(sppasPanel):
             name=name)
 
         # The files of this panel (key=name, value=wx.SizerItem)
-        self.__files = dict()
-        self.__hicolor = self.GetForegroundColour()
+        self._files = list()
+        self._hicolor = self.GetForegroundColour()
 
         self._create_content(files)
         self.Layout()
 
     # -----------------------------------------------------------------------
 
+    def GetHighLightColor(self):
+        """Get the color to highlight buttons."""
+        return self._hicolor
+
+    # -----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
+
     def SetHighLightColor(self, color):
         """Set a color to highlight buttons, and for the focus."""
-        self.__hicolor = color
+        self._hicolor = color
 
     # -----------------------------------------------------------------------
     # Manage the files
     # -----------------------------------------------------------------------
 
-    def append(self, name):
-        """Add a panel corresponding to the name of a file.
+    def get_files(self):
+        """Return the list of filenames this panel is displaying."""
+        return self._files
+
+    # -----------------------------------------------------------------------
+
+    def append_file(self, name):
+        """Add a file and display its content.
 
         :param name: (str)
-        :returns: index of the newly created button
 
         """
-        logging.debug('APPEND FILE {:s}'.format(name))
-        if name in self.__files:
+        logging.debug('Append file {:s}'.format(name))
+        if name in self._files:
+            wx.LogError('Name {:s} is already in the list of files.')
             raise ValueError('Name {:s} is already in the list of files.')
 
-        panel = BaseViewPanel(self, filename=name)
-        panel.SetHighLightColor(self.__hicolor)
-        item = self.GetSizer().Add(panel, 1, wx.EXPAND)
-        self.__files[name] = item
+        self._files.append(name)
+        logging.debug("current list of files: {!s:s}".format(str(self._files)))
+        self._show_file(name)
+
+        # Update the gui
         self.Layout()
         self.Refresh()
 
     # -----------------------------------------------------------------------
 
-    def remove(self, name):
+    def remove_file(self, name):
         """Remove a panel corresponding to the name of a file.
 
         :param name: (str)
 
         """
-        # Get and delete the panel
-        item = self.__files[name]
-        item.DeleteWindows()
+        # Remove of the object
+        self._del_file(name)
+        # Delete of the list
+        self._files.pop(name)
 
-        # Remove of the sizer
-        self.GetSizer().Remove(item)
+        # Update the gui
         self.Layout()
         self.Refresh()
-
-        # Delete of the list
-        self.__files.pop(name)
-
-    # -----------------------------------------------------------------------
-
-    def get_files(self):
-        """Return the list of filenames this panel is displaying."""
-        return list(self.__files.keys())
-
-    # -----------------------------------------------------------------------
-
-    def get_checked_files(self):
-        """Return the list of the checked filenames."""
-        checked = list()
-        for name in self.__files:
-            item = self.__files[name]
-            window = item.GetWindow()
-            if window.is_checked() is True:
-                checked.append(name)
-        return checked
 
     # -----------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -146,6 +138,27 @@ class ViewFilesPanel(sppasPanel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
         for f in files:
-            self.append(f)
-        self.SetMinSize(wx.Size(sppasPanel.fix_size(128),
-                                sppasPanel.fix_size(32)*len(self.__files)))
+            self.append_file(f)
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(420),
+                                sppasPanel.fix_size(48)*len(self._files)))
+
+    # -----------------------------------------------------------------------
+
+    def _show_file(self, name):
+        """Display the file."""
+        logging.warning("Displaying file is not implemented in this view mode.")
+        panel = sppasStaticText(self, label=name)
+        self.GetSizer().Add(panel, 1, wx.EXPAND)
+
+    # -----------------------------------------------------------------------
+
+    def _del_file(self, name):
+        """Remove the file."""
+        # Get the index of the file in the list
+        idx = self._files.index(name)
+        item = self.GetSizer().GetItem(idx)
+        # Get and delete the panel
+        item.DeleteWindows()
+
+        # Remove of the sizer
+        self.GetSizer().Remove(item)

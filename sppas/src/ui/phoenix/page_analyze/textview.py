@@ -29,25 +29,33 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_analyze.baseview.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ui.phoenix.page_analyze.textview.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
+import codecs
 import logging
 import wx
 
-from ..windows import sppasScrolledPanel
-from ..windows import sppasPanel
-from ..windows import CheckButton
+from sppas import sg
 
-from .text_view import TextViewPanel
+from ..windows import sppasScrolledPanel
+from ..windows import CheckButton
+from ..windows import sppasTextCtrl
+
+# ----------------------------------------------------------------------------
+
+BRACKET_COLOUR = wx.Colour(196, 48, 48)
+PARENTHESIS_COLOUR = wx.Colour(48, 196, 48)
+BRACES_COLOUR = wx.Colour(48, 48, 196)
+TAG_COLOUR = wx.Colour(48, 196, 196)
 
 # ----------------------------------------------------------------------------
 
 
-class BaseViewPanel(sppasScrolledPanel):
-    """Base class to display the content of one file.
+class TextViewPanel(sppasScrolledPanel):
+    """Display the content of one file.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -58,7 +66,7 @@ class BaseViewPanel(sppasScrolledPanel):
     """
 
     def __init__(self, parent, name="baseview", filename=""):
-        super(BaseViewPanel, self).__init__(
+        super(TextViewPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
@@ -69,15 +77,40 @@ class BaseViewPanel(sppasScrolledPanel):
         # The file this panel is displaying
         self.__filename = filename
         self.__hicolor = self.GetForegroundColour()
+        self.txtview = None
+        self.nblines = 0
 
         self._create_content()
         self._setup_events()
+
+        if filename is not None:
+            self.load_text()
 
         self.SetBackgroundColour(wx.GetApp().settings.bg_color)
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.mono_text_font)
 
         self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def load_text(self):
+        """Load the file and display it."""
+        # TODO: progress bar while loading and highlighting
+        try:
+            with codecs.open(self.__filename, 'r', sg.__encoding__) as fp:
+                lines = fp.readlines()
+        except Exception as e:
+            lines = ["The file can't be loaded.",
+                     "Error is: %s" % str(e)]
+
+        self.nblines = len(lines)
+        content = "".join(lines)
+        txtctrl = self.FindWindow("textctrl")
+        txtctrl.SetValue(content)
+
+        # required under Windows
+        txtctrl.SetStyle(0, len(content), txtctrl.GetDefaultStyle())
 
     # -----------------------------------------------------------------------
 
@@ -99,6 +132,16 @@ class BaseViewPanel(sppasScrolledPanel):
     # Private methods to construct the panel.
     # -----------------------------------------------------------------------
 
+    @staticmethod
+    def __highlight(txtctrl, content, characters, color):
+        i = content.find(characters, 0)
+        while i != -1:
+            print(i)
+            txtctrl.SetStyle(i, i + 1, wx.TextAttr(color))
+            i = content.find(characters, i+1)
+
+    # -----------------------------------------------------------------------
+
     def _create_content(self):
         """Create the main content."""
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -107,16 +150,19 @@ class BaseViewPanel(sppasScrolledPanel):
         btn.SetSpacing(sppasScrolledPanel.fix_size(12))
         btn.SetMinSize(wx.Size(-1, sppasScrolledPanel.fix_size(32)))
         btn.SetSize(wx.Size(-1, sppasScrolledPanel.fix_size(32)))
-        btn.SetValue(False)
-        self.__set_normal_btn_style(btn)
+        btn.SetValue(True)
+        self.__set_active_btn_style(btn)
         sizer.Add(btn, 0, wx.EXPAND | wx.ALL, 2)
 
-        view = TextViewPanel(self, filename=self.__filename)
-        sizer.Add(view, 1, wx.EXPAND | wx.LEFT, sppasScrolledPanel.fix_size(34))
+        style = wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_RICH2 | wx.TE_AUTO_URL | wx.NO_BORDER
+        self.txtview = sppasTextCtrl(self, style=style, name="textctrl")
+        self.txtview.SetFont(wx.GetApp().settings.mono_text_font)
+
+        sizer.Add(self.txtview, 1, wx.EXPAND | wx.LEFT, sppasScrolledPanel.fix_size(34))
 
         self.SetSizer(sizer)
         self.SetupScrolling(scroll_x=False, scroll_y=True)
-        self.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(128),
+        self.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(320),
                                 sppasScrolledPanel.fix_size(32)))
 
     # -----------------------------------------------------------------------
@@ -127,15 +173,17 @@ class BaseViewPanel(sppasScrolledPanel):
         button.BorderColour = self.GetForegroundColour()
         button.BorderStyle = wx.PENSTYLE_SOLID
         button.FocusColour = self.__hicolor
+        button.SetForegroundColour(self.__hicolor)
 
     # -----------------------------------------------------------------------
 
     def __set_active_btn_style(self, button):
         """Set a special style to the button."""
-        button.BorderWidth = 1
+        button.BorderWidth = 0
         button.BorderColour = self.__hicolor
         button.BorderStyle = wx.PENSTYLE_SOLID
         button.FocusColour = self.GetForegroundColour()
+        button.SetForegroundColour(self.__hicolor)
 
     # -----------------------------------------------------------------------
     # Events management
@@ -148,7 +196,7 @@ class BaseViewPanel(sppasScrolledPanel):
         will be called.
 
         """
-        self.Bind(wx.EVT_RADIOBUTTON, self.__process_checked)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self.__process_checked)
 
     # -----------------------------------------------------------------------
 
@@ -166,9 +214,9 @@ class BaseViewPanel(sppasScrolledPanel):
         state = btn.GetValue()
         if state is True:
             self.__set_active_btn_style(btn)
+            self.txtview.Show()
         else:
             self.__set_normal_btn_style(btn)
+            self.txtview.Hide()
         btn.SetValue(state)
-        btn.Refresh()
-        logging.debug('Button {:s} is checked: {:s}'
-                      ''.format(btn.GetLabel(), str(state)))
+        self.Refresh()

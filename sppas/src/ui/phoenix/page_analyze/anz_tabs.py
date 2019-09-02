@@ -49,7 +49,6 @@ from ..windows import sppasStaticLine
 from ..windows import RadioButton
 
 from ..main_events import TabChangeEvent
-from ..main_events import ViewChangeEvent
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when the tab has changed.
@@ -74,11 +73,7 @@ TAB = _("Tab")
 TAB_ACT_OPEN = _("Open files")
 TAB_ACT_NEW_TAB = _("New tab")
 TAB_ACT_CLOSE_TAB = _("Close tab")
-TAB_VIEW_LIST = _("Summary")
-TAB_VIEW_TIME = _("Time line")
-TAB_VIEW_TEXT = _("Text edit")
-TAB_VIEW_GRID = _("Grid details")
-TAB_VIEW_STAT = _("Statistics")
+
 
 TAB_MSG_CONFIRM_SWITCH = _("Confirm switch of tab?")
 TAB_MSG_CONFIRM = _("The current tab contains not saved work that "
@@ -131,7 +126,6 @@ class TabsManager(sppasPanel):
         sizer.Add(self.__create_hline(), 0, wx.EXPAND, 0)
         sizer.Add(tabs, 2, wx.EXPAND, 0)
 
-        self.SetMinSize(wx.Size(128, -1))
         self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
@@ -144,12 +138,7 @@ class TabsManager(sppasPanel):
         tb.AddButton("files-edit-file", TAB_ACT_OPEN)
         tb.AddButton("tab-add", TAB_ACT_NEW_TAB)
         tb.AddButton("tab-del", TAB_ACT_CLOSE_TAB)
-        tb.AddText("Views: ")
-        tb.AddToggleButton("data-view-list", TAB_VIEW_LIST, value=True, group_name="view")
-        tb.AddToggleButton("data-view-timeline", TAB_VIEW_TIME, value=False, group_name="view")
-        tb.AddToggleButton("data-view-text", TAB_VIEW_TEXT, value=False, group_name="view")
-        tb.AddToggleButton("data-view-grid", TAB_VIEW_GRID, value=False, group_name="view")
-        tb.AddToggleButton("data-view-stats", TAB_VIEW_STAT, value=False, group_name="view")
+
         return tb
 
     # ------------------------------------------------------------------------
@@ -179,9 +168,6 @@ class TabsManager(sppasPanel):
 
         # The user clicked an action button of the toolbar
         self.Bind(wx.EVT_BUTTON, self._process_action)
-
-        # The user clicked a toggle button
-        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_view_changed)
 
         # The tab has changed.
         # This event is sent by the 'tabslist' child window.
@@ -216,23 +202,6 @@ class TabsManager(sppasPanel):
                              dest_tab=event.dest_tab)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
-
-    # ------------------------------------------------------------------------
-
-    def _process_view_changed(self, event):
-        """Process a change of view event: the active view changed.
-
-        Notify the parent of this change.
-
-        :param event: (wx.Event)
-
-        """
-        event_name = event.GetButtonObj().GetName()
-        if event_name.startswith("data-view-"):
-            view_name = event_name[len("data-view-"):]
-            evt = ViewChangeEvent(view=view_name)
-            evt.SetEventObject(self)
-            wx.PostEvent(self.GetParent(), evt)
 
     # ------------------------------------------------------------------------
 

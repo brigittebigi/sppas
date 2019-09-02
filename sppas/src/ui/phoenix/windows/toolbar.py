@@ -83,16 +83,24 @@ class sppasToolbar(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def get_button(self, name):
+    def get_button(self, name, group_name=None):
         """Return the button matching the given name or None.
 
-        :param name: (str) Name of the object
+        :param name: (str) Name of the button to search
+        :param group_name: (str) Group name of the button to search
         :returns: (wx.Window) a button or None
 
         """
-        for b in self.GetSizer().GetChildren():
-            if b.GetName() == name:
-                return b
+        if group_name is None:
+            for b in self.GetSizer().GetChildren():
+                w = b.GetWindow()
+                if w is not None and w.GetName() == name:
+                    return w
+        else:
+            if group_name in self.__tg:
+                for btn in self.__tg[group_name]:
+                    if btn.GetName() == name:
+                        return btn
 
         return None
 
@@ -193,6 +201,8 @@ class sppasToolbar(sppasPanel):
             self.__fg.append(st)
         self.GetSizer().Add(st, 0, align | wx.ALL, 6)
 
+        return st
+
     # -----------------------------------------------------------------------
 
     def AddTitleText(self, text="", color=None, align=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL):
@@ -210,6 +220,8 @@ class sppasToolbar(sppasPanel):
             st.SetForegroundColour(color)
             self.__fg.append(st)
         self.GetSizer().Add(st, 0, align | wx.ALL, 6)
+
+        return st
 
     # -----------------------------------------------------------------------
 
@@ -239,7 +251,8 @@ class sppasToolbar(sppasPanel):
         btn.Spacing = sppasPanel.fix_size(12)
         btn.BorderWidth = 0
         btn.BitmapColour = self.GetForegroundColour()
-        btn.SetMinSize((sppasPanel.fix_size(32), sppasPanel.fix_size(32)))
+        btn.SetMinSize(wx.Size(sppasPanel.fix_size(32),
+                               sppasPanel.fix_size(32)))
 
         return btn
 
