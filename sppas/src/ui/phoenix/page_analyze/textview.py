@@ -34,11 +34,12 @@
 
 """
 
+import os
 import codecs
-import logging
 import wx
 
 from sppas import sg
+from sppas import paths
 
 from ..windows import sppasPanel
 from ..windows import CheckButton
@@ -125,7 +126,7 @@ class TextViewPanel(sppasPanel):
             font = wx.SystemSettings().GetFont(wx.SYS_DEFAULT_GUI_FONT)
         except AttributeError:  # wx3
             font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
-        line_height = int(float(font.GetPixelSize()[1]) * 1.5) # line spacing
+        line_height = int(float(font.GetPixelSize()[1]) * 1.5)  # line spacing
         self.SetMinSize(wx.Size(sppasPanel.fix_size(320),
                                 line_height*len(lines)))
 
@@ -247,3 +248,15 @@ class TextViewPanel(sppasPanel):
 
         """
         self.__modified = True
+
+# ----------------------------------------------------------------------------
+# Panel tested by test_glob.py
+# ----------------------------------------------------------------------------
+
+
+class TestPanel(TextViewPanel):
+
+    def __init__(self, parent):
+        super(TestPanel, self).__init__(
+            parent, filename=os.path.join(paths.samples, "COPYRIGHT.txt"))
+        self.SetBackgroundColour(wx.Colour(128, 128, 128))

@@ -34,7 +34,6 @@
 
 """
 
-import logging
 import wx
 import random
 import wx.lib.newevent
@@ -136,7 +135,7 @@ class TabsManager(sppasPanel):
         :return: (int) Index of the tab.
 
         """
-        logging.debug(" --- method append_tab of class TabsManager")
+        wx.LogDebug(" --- method append_tab of class TabsManager")
         tabs = self.FindWindow("tabslist")
         index = tabs.append()
         return index
@@ -249,9 +248,9 @@ class TabsManager(sppasPanel):
 
         """
         key_code = event.GetKeyCode()
-        logging.debug('Tabs manager received the key event {:d}'
+        wx.LogDebug('Tabs manager received the key event {:d}'
                       ''.format(key_code))
-        logging.debug('Key event skipped by the tab manager.')
+        wx.LogDebug('Key event skipped by the tab manager.')
         event.Skip()
 
     # ------------------------------------------------------------------------
@@ -264,6 +263,8 @@ class TabsManager(sppasPanel):
         :param event: (wx.Event) TabChangeEvent
 
         """
+        wx.LogDebug('Tabs manager received a tab change event.')
+
         evt = TabChangeEvent(action="show",
                              cur_tab=event.cur_tab,
                              dest_tab=event.dest_tab)
@@ -278,6 +279,7 @@ class TabsManager(sppasPanel):
         :param event: (wx.Event)
 
         """
+        wx.LogDebug('Tabs manager received a button event.')
         event_name = event.GetButtonObj().GetName()
 
         if event_name == "files-edit-file":
@@ -295,8 +297,7 @@ class TabsManager(sppasPanel):
 
     def __event_append_tab(self):
         """Notify the parent the user asked to append a tab."""
-        tabs = self.FindWindow("tabslist")
-        # Send the new page name to the parent
+        wx.LogDebug('Tabs manager notify the parent to append a tab.')
         evt = TabChangeEvent(action="append",
                              cur_tab=None,
                              dest_tab=None)
@@ -307,6 +308,7 @@ class TabsManager(sppasPanel):
 
     def __event_remove_tab(self):
         """Notify the parent the user asked to remove a tab."""
+        wx.LogDebug('Tabs manager notify the parent to remove a tab.')
         tabs = self.FindWindow("tabslist")
 
         nb_tabs = tabs.get_count()
@@ -315,19 +317,17 @@ class TabsManager(sppasPanel):
             wx.LogError("There's no tab in the list to remove")
             return
 
-        # Remove of the list of tabs (if we can)
-        try:
-            current = tabs.get_current()
-            cur_name = tabs.get_name(current)
-        except Exception:
-            return
-
-        # Send the removed and destination page names to the parent
-        evt = TabChangeEvent(action="remove",
-                             cur_tab=cur_name,
-                             dest_tab=None)
-        evt.SetEventObject(self)
-        wx.PostEvent(self.GetParent(), evt)
+        current = tabs.get_current()
+        wx.LogDebug(" ... tab at index = {:d}".format(current))
+        if current == -1:
+            Error("No tab is checked to be closed.")
+        else:
+            # Send the index of the tab to be removed
+            evt = TabChangeEvent(action="remove",
+                                 cur_tab=current,
+                                 dest_tab=None)
+            evt.SetEventObject(self)
+            wx.PostEvent(self.GetParent(), evt)
 
     # -----------------------------------------------------------------------
 
@@ -479,7 +479,7 @@ class TabsPanel(sppasPanel):
         :returns: Index of the button in the sizer
 
         """
-        logging.debug(" --- method append of class TabsPanel")
+        wx.LogDebug(" --- method append of class TabsPanel")
         self.__counter += 1
         name = "btn_analyze_{:d}".format(self.__counter)
         label = TAB + " #{:d}".format(self.__counter)
@@ -642,17 +642,22 @@ class TabsPanel(sppasPanel):
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(TabsManager):
+class TestPanel(sppasPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
         self.SetBackgroundColour(wx.Colour(128, 128, 128))
+        self.tabs = TabsManager(parent=self)
+        s = wx.BoxSizer()
+        s.Add(self.tabs, 1, wx.EXPAND)
+        self.SetSizer(s)
+        self.Layout()
         self.Bind(EVT_TAB_CHANGE, self._process_tab_change)
 
     # -----------------------------------------------------------------------
 
     def _process_tab_change(self, event):
-        """Process a change of page.
+        """Process a change of tab.
 
         A tab is matching a page of the book. When the tab changed, the page
         displaying the files has to be changed too.
@@ -660,7 +665,7 @@ class TestPanel(TabsManager):
         :param event: (wx.Event)
 
         """
-        logging.debug("Process tab change, one of (show/open/append/remove).")
+        wx.LogDebug("Process tab change event (show/open/append/remove).")
         emitted = event.GetEventObject()
         try:
             action = event.action
@@ -672,18 +677,19 @@ class TestPanel(TabsManager):
             return
 
         if action == "open":
-            logging.debug(" --- event tab change with action open")
+            wx.LogDebug(" --- event tab change with action open")
 
         elif action == "append":
-            logging.debug(" --- event tab change with action append")
-            i = self.append_tab()
+            wx.LogDebug(" --- event tab change with action append")
+            i = self.tabs.append_tab()
             if i == 0:
-                self.switch_to_tab(i)
+                self.tabs.switch_to_tab(i)
 
         elif action == "remove":
-            logging.debug(" --- event tab change with action remove")
-            self.remove_tab(cur_index)
+            wx.LogDebug(" --- event tab change with action remove")
+            self.tabs.remove_tab(cur_index)
+            # Here we could switch to another tab...
 
         elif action == "show":
-            logging.debug(" --- event tab change with action show")
-            self.switch_to_tab(dest_index)
+            wx.LogDebug(" --- event tab change with action show")
+            self.tabs.switch_to_tab(dest_index)

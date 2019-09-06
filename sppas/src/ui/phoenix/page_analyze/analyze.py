@@ -349,25 +349,25 @@ class sppasAnalyzePanel(sppasPanel):
 
             # If it is the first page, we switch on it.
             if i == 0:
-                book.ChangeSelection(0)
-                tabs.switch_to(0)
+                book.ChangeSelection(1)
+                tabs.switch_to(1)
 
         elif action == "remove":
             # Remove the page to the book (if authorized...)
             r = self._remove_page(cur_index)
             if r is True:
                 # Remove also the corresponding tab
-                tabs.remove()
+                tabs.remove_tab(cur_index)
 
                 # The book switched automatically to another page!
                 page = book.GetCurrentPage()
                 tabs.switch_to(page.GetName())
 
-        # Show a page of the book
-        if dest_index is not None:
-            if dest_index != cur_index:
-                self._show_page(dest_index)
-                self.FindWindow("tabs").switch_to_tab(dest_index)
+        elif action == "show":
+            logging.debug("Action show with dest = {:d}".format(dest_index))
+            # Show a page of the book
+            self._show_page(dest_index)
+            self.FindWindow("tabs").switch_to_tab(dest_index)
 
     # ------------------------------------------------------------------------
 
@@ -446,15 +446,19 @@ class sppasAnalyzePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def _remove_page(self, page):
+    def _remove_page(self, page_index):
         """Remove a page of the content panel.
 
         Attention: does not remove the tab corresponding to this page.
 
-        :param page: (ViewFilesPanel)
+        :param page_index: (int)
 
         """
-        logging.debug("Remove page {:s}".format(page.GetName()))
+        logging.debug("Remove page at index = {:d}".format(page_index))
+        book = self.FindWindow("content")
+        page = book.GetPage(page_index)
+        if page == wx.NOT_FOUND:
+            return
         # Ask the page if at least one file has been modified
 
         # Unlock files
@@ -466,11 +470,8 @@ class sppasAnalyzePanel(sppasPanel):
             return False
 
         # Delete the page then the associated window
-        book = self.FindWindow("content")
-        p = book.FindPage(page)
         page_name = page.GetName()
-        if p != wx.NOT_FOUND:
-            book.RemovePage(p)
+        book.RemovePage(page_index)
         page.Destroy()
 
         if i > 0:
@@ -495,19 +496,20 @@ class sppasAnalyzePanel(sppasPanel):
 
         """
         book = self.FindWindow("content")
+        page_index += 1
+
+        # check if a page is existing at the given index
+        p = book.GetPage(page_index)
+        if p == wx.NOT_FOUND:
+            return
 
         # the current page number
         c = book.FindPage(book.GetCurrentPage())
 
-        # the page number to switch on
-        p = book.FindPage(page_index)
-        if p == wx.NOT_FOUND:
-            return
-
         # assign the effect
-        if c == p:
+        if c == page_index:
             return
-        elif c < p:
+        elif c < page_index:
             book.SetEffects(showEffect=wx.SHOW_EFFECT_SLIDE_TO_TOP,
                             hideEffect=wx.SHOW_EFFECT_SLIDE_TO_TOP)
         else:
@@ -515,7 +517,7 @@ class sppasAnalyzePanel(sppasPanel):
                             hideEffect=wx.SHOW_EFFECT_SLIDE_TO_BOTTOM)
 
         # then change the current tab
-        book.ChangeSelection(p)
+        book.ChangeSelection(page_index)
         self.Refresh()
 
     # -----------------------------------------------------------------------
@@ -551,8 +553,10 @@ class sppasAnalyzePanel(sppasPanel):
         self._viewname = view_name
 
         # Create and append the page with the appropriate new view
-        new_page = self._append_page(page_name, page_color, page_files)
+        new_page = self._append_page(page_files)
+        new_page.SetName(page_name)
+        new_page.SetHighLightColor(page_color)
 
-        page_index = book.FindPage(new_page)
-        book.ChangeSelection(page_index)
+        new_page_index = book.FindPage(new_page)
+        book.ChangeSelection(new_page_index)
         self.Refresh()
