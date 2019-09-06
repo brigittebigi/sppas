@@ -37,13 +37,13 @@
 import logging
 import wx
 
-from ..windows import sppasPanel
+from ..windows import sppasScrolledPanel
 from ..windows import sppasStaticText
 
 # ----------------------------------------------------------------------------
 
 
-class BaseViewFilesPanel(sppasPanel):
+class BaseViewFilesPanel(sppasScrolledPanel):
     """Panel to display the list of opened files and their content.
 
     :author:       Brigitte Bigi
@@ -71,12 +71,13 @@ class BaseViewFilesPanel(sppasPanel):
         self.Layout()
 
     # -----------------------------------------------------------------------
+    # Colours
+    # -----------------------------------------------------------------------
 
     def GetHighLightColor(self):
         """Get the color to highlight buttons."""
         return self._hicolor
 
-    # -----------------------------------------------------------------------
     # -----------------------------------------------------------------------
 
     def SetHighLightColor(self, color):
@@ -85,6 +86,23 @@ class BaseViewFilesPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
     # Manage the files
+    # -----------------------------------------------------------------------
+
+    def is_modified(self, name):
+        """Return True if the content of the file has been changed.
+
+        :param name: (str) Name of a file
+
+        """
+        # Get the index of the file in the list
+        idx = self._files.index(name)
+        item = self.GetSizer().GetItem(idx)
+        try:
+            changed = item.is_modified()
+        except:
+            return False
+        return changed
+
     # -----------------------------------------------------------------------
 
     def get_files(self):
@@ -97,6 +115,7 @@ class BaseViewFilesPanel(sppasPanel):
         """Add a file and display its content.
 
         :param name: (str)
+        :raise: ValueError
 
         """
         logging.debug('Append file {:s}'.format(name))
@@ -108,26 +127,26 @@ class BaseViewFilesPanel(sppasPanel):
         logging.debug("current list of files: {!s:s}".format(str(self._files)))
         self._show_file(name)
 
-        # Update the gui
-        self.Layout()
-        self.Refresh()
-
     # -----------------------------------------------------------------------
 
-    def remove_file(self, name):
+    def remove_file(self, name, force=True):
         """Remove a panel corresponding to the name of a file.
 
+        Do not update the GUI.
+
         :param name: (str)
+        :return: (bool) The file was removed or not
 
         """
-        # Remove of the object
-        self._del_file(name)
-        # Delete of the list
-        self._files.pop(name)
+        changed = self.is_modified(name)
+        if changed is True or force is True:
+            # Remove of the object
+            self._del_file(name)
+            # Delete of the list
+            self._files.pop(name)
+            return True
 
-        # Update the gui
-        self.Layout()
-        self.Refresh()
+        return False
 
     # -----------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -139,16 +158,22 @@ class BaseViewFilesPanel(sppasPanel):
         self.SetSizer(sizer)
         for f in files:
             self.append_file(f)
-        self.SetMinSize(wx.Size(sppasPanel.fix_size(420),
-                                sppasPanel.fix_size(48)*len(self._files)))
+        self.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(420),
+                                sppasScrolledPanel.fix_size(48)*len(self._files)))
 
     # -----------------------------------------------------------------------
 
     def _show_file(self, name):
         """Display the file."""
-        logging.warning("Displaying file is not implemented in this view mode.")
+        wx.LogWarning("Displaying file is not implemented in this view mode.")
         panel = sppasStaticText(self, label=name)
-        self.GetSizer().Add(panel, 1, wx.EXPAND)
+        try:  # wx4
+            font = wx.SystemSettings().GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        except AttributeError:  # wx3
+            font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        line_height = float(font.GetPixelSize()[1])
+        panel.SetMinSize(wx.Size(-1, line_height * 2))
+        self.GetSizer().Add(panel, 0, wx.EXPAND)
 
     # -----------------------------------------------------------------------
 

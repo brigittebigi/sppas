@@ -40,7 +40,7 @@ import wx
 
 from sppas import sg
 
-from ..windows import sppasScrolledPanel
+from ..windows import sppasPanel
 from ..windows import CheckButton
 from ..windows import sppasTextCtrl
 
@@ -54,8 +54,8 @@ TAG_COLOUR = wx.Colour(48, 196, 196)
 # ----------------------------------------------------------------------------
 
 
-class TextViewPanel(sppasScrolledPanel):
-    """Display the content of one file.
+class TextViewPanel(sppasPanel):
+    """Display the content of a file into a TextCtrl.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -77,26 +77,35 @@ class TextViewPanel(sppasScrolledPanel):
         # The file this panel is displaying
         self.__filename = filename
         self.__hicolor = self.GetForegroundColour()
-        self.txtview = None
-        self.nblines = 0
+        self.__txtview = None
+        self.__modified = False
 
         self._create_content()
         self._setup_events()
-
-        if filename is not None:
-            self.load_text()
 
         self.SetBackgroundColour(wx.GetApp().settings.bg_color)
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.mono_text_font)
 
+        if filename is not None:
+            self.load_text()
+        else:
+            self.SetMinSize(wx.Size(sppasPanel.fix_size(320),
+                                    sppasPanel.fix_size(32)))
+
         self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def is_modified(self):
+        """Return True if the content of the file has changed."""
+        return self.__modified
 
     # -----------------------------------------------------------------------
 
     def load_text(self):
         """Load the file and display it."""
-        # TODO: progress bar while loading and highlighting
+        # TODO: progress bar while loading
         try:
             with codecs.open(self.__filename, 'r', sg.__encoding__) as fp:
                 lines = fp.readlines()
@@ -104,13 +113,21 @@ class TextViewPanel(sppasScrolledPanel):
             lines = ["The file can't be loaded.",
                      "Error is: %s" % str(e)]
 
-        self.nblines = len(lines)
         content = "".join(lines)
         txtctrl = self.FindWindow("textctrl")
         txtctrl.SetValue(content)
 
         # required under Windows
         txtctrl.SetStyle(0, len(content), txtctrl.GetDefaultStyle())
+        
+        # Search the height of the text
+        try:  # wx4
+            font = wx.SystemSettings().GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        except AttributeError:  # wx3
+            font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        line_height = int(float(font.GetPixelSize()[1]) * 1.5) # line spacing
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(320),
+                                line_height*len(lines)))
 
     # -----------------------------------------------------------------------
 
@@ -147,23 +164,20 @@ class TextViewPanel(sppasScrolledPanel):
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         btn = CheckButton(self, label=self.__filename, name="checkbtn")
-        btn.SetSpacing(sppasScrolledPanel.fix_size(12))
-        btn.SetMinSize(wx.Size(-1, sppasScrolledPanel.fix_size(32)))
-        btn.SetSize(wx.Size(-1, sppasScrolledPanel.fix_size(32)))
+        btn.SetSpacing(sppasPanel.fix_size(12))
+        btn.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
+        btn.SetSize(wx.Size(-1, sppasPanel.fix_size(32)))
         btn.SetValue(True)
         self.__set_active_btn_style(btn)
         sizer.Add(btn, 0, wx.EXPAND | wx.ALL, 2)
 
-        style = wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_RICH2 | wx.TE_AUTO_URL | wx.NO_BORDER
-        self.txtview = sppasTextCtrl(self, style=style, name="textctrl")
-        self.txtview.SetFont(wx.GetApp().settings.mono_text_font)
+        style = wx.NO_BORDER | wx.TE_MULTILINE | wx.TE_RICH | wx.TE_PROCESS_ENTER | wx.TE_BESTWRAP | wx.TE_NO_VSCROLL
+        self.__txtview = sppasTextCtrl(self, style=style, name="textctrl")
+        self.__txtview.SetFont(wx.GetApp().settings.mono_text_font)
 
-        sizer.Add(self.txtview, 1, wx.EXPAND | wx.LEFT, sppasScrolledPanel.fix_size(34))
+        sizer.Add(self.__txtview, 1, wx.EXPAND | wx.LEFT, sppasPanel.fix_size(34))
 
         self.SetSizer(sizer)
-        self.SetupScrolling(scroll_x=False, scroll_y=True)
-        self.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(320),
-                                sppasScrolledPanel.fix_size(32)))
 
     # -----------------------------------------------------------------------
 
@@ -196,7 +210,8 @@ class TextViewPanel(sppasScrolledPanel):
         will be called.
 
         """
-        self.Bind(wx.EVT_TOGGLEBUTTON, self.__process_checked)
+        self.Bind(wx.EVT_BUTTON, self.__process_checked)
+        self.Bind(wx.EVT_TEXT_ENTER, self.__process_text_enter)
 
     # -----------------------------------------------------------------------
 
@@ -214,9 +229,21 @@ class TextViewPanel(sppasScrolledPanel):
         state = btn.GetValue()
         if state is True:
             self.__set_active_btn_style(btn)
-            self.txtview.Show()
+            self.__txtview.Show()
         else:
             self.__set_normal_btn_style(btn)
-            self.txtview.Hide()
+            self.__txtview.Hide()
         btn.SetValue(state)
         self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def __process_text_enter(self, event):
+        """Process a text enter event.
+        
+        We then suppose the text was modified.
+        
+        :param event: (wx.Event)
+
+        """
+        self.__modified = True

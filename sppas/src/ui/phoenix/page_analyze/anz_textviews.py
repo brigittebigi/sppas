@@ -60,6 +60,7 @@ class TextViewFilesPanel(BaseViewFilesPanel):
             parent,
             name=name,
             files=files)
+        self.SetupScrolling(scroll_x=False, scroll_y=True)
 
     # -----------------------------------------------------------------------
     # Manage the files
@@ -67,7 +68,8 @@ class TextViewFilesPanel(BaseViewFilesPanel):
 
     def _show_file(self, name):
         """Display the file."""
+        wx.LogMessage("Displaying file {:s} in TextView mode.".format(name))
         panel = TextViewPanel(self, filename=name)
         panel.SetHighLightColor(self._hicolor)
-        self.GetSizer().Add(panel, 1, wx.EXPAND)
+        self.GetSizer().Add(panel, 0, wx.EXPAND)
 

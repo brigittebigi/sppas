@@ -81,6 +81,14 @@ VIEW_TEXT = _("Text edit")
 VIEW_GRID = _("Grid details")
 VIEW_STAT = _("Statistics")
 
+TAB_MSG_CONFIRM_SWITCH = _("Confirm switch of tab?")
+TAB_MSG_CONFIRM = _("The current tab contains not saved work that "
+                    "will be lost. Are you sure you want to change tab?")
+
+TAB_ACT_SAVECURRENT_ERROR = _(
+    "Files of the current tab can not be saved due to "
+    "the following error: {:s}\nConfirm you still want to switch tab?")
+
 # ---------------------------------------------------------------------------
 
 
@@ -321,37 +329,45 @@ class sppasAnalyzePanel(sppasPanel):
         emitted = event.GetEventObject()
         try:
             action = event.action
-            cur_page_name = event.cur_tab
-            dest_page_name = event.dest_tab
+            cur_index = event.cur_tab
+            dest_index = event.dest_tab
         except:
             wx.LogError('Malformed event emitted by {:s}'
                         '.'.format(emitted.GetName()))
             return
 
         book = self.FindWindow("content")
+        tabs = self.FindWindow("tabs")
 
         if action == "open":
-            w = book.FindWindow(cur_page_name)
-            if w is None:
-                wx.LogError("No page with name {:s}.".format(cur_page_name))
-                return
-            self._open_files(w)
+            self._open_files()
 
         elif action == "append":
-            color = event.color
-            self._append_page(cur_page_name, color)
+            new_page = self._append_page()
+            i = tabs.append_tab()
+            new_page.SetHighLightColor(tabs.get_tab_color(i))
+
+            # If it is the first page, we switch on it.
+            if i == 0:
+                book.ChangeSelection(0)
+                tabs.switch_to(0)
 
         elif action == "remove":
-            w = book.FindWindow(cur_page_name)
-            if w is None:
-                wx.LogError("No page with name {:s}".format(cur_page_name))
-                return
-            self._remove_page(w)
+            # Remove the page to the book (if authorized...)
+            r = self._remove_page(cur_index)
+            if r is True:
+                # Remove also the corresponding tab
+                tabs.remove()
+
+                # The book switched automatically to another page!
+                page = book.GetCurrentPage()
+                tabs.switch_to(page.GetName())
 
         # Show a page of the book
-        if dest_page_name is not None:
-            if dest_page_name != cur_page_name:
-                self._show_page(dest_page_name)
+        if dest_index is not None:
+            if dest_index != cur_index:
+                self._show_page(dest_index)
+                self.FindWindow("tabs").switch_to_tab(dest_index)
 
     # ------------------------------------------------------------------------
 
@@ -372,12 +388,15 @@ class sppasAnalyzePanel(sppasPanel):
     # Management of the book
     # -----------------------------------------------------------------------
 
-    def _open_files(self, page):
-        """Open the checked files in the given page.
+    def _open_files(self):
+        """Open the checked files in the current page.
 
         :param page: (ViewFilesPanel)
 
         """
+        book = self.FindWindow("content")
+        page = book.GetCurrentPage()
+
         checked = self.__data.get_filename_from_state(States().CHECKED)
         i = 0
         for fn in checked:
@@ -390,6 +409,9 @@ class sppasAnalyzePanel(sppasPanel):
 
         # send data to the parent
         if i > 0:
+            page.Layout()
+            # page.Refresh()
+            self.Refresh()
             wx.LogMessage("{:d} files opened in page {:s}."
                           "".format(i, page.GetName()))
             self.notify()
@@ -398,32 +420,28 @@ class sppasAnalyzePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def _append_page(self, page_name, color=None, files=()):
+    def _append_page(self, files=()):
         """Append a page to the content panel.
 
         Attention: does not add the tab corresponding to this page.
 
-        :param page_name: (str)
-        :param color: (wx.Colour)
         :param files: (list) List of filenames
 
         """
-        logging.debug("Create page {:s}".format(page_name))
         book = self.FindWindow("content")
+        index = book.GetPageCount()
+        page_name = "page_{:d}".format(index)
 
         if self._viewname == "data-view-text":
             wx.LogMessage("New empty text-view page created.")
+
             new_page = TextViewFilesPanel(book, name=page_name, files=files)
         else:
             wx.LogWarning("{:s} view is not currently supported."
                           "".format(self._viewname))
             new_page = BaseViewFilesPanel(book, name=page_name, files=files)
 
-        if color is not None:
-            new_page.SetHighLightColor(color)
-
         book.AddPage(new_page, text="")
-        # self.Refresh()
         return new_page
 
     # -----------------------------------------------------------------------
@@ -437,37 +455,43 @@ class sppasAnalyzePanel(sppasPanel):
 
         """
         logging.debug("Remove page {:s}".format(page.GetName()))
+        # Ask the page if at least one file has been modified
+
         # Unlock files
         fns = [self.__data.get_object(fname) for fname in page.get_files()]
         try:
             i = self.__data.unlock(fns)
         except Exception as e:
             wx.LogError(str(e))
-            return
+            return False
 
         # Delete the page then the associated window
         book = self.FindWindow("content")
         p = book.FindPage(page)
+        page_name = page.GetName()
         if p != wx.NOT_FOUND:
             book.RemovePage(p)
         page.Destroy()
-        # self.Refresh()
 
         if i > 0:
             wx.LogMessage("{:d} files closed by page {:s}."
-                          "".format(i, page.GetName()))
+                          "".format(i, page_name))
+
+            self.Refresh()
             self.notify()
         else:
-            wx.LogMessage("No file closed by page {:s}.".format(page.GetName()))
+            wx.LogMessage("No file closed by page {:s}.".format(page_name))
+
+        return True
 
     # -----------------------------------------------------------------------
 
-    def _show_page(self, page_name):
+    def _show_page(self, page_index):
         """Show a page of the content panel.
 
         Attention: does not select the tab corresponding to this page.
 
-        :param page_name: (str)
+        :param page_index: (str)
 
         """
         book = self.FindWindow("content")
@@ -476,12 +500,7 @@ class sppasAnalyzePanel(sppasPanel):
         c = book.FindPage(book.GetCurrentPage())
 
         # the page number to switch on
-        page = book.FindWindow(page_name)
-        if page is None:
-            logging.error("No page with name {:s} found in the book."
-                          "".format(page_name))
-            return
-        p = book.FindPage(page)
+        p = book.FindPage(page_index)
         if p == wx.NOT_FOUND:
             return
 
