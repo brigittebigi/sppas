@@ -72,4 +72,4 @@ class TextViewFilesPanel(BaseViewFilesPanel):
         panel = TextViewPanel(self, filename=name)
         panel.SetHighLightColor(self._hicolor)
         self.GetSizer().Add(panel, 0, wx.EXPAND)
-
+        return panel

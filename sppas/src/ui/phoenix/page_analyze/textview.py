@@ -34,6 +34,7 @@
 
 """
 
+import logging
 import os
 import codecs
 import wx
@@ -117,6 +118,7 @@ class TextViewPanel(sppasPanel):
         content = "".join(lines)
         txtctrl = self.FindWindow("textctrl")
         txtctrl.SetValue(content)
+        self.__modified = False
 
         # required under Windows
         txtctrl.SetStyle(0, len(content), txtctrl.GetDefaultStyle())
@@ -129,6 +131,21 @@ class TextViewPanel(sppasPanel):
         line_height = int(float(font.GetPixelSize()[1]) * 1.5)  # line spacing
         self.SetMinSize(wx.Size(sppasPanel.fix_size(320),
                                 line_height*len(lines)))
+
+    # -----------------------------------------------------------------------
+
+    def save_text(self):
+        """Save the displayed text into a file."""
+        txtctrl = self.FindWindow("textctrl")
+        content = txtctrl.GetValue()
+        try:
+            with codecs.open(self.__filename, 'w', sg.__encoding__) as fp:
+                fp.write(content)
+        except Exception as e:
+            wx.LogError(str(e))
+            raise
+
+        self.__modified = False
 
     # -----------------------------------------------------------------------
 
@@ -212,7 +229,7 @@ class TextViewPanel(sppasPanel):
 
         """
         self.Bind(wx.EVT_BUTTON, self.__process_checked)
-        self.Bind(wx.EVT_TEXT_ENTER, self.__process_text_enter)
+        self.Bind(wx.EVT_TEXT, self.__process_text_modified)
 
     # -----------------------------------------------------------------------
 
@@ -239,7 +256,7 @@ class TextViewPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def __process_text_enter(self, event):
+    def __process_text_modified(self, event):
         """Process a text enter event.
         
         We then suppose the text was modified.

@@ -58,7 +58,7 @@ from sppas.src.files import FileData, States
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 from ..main_events import EVT_TAB_CHANGE
 
-from ..dialogs import Information
+from ..dialogs import Information, Confirm
 from ..windows import sppasPanel
 from ..windows import sppasStaticLine
 from ..windows.book import sppasSimplebook
@@ -438,7 +438,7 @@ class sppasAnalyzePanel(sppasPanel):
         logging.debug('Analyze page received a key event. key_code={:d}'
                       ''.format(key_code))
 
-        event.Skip()
+        # event.Skip()
 
     # -----------------------------------------------------------------------
 
@@ -470,7 +470,6 @@ class sppasAnalyzePanel(sppasPanel):
         :param event: (wx.Event)
 
         """
-        logging.debug("Process tab change, one of (open/append/remove).")
         emitted = event.GetEventObject()
         try:
             action = event.action
@@ -546,7 +545,13 @@ class sppasAnalyzePanel(sppasPanel):
         page = book.GetPage(page_index)
         if page == wx.NOT_FOUND:
             return
+
         # Ask the page if at least one file has been modified
+        if page.is_modified() is True:
+            # Ask the user to confirm to close (and changes are lost)
+            response = Confirm(TAB_MSG_CONFIRM, "Close...")
+            if response == wx.ID_CANCEL:
+                return False
 
         # Unlock files
         fns = [self.__data.get_object(fname) for fname in page.get_files()]
@@ -599,8 +604,6 @@ class sppasAnalyzePanel(sppasPanel):
         page_index = book.FindPage(page)
         book.RemovePage(page_index)
         page.Destroy()
-        logging.debug("Page {:s} deleted (to create a new one with the new view). ".format(page_name))
-        logging.debug("  -> page files = {!s:s}".format(str(page_files)))
 
         # Set the name of the new view
         self._params[page_index].view_name = view_name

@@ -64,7 +64,7 @@ class BaseViewFilesPanel(sppasScrolledPanel):
             name=name)
 
         # The files of this panel (key=name, value=wx.SizerItem)
-        self._files = list()
+        self._files = dict()
         self._hicolor = self.GetForegroundColour()
 
         self._create_content(files)
@@ -88,26 +88,45 @@ class BaseViewFilesPanel(sppasScrolledPanel):
     # Manage the files
     # -----------------------------------------------------------------------
 
-    def is_modified(self, name):
-        """Return True if the content of the file has been changed.
+    def is_modified(self, name=None):
+        """Return True if the content of the or all files has been changed.
 
         :param name: (str) Name of a file
 
         """
-        # Get the index of the file in the list
-        idx = self._files.index(name)
-        item = self.GetSizer().GetItem(idx)
-        try:
-            changed = item.is_modified()
-        except:
-            return False
-        return changed
+        logging.debug("Page is modified ?????????????????????????????")
+        if name is not None:
+            logging.debug("  name = {:s}".format(name))
+            page = self._files.get(name, None)
+            try:
+                changed = page.is_modified()
+            except Exception as e:
+                logging.debug(" ... error: {:s}".format(str(e)))
+                changed = False
+
+            return changed
+
+        # All files
+        for name in self._files:
+            logging.debug("  - name = {:s}".format(name))
+            page = self._files.get(name, None)
+            try:
+                if page.is_modified() is True:
+                    return True
+                else:
+                    logging.debug("  not modified")
+
+            except Exception as e:
+                logging.debug(" ... error: {:s}".format(str(e)))
+                pass
+
+        return False
 
     # -----------------------------------------------------------------------
 
     def get_files(self):
         """Return the list of filenames this panel is displaying."""
-        return self._files
+        return list(self._files.keys())
 
     # -----------------------------------------------------------------------
 
@@ -118,14 +137,11 @@ class BaseViewFilesPanel(sppasScrolledPanel):
         :raise: ValueError
 
         """
-        logging.debug('Append file {:s}'.format(name))
         if name in self._files:
             wx.LogError('Name {:s} is already in the list of files.')
             raise ValueError('Name {:s} is already in the list of files.')
 
-        self._files.append(name)
-        logging.debug("current list of files: {!s:s}".format(str(self._files)))
-        self._show_file(name)
+        self._files[name] = self._show_file(name)
 
     # -----------------------------------------------------------------------
 
@@ -174,16 +190,18 @@ class BaseViewFilesPanel(sppasScrolledPanel):
         line_height = float(font.GetPixelSize()[1])
         panel.SetMinSize(wx.Size(-1, line_height * 2))
         self.GetSizer().Add(panel, 0, wx.EXPAND)
+        return panel
 
     # -----------------------------------------------------------------------
 
     def _del_file(self, name):
         """Remove the file."""
-        # Get the index of the file in the list
-        idx = self._files.index(name)
-        item = self.GetSizer().GetItem(idx)
+        page = self._files.get(name, None)
+        if page is None:
+            wx.LogError("There's no file with name {:s}".format(name))
+
         # Get and delete the panel
-        item.DeleteWindows()
+        page.Destroy()
 
         # Remove of the sizer
-        self.GetSizer().Remove(item)
+        self.GetSizer().Remove(page)
