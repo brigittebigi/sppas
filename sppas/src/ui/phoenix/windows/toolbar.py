@@ -55,14 +55,14 @@ class sppasToolbar(sppasPanel):
 
     """
 
-    def __init__(self, parent, orient=wx.HORIZONTAL):
+    def __init__(self, parent, orient=wx.HORIZONTAL, name="toolbar"):
         super(sppasToolbar, self).__init__(
             parent,
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
             size=wx.DefaultSize,
             style=wx.NO_BORDER | wx.NO_FULL_REPAINT_ON_RESIZE,
-            name=wx.PanelNameStr)
+            name=name)
 
         # Focus Color&Style
         self._fs = wx.PENSTYLE_SOLID
@@ -316,7 +316,6 @@ class sppasToolbar(sppasPanel):
 
     def __on_tg_btn_event(self, event):
         obj = event.GetEventObject()
-        logging.debug('toolbar received toogle event for btn {:s}'.format(obj.GetName()))
         group = None
         for gp in self.__tg:
             for btn in self.__tg[gp]:

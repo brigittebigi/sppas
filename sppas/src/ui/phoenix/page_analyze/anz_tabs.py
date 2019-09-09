@@ -35,7 +35,6 @@
 """
 
 import wx
-import random
 import wx.lib.newevent
 
 from sppas import msg
@@ -107,6 +106,13 @@ class TabsManager(sppasPanel):
     # Actions to perform on the tabs
     # ------------------------------------------------------------------------
 
+    def get_selected_tab(self):
+        """Return the index of the currently selected tab, or -1."""
+        tabs = self.FindWindow("tabslist")
+        return tabs.get_current()
+
+    # -----------------------------------------------------------------------
+
     def get_tab_color(self, index):
         """Return the color of a tab.
 
@@ -122,6 +128,7 @@ class TabsManager(sppasPanel):
         """Set the color of a tab.
 
         :param index: (int) Index of the tab to fix the color.
+        :param color: (wx.Colour)
 
         """
         tabs = self.FindWindow("tabslist")
@@ -198,7 +205,7 @@ class TabsManager(sppasPanel):
 
     def __create_toolbar(self):
         """Create the toolbar."""
-        tb = sppasToolbar(self, orient=wx.VERTICAL)
+        tb = sppasToolbar(self, orient=wx.VERTICAL, name="TabsManager-toolbar")
         tb.set_focus_color(TabsManager.HIGHLIGHT_COLOUR)
         tb.AddTitleText(TAB_TITLE, TabsManager.HIGHLIGHT_COLOUR)
         tb.AddButton("files-edit-file", TAB_ACT_OPEN)
@@ -299,7 +306,6 @@ class TabsManager(sppasPanel):
         """Notify the parent the user asked to append a tab."""
         wx.LogDebug('Tabs manager notify the parent to append a tab.')
         evt = TabChangeEvent(action="append",
-                             cur_tab=None,
                              dest_tab=None)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
@@ -320,11 +326,9 @@ class TabsManager(sppasPanel):
         current = tabs.get_current()
         wx.LogDebug(" ... tab at index = {:d}".format(current))
         if current == -1:
-            Error("No tab is checked to be closed.")
+            wx.LogError("No tab is checked to be closed.")
         else:
-            # Send the index of the tab to be removed
             evt = TabChangeEvent(action="remove",
-                                 cur_tab=current,
                                  dest_tab=None)
             evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)
@@ -335,15 +339,10 @@ class TabsManager(sppasPanel):
         """Notify the parent to open files into the current tab."""
         tabs = self.FindWindow("tabslist")
         current = tabs.get_current()
-
-        # we did not created a tab anymore
         if current == -1:
             Error("No tab is checked to open files.")
-
-        # a tab is active
         else:
             evt = TabChangeEvent(action="open",
-                                 cur_tab=current,
                                  dest_tab=None)
             evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)
@@ -367,6 +366,10 @@ class TabsPanel(sppasPanel):
     tab changed.
 
     """
+
+    HIGHLIGHT_COLOUR = wx.Colour(92, 192, 192, 128)
+
+    # -----------------------------------------------------------------------
 
     def __init__(self, parent, name="tabslist"):
         super(TabsPanel, self).__init__(
@@ -479,9 +482,8 @@ class TabsPanel(sppasPanel):
         :returns: Index of the button in the sizer
 
         """
-        wx.LogDebug(" --- method append of class TabsPanel")
         self.__counter += 1
-        name = "btn_analyze_{:d}".format(self.__counter)
+        name = "btn_tab_anz_{:d}".format(self.__counter)
         label = TAB + " #{:d}".format(self.__counter)
 
         btn = RadioButton(self, label=label, name=name)
@@ -489,13 +491,11 @@ class TabsPanel(sppasPanel):
         btn.SetSpacing(sppasPanel.fix_size(12))
         btn.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
         btn.SetSize(wx.Size(-1, sppasPanel.fix_size(32)))
-        self.__colors[btn] = wx.Colour(random.randint(50, 255),
-                                       random.randint(50, 255),
-                                       random.randint(50, 255))
+        self.__colors[btn] = TabsPanel.HIGHLIGHT_COLOUR
         self.__set_normal_btn_style(btn)
         self.GetSizer().Add(btn, 0, wx.EXPAND | wx.ALL, 2)
-        self.Refresh()
         self.Layout()
+        self.Refresh()
 
         return self.GetSizer().GetItemCount() - 1
 
@@ -669,7 +669,6 @@ class TestPanel(sppasPanel):
         emitted = event.GetEventObject()
         try:
             action = event.action
-            cur_index = event.cur_tab
             dest_index = event.dest_tab
         except:
             wx.LogError('Malformed event emitted by {:s}'
@@ -687,6 +686,7 @@ class TestPanel(sppasPanel):
 
         elif action == "remove":
             wx.LogDebug(" --- event tab change with action remove")
+            cur_index = self.tabs.get_selected_tab()
             self.tabs.remove_tab(cur_index)
             # Here we could switch to another tab...
 
