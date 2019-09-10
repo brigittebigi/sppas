@@ -394,10 +394,11 @@ class sppasAnalyzePanel(sppasPanel):
         tb = sppasToolbar(parent, name="analyze-toolbar")
         tb.set_focus_color(sppasAnalyzePanel.HIGHLIGHT_COLOUR)
 
-        # Add toggle buttons to switch the view
         tb.AddTitleText(VIEW_TITLE,
                         color=sppasAnalyzePanel.HIGHLIGHT_COLOUR,
                         name="view-title-text")
+
+        # Add toggle buttons to switch the view
         for view_name in sppasAnalyzePanel.VIEWS:
             btn = tb.AddToggleButton(
                 view_name,

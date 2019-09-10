@@ -32,6 +32,8 @@
     ui.phoenix.page_analyze.textview.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    ViewPanel to display the content of a file as a simple ASCII text.
+
 """
 
 import os
@@ -44,21 +46,16 @@ from sppas import paths
 from ..windows import sppasPanel
 from ..windows import CheckButton
 from ..windows import sppasTextCtrl
+from ..windows import sppasToolbar
+from ..windows import sppasStaticLine
 
 from .baseview import sppasBaseViewPanel
 
 # ----------------------------------------------------------------------------
 
-BRACKET_COLOUR = wx.Colour(196, 48, 48)
-PARENTHESIS_COLOUR = wx.Colour(48, 196, 48)
-BRACES_COLOUR = wx.Colour(48, 48, 196)
-TAG_COLOUR = wx.Colour(48, 196, 196)
-
-# ----------------------------------------------------------------------------
-
 
 class TextViewPanel(sppasBaseViewPanel):
-    """Display the content of a file into a TextCtrl.
+    """Display the content of a file into an editable TextCtrl.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -110,42 +107,24 @@ class TextViewPanel(sppasBaseViewPanel):
         content = self.__txtview.GetValue()
         with codecs.open(self._filename, 'w', sg.__encoding__) as fp:
             fp.write(content)
-            # fp.close()
 
         self.__txtview.SetModified(False)
         return True
 
     # -----------------------------------------------------------------------
-
-    def is_checked(self):
-        """Return True if this file is checked."""
-        return self.FindWindow("checkbtn").GetValue()
-
-    # -----------------------------------------------------------------------
     # Private methods to construct the panel.
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def __highlight(txtctrl, content, characters, color):
-        i = content.find(characters, 0)
-        while i != -1:
-            print(i)
-            txtctrl.SetStyle(i, i + 1, wx.TextAttr(color))
-            i = content.find(characters, i+1)
-
     # -----------------------------------------------------------------------
 
     def _create_content(self):
         """Create the main content."""
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        btn = CheckButton(self, label=self._filename, name="checkbtn")
-        btn.SetSpacing(sppasPanel.fix_size(12))
-        btn.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
-        btn.SetSize(wx.Size(-1, sppasPanel.fix_size(32)))
-        btn.SetValue(True)
-        self.__set_active_btn_style(btn)
-        sizer.Add(btn, 0, wx.EXPAND | wx.ALL, 2)
+        line1 = self.__create_hline()
+        line1.SetName("line1")
+        sizer.Add(line1, 0, wx.EXPAND | wx.ALL, 2)
+        tb = self.__create_toolbar(self)
+        sizer.Add(tb, 0, wx.EXPAND | wx.ALL, 2)
+        sizer.Add(self.__create_hline(), 0, wx.EXPAND | wx.ALL, 2)
 
         style = wx.NO_BORDER | wx.TE_MULTILINE | wx.TE_RICH | wx.TE_PROCESS_ENTER | wx.TE_BESTWRAP | wx.TE_NO_VSCROLL
         self.__txtview = sppasTextCtrl(self, style=style, name="textctrl")
@@ -159,25 +138,31 @@ class TextViewPanel(sppasBaseViewPanel):
 
         self.SetSizer(sizer)
 
-    # -----------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
-    def __set_normal_btn_style(self, button):
-        """Set a normal style to a button."""
-        button.BorderWidth = 0
-        button.BorderColour = self.GetForegroundColour()
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = self._hicolor
-        button.SetForegroundColour(self._hicolor)
+    def __create_toolbar(self, parent):
+        """Create the toolbar."""
+        tb = sppasToolbar(parent, name="textview-toolbar")
+        tb.set_focus_color(self._hicolor)
+        tb.AddTitleText(self._filename,
+                        color=self._hicolor,
+                        name="tb-title-text")
+        tb.AddButton("eye_hide", "Show/Hide")
+        tb.AddButton("save", "Save")
+        tb.AddButton("close", "Close")
+        return tb
 
-    # -----------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
-    def __set_active_btn_style(self, button):
-        """Set a special style to the button."""
-        button.BorderWidth = 0
-        button.BorderColour = self._hicolor
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = self.GetForegroundColour()
-        button.SetForegroundColour(self._hicolor)
+    def __create_hline(self):
+        """Create a vertical line, used to separate the panels."""
+        line = sppasStaticLine(self, orient=wx.LI_HORIZONTAL)
+        line.SetMinSize(wx.Size(-1, 2))
+        line.SetSize(wx.Size(-1, 2))
+        line.SetPenStyle(wx.PENSTYLE_SOLID)
+        line.SetDepth(2)
+        line.SetForegroundColour(self._hicolor)
+        return line
 
     # -----------------------------------------------------------------------
     # Events management
@@ -190,30 +175,37 @@ class TextViewPanel(sppasBaseViewPanel):
         will be called.
 
         """
-        self.Bind(wx.EVT_BUTTON, self.__process_checked)
+        self.Bind(wx.EVT_BUTTON, self._process_event)
 
     # -----------------------------------------------------------------------
 
-    def __process_checked(self, event):
-        """Process a checkbox event.
-
-        Skip the event in order to allow the parent to handle it: it's to
-        update the other windows with data of the new selected workspace.
+    def _process_event(self, event):
+        """Process any kind of event.
 
         :param event: (wx.Event)
 
         """
-        # the button we want to switch on
-        btn = event.GetButtonObj()
-        state = btn.GetValue()
-        if state is True:
-            self.__set_active_btn_style(btn)
-            self.__txtview.Show()
-        else:
-            self.__set_normal_btn_style(btn)
-            self.__txtview.Hide()
-        btn.SetValue(state)
-        self.Refresh()
+        event_obj = event.GetButtonObj()
+        event_name = event_obj.GetName()
+
+        if event_name == "close":
+            pass
+
+        elif event_name == "save":
+            self.save()
+
+        elif event_name == "eye_show":
+            self.__txtview.Show(True)
+            event_obj.SetImage('eye_hide')
+            event_obj.SetName("eye_hide")
+
+        elif event_name == "eye_hide":
+            self.__txtview.Show(False)
+            event_obj.SetImage('eye_show')
+            event_obj.SetName("eye_show")
+
+        event.Skip()
+
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py

@@ -67,6 +67,8 @@ class BaseViewFilesPanel(sppasScrolledPanel):
         self._hicolor = self.GetForegroundColour()
 
         self._create_content(files)
+        self._setup_events()
+
         self.Layout()
 
     # -----------------------------------------------------------------------
@@ -219,3 +221,18 @@ class BaseViewFilesPanel(sppasScrolledPanel):
 
         # Remove of the sizer
         self.GetSizer().Remove(page)
+
+
+    # -----------------------------------------------------------------------
+    # Events management
+    # -----------------------------------------------------------------------
+
+    def _setup_events(self):
+        """Associate an handler function with the events.
+
+        It means that when an event occurs then the process handler function
+        will be called.
+
+        """
+        pass
+
