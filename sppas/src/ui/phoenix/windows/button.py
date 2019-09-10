@@ -339,7 +339,8 @@ class BaseButton(wx.Window):
 
         # Border width to draw (0=no border)
         self._borderwidth = 2
-        self._bordercolor = self.GetPenForegroundColour()
+        self._default_bordercolor = self.GetPenForegroundColour()
+        self._bordercolor = self._default_bordercolor
         self._borderstyle = wx.PENSTYLE_SOLID
 
         # Focus (True when mouse/keyboard is entered)
@@ -364,6 +365,23 @@ class BaseButton(wx.Window):
 
         # Allow sub-classes to bind other events
         self.InitOtherEvents()
+
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        """Override. Apply fg colour to both the image and the text.
+
+        :param colour: (wx.Colour)
+
+        """
+        wx.Window.SetForegroundColour(self, colour)
+
+        # If the bordercolor wasn't changed by the user
+        if self._bordercolor == self._default_bordercolor:
+            self._bordercolor = self.GetPenForegroundColour()
+
+        self._default_bordercolor = self.GetPenForegroundColour()
+
 
     # -----------------------------------------------------------------------
 
@@ -974,6 +992,7 @@ class BaseButton(wx.Window):
     def DrawBorder(self, dc, gc):
         w, h = self.GetClientSize()
 
+        logging.debug(" ##### {:s} draw border with color = {:s}".format(self.GetName(), str(self._bordercolor)))
         pen = wx.Pen(self._bordercolor, 1, self._borderstyle)
         dc.SetPen(pen)
 
@@ -1069,11 +1088,14 @@ class BitmapTextButton(BaseButton):
         """
         super(BitmapTextButton, self).__init__(
             parent, id, pos, size, name)
+        wx.Window.SetForegroundColour(self, self.GetParent().GetForegroundColour())
+
 
         self._label = label
         self._labelpos = wx.BOTTOM
         self._spacing = 4
-        self._bitmapcolor = self.GetParent().GetForegroundColour()
+        self._default_bitmapcolor = self.GetForegroundColour()
+        self._bitmapcolor = self._default_bitmapcolor
 
         # The icon image
         self._image = None
@@ -1098,8 +1120,11 @@ class BitmapTextButton(BaseButton):
         :param colour: (wx.Colour)
 
         """
-        self._bitmapcolor = colour
-        wx.Window.SetForegroundColour(self, colour)
+        BaseButton.SetForegroundColour(self, colour)
+        if self._bitmapcolor == self._default_bitmapcolor:
+            self._bitmapcolor = colour
+
+        self._default_bitmapcolor = colour
 
     # -----------------------------------------------------------------------
 
