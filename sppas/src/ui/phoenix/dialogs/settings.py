@@ -289,9 +289,7 @@ class WxSettingsPanel(sppasPanel):
         event_obj = event.GetEventObject()
         event_name = event_obj.GetName()
         event_id = event_obj.GetId()
-
-        wx.LogMessage("Received event id {:d} of {:s}"
-                      "".format(event_id, event_name))
+        # wx.LogDebug("Received event id {:d} of {:s}".format(event_id, event_name))
 
         if "color" in event_name:
             self.on_color_dialog(event)

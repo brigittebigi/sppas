@@ -451,9 +451,6 @@ class BaseTreeViewCtrl(wx.dataview.DataViewCtrl):
         :returns: (wx.dataview.DataViewColumn)
 
         """
-        logging.debug('Create column: {:d} {:s}'
-                      ''.format(index, model.GetColumnName(index)))
-
         stype = model.GetColumnType(index)
         render = model.GetColumnRenderer(index)
         if render is None:

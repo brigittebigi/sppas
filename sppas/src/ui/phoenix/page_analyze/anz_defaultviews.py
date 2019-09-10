@@ -37,13 +37,13 @@
 import wx
 
 from .anz_baseviews import BaseViewFilesPanel
-from .textview import TextViewPanel
+from .baseview import sppasBaseViewPanel
 
 # ----------------------------------------------------------------------------
 
 
-class TextViewFilesPanel(BaseViewFilesPanel):
-    """Panel to display the list of opened files and their content.
+class DefaultViewFilesPanel(BaseViewFilesPanel):
+    """Default panel to display the list of opened files.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -51,12 +51,12 @@ class TextViewFilesPanel(BaseViewFilesPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-    In this views, the content of each file is displayed "as it".
+    In this views, the content of each file is NOT displayed.
 
     """
 
-    def __init__(self, parent, name="textviewfiles", files=tuple()):
-        super(TextViewFilesPanel, self).__init__(
+    def __init__(self, parent, name="default-view-files", files=tuple()):
+        super(DefaultViewFilesPanel, self).__init__(
             parent,
             name=name,
             files=files)
@@ -64,25 +64,8 @@ class TextViewFilesPanel(BaseViewFilesPanel):
 
     # -----------------------------------------------------------------------
 
-    def can_edit(self):
-        """Return True if this view can edit/save the file content.
-
-        Override base class.
-
-        The methods 'is_modified' and 'save' should be implemented in the
-        view panel of each file.
-
-        """
-        return True
-
-    # -----------------------------------------------------------------------
-    # Manage the files
-    # -----------------------------------------------------------------------
-
     def _show_file(self, name):
         """Display the file."""
-        wx.LogMessage("Displaying file {:s} in TextView mode.".format(name))
-        panel = TextViewPanel(self, filename=name)
-        panel.SetHighLightColor(self._hicolor)
+        panel = sppasBaseViewPanel(self, filename=name)
         self.GetSizer().Add(panel, 0, wx.EXPAND)
         return panel

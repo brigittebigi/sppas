@@ -34,7 +34,6 @@
 
 """
 
-import logging
 import os
 import codecs
 import wx
@@ -46,6 +45,8 @@ from ..windows import sppasPanel
 from ..windows import CheckButton
 from ..windows import sppasTextCtrl
 
+from .baseview import sppasBaseViewPanel
+
 # ----------------------------------------------------------------------------
 
 BRACKET_COLOUR = wx.Colour(196, 48, 48)
@@ -56,7 +57,7 @@ TAG_COLOUR = wx.Colour(48, 196, 196)
 # ----------------------------------------------------------------------------
 
 
-class TextViewPanel(sppasPanel):
+class TextViewPanel(sppasBaseViewPanel):
     """Display the content of a file into a TextCtrl.
 
     :author:       Brigitte Bigi
@@ -67,41 +68,14 @@ class TextViewPanel(sppasPanel):
 
     """
 
-    def __init__(self, parent, name="baseview", filename=""):
-        super(TextViewPanel, self).__init__(
-            parent,
-            id=wx.ID_ANY,
-            pos=wx.DefaultPosition,
-            size=wx.DefaultSize,
-            style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
-            name=name)
-
-        # The file this panel is displaying
-        self.__filename = filename
-        self.__hicolor = self.GetForegroundColour()
-        self.__txtview = None
-        self.__modified = False
-
-        self._create_content()
-        self._setup_events()
-
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.mono_text_font)
-
-        if filename is not None:
-            self.load_text()
-        else:
-            self.SetMinSize(wx.Size(sppasPanel.fix_size(320),
-                                    sppasPanel.fix_size(32)))
-
-        self.Layout()
+    def __init__(self, parent, name="textview", filename=""):
+        super(TextViewPanel, self).__init__(parent, name, filename)
 
     # -----------------------------------------------------------------------
 
     def is_modified(self):
         """Return True if the content of the file has changed."""
-        return self.__modified
+        return self.__txtview.IsModified()
 
     # -----------------------------------------------------------------------
 
@@ -109,59 +83,43 @@ class TextViewPanel(sppasPanel):
         """Load the file and display it."""
         # TODO: progress bar while loading
         try:
-            with codecs.open(self.__filename, 'r', sg.__encoding__) as fp:
+            with codecs.open(self._filename, 'r', sg.__encoding__) as fp:
                 lines = fp.readlines()
         except Exception as e:
-            lines = ["The file can't be loaded.",
+            lines = ["The file can't be loaded by this view. ",
                      "Error is: %s" % str(e)]
 
         content = "".join(lines)
         txtctrl = self.FindWindow("textctrl")
         txtctrl.SetValue(content)
-        self.__modified = False
 
         # required under Windows
         txtctrl.SetStyle(0, len(content), txtctrl.GetDefaultStyle())
         
         # Search the height of the text
-        try:  # wx4
-            font = wx.SystemSettings().GetFont(wx.SYS_DEFAULT_GUI_FONT)
-        except AttributeError:  # wx3
-            font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
-        line_height = int(float(font.GetPixelSize()[1]) * 1.5)  # line spacing
-        self.SetMinSize(wx.Size(sppasPanel.fix_size(320),
-                                line_height*len(lines)))
+        line_height = float(self.get_line_height()) * 1.3  # line spacing
+        height = sppasPanel.fix_size(32) + int(line_height*len(lines)) + 4
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(320), height))
+
+        self.__txtview.SetModified(False)
 
     # -----------------------------------------------------------------------
 
-    def save_text(self):
+    def save(self):
         """Save the displayed text into a file."""
-        txtctrl = self.FindWindow("textctrl")
-        content = txtctrl.GetValue()
-        try:
-            with codecs.open(self.__filename, 'w', sg.__encoding__) as fp:
-                fp.write(content)
-        except Exception as e:
-            wx.LogError(str(e))
-            raise
+        content = self.__txtview.GetValue()
+        with codecs.open(self._filename, 'w', sg.__encoding__) as fp:
+            fp.write(content)
+            # fp.close()
 
-        self.__modified = False
+        self.__txtview.SetModified(False)
+        return True
 
     # -----------------------------------------------------------------------
 
     def is_checked(self):
         """Return True if this file is checked."""
         return self.FindWindow("checkbtn").GetValue()
-
-    # -----------------------------------------------------------------------
-
-    def SetHighLightColor(self, color):
-        """Set a color to highlight buttons, and for the focus."""
-        self.__hicolor = color
-        for child in self.GetChildren():
-            if isinstance(child, CheckButton):
-                if child.GetValue() is False:
-                    child.FocusColour = self.__hicolor
 
     # -----------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -181,7 +139,7 @@ class TextViewPanel(sppasPanel):
         """Create the main content."""
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        btn = CheckButton(self, label=self.__filename, name="checkbtn")
+        btn = CheckButton(self, label=self._filename, name="checkbtn")
         btn.SetSpacing(sppasPanel.fix_size(12))
         btn.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
         btn.SetSize(wx.Size(-1, sppasPanel.fix_size(32)))
@@ -192,8 +150,12 @@ class TextViewPanel(sppasPanel):
         style = wx.NO_BORDER | wx.TE_MULTILINE | wx.TE_RICH | wx.TE_PROCESS_ENTER | wx.TE_BESTWRAP | wx.TE_NO_VSCROLL
         self.__txtview = sppasTextCtrl(self, style=style, name="textctrl")
         self.__txtview.SetFont(wx.GetApp().settings.mono_text_font)
+        self.__txtview.SetEditable(True)
+        self.__txtview.SetModified(False)
 
         sizer.Add(self.__txtview, 1, wx.EXPAND | wx.LEFT, sppasPanel.fix_size(34))
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(320),
+                                sppasPanel.fix_size(34)))
 
         self.SetSizer(sizer)
 
@@ -204,18 +166,18 @@ class TextViewPanel(sppasPanel):
         button.BorderWidth = 0
         button.BorderColour = self.GetForegroundColour()
         button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = self.__hicolor
-        button.SetForegroundColour(self.__hicolor)
+        button.FocusColour = self._hicolor
+        button.SetForegroundColour(self._hicolor)
 
     # -----------------------------------------------------------------------
 
     def __set_active_btn_style(self, button):
         """Set a special style to the button."""
         button.BorderWidth = 0
-        button.BorderColour = self.__hicolor
+        button.BorderColour = self._hicolor
         button.BorderStyle = wx.PENSTYLE_SOLID
         button.FocusColour = self.GetForegroundColour()
-        button.SetForegroundColour(self.__hicolor)
+        button.SetForegroundColour(self._hicolor)
 
     # -----------------------------------------------------------------------
     # Events management
@@ -229,7 +191,6 @@ class TextViewPanel(sppasPanel):
 
         """
         self.Bind(wx.EVT_BUTTON, self.__process_checked)
-        self.Bind(wx.EVT_TEXT, self.__process_text_modified)
 
     # -----------------------------------------------------------------------
 
@@ -253,18 +214,6 @@ class TextViewPanel(sppasPanel):
             self.__txtview.Hide()
         btn.SetValue(state)
         self.Refresh()
-
-    # -----------------------------------------------------------------------
-
-    def __process_text_modified(self, event):
-        """Process a text enter event.
-        
-        We then suppose the text was modified.
-        
-        :param event: (wx.Event)
-
-        """
-        self.__modified = True
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py

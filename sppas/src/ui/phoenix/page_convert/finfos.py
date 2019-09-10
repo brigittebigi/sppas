@@ -325,7 +325,6 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
 
     def GetColumnCount(self):
         """Overridden. Report how many columns this model provides data for."""
-        logging.debug("GetColumnCount")
         return len(self.__mapper)
 
     # -----------------------------------------------------------------------

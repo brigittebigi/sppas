@@ -142,7 +142,6 @@ class TabsManager(sppasPanel):
         :return: (int) Index of the tab.
 
         """
-        wx.LogDebug(" --- method append_tab of class TabsManager")
         tabs = self.FindWindow("tabslist")
         index = tabs.append()
         return index

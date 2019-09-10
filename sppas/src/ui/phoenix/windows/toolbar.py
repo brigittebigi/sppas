@@ -84,18 +84,21 @@ class sppasToolbar(sppasPanel):
     # -----------------------------------------------------------------------
 
     def get_button(self, name, group_name=None):
-        """Return the button matching the given name or None.
+        """Return the object matching the given name or None.
 
-        :param name: (str) Name of the button to search
+        Without "group_name", it is like "FindWindow(name)
+
+        :param name: (str) Name of the object to search
         :param group_name: (str) Group name of the button to search
         :returns: (wx.Window) a button or None
 
         """
         if group_name is None:
-            for b in self.GetSizer().GetChildren():
-                w = b.GetWindow()
-                if w is not None and w.GetName() == name:
-                    return w
+            return self.FindWindow(name)
+            #for b in self.GetSizer().GetChildren():
+            #    w = b.GetWindow()
+            #    if w is not None and w.GetName() == name:
+            #        return w
         else:
             if group_name in self.__tg:
                 for btn in self.__tg[group_name]:
@@ -187,15 +190,18 @@ class sppasToolbar(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def AddText(self, text="", color=None, align=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL):
+    def AddText(self, text="", color=None,
+                align=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL,
+                name=wx.StaticTextNameStr):
         """Append a colored static text into the toolbar.
 
         :param text: (str)
         :param color: (wx.Colour)
         :param align: (int) alignment style
+        :param name: (str)
 
         """
-        st = sppasStaticText(self, label=text)
+        st = sppasStaticText(self, label=text, name=name)
         if color is not None:
             st.SetForegroundColour(color)
             self.__fg.append(st)
@@ -205,15 +211,18 @@ class sppasToolbar(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def AddTitleText(self, text="", color=None, align=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL):
+    def AddTitleText(self, text="", color=None,
+                     align=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL,
+                     name=wx.StaticTextNameStr):
         """Append a colored static text with an higher font into the toolbar.
 
         :param text: (str)
         :param color: (wx.Colour)
         :param align: (int) alignment style
+        :param name: (str)
 
         """
-        st = sppasStaticText(self, label=text)
+        st = sppasStaticText(self, label=text, name=name)
         st.SetFont(self.__title_font())
         self.__ft.append(st)
         if color is not None:
@@ -227,12 +236,30 @@ class sppasToolbar(sppasPanel):
 
     def set_focus_color(self, value):
         self._fc = value
+        for c in self.GetChildren():
+            try:
+                c.FocusColour = value
+                c.Refresh()
+            except:
+                pass
 
     def set_focus_penstyle(self, value):
         self._fs = value
+        for c in self.GetChildren():
+            try:
+                c.FocusStyle = value
+                c.Refresh()
+            except:
+                pass
 
     def set_focus_width(self, value):
         self._fw = value
+        for c in self.GetChildren():
+            try:
+                c.FocusWidth = value
+                c.Refresh()
+            except:
+                pass
 
     # -----------------------------------------------------------------------
 

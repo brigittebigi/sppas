@@ -38,7 +38,6 @@ import logging
 import wx
 
 from ..windows import sppasScrolledPanel
-from ..windows import sppasStaticText
 
 # ----------------------------------------------------------------------------
 
@@ -89,35 +88,26 @@ class BaseViewFilesPanel(sppasScrolledPanel):
     # -----------------------------------------------------------------------
 
     def is_modified(self, name=None):
-        """Return True if the content of the or all files has been changed.
+        """Return True if the content of the file has been changed.
 
-        :param name: (str) Name of a file
+        :param name: (str) Name of a file. None for all files.
 
         """
-        logging.debug("Page is modified ?????????????????????????????")
         if name is not None:
-            logging.debug("  name = {:s}".format(name))
             page = self._files.get(name, None)
             try:
                 changed = page.is_modified()
-            except Exception as e:
-                logging.debug(" ... error: {:s}".format(str(e)))
-                changed = False
-
-            return changed
+                return changed
+            except:
+                return False
 
         # All files
         for name in self._files:
-            logging.debug("  - name = {:s}".format(name))
             page = self._files.get(name, None)
             try:
                 if page.is_modified() is True:
                     return True
-                else:
-                    logging.debug("  not modified")
-
-            except Exception as e:
-                logging.debug(" ... error: {:s}".format(str(e)))
+            except:
                 pass
 
         return False
@@ -145,12 +135,13 @@ class BaseViewFilesPanel(sppasScrolledPanel):
 
     # -----------------------------------------------------------------------
 
-    def remove_file(self, name, force=True):
+    def remove_file(self, name, force=False):
         """Remove a panel corresponding to the name of a file.
 
-        Do not update the GUI.
+        Do not refresh/layout the GUI.
 
         :param name: (str)
+        :param force: (bool) Force to remove, even if a file is modified
         :return: (bool) The file was removed or not
 
         """
@@ -165,7 +156,45 @@ class BaseViewFilesPanel(sppasScrolledPanel):
         return False
 
     # -----------------------------------------------------------------------
+
+    def can_edit(self):
+        """Return True if this view can modify/save the file content.
+
+        Can be overridden.
+
+        If True, the methods 'is_modified' and 'save' should be implemented
+        in the view panel of each file.
+
+        """
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def save_file(self, name):
+        """Save a file.
+
+        :param name: (str)
+        :return: (bool) The file was saved or not
+
+        """
+        panel = self._files.get(name, None)
+        try:
+            saved = panel.save()
+        except Exception as e:
+            wx.LogError("Error while saving file {:s}: {:s}"
+                        "".format(name, str(e)))
+            saved = False
+
+        return saved
+
+    # -----------------------------------------------------------------------
     # Private methods to construct the panel.
+    # -----------------------------------------------------------------------
+
+    def _show_file(self, name):
+        """Display the file."""
+        raise NotImplementedError
+
     # -----------------------------------------------------------------------
 
     def _create_content(self, files):
@@ -176,21 +205,6 @@ class BaseViewFilesPanel(sppasScrolledPanel):
             self.append_file(f)
         self.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(420),
                                 sppasScrolledPanel.fix_size(48)*len(self._files)))
-
-    # -----------------------------------------------------------------------
-
-    def _show_file(self, name):
-        """Display the file."""
-        wx.LogWarning("Displaying file is not implemented in this view mode.")
-        panel = sppasStaticText(self, label=name)
-        try:  # wx4
-            font = wx.SystemSettings().GetFont(wx.SYS_DEFAULT_GUI_FONT)
-        except AttributeError:  # wx3
-            font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
-        line_height = float(font.GetPixelSize()[1])
-        panel.SetMinSize(wx.Size(-1, line_height * 2))
-        self.GetSizer().Add(panel, 0, wx.EXPAND)
-        return panel
 
     # -----------------------------------------------------------------------
 

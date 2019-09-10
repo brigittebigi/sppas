@@ -65,8 +65,8 @@ from ..windows.book import sppasSimplebook
 from ..windows import sppasToolbar
 
 from .anz_tabs import TabsManager
-from .anz_baseviews import BaseViewFilesPanel
 from .anz_textviews import TextViewFilesPanel
+from .anz_defaultviews import DefaultViewFilesPanel
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
@@ -76,20 +76,27 @@ def _(message):
     return u(msg(message, "ui"))
 
 
-VIEW_TITLE = _("Views: ")
+VIEW_TITLE = _("View: ")
 VIEW_LIST = _("Summary")
 VIEW_TIME = _("Time line")
 VIEW_TEXT = _("Text edit")
 VIEW_GRID = _("Grid details")
 VIEW_STAT = _("Statistics")
 
+TAB_MSG_NO_SELECT = _("No tab is currently checked.")
 TAB_MSG_CONFIRM_SWITCH = _("Confirm switch of tab?")
+VIEW_MSG_CONFIRM_SWITCH = _("Confirm switch of view?")
 TAB_MSG_CONFIRM = _("The current tab contains not saved work that "
                     "will be lost. Are you sure you want to change tab?")
+VIEW_MSG_CONFIRM = _("The current view contains not saved work that "
+                    "will be lost. Are you sure you want to change view?")
 
 TAB_ACT_SAVECURRENT_ERROR = _(
     "Files of the current tab can not be saved due to "
     "the following error: {:s}\nConfirm you still want to switch tab?")
+VIEW_ACT_SAVECURRENT_ERROR = _(
+    "Files of the current view can not be saved due to "
+    "the following error: {:s}\nConfirm you still want to switch view?")
 
 # ---------------------------------------------------------------------------
 
@@ -127,7 +134,8 @@ class sppasAnalyzePanel(sppasPanel):
 
     """
 
-    HIGHLIGHT_COLOUR = wx.Colour(196, 96, 196, 196)
+    HIGHLIGHT_COLOUR = wx.Colour(96, 196, 196, 196)
+
     VIEWS = {
         "data-view-list": VIEW_LIST,
         "data-view-timeline": VIEW_TIME,
@@ -135,6 +143,8 @@ class sppasAnalyzePanel(sppasPanel):
         "data-view-grid": VIEW_GRID,
         "data-view-stats": VIEW_STAT
     }
+
+    # ------------------------------------------------------------------------
 
     def __init__(self, parent):
         super(sppasAnalyzePanel, self).__init__(
@@ -198,7 +208,7 @@ class sppasAnalyzePanel(sppasPanel):
         tabs = self.FindWindow("tabs")
         cur_index = tabs.get_selected_tab()
         if cur_index == -1:
-            Information("No tab is currently checked to open files in it.")
+            Information(TAB_MSG_NO_SELECT)
             return
 
         book = self.FindWindow("content")
@@ -217,12 +227,40 @@ class sppasAnalyzePanel(sppasPanel):
         # send data to the parent
         if i > 0:
             page.Layout()
-            self.Refresh()
+            page.Refresh()
             wx.LogMessage("{:d} files opened in page {:s}."
                           "".format(i, page.GetName()))
             self.notify()
         else:
             wx.LogMessage("No file opened in page {:s}.".format(page.GetName()))
+
+    # ------------------------------------------------------------------------
+
+    def save_files(self):
+        """Save the files of the selected page (if modified)."""
+        tabs = self.FindWindow("tabs")
+        cur_index = tabs.get_selected_tab()
+        if cur_index == -1:
+            Information(TAB_MSG_NO_SELECT)
+            return
+
+        book = self.FindWindow("content")
+        page = book.GetPage(cur_index)
+        if page.is_modified() is False:
+            wx.LogMessage("None of the files was modified. Nothing to do.")
+            return
+
+        nb = 0
+        for filename in page.get_files():
+            if page.is_modified(filename):
+                saved = page.save_file(filename)
+                if saved is True:
+                    nb += 1
+            else:
+                wx.LogDebug("File {:s} was not modified. Nothing to do."
+                            "".format(filename))
+
+        wx.LogMessage("{:d} files were saved successfully".format(nb))
 
     # ------------------------------------------------------------------------
 
@@ -265,8 +303,8 @@ class sppasAnalyzePanel(sppasPanel):
             tabs.remove_tab(cur_index)
 
             # And remove the corresponding parameters
-            self._enable_view(False, cur_index)
             self._params.pop(cur_index)
+            self._default_toolbar()
 
             # The book switched automatically to another page!
             book = self.FindWindow("content")
@@ -274,16 +312,18 @@ class sppasAnalyzePanel(sppasPanel):
             if page_index != wx.NOT_FOUND:
                 self.switch_to(page_index)
 
+
     # -----------------------------------------------------------------------
 
     def switch_to(self, page_index):
-        """Show a page/tab.
+        """Show another page/tab.
 
-        :param page_index: (int)
+        :param page_index: (int) Index of the tab/page to display.
 
         """
         book = self.FindWindow("content")
         tabs = self.FindWindow("tabs")
+        toolbar = self.FindWindow("analyze-toolbar")
 
         # check if a page is existing at the given index
         p = book.GetPage(page_index)
@@ -310,7 +350,7 @@ class sppasAnalyzePanel(sppasPanel):
                 book.SetEffects(showEffect=wx.SHOW_EFFECT_SLIDE_TO_BOTTOM,
                                 hideEffect=wx.SHOW_EFFECT_SLIDE_TO_BOTTOM)
             # disable the current button of the view
-            self._enable_view(False, c)
+            self._update_toolbar(False, c)
 
         # then change the current page/tab
         book.ChangeSelection(page_index)
@@ -318,7 +358,7 @@ class sppasAnalyzePanel(sppasPanel):
         tabs.switch_to_tab(page_index)
 
         # enable the button of the view
-        self._enable_view(True, page_index)
+        self._update_toolbar(True, page_index)
 
         self.Refresh()
 
@@ -355,7 +395,9 @@ class sppasAnalyzePanel(sppasPanel):
         tb.set_focus_color(sppasAnalyzePanel.HIGHLIGHT_COLOUR)
 
         # Add toggle buttons to switch the view
-        tb.AddTitleText("Views: ", color=sppasAnalyzePanel.HIGHLIGHT_COLOUR)
+        tb.AddTitleText(VIEW_TITLE,
+                        color=sppasAnalyzePanel.HIGHLIGHT_COLOUR,
+                        name="view-title-text")
         for view_name in sppasAnalyzePanel.VIEWS:
             btn = tb.AddToggleButton(
                 view_name,
@@ -363,6 +405,12 @@ class sppasAnalyzePanel(sppasPanel):
                 value=False,
                 group_name="views")
             # btn.Enable(False)
+
+        tb.AddSpacer(1)
+
+        # Add button to save files of the current tab
+        save_btn = tb.AddButton("save")
+        save_btn.Enable(False)
 
         return tb
 
@@ -409,9 +457,6 @@ class sppasAnalyzePanel(sppasPanel):
         will be called.
 
         """
-        # Capture keys
-        self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
-
         # The data have changed.
         # This event is sent by the tabs manager or by the parent
         self.Bind(EVT_DATA_CHANGED, self._process_data_changed)
@@ -423,22 +468,6 @@ class sppasAnalyzePanel(sppasPanel):
         # The user clicked a button of the toolbar
         self.Bind(wx.EVT_TOGGLEBUTTON, self._process_event)
         self.Bind(wx.EVT_BUTTON, self._process_event)
-
-    # -----------------------------------------------------------------------
-
-    def _process_key_event(self, event):
-        """Process a key event.
-
-        :param event: (wx.Event)
-
-        """
-        key_code = event.GetKeyCode()
-        cmd_down = event.CmdDown()
-        shift_down = event.ShiftDown()
-        logging.debug('Analyze page received a key event. key_code={:d}'
-                      ''.format(key_code))
-
-        # event.Skip()
 
     # -----------------------------------------------------------------------
 
@@ -504,6 +533,9 @@ class sppasAnalyzePanel(sppasPanel):
         if event_name.startswith("data-view-"):
             self._switch_page_to_view(event_name)
 
+        elif event_name == "save":
+            self.save_files()
+
         event.Skip()
 
     # -----------------------------------------------------------------------
@@ -526,7 +558,7 @@ class sppasAnalyzePanel(sppasPanel):
         else:
             wx.LogWarning("{:s} view is not currently supported."
                           "".format(view_name))
-            new_page = BaseViewFilesPanel(book, name="new_page", files=files)
+            new_page = DefaultViewFilesPanel(book, name="new_page", files=files)
 
         return new_page
 
@@ -540,16 +572,15 @@ class sppasAnalyzePanel(sppasPanel):
         :param page_index: (int)
 
         """
-        logging.debug("Remove page at index = {:d}".format(page_index))
         book = self.FindWindow("content")
         page = book.GetPage(page_index)
         if page == wx.NOT_FOUND:
-            return
+            return False
 
         # Ask the page if at least one file has been modified
         if page.is_modified() is True:
             # Ask the user to confirm to close (and changes are lost)
-            response = Confirm(TAB_MSG_CONFIRM, "Close...")
+            response = Confirm(TAB_MSG_CONFIRM, TAB_MSG_CONFIRM_SWITCH)
             if response == wx.ID_CANCEL:
                 return False
 
@@ -587,21 +618,28 @@ class sppasAnalyzePanel(sppasPanel):
         tabs = self.FindWindow("tabs")
         page_index = tabs.get_selected_tab()
         if view_name == self._params[page_index].view_name:
-            return
+            return False
 
-        logging.debug("Switch to view {:s}".format(view_name))
         book = self.FindWindow("content")
         page = book.GetCurrentPage()
         if page is None:
             wx.LogMessage("Attempted to switch to view {:s} without "
                           "opened page...".format(view_name))
-            return
+            return False
+
+        # Ask the page if at least one file has been modified
+        if page.is_modified() is True:
+            # Ask the user to confirm to close (and changes are lost)
+            response = Confirm(VIEW_MSG_CONFIRM, VIEW_MSG_CONFIRM_SWITCH)
+            if response == wx.ID_CANCEL:
+                return False
 
         # delete the current page
+        page_index = book.FindPage(page)
+        self._update_toolbar(False, page_index)
         page_name = page.GetName()
         page_color = page.GetHighLightColor()
         page_files = page.get_files()
-        page_index = book.FindPage(page)
         book.RemovePage(page_index)
         page.Destroy()
 
@@ -614,15 +652,69 @@ class sppasAnalyzePanel(sppasPanel):
         new_page.SetHighLightColor(page_color)
         book.InsertPage(page_index, new_page, text="")
         book.ChangeSelection(page_index)
+        self._update_toolbar(True, page_index)
 
         book.Refresh()
         self.Refresh()
+        return True
 
     # -----------------------------------------------------------------------
 
-    def _enable_view(self, value, index):
-        """Enable or disable the button of the view of a tab/page."""
+    def _update_toolbar(self, value, index):
+        """Enable or disable the buttons of the toolbar.
+
+        :param value: (bool) True for the selected page
+        :param index: (int) Page/tab index
+
+        """
         toolbar = self.FindWindow("analyze-toolbar")
-        btn_name = self._params[index].view_name
-        btn = toolbar.get_button(btn_name)
+        toolbar.set_focus_color(self._params[index].hicolor)
+        btn_view_name = self._params[index].view_name
+
+        btn = toolbar.FindWindow(btn_view_name)
         btn.SetValue(value)
+
+        txt_view = toolbar.FindWindow("view-title-text")
+        if value is True:
+            btn.BitmapColour = self._params[index].hicolor
+            btn.BorderColour = self._params[index].hicolor
+            txt_view.SetForegroundColour(self._params[index].hicolor)
+        else:
+            btn.BitmapColour = btn.GetForegroundColour()
+            btn.BorderColour = btn.GetPenForegroundColour()
+            txt_view.SetForegroundColour(sppasAnalyzePanel.HIGHLIGHT_COLOUR)
+
+        book = self.FindWindow("content")
+        btn_save = toolbar.FindWindow("save")
+        try:
+            page = book.GetPage(index)
+            btn_save.Enable(page.can_edit())
+        except Exception as e:
+            btn_save.Enable(False)
+            wx.LogError(str(e))
+
+        toolbar.Refresh()
+
+
+    # -----------------------------------------------------------------------
+
+    def _default_toolbar(self):
+        """Disable the buttons of the toolbar.
+
+        Useful if no page/tab is selected.
+
+        """
+        toolbar = self.FindWindow("analyze-toolbar")
+        toolbar.set_focus_color(sppasAnalyzePanel.HIGHLIGHT_COLOUR)
+
+        btn_save = toolbar.FindWindow("save")
+        btn_save.Enable(False)
+
+        for view_name in sppasAnalyzePanel.VIEWS:
+            btn = toolbar.FindWindow(view_name)
+            btn.SetValue(False)
+            btn.BitmapColour = btn.GetForegroundColour()
+            btn.BorderColour = btn.GetPenForegroundColour()
+
+        txt_view = toolbar.FindWindow("view-title-text")
+        txt_view.SetForegroundColour(sppasAnalyzePanel.HIGHLIGHT_COLOUR)

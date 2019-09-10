@@ -61,7 +61,6 @@
 
 """
 
-import logging
 import random
 import wx
 import wx.lib.newevent
@@ -151,8 +150,8 @@ class sppasBitmapTextButton(GenBitmapTextButton):
             ColorizeImage(img, current, colour)
             self.SetBitmapLabel(wx.Bitmap(img))
         except:
-            logging.debug('SetForegroundColour not applied to image'
-                          'for button {:s}'.format(self.GetName()))
+            wx.LogDebug('SetForegroundColour not applied to image'
+                        'for button {:s}'.format(self.GetName()))
 
         GenBitmapTextButton.SetForegroundColour(self, colour)
 
@@ -207,8 +206,8 @@ class sppasBitmapButton(GenBitmapButton):
             ColorizeImage(img, current, colour)
             self.SetBitmapLabel(wx.Bitmap(img))
         except:
-            logging.debug('SetForegroundColour not applied to image'
-                          'for button {:s}'.format(self.GetName()))
+            wx.LogDebug('SetForegroundColour not applied to image'
+                        'for button {:s}'.format(self.GetName()))
 
         GenBitmapButton.SetForegroundColour(self, colour)
 
@@ -456,7 +455,8 @@ class BaseButton(wx.Window):
         """
         if enable != self.IsEnabled():
             wx.Window.Enable(self, enable)
-            self.Refresh()
+            # re-assign an appropriate border color (Pen)
+            self.SetForegroundColour(self.GetForegroundColour())
 
     # ----------------------------------------------------------------------
 
@@ -581,7 +581,7 @@ class BaseButton(wx.Window):
         if style not in [wx.PENSTYLE_SOLID, wx.PENSTYLE_LONG_DASH,
                          wx.PENSTYLE_SHORT_DASH, wx.PENSTYLE_DOT_DASH,
                          wx.PENSTYLE_HORIZONTAL_HATCH]:
-            logging.warning("Invalid focus style.")
+            wx.LogWarning("Invalid focus style {:s}.".format(str(style)))
             return
         self._borderstyle = style
 
@@ -594,7 +594,7 @@ class BaseButton(wx.Window):
         if style not in [wx.PENSTYLE_SOLID, wx.PENSTYLE_LONG_DASH,
                          wx.PENSTYLE_SHORT_DASH, wx.PENSTYLE_DOT_DASH,
                          wx.PENSTYLE_HORIZONTAL_HATCH]:
-            logging.warning("Invalid focus style.")
+            wx.LogWarning("Invalid focus style {:s}.".format(str(style)))
             return
         self._focusstyle = style
 
@@ -669,7 +669,8 @@ class BaseButton(wx.Window):
                 self.OnMouseRightUp(event)
 
             else:
-                logging.debug('{:s} Other mouse event'.format(self.GetName()))
+                # logging.debug('{:s} Other mouse event'.format(self.GetName()))
+                pass
 
         event.Skip()
 
@@ -992,7 +993,6 @@ class BaseButton(wx.Window):
     def DrawBorder(self, dc, gc):
         w, h = self.GetClientSize()
 
-        logging.debug(" ##### {:s} draw border with color = {:s}".format(self.GetName(), str(self._bordercolor)))
         pen = wx.Pen(self._bordercolor, 1, self._borderstyle)
         dc.SetPen(pen)
 
@@ -1088,13 +1088,12 @@ class BitmapTextButton(BaseButton):
         """
         super(BitmapTextButton, self).__init__(
             parent, id, pos, size, name)
-        wx.Window.SetForegroundColour(self, self.GetParent().GetForegroundColour())
-
+        #BaseButton.SetForegroundColour(self, self.GetParent().GetForegroundColour())
 
         self._label = label
         self._labelpos = wx.BOTTOM
         self._spacing = 4
-        self._default_bitmapcolor = self.GetForegroundColour()
+        self._default_bitmapcolor = self.GetPenForegroundColour()
         self._bitmapcolor = self._default_bitmapcolor
 
         # The icon image
@@ -1122,9 +1121,9 @@ class BitmapTextButton(BaseButton):
         """
         BaseButton.SetForegroundColour(self, colour)
         if self._bitmapcolor == self._default_bitmapcolor:
-            self._bitmapcolor = colour
+            self._bitmapcolor = self.GetPenForegroundColour()
 
-        self._default_bitmapcolor = colour
+        self._default_bitmapcolor = self.GetPenForegroundColour()
 
     # -----------------------------------------------------------------------
 
@@ -1302,7 +1301,7 @@ class BitmapTextButton(BaseButton):
             else:
                 gc.DrawBitmap(bitmap, x, y)
         except Exception as e:
-            logging.error('Draw image error: {:s}'.format(str(e)))
+            wx.LogWarning('Draw image error: {:s}'.format(str(e)))
             return False
 
         return True
@@ -1762,8 +1761,8 @@ class CheckButton(BaseCheckButton):
         if spacing < 0:
             spacing = 0
         if spacing > 30:
-            logging.warning('Spacing of a button is maximum 30px width. '
-                            'Got {:d}.'.format(spacing))
+            # logging.warning('Spacing of a button is maximum 30px width. '
+            #                'Got {:d}.'.format(spacing))
             spacing = 30
         # we should check if spacing < self height or width
         self._spacing = spacing
@@ -2024,7 +2023,6 @@ class TestPanelBaseButton(wx.Panel):
 
     def on_btn_event(self, event):
         obj = event.GetEventObject()
-        logging.debug('* * * PANEL: Button Event received by {:s} * * *'.format(obj.GetName()))
 
 # ----------------------------------------------------------------------------
 
@@ -2110,7 +2108,6 @@ class TestPanelCheckButton(wx.Panel):
 
     def on_btn_event(self, event):
         obj = event.GetEventObject()
-        logging.debug('* * * PANEL: Check Button Event received by {:s} * * *'.format(obj.GetName()))
 
 # ----------------------------------------------------------------------------
 
@@ -2139,7 +2136,6 @@ class TestPanelRadioButton(wx.Panel):
 
     def on_btn_event(self, event):
         obj = event.GetEventObject()
-        logging.debug('* * * PANEL: Check Button Event received by {:s} * * *'.format(obj.GetName()))
 
 # ----------------------------------------------------------------------------
 
