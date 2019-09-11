@@ -78,7 +78,6 @@ class sppasToolbar(sppasPanel):
 
         self.SetSizer(wx.BoxSizer(orient))
         self.SetAutoLayout(True)
-
         self.Bind(wx.EVT_TOGGLEBUTTON, self.__on_tg_btn_event)
 
     # -----------------------------------------------------------------------
@@ -299,7 +298,7 @@ class sppasToolbar(sppasPanel):
         btn.Spacing = sppasPanel.fix_size(12)
         btn.BorderWidth = 1
         btn.BitmapColour = self.GetForegroundColour()
-        btn.SetMinSize((sppasPanel.fix_size(32), sppasPanel.fix_size(32)))
+        btn.SetMinSize(wx.Size(sppasPanel.fix_size(32), sppasPanel.fix_size(32)))
 
         return btn
 

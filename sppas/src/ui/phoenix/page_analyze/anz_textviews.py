@@ -36,6 +36,7 @@
 
 import wx
 
+from ..main_events import EVT_VIEW
 from .anz_baseviews import BaseViewFilesPanel
 from .textview import TextViewPanel
 
@@ -86,3 +87,43 @@ class TextViewFilesPanel(BaseViewFilesPanel):
         panel.SetHighLightColor(self._hicolor)
         self.GetSizer().Add(panel, 0, wx.EXPAND)
         return panel
+
+    # -----------------------------------------------------------------------
+    # Events management
+    # -----------------------------------------------------------------------
+
+    def _setup_events(self):
+        """Associate an handler function with the events.
+
+        It means that when an event occurs then the process handler function
+        will be called.
+
+        """
+        self.Bind(EVT_VIEW, self._process_view_event)
+
+    # -----------------------------------------------------------------------
+
+    def _process_view_event(self, event):
+        """Process a view event: an action has to be performed.
+
+        :param event: (wx.Event)
+
+        """
+        try:
+            action = event.action
+        except:
+            return
+
+        if action == "size":
+            self.Layout()
+            self.Refresh()
+
+        elif action == "close":
+            panel = event.GetEventObject()
+            fn = None
+            for filename in self._files:
+                if self._files[filename] == panel:
+                    fn = filename
+                    break
+            if fn is not None:
+                self.notify(action="close", filename=fn)

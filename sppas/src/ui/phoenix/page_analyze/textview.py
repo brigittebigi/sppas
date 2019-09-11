@@ -43,8 +43,9 @@ import wx
 from sppas import sg
 from sppas import paths
 
+from ..main_events import ViewEvent
+
 from ..windows import sppasPanel
-from ..windows import CheckButton
 from ..windows import sppasTextCtrl
 from ..windows import sppasToolbar
 from ..windows import sppasStaticLine
@@ -66,8 +67,11 @@ class TextViewPanel(sppasBaseViewPanel):
     """
 
     def __init__(self, parent, name="textview", filename=""):
+        self.__lines = 0
         super(TextViewPanel, self).__init__(parent, name, filename)
 
+    # -----------------------------------------------------------------------
+    # Override from the parent
     # -----------------------------------------------------------------------
 
     def is_modified(self):
@@ -94,9 +98,9 @@ class TextViewPanel(sppasBaseViewPanel):
         txtctrl.SetStyle(0, len(content), txtctrl.GetDefaultStyle())
         
         # Search the height of the text
-        line_height = float(self.get_line_height()) * 1.3  # line spacing
-        height = sppasPanel.fix_size(32) + int(line_height*len(lines)) + 4
-        self.SetMinSize(wx.Size(sppasPanel.fix_size(320), height))
+        self.__lines = len(lines)
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(320),
+                                self._eval_height()))
 
         self.__txtview.SetModified(False)
 
@@ -134,7 +138,7 @@ class TextViewPanel(sppasBaseViewPanel):
 
         sizer.Add(self.__txtview, 1, wx.EXPAND | wx.LEFT, sppasPanel.fix_size(34))
         self.SetMinSize(wx.Size(sppasPanel.fix_size(320),
-                                sppasPanel.fix_size(34)))
+                                sppasPanel.fix_size(40)))
 
         self.SetSizer(sizer)
 
@@ -165,7 +169,23 @@ class TextViewPanel(sppasBaseViewPanel):
         return line
 
     # -----------------------------------------------------------------------
+
+    def _eval_height(self):
+        """Return the optimal height of this panel."""
+        tb_height = sppasPanel.fix_size(32)
+        lines_height = 4
+        view_height = float(self.get_line_height()) * 1.3 * self.__lines
+        return tb_height + lines_height + int(view_height) + 6
+
+    # -----------------------------------------------------------------------
     # Events management
+    # -----------------------------------------------------------------------
+
+    def notify(self, action):
+        evt = ViewEvent(action=action)
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
     # -----------------------------------------------------------------------
 
     def _setup_events(self):
@@ -189,7 +209,7 @@ class TextViewPanel(sppasBaseViewPanel):
         event_name = event_obj.GetName()
 
         if event_name == "close":
-            pass
+            self.notify("close")
 
         elif event_name == "save":
             self.save()
@@ -198,11 +218,23 @@ class TextViewPanel(sppasBaseViewPanel):
             self.__txtview.Show(True)
             event_obj.SetImage('eye_hide')
             event_obj.SetName("eye_hide")
+            self.__lines = self.__txtview.GetNumberOfLines()
+            self.SetMinSize(wx.Size(-1, self._eval_height()))
+            self.SetSize(wx.Size(-1, self._eval_height()))
+            self.Layout()
+            self.Refresh()
+            self.notify("size")
 
         elif event_name == "eye_hide":
             self.__txtview.Show(False)
             event_obj.SetImage('eye_show')
             event_obj.SetName("eye_show")
+            self.__lines = 1
+            self.SetMinSize(wx.Size(-1, self._eval_height()))
+            self.SetSize(wx.Size(-1, self._eval_height()))
+            self.Layout()
+            self.Refresh()
+            self.notify("size")
 
         event.Skip()
 

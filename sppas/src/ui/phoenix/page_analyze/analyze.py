@@ -57,6 +57,7 @@ from sppas.src.files import FileData, States
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 from ..main_events import EVT_TAB_CHANGE
+from ..main_events import EVT_VIEW
 
 from ..dialogs import Information, Confirm
 from ..windows import sppasPanel
@@ -312,7 +313,6 @@ class sppasAnalyzePanel(sppasPanel):
             if page_index != wx.NOT_FOUND:
                 self.switch_to(page_index)
 
-
     # -----------------------------------------------------------------------
 
     def switch_to(self, page_index):
@@ -470,6 +470,9 @@ class sppasAnalyzePanel(sppasPanel):
         self.Bind(wx.EVT_TOGGLEBUTTON, self._process_event)
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
+        # The view performed an action.
+        self.Bind(EVT_VIEW, self._process_view_event)
+
     # -----------------------------------------------------------------------
 
     def _process_data_changed(self, event):
@@ -538,6 +541,32 @@ class sppasAnalyzePanel(sppasPanel):
             self.save_files()
 
         event.Skip()
+
+    # -----------------------------------------------------------------------
+
+    def _process_view_event(self, event):
+        """Process a view event: an action has to be performed.
+
+        :param event: (wx.Event)
+
+        """
+        page = event.GetEventObject()
+        try:
+            action = event.action
+            filename = event.filename
+        except:
+            return
+
+        if action == "close":
+            removed = False
+            if page.is_modified() is False:
+                removed = page.remove_file(filename)
+            else:
+                wx.LogError("File contains not saved changes.")
+
+            if removed is True:
+                page.Layout()
+                page.Refresh()
 
     # -----------------------------------------------------------------------
     # Management of the book
@@ -695,7 +724,6 @@ class sppasAnalyzePanel(sppasPanel):
             wx.LogError(str(e))
 
         toolbar.Refresh()
-
 
     # -----------------------------------------------------------------------
 

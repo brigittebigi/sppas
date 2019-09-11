@@ -34,10 +34,10 @@
 
 """
 
-import logging
 import wx
 
 from ..windows import sppasScrolledPanel
+from ..main_events import ViewEvent
 
 # ----------------------------------------------------------------------------
 
@@ -149,8 +149,19 @@ class BaseViewFilesPanel(sppasScrolledPanel):
         """
         changed = self.is_modified(name)
         if changed is True or force is True:
+
             # Remove of the object
-            self._del_file(name)
+            page = self._files.get(name, None)
+            if page is None:
+                wx.LogError("There's no file with name {:s}".format(name))
+                return False
+
+            # Get and delete the panel
+            page.Destroy()
+
+            # Remove of the sizer
+            self.GetSizer().Remove(page)
+
             # Delete of the list
             self._files.pop(name)
             return True
@@ -209,22 +220,14 @@ class BaseViewFilesPanel(sppasScrolledPanel):
                                 sppasScrolledPanel.fix_size(48)*len(self._files)))
 
     # -----------------------------------------------------------------------
-
-    def _del_file(self, name):
-        """Remove the file."""
-        page = self._files.get(name, None)
-        if page is None:
-            wx.LogError("There's no file with name {:s}".format(name))
-
-        # Get and delete the panel
-        page.Destroy()
-
-        # Remove of the sizer
-        self.GetSizer().Remove(page)
-
-
-    # -----------------------------------------------------------------------
     # Events management
+    # -----------------------------------------------------------------------
+
+    def notify(self, action, filename):
+        evt = ViewEvent(action=action, filename=filename)
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
     # -----------------------------------------------------------------------
 
     def _setup_events(self):
