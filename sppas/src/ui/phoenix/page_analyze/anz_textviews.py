@@ -30,7 +30,7 @@
         ---------------------------------------------------------------------
 
     ui.phoenix.page_analyze.anz_textviews.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -52,7 +52,8 @@ class TextViewFilesPanel(BaseViewFilesPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-    In this views, the content of each file is displayed "as it".
+    In this views, the content of each file is displayed "as it", like
+    a text editor.
 
     """
 
@@ -110,20 +111,30 @@ class TextViewFilesPanel(BaseViewFilesPanel):
 
         """
         try:
+            panel = event.GetEventObject()
+            panel_name = panel.GetName()
+
             action = event.action
-        except:
+            fn = None
+            for filename in self._files:
+                p = self._files[filename]
+                if p == panel:
+                    fn = filename
+                    break
+            if fn is None:
+                raise Exception("Unknown {:s} panel in ViewEvent."
+                                "".format(panel_name))
+        except Exception as e:
+            wx.LogError(str(e))
             return
 
         if action == "size":
             self.Layout()
             self.Refresh()
 
+        elif action == "save":
+            self.notify(action="save", filename=fn)
+
         elif action == "close":
-            panel = event.GetEventObject()
-            fn = None
-            for filename in self._files:
-                if self._files[filename] == panel:
-                    fn = filename
-                    break
-            if fn is not None:
-                self.notify(action="close", filename=fn)
+            self.notify(action="close", filename=fn)
+

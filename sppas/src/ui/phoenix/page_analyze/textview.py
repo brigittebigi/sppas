@@ -42,6 +42,8 @@ import wx
 
 from sppas import sg
 from sppas import paths
+from sppas import u
+from sppas import msg
 
 from ..main_events import ViewEvent
 
@@ -52,7 +54,19 @@ from ..windows import sppasStaticLine
 
 from .baseview import sppasBaseViewPanel
 
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# List of displayed messages:
+
+
+def _(message):
+    return u(msg(message, "ui"))
+
+
+SHOWHIDE_MSG = _("Show/Hide")
+SAVE_MSG = _("Save")
+CLOSE_MSG = _("Close")
+
+# ---------------------------------------------------------------------------
 
 
 class TextViewPanel(sppasBaseViewPanel):
@@ -66,7 +80,7 @@ class TextViewPanel(sppasBaseViewPanel):
 
     """
 
-    def __init__(self, parent, name="textview", filename=""):
+    def __init__(self, parent, name="textview-panel", filename=""):
         self.__lines = 0
         super(TextViewPanel, self).__init__(parent, name, filename)
 
@@ -130,7 +144,8 @@ class TextViewPanel(sppasBaseViewPanel):
         sizer.Add(tb, 0, wx.EXPAND | wx.ALL, 2)
         sizer.Add(self.__create_hline(), 0, wx.EXPAND | wx.ALL, 2)
 
-        style = wx.NO_BORDER | wx.TE_MULTILINE | wx.TE_RICH | wx.TE_PROCESS_ENTER | wx.TE_BESTWRAP | wx.TE_NO_VSCROLL
+        style = wx.NO_BORDER | wx.TE_MULTILINE | wx.TE_RICH | \
+                wx.TE_PROCESS_ENTER | wx.TE_BESTWRAP | wx.TE_NO_VSCROLL
         self.__txtview = sppasTextCtrl(self, style=style, name="textctrl")
         self.__txtview.SetFont(wx.GetApp().settings.mono_text_font)
         self.__txtview.SetEditable(True)
@@ -151,9 +166,10 @@ class TextViewPanel(sppasBaseViewPanel):
         tb.AddTitleText(self._filename,
                         color=self._hicolor,
                         name="tb-title-text")
-        tb.AddButton("eye_hide", "Show/Hide")
-        tb.AddButton("save", "Save")
-        tb.AddButton("close", "Close")
+        tb.AddSpacer(1)
+        tb.AddButton("eye_hide", SHOWHIDE_MSG)
+        tb.AddButton("save", SAVE_MSG)
+        tb.AddButton("close", CLOSE_MSG)
         return tb
 
     # ------------------------------------------------------------------------
@@ -212,7 +228,10 @@ class TextViewPanel(sppasBaseViewPanel):
             self.notify("close")
 
         elif event_name == "save":
-            self.save()
+            if self.is_modified() is True:
+                self.notify("save")
+            else:
+                wx.LogDebug("File wasn't modified. Nothing to do.")
 
         elif event_name == "eye_show":
             self.__txtview.Show(True)
@@ -235,9 +254,6 @@ class TextViewPanel(sppasBaseViewPanel):
             self.Layout()
             self.Refresh()
             self.notify("size")
-
-        event.Skip()
-
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py

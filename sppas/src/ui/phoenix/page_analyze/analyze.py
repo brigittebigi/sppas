@@ -83,6 +83,7 @@ VIEW_TIME = _("Time line")
 VIEW_TEXT = _("Text edit")
 VIEW_GRID = _("Grid details")
 VIEW_STAT = _("Statistics")
+CLOSE = _("Close")
 
 TAB_MSG_NO_SELECT = _("No tab is currently checked.")
 TAB_MSG_CONFIRM_SWITCH = _("Confirm switch of tab?")
@@ -98,6 +99,9 @@ TAB_ACT_SAVECURRENT_ERROR = _(
 VIEW_ACT_SAVECURRENT_ERROR = _(
     "Files of the current view can not be saved due to "
     "the following error: {:s}\nConfirm you still want to switch view?")
+
+CLOSE_CONFIRM = _("The file contains not saved work that will be lost."
+                  "Are you sure you want to close?")
 
 # ---------------------------------------------------------------------------
 
@@ -227,8 +231,8 @@ class sppasAnalyzePanel(sppasPanel):
 
         # send data to the parent
         if i > 0:
-            page.Layout()
-            page.Refresh()
+            self.Layout()
+            self.Refresh()
             wx.LogMessage("{:d} files opened in page {:s}."
                           "".format(i, page.GetName()))
             self.notify()
@@ -251,17 +255,8 @@ class sppasAnalyzePanel(sppasPanel):
             wx.LogMessage("None of the files was modified. Nothing to do.")
             return
 
-        nb = 0
         for filename in page.get_files():
-            if page.is_modified(filename):
-                saved = page.save_file(filename)
-                if saved is True:
-                    nb += 1
-            else:
-                wx.LogDebug("File {:s} was not modified. Nothing to do."
-                            "".format(filename))
-
-        wx.LogMessage("{:d} files were saved successfully".format(nb))
+            page.save_file(filename)
 
     # ------------------------------------------------------------------------
 
@@ -471,7 +466,7 @@ class sppasAnalyzePanel(sppasPanel):
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
         # The view performed an action.
-        self.Bind(EVT_VIEW, self._process_view_event)
+        self.FindWindow("content").Bind(EVT_VIEW, self._process_view_event)
 
     # -----------------------------------------------------------------------
 
@@ -551,22 +546,41 @@ class sppasAnalyzePanel(sppasPanel):
 
         """
         page = event.GetEventObject()
+
         try:
             action = event.action
             filename = event.filename
-        except:
+        except Exception as e:
+            wx.LogError(str(e))
             return
 
-        if action == "close":
-            removed = False
+        if action == "save":
+            page.save_file(filename)
+
+        elif action == "close":
+            wx.LogDebug("Close...")
             if page.is_modified() is False:
                 removed = page.remove_file(filename)
             else:
-                wx.LogError("File contains not saved changes.")
+                wx.LogWarning("File contains not saved changes.")
+                # Ask the user to confirm to close (and changes are lost)
+                response = Confirm(CLOSE_CONFIRM, CLOSE)
+                if response == wx.ID_CANCEL:
+                    return False
+                removed = page.remove_file(filename, force=True)
 
             if removed is True:
                 page.Layout()
                 page.Refresh()
+
+                # Unlock file
+                fns = [self.__data.get_object(filename)]
+                try:
+                    self.__data.unlock(fns)
+                    self.notify()
+                except Exception as e:
+                    wx.LogError(str(e))
+                    return False
 
     # -----------------------------------------------------------------------
     # Management of the book

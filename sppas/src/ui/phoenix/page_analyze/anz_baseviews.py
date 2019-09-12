@@ -125,6 +125,8 @@ class BaseViewFilesPanel(sppasScrolledPanel):
     def append_file(self, name):
         """Add a file and display its content.
 
+        Do not refresh/layout the GUI.
+
         :param name: (str)
         :raise: ValueError
 
@@ -147,8 +149,7 @@ class BaseViewFilesPanel(sppasScrolledPanel):
         :return: (bool) The file was removed or not
 
         """
-        changed = self.is_modified(name)
-        if changed is True or force is True:
+        if force is True or self.is_modified(name) is False:
 
             # Remove of the object
             page = self._files.get(name, None)
@@ -156,11 +157,12 @@ class BaseViewFilesPanel(sppasScrolledPanel):
                 wx.LogError("There's no file with name {:s}".format(name))
                 return False
 
-            # Get and delete the panel
+            # Destroy the panel and remove of the sizer
+            for i, child in enumerate(self.GetChildren()):
+                if child == page:
+                    self.GetSizer().Remove(i)
+                    break
             page.Destroy()
-
-            # Remove of the sizer
-            self.GetSizer().Remove(page)
 
             # Delete of the list
             self._files.pop(name)
@@ -191,12 +193,16 @@ class BaseViewFilesPanel(sppasScrolledPanel):
 
         """
         panel = self._files.get(name, None)
-        try:
-            saved = panel.save()
-        except Exception as e:
-            wx.LogError("Error while saving file {:s}: {:s}"
-                        "".format(name, str(e)))
-            saved = False
+        saved = False
+        if panel.is_modified() is True:
+            try:
+                saved = panel.save()
+                if saved is True:
+                    wx.LogMessage("File {:s} saved.".format(name))
+            except Exception as e:
+                saved = False
+                wx.LogError("Error while saving file {:s}: {:s}"
+                            "".format(name, str(e)))
 
         return saved
 
@@ -205,25 +211,39 @@ class BaseViewFilesPanel(sppasScrolledPanel):
     # -----------------------------------------------------------------------
 
     def _show_file(self, name):
-        """Display the file."""
+        """Display the file.
+
+        Must be overridden.
+
+        """
         raise NotImplementedError
 
     # -----------------------------------------------------------------------
 
     def _create_content(self, files):
-        """Create the main content."""
+        """Create the main content.
+
+        :param files: (list) List of filenames
+
+        """
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
         for f in files:
             self.append_file(f)
-        self.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(420),
-                                sppasScrolledPanel.fix_size(48)*len(self._files)))
+        min_height = sppasScrolledPanel.fix_size(48)*len(self._files)
+        self.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(420), min_height))
 
     # -----------------------------------------------------------------------
     # Events management
     # -----------------------------------------------------------------------
 
     def notify(self, action, filename):
+        """Notify the parent of a ViewEvent.
+
+        :param action: (str) the action to perform
+        :param filename: (str) name of the file to perform the action
+
+        """
         evt = ViewEvent(action=action, filename=filename)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
@@ -235,6 +255,7 @@ class BaseViewFilesPanel(sppasScrolledPanel):
 
         It means that when an event occurs then the process handler function
         will be called.
+        To be overridden.
 
         """
         pass
