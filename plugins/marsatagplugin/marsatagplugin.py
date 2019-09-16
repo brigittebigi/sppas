@@ -152,7 +152,7 @@ if fname.endswith("-palign") is False:
 # read to check data content
 # --------------------------
 parser = sppasRW(filename)
-trs_input = parser.read(filename)
+trs_input = parser.read()
 tier = trs_input.find("TokensAlign", case_sensitive=False)
 if tier is None:
     print("ERROR: A tier with name TokensAlign is required.")

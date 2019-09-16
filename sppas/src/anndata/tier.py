@@ -993,6 +993,7 @@ class sppasTier(sppasMetaData):
     def export_to_intervals(self, separators):
         """Create a tier with the consecutive filled intervals.
 
+        Return an empty tier if 'self' is not of type "interval".
         The created intervals are not filled.
 
         :param separators: (list)
@@ -1000,6 +1001,9 @@ class sppasTier(sppasMetaData):
 
         """
         intervals = sppasTier("intervals")
+        if self.is_interval() is False:
+            return intervals
+
         begin = self.get_first_point()
         end = begin
         prev_ann = None
