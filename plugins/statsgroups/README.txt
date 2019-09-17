@@ -11,8 +11,11 @@ brief:      SPPAS plugin to estimate stats on series of intervals
 
 This plugin estimates statistics (occ, mean, stdev, intercep and
 slope) on sequences of numerical intervals.
-Numerical intervals are separated by holes, intervals with an empty
-label or intervals with a non-numerical label (except for .xra).
+
+By default, only the tier with the numerical values is needed: the time
+segments are automatically created when the numerical intervals are
+separated by holes or by intervals with an empty label.
+Optionally, another tier with the time segments can be given.
 
 ------------------------------------------------------------------------------
 

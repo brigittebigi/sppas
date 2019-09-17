@@ -27,7 +27,7 @@
         ---------------------------------------------------------------------
 
     src.files.filestructure.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -47,20 +47,6 @@ from .filebase import FileBase, States
 
 # ---------------------------------------------------------------------------
 
-FILENAME_STATES = (States().UNUSED, States().CHECKED, States().LOCKED)
-
-# If we create dynamically this list from the existing annotations, we'll
-# have circular imports.
-# Solutions to be implemented are either:
-#     - add this info in each annotation json file (preferred), or
-#     - add this information in the sppasui.json file
-ANNOT_PATTERNS = (
-    "-token", "-phon", "-palign", "-syll", "-tga",
-    "-momel", "-intsint", "-ralign", "-merge"
-)
-
-# ---------------------------------------------------------------------------
-
 
 class FileName(FileBase):
     """Represent the data linked to a filename.
@@ -74,6 +60,8 @@ class FileName(FileBase):
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     """
+
+    FILENAME_STATES = (States().UNUSED, States().CHECKED, States().LOCKED)
 
     def __init__(self, identifier):
         """Constructor of a FileName.
@@ -175,8 +163,8 @@ class FileName(FileBase):
         :raise: sppasTypeError
 
         """
-        if value not in FILENAME_STATES:
-            raise sppasTypeError(value, str(FILENAME_STATES))
+        if value not in FileName.FILENAME_STATES:
+            raise sppasTypeError(value, str(FileName.FILENAME_STATES))
 
         if self._state == States().LOCKED and value != States().CHECKED:
             return False
@@ -388,8 +376,8 @@ class FileRoot(FileBase):
         :param value: (State) A state of FileName.
 
         """
-        if value not in FILENAME_STATES:
-            raise sppasTypeError(value, str(FILENAME_STATES))
+        if value not in FileName.FILENAME_STATES:
+            raise sppasTypeError(value, str(FileName.FILENAME_STATES))
 
         modified = False
         for fn in self.__files:
@@ -789,8 +777,8 @@ class FilePath(FileBase):
         :param value: (State) A state of FileName.
 
         """
-        if value not in FILENAME_STATES:
-            raise sppasTypeError(value, str(FILENAME_STATES))
+        if value not in FileName.FILENAME_STATES:
+            raise sppasTypeError(value, str(FileName.FILENAME_STATES))
 
         modified = False
         for fr in self.__roots:
@@ -862,14 +850,16 @@ class FilePath(FileBase):
         """
         for fr in self.__roots:
             # TODO: Solve the error with python 2.7: UnicodeWarning:
-            # Unicode equal comparison failed to convert both arguments to Unicode - interpreting them as being unequal
+            # Unicode equal comparison failed to convert both arguments
+            # to Unicode - interpreting them as being unequal
             if fr.id == name:
                 return fr
 
         for fr in self.__roots:
             for fn in fr:
                 # TODO: Solve the error with python 2.7: UnicodeWarning:
-                # Unicode equal comparison failed to convert both arguments to Unicode - interpreting them as being unequal
+                # Unicode equal comparison failed to convert both arguments
+                # to Unicode - interpreting them as being unequal
                 if fn.id == name:
                     return fr
 
@@ -948,7 +938,9 @@ class FilePath(FileBase):
         TODO: REMOVE IF ENTRY is FILENAME
 
         :param entry: (str or FileRoot)
-        :returns: (int) Index of the removed FileRoot or -1 if nothing removed.
+        :returns: (int) Index of the removed FileRoot
+
+        Return -1 if nothing removed.
 
         """
         if isinstance(entry, FileRoot):

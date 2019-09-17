@@ -23,7 +23,14 @@
       "id": "-t",
       "type": "string",
       "value": "",
-      "text": "Name of the tier with the numbers:"
+      "text": "Name of the tier with the numbers: (required)"
+    },
+
+    {
+      "id": "-s",
+      "type": "string",
+      "value": "",
+      "text": "Name of a tier with the time segments: (optional)"
     },
 
     {

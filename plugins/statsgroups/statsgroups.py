@@ -42,7 +42,6 @@
 
 """
 
-import logging
 import sys
 import os
 from argparse import ArgumentParser
@@ -57,6 +56,9 @@ if os.path.exists(SPPAS) is False:
     sys.exit(1)
 sys.path.append(SPPAS)
 
+from sppas.src.ui import sppasTrash
+from sppas.src.files import FileRoot, FileName
+
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 from sppas.src.anndata import sppasTier
@@ -67,15 +69,22 @@ from sppas.src.annotations.TGA import TimeGroupAnalysis
 # ---------------------------------------------------------------------------
 
 
-def tier_to_intervals(tier):
+def tier_to_intervals(tier, segments=None):
     """Create a tier in which the intervals contains the numbers.
 
     :param tier: (sppasTier)
+    :param segments: (sppasTier) Use this tier to create the intervals
     :returns: (sppasTier) Time segments
 
     """
-    intervals = tier.export_to_intervals(list())
-    intervals.set_name("Values")
+    if segments is None:
+        intervals = tier.export_to_intervals(list())
+        intervals.set_name("Values")
+    else:
+        intervals = sppasTier("Values")
+        for ann in segments:
+            if ann.label_is_filled():
+                intervals.create_annotation(ann.get_location().copy())
 
     for i, interval in enumerate(intervals):
         tier_anns = tier.find(interval.get_lowest_localization(),
@@ -97,9 +106,9 @@ def intervals_to_numbers(tier):
 
     """
     numbers = dict()
-    groups = sppasTier("Indexes")
+    groups = sppasTier("StatGroup")
     for i, ann in enumerate(tier):
-        name = str(i+1)
+        name = "st_" + str(i+1)
         groups.create_annotation(ann.get_location().copy(),
                                  sppasLabel(sppasTag(name)))
         numbers[name] = list()
@@ -201,16 +210,18 @@ if __name__ == "__main__":
     # Optional parameters
     # ------------------------------------------------------
 
-    parser.add_argument(
-        "--quiet",
-        action='store_true',
-        help="Disable the verbosity")
+    parser.add_argument("-s",
+                        metavar="segments",
+                        required=False,
+                        help="Name of a tier with the time segments.")
+
+    parser.add_argument("-p",
+                        metavar="pattern",
+                        required=False,
+                        default="-sg",
+                        help="Pattern of the output file.")
 
     parser.add_argument("--occ",
-                        #metavar="bool",
-                        #required=False,
-                        #default=True,
-                        #type=bool,
                         action="store_true",
                         help="Estimate the number of values in the intervals.")
 
@@ -247,11 +258,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # -----------------------------------------------------------------------
-    # The main is here:
+    # Read the input data
     # -----------------------------------------------------------------------
 
+    print("Apply StatsGroup on file {:s}".format(args.i))
     parser = sppasRW(args.i)
     trs_input = parser.read()
+    print("   - StatsGroup is reading the data...")
     tier = trs_input.find(args.t, case_sensitive=False)
     if tier is None:
         print("ERROR: A tier with name '{:s}' wasn't found.".format(args.t))
@@ -259,23 +272,39 @@ if __name__ == "__main__":
 
     trs_out = sppasTranscription("StatsGroups")
 
+    # -----------------------------------------------------------------------
+    # Convert input data and estimate stats
+    # -----------------------------------------------------------------------
+
     # Create a tier with the appropriate intervals.
     # Each interval contains the list of numbers (= inside the labels)
-    intervals = tier_to_intervals(tier)
+    segments = None
+    if args.s:
+        segments = trs_input.find(args.s, case_sensitive=False)
+        if segments is None:
+            print("ERROR: A tier with name '{:s}' wasn't found.".format(args.s))
+            sys.exit(1)
+    intervals = tier_to_intervals(tier, segments)
     intervals.set_meta('intervals_from_tier', tier.get_name())
     trs_out.append(intervals)
 
     # Extract numbers into a dict
+    print("   - StatsGroup is creating the groups...")
     numbers, groups = intervals_to_numbers(intervals)
     trs_out.append(groups)
     trs_out.add_hierarchy_link("TimeAssociation", intervals, groups)
 
     # Estimate stats
+    print("   - StatsGroup is estimating the stats...")
     ts = TimeGroupAnalysis(numbers)
+
+    # -----------------------------------------------------------------------
+    # Convert stats into tiers
+    # -----------------------------------------------------------------------
 
     # Put TGA results into tiers
     if args.occ:
-        tier = tga_to_tier(ts.len(), groups, "Occurrences", "int")
+        tier = tga_to_tier(ts.len(), groups, "Occurrence", "int")
         trs_out.append(tier)
         trs_out.add_hierarchy_link("TimeAssociation", intervals, tier)
 
@@ -296,7 +325,25 @@ if __name__ == "__main__":
         trs_out.append(tierS)
         trs_out.add_hierarchy_link("TimeAssociation", intervals, tierS)
 
-    for tier in trs_out:
-        print(tier.get_name())
-        for ann in tier:
-            print(ann)
+    # -----------------------------------------------------------------------
+    # Save the result
+    # -----------------------------------------------------------------------
+
+    print("   - StatsGroup is saving the result...")
+    fn = FileName(args.i)
+    name = fn.get_name()
+    pattern = FileRoot.pattern(name)
+    if len(pattern) > 0:
+        name = name.replace(pattern, args.p)
+    else:
+        name = name + args.p
+    output = os.path.join(fn.folder(), name + fn.get_extension())
+    if os.path.exists(output):
+        print("A file with name {:s} is already existing.".format(name))
+        trash_filename = sppasTrash().put_file_into(output)
+        print("This file is moved into the Trash of SPPAS: "
+              "{:s}".format(trash_filename))
+
+    p = sppasRW(output)
+    p.write(trs_out)
+    print("Result saved in file: {:s}".format(output))

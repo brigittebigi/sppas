@@ -122,22 +122,22 @@ class FileData(FileBase):
     # Methods to add data
     # -----------------------------------------------------------------------
 
-    def add(self, object):
+    def add(self, file_object):
         """Add a file object into the data.
 
-        :param object: (FileBase)
+        :param file_object: (FileBase)
         :raise: sppasTypeError,
 
         """
-        if isinstance(object, (FileName, FileRoot, FilePath, FileReference)) is False:
-            raise sppasTypeError(object.id, "FileBase-subclass")
+        if isinstance(file_object, (FileName, FileRoot, FilePath, FileReference)) is False:
+            raise sppasTypeError(file_object.id, "FileBase-subclass")
 
-        test_obj = self.get_object(object.id)
+        test_obj = self.get_object(file_object.id)
         if test_obj is not None:
-            raise Exception('Object {:s} is already in the data.'.format(object.id))
+            raise Exception('Object {:s} is already in the data.'.format(file_object.id))
 
-        if isinstance(object, FilePath):
-            self.__data.append(object)
+        if isinstance(file_object, FilePath):
+            self.__data.append(file_object)
 
     # -----------------------------------------------------------------------
 
