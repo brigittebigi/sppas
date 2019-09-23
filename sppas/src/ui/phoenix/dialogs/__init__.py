@@ -2,6 +2,7 @@
 from .messages import YesNoQuestion
 from .messages import Information
 from .messages import Confirm
+from .messages import Warn
 from .messages import Error
 from .messages import sppasChoiceDialog
 
@@ -17,6 +18,7 @@ __all__ = (
     'YesNoQuestion',
     'Information',
     'Confirm',
+    'Warn',
     'Error',
     'Feedback',
     'About',

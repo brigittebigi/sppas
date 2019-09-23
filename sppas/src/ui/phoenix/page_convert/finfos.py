@@ -190,7 +190,6 @@ class FormatsViewCtrl(BaseTreeViewCtrl):
         self.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED,
                   self._on_item_selection_changed)
 
-
         # Ensure the whole table is visible (no scrollbar)
         try:
             nb_rows = 2 + len(sppasRW.TRANSCRIPTION_TYPES.keys())
