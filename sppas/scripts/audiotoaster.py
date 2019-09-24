@@ -37,7 +37,7 @@
 
 """
 import sys
-import os.path
+import os
 from argparse import ArgumentParser
 import time
 

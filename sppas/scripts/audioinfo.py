@@ -57,9 +57,9 @@ parser = ArgumentParser(usage="%s -w file [options]" % os.path.basename(PROGRAM)
                         description="... a script to get information about an audio file.")
 
 parser.add_argument(
-    "--noclip",
+    "--clip",
     action='store_true',
-    help="Do not print the clipping values")
+    help="Print the clipping values of the whole file")
 
 parser.add_argument("-w",
                     metavar="file",
@@ -90,7 +90,7 @@ nc = audio.get_nchannels()
 print("Number of channels:  {:d}".format(nc))
 
 if nc == 1:
-    if not args.noclip:
+    if args.clip:
         print("Clipping rate (in %):")
         for i in range(2, 9, 2):
             f = float(i)/10.

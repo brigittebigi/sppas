@@ -206,12 +206,12 @@ class sppasAudioFrames(object):
             data = struct.unpack("%uB" % len(self._frames), self._frames)
             data = [s - 128 for s in data]
 
-        max_val = int(sppasAudioFrames.get_maxval(self._sampwidth) * (factor/2.))
-        min_val = int(sppasAudioFrames.get_minval(self._sampwidth) * (factor/2.))
+        max_val = int(sppasAudioFrames.get_maxval(self._sampwidth) * float(factor))
+        min_val = int(sppasAudioFrames.get_minval(self._sampwidth) * float(factor))
 
         nb_clipping = 0
-        for i in range(len(data)):
-            if data[i] >= max_val or data[i] <= min_val:
+        for d in data:
+            if d >= max_val or d <= min_val:
                 nb_clipping += 1
 
         return float(nb_clipping)/len(data)
