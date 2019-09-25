@@ -121,10 +121,13 @@ class FilterProcess(object):
                     progress.set_text(tier.get_name())
 
                     # so, we do the job!
-                    new_tier = self.run_on_tier(tier, y_tier)
-                    if new_tier is not None:
-                        # add the new tier both in Transcription and in the list
-                        obj.AddTier(new_tier)
+                    try:
+                        new_tier = self.run_on_tier(tier, y_tier)
+                        if new_tier is not None:
+                            # add the new tier both in Transcription and in the list
+                            obj.AddTier(new_tier)
+                    except Exception as e:
+                        logging.error(str(e))
 
                     progress.set_fraction(float((i+1))/float(total))
 
@@ -133,7 +136,6 @@ class FilterProcess(object):
         # progress.set_header("")
         progress.close()
         wx.EndBusyCursor()
-
 
 # ----------------------------------------------------------------------------
 

@@ -139,7 +139,7 @@ class DataFilterClient(BaseClient):
 
         for i in range(self._xfiles.GetSize()):
             o = self._xfiles.GetObject(i)
-            o.Save()
+            o.Save(selected=False)
 
 
 # ----------------------------------------------------------------------------
@@ -395,8 +395,8 @@ class DataFilter(wx.Panel):
     # Actions on a file...
     # ----------------------------------------------------------------------
 
-    def Save(self):
-        """Save the selected file."""
+    def Save(self, selected=True):
+        """Save the selected file or save event if not selected."""
 
         if self._selection is None:
             ShowInformation(self,
@@ -408,7 +408,7 @@ class DataFilter(wx.Panel):
 
         for i in range(self._filetrs.GetSize()):
             p = self._filetrs.GetObject(i)
-            if p == self._selection:
+            if (selected is True and p == self._selection) or selected is False:
                 p.Save()
 
     # ----------------------------------------------------------------------
@@ -466,7 +466,8 @@ class DataFilter(wx.Panel):
 
         for i in range(self._filetrs.GetSize()):
             o = self._filetrs.GetObject(i)
-            o.Save()
+            # save even if the file is not selected
+            o.Save(selected=False)
 
     # ----------------------------------------------------------------------
     # Functions... to filter
