@@ -68,7 +68,8 @@ class sppasBaseFilters(object):
         :param comparator: (sppasBaseComparator)
 
         """
-        names = ["logic_bool"] + comparator.get_function_names()
+        names = ["logic_bool", "logic_bool_label"] + \
+                comparator.get_function_names()
         for func_name, value in kwargs.items():
             if func_name.startswith("not_"):
                 func_name = func_name[4:]
@@ -82,6 +83,11 @@ class sppasBaseFilters(object):
     def fix_logic_bool(**kwargs):
         """Return the value of a logic boolean predicate.
 
+        Expect the "logic_bool" argument.
+
+        :return: (str) "and" or "or". By default, the logical "and" is returned.
+        :raise: sppasValueError
+
         """
         for func_name, value in kwargs.items():
             if func_name == "logic_bool":
@@ -89,6 +95,25 @@ class sppasBaseFilters(object):
                     raise sppasValueError(value, "logic bool")
                 return value
         return "and"
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def fix_logic_bool_label(**kwargs):
+        """Return the value of a logic boolean predicate.
+
+        Expect the "logic_bool_label" args.
+
+        :return: (str) "all" or "any". By default, "any" is returned.
+        :raise: sppasValueError
+
+        """
+        for func_name, value in kwargs.items():
+            if func_name == "logic_bool_label":
+                if value not in ['all', 'any']:
+                    raise sppasValueError(value, "logic bool label")
+                return value
+        return "any"
 
     # -----------------------------------------------------------------------
 

@@ -134,7 +134,8 @@ class sppasTierFilters(sppasBaseFilters):
 
         # extract the information from the arguments
         sppasBaseFilters.test_args(comparator, **kwargs)
-        logic_bool = sppasBaseFilters.fix_logic_bool(**kwargs)
+        tag_logic_bool = sppasBaseFilters.fix_logic_bool(**kwargs)
+        label_logic_bool = sppasBaseFilters.fix_logic_bool_label(**kwargs)
         tag_fct_values = sppasBaseFilters.fix_function_values(comparator, **kwargs)
         tag_functions = sppasBaseFilters.fix_functions(comparator, **kwargs)
 
@@ -143,14 +144,23 @@ class sppasTierFilters(sppasBaseFilters):
         # search for the annotations to be returned:
         for annotation in self.obj:
 
-            # any label can match
+            is_matching = False
+
+            # "any" or "all" labels can match
             for label in annotation.get_labels():
 
-                is_matching = label.match(tag_functions, logic_bool)
-                # no need to test the next labels if the current one is matching.
-                if is_matching is True:
-                    data.append(annotation, tag_fct_values)
+                is_matching = label.match(tag_functions, tag_logic_bool)
+
+                # do not test the next labels if...
+                if is_matching is True and label_logic_bool == "any":
+                    # if at least one is matching
                     break
+                if is_matching is False and label_logic_bool == "all":
+                    # if one is not matching
+                    break
+
+            if is_matching is True:
+                data.append(annotation, tag_fct_values)
 
         return data
 
