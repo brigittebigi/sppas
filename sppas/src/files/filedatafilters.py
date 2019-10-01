@@ -142,7 +142,7 @@ class sppasFileDataFilters(sppasBaseFilters):
 
         # extract the information from the arguments
         sppasBaseFilters.test_args(comparator, **kwargs)
-        logic_bool = sppasBaseFilters.fix_logic(**kwargs)
+        logic_bool = sppasBaseFilters.fix_logic_bool(**kwargs)
         path_fct_values = sppasBaseFilters.fix_function_values(comparator, **kwargs)
         path_functions = sppasBaseFilters.fix_functions(comparator, **kwargs)
 
