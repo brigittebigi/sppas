@@ -41,17 +41,18 @@ from sppas.src.ui.cfg import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
-import sppas.src.ui.phoenix.windows.toolbar
-import sppas.src.ui.phoenix.windows.line
-import sppas.src.ui.phoenix.windows.button
-import sppas.src.ui.phoenix.panels.option
-import sppas.src.ui.phoenix.page_files.filesmanager
-import sppas.src.ui.phoenix.page_files.refsmanager
-import sppas.src.ui.phoenix.page_files.wksmanager
-import sppas.src.ui.phoenix.page_analyze.anz_tabs
-import sppas.src.ui.phoenix.page_analyze.textview
-import sppas.src.ui.phoenix.page_analyze.baseview
-import sppas.src.ui.phoenix.windows.buttonbox
+import sppas.src.ui.phoenix.windows.toolbar as toolbar
+import sppas.src.ui.phoenix.windows.line as line
+import sppas.src.ui.phoenix.windows.button as button
+import sppas.src.ui.phoenix.panels.option as option
+import sppas.src.ui.phoenix.page_files.filesmanager as filesmanager
+import sppas.src.ui.phoenix.page_files.filestreectrl as filestreectrl
+import sppas.src.ui.phoenix.page_files.refsmanager as refsmanager
+import sppas.src.ui.phoenix.page_files.wksmanager as wksmanager
+import sppas.src.ui.phoenix.page_analyze.anz_tabs as anz_tabs
+import sppas.src.ui.phoenix.page_analyze.textview as textview
+import sppas.src.ui.phoenix.page_analyze.baseview as baseview
+import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -65,18 +66,24 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
+        self.SetBackgroundColour(wx.Colour(100, 100, 100))
+        self.SetForegroundColour(wx.Colour(0, 0, 10))
+
         # Make the bunch of test panels for the choice book
-        self.AddPage(sppas.src.ui.phoenix.page_analyze.textview.TestPanel(self), "Text view")
-        self.AddPage(sppas.src.ui.phoenix.page_analyze.baseview.TestPanel(self), "Base view")
-        self.AddPage(sppas.src.ui.phoenix.page_analyze.anz_tabs.TestPanel(self), "Tabs analyze")
-        self.AddPage(sppas.src.ui.phoenix.page_files.refsmanager.TestPanel(self), "References manager")
-        self.AddPage(sppas.src.ui.phoenix.page_files.filesmanager.TestPanel(self), "Files manager")
-        self.AddPage(sppas.src.ui.phoenix.page_files.wksmanager.TestPanel(self), "Workspaces manager")
-        self.AddPage(sppas.src.ui.phoenix.panels.option.TestPanel(self), "Configure options")
-        self.AddPage(sppas.src.ui.phoenix.windows.toolbar.TestPanel(self), "Toolbar")
-        self.AddPage(sppas.src.ui.phoenix.windows.buttonbox.TestPanel(self), "ButtonBox")
-        self.AddPage(sppas.src.ui.phoenix.windows.button.TestPanel(self), "Buttons")
-        self.AddPage(sppas.src.ui.phoenix.windows.line.TestPanel(self), "Lines")
+        self.AddPage(filestreectrl.TestPanel(self), "AGW Files tree ctrl")
+        """
+        self.AddPage(filesmanager.TestPanel(self), "Dataview Files manager")
+        self.AddPage(textview.TestPanel(self), "Text view")
+        self.AddPage(baseview.TestPanel(self), "Base view")
+        self.AddPage(anz_tabs.TestPanel(self), "Tabs analyze")
+        self.AddPage(refsmanager.TestPanel(self), "References manager")
+        self.AddPage(wksmanager.TestPanel(self), "Workspaces manager")
+        self.AddPage(option.TestPanel(self), "Configure options")
+        self.AddPage(toolbar.TestPanel(self), "Toolbar")
+        self.AddPage(buttonbox.TestPanel(self), "ButtonBox")
+        self.AddPage(button.TestPanel(self), "Buttons")
+        self.AddPage(line.TestPanel(self), "Lines")
+        """
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
@@ -102,16 +109,17 @@ class TestPanel(wx.Choicebook):
         old = event.GetOldSelection()
         new = event.GetSelection()
         sel = self.GetSelection()
-        logging.debug('OnPageChanged,  old:%d, new:%d, sel:%d\n' % (old, new, sel))
+        logging.debug('OnPageChanged,  old:%d, new:%d, sel:%d\n'
+                      '' % (old, new, sel))
         event.Skip()
 
     def OnPageChanging(self, event):
         old = event.GetOldSelection()
         new = event.GetSelection()
         sel = self.GetSelection()
-        logging.debug('OnPageChanging, old:%d, new:%d, sel:%d\n' % (old, new, sel))
+        logging.debug('OnPageChanging, old:%d, new:%d, sel:%d\n'
+                      '' % (old, new, sel))
         event.Skip()
-
 
 # ----------------------------------------------------------------------------
 # App to test
@@ -130,7 +138,7 @@ class TestApp(wx.App):
                         clearSigInt=True)
 
         # create the frame
-        frm = wx.Frame(None, title='Test frame', size=(640, 540))
+        frm = wx.Frame(None, title='Test frame', size=(800, 600))
         self.SetTopWindow(frm)
 
         # Fix language and translation

@@ -35,17 +35,17 @@
 
 import unittest
 import os
-import logging
 import wx
 import wx.dataview
 
 from sppas import sppasTypeError
-from sppas.src.ui.trash import sppasTrash
 from sppas.src.anndata import sppasRW
 from sppas.src.files import States, FileName, FileRoot, FilePath, FileData
 
+from sppas.src.ui.trash import sppasTrash
 from ..tools import sppasSwissKnife
-from sppas.src.ui.phoenix.windows.baseviewctrl import ColumnProperties, StateIconRenderer
+from ..windows.baseviewctrl import ColumnProperties
+from ..windows.baseviewctrl import StateIconRenderer
 
 # ---------------------------------------------------------------------------
 
@@ -60,6 +60,7 @@ class FileAnnotIcon(object):
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     All supported file formats of 'anndata' are linked to an icon file.
+    All 'wav' files are linked to an icon file.
 
     """
 
@@ -159,15 +160,17 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
 
     This model mapper provides these data columns identifiers:
 
-        0. icon:     wxBitmap
-        1. file:     string
-        2. state:    int (one of the States() class)
-        3. type:     string
-        4. refs:     string
-        5. data:     string
-        6. size:     string
+        icon:     wxBitmap
+        file:     string
+        state:    int (one of the States() class)
+        type:     string
+        refs:     string
+        data:     string
+        size:     string
 
     """
+
+    COLUMNS = ['file', 'icon', 'state', 'type', 'refs', 'date', 'size']
 
     def __init__(self):
         """Constructor of a fileTreeModel.
@@ -190,13 +193,8 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
 
         # Map between the displayed columns and the workspace data
         self.__mapper = dict()
-        self.__mapper[0] = FilesTreeViewModel.__create_col('icon')
-        self.__mapper[1] = FilesTreeViewModel.__create_col('file')
-        self.__mapper[2] = FilesTreeViewModel.__create_col('state')
-        self.__mapper[3] = FilesTreeViewModel.__create_col('type')
-        self.__mapper[4] = FilesTreeViewModel.__create_col('refs')
-        self.__mapper[5] = FilesTreeViewModel.__create_col('date')
-        self.__mapper[6] = FilesTreeViewModel.__create_col('size')
+        for i, c in enumerate(FilesTreeViewModel.COLUMNS):
+            self.__mapper[i] = FilesTreeViewModel.__create_col(c)
 
         # GUI information which can be managed by the mapper
         self._bgcolor = None
@@ -213,8 +211,8 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
     def set_data(self, data):
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        logging.debug('New data to set in the files panel. '
-                      'Id={:s}'.format(data.id))
+        wx.LogDebug('New data to set in the files panel. '
+                    'Id={:s}'.format(data.id))
         self.__data = data
         self.update()
 
@@ -231,11 +229,11 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
     def GetExpanderColumn(self):
         """Returns column which have to contain the expanders.
 
-        On MacOS it should be the first one... because of the display of the
-        expander symbol.
+        On MacOS it must be the first one (ie index = 0) because of the
+        strange position of the expander symbol, but 1 is still "acceptable".
 
         """
-        return 1
+        return FilesTreeViewModel.COLUMNS.index('file')
 
     # -----------------------------------------------------------------------
 
@@ -461,8 +459,6 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
         :param col: (int)
 
         """
-        logging.debug("SetValue: %s\n" % value)
-
         node = self.ItemToObject(item)
         if isinstance(node, (FileName, FileRoot, FilePath)) is False:
             raise RuntimeError("Unknown node type {:s}".format(type(node)))
@@ -471,7 +467,7 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
             if isinstance(value, (States, int)):
                 v = value
             else:
-                logging.error("Can't set state {:d} to object {:s}".format(value, node))
+                wx.LogError("Can't set state {:d} to object {:s}".format(value, node))
                 return False
 
             self.__data.set_object_state(v, node)
@@ -540,20 +536,20 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
                     self.__item_changed(item)
 
             except Exception as e:
-                logging.info('Value not modified for node {:s}'.format(node))
-                logging.error(str(e))
+                wx.LogMessage('Value not modified for node {:s}'.format(node))
+                wx.LogError(str(e))
 
         elif cur_state == States().CHECKED:
             try:
                 self.__data.set_object_state(States().UNUSED, node)
                 self.__item_changed(self.ObjectToItem(node))
             except Exception as e:
-                logging.info('Value not modified for node {:s}'.format(node))
-                logging.error(str(e))
+                wx.LogMessage('Value not modified for node {:s}'.format(node))
+                wx.LogError(str(e))
 
         else:
-            logging.warning("{:s} is locked. It's state can't be changed "
-                            "until it is un-locked.".format(node))
+            wx.LogWarning("{:s} is locked. It's state can't be changed "
+                          "until it is un-locked.".format(node))
 
     # -----------------------------------------------------------------------
 
@@ -619,22 +615,25 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
                     new_fns = self.__data.add_file(fullname)
                     if new_fns is not None:
                         fns.extend(new_fns)
-                        logging.debug('{:s} added. '.format(entry))
-                except OSError:
-                    logging.error('{:s} not added.'.format(fullname))
+                        wx.LogDebug('{:s} added in workspace.'.format(entry))
+                except OSError as e:
+                    wx.LogError('{:s} not added in workspace: {:s}'
+                                ''.format(fullname, str(e)))
 
         elif os.path.isfile(entry):
             try:
                 new_fns = self.__data.add_file(entry, brothers=True)
                 if new_fns is not None:
                     fns.extend(new_fns)
-                    logging.debug('{:s} added. {:d} brother files added.'
-                                  ''.format(entry, len(new_fns)))
-            except:
-                logging.error('{:s} not added.'.format(entry))
+                    wx.LogDebug('{:s} added.\n{:d} brother files added in '
+                                'workspace.'.format(entry, len(new_fns)))
+            except Exception as e:
+                wx.LogError('{:s} not added in workspace: {:s}.'
+                            ''.format(entry, str(e)))
 
         else:
-            logging.error('{:s} not added.'.format(entry))
+            wx.LogError('{:s} not added in workspace (not a regular file'
+                        'nor a directory).'.format(entry))
 
         return fns
 
@@ -663,13 +662,13 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
                 nb_deleted += 1
 
             except Exception as e:
-                logging.error("File {!s:s} can't be deleted due to the "
-                              "following error: {:s}.".format(fn.id, str(e)))
+                wx.LogError("File {!s:s} can't be deleted due to the "
+                            "following error: {:s}.".format(fn.id, str(e)))
 
         if nb_deleted > 0:
             self.update()
-            logging.info('{:d} files moved into the trash.'
-                         ''.format(nb_deleted))
+            wx.LogMessage('{:d} files moved into the trash.'
+                          ''.format(nb_deleted))
 
         return nb_deleted
 
@@ -739,7 +738,7 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
     def get_expanded_items(self, value=True):
         """Return the list of expanded or collapsed items.
 
-        :param value: (bool)
+        :param value: (bool) True represents Expanded.
 
         """
         items = list()
@@ -748,12 +747,20 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
                 if 'expand' in fp.subjoined:
                     if fp.subjoined['expand'] is value:
                         items.append(self.ObjectToItem(fp))
+                else:
+                    # we don't know if collapsed or expanded.
+                    if value is False:
+                        items.append(self.ObjectToItem(fp))
 
             for fr in fp:
                 if fr.subjoined is not None:
                     if 'expand' in fr.subjoined:
                         if fr.subjoined['expand'] is value:
                             items.append(self.ObjectToItem(fr))
+                else:
+                    # we don't know if collapsed or expanded.
+                    if value is False:
+                        items.append(self.ObjectToItem(fp))
 
         return items
 

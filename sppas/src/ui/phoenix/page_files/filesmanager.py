@@ -27,7 +27,7 @@
         ---------------------------------------------------------------------
 
     src.ui.phoenix.page_files.filesmanager.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Main panel to manage the tree of files.
 
@@ -46,7 +46,7 @@ from ..dialogs import YesNoQuestion, Information
 from ..dialogs import sppasFileDialog
 from ..main_events import DataChangedEvent
 
-from .filestreectrl import FilesTreeViewCtrl
+from .dv_filestreectrl import FilesTreeViewCtrl
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
@@ -224,7 +224,7 @@ class FilesManager(sppasPanel):
 
         if len(filenames) > 0:
             added = self.FindWindow("filestree").AddFiles(filenames)
-            if added:
+            if added > 0:
                 self.__current_dir = os.path.dirname(filenames[0])
                 self.notify()
 
@@ -256,7 +256,6 @@ class FilesManager(sppasPanel):
             return
 
         # User must confirm to really delete files
-        # title = "Confirm delete of files?"
         message = FLS_MSG_CONFIRM_DEL.format(len(checked_files))
         response = YesNoQuestion(message)
         if response == wx.ID_YES:
@@ -275,7 +274,14 @@ class TestPanel(FilesManager):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
-        self.add_test_data()
+        self.SetBackgroundColour(wx.Colour(100, 100, 100))
+        self.SetForegroundColour(wx.Colour(0, 0, 10))
+        self.add_one_test_data()
+
+    # ------------------------------------------------------------------------
+
+    def add_one_test_data(self):
+        self.FindWindow("filestree").AddFiles([os.path.abspath(__file__)])
 
     # ------------------------------------------------------------------------
 
@@ -286,6 +292,7 @@ class TestPanel(FilesManager):
 
         for f in os.listdir(here):
             fullname = os.path.join(here, f)
-            logging.info('add {:s}'.format(fullname))
             if os.path.isfile(fullname):
-                self.FindWindow("filestree").AddFiles([fullname])
+                logging.info('Add {:s}'.format(fullname))
+                nb = self.FindWindow("filestree").AddFiles([fullname])
+                logging.info(" --> {:d} files added.".format(nb))

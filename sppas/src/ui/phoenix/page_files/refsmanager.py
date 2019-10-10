@@ -52,7 +52,7 @@ from ..dialogs import Information
 from ..dialogs import Error
 from ..main_events import DataChangedEvent
 
-from .refstreectrl import ReferencesTreeViewCtrl
+from .dv_refstreectrl import ReferencesTreeViewCtrl
 from .filesutils import IdentifierTextValidator
 
 

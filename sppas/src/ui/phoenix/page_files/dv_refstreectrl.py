@@ -36,7 +36,7 @@ import wx
 import wx.dataview
 
 from sppas.src.ui.phoenix.windows.baseviewctrl import BaseTreeViewCtrl
-from .refsviewmodel import ReferencesTreeViewModel
+from .dv_refsviewmodel import ReferencesTreeViewModel
 
 # ----------------------------------------------------------------------------
 # Control to store the data matching the model
