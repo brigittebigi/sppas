@@ -5,9 +5,6 @@ import wx.dataview as dv
 import random
 import logging
 
-from sppas.src.ui.cfg import sppasAppConfig
-from sppas.src.ui.phoenix.main_settings import WxAppSettings
-
 musicdata = {
 1 : ("Bad English", "The Price Of Love", "Rock"),
 2 : ("DNA featuring Suzanne Vega", "Tom's Diner", "Rock"),
@@ -99,6 +96,10 @@ class Song(object):
     def __repr__(self):
         return 'Song: %s-%s' % (self.artist, self.title)
 
+    def __format__(self, fmt):
+        """ADDED. Allow the use of format."""
+        return str(self).__format__(fmt)
+
 
 class Genre(object):
     def __init__(self, name):
@@ -107,6 +108,11 @@ class Genre(object):
 
     def __repr__(self):
         return 'Genre: ' + self.name
+
+    def __format__(self, fmt):
+        """ADDED. Allow the use of format."""
+        s = 'Genre: ' + self.name + " (" + str(len(self.songs)) + " songs)"
+        return s.__format__(fmt)
 
 # ----------------------------------------------------------------------
 
@@ -140,19 +146,155 @@ class MyTreeListModel(dv.PyDataViewModel):
         # WeakValueDictionary instead.
         self.UseWeakRefs(True)
 
+    # BEGIN ADDED CODE -------------------------------------------------------
+
+    def __add_genre(self, genre):
+        """ADDED. Add a genre into the data and update the treectrl."""
+        self.data.append(genre)
+        item = self.ObjectToItem(genre)
+        self.ItemAdded(self.GetParent(item), item)
+
+    def __add_song(self, genre, song):
+        """ADDED. Add a song into the data.
+
+        I failed to update the treectrl.
+
+        """
+        logging.debug("Add {:s} in {:s}".format(str(song), str(genre)))
+        genre.songs.append(song)
+        # In the doc, it is said: "If the data represented by the model is
+        # changed by something else than its associated wx.dataview.DataViewCtrl
+        # the control has to be notified about the change."
+        # so we'll do it !
+        item = self.ObjectToItem(song)
+        # but the following failed:
+        # self.ItemAdded(parent, item)
+        # attempted with:
+        # parent = self.ObjectToItem(genre)
+        # -> TypeError: invalid result from MyTreeListModel.GetParent(),
+        #    NoneType cannot be converted to wx._dataview.DataViewItem in
+        #    this context
+        # parent = self.GetParent(item)
+        # -> TypeError: DataViewModel.ItemAdded(): argument 1 has unexpected
+        # type 'NoneType'
+
+    def __create_random_song(self):
+        """ADDED. Create an return a song. Add its genre into the treectrl if any."""
+        genre = None
+        for g in self.data:
+            if g.name == "Random":
+                genre = g
+                break
+        if genre is None:
+            genre = Genre("Random")
+            self.__add_genre(genre)
+        # pick a random song
+        song_id = random.randint(1, len(musicdata))
+        # create a new song with a random id
+        song = Song(song_id*random.randint(100, 200),
+                    musicdata[song_id][0],
+                    musicdata[song_id][1],
+                    genre)
+        return song
+
+    def TestAdd(self):
+        """ADDED. Create a song and add it."""
+        song = self.__create_random_song()
+        # add the song to the data and to the treectrl
+        self.__add_song(song.genre, song)
+
+    def TestDelete(self, items):
+        """ADDED. Delete a list of items in the data and in the tree."""
+        for item in items:
+            node = self.ItemToObject(item)
+            if isinstance(node, Genre):
+                logging.debug("Delete genre: {:s}".format(str(node)))
+                if node is not None:
+                    self.data.remove(node)
+                    self.ItemDeleted(self.GetParent(item), item)
+            if isinstance(node, Song):
+                logging.debug("Delete song: {:s}".format(str(node)))
+                parent_item = self.GetParent(item)
+                parent_node = self.ItemToObject(parent_item)
+                parent_node.songs.remove(node)
+                self.ItemDeleted(parent_item, item)
+
+    def TestCleared(self):
+        """ADDED. Refresh the whole content."""
+        # randomly modify the data
+        for i, genre in enumerate(reversed(self.data)):
+            if i % 2:
+                logging.debug("remove {:s}".format(genre))
+                self.data.remove(genre)
+            else:
+                for j, song in enumerate(reversed(genre.songs)):
+                    logging.debug("remove {:s}".format(song))
+                    genre.songs.remove(song)
+        song1 = self.__create_random_song()
+        genre1 = song1.genre
+        genre1.songs.append(song1)
+        logging.debug("added {:s}".format(song1))
+        song2 = self.__create_random_song()
+        genre2 = song2.genre
+        genre2.songs.append(song2)
+        logging.debug("added {:s}".format(song2))
+
+        # apply this large amount of changes
+        self.Cleared()
+        if wx.Platform == '__WXGTK__':
+            # the tree fully disappeared under Linux. OK on other platforms.
+            # how to make it visible again???
+            pass
+
+    def TestChangeValue(self):
+        # pick a random song
+        song_id = str(random.randint(1, len(musicdata)))
+        logging.debug("selected song id: {:s}".format(song_id))
+        # apply change if the song is still in the data
+        changed = False
+        for genre in self.data:
+            for song in genre.songs:
+                if song.id == song_id:
+                    logging.debug("{:s} title change".format(song))
+                    song.title = song.title + "-changed"
+                    item = self.ObjectToItem(song)
+                    self.ValueChanged(item, 2)
+                    changed = True
+                    break
+        logging.debug(" -> changed: {:s}".format(str(changed)))
+
+    def TestChangeItem(self):
+        # pick a random song
+        song_id = str(random.randint(1, len(musicdata)))
+        logging.debug("selected song id: {:s}".format(song_id))
+        # apply change if the song is still in the data
+        changed = False
+        for genre in self.data:
+            for song in genre.songs:
+                if song.id == song_id:
+                    logging.debug(" {:s} artist change".format(song))
+                    song.artist += "-changed"
+                    item = self.ObjectToItem(song)
+                    self.ItemChanged(item)
+                    changed = True
+                    break
+        logging.debug(" -> changed: {:s}".format(str(changed)))
+
+    # END ADDED CODE ----------------------------------------------------------
+
     # Report how many columns this model provides data for.
     def GetColumnCount(self):
         return 6
 
     # Map the data column numbers to the data type
     def GetColumnType(self, col):
-        mapper = { 0 : 'string',
-                   1 : 'string',
-                   2 : 'string',
-                   3.: 'string', # the real value is an int, but the renderer should convert it okay
-                   4 : 'datetime',
-                   5 : 'bool',
-                   }
+        mapper = {0: 'string',
+                  1: 'string',
+                  2: 'string',
+                  3: 'string',  # the real value is an int, but the renderer should convert it okay
+                  4: 'datetime',
+                  5: 'bool',
+                  }
         return mapper[col]
 
     def GetChildren(self, parent, children):
@@ -219,23 +361,23 @@ class MyTreeListModel(dv.PyDataViewModel):
         if isinstance(node, Genre):
             # We'll only use the first column for the Genre objects,
             # for the other columns lets just return empty values
-            mapper = { 0 : node.name,
-                       1 : "",
-                       2 : "",
-                       3 : "",
-                       4 : wx.DateTime.FromTimeT(0),  # TODO: There should be some way to indicate a null value...
-                       5 : False,
-                       }
+            mapper = {0: node.name,
+                      1: "",
+                      2: "",
+                      3: "",
+                      4: wx.DateTime.FromTimeT(0),  # TODO: There should be some way to indicate a null value...
+                      5: False,
+                      }
             return mapper[col]
 
         elif isinstance(node, Song):
-            mapper = { 0 : node.genre,
-                       1 : node.artist,
-                       2 : node.title,
-                       3 : node.id,
-                       4 : node.date,
-                       5 : node.like,
-                       }
+            mapper = {0: node.genre,
+                      1: node.artist,
+                      2: node.title,
+                      3: node.id,
+                      4: node.date,
+                      5: node.like,
+                      }
             return mapper[col]
 
         else:
@@ -325,17 +467,48 @@ class TestPanel(wx.Panel):
 
         b1 = wx.Button(self, label="New View", name="newView")
         self.Bind(wx.EVT_BUTTON, self.OnNewView, b1)
-        b2 = wx.Button(self, label="Delete", name="delSelect")
-        self.Bind(wx.EVT_BUTTON, self.OnDeleteSelected, b1)
-        b3 = wx.Button(self, label="Cleared", name="cleared")
-        self.Bind(wx.EVT_BUTTON, self.OnCleared, b1)
+
+        # BEGIN ADDED CODE --------------------------------------------------
+        # self.Sizer.Add(b1, 0, wx.ALL, 5)
+
+        b4 = wx.Button(self, label="Test Add", name="addRandom")
+        self.Bind(wx.EVT_BUTTON, self.OnAddRandom, b4)
+        b2 = wx.Button(self, label="Test Delete", name="delSelect")
+        self.Bind(wx.EVT_BUTTON, self.OnDeleteSelected, b2)
+        b3 = wx.Button(self, label="Test Cleared", name="cleared")
+        self.Bind(wx.EVT_BUTTON, self.OnCleared, b3)
+        b5 = wx.Button(self, label="Test Change Title", name="changeValue")
+        self.Bind(wx.EVT_BUTTON, self.OnChangeValue, b5)
+        b6 = wx.Button(self, label="Test Change Artist", name="changeItem")
+        self.Bind(wx.EVT_BUTTON, self.OnChangeItem, b6)
 
         btnsizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.Sizer.Add(b1, 0, wx.ALL, 5)
-        self.Sizer.Add(b2, 0, wx.ALL, 5)
-        self.Sizer.Add(b3, 0, wx.ALL, 5)
-
+        for b in (b1, b2, b3, b4, b5, b6):
+            btnsizer.Add(b, 0, wx.ALL, 5)
         self.Sizer.Add(btnsizer, 0, wx.ALL, 5)
+
+    def OnAddRandom(self, evt):
+        """ADDED. add a randomly created song."""
+        self.model.TestAdd()
+
+    def OnDeleteSelected(self, evt):
+        """ADDED. Delete the selected item (genre or song)."""
+        item = self.dvc.GetSelection()
+        self.model.TestDelete([item])
+
+    def OnCleared(self, evt):
+        """ADDED. Delete/Add items and clear the tree."""
+        self.model.TestCleared()
+
+    def OnChangeValue(self, evt):
+        """ADDED. Change randomly the value of a song."""
+        self.model.TestChangeValue()
+
+    def OnChangeItem(self, evt):
+        """ADDED. Change randomly a song."""
+        self.model.TestChangeItem()
+
+    # END ADDED CODE -------------------------------------------------------
 
     def OnNewView(self, evt):
         f = wx.Frame(None, title="New view, shared model", size=(600,400))
@@ -343,12 +516,6 @@ class TestPanel(wx.Panel):
         b = f.FindWindow("newView")
         b.Disable()
         f.Show()
-
-    def OnDeleteSelected(self, evt):
-        pass
-
-    def OnCleared(self, evt):
-        self.model.Cleared()
 
 # ----------------------------------------------------------------------------
 # App to test
@@ -372,8 +539,6 @@ class TestApp(wx.App):
 
         # Fix language and translation
         self.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
-        self.__cfg = sppasAppConfig()
-        self.settings = WxAppSettings()
         self.setup_debug_logging()
 
         # our data structure will be a collection of Genres, each of which is a
@@ -387,7 +552,7 @@ class TestApp(wx.App):
                 genre = Genre(song.genre)
                 data[song.genre] = genre
             genre.songs.append(song)
-        data = data.values()
+        data = list(data.values())
 
         # create a panel in the frame
         sizer = wx.BoxSizer()
