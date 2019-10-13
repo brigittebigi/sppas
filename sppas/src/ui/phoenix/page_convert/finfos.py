@@ -36,7 +36,6 @@
 
 """
 
-import logging
 import wx
 import wx.lib.newevent
 import wx.dataview
@@ -45,7 +44,6 @@ from sppas.src.config import ui_translation
 from sppas.src.anndata import sppasRW
 
 from ..windows import sppasPanel
-from ..windows import sppasStaticText
 from ..windows.baseviewctrl import BaseTreeViewCtrl
 from ..windows.baseviewctrl import SelectedIconRenderer
 from ..windows.baseviewctrl import ColumnProperties
@@ -295,14 +293,14 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
         :param item: (wx.dataview.DataViewItem)
 
         """
-        logging.debug("CHANGE VALUE")
         if item is None:
             return
         node = self.ItemToObject(item)
         # Node is a FileFormatProperty
         if node.get_extension() != self.__selected:
             self.__selected = node.get_extension()
-            self.Cleared()
+            # self.Cleared() --> does not work with WXGTK. Replaced by:
+            self.ValueChanged(item, self.get_col_idx("icon"))
             return True
         return False
 
@@ -315,11 +313,21 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
 
     def cancel_selected(self):
         if self.__selected is not None:
+            item = self.ObjectToItem(self.__selected)
             self.__selected = None
-            self.Cleared()
+            # self.Cleared()  --> does not work with WXGTK. Replaced by:
+            self.ValueChanged(item, self.get_col_idx("icon"))
 
     # -----------------------------------------------------------------------
     # Manage column properties
+    # -----------------------------------------------------------------------
+
+    def get_col_idx(self, name):
+        for c in self.__mapper:
+            if self.__mapper[c].get_id() == name:
+                return c
+        return -1
+
     # -----------------------------------------------------------------------
 
     def GetColumnCount(self):
@@ -510,7 +518,6 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
                 value = "X"
             elif value is False:
                 value = ""
-        # logging.debug("GetValue of col={:d} = {:s}".format(col, str(value)))
 
         return value
 
@@ -524,9 +531,9 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
         :param col: (int)
 
         """
-        logging.debug("SetValue of col={:d}".format(col))
+        wx.LogDebug("SetValue of col={:d}".format(col))
         node = self.ItemToObject(item)
-        logging.debug("Set value to node: {:s}".format(str(node)))
+        wx.LogDebug("Set value to node: {:s}".format(str(node)))
         node[col] = value
 
         return True

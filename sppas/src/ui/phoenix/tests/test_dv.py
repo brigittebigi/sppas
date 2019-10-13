@@ -514,11 +514,11 @@ class TestPanel(wx.Panel):
     def OnCleared(self, evt):
         """ADDED. Delete/Add items and clear the tree."""
         self.model.TestCleared()
-        #if wx.Platform == '__WXGTK__':
-        data = self.model.data
-        del self.model
-        self.model = MyTreeListModel(data)
-        self.Refresh()
+        if wx.Platform == '__WXGTK__':
+            data = self.model.data
+            del self.model
+            self.model = MyTreeListModel(data)
+            self.Refresh()
 
 
     def OnChangeValue(self, evt):
