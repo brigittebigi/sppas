@@ -180,13 +180,6 @@ class FilesTreeViewCtrl(BaseTreeViewCtrl):
         self._model.lock(entries)
 
     # ------------------------------------------------------------------------
-
-    def update_data(self):
-        """Overridden. Update the currently displayed data."""
-        self._model.update()
-        self.__restore_expanders()
-
-    # ------------------------------------------------------------------------
     # Callbacks to events
     # ------------------------------------------------------------------------
 

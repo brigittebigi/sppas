@@ -46,6 +46,7 @@ from sppas.src.anndata import sppasRW
 from ..windows import sppasPanel
 from ..windows.baseviewctrl import BaseTreeViewCtrl
 from ..windows.baseviewctrl import SelectedIconRenderer
+from ..windows.baseviewctrl import YesNoIconRenderer
 from ..windows.baseviewctrl import ColumnProperties
 
 # ---------------------------------------------------------------------------
@@ -514,10 +515,10 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
 
         else:
             value = self.__mapper[col].get_value(node)
-            if value is True:
-                value = "X"
-            elif value is False:
-                value = ""
+            # if value is True:
+            #    value = "X"
+            # elif value is False:
+            #     value = ""
 
         return value
 
@@ -562,11 +563,14 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
             col.width = sppasPanel.fix_size(40)
             col.align = wx.ALIGN_CENTRE
             col.add_fct_name(FileFormatProperty, "get_"+name)
+            col.renderer = YesNoIconRenderer()
 
         else:
+            # Only boolean values are displayed in the other columns
             col = ColumnProperties(title, name)
             col.width = sppasPanel.fix_size(40)
             col.align = wx.ALIGN_CENTRE
             col.add_fct_name(FileFormatProperty, "get_support", name)
+            col.renderer = YesNoIconRenderer()
 
         return col
