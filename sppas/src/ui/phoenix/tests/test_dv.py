@@ -168,15 +168,26 @@ class MyTreeListModel(dv.PyDataViewModel):
         # so we'll do it !
         item = self.ObjectToItem(song)
         # but the following failed:
+        # parent = self.ObjectToItem(genre)  #  --- OR ---
+        # parent = self.GetParent(item)
         # self.ItemAdded(parent, item)
         # attempted with:
+
         # parent = self.ObjectToItem(genre)
-        # -> TypeError: invalid result from MyTreeListModel.GetParent(),
+        # -> Linux:
+        #    TypeError: invalid result from MyTreeListModel.GetParent(),
         #    NoneType cannot be converted to wx._dataview.DataViewItem in
         #    this context
+        # -> MacOS: The code "as it" with the comments implies the item to be visible
+        # in the tree but with the following message in the console:
+        # wx._core.wxAssertionError: C++ assertion "Assert failure" failed at /opt/concourse/worker/volumes/live/3ef8f33f-8e5b-442f-6716-948fc4646a36/volume/wxpython_1547931203930/work/ext/wxWidgets/src/osx/cocoa/dataview.mm(2813) in MacRender(): Text renderer cannot render value because of wrong value type; value type: long
+        # The above exception was the direct cause of the following exception:
+        # SystemError: <class 'wx._dataview.DataViewItem'> returned a result with an error set
+
         # parent = self.GetParent(item)
-        # -> TypeError: DataViewModel.ItemAdded(): argument 1 has unexpected
-        # type 'NoneType'
+        # -> Linux/MacOS:
+        #    TypeError: DataViewModel.ItemAdded(): argument 1 has unexpected
+        #    type 'NoneType'
 
     def __create_random_song(self):
         """ADDED. Create an return a song. Add its genre into the treectrl if any."""
@@ -242,8 +253,12 @@ class MyTreeListModel(dv.PyDataViewModel):
         # apply this large amount of changes
         self.Cleared()
         if wx.Platform == '__WXGTK__':
-            # the tree fully disappeared under Linux. OK on other platforms.
+            # the tree fully disappears under Linux.
             # how to make it visible again???
+            pass
+        else:
+            # MacOS and Windows:
+            # the expanded items are all collapsed.
             pass
 
     def TestChangeValue(self):
@@ -499,6 +514,12 @@ class TestPanel(wx.Panel):
     def OnCleared(self, evt):
         """ADDED. Delete/Add items and clear the tree."""
         self.model.TestCleared()
+        #if wx.Platform == '__WXGTK__':
+        data = self.model.data
+        del self.model
+        self.model = MyTreeListModel(data)
+        self.Refresh()
+
 
     def OnChangeValue(self, evt):
         """ADDED. Change randomly the value of a song."""

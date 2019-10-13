@@ -35,7 +35,9 @@ import logging
 import wx
 import wx.dataview
 
-from sppas.src.ui.phoenix.windows.baseviewctrl import BaseTreeViewCtrl
+from sppas.src.files.filedata import FileData
+
+from ..windows.baseviewctrl import BaseTreeViewCtrl
 from .dv_refsviewmodel import ReferencesTreeViewModel
 
 # ----------------------------------------------------------------------------
@@ -67,9 +69,8 @@ class ReferencesTreeViewCtrl(BaseTreeViewCtrl):
         super(ReferencesTreeViewCtrl, self).__init__(parent, name)
 
         # Create an instance of our model and associate to the view.
-        self._model = ReferencesTreeViewModel()
-        self.AssociateModel(self._model)
-        self._model.DecRef()
+        self._model = None
+        self.__create_model(FileData())
 
         # Create the columns that the model wants in the view.
         for i in range(self._model.GetColumnCount()):
@@ -87,6 +88,14 @@ class ReferencesTreeViewCtrl(BaseTreeViewCtrl):
         self.Bind(wx.dataview.EVT_DATAVIEW_ITEM_EDITING_DONE, self._on_item_edited)
 
     # ------------------------------------------------------------------------
+
+    def __create_model(self, data):
+        """Create an instance of our model and associate to the view."""
+        self._model = ReferencesTreeViewModel(data)
+        self.AssociateModel(self._model)
+        self._model.DecRef()
+
+    # ------------------------------------------------------------------------
     # Public methods
     # ------------------------------------------------------------------------
 
@@ -97,8 +106,12 @@ class ReferencesTreeViewCtrl(BaseTreeViewCtrl):
     # ------------------------------------------------------------------------
 
     def set_data(self, data):
-        self._model.set_data(data)
-        self.__refresh()
+        ret = self._model.set_data(data)
+        if ret is False:
+            del self._model
+            self.__create_model(data)
+
+        self.__restore_expanders()
 
     # ------------------------------------------------------------------------
 
@@ -139,7 +152,7 @@ class ReferencesTreeViewCtrl(BaseTreeViewCtrl):
         nb = self._model.add_refs(entries)
         if nb > 0:
             logging.debug('Added {:d} references in the data.'.format(len(entries)))
-            self.__refresh()
+            self.__restore_expanders()
         return nb
 
     # ------------------------------------------------------------------------
@@ -149,7 +162,7 @@ class ReferencesTreeViewCtrl(BaseTreeViewCtrl):
         nb = self._model.remove_checked_refs()
         if nb > 0:
             logging.info('Removed {:d} references.'.format(nb))
-            self.__refresh()
+            self.__restore_expanders()
         return nb
 
     # ------------------------------------------------------------------------
@@ -165,7 +178,7 @@ class ReferencesTreeViewCtrl(BaseTreeViewCtrl):
         logging.info('Identifier {:s} removed of {:d} references.'
                      ''.format(identifier, nb))
         if nb > 0:
-            self.__refresh()
+            self.__restore_expanders()
         return nb
 
     # ------------------------------------------------------------------------
@@ -184,15 +197,8 @@ class ReferencesTreeViewCtrl(BaseTreeViewCtrl):
         logging.info('Identifier {:s} added into {:d} references.'
                      ''.format(identifier, nb))
         if nb > 0:
-            self.__refresh()
+            self.__restore_expanders()
         return nb
-
-    # ------------------------------------------------------------------------
-
-    def update_data(self):
-        """Overridden. Update the currently displayed data."""
-        self._model.update()
-        self.__refresh()
 
     # ------------------------------------------------------------------------
     # Callbacks to events
@@ -252,7 +258,7 @@ class ReferencesTreeViewCtrl(BaseTreeViewCtrl):
 
     # ------------------------------------------------------------------------
 
-    def __refresh(self):
+    def __restore_expanders(self):
         for item in self._model.get_expanded_items(True):
             self.Expand(item)
         for item in self._model.get_expanded_items(False):

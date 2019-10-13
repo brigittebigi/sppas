@@ -67,7 +67,7 @@ class ReferencesTreeViewModel(wx.dataview.PyDataViewModel):
 
     """
 
-    def __init__(self):
+    def __init__(self, data):
         """Constructor of a fileTreeModel.
 
         No data is given at the initialization.
@@ -82,6 +82,7 @@ class ReferencesTreeViewModel(wx.dataview.PyDataViewModel):
 
         # The workspace to display
         self.__data = FileData()
+        self.set_data(data)
 
         # Map between displayed columns and workspace
         self.__mapper = dict()
@@ -143,12 +144,29 @@ class ReferencesTreeViewModel(wx.dataview.PyDataViewModel):
     # -----------------------------------------------------------------------
 
     def set_data(self, data):
+        """Set new data to the model.
+
+        self.Cleared() is not called under Linux. The tree is not updated,
+        only the data are updated, because on GTK, the Cleared method will
+        erase the displayed items but it won't display the new ones. This
+        is a known bug of this method.
+        http://wxpython-users.1045709.n5.nabble.com/DataViewModel-Cleared-problem-on-GTK-td5722735.html
+
+        :return: (bool) Successfully set data and cleared the tree.
+        This method always returns False under Linux.
+
+
+        """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
         logging.debug('New data to set in the references panel. '
                       'Id={:s}'.format(data.id))
         self.__data = data
-        self.update()
+        if wx.Platform != "__WXGTK__":
+            self.Cleared()
+            return True
+        else:
+            return False
 
     # -----------------------------------------------------------------------
     # Manage column properties
@@ -494,7 +512,8 @@ class ReferencesTreeViewModel(wx.dataview.PyDataViewModel):
         """Remove all FileReference with state CHECKED."""
         nb_removed = self.__data.remove_refs(States().CHECKED)
         if nb_removed > 0:
-            self.update()
+            self.__data.update()
+            self.Cleared()
         return nb_removed
 
     # -----------------------------------------------------------------------
