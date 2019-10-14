@@ -55,6 +55,7 @@ from .image import sppasStaticBitmap
 
 from .panel import sppasPanel
 from .panel import sppasScrolledPanel
+from .panel import sppasCollapsiblePanel
 
 from .progress import sppasProgressDialog
 from .dialog import sppasDialog
@@ -81,6 +82,7 @@ __all__ = (
     "sppasProgressDialog",
     "sppasPanel",
     "sppasScrolledPanel",
+    "sppasCollapsiblePanel",
     "sppasDialog",
     "sppasTopFrame",
     "sppasFrame",

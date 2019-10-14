@@ -44,6 +44,7 @@ from sppas.src.ui.phoenix.main_settings import WxAppSettings
 import sppas.src.ui.phoenix.windows.toolbar as toolbar
 import sppas.src.ui.phoenix.windows.line as line
 import sppas.src.ui.phoenix.windows.button as button
+import sppas.src.ui.phoenix.windows.panel as panel
 import sppas.src.ui.phoenix.panels.option as option
 import sppas.src.ui.phoenix.page_files.filesmanager as filesmanager
 #import sppas.src.ui.phoenix.page_files.filestreectrl as filestreectrl
@@ -71,6 +72,7 @@ class TestPanel(wx.Choicebook):
 
         # Make the bunch of test panels for the choice book
         # self.AddPage(filestreectrl.TestPanel(self), "AGW Files tree ctrl")
+        self.AddPage(panel.TestPanel(self), "Panels")
         self.AddPage(filesmanager.TestPanel(self), "Dataview Files manager")
         self.AddPage(textview.TestPanel(self), "Text view")
         self.AddPage(baseview.TestPanel(self), "Base view")
@@ -96,7 +98,7 @@ class TestPanel(wx.Choicebook):
 
         """
         key_code = event.GetKeyCode()
-        logging.debug('Test panel received the key event {:d}'.format(key_code))
+        # logging.debug('Test panel received the key event {:d}'.format(key_code))
 
         # Keeps on going the event to the current page of the book.
         event.Skip()
@@ -107,16 +109,12 @@ class TestPanel(wx.Choicebook):
         old = event.GetOldSelection()
         new = event.GetSelection()
         sel = self.GetSelection()
-        logging.debug('OnPageChanged,  old:%d, new:%d, sel:%d\n'
-                      '' % (old, new, sel))
         event.Skip()
 
     def OnPageChanging(self, event):
         old = event.GetOldSelection()
         new = event.GetSelection()
         sel = self.GetSelection()
-        logging.debug('OnPageChanging, old:%d, new:%d, sel:%d\n'
-                      '' % (old, new, sel))
         event.Skip()
 
 # ----------------------------------------------------------------------------
