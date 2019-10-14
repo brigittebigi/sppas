@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import copy
 import wx
 import wx.dataview as dv
 import random
@@ -103,7 +104,7 @@ class Song(object):
 
 class Genre(object):
     def __init__(self, name):
-        self.name = name
+        self.name = name.strip()
         self.songs = []
 
     def __repr__(self):
@@ -160,34 +161,12 @@ class MyTreeListModel(dv.PyDataViewModel):
         I failed to update the treectrl.
 
         """
-        logging.debug("Add {:s} in {:s}".format(str(song), str(genre)))
+        if genre not in self.data:
+            raise ValueError("{:s} not in data".format(genre))
         genre.songs.append(song)
-        # In the doc, it is said: "If the data represented by the model is
-        # changed by something else than its associated wx.dataview.DataViewCtrl
-        # the control has to be notified about the change."
-        # so we'll do it !
-        item = self.ObjectToItem(song)
-        # but the following failed:
-        # parent = self.ObjectToItem(genre)  #  --- OR ---
-        # parent = self.GetParent(item)
-        # self.ItemAdded(parent, item)
-        # attempted with:
-
-        # parent = self.ObjectToItem(genre)
-        # -> Linux:
-        #    TypeError: invalid result from MyTreeListModel.GetParent(),
-        #    NoneType cannot be converted to wx._dataview.DataViewItem in
-        #    this context
-        # -> MacOS: The code "as it" with the comments implies the item to be visible
-        # in the tree but with the following message in the console:
-        # wx._core.wxAssertionError: C++ assertion "Assert failure" failed at /opt/concourse/worker/volumes/live/3ef8f33f-8e5b-442f-6716-948fc4646a36/volume/wxpython_1547931203930/work/ext/wxWidgets/src/osx/cocoa/dataview.mm(2813) in MacRender(): Text renderer cannot render value because of wrong value type; value type: long
-        # The above exception was the direct cause of the following exception:
-        # SystemError: <class 'wx._dataview.DataViewItem'> returned a result with an error set
-
-        # parent = self.GetParent(item)
-        # -> Linux/MacOS:
-        #    TypeError: DataViewModel.ItemAdded(): argument 1 has unexpected
-        #    type 'NoneType'
+        song_item = self.ObjectToItem(song)
+        genre_item = self.ObjectToItem(genre)
+        self.ItemAdded(genre_item, song_item)
 
     def __create_random_song(self):
         """ADDED. Create an return a song. Add its genre into the treectrl if any."""
@@ -202,17 +181,16 @@ class MyTreeListModel(dv.PyDataViewModel):
         # pick a random song
         song_id = random.randint(1, len(musicdata))
         # create a new song with a random id
-        song = Song(song_id*random.randint(100, 200),
+        song = Song(str(song_id*random.randint(100, 200)),
                     musicdata[song_id][0],
                     musicdata[song_id][1],
-                    genre)
-        return song
+                    genre.name)
+        return genre, song
 
     def TestAdd(self):
         """ADDED. Create a song and add it."""
-        song = self.__create_random_song()
-        # add the song to the data and to the treectrl
-        self.__add_song(song.genre, song)
+        genre, song = self.__create_random_song()
+        self.__add_song(genre, song)
 
     def TestDelete(self, items):
         """ADDED. Delete a list of items in the data and in the tree."""
@@ -241,25 +219,18 @@ class MyTreeListModel(dv.PyDataViewModel):
                 for j, song in enumerate(reversed(genre.songs)):
                     logging.debug("remove {:s}".format(song))
                     genre.songs.remove(song)
-        song1 = self.__create_random_song()
-        genre1 = song1.genre
+        genre1, song1 = self.__create_random_song()
         genre1.songs.append(song1)
         logging.debug("added {:s}".format(song1))
-        song2 = self.__create_random_song()
-        genre2 = song2.genre
+        genre2, song2 = self.__create_random_song()
         genre2.songs.append(song2)
         logging.debug("added {:s}".format(song2))
 
         # apply this large amount of changes
-        self.Cleared()
-        if wx.Platform == '__WXGTK__':
-            # the tree fully disappears under Linux.
-            # how to make it visible again???
-            pass
-        else:
-            # MacOS and Windows:
-            # the expanded items are all collapsed.
-            pass
+        if wx.Platform != '__WXGTK__':
+            # MacOS and Windows: the expanded items are all collapsed.
+            self.Cleared()
+        return self.data
 
     def TestChangeValue(self):
         # pick a random song
@@ -276,7 +247,6 @@ class MyTreeListModel(dv.PyDataViewModel):
                     self.ValueChanged(item, 2)
                     changed = True
                     break
-        logging.debug(" -> changed: {:s}".format(str(changed)))
 
     def TestChangeItem(self):
         # pick a random song
@@ -293,7 +263,6 @@ class MyTreeListModel(dv.PyDataViewModel):
                     self.ItemChanged(item)
                     changed = True
                     break
-        logging.debug(" -> changed: {:s}".format(str(changed)))
 
     # END ADDED CODE ----------------------------------------------------------
 
@@ -361,9 +330,9 @@ class MyTreeListModel(dv.PyDataViewModel):
         if isinstance(node, Genre):
             return dv.NullDataViewItem
         elif isinstance(node, Song):
-            for g in self.data:
-                if g.name == node.genre:
-                    return self.ObjectToItem(g)
+            for genre in self.data:
+                if genre.name == node.genre:
+                    return self.ObjectToItem(genre)
 
     def GetValue(self, item, col):
         # Return the value to be displayed for this item and column. For this
@@ -513,13 +482,13 @@ class TestPanel(wx.Panel):
 
     def OnCleared(self, evt):
         """ADDED. Delete/Add items and clear the tree."""
-        self.model.TestCleared()
+        old_data = self.model.TestCleared()
         if wx.Platform == '__WXGTK__':
-            data = self.model.data
+            new_data = copy.deepcopy(old_data)
             del self.model
-            self.model = MyTreeListModel(data)
-            self.Refresh()
-
+            self.model = MyTreeListModel(new_data)
+            self.dvc.AssociateModel(self.model)
+            self.model.DecRef()
 
     def OnChangeValue(self, evt):
         """ADDED. Change randomly the value of a song."""
