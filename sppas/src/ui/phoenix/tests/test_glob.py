@@ -134,7 +134,8 @@ class TestApp(wx.App):
                         clearSigInt=True)
 
         # create the frame
-        frm = wx.Frame(None, title='Test frame', size=(800, 600))
+        frm = wx.Frame(None, title='Test frame', size=wx.Size(800, 600))
+        frm.SetMinSize(wx.Size(640, 480))
         self.SetTopWindow(frm)
 
         # Fix language and translation
@@ -149,6 +150,7 @@ class TestApp(wx.App):
         frm.SetSizer(sizer)
 
         # show result
+        frm.Layout()
         frm.Show()
 
     @staticmethod
