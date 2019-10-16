@@ -35,7 +35,6 @@
 
 import wx
 import wx.dataview
-import logging
 
 from sppas.src.files.filebase import States
 from sppas.src.files.fileexc import FileAttributeError
@@ -53,6 +52,67 @@ default_renderers = {
     "wxBitmap": wx.dataview.DataViewBitmapRenderer,
     "wxDataViewIconText": wx.dataview.DataViewIconTextRenderer
 }
+
+# ---------------------------------------------------------------------------
+
+
+class YesNoIconRenderer(wx.dataview.DataViewCustomRenderer):
+    """Draw an icon matching the 2 states of a row (select/unselect).
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
+
+    def __init__(self):
+        super(YesNoIconRenderer, self).__init__(
+            varianttype="bool",
+            mode=wx.dataview.DATAVIEW_CELL_INERT,
+            align=wx.dataview.DVR_DEFAULT_ALIGNMENT)
+        self.value = False
+
+    def SetValue(self, value):
+        """Assign a boolean value."""
+        # The given value is not valid
+        if value is None or len(str(value)) == 0:
+            return False
+        # The given value sounds good
+        self.value = value
+        return True
+
+    def GetValue(self):
+        """Return the boolean value."""
+        return self.value
+
+    def GetSize(self):
+        """Return the size needed to display the value."""
+        size = self.GetTextExtent('TT')
+        return size[1]*2, size[1]*2
+
+    def Render(self, rect, dc, state):
+        """Draw the bitmap, adjusting its size. """
+        x, y, w, h = rect
+        s = min(w, h)
+        s = int(0.8 * s)
+
+        if self.value is True:
+            icon_value = "check_yes"
+        else:
+            icon_value = "check_no"
+
+        # get the image from its name
+        img = sppasSwissKnife.get_image(icon_value)
+        # re-scale the image to the expected size
+        sppasSwissKnife.rescale_image(img, s)
+        # convert to bitmap
+        bitmap = wx.Bitmap(img)
+        # render it at the center
+        dc.DrawBitmap(bitmap, x + (w-s)//2, y + (h-s)//2)
+
+        return True
 
 # ---------------------------------------------------------------------------
 
@@ -368,7 +428,6 @@ class ColumnProperties(object):
     renderer = property(get_renderer, set_renderer)
     align = property(get_align, set_align)
 
-
 # ----------------------------------------------------------------------------
 # Control to store the data matching the model
 # ----------------------------------------------------------------------------
@@ -398,7 +457,7 @@ class BaseTreeViewCtrl(wx.dataview.DataViewCtrl):
         """
         super(BaseTreeViewCtrl, self).__init__(
             parent,
-            style=wx.BORDER_NONE | wx.dataview.DV_MULTIPLE,  # | wx.dataview.DV_NO_HEADER,  # wx.dataview.DV_VERT_RULES
+            style=wx.BORDER_NONE | wx.dataview.DV_MULTIPLE,
             name=name
         )
 
@@ -430,12 +489,6 @@ class BaseTreeViewCtrl(wx.dataview.DataViewCtrl):
         wx.Window.SetForegroundColour(self, color)
         if self._model is not None:
             self._model.SetForegroundColour(color)
-
-    # ------------------------------------------------------------------------
-
-    def update_data(self):
-        """To be overridden. Update the currently displayed data."""
-        return
 
     # ------------------------------------------------------------------------
     # For sub-classes only (private)
@@ -474,58 +527,75 @@ class BaseTreeViewCtrl(wx.dataview.DataViewCtrl):
         return col
 
     # ------------------------------------------------------------------------
-    # Override methods to manage columns. No parent nor children will have the
+    # Override methods to manage columns. No parent will have the
     # possibility to Append/Insert/Prepend/Delete columns.
     # ------------------------------------------------------------------------
 
     def DeleteColumn(self, column):
-        raise FileAttributeError(self.__class__.__format__, "DeleteColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "DeleteColumn")
 
     def ClearColumns(self):
-        raise FileAttributeError(self.__class__.__format__, "ClearColumns")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "ClearColumns")
 
     def AppendColumn(self, col):
-        raise FileAttributeError(self.__class__.__format__, "AppendColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "AppendColumn")
 
     def AppendBitmapColumn(self, *args, **kw):
-        raise FileAttributeError(self.__class__.__format__, "AppendBitmapColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "AppendBitmapColumn")
 
     def AppendDateColumn(self, *args, **kw):
-        raise FileAttributeError(self.__class__.__format__, "AppendDateColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "AppendDateColumn")
 
     def AppendIconTextColumn(self,*args, **kw):
-        raise FileAttributeError(self.__class__.__format__, "AppendIconTextColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "AppendIconTextColumn")
 
     def AppendProgressColumn(self,*args, **kw):
-        raise FileAttributeError(self.__class__.__format__, "AppendProgressColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "AppendProgressColumn")
 
     def AppendTextColumn(self,*args, **kw):
-        raise FileAttributeError(self.__class__.__format__, "AppendTextColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "AppendTextColumn")
 
     def AppendToggleColumn(self, *args, **kw):
-        raise FileAttributeError(self.__class__.__format__, "AppendToggleColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "AppendToggleColumn")
 
     def InsertColumn(self, pos, col):
-        raise FileAttributeError(self.__class__.__format__, "InsertColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "InsertColumn")
 
     def PrependBitmapColumn(self, *args, **kw):
-        raise FileAttributeError(self.__class__.__format__, "PrependBitmapColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "PrependBitmapColumn")
 
     def PrependColumn(self, col):
-        raise FileAttributeError(self.__class__.__format__, "PrependColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "PrependColumn")
 
     def PrependDateColumn(self, *args, **kw):
-        raise FileAttributeError(self.__class__.__format__, "PrependDateColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "PrependDateColumn")
 
     def PrependIconTextColumn(self, *args, **kw):
-        raise FileAttributeError(self.__class__.__format__, "PrependIconTextColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "PrependIconTextColumn")
 
     def PrependProgressColumn(self, *args, **kw):
-        raise FileAttributeError(self.__class__.__format__, "PrependProgressColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "PrependProgressColumn")
 
     def PrependTextColumn(self, *args, **kw):
-        raise FileAttributeError(self.__class__.__format__, "PrependTextColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "PrependTextColumn")
 
     def PrependToggleColumn(self, *args, **kw):
-        raise FileAttributeError(self.__class__.__format__, "PrependToggleColumn")
+        raise FileAttributeError(self.__class__.__format__,
+                                 "PrependToggleColumn")
 

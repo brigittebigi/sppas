@@ -110,9 +110,12 @@ class ReferencesTreeViewModel(wx.dataview.PyDataViewModel):
         """
         try:
             node = self.ItemToObject(item)
-        except TypeError:
+        except Exception as e:
             # occurs sometimes on mac while clicking elsewhere than a row
-            # of the tree
+            # of the tree, and on Linux when... dont known...
+            wx.LogWarning(
+                "No node is matching the item to change its content "
+                "value: {:s}.".format(str(e)))
             return
 
         changed = False

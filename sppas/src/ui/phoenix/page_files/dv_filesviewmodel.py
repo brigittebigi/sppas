@@ -540,9 +540,12 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
         :param item: (wx.dataview.DataViewItem)
 
         """
-        if item is None:
+        try:
+            node = self.ItemToObject(item)
+        except Exception as e:
+            wx.LogWarning("No node is matching the item to change its state "
+                          "value: {:s}.".format(str(e)))
             return
-        node = self.ItemToObject(item)
         cur_state = node.get_state()
         if cur_state in (States().UNUSED, States().AT_LEAST_ONE_CHECKED, States().AT_LEAST_ONE_LOCKED):
             try:
