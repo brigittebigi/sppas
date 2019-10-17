@@ -32,7 +32,7 @@
     ui.phoenix.page_analyze.textview.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    ViewPanel to display the content of a file as a simple ASCII text.
+    TextViewPanel to display the content of a file as a simple ASCII text.
 
 """
 
@@ -97,6 +97,7 @@ class TextViewPanel(sppasBaseViewPanel):
     def load_text(self):
         """Load the file and display it."""
         # TODO: progress bar while loading
+        wx.LogMessage("Load text of file {:s}".format(self._filename))
         try:
             with codecs.open(self._filename, 'r', sg.__encoding__) as fp:
                 lines = fp.readlines()
@@ -110,13 +111,14 @@ class TextViewPanel(sppasBaseViewPanel):
 
         # required under Windows
         txtctrl.SetStyle(0, len(content), txtctrl.GetDefaultStyle())
-        
-        # Search the height of the text
-        self.__lines = len(lines)
-        self.SetMinSize(wx.Size(sppasPanel.fix_size(320),
-                                self._eval_height()))
+
+        # Search for the height of the text
+        self.__lines = len(lines) + 1
+        view_height = float(self.get_line_height()) * 1.1 * self.__lines
+        txtctrl.SetMinSize(wx.Size(sppasPanel.fix_size(320), view_height))
 
         self.__txtview.SetModified(False)
+        wx.LogMessage("Text loaded: {:d} lines.".format(self.__lines))
 
     # -----------------------------------------------------------------------
 
@@ -134,49 +136,42 @@ class TextViewPanel(sppasBaseViewPanel):
     # -----------------------------------------------------------------------
 
     def _create_content(self):
-        """Create the main content."""
-        sizer = wx.BoxSizer(wx.VERTICAL)
+        """Create the main content, ie the content of the embedded panel."""
+        pane = self.GetPane()
 
-        line1 = self.__create_hline()
+        line1 = self.__create_hline(pane)
         line1.SetName("line1")
-        sizer.Add(line1, 0, wx.EXPAND | wx.ALL, 2)
-        tb = self.__create_toolbar(self)
-        sizer.Add(tb, 0, wx.EXPAND | wx.ALL, 2)
-        sizer.Add(self.__create_hline(), 0, wx.EXPAND | wx.ALL, 2)
-
+        tb = self.__create_toolbar(pane)
         style = wx.NO_BORDER | wx.TE_MULTILINE | wx.TE_RICH | \
                 wx.TE_PROCESS_ENTER | wx.TE_BESTWRAP | wx.TE_NO_VSCROLL
-        self.__txtview = sppasTextCtrl(self, style=style, name="textctrl")
+        self.__txtview = sppasTextCtrl(pane, style=style, name="textctrl")
         self.__txtview.SetFont(wx.GetApp().settings.mono_text_font)
         self.__txtview.SetEditable(True)
         self.__txtview.SetModified(False)
 
-        sizer.Add(self.__txtview, 1, wx.EXPAND | wx.LEFT, sppasPanel.fix_size(34))
-        self.SetMinSize(wx.Size(sppasPanel.fix_size(320),
-                                sppasPanel.fix_size(40)))
-
-        self.SetSizer(sizer)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(line1, 0, wx.EXPAND | wx.ALL, 2)
+        sizer.Add(tb, 0, wx.EXPAND)
+        sizer.Add(self.__create_hline(pane), 0, wx.EXPAND | wx.ALL, 2)
+        sizer.Add(self.__txtview, 1, wx.EXPAND)
+        pane.SetSizer(sizer)
 
     # ------------------------------------------------------------------------
 
     def __create_toolbar(self, parent):
         """Create the toolbar."""
         tb = sppasToolbar(parent, name="textview-toolbar")
+        tb.set_height(16)
         tb.set_focus_color(self._hicolor)
-        tb.AddTitleText(self._filename,
-                        color=self._hicolor,
-                        name="tb-title-text")
-        tb.AddSpacer(1)
-        tb.AddButton("eye_hide", SHOWHIDE_MSG)
         tb.AddButton("save", SAVE_MSG)
         tb.AddButton("close", CLOSE_MSG)
         return tb
 
     # ------------------------------------------------------------------------
 
-    def __create_hline(self):
+    def __create_hline(self, parent):
         """Create a vertical line, used to separate the panels."""
-        line = sppasStaticLine(self, orient=wx.LI_HORIZONTAL)
+        line = sppasStaticLine(parent, orient=wx.LI_HORIZONTAL)
         line.SetMinSize(wx.Size(-1, 2))
         line.SetSize(wx.Size(-1, 2))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
@@ -187,8 +182,8 @@ class TextViewPanel(sppasBaseViewPanel):
     # -----------------------------------------------------------------------
 
     def _eval_height(self):
-        """Return the optimal height of this panel."""
-        tb_height = sppasPanel.fix_size(32)
+        """Return the optimal height of the textctrl."""
+        tb_height = self.FindWindow("textview-toolbar").get_height()
         lines_height = 4
         view_height = float(self.get_line_height()) * 1.3 * self.__lines
         return tb_height + lines_height + int(view_height) + 6
@@ -225,35 +220,18 @@ class TextViewPanel(sppasBaseViewPanel):
         event_name = event_obj.GetName()
 
         if event_name == "close":
+            wx.LogDebug("Parent is notified to close")
             self.notify("close")
 
         elif event_name == "save":
             if self.is_modified() is True:
+                wx.LogDebug("Parent is notified to save")
                 self.notify("save")
             else:
                 wx.LogDebug("File wasn't modified. Nothing to do.")
 
-        elif event_name == "eye_show":
-            self.__txtview.Show(True)
-            event_obj.SetImage('eye_hide')
-            event_obj.SetName("eye_hide")
-            self.__lines = self.__txtview.GetNumberOfLines()
-            self.SetMinSize(wx.Size(-1, self._eval_height()))
-            self.SetSize(wx.Size(-1, self._eval_height()))
-            self.Layout()
-            self.Refresh()
-            self.notify("size")
-
-        elif event_name == "eye_hide":
-            self.__txtview.Show(False)
-            event_obj.SetImage('eye_show')
-            event_obj.SetName("eye_show")
-            self.__lines = 1
-            self.SetMinSize(wx.Size(-1, self._eval_height()))
-            self.SetSize(wx.Size(-1, self._eval_height()))
-            self.Layout()
-            self.Refresh()
-            self.notify("size")
+        else:
+            event.Skip()
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
@@ -265,4 +243,4 @@ class TestPanel(TextViewPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(
             parent, filename=os.path.join(paths.samples, "COPYRIGHT.txt"))
-        self.SetBackgroundColour(wx.Colour(128, 128, 128))
+        #self.SetBackgroundColour(wx.Colour(128, 128, 128))

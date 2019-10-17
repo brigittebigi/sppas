@@ -63,6 +63,9 @@ class sppasToolbar(sppasPanel):
             style=wx.NO_BORDER | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
+        # Size
+        self._h = sppasPanel.fix_size(32)
+
         # Focus Color&Style
         self._fs = wx.PENSTYLE_SOLID
         self._fw = 3
@@ -77,7 +80,34 @@ class sppasToolbar(sppasPanel):
 
         self.SetSizer(wx.BoxSizer(orient))
         self.SetAutoLayout(True)
+        if orient == wx.HORIZONTAL:
+            self.SetMinSize(wx.Size(-1, self._h))
+        else:
+            self.SetMinSize(wx.Size(self._h, -1))
         self.Bind(wx.EVT_TOGGLEBUTTON, self.__on_tg_btn_event)
+
+    # -----------------------------------------------------------------------
+
+    def get_height(self):
+        """Return the height of the toolbar."""
+        return self._h
+
+    # -----------------------------------------------------------------------
+
+    def set_height(self, value):
+        """Fix the height of the toolbar.
+
+        The given height will be adjusted to a proportion of the font height.
+        Min is 12, max is 128.
+        The toolbar is not updated.
+
+        """
+        self._h = min(sppasPanel.fix_size(value), 128)
+        self._h = max(self._h, 12)
+        if self.GetSizer().GetOrientation() == wx.HORIZONTAL:
+            self.SetMinSize(wx.Size(-1, self._h))
+        else:
+            self.SetMinSize(wx.Size(self._h, -1))
 
     # -----------------------------------------------------------------------
 
@@ -276,8 +306,7 @@ class sppasToolbar(sppasPanel):
         btn.Spacing = sppasPanel.fix_size(12)
         btn.BorderWidth = 0
         btn.BitmapColour = self.GetForegroundColour()
-        btn.SetMinSize(wx.Size(sppasPanel.fix_size(32),
-                               sppasPanel.fix_size(32)))
+        btn.SetMinSize(wx.Size(self._h, self._h))
 
         return btn
 
@@ -294,10 +323,10 @@ class sppasToolbar(sppasPanel):
         btn.FocusStyle = self._fs
         btn.FocusWidth = self._fw
         btn.FocusColour = self._fc
-        btn.Spacing = sppasPanel.fix_size(12)
+        btn.Spacing = sppasPanel.fix_size(self._h // 3)
         btn.BorderWidth = 1
         btn.BitmapColour = self.GetForegroundColour()
-        btn.SetMinSize(wx.Size(sppasPanel.fix_size(32), sppasPanel.fix_size(32)))
+        btn.SetMinSize(wx.Size(self._h, self._h))
 
         return btn
 

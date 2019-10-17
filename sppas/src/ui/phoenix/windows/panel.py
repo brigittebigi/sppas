@@ -213,9 +213,7 @@ class sppasCollapsiblePanel(sppasPanel):
 
         self.__collapsed = True
         self.__btn = self.create_button(label)
-        self.__icon_size = sppasCollapsiblePanel.fix_size(24)
-        self.__btn.SetMinSize(wx.Size(64, self.__icon_size))
-        self.__child_panel = sppasPanel(self, style=wx.TAB_TRAVERSAL | wx.NO_BORDER)
+        self.__child_panel = sppasPanel(self, style=wx.TAB_TRAVERSAL | wx.NO_BORDER, name="content")
         self.__child_panel.Hide()
         self.__border = sppasCollapsiblePanel.fix_size(4)
 
@@ -331,7 +329,7 @@ class sppasCollapsiblePanel(sppasPanel):
 
         w, h = self.GetSize()
         bw = w - self.__border
-        bh = self.__btn.GetMinSize().GetHeight()
+        bh = self.get_line_height() * 2
         # fix pos and size of the button
         self.__btn.SetPosition((self.__border, 0))
         self.__btn.SetSize(wx.Size(bw, bh))
@@ -339,7 +337,7 @@ class sppasCollapsiblePanel(sppasPanel):
         if self.IsExpanded():
             # fix pos and size of the child window
             pw, ph = self.GetSize()
-            x = self.__border + self.__icon_size
+            x = self.__border + bh  # shift of the icon size (a square).
             y = bh + self.__border
             pw = pw - x - self.__border      # left-right borders
             ph = ph - y - self.__border      # top-bottom borders
@@ -441,8 +439,9 @@ class sppasCollapsiblePanel(sppasPanel):
         btn.Spacing = sppasPanel.fix_size(4)
         btn.BorderWidth = 0
         btn.BitmapColour = self.GetForegroundColour()
-        btn.SetMinSize(wx.Size(sppasPanel.fix_size(16),
-                               sppasPanel.fix_size(16)))
+        h = int(float(self.get_line_height()) * 1.6)
+        btn.SetMinSize(wx.Size(sppasPanel.fix_size(h*10),
+                               sppasPanel.fix_size(h)))
 
         return btn
 
@@ -461,6 +460,12 @@ class sppasCollapsiblePanel(sppasPanel):
         except AttributeError:
             obj_size = int(value)
         return obj_size
+
+    # -----------------------------------------------------------------------
+
+    def get_line_height(self):
+        font = self.GetFont()
+        return int(float(font.GetPixelSize()[1]))
 
 # -----------------------------------------------------------------------
 

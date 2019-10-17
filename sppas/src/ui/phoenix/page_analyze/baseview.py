@@ -41,7 +41,7 @@ from sppas import msg
 from sppas import paths
 from sppas.src.utils import u
 
-from ..windows import sppasPanel
+from ..windows import sppasCollapsiblePanel
 from ..windows import sppasStaticText
 
 # ----------------------------------------------------------------------------
@@ -57,7 +57,7 @@ MSG_NO_CONTENT = _("Displaying a file is not implemented in this view.")
 # ----------------------------------------------------------------------------
 
 
-class sppasBaseViewPanel(sppasPanel):
+class sppasBaseViewPanel(sppasCollapsiblePanel):
     """Panel to display the content of a file.
 
     :author:       Brigitte Bigi
@@ -72,6 +72,7 @@ class sppasBaseViewPanel(sppasPanel):
         super(sppasBaseViewPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
+            label=filename,
             pos=wx.DefaultPosition,
             size=wx.DefaultSize,
             style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
@@ -84,10 +85,6 @@ class sppasBaseViewPanel(sppasPanel):
         self._hicolor = self.GetForegroundColour()
         self._create_content()
         self._setup_events()
-
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.mono_text_font)
 
         if filename is not None:
             self.load_text()
@@ -119,24 +116,20 @@ class sppasBaseViewPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _create_content(self):
-        """Create the main content."""
-        sizer = wx.BoxSizer(wx.VERTICAL)
+        """Create the main content, ie the content of the embedded panel."""
+        pane = self.GetPane()
         try:  # wx4
             font = wx.SystemSettings().GetFont(wx.SYS_DEFAULT_GUI_FONT)
         except AttributeError:  # wx3
             font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
         line_height = float(font.GetPixelSize()[1])
 
-        txt_name = sppasStaticText(self, label=self._filename)
-        txt_name.SetMinSize(wx.Size(-1, line_height * 2))
-
-        txt_msg = sppasStaticText(self, label=MSG_NO_CONTENT)
+        txt_msg = sppasStaticText(pane, label=MSG_NO_CONTENT)
         txt_msg.SetMinSize(wx.Size(-1, line_height * 2))
 
-        sizer.Add(txt_name, 0, wx.EXPAND | wx.LEFT, sppasPanel.fix_size(34))
-        sizer.Add(txt_msg, 0, wx.EXPAND | wx.LEFT, sppasPanel.fix_size(34*2))
-
-        self.SetSizer(sizer)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(txt_msg, 0, wx.EXPAND | wx.LEFT, sppasCollapsiblePanel.fix_size(34*2))
+        pane.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
     # Events management
@@ -150,14 +143,6 @@ class sppasBaseViewPanel(sppasPanel):
 
         """
         pass
-
-    # -----------------------------------------------------------------------
-    # Functionalities
-    # -----------------------------------------------------------------------
-
-    def get_line_height(self):
-        font = self.GetFont()
-        return int(float(font.GetPixelSize()[1]))
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
