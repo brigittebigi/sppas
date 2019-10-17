@@ -35,7 +35,6 @@
 """
 
 import wx
-import logging
 
 from .panel import sppasPanel
 from .text import sppasStaticText
@@ -398,4 +397,3 @@ class TestPanel(wx.Panel):
 
     def __on_btn_event(self, event):
         btn = event.GetEventObject()
-        logging.info('Event button {:s}'.format(btn.GetName()))

@@ -32,17 +32,22 @@
     src.ui.phoenix.windows.panel.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    A panel is a window on which controls are placed.
+    Panels of SPPAS allow to propagate properly fonts and colors defined in
+    the settings.
+
 """
 
 import wx
 import wx.lib.scrolledpanel as sc
 
+from .button import BitmapTextButton
 
 # ---------------------------------------------------------------------------
 
 
 class sppasPanel(wx.Panel):
-    """A panel is a window on which controls are placed.
+    """A panel with colors and fonts defined in the settings.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -60,10 +65,14 @@ class sppasPanel(wx.Panel):
 
     def __init_(self, *args, **kw):
         super(sppasPanel, self).__init__(*args, **kw)
-        s = wx.GetApp().settings
-        self.SetBackgroundColour(s.bg_color)
-        self.SetForegroundColour(s.fg_color)
-        self.SetFont(s.text_font)
+        try:
+            s = wx.GetApp().settings
+            self.SetBackgroundColour(s.bg_color)
+            self.SetForegroundColour(s.fg_color)
+            self.SetFont(s.text_font)
+        except AttributeError:
+            wx.LogWarning("Settings not defined. Use default colors and fonts.")
+            pass
         self.SetAutoLayout(True)
         self.SetMinSize(wx.Size(320, 200))
 
@@ -108,7 +117,6 @@ class sppasPanel(wx.Panel):
             obj_size = int(value)
         return obj_size
 
-
 # ---------------------------------------------------------------------------
 
 
@@ -131,10 +139,14 @@ class sppasScrolledPanel(sc.ScrolledPanel):
 
     def __init_(self, *args, **kw):
         super(sppasScrolledPanel, self).__init__(*args, **kw)
-        s = wx.GetApp().settings
-        self.SetBackgroundColour(s.bg_color)
-        self.SetForegroundColour(s.fg_color)
-        self.SetFont(s.text_font)
+        try:
+            s = wx.GetApp().settings
+            self.SetBackgroundColour(s.bg_color)
+            self.SetForegroundColour(s.fg_color)
+            self.SetFont(s.text_font)
+        except AttributeError:
+            wx.LogWarning("Settings not defined. Use default colors and fonts.")
+            pass
 
     # -----------------------------------------------------------------------
 
@@ -177,27 +189,49 @@ class sppasScrolledPanel(sc.ScrolledPanel):
             obj_size = int(value)
         return obj_size
 
-
 # ---------------------------------------------------------------------------
 
 
-class sppasCollapsiblePanel(wx.CollapsiblePane):
-    """A collapsible panel is a window on which controls are placed.
+class sppasCollapsiblePanel(sppasPanel):
 
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    def __init__(self, parent, id=wx.ID_ANY, label="", pos=wx.DefaultPosition,
+                 size=wx.DefaultSize, style=0, name="CollapsiblePane"):
+        """Create a CollapsiblePanel.
+        
+        :param parent: (wx.Window) Parent window must NOT be none
+        :param id: (int) window identifier or -1
+        :param label: (string) Label of the button
+        :param pos: (wx.Pos) the control position
+        :param size: (wx.Size) the control size
+        :param style: (int) the underlying window style
+        :param name: (str) the widget name.
 
-    """
+        The parent can Bind the wx.EVT_COLLAPSIBLEPANE_CHANGED.
 
-    def __init_(self, *args, **kw):
-        super(sppasCollapsiblePanel, self).__init__(*args, **kw)
-        s = wx.GetApp().settings
-        self.SetBackgroundColour(s.bg_color)
-        self.SetForegroundColour(s.fg_color)
-        self.SetFont(s.text_font)
+        """
+        sppasPanel.__init__(self, parent, id, pos, size, style, name)
+
+        self.__collapsed = True
+        self.__btn = self.create_button(label)
+        self.__icon_size = sppasCollapsiblePanel.fix_size(24)
+        self.__btn.SetMinSize(wx.Size(64, self.__icon_size))
+        self.__child_panel = sppasPanel(self, style=wx.TAB_TRAVERSAL | wx.NO_BORDER)
+        self.__child_panel.Hide()
+        self.__border = sppasCollapsiblePanel.fix_size(4)
+
+        try:
+            s = wx.GetApp().settings
+            self.SetBackgroundColour(s.bg_color)
+            self.SetForegroundColour(s.fg_color)
+            self.SetFont(s.text_font)
+        except AttributeError:
+            wx.LogWarning("Settings not defined. Use default colors and fonts.")
+            pass
+
+        self.Bind(wx.EVT_BUTTON, self.OnButton, self.__btn)
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.SetInitialSize()
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
@@ -226,68 +260,11 @@ class sppasCollapsiblePanel(wx.CollapsiblePane):
 
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def fix_size(value):
-        """Return a proportional size value.
-
-        :param value: (int)
-        :returns: (int)
-
-        """
-        try:
-            obj_size = int(float(value) * wx.GetApp().settings.size_coeff)
-        except AttributeError:
-            obj_size = int(value)
-        return obj_size
-
-
-# -----------------------------------------------------------------------------
-# PyCollapsiblePane
-# -----------------------------------------------------------------------------
-
-
-class PyCollapsiblePane(sppasPanel):
-
-    def __init__(self, parent, id=wx.ID_ANY, label="", pos=wx.DefaultPosition,
-                 size=wx.DefaultSize, style=0, name="CollapsiblePane"):
-        """Create a CollapsiblePanel.
-        
-        :param parent: (wx.Window) Parent window must NOT be none
-        :param id: (int) window identifier or -1
-        :param label: (string) Label of the button
-        :param pos: (wx.Pos) the control position
-        :param size: (wx.Size) the control size
-        :param style: (int) the underlying window style
-        :param name: (str) the widget name.
-
-        """
-        sppasPanel.__init__(self, parent, id, pos, size, style, name)
-
-        self.__btn = wx.Button(self, wx.ID_ANY, label, style=wx.BU_EXACTFIT)
-        self.__btn.SetMinSize(wx.Size(64, 32))
-        self.__child_panel = sppasPanel(self, style=wx.TAB_TRAVERSAL | wx.NO_BORDER)
-        self.__child_panel.Hide()
-        self.__collapsed = True
-
-        self.Bind(wx.EVT_BUTTON, self.OnButton, self.__btn)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
-        # self.SetInitialSize()
-        self.Layout()
-
     def GetPane(self):
-        """Return a reference to the pane window."""
+        """Return a reference to the embedded pane window."""
         return self.__child_panel
 
-    def GetBorder(self):
-        """Return the border in pixels (platform dependent). """
-        if wx.Platform == "__WXMAC__":
-            return 6
-        elif wx.Platform == "__WXGTK__":
-            return 3
-        elif wx.Platform == "__WXMSW__":
-            return self.__btn.ConvertDialogSizeToPixels(wx.Size(2, 0)).x
-        else:
-            return 5
+    # -----------------------------------------------------------------------
 
     def Collapse(self, collapse=True):
         """Collapse or expand the pane window.
@@ -298,27 +275,39 @@ class PyCollapsiblePane(sppasPanel):
         if self.IsCollapsed() == collapse:
             return
 
-        # to reduce your UI from appearing to flicker
-        self.Freeze()
         # update our state
+        self.Freeze()
+        if collapse is True:
+            self.__btn.SetImage("arrow_collapsed")
+        else:
+            self.__btn.SetImage("arrow_expanded")
         self.__child_panel.Show(not collapse)
         self.__collapsed = collapse
         self.InvalidateBestSize()
+
         # then display our changes
         self.Thaw()
         self.SetStateChange(self.GetBestSize())
+
+    # -----------------------------------------------------------------------
 
     def Expand(self):
         """Same as Collapse(False). """
         self.Collapse(False)
 
+    # -----------------------------------------------------------------------
+
     def IsCollapsed(self):
         """Return True if the pane window is currently hidden."""
         return self.__collapsed
 
+    # -----------------------------------------------------------------------
+
     def IsExpanded(self):
         """ Returns True` if the pane window is currently shown. """
         return not self.IsCollapsed()
+
+    # -----------------------------------------------------------------------
 
     def DoGetBestSize(self):
         """Get the size which best suits the window."""
@@ -327,40 +316,42 @@ class PyCollapsiblePane(sppasPanel):
 
         if self.IsExpanded():
             pbs = self.__child_panel.GetBestSize()
-            wx.LogDebug("  -> child panel best size = {:s}".format(str(pbs)))
             size.width = max(size.GetWidth(), pbs.x)
-            size.height = size.y + self.GetBorder() + pbs.y
+            size.height = size.y + self.__border + pbs.y
 
-        wx.LogDebug("  -> returned size {:s}".format(str(size)))
         return size
+
+    # -----------------------------------------------------------------------
 
     def Layout(self):
         """Do the layout."""
         # we need to complete the creation first
         if not self.__btn or not self.__child_panel:
-            wx.LogDebug("  -> we need to complete the creation first")
             return False
 
         w, h = self.GetSize()
-        bw = w
+        bw = w - self.__border
         bh = self.__btn.GetMinSize().GetHeight()
-        # move & resize the button
-        self.__btn.SetPosition((0, 0))
+        # fix pos and size of the button
+        self.__btn.SetPosition((self.__border, 0))
         self.__btn.SetSize(wx.Size(bw, bh))
 
         if self.IsExpanded():
-            # move & resize the container window
+            # fix pos and size of the child window
             pw, ph = self.GetSize()
-            yoffset = bh + self.GetBorder()
-            self.__child_panel.SetSize(wx.Size(w, ph - yoffset))
-            self.__child_panel.SetPosition((0, yoffset))
-
-            # this is very important to make the pane window layout show correctly
+            x = self.__border + self.__icon_size
+            y = bh + self.__border
+            pw = pw - x - self.__border      # left-right borders
+            ph = ph - y - self.__border      # top-bottom borders
+            self.__child_panel.SetSize(wx.Size(pw, ph))
+            self.__child_panel.SetPosition((x, y))
             self.__child_panel.Show(True)
             self.__child_panel.Layout()
             self.__child_panel.Refresh()
 
         return True
+
+    # -----------------------------------------------------------------------
 
     def SetStateChange(self, sz):
         """Handles the status changes (collapsing/expanding).
@@ -369,30 +360,25 @@ class PyCollapsiblePane(sppasPanel):
 
         """
         self.SetSize(sz)
-
-        ###top = wx.GetTopLevelParent(self)
         top = self.GetParent()
 
         if top.GetSizer():
-            if (wx.Platform == "__WXGTK__" and self.IsCollapsed()) or wx.Platform != "__WXGTK__":
+            if (wx.Platform == "__WXGTK__" and self.IsCollapsed()) or \
+                    wx.Platform != "__WXGTK__":
                 top.GetSizer().SetSizeHints(top)
 
         if self.IsCollapsed():
             # expanded -> collapsed transition
             if top.GetSizer():
-                # we have just set the size hints...
                 sz = top.GetSizer().CalcMin()
-
-                # use SetClientSize() and not SetSize() otherwise the size for
-                # e.g. a wxFrame with a menubar wouldn't be correctly set
                 top.SetClientSize(sz)
-            else:
-                top.Layout()
         else:
-            # collapsed . expanded transition
-            # force our parent to "fit", i.e. expand so that it can honour
-            # our best size
+            # collapsed -> expanded transition
             top.Fit()
+
+        wx.GetTopLevelParent(self).Layout()
+
+    # -----------------------------------------------------------------------
 
     def SetInitialSize(self, size=None):
         """Calculate and set a good size.
@@ -402,18 +388,15 @@ class PyCollapsiblePane(sppasPanel):
         """
         bw, bh = self.__btn.GetMinSize()
         self.SetMinSize(wx.Size(bw, bh))
-        wx.LogDebug("  -> min size: ({:d}, {:d}) ".format(bw, bh))
-
         if size is None:
             size = wx.DefaultSize
         wx.Window.SetInitialSize(self, size)
-        wx.LogDebug("  -> size: {:s}".format(str(size)))
 
     SetBestSize = SetInitialSize
 
-    # -----------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
     # Event handlers
-    # -----------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def OnButton(self, event):
         """Handle the wx.EVT_BUTTON event.
@@ -430,6 +413,8 @@ class PyCollapsiblePane(sppasPanel):
         ev = wx.CollapsiblePaneEvent(self, self.GetId(), self.IsCollapsed())
         self.GetEventHandler().ProcessEvent(ev)
 
+    # ------------------------------------------------------------------------
+
     def OnSize(self, event):
         """Handle the wx.EVT_SIZE event.
 
@@ -439,6 +424,43 @@ class PyCollapsiblePane(sppasPanel):
         # each time our size is changed, the child panel needs a resize.
         self.Layout()
 
+    # -----------------------------------------------------------------------
+
+    def create_button(self, text):
+        if self.__collapsed is True:
+            icon = "arrow_collapsed"
+        else:
+            icon = "arrow_expanded"
+        btn = BitmapTextButton(self, label=text, name=icon)
+        btn.LabelPosition = wx.RIGHT
+        btn.Align = wx.ALIGN_LEFT
+
+        btn.FocusStyle = wx.PENSTYLE_SOLID
+        btn.FocusWidth = 1
+        btn.FocusColour = self.GetForegroundColour()
+        btn.Spacing = sppasPanel.fix_size(4)
+        btn.BorderWidth = 0
+        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetMinSize(wx.Size(sppasPanel.fix_size(16),
+                               sppasPanel.fix_size(16)))
+
+        return btn
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def fix_size(value):
+        """Return a proportional size value.
+
+        :param value: (int)
+        :returns: (int)
+
+        """
+        try:
+            obj_size = int(float(value) * wx.GetApp().settings.size_coeff)
+        except AttributeError:
+            obj_size = int(value)
+        return obj_size
 
 # -----------------------------------------------------------------------
 
@@ -448,25 +470,27 @@ class TestPanel(sc.ScrolledPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(
             parent,
-            style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.VSCROLL,
+            style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.HSCROLL | wx.VSCROLL,
             name="Test Panels")
+        self.SetBackgroundColour(wx.WHITE)
 
         p1 = sppasPanel(self)
         self.MakePanelContent(p1)
 
-        p2 = PyCollapsiblePane(self, label="SPPAS Collapsible Panel (1)...")
+        p2 = sppasCollapsiblePanel(self, label="SPPAS Collapsible Panel (1)...")
         child_panel = p2.GetPane()
         child_panel.SetBackgroundColour(wx.BLUE)
         self.MakePanelContent(child_panel)
+        p2.Expand()
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p2)
 
-        p3 = PyCollapsiblePane(self, label="SPPAS Collapsible Panel (2)...")
+        p3 = sppasCollapsiblePanel(self, label="SPPAS Collapsible Panel (2)...")
         child_panel = p3.GetPane()
         child_panel.SetBackgroundColour(wx.YELLOW)
         self.MakePanelContent(child_panel)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p3)
 
-        p4 = PyCollapsiblePane(self, label="wx.CollapsiblePane")
+        p4 = sppasCollapsiblePanel(self, label="wx.CollapsiblePane")
         child_panel = p4.GetPane()
         child_panel.SetBackgroundColour(wx.GREEN)
         self.MakePanelContent(child_panel)
@@ -474,23 +498,21 @@ class TestPanel(sc.ScrolledPanel):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(p1, 0, wx.EXPAND)
-        sizer.Add(p2, 0, wx.EXPAND | wx.ALL, border=10)
-        sizer.Add(p3, 0, wx.EXPAND | wx.ALL, border=10)
+        sizer.Add(p2, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, border=10)
+        sizer.Add(p3, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, border=10)
         sizer.Add(p4, 0, wx.EXPAND | wx.ALL, border=10)
 
-        self.SetSizer(sizer)
-        sizer.Fit(self)
+        self.SetSizerAndFit(sizer)
         self.Layout()
-        self.SetupScrolling(scroll_x=False, scroll_y=True)
+        self.SetupScrolling(scroll_x=True, scroll_y=True)
         self.SetAutoLayout(True)
+
+        self.Bind(wx.EVT_SIZE, self.OnSize)
 
     def OnCollapseChanged(self, evt=None):
         panel = evt.GetEventObject()
         panel.SetFocus()
-        # self.OnChildFocus(evt)
-        # self.ScrollChildIntoView(panel)
-        self.Layout()
-        self.Refresh()
+        self.ScrollChildIntoView(panel)
 
     def MakePanelContent(self, pane):
         """Just make a few controls to put on the collapsible pane."""
@@ -527,3 +549,6 @@ class TestPanel(sc.ScrolledPanel):
         border.Add(addrSizer, 1, wx.EXPAND | wx.ALL, 5)
         pane.SetSizer(border)
         pane.Layout()
+
+    def OnSize(self, evt):
+        self.Layout()

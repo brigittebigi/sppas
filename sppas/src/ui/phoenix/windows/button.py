@@ -63,11 +63,11 @@
 
 import random
 import wx
+import wx.lib.scrolledpanel as sc
 import wx.lib.newevent
 from wx.lib.buttons import GenBitmapTextButton, GenButton, GenBitmapButton
 
 from ..tools import sppasSwissKnife
-from .panel import sppasScrolledPanel
 from .image import ColorizeImage
 
 # ---------------------------------------------------------------------------
@@ -380,7 +380,6 @@ class BaseButton(wx.Window):
             self._bordercolor = self.GetPenForegroundColour()
 
         self._default_bordercolor = self.GetPenForegroundColour()
-
 
     # -----------------------------------------------------------------------
 
@@ -1088,13 +1087,13 @@ class BitmapTextButton(BaseButton):
         """
         super(BitmapTextButton, self).__init__(
             parent, id, pos, size, name)
-        #BaseButton.SetForegroundColour(self, self.GetParent().GetForegroundColour())
 
         self._label = label
         self._labelpos = wx.BOTTOM
         self._spacing = 4
         self._default_bitmapcolor = self.GetPenForegroundColour()
         self._bitmapcolor = self._default_bitmapcolor
+        self._align = wx.ALIGN_CENTER  # or LEFT or RIGHT
 
         # The icon image
         self._image = None
@@ -1175,9 +1174,21 @@ class BitmapTextButton(BaseButton):
 
     # -----------------------------------------------------------------------
 
+    def GetAlign(self):
+        return self._align
+
+    def SetAlign(self, align=wx.ALIGN_CENTER):
+        """Set the position of the label: top, bottom, left, right."""
+        if align not in [wx.ALIGN_CENTER, wx.ALIGN_LEFT, wx.ALIGN_RIGHT]:
+            return
+        self._align = align
+
+    # -----------------------------------------------------------------------
+
     LabelPosition = property(GetLabelPosition, SetLabelPosition)
     BitmapColour = property(GetBitmapColour, SetBitmapColour)
     Spacing = property(GetSpacing, SetSpacing)
+    Align = property(GetAlign, SetAlign)
 
     # -----------------------------------------------------------------------
 
@@ -1200,7 +1211,7 @@ class BitmapTextButton(BaseButton):
             self.DrawFocusIndicator(dc, gc)
 
         x, y, w, h = self.GetClientRect()
-        bd = max(self.BorderWidth, 2)
+        bd = max(self.GetBorderWidth(), 2)
         x += bd
         y += bd
         w -= (2 * bd)
@@ -1223,8 +1234,8 @@ class BitmapTextButton(BaseButton):
             tw, th = self.get_text_extend(dc, gc, self._label)
 
             if self._labelpos == wx.BOTTOM or self._labelpos == wx.TOP:
-                # we need to know the available room to distribute it in margins
-                x_pos, y_pos, bmp_size = self.__get_bitmap_properties(
+                # spacing is applied vertically
+                x_bmp, y_pos, bmp_size = self.__get_bitmap_properties(
                     x, y + th + self._spacing,
                     w, h - th - 2 * self._spacing)
                 if bmp_size > 15:
@@ -1232,34 +1243,43 @@ class BitmapTextButton(BaseButton):
                     y += (margin // 2)
 
                 if self._labelpos == wx.BOTTOM:
+                    #self.__draw_bitmap(dc, gc, (w - bmp_size) // 2, y, bmp_size)
+                    self.__draw_bitmap(dc, gc, x_bmp, y, bmp_size)
                     self.__draw_label(dc, gc, (w - tw) // 2, h - th)
-                    self.__draw_bitmap(dc, gc, (w - bmp_size) // 2, y, bmp_size)
 
                 if self._labelpos == wx.TOP:
                     self.__draw_label(dc, gc, (w - tw) // 2, y)
-                    self.__draw_bitmap(dc, gc, x_pos, y_pos, bmp_size)
+                    self.__draw_bitmap(dc, gc, x_bmp, y_pos, bmp_size)
 
             if self._labelpos == wx.LEFT or self._labelpos == wx.RIGHT:
-                # we need to know the available room to distribute it in margins
-                x_pos, y_pos, bmp_size = self.__get_bitmap_properties(
-                    x + tw + self._spacing, y,
-                    w - tw - self._spacing, h)
+                # spacing is applied horizontally
+                x_bmp, y_bmp, bmp_size = self.__get_bitmap_properties(
+                    x, y, w - tw - self._spacing, h)
 
                 if bmp_size > 15:
                     margin = w - bmp_size - tw - self._spacing
-                    x += (margin // 2)
+                    if self._align == wx.ALIGN_RIGHT:
+                        x += margin
+                    elif self._align == wx.ALIGN_CENTER:
+                        x += (margin // 2)
 
                     if self._labelpos == wx.LEFT:
                         self.__draw_label(dc, gc, x, (h - (th//2)) // 2)
-                        self.__draw_bitmap(dc, gc, x + tw + self._spacing, y_pos, bmp_size)
+                        self.__draw_bitmap(dc, gc, x_bmp + self._spacing + tw, y_bmp, bmp_size)
 
                     if self._labelpos == wx.RIGHT:
-                        self.__draw_label(dc, gc, w - tw - (margin // 2), (h - (th//2)) // 2)
-                        self.__draw_bitmap(dc, gc, x, y_pos, bmp_size)
+                        self.__draw_bitmap(dc, gc, x_bmp, y_bmp, bmp_size)
+                        self.__draw_label(dc, gc, x_bmp + bmp_size + self._spacing, (h - (th//2)) // 2)
 
                 else:
-                    # not enough room for a bitmap. Center the text.
-                    self.__draw_label(dc, gc, (w - tw) // 2, (h - (th//2)) // 2)
+                    # not enough room for a bitmap.
+                    if self._align == wx.ALIGN_CENTER:
+                        self.__draw_label(dc, gc, (w - tw) // 2, (h - (th//2)) // 2)
+                    elif self._align == wx.ALIGN_LEFT:
+                        self.__draw_label(dc, gc, x, (h - (th//2)) // 2)
+                    elif self._align == wx.ALIGN_RIGHT:
+                        self.__draw_label(dc, gc, (w - tw), (h - (th//2)) // 2)
+
 
         if self._borderwidth > 0:
             self.DrawBorder(dc, gc)
@@ -1267,15 +1287,23 @@ class BitmapTextButton(BaseButton):
     # -----------------------------------------------------------------------
 
     def __get_bitmap_properties(self, x, y, w, h):
-        bmp_size = min(w, h)
-        margin = max(int(bmp_size * 0.1), 2)
+        # w, h is the available size
+        bmp_size = min(w, h)                  # force a squared button
+        margin = max(int(bmp_size * 0.2), 2)  # optimal margin (20% of btn size)
         bmp_size -= margin
-        x_pos = x + (margin // 2)
         y_pos = y + (margin // 2)
+        if self._align == wx.ALIGN_LEFT:
+            x_pos = x
+        elif self._align == wx.ALIGN_RIGHT:
+            x_pos = w - bmp_size
+        else:
+            x_pos = x + (margin // 2)
+
         if w < h:
             y_pos = (h - bmp_size + margin) // 2
         else:
-            x_pos = (w - bmp_size + margin) // 2
+            if self._align == wx.ALIGN_CENTER:
+                x_pos = (w - bmp_size + margin) // 2
 
         return x_pos, y_pos, bmp_size
 
@@ -1410,7 +1438,7 @@ class TextButton(BaseButton):
             self.DrawFocusIndicator(dc, gc)
 
         x, y, w, h = self.GetClientRect()
-        bd = max(self.BorderWidth, 2)
+        bd = max(self.GetBorderWidth(), 2)
         x += bd
         y += bd
         w -= (2 * bd)
@@ -2162,7 +2190,7 @@ class TestPanelButtonsInSizer(wx.Panel):
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(sppasScrolledPanel):
+class TestPanel(sc.ScrolledPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(
