@@ -51,6 +51,7 @@ import sppas.src.ui.phoenix.page_files.filesmanager as filesmanager
 import sppas.src.ui.phoenix.page_files.refsmanager as refsmanager
 import sppas.src.ui.phoenix.page_files.wksmanager as wksmanager
 import sppas.src.ui.phoenix.page_analyze.anz_tabs as anz_tabs
+import sppas.src.ui.phoenix.page_analyze.listview as listview
 import sppas.src.ui.phoenix.page_analyze.textview as textview
 import sppas.src.ui.phoenix.page_analyze.baseview as baseview
 import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
@@ -72,6 +73,7 @@ class TestPanel(wx.Choicebook):
 
         # Make the bunch of test panels for the choice book
         # self.AddPage(filestreectrl.TestPanel(self), "AGW Files tree ctrl")
+        self.AddPage(listview.TestPanel(self), "List view")
         self.AddPage(textview.TestPanel(self), "Text view")
         self.AddPage(baseview.TestPanel(self), "Base view")
         self.AddPage(filesmanager.TestPanel(self), "Dataview Files manager")

@@ -37,6 +37,7 @@
 import wx
 
 from ..main_events import EVT_VIEW
+from ..windows import sppasCollapsiblePanel
 from .anz_baseviews import BaseViewFilesPanel
 from .textview import TextViewPanel
 
@@ -62,7 +63,8 @@ class TextViewFilesPanel(BaseViewFilesPanel):
             parent,
             name=name,
             files=files)
-        self.SetupScrolling(scroll_x=False, scroll_y=True)
+        self.SetupScrolling(scroll_x=True, scroll_y=True)
+        self.Bind(wx.EVT_SIZE, self.OnSize)
 
     # -----------------------------------------------------------------------
 
@@ -82,11 +84,20 @@ class TextViewFilesPanel(BaseViewFilesPanel):
     # -----------------------------------------------------------------------
 
     def _show_file(self, name):
-        """Display the file."""
+        """Create a CollapsiblePanel and a TextViewPanel to display a file.
+
+        :param name: (str) Name of the file to view
+        :return: wx.Window
+
+        """
         wx.LogMessage("Displaying file {:s} in TextView mode.".format(name))
-        panel = TextViewPanel(self, filename=name)
+        cp = sppasCollapsiblePanel(self, label=name)
+        panel = TextViewPanel(cp, filename=name)
         panel.SetHighLightColor(self._hicolor)
-        self.GetSizer().Add(panel, 0, wx.EXPAND)
+        cp.SetPane(panel)
+        self.GetSizer().Add(cp, 0, wx.EXPAND)
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, cp)
+
         return panel
 
     # -----------------------------------------------------------------------
@@ -128,13 +139,21 @@ class TextViewFilesPanel(BaseViewFilesPanel):
             wx.LogError(str(e))
             return
 
-        if action == "size":
-            self.Layout()
-            self.Refresh()
-
-        elif action == "save":
+        if action == "save":
             self.notify(action="save", filename=fn)
 
         elif action == "close":
             self.notify(action="close", filename=fn)
 
+    # -----------------------------------------------------------------------
+
+    def OnSize(self, evt):
+        self.Layout()
+        self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def OnCollapseChanged(self, evt=None):
+        panel = evt.GetEventObject()
+        panel.SetFocus()
+        self.ScrollChildIntoView(panel)

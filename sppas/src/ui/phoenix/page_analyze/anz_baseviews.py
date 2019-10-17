@@ -59,7 +59,7 @@ class BaseViewFilesPanel(sppasScrolledPanel):
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
             size=wx.DefaultSize,
-            style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
+            style=wx.BORDER_NONE | wx.VSCROLL | wx.HSCROLL | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
         # The files of this panel (key=name, value=wx.SizerItem)
@@ -162,6 +162,11 @@ class BaseViewFilesPanel(sppasScrolledPanel):
                 if child == page:
                     self.GetSizer().Remove(i)
                     break
+                for c in child.GetChildren():
+                    if c == page:
+                        self.GetSizer().Remove(i)
+                        break
+
             page.Destroy()
 
             # Delete of the list
@@ -211,9 +216,11 @@ class BaseViewFilesPanel(sppasScrolledPanel):
     # -----------------------------------------------------------------------
 
     def _show_file(self, name):
-        """Display the file.
+        """Create a panel to display a single file.
 
         Must be overridden.
+
+        :return: wx.Window
 
         """
         raise NotImplementedError

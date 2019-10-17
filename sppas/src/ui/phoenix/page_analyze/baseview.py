@@ -41,7 +41,7 @@ from sppas import msg
 from sppas import paths
 from sppas.src.utils import u
 
-from ..windows import sppasCollapsiblePanel
+from ..windows import sppasPanel
 from ..windows import sppasStaticText
 
 # ----------------------------------------------------------------------------
@@ -57,7 +57,7 @@ MSG_NO_CONTENT = _("Displaying a file is not implemented in this view.")
 # ----------------------------------------------------------------------------
 
 
-class sppasBaseViewPanel(sppasCollapsiblePanel):
+class sppasBaseViewPanel(sppasPanel):
     """Panel to display the content of a file.
 
     :author:       Brigitte Bigi
@@ -72,7 +72,6 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
         super(sppasBaseViewPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
-            label=filename,
             pos=wx.DefaultPosition,
             size=wx.DefaultSize,
             style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
@@ -117,19 +116,18 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
 
     def _create_content(self):
         """Create the main content, ie the content of the embedded panel."""
-        pane = self.GetPane()
         try:  # wx4
             font = wx.SystemSettings().GetFont(wx.SYS_DEFAULT_GUI_FONT)
         except AttributeError:  # wx3
             font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
         line_height = float(font.GetPixelSize()[1])
 
-        txt_msg = sppasStaticText(pane, label=MSG_NO_CONTENT)
+        txt_msg = sppasStaticText(self, label=MSG_NO_CONTENT)
         txt_msg.SetMinSize(wx.Size(-1, line_height * 2))
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(txt_msg, 0, wx.EXPAND | wx.LEFT, sppasCollapsiblePanel.fix_size(34*2))
-        pane.SetSizer(sizer)
+        sizer.Add(txt_msg, 0, wx.EXPAND | wx.LEFT, sppasPanel.fix_size(34*2))
+        self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
     # Events management

@@ -515,10 +515,6 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
 
         else:
             value = self.__mapper[col].get_value(node)
-            # if value is True:
-            #    value = "X"
-            # elif value is False:
-            #     value = ""
 
         return value
 

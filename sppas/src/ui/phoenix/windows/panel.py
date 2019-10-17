@@ -264,6 +264,22 @@ class sppasCollapsiblePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def SetPane(self, pane):
+        """Set given pane to the embedded pane window.
+
+        The parent of pane must be self.
+
+        """
+        if pane.GetParent() != self:
+            raise ValueError("Bad parent for pane {:s}.".format(pane.GetName()))
+        self.__child_panel.Destroy()
+        self.__child_panel = pane
+        if self.__collapsed is True:
+            self.__child_panel.Hide()
+        self.Layout()
+
+    # -----------------------------------------------------------------------
+
     def Collapse(self, collapse=True):
         """Collapse or expand the pane window.
 
@@ -424,6 +440,12 @@ class sppasCollapsiblePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def get_line_height(self):
+        font = self.GetFont()
+        return int(float(font.GetPixelSize()[1]))
+
+    # -----------------------------------------------------------------------
+
     def create_button(self, text):
         if self.__collapsed is True:
             icon = "arrow_collapsed"
@@ -461,12 +483,6 @@ class sppasCollapsiblePanel(sppasPanel):
             obj_size = int(value)
         return obj_size
 
-    # -----------------------------------------------------------------------
-
-    def get_line_height(self):
-        font = self.GetFont()
-        return int(float(font.GetPixelSize()[1]))
-
 # -----------------------------------------------------------------------
 
 
@@ -490,9 +506,10 @@ class TestPanel(sc.ScrolledPanel):
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p2)
 
         p3 = sppasCollapsiblePanel(self, label="SPPAS Collapsible Panel (2)...")
-        child_panel = p3.GetPane()
+        child_panel = sppasPanel(p3)
         child_panel.SetBackgroundColour(wx.YELLOW)
         self.MakePanelContent(child_panel)
+        p3.SetPane(child_panel)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p3)
 
         p4 = sppasCollapsiblePanel(self, label="wx.CollapsiblePane")

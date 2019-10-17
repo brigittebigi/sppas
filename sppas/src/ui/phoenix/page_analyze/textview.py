@@ -137,14 +137,12 @@ class TextViewPanel(sppasBaseViewPanel):
 
     def _create_content(self):
         """Create the main content, ie the content of the embedded panel."""
-        pane = self.GetPane()
-
-        line1 = self.__create_hline(pane)
+        line1 = self.__create_hline(self)
         line1.SetName("line1")
-        tb = self.__create_toolbar(pane)
+        tb = self.__create_toolbar(self)
         style = wx.NO_BORDER | wx.TE_MULTILINE | wx.TE_RICH | \
                 wx.TE_PROCESS_ENTER | wx.TE_BESTWRAP | wx.TE_NO_VSCROLL
-        self.__txtview = sppasTextCtrl(pane, style=style, name="textctrl")
+        self.__txtview = sppasTextCtrl(self, style=style, name="textctrl")
         self.__txtview.SetFont(wx.GetApp().settings.mono_text_font)
         self.__txtview.SetEditable(True)
         self.__txtview.SetModified(False)
@@ -152,9 +150,9 @@ class TextViewPanel(sppasBaseViewPanel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(line1, 0, wx.EXPAND | wx.ALL, 2)
         sizer.Add(tb, 0, wx.EXPAND)
-        sizer.Add(self.__create_hline(pane), 0, wx.EXPAND | wx.ALL, 2)
+        sizer.Add(self.__create_hline(self), 0, wx.EXPAND | wx.ALL, 2)
         sizer.Add(self.__txtview, 1, wx.EXPAND)
-        pane.SetSizer(sizer)
+        self.SetSizer(sizer)
 
     # ------------------------------------------------------------------------
 
@@ -178,6 +176,12 @@ class TextViewPanel(sppasBaseViewPanel):
         line.SetDepth(2)
         line.SetForegroundColour(self._hicolor)
         return line
+
+    # -----------------------------------------------------------------------
+
+    def get_line_height(self):
+        font = self.GetFont()
+        return int(float(font.GetPixelSize()[1]))
 
     # -----------------------------------------------------------------------
 
