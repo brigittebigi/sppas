@@ -156,7 +156,7 @@ class ToggledIconRenderer(wx.dataview.DataViewCustomRenderer):
         """Draw the bitmap, adjusting its size. """
         x, y, w, h = rect
         s = min(w, h)
-        s = int(0.7 * s)
+        s = int(0.8 * s)
 
         if self.value is True:
             icon_value = "choice_checked"
@@ -219,7 +219,7 @@ class SelectedIconRenderer(wx.dataview.DataViewCustomRenderer):
         """Draw the bitmap, adjusting its size. """
         x, y, w, h = rect
         s = min(w, h)
-        s = int(0.7 * s)
+        s = int(0.8 * s)
 
         if self.value is True:
             icon_value = "radio_checked"

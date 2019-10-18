@@ -42,11 +42,12 @@ from .anndataexc import HierarchyAssociationError
 from .anndataexc import HierarchyParentTierError
 from .anndataexc import HierarchyChildTierError
 from .anndataexc import HierarchyAncestorTierError
+from .metadata import sppasMetaData
 
 # ----------------------------------------------------------------------------
 
 
-class sppasHierarchy(object):
+class sppasHierarchy(sppasMetaData):
     """Generic representation of a hierarchy between tiers.
     
     :author:       Brigitte Bigi
@@ -61,7 +62,7 @@ class sppasHierarchy(object):
         the points of a child tier are all equals to the points of
         a reference tier, as for example:
 
-            | parent:  Words      | l' |  âne  | est |  là   |
+            | parent:  Words      | l' |  âne  | est  |  là   |
             | child:   Lemmas     | le |  âne  | être |  là  |
 
       - TimeAlignment:
@@ -86,8 +87,8 @@ class sppasHierarchy(object):
 
     Todo is to consider a time association that is not fully completed:
 
-            | parent:  Tokens     | l' |  âne  | euh | euh | est |  là   | @ |
-            | child:   Lemmas     | le |  âne  |           | être |  là  |
+            | parent:  Tokens | l' |  âne  | euh | euh | est  |  là   | @ |
+            | child:   Lemmas | le |  âne  |           | être |  là  |
 
     """
     types = {"TimeAssociation", "TimeAlignment"}

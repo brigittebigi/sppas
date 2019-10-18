@@ -99,7 +99,34 @@ class TrsViewCtrl(BaseTreeViewCtrl):
             col = BaseTreeViewCtrl._create_column(self._model, i)
             wx.dataview.DataViewCtrl.AppendColumn(self, col)
 
+        self.Bind(wx.dataview.EVT_DATAVIEW_ITEM_ACTIVATED, self._on_item_activated)
+        self.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED, self._on_item_selection_changed)
         self.SetMinSize(wx.Size(-1, 64))
+
+    # ------------------------------------------------------------------------
+
+    def _on_item_activated(self, event):
+        """Happens when the user activated a cell (double-click).
+
+        This event is triggered by double clicking an item or pressing some
+        special key (usually "Enter") when it is focused.
+
+        """
+        item = event.GetItem()
+        if item is not None:
+            self._model.check(event.GetColumn(), item)
+            self.Unselect(item)
+
+    # ------------------------------------------------------------------------
+
+    def _on_item_selection_changed(self, event):
+        """Happens when the user simple-click a cell.
+
+        """
+        item = event.GetItem()
+        if item is not None:
+            self._model.check(event.GetColumn(), item)
+            self.Unselect(item)
 
 # ----------------------------------------------------------------------------
 # Model
@@ -140,12 +167,55 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
     def set_data(self, filename):
         parser = sppasRW(filename)
         self._data = parser.read()
+        self._data.set_meta("checked", "False")
+        self._data.get_hierarchy().set_meta("checked", "False")
         for tier in self._data.get_tier_list():
             tier.set_meta("checked", "False")
         for media in self._data.get_media_list():
             media.set_meta("checked", "False")
         for vocab in self._data.get_ctrl_vocab_list():
             vocab.set_meta("checked", "False")
+
+    # -----------------------------------------------------------------------
+
+    def check(self, col, item):
+        """Change state value.
+
+        :param col: (int) Column index.
+        :param item: (wx.dataview.DataViewItem)
+
+        """
+        try:
+            if item is None:
+                return
+            node = self.ItemToObject(item)
+            if node is None:
+                return
+        except:
+            return
+        cur_state = TrsViewModel.str_to_bool(node.get_meta("checked", "False"))
+
+        cur_state = not cur_state
+        try:
+            node.set_meta("checked", str(cur_state))
+            self.ItemChanged(item)
+        except Exception as e:
+            wx.LogMessage('Value not modified for node {:s}'.format(node))
+            wx.LogError(str(e))
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def str_to_bool(value):
+        if value.lower() == "true":
+            return True
+        try:
+            if value.isdigit() and int(value) > 0:
+                return True
+        except AttributeError:
+            pass
+        return False
+
 
     # -----------------------------------------------------------------------
     # Manage column properties
@@ -233,15 +303,23 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
 
         """
         if not parent:
-            #children.append(self.ObjectToItem(self._data))
+            children.append(self.ObjectToItem(self._data))
+            i = 1
             for tier in self._data.get_tier_list():
                 children.append(self.ObjectToItem(tier))
+                i += 1
             for media in self._data.get_media_list():
                 children.append(self.ObjectToItem(media))
+                i += 1
             for vocab in self._data.get_ctrl_vocab_list():
                 children.append(self.ObjectToItem(vocab))
+                i += 1
+            hierarchy = self._data.get_hierarchy()
+            if hierarchy is not None:
+                self.ObjectToItem(hierarchy)
+                i += 1
 
-            return len(self._data)
+            return i
 
         # Otherwise we'll fetch the python object associated with the parent
         # item and make DV items for each of its child objects.
@@ -291,8 +369,6 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
     # Manage the items
     # -----------------------------------------------------------------------
 
-    # -----------------------------------------------------------------------
-
     def HasValue(self, item, col):
         """Overridden.
 
@@ -332,11 +408,17 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
             return t
 
         elif col_id == "size":
-            value = str(len(node))
+            if isinstance(node, (sppasTier, sppasHierarchy)):
+                # number of annotations
+                value = str(len(node))
+            else:
+                value = ""
 
         else:
-            # Get the value of the object
-            value = str(self.__mapper[col].get_value(node))
+            value = "Metadata"
+            if node != self._data:
+                # Get the value of the object
+                value = str(self.__mapper[col].get_value(node))
 
         return value
 
@@ -355,6 +437,8 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
             col.width = sppasPanel.fix_size(80)
             col.align = wx.ALIGN_LEFT
             col.add_fct_name(sppasTier, "get_name")
+            col.add_fct_name(sppasMedia, "get_filename")
+            col.add_fct_name(sppasCtrlVocab, "get_name")
 
         else:
             # type (=tier/ctrlvocab/media/metadata...)
@@ -374,7 +458,8 @@ class TestPanel(sppasPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
-        self.SetBackgroundColour(wx.Colour(128, 128, 128))
+        self.SetBackgroundColour(wx.Colour(28, 28, 28))
+        self.SetForegroundColour(wx.Colour(228, 228, 228))
 
         p1 = TrsViewCtrl(self, filename=os.path.join(
             paths.samples,

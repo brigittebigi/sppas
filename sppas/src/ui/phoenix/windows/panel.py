@@ -295,7 +295,11 @@ class sppasCollapsiblePanel(sppasPanel):
             self.__btn.SetImage("arrow_collapsed")
         else:
             self.__btn.SetImage("arrow_expanded")
-        self.__child_panel.Show(not collapse)
+
+        if collapse is True:
+            self.__child_panel.HideWithEffect(wx.SHOW_EFFECT_SLIDE_TO_LEFT, 200)
+        else:
+            self.__child_panel.ShowWithEffect(wx.SHOW_EFFECT_ROLL_TO_RIGHT, 200)
         self.__collapsed = collapse
         self.InvalidateBestSize()
 
@@ -498,14 +502,14 @@ class TestPanel(sc.ScrolledPanel):
         p1 = sppasPanel(self)
         self.MakePanelContent(p1)
 
-        p2 = sppasCollapsiblePanel(self, label="SPPAS Collapsible Panel (1)...")
+        p2 = sppasCollapsiblePanel(self, label="SPPAS Collapsible Panel...")
         child_panel = p2.GetPane()
         child_panel.SetBackgroundColour(wx.BLUE)
         self.MakePanelContent(child_panel)
         p2.Expand()
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p2)
 
-        p3 = sppasCollapsiblePanel(self, label="SPPAS Collapsible Panel (2)...")
+        p3 = sppasCollapsiblePanel(self, label="SPPAS Collapsible Panel using SetPane...")
         child_panel = sppasPanel(p3)
         child_panel.SetBackgroundColour(wx.YELLOW)
         self.MakePanelContent(child_panel)

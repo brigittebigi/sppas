@@ -100,12 +100,13 @@ class BitmapWindow(wx.Window):
 
     def __init__(self, name):
         super(BitmapWindow, self).__init__()
-        dc = wx.ClientDC(self)
-        dc.SetFont(self.GetFont())
-        size = dc.GetTextExtent('TT')
-        w, h = size[1] * 2, size[1] * 2
-        s = min(w, h)
-        s = int(0.8 * s)
+        #dc = wx.ClientDC(self)
+        #dc.SetFont(self.GetFont())
+        #size = dc.GetTextExtent('TT')
+        #w, h = size[1] * 2, size[1] * 2
+        #s = min(w, h)
+        #s = int(0.8 * s)
+        s = 32
         self.bmp = sppasSwissKnife.get_bmp_icon(name, s)
 
     def get_window(self):
@@ -126,12 +127,13 @@ class StateWindow(wx.Window):
 
     def __init__(self, state):
         super(StateWindow, self).__init__()
-        dc = wx.ClientDC(self)
-        dc.SetFont(self.GetFont())
-        size = dc.GetTextExtent('TT')
-        w, h = size[1] * 2, size[1] * 2
-        s = min(w, h)
-        s = int(0.9 * s)
+        #dc = wx.ClientDC(self)
+        #dc.SetFont(self.GetFont())
+        #size = dc.GetTextExtent('TT')
+        #w, h = size[1] * 2, size[1] * 2
+        #s = min(w, h)
+        #s = int(0.9 * s)
+        s = 32
 
         if state in StateWindow.ICON_NAMES:
             icon_value = StateWindow.ICON_NAMES[state]
@@ -329,9 +331,9 @@ class FileTreeView(sppasPanel):
             self.__mapper[i] = FileTreeView.__create_col_properties(c)
             self.__create_col(self.__mapper[i])
 
-        self.root = self.tree.AddRoot("")
-        self.tree.Expand(self.root)
-        self.tree.SetMainColumn(1)
+        self.root = self.tree.GetMainWindow().AddRoot("")
+        self.tree.GetMainWindow().Expand(self.root)
+        self.tree.GetMainWindow().SetMainColumn(1)
 
         sizer = wx.BoxSizer()
         sizer.Add(self.tree, 1, wx.EXPAND)
