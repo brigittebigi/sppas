@@ -49,7 +49,7 @@ from ..windows import sppasDialog
 from ..windows import sppasScrolledPanel
 from ..windows import sppasProgressDialog
 from ..windows import sppasPanel
-from ..windows import sppasTextCtrl, sppasTitleText
+from ..windows import sppasMessageText, sppasTitleText
 from ..windows import sppasStaticLine
 from ..windows import BitmapTextButton, sppasTextButton
 
@@ -286,7 +286,6 @@ class sppasPluginsList(sppasScrolledPanel):
         line.SetSize(wx.Size(-1, depth))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(depth)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line
 
     # -----------------------------------------------------------------------
@@ -404,19 +403,10 @@ class sppasPluginDescription(sppasPanel):
 
     def __create_description_sizer(self):
         s = wx.BoxSizer(wx.VERTICAL)
-        tt = sppasTitleText(self, label=self.__plugin.get_name(), name="text_title")
-
-        text_style = wx.TAB_TRAVERSAL | \
-                     wx.TE_MULTILINE | \
-                     wx.TE_READONLY | \
-                     wx.TE_BESTWRAP | \
-                     wx.TE_AUTO_URL | \
-                     wx.NO_BORDER | \
-                     wx.TE_RICH
-        td = sppasTextCtrl(self, value=self.__plugin.get_descr(), style=text_style)
-
-        s.Add(tt, 0, wx.ALIGN_CENTRE_VERTICAL, wx.ALL, 4)
-        s.Add(td, 1, wx.EXPAND | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 4)
+        tt = sppasTitleText(self, value=self.__plugin.get_name(), name="text_title")
+        td = sppasMessageText(self, self.__plugin.get_descr())
+        s.Add(tt, 1, wx.EXPAND | wx.ALL, 4)
+        s.Add(td, 3, wx.EXPAND | wx.ALL, 4)
         return s
 
     # -----------------------------------------------------------------------

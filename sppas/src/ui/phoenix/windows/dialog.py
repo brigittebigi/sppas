@@ -43,6 +43,7 @@ from ..tools import sppasSwissKnife
 from . import sppasBitmapTextButton
 from . import sppasStaticBitmap
 from . import sppasStaticLine
+from . import sppasTitleText
 from . import sppasPanel
 
 # ----------------------------------------------------------------------------
@@ -203,19 +204,21 @@ class sppasDialog(wx.Dialog):
         :param icon_name: (str) Base name of the icon.
 
         """
+        spacing = self.fix_size(10)
         # Create the header panel and sizer
         panel = sppasPanel(self, name="header")
-        panel.SetMinSize((-1, wx.GetApp().settings.title_height))
+        panel.SetMinSize(wx.Size(-1, wx.GetApp().settings.title_height))
         sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # Add the icon, at left, with its title
         if icon_name is not None:
             static_bmp = sppasStaticBitmap(panel, icon_name)
             sizer.Add(static_bmp, 0,
-                      wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10)
+                      wx.LEFT | wx.ALIGN_CENTER_VERTICAL, spacing)
 
-        txt = wx.StaticText(panel, label=title)
-        sizer.Add(txt, 0, wx.ALIGN_CENTER_VERTICAL)
+        txt = sppasTitleText(panel, value=title)
+        txt.SetAlignment(wx.TEXT_ALIGNMENT_LEFT)
+        sizer.Add(txt, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, spacing)
 
         # This header panel properties
         panel.SetSizer(sizer)
@@ -313,19 +316,19 @@ class sppasDialog(wx.Dialog):
         line.SetSize(wx.Size(depth, -1))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(depth)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line
 
     # ------------------------------------------------------------------------
 
-    def HorizLine(self, parent, depth=3):
+    def HorizLine(self, parent, depth=2):
         """Return an horizontal static line."""
-        line = sppasStaticLine(parent, orient=wx.LI_HORIZONTAL)
+        nid = wx.NewId()
+        line = sppasStaticLine(parent, nid, orient=wx.LI_HORIZONTAL,
+                               name="line"+str(nid))
         line.SetMinSize(wx.Size(-1, depth))
         line.SetSize(wx.Size(-1, depth))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(depth)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line
 
     # ---------------------------------------------------------------------------
@@ -375,27 +378,24 @@ class sppasDialog(wx.Dialog):
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
 
-        # apply new (or not) 'wx' values to content.
-        p = self.FindWindow("content")
-        if p is not None:
-            p.SetBackgroundColour(wx.GetApp().settings.bg_color)
-            p.SetForegroundColour(wx.GetApp().settings.fg_color)
-            p.SetFont(wx.GetApp().settings.text_font)
+        for w in self.GetChildren():
+            name = w.GetName()
+            if name == "header":
+                w.SetBackgroundColour(wx.GetApp().settings.header_bg_color)
+                w.SetForegroundColour(wx.GetApp().settings.header_fg_color)
+                w.SetFont(wx.GetApp().settings.header_text_font)
+            elif name == "actions":
+                w.SetBackgroundColour(wx.GetApp().settings.action_bg_color)
+                w.SetForegroundColour(wx.GetApp().settings.action_fg_color)
+                w.SetFont(wx.GetApp().settings.action_text_font)
+            else:
+                w.SetBackgroundColour(wx.GetApp().settings.bg_color)
+                w.SetForegroundColour(wx.GetApp().settings.fg_color)
+                w.SetFont(wx.GetApp().settings.text_font)
+            w.Layout()
+            w.Refresh()
 
-        # apply new (or not) 'wx' values to header.
-        p = self.FindWindow("header")
-        if p is not None:
-            p.SetBackgroundColour(wx.GetApp().settings.header_bg_color)
-            p.SetForegroundColour(wx.GetApp().settings.header_fg_color)
-            p.SetFont(wx.GetApp().settings.header_text_font)
-
-        # apply new (or not) 'wx' values to actions.
-        p = self.FindWindow("actions")
-        if p is not None:
-            p.SetBackgroundColour(wx.GetApp().settings.action_bg_color)
-            p.SetForegroundColour(wx.GetApp().settings.action_fg_color)
-            p.SetFont(wx.GetApp().settings.action_text_font)
-
+        self.Layout()
         self.Refresh()
 
     # ---------------------------------------------------------------------------

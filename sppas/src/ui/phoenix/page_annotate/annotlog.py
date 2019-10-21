@@ -63,7 +63,7 @@ def _(message):
 ERROR_COLOUR = wx.Colour(220, 30, 10)     # red
 INFO_COLOUR = wx.Colour(55, 30, 200)      # blue
 IGNORE_COLOUR = wx.Colour(140, 100, 160)  # gray-violet
-WARNING_COLOUR = wx.Colour(240, 190, 45)  # orange
+WARNING_COLOUR = wx.Colour(250, 150, 40)  # orange
 OK_COLOUR = wx.Colour(25, 160, 50)        # green
 
 # ---------------------------------------------------------------------------

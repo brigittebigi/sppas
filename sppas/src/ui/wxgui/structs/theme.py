@@ -63,7 +63,7 @@ class sppasTheme(object):
     # Define the main font
     MAIN_FONTSIZE = 9
     if wx.Platform == '__WXMAC__':
-        MAIN_FONTSIZE = 12
+        MAIN_FONTSIZE = 11
     elif wx.Platform == '__WXGTK__':
         MAIN_FONTSIZE = 8
     MAIN_FONT = (MAIN_FONTSIZE,

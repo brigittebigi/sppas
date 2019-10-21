@@ -62,18 +62,18 @@ class FileSupports:
 
     supports = {
         "metadata_support": ui_translation.gettext('Metadata'),
-        "point_support": ui_translation.gettext('Point'),
-        "interval_support": ui_translation.gettext('Interval'),
-        "alternative_localization_support": ui_translation.gettext('Alt. loc'),
-        "alternative_tag_support": ui_translation.gettext('Alt. tag'),
-        "radius_support": ui_translation.gettext('Vagueness'),
-        "gaps_support": ui_translation.gettext('Gaps'),
-        "overlaps_support": ui_translation.gettext('Overlaps'),
         "multi_tiers_support": ui_translation.gettext('Multi tiers'),
         "no_tiers_support": ui_translation.gettext('No tier'),
+        "point_support": ui_translation.gettext('Point'),
+        "interval_support": ui_translation.gettext('Interval'),
+        "gaps_support": ui_translation.gettext('Gaps'),
+        "overlaps_support": ui_translation.gettext('Overlaps'),
         "hierarchy_support": ui_translation.gettext('Hierarchy'),
         "ctrl_vocab_support": ui_translation.gettext('Ctrl vocab'),
         "media_support": ui_translation.gettext('Media'),
+        "radius_support": ui_translation.gettext('Vagueness'),
+        "alternative_localization_support": ui_translation.gettext('Alt. loc'),
+        "alternative_tag_support": ui_translation.gettext('Alt. tag'),
     }
 
 # ---------------------------------------------------------------------------

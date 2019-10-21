@@ -159,7 +159,7 @@ class sppasFilesPanel(sppasPanel):
         line.SetSize(wx.Size(2, -1))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(2)
-        line.SetForegroundColour(wx.Colour(128, 128, 128, 128))
+        # line.SetForegroundColour(wx.Colour(128, 128, 128, 128))
         return line
 
     # -----------------------------------------------------------------------

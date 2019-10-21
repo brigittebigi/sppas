@@ -297,9 +297,9 @@ class sppasCollapsiblePanel(sppasPanel):
             self.__btn.SetImage("arrow_expanded")
 
         if collapse is True:
-            self.__child_panel.HideWithEffect(wx.SHOW_EFFECT_SLIDE_TO_LEFT, 200)
+            self.__child_panel.Hide()
         else:
-            self.__child_panel.ShowWithEffect(wx.SHOW_EFFECT_ROLL_TO_RIGHT, 200)
+            self.__child_panel.Show()
         self.__collapsed = collapse
         self.InvalidateBestSize()
 

@@ -67,8 +67,8 @@ MSG_NO_FILE = _("No file(s) selected to be converted.")
 
 MSG_PROCESS_TODO = _("To do")
 MSG_PROCESS_IGNORED = _("File is already existing. Ignored.")
-MSG_PROCESS_READING = _("Reading...")
-MSG_PROCESS_WRITING = _("Writing...")
+MSG_PROCESS_READING = _("Reading") + "..."
+MSG_PROCESS_WRITING = _("Writing") + "..."
 MSG_PROCESS_DONE = _("Done")
 
 # ---------------------------------------------------------------------------

@@ -260,19 +260,19 @@ class FrameSPPAS(wx.Frame):
 
         elif ide == ID_COMPONENTS:
             self.actions = AnalyzePanel(self._right_panel, self.preferences)
-            self.actionsmenu.ShowBack(True, "   " + _("Analyze"))
+            self.actionsmenu.ShowBack(True, " " + _("Analyze") + " ")
 
         elif ide == ID_ANNOTATIONS:
             self.actions = AnnotationsPanel(self._right_panel, self.preferences)
-            self.actionsmenu.ShowBack(True, "   " + _("Annotate"))
+            self.actionsmenu.ShowBack(True, " " + _("Annotate") + " ")
 
         elif ide == wx.ID_ABOUT:
             self.actions = AboutSPPASPanel(self._right_panel, self.preferences)
-            self.actionsmenu.ShowBack(True, "   " + _("About"))
+            self.actionsmenu.ShowBack(True, " " + _("About") + " ")
 
         elif ide == ID_PLUGINS:
             self.actions = PluginsPanel(self._right_panel, self.preferences)
-            self.actionsmenu.ShowBack(True, "   " + _("Plugins"))
+            self.actionsmenu.ShowBack(True, " " + _("Plugins") + " ")
 
         self._rightsizer.Add(self.actions, proportion=1, flag=wx.ALL | wx.EXPAND, border=0)
         self._LayoutFrame()

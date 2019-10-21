@@ -221,7 +221,6 @@ class TabsManager(sppasPanel):
         line.SetMinSize(wx.Size(-1, 20))
         line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
         line.SetDepth(1)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line
 
     # -----------------------------------------------------------------------

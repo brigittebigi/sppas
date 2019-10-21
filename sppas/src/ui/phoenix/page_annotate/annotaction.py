@@ -37,17 +37,35 @@
 import wx
 import os
 
+from sppas import msg, u
 from sppas import annots, paths
 
 from ..windows import sppasStaticLine
 from ..windows import sppasToolbar
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
-from ..windows import sppasStaticText
+from ..windows import sppasSimpleText
 from ..windows import BitmapTextButton, CheckButton
 
 from .annotevent import PageChangeEvent
 from .annotselect import LANG_NONE
+
+
+# ---------------------------------------------------------------------------
+# List of displayed messages:
+
+
+def _(message):
+    return u(msg(message, "ui"))
+
+
+MSG_STEP_FORMAT = _("STEP 1: choose an output file format")
+MSG_STEP_LANG = _("STEP 2: fix the language(s)")
+MSG_STEP_ANNCHOICE = _("STEP 3: select annotations")
+MSG_STEP_RUN = _("STEP 4: perform the annotations")
+MSG_STEP_REPORT = _("STEP 5: read the procedure outcome report")
+MSG_BTN_RUN = _("Let's go!")
+MSG_BTN_REPORT = _("Show report")
 
 # ---------------------------------------------------------------------------
 
@@ -73,7 +91,6 @@ class sppasActionAnnotatePanel(sppasPanel):
 
         self._create_content()
         self._setup_events()
-
         self.Layout()
 
     # ------------------------------------------------------------------------
@@ -114,83 +131,144 @@ class sppasActionAnnotatePanel(sppasPanel):
         line.SetMinSize(wx.Size(-1, 20))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(1)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line
 
     # ------------------------------------------------------------------------
 
     def _create_action_content(self):
         """Create the left content with actions."""
+        panel = sppasScrolledPanel(self)
 
-        # The output file format
-        stf = sppasStaticText(self, label="STEP 1: choose an output file format")
-        choice_fmt = self.__create_format_btn()
+        # Create all the objects
+        pnl_fmt = self.__create_action_format(panel)
+        pnl_lang = self.__create_action_lang(panel)
+        pnl_select = self.__create_action_annselect(panel)
+        pnl_run = self.__create_action_annot(panel)
+        pnl_report = self.__create_action_report(panel)
 
-        sizer_fmt = wx.BoxSizer(wx.VERTICAL)
-        sizer_fmt.Add(stf, 0, wx.ALIGN_BOTTOM | wx.ALIGN_CENTRE_HORIZONTAL | wx.TOP | wx.BOTTOM, 10)
-        sizer_fmt.Add(choice_fmt, 0, wx.ALIGN_TOP | wx.ALIGN_CENTRE_HORIZONTAL)
+        # Organize all the objects
+        border = sppasPanel.fix_size(20)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(pnl_fmt, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        sizer.Add(pnl_lang, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        sizer.Add(pnl_select, 3, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        sizer.Add(pnl_run, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        sizer.Add(pnl_report, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        panel.SetSizerAndFit(sizer)
 
-        # The language (if any)
-        stl = sppasStaticText(self, label="STEP 2: fix the language(s)")
-        choice = self.__create_lang_btn()
+        panel.SetupScrolling(scroll_x=False, scroll_y=True)
+        return panel
 
-        sizer_lang = wx.BoxSizer(wx.VERTICAL)
-        sizer_lang.Add(stl, 0, wx.ALIGN_BOTTOM | wx.ALIGN_CENTRE_HORIZONTAL | wx.TOP | wx.BOTTOM, 10)
-        sizer_lang.Add(choice, 0, wx.ALIGN_TOP | wx.ALIGN_CENTRE_HORIZONTAL)
+    # ------------------------------------------------------------------------
 
-        # The buttons to select annotations (switch to other pages)
-        sta = sppasStaticText(self, label="STEP 3: select the annotations to perform")
-        s1 = wx.BoxSizer(wx.HORIZONTAL)
+    def __create_action_format(self, parent):
+        """The output file format (step 1)."""
+        p = sppasPanel(parent)
+
+        st = sppasSimpleText(p, MSG_STEP_FORMAT)
+        all_formats = ['.xra', '.TextGrid', '.eaf', '.antx', '.mrk', '.csv']
+        default = self.__param.get_output_format()
+        wx.LogMessage("Default output format is {:s}".format(default))
+        choice = wx.ComboBox(p, -1, choices=all_formats, name="format_choice")
+        choice.SetSelection(choice.GetItems().index(default))
+        choice.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
+
+        s = wx.BoxSizer(wx.HORIZONTAL)
+        s.Add(st, 1, wx.ALIGN_LEFT | wx.ALL, 10)
+        s.Add(choice, 0, wx.ALL, 10)
+        p.SetSizer(s)
+        return p
+
+    # ------------------------------------------------------------------------
+
+    def __create_action_lang(self, parent):
+        """The language (step 2)."""
+        p = sppasPanel(parent)
+
+        st = sppasSimpleText(p, MSG_STEP_LANG)
+        all_langs = list()
+        for i in range(self.__param.get_step_numbers()):
+            a = self.__param.get_step(i)
+            all_langs.extend(a.get_langlist())
+
+        lang_list = list(set(all_langs))
+        lang_list.append(LANG_NONE)
+        choice = wx.ComboBox(p, -1, choices=sorted(lang_list), name="lang_choice")
+        choice.SetSelection(choice.GetItems().index(LANG_NONE))
+        choice.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
+
+        s = wx.BoxSizer(wx.HORIZONTAL)
+        s.Add(st, 1, wx.ALIGN_LEFT | wx.ALL, 10)
+        s.Add(choice, 0, wx.ALL, 10)
+        p.SetSizer(s)
+        return p
+
+    # ------------------------------------------------------------------------
+
+    def __create_action_annselect(self, parent):
+        """The annotations to select (step 3)."""
+        p = sppasPanel(parent)
+        st = sppasSimpleText(p, MSG_STEP_ANNCHOICE)
+
+        pbts = sppasPanel(p)
+        sbts = wx.BoxSizer(wx.VERTICAL)
         for ann_type in annots.types:
-            btn = self.__create_select_annot_btn("{:s} annotations".format(ann_type))
+            btn = self.__create_select_annot_btn(pbts, "{:s} annotations".format(ann_type))
             btn.SetName("btn_annot_" + ann_type)
             btn.SetImage("on-off-off")
-            s1.Add(btn, 1, wx.EXPAND | wx.ALL, 4)
+            sbts.Add(btn, 1, wx.EXPAND | wx.LEFT, 4)
+        pbts.SetSizer(sbts)
 
-        sizer_select = wx.BoxSizer(wx.VERTICAL)
-        sizer_select.Add(sta, 0, wx.ALIGN_BOTTOM | wx.ALIGN_CENTRE_HORIZONTAL | wx.TOP | wx.BOTTOM, 10)
-        sizer_select.Add(s1, 0, wx.ALIGN_TOP | wx.ALIGN_CENTRE_HORIZONTAL)
+        s = wx.BoxSizer(wx.HORIZONTAL)
+        s.Add(st, 1, wx.ALIGN_LEFT | wx.ALL, 10)
+        s.Add(pbts, 0, wx.ALL, 10)
+        p.SetSizer(s)
+        return p
 
-        # The button to perform annotations
-        str = sppasStaticText(self, label="STEP 4: perform the annotations")
-        self.btn_run = self.__create_select_annot_btn("Let's go!")
+    # ------------------------------------------------------------------------
+
+    def __create_action_annot(self, parent):
+        """The button to run annotations (step 4)."""
+        p = sppasPanel(parent)
+        st = sppasSimpleText(p, MSG_STEP_RUN)
+        self.btn_run = self.__create_select_annot_btn(p, MSG_BTN_RUN)
         self.btn_run.SetName("wizard")
         self.btn_run.SetImage("wizard")
         self.btn_run.Enable(False)
         self.btn_run.BorderColour = wx.Colour(228, 24, 24, 128)
-        sizer_run = wx.BoxSizer(wx.VERTICAL)
-        sizer_run.Add(str, 0, wx.ALIGN_BOTTOM | wx.ALIGN_CENTRE_HORIZONTAL | wx.TOP | wx.BOTTOM, 10)
-        sizer_run.Add(self.btn_run, 0, wx.ALIGN_TOP | wx.ALIGN_CENTRE_HORIZONTAL)
 
-        # The button to save the POR
-        stp = sppasStaticText(self, label="STEP 5: read the procedure outcome report")
-        self.btn_por = self.__create_select_annot_btn("Show it...")
+        s = wx.BoxSizer(wx.HORIZONTAL)
+        s.Add(st, 1, wx.ALIGN_LEFT | wx.ALL, 10)
+        s.Add(self.btn_run, 0, wx.ALL, 10)
+        p.SetSizer(s)
+        return p
+
+    # ------------------------------------------------------------------------
+
+    def __create_action_report(self, parent):
+        """The button to show the report."""
+        p = sppasPanel(parent)
+        st = sppasSimpleText(p, MSG_STEP_REPORT)
+        self.btn_por = self.__create_select_annot_btn(p, MSG_BTN_REPORT)
         self.btn_por.SetName("save_as")
         self.btn_por.SetImage("save_as")
         self.btn_por.Enable(False)
         self.btn_por.BorderColour = wx.Colour(228, 24, 24, 128)
-        sizer_log = wx.BoxSizer(wx.VERTICAL)
-        sizer_log.Add(stp, 1, wx.ALIGN_BOTTOM | wx.ALIGN_CENTRE_HORIZONTAL | wx.TOP | wx.BOTTOM, 10)
-        sizer_log.Add(self.btn_por, 0, wx.ALIGN_TOP | wx.ALIGN_CENTRE_HORIZONTAL | wx.BOTTOM, 5)
 
-        # Organize all the objects
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(sizer_fmt, 1, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
-        sizer.Add(sizer_lang, 1, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
-        sizer.Add(sizer_select, 2, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
-        sizer.Add(sizer_run, 2, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
-        sizer.Add(sizer_log, 1, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
-
-        return sizer
+        s = wx.BoxSizer(wx.HORIZONTAL)
+        s.Add(st, 1, wx.ALIGN_LEFT | wx.ALL, 10)
+        s.Add(self.btn_por, 0, wx.ALL, 10)
+        p.SetSizer(s)
+        return p
 
     # ------------------------------------------------------------------------
 
-    def __create_select_annot_btn(self, label):
+    def __create_select_annot_btn(self, parent, label):
 
         w = sppasPanel.fix_size(196)
         h = sppasPanel.fix_size(42)
 
-        btn = BitmapTextButton(self, label=label)
+        btn = BitmapTextButton(parent, label=label)
         btn.LabelPosition = wx.RIGHT
         btn.Spacing = 12
         btn.BorderWidth = 2
@@ -198,36 +276,6 @@ class sppasActionAnnotatePanel(sppasPanel):
         btn.BitmapColour = self.GetForegroundColour()
         btn.SetMinSize(wx.Size(w, h))
         return btn
-
-    # ------------------------------------------------------------------------
-
-    def __create_format_btn(self):
-        w = sppasPanel.fix_size(80)
-        all_formats = ['.xra', '.TextGrid', '.eaf', '.antx', '.mrk', '.csv']
-        default = self.__param.get_output_format()
-        wx.LogDebug("Default output format is {:s}".format(default))
-
-        choice = wx.ComboBox(self, -1, choices=all_formats, name="format_choice")
-        choice.SetSelection(choice.GetItems().index(default))
-        choice.SetMinSize(wx.Size(w, -1))
-        return choice
-
-    # ------------------------------------------------------------------------
-
-    def __create_lang_btn(self):
-        w = sppasPanel.fix_size(80)
-
-        all_langs = list()
-        for i in range(self.__param.get_step_numbers()):
-            a = self.__param.get_step(i)
-            all_langs.extend(a.get_langlist())
-
-        langlist = list(set(all_langs))
-        langlist.append(LANG_NONE)
-        choice = wx.ComboBox(self, -1, choices=sorted(langlist), name="lang_choice")
-        choice.SetSelection(choice.GetItems().index(LANG_NONE))
-        choice.SetMinSize(wx.Size(w, -1))
-        return choice
 
     # -----------------------------------------------------------------------
     # Events management

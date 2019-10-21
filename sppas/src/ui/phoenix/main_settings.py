@@ -81,13 +81,13 @@ class WxAppSettings(sppasBaseSettings):
             default_icons_theme="Refine",
             icons_theme="Refine",
 
-            fg_color=wx.Colour(190, 190, 190),
-            header_fg_color=wx.Colour(160, 160, 160),
-            action_fg_color=wx.Colour(130, 130, 130),
+            fg_color=wx.Colour(18, 12, 12),
+            header_fg_color=wx.Colour(240, 240, 230),
+            action_fg_color=wx.Colour(230, 230, 225),
 
-            bg_color=wx.Colour(30, 30, 30, alpha=wx.ALPHA_OPAQUE),
-            header_bg_color=wx.Colour(40, 40, 40, alpha=wx.ALPHA_OPAQUE),
-            action_bg_color=wx.Colour(20, 20, 20, alpha=wx.ALPHA_OPAQUE),
+            bg_color=wx.Colour(240, 240, 235, alpha=wx.ALPHA_OPAQUE),
+            header_bg_color=wx.Colour(80, 80, 100, alpha=wx.ALPHA_OPAQUE),
+            action_bg_color=wx.Colour(70, 70, 90, alpha=wx.ALPHA_OPAQUE),
 
             text_font=self.__text_font(),
             header_text_font=self.__header_font(),

@@ -32,7 +32,7 @@
 # along with SPPAS. If not, see <http://www.gnu.org/licenses/>.
 #
 # ---------------------------------------------------------------------------
-# File:    sppas.command
+# File:    sppas-py3.command
 # Author:  Brigitte Bigi
 # Summary: SPPAS GUI run script for unix-based systems.
 # ---------------------------------------------------------------------------
@@ -56,49 +56,16 @@ export PYTHONIOENCODING=UTF-8
 
 PYTHON=""
 
-echo -n "Search for 'pythonw' command for Python 2: "
-for cmd in `which -a pythonw`;
+echo -n "Search for 'python3' command for Python: "
+for cmd in `which -a python3`;
 do
     v=$($cmd -c "import sys; print(sys.version_info[0])");
-    if [[ "$v" == "2" ]]; then
+    if [[ "$v" == "3" ]]; then
         PYTHON=$cmd;
         break;
     fi;
 done
 
-# Search for pythonw, v3
-if [ -z "$PYTHON" ]; then
-    echo "not found.";
-    echo -n "Search for 'pythonw' command for Python 3: ";
-    for cmd in `which -a pythonw`;
-    do
-        v=$($cmd -c "import sys; print(sys.version_info[0])");
-        if [[ "$v" == "3" ]]; then
-            PYTHON=$cmd;
-            break;
-        fi;
-    done
-else
-    echo "OK";
-fi
-
-# Search for python, v2
-if [ -z "$PYTHON" ]; then
-    echo "not found.";
-    echo -n "Search for 'python' command for Python 2: ";
-    for cmd in `which -a python`;
-    do
-        v=$($cmd -c "import sys; print(sys.version_info[0])");
-        if [[ "$v" == "2" ]]; then
-            PYTHON=$cmd;
-            break;
-        fi;
-    done
-else
-    echo "OK";
-fi
-
-# Search for python, v3
 if [ -z "$PYTHON" ]; then
     echo "not found."
     echo -n "Search for 'python' command for Python 3: "
@@ -117,7 +84,7 @@ fi
 if [ -z "$PYTHON" ]; then
     echo "not found.";
     echo "Python is not an internal command of your operating system.";
-    echo "For any help, take a look at the SPPAS installation page: http://www.sppas.org.";
+    echo "Install it first and try again with SPPAS: http://www.python.org.";
     exit -1;
 fi
 

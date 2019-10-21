@@ -46,6 +46,7 @@ from .button import sppasBitmapButton
 from .buttonbox import sppasRadioBoxPanel
 
 from .text import sppasStaticText
+from .text import sppasSimpleText
 from .text import sppasMessageText
 from .text import sppasTitleText
 from .text import sppasTextCtrl
@@ -76,6 +77,7 @@ __all__ = (
     "sppasStaticText",
     "sppasTitleText",
     "sppasMessageText",
+    "sppasSimpleText",
     "sppasTextCtrl",
     "NotEmptyTextValidator",
     "sppasStaticBitmap",

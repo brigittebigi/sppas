@@ -77,11 +77,11 @@ class sppasStaticLine(wx.Window):
     """
 
     def __init__(self, parent,
-                id=wx.ID_ANY,
-                pos=wx.DefaultPosition,
-                size=wx.DefaultSize,
-                orient=wx.LI_HORIZONTAL,
-                name=wx.StaticLineNameStr):
+                 id=wx.ID_ANY,
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 orient=wx.LI_HORIZONTAL,
+                 name=wx.StaticLineNameStr):
 
         super(sppasStaticLine, self).__init__(
             parent, id, pos, size,
@@ -89,10 +89,10 @@ class sppasStaticLine(wx.Window):
             name=name)
 
         try:
-            s = wx.GetApp().settings
-            self.SetForegroundColour(s.fg_color)
+            self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            # only fg needed. bg of the parent. no need of a font.
         except:
-            logging.warning('No settings. Foreground not defined.')
+            wx.LogWarning('No settings to construct sppasStaticLine.')
             pass
 
         self.__orient = orient
@@ -137,7 +137,6 @@ class sppasStaticLine(wx.Window):
         if style not in [wx.PENSTYLE_SOLID, wx.PENSTYLE_LONG_DASH,
                          wx.PENSTYLE_SHORT_DASH, wx.PENSTYLE_DOT_DASH,
                          wx.PENSTYLE_HORIZONTAL_HATCH]:
-            logging.warning("Invalid pen style.")
             return
 
         self.__penstyle = style
@@ -165,12 +164,12 @@ class sppasStaticLine(wx.Window):
         if value < 0:
             return
         if self.__orient == wx.LI_VERTICAL and value > w:
-            logging.error("Depth value {:d} of a vertical line can't be > "
-                          "width {:d}".format(value, w))
+            wx.LogError("Depth value {:d} of a vertical line can't be > "
+                        "width {:d}".format(value, w))
             return
         if self.__orient == wx.LI_HORIZONTAL and value > h:
-            logging.error("Depth value {:d} of an horizontal line can't be > "
-                          "height {:d}".format(value, h))
+            wx.LogError("Depth value {:d} of an horizontal line can't be > "
+                        "height {:d}".format(value, h))
             return
 
         self.__depth = value

@@ -123,6 +123,7 @@ class sppasMainWindow(sppasDialog):
         # Fix this frame content
         self._create_content()
         self._setup_events()
+        self.UpdateUI()
 
         # Fix this frame properties
         self.Enable()
@@ -537,5 +538,4 @@ class sppasActionsPanel(sppasPanel):
         line.SetSize(wx.Size(1, -1))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(1)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line
