@@ -366,7 +366,7 @@ class sppasTier(sppasMetaData):
             raise IntervalBoundsError(begin, end)
 
         annotations = self.find(begin, end, overlaps)
-        for a in annotations:
+        for a in reversed(annotations):
             self.__ann.remove(a)
 
         return len(annotations)
@@ -386,6 +386,21 @@ class sppasTier(sppasMetaData):
             self.__ann.pop(index)
         except IndexError:
             raise AnnDataIndexError(index)
+
+    # -----------------------------------------------------------------------
+
+    def remove_unlabelled(self):
+        """Remove annotations without labels.
+
+        :returns: the number of removed annotations
+
+        """
+        nb = 0
+        for a in reversed(self.__ann):
+            if a.is_labelled() is False:
+                self.__ann.remove(a)
+                nb += 1
+        return nb
 
     # -----------------------------------------------------------------------
     # Localizations
