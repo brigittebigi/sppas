@@ -117,7 +117,7 @@ class ButtonCreator(object):
 # ---------------------------------------------------------------------------
 
 
-class ImgPanel( wx.Panel ):
+class ImgPanel(wx.Panel):
     """
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -129,14 +129,14 @@ class ImgPanel( wx.Panel ):
     """
     def __init__(self, parent, bmpsize, bmpname, prefsIO):
         wx.Panel.__init__(self, parent)
-        self.SetBackgroundColour( parent.GetBackgroundColour() )
+        self.SetBackgroundColour(parent.GetBackgroundColour())
 
-        bitmap = spBitmap( bmpname, size=bmpsize, theme=prefsIO.GetValue('M_ICON_THEME') )
+        bitmap = spBitmap(bmpname, size=bmpsize, theme=prefsIO.GetValue('M_ICON_THEME'))
         sBmp = wx.StaticBitmap(self, wx.ID_ANY, bitmap)
-        sBmp.SetBackgroundColour( parent.GetBackgroundColour() )
+        sBmp.SetBackgroundColour(parent.GetBackgroundColour())
 
         sizer = wx.BoxSizer()
-        sizer.Add(sBmp, proportion=1, flag=wx.ALL|wx.ALIGN_CENTER, border=0)
+        sizer.Add(sBmp, 1, wx.ALIGN_CENTER, 0)
         self.SetSizerAndFit(sizer)
 
         sBmp.Bind(wx.EVT_LEFT_UP,      self.ProcessEvent)
@@ -150,7 +150,7 @@ class ImgPanel( wx.Panel ):
 # ---------------------------------------------------------------------------
 
 
-class ButtonPanel( wx.Panel ):
+class ButtonPanel(wx.Panel):
     """
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -162,8 +162,8 @@ class ButtonPanel( wx.Panel ):
     """
     def __init__(self, parent, idb, preferences, bmp, text, subtext=None, tooltip=None, activated=True):
         wx.Panel.__init__(self, parent, idb, style=wx.NO_BORDER)
-        self.SetBackgroundColour( preferences.GetValue('M_BGD_COLOUR') )
-        self.SetFont( preferences.GetValue('M_FONT') )
+        self.SetBackgroundColour(preferences.GetValue('M_BGD_COLOUR'))
+        self.SetFont(preferences.GetValue('M_FONT'))
 
         self._prefs = preferences
         self.activated = activated
@@ -171,55 +171,54 @@ class ButtonPanel( wx.Panel ):
 
         self.contentpanel = self.create_content(bmp, text, subtext)
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.contentpanel, flag=wx.ALL|wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL, border=2)
+        sizer.Add(self.contentpanel, 1, wx.EXPAND | wx.ALIGN_CENTER)
 
         self.SetSizer(sizer)
+        self.SetAutoLayout(True)
         self.FitInside()
-        #self.SetAutoLayout( True )
         if tooltip is not None:
-            self.SetToolTipString( tooltip )
+            self.SetToolTipString(tooltip)
 
     def create_content(self, bmpname, textstr, subtextstr=None):
         panel = wx.Panel(self)
-        panel.SetBackgroundColour( self._prefs.GetValue('M_BGD_COLOUR') )
+        panel.SetBackgroundColour(self._prefs.GetValue('M_BGD_COLOUR'))
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         font = self.GetFont()
-
+        text_style = wx.TAB_TRAVERSAL | \
+                     wx.TE_READONLY | \
+                     wx.TE_BESTWRAP | \
+                     wx.TE_CENTER | \
+                     wx.NO_BORDER
         if bmpname is not None:
             bmp = ImgPanel(panel, self._prefs.GetValue('M_BUTTON_ICONSIZE'), bmpname, self._prefs)
-            sizer.Add(bmp, 0, flag=wx.ALL|wx.ALIGN_CENTER, border=8)
+            sizer.Add(bmp, 1, flag=wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER, border=4)
 
-        text = wx.StaticText(panel, -1, textstr)
+        text = wx.TextCtrl(panel, value="", style=text_style)
         font.SetWeight(wx.BOLD)
         text.SetFont(font)
-        text.SetBackgroundColour( self._prefs.GetValue('M_BGD_COLOUR') )
-        text.SetForegroundColour( self._prefs.GetValue('M_FG_COLOUR') )
+        text.SetBackgroundColour(self._prefs.GetValue('M_BGD_COLOUR'))
+        text.SetForegroundColour(self._prefs.GetValue('M_FG_COLOUR'))
+        text.SetValue(textstr)
         text.Bind(wx.EVT_LEFT_UP, self.OnButtonLeftUp)
         text.Bind(wx.EVT_ENTER_WINDOW, self.OnButtonEnter)
-        sizer.Add(text, 0, flag=wx.ALL|wx.ALIGN_CENTER, border=2)
+        sizer.Add(text, 1, flag=wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER, border=4)
 
         font.SetWeight(wx.NORMAL)
         if subtextstr is not None:
             tabtexts = subtextstr.split(',')
-            for i,t in enumerate(tabtexts):
-                if (i+1)<len(tabtexts):
-                    subtext = wx.StaticText(panel, -1, t+",")
-                else:
-                    subtext = wx.StaticText(panel, -1, t)
-                subtext.SetBackgroundColour( self._prefs.GetValue('M_BGD_COLOUR') )
-                subtext.SetForegroundColour( self._prefs.GetValue('M_FGD_COLOUR') )
+            for i, t in enumerate(tabtexts):
+                subtext = wx.TextCtrl(panel, value="", style=text_style)
+                subtext.SetBackgroundColour(self._prefs.GetValue('M_BGD_COLOUR'))
+                subtext.SetForegroundColour(self._prefs.GetValue('M_FGD_COLOUR'))
                 subtext.SetFont(font)
+                subtext.SetValue(t)
                 subtext.Bind(wx.EVT_LEFT_UP, self.OnButtonLeftUp)
                 subtext.Bind(wx.EVT_ENTER_WINDOW, self.OnButtonEnter)
-                sizer.Add(subtext, 0, flag=wx.ALL|wx.ALIGN_CENTER, border=2)
-
-            panel.SetMinSize((128, 128))
-        else:
-            panel.SetMinSize((96, 96))
+                sizer.Add(subtext, 0, flag=wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER, border=2)
 
         panel.SetSizer(sizer)
-        panel.SetAutoLayout(True)
+        panel.SetMinSize(wx.Size(128, 128))
 
         panel.Bind(wx.EVT_LEFT_UP,      self.OnButtonLeftUp)
         panel.Bind(wx.EVT_ENTER_WINDOW, self.OnButtonEnter)
@@ -231,7 +230,7 @@ class ButtonPanel( wx.Panel ):
         if self.activated is True:
             ide = event.GetEventObject().GetId()
             if (wx.Platform == "__WXMSW__" and ide == self.contentpanel.GetId()) or wx.Platform != "__WXMSW__":
-                self.SetBackgroundColour( self._prefs.GetValue('M_FGD_COLOUR') )
+                self.SetBackgroundColour(self._prefs.GetValue('M_FGD_COLOUR'))
                 self.Refresh()
                 self.childenter = False
             else:
@@ -240,12 +239,12 @@ class ButtonPanel( wx.Panel ):
     def OnButtonLeave(self, event):
         if self.activated is True:
             if (wx.Platform == "__WXMSW__" and self.childenter is False) or wx.Platform != "__WXMSW__":
-                self.SetBackgroundColour( self._prefs.GetValue('M_BGD_COLOUR') )
+                self.SetBackgroundColour(self._prefs.GetValue('M_BGD_COLOUR'))
                 self.Refresh()
 
     def OnButtonLeftUp(self, event):
         if self.activated is True:
-            self.SetBackgroundColour( self._prefs.GetValue('M_BGD_COLOUR') )
+            self.SetBackgroundColour(self._prefs.GetValue('M_BGD_COLOUR'))
             self.Refresh()
             evt = wx.CommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, self.GetId())
             evt.SetEventObject(self)
@@ -254,7 +253,7 @@ class ButtonPanel( wx.Panel ):
 # ---------------------------------------------------------------------------
 
 
-class ButtonToolbarPanel( wx.Panel ):
+class ButtonToolbarPanel(wx.Panel):
     """
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -266,8 +265,8 @@ class ButtonToolbarPanel( wx.Panel ):
     """
     def __init__(self, parent, idb, preferences, bmp, text, tooltip=None, activated=True):
         wx.Panel.__init__(self, parent, idb, style=wx.NO_BORDER)
-        self.SetBackgroundColour( preferences.GetValue('M_BG_COLOUR') )
-        self.SetFont( preferences.GetValue('M_FONT') )
+        self.SetBackgroundColour(preferences.GetValue('M_BG_COLOUR'))
+        self.SetFont(preferences.GetValue('M_FONT'))
 
         self._prefs = preferences
         self.activated = activated
@@ -280,11 +279,11 @@ class ButtonToolbarPanel( wx.Panel ):
 
         self.FitInside()
         if tooltip is not None:
-            self.SetToolTipString( tooltip )
+            self.SetToolTipString(tooltip)
 
     def create_content(self, bmpname, textstr):
         panel = wx.Panel(self)
-        panel.SetBackgroundColour( self._prefs.GetValue('M_BG_COLOUR') )
+        panel.SetBackgroundColour(self._prefs.GetValue('M_BG_COLOUR'))
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         if bmpname is not None:
@@ -292,16 +291,22 @@ class ButtonToolbarPanel( wx.Panel ):
             sizer.Add(bmp, 0, flag=wx.ALL|wx.ALIGN_CENTER, border=8)
 
         font = self._prefs.GetValue('M_TOOLBAR_FONT')
-        text = wx.StaticText(panel, -1, textstr)
-        text.SetBackgroundColour( self._prefs.GetValue('M_BG_COLOUR') )
-        text.SetForegroundColour( self._prefs.GetValue('M_FG_COLOUR') )
+        text_style = wx.TAB_TRAVERSAL | \
+                     wx.TE_READONLY | \
+                     wx.TE_BESTWRAP | \
+                     wx.TE_CENTER | \
+                     wx.NO_BORDER
+        text = wx.TextCtrl(panel, value="", style=text_style)
+        text.SetBackgroundColour(self._prefs.GetValue('M_BG_COLOUR'))
+        text.SetForegroundColour(self._prefs.GetValue('M_FG_COLOUR'))
         text.SetFont(font)
+        text.SetValue(textstr)
         text.Bind(wx.EVT_LEFT_UP, self.OnButtonLeftUp)
         text.Bind(wx.EVT_ENTER_WINDOW, self.OnButtonEnter)
         sizer.Add(text, 0, flag=wx.ALL|wx.ALIGN_CENTER, border=2)
 
         panel.SetSizer(sizer)
-        panel.SetAutoLayout( True )
+        panel.SetAutoLayout(True)
 
         panel.Bind(wx.EVT_LEFT_UP,      self.OnButtonLeftUp)
         panel.Bind(wx.EVT_ENTER_WINDOW, self.OnButtonEnter)
@@ -315,7 +320,7 @@ class ButtonToolbarPanel( wx.Panel ):
         if self.activated is True:
             ide = event.GetEventObject().GetId()
             if (wx.Platform == "__WXMSW__" and ide == self.contentpanel.GetId()) or wx.Platform != "__WXMSW__":
-                self.SetBackgroundColour( self._prefs.GetValue('M_FGD_COLOUR') )
+                self.SetBackgroundColour(self._prefs.GetValue('M_FGD_COLOUR'))
                 self.Refresh()
                 self.childenter = False
             else:
@@ -324,12 +329,12 @@ class ButtonToolbarPanel( wx.Panel ):
     def OnButtonLeave(self, event):
         if self.activated is True:
             if (wx.Platform == "__WXMSW__" and self.childenter is False) or wx.Platform != "__WXMSW__":
-                self.SetBackgroundColour( self._prefs.GetValue('M_BG_COLOUR') )
+                self.SetBackgroundColour(self._prefs.GetValue('M_BG_COLOUR'))
                 self.Refresh()
 
     def OnButtonLeftUp(self, event):
         if self.activated is True:
-            self.SetBackgroundColour( self._prefs.GetValue('M_BG_COLOUR') )
+            self.SetBackgroundColour(self._prefs.GetValue('M_BG_COLOUR'))
             self.Refresh()
             evt = wx.CommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, self.GetId())
             evt.SetEventObject(self)
@@ -337,7 +342,7 @@ class ButtonToolbarPanel( wx.Panel ):
 
     def Enable(self, value):
         self.activated = value
-        self.SetBackgroundColour( self._prefs.GetValue('M_BG_COLOUR') )
+        self.SetBackgroundColour(self._prefs.GetValue('M_BG_COLOUR'))
         self.Refresh()
 
     def SetPrefs(self, prefs):
@@ -347,7 +352,7 @@ class ButtonToolbarPanel( wx.Panel ):
 # ---------------------------------------------------------------------------
 
 
-class ButtonMenuPanel( wx.Panel ):
+class ButtonMenuPanel(wx.Panel):
     """
     @author:  Brigitte Bigi
     @contact: develop@sppas.org
@@ -357,7 +362,7 @@ class ButtonMenuPanel( wx.Panel ):
     """
     def __init__(self, parent, idb, preferences, bmpname, textstr):
         wx.Panel.__init__(self, parent, idb, style=wx.NO_BORDER)
-        self.SetBackgroundColour( preferences.GetValue('M_BGM_COLOUR') )
+        self.SetBackgroundColour(preferences.GetValue('M_BGM_COLOUR'))
 
         self._prefs = preferences
 
@@ -368,16 +373,22 @@ class ButtonMenuPanel( wx.Panel ):
             sizer.Add(bmp, flag=wx.ALIGN_CENTER_HORIZONTAL, border=0)
 
         if textstr is not None:
-            text = wx.StaticText(self, -1, textstr)
-            text.SetBackgroundColour( self.GetBackgroundColour() )
-            text.SetForegroundColour( preferences.GetValue('M_FGM_COLOUR') )
+            text_style = wx.TAB_TRAVERSAL | \
+                         wx.TE_READONLY | \
+                         wx.TE_BESTWRAP | \
+                         wx.TE_CENTER | \
+                         wx.NO_BORDER
+            text = wx.TextCtrl(self, value="", style=text_style)
+            text.SetBackgroundColour(self.GetBackgroundColour())
+            text.SetForegroundColour(preferences.GetValue('M_FGM_COLOUR'))
+            text.SetValue(textstr)
             text.Bind(wx.EVT_LEFT_UP, self.OnButtonLeftUp)
             sizer.Add(text, flag=wx.ALL|wx.ALIGN_CENTER, border=2)
 
         self.Bind(wx.EVT_LEFT_UP, self.OnButtonLeftUp)
 
         self.SetSizer(sizer)
-        self.SetAutoLayout( True )
+        self.SetAutoLayout(True)
 
 
     def OnButtonLeftUp(self, event):
