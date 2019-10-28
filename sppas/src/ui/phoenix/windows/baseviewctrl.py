@@ -549,6 +549,7 @@ class BaseTreeViewCtrl(wx.dataview.DataViewCtrl):
 
     def SetForegroundColour(self, color):
         wx.Window.SetForegroundColour(self, color)
+        wx.LogDebug("BaseViewCtrl * * * * * * * * New fgcolor = {:s}".format(str(color)))
         if self._model is not None:
             self._model.SetForegroundColour(color)
 

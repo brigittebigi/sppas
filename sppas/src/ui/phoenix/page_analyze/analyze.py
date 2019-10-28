@@ -67,6 +67,7 @@ from ..windows import sppasToolbar
 
 from .anz_tabs import TabsManager
 from .anz_textviews import TextViewFilesPanel
+from .anz_listviews import ListViewFilesPanel
 from .anz_defaultviews import DefaultViewFilesPanel
 
 # ---------------------------------------------------------------------------
@@ -599,6 +600,11 @@ class sppasAnalyzePanel(sppasPanel):
         if view_name == "data-view-text":
             wx.LogMessage("New empty text-view page created.")
             new_page = TextViewFilesPanel(book, name="new_page", files=files)
+
+        elif view_name == "data-view-list":
+            wx.LogMessage("New empty text-view page created.")
+            new_page = ListViewFilesPanel(book, name="new_page", files=files)
+
         else:
             wx.LogWarning("{:s} view is not currently supported."
                           "".format(view_name))

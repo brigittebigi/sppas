@@ -55,35 +55,11 @@ from sppas.src.anndata import sppasMetaData
 from sppas.src.config import ui_translation
 
 from ..main_events import ViewEvent
-from ..windows import sppasTextCtrl
 from ..windows import sppasPanel
 from ..windows import sppasCollapsiblePanel
-from ..windows import sppasStaticLine
 from ..windows.baseviewctrl import BaseTreeViewCtrl
 from ..windows.baseviewctrl import ColumnProperties
 from ..windows.baseviewctrl import ToggledIconRenderer
-from .baseview import sppasBaseViewPanel
-
-
-# ---------------------------------------------------------------------------
-
-
-class TrsViewPanel(sppasCollapsiblePanel):
-    """A panel to display the content of a sppasTranscription as a list.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    def __init__(self, parent, filename, name="listview-panel"):
-        super(TrsViewPanel, self).__init__(parent, label=filename, name=name)
-
-        self.SetPane(TrsViewCtrl(self, filename=filename))
-        self.Expand()
 
 # ---------------------------------------------------------------------------
 
@@ -289,7 +265,7 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
 
     def SetForegroundColour(self, color):
         self._fgcolor = color
-        wx.LogDebug("* * * * * * * * New fgcolor = {:s}".format(str(color)))
+        wx.LogDebug("ListView * * * * * * * * New fgcolor = {:s}".format(str(color)))
 
     # -----------------------------------------------------------------------
 
@@ -518,6 +494,26 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
 
         return col
 
+# ---------------------------------------------------------------------------
+
+
+class TrsViewPanel(sppasCollapsiblePanel):
+    """A panel to display the content of a sppasTranscription as a list.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, filename, name="listview-panel"):
+        super(TrsViewPanel, self).__init__(parent, label=filename, name=name)
+
+        self.SetPane(TrsViewCtrl(self, filename=filename))
+        self.Expand()
+
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
 # ----------------------------------------------------------------------------
@@ -527,8 +523,6 @@ class TestPanel(sppasPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
-        self.SetBackgroundColour(wx.Colour(28, 28, 28))
-        self.SetForegroundColour(wx.Colour(228, 228, 228))
 
         f1 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra")
         f2 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-salign.xra")
@@ -540,6 +534,10 @@ class TestPanel(sppasPanel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(p1, 0, wx.EXPAND)
         sizer.Add(p2, 0, wx.EXPAND)
+
+        self.SetBackgroundColour(wx.Colour(28, 28, 28))
+        self.SetForegroundColour(wx.Colour(228, 228, 228))
+
         self.SetSizerAndFit(sizer)
         self.Layout()
         self.SetAutoLayout(True)
@@ -547,4 +545,3 @@ class TestPanel(sppasPanel):
     def OnCollapseChanged(self, evt=None):
         panel = evt.GetEventObject()
         panel.SetFocus()
-        #self.ScrollChildIntoView(panel)
