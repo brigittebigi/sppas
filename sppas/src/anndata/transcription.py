@@ -390,6 +390,10 @@ class sppasTranscription(sppasMetaData):
 
     # -----------------------------------------------------------------------
 
+    tiers = property(get_tier_list, None)
+
+    # -----------------------------------------------------------------------
+
     def is_empty(self):
         """Return True if the transcription does not contains tiers."""
         return len(self._tiers) == 0
