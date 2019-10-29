@@ -104,6 +104,10 @@ class sppasBaseViewPanel(sppasPanel):
         """Save the displayed text into a file."""
         return False
 
+    def get_object(self):
+        """Return the object created from the opened file."""
+        return None
+
     # -----------------------------------------------------------------------
 
     def SetHighLightColor(self, color):

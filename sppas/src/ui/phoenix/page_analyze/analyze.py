@@ -92,7 +92,7 @@ VIEW_MSG_CONFIRM_SWITCH = _("Confirm switch of view?")
 TAB_MSG_CONFIRM = _("The current tab contains not saved work that "
                     "will be lost. Are you sure you want to change tab?")
 VIEW_MSG_CONFIRM = _("The current view contains not saved work that "
-                    "will be lost. Are you sure you want to change view?")
+                     "will be lost. Are you sure you want to change view?")
 
 TAB_ACT_SAVECURRENT_ERROR = _(
     "Files of the current tab can not be saved due to "
@@ -108,9 +108,18 @@ CLOSE_CONFIRM = _("The file contains not saved work that will be lost."
 
 
 class TabParam(object):
+    """Data structure of the parameters of a tab.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
 
     def __init__(self):
-        """Create the TabsData instance of the given index."""
+        """Create the TabParam instance of the given index."""
         self.view_name = "data-view-list"
         self.hicolor = wx.Colour(random.randint(60, 230),
                                  random.randint(60, 230),
@@ -130,9 +139,9 @@ class sppasAnalyzePanel(sppasPanel):
 
     The panel is made of 3 areas:
 
-        - a toolbar to switch to the expected analyze view,
-        - a list of tabs,
-        - a book.
+        - a list of tabs
+        - a toolbar to switch to the expected view
+        - a book matching the tabs
 
     Each tab is matching a page of the book. It contains some of the checked
     files of the data. The page displays such files depending on the selected
@@ -159,7 +168,7 @@ class sppasAnalyzePanel(sppasPanel):
             style=wx.BORDER_NONE
         )
 
-        # Data related to each of the tabs/pages like the view, etc.
+        # Parameters related to each of the tabs/pages like the view, etc.
         self._params = list()
 
         # The data all tabs are working on
@@ -201,8 +210,7 @@ class sppasAnalyzePanel(sppasPanel):
         """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        logging.debug('New data in the analyze page. '
-                      'Id={:s}'.format(data.id))
+
         self.__data = data
 
     # ------------------------------------------------------------------------
@@ -210,16 +218,22 @@ class sppasAnalyzePanel(sppasPanel):
     # ------------------------------------------------------------------------
 
     def open_files(self):
-        """Open the checked files in the current page."""
+        """Open the checked files in the current page.
+
+        Opened files are locked and parent is notified.
+
+        """
         tabs = self.FindWindow("tabs")
+
+        # Get the index of the currently selected tab and the page
         cur_index = tabs.get_selected_tab()
         if cur_index == -1:
             Information(TAB_MSG_NO_SELECT)
             return
-
         book = self.FindWindow("content")
         page = book.GetCurrentPage()
 
+        # Add checked files to the page
         checked = self.__data.get_filename_from_state(States().CHECKED)
         i = 0
         for fn in checked:
@@ -243,7 +257,11 @@ class sppasAnalyzePanel(sppasPanel):
     # ------------------------------------------------------------------------
 
     def save_files(self):
-        """Save the files of the selected page (if modified)."""
+        """Save the files of the selected page (if modified).
+
+        Ask the page to save each of its files.
+
+        """
         tabs = self.FindWindow("tabs")
         cur_index = tabs.get_selected_tab()
         if cur_index == -1:
@@ -262,7 +280,9 @@ class sppasAnalyzePanel(sppasPanel):
     # ------------------------------------------------------------------------
 
     def append(self):
-        """Append a tab/page/param to manage some of the data."""
+        """Append a tab/page/param to manage some of the data.
+
+        """
         # Append a new set of default parameters
         self._params.append(TabParam())
 
@@ -285,7 +305,9 @@ class sppasAnalyzePanel(sppasPanel):
     # ------------------------------------------------------------------------
 
     def remove(self):
-        """Remove a tab/page which managed some of the data."""
+        """Remove a tab/page which managed some of the data.
+
+        """
         # Check if a tab is selected
         tabs = self.FindWindow("tabs")
         cur_index = tabs.get_selected_tab()
@@ -598,11 +620,9 @@ class sppasAnalyzePanel(sppasPanel):
         book = self.FindWindow("content")
 
         if view_name == "data-view-text":
-            wx.LogMessage("New empty text-view page created.")
             new_page = TextViewFilesPanel(book, name="new_page", files=files)
 
         elif view_name == "data-view-list":
-            wx.LogMessage("New empty text-view page created.")
             new_page = ListViewFilesPanel(book, name="new_page", files=files)
 
         else:
@@ -704,6 +724,7 @@ class sppasAnalyzePanel(sppasPanel):
         book.ChangeSelection(page_index)
         self._update_toolbar(True, page_index)
 
+        new_page.Refresh()
         book.Refresh()
         self.Refresh()
         return True

@@ -104,6 +104,14 @@ class TrsViewCtrl(BaseTreeViewCtrl):
         h *= self._model.get_nb_lines()
         self.SetMinSize(wx.Size(-1, h))
 
+    # -----------------------------------------------------------------------
+
+    def get_object(self):
+        """Return the object created from the opened file.
+
+        """
+        return self._model.get_object()
+
     # ------------------------------------------------------------------------
 
     def Layout(self):
@@ -184,7 +192,12 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
 
     def get_nb_lines(self):
         return self.__nb_lines
-    
+
+    # -----------------------------------------------------------------------
+
+    def get_object(self):
+        return self._data
+
     # -----------------------------------------------------------------------
     # Manage the data
     # -----------------------------------------------------------------------

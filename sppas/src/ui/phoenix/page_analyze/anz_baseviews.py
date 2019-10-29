@@ -29,14 +29,15 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_analyze.anz_views.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ui.phoenix.page_analyze.anz_baseviews.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
 import wx
 
 from ..windows import sppasScrolledPanel
+from ..windows import sppasToolbar
 from ..main_events import ViewEvent
 
 # ----------------------------------------------------------------------------
@@ -220,7 +221,7 @@ class BaseViewFilesPanel(sppasScrolledPanel):
 
         Must be overridden.
 
-        :return: wx.Window
+        :return: (sppasBaseViewPanel)
 
         """
         raise NotImplementedError
