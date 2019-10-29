@@ -510,7 +510,7 @@ class BaseTreeViewCtrl(wx.dataview.DataViewCtrl):
 
     """
 
-    def __init__(self, parent, name=wx.PanelNameStr):
+    def __init__(self, parent, style=wx.BORDER_NONE | wx.dataview.DV_MULTIPLE, name=wx.PanelNameStr):
         """Constructor of the FileTreeCtrl.
 
         :param parent: (wx.Window)
@@ -519,7 +519,7 @@ class BaseTreeViewCtrl(wx.dataview.DataViewCtrl):
         """
         super(BaseTreeViewCtrl, self).__init__(
             parent,
-            style=wx.BORDER_NONE | wx.dataview.DV_MULTIPLE,
+            style=style,
             name=name
         )
 

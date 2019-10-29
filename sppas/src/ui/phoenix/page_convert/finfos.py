@@ -170,7 +170,7 @@ class FormatsViewCtrl(BaseTreeViewCtrl):
         :param name: (str)
 
         """
-        super(FormatsViewCtrl, self).__init__(parent, name)
+        super(FormatsViewCtrl, self).__init__(parent, name=name)
 
         # Create an instance of our model and associate to the view.
         self._model = FormatsViewModel()

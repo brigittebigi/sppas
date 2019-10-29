@@ -210,7 +210,7 @@ if __name__ == "__main__":
 
     # Set the other members
     for key in trs_input.get_meta_keys():
-        trs_output.set_meta(key, trs_input.get_meta(key))
+        trs_output.set_meta(key, trs_input.get_metadata().get_meta(key))
 
     # Copy relevant hierarchy links
     for child_tier in trs_input:

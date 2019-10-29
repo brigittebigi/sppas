@@ -71,7 +71,7 @@ class FilesTreeViewCtrl(BaseTreeViewCtrl):
         :param name: (str)
 
         """
-        super(FilesTreeViewCtrl, self).__init__(parent, name)
+        super(FilesTreeViewCtrl, self).__init__(parent, name=name)
 
         # Create an instance of our model and associate to the view.
         self._model = FilesTreeViewModel(FileData())

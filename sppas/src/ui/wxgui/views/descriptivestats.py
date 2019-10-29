@@ -81,7 +81,7 @@ class DescriptivesStatsDialog(spBaseDialog):
         self.withalt = False
 
         self._data = {}   # to store stats
-        for k,v in tiers.items():
+        for k, v in tiers.items():
             # k = filename
             # v = list of tiers
             for tier in v:
@@ -90,13 +90,11 @@ class DescriptivesStatsDialog(spBaseDialog):
                 # remark: statistics are not estimated yet.
                 # ts contains a pointer to the tier; ts.tier
 
-        titlebox = self.CreateTitle(SPREADSHEETS, "Descriptives statistics of a set of tiers")
+        titlebox = self.CreateTitle(SPREADSHEETS, "Descriptive statistics of a set of tiers")
         contentbox = self._create_content()
         buttonbox = self._create_buttons()
 
-        self.LayoutComponents(titlebox,
-                               contentbox,
-                               buttonbox)
+        self.LayoutComponents(titlebox, contentbox, buttonbox)
 
     # ------------------------------------------------------------------------
     # Create the GUI
@@ -170,6 +168,7 @@ class DescriptivesStatsDialog(spBaseDialog):
         if oldselection != newselection:
             page = self.notebook.GetPage(newselection)
             page.ShowStats(self._data)
+            page.Refresh()
 
     def OnNgram(self, event):
         # get new n value of the N-gram
@@ -260,7 +259,7 @@ class SummaryPanel(BaseStatPanel):
 
         # fill rows
         self.rowdata = []
-        for i,key in enumerate(occurrences.keys()):
+        for i, key in enumerate(occurrences.keys()):
             row = [key, occurrences[key], total[key], mean[key], median[key], stdev[key]]
             # add the data content in rowdata
             self.rowdata.append(row)

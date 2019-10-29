@@ -85,7 +85,8 @@ class TrsViewCtrl(BaseTreeViewCtrl):
         :param name: (str)
 
         """
-        super(TrsViewCtrl, self).__init__(parent, name)
+        style = wx.BORDER_NONE | wx.dataview.DV_MULTIPLE | wx.dataview.DV_NO_HEADER
+        super(TrsViewCtrl, self).__init__(parent, style, name)
 
         # Create an instance of our model and associate to the view.
         self._model = TrsViewModel(filename)

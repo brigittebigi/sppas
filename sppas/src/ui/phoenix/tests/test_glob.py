@@ -74,7 +74,6 @@ class TestPanel(wx.Choicebook):
         # Make the bunch of test panels for the choice book
         # self.AddPage(filestreectrl.TestPanel(self), "AGW Files tree ctrl")
         self.AddPage(listview.TestPanel(self), "List view")
-
         self.AddPage(textview.TestPanel(self), "Text view")
         self.AddPage(baseview.TestPanel(self), "Base view")
         self.AddPage(filesmanager.TestPanel(self), "Dataview Files manager")

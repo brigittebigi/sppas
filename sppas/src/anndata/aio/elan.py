@@ -955,10 +955,10 @@ class sppasEAF(sppasBaseIO):
         """
         # we have to restore the licenses in their original order.
         licenses = dict()
-        for key in self.get_meta_keys():
+        for key in self.get_metadata().get_meta_keys():
             if 'file_license_text' in key:
                 url = ""
-                for url_key in self.get_meta_keys():
+                for url_key in self.get_metadata().get_meta_keys():
                     if url_key == key.replace('text', 'url'):
                         url = self.get_meta(url_key)
                 licenses[key] = (self.get_meta(key), url)
@@ -981,11 +981,11 @@ class sppasEAF(sppasBaseIO):
 
         # store all languages in a dictionary
         languages = dict()
-        for key in self.get_meta_keys():
+        for key in self.get_metadata().get_meta_keys():
             if key.startswith('language_code_'):
                 name = None
                 url = None
-                for key2 in self.get_meta_keys():
+                for key2 in self.get_metadata().get_meta_keys():
                     if key2 == key.replace('code', 'url'):
                         url = self.get_meta(key2)
                     if key2 == key.replace('code', 'name'):
@@ -1014,7 +1014,7 @@ class sppasEAF(sppasBaseIO):
         for media in self.get_media_list():
             self._format_linked_media(header_root, media)
 
-        sppasEAF._format_property(header_root, self)
+        sppasEAF._format_property(header_root, self.get_metadata())
 
     # -----------------------------------------------------------------------
 
@@ -1185,11 +1185,11 @@ class sppasEAF(sppasBaseIO):
         """
         # we have to restore the locales in their original order.
         locales = dict()
-        for key in self.get_meta_keys():
+        for key in self.get_metadata().get_meta_keys():
             if key.startswith('locale_code_'):
                 country = None
                 variant = None
-                for key2 in self.get_meta_keys():
+                for key2 in self.get_metadata().get_meta_keys():
                     if key2 == key.replace('code', "country"):
                         country = self.get_meta(key2)
                     if key2 == key.replace('code', "variant"):

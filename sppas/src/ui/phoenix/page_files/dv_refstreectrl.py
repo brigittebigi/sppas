@@ -66,7 +66,7 @@ class ReferencesTreeViewCtrl(BaseTreeViewCtrl):
         :param parent: (wx.Window)
 
         """
-        super(ReferencesTreeViewCtrl, self).__init__(parent, name)
+        super(ReferencesTreeViewCtrl, self).__init__(parent, name=name)
 
         # Create an instance of our model and associate to the view.
         self._model = None
