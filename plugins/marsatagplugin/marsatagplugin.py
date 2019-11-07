@@ -151,6 +151,7 @@ if fname.endswith("-palign") is False:
 
 # read to check data content
 # --------------------------
+print("Read file {:s}".format(filename))
 parser = sppasRW(filename)
 trs_input = parser.read()
 tier = trs_input.find("TokensAlign", case_sensitive=False)
@@ -161,6 +162,7 @@ if tier is None:
 # write as textgrid
 # -----------------
 if fext.lower().endswith("textgrid") is False:
+    print("Convert file to TextGrid")
     trs = sppasTranscription(name="TokensAlign")
     trs.append(tier)
     filename = fname + ".TextGrid"
@@ -189,6 +191,7 @@ command += ' -M -P -Q '
 command += " '" + os.path.abspath(filename) + "'"
 command_args = shlex.split(command)
 
+print("Execute command: {:s}".format(command))
 p = Popen(command_args, shell=False, stdout=PIPE, stderr=STDOUT)
 message = p.communicate()[0]
 
