@@ -267,7 +267,7 @@ class sppasBaseIO(sppasTranscription):
         if isinstance(other, sppasTranscription) is False:
             raise AnnDataTypeError(other, "sppasTranscription")
 
-        for key in other.get_meta_keys():
+        for key in other.get_metadata().get_meta_keys():
             self.set_meta(key, other.get_meta(key))
         self._name = other.get_name()
         self._media = other.get_media_list()

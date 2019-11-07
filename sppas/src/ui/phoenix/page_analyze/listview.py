@@ -55,19 +55,17 @@ from sppas.src.anndata import sppasMetaData
 from sppas.src.config import ui_translation
 
 from ..main_events import ViewEvent
-from ..windows import sppasTextCtrl
 from ..windows import sppasPanel
-from ..windows import sppasStaticLine
+from ..windows import sppasCollapsiblePanel
 from ..windows.baseviewctrl import BaseTreeViewCtrl
 from ..windows.baseviewctrl import ColumnProperties
 from ..windows.baseviewctrl import ToggledIconRenderer
-from .baseview import sppasBaseViewPanel
 
 # ---------------------------------------------------------------------------
 
 
 class TrsViewCtrl(BaseTreeViewCtrl):
-    """A control to display a sppasTranscription.
+    """A control to display the content of a sppasTranscription as a list.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -80,14 +78,15 @@ class TrsViewCtrl(BaseTreeViewCtrl):
 
     """
 
-    def __init__(self, parent, name="textview-panel", filename=""):
+    def __init__(self, parent, filename="", name="listview-ctrl"):
         """Constructor of the TrsViewCtrl.
 
         :param parent: (wx.Window)
         :param name: (str)
 
         """
-        super(TrsViewCtrl, self).__init__(parent, name)
+        style = wx.BORDER_NONE | wx.dataview.DV_MULTIPLE | wx.dataview.DV_NO_HEADER
+        super(TrsViewCtrl, self).__init__(parent, style, name)
 
         # Create an instance of our model and associate to the view.
         self._model = TrsViewModel(filename)
@@ -101,7 +100,26 @@ class TrsViewCtrl(BaseTreeViewCtrl):
 
         self.Bind(wx.dataview.EVT_DATAVIEW_ITEM_ACTIVATED, self._on_item_activated)
         self.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED, self._on_item_selection_changed)
-        self.SetMinSize(wx.Size(-1, 64))
+
+        h = self.get_line_height() * 2
+        h *= self._model.get_nb_lines()
+        self.SetMinSize(wx.Size(-1, h))
+
+    # -----------------------------------------------------------------------
+
+    def get_object(self):
+        """Return the object created from the opened file.
+
+        """
+        return self._model.get_object()
+
+    # ------------------------------------------------------------------------
+
+    def Layout(self):
+        h = self.get_line_height() * 2
+        h *= self._model.get_nb_lines()
+        self.SetMinSize(wx.Size(-1, h))
+        wx.Window.Layout(self)
 
     # ------------------------------------------------------------------------
 
@@ -128,6 +146,12 @@ class TrsViewCtrl(BaseTreeViewCtrl):
             self._model.check(event.GetColumn(), item)
             self.Unselect(item)
 
+    # -----------------------------------------------------------------------
+
+    def get_line_height(self):
+        font = self.GetFont()
+        return int(float(font.GetPixelSize()[1]))
+
 # ----------------------------------------------------------------------------
 # Model
 # ----------------------------------------------------------------------------
@@ -150,6 +174,7 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
         """
         wx.dataview.PyDataViewModel.__init__(self)
 
+        self.__nb_lines = 1
         self._data = sppasTranscription()
         self.set_data(filename)
 
@@ -160,21 +185,39 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
         self.__mapper[2] = TrsViewModel.__create_col(ui_translation.gettext('Name'), "name")
         self.__mapper[3] = TrsViewModel.__create_col(ui_translation.gettext('Size'), "size")
 
+        # GUI information which can be managed by the mapper
+        self._bgcolor = wx.BLACK
+        self._fgcolor = wx.WHITE
+
+    # -----------------------------------------------------------------------
+
+    def get_nb_lines(self):
+        return self.__nb_lines
+
+    # -----------------------------------------------------------------------
+
+    def get_object(self):
+        return self._data
+
     # -----------------------------------------------------------------------
     # Manage the data
     # -----------------------------------------------------------------------
 
     def set_data(self, filename):
         parser = sppasRW(filename)
+        self.__nb_lines = 2
         self._data = parser.read()
         self._data.set_meta("checked", "False")
-        self._data.get_hierarchy().set_meta("checked", "False")
+        # self._data.get_hierarchy().set_meta("checked", "False")
         for tier in self._data.get_tier_list():
             tier.set_meta("checked", "False")
+            self.__nb_lines += 1
         for media in self._data.get_media_list():
             media.set_meta("checked", "False")
+            self.__nb_lines += 1
         for vocab in self._data.get_ctrl_vocab_list():
             vocab.set_meta("checked", "False")
+            self.__nb_lines += 1
 
     # -----------------------------------------------------------------------
 
@@ -216,7 +259,6 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
             pass
         return False
 
-
     # -----------------------------------------------------------------------
     # Manage column properties
     # -----------------------------------------------------------------------
@@ -226,6 +268,18 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
             if self.__mapper[c].get_id() == name:
                 return c
         return -1
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, color):
+        self._bgcolor = color
+        wx.LogDebug("* * * * * * * * New bgcolor = {:s}".format(str(color)))
+
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, color):
+        self._fgcolor = color
+        wx.LogDebug("ListView * * * * * * * * New fgcolor = {:s}".format(str(color)))
 
     # -----------------------------------------------------------------------
 
@@ -314,10 +368,6 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
             for vocab in self._data.get_ctrl_vocab_list():
                 children.append(self.ObjectToItem(vocab))
                 i += 1
-            hierarchy = self._data.get_hierarchy()
-            if hierarchy is not None:
-                self.ObjectToItem(hierarchy)
-                i += 1
 
             return i
 
@@ -363,6 +413,15 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
         :returns: (bool) True if this item has an attribute or False otherwise.
 
         """
+        node = self.ItemToObject(item)
+        checked = node.get_meta("checked", "False")
+        if checked == "True":
+            attr.SetBold(True)
+
+        # default colors for foreground and background
+        attr.SetColour(self._fgcolor)
+        attr.SetBackgroundColour(self._bgcolor)
+
         return True
 
     # -----------------------------------------------------------------------
@@ -408,7 +467,7 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
             return t
 
         elif col_id == "size":
-            if isinstance(node, (sppasTier, sppasHierarchy)):
+            if isinstance(node, sppasTier):
                 # number of annotations
                 value = str(len(node))
             else:
@@ -434,7 +493,7 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
 
         elif name == "name":
             col = ColumnProperties(title, name)
-            col.width = sppasPanel.fix_size(80)
+            col.width = sppasPanel.fix_size(180)
             col.align = wx.ALIGN_LEFT
             col.add_fct_name(sppasTier, "get_name")
             col.add_fct_name(sppasMedia, "get_filename")
@@ -443,11 +502,31 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
         else:
             # type (=tier/ctrlvocab/media/metadata...)
             col = ColumnProperties(title, name)
-            col.width = sppasPanel.fix_size(60)
+            col.width = sppasPanel.fix_size(80)
             col.align = wx.ALIGN_CENTER
             # col.add_fct_name(FileFormatProperty, "get_support", name)
 
         return col
+
+# ---------------------------------------------------------------------------
+
+
+class TrsViewPanel(sppasCollapsiblePanel):
+    """A panel to display the content of a sppasTranscription as a list.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, filename, name="listview-panel"):
+        super(TrsViewPanel, self).__init__(parent, label=filename, name=name)
+
+        self.SetPane(TrsViewCtrl(self, filename=filename))
+        self.Expand()
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
@@ -458,24 +537,25 @@ class TestPanel(sppasPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
+
+        f1 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra")
+        f2 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-salign.xra")
+        p1 = TrsViewPanel(self, f1)
+        p2 = TrsViewPanel(self, f2)
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p1)
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p2)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(p1, 0, wx.EXPAND)
+        sizer.Add(p2, 0, wx.EXPAND)
+
         self.SetBackgroundColour(wx.Colour(28, 28, 28))
         self.SetForegroundColour(wx.Colour(228, 228, 228))
 
-        p1 = TrsViewCtrl(self, filename=os.path.join(
-            paths.samples,
-            "annotation-results",
-            "samples-fra",
-            "F_F_B003-P8-palign.xra"))
-
-        p2 = TrsViewCtrl(self, filename=os.path.join(
-            paths.samples,
-            "annotation-results",
-            "samples-fra",
-            "F_F_B003-P8-salign.xra"))
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(p1, 1, wx.EXPAND)
-        sizer.Add(p2, 1, wx.EXPAND)
-        self.SetSizer(sizer)
+        self.SetSizerAndFit(sizer)
         self.Layout()
+        self.SetAutoLayout(True)
 
+    def OnCollapseChanged(self, evt=None):
+        panel = evt.GetEventObject()
+        panel.SetFocus()

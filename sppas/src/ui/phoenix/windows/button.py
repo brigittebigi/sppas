@@ -1256,7 +1256,7 @@ class BitmapTextButton(BaseButton):
                 x_bmp, y_bmp, bmp_size = self.__get_bitmap_properties(
                     x, y, w - tw - self._spacing, h)
 
-                if bmp_size > 15:
+                if bmp_size > 8:
                     margin = w - bmp_size - tw - self._spacing
                     if self._align == wx.ALIGN_RIGHT:
                         x += margin

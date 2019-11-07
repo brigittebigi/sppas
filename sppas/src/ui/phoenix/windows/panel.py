@@ -395,6 +395,7 @@ class sppasCollapsiblePanel(sppasPanel):
             top.Fit()
 
         wx.GetTopLevelParent(self).Layout()
+        self.Refresh()
 
     # -----------------------------------------------------------------------
 
@@ -465,9 +466,11 @@ class sppasCollapsiblePanel(sppasPanel):
         btn.Spacing = sppasPanel.fix_size(4)
         btn.BorderWidth = 0
         btn.BitmapColour = self.GetForegroundColour()
-        h = int(float(self.get_line_height()) * 1.6)
-        btn.SetMinSize(wx.Size(sppasPanel.fix_size(h*10),
-                               sppasPanel.fix_size(h)))
+        h = self.get_line_height() * 2
+        btn_w = sppasPanel.fix_size(h*10)
+        btn_h = sppasPanel.fix_size(h)
+        btn.SetMinSize(wx.Size(btn_w, btn_h))
+        btn.SetSize(wx.Size(btn_w, btn_h))
 
         return btn
 

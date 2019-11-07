@@ -561,7 +561,7 @@ class sppasSubViewer(sppasBaseSubtitles):
         header += self.get_name()
         header += "\n"
         header += "[AUTHOR]"
-        if self.is_meta_key("annotator_name"):
+        if self.get_metadata().is_meta_key("annotator_name"):
             header += self.get_meta("annotator_name")
         header += "\n"
         header += "[SOURCE]"

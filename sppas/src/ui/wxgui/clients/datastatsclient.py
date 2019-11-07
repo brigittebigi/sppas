@@ -35,6 +35,7 @@
     GUI statistics system of annotated data.
 
 """
+
 import wx
 import wx.lib.scrolledpanel as scrolled
 
@@ -43,9 +44,9 @@ from sppas.src.ui.wxgui.sp_icons import FILTER_CHECK
 from sppas.src.ui.wxgui.sp_icons import FILTER_UNCHECK
 from sppas.src.ui.wxgui.sp_icons import TIER_PREVIEW
 
-from sppas.src.ui.wxgui.ui.CustomEvents  import FileWanderEvent, spEVT_FILE_WANDER
-from sppas.src.ui.wxgui.ui.CustomEvents  import spEVT_PANEL_SELECTED
-from sppas.src.ui.wxgui.ui.CustomEvents  import spEVT_SETTINGS
+from sppas.src.ui.wxgui.ui.CustomEvents import FileWanderEvent, spEVT_FILE_WANDER
+from sppas.src.ui.wxgui.ui.CustomEvents import spEVT_PANEL_SELECTED
+from sppas.src.ui.wxgui.ui.CustomEvents import spEVT_SETTINGS
 
 from sppas.src.ui.wxgui.structs.files import xFiles
 
@@ -58,6 +59,7 @@ from sppas.src.ui.wxgui.views.descriptivestats import DescriptivesStatsDialog
 
 from .baseclient import BaseClient
 
+
 # ----------------------------------------------------------------------------
 # Constants
 # ----------------------------------------------------------------------------
@@ -67,6 +69,7 @@ FILTER_UNCHECK_ID = wx.NewId()
 DESCRIPTIVES_ID = wx.NewId()
 PREVIEW_ID = wx.NewId()
 
+
 # ----------------------------------------------------------------------------
 # Main class that manage the notebook
 # ----------------------------------------------------------------------------
@@ -74,6 +77,7 @@ PREVIEW_ID = wx.NewId()
 
 class DataStatsClient(BaseClient):
     """
+
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org

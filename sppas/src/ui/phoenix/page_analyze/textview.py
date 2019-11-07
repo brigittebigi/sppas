@@ -122,6 +122,16 @@ class TextViewPanel(sppasBaseViewPanel):
 
     # -----------------------------------------------------------------------
 
+    def get_object(self):
+        """Return the object created from the opened file.
+
+        This view does not load the file into a specific object.
+
+        """
+        return None
+
+    # -----------------------------------------------------------------------
+
     def save(self):
         """Save the displayed text into a file."""
         content = self.__txtview.GetValue()
