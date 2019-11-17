@@ -209,13 +209,17 @@ class sppasCollapsiblePanel(sppasPanel):
         The parent can Bind the wx.EVT_COLLAPSIBLEPANE_CHANGED.
 
         """
+        
         sppasPanel.__init__(self, parent, id, pos, size, style, name)
 
         self.__collapsed = True
-        self.__btn = self.create_button(label)
+        self.__btn = None
+        self.__tools_panel = self.create_toolbar(label)
         self.__child_panel = sppasPanel(self, style=wx.TAB_TRAVERSAL | wx.NO_BORDER, name="content")
         self.__child_panel.Hide()
-        self.__border = sppasCollapsiblePanel.fix_size(4)
+        self.__child_panel.SetAutoLayout(True)
+        self.__child_panel.SetSizer(wx.BoxSizer(wx.VERTICAL))
+        self.__border = sppasCollapsiblePanel.fix_size(2)
 
         try:
             s = wx.GetApp().settings
@@ -235,7 +239,7 @@ class sppasCollapsiblePanel(sppasPanel):
 
     def SetBackgroundColour(self, colour):
         """Override."""
-        wx.CollapsiblePane.SetBackgroundColour(self, colour)
+        wx.Panel.SetBackgroundColour(self, colour)
         for c in self.GetChildren():
             c.SetBackgroundColour(colour)
 
@@ -243,7 +247,7 @@ class sppasCollapsiblePanel(sppasPanel):
 
     def SetForegroundColour(self, colour):
         """Override."""
-        wx.CollapsiblePane.SetForegroundColour(self, colour)
+        wx.Panel.SetForegroundColour(self, colour)
         for c in self.GetChildren():
             c.SetForegroundColour(colour)
 
@@ -251,7 +255,7 @@ class sppasCollapsiblePanel(sppasPanel):
 
     def SetFont(self, font):
         """Override."""
-        wx.CollapsiblePane.SetFont(self, font)
+        wx.Panel.SetFont(self, font)
         for c in self.GetChildren():
             c.SetFont(font)
         self.Layout()
@@ -327,10 +331,43 @@ class sppasCollapsiblePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def FindButton(self, icon):
+        """Return the button with the given icon name or None."""
+        for child in self.__tools_panel.GetChildren():
+            if child.GetName() == icon:
+                return child
+        return None
+
+    # -----------------------------------------------------------------------
+
+    def AddButton(self, icon):
+        """Prepend a button into the toolbar.
+
+        :param icon: (str) Name of the .png file of the icon or None
+
+        """
+        btn = BitmapTextButton(self.__tools_panel, name=icon)
+        btn.SetLabelPosition(wx.RIGHT)
+        btn.SetFocusWidth(0)
+        btn.SetSpacing(0)
+        btn.SetBorderWidth(0)
+        btn.SetBitmapColour(self.GetForegroundColour())
+        h = self.get_line_height() * 2
+        btn_h = sppasPanel.fix_size(h)
+        btn_w = btn_h
+        btn.SetMinSize(wx.Size(btn_w, btn_h))
+        btn.SetSize(wx.Size(btn_w, btn_h))
+        self.__tools_panel.GetSizer().Prepend(btn, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 0)
+
+        return btn
+
+    # -----------------------------------------------------------------------
+
     def DoGetBestSize(self):
         """Get the size which best suits the window."""
         # size = self.__btn.GetMinSize()
-        size = self.__btn.GetSize()
+        # size = self.__btn.GetSize()
+        size = self.__tools_panel.GetSize()
 
         if self.IsExpanded():
             pbs = self.__child_panel.GetBestSize()
@@ -344,15 +381,15 @@ class sppasCollapsiblePanel(sppasPanel):
     def Layout(self):
         """Do the layout."""
         # we need to complete the creation first
-        if not self.__btn or not self.__child_panel:
+        if not self.__tools_panel or not self.__child_panel:
             return False
 
         w, h = self.GetSize()
         bw = w - self.__border
         bh = self.get_line_height() * 2
-        # fix pos and size of the button
-        self.__btn.SetPosition((self.__border, 0))
-        self.__btn.SetSize(wx.Size(bw, bh))
+        # fix pos and size of the top panel with tools
+        self.__tools_panel.SetPosition((self.__border, 0))
+        self.__tools_panel.SetSize(wx.Size(bw, bh))
 
         if self.IsExpanded():
             # fix pos and size of the child window
@@ -405,7 +442,7 @@ class sppasCollapsiblePanel(sppasPanel):
         :param size: an instance of wx.Size.
 
         """
-        bw, bh = self.__btn.GetMinSize()
+        bw, bh = self.__tools_panel.GetMinSize()
         self.SetMinSize(wx.Size(bw, bh))
         if size is None:
             size = wx.DefaultSize
@@ -451,12 +488,23 @@ class sppasCollapsiblePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def create_button(self, text):
+    def create_toolbar(self, label):
+        """Create a panel with tools, including the collapsible button."""
+        panel = sppasPanel(self)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.__btn = self.create_collapsible_button(panel, label)
+        sizer.Add(self.__btn, 1, wx.EXPAND, 0)
+        panel.SetSizer(sizer)
+        return panel
+
+    # -----------------------------------------------------------------------
+
+    def create_collapsible_button(self, parent, text):
         if self.__collapsed is True:
             icon = "arrow_collapsed"
         else:
             icon = "arrow_expanded"
-        btn = BitmapTextButton(self, label=text, name=icon)
+        btn = BitmapTextButton(parent, label=text, name=icon)
         btn.LabelPosition = wx.RIGHT
         btn.Align = wx.ALIGN_LEFT
 
@@ -506,11 +554,14 @@ class TestPanel(sc.ScrolledPanel):
         self.MakePanelContent(p1)
 
         p2 = sppasCollapsiblePanel(self, label="SPPAS Collapsible Panel...")
+        p2.AddButton("folder")
         child_panel = p2.GetPane()
         child_panel.SetBackgroundColour(wx.BLUE)
         self.MakePanelContent(child_panel)
         p2.Expand()
+        checkbox = p2.AddButton("choice_checkbox")
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p2)
+        checkbox.Bind(wx.EVT_BUTTON, self.OnCkeckedPanel)
 
         p3 = sppasCollapsiblePanel(self, label="SPPAS Collapsible Panel using SetPane...")
         child_panel = sppasPanel(p3)
@@ -535,6 +586,7 @@ class TestPanel(sc.ScrolledPanel):
         self.Layout()
         self.SetupScrolling(scroll_x=True, scroll_y=True)
         self.SetAutoLayout(True)
+        self.Refresh()
 
         self.Bind(wx.EVT_SIZE, self.OnSize)
 
@@ -542,6 +594,15 @@ class TestPanel(sc.ScrolledPanel):
         panel = evt.GetEventObject()
         panel.SetFocus()
         self.ScrollChildIntoView(panel)
+
+    def OnCkeckedPanel(self, evt):
+        button = evt.GetEventObject()
+        if button.GetName() == "choice_checked":
+            button.SetImage("choice_checkbox")
+            button.SetName("choice_checkbox")
+        else:
+            button.SetImage("choice_checked")
+            button.SetName("choice_checked")
 
     def MakePanelContent(self, pane):
         """Just make a few controls to put on the collapsible pane."""

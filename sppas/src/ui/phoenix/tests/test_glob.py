@@ -47,7 +47,7 @@ import sppas.src.ui.phoenix.windows.button as button
 import sppas.src.ui.phoenix.windows.panel as panel
 import sppas.src.ui.phoenix.panels.option as option
 import sppas.src.ui.phoenix.page_files.filesmanager as filesmanager
-#import sppas.src.ui.phoenix.page_files.filestreectrl as filestreectrl
+import sppas.src.ui.phoenix.page_files.filestreectrl as filestreectrl
 import sppas.src.ui.phoenix.page_files.refsmanager as refsmanager
 import sppas.src.ui.phoenix.page_files.wksmanager as wksmanager
 import sppas.src.ui.phoenix.page_analyze.anz_tabs as anz_tabs
@@ -72,7 +72,7 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
-        # self.AddPage(filestreectrl.TestPanel(self), "AGW Files tree ctrl")
+        self.AddPage(filestreectrl.TestPanel(self), "Files tree ctrl: collapsed panels")
         self.AddPage(listview.TestPanel(self), "List view")
         self.AddPage(textview.TestPanel(self), "Text view")
         self.AddPage(baseview.TestPanel(self), "Base view")

@@ -33,15 +33,24 @@
 
 import os
 import wx
-import wx.lib.agw.hypertreelist as HTL
+import wx.lib.newevent
 
+from sppas import paths
 from sppas import sppasTypeError
 from sppas.src.anndata import sppasRW
 from sppas.src.files import States, FileName, FileRoot, FilePath, FileData
 
 from ..windows import sppasPanel
+from ..windows import sppasScrolledPanel
+from ..windows import sppasCollapsiblePanel
 from ..windows.image import ColorizeImage
 from ..tools import sppasSwissKnife
+
+# ---------------------------------------------------------------------------
+# Internal use of an event, when an item is clicked.
+
+ItemClickedEvent, EVT_ITEM_CLICKED = wx.lib.newevent.NewEvent()
+ItemClickedCommandEvent, EVT_ITEM_CLICKED_COMMAND = wx.lib.newevent.NewCommandEvent()
 
 # ---------------------------------------------------------------------------
 
@@ -93,210 +102,16 @@ class FileAnnotIcon(object):
             ext = "." + ext
         return self.__exticon.get(ext.upper(), "")
 
-# ---------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
-
-class BitmapWindow(wx.Window):
-
-    def __init__(self, name):
-        super(BitmapWindow, self).__init__()
-        #dc = wx.ClientDC(self)
-        #dc.SetFont(self.GetFont())
-        #size = dc.GetTextExtent('TT')
-        #w, h = size[1] * 2, size[1] * 2
-        #s = min(w, h)
-        #s = int(0.8 * s)
-        s = 32
-        self.bmp = sppasSwissKnife.get_bmp_icon(name, s)
-
-    def get_window(self):
-        return self.bmp
+    def get_names(self):
+        """Return the list of known icons."""
+        return list(self.__exticon.keys())
 
 # ---------------------------------------------------------------------------
 
 
-class StateWindow(wx.Window):
-
-    ICON_NAMES = {
-        States().UNUSED: "choice_checkbox",
-        States().CHECKED: "choice_checked",
-        States().LOCKED: "locked",
-        States().AT_LEAST_ONE_CHECKED: "choice_pos",
-        States().AT_LEAST_ONE_LOCKED: "choice_neg"
-    }
-
-    def __init__(self, state):
-        super(StateWindow, self).__init__()
-        #dc = wx.ClientDC(self)
-        #dc.SetFont(self.GetFont())
-        #size = dc.GetTextExtent('TT')
-        #w, h = size[1] * 2, size[1] * 2
-        #s = min(w, h)
-        #s = int(0.9 * s)
-        s = 32
-
-        if state in StateWindow.ICON_NAMES:
-            icon_value = StateWindow.ICON_NAMES[state]
-            # get the image from its name
-            img = sppasSwissKnife.get_image(icon_value)
-            # re-scale the image to the expected size
-            sppasSwissKnife.rescale_image(img, s)
-            # re-colorize
-            ColorizeImage(img, wx.BLACK, wx.Colour(128, 128, 128, 128))
-            # convert to bitmap
-            self.bmp = wx.Bitmap(img)
-        else:
-            try:  # wx4
-                self.bmp = wx.Bitmap(s, s, 32)
-            except TypeError:  # wx3
-                self.bmp = wx.EmptyBitmap(s, s)
-
-    def get_window(self):
-        return self.bmp
-
-# ---------------------------------------------------------------------------
-
-
-class ColumnProperties(object):
-    """Represents the properties of any column.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    def __init__(self, name, idt):
-        """Constructor of a ColumnProperties.
-
-        Some members of this class are associated to the wx.dataview package.
-
-        All members are private so that the get/set methods are always called
-        and they have properties in order to be able to access them in a
-        simplest way. These members can't be modified by inheritance.
-
-        The properties of a column are:
-
-            - an identifier: an integer to represent the column number,
-            - a name of the column,
-            - the initial width of the column,
-            - the edit mode of the cell (editable or not),
-            - a renderer,
-            - an alignment,
-            - the functions to get values in the data of the model.
-
-        :param name: (str) Name of the column
-
-        """
-        self.__id = idt
-        self.__name = ""
-        self.set_name(name)
-
-        self.__width = 40
-        self.__renderer = None
-        self.__edit = False
-        self.__align = wx.ALIGN_LEFT
-        self.__fct = dict()       # functions to get values
-        self.__fct_args = dict()  # args of the function to get values
-
-    # -----------------------------------------------------------------------
-
-    def get_id(self):
-        return self.__id
-
-    # -----------------------------------------------------------------------
-
-    def get_name(self):
-        return self.__name
-
-    def set_name(self, value):
-        self.__name = str(value)
-
-    # -----------------------------------------------------------------------
-
-    def get_width(self):
-        return self.__width
-
-    def set_width(self, value):
-        value = int(value)
-        value = min(max(40, value), 400)
-        self.__width = value
-
-    # -----------------------------------------------------------------------
-    # Edit mode (editable or not)
-    # -----------------------------------------------------------------------
-
-    def get_edit(self):
-        """Get the edit mode of the cells. """
-        return self.__edit
-
-    # -----------------------------------------------------------------------
-
-    def set_edit(self, value):
-        """Fix the edit mode of the cells.
-
-        :param value: (bool) True if editable
-
-        """
-        self.__edit = bool(value)
-
-    # -----------------------------------------------------------------------
-
-    def get_renderer(self):
-        return self.__renderer
-
-    def set_renderer(self, r):
-        self.__renderer = r
-
-    # -----------------------------------------------------------------------
-
-    def get_align(self):
-        return self.__align
-
-    def set_align(self, value):
-        aligns = (
-            wx.ALIGN_LEFT,
-            wx.ALIGN_RIGHT,
-            wx.ALIGN_CENTRE)
-        if value is None or value not in aligns:
-            value = aligns[0]
-        self.__align = value
-
-    # -----------------------------------------------------------------------
-
-    def add_fct_name(self, key, fct_name, fct_arg=None):
-        """key is a data type."""
-        self.__fct[key] = fct_name
-        self.__fct_args[key] = fct_arg
-
-    # -----------------------------------------------------------------------
-
-    def get_value(self, data):
-        for key in self.__fct:
-            if key == type(data):
-                if self.__fct_args[key] is None:
-                    return getattr(data, self.__fct[key])()
-                else:
-                    return getattr(data, self.__fct[key])(self.__fct_args[key])
-        return ""
-
-    # -----------------------------------------------------------------------
-    # Properties
-    # -----------------------------------------------------------------------
-
-    id = property(get_id, None)
-    name = property(get_name, set_name)
-    edit = property(get_edit, set_edit)
-    width = property(get_width, set_width)
-    renderer = property(get_renderer, set_renderer)
-    align = property(get_align, set_align)
-
-# ---------------------------------------------------------------------------
-
-
-class FileTreeView(sppasPanel):
+class FileTreeView(sppasScrolledPanel):
     """A control to display data files in a tree-spreadsheet style.
 
     :author:       Brigitte Bigi
@@ -304,6 +119,9 @@ class FileTreeView(sppasPanel):
     :contact:      contact@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    This class manages a FileData() instance to add/remove/delete files and
+    the wx objects to display it.
 
     """
 
@@ -316,30 +134,15 @@ class FileTreeView(sppasPanel):
         """
         super(FileTreeView, self).__init__(parent, name=name)
 
-        self.tree = HTL.HyperTreeList(self, style=wx.BORDER_NONE | HTL.TR_NO_BUTTONS | HTL.TR_SINGLE | HTL.TR_HIDE_ROOT | HTL.TR_COLUMN_LINES, name="content")
-
         # The workspace to display
         self.__data = FileData()
-        self.__column_names = ['icon', 'file', 'state', 'type', 'refs', 'date', 'size']
-        self.__mapper = dict()
 
-        # The icons to display depending on the file extension
-        self.exticon = FileAnnotIcon()
+        # Each FilePath has its own CollapsiblePanel in the sizer
+        self.__fps = dict()  # key=fp.id, value=FilePathCollapsiblePanel
+        self._create_content()
+        self._setup_events()
 
-        # Create the columns
-        for i, c in enumerate(self.__column_names):
-            self.__mapper[i] = FileTreeView.__create_col_properties(c)
-            self.__create_col(self.__mapper[i])
-
-        self.root = self.tree.GetMainWindow().AddRoot("")
-        self.tree.GetMainWindow().Expand(self.root)
-        self.tree.GetMainWindow().SetMainColumn(1)
-
-        sizer = wx.BoxSizer()
-        sizer.Add(self.tree, 1, wx.EXPAND)
-        self.SetSizer(sizer)
-        sizer.Layout()
-
+        # Look&feel
         self.SetBackgroundColour(wx.GetApp().settings.bg_color)
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
@@ -355,242 +158,597 @@ class FileTreeView(sppasPanel):
     # ------------------------------------------------------------------------
 
     def set_data(self, data):
-        """Set the data."""
+        """Set the data and update the corresponding wx objects."""
         self.__data = data
-        self.__refresh()
+        self.__update()
 
     # ------------------------------------------------------------------------
 
     def AddFiles(self, entries):
         """Add a list of files or folders.
 
-        The given filenames must include their absolute path.
+        The given entries must include their absolute path.
 
         :param entries: (list of str) Filename or folder with absolute path.
-        :return: (int) Number of items added in the tree
+        :return: (int) Number of items added in the tree (folders, roots and files)
 
         """
-        wx.LogDebug('Add files: {:s}'.format(str(entries)))
-        items = self.__add_files(entries)
-        nb = len(items)
-        if len(items) > 0:
-            self.__refresh()
-        return nb
+        modified = 0
 
-    # -----------------------------------------------------------------------
-    # Management of the tree
-    # -----------------------------------------------------------------------
+        for entry in entries:
+            if os.path.isdir(entry):
+                m = self.add_folder(entry, add_files=True)
+                modified += len(m)
 
-    @staticmethod
-    def __create_col_properties(name):
-        if name == "icon":
-            col = ColumnProperties(" ", name)
-            col.width = 36
-            col.align = wx.ALIGN_CENTRE
-            col.renderer = BitmapWindow("")
-            return col
+            elif os.path.isfile(entry):
+                m = self.add_file(entry)
+                modified += len(m)
 
-        if name == "file":
-            col_file = ColumnProperties("Path Root Name", name)
-            col_file.add_fct_name(FilePath, "get_id")
-            col_file.add_fct_name(FileRoot, "get_id")
-            col_file.add_fct_name(FileName, "get_name")
-            col_file.width = 320
-            return col_file
+        if modified > 0:
+            self.Layout()
+            self.Refresh()
 
-        if name == "state":
-            col = ColumnProperties("State", name)
-            col.width = 36
-            col.align = wx.ALIGN_CENTRE
-            col.renderer = StateWindow(0)
-            col.add_fct_name(FileName, "get_state")
-            col.add_fct_name(FileRoot, "get_state")
-            col.add_fct_name(FilePath, "get_state")
-            return col
-
-        if name == "type":
-            col = ColumnProperties("Type", name)
-            col.add_fct_name(FileName, "get_extension")
-            col.width = 100
-            return col
-
-        if name == "refs":
-            col = ColumnProperties("Ref.", name)
-            col.width = 80
-            col.align = wx.ALIGN_LEFT
-            return col
-
-        if name == "date":
-            col = ColumnProperties("Modified", name)
-            col.add_fct_name(FileName, "get_date")
-            col.width = 140
-            col.align = wx.ALIGN_CENTRE
-            return col
-
-        if name == "size":
-            col = ColumnProperties("Size", name)
-            col.add_fct_name(FileName, "get_size")
-            col.width = 80
-            col.align = wx.ALIGN_RIGHT
-            return col
-
-        col = ColumnProperties("", name)
-        col.width = 200
-        return col
-
-    def __create_col(self, col):
-        self.tree.AddColumn(
-            col.name,
-            col.width,
-            col.align,
-            image=-1,
-            shown=True,
-            colour=None,
-            edit=col.edit
-        )
+        return modified
 
     # ------------------------------------------------------------------------
 
-    def __refresh(self):
+    def RemoveCheckedFiles(self):
+        """Remove all checked files."""
+        raise NotImplementedError
+
+    # ------------------------------------------------------------------------
+
+    def DeleteCheckedFiles(self):
+        """Delete all checked files."""
+        raise NotImplementedError
+
+    # ------------------------------------------------------------------------
+
+    def GetCheckedFiles(self):
+        """Return the list of checked files.
+
+        :returns: List of FileName
+
+        """
+        raise NotImplementedError
+
+    # ------------------------------------------------------------------------
+
+    def LockFiles(self, entries):
+        """Lock a list of files.
+
+        Entries are a list of filenames with absolute path or FileName
+        instances or both.
+
+        :param entries: (list of str/FileName)
+
+        """
+        raise NotImplementedError
+
+    # ------------------------------------------------------------------------
+    # Manage the data and their panels
+    # ------------------------------------------------------------------------
+
+    def add_folder(self, foldername, add_files=True):
+        """Add a folder and its files into to the data and display it.
+
+        Do not layout/refresh the panel.
+
+        :param foldername: (str) Absolute path
+        :param add_files: (bool) Add also the files of this folder
+        :return: list of added items
+
+        """
+        wx.LogDebug('Add folder: {:s}'.format(str(foldername)))
+        added = list()
+
+        # Get or create the FilePath of the foldername
+        try:
+            fp = FilePath(foldername)
+        except Exception as e:
+            wx.LogError("{:s}".format(str(e)))
+            return added
+
+        fpx = self.__data.get_object(fp.id)
+        if fpx is None:
+            self.__data.add(fp)
+            self.__add_folder_panel(fp)
+            added.append(foldername)
+
+        if add_files is True:
+            # add all files of this folder into the FilePath and the panel
+            for f in sorted(os.listdir(foldername)):
+                fullname = os.path.join(foldername, f)
+                if os.path.isfile(fullname):
+                    m = self.add_file(fullname)
+                    if len(m) > 0:
+                        added.extend(m)
+
+        return added
+
+    # ------------------------------------------------------------------------
+
+    def add_file(self, filename):
+        """Add a file to the data and into a path-root panel.
+
+        Do not layout/refresh the panel.
+
+        :param filename: (str) Absolute name of a file
+        :return: (bool)
+
+        """
+        wx.LogDebug('Add file: {:s}'.format(str(filename)))
+        added = list()
+
+        # get the FilePath of this filename
+        fpx = FilePath(os.path.dirname(filename))
+        fp = self.__data.get_object(fpx.get_id())
+        if fp is None:
+            added = self.add_folder(fpx.get_id(), add_files=False)
+            if len(added) == 0:
+                wx.LogError("Folder not added: {:s}".format(fpx.get_id()))
+                return added
+        fp = self.__data.get_object(fpx.get_id())
+
+        # get the panel of this fp
+        p = self.__fps[fp.get_id()]
+
+        # add the entry into the data
+        added_fs = self.__data.add_file(filename, brothers=False, ctime=0.)
+        if len(added_fs) == 0:
+            wx.LogWarning("File not added: {:s}".format(filename))
+            return added
+
+        # add the entries into the panels
+        # TODO: add roots first, then add files into the roots
+        for fs in added_fs:
+            if isinstance(fs, FileName):
+                wx.LogDebug("Added file {:s}".format(fs.get_id()))
+                fr = self.__data.get_object(FileRoot.root(fs.get_id()))
+                p.add_file(fr, fs)
+                added.append(fs)
+
+        return added
+
+    # ------------------------------------------------------------------------
+
+    def __add_folder_panel(self, fp):
+        """Create a child panel to display the content of a FilePath.
+
+        :param fp: (FilePath)
+        :return: FilePathCollapsiblePanel
+
+        """
+        p = FilePathCollapsiblePanel(self, fp)
+        p.SetFocus()
+        self.ScrollChildIntoView(p)
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p)
+        p.GetPane().Bind(EVT_ITEM_CLICKED, self._process_item_clicked)
+
+        self.GetSizer().Add(p, 0, wx.EXPAND | wx.ALL, border=8)
+        self.__fps[fp.get_id()] = p
+        return p
+
+    # ------------------------------------------------------------------------
+
+    def __update(self):
+        """Update the currently displayed wx objects to match the data."""
         pass
 
-    # -----------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
-    def update(self):
-        """Update the data and refresh the tree."""
-        wx.LogDebug("Data update...")
-        self.__data.update()
-        wx.LogDebug("Clear the tree...")
-        self.tree.DeleteAllItems()
-        self.root = self.tree.AddRoot("")
-        self.tree.Expand(self.root)
-        for fp in self.__data:
-            wx.LogDebug(" - add item {:s}".format(fp.get_id()))
-            fp_item = self.__append_item(fp, parent=self.root)
-            for fr in fp:
-                fr_item = self.__append_item(fr, parent=fp_item)
-                for fn in fr:
-                    self.__append_item(fn, parent=fr_item)
-        self.tree.Refresh()
+    def _create_content(self):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(sizer)
+        self.Layout()
+        self.SetupScrolling(scroll_x=True, scroll_y=True)
+        self.SetAutoLayout(True)
 
     # -----------------------------------------------------------------------
+    # Events management
+    # -----------------------------------------------------------------------
 
-    def __append_item(self, fb, parent=None):
-        """Create an item matching a FileBase."""
-        item = self.tree.AppendItem(parent, "", data=fb)
-        if isinstance(fb, (FileRoot, FilePath)):
-            if fb.subjoined is None:
-                fb.subjoined = dict()
-                fb.subjoined["expand"] = True
-            if fb.subjoined.get('expand', False) is True:
-                self.tree.Expand(item)
-                wx.LogDebug(" expand item {:s} ".format(fb.get_id()))
-        for i in self.__mapper:
-            value = self.GetValue(item, i)
-            if value is None:
-                wx.LogError("None value for item={:s}, col={:d}".format(fb.get_id(), i))
-                return
-            wx.LogDebug(" value={:s}".format(str(value)))
-            renderer = self.__mapper[i].renderer
-            if renderer is None or len(str(value)) == 0:
-                item.SetText(i, str(value))
+    def _setup_events(self):
+        """Associate a handler function with the events.
+
+        It means that when an event occurs then the process handler function
+        will be called.
+
+        """
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+
+        # The user pressed a key of its keyboard
+        # self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
+
+        # The user clicked an item
+        self.Bind(EVT_ITEM_CLICKED, self._process_item_clicked)
+
+    # ------------------------------------------------------------------------
+
+    def _process_item_clicked(self, event):
+        """Process an action event: an item was clicked.
+
+        The sender of the event is either a Path or a Root Collapsible Panel.
+
+        :param event: (wx.Event)
+
+        """
+        # the object is a FileBase (path, root or file)
+        object_id = event.id
+        filebase = self.__data.get_object(object_id)
+        wx.LogDebug("Process ItemClicked {:s}".format(object_id))
+
+        # change state of the item
+        current_state = filebase.get_state()
+        new_state = States().UNUSED
+        if current_state == States().UNUSED:
+            new_state = States().CHECKED
+        modified = self.__data.set_object_state(new_state, filebase)
+
+        # update the corresponding panel(s)
+        for fs in modified:
+            wx.LogDebug("Modified: {:s}".format(fs.id))
+            if isinstance(fs, FilePath):
+                fp = fs
+            elif isinstance(fs, FileRoot):
+                fp = self.__data.get_parent(fs)
+            elif isinstance(fs, FileName):
+                fr = self.__data.get_parent(fs)
+                fp = self.__data.get_parent(fr)
             else:
-                # item.SetWindow(value, i)
-                wx.LogDebug('Not implemented: custom renderer.')
-        return item
+                continue
+            self.__fps[fp.get_id()].change_state(fs.get_id(), fs.get_state())
+
+    # ------------------------------------------------------------------------
+
+    def OnCollapseChanged(self, evt=None):
+        panel = evt.GetEventObject()
+        panel.SetFocus()
+        self.ScrollChildIntoView(panel)
+
+    # ------------------------------------------------------------------------
+
+    def OnSize(self, evt):
+        self.Layout()
+
+# ---------------------------------------------------------------------------
+
+
+class FilePathCollapsiblePanel(sppasCollapsiblePanel):
+    """A panel to display the fp as a list of fr.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, fp, name="fp-panel"):
+        super(FilePathCollapsiblePanel, self).__init__(parent, label=fp.get_id(), name=name)
+
+        self._create_content(fp)
+        self._setup_events()
+
+        # Each FileRoot has its own CollapsiblePanel in the sizer
+        self.__fpid = fp.get_id()
+        self.__frs = dict()  # key=root.id, value=FileRootCollapsiblePanel
+
+        # Look&feel
+        self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
+        self.SetForegroundColour(wx.GetApp().settings.fg_color)
+        self.SetFont(wx.GetApp().settings.text_font)
 
     # -----------------------------------------------------------------------
 
-    def __add_files(self, entries):
-        """Add a set of files or folders in the data and in the tree.
+    def SetFont(self, font):
+        """Override."""
+        f = wx.Font(font.GetPointSize(),
+                    font.GetFamily(),
+                    font.GetStyle(),
+                    wx.FONTWEIGHT_BOLD,
+                    font.GetUnderlined(),
+                    font.GetFaceName())
+        sppasCollapsiblePanel.SetFont(self, f)
+        self.GetPane().SetFont(font)
+        self.Layout()
 
-        :param entries: (list of str) FileName or folder with absolute path.
+    # ----------------------------------------------------------------------
+
+    def add_file(self, fr, fn):
+        """Add a file in the appropriate root of the child panel.
 
         """
-        added_files = list()
-        for entry in entries:
-            fns = self.__add(entry)
-            if len(fns) > 0:
-                added_files.extend(fns)
+        if fr.get_id() not in self.__frs:
+            p = self.__add_root_panel(fr)
+        else:
+            p = self.__frs[fr.get_id()]
 
-        if len(added_files) > 0:
-            self.update()
+        added = p.add(fn)
+        if added is True:
+            self.Layout()
+            self.Refresh()
 
-        return added_files
+    # ------------------------------------------------------------------------
+
+    def __add_root_panel(self, fr):
+        """Create a child panel to display the content of a FileRoot.
+
+        :param fr: (FileRoot)
+        :return: FileRootCollapsiblePanel
+
+        """
+        p = FileRootCollapsiblePanel(self.GetPane(), fr)
+        p.SetFocus()
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p)
+        self.GetPane().GetSizer().Add(p, 0, wx.EXPAND | wx.ALL, border=4)
+        self.__frs[fr.get_id()] = p
+        return p
+
+    # ------------------------------------------------------------------------
+    # Manage the content
+    # ------------------------------------------------------------------------
+
+    def _create_content(self, fp):
+        collapse = True
+        if fp.subjoined is not None:
+            if "expand" in fp.subjoined:
+                collapse = not fp.subjoined["expand"]
+
+        self.Collapse(collapse)
+        self.AddButton("folder")
+        self.AddButton("choice_checkbox")
+
+    # ------------------------------------------------------------------------
+
+    def change_state(self, identifier, state):
+        icon_name = FileRootCollapsiblePanel.STATES_ICON_NAMES[state]
+
+        if self.__fpid == identifier:
+            btn = self.FindButton("choice_checkbox")
+            btn.SetImage(icon_name)
+            btn.Refresh()
+        elif identifier in self.__frs:
+            self.__frs[identifier].change_state(identifier, state)
+        else:
+            frid = FileRoot.root(identifier)
+            if frid in self.__frs:
+                self.__frs[frid].change_state(identifier, state)
+
+    # -----------------------------------------------------------------------
+    # Events management
+    # -----------------------------------------------------------------------
+
+    def notify(self, identifier):
+        """The parent has to be informed of a change of content."""
+        wx.LogDebug("PATH: Notification ItemClicked {:s}".format(identifier))
+        evt = ItemClickedEvent(id=identifier)
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
+    # ------------------------------------------------------------------------
+
+    def _setup_events(self):
+        """Associate a handler function with the events.
+
+        It means that when an event occurs then the process handler function
+        will be called.
+
+        """
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.FindButton("choice_checkbox").Bind(wx.EVT_BUTTON, self.OnCkeckedPath)
+
+    # ------------------------------------------------------------------------
+
+    def OnCollapseChanged(self, evt=None):
+        panel = evt.GetEventObject()
+        panel.SetFocus()
+
+    # ------------------------------------------------------------------------
+
+    def OnCkeckedPath(self, evt):
+        self.notify(self.__fpid)
+
+    # ------------------------------------------------------------------------
+
+    def OnSize(self, evt):
+        self.Layout()
+
+# ---------------------------------------------------------------------------
+
+
+class FileRootCollapsiblePanel(sppasCollapsiblePanel):
+    """A panel to display the fr as a list of fn.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
+
+    STATES_ICON_NAMES = {
+        States().UNUSED: "choice_checkbox",
+        States().CHECKED: "choice_checked",
+        States().LOCKED: "locked",
+        States().AT_LEAST_ONE_CHECKED: "choice_pos",
+        States().AT_LEAST_ONE_LOCKED: "choice_neg"
+    }
+
+    def __init__(self, parent, fr, name="fr-panel"):
+        super(FileRootCollapsiblePanel, self).__init__(parent, label=fr.get_id(), name=name)
+
+        list_ctrl = self.__create_listctrl()
+        self.SetPane(list_ctrl)
+        self.Expand()
+        self.AddButton("root")
+        self.__checkbox = self.AddButton("choice_checkbox")
+        self.__checkbox.Bind(wx.EVT_BUTTON, self.OnCkeckedRoot)
+
+        self.__frid = fr.get_id()
+        self.__fns = dict()
+
+        icon_size = sppasCollapsiblePanel.fix_size(16)
+        self.__il = wx.ImageList(icon_size, icon_size)
+        self.__ils = list()
+
+        for state in FileRootCollapsiblePanel.STATES_ICON_NAMES:
+            icon_name = FileRootCollapsiblePanel.STATES_ICON_NAMES[state]
+            bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
+            self.__il.Add(bitmap)
+            self.__ils.append(icon_name)
+
+        self.__file_icon_names = FileAnnotIcon()
+        for icon_name in self.__file_icon_names.get_names():
+            bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
+            self.__il.Add(bitmap)
+
+        list_ctrl.SetImageList(self.__il, wx.IMAGE_LIST_SMALL)
+
+        # Look&feel
+        self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
+        self.SetForegroundColour(wx.GetApp().settings.fg_color)
+        self.SetFont(wx.GetApp().settings.text_font)
+
+        # Organize items and fix a size for each of them
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
-    def __add(self, entry):
-        """Add a file or a folder in the data.
+    # -----------------------------------------------------------------------
 
-        :param entry: (str)
+    def SetBackgroundColour(self, color):
+        """Calculate a lightness background color."""
+        r, g, b = color.Red(), color.Green(), color.Blue()
+        delta = 10
+        if (r + g + b) > 384:
+            color = wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
+        else:
+            color = wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
+
+        wx.Window.SetBackgroundColour(self, color)
+        for c in self.GetChildren():
+            c.SetBackgroundColour(color)
+
+    # -----------------------------------------------------------------------
+
+    def SetFont(self, font):
+        """Override."""
+        f = wx.Font(font.GetPointSize(),
+                    font.GetFamily(),
+                    wx.FONTSTYLE_ITALIC,
+                    wx.FONTWEIGHT_NORMAL,
+                    font.GetUnderlined(),
+                    font.GetFaceName())
+        sppasCollapsiblePanel.SetFont(self, f)
+        self.GetPane().SetFont(font)
+        self.__set_pane_size()
+        self.Layout()
+
+    # ----------------------------------------------------------------------
+
+    def add(self, fn):
+        """Add a file in the dataview of the child panel.
 
         """
-        fns = list()
-        if os.path.isdir(entry):
-            for f in sorted(os.listdir(entry)):
-                fullname = os.path.join(entry, f)
-                try:
-                    new_fns = self.__data.add_file(fullname)
-                    if new_fns is not None:
-                        fns.extend(new_fns)
-                        wx.LogDebug('{:s} added in workspace.'.format(entry))
-                except OSError as e:
-                    wx.LogError('{:s} not added in workspace: {:s}'
-                                ''.format(fullname, str(e)))
+        if fn not in self.__fns:
+            self.__add_file(fn)
+        else:
+            return False
 
-        elif os.path.isfile(entry):
-            try:
-                new_fns = self.__data.add_file(entry, brothers=True)
-                if new_fns is not None:
-                    fns.extend(new_fns)
-                    wx.LogDebug('{:s} added.\n{:d} brother files added in '
-                                'workspace.'.format(entry, len(new_fns)))
-            except Exception as e:
-                wx.LogError('{:s} not added in workspace: {:s}.'
-                            ''.format(entry, str(e)))
+        return True
+
+    # ------------------------------------------------------------------------
+
+    def __add_file(self, fn):
+        listctrl = self.FindWindow("listctrl_files")
+
+        index = listctrl.InsertItem(listctrl.GetItemCount(), 0)
+        listctrl.SetItem(index, 1, fn.get_id())
+        self.__fns[fn.get_id()] = index
+        self.__set_pane_size()
+
+    # ------------------------------------------------------------------------
+
+    def __set_pane_size(self):
+        """Fix the size of the child panel."""
+        listctrl = self.FindWindow("listctrl_files")
+        n = listctrl.GetItemCount() + 1
+        if n == 0:
+            n = 1
+        h = n * self.GetFont().GetPixelSize()[1] * 2
+        listctrl.SetMinSize(wx.Size(-1, h+2))
+
+    # ------------------------------------------------------------------------
+
+    def __create_listctrl(self):
+        """Create a listctrl to display files."""
+        style = wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL | wx.LC_HRULES
+        lst = wx.ListCtrl(self, style=style, name="listctrl_files")
+
+        lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
+        info = wx.ListItem()
+        info.Mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
+        info.Image = -1
+        info.Align = 0
+        lst.InsertColumn(0, info)
+        lst.AppendColumn("filename",
+                         format=wx.LIST_FORMAT_LEFT,
+                         width=sppasScrolledPanel.fix_size(340))
+        lst.SetColumnWidth(0, sppasScrolledPanel.fix_size(24))
+        #lst.SetColumnWidth(1, wx.LIST_AUTOSIZE)
+
+        return lst
+
+    # ------------------------------------------------------------------------
+
+    def __item_selected(self, event):
+        """"""
+        listctrl = self.FindWindow("listctrl_files")
+        index = listctrl.GetFirstSelected()
+        listctrl.Select(index, on=False)
+
+        # get the corresponding fn
+        fn_clicked = None
+        for fnid in self.__fns:
+            if self.__fns[fnid] == index:
+                fn_clicked = fnid
+                break
+
+        # notify parent to decide what has to be done
+        self.notify(fn_clicked)
+
+    # ------------------------------------------------------------------------
+
+    def notify(self, identifier):
+        """The parent has to be informed of a change of content."""
+        wx.LogDebug("ROOT: Notification ItemClicked {:s}".format(identifier))
+        evt = ItemClickedEvent(id=identifier)
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+        wx.LogDebug(" event posted to parent")
+
+    # ------------------------------------------------------------------------
+
+    def change_state(self, identifier, state):
+        icon_name = FileRootCollapsiblePanel.STATES_ICON_NAMES[state]
+
+        if self.__frid == identifier:
+            self.__checkbox.SetImage(icon_name)
+            self.__checkbox.Refresh()
 
         else:
-            wx.LogError('{:s} not added in workspace (not a regular file'
-                        'nor a directory).'.format(entry))
+            listctrl = self.FindWindow("listctrl_files")
+            index = self.__fns[identifier]
+            listctrl.SetItem(index, 0, "", imageId=self.__ils.index(icon_name))
 
-        return fns
+    # ------------------------------------------------------------------------
 
-    # -----------------------------------------------------------------------
-
-    def GetValue(self, item, col):
-        """Return the value to be displayed for this item and column.
-
-        :param item: (wx.dataview.DataViewItem)
-        :param col: (int) Column index.
-
-        Pull the values from the data objects we associated with the items
-        in GetChildren.
-
-        """
-        # Fetch the data object for this item.
-        node = item.GetData()
-        if isinstance(node, (FileName, FileRoot, FilePath)) is False:
-            raise RuntimeError("Unknown node type {:s}".format(type(node)))
-
-        if self.__mapper[col].get_id() == "state":
-            return StateWindow(self.__mapper[col].get_value(node))
-
-        if self.__mapper[col].get_id() == "icon":
-            if isinstance(node, FileName) is True:
-                ext = node.get_extension()
-                icon_name = self.exticon.get_icon_name(ext)
-                return BitmapWindow(icon_name)
-            return ""
-
-        if self.__mapper[col].get_id() == "refs":
-            if isinstance(node, FileRoot) is True:
-                # convert the list of FileReference instances into a string
-                refs_ids = [ref.id for ref in node.get_references()]
-                return " ".join(sorted(refs_ids))
-            return ""
-
-        return self.__mapper[col].get_value(node)
+    def OnCkeckedRoot(self, evt):
+        button = evt.GetEventObject()
+        self.notify(self.__frid)
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
@@ -602,3 +760,4 @@ class TestPanel(FileTreeView):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
         self.AddFiles([os.path.abspath(__file__)])
+        self.AddFiles([os.path.join(paths.samples, "samples-fra")])

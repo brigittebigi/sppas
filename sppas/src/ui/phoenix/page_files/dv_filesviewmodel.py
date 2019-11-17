@@ -549,9 +549,15 @@ class FilesTreeViewModel(wx.dataview.PyDataViewModel):
         cur_state = node.get_state()
         if cur_state in (States().UNUSED, States().AT_LEAST_ONE_CHECKED, States().AT_LEAST_ONE_LOCKED):
             try:
-                modified = self.__data.set_object_state(States().CHECKED, node)
+                modified_fs = self.__data.set_object_state(States().CHECKED, node)
+                modified = False
+                if len(modified_fs) > 0:
+                    modified = True
                 if modified is False and cur_state == States().AT_LEAST_ONE_LOCKED:
-                    modified = self.__data.set_object_state(States().UNUSED, node)
+                    modified_fs = self.__data.set_object_state(States().UNUSED, node)
+                    modified = False
+                    if len(modified_fs) > 0:
+                        modified = True
                 if modified:
                     self.__item_changed(item)
 

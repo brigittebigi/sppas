@@ -273,13 +273,11 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
 
     def SetBackgroundColour(self, color):
         self._bgcolor = color
-        wx.LogDebug("* * * * * * * * New bgcolor = {:s}".format(str(color)))
 
     # -----------------------------------------------------------------------
 
     def SetForegroundColour(self, color):
         self._fgcolor = color
-        wx.LogDebug("ListView * * * * * * * * New fgcolor = {:s}".format(str(color)))
 
     # -----------------------------------------------------------------------
 

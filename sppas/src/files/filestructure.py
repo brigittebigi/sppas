@@ -159,7 +159,7 @@ class FileName(FileBase):
         UNUSED state.
 
         :param value: (States)
-        :returns: (bool) True if the state changed
+        :returns: (bool) this filename state has changed or not
         :raise: sppasTypeError
 
         """
@@ -350,17 +350,22 @@ class FileRoot(FileBase):
 
         :param value: (int) A state of FileName.
         :param filename: (FileName) The instance to change state
+        :return: (list) Modified instances
         :raises: sppasTypeError
 
         """
+        changed = list()
         for fn in self.__files:
             if fn == filename:
-                modified = fn.set_state(value)
-                if modified is True:
-                    self.update_state()
-                    return True
+                m = fn.set_state(value)
+                if m is True:
+                    changed.append(fn)
+                    m = self.update_state()
+                    if m is True:
+                        changed.append(self)
+                    return changed
 
-        return False
+        return changed
 
     # -----------------------------------------------------------------------
 
@@ -374,19 +379,23 @@ class FileRoot(FileBase):
         The state of locked files is not changed.
 
         :param value: (State) A state of FileName.
+        :return: (list) Modified instances
 
         """
         if value not in FileName.FILENAME_STATES:
             raise sppasTypeError(value, str(FileName.FILENAME_STATES))
 
-        modified = False
+        modified = list()
         for fn in self.__files:
             if fn.get_state() != States().LOCKED:
-                if fn.set_state(value) is True:
-                    modified = True
+                m = fn.set_state(value)
+                if m is True:
+                    modified.append(fn)
 
-        if modified:
-            self.update_state()
+        if len(modified) > 0:
+            m = self.update_state()
+            if m is True:
+                modified.append(self)
 
         return modified
 
@@ -395,29 +404,38 @@ class FileRoot(FileBase):
     # -----------------------------------------------------------------------
 
     def update_state(self):
-        """Update the state depending on the checked and locked filenames."""
+        """Update the state depending on the checked and locked filenames.
+
+        :return: (bool) State is changed or not
+
+        """
         if len(self.__files) == 0:
-            self._state = States().UNUSED
-            return
-
-        checked = 0
-        locked = 0
-        for fn in self.__files:
-            if fn.get_state() == States().CHECKED:
-                checked += 1
-            elif fn.get_state() == States().LOCKED:
-                locked += 1
-
-        if locked == len(self.__files):
-            self._state = States().LOCKED
-        elif locked > 0:
-            self._state = States().AT_LEAST_ONE_LOCKED
-        elif checked == len(self.__files):
-            self._state = States().CHECKED
-        elif checked > 0:
-            self._state = States().AT_LEAST_ONE_CHECKED
+            new_state = States().UNUSED
         else:
-            self._state = States().UNUSED
+            checked = 0
+            locked = 0
+            for fn in self.__files:
+                if fn.get_state() == States().CHECKED:
+                    checked += 1
+                elif fn.get_state() == States().LOCKED:
+                    locked += 1
+
+            if locked == len(self.__files):
+                new_state = States().LOCKED
+            elif locked > 0:
+                new_state = States().AT_LEAST_ONE_LOCKED
+            elif checked == len(self.__files):
+                new_state = States().CHECKED
+            elif checked > 0:
+                new_state = States().AT_LEAST_ONE_CHECKED
+            else:
+                new_state = States().UNUSED
+
+        if self._state != new_state:
+            self._state = new_state
+            return True
+
+        return False
 
     # -----------------------------------------------------------------------
 
@@ -505,6 +523,7 @@ class FileRoot(FileBase):
         Return self if filename is matching the id.
 
         :param filename: Full name of a file
+        :returns: (FileName of None)
 
         """
         fr = FileRoot.root(filename)
@@ -735,12 +754,12 @@ class FilePath(FileBase):
         It is not allowed to manually assign one of the "AT_LEAST" states.
         They are automatically fixed here depending on the roots states.
 
-        :param value: (int) A state of FileName.
+        :param value: (int) A state.
         :param entry: (FileName, FileRoot) The instance to change state
         :raises: sppasTypeError, sppasOSError, sppasValueError
 
         """
-        modified = False
+        modified = list()
         # In case (not normal) filename is a string, create a FileName
         if isinstance(entry, (FileName, FileRoot)) is False:
             file_id = self.identifier(entry)
@@ -758,8 +777,10 @@ class FilePath(FileBase):
         elif isinstance(entry, FileRoot):
             modified = entry.set_state(value)
 
-        if modified is True:
-            self.update_state()
+        if len(modified) > 0:
+            m = self.update_state()
+            if m is True:
+                modified.append(self)
 
         return modified
 
@@ -780,13 +801,15 @@ class FilePath(FileBase):
         if value not in FileName.FILENAME_STATES:
             raise sppasTypeError(value, str(FileName.FILENAME_STATES))
 
-        modified = False
+        modified = list()
         for fr in self.__roots:
-            if fr.set_state(value) is True:
-                modified = True
+            m = fr.set_state(value)
+            modified.extend(m)
 
-        if modified:
-            self.update_state()
+        if len(modified) > 0:
+            m = self.update_state()
+            if m is True:
+                modified.append(self)
 
         return modified
 
@@ -962,33 +985,38 @@ class FilePath(FileBase):
     def update_state(self):
         """Modify state depending on the checked root names."""
         if len(self.__roots) == 0:
-            self._state = States().UNUSED
-            return
+            new_state = States().UNUSED
 
-        at_least_checked = 0
-        at_least_locked = 0
-        checked = 0
-        locked = 0
-        for fr in self.__roots:
-            if fr.get_state() == States().CHECKED:
-                checked += 1
-            elif fr.get_state() == States().AT_LEAST_ONE_CHECKED:
-                at_least_checked += 1
-            elif fr.get_state() == States().LOCKED:
-                locked += 1
-            elif fr.get_state() == States().AT_LEAST_ONE_LOCKED:
-                at_least_locked += 1
-
-        if locked == len(self.__roots):
-            self._state = States().LOCKED
-        elif (locked+at_least_locked) > 0:
-            self._state = States().AT_LEAST_ONE_LOCKED
-        elif checked == len(self.__roots):
-            self._state = States().CHECKED
-        elif (at_least_checked+checked) > 0:
-            self._state = States().AT_LEAST_ONE_CHECKED
         else:
-            self._state = States().UNUSED
+            at_least_checked = 0
+            at_least_locked = 0
+            checked = 0
+            locked = 0
+            for fr in self.__roots:
+                if fr.get_state() == States().CHECKED:
+                    checked += 1
+                elif fr.get_state() == States().AT_LEAST_ONE_CHECKED:
+                    at_least_checked += 1
+                elif fr.get_state() == States().LOCKED:
+                    locked += 1
+                elif fr.get_state() == States().AT_LEAST_ONE_LOCKED:
+                    at_least_locked += 1
+
+            if locked == len(self.__roots):
+                new_state = States().LOCKED
+            elif (locked+at_least_locked) > 0:
+                new_state = States().AT_LEAST_ONE_LOCKED
+            elif checked == len(self.__roots):
+                new_state = States().CHECKED
+            elif (at_least_checked+checked) > 0:
+                new_state = States().AT_LEAST_ONE_CHECKED
+            else:
+                new_state = States().UNUSED
+
+        if self._state != new_state:
+            self._state = new_state
+            return True
+        return False
 
     # -----------------------------------------------------------------------
 

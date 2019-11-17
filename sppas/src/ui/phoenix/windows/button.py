@@ -467,7 +467,7 @@ class BaseButton(wx.Window):
         """
         value = int(value)
         w, h = self.GetClientSize()
-        if value < 1:
+        if value < 0:
             return
         if value >= (w // 4):
             return
@@ -1027,6 +1027,9 @@ class BaseButton(wx.Window):
     # -----------------------------------------------------------------------
 
     def DrawFocusIndicator(self, dc, gc):
+        if self._focuswidth == 0:
+            return
+
         focus_pen = wx.Pen(self._focuscolor,
                            self._focuswidth,
                            self._focusstyle)
@@ -1279,7 +1282,6 @@ class BitmapTextButton(BaseButton):
                         self.__draw_label(dc, gc, x, (h - (th//2)) // 2)
                     elif self._align == wx.ALIGN_RIGHT:
                         self.__draw_label(dc, gc, (w - tw), (h - (th//2)) // 2)
-
 
         if self._borderwidth > 0:
             self.DrawBorder(dc, gc)
@@ -2099,7 +2101,19 @@ class TestPanelBitmapTextButton(wx.Panel):
             name="Test TextBitmapButton")
 
         b1 = BitmapTextButton(self, label="SPPAS", pos=(10, 10), size=(50, 50))
-        b2 = BitmapTextButton(self, label="SPPAS", pos=(70, 10), size=(100, 50))
+        #font = self.GetFont().MakeBold()
+        #b1.SetFont(font)
+
+        b2 = BitmapTextButton(self, label="boldfont", pos=(70, 10), size=(100, 50))
+        # bold_font = wx.Font(15,                      # point size
+        #                     wx.FONTFAMILY_DEFAULT,   # family,
+        #                     wx.FONTSTYLE_NORMAL,     # style,
+        #                     wx.FONTWEIGHT_BOLD,      # weight,
+        #                     underline=False,
+        #                     faceName="Lucida sans",
+        #                     encoding=wx.FONTENCODING_SYSTEM)
+        # b2.SetFont(bold_font)
+
         b3 = BitmapTextButton(self, label="SPPAS", pos=(180, 10), size=(50, 50))
         b3.SetLabelPosition(wx.TOP)
         b4 = BitmapTextButton(self, label="Add", pos=(240, 10), size=(100, 50), name="add")
@@ -2202,9 +2216,14 @@ class TestPanel(sc.ScrolledPanel):
 
         tbpanel = wx.Panel(self, size=(-1, 32), )
         tbsizer = wx.BoxSizer(wx.HORIZONTAL)
+
         bgbtn = BitmapTextButton(tbpanel, name="bg_color")
+        bgbtn.SetFocusWidth(0)
         fgbtn = BitmapTextButton(tbpanel, name="font_color")
+        fgbtn.SetFocusWidth(0)
         fontbtn = BitmapTextButton(tbpanel, name="font")
+        fontbtn.SetFocusWidth(0)
+
         self.Bind(wx.EVT_BUTTON, self.on_bg_color, bgbtn)
         self.Bind(wx.EVT_BUTTON, self.on_fg_color, fgbtn)
         self.Bind(wx.EVT_BUTTON, self.on_font, fontbtn)

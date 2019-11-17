@@ -125,6 +125,8 @@ class FileData(FileBase):
     def add(self, file_object):
         """Add a file object into the data.
 
+        IMPLEMENTED ONLY FOR FilePath and FileReference.
+
         :param file_object: (FileBase)
         :raise: sppasTypeError,
 
@@ -139,6 +141,12 @@ class FileData(FileBase):
         if isinstance(file_object, FilePath):
             self.__data.append(file_object)
 
+        elif isinstance(file_object, FileReference):
+            self.add_ref(file_object)
+
+        else:
+            raise NotImplementedError
+
     # -----------------------------------------------------------------------
 
     def add_file(self, filename, brothers=False, ctime=0.):
@@ -147,7 +155,7 @@ class FileData(FileBase):
         :param filename: (str) Absolute or relative name of a file
         :param brothers: (bool) Add also all files sharing the same root as the given file
         :param ctime: (float) Add files only if created/modified after time in seconds since the epoch
-        :returns: (list of FileName or None)
+        :returns: (list of FileBase or None)
         :raises: OSError
 
         """
@@ -361,17 +369,26 @@ class FileData(FileBase):
         :param state: (States) state to set the file to
         :param file_obj: (FileBase) the specific file to set the state to
         :raises: sppasTypeError, sppasValueError
+        :return: list of modified objects
 
         """
-        modified = False
+        modified = list()
         if file_obj is None:
             for fp in self.__data:
-                modified = fp.set_state(state)
+                m = fp.set_state(state)
+                if m is True:
+                    modified.append(fp)
             for ref in self.__refs:
-                modified = ref.set_state(state)
+                m = ref.set_state(state)
+                if m is True:
+                    modified.append(ref)
 
         else:
-            if isinstance(file_obj, (FilePath, FileReference)):
+            if isinstance(file_obj, FileReference):
+                file_obj.set_state(state)
+                modified.append(file_obj)
+
+            if isinstance(file_obj, FilePath):
                 modified = file_obj.set_state(state)
 
             elif isinstance(file_obj, (FileRoot, FileName)):
@@ -381,7 +398,9 @@ class FileData(FileBase):
                     cur_obj = fp.get_object(file_obj.id)
                     if cur_obj is not None:
                         # this object is one of this fp
-                        modified = fp.set_object_state(state, file_obj)
+                        m = fp.set_object_state(state, file_obj)
+                        if len(m) > 0:
+                            modified.extend(m)
                         break
 
             else:
@@ -532,7 +551,7 @@ class FileData(FileBase):
             return self.get_object(fr.id)
 
         if isinstance(filebase, FileRoot):
-            fp = FilePath(filebase.id)
+            fp = FilePath(os.path.dirname(filebase.id))
             return self.get_object(fp.id)
 
         raise sppasTypeError(filebase, "FileName, FileRoot")
