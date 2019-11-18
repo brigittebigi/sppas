@@ -62,6 +62,8 @@ from sppas.src.files import FileRoot, FileName
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 from sppas.src.anndata import sppasTier
+from sppas.src.anndata import sppasLocation
+from sppas.src.anndata import sppasInterval
 from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasTag
 from sppas.src.annotations.TGA import TimeGroupAnalysis
@@ -74,9 +76,10 @@ def tier_to_intervals(tier, segments=None):
 
     :param tier: (sppasTier)
     :param segments: (sppasTier) Use this tier to create the intervals
-    :returns: (sppasTier) Time segments
+    :returns: (sppasTier, sppasTier) Time segments, NOT time segments
 
     """
+    # Create the tier with the intervals (from segments)
     if segments is None:
         intervals = tier.export_to_intervals(list())
         intervals.set_name("Values")
@@ -86,14 +89,46 @@ def tier_to_intervals(tier, segments=None):
             if ann.label_is_filled():
                 intervals.create_annotation(ann.get_location().copy())
 
+    # Fill in the intervals with the values of the tier
     for i, interval in enumerate(intervals):
         tier_anns = tier.find(interval.get_lowest_localization(),
-                              interval.get_highest_localization())
+                              interval.get_highest_localization(),
+                              overlaps=True)
         for ann in tier_anns:
             for label in ann.get_labels():
                 interval.append_label(label)
 
-    return intervals
+    # Not Intervals
+    not_intervals = intervals.export_unfilled()
+    not_intervals.set_name("NotValues")
+
+    # first "unfilled" interval
+    begin = tier[0].get_lowest_localization()
+    prev_ann = intervals[0]
+    prev_begin = prev_ann.get_lowest_localization()
+    if prev_begin > begin:
+        not_intervals.create_annotation(
+            sppasLocation(sppasInterval(begin, prev_begin))
+        )
+
+    # last "unfilled" interval
+    end = tier[-1].get_highest_localization()
+    prev_end = intervals[-1].get_highest_localization()
+    if prev_end < end:
+        not_intervals.create_annotation(
+            sppasLocation(sppasInterval(prev_end, end))
+        )
+
+    # Fill in the intervals with the values of the tier
+    for i, interval in enumerate(not_intervals):
+        tier_anns = tier.find(interval.get_lowest_localization(),
+                              interval.get_highest_localization(),
+                              overlaps=False)
+        for ann in tier_anns:
+            for label in ann.get_labels():
+                interval.append_label(label)
+
+    return intervals, not_intervals
 
 # ---------------------------------------------------------------------------
 
@@ -218,34 +253,26 @@ if __name__ == "__main__":
     parser.add_argument("-p",
                         metavar="pattern",
                         required=False,
-                        default="-sg",
+                        default="sg",
                         help="Pattern of the output file.")
+
+    parser.add_argument("--notsegments",
+                        action="store_true",
+                        help="Create a tier with the not-selected intervals")
 
     parser.add_argument("--occ",
                         action="store_true",
                         help="Estimate the number of values in the intervals.")
 
     parser.add_argument("--mean",
-                        #metavar="bool",
-                        #required=False,
-                        #default=True,
-                        #type=bool,
                         action="store_true",
                         help="Estimate the mean of the intervals.")
 
     parser.add_argument("--stdev",
-                        #metavar="bool",
-                        #required=False,
-                        #default=False,
-                        #type=bool,
                         action="store_true",
                         help="Estimate the standard deviation of the intervals.")
 
     parser.add_argument("--curve",
-                        #metavar="bool",
-                        #required=False,
-                        #default=True,
-                        #type=bool,
                         action="store_true",
                         help="Estimate the intercept and the slope of the intervals.")
 
@@ -284,46 +311,51 @@ if __name__ == "__main__":
         if segments is None:
             print("ERROR: A tier with name '{:s}' wasn't found.".format(args.s))
             sys.exit(1)
-    intervals = tier_to_intervals(tier, segments)
+    intervals, not_intervals = tier_to_intervals(tier, segments)
     intervals.set_meta('intervals_from_tier', tier.get_name())
     trs_out.append(intervals)
+    if args.notsegments:
+        not_intervals.set_meta('not_intervals_from_tier', tier.get_name())
+        trs_out.append(not_intervals)
 
-    # Extract numbers into a dict
-    print("   - StatsGroup is creating the groups...")
-    numbers, groups = intervals_to_numbers(intervals)
-    trs_out.append(groups)
-    trs_out.add_hierarchy_link("TimeAssociation", intervals, groups)
+    if args.occ or args.mean or args.stdev or args.curve:
 
-    # Estimate stats
-    print("   - StatsGroup is estimating the stats...")
-    ts = TimeGroupAnalysis(numbers)
+        # Extract numbers into a dict
+        print("   - StatsGroup is creating the groups...")
+        numbers, groups = intervals_to_numbers(intervals)
+        trs_out.append(groups)
+        trs_out.add_hierarchy_link("TimeAssociation", intervals, groups)
 
-    # -----------------------------------------------------------------------
-    # Convert stats into tiers
-    # -----------------------------------------------------------------------
+        # Estimate stats
+        print("   - StatsGroup is estimating the stats...")
+        ts = TimeGroupAnalysis(numbers)
 
-    # Put TGA results into tiers
-    if args.occ:
-        tier = tga_to_tier(ts.len(), groups, "Occurrence", "int")
-        trs_out.append(tier)
-        trs_out.add_hierarchy_link("TimeAssociation", intervals, tier)
+        # --------------------------------------------------------------------
+        # Convert stats into tiers
+        # --------------------------------------------------------------------
 
-    if args.mean:
-        tier = tga_to_tier(ts.mean(), groups, "Mean")
-        trs_out.append(tier)
-        trs_out.add_hierarchy_link("TimeAssociation", intervals, tier)
+        # Put TGA results into tiers
+        if args.occ:
+            tier = tga_to_tier(ts.len(), groups, "Occurrence", "int")
+            trs_out.append(tier)
+            trs_out.add_hierarchy_link("TimeAssociation", intervals, tier)
 
-    if args.stdev:
-        tier = tga_to_tier(ts.stdev(), groups, "StdDev")
-        trs_out.append(tier)
-        trs_out.add_hierarchy_link("TimeAssociation", intervals, tier)
+        if args.mean:
+            tier = tga_to_tier(ts.mean(), groups, "Mean")
+            trs_out.append(tier)
+            trs_out.add_hierarchy_link("TimeAssociation", intervals, tier)
 
-    if args.curve:
-        tierI, tierS = tga_to_tiers_reglin(ts.intercept_slope_original(), groups)
-        trs_out.append(tierI)
-        trs_out.add_hierarchy_link("TimeAssociation", intervals, tierI)
-        trs_out.append(tierS)
-        trs_out.add_hierarchy_link("TimeAssociation", intervals, tierS)
+        if args.stdev:
+            tier = tga_to_tier(ts.stdev(), groups, "StdDev")
+            trs_out.append(tier)
+            trs_out.add_hierarchy_link("TimeAssociation", intervals, tier)
+
+        if args.curve:
+            tierI, tierS = tga_to_tiers_reglin(ts.intercept_slope_original(), groups)
+            trs_out.append(tierI)
+            trs_out.add_hierarchy_link("TimeAssociation", intervals, tierI)
+            trs_out.append(tierS)
+            trs_out.add_hierarchy_link("TimeAssociation", intervals, tierS)
 
     # -----------------------------------------------------------------------
     # Save the result
@@ -333,10 +365,13 @@ if __name__ == "__main__":
     fn = FileName(args.i)
     name = fn.get_name()
     pattern = FileRoot.pattern(name)
+    p = args.p
+    if p.startswith("-") is False:
+        p = "-" + p
     if len(pattern) > 0:
-        name = name.replace(pattern, args.p)
+        name = name.replace(pattern, p)
     else:
-        name = name + args.p
+        name = name + p
     output = os.path.join(fn.folder(), name + fn.get_extension())
     if os.path.exists(output):
         print("A file with name {:s} is already existing.".format(name))

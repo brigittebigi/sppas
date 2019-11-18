@@ -1058,6 +1058,64 @@ class sppasTier(sppasMetaData):
         return intervals
 
     # -----------------------------------------------------------------------
+
+    def export_unfilled(self):
+        """Create a tier with the unlabelled/unfilled intervals.
+
+        Only for tiers of type Interval.
+        It represents the "NOT tier", ie where this tier is not annotated.
+
+        IMPORTANT: Never tested with overlapped annotations,
+        actually not tested at all (but used in the plugin StatGroups).
+
+        :return: (sppasTier) or None
+
+        """
+        if self.is_empty() is True:
+            return None
+        if self.is_interval() is False:
+            return None
+
+        intervals = self.export_to_intervals([])
+        not_intervals = sppasTier("NotIntervals")
+        if intervals.is_empty():
+            not_intervals.create_annotation(
+                sppasLocation(sppasInterval(self.get_first_point(),
+                                            self.get_last_point()))
+            )
+            return not_intervals
+
+        # first "unfilled" interval
+        begin = self.__ann[0].get_lowest_localization()
+        prev_ann = intervals[0]
+        prev_begin = prev_ann.get_lowest_localization()
+        if prev_begin > begin:
+            not_intervals.create_annotation(
+                sppasLocation(sppasInterval(begin, prev_begin))
+            )
+
+        # holes
+        for i in range(1, len(intervals)):
+            prev_end = prev_ann.get_highest_localization()
+            ann = intervals[i]
+            begin = ann.get_lowest_localization()
+            if begin > prev_end:
+                not_intervals.create_annotation(
+                    sppasLocation(sppasInterval(prev_end, begin))
+                )
+            prev_ann = ann
+
+        # last "unfilled" interval
+        end = self.__ann[-1].get_highest_localization()
+        prev_end = intervals[-1].get_highest_localization()
+        if prev_end < end:
+            not_intervals.create_annotation(
+                sppasLocation(sppasInterval(prev_end, end))
+            )
+
+        return not_intervals
+
+    # -----------------------------------------------------------------------
     # Private
     # -----------------------------------------------------------------------
 
