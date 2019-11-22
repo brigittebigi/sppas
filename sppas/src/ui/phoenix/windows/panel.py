@@ -218,7 +218,7 @@ class sppasCollapsiblePanel(sppasPanel):
         self.__child_panel = sppasPanel(self, style=wx.TAB_TRAVERSAL | wx.NO_BORDER, name="content")
         self.__child_panel.Hide()
         self.__child_panel.SetAutoLayout(True)
-        self.__child_panel.SetSizerAndFit(wx.BoxSizer(wx.VERTICAL))
+        self.__child_panel.SetSizer(wx.BoxSizer(wx.VERTICAL))
         self.__border = sppasCollapsiblePanel.fix_size(2)
 
         try:
@@ -443,7 +443,7 @@ class sppasCollapsiblePanel(sppasPanel):
 
         """
         bw, bh = self.__tools_panel.GetMinSize()
-        self.SetMinSize(wx.Size(bw, bh))
+        self.SetMinSize(wx.Size(bw, bh + self.__border))
         if size is None:
             size = wx.DefaultSize
         wx.Window.SetInitialSize(self, size)

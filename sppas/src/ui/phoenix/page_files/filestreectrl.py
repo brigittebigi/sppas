@@ -44,7 +44,7 @@ from sppas.src.ui import sppasTrash
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasCollapsiblePanel
-from ..windows.image import ColorizeImage
+from ..windows import sppasSimpleText
 from ..tools import sppasSwissKnife
 
 
@@ -213,16 +213,34 @@ class FileTreeView(sppasScrolledPanel):
     # ------------------------------------------------------------------------
 
     def RemoveCheckedFiles(self):
-        """Remove all checked files."""
-        checked = self.__data.get_filename_from_state(States().CHECKED)
-        if len(checked) == 0:
-            return
+        """Remove all checked files.
 
+        :return: (list) List of removed filenames
+
+        """
         removed = list()
-        for fn in checked:
-            removed.append(fn.id)
+        checked_fns = self.__data.get_filename_from_state(States().CHECKED)
+        for fn in checked_fns:
+            wx.LogDebug(" - checked file: {:s}".format(fn.get_id()))
+            removed_ids = self.__data.remove_file(fn.get_id())
+            for fs_id in removed_ids:
+                wx.LogDebug(" - removed id: {:s}".format(fs_id))
 
-        wx.LogMessage('{:d} files removed.'.format(len(removed)))
+                # The path was removed
+                if fs_id in self.__fps:
+                    self.__remove_folder_panel(fs_id)
+                    wx.LogMessage('{:s} removed.'.format(fs_id))
+                else:
+                    fp_id = FilePath(os.path.dirname(fs_id)).get_id()
+                    if fp_id in self.__fps:
+                        p = self.__fps[fp_id]
+                        r = p.remove_root(fs_id)
+                        if r is False:
+                            r = p.remove(fs_id)
+                            removed.append(fs_id)
+                        if r is True:
+                            wx.LogMessage('{:s} removed.'.format(fs_id))
+
         return removed
 
     # ------------------------------------------------------------------------
@@ -252,25 +270,31 @@ class FileTreeView(sppasScrolledPanel):
 
     # ------------------------------------------------------------------------
 
-    def LockFiles(self, entries):
-        """Lock a list of files.
+    def Check(self, entries):
+        """Check a list of entries.
 
         Entries are a list of filenames with absolute path or FileName
         instances or both.
 
-        :param entries: (list of str/FileName)
+        :param entries: (list) identifiers of objects or objects in data
 
         """
         for entry in entries:
-            if isinstance(entry, FileName) is False:
-                fs = self.__data.get_object(entry)
-            else:
-                fs = entry
-            self.__data.set_object_state(States().LOCKED, fs)
-            # Update object in the panel
-            panel = self.__get_path_panel(fs)
-            if panel is not None:
-                panel.change_state(fs.get_id(), fs.get_state())
+            self.change_state(entry, States().CHECKED)
+
+    # ------------------------------------------------------------------------
+
+    def Lock(self, entries):
+        """Lock a list of entries.
+
+        Entries are a list of either folder name, file name with absolute path
+        or FileName, FileRoot or FilePath or any of them.
+
+        :param entries: (list) identifiers of objects or objects in data
+
+        """
+        for entry in entries:
+            self.change_state(entry, States().LOCKED)
 
     # ------------------------------------------------------------------------
     # Manage the data and their panels
@@ -358,6 +382,35 @@ class FileTreeView(sppasScrolledPanel):
 
     # ------------------------------------------------------------------------
 
+    def change_state(self, entry, state):
+        """Change the state of an entry.
+
+        Entry is either a folder name, a file name with absolute path
+        or a FileName, a FileRoot or a FilePath.
+        If entry is already locked, this will have no effect.
+
+        :param entry: (str/FileName/FileRoot/FilePath)
+        :param state: (States/int)
+
+        """
+        if isinstance(entry, (FileName, FileRoot, FilePath)) is False:
+            fs = self.__data.get_object(entry)
+            if fs is None:
+                wx.LogWarning("Wrong entry name to change state: {:s}".format(entry))
+                return
+        else:
+            fs = entry
+
+        modified = self.__data.set_object_state(state, fs)
+        for fs in modified:
+            wx.LogMessage("{:s} state changed to {:d}".format(fs.get_id(), state))
+            # Update object in the panel
+            panel = self.__get_path_panel(fs)
+            if panel is not None:
+                panel.change_state(fs.get_id(), fs.get_state())
+
+    # ------------------------------------------------------------------------
+
     def __add_folder_panel(self, fp):
         """Create a child panel to display the content of a FilePath.
 
@@ -377,9 +430,37 @@ class FileTreeView(sppasScrolledPanel):
 
     # ------------------------------------------------------------------------
 
+    def __remove_folder_panel(self, identifier):
+        """Remove a child panel that displays the content of a FilePath.
+
+        :param fp: (FilePath)
+        :return: FilePathCollapsiblePanel
+
+        """
+        if identifier in self.__fps:
+            path_panel = self.__fps[identifier]
+            path_panel.Destroy()
+            del self.__fps[identifier]
+
+    # ------------------------------------------------------------------------
+
     def __update(self):
         """Update the currently displayed wx objects to match the data."""
-        pass
+        # Remove paths of the panel if not in the data
+        for fpid in self.__fps:
+            if fpid not in self.__data:
+                self.__remove_folder_panel(fpid)
+
+        # Add or update
+        for fp in self.__data:
+            if fp.get_id() not in self.__fps:
+                p = self.__add_folder_panel(fp)
+                p.update(fp)
+            else:
+                self.__fps[fp.get_id()].update(fp)
+
+        self.Layout()
+        self.Refresh()
 
     # ------------------------------------------------------------------------
 
@@ -525,11 +606,121 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
         else:
             p = self.__frs[fr.get_id()]
 
-        wx.LogDebug("Will add file in the root panel: ")
         added = p.add(fn)
-        if added is True:
-            self.Layout()
-            self.Refresh()
+        self.Layout()
+        # self.Refresh()
+        return added
+
+    # ----------------------------------------------------------------------
+
+    def remove(self, identifier):
+        """Remove a file or a root of the panel.
+
+        """
+        if identifier in self.__frs:
+            self.__remove_root(identifier)
+            return True
+        else:
+            fr_id = FileRoot.root(identifier)
+            if fr_id in self.__frs:
+                p = self.__frs[fr_id]
+                removed = p.remove(identifier)
+                if removed is True:
+                    self.Layout()
+                    return True
+
+        return False
+
+    # ----------------------------------------------------------------------
+
+    def remove_file(self, fr_id, fn_id):
+        """Remove a file of the appropriate root of the child panel.
+
+        """
+        removed = False
+        if fr_id in self.__frs:
+            p = self.__frs[fr_id]
+            removed = p.remove(fn_id)
+            if removed is True:
+                self.Layout()
+
+        return removed
+
+    # ----------------------------------------------------------------------
+
+    def add_root(self, fr):
+        """Add a new root panel.
+
+        """
+        added = False
+        if fr.get_id() not in self.__frs:
+            p = self.__add_root_panel(fr)
+            added = True
+            for fn in fr:
+                p.add(fn)
+
+        return added
+
+    # ----------------------------------------------------------------------
+
+    def remove_root(self, fr_id):
+        """Remove a full root of the child panel.
+
+        """
+        if fr_id not in self.__frs:
+            return False
+        self.__remove_root(fr_id)
+        return True
+
+    # ------------------------------------------------------------------------
+
+    def change_state(self, identifier, state):
+        icon_name = STATES_ICON_NAMES[state]
+
+        if self.__fpid == identifier:
+            btn = self.FindButton("choice_checkbox")
+            btn.SetImage(icon_name)
+            btn.Refresh()
+        elif identifier in self.__frs:
+            self.__frs[identifier].change_state(identifier, state)
+        else:
+            frid = FileRoot.root(identifier)
+            if frid in self.__frs:
+                self.__frs[frid].change_state(identifier, state)
+
+    # ------------------------------------------------------------------------
+
+    def update(self, fs):
+        """Update the given file structure.
+
+        :param fs: (FilePath/FileRoot/FileName)
+
+        """
+        if isinstance(fs, FilePath):
+            # Remove roots of the panel if not in the data
+            for frid in self.__frs:
+                if frid not in fs:
+                    self.__remove_root(frid)
+
+            # Add or update the roots
+            for fr in fs:
+                if fr.get_id() not in self.__frs:
+                    self.add_root(fr)
+                else:
+                    self.__frs[fr.get_id()].update(fr)
+
+        elif isinstance(fs, FileRoot):
+            if fs.get_id() in self.__frs:
+                p = self.__frs[fs.get_id()]
+                p.update(fs)
+
+        elif isinstance(fs, FileName):
+            frid = FileRoot.root(fs.get_id())
+            if frid in self.__frs:
+                p = self.__frs[frid]
+                p.update(fs)
+
+        self.Layout()
 
     # ------------------------------------------------------------------------
 
@@ -548,6 +739,15 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
         return p
 
     # ------------------------------------------------------------------------
+
+    def __remove_root(self, identifier):
+        p = self.__frs[identifier]
+        p.Destroy()
+        del self.__frs[identifier]
+        self.Layout()
+        self.Refresh()
+
+    # ------------------------------------------------------------------------
     # Manage the content
     # ------------------------------------------------------------------------
 
@@ -560,22 +760,6 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
         self.Collapse(collapse)
         self.AddButton("folder")
         self.AddButton("choice_checkbox")
-
-    # ------------------------------------------------------------------------
-
-    def change_state(self, identifier, state):
-        icon_name = STATES_ICON_NAMES[state]
-
-        if self.__fpid == identifier:
-            btn = self.FindButton("choice_checkbox")
-            btn.SetImage(icon_name)
-            btn.Refresh()
-        elif identifier in self.__frs:
-            self.__frs[identifier].change_state(identifier, state)
-        else:
-            frid = FileRoot.root(identifier)
-            if frid in self.__frs:
-                self.__frs[frid].change_state(identifier, state)
 
     # -----------------------------------------------------------------------
     # Events management
@@ -637,6 +821,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         # stored into a list.
         self.__frid = fr.get_id()
         self.__fns = list()
+        self.update(fr)
 
         # Look&feel
         self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
@@ -645,6 +830,17 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
 
     # -----------------------------------------------------------------------
     # Public methods
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, color):
+        """Override."""
+        refsctrl = self.FindWindow("textctrl_refs")
+        wx.Window.SetForegroundColour(self, color)
+        for c in self.GetChildren():
+            if c != refsctrl:
+                c.SetForegroundColour(color)
+        refsctrl.SetForegroundColour(wx.Colour(128, 128, 250, 196))
+    
     # -----------------------------------------------------------------------
 
     def SetBackgroundColour(self, color):
@@ -671,7 +867,6 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
                     font.GetUnderlined(),
                     font.GetFaceName())
         sppasCollapsiblePanel.SetFont(self, f)
-
         self.GetPane().SetFont(font)
 
         # The change of font implies to re-draw all proportional objects
@@ -683,7 +878,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
     # ----------------------------------------------------------------------
 
     def add(self, fn):
-        """Add a file in the dataview of the child panel.
+        """Add a file in the listctrl child panel.
 
         :param fn: (FileName)
 
@@ -691,15 +886,34 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         if fn.get_id() in self.__fns:
             return False
 
-        wx.LogDebug("In add. Item {:s} not found so we'll add it.".format(fn.id))
         self.__add_file(fn)
+        return True
+
+    # ----------------------------------------------------------------------
+
+    def remove(self, identifier):
+        """Remove a file of the listctrl child panel.
+
+        :param identifier: (str)
+        :return: (bool)
+
+        """
+        if identifier not in self.__fns:
+            return False
+
+        self.__remove_file(identifier)
         return True
 
     # ------------------------------------------------------------------------
 
     def change_state(self, identifier, state):
+        """Update the state of the given identifier.
+
+        :param identifier: (str)
+        :param state: (State/int)
+
+        """
         icon_name = STATES_ICON_NAMES[state]
-        wx.LogDebug("change state. index of image: {:d}".format(self.__ils.index(icon_name)))
 
         if self.__frid == identifier:
             self.FindButton("choice_checkbox").SetImage(icon_name)
@@ -711,12 +925,69 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
             listctrl.SetItem(idx, 0, "", imageId=self.__ils.index(icon_name))
 
     # ------------------------------------------------------------------------
+
+    def set_refs(self, refs_list):
+        """Display the given list of references.
+
+        :param refs_list: (list of FileReference)
+
+        """
+        refstext = self.FindWindow("textctrl_refs")
+        # convert the list of FileReference instances into a string
+        refs_ids = [ref.id for ref in refs_list]
+        txt = "".join(sorted(refs_ids))
+        if len(txt) > 0:
+            refstext.SetValue(txt)
+            refstext.Show()
+        else:
+            refstext.Hide()
+
+    # ------------------------------------------------------------------------
+
+    def update(self, fs):
+        """Update each fn of a given fr or update the given fn.
+
+        :param fs: (FileRoot or FileName)
+
+        """
+        if isinstance(fs, FileRoot):
+            if fs.get_id() != self.__frid:
+                return
+
+            # Remove files of the panel if not in the data
+            for fnid in self.__fns:
+                if fnid not in fs:
+                    self.__remove_file(fnid)
+
+            # Update existing files and add if missing
+            for fn in fs:
+                if fn.get_id() not in self.__fns:
+                    self.add(fn)
+                else:
+                    self.change_state(fn.get_id(), fn.get_state())
+                    self.__update_file(fn)
+
+            self.set_refs(fs.get_references())
+
+        elif isinstance(fs, FileName):
+            self.change_state(fs.get_id(), fs.get_state())
+            self.__update_file(fs)
+
+        self.Layout()
+
+    # ------------------------------------------------------------------------
     # Construct the GUI
     # ------------------------------------------------------------------------
 
     def _create_content(self, fr):
-        list_ctrl = self.__create_listctrl()
-        self.SetPane(list_ctrl)
+        child_panel = sppasPanel(self)
+        child_sizer = wx.BoxSizer(wx.VERTICAL)
+        refs_text = self.__create_refstext(child_panel)
+        list_ctrl = self.__create_listctrl(child_panel)
+        child_sizer.Add(refs_text, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 2)
+        child_sizer.Add(list_ctrl, 1, wx.EXPAND | wx.TOP | wx.BOTTOM, 2)
+        child_panel.SetSizer(child_sizer)
+        self.SetPane(child_panel)
 
         collapse = True
         if fr.subjoined is not None:
@@ -729,10 +1000,18 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
 
     # ------------------------------------------------------------------------
 
-    def __create_listctrl(self):
+    def __create_refstext(self, parent):
+        """Create a text control to display references of the root."""
+        refs_text = sppasSimpleText(parent, "", name="textctrl_refs")
+        refs_text.Hide()
+        return refs_text
+
+    # ------------------------------------------------------------------------
+
+    def __create_listctrl(self, parent):
         """Create a listctrl to display files."""
-        style = wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL | wx.LC_HRULES
-        lst = wx.ListCtrl(self, style=style, name="listctrl_files")
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL | wx.LC_HRULES
+        lst = wx.ListCtrl(parent, style=style, name="listctrl_files")
 
         lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
         info = wx.ListItem()
@@ -762,9 +1041,13 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def __create_image_list(self):
-        """Create a list of images to be displayed in the listctrl."""
+        """Create a list of images to be displayed in the listctrl.
+
+        :return: (wx.ImageList)
+
+        """
         h = self.GetFont().GetPixelSize()[1]
-        icon_size = sppasCollapsiblePanel.fix_size(int(h))
+        icon_size = sppasCollapsiblePanel.fix_size(int(h * 1.2))
 
         il = wx.ImageList(icon_size, icon_size)
         self.__ils = list()
@@ -794,47 +1077,56 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
     def __set_pane_size(self):
         """Fix the size of the child panel."""
         listctrl = self.FindWindow("listctrl_files")
-        n = listctrl.GetItemCount() + 1
+
+        n = listctrl.GetItemCount()
         if n == 0:
             n = 1
-        h = n * self.GetFont().GetPixelSize()[1] * 2
-        listctrl.SetMinSize(wx.Size(-1, h+2))
+        h = int(self.GetFont().GetPixelSize()[1] * 2.)
+        listctrl.SetMinSize(wx.Size(-1, n * h))
 
     # ------------------------------------------------------------------------
     # Management the list of files
     # ------------------------------------------------------------------------
 
     def __add_file(self, fn):
+        """Append a file."""
         listctrl = self.FindWindow("listctrl_files")
         icon_name = FileAnnotIcon().get_icon_name(fn.get_extension())
         img_index = self.__ils.index(icon_name)
 
         index = listctrl.InsertItem(listctrl.GetItemCount(), 0)
-        listctrl.SetItemColumnImage(index, FileRootCollapsiblePanel.COLUMNS.index("icon"), img_index)
-        listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("file"), fn.get_name())
-        listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("type"), fn.get_extension())  # type=extension
-        listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("date"), fn.get_date())  # last modif
-        listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("size"), fn.get_size())  # file size
-
         self.__fns.append(fn.get_id())
+
+        listctrl.SetItemColumnImage(index, FileRootCollapsiblePanel.COLUMNS.index("icon"), img_index)
+        self.__update_file(fn)
         self.__set_pane_size()
-        self.GetPane().Layout()
+        self.Layout()
 
     # ------------------------------------------------------------------------
 
-    def __remove_file(self, fn):
+    def __remove_file(self, identifier):
+        """Remove a filename."""
         listctrl = self.FindWindow("listctrl_files")
+        idx = self.__fns.index(identifier)
+        # item = listctrl.GetItem(idx)
+        listctrl.DeleteItem(idx)
 
-        #item = listctrl.FindItem(label) or item = listctrl.GetItem(idx)
-        #listctrl.DeleteItem(item)
+        self.__fns.pop(idx)
+        self.__set_pane_size()
+        self.Layout()
 
     # ------------------------------------------------------------------------
 
     def __update_file(self, fn):
+        """Update information of a file, except its icon and its state."""
         listctrl = self.FindWindow("listctrl_files")
-
-        #item = listctrl.FindItem(label) or item = listctrl.GetItem(idx)
-        #listctrl.RefreshItem(item)
+        if fn.get_id() in self.__fns:
+            index = self.__fns.index(fn.get_id())
+            listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("file"), fn.get_name())
+            listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("type"), fn.get_extension())
+            listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("date"), fn.get_date())
+            listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("size"), fn.get_size())
+            # listctrl.RefreshItem(index)
 
     # ------------------------------------------------------------------------
     # Management of the events
@@ -860,26 +1152,16 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def __item_selected(self, event):
-        """"""
         listctrl = self.FindWindow("listctrl_files")
         index = listctrl.GetFirstSelected()
         listctrl.Select(index, on=False)
 
-        # get the corresponding fn
-        item = listctrl.GetItem(index, col=FileRootCollapsiblePanel.COLUMNS.index("file"))
-        wx.LogDebug("THE item I SEARCH ={:s}".format(str(item)))
-        wx.LogDebug("THE item I SEARCH ={:s}".format(str(listctrl.GetItemText(index, col=FileRootCollapsiblePanel.COLUMNS.index("file")))))
-
-        fn_clicked = self.__fns[index]
-        wx.LogDebug("fn clicked is {:s}".format(fn_clicked))
-
         # notify parent to decide what has to be done
-        self.notify(fn_clicked)
+        self.notify(self.__fns[index])
 
     # ------------------------------------------------------------------------
 
     def OnCkeckedRoot(self, evt):
-        # button = evt.GetEventObject()
         self.notify(self.__frid)
 
 # ----------------------------------------------------------------------------
@@ -893,3 +1175,13 @@ class TestPanel(FileTreeView):
         super(TestPanel, self).__init__(parent)
         self.AddFiles([os.path.abspath(__file__)])
         self.AddFiles([os.path.join(paths.samples, "samples-fra")])
+
+        self.Check([os.path.join(paths.samples, "samples-fra", "F_F_B003-P9")])
+        self.Check([os.path.join(paths.samples, "samples-fra", ".DS_Store")])
+        # self.Check([os.path.abspath(__file__)])
+
+        self.Lock([os.path.join(paths.samples, "samples-fra", "F_F_C006-P6.wav")])
+
+        self.RemoveCheckedFiles()
+        #self.DeleteCheckedFiles()
+

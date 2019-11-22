@@ -602,7 +602,7 @@ class FileRoot(FileBase):
         of FileName.
 
         :param filename: (str, FileName) Absolute name of a file
-        :returns: (int) Index of the removed FileName or -1 if nothing removed.
+        :returns: (identifier) Identifier of the removed FileName or None if nothing removed.
 
         """
         idx = -1
@@ -618,11 +618,13 @@ class FileRoot(FileBase):
                     idx = i
                     break
 
+        identifier = None
         if idx != -1:
+            identifier = self.__files[idx].get_id()
             self.__files.pop(idx)
             self.update_state()
 
-        return idx
+        return identifier
 
     # -----------------------------------------------------------------------
 
@@ -953,17 +955,15 @@ class FilePath(FileBase):
     # -----------------------------------------------------------------------
 
     def remove(self, entry):
-        """Remove an entry of the list of roots or filenames.
+        """Remove an entry of the list of roots.
 
         Given entry can be either the identifier of a root or an instance
-        of FileRoot or a FileName or an identifier of file name.
+        of FileRoot.
 
         TODO: REMOVE IF ENTRY is FILENAME
 
-        :param entry: (str or FileRoot)
-        :returns: (int) Index of the removed FileRoot
-
-        Return -1 if nothing removed.
+        :param entry:
+        :returns: (identifier) Identifier of the removed entry or None
 
         """
         if isinstance(entry, FileRoot):
@@ -973,12 +973,13 @@ class FilePath(FileBase):
 
         try:
             idx = self.__roots.index(root)
+            identifier = self.__roots[idx].get_id()
             self.__roots.pop(idx)
         except ValueError:
-            return -1
+            identifier = None
 
         self.update_state()
-        return idx
+        return identifier
 
     # -----------------------------------------------------------------------
 

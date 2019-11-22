@@ -179,16 +179,43 @@ class FileData(FileBase):
     def remove_file(self, filename):
         """Remove a file in the list from its file name.
 
+        Its root and path are also removed if empties.
+
         :param filename: (str) Absolute or relative name of a file
-        :returns: (FileName)
+        :returns: (list) Identifiers of removed objects
         :raises: OSError
 
         """
+        if isinstance(filename, FileName):
+            fn_id = filename.get_id()
+        else:
+            fn_id = FileName(filename).get_id()
+
         given_fp = FilePath(os.path.dirname(filename))
+        path = None
+        root = None
+        removed = list()
         for fp in self.__data:
             if fp.id == given_fp.id:
                 for fr in fp:
-                    fr.remove(filename)
+                    rem_id = fr.remove(fn_id)
+                    if rem_id is not None:
+                        removed.append(rem_id)
+                        root = fr
+                        path = fp
+                        break
+
+        # if we removed a file, check if its root/path have to be removed too
+        if root is not None:
+            if len(root) == 0:
+                removed.append(root.get_id())
+                path.remove(root)
+
+            if len(path) == 0:
+                removed.append(path.get_id())
+                self.__data.remove(path)
+
+        return removed
 
     # -----------------------------------------------------------------------
 
@@ -279,7 +306,7 @@ class FileData(FileBase):
         Do not update: empty roots or paths are not removed.
 
         :param state: (States)
-        :returns: (int) Number of removed files
+        :returns: (int)
 
         """
         nb = 0

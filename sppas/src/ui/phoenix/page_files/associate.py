@@ -37,7 +37,6 @@
 """
 
 import wx
-import logging
 
 from sppas import sppasTypeError
 from sppas import sg
@@ -113,8 +112,8 @@ class AssociatePanel(sppasPanel):
         """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        logging.debug('New data to set in the associate panel. '
-                      'Id={:s}'.format(data.id))
+        wx.LogDebug('New data to set in the associate panel. '
+                    'Id={:s}'.format(data.id))
         self.__data = data
 
     # ------------------------------------------------------------------------
@@ -190,8 +189,8 @@ class AssociatePanel(sppasPanel):
     def _process_key_event(self, event):
         """Respond to a keypress event."""
         key_code = event.GetKeyCode()
-        logging.debug('Associate panel received a key event. key_code={:d}'.format(key_code))
-        logging.debug('Key event skipped by the associate panel.')
+        # logging.debug('Associate panel received a key event. key_code={:d}'.format(key_code))
+        # logging.debug('Key event skipped by the associate panel.')
         event.Skip()
 
     # ------------------------------------------------------------------------
@@ -266,14 +265,14 @@ class AssociatePanel(sppasPanel):
         :param match_all: (bool)
         
         """
-        logging.info("Check files matching the following: ")
-        logging.info(" >>> filter = sppasFileDataFilters()")
+        wx.LogMessage("Check files matching the following: ")
+        wx.LogMessage(" >>> filter = sppasFileDataFilters()")
         f = sppasFileDataFilters(self.__data)
         data_sets = list()
 
         for d in data_filters:
             if len(d) != 3:
-                logging.error("Bad data format: {:s}".format(str(d)))
+                wx.LogError("Bad data format: {:s}".format(str(d)))
                 continue
 
             # the method to be uses by Compare
@@ -284,7 +283,7 @@ class AssociatePanel(sppasPanel):
             if method == "att":
                 # identifier:value are separated by a ":" but a tuple is needed
                 values = tuple(d[2].split(":"))
-                logging.info(" >>> filter.{:s}({:s}={!s:s})".format(method, fct, str(values)))
+                wx.LogMessage(" >>> filter.{:s}({:s}={!s:s})".format(method, fct, str(values)))
                 data_set = getattr(f, method)(**{fct: values})
 
             # a little bit of doc:
@@ -294,14 +293,14 @@ class AssociatePanel(sppasPanel):
             else:
                 # all the possible values are separated by commas
                 values = d[2].split(",")
-                logging.info(" >>> filter.{:s}({:s}={!s:s})".format(method, fct, values[0]))
+                wx.LogMessage(" >>> filter.{:s}({:s}={!s:s})".format(method, fct, values[0]))
                 data_set = getattr(f, method)(**{fct: values[0]})
 
                 # Apply "or" between each data_set matching a value
                 for i in range(1, len(values)):
                     v = values[i].strip()
                     data_set = data_set | getattr(f, method)(**{fct: v})
-                    logging.info(" >>>    | filter.{:s}({:s}={!s:s})".format(method, fct, v))
+                    wx.LogMessage(" >>>    | filter.{:s}({:s}={!s:s})".format(method, fct, v))
 
             data_sets.append(data_set)
         
@@ -516,7 +515,7 @@ class sppasFilesFilterDialog(sppasDialog):
                 if len(v[0].strip()) > 1 and len(v[1].strip()) > 0:
                     self.listctrl.AppendItem(["att", f[0], f[1].strip()])
                 else:
-                    logging.error("Invalid input string for identifier or value.")
+                    wx.LogError("Invalid input string for identifier or value.")
             dlg.Destroy()
 
         elif event_name == "cancel":
@@ -546,7 +545,7 @@ class sppasFilesFilterDialog(sppasDialog):
             if len(f[1].strip()) > 0:
                 self.listctrl.AppendItem([fct, f[0], f[1].strip()])
             else:
-                logging.error("Empty input pattern.")
+                wx.LogError("Empty input pattern.")
         dlg.Destroy()
 
 # ---------------------------------------------------------------------------

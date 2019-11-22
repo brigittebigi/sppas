@@ -35,7 +35,6 @@
 """
 
 import re
-import logging
 import wx
 
 # ---------------------------------------------------------------------------
@@ -108,7 +107,7 @@ class sppasTextCtrl(wx.TextCtrl):
             self.SetFont(settings.text_font)
             self.SetBackgroundColour(settings.bg_color)
         except:
-            logging.debug("TextCtrl error. Settings not set.")
+            wx.LogDebug("TextCtrl error. Settings not set.")
             pass
 
         # the message is not send to the base class when init but after
@@ -271,7 +270,6 @@ class sppasMessageText(sppasTextCtrl):
         # in order to apply the appropriate colors
         self.SetValue(message)
 
-
 # ---------------------------------------------------------------------------
 
 
@@ -307,7 +305,6 @@ class sppasSimpleText(sppasTextCtrl):
         # the message is not send to the base class when init but after
         # in order to apply the appropriate colors
         self.SetValue(message)
-
 
 # ---------------------------------------------------------------------------
 # Validators for a sppasTextCtrl or wx.TextCtrl.
