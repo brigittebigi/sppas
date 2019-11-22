@@ -33,7 +33,6 @@
 
 """
 
-import logging
 import os
 import wx
 
@@ -47,6 +46,7 @@ from ..dialogs import sppasFileDialog
 from ..main_events import DataChangedEvent
 
 from .dv_filestreectrl import FilesTreeViewCtrl
+from .filestreectrl import FileTreeView
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
@@ -117,7 +117,8 @@ class FilesManager(sppasPanel):
     def _create_content(self):
         """Create the main content."""
         tb = self.__create_toolbar()
-        fv = FilesTreeViewCtrl(self, name="filestree")
+        # fv = FilesTreeViewCtrl(self, name="filestree")
+        fv = FileTreeView(self, name="filestree")
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(tb, proportion=0, flag=wx.EXPAND, border=0)
@@ -293,6 +294,6 @@ class TestPanel(FilesManager):
         for f in os.listdir(here):
             fullname = os.path.join(here, f)
             if os.path.isfile(fullname):
-                logging.info('Add {:s}'.format(fullname))
+                wx.LogMessage('Add {:s}'.format(fullname))
                 nb = self.FindWindow("filestree").AddFiles([fullname])
-                logging.info(" --> {:d} files added.".format(nb))
+                wx.LogMessage(" --> {:d} files added.".format(nb))

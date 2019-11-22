@@ -221,10 +221,8 @@ class FileTreeView(sppasScrolledPanel):
         removed = list()
         checked_fns = self.__data.get_filename_from_state(States().CHECKED)
         for fn in checked_fns:
-            wx.LogDebug(" - checked file: {:s}".format(fn.get_id()))
             removed_ids = self.__data.remove_file(fn.get_id())
             for fs_id in removed_ids:
-                wx.LogDebug(" - removed id: {:s}".format(fs_id))
 
                 # The path was removed
                 if fs_id in self.__fps:
@@ -241,6 +239,10 @@ class FileTreeView(sppasScrolledPanel):
                         if r is True:
                             wx.LogMessage('{:s} removed.'.format(fs_id))
 
+        if len(removed) > 0:
+            self.Layout()
+            self.Refresh()
+
         return removed
 
     # ------------------------------------------------------------------------
@@ -253,6 +255,7 @@ class FileTreeView(sppasScrolledPanel):
         for filename in removed_filenames:
             try:
                 sppasTrash().put_file_into(filename)
+                wx.LogMessage('{:s} moved into SPPAS Trash.'.format(filename))
             except Exception as e:
                 # Re-Add it into the data and the panels or not?????
                 wx.LogError("File {!s:s} can't be deleted due to the "
@@ -447,9 +450,12 @@ class FileTreeView(sppasScrolledPanel):
     def __update(self):
         """Update the currently displayed wx objects to match the data."""
         # Remove paths of the panel if not in the data
+        r = list()
         for fpid in self.__fps:
             if fpid not in self.__data:
-                self.__remove_folder_panel(fpid)
+                r.append(fpid)
+        for fpid in r:
+            self.__remove_folder_panel(fpid)
 
         # Add or update
         for fp in self.__data:
@@ -540,6 +546,17 @@ class FileTreeView(sppasScrolledPanel):
         panel = evt.GetEventObject()
         panel.SetFocus()
         self.ScrollChildIntoView(panel)
+
+    # ------------------------------------------------------------------------
+
+    def OnCollapseChanged(self, evt=None):
+        """One of the roots was collapsed/expanded."""
+        panel = evt.GetEventObject()
+        panel.SetFocus()
+        #wx.PostEvent(self.GetParent(), evt)
+        self.Layout()
+        #self.Refresh()
+        self.GetParent().SendSizeEvent()
 
     # ------------------------------------------------------------------------
 
@@ -767,7 +784,6 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
 
     def notify(self, identifier):
         """The parent has to be informed of a change of content."""
-        wx.LogDebug("PATH: Notification ItemClicked {:s}".format(identifier))
         evt = ItemClickedEvent(id=identifier)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
@@ -786,8 +802,12 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def OnCollapseChanged(self, evt=None):
+        """One of the roots was collapsed/expanded."""
         panel = evt.GetEventObject()
         panel.SetFocus()
+        #wx.PostEvent(self.GetParent(), evt)
+        self.Layout()
+        #self.Refresh()
         self.GetParent().SendSizeEvent()
 
     # ------------------------------------------------------------------------
@@ -814,6 +834,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
     def __init__(self, parent, fr, name="fr-panel"):
         super(FileRootCollapsiblePanel, self).__init__(parent, label=fr.get_id(), name=name)
 
+        self.__ils = list()
         self._create_content(fr)
         self._setup_events()
 
@@ -821,12 +842,14 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         # stored into a list.
         self.__frid = fr.get_id()
         self.__fns = list()
-        self.update(fr)
 
         # Look&feel
         self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
+
+        # Fill in the controls with the data
+        self.update(fr)
 
     # -----------------------------------------------------------------------
     # Public methods
@@ -840,7 +863,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
             if c != refsctrl:
                 c.SetForegroundColour(color)
         refsctrl.SetForegroundColour(wx.Colour(128, 128, 250, 196))
-    
+
     # -----------------------------------------------------------------------
 
     def SetBackgroundColour(self, color):
@@ -1173,6 +1196,7 @@ class TestPanel(FileTreeView):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
+
         self.AddFiles([os.path.abspath(__file__)])
         self.AddFiles([os.path.join(paths.samples, "samples-fra")])
 

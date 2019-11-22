@@ -43,7 +43,6 @@
 """
 
 import wx
-import logging
 
 from sppas.src.files import FileData, States
 from sppas import sppasTypeError
@@ -121,7 +120,7 @@ class sppasFilesPanel(sppasPanel):
         """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        logging.debug('New data to set in the files page. '
+        wx.LogDebug('New data to set in the files page. '
                       'Id={:s}'.format(data.id))
         # Set to all children.
         self.__send_data(self.GetParent(), data)
@@ -191,19 +190,19 @@ class sppasFilesPanel(sppasPanel):
         key_code = event.GetKeyCode()
         cmd_down = event.CmdDown()
         shift_down = event.ShiftDown()
-        logging.debug('Files book page received a key event. '
+        wx.LogDebug('Files book page received a key event. '
                       'key_code={:d}'.format(key_code))
 
         if key_code == wx.WXK_F5 and cmd_down is False and shift_down is False:
-            logging.debug(' ... [F5] key pressed')
+            wx.LogDebug(' ... [F5] key pressed')
 
         # CMD+S: Pin&Save the workspace
         elif key_code == 83 and cmd_down is True:
-            logging.debug('Key event: Pin&Save the workspace')
+            wx.LogDebug('Key event: Pin&Save the workspace')
             self.FindWindow("workspaces").pin_save()
 
         else:
-            logging.debug('Key event skipped by the files book page.')
+            wx.LogDebug('Key event skipped by the files book page.')
             event.Skip()
 
     # -----------------------------------------------------------------------
@@ -220,8 +219,8 @@ class sppasFilesPanel(sppasPanel):
         try:
             data = event.data
         except AttributeError:
-            logging.error('Data were not sent in the event emitted by {:s}'
-                          '.'.format(emitted.GetName()))
+            wx.LogError('Data were not sent in the event emitted by {:s}'
+                        '.'.format(emitted.GetName()))
             return
 
         self.__send_data(emitted, data)
