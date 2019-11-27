@@ -91,7 +91,7 @@ class sppasBaseIO(sppasTranscription):
         super(sppasBaseIO, self).__init__(name)
 
         self.default_extension = None
-        self.software = ""
+        self.software = "Und"
 
         self._accept_multi_tiers = False
         self._accept_no_tiers = False

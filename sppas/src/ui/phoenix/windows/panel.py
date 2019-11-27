@@ -393,7 +393,6 @@ class sppasCollapsiblePanel(sppasPanel):
         w, h = self.GetSize()
         bw = w - self.__border
         bh = self.GetButtonHeight()
-        wx.LogDebug("CollapsiblePanel: buttons size is {:d} px".format(bh))
         # fix pos and size of the top panel with tools
         self.__tools_panel.SetPosition((self.__border, 0))
         self.__tools_panel.SetSize(wx.Size(bw, bh))

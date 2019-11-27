@@ -844,7 +844,6 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
             parent, label=fr.get_id(), name=name)
 
         self.__ils = list()
-        self.__il = None
         self._create_content(fr)
         self._setup_events()
 
@@ -968,7 +967,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         refstext = self.FindWindow("textctrl_refs")
         # convert the list of FileReference instances into a string
         refs_ids = [ref.id for ref in refs_list]
-        txt = "".join(sorted(refs_ids))
+        txt = " ".join(sorted(refs_ids))
         if len(txt) > 0:
             refstext.SetValue(txt)
             refstext.Show()
@@ -1080,8 +1079,6 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         :return: (wx.ImageList)
 
         """
-        # h = self.GetFont().GetPixelSize()[1]
-        # icon_size = sppasCollapsiblePanel.fix_size(int(h * 1.2))
         icon_size = int(float(self.get_line_height()) * 1.4)
         wx.LogDebug("ListCtrl: images size is {:d} px".format(icon_size))
 
@@ -1101,11 +1098,13 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         self.__ils.append("files-file")
 
         # The icons of the known file extensions
-        for soft in FileAnnotIcon().get_extensions():
-            icon_name = FileAnnotIcon().get_icon_name(soft)
-            bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
+        for icon_name in FileAnnotIcon().get_names():
+            #icon_name = FileAnnotIcon().get_icon_name(soft)
+            bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size, "files-file")
             il.Add(bitmap)
             self.__ils.append(icon_name)
+
+        return il
 
     # ------------------------------------------------------------------------
 
@@ -1113,10 +1112,13 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         """Fix the size of the child panel."""
         listctrl = self.FindWindow("listctrl_files")
 
+        # The listctrl can have an horizontal scrollbar
+        h = 14
+
         n = listctrl.GetItemCount()
         if n == 0:
             n = 1
-        h = int(self.GetFont().GetPixelSize()[1] * 2.)
+        h += int(self.GetFont().GetPixelSize()[1] * 2.)
         listctrl.SetMinSize(wx.Size(-1, n * h))
 
     # ------------------------------------------------------------------------
@@ -1128,7 +1130,6 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         listctrl = self.FindWindow("listctrl_files")
         icon_name = FileAnnotIcon().get_icon_name(fn.get_extension())
         img_index = self.__ils.index(icon_name)
-
         index = listctrl.InsertItem(listctrl.GetItemCount(), 0)
         self.__fns.append(fn.get_id())
 

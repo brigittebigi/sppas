@@ -444,6 +444,7 @@ class sppasSignaix(sppasBaseIO):
         super(sppasSignaix, self).__init__(name)
 
         self.default_extension = "hz"
+        self.software = "Und"
 
         self._accept_multi_tiers = False
         self._accept_no_tiers = False

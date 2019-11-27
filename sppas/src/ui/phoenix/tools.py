@@ -55,15 +55,16 @@ class sppasSwissKnife:
     """
 
     @staticmethod
-    def get_bmp_icon(name, height=None):
+    def get_bmp_icon(name, height=None, default="default"):
         """Return the bitmap corresponding to the name of an icon.
 
         :param name: (str) Name of an icon.
         :param height: (int) Height of the bitmap. Width=height.
+        :param default: (str) Default icon if name is missing
         :returns: (wx.Bitmap)
 
         """
-        img = sppasSwissKnife.get_image(name)
+        img = sppasSwissKnife.get_image(name, default)
         if height is not None:
             img.Rescale(height, height, wx.IMAGE_QUALITY_HIGH)
 
@@ -72,18 +73,26 @@ class sppasSwissKnife:
     # ------------------------------------------------------------------------
 
     @staticmethod
-    def get_image(name):
-        img_name = sppasSwissKnife.get_image_filename(name)
+    def get_image(name, default="default"):
+        """Return the image corresponding to the name of an image or icon.
+
+        :param name: (str) Name of an image or an icon.
+        :param default: (str) Default icon if name is missing.
+        :returns: (wx.Image)
+
+        """
+        img_name = sppasSwissKnife.get_image_filename(name, default)
         wx.LogDebug("For name {:s}, IMG NAME is {:s}".format(name, img_name))
         return wx.Image(img_name, wx.BITMAP_TYPE_ANY)
 
     # ------------------------------------------------------------------------
 
     @staticmethod
-    def get_image_filename(name):
+    def get_image_filename(name, default="default"):
         """Return the filename matching the given name or the default.
 
-        :param name: (str)
+        :param name: (str) Name of an image or an icon.
+        :param default: (str) Default icon if name is missing.
 
         """
         # Given "name" is already a filename
@@ -94,17 +103,18 @@ class sppasSwissKnife:
             img_name = os.path.join(paths.etc, "images", name + ".png")
             if os.path.exists(img_name) is False:
                 # fix the image file name with the current icon's theme
-                img_name = sppasSwissKnife.get_icon_filename(name)
+                img_name = sppasSwissKnife.get_icon_filename(name, default)
 
         return img_name
 
     # ------------------------------------------------------------------------
 
     @staticmethod
-    def get_icon_filename(name):
+    def get_icon_filename(name, default="default"):
         """Return the icon filename matching the given name or the default.
 
-        :param name: (str)
+        :param name: (str) Name of an icon.
+        :param default: (str) Default icon if name is missing.
 
         """
         # fix the icon file name with the current theme
@@ -119,6 +129,13 @@ class sppasSwissKnife:
                 paths.etc, "icons",
                 "Refine",
                 name + ".png")
+
+        # instead, use the given default icon
+        if os.path.exists(icon_name) is False:
+            icon_name = os.path.join(
+                paths.etc, "icons",
+                "Refine",
+                default + ".png")
 
         # instead, use the default icon
         if os.path.exists(icon_name) is False:
