@@ -1,21 +1,23 @@
-                           Brigitte Bigi                           
-              Copyright (C) 2011-2014  LPL Laboratory                
-                 Contact: brigite.bigi@lpl-aix.fr                
-              URL: http://www.lpl-aix.fr/~bigi/sppas/ 
+                       Brigitte Bigi
+                 Contact: contact@sppas.org
+                 URL: http://www.sppas.org/
 
 
 cmn.dict:
     Authors: Zhi Na and Brigitte Bigi
+    Copyright (C) 2011-2014 Brigitte Bigi, LPL, CNRS
 
 
 cat.dit:
     Part of the Ralf dictionaries for Simon ASR system.
     Converted (file format and phoneset) by Brigitte Bigi.
+    Copyright (C) 2011-2016 Brigitte Bigi, LPL, CNRS
 
 
 deu.dit:
     Part of the Ralf dictionaries for Simon ASR system.
     Converted (file format and phoneset) by Brigitte Bigi.
+    Copyright (C) 2011-2018 Brigitte Bigi, LPL, CNRS
 
 
 eng.dict:
@@ -25,6 +27,12 @@ eng.dict:
 
 fra.dict:
     Author: Brigitte Bigi
+    Copyright (C) 2011-2019 Brigitte Bigi, LPL, CNRS
+
+fraquebec:
+    Copyright (c) Marie-Hélène Côté, Université de Lausanne
+    Author: Marie-Hélène Côté
+    Converted (file format and phoneset) by Brigitte Bigi.
 
 
 ita.dict:

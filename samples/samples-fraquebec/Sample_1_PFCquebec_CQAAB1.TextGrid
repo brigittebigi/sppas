@@ -1,0 +1,30 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 8.072709293853478 
+tiers? <exists> 
+size = 1 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "transcription" 
+        xmin = 0 
+        xmax = 8.072709293853478 
+        intervals: size = 4 
+        intervals [1]:
+            xmin = 0 
+            xmax = 4.500373035659581 
+            text = "Oui j'en ai euh, je crois que c'est + attendez, je pense que c'est la, " 
+        intervals [2]:
+            xmin = 4.500373035659581 
+            xmax = 5.176108890199075 
+            text = "#" 
+        intervals [3]:
+            xmin = 5.176108890199075 
+            xmax = 7.798575683631144 
+            text = "L'arri- la grand-mère de mon grand-père qui était Huronne." 
+        intervals [4]:
+            xmin = 7.798575683631144 
+            xmax = 8.072709293853478 
+            text = "#" 

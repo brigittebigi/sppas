@@ -1,0 +1,18 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 6.546224730970031 
+tiers? <exists> 
+size = 1 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "transcription" 
+        xmin = 0 
+        xmax = 6.546224730970031 
+        intervals: size = 1 
+        intervals [1]:
+            xmin = 0 
+            xmax = 6.546224730970031 
+            text = "Euh, oui + euh, je viens de, d'une petite ville, Victoriaville euh, qui est entre euh, Québec et Montréal, c'est une petite ville euh." 
