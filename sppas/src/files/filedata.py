@@ -169,7 +169,9 @@ class FileData(FileBase):
         added = new_fp.append(filename, brothers, ctime)
 
         # this is a new path to add into the workspace
-        if added is not None and new_fp not in self.__data:
+        if added is None:
+            added = list()
+        elif added is not None and new_fp not in self.__data:
             self.__data.append(new_fp)
 
         return added

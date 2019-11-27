@@ -74,6 +74,7 @@ class sppasSwissKnife:
     @staticmethod
     def get_image(name):
         img_name = sppasSwissKnife.get_image_filename(name)
+        wx.LogDebug("For name {:s}, IMG NAME is {:s}".format(name, img_name))
         return wx.Image(img_name, wx.BITMAP_TYPE_ANY)
 
     # ------------------------------------------------------------------------

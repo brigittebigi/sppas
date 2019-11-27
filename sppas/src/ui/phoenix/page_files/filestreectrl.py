@@ -118,6 +118,14 @@ class FileAnnotIcon(object):
 
     # -----------------------------------------------------------------------
 
+    def get_software(self):
+        return [self.__exticon[ext] for ext in self.__exticon]
+
+    def get_extensions(self):
+        return list(self.__exticon.keys())
+
+    # -----------------------------------------------------------------------
+
     def get_names(self):
         """Return the list of known icon names."""
         names = list()
@@ -465,8 +473,7 @@ class FileTreeView(sppasScrolledPanel):
             else:
                 self.__fps[fp.get_id()].update(fp)
 
-        self.Layout()
-        self.Refresh()
+        self.GetParent().SendSizeEvent()
 
     # ------------------------------------------------------------------------
 
@@ -738,6 +745,7 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
                 p.update(fs)
 
         self.Layout()
+        self.Refresh()
 
     # ------------------------------------------------------------------------
 
@@ -832,9 +840,11 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
     COLUMNS = ['state', 'icon', 'file', 'type', 'date', 'size']
 
     def __init__(self, parent, fr, name="fr-panel"):
-        super(FileRootCollapsiblePanel, self).__init__(parent, label=fr.get_id(), name=name)
+        super(FileRootCollapsiblePanel, self).__init__(
+            parent, label=fr.get_id(), name=name)
 
         self.__ils = list()
+        self.__il = None
         self._create_content(fr)
         self._setup_events()
 
@@ -867,7 +877,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
     # -----------------------------------------------------------------------
 
     def SetBackgroundColour(self, color):
-        """Calculate a lightness background color."""
+        """Calculate a lightness or darkness background color."""
         r, g, b = color.Red(), color.Green(), color.Blue()
         delta = 10
         if (r + g + b) > 384:
@@ -1026,6 +1036,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
     def __create_refstext(self, parent):
         """Create a text control to display references of the root."""
         refs_text = sppasSimpleText(parent, "", name="textctrl_refs")
+        refs_text.SetSize(wx.Size(-1, self.GetButtonHeight()))
         refs_text.Hide()
         return refs_text
 
@@ -1069,8 +1080,10 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         :return: (wx.ImageList)
 
         """
-        h = self.GetFont().GetPixelSize()[1]
-        icon_size = sppasCollapsiblePanel.fix_size(int(h * 1.2))
+        # h = self.GetFont().GetPixelSize()[1]
+        # icon_size = sppasCollapsiblePanel.fix_size(int(h * 1.2))
+        icon_size = int(float(self.get_line_height()) * 1.4)
+        wx.LogDebug("ListCtrl: images size is {:d} px".format(icon_size))
 
         il = wx.ImageList(icon_size, icon_size)
         self.__ils = list()
@@ -1088,12 +1101,11 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         self.__ils.append("files-file")
 
         # The icons of the known file extensions
-        for icon_name in FileAnnotIcon().get_names():
+        for soft in FileAnnotIcon().get_extensions():
+            icon_name = FileAnnotIcon().get_icon_name(soft)
             bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
             il.Add(bitmap)
             self.__ils.append(icon_name)
-
-        return il
 
     # ------------------------------------------------------------------------
 

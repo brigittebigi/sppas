@@ -352,7 +352,7 @@ class sppasCollapsiblePanel(sppasPanel):
         btn.SetSpacing(0)
         btn.SetBorderWidth(0)
         btn.SetBitmapColour(self.GetForegroundColour())
-        h = self.get_line_height() * 2
+        h = self.GetButtonHeight()
         btn_h = sppasPanel.fix_size(h)
         btn_w = btn_h
         btn.SetMinSize(wx.Size(btn_w, btn_h))
@@ -360,6 +360,12 @@ class sppasCollapsiblePanel(sppasPanel):
         self.__tools_panel.GetSizer().Prepend(btn, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 0)
 
         return btn
+
+    # -----------------------------------------------------------------------
+
+    def GetButtonHeight(self):
+        """Return the height assigned to the buttons in the toolbar."""
+        return self.get_line_height() * 2
 
     # -----------------------------------------------------------------------
 
@@ -386,7 +392,8 @@ class sppasCollapsiblePanel(sppasPanel):
 
         w, h = self.GetSize()
         bw = w - self.__border
-        bh = self.get_line_height() * 2
+        bh = self.GetButtonHeight()
+        wx.LogDebug("CollapsiblePanel: buttons size is {:d} px".format(bh))
         # fix pos and size of the top panel with tools
         self.__tools_panel.SetPosition((self.__border, 0))
         self.__tools_panel.SetSize(wx.Size(bw, bh))
@@ -514,7 +521,7 @@ class sppasCollapsiblePanel(sppasPanel):
         btn.Spacing = sppasPanel.fix_size(4)
         btn.BorderWidth = 0
         btn.BitmapColour = self.GetForegroundColour()
-        h = self.get_line_height() * 2
+        h = self.GetButtonHeight()
         btn_w = sppasPanel.fix_size(h*10)
         btn_h = sppasPanel.fix_size(h)
         btn.SetMinSize(wx.Size(btn_w, btn_h))
