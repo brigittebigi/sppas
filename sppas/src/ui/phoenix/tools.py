@@ -82,7 +82,6 @@ class sppasSwissKnife:
 
         """
         img_name = sppasSwissKnife.get_image_filename(name, default)
-        wx.LogDebug("For name {:s}, IMG NAME is {:s}".format(name, img_name))
         return wx.Image(img_name, wx.BITMAP_TYPE_ANY)
 
     # ------------------------------------------------------------------------

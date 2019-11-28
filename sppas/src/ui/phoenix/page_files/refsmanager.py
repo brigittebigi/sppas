@@ -52,7 +52,8 @@ from ..dialogs import Information
 from ..dialogs import Error
 from ..main_events import DataChangedEvent
 
-from .dv_refstreectrl import ReferencesTreeViewCtrl
+#from .dv_refstreectrl import ReferencesTreeViewCtrl
+from .refsviewctrl import RefsTreeView
 from .filesutils import IdentifierTextValidator
 
 
@@ -124,7 +125,7 @@ class ReferencesManager(sppasPanel):
     def _create_content(self):
         """Create the main content."""
         tb = self.__create_toolbar()
-        cv = ReferencesTreeViewCtrl(self, name="refsview")
+        cv = RefsTreeView(self, name="refsview")
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(tb, proportion=0, flag=wx.EXPAND, border=0)

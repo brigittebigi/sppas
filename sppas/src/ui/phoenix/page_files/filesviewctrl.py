@@ -107,13 +107,17 @@ class FileAnnotIcon(object):
     def get_icon_name(self, ext):
         """Return the name of the icon matching the given extension.
 
+        A default icon is returned if the extension is unknown.
+        It is supposed that the icon is available in the set of icons in
+        SPPAS (it is not verified).
+
         :param ext: (str) An extension of an annotated or an audio file.
         :returns: (str) Name of an icon
 
         """
         if ext.startswith(".") is False:
             ext = "." + ext
-        soft = self.__exticon.get(ext.upper(), "files-file")
+        soft = self.__exticon.get(ext.upper(), "files-unk-file")
         return soft
 
     # -----------------------------------------------------------------------
@@ -444,7 +448,7 @@ class FileTreeView(sppasScrolledPanel):
     def __remove_folder_panel(self, identifier):
         """Remove a child panel that displays the content of a FilePath.
 
-        :param fp: (FilePath)
+        :param identifier: (str)
         :return: FilePathCollapsiblePanel
 
         """
@@ -546,13 +550,6 @@ class FileTreeView(sppasScrolledPanel):
         else:
             return None
         return self.__fps[fp.get_id()]
-
-    # ------------------------------------------------------------------------
-
-    def OnCollapseChanged(self, evt=None):
-        panel = evt.GetEventObject()
-        panel.SetFocus()
-        self.ScrollChildIntoView(panel)
 
     # ------------------------------------------------------------------------
 
@@ -1000,6 +997,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
                     self.__update_file(fn)
 
             self.set_refs(fs.get_references())
+            self.change_state(fs.get_id(), fs.get_state())
 
         elif isinstance(fs, FileName):
             self.change_state(fs.get_id(), fs.get_state())
@@ -1092,14 +1090,18 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
             il.Add(bitmap)
             self.__ils.append(icon_name)
 
-        # The default icon to represent a missing file
+        # The default icon to represent a missing (known) file
         bitmap = sppasSwissKnife.get_bmp_icon("files-file", icon_size)
         il.Add(bitmap)
         self.__ils.append("files-file")
 
+        # The default icon to represent an unknown file
+        bitmap = sppasSwissKnife.get_bmp_icon("files-unk-file", icon_size)
+        il.Add(bitmap)
+        self.__ils.append("files-unk-file")
+
         # The icons of the known file extensions
         for icon_name in FileAnnotIcon().get_names():
-            #icon_name = FileAnnotIcon().get_icon_name(soft)
             bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size, "files-file")
             il.Add(bitmap)
             self.__ils.append(icon_name)

@@ -83,6 +83,7 @@
 
 import json
 import os
+import logging
 
 from sppas import sppasTypeError
 from sppas.src.config import sg
@@ -417,7 +418,7 @@ class FileData(FileBase):
                 file_obj.set_state(state)
                 modified.append(file_obj)
 
-            if isinstance(file_obj, FilePath):
+            elif isinstance(file_obj, FilePath):
                 modified = file_obj.set_state(state)
 
             elif isinstance(file_obj, (FileRoot, FileName)):
@@ -431,8 +432,9 @@ class FileData(FileBase):
                         if len(m) > 0:
                             modified.extend(m)
                         break
-
             else:
+                logging.error("Wrong type of the object: {:s}"
+                              "".format(str(type(file_obj))))
                 raise sppasTypeError(file_obj, 'FileBase')
 
         return modified

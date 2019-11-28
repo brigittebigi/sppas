@@ -46,7 +46,7 @@ from ..dialogs import sppasFileDialog
 from ..main_events import DataChangedEvent
 
 from .dv_filestreectrl import FilesTreeViewCtrl
-from .filestreectrl import FileTreeView
+from .filesviewctrl import FileTreeView
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
