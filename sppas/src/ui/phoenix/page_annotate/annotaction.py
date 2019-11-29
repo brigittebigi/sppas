@@ -118,7 +118,7 @@ class sppasActionAnnotatePanel(sppasPanel):
         action_sizer = self._create_action_content()
         report_panel = ReportsPanel(self, reports, name="panel_reports")
 
-        sizer.Add(action_sizer, 4, wx.EXPAND)
+        sizer.Add(action_sizer, 3, wx.EXPAND)
         sizer.Add(self.__create_vline(), 0, wx.EXPAND)
         sizer.Add(report_panel, 1, wx.EXPAND)
         self.SetSizer(sizer)

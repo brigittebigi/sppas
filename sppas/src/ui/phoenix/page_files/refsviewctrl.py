@@ -140,6 +140,7 @@ class RefsTreeView(sppasScrolledPanel):
         r.set_type(ref_type)
         self.__data.add_ref(r)  # can raise a ValueError
         self.__add_ref_panel(r)
+        self.GetParent().SendSizeEvent()
 
     # ------------------------------------------------------------------------
 
@@ -161,6 +162,7 @@ class RefsTreeView(sppasScrolledPanel):
 
         if len(added_refs) > 0:
             self.Layout()
+
         return len(added_refs)
 
     # ------------------------------------------------------------------------
@@ -171,6 +173,7 @@ class RefsTreeView(sppasScrolledPanel):
         if nb_removed > 0:
             self.__data.update()
             self.__update()
+
         return nb_removed
 
     # ------------------------------------------------------------------------
@@ -189,6 +192,10 @@ class RefsTreeView(sppasScrolledPanel):
                 panel = self.__refps[ref.get_id()]
                 panel.remove(identifier)
                 nb += 1
+
+        if nb > 0:
+            self.Layout()
+
         return nb
 
     # ------------------------------------------------------------------------
@@ -228,6 +235,9 @@ class RefsTreeView(sppasScrolledPanel):
             if ref.subjoined is None:
                 ref.subjoined = dict()
             ref.subjoined['expand'] = True
+
+        if nb > 0:
+            self.Layout()
 
         return nb
 
