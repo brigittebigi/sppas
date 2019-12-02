@@ -113,7 +113,7 @@ class TestAudioPCM(unittest.TestCase):
         a1 = audio_open(sample_1)
         a1.extract_channels()
         self.assertEqual(696, a1.rms())
-        self.assertEqual(0.04, round(a1.clipping_rate(0.1), 2))
+        self.assertEqual(0.01, round(a1.clipping_rate(0.1), 2))
         a1.close()
 
     def test_incoming(self):

@@ -30,24 +30,35 @@
         ---------------------------------------------------------------------
 
     ui.phoenix.page_analyze.baseview.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
-import logging
+import os
 import wx
 
-from ..windows import sppasScrolledPanel
-from ..windows import sppasPanel
-from ..windows import CheckButton
+from sppas import msg
+from sppas import paths
+from sppas.src.utils import u
 
-from .text_view import TextViewPanel
+from ..windows import sppasPanel
+from ..windows import sppasStaticText
+
+# ----------------------------------------------------------------------------
+# List of displayed messages:
+
+
+def _(message):
+    return u(msg(message, "ui"))
+
+
+MSG_NO_CONTENT = _("Displaying a file is not implemented in this view.")
 
 # ----------------------------------------------------------------------------
 
 
-class BaseViewPanel(sppasScrolledPanel):
-    """Base class to display the content of one file.
+class sppasBaseViewPanel(sppasPanel):
+    """Panel to display the content of a file.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -58,7 +69,7 @@ class BaseViewPanel(sppasScrolledPanel):
     """
 
     def __init__(self, parent, name="baseview", filename=""):
-        super(BaseViewPanel, self).__init__(
+        super(sppasBaseViewPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
@@ -67,75 +78,60 @@ class BaseViewPanel(sppasScrolledPanel):
             name=name)
 
         # The file this panel is displaying
-        self.__filename = filename
-        self.__hicolor = self.GetForegroundColour()
+        self._filename = filename
 
+        # Create the GUI
+        self._hicolor = self.GetForegroundColour()
         self._create_content()
         self._setup_events()
 
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.mono_text_font)
+        if filename is not None:
+            self.load_text()
 
         self.Layout()
 
     # -----------------------------------------------------------------------
 
-    def is_checked(self):
-        """Return True if this file is checked."""
-        return self.FindWindow("checkbtn").GetValue()
+    def is_modified(self):
+        """Return True if the content of the file has changed."""
+        return False
+
+    def load_text(self):
+        """Load the file and display it."""
+        return False
+
+    def save(self):
+        """Save the displayed text into a file."""
+        return False
+
+    def get_object(self):
+        """Return the object created from the opened file."""
+        return None
 
     # -----------------------------------------------------------------------
 
     def SetHighLightColor(self, color):
-        """Set a color to highlight buttons, and for the focus."""
-        self.__hicolor = color
-        for child in self.GetChildren():
-            if isinstance(child, CheckButton):
-                if child.GetValue() is False:
-                    child.FocusColour = self.__hicolor
+        """Set a color to highlight something."""
+        self._hicolor = color
 
     # -----------------------------------------------------------------------
-    # Private methods to construct the panel.
+    # Construct the GUI
     # -----------------------------------------------------------------------
 
     def _create_content(self):
-        """Create the main content."""
+        """Create the main content, ie the content of the embedded panel."""
+        try:  # wx4
+            font = wx.SystemSettings().GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        except AttributeError:  # wx3
+            font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        line_height = float(font.GetPixelSize()[1])
+
+        txt_msg = sppasStaticText(self, label=MSG_NO_CONTENT)
+        txt_msg.SetMinSize(wx.Size(-1, line_height * 2))
+
         sizer = wx.BoxSizer(wx.VERTICAL)
-
-        btn = CheckButton(self, label=self.__filename, name="checkbtn")
-        btn.SetSpacing(sppasScrolledPanel.fix_size(12))
-        btn.SetMinSize(wx.Size(-1, sppasScrolledPanel.fix_size(32)))
-        btn.SetSize(wx.Size(-1, sppasScrolledPanel.fix_size(32)))
-        btn.SetValue(False)
-        self.__set_normal_btn_style(btn)
-        sizer.Add(btn, 0, wx.EXPAND | wx.ALL, 2)
-
-        view = TextViewPanel(self, filename=self.__filename)
-        sizer.Add(view, 1, wx.EXPAND | wx.LEFT, sppasScrolledPanel.fix_size(34))
-
+        sizer.Add(txt_msg, 0, wx.EXPAND | wx.LEFT, sppasPanel.fix_size(34*2))
         self.SetSizer(sizer)
-        self.SetupScrolling(scroll_x=False, scroll_y=True)
-        self.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(128),
-                                sppasScrolledPanel.fix_size(32)))
-
-    # -----------------------------------------------------------------------
-
-    def __set_normal_btn_style(self, button):
-        """Set a normal style to a button."""
-        button.BorderWidth = 0
-        button.BorderColour = self.GetForegroundColour()
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = self.__hicolor
-
-    # -----------------------------------------------------------------------
-
-    def __set_active_btn_style(self, button):
-        """Set a special style to the button."""
-        button.BorderWidth = 1
-        button.BorderColour = self.__hicolor
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = self.GetForegroundColour()
 
     # -----------------------------------------------------------------------
     # Events management
@@ -148,27 +144,16 @@ class BaseViewPanel(sppasScrolledPanel):
         will be called.
 
         """
-        self.Bind(wx.EVT_RADIOBUTTON, self.__process_checked)
+        pass
 
-    # -----------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+# Panel tested by test_glob.py
+# ----------------------------------------------------------------------------
 
-    def __process_checked(self, event):
-        """Process a checkbox event.
 
-        Skip the event in order to allow the parent to handle it: it's to
-        update the other windows with data of the new selected workspace.
+class TestPanel(sppasBaseViewPanel):
 
-        :param event: (wx.Event)
-
-        """
-        # the button we want to switch on
-        btn = event.GetButtonObj()
-        state = btn.GetValue()
-        if state is True:
-            self.__set_active_btn_style(btn)
-        else:
-            self.__set_normal_btn_style(btn)
-        btn.SetValue(state)
-        btn.Refresh()
-        logging.debug('Button {:s} is checked: {:s}'
-                      ''.format(btn.GetLabel(), str(state)))
+    def __init__(self, parent):
+        super(TestPanel, self).__init__(
+            parent, filename=os.path.join(paths.samples, "COPYRIGHT.txt"))
+        self.SetBackgroundColour(wx.Colour(128, 128, 128))

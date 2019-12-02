@@ -153,7 +153,8 @@ class DataRoamerClient(BaseClient):
         
         for i in range(self._xfiles.GetSize()):
             o = self._xfiles.GetObject(i)
-            o.SaveAll()
+            # save even if the file is not selected
+            o.SaveAll(selected=False)
 
 # ----------------------------------------------------------------------------
 # The Component is the content of one page of the notebook.
@@ -473,7 +474,7 @@ class DataRoamer(wx.Panel):
     # Functions on a file...
     # ----------------------------------------------------------------------
 
-    def Save(self):
+    def Save(self, selected=True):
         """Save the selected file."""
 
         if self._selection is None:
@@ -486,7 +487,7 @@ class DataRoamer(wx.Panel):
 
         for i in range(self._filetrs.GetSize()):
             p = self._filetrs.GetObject(i)
-            if p == self._selection:
+            if (selected is True and p == self._selection) or selected is False:
                 p.Save()
 
     # ----------------------------------------------------------------------

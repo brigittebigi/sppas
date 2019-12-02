@@ -29,16 +29,23 @@
     src.ui.lib.filestreectrl.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    Deprecated. Because dataview is:
+        - not supported undex Linux;
+        - several problems under MacOS;
+        - Expand/Collapse does not work as expected.
+
 """
 
 import wx
 import wx.dataview
 
-from .filesviewmodel import FilesTreeViewModel
-from .basectrls import BaseTreeViewCtrl
+from sppas.src.files.filedata import FileData
+
+from .dv_filesviewmodel import FilesTreeViewModel
+from ..windows.baseviewctrl import BaseTreeViewCtrl
 
 # ----------------------------------------------------------------------------
-# Control to store the data matching the model
+# Control to display the data matching the model
 # ----------------------------------------------------------------------------
 
 
@@ -60,14 +67,14 @@ class FilesTreeViewCtrl(BaseTreeViewCtrl):
     def __init__(self, parent, name=wx.PanelNameStr):
         """Constructor of the FileTreeCtrl.
 
-        :param parent: (wx.Window)
+        :ram parent: (wx.Window)
         :param name: (str)
 
         """
-        super(FilesTreeViewCtrl, self).__init__(parent, name)
+        super(FilesTreeViewCtrl, self).__init__(parent, name=name)
 
         # Create an instance of our model and associate to the view.
-        self._model = FilesTreeViewModel()
+        self._model = FilesTreeViewModel(FileData())
         self.AssociateModel(self._model)
         self._model.DecRef()
 
@@ -86,6 +93,14 @@ class FilesTreeViewCtrl(BaseTreeViewCtrl):
         self.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED, self._on_item_selection_changed)
 
     # ------------------------------------------------------------------------
+
+    def __create_model(self, data):
+        """Create an instance of our model and associate to the view."""
+        self._model = FilesTreeViewModel(data)
+        self.AssociateModel(self._model)
+        self._model.DecRef()
+
+    # ------------------------------------------------------------------------
     # Public methods
     # ------------------------------------------------------------------------
 
@@ -97,24 +112,29 @@ class FilesTreeViewCtrl(BaseTreeViewCtrl):
 
     def set_data(self, data):
         """Set the data of the model."""
-        self._model.set_data(data)
-        self.__refresh()
+        ret = self._model.set_data(data)
+        if ret is False:
+            del self._model
+            self.__create_model(data)
+
+        self.__restore_expanders()
 
     # ------------------------------------------------------------------------
 
     def AddFiles(self, entries):
-        """Add a list of files in the model.
+        """Add a list of files or folders in the model.
         
-        The given filenames must include theirs absolute path.
+        The given filenames must include their absolute path.
 
         :param entries: (list of str) Filename or folder with absolute path.
+        :return: (int) Number of items added in the tree
 
         """
         items = self._model.add_files(entries)
+        nb = len(items)
         if len(items) > 0:
-            self.__refresh()
-            return True
-        return False
+            self.__restore_expanders()
+        return nb
 
     # ------------------------------------------------------------------------
 
@@ -122,7 +142,7 @@ class FilesTreeViewCtrl(BaseTreeViewCtrl):
         """Remove all checked files."""
         nb = self._model.remove_checked_files()
         if nb > 0:
-            self.__refresh()
+            self.__restore_expanders()
             return True
         return False
 
@@ -132,7 +152,7 @@ class FilesTreeViewCtrl(BaseTreeViewCtrl):
         """Delete all checked files."""
         nb = self._model.delete_checked_files()
         if nb > 0:
-            self.__refresh()
+            self.__restore_expanders()
             return True
         return False
 
@@ -158,13 +178,6 @@ class FilesTreeViewCtrl(BaseTreeViewCtrl):
 
         """
         self._model.lock(entries)
-
-    # ------------------------------------------------------------------------
-
-    def update_data(self):
-        """Overridden. Update the currently displayed data."""
-        self._model.update()
-        self.__refresh()
 
     # ------------------------------------------------------------------------
     # Callbacks to events
@@ -213,8 +226,9 @@ class FilesTreeViewCtrl(BaseTreeViewCtrl):
 
     # ------------------------------------------------------------------------
 
-    def __refresh(self):
+    def __restore_expanders(self):
         for item in self._model.get_expanded_items(True):
             self.Expand(item)
         for item in self._model.get_expanded_items(False):
             self.Collapse(item)
+

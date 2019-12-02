@@ -54,7 +54,7 @@ from .ann.annotation import sppasAnnotation
 # ----------------------------------------------------------------------------
 
 
-class sppasTranscription(sppasMetaData):
+class sppasTranscription(object):
     """Representation of a transcription, a structured set of tiers.
 
     :author:       Brigitte Bigi
@@ -100,8 +100,7 @@ class sppasTranscription(sppasMetaData):
         :param name: (str) Name of the transcription.
 
         """
-        super(sppasTranscription, self).__init__()
-
+        self._meta = sppasMetaData()
         self._name = None
         self._media = list()      # a list of sppasMedia() instances
         self._ctrlvocab = list()  # a list of sppasCtrlVocab() instances
@@ -111,9 +110,9 @@ class sppasTranscription(sppasMetaData):
         self.set_name(name)
 
         # Add metadata about SPPAS, the language and the license.
-        self.add_software_metadata()
-        self.add_language_metadata()
-        self.add_license_metadata(0)
+        self._meta.add_software_metadata()
+        self._meta.add_language_metadata()
+        self._meta.add_license_metadata(0)
 
     # -----------------------------------------------------------------------
     # Name
@@ -138,6 +137,31 @@ class sppasTranscription(sppasMetaData):
         self._name = su.to_strip()
 
         return self._name
+
+    # -----------------------------------------------------------------------
+    # Metadata
+    # -----------------------------------------------------------------------
+
+    def get_metadata(self):
+        """Return the metadata object of this sppasTranscription."""
+        return self._meta
+
+    def get_meta_keys(self):
+        """Return the list of metadata keys."""
+        return self._meta.get_meta_keys()
+
+    def get_meta(self, entry, default=""):
+        """Return the value of the given key.
+
+        :param entry: (str) Entry to be checked as a key.
+        :param default: (str) Default value to return if entry is not a key.
+        :returns: (str) meta data value or default value
+
+        """
+        return self._meta.get_meta(entry, default)
+
+    def set_meta(self, key, value):
+        self._meta.set_meta(key, value)
 
     # ------------------------------------------------------------------------
     # Media
@@ -387,6 +411,10 @@ class sppasTranscription(sppasMetaData):
     def get_tier_list(self):
         """Return the list of tiers."""
         return self._tiers
+
+    # -----------------------------------------------------------------------
+
+    tiers = property(get_tier_list, None)
 
     # -----------------------------------------------------------------------
 

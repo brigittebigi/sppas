@@ -174,6 +174,7 @@ def exec_Rscript(filenamed, filenames, filenamee, rscriptname, pdffilename):
         fp.write('   outline = FALSE,                   # REMOVE OUTLIERS \n')
         fp.write('   border="blue", \n')
         fp.write('   ylim=c(-0.05,0.05), \n')
+        # fp.write('   ylim=c(-0.2,0.2), \n')
         fp.write('   col="pink") \n')
         fp.write("   abline(0,0) \n")
         fp.write("\n")

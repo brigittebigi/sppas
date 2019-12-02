@@ -55,12 +55,65 @@ class sppasSwissKnife:
     """
 
     @staticmethod
-    def get_bmp_icon(name, height=None):
+    def get_bmp_icon(name, height=None, default="default"):
         """Return the bitmap corresponding to the name of an icon.
 
         :param name: (str) Name of an icon.
         :param height: (int) Height of the bitmap. Width=height.
+        :param default: (str) Default icon if name is missing
         :returns: (wx.Bitmap)
+
+        """
+        img = sppasSwissKnife.get_image(name, default)
+        if height is not None:
+            img.Rescale(height, height, wx.IMAGE_QUALITY_HIGH)
+
+        return wx.Bitmap(img)
+
+    # ------------------------------------------------------------------------
+
+    @staticmethod
+    def get_image(name, default="default"):
+        """Return the image corresponding to the name of an image or icon.
+
+        :param name: (str) Name of an image or an icon.
+        :param default: (str) Default icon if name is missing.
+        :returns: (wx.Image)
+
+        """
+        img_name = sppasSwissKnife.get_image_filename(name, default)
+        return wx.Image(img_name, wx.BITMAP_TYPE_ANY)
+
+    # ------------------------------------------------------------------------
+
+    @staticmethod
+    def get_image_filename(name, default="default"):
+        """Return the filename matching the given name or the default.
+
+        :param name: (str) Name of an image or an icon.
+        :param default: (str) Default icon if name is missing.
+
+        """
+        # Given "name" is already a filename
+        if os.path.exists(name):
+            img_name = name
+        else:
+            # search in the images file names
+            img_name = os.path.join(paths.etc, "images", name + ".png")
+            if os.path.exists(img_name) is False:
+                # fix the image file name with the current icon's theme
+                img_name = sppasSwissKnife.get_icon_filename(name, default)
+
+        return img_name
+
+    # ------------------------------------------------------------------------
+
+    @staticmethod
+    def get_icon_filename(name, default="default"):
+        """Return the icon filename matching the given name or the default.
+
+        :param name: (str) Name of an icon.
+        :param default: (str) Default icon if name is missing.
 
         """
         # fix the icon file name with the current theme
@@ -76,44 +129,24 @@ class sppasSwissKnife:
                 "Refine",
                 name + ".png")
 
+        # instead, use the given default icon
+        if os.path.exists(icon_name) is False:
+            icon_name = os.path.join(
+                paths.etc, "icons",
+                "Refine",
+                default + ".png")
+
         # instead, use the default icon
         if os.path.exists(icon_name) is False:
-            logging.info('Image {:s} not found.'.format(icon_name))
             icon_name = os.path.join(
                 paths.etc, "icons",
                 "Refine",
                 "default.png")
 
-        # create an image from the png file
-        img = wx.Image(icon_name, wx.BITMAP_TYPE_ANY)
-        if height is not None:
-            img.Rescale(height, height, wx.IMAGE_QUALITY_HIGH)
+        if os.path.exists(icon_name) is False:
+            raise OSError("SPPAS Package corrupted: Missing default image.")
 
-        return wx.Bitmap(img)
-
-    # ------------------------------------------------------------------------
-
-    @staticmethod
-    def get_image(name):
-        # Given "name" is already a filename
-        if os.path.exists(name):
-            img_name = name
-        else:
-            # search in the images file names
-            img_name = os.path.join(paths.etc, "images", name + ".png")
-            if os.path.exists(img_name) is False:
-                # fix the image file name with the current icon's theme
-                img_name = os.path.join(
-                    paths.etc, "icons",
-                    wx.GetApp().settings.icons_theme,
-                    name + ".png")
-                # ... not found in the icons ...
-                # instead, use the logo of SPPAS!
-                if os.path.exists(img_name) is False:
-                    logging.warning('Image {:s} not found.'.format(img_name))
-                    img_name = os.path.join(paths.etc, "images", "sppas.png")
-
-        return wx.Image(img_name, wx.BITMAP_TYPE_ANY)
+        return icon_name
 
     # ------------------------------------------------------------------------
 

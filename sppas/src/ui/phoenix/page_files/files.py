@@ -43,7 +43,6 @@
 """
 
 import wx
-import logging
 
 from sppas.src.files import FileData, States
 from sppas import sppasTypeError
@@ -88,6 +87,7 @@ class sppasFilesPanel(sppasPanel):
             name="page_files"
         )
 
+        # Construct the GUI
         self._create_content()
         self._setup_events()
 
@@ -95,6 +95,7 @@ class sppasFilesPanel(sppasPanel):
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
 
+        # Organize items and fix a size for each of them
         self.Layout()
 
     # ------------------------------------------------------------------------
@@ -119,7 +120,7 @@ class sppasFilesPanel(sppasPanel):
         """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        logging.debug('New data to set in the files page. '
+        wx.LogDebug('New data to set in the files page. '
                       'Id={:s}'.format(data.id))
         # Set to all children.
         self.__send_data(self.GetParent(), data)
@@ -138,13 +139,13 @@ class sppasFilesPanel(sppasPanel):
 
         # Organize all the panels vertically, separated by 2px grey lines.
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(wp, 0, wx.EXPAND, 0)
+        sizer.Add(wp, 1, wx.EXPAND, 0)
         sizer.Add(self.__create_vline(), 0, wx.EXPAND, 0)
-        sizer.Add(fm, 2, wx.EXPAND, 0)
+        sizer.Add(fm, 5, wx.EXPAND, 0)
         sizer.Add(self.__create_vline(), 0, wx.EXPAND, 0)
         sizer.Add(ap, 0, wx.EXPAND, 0)
         sizer.Add(self.__create_vline(), 0, wx.EXPAND, 0)
-        sizer.Add(cm, 1, wx.EXPAND, 0)
+        sizer.Add(cm, 3, wx.EXPAND, 0)
 
         self.SetSizer(sizer)
 
@@ -157,7 +158,7 @@ class sppasFilesPanel(sppasPanel):
         line.SetSize(wx.Size(2, -1))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(2)
-        line.SetForegroundColour(wx.Colour(128, 128, 128, 128))
+        # line.SetForegroundColour(wx.Colour(128, 128, 128, 128))
         return line
 
     # -----------------------------------------------------------------------
@@ -189,19 +190,19 @@ class sppasFilesPanel(sppasPanel):
         key_code = event.GetKeyCode()
         cmd_down = event.CmdDown()
         shift_down = event.ShiftDown()
-        logging.debug('Files book page received a key event. '
+        wx.LogDebug('Files book page received a key event. '
                       'key_code={:d}'.format(key_code))
 
         if key_code == wx.WXK_F5 and cmd_down is False and shift_down is False:
-            logging.debug(' ... [F5] key pressed')
+            wx.LogDebug(' ... [F5] key pressed')
 
         # CMD+S: Pin&Save the workspace
         elif key_code == 83 and cmd_down is True:
-            logging.debug('Key event: Pin&Save the workspace')
+            wx.LogDebug('Key event: Pin&Save the workspace')
             self.FindWindow("workspaces").pin_save()
 
         else:
-            logging.debug('Key event skipped by the files book page.')
+            wx.LogDebug('Key event skipped by the files book page.')
             event.Skip()
 
     # -----------------------------------------------------------------------
@@ -218,8 +219,8 @@ class sppasFilesPanel(sppasPanel):
         try:
             data = event.data
         except AttributeError:
-            logging.error('Data were not sent in the event emitted by {:s}'
-                          '.'.format(emitted.GetName()))
+            wx.LogError('Data were not sent in the event emitted by {:s}'
+                        '.'.format(emitted.GetName()))
             return
 
         self.__send_data(emitted, data)

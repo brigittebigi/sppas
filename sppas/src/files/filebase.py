@@ -97,6 +97,7 @@ class FileBase(object):
         """Set a state (to be overridden).
 
         :param value: (States) The state value to assign
+        :returns: (bool or list)
 
         """
         raise NotImplementedError

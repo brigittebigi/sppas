@@ -34,7 +34,6 @@
 
 """
 
-import logging
 import wx
 import os
 import time
@@ -50,7 +49,7 @@ from ..windows import sppasDialog
 from ..windows import sppasScrolledPanel
 from ..windows import sppasProgressDialog
 from ..windows import sppasPanel
-from ..windows import sppasTextCtrl, sppasTitleText
+from ..windows import sppasMessageText, sppasTitleText
 from ..windows import sppasStaticLine
 from ..windows import BitmapTextButton, sppasTextButton
 
@@ -128,7 +127,7 @@ class sppasPluginsList(sppasScrolledPanel):
         """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        logging.debug('New data to set in the plugins page. '
+        wx.LogMessage('New data to set in the plugins page. '
                       'Id={:s}'.format(data.id))
         self.__data = data
 
@@ -199,8 +198,8 @@ class sppasPluginsList(sppasScrolledPanel):
         """
         # Get the list of checked FileName() instances
         checked = self.__data.get_filename_from_state(States().CHECKED)
-        logging.info("Apply plugin {:s} on {:d} files."
-                     "".format(plugin_id, len(checked)))
+        wx.LogMessage("Apply plugin {:s} on {:d} files."
+                      "".format(plugin_id, len(checked)))
         if len(checked) == 0:
             Information("No file(s) selected to apply the plugin on!")
             return
@@ -234,8 +233,8 @@ class sppasPluginsList(sppasScrolledPanel):
 
                 # Notify the data changed (if any)
                 if added > 0:
-                    logging.info("{:d} files added into the workspace"
-                                 "".format(added))
+                    wx.LogMessage("{:d} files added into the workspace"
+                                  "".format(added))
                     evt = DataChangedEvent(data=self.__data)
                     evt.SetEventObject(self)
                     wx.PostEvent(self.GetParent(), evt)
@@ -287,7 +286,6 @@ class sppasPluginsList(sppasScrolledPanel):
         line.SetSize(wx.Size(-1, depth))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(depth)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line
 
     # -----------------------------------------------------------------------
@@ -317,7 +315,7 @@ class sppasPluginsList(sppasScrolledPanel):
 
         for plugin_id in self._manager.get_plugin_ids():
             if event_name == plugin_id:
-                logging.debug("User clicked plugin {:s}".format(plugin_id))
+                # logging.debug("User clicked plugin {:s}".format(plugin_id))
                 self.apply(plugin_id)
                 event.Skip()
                 break
@@ -405,19 +403,10 @@ class sppasPluginDescription(sppasPanel):
 
     def __create_description_sizer(self):
         s = wx.BoxSizer(wx.VERTICAL)
-        tt = sppasTitleText(self, label=self.__plugin.get_name(), name="text_title")
-
-        text_style = wx.TAB_TRAVERSAL | \
-                     wx.TE_MULTILINE | \
-                     wx.TE_READONLY | \
-                     wx.TE_BESTWRAP | \
-                     wx.TE_AUTO_URL | \
-                     wx.NO_BORDER | \
-                     wx.TE_RICH
-        td = sppasTextCtrl(self, value=self.__plugin.get_descr(), style=text_style)
-
-        s.Add(tt, 0, wx.ALIGN_CENTRE_VERTICAL, wx.ALL, 4)
-        s.Add(td, 1, wx.EXPAND | wx.ALIGN_CENTRE_VERTICAL | wx.ALL, 4)
+        tt = sppasTitleText(self, value=self.__plugin.get_name(), name="text_title")
+        td = sppasMessageText(self, self.__plugin.get_descr())
+        s.Add(tt, 1, wx.EXPAND | wx.ALL, 4)
+        s.Add(td, 3, wx.EXPAND | wx.ALL, 4)
         return s
 
     # -----------------------------------------------------------------------

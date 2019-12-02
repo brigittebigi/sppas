@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import os.path
 import wx
 import wx.lib.scrolledpanel as scrolled
@@ -41,6 +42,7 @@ from sppas.src.ui.wxgui.sp_icons import TIER_DELETE
 from sppas.src.ui.wxgui.sp_icons import TIER_PREVIEW
 from sppas.src.ui.wxgui.sp_icons import FILTER_CHECK
 from sppas.src.ui.wxgui.sp_icons import FILTER_UNCHECK
+from sppas.src.ui.wxgui.sp_icons import FILTER_UNLABELLED
 from sppas.src.ui.wxgui.sp_icons import FILTER_SINGLE
 from sppas.src.ui.wxgui.sp_icons import FILTER_RELATION
 
@@ -60,6 +62,7 @@ from sppas.src.ui.wxgui.views.singlefilter import SingleFilterDialog
 from sppas.src.ui.wxgui.views.relationfilter import RelationFilterDialog
 from sppas.src.ui.wxgui.process.filterprocess import SingleFilterProcess
 from sppas.src.ui.wxgui.process.filterprocess import RelationFilterProcess
+from sppas.src.ui.wxgui.process.filterprocess import UnlabelledFilterProcess
 
 # ----------------------------------------------------------------------------
 # Constants
@@ -72,6 +75,7 @@ FILTER_CHECK_ID = wx.NewId()
 FILTER_UNCHECK_ID = wx.NewId()
 FILTER_SEL_ID = wx.NewId()
 FILTER_REL_ID = wx.NewId()
+FILTER_GAPS_ID = wx.NewId()
 
 # ----------------------------------------------------------------------------
 # Main class that manage the notebook
@@ -139,7 +143,7 @@ class DataFilterClient(BaseClient):
 
         for i in range(self._xfiles.GetSize()):
             o = self._xfiles.GetObject(i)
-            o.Save()
+            o.Save(selected=False)
 
 
 # ----------------------------------------------------------------------------
@@ -214,6 +218,9 @@ class DataFilter(wx.Panel):
                           tooltip="Preview a tier of the selected file.")
         toolbar.AddSpacer()
 
+        toolbar.AddButton(FILTER_GAPS_ID, FILTER_UNLABELLED,
+                          'DelGaps',
+                          tooltip="Filter un-labelled annotations.")
         toolbar.AddButton(FILTER_SEL_ID, FILTER_SINGLE,
                           'Single',
                           tooltip="Filter checked tier(s) depending on "
@@ -270,6 +277,9 @@ class DataFilter(wx.Panel):
             self.Uncheck()
             return True
 
+        elif ide == FILTER_GAPS_ID:
+            self.UnlabelledFilter()
+            return True
         elif ide == FILTER_SEL_ID:
             self.SingleFilter()
             return True
@@ -395,8 +405,8 @@ class DataFilter(wx.Panel):
     # Actions on a file...
     # ----------------------------------------------------------------------
 
-    def Save(self):
-        """Save the selected file."""
+    def Save(self, selected=True):
+        """Save the selected file or save event if not selected."""
 
         if self._selection is None:
             ShowInformation(self,
@@ -408,7 +418,7 @@ class DataFilter(wx.Panel):
 
         for i in range(self._filetrs.GetSize()):
             p = self._filetrs.GetObject(i)
-            if p == self._selection:
+            if (selected is True and p == self._selection) or selected is False:
                 p.Save()
 
     # ----------------------------------------------------------------------
@@ -466,10 +476,21 @@ class DataFilter(wx.Panel):
 
         for i in range(self._filetrs.GetSize()):
             o = self._filetrs.GetObject(i)
-            o.Save()
+            # save even if the file is not selected
+            o.Save(selected=False)
 
     # ----------------------------------------------------------------------
     # Functions... to filter
+    # ----------------------------------------------------------------------
+
+    def UnlabelledFilter(self):
+        """Filter selected tiers to remove un-labelled annotations."""
+
+        dlg = wx.Window(self)
+        for i in range(self._filetrs.GetSize()):
+            process = UnlabelledFilterProcess(dlg, self._filetrs)
+            process.run()
+
     # ----------------------------------------------------------------------
 
     def SingleFilter(self):

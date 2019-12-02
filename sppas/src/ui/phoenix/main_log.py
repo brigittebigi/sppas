@@ -304,7 +304,6 @@ class sppasLogWindow(wx.TopLevelWindow):
         line.SetSize(wx.Size(-1, depth))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(depth)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line
 
     # -----------------------------------------------------------------------
@@ -466,6 +465,7 @@ class sppasLogWindow(wx.TopLevelWindow):
         if self.IsIconized():
             self.Iconize(False)
         self.SetFocus()
+        self.Raise()
 
     # -----------------------------------------------------------------------
 
@@ -675,7 +675,7 @@ class sppasMessageTextCtrl(wx.TextCtrl):
 
         # Fix Look&Feel for warnings
         self.warning = wx.TextAttr()
-        self.warning.SetTextColour(wx.YELLOW)
+        self.warning.SetTextColour(wx.Colour(250, 150, 40))  # orange
         self.warning.SetBackgroundColour(settings.bg_color)
         self.warning.SetFont(settings.mono_text_font)
 
@@ -788,5 +788,4 @@ class sppasLogActionPanel(sppasPanel):
         line.SetMinSize(wx.Size(1, -1))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(1)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line

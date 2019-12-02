@@ -771,3 +771,50 @@ class TestTier(unittest.TestCase):
         subtier.append(sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(2.), sppasPoint(3.)))))
         self.assertTrue(reftier.is_superset(subtier))
         self.assertFalse(subtier.is_superset(reftier))
+
+    # -----------------------------------------------------------------------
+
+    def test_export_to_intervals(self):
+        # Input is an Interval Tier
+        tier = sppasTier()
+        localizations = [sppasInterval(sppasPoint(1.), sppasPoint(2.)),
+                         sppasInterval(sppasPoint(1.5), sppasPoint(2.)),
+                         sppasInterval(sppasPoint(2.4), sppasPoint(4.)),
+                         sppasInterval(sppasPoint(4.), sppasPoint(4.3)),
+                         sppasInterval(sppasPoint(4.3), sppasPoint(4.5)),
+                         sppasInterval(sppasPoint(5.), sppasPoint(8.)),
+                         ]
+        annotations = [sppasAnnotation(sppasLocation(t), sppasLabel(sppasTag(i))) for i, t in enumerate(localizations)]
+        for i, a in enumerate(annotations):
+            tier.add(a)
+
+        intervals = tier.export_to_intervals(separators=list())
+        self.assertEqual(3, len(intervals))
+        self.assertEqual(sppasInterval(sppasPoint(1.), sppasPoint(2.)),
+                         intervals[0].get_location().get_best())
+        self.assertEqual(sppasInterval(sppasPoint(2.4), sppasPoint(4.5)),
+                         intervals[1].get_location().get_best())
+        self.assertEqual(sppasInterval(sppasPoint(5.0), sppasPoint(8.0)),
+                         intervals[2].get_location().get_best())
+
+        # Input is a Point Tier: it does not work.
+        tier = sppasTier()
+        localizations = [sppasPoint(1.),
+                         sppasPoint(2.),   # no label
+                         sppasPoint(2.1),
+                         sppasPoint(2.4),
+                         sppasPoint(4.),   # no label
+                         sppasPoint(4.3),
+                         sppasPoint(6.1),
+                         sppasPoint(8.)    # no label
+                         ]
+
+        for loc in localizations:
+            m = loc.get_midpoint()
+            if m % 2 != 0:
+                tier.create_annotation(sppasLocation(loc), sppasLabel(sppasTag(m)))
+            else:
+                tier.create_annotation(sppasLocation(loc))
+
+        intervals = tier.export_to_intervals(separators=list())
+        self.assertEqual(0, len(intervals))

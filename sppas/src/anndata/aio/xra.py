@@ -580,7 +580,7 @@ class sppasXRA(sppasBaseIO):
         root.set('name', self.get_name())
 
         metadata_root = ET.SubElement(root, 'Metadata')
-        sppasXRA.format_metadata(metadata_root, self)
+        sppasXRA.format_metadata(metadata_root, self.get_metadata())
         if len(metadata_root.findall('Entry')) == 0:
             root.remove(metadata_root)
 

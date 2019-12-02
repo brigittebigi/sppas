@@ -33,6 +33,7 @@
     ~~~~~~~~~~
 
 """
+
 import logging
 import os
 import time
@@ -92,15 +93,19 @@ class sppasTrash(object):
         """Put a file into the trash.
 
         :param filename: (str)
-
+        :return: Full name of the file in the trash
 
         """
         fn, fe = os.path.splitext(os.path.basename(filename))
         now = time.strftime("-%a-%d-%b-%Y_%H%M%S_0000", time.localtime())
         if os.path.exists(filename):
-            shutil.move(
-                filename,
-                os.path.join(paths.trash, fn+now+fe))
+            trashname = os.path.join(paths.trash, fn+now+fe)
+            shutil.move(filename, trashname)
+        else:
+            return ""
+
+        return trashname
+
 
     # -----------------------------------------------------------------------
 

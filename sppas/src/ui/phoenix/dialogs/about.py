@@ -44,6 +44,7 @@ from sppas.src.config import ui_translation
 from ..tools import sppasSwissKnife
 from ..windows import sppasScrolledPanel
 from ..windows import sppasDialog
+from ..windows import sppasMessageText
 
 # ----------------------------------------------------------------------------
 
@@ -117,8 +118,9 @@ class sppasBaseAbout(sppasScrolledPanel):
 
         # URL
         if len(self.url) > 0:
-            text = wx.StaticText(self, -1, self.url, name="url")
+            text = sppasMessageText(self, self.url, name="url")
             text.Bind(wx.EVT_LEFT_UP, self.on_link, text)
+            text.SetMinSize(wx.Size(200, sppasScrolledPanel.fix_size(20)))
             sizer.Add(text, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
 
         # License
@@ -306,7 +308,7 @@ class sppasAboutPluginDialog(sppasDialog):
             title="About",
             style=wx.DEFAULT_FRAME_STYLE)
 
-        self.CreateHeader(MSG_HEADER_ABOUT + plugin.get_key() + "...", 'about')
+        self.CreateHeader(MSG_HEADER_ABOUT + " " + plugin.get_key() + "...", 'about')
         p = AboutPluginPanel(self, plugin)
         self.SetContent(p)
         self.CreateActions([wx.ID_OK])

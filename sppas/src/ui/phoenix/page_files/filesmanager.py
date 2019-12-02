@@ -27,13 +27,12 @@
         ---------------------------------------------------------------------
 
     src.ui.phoenix.page_files.filesmanager.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Main panel to manage the tree of files.
 
 """
 
-import logging
 import os
 import wx
 
@@ -46,7 +45,8 @@ from ..dialogs import YesNoQuestion, Information
 from ..dialogs import sppasFileDialog
 from ..main_events import DataChangedEvent
 
-from .filestreectrl import FilesTreeViewCtrl
+from .dv_filestreectrl import FilesTreeViewCtrl
+from .filesviewctrl import FileTreeView
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
@@ -86,6 +86,9 @@ class FilesManager(sppasPanel):
         self.__current_dir = paths.samples
         self._create_content()
         self._setup_events()
+
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(320), -1))
+        self.SetAutoLayout(True)
         self.Layout()
 
     # -----------------------------------------------------------------------
@@ -114,16 +117,13 @@ class FilesManager(sppasPanel):
     def _create_content(self):
         """Create the main content."""
         tb = self.__create_toolbar()
-        fv = FilesTreeViewCtrl(self, name="filestree")
+        # fv = FilesTreeViewCtrl(self, name="filestree")
+        fv = FileTreeView(self, name="filestree")
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(tb, proportion=0, flag=wx.EXPAND, border=0)
         sizer.Add(fv, proportion=1, flag=wx.EXPAND, border=0)
         self.SetSizer(sizer)
-
-        self.SetMinSize(wx.Size(sppasPanel.fix_size(320),
-                                sppasPanel.fix_size(200)))
-        self.SetAutoLayout(True)
 
     # -----------------------------------------------------------------------
 
@@ -178,8 +178,8 @@ class FilesManager(sppasPanel):
         key_code = event.GetKeyCode()
         cmd_down = event.CmdDown()
         shift_down = event.ShiftDown()
-        logging.debug('Files manager received the key event {:d}'
-                      ''.format(key_code))
+        #logging.debug('Files manager received the key event {:d}'
+        #              ''.format(key_code))
 
         #if key_code == wx.WXK_F5 and cmd_down is False and shift_down is False:
         #    loggingFindWindow.debug('Refresh all the files [F5 keys pressed]')
@@ -197,7 +197,6 @@ class FilesManager(sppasPanel):
 
         """
         name = event.GetButtonObj().GetName()
-        logging.debug("Event received of button: {:s}".format(name))
 
         if name == "files-add":
             self._add()
@@ -226,7 +225,7 @@ class FilesManager(sppasPanel):
 
         if len(filenames) > 0:
             added = self.FindWindow("filestree").AddFiles(filenames)
-            if added:
+            if added > 0:
                 self.__current_dir = os.path.dirname(filenames[0])
                 self.notify()
 
@@ -236,7 +235,7 @@ class FilesManager(sppasPanel):
         """Remove the checked files of the fileviewer."""
         data = self.get_data()
         if data.is_empty():
-            logging.info('No files in data. Nothing to remove.')
+            wx.LogMessage('No files in data. Nothing to remove.')
             return
 
         removed = self.FindWindow("filestree").RemoveCheckedFiles()
@@ -249,7 +248,7 @@ class FilesManager(sppasPanel):
         """Move into the trash the checked files of the fileviewer."""
         data = self.get_data()
         if data.is_empty():
-            logging.info('No files in data. Nothing to delete.')
+            wx.LogMessage('No files in data. Nothing to delete.')
             return
 
         checked_files = self.FindWindow("filestree").GetCheckedFiles()
@@ -258,7 +257,6 @@ class FilesManager(sppasPanel):
             return
 
         # User must confirm to really delete files
-        # title = "Confirm delete of files?"
         message = FLS_MSG_CONFIRM_DEL.format(len(checked_files))
         response = YesNoQuestion(message)
         if response == wx.ID_YES:
@@ -266,7 +264,7 @@ class FilesManager(sppasPanel):
             if deleted:
                 self.notify()
         elif response == wx.ID_NO:
-            logging.info('Response is no. No file deleted.')
+            wx.LogMessage('Response is no. No file deleted.')
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
@@ -277,7 +275,14 @@ class TestPanel(FilesManager):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
-        self.add_test_data()
+        self.SetBackgroundColour(wx.Colour(100, 100, 100))
+        self.SetForegroundColour(wx.Colour(0, 0, 10))
+        self.add_one_test_data()
+
+    # ------------------------------------------------------------------------
+
+    def add_one_test_data(self):
+        self.FindWindow("filestree").AddFiles([os.path.abspath(__file__)])
 
     # ------------------------------------------------------------------------
 
@@ -288,6 +293,7 @@ class TestPanel(FilesManager):
 
         for f in os.listdir(here):
             fullname = os.path.join(here, f)
-            logging.info('add {:s}'.format(fullname))
             if os.path.isfile(fullname):
-                self.FindWindow("filestree").AddFiles([fullname])
+                wx.LogMessage('Add {:s}'.format(fullname))
+                nb = self.FindWindow("filestree").AddFiles([fullname])
+                wx.LogMessage(" --> {:d} files added.".format(nb))

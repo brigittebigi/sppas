@@ -50,8 +50,11 @@ from .term import ProcessProgressTerminal
 
 from .wkps import sppasWorkspaces
 
+from .trash import sppasTrash
+
 __all__ = (
     "sppasAppConfig",
+    "sppasTrash",
     "sppasTips",
     "sppasLogFile",
     "sppasLogSetup",

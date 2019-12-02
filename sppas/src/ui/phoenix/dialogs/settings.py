@@ -93,11 +93,12 @@ class sppasSettingsDialog(sppasDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     Returns either wx.ID_CANCEL or wx.ID_OK if ShowModal().
 
     """
+
     def __init__(self, parent):
         """Create a dialog to fix settings.
 
@@ -288,9 +289,7 @@ class WxSettingsPanel(sppasPanel):
         event_obj = event.GetEventObject()
         event_name = event_obj.GetName()
         event_id = event_obj.GetId()
-
-        wx.LogMessage("Received event id {:d} of {:s}"
-                      "".format(event_id, event_name))
+        # wx.LogDebug("Received event id {:d} of {:s}".format(event_id, event_name))
 
         if "color" in event_name:
             self.on_color_dialog(event)

@@ -172,7 +172,6 @@ class sppasAnnotationsPanel(sppasPanel):
         line.SetSize(wx.Size(-1, depth))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(depth)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line
 
     # -----------------------------------------------------------------------

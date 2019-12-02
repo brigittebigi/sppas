@@ -153,9 +153,16 @@ class MainTitlePanel(wx.Panel):
         self.SetBackgroundColour(preferences.GetValue('M_BGD_COLOUR'))
 
         s = wx.BoxSizer()
-        text = wx.StaticText(self, label=sg.__name__+" - "+sg.__title__)
+        text_style = wx.TAB_TRAVERSAL | \
+                     wx.TE_READONLY | \
+                     wx.TE_BESTWRAP | \
+                     wx.TE_CENTER | \
+                     wx.NO_BORDER
+        text = wx.TextCtrl(self, value="", style=text_style)
         text.SetFont(preferences.GetValue('M_HEADER_FONT'))
         text.SetForegroundColour(preferences.GetValue('M_FG_COLOUR'))
+        text.SetBackgroundColour(preferences.GetValue('M_BGD_COLOUR'))
+        text.SetValue(sg.__name__ + " - " + sg.__title__)
         text.Bind(wx.EVT_LEFT_UP, self.OnButtonClick)
         s.Add(text, proportion=1, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=10)
 
@@ -257,38 +264,38 @@ class MainActionsPanel(wx.Panel):
         annotateButton = ButtonPanel(self, ID_ANNOTATIONS,
                                      self._prefs,
                                      ANNOTATIONS_ICON,
-                                     _("Annotate"),
-                                     "Create automatically\nannotations")
+                                     _(" Annotate "),
+                                     "Create automatically,annotations")
 
         analyzeButton = ButtonPanel(self, ID_COMPONENTS,
                                     self._prefs,
                                     COMPONENTS_ICON,
-                                    _("Analyze"),
-                                    "Manage any\nannotated data")
+                                    _(" Analyze "),
+                                    "Manage any,annotated data")
 
         pluginsButton = ButtonPanel(self, ID_PLUGINS,
                                     self._prefs,
                                     PLUGINS_ICON,
-                                    _("Plugins"),
-                                    "Extended features",
+                                    _(" Plugins "),
+                                    "Extended,features",
                                     activated=True)
 
         settingsButton = ButtonPanel(self, wx.ID_PREFERENCES,
                                      self._prefs,
                                      SETTINGS_ICON,
-                                     _("Settings"),
+                                     _(" Settings "),
                                      "Customization")
 
         helpButton = ButtonPanel(self, wx.ID_HELP,
                                  self._prefs,
                                  HELP_ICON,
-                                 _("Help"),
+                                 _(" Help "),
                                  "Documentation")
 
         aboutButton = ButtonPanel(self, wx.ID_ABOUT,
                                   self._prefs,
                                   ABOUT_ICON,
-                                  _("About"),
+                                  _(" About "),
                                   "Know more")
 
         _box = wx.GridBagSizer()

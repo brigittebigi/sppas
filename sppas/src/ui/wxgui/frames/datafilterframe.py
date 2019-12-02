@@ -130,5 +130,3 @@ class DataFilterFrame(ComponentFrame):
 
         else:
             ComponentFrame.ProcessEvent(self, event)
-
-# ----------------------------------------------------------------------------

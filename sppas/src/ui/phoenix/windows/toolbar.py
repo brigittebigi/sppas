@@ -35,7 +35,6 @@
 """
 
 import wx
-import logging
 
 from .panel import sppasPanel
 from .text import sppasStaticText
@@ -55,14 +54,17 @@ class sppasToolbar(sppasPanel):
 
     """
 
-    def __init__(self, parent, orient=wx.HORIZONTAL):
+    def __init__(self, parent, orient=wx.HORIZONTAL, name="toolbar"):
         super(sppasToolbar, self).__init__(
             parent,
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
             size=wx.DefaultSize,
             style=wx.NO_BORDER | wx.NO_FULL_REPAINT_ON_RESIZE,
-            name=wx.PanelNameStr)
+            name=name)
+
+        # Size
+        self._h = sppasPanel.fix_size(32)
 
         # Focus Color&Style
         self._fs = wx.PENSTYLE_SOLID
@@ -78,21 +80,58 @@ class sppasToolbar(sppasPanel):
 
         self.SetSizer(wx.BoxSizer(orient))
         self.SetAutoLayout(True)
-
+        if orient == wx.HORIZONTAL:
+            self.SetMinSize(wx.Size(-1, self._h))
+        else:
+            self.SetMinSize(wx.Size(self._h, -1))
         self.Bind(wx.EVT_TOGGLEBUTTON, self.__on_tg_btn_event)
 
     # -----------------------------------------------------------------------
 
-    def get_button(self, name):
-        """Return the button matching the given name or None.
+    def get_height(self):
+        """Return the height of the toolbar."""
+        return self._h
 
-        :param name: (str) Name of the object
+    # -----------------------------------------------------------------------
+
+    def set_height(self, value):
+        """Fix the height of the toolbar.
+
+        The given height will be adjusted to a proportion of the font height.
+        Min is 12, max is 128.
+        The toolbar is not updated.
+
+        """
+        self._h = min(sppasPanel.fix_size(value), 128)
+        self._h = max(self._h, 12)
+        if self.GetSizer().GetOrientation() == wx.HORIZONTAL:
+            self.SetMinSize(wx.Size(-1, self._h))
+        else:
+            self.SetMinSize(wx.Size(self._h, -1))
+
+    # -----------------------------------------------------------------------
+
+    def get_button(self, name, group_name=None):
+        """Return the object matching the given name or None.
+
+        Without "group_name", it is like "FindWindow(name)
+
+        :param name: (str) Name of the object to search
+        :param group_name: (str) Group name of the button to search
         :returns: (wx.Window) a button or None
 
         """
-        for b in self.GetSizer().GetChildren():
-            if b.GetName() == name:
-                return b
+        if group_name is None:
+            return self.FindWindow(name)
+            #for b in self.GetSizer().GetChildren():
+            #    w = b.GetWindow()
+            #    if w is not None and w.GetName() == name:
+            #        return w
+        else:
+            if group_name in self.__tg:
+                for btn in self.__tg[group_name]:
+                    if btn.GetName() == name:
+                        return btn
 
         return None
 
@@ -179,31 +218,39 @@ class sppasToolbar(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def AddText(self, text="", color=None, align=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL):
+    def AddText(self, text="", color=None,
+                align=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL,
+                name=wx.StaticTextNameStr):
         """Append a colored static text into the toolbar.
 
         :param text: (str)
         :param color: (wx.Colour)
         :param align: (int) alignment style
+        :param name: (str)
 
         """
-        st = sppasStaticText(self, label=text)
+        st = sppasStaticText(self, label=text, name=name)
         if color is not None:
             st.SetForegroundColour(color)
             self.__fg.append(st)
         self.GetSizer().Add(st, 0, align | wx.ALL, 6)
 
+        return st
+
     # -----------------------------------------------------------------------
 
-    def AddTitleText(self, text="", color=None, align=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL):
+    def AddTitleText(self, text="", color=None,
+                     align=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL,
+                     name=wx.StaticTextNameStr):
         """Append a colored static text with an higher font into the toolbar.
 
         :param text: (str)
         :param color: (wx.Colour)
         :param align: (int) alignment style
+        :param name: (str)
 
         """
-        st = sppasStaticText(self, label=text)
+        st = sppasStaticText(self, label=text, name=name)
         st.SetFont(self.__title_font())
         self.__ft.append(st)
         if color is not None:
@@ -211,16 +258,36 @@ class sppasToolbar(sppasPanel):
             self.__fg.append(st)
         self.GetSizer().Add(st, 0, align | wx.ALL, 6)
 
+        return st
+
     # -----------------------------------------------------------------------
 
     def set_focus_color(self, value):
         self._fc = value
+        for c in self.GetChildren():
+            try:
+                c.FocusColour = value
+                c.Refresh()
+            except:
+                pass
 
     def set_focus_penstyle(self, value):
         self._fs = value
+        for c in self.GetChildren():
+            try:
+                c.FocusStyle = value
+                c.Refresh()
+            except:
+                pass
 
     def set_focus_width(self, value):
         self._fw = value
+        for c in self.GetChildren():
+            try:
+                c.FocusWidth = value
+                c.Refresh()
+            except:
+                pass
 
     # -----------------------------------------------------------------------
 
@@ -239,7 +306,7 @@ class sppasToolbar(sppasPanel):
         btn.Spacing = sppasPanel.fix_size(12)
         btn.BorderWidth = 0
         btn.BitmapColour = self.GetForegroundColour()
-        btn.SetMinSize((sppasPanel.fix_size(32), sppasPanel.fix_size(32)))
+        btn.SetMinSize(wx.Size(self._h, self._h))
 
         return btn
 
@@ -256,10 +323,10 @@ class sppasToolbar(sppasPanel):
         btn.FocusStyle = self._fs
         btn.FocusWidth = self._fw
         btn.FocusColour = self._fc
-        btn.Spacing = sppasPanel.fix_size(12)
+        btn.Spacing = sppasPanel.fix_size(self._h // 3)
         btn.BorderWidth = 1
         btn.BitmapColour = self.GetForegroundColour()
-        btn.SetMinSize((sppasPanel.fix_size(32), sppasPanel.fix_size(32)))
+        btn.SetMinSize(wx.Size(self._h, self._h))
 
         return btn
 
@@ -303,7 +370,6 @@ class sppasToolbar(sppasPanel):
 
     def __on_tg_btn_event(self, event):
         obj = event.GetEventObject()
-        logging.debug('toolbar received toogle event for btn {:s}'.format(obj.GetName()))
         group = None
         for gp in self.__tg:
             for btn in self.__tg[gp]:
@@ -360,4 +426,3 @@ class TestPanel(wx.Panel):
 
     def __on_btn_event(self, event):
         btn = event.GetEventObject()
-        logging.info('Event button {:s}'.format(btn.GetName()))

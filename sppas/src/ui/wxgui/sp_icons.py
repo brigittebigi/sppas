@@ -193,7 +193,7 @@ PAGE_NEXT_ICON  = os.path.join( "others", "pagenext.png")
 # ---------------------------------------------------------------------------
 # SppasEdit
 
-BROOM_ICON = os.path.join( "others", "broom.png") # Search frame
+BROOM_ICON = os.path.join( "others", "broom.png")  # Search frame
 
 RULER_RED   = os.path.join( "timenav", "indicator_down-red.png")
 RULER_GREEN = os.path.join( "timenav", "indicator_down-green.png")
@@ -230,6 +230,7 @@ FILTER_ADD_TIME     = os.path.join( "others", "list-add-time.png")
 FILTER_REMOVE       = os.path.join( "others", "list-clear.png")
 FILTER_CHECK        = os.path.join( "others", "list-check.png")
 FILTER_UNCHECK      = os.path.join( "others", "list-uncheck.png")
+FILTER_UNLABELLED   = os.path.join( "others", "broom.png")
 FILTER_SINGLE       = os.path.join( "actions", "filter.png")
 FILTER_RELATION     = os.path.join( "actions", "filter-relation.png")
 

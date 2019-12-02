@@ -115,14 +115,14 @@ class sppasNumAsianType(sppasNumBase):
             if mult is None:
                 if int(str(number)[1:]) == 0:
                     return self._lang_dict['1'] \
-                           + self._lang_dict['1000000000']
+                           + self._lang_dict['100000000']
                 else:
                     return self._lang_dict['1'] \
-                           + self._lang_dict['1000000000'] \
-                           + self._tenth_of_thousands(number % 1000000000)
+                           + self._lang_dict['100000000'] \
+                           + self._tenth_of_thousands(number % 100000000)
             else:
                 if int(str(number)[1:]) == 0:
-                    return mult + self._lang_dict['1000000000']
+                    return mult + self._lang_dict['100000000']
                 else:
-                    return mult + self._lang_dict['1000000000'] \
-                            + self._tenth_of_thousands(number % 1000000000)
+                    return mult + self._lang_dict['100000000'] \
+                            + self._tenth_of_thousands(number % 100000000)

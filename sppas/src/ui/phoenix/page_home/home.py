@@ -85,7 +85,7 @@ class sppasHomePanel(sppasPanel):
         # Create a title
         st = sppasTitleText(
             parent=self,
-            label="Welcome")
+            value="Welcome")
         st.SetName("title")
 
         # Create the welcome message

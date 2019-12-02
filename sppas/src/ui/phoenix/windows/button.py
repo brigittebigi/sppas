@@ -61,14 +61,13 @@
 
 """
 
-import logging
 import random
 import wx
+import wx.lib.scrolledpanel as sc
 import wx.lib.newevent
 from wx.lib.buttons import GenBitmapTextButton, GenButton, GenBitmapButton
 
 from ..tools import sppasSwissKnife
-from .panel import sppasScrolledPanel
 from .image import ColorizeImage
 
 # ---------------------------------------------------------------------------
@@ -151,8 +150,8 @@ class sppasBitmapTextButton(GenBitmapTextButton):
             ColorizeImage(img, current, colour)
             self.SetBitmapLabel(wx.Bitmap(img))
         except:
-            logging.debug('SetForegroundColour not applied to image'
-                          'for button {:s}'.format(self.GetName()))
+            wx.LogDebug('SetForegroundColour not applied to image'
+                        'for button {:s}'.format(self.GetName()))
 
         GenBitmapTextButton.SetForegroundColour(self, colour)
 
@@ -207,8 +206,8 @@ class sppasBitmapButton(GenBitmapButton):
             ColorizeImage(img, current, colour)
             self.SetBitmapLabel(wx.Bitmap(img))
         except:
-            logging.debug('SetForegroundColour not applied to image'
-                          'for button {:s}'.format(self.GetName()))
+            wx.LogDebug('SetForegroundColour not applied to image'
+                        'for button {:s}'.format(self.GetName()))
 
         GenBitmapButton.SetForegroundColour(self, colour)
 
@@ -339,7 +338,8 @@ class BaseButton(wx.Window):
 
         # Border width to draw (0=no border)
         self._borderwidth = 2
-        self._bordercolor = self.GetPenForegroundColour()
+        self._default_bordercolor = self.GetPenForegroundColour()
+        self._bordercolor = self._default_bordercolor
         self._borderstyle = wx.PENSTYLE_SOLID
 
         # Focus (True when mouse/keyboard is entered)
@@ -364,6 +364,22 @@ class BaseButton(wx.Window):
 
         # Allow sub-classes to bind other events
         self.InitOtherEvents()
+
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        """Override. Apply fg colour to both the image and the text.
+
+        :param colour: (wx.Colour)
+
+        """
+        wx.Window.SetForegroundColour(self, colour)
+
+        # If the bordercolor wasn't changed by the user
+        if self._bordercolor == self._default_bordercolor:
+            self._bordercolor = self.GetPenForegroundColour()
+
+        self._default_bordercolor = self.GetPenForegroundColour()
 
     # -----------------------------------------------------------------------
 
@@ -438,7 +454,8 @@ class BaseButton(wx.Window):
         """
         if enable != self.IsEnabled():
             wx.Window.Enable(self, enable)
-            self.Refresh()
+            # re-assign an appropriate border color (Pen)
+            self.SetForegroundColour(self.GetForegroundColour())
 
     # ----------------------------------------------------------------------
 
@@ -450,7 +467,7 @@ class BaseButton(wx.Window):
         """
         value = int(value)
         w, h = self.GetClientSize()
-        if value < 1:
+        if value < 0:
             return
         if value >= (w // 4):
             return
@@ -563,7 +580,7 @@ class BaseButton(wx.Window):
         if style not in [wx.PENSTYLE_SOLID, wx.PENSTYLE_LONG_DASH,
                          wx.PENSTYLE_SHORT_DASH, wx.PENSTYLE_DOT_DASH,
                          wx.PENSTYLE_HORIZONTAL_HATCH]:
-            logging.warning("Invalid focus style.")
+            wx.LogWarning("Invalid focus style {:s}.".format(str(style)))
             return
         self._borderstyle = style
 
@@ -576,7 +593,7 @@ class BaseButton(wx.Window):
         if style not in [wx.PENSTYLE_SOLID, wx.PENSTYLE_LONG_DASH,
                          wx.PENSTYLE_SHORT_DASH, wx.PENSTYLE_DOT_DASH,
                          wx.PENSTYLE_HORIZONTAL_HATCH]:
-            logging.warning("Invalid focus style.")
+            wx.LogWarning("Invalid focus style {:s}.".format(str(style)))
             return
         self._focusstyle = style
 
@@ -651,7 +668,8 @@ class BaseButton(wx.Window):
                 self.OnMouseRightUp(event)
 
             else:
-                logging.debug('{:s} Other mouse event'.format(self.GetName()))
+                # logging.debug('{:s} Other mouse event'.format(self.GetName()))
+                pass
 
         event.Skip()
 
@@ -1009,6 +1027,9 @@ class BaseButton(wx.Window):
     # -----------------------------------------------------------------------
 
     def DrawFocusIndicator(self, dc, gc):
+        if self._focuswidth == 0:
+            return
+
         focus_pen = wx.Pen(self._focuscolor,
                            self._focuswidth,
                            self._focusstyle)
@@ -1073,7 +1094,9 @@ class BitmapTextButton(BaseButton):
         self._label = label
         self._labelpos = wx.BOTTOM
         self._spacing = 4
-        self._bitmapcolor = self.GetParent().GetForegroundColour()
+        self._default_bitmapcolor = self.GetPenForegroundColour()
+        self._bitmapcolor = self._default_bitmapcolor
+        self._align = wx.ALIGN_CENTER  # or LEFT or RIGHT
 
         # The icon image
         self._image = None
@@ -1098,8 +1121,11 @@ class BitmapTextButton(BaseButton):
         :param colour: (wx.Colour)
 
         """
-        self._bitmapcolor = colour
-        wx.Window.SetForegroundColour(self, colour)
+        BaseButton.SetForegroundColour(self, colour)
+        if self._bitmapcolor == self._default_bitmapcolor:
+            self._bitmapcolor = self.GetPenForegroundColour()
+
+        self._default_bitmapcolor = self.GetPenForegroundColour()
 
     # -----------------------------------------------------------------------
 
@@ -1151,9 +1177,21 @@ class BitmapTextButton(BaseButton):
 
     # -----------------------------------------------------------------------
 
+    def GetAlign(self):
+        return self._align
+
+    def SetAlign(self, align=wx.ALIGN_CENTER):
+        """Set the position of the label: top, bottom, left, right."""
+        if align not in [wx.ALIGN_CENTER, wx.ALIGN_LEFT, wx.ALIGN_RIGHT]:
+            return
+        self._align = align
+
+    # -----------------------------------------------------------------------
+
     LabelPosition = property(GetLabelPosition, SetLabelPosition)
     BitmapColour = property(GetBitmapColour, SetBitmapColour)
     Spacing = property(GetSpacing, SetSpacing)
+    Align = property(GetAlign, SetAlign)
 
     # -----------------------------------------------------------------------
 
@@ -1176,7 +1214,7 @@ class BitmapTextButton(BaseButton):
             self.DrawFocusIndicator(dc, gc)
 
         x, y, w, h = self.GetClientRect()
-        bd = max(self.BorderWidth, 2)
+        bd = max(self.GetBorderWidth(), 2)
         x += bd
         y += bd
         w -= (2 * bd)
@@ -1199,8 +1237,8 @@ class BitmapTextButton(BaseButton):
             tw, th = self.get_text_extend(dc, gc, self._label)
 
             if self._labelpos == wx.BOTTOM or self._labelpos == wx.TOP:
-                # we need to know the available room to distribute it in margins
-                x_pos, y_pos, bmp_size = self.__get_bitmap_properties(
+                # spacing is applied vertically
+                x_bmp, y_pos, bmp_size = self.__get_bitmap_properties(
                     x, y + th + self._spacing,
                     w, h - th - 2 * self._spacing)
                 if bmp_size > 15:
@@ -1208,34 +1246,42 @@ class BitmapTextButton(BaseButton):
                     y += (margin // 2)
 
                 if self._labelpos == wx.BOTTOM:
+                    #self.__draw_bitmap(dc, gc, (w - bmp_size) // 2, y, bmp_size)
+                    self.__draw_bitmap(dc, gc, x_bmp, y, bmp_size)
                     self.__draw_label(dc, gc, (w - tw) // 2, h - th)
-                    self.__draw_bitmap(dc, gc, (w - bmp_size) // 2, y, bmp_size)
 
                 if self._labelpos == wx.TOP:
                     self.__draw_label(dc, gc, (w - tw) // 2, y)
-                    self.__draw_bitmap(dc, gc, x_pos, y_pos, bmp_size)
+                    self.__draw_bitmap(dc, gc, x_bmp, y_pos, bmp_size)
 
             if self._labelpos == wx.LEFT or self._labelpos == wx.RIGHT:
-                # we need to know the available room to distribute it in margins
-                x_pos, y_pos, bmp_size = self.__get_bitmap_properties(
-                    x + tw + self._spacing, y,
-                    w - tw - self._spacing, h)
+                # spacing is applied horizontally
+                x_bmp, y_bmp, bmp_size = self.__get_bitmap_properties(
+                    x, y, w - tw - self._spacing, h)
 
-                if bmp_size > 15:
+                if bmp_size > 8:
                     margin = w - bmp_size - tw - self._spacing
-                    x += (margin // 2)
+                    if self._align == wx.ALIGN_RIGHT:
+                        x += margin
+                    elif self._align == wx.ALIGN_CENTER:
+                        x += (margin // 2)
 
                     if self._labelpos == wx.LEFT:
                         self.__draw_label(dc, gc, x, (h - (th//2)) // 2)
-                        self.__draw_bitmap(dc, gc, x + tw + self._spacing, y_pos, bmp_size)
+                        self.__draw_bitmap(dc, gc, x_bmp + self._spacing + tw, y_bmp, bmp_size)
 
                     if self._labelpos == wx.RIGHT:
-                        self.__draw_label(dc, gc, w - tw - (margin // 2), (h - (th//2)) // 2)
-                        self.__draw_bitmap(dc, gc, x, y_pos, bmp_size)
+                        self.__draw_bitmap(dc, gc, x_bmp, y_bmp, bmp_size)
+                        self.__draw_label(dc, gc, x_bmp + bmp_size + self._spacing, (h - (th//2)) // 2)
 
                 else:
-                    # not enough room for a bitmap. Center the text.
-                    self.__draw_label(dc, gc, (w - tw) // 2, (h - (th//2)) // 2)
+                    # not enough room for a bitmap.
+                    if self._align == wx.ALIGN_CENTER:
+                        self.__draw_label(dc, gc, (w - tw) // 2, (h - (th//2)) // 2)
+                    elif self._align == wx.ALIGN_LEFT:
+                        self.__draw_label(dc, gc, x, (h - (th//2)) // 2)
+                    elif self._align == wx.ALIGN_RIGHT:
+                        self.__draw_label(dc, gc, (w - tw), (h - (th//2)) // 2)
 
         if self._borderwidth > 0:
             self.DrawBorder(dc, gc)
@@ -1243,15 +1289,23 @@ class BitmapTextButton(BaseButton):
     # -----------------------------------------------------------------------
 
     def __get_bitmap_properties(self, x, y, w, h):
-        bmp_size = min(w, h)
-        margin = max(int(bmp_size * 0.1), 2)
+        # w, h is the available size
+        bmp_size = min(w, h)                  # force a squared button
+        margin = max(int(bmp_size * 0.2), 2)  # optimal margin (20% of btn size)
         bmp_size -= margin
-        x_pos = x + (margin // 2)
         y_pos = y + (margin // 2)
+        if self._align == wx.ALIGN_LEFT:
+            x_pos = x
+        elif self._align == wx.ALIGN_RIGHT:
+            x_pos = w - bmp_size
+        else:
+            x_pos = x + (margin // 2)
+
         if w < h:
             y_pos = (h - bmp_size + margin) // 2
         else:
-            x_pos = (w - bmp_size + margin) // 2
+            if self._align == wx.ALIGN_CENTER:
+                x_pos = (w - bmp_size + margin) // 2
 
         return x_pos, y_pos, bmp_size
 
@@ -1277,7 +1331,7 @@ class BitmapTextButton(BaseButton):
             else:
                 gc.DrawBitmap(bitmap, x, y)
         except Exception as e:
-            logging.error('Draw image error: {:s}'.format(str(e)))
+            wx.LogWarning('Draw image error: {:s}'.format(str(e)))
             return False
 
         return True
@@ -1386,7 +1440,7 @@ class TextButton(BaseButton):
             self.DrawFocusIndicator(dc, gc)
 
         x, y, w, h = self.GetClientRect()
-        bd = max(self.BorderWidth, 2)
+        bd = max(self.GetBorderWidth(), 2)
         x += bd
         y += bd
         w -= (2 * bd)
@@ -1711,7 +1765,7 @@ class CheckButton(BaseCheckButton):
         self._label = label
         self._radio = False
 
-        # Set the spacing between the check bitmap and the label to 4 by default.
+        # Set the spacing between the check bitmap and the label to 6.
         # This can be changed using SetSpacing later.
         self._spacing = 6
 
@@ -1730,16 +1784,16 @@ class CheckButton(BaseCheckButton):
     def SetSpacing(self, spacing):
         """Set a new spacing between the check bitmap and the text.
 
-        :param spacing: (int) Value between 0 and 20.
+        :param spacing: (int) Value between 0 and 30.
 
         """
         spacing = int(spacing)
         if spacing < 0:
             spacing = 0
-        if spacing > 20:
-            logging.warning('Spacing of a button is maximum 20px width. '
-                            'Got {:d}.'.format(spacing))
-            spacing = 20
+        if spacing > 30:
+            # logging.warning('Spacing of a button is maximum 30px width. '
+            #                'Got {:d}.'.format(spacing))
+            spacing = 30
         # we should check if spacing < self height or width
         self._spacing = spacing
 
@@ -1999,7 +2053,6 @@ class TestPanelBaseButton(wx.Panel):
 
     def on_btn_event(self, event):
         obj = event.GetEventObject()
-        logging.debug('* * * PANEL: Button Event received by {:s} * * *'.format(obj.GetName()))
 
 # ----------------------------------------------------------------------------
 
@@ -2048,7 +2101,19 @@ class TestPanelBitmapTextButton(wx.Panel):
             name="Test TextBitmapButton")
 
         b1 = BitmapTextButton(self, label="SPPAS", pos=(10, 10), size=(50, 50))
-        b2 = BitmapTextButton(self, label="SPPAS", pos=(70, 10), size=(100, 50))
+        #font = self.GetFont().MakeBold()
+        #b1.SetFont(font)
+
+        b2 = BitmapTextButton(self, label="boldfont", pos=(70, 10), size=(100, 50))
+        # bold_font = wx.Font(15,                      # point size
+        #                     wx.FONTFAMILY_DEFAULT,   # family,
+        #                     wx.FONTSTYLE_NORMAL,     # style,
+        #                     wx.FONTWEIGHT_BOLD,      # weight,
+        #                     underline=False,
+        #                     faceName="Lucida sans",
+        #                     encoding=wx.FONTENCODING_SYSTEM)
+        # b2.SetFont(bold_font)
+
         b3 = BitmapTextButton(self, label="SPPAS", pos=(180, 10), size=(50, 50))
         b3.SetLabelPosition(wx.TOP)
         b4 = BitmapTextButton(self, label="Add", pos=(240, 10), size=(100, 50), name="add")
@@ -2085,7 +2150,6 @@ class TestPanelCheckButton(wx.Panel):
 
     def on_btn_event(self, event):
         obj = event.GetEventObject()
-        logging.debug('* * * PANEL: Check Button Event received by {:s} * * *'.format(obj.GetName()))
 
 # ----------------------------------------------------------------------------
 
@@ -2114,7 +2178,6 @@ class TestPanelRadioButton(wx.Panel):
 
     def on_btn_event(self, event):
         obj = event.GetEventObject()
-        logging.debug('* * * PANEL: Check Button Event received by {:s} * * *'.format(obj.GetName()))
 
 # ----------------------------------------------------------------------------
 
@@ -2141,7 +2204,7 @@ class TestPanelButtonsInSizer(wx.Panel):
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(sppasScrolledPanel):
+class TestPanel(sc.ScrolledPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(
@@ -2153,9 +2216,14 @@ class TestPanel(sppasScrolledPanel):
 
         tbpanel = wx.Panel(self, size=(-1, 32), )
         tbsizer = wx.BoxSizer(wx.HORIZONTAL)
+
         bgbtn = BitmapTextButton(tbpanel, name="bg_color")
+        bgbtn.SetFocusWidth(0)
         fgbtn = BitmapTextButton(tbpanel, name="font_color")
+        fgbtn.SetFocusWidth(0)
         fontbtn = BitmapTextButton(tbpanel, name="font")
+        fontbtn.SetFocusWidth(0)
+
         self.Bind(wx.EVT_BUTTON, self.on_bg_color, bgbtn)
         self.Bind(wx.EVT_BUTTON, self.on_fg_color, fgbtn)
         self.Bind(wx.EVT_BUTTON, self.on_font, fontbtn)

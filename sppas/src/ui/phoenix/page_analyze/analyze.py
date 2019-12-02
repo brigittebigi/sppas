@@ -32,23 +32,98 @@
     ui.phoenix.page_analyze.analyze.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    One of the main pages of the wx4-based GUI of SPPAS.
+
+    It manages:
+
+        - a set of tabs,
+        - a book (each page is matching a tab),
+        - a toolbar.
+
+    Checked files of the workspace are opened in the active page, ie the
+    checked tab, then they are locked (so that they can't be un-checked
+    in the file manager).
+
 """
 
 import logging
+import random
 import wx
 
 from sppas import sppasTypeError
+from sppas import msg
+from sppas.src.utils import u
 from sppas.src.files import FileData, States
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 from ..main_events import EVT_TAB_CHANGE
+from ..main_events import EVT_VIEW
 
+from ..dialogs import Information, Confirm
 from ..windows import sppasPanel
 from ..windows import sppasStaticLine
 from ..windows.book import sppasSimplebook
+from ..windows import sppasToolbar
 
 from .anz_tabs import TabsManager
-from .anz_views import ViewFilesPanel
+from .anz_textviews import TextViewFilesPanel
+from .anz_listviews import ListViewFilesPanel
+from .anz_defaultviews import DefaultViewFilesPanel
+
+# ---------------------------------------------------------------------------
+# List of displayed messages:
+
+
+def _(message):
+    return u(msg(message, "ui"))
+
+
+VIEW_TITLE = _("View: ")
+VIEW_LIST = _("Summary")
+VIEW_TIME = _("Time line")
+VIEW_TEXT = _("Text edit")
+VIEW_GRID = _("Grid details")
+VIEW_STAT = _("Statistics")
+CLOSE = _("Close")
+
+TAB_MSG_NO_SELECT = _("No tab is currently checked.")
+TAB_MSG_CONFIRM_SWITCH = _("Confirm switch of tab?")
+VIEW_MSG_CONFIRM_SWITCH = _("Confirm switch of view?")
+TAB_MSG_CONFIRM = _("The current tab contains not saved work that "
+                    "will be lost. Are you sure you want to change tab?")
+VIEW_MSG_CONFIRM = _("The current view contains not saved work that "
+                     "will be lost. Are you sure you want to change view?")
+
+TAB_ACT_SAVECURRENT_ERROR = _(
+    "Files of the current tab can not be saved due to "
+    "the following error: {:s}\nConfirm you still want to switch tab?")
+VIEW_ACT_SAVECURRENT_ERROR = _(
+    "Files of the current view can not be saved due to "
+    "the following error: {:s}\nConfirm you still want to switch view?")
+
+CLOSE_CONFIRM = _("The file contains not saved work that will be lost."
+                  "Are you sure you want to close?")
+
+# ---------------------------------------------------------------------------
+
+
+class TabParam(object):
+    """Data structure of the parameters of a tab.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
+
+    def __init__(self):
+        """Create the TabParam instance of the given index."""
+        self.view_name = "data-view-list"
+        self.hicolor = wx.Colour(random.randint(60, 230),
+                                 random.randint(60, 230),
+                                 random.randint(60, 230))
 
 # ---------------------------------------------------------------------------
 
@@ -60,9 +135,31 @@ class sppasAnalyzePanel(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    The panel is made of 3 areas:
+
+        - a list of tabs
+        - a toolbar to switch to the expected view
+        - a book matching the tabs
+
+    Each tab is matching a page of the book. It contains some of the checked
+    files of the data. The page displays such files depending on the selected
+    view of the toolbar.
 
     """
+
+    HIGHLIGHT_COLOUR = wx.Colour(96, 196, 196, 196)
+
+    VIEWS = {
+        "data-view-list": VIEW_LIST,
+        "data-view-timeline": VIEW_TIME,
+        "data-view-text": VIEW_TEXT,
+        "data-view-grid": VIEW_GRID,
+        "data-view-stats": VIEW_STAT
+    }
+
+    # ------------------------------------------------------------------------
 
     def __init__(self, parent):
         super(sppasAnalyzePanel, self).__init__(
@@ -70,6 +167,9 @@ class sppasAnalyzePanel(sppasPanel):
             name="page_analyze",
             style=wx.BORDER_NONE
         )
+
+        # Parameters related to each of the tabs/pages like the view, etc.
+        self._params = list()
 
         # The data all tabs are working on
         self.__data = FileData()
@@ -85,8 +185,8 @@ class sppasAnalyzePanel(sppasPanel):
         # Organize items and fix a size for each of them
         self.Layout()
 
-        # Add a first empty tab/page
-        self.FindWindow("tabsview").append_tab()
+        # Add a first empty tab and page
+        self.append()
 
     # ------------------------------------------------------------------------
     # Public methods to access the data
@@ -110,9 +210,175 @@ class sppasAnalyzePanel(sppasPanel):
         """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        logging.debug('New data to set in the analyze page. '
-                      'Id={:s}'.format(data.id))
+
         self.__data = data
+
+    # ------------------------------------------------------------------------
+    # Manage the content
+    # ------------------------------------------------------------------------
+
+    def open_files(self):
+        """Open the checked files in the current page.
+
+        Opened files are locked and parent is notified.
+
+        """
+        tabs = self.FindWindow("tabs")
+
+        # Get the index of the currently selected tab and the page
+        cur_index = tabs.get_selected_tab()
+        if cur_index == -1:
+            Information(TAB_MSG_NO_SELECT)
+            return
+        book = self.FindWindow("content")
+        page = book.GetCurrentPage()
+
+        # Add checked files to the page
+        checked = self.__data.get_filename_from_state(States().CHECKED)
+        i = 0
+        for fn in checked:
+            try:
+                page.append_file(fn.get_id())
+                self.__data.set_object_state(States().LOCKED, fn)
+                i += 1
+            except Exception as e:
+                wx.LogError(str(e))
+
+        # send data to the parent
+        if i > 0:
+            self.Layout()
+            self.Refresh()
+            wx.LogMessage("{:d} files opened in page {:s}."
+                          "".format(i, page.GetName()))
+            self.notify()
+        else:
+            wx.LogMessage("No file opened in page {:s}.".format(page.GetName()))
+
+    # ------------------------------------------------------------------------
+
+    def save_files(self):
+        """Save the files of the selected page (if modified).
+
+        Ask the page to save each of its files.
+
+        """
+        tabs = self.FindWindow("tabs")
+        cur_index = tabs.get_selected_tab()
+        if cur_index == -1:
+            Information(TAB_MSG_NO_SELECT)
+            return
+
+        book = self.FindWindow("content")
+        page = book.GetPage(cur_index)
+        if page.is_modified() is False:
+            wx.LogMessage("None of the files was modified. Nothing to do.")
+            return
+
+        for filename in page.get_files():
+            page.save_file(filename)
+
+    # ------------------------------------------------------------------------
+
+    def append(self):
+        """Append a tab/page/param to manage some of the data.
+
+        """
+        # Append a new set of default parameters
+        self._params.append(TabParam())
+
+        # Append a tab to the TabsManager
+        tabs = self.FindWindow("tabs")
+        i = tabs.append_tab()
+        tabs.set_tab_color(i, self._params[i].hicolor)
+
+        # Append a page to the book
+        book = self.FindWindow("content")
+        new_page = self._create_view(self._params[i].view_name)
+        new_page.SetHighLightColor(self._params[i].hicolor)
+        new_page.SetName("anz_page_panel_{:d}".format(i))
+        book.AddPage(new_page, text="")
+
+        # If it is the first page, we switch on it.
+        if i == 0:
+            self.switch_to(0)
+
+    # ------------------------------------------------------------------------
+
+    def remove(self):
+        """Remove a tab/page which managed some of the data.
+
+        """
+        # Check if a tab is selected
+        tabs = self.FindWindow("tabs")
+        cur_index = tabs.get_selected_tab()
+        if cur_index == -1:
+            Information("No tab is currently checked to be closed.")
+            return
+
+        # Remove the page of the book (if authorized...)
+        r = self._remove_page(cur_index)
+        if r is True:
+            # Remove the tab of the TabsManager
+            tabs.remove_tab(cur_index)
+
+            # And remove the corresponding parameters
+            self._params.pop(cur_index)
+            self._default_toolbar()
+
+            # The book switched automatically to another page!
+            book = self.FindWindow("content")
+            page_index = book.FindPage(book.GetCurrentPage())
+            if page_index != wx.NOT_FOUND:
+                self.switch_to(page_index)
+
+    # -----------------------------------------------------------------------
+
+    def switch_to(self, page_index):
+        """Show another page/tab.
+
+        :param page_index: (int) Index of the tab/page to display.
+
+        """
+        book = self.FindWindow("content")
+        tabs = self.FindWindow("tabs")
+        toolbar = self.FindWindow("analyze-toolbar")
+
+        # check if a page is existing at the given index
+        p = book.GetPage(page_index)
+        if p == wx.NOT_FOUND:
+            logging.error("No page existing at index {:d}".format(page_index))
+            return
+
+        # the index of the currently selected page
+        #  -- cur_index should match with c but the book is automatically
+        #     changing its selected page when removing...
+        # cur_index = book.FindPage(book.GetCurrentPage())
+        c = tabs.get_selected_tab()
+
+        # assign the effect
+        if c != -1:
+            if c == page_index:
+                # nothing to do... we're already on the right page!
+                return
+
+            if c < page_index:
+                book.SetEffects(showEffect=wx.SHOW_EFFECT_SLIDE_TO_TOP,
+                                hideEffect=wx.SHOW_EFFECT_SLIDE_TO_TOP)
+            else:
+                book.SetEffects(showEffect=wx.SHOW_EFFECT_SLIDE_TO_BOTTOM,
+                                hideEffect=wx.SHOW_EFFECT_SLIDE_TO_BOTTOM)
+            # disable the current button of the view
+            self._update_toolbar(False, c)
+
+        # then change the current page/tab
+        book.ChangeSelection(page_index)
+        tabs = self.FindWindow("tabs")
+        tabs.switch_to_tab(page_index)
+
+        # enable the button of the view
+        self._update_toolbar(True, page_index)
+
+        self.Refresh()
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -121,15 +387,51 @@ class sppasAnalyzePanel(sppasPanel):
     def _create_content(self):
         """Create the main content."""
         # Create all the panels
-        tm = TabsManager(self, name="tabsview")
-        book = sppasSimplebook(self, name="content")
+        tm = TabsManager(self, name="tabs")
+        p = sppasPanel(self)
+        tb = self.__create_toolbar(p)
+        bk = sppasSimplebook(p, name="content")
 
-        # Organize all the panels vertically, separated by 2px grey lines.
+        # Organize all the panels, separated by 2px grey lines.
+        s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(tb, 0, wx.EXPAND, 0)
+        s.Add(bk, 1, wx.EXPAND, 0)
+        p.SetSizer(s)
+
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(tm, 0, wx.EXPAND, 0)
+        sizer.Add(tm, 1, wx.EXPAND, 0)
         sizer.Add(self.__create_vline(), 0, wx.EXPAND, 0)
-        sizer.Add(book, 2, wx.EXPAND, 0)
+        sizer.Add(p, 8, wx.EXPAND, 0)
+
         self.SetSizer(sizer)
+
+    # ------------------------------------------------------------------------
+
+    def __create_toolbar(self, parent):
+        """Create the toolbar."""
+        tb = sppasToolbar(parent, name="analyze-toolbar")
+        tb.set_focus_color(sppasAnalyzePanel.HIGHLIGHT_COLOUR)
+
+        tb.AddTitleText(VIEW_TITLE,
+                        color=sppasAnalyzePanel.HIGHLIGHT_COLOUR,
+                        name="view-title-text")
+
+        # Add toggle buttons to switch the view
+        for view_name in sppasAnalyzePanel.VIEWS:
+            btn = tb.AddToggleButton(
+                view_name,
+                sppasAnalyzePanel.VIEWS[view_name],
+                value=False,
+                group_name="views")
+            # btn.Enable(False)
+
+        tb.AddSpacer(1)
+
+        # Add button to save files of the current tab
+        save_btn = tb.AddButton("save")
+        save_btn.Enable(False)
+
+        return tb
 
     # ------------------------------------------------------------------------
 
@@ -160,7 +462,7 @@ class sppasAnalyzePanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def notify(self):
-        """The parent has to be informed of a change of content."""
+        """The parent is informed of changes of the workspace."""
         evt = DataChangedEvent(data=self.__data)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
@@ -168,36 +470,26 @@ class sppasAnalyzePanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _setup_events(self):
-        """Associate a handler function with the events.
+        """Associate an handler function with the events.
 
         It means that when an event occurs then the process handler function
         will be called.
 
         """
-        # Capture keys
-        self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
-
         # The data have changed.
         # This event is sent by the tabs manager or by the parent
         self.Bind(EVT_DATA_CHANGED, self._process_data_changed)
 
-        # Tabs have changed. The book must do the same.
+        # The active tab has changed. The book must do the same.
+        # This event is sent by the tabs manager
         self.Bind(EVT_TAB_CHANGE, self._process_tab_change)
 
-    # -----------------------------------------------------------------------
+        # The user clicked a button of the toolbar
+        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_event)
+        self.Bind(wx.EVT_BUTTON, self._process_event)
 
-    def _process_key_event(self, event):
-        """Process a key event.
-
-        :param event: (wx.Event)
-
-        """
-        key_code = event.GetKeyCode()
-        cmd_down = event.CmdDown()
-        shift_down = event.ShiftDown()
-        logging.debug('Analyze page received a key event. key_code={:d}'.format(key_code))
-
-        event.Skip()
+        # The view performed an action.
+        self.FindWindow("content").Bind(EVT_VIEW, self._process_view_event)
 
     # -----------------------------------------------------------------------
 
@@ -223,141 +515,276 @@ class sppasAnalyzePanel(sppasPanel):
     def _process_tab_change(self, event):
         """Process a change of page.
 
+        A tab is matching a page of the book. When the tab changed, the page
+        displaying the files has to be changed too.
+
         :param event: (wx.Event)
 
         """
         emitted = event.GetEventObject()
         try:
             action = event.action
-            cur_page_name = event.cur_tab
-            dest_page_name = event.dest_tab
+            dest_index = event.dest_tab
         except:
-            logging.error('Malformed event emitted by {:s}'
-                          '.'.format(emitted.GetName()))
+            wx.LogError('Malformed event emitted by {:s}'
+                        '.'.format(emitted.GetName()))
             return
 
-        book = self.FindWindow("content")
-
-        if action == "append":
-            color = event.color
-            self.append(cur_page_name, color)
-
-        if action == "remove":
-            w = book.FindWindow(cur_page_name)
-            if w is None:
-                return
-            self.remove(w)
-
         if action == "open":
-            w = book.FindWindow(cur_page_name)
-            if w is None:
-                return
-            self.open_files(w)
+            self.open_files()
 
-        # Show a page of the book
-        if dest_page_name is not None:
-            if dest_page_name != cur_page_name:
-                self.show_page(dest_page_name)
+        elif action == "append":
+            self.append()
+
+        elif action == "remove":
+            self.remove()
+
+        elif action == "show":
+            self.switch_to(dest_index)
+
+    # ------------------------------------------------------------------------
+
+    def _process_event(self, event):
+        """Process any kind of event.
+
+        :param event: (wx.Event)
+
+        """
+        event_name = event.GetButtonObj().GetName()
+
+        if event_name.startswith("data-view-"):
+            self._switch_page_to_view(event_name)
+
+        elif event_name == "save":
+            self.save_files()
+
+        event.Skip()
+
+    # -----------------------------------------------------------------------
+
+    def _process_view_event(self, event):
+        """Process a view event: an action has to be performed.
+
+        :param event: (wx.Event)
+
+        """
+        page = event.GetEventObject()
+
+        try:
+            action = event.action
+            filename = event.filename
+        except Exception as e:
+            wx.LogError(str(e))
+            return
+
+        if action == "save":
+            page.save_file(filename)
+
+        elif action == "close":
+            wx.LogDebug("Close...")
+            if page.is_modified() is False:
+                removed = page.remove_file(filename)
+            else:
+                wx.LogWarning("File contains not saved changes.")
+                # Ask the user to confirm to close (and changes are lost)
+                response = Confirm(CLOSE_CONFIRM, CLOSE)
+                if response == wx.ID_CANCEL:
+                    return False
+                removed = page.remove_file(filename, force=True)
+
+            if removed is True:
+                page.Layout()
+                page.Refresh()
+
+                # Unlock file
+                fns = [self.__data.get_object(filename)]
+                try:
+                    self.__data.unlock(fns)
+                    self.notify()
+                except Exception as e:
+                    wx.LogError(str(e))
+                    return False
 
     # -----------------------------------------------------------------------
     # Management of the book
     # -----------------------------------------------------------------------
 
-    def open_files(self, page):
-        """Open the checked files in the given page.
+    def _create_view(self, view_name, files=()):
+        """Create a panel displaying the given files with a view.
 
-        :param page: (ViewFilesPanel)
-
-        """
-        checked = self.__data.get_filename_from_state(States().CHECKED)
-        i = 0
-        for fn in checked:
-            try:
-                page.append(fn.get_id())
-                self.__data.set_object_state(States().LOCKED, fn)
-                i += 1
-            except Exception as e:
-                logging.error(str(e))
-        # send data to the parent
-        if i > 0:
-            self.notify()
-
-    # -----------------------------------------------------------------------
-
-    def append(self, page_name, color=None):
-        """Append a page to the content panel.
-
-        :param page_name: (str)
-        :param color: (wx.Colour)
+        :param view_name: (str)
+        :param files: (list) List of filenames
+        :return: (BaseViewFilesPanel)
 
         """
         book = self.FindWindow("content")
 
-        new_page = ViewFilesPanel(book, name=page_name, files=())
-        if color is not None:
-            new_page.SetHighLightColor(color)
+        if view_name == "data-view-text":
+            new_page = TextViewFilesPanel(book, name="new_page", files=files)
 
-        book.AddPage(new_page, text="")
+        elif view_name == "data-view-list":
+            new_page = ListViewFilesPanel(book, name="new_page", files=files)
+
+        else:
+            wx.LogWarning("{:s} view is not currently supported."
+                          "".format(view_name))
+            new_page = DefaultViewFilesPanel(book, name="new_page", files=files)
+
+        return new_page
 
     # -----------------------------------------------------------------------
 
-    def remove(self, page):
+    def _remove_page(self, page_index):
         """Remove a page of the content panel.
 
-        :param page: (ViewFilesPanel)
+        Attention: does not remove the tab corresponding to this page.
+
+        :param page_index: (int)
 
         """
+        book = self.FindWindow("content")
+        page = book.GetPage(page_index)
+        if page == wx.NOT_FOUND:
+            return False
+
+        # Ask the page if at least one file has been modified
+        if page.is_modified() is True:
+            # Ask the user to confirm to close (and changes are lost)
+            response = Confirm(TAB_MSG_CONFIRM, TAB_MSG_CONFIRM_SWITCH)
+            if response == wx.ID_CANCEL:
+                return False
+
         # Unlock files
         fns = [self.__data.get_object(fname) for fname in page.get_files()]
         try:
             i = self.__data.unlock(fns)
         except Exception as e:
-            logging.error(str(e))
-            return
+            wx.LogError(str(e))
+            return False
 
         # Delete the page then the associated window
-        book = self.FindWindow("content")
-        p = book.FindPage(page)
-        if p != wx.NOT_FOUND:
-            book.RemovePage(p)
+        page_name = page.GetName()
+        book.RemovePage(page_index)
         page.Destroy()
 
         if i > 0:
+            wx.LogMessage("{:d} files closed by page {:s}."
+                          "".format(i, page_name))
+            self.Refresh()
             self.notify()
+        else:
+            wx.LogMessage("No file closed by page {:s}.".format(page_name))
+
+        return True
 
     # -----------------------------------------------------------------------
 
-    def show_page(self, page_name):
-        """Show a page of the content panel.
+    def _switch_page_to_view(self, view_name):
+        """Switch the current page to the view with the given name.
 
-        :param page_name: (str)
+        :param view_name: (str) Name of the view to switch to.
 
         """
+        tabs = self.FindWindow("tabs")
+        page_index = tabs.get_selected_tab()
+        if view_name == self._params[page_index].view_name:
+            return False
+
         book = self.FindWindow("content")
-
-        # the current page number
-        c = book.FindPage(book.GetCurrentPage())
-
-        # the page number to switch on
-        page = book.FindWindow(page_name)
+        page = book.GetCurrentPage()
         if page is None:
-            logging.error("No page with name {:s} found in the book."
-                          "".format(page_name))
-            return
-        p = book.FindPage(page)
-        if p == wx.NOT_FOUND:
-            return
+            wx.LogMessage("Attempted to switch to view {:s} without "
+                          "opened page...".format(view_name))
+            return False
 
-        # assign the effect
-        if c == p:
-            return
-        elif c < p:
-            book.SetEffects(showEffect=wx.SHOW_EFFECT_SLIDE_TO_TOP,
-                            hideEffect=wx.SHOW_EFFECT_SLIDE_TO_TOP)
-        else:
-            book.SetEffects(showEffect=wx.SHOW_EFFECT_SLIDE_TO_BOTTOM,
-                            hideEffect=wx.SHOW_EFFECT_SLIDE_TO_BOTTOM)
+        # Ask the page if at least one file has been modified
+        if page.is_modified() is True:
+            # Ask the user to confirm to close (and changes are lost)
+            response = Confirm(VIEW_MSG_CONFIRM, VIEW_MSG_CONFIRM_SWITCH)
+            if response == wx.ID_CANCEL:
+                return False
 
-        # then change the current tab
-        book.ChangeSelection(p)
+        # delete the current page
+        page_index = book.FindPage(page)
+        self._update_toolbar(False, page_index)
+        page_name = page.GetName()
+        page_color = page.GetHighLightColor()
+        page_files = page.get_files()
+        book.RemovePage(page_index)
+        page.Destroy()
+
+        # Set the name of the new view
+        self._params[page_index].view_name = view_name
+
+        # Create and insert the page with the appropriate new view
+        new_page = self._create_view(view_name, page_files)
+        new_page.SetName(page_name)
+        new_page.SetHighLightColor(page_color)
+        book.InsertPage(page_index, new_page, text="")
+        book.ChangeSelection(page_index)
+        self._update_toolbar(True, page_index)
+
+        new_page.Refresh()
+        book.Refresh()
         self.Refresh()
+        return True
+
+    # -----------------------------------------------------------------------
+
+    def _update_toolbar(self, value, index):
+        """Enable or disable the buttons of the toolbar.
+
+        :param value: (bool) True for the selected page
+        :param index: (int) Page/tab index
+
+        """
+        toolbar = self.FindWindow("analyze-toolbar")
+        toolbar.set_focus_color(self._params[index].hicolor)
+        btn_view_name = self._params[index].view_name
+
+        btn = toolbar.FindWindow(btn_view_name)
+        btn.SetValue(value)
+
+        txt_view = toolbar.FindWindow("view-title-text")
+        if value is True:
+            btn.BitmapColour = self._params[index].hicolor
+            btn.BorderColour = self._params[index].hicolor
+            txt_view.SetForegroundColour(self._params[index].hicolor)
+        else:
+            btn.BitmapColour = btn.GetForegroundColour()
+            btn.BorderColour = btn.GetPenForegroundColour()
+            txt_view.SetForegroundColour(sppasAnalyzePanel.HIGHLIGHT_COLOUR)
+
+        book = self.FindWindow("content")
+        btn_save = toolbar.FindWindow("save")
+        try:
+            page = book.GetPage(index)
+            btn_save.Enable(page.can_edit())
+        except Exception as e:
+            btn_save.Enable(False)
+            wx.LogError(str(e))
+
+        toolbar.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def _default_toolbar(self):
+        """Disable the buttons of the toolbar.
+
+        Useful if no page/tab is selected.
+
+        """
+        toolbar = self.FindWindow("analyze-toolbar")
+        toolbar.set_focus_color(sppasAnalyzePanel.HIGHLIGHT_COLOUR)
+
+        btn_save = toolbar.FindWindow("save")
+        btn_save.Enable(False)
+
+        for view_name in sppasAnalyzePanel.VIEWS:
+            btn = toolbar.FindWindow(view_name)
+            btn.SetValue(False)
+            btn.BitmapColour = btn.GetForegroundColour()
+            btn.BorderColour = btn.GetPenForegroundColour()
+
+        txt_view = toolbar.FindWindow("view-title-text")
+        txt_view.SetForegroundColour(sppasAnalyzePanel.HIGHLIGHT_COLOUR)

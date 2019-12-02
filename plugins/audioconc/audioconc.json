@@ -1,0 +1,71 @@
+{
+  "id": "audioconc",
+  "name": "Word Concatener",
+  "descr": "Word Concatener is a tool to concatenate the chunks of an audio file corresponding to a searched word/sequence.",
+  "icon": "audioseg.png",
+  "version": "1.1",
+
+  "commands": {
+    "windows": "python.exe PLUGIN_PATH/audioconc.py",
+    "macos": "python audioconc.py",
+    "linux": "python audioconc.py"
+  },
+  
+  "options": [
+
+    {
+      "id": "-i",
+      "type": "file",
+      "value": "input"
+    },
+
+    {
+      "id": "-p",
+      "type": "string",
+      "value": "-palign",
+	  "text": "Pattern of the annotated input file:"
+    },
+
+    {
+      "id": "-t",
+      "type": "string",
+      "value": "TokensAlign",
+	  "text": "Name of the tier indicating the tracks:"
+    },
+
+	{
+	  "id": "-w",
+	  "type": "string",
+	  "value": "want",
+	  "text":  "Word to retrieve:"
+	},
+
+	{
+	  "id": "-m",
+	  "type": "string",
+	  "value": "contains",
+	  "text": "Type of search:"
+    },
+	  
+	{
+	  "id": "-o",
+      "type": "int",
+	  "value": 500,
+	  "text": "offset:"
+	},
+	
+	{
+	  "id": "-b",
+	  "type": "int",
+	  "value": 500,
+	  "text": "blank:"
+	},
+	
+	{
+	  "id": "-e",
+	  "type": "string",
+	  "value": ".eaf",
+	  "text": "File extension for the tracks (beginning with a dot):"
+	}
+  ]
+}

@@ -53,17 +53,19 @@ class FilterProcess(object):
         """
         self.parent = parent.GetParent()
 
-        # List of selected data
-        self.data = parent.GetSelectedData()
-
-        # Output tier name
-        self.tier_name = parent.GetFiltererdTierName()
-
-        # Output format
-        self.annot_format = parent.GetAnnotationFormat()
-
         # List of files/tiers to filter
         self.file_manager = file_manager
+
+        # for "rel" and "sel" filters only
+        try:
+            # List of selected data
+            self.data = parent.GetSelectedData()
+            # Output tier name
+            self.tier_name = parent.GetFiltererdTierName()
+            # Output format
+            self.annot_format = parent.GetAnnotationFormat()
+        except:
+            self.data = None
 
         # for "rel" filter only
         try:
@@ -121,10 +123,13 @@ class FilterProcess(object):
                     progress.set_text(tier.get_name())
 
                     # so, we do the job!
-                    new_tier = self.run_on_tier(tier, y_tier)
-                    if new_tier is not None:
-                        # add the new tier both in Transcription and in the list
-                        obj.AddTier(new_tier)
+                    try:
+                        new_tier = self.run_on_tier(tier, y_tier)
+                        if new_tier is not None:
+                            # add the new tier both in Transcription and in the list
+                            obj.AddTier(new_tier)
+                    except Exception as e:
+                        logging.error(str(e))
 
                     progress.set_fraction(float((i+1))/float(total))
 
@@ -134,6 +139,25 @@ class FilterProcess(object):
         progress.close()
         wx.EndBusyCursor()
 
+# ----------------------------------------------------------------------------
+
+
+class UnlabelledFilterProcess(FilterProcess):
+
+    def run_on_tier(self, tier, tier_y=None):
+        """Apply filters on a tier.
+
+        :param tier: (sppasTier) tier to be filtered
+        :param tier_y: (sppasTier) ignored
+        :returns: (sppasTier)
+
+        """
+        logging.info("Apply UnlabelledFilter() on tier: {:s}".format(tier.get_name()))
+        filtered_tier = tier.copy()
+        nb = filtered_tier.remove_unlabelled()
+        logging.info("  -> {:d} annotation(s) removed".format(nb))
+        filtered_tier.set_name(tier.get_name() + "-gaps")
+        return filtered_tier
 
 # ----------------------------------------------------------------------------
 

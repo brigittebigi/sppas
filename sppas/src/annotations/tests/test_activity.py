@@ -4,7 +4,7 @@ import unittest
 
 from sppas.src.config import symbols
 from sppas.src.anndata import sppasTranscription
-from sppas.src.annotations.Activity.activity import sppasActivity
+from ..Activity.activity import Activity
 
 # ---------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ class TestActivity(unittest.TestCase):
     def test_create(self):
 
         # create an instance with the default symbols
-        a = sppasActivity()
+        a = Activity()
         for s in symbols.all:
             self.assertTrue(s in a)
         self.assertTrue(symbols.unk in a)
@@ -32,7 +32,7 @@ class TestActivity(unittest.TestCase):
         self.assertEqual(len(a), len(symbols.all) + 1)
 
     def test_get_tier(self):
-        a = sppasActivity()
+        a = Activity()
         trs = sppasTranscription()
 
         # No tokensTier

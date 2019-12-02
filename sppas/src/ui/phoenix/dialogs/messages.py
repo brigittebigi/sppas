@@ -250,10 +250,9 @@ class sppasInformationDialog(sppasBaseMessageDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-    wx.ID_OK is returned if the button is clicked.
-    wx.ID_CANCEL is returned if the dialog is destroyed.
+    wx.ID_OK is returned when the button is clicked.
 
     >>> dialog = sppasInformationDialog("you are here")
     >>> dialog.ShowModal()
@@ -266,6 +265,38 @@ class sppasInformationDialog(sppasBaseMessageDialog):
             parent=None,
             message=message,
             style=wx.ICON_INFORMATION)
+
+    # -----------------------------------------------------------------------
+
+    def _create_buttons(self):
+        self.CreateActions([wx.ID_OK])
+        self.SetAffirmativeId(wx.ID_OK)
+
+# ---------------------------------------------------------------------------
+
+
+class sppasWarnDialog(sppasBaseMessageDialog):
+    """Create a message in a wx.Dialog with a warn message.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    wx.ID_OK is returned when the button is clicked.
+
+    >>> dialog = sppasWarnDialog("there's something wrong...")
+    >>> dialog.ShowModal()
+    >>> dialog.Destroy()
+
+    """
+
+    def __init__(self, message):
+        super(sppasWarnDialog, self).__init__(
+            parent=None,
+            message=message,
+            style=wx.ICON_WARNING)
 
     # -----------------------------------------------------------------------
 
@@ -444,7 +475,7 @@ def Confirm(message, title=None):
 
 
 def Error(message, title=None):
-    """Display a error.
+    """Display a error message.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -467,23 +498,40 @@ def Error(message, title=None):
 
 
 def Information(message):
-    """Display an information.
+    """Display an information message.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-    :param message: (str) The question to ask
-    :returns: the response
-
-    wx.ID_OK is returned if a button is clicked.
-    wx.ID_CANCEL is returned if the dialog is destroyed.
+    :param message: (str) The information to display
+    :returns: wx.ID_OK
 
     """
     logging.info(message)
     dialog = sppasInformationDialog(message)
+    response = dialog.ShowModal()
+    dialog.Destroy()
+    return response
+
+
+def Warn(message):
+    """Display a warn message.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    :param message: (str) The message to display
+    :returns: wx.ID_OK
+
+    """
+    logging.info(message)
+    dialog = sppasWarnDialog(message)
     response = dialog.ShowModal()
     dialog.Destroy()
     return response

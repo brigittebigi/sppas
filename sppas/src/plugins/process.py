@@ -34,6 +34,7 @@
 
 """
 
+import logging
 import os
 import shlex
 from subprocess import Popen, PIPE, STDOUT
@@ -79,7 +80,7 @@ class sppasPluginProcess(object):
             opt_id = opt.get_key()
 
             if opt_id == "input":
-                command += " \"" + filename + "\" "
+                command += " \'" + filename + "\' "
 
             elif opt_id == "options":
                 value = opt.get_untypedvalue()
@@ -90,7 +91,7 @@ class sppasPluginProcess(object):
                 value = opt.get_untypedvalue()
                 if len(value) > 0:
                     fname = os.path.splitext(filename)[0]
-                    command += " \"" + fname + value + "\" "
+                    command += " \'" + fname + value + "\' "
 
             elif opt.get_type() == "bool":
                 value = opt.get_value()
@@ -102,12 +103,13 @@ class sppasPluginProcess(object):
                 if len(value) > 0:
                     command += " " + opt.get_key()
                     if value == "input":
-                        command += " \"" + filename + "\" "
+                        command += " \'" + filename + "\' "
                     elif "file" in opt.get_type():
-                        command += " \"" + value + "\" "
+                        command += " \'" + value + "\' "
                     else:
                         command += " " + value
 
+        logging.debug("Execute the command: {:s}".format(command))
         args = shlex.split(command)
         for i, argument in enumerate(args):
             if "PLUGIN_PATH/" in argument:

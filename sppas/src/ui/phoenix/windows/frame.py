@@ -154,7 +154,6 @@ class sppasFrame(wx.Frame):
         line.SetSize(wx.Size(depth, -1))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(depth)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line
 
     # ------------------------------------------------------------------------
@@ -166,7 +165,6 @@ class sppasFrame(wx.Frame):
         line.SetSize(wx.Size(-1, depth))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(depth)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line
 
     # ---------------------------------------------------------------------------
@@ -330,7 +328,6 @@ class sppasTopFrame(wx.TopLevelWindow):
         line.SetSize(wx.Size(depth, -1))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(depth)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line
 
     # ------------------------------------------------------------------------
@@ -342,7 +339,6 @@ class sppasTopFrame(wx.TopLevelWindow):
         line.SetSize(wx.Size(-1, depth))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(depth)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line
 
     # ---------------------------------------------------------------------------

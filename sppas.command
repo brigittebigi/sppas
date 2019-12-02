@@ -62,6 +62,7 @@ do
     v=$($cmd -c "import sys; print(sys.version_info[0])");
     if [[ "$v" == "2" ]]; then
         PYTHON=$cmd;
+        break;
     fi;
 done
 
@@ -74,6 +75,7 @@ if [ -z "$PYTHON" ]; then
         v=$($cmd -c "import sys; print(sys.version_info[0])");
         if [[ "$v" == "3" ]]; then
             PYTHON=$cmd;
+            break;
         fi;
     done
 else
@@ -89,6 +91,7 @@ if [ -z "$PYTHON" ]; then
         v=$($cmd -c "import sys; print(sys.version_info[0])");
         if [[ "$v" == "2" ]]; then
             PYTHON=$cmd;
+            break;
         fi;
     done
 else
@@ -104,6 +107,7 @@ if [ -z "$PYTHON" ]; then
         v=$($cmd -c "import sys; print(sys.version_info[0])");
         if [[ "$v" == "3" ]]; then
             PYTHON=$cmd;
+            break;
         fi;
     done
 else

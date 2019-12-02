@@ -1,0 +1,36 @@
+{
+  "id": "rms",
+  "name": "RMS",
+  "descr": "Estimate the Root-Mean Square values in intervals.",
+  "required": "",
+  "api": "sppasRMS",
+
+  "resources": [
+  ],
+
+  "anntype": [
+    "STANDALONE"
+  ],
+
+  "options": [
+    {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-palign",
+      "text": "Input file pattern"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-rms",
+      "text": "Output file pattern"
+    },
+    {
+      "id": "tiername",
+      "type": "str",
+      "value": "PhonAlign",
+      "text": "Tier to fix intervals in which RMS is estimated "
+    }
+  ]
+}
+

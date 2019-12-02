@@ -66,6 +66,7 @@ from .TGA import sppasTGA
 from .Align import sppasAlign
 from .SelfRepet import sppasSelfRepet
 from .Activity import sppasActivity
+from .RMS import sppasRMS
 from .OtherRepet import sppasOtherRepet
 from .ReOccurrences import sppasReOcc
 
@@ -87,6 +88,7 @@ __all__ = (
     'sppasTGA',
     'sppasSelfRepet',
     'sppasActivity',
+    'sppasRMS',
     'sppasOtherRepet',
     'sppasFindTier',
     'sppasParam',

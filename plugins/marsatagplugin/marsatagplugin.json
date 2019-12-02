@@ -20,7 +20,7 @@
     },
 
     {
-      "id": "-t",
+      "id": "-m",
       "type": "filepath",
       "value": "",
       "text": "Directory of MarsaTag:"

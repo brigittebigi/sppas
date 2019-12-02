@@ -46,6 +46,7 @@ from .button import sppasBitmapButton
 from .buttonbox import sppasRadioBoxPanel
 
 from .text import sppasStaticText
+from .text import sppasSimpleText
 from .text import sppasMessageText
 from .text import sppasTitleText
 from .text import sppasTextCtrl
@@ -55,6 +56,7 @@ from .image import sppasStaticBitmap
 
 from .panel import sppasPanel
 from .panel import sppasScrolledPanel
+from .panel import sppasCollapsiblePanel
 
 from .progress import sppasProgressDialog
 from .dialog import sppasDialog
@@ -75,12 +77,14 @@ __all__ = (
     "sppasStaticText",
     "sppasTitleText",
     "sppasMessageText",
+    "sppasSimpleText",
     "sppasTextCtrl",
     "NotEmptyTextValidator",
     "sppasStaticBitmap",
     "sppasProgressDialog",
     "sppasPanel",
     "sppasScrolledPanel",
+    "sppasCollapsiblePanel",
     "sppasDialog",
     "sppasTopFrame",
     "sppasFrame",

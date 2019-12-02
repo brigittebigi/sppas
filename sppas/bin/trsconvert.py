@@ -37,7 +37,7 @@
 :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
 :contact:      develop@sppas.org
 :license:      GPL, v3
-:copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+:copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 :summary:      a program to export annotation files based on anndata API.
 
 """
@@ -161,11 +161,11 @@ if __name__ == "__main__":
 
     # General information
     # -------------------
-    logging.debug(
+    logging.info(
         "Elapsed time for reading: {:f} seconds"
         "".format(end_time - start_time))
     pickle_string = pickle.dumps(trs_input)
-    logging.debug(
+    logging.info(
         "Memory usage of the transcription: {:d} bytes"
         "".format(sys.getsizeof(pickle_string)))
 
@@ -210,7 +210,7 @@ if __name__ == "__main__":
 
     # Set the other members
     for key in trs_input.get_meta_keys():
-        trs_output.set_meta(key, trs_input.get_meta(key))
+        trs_output.set_meta(key, trs_input.get_metadata().get_meta(key))
 
     # Copy relevant hierarchy links
     for child_tier in trs_input:

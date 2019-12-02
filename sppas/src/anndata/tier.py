@@ -366,7 +366,7 @@ class sppasTier(sppasMetaData):
             raise IntervalBoundsError(begin, end)
 
         annotations = self.find(begin, end, overlaps)
-        for a in annotations:
+        for a in reversed(annotations):
             self.__ann.remove(a)
 
         return len(annotations)
@@ -386,6 +386,21 @@ class sppasTier(sppasMetaData):
             self.__ann.pop(index)
         except IndexError:
             raise AnnDataIndexError(index)
+
+    # -----------------------------------------------------------------------
+
+    def remove_unlabelled(self):
+        """Remove annotations without labels.
+
+        :returns: the number of removed annotations
+
+        """
+        nb = 0
+        for a in reversed(self.__ann):
+            if a.is_labelled() is False:
+                self.__ann.remove(a)
+                nb += 1
+        return nb
 
     # -----------------------------------------------------------------------
     # Localizations
@@ -993,6 +1008,7 @@ class sppasTier(sppasMetaData):
     def export_to_intervals(self, separators):
         """Create a tier with the consecutive filled intervals.
 
+        Return an empty tier if 'self' is not of type "interval".
         The created intervals are not filled.
 
         :param separators: (list)
@@ -1000,6 +1016,9 @@ class sppasTier(sppasMetaData):
 
         """
         intervals = sppasTier("intervals")
+        if self.is_interval() is False:
+            return intervals
+
         begin = self.get_first_point()
         end = begin
         prev_ann = None
@@ -1037,6 +1056,64 @@ class sppasTier(sppasMetaData):
             intervals.create_annotation(sppasLocation(sppasInterval(begin, end)))
 
         return intervals
+
+    # -----------------------------------------------------------------------
+
+    def export_unfilled(self):
+        """Create a tier with the unlabelled/unfilled intervals.
+
+        Only for tiers of type Interval.
+        It represents the "NOT tier", ie where this tier is not annotated.
+
+        IMPORTANT: Never tested with overlapped annotations,
+        actually not tested at all (but used in the plugin StatGroups).
+
+        :return: (sppasTier) or None
+
+        """
+        if self.is_empty() is True:
+            return None
+        if self.is_interval() is False:
+            return None
+
+        intervals = self.export_to_intervals([])
+        not_intervals = sppasTier("NotIntervals")
+        if intervals.is_empty():
+            not_intervals.create_annotation(
+                sppasLocation(sppasInterval(self.get_first_point(),
+                                            self.get_last_point()))
+            )
+            return not_intervals
+
+        # first "unfilled" interval
+        begin = self.__ann[0].get_lowest_localization()
+        prev_ann = intervals[0]
+        prev_begin = prev_ann.get_lowest_localization()
+        if prev_begin > begin:
+            not_intervals.create_annotation(
+                sppasLocation(sppasInterval(begin, prev_begin))
+            )
+
+        # holes
+        for i in range(1, len(intervals)):
+            prev_end = prev_ann.get_highest_localization()
+            ann = intervals[i]
+            begin = ann.get_lowest_localization()
+            if begin > prev_end:
+                not_intervals.create_annotation(
+                    sppasLocation(sppasInterval(prev_end, begin))
+                )
+            prev_ann = ann
+
+        # last "unfilled" interval
+        end = self.__ann[-1].get_highest_localization()
+        prev_end = intervals[-1].get_highest_localization()
+        if prev_end < end:
+            not_intervals.create_annotation(
+                sppasLocation(sppasInterval(prev_end, end))
+            )
+
+        return not_intervals
 
     # -----------------------------------------------------------------------
     # Private

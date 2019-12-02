@@ -59,6 +59,7 @@ from sppas.src.annotations.Activity import sppasActivity
 from sppas.src.annotations.SelfRepet import sppasSelfRepet
 from sppas.src.annotations.OtherRepet import sppasOtherRepet
 from sppas.src.annotations.ReOccurrences import sppasReOcc
+from sppas.src.annotations.RMS import sppasRMS
 
 from .infotier import sppasMetaInfoTier
 from .log import sppasLog
@@ -159,6 +160,9 @@ class sppasAnnotationsManager(Thread):
 
                 elif annotation_key == "alignment":
                     ann_stats[i] = self._run_alignment()
+
+                elif annotation_key == "rms":
+                    ann_stats[i] = self._run_rms()
 
                 else:
                     ann_stats[i] = self._run_annotation(annotation_key)
@@ -282,6 +286,45 @@ class sppasAnnotationsManager(Thread):
         for f in audio_files:
             in_name = os.path.splitext(f)[0] + ".txt"
             files.append((f, in_name))
+
+        out_files = a.batch_processing(
+            files,
+            self._progress,
+            self._parameters.get_output_format())
+
+        self._parameters.add_to_workspace(out_files)
+        return len(out_files)
+
+    # ------------------------------------------------------------------------
+
+    def _run_rms(self):
+        """Execute the RMS automatic annotation.
+
+        Required: an audio file and an annotated file with intervals
+
+        :returns: number of files processed successfully
+
+        """
+        a = self._create_ann_instance("rms")
+
+        # Required input file
+        annot_files = self.get_annot_files(
+            pattern=a.get_input_pattern(),
+            extensions=a.get_input_extensions())
+
+        # Get optional files
+        files = list()
+        for f in annot_files:
+            base_f = os.path.splitext(f)[0]
+            base_f = base_f.replace(a.get_input_pattern(), "")
+
+            # Get the audio input file
+            audio = sppasAnnotationsManager._get_filename(
+                base_f,
+                sppas.src.audiodata.aio.extensions)
+
+            # Append the 2 files
+            files.append(((audio, f), []))
 
         out_files = a.batch_processing(
             files,

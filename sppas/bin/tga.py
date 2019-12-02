@@ -114,7 +114,7 @@ if __name__ == "__main__":
         "-I",
         metavar="file",
         action='append',
-        help='Input time-aligned syllables file (append).')
+        help='Input file name (append).')
 
     group_io_2.add_argument(
         "-e",

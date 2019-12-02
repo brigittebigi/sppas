@@ -48,14 +48,16 @@ class WxAppSettings(sppasBaseSettings):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     """
 
     def __init__(self):
         """Create the dictionary of settings."""
         super(WxAppSettings, self).__init__()
-        self.size_coeff = float(self.__get_font_height()) / 10.
+        fh = self.__get_font_height()
+        wx.LogDebug("Font height of the system: {:d}".format(fh))
+        self.size_coeff = float(fh) / 10.
 
     # -----------------------------------------------------------------------
 
@@ -79,13 +81,13 @@ class WxAppSettings(sppasBaseSettings):
             default_icons_theme="Refine",
             icons_theme="Refine",
 
-            fg_color=wx.Colour(190, 190, 190),
-            header_fg_color=wx.Colour(160, 160, 160),
-            action_fg_color=wx.Colour(130, 130, 130),
+            fg_color=wx.Colour(18, 12, 12),
+            header_fg_color=wx.Colour(240, 240, 230),
+            action_fg_color=wx.Colour(230, 230, 225),
 
-            bg_color=wx.Colour(30, 30, 30, alpha=wx.ALPHA_OPAQUE),
-            header_bg_color=wx.Colour(40, 40, 40, alpha=wx.ALPHA_OPAQUE),
-            action_bg_color=wx.Colour(20, 20, 20, alpha=wx.ALPHA_OPAQUE),
+            bg_color=wx.Colour(240, 240, 235, alpha=wx.ALPHA_OPAQUE),
+            header_bg_color=wx.Colour(80, 80, 100, alpha=wx.ALPHA_OPAQUE),
+            action_bg_color=wx.Colour(70, 70, 90, alpha=wx.ALPHA_OPAQUE),
 
             text_font=self.__text_font(),
             header_text_font=self.__header_font(),
@@ -135,7 +137,7 @@ class WxAppSettings(sppasBaseSettings):
                             wx.FONTSTYLE_NORMAL,    # style,
                             wx.FONTWEIGHT_NORMAL,   # weight,
                             underline=False,
-                            faceName="Calibri",
+                            faceName="Lucida sans",
                             encoding=wx.FONTENCODING_SYSTEM)
         return text_font
 
@@ -149,7 +151,7 @@ class WxAppSettings(sppasBaseSettings):
                              wx.FONTSTYLE_NORMAL,    # style,
                              wx.FONTWEIGHT_BOLD,     # weight,
                              underline=False,
-                             faceName="Calibri",
+                             faceName="Lucida sans",
                              encoding=wx.FONTENCODING_SYSTEM)
         return title_font
 
@@ -163,7 +165,7 @@ class WxAppSettings(sppasBaseSettings):
                               wx.FONTSTYLE_NORMAL,    # style,
                               wx.FONTWEIGHT_NORMAL,   # weight,
                               underline=False,
-                              faceName="Calibri",
+                              faceName="Lucida sans",
                               encoding=wx.FONTENCODING_SYSTEM)
         return button_font
 
@@ -184,6 +186,9 @@ class WxAppSettings(sppasBaseSettings):
 
     def __frame_size(self):
         (w, h) = wx.GetDisplaySize()
-        w = float(w) * 0.6 * self.size_coeff
-        h = min(0.7*float(h), float(w)*9./16.)
-        return wx.Size(max(int(w), 320), max(int(h), 200))
+        w = float(w)
+        h = float(h)
+        ratio = h / w
+        w = min(0.9 * w, w * 0.6 * self.size_coeff)
+        h = min(0.9 * h, w * ratio)
+        return wx.Size(max(int(w), 520), max(int(h), 480))

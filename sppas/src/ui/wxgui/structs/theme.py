@@ -48,7 +48,7 @@ class sppasTheme(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2017  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
     :summary:      Base class for a theme.
 
     The minimum required information, with a "classic" look.
@@ -63,7 +63,7 @@ class sppasTheme(object):
     # Define the main font
     MAIN_FONTSIZE = 9
     if wx.Platform == '__WXMAC__':
-        MAIN_FONTSIZE = 12
+        MAIN_FONTSIZE = 10
     elif wx.Platform == '__WXGTK__':
         MAIN_FONTSIZE = 8
     MAIN_FONT = (MAIN_FONTSIZE,

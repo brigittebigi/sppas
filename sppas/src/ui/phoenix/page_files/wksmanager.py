@@ -110,7 +110,10 @@ class WorkspacesManager(sppasPanel):
 
     """
 
-    HIGHLIGHT_COLOUR = wx.Colour(128, 228, 128, 196)   # yellow-green
+    # yellow-green
+    HIGHLIGHT_COLOUR = wx.Colour(128, 228, 128, 196)
+
+    # -----------------------------------------------------------------------
 
     def __init__(self, parent, name=wx.PanelNameStr):
         super(WorkspacesManager, self).__init__(
@@ -127,6 +130,8 @@ class WorkspacesManager(sppasPanel):
         # Construct the panel
         self._create_content()
         self._setup_events()
+
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(96), -1))
         self.Layout()
 
     # -----------------------------------------------------------------------
@@ -137,7 +142,7 @@ class WorkspacesManager(sppasPanel):
         """Return the data of the current workspace."""
         return self.__data
 
-    # ------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def set_data(self, data):
         """Assign new data to this panel.
@@ -151,9 +156,9 @@ class WorkspacesManager(sppasPanel):
                       'Id={:s}'.format(data.id))
         self.__data = data
 
-    # ------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     # Private methods to construct the panel.
-    # ------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def _create_content(self):
         """Create the main content."""
@@ -165,7 +170,6 @@ class WorkspacesManager(sppasPanel):
         sizer.Add(self.__create_hline(), 0, wx.EXPAND, 0)
         sizer.Add(cv, 1, wx.EXPAND, 0)
 
-        self.SetMinSize(wx.Size(128, -1))
         self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
@@ -181,7 +185,7 @@ class WorkspacesManager(sppasPanel):
         tb.AddButton("workspace_rename", WKP_ACT_RENAME)
         return tb
 
-    # ------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def __create_hline(self):
         """Create an horizontal line, used to separate the panels."""
@@ -189,7 +193,6 @@ class WorkspacesManager(sppasPanel):
         line.SetMinSize(wx.Size(-1, 20))
         line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
         line.SetDepth(1)
-        line.SetForegroundColour(self.GetForegroundColour())
         return line
 
     # -----------------------------------------------------------------------
@@ -235,7 +238,7 @@ class WorkspacesManager(sppasPanel):
         logging.debug('Key event skipped by the workspace manager.')
         event.Skip()
 
-    # ------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def _process_wkp_changed(self, event):
         """Process a change of workspace event: the active workspace changed.
@@ -298,7 +301,7 @@ class WorkspacesManager(sppasPanel):
 
         self.Refresh()
 
-    # ------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def _process_action(self, event):
         """Process a button event: an action has to be performed.
@@ -322,9 +325,9 @@ class WorkspacesManager(sppasPanel):
 
         event.Skip()
 
-    # ------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     # Actions to perform on the workspaces
-    # ------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def import_wkp(self):
         """Import a file and append into the list of workspaces."""
@@ -345,7 +348,7 @@ class WorkspacesManager(sppasPanel):
 
         dlg.Destroy()
 
-    # ------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def export_wkp(self):
         """Export a workspace file to a folder.
@@ -376,7 +379,7 @@ class WorkspacesManager(sppasPanel):
             message = WKP_ACT_EXPORT_ERROR.format(pathname, str(e))
             Error(message, "Export error")
 
-    # ------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def pin_save(self):
         """Pin and/or save the currently displayed data into a workspace.
@@ -409,7 +412,7 @@ class WorkspacesManager(sppasPanel):
             message = WKP_ACT_SAVE_ERROR.format(wkp_name, str(e))
             Error(message, "Save error")
 
-    # ------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def rename_wkp(self):
         """Rename the currently displayed workspace.
@@ -432,9 +435,9 @@ class WorkspacesManager(sppasPanel):
             message = WKP_ACT_RENAME_ERROR.format(new_name, str(e))
             Error(message, "Rename error")
 
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Panel to display the existing workspaces
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 
 class WorkspacesPanel(sppasPanel):

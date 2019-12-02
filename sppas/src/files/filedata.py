@@ -83,6 +83,7 @@
 
 import json
 import os
+import logging
 
 from sppas import sppasTypeError
 from sppas.src.config import sg
@@ -122,22 +123,30 @@ class FileData(FileBase):
     # Methods to add data
     # -----------------------------------------------------------------------
 
-    def add(self, object):
+    def add(self, file_object):
         """Add a file object into the data.
 
-        :param object: (FileBase)
+        IMPLEMENTED ONLY FOR FilePath and FileReference.
+
+        :param file_object: (FileBase)
         :raise: sppasTypeError,
 
         """
-        if isinstance(object, (FileName, FileRoot, FilePath, FileReference)) is False:
-            raise sppasTypeError(object.id, "FileBase-subclass")
+        if isinstance(file_object, (FileName, FileRoot, FilePath, FileReference)) is False:
+            raise sppasTypeError(file_object.id, "FileBase-subclass")
 
-        test_obj = self.get_object(object.id)
+        test_obj = self.get_object(file_object.id)
         if test_obj is not None:
-            raise Exception('Object {:s} is already in the data.'.format(object.id))
+            raise Exception('Object {:s} is already in the data.'.format(file_object.id))
 
-        if isinstance(object, FilePath):
-            self.__data.append(object)
+        if isinstance(file_object, FilePath):
+            self.__data.append(file_object)
+
+        elif isinstance(file_object, FileReference):
+            self.add_ref(file_object)
+
+        else:
+            raise NotImplementedError
 
     # -----------------------------------------------------------------------
 
@@ -147,7 +156,7 @@ class FileData(FileBase):
         :param filename: (str) Absolute or relative name of a file
         :param brothers: (bool) Add also all files sharing the same root as the given file
         :param ctime: (float) Add files only if created/modified after time in seconds since the epoch
-        :returns: (list of FileName or None)
+        :returns: (list of FileBase or None)
         :raises: OSError
 
         """
@@ -161,7 +170,9 @@ class FileData(FileBase):
         added = new_fp.append(filename, brothers, ctime)
 
         # this is a new path to add into the workspace
-        if added is not None and new_fp not in self.__data:
+        if added is None:
+            added = list()
+        elif added is not None and new_fp not in self.__data:
             self.__data.append(new_fp)
 
         return added
@@ -171,16 +182,49 @@ class FileData(FileBase):
     def remove_file(self, filename):
         """Remove a file in the list from its file name.
 
+        Its root and path are also removed if empties, or their state is
+        updated.
+
         :param filename: (str) Absolute or relative name of a file
-        :returns: (FileName)
+        :returns: (list) Identifiers of removed objects
         :raises: OSError
 
         """
+        if isinstance(filename, FileName):
+            fn_id = filename.get_id()
+        else:
+            fn_id = FileName(filename).get_id()
+
         given_fp = FilePath(os.path.dirname(filename))
+        path = None
+        root = None
+        removed = list()
         for fp in self.__data:
-            if fp.id == given_fp.id:
+            if fp.get_id() == given_fp.get_id():
                 for fr in fp:
-                    fr.remove(filename)
+                    rem_id = fr.remove(fn_id)
+                    if rem_id is not None:
+                        removed.append(rem_id)
+                        root = fr
+                        path = fp
+                        break
+
+        # if we removed a file, check if its root/path have to be removed too
+        if root is not None:
+            # The file was removed. Check to remove (or not) the root.
+            if len(root) == 0:
+                removed.append(root.get_id())
+                path.remove(root)
+            else:
+                root.update_state()
+
+            if len(path) == 0:
+                removed.append(path.get_id())
+                self.__data.remove(path)
+            else:
+                path.update_state()
+
+        return removed
 
     # -----------------------------------------------------------------------
 
@@ -271,7 +315,7 @@ class FileData(FileBase):
         Do not update: empty roots or paths are not removed.
 
         :param state: (States)
-        :returns: (int) Number of removed files
+        :returns: (int)
 
         """
         nb = 0
@@ -361,17 +405,26 @@ class FileData(FileBase):
         :param state: (States) state to set the file to
         :param file_obj: (FileBase) the specific file to set the state to
         :raises: sppasTypeError, sppasValueError
+        :return: list of modified objects
 
         """
-        modified = False
+        modified = list()
         if file_obj is None:
             for fp in self.__data:
-                modified = fp.set_state(state)
+                m = fp.set_state(state)
+                if m is True:
+                    modified.append(fp)
             for ref in self.__refs:
-                modified = ref.set_state(state)
+                m = ref.set_state(state)
+                if m is True:
+                    modified.append(ref)
 
         else:
-            if isinstance(file_obj, (FilePath, FileReference)):
+            if isinstance(file_obj, FileReference):
+                file_obj.set_state(state)
+                modified.append(file_obj)
+
+            elif isinstance(file_obj, FilePath):
                 modified = file_obj.set_state(state)
 
             elif isinstance(file_obj, (FileRoot, FileName)):
@@ -381,10 +434,13 @@ class FileData(FileBase):
                     cur_obj = fp.get_object(file_obj.id)
                     if cur_obj is not None:
                         # this object is one of this fp
-                        modified = fp.set_object_state(state, file_obj)
+                        m = fp.set_object_state(state, file_obj)
+                        if len(m) > 0:
+                            modified.extend(m)
                         break
-
             else:
+                logging.error("Wrong type of the object: {:s}"
+                              "".format(str(type(file_obj))))
                 raise sppasTypeError(file_obj, 'FileBase')
 
         return modified
@@ -532,7 +588,7 @@ class FileData(FileBase):
             return self.get_object(fr.id)
 
         if isinstance(filebase, FileRoot):
-            fp = FilePath(filebase.id)
+            fp = FilePath(os.path.dirname(filebase.id))
             return self.get_object(fp.id)
 
         raise sppasTypeError(filebase, "FileName, FileRoot")

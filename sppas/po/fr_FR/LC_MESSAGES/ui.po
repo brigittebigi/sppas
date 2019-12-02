@@ -29,6 +29,9 @@ msgstr "Annoter"
 msgid "Analyze"
 msgstr "Analyser"
 
+msgid "Convert"
+msgstr "Convertir"
+
 msgid "Plugins"
 msgstr "Plugins"
 

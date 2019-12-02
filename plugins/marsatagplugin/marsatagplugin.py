@@ -116,7 +116,10 @@ if os.path.isdir(args.m) is False:
     print("ERROR: {:s} is not a valid directory.".format(args.m))
     sys.exit(1)
 
-MARSATAG = os.path.join(args.m, "lib", "MarsaTag-UI.jar")
+home = args.m
+home = home.replace('"', '')
+
+MARSATAG = os.path.join(home, "lib", "MarsaTag-UI.jar")
 if os.path.exists(MARSATAG) is False:
     print("ERROR: MarsaTag is not properly installed: "
           "{:s} is not existing.".format(MARSATAG))
@@ -148,8 +151,9 @@ if fname.endswith("-palign") is False:
 
 # read to check data content
 # --------------------------
+print("Read file {:s}".format(filename))
 parser = sppasRW(filename)
-trs_input = parser.read(filename)
+trs_input = parser.read()
 tier = trs_input.find("TokensAlign", case_sensitive=False)
 if tier is None:
     print("ERROR: A tier with name TokensAlign is required.")
@@ -158,6 +162,7 @@ if tier is None:
 # write as textgrid
 # -----------------
 if fext.lower().endswith("textgrid") is False:
+    print("Convert file to TextGrid")
     trs = sppasTranscription(name="TokensAlign")
     trs.append(tier)
     filename = fname + ".TextGrid"
@@ -169,9 +174,8 @@ if fext.lower().endswith("textgrid") is False:
 # Call MarsaTag
 # ---------------------------------------------------------------------------
 
-
-command = 'java -Xms300M -Xmx580M -Dortolang.home="' + args.m + '"'
-command += ' -jar "' + MARSATAG + '" '
+command = "java -Xms300M -Xmx580M -Dortolang.home='" + args.m + "'"
+command += " -jar '" + MARSATAG + "' "
 command += ' --cli '
 command += ' -tier TokensAlign '
 command += ' -reader praat-textgrid '
@@ -184,9 +188,10 @@ command += ' --writer-option keep-input-tiers=false '
 command += ' -out-ext -pos.TextGrid '
 command += ' --oral '
 command += ' -M -P -Q '
-command += ' "' + os.path.abspath(filename) + '" '
+command += " '" + os.path.abspath(filename) + "'"
 command_args = shlex.split(command)
 
+print("Execute command: {:s}".format(command))
 p = Popen(command_args, shell=False, stdout=PIPE, stderr=STDOUT)
 message = p.communicate()[0]
 

@@ -35,7 +35,6 @@
 """
 
 import re
-import logging
 import wx
 
 # ---------------------------------------------------------------------------
@@ -108,7 +107,7 @@ class sppasTextCtrl(wx.TextCtrl):
             self.SetFont(settings.text_font)
             self.SetBackgroundColour(settings.bg_color)
         except:
-            logging.debug("TextCtrl error. Settings not set.")
+            wx.LogDebug("TextCtrl error. Settings not set.")
             pass
 
         # the message is not send to the base class when init but after
@@ -136,7 +135,8 @@ class sppasTextCtrl(wx.TextCtrl):
     def SetFont(self, font):
         wx.Window.SetFont(self, font)
         attr = wx.TextAttr()
-        attr.SetTextColour(wx.GetApp().settings.fg_color)
+        # attr.SetTextColour(wx.GetApp().settings.fg_color)
+        attr.SetTextColour(self.GetForegroundColour())
         attr.SetBackgroundColour(self.GetBackgroundColour())
         attr.SetFont(font)
         self.SetDefaultStyle(attr)
@@ -145,37 +145,91 @@ class sppasTextCtrl(wx.TextCtrl):
 # ---------------------------------------------------------------------------
 
 
-class sppasTitleText(wx.StaticText):
+class sppasTitleText(wx.TextCtrl):
     """Create a static title.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     Font, foreground and background are taken from the application settings.
 
+    Possible constructors:
+        - sppasTitleText()
+        - sppasTitleText(parent, id=ID_ANY, value="", name=TextCtrlNameStr)
+
     """
 
-    def __init__(self, *args, **kw):
-        """Create a static text for a header panel.
+    text_style = wx.TAB_TRAVERSAL | \
+                 wx.TE_READONLY | \
+                 wx.TE_BESTWRAP | \
+                 wx.TE_CENTRE | \
+                 wx.NO_BORDER
 
-        Possible constructors:
+    def __init__(self, parent, id=wx.ID_ANY, value="", name=wx.TextCtrlNameStr):
+        super(sppasTitleText, self).__init__(
+            parent, id,
+            value=" ",
+            style=sppasTitleText.text_style,
+            name=name)
 
-            - StaticText()
-
-            - StaticText(parent, id=ID_ANY, label="", pos=DefaultPosition,
-                         size=DefaultSize, style=0, name=StaticTextNameStr)
-
-        """
-        super(sppasTitleText, self).__init__(*args, **kw)
-
+        self.align = wx.TEXT_ALIGNMENT_CENTER
         # Fix Look&Feel
-        settings = wx.GetApp().settings
-        self.SetFont(settings.header_text_font)
-        self.SetBackgroundColour(settings.header_bg_color)
-        self.SetForegroundColour(settings.header_fg_color)
+        try:
+            settings = wx.GetApp().settings
+            self.SetForegroundColour(settings.header_fg_color)
+            self.SetFont(settings.header_text_font)
+            self.SetBackgroundColour(settings.header_bg_color)
+        except:
+            wx.LogWarning("Settings not set to construct sppasTitleText.")
+            pass
+
+        # the message is not send to the base class when init but after
+        # in order to apply the appropriate colors&font&size
+        self.SetValue(value)
+
+    def SetForegroundColour(self, colour):
+        wx.Window.SetForegroundColour(self, colour)
+        attr = wx.TextAttr()
+        attr.SetTextColour(colour)
+        attr.SetBackgroundColour(self.GetBackgroundColour())
+        attr.SetFont(self.GetFont())
+        attr.SetAlignment(self.align)
+        self.SetDefaultStyle(attr)
+        self.SetStyle(0, len(self.GetValue()), attr)
+
+    def SetBackgroundColour(self, colour):
+        wx.Window.SetBackgroundColour(self, colour)
+        attr = wx.TextAttr()
+        attr.SetTextColour(self.GetForegroundColour())
+        attr.SetBackgroundColour(colour)
+        attr.SetFont(self.GetFont())
+        attr.SetAlignment(self.align)
+        self.SetDefaultStyle(attr)
+        self.SetStyle(0, len(self.GetValue()), attr)
+
+    def SetFont(self, font):
+        wx.Window.SetFont(self, font)
+        attr = wx.TextAttr()
+        attr.SetTextColour(self.GetForegroundColour())
+        attr.SetBackgroundColour(self.GetBackgroundColour())
+        attr.SetFont(font)
+        attr.SetAlignment(self.align)
+        self.SetDefaultStyle(attr)
+        self.SetStyle(0, len(self.GetValue()), attr)
+
+    def SetAlignment(self, align):
+        """align is a wx.TextAttrAlignment."""
+        self.align = align
+        attr = wx.TextAttr()
+        attr.SetTextColour(self.GetForegroundColour())
+        attr.SetBackgroundColour(self.GetBackgroundColour())
+        attr.SetFont(self.GetFont())
+        attr.SetAlignment(align)
+        self.SetDefaultStyle(attr)
+        self.SetStyle(0, len(self.GetValue()), attr)
 
 # ---------------------------------------------------------------------------
 
@@ -191,26 +245,66 @@ class sppasMessageText(sppasTextCtrl):
 
     Font, foreground and background are taken from the application settings.
 
+    Possible constructors:
+        - sppasMessageText()
+        - sppasMessageText(parent, id=ID_ANY, value="", name=TextCtrlNameStr)
+
     """
 
     text_style = wx.TAB_TRAVERSAL | \
-                 wx.TE_MULTILINE | \
                  wx.TE_READONLY | \
                  wx.TE_BESTWRAP | \
-                 wx.TE_AUTO_URL | \
                  wx.TE_CENTRE | \
                  wx.NO_BORDER | \
-                 wx.TE_RICH
+                 wx.TE_MULTILINE
+                 # wx.TE_AUTO_URL | \
+                 # wx.TE_RICH
 
-    def __init__(self, parent, message):
+    def __init__(self, parent, message, name=wx.TextCtrlNameStr):
         super(sppasMessageText, self).__init__(
             parent=parent,
             value="",
-            style=sppasMessageText.text_style)
+            style=sppasMessageText.text_style,
+            name=name)
         # the message is not send to the base class when init but after
         # in order to apply the appropriate colors
         self.SetValue(message)
 
+# ---------------------------------------------------------------------------
+
+
+class sppasSimpleText(sppasTextCtrl):
+    """Create a single-line left-justified message text.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+
+    Font, foreground and background are taken from the application settings.
+
+    Possible constructors:
+        - sppasMessageText()
+        - sppasMessageText(parent, id=ID_ANY, value="", name=TextCtrlNameStr)
+
+    """
+
+    text_style = wx.TAB_TRAVERSAL | \
+                 wx.TE_READONLY | \
+                 wx.TE_BESTWRAP | \
+                 wx.TE_LEFT | \
+                 wx.NO_BORDER
+
+    def __init__(self, parent, message, name=wx.TextCtrlNameStr):
+        super(sppasSimpleText, self).__init__(
+            parent=parent,
+            value="",
+            style=sppasSimpleText.text_style,
+            name=name)
+        # the message is not send to the base class when init but after
+        # in order to apply the appropriate colors
+        self.SetValue(message)
 
 # ---------------------------------------------------------------------------
 # Validators for a sppasTextCtrl or wx.TextCtrl.
