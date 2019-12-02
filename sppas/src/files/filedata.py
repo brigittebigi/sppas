@@ -182,7 +182,8 @@ class FileData(FileBase):
     def remove_file(self, filename):
         """Remove a file in the list from its file name.
 
-        Its root and path are also removed if empties.
+        Its root and path are also removed if empties, or their state is
+        updated.
 
         :param filename: (str) Absolute or relative name of a file
         :returns: (list) Identifiers of removed objects
@@ -199,7 +200,7 @@ class FileData(FileBase):
         root = None
         removed = list()
         for fp in self.__data:
-            if fp.id == given_fp.id:
+            if fp.get_id() == given_fp.get_id():
                 for fr in fp:
                     rem_id = fr.remove(fn_id)
                     if rem_id is not None:
@@ -210,13 +211,18 @@ class FileData(FileBase):
 
         # if we removed a file, check if its root/path have to be removed too
         if root is not None:
+            # The file was removed. Check to remove (or not) the root.
             if len(root) == 0:
                 removed.append(root.get_id())
                 path.remove(root)
+            else:
+                root.update_state()
 
             if len(path) == 0:
                 removed.append(path.get_id())
                 self.__data.remove(path)
+            else:
+                path.update_state()
 
         return removed
 

@@ -36,7 +36,6 @@ import wx
 import wx.lib.newevent
 
 from sppas import paths
-from sppas import sppasTypeError
 from sppas.src.anndata import sppasRW
 from sppas.src.files import States, FileName, FileRoot, FilePath, FileData
 from sppas.src.ui import sppasTrash
@@ -158,7 +157,7 @@ class FileTreeView(sppasScrolledPanel):
     """
 
     def __init__(self, parent, name=wx.PanelNameStr):
-        """Constructor of the FileTreeCtrl.
+        """Constructor of the FileTreeView.
 
         :param parent: (wx.Window)
         :param name: (str)
@@ -235,12 +234,17 @@ class FileTreeView(sppasScrolledPanel):
         for fn in checked_fns:
             removed_ids = self.__data.remove_file(fn.get_id())
             for fs_id in removed_ids:
-
                 # The path was removed
                 if fs_id in self.__fps:
                     self.__remove_folder_panel(fs_id)
                     wx.LogMessage('{:s} removed.'.format(fs_id))
                 else:
+                    # Either a FileRoot or a FileName.
+                    is_root = False
+                    fs = self.__data.get_object(fs_id)
+                    if isinstance(fs, FileRoot):
+                        is_root = True
+                    # Get its path first!
                     fp_id = FilePath(os.path.dirname(fs_id)).get_id()
                     if fp_id in self.__fps:
                         p = self.__fps[fp_id]
@@ -248,8 +252,18 @@ class FileTreeView(sppasScrolledPanel):
                         if r is False:
                             r = p.remove(fs_id)
                             removed.append(fs_id)
+                        # OK. The FileName or FileRoot was removed...
                         if r is True:
                             wx.LogMessage('{:s} removed.'.format(fs_id))
+                            # Update the state of the path.
+                            fp = self.__data.get_object(fp_id)
+                            p.change_state(fp_id, fp.get_state())
+                            # Update the state of the root (fs was a FileName)
+                            if is_root is False:
+                                # (if the root was not removed)
+                                fr = self.__data.get_object(FileRoot.root(fs_id))
+                                if fr is not None:
+                                    p.change_state(fr.get_id(), fr.get_state())
 
         if len(removed) > 0:
             self.Layout()
@@ -557,10 +571,15 @@ class FileTreeView(sppasScrolledPanel):
         """One of the roots was collapsed/expanded."""
         panel = evt.GetEventObject()
         panel.SetFocus()
-        #wx.PostEvent(self.GetParent(), evt)
-        self.Layout()
-        #self.Refresh()
-        self.GetParent().SendSizeEvent()
+        fs_id = panel.get_id()
+        fs = self.__data.get_object(fs_id)
+        if fs.subjoined is None:
+            fs.subjoined = dict()
+        fs.subjoined['expand'] = panel.IsExpanded()
+
+        if isinstance(fs, FilePath):
+            self.Layout()
+            self.GetParent().SendSizeEvent()
 
     # ------------------------------------------------------------------------
 
@@ -615,6 +634,12 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
         sppasCollapsiblePanel.SetFont(self, f)
         self.GetPane().SetFont(font)
         self.Layout()
+
+    # ----------------------------------------------------------------------
+
+    def get_id(self):
+        """Return the identifier of the path this panel is displaying."""
+        return self.__fpid
 
     # ----------------------------------------------------------------------
 
@@ -810,9 +835,8 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
         """One of the roots was collapsed/expanded."""
         panel = evt.GetEventObject()
         panel.SetFocus()
-        #wx.PostEvent(self.GetParent(), evt)
         self.Layout()
-        #self.Refresh()
+        wx.PostEvent(self.GetParent(), evt)
         self.GetParent().SendSizeEvent()
 
     # ------------------------------------------------------------------------
@@ -903,6 +927,12 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         self.FindWindow("listctrl_files").SetImageList(self.__il, wx.IMAGE_LIST_SMALL)
         self.__set_pane_size()
         self.Layout()
+
+    # ----------------------------------------------------------------------
+
+    def get_id(self):
+        """Return the identifier of the root this panel is displaying."""
+        return self.__frid
 
     # ----------------------------------------------------------------------
 
@@ -1164,7 +1194,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
             listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("type"), fn.get_extension())
             listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("date"), fn.get_date())
             listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("size"), fn.get_size())
-            # listctrl.RefreshItem(index)
+            listctrl.RefreshItem(index)
 
     # ------------------------------------------------------------------------
     # Management of the events

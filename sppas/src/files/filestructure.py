@@ -622,7 +622,10 @@ class FileRoot(FileBase):
         if idx != -1:
             identifier = self.__files[idx].get_id()
             self.__files.pop(idx)
-            self.update_state()
+            upd = self.update_state()
+            if upd is True:
+                logging.debug("FileRoot {:s} state changed to {:d}"
+                              "".format(self.get_id(), self.get_state()))
 
         return identifier
 
