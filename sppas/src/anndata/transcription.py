@@ -269,6 +269,20 @@ class sppasTranscription(object):
 
     # ------------------------------------------------------------------------
 
+    def get_ctrl_vocab_from_id(self, ctrl_vocab_id):
+        """Return a sppasCtrlVocab from its id or None.
+
+        :param ctrl_vocab_id: (str) Identifier name of a ctrl vocab
+
+        """
+        idt = ctrl_vocab_id.strip()
+        for m in self._ctrlvocab:
+            if m.get_meta('id') == idt:
+                return m
+        return None
+
+    # ------------------------------------------------------------------------
+
     def add_ctrl_vocab(self, new_ctrl_vocab):
         """Add a new controlled vocabulary in the list of ctrl vocab.
 
@@ -411,6 +425,20 @@ class sppasTranscription(object):
     def get_tier_list(self):
         """Return the list of tiers."""
         return self._tiers
+
+    # ------------------------------------------------------------------------
+
+    def get_tier_from_id(self, tier_id):
+        """Return a sppasTier from its id or None.
+
+        :param tier_id: (str) Identifier name of a tier
+
+        """
+        idt = tier_id.strip()
+        for t in self._tiers:
+            if t.get_meta('id') == idt:
+                return t
+        return None
 
     # -----------------------------------------------------------------------
 

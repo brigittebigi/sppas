@@ -73,8 +73,6 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
-        self.AddPage(refsviewctrl.TestPanel(self), "Refs view ctrl: collapsed panels")
-        self.AddPage(filesviewctrl.TestPanel(self), "Files view ctrl: collapsed panels")
         self.AddPage(listview.TestPanel(self), "List view")
         self.AddPage(textview.TestPanel(self), "Text view")
         self.AddPage(baseview.TestPanel(self), "Base view")
@@ -82,6 +80,8 @@ class TestPanel(wx.Choicebook):
         self.AddPage(anz_tabs.TestPanel(self), "Tabs analyze")
         self.AddPage(refsmanager.TestPanel(self), "References manager")
         self.AddPage(wksmanager.TestPanel(self), "Workspaces manager")
+        self.AddPage(refsviewctrl.TestPanel(self), "Refs view ctrl: collapsed panels")
+        self.AddPage(filesviewctrl.TestPanel(self), "Files view ctrl: collapsed panels")
         self.AddPage(option.TestPanel(self), "Configure options")
         self.AddPage(toolbar.TestPanel(self), "Toolbar")
         self.AddPage(panel.TestPanel(self), "Panels")

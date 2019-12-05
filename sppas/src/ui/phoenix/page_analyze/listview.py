@@ -39,12 +39,14 @@
 import os
 import wx
 import wx.dataview
+import wx.lib.newevent
 
 from sppas import sg
 from sppas import paths
 from sppas import u
 from sppas import msg
 
+from sppas.src.files import FileData
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 from sppas.src.anndata import sppasTier
@@ -60,11 +62,26 @@ from ..windows import sppasCollapsiblePanel
 from ..windows.baseviewctrl import BaseTreeViewCtrl
 from ..windows.baseviewctrl import ColumnProperties
 from ..windows.baseviewctrl import ToggledIconRenderer
+from ..tools import sppasSwissKnife
+
+
+# ---------------------------------------------------------------------------
+# Internal use of an event, when an item is clicked.
+
+ItemClickedEvent, EVT_ITEM_CLICKED = wx.lib.newevent.NewEvent()
+ItemClickedCommandEvent, EVT_ITEM_CLICKED_COMMAND = wx.lib.newevent.NewCommandEvent()
+
+# ---------------------------------------------------------------------------
+
+STATES_ICON_NAMES = {
+    "False": "choice_checkbox",
+    "True": "choice_checked",
+}
 
 # ---------------------------------------------------------------------------
 
 
-class TrsViewCtrl(BaseTreeViewCtrl):
+class TrsViewCtrl(sppasPanel):
     """A control to display the content of a sppasTranscription as a list.
 
     :author:       Brigitte Bigi
@@ -78,7 +95,7 @@ class TrsViewCtrl(BaseTreeViewCtrl):
 
     """
 
-    def __init__(self, parent, filename="", name="listview-ctrl"):
+    def __init__(self, parent, filename="", name="listviewctrl-panel"):
         """Constructor of the TrsViewCtrl.
 
         :param parent: (wx.Window)
@@ -86,79 +103,148 @@ class TrsViewCtrl(BaseTreeViewCtrl):
 
         """
         style = wx.BORDER_NONE | wx.dataview.DV_MULTIPLE | wx.dataview.DV_NO_HEADER
-        super(TrsViewCtrl, self).__init__(parent, style, name)
+        super(TrsViewCtrl, self).__init__(parent, style=style, name=name)
 
-        # Create an instance of our model and associate to the view.
-        self._model = TrsViewModel(filename)
-        self.AssociateModel(self._model)
-        self._model.DecRef()
+        self.__trs = sppasTranscription()
+        self.set_trs(filename)
+        self._create_content()
+        self._setup_events()
 
-        # Create the columns that the model wants in the view.
-        for i in range(self._model.GetColumnCount()):
-            col = BaseTreeViewCtrl._create_column(self._model, i)
-            wx.dataview.DataViewCtrl.AppendColumn(self, col)
+        # Look&feel
+        self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
+        self.SetForegroundColour(wx.GetApp().settings.fg_color)
+        self.SetFont(wx.GetApp().settings.text_font)
 
-        self.Bind(wx.dataview.EVT_DATAVIEW_ITEM_ACTIVATED, self._on_item_activated)
-        self.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED, self._on_item_selection_changed)
+    # -----------------------------------------------------------------------
+    # Manage the data
+    # -----------------------------------------------------------------------
 
-        h = self.get_line_height() * 2
-        h *= self._model.get_nb_lines()
-        self.SetMinSize(wx.Size(-1, h))
+    def set_trs(self, filename):
+        parser = sppasRW(filename)
+        self.__trs = parser.read()
+        self.__trs.set_meta("checked", "False")
+        # self.__trs.get_hierarchy().set_meta("checked", "False")
+        for tier in self.__trs.get_tier_list():
+            tier.set_meta("checked", "False")
+        for media in self.__trs.get_media_list():
+            media.set_meta("checked", "False")
+        for vocab in self.__trs.get_ctrl_vocab_list():
+            vocab.set_meta("checked", "False")
 
     # -----------------------------------------------------------------------
 
-    def get_object(self):
-        """Return the object created from the opened file.
-
-        """
-        return self._model.get_object()
-
-    # ------------------------------------------------------------------------
-
-    def Layout(self):
-        h = self.get_line_height() * 2
-        h *= self._model.get_nb_lines()
-        self.SetMinSize(wx.Size(-1, h))
-        wx.Window.Layout(self)
-
-    # ------------------------------------------------------------------------
-
-    def _on_item_activated(self, event):
-        """Happens when the user activated a cell (double-click).
-
-        This event is triggered by double clicking an item or pressing some
-        special key (usually "Enter") when it is focused.
-
-        """
-        item = event.GetItem()
-        if item is not None:
-            self._model.check(event.GetColumn(), item)
-            self.Unselect(item)
-
-    # ------------------------------------------------------------------------
-
-    def _on_item_selection_changed(self, event):
-        """Happens when the user simple-click a cell.
-
-        """
-        item = event.GetItem()
-        if item is not None:
-            self._model.check(event.GetColumn(), item)
-            self.Unselect(item)
+    def update(self):
+        """Update the controls to match the data."""
+        panel = self.FindWindow("tierctrl_panel")
+        for i, tier in enumerate(self.__trs.get_tier_list()):
+            #self.__update_tier(tier, i)
+            panel.add_item(tier)
 
     # -----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
-    def get_line_height(self):
-        font = self.GetFont()
-        return int(float(font.GetPixelSize()[1]))
+    def _create_content(self):
+        """Create the content of the panel."""
+        # todo: add metadata
+        tier_ctrl = TiersCollapsiblePanel(self, self.__trs.get_tier_list(), name="tierctrl_panel")
+        # tier_ctrl.AddButton("favourite")
+        tier_ctrl.Expand()
+        tier_ctrl.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnSize)
 
-# ----------------------------------------------------------------------------
-# Model
-# ----------------------------------------------------------------------------
+        media_ctrl = MediaCollapsiblePanel(self, self.__trs.get_media_list(), name="mediactrl_panel")
+        media_ctrl.Collapse(len(self.__trs.get_media_list()) == 0)
+        media_ctrl.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnSize)
+
+        vocab_ctrl = CtrlVocabCollapsiblePanel(self, self.__trs.get_ctrl_vocab_list(), name="vocabctrl_panel")
+        vocab_ctrl.Collapse(len(self.__trs.get_ctrl_vocab_list()) == 0)
+        vocab_ctrl.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnSize)
+
+        # todo: add hierarchy
+        # y_ctrl = self.__create_hyctrl()
+
+        s = wx.BoxSizer(wx.VERTICAL)
+        # s.Add(meta_ctrl, 0, wx.EXPAND)
+        s.Add(tier_ctrl, 0, wx.EXPAND)
+        s.Add(media_ctrl, 0, wx.EXPAND)
+        s.Add(vocab_ctrl, 0, wx.EXPAND)
+        # s.Add(hy_ctrl, 0, wx.EXPAND)
+        self.SetSizer(s)
+
+    # ------------------------------------------------------------------------
+    # Events management
+    # -----------------------------------------------------------------------
+
+    def _setup_events(self):
+        """Associate a handler function with the events.
+
+        It means that when an event occurs then the process handler function
+        will be called.
+
+        """
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+
+        # The user pressed a key of its keyboard
+        # self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
+
+        # The user clicked an item
+        self.Bind(EVT_ITEM_CLICKED, self._process_item_clicked)
+
+    # ------------------------------------------------------------------------
+
+    def _process_item_clicked(self, event):
+        """Process an action event: an item was clicked.
+
+        The sender of the event is a Collapsible Panel.
+
+        :param event: (wx.Event)
+
+        """
+        # the object is a FileBase (path, root or file)
+        object_id = event.id
+        obj = self.get_object(object_id)
+
+        # change state of the item
+        current_state = obj.get_meta("checked")
+        new_state = "False"
+        if current_state == "False":
+            new_state = "True"
+        obj.set_meta("checked", new_state)
+
+        # update the corresponding panel(s)
+        panel = event.GetEventObject()
+        panel.change_state(object_id, new_state)
+
+    # ------------------------------------------------------------------------
+
+    def get_object(self, identifier):
+        obj = self.__trs.get_tier_from_id(identifier)
+        if obj is not None:
+            return obj
+
+        obj = self.__trs.get_media_from_id(identifier)
+        if obj is not None:
+            return obj
+
+        return None
+
+    # ------------------------------------------------------------------------
+
+    def OnSize(self, event):
+        """Handle the wx.EVT_SIZE event.
+
+        :param event: a SizeEvent event to be processed.
+
+        """
+        # each time our size is changed, the child panel needs a resize.
+        self.Layout()
+        wx.LogDebug("ON SIZE RECEIVED . LAYOUT")
+        self.GetParent().Layout()
+
+# ---------------------------------------------------------------------------
 
 
-class TrsViewModel(wx.dataview.PyDataViewModel):
-    """A class that is a DataViewModel combined with an object mapper.
+class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
+    """A panel to display a list of tiers.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -168,343 +254,365 @@ class TrsViewModel(wx.dataview.PyDataViewModel):
 
     """
 
-    def __init__(self, filename):
-        """Constructor of a TrsViewModel.
+    def __init__(self, parent, objects, label="", name="objects-panel"):
+        super(BaseObjectCollapsiblePanel, self).__init__(
+            parent, label=label, name=name)
 
-        """
-        wx.dataview.PyDataViewModel.__init__(self)
+        self.__ils = list()
+        self._create_content()
+        self._create_columns()
+        # self._setup_events()
 
-        self.__nb_lines = 1
-        self._data = sppasTranscription()
-        self.set_data(filename)
+        # For convenience, objects identifiers are stored into a list.
+        self._objects = list()
 
-        # Map between the displayed columns and the workspace data
-        self.__mapper = dict()
-        self.__mapper[0] = TrsViewModel.__create_col("", "icon")
-        self.__mapper[1] = TrsViewModel.__create_col(ui_translation.gettext('Data type'), "type")
-        self.__mapper[2] = TrsViewModel.__create_col(ui_translation.gettext('Name'), "name")
-        self.__mapper[3] = TrsViewModel.__create_col(ui_translation.gettext('Size'), "size")
+        # Look&feel
+        self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
+        self.SetForegroundColour(wx.GetApp().settings.fg_color)
+        self.SetFont(wx.GetApp().settings.text_font)
 
-        # GUI information which can be managed by the mapper
-        self._bgcolor = wx.BLACK
-        self._fgcolor = wx.WHITE
-
-    # -----------------------------------------------------------------------
-
-    def get_nb_lines(self):
-        return self.__nb_lines
+        # Fill in the controls with the data
+        self.update(objects)
 
     # -----------------------------------------------------------------------
-
-    def get_object(self):
-        return self._data
-
-    # -----------------------------------------------------------------------
-    # Manage the data
-    # -----------------------------------------------------------------------
-
-    def set_data(self, filename):
-        parser = sppasRW(filename)
-        self.__nb_lines = 2
-        self._data = parser.read()
-        self._data.set_meta("checked", "False")
-        # self._data.get_hierarchy().set_meta("checked", "False")
-        for tier in self._data.get_tier_list():
-            tier.set_meta("checked", "False")
-            self.__nb_lines += 1
-        for media in self._data.get_media_list():
-            media.set_meta("checked", "False")
-            self.__nb_lines += 1
-        for vocab in self._data.get_ctrl_vocab_list():
-            vocab.set_meta("checked", "False")
-            self.__nb_lines += 1
-
-    # -----------------------------------------------------------------------
-
-    def check(self, col, item):
-        """Change state value.
-
-        :param col: (int) Column index.
-        :param item: (wx.dataview.DataViewItem)
-
-        """
-        try:
-            if item is None:
-                return
-            node = self.ItemToObject(item)
-            if node is None:
-                return
-        except:
-            return
-        cur_state = TrsViewModel.str_to_bool(node.get_meta("checked", "False"))
-
-        cur_state = not cur_state
-        try:
-            node.set_meta("checked", str(cur_state))
-            self.ItemChanged(item)
-        except Exception as e:
-            wx.LogMessage('Value not modified for node {:s}'.format(node))
-            wx.LogError(str(e))
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def str_to_bool(value):
-        if value.lower() == "true":
-            return True
-        try:
-            if value.isdigit() and int(value) > 0:
-                return True
-        except AttributeError:
-            pass
-        return False
-
-    # -----------------------------------------------------------------------
-    # Manage column properties
-    # -----------------------------------------------------------------------
-
-    def get_col_idx(self, name):
-        for c in self.__mapper:
-            if self.__mapper[c].get_id() == name:
-                return c
-        return -1
-
+    # Public methods
     # -----------------------------------------------------------------------
 
     def SetBackgroundColour(self, color):
-        self._bgcolor = color
+        """Calculate a lightness or darkness background color."""
+        r, g, b = color.Red(), color.Green(), color.Blue()
+        delta = 10
+        if (r + g + b) > 384:
+            color = wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
+        else:
+            color = wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
+
+        wx.Window.SetBackgroundColour(self, color)
+        for c in self.GetChildren():
+            c.SetBackgroundColour(color)
 
     # -----------------------------------------------------------------------
 
-    def SetForegroundColour(self, color):
-        self._fgcolor = color
+    def SetFont(self, font):
+        """Override."""
+        f = wx.Font(font.GetPointSize(),
+                    font.GetFamily(),
+                    wx.FONTSTYLE_ITALIC,
+                    wx.FONTWEIGHT_NORMAL,
+                    font.GetUnderlined(),
+                    font.GetFaceName())
+        sppasCollapsiblePanel.SetFont(self, f)
+        self.GetPane().SetFont(font)
 
-    # -----------------------------------------------------------------------
+        # The change of font implies to re-draw all proportional objects
+        self.__il = self.__create_image_list()
+        self.FindWindow("listctrl").SetImageList(self.__il, wx.IMAGE_LIST_SMALL)
+        self.__set_pane_size()
+        self.Layout()
 
-    def GetColumnCount(self):
-        """Overridden. Report how many columns this model provides data for."""
-        return len(self.__mapper)
+    # ----------------------------------------------------------------------
 
-    # -----------------------------------------------------------------------
+    def add(self, obj):
+        """Add an object in the listctrl child panel.
 
-    def GetColumnType(self, col):
-        """Overridden. Map the data column number to the data type.
-
-        :param col: (int)FileData()
+        :param obj:
 
         """
-        return self.__mapper[col].stype
+        if obj.get_meta("id") in self._objects:
+            return False
 
-    # -----------------------------------------------------------------------
-
-    def GetColumnName(self, col):
-        """Map the data column number to the data name.
-
-        :param col: (int) Column index.
-
-        """
-        return self.__mapper[col].name
-
-    # -----------------------------------------------------------------------
-
-    def GetColumnMode(self, col):
-        """Map the data column number to the cell mode.
-
-        :param col: (int) Column index.
-
-        """
-        return self.__mapper[col].mode
-
-    # -----------------------------------------------------------------------
-
-    def GetColumnWidth(self, col):
-        """Map the data column number to the col width.
-
-        :param col: (int) Column index.
-
-        """
-        return self.__mapper[col].width
-
-    # -----------------------------------------------------------------------
-
-    def GetColumnRenderer(self, col):
-        """Map the data column numbers to the col renderer.
-
-        :param col: (int) Column index.
-
-        """
-        return self.__mapper[col].renderer
-
-    # -----------------------------------------------------------------------
-
-    def GetColumnAlign(self, col):
-        """Map the data column numbers to the col alignment.
-
-        :param col: (int) Column index.
-
-        """
-        return self.__mapper[col].align
-
-    # -----------------------------------------------------------------------
-
-    def GetChildren(self, parent, children):
-        """The view calls this method to find the children of any node.
-
-        There is an implicit hidden root node, and the top level
-        item(s) should be reported as children of this node.
-
-        """
-        if not parent:
-            children.append(self.ObjectToItem(self._data))
-            i = 1
-            for tier in self._data.get_tier_list():
-                children.append(self.ObjectToItem(tier))
-                i += 1
-            for media in self._data.get_media_list():
-                children.append(self.ObjectToItem(media))
-                i += 1
-            for vocab in self._data.get_ctrl_vocab_list():
-                children.append(self.ObjectToItem(vocab))
-                i += 1
-
-            return i
-
-        # Otherwise we'll fetch the python object associated with the parent
-        # item and make DV items for each of its child objects.
-        return 0
-
-    # -----------------------------------------------------------------------
-
-    def GetParent(self, item):
-        """Return the item which is this item's parent.
-
-        :param item: (wx.dataview.DataViewItem)
-
-        """
-        return wx.dataview.NullDataViewItem
-
-    # -----------------------------------------------------------------------
-
-    def IsContainer(self, item):
-        """Return True if the item has children, False otherwise.
-
-        :param item: (wx.dataview.DataViewItem)
-
-        """
-        # The hidden root is a container
-        if not item:
-            return True
-
-        # but everything else are not
-        return False
-
-    # -----------------------------------------------------------------------
-
-    def GetAttr(self, item, col, attr):
-        """Overridden. Indicate that the item has special font attributes.
-
-        This only affects the DataViewTextRendererText renderer.
-
-        :param item: (wx.dataview.DataViewItem) – The item for which the attribute is requested.
-        :param col: (int) – The column of the item for which the attribute is requested.
-        :param attr: (wx.dataview.DataViewItemAttr) – The attribute to be filled in if the function returns True.
-        :returns: (bool) True if this item has an attribute or False otherwise.
-
-        """
-        node = self.ItemToObject(item)
-        checked = node.get_meta("checked", "False")
-        if checked == "True":
-            attr.SetBold(True)
-
-        # default colors for foreground and background
-        attr.SetColour(self._fgcolor)
-        attr.SetBackgroundColour(self._bgcolor)
-
+        self.__add_item(obj)
         return True
 
-    # -----------------------------------------------------------------------
-    # Manage the items
-    # -----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
 
-    def HasValue(self, item, col):
-        """Overridden.
+    def remove(self, identifier):
+        """Remove an item of the listctrl child panel.
 
-        Return True if there is a value in the given column of this item.
+        :param identifier: (str)
+        :return: (bool)
 
         """
+        if identifier not in self._objects:
+            return False
+
+        self.__remove_item(identifier)
         return True
 
-    # -----------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
-    def GetValue(self, item, col):
-        """Return the value to be displayed for this item and column.
+    def change_state(self, identifier, state):
+        """Update the state of the given identifier.
 
-        :param item: (wx.dataview.DataViewItem)
-        :param col: (int) Column index.
-
-        Pull the values from the data objects we associated with the items
-        in GetChildren.
+        :param identifier: (str)
+        :param state: (str) True or False
 
         """
-        # Fetch the data object for this item.
-        node = self.ItemToObject(item)
-        col_id = self.__mapper[col].get_id()
+        icon_name = STATES_ICON_NAMES[state]
 
-        if col_id == "icon":
-            value = node.get_meta("checked", "False")
-            if value == "True":
-                value = True
+        listctrl = self.FindWindow("listctrl")
+        idx = self._objects.index(identifier)
+        listctrl.SetItem(idx, 0, "", imageId=self.__ils.index(icon_name))
+
+    # ------------------------------------------------------------------------
+
+    def update(self, lst_obj):
+        """Update each object of a given list.
+
+        :param lst_obj: (list of sppasTier)
+
+        """
+        for obj in lst_obj:
+            if obj.get_meta("id") not in self._objects:
+                self.__add_item(obj)
             else:
-                value = False
+                #self.change_state(obj.get_meta("id"), obj.get_state())
+                self.update_item(obj)
 
-        elif col_id == "type":
-            t = str(type(node))
-            t = t.split('.')[-1]
-            t = t.replace("sppas", "")
-            t = t[:-2]
-            return t
+    # ------------------------------------------------------------------------
+    # Construct the GUI
+    # ------------------------------------------------------------------------
 
-        elif col_id == "size":
-            if isinstance(node, sppasTier):
-                # number of annotations
-                value = str(len(node))
-            else:
-                value = ""
+    def _create_content(self):
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL | wx.LC_HRULES
+        lst = wx.ListCtrl(self, style=style, name="listctrl")
+        lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
+        self.SetPane(lst)
 
-        else:
-            value = "Metadata"
-            if node != self._data:
-                # Get the value of the object
-                value = str(self.__mapper[col].get_value(node))
+        info = wx.ListItem()
+        info.Mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
+        info.Image = -1
+        info.Align = 0
+        lst.InsertColumn(0, info)
+        lst.SetColumnWidth(0, sppasPanel.fix_size(24))
 
-        return value
+    # ------------------------------------------------------------------------
 
-    # -----------------------------------------------------------------------
+    def _create_columns(self):
+        """Create the columns to display the objects."""
+        raise NotImplementedError
 
-    @staticmethod
-    def __create_col(title, name):
-        if name == "icon":
-            col = ColumnProperties(title, name, "wxBitmap")
-            col.width = sppasPanel.fix_size(30)
-            col.align = wx.ALIGN_CENTRE
-            col.renderer = ToggledIconRenderer()
+    # ------------------------------------------------------------------------
 
-        elif name == "name":
-            col = ColumnProperties(title, name)
-            col.width = sppasPanel.fix_size(180)
-            col.align = wx.ALIGN_LEFT
-            col.add_fct_name(sppasTier, "get_name")
-            col.add_fct_name(sppasMedia, "get_filename")
-            col.add_fct_name(sppasCtrlVocab, "get_name")
+    def __create_image_list(self):
+        """Create a list of images to be displayed in the listctrl.
 
-        else:
-            # type (=tier/ctrlvocab/media/metadata...)
-            col = ColumnProperties(title, name)
-            col.width = sppasPanel.fix_size(80)
-            col.align = wx.ALIGN_CENTER
-            # col.add_fct_name(FileFormatProperty, "get_support", name)
+        :return: (wx.ImageList)
 
-        return col
+        """
+        font = self.GetFont()
+        lh = int(float(font.GetPixelSize()[1]))
+        icon_size = int(float(lh * 1.4))
+
+        il = wx.ImageList(icon_size, icon_size)
+        self.__ils = list()
+
+        icon_name = "choice_checkbox"
+        bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
+        il.Add(bitmap)
+        self.__ils.append(icon_name)
+
+        icon_name = "choice_checked"
+        bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
+        il.Add(bitmap)
+        self.__ils.append(icon_name)
+
+        return il
+
+    # ------------------------------------------------------------------------
+
+    def __set_pane_size(self):
+        """Fix the size of the child panel."""
+        listctrl = self.FindWindow("listctrl")
+
+        # The listctrl can have an horizontal scrollbar
+        h = 0  # 14
+
+        n = listctrl.GetItemCount()
+        if n == 0:
+            n = 1
+        h += int(self.GetFont().GetPixelSize()[1] * 2.)
+        listctrl.SetMinSize(wx.Size(-1, n * h))
+
+    # ------------------------------------------------------------------------
+    # Management the list of files
+    # ------------------------------------------------------------------------
+
+    def __add_item(self, obj):
+        """Append an object."""
+        listctrl = self.FindWindow("listctrl")
+        icon_name = STATES_ICON_NAMES[obj.get_meta("checked")]
+        img_index = self.__ils.index(icon_name)
+        index = listctrl.InsertItem(listctrl.GetItemCount(), img_index)
+
+        self._objects.append(obj.get_meta("id"))
+        self.update_item(obj)
+
+        # listctrl.SetItem(index, 1, obj.get_name())
+        # listctrl.SetItem(index, 2, str(len(obj)))
+        self.__set_pane_size()
+        self.Layout()
+
+    # ------------------------------------------------------------------------
+
+    def __remove_item(self, identifier):
+        """Remove an object of the listctrl."""
+        listctrl = self.FindWindow("listctrl")
+        idx = self._objects.index(identifier)
+        listctrl.DeleteItem(idx)
+
+        self._objects.pop(idx)
+        self.__set_pane_size()
+        self.Layout()
+
+    # ------------------------------------------------------------------------
+
+    def update_item(self, obj):
+        """Update information of an object, except its state."""
+        raise NotImplementedError
+
+    # ------------------------------------------------------------------------
+    # Management of the events
+    # ------------------------------------------------------------------------
+
+    def notify(self, identifier):
+        """The parent has to be informed of a change of content."""
+        evt = ItemClickedEvent(id=identifier)
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
+    # ------------------------------------------------------------------------
+
+    def __item_selected(self, event):
+        listctrl = self.FindWindow("listctrl")
+        index = listctrl.GetFirstSelected()
+        listctrl.Select(index, on=False)
+
+        # notify parent to decide what has to be done
+        self.notify(self._objects[index])
+
+# ---------------------------------------------------------------------------
+
+
+class TiersCollapsiblePanel(BaseObjectCollapsiblePanel):
+    """A panel to display a list of tiers.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, objects, name="tiers-panel"):
+        super(TiersCollapsiblePanel, self).__init__(
+            parent, objects, label="Tiers", name=name)
+
+    # ------------------------------------------------------------------------
+
+    def _create_columns(self):
+        """Create a listctrl to display the objects."""
+        listctrl = self.FindWindow("listctrl")
+        listctrl.AppendColumn("name",
+                              format=wx.LIST_FORMAT_LEFT,
+                              width=sppasPanel.fix_size(200))
+        listctrl.AppendColumn("len",
+                              format=wx.LIST_FORMAT_LEFT,
+                              width=sppasPanel.fix_size(80))
+
+    # ------------------------------------------------------------------------
+
+    def update_item(self, obj):
+        """Update information of an object, except its state."""
+        listctrl = self.FindWindow("listctrl")
+        if obj.get_meta("id") in self._objects:
+            index = self._objects.index(obj.get_meta("id"))
+            listctrl.SetItem(index, 1, obj.get_name())
+            listctrl.SetItem(index, 2, str(len(obj)))
+            listctrl.RefreshItem(index)
+
+# ---------------------------------------------------------------------------
+
+
+class CtrlVocabCollapsiblePanel(BaseObjectCollapsiblePanel):
+    """A panel to display a list of controlled vocabs.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, objects, name="ctrlvocabs-panel"):
+        super(CtrlVocabCollapsiblePanel, self).__init__(
+            parent, objects, label="Controlled vocabularies", name=name)
+
+    # ------------------------------------------------------------------------
+
+    def _create_columns(self):
+        """Create a listctrl to display the objects."""
+        listctrl = self.FindWindow("listctrl")
+        listctrl.AppendColumn("name",
+                              format=wx.LIST_FORMAT_LEFT,
+                              width=sppasPanel.fix_size(200))
+        listctrl.AppendColumn("description",
+                              format=wx.LIST_FORMAT_LEFT,
+                              width=sppasPanel.fix_size(80))
+
+    # ------------------------------------------------------------------------
+
+    def update_item(self, obj):
+        """Update information of an object, except its state."""
+        listctrl = self.FindWindow("listctrl")
+        if obj.get_meta("id") in self._objects:
+            index = self._objects.index(obj.get_meta("id"))
+            listctrl.SetItem(index, 1, obj.get_name())
+            listctrl.SetItem(index, 2, obj.get_description())
+            listctrl.RefreshItem(index)
+
+# ---------------------------------------------------------------------------
+
+
+class MediaCollapsiblePanel(BaseObjectCollapsiblePanel):
+    """A panel to display a list of metadata.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, objects, name="media-panel"):
+        super(MediaCollapsiblePanel, self).__init__(
+            parent, objects, label="Media", name=name)
+
+    # ------------------------------------------------------------------------
+
+    def _create_columns(self):
+        """Create a listctrl to display the objects."""
+        listctrl = self.FindWindow("listctrl")
+        listctrl.AppendColumn("filename",
+                              format=wx.LIST_FORMAT_LEFT,
+                              width=sppasPanel.fix_size(200))
+        listctrl.AppendColumn("mime",
+                              format=wx.LIST_FORMAT_LEFT,
+                              width=sppasPanel.fix_size(80))
+
+    # ------------------------------------------------------------------------
+
+    def update_item(self, obj):
+        """Update information of an object, except its state."""
+        listctrl = self.FindWindow("listctrl")
+        if obj.get_meta("id") in self._objects:
+            index = self._objects.index(obj.get_meta("id"))
+            listctrl.SetItem(index, 1, obj.get_filename())
+            listctrl.SetItem(index, 2, obj.get_mime_type())
+            listctrl.RefreshItem(index)
 
 # ---------------------------------------------------------------------------
 
