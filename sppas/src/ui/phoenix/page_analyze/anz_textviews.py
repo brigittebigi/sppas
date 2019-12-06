@@ -157,3 +157,4 @@ class TextViewFilesPanel(BaseViewFilesPanel):
         panel = evt.GetEventObject()
         panel.SetFocus()
         self.ScrollChildIntoView(panel)
+        self.Layout()

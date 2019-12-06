@@ -1086,7 +1086,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
                          width=sppasScrolledPanel.fix_size(36))
         lst.AppendColumn("file",
                          format=wx.LIST_FORMAT_LEFT,
-                         width=sppasScrolledPanel.fix_size(160))
+                         width=sppasScrolledPanel.fix_size(140))
         lst.AppendColumn("type",
                          format=wx.LIST_FORMAT_LEFT,
                          width=sppasScrolledPanel.fix_size(80))
@@ -1145,13 +1145,12 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         listctrl = self.FindWindow("listctrl_files")
 
         # The listctrl can have an horizontal scrollbar
-        h = 14
+        bar = 14
 
         n = listctrl.GetItemCount()
-        if n == 0:
-            n = 1
-        h += int(self.GetFont().GetPixelSize()[1] * 2.)
-        listctrl.SetMinSize(wx.Size(-1, n * h))
+        h = int(self.GetFont().GetPixelSize()[1] * 2.)
+        listctrl.SetMinSize(wx.Size(-1, (n * h) + bar))
+        listctrl.SetMaxSize(wx.Size(-1, (n * h) + bar + 2))
 
     # ------------------------------------------------------------------------
     # Management the list of files

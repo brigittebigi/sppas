@@ -37,9 +37,8 @@
 import wx
 
 from ..main_events import EVT_VIEW
-from ..windows import sppasCollapsiblePanel
 from .anz_baseviews import BaseViewFilesPanel
-from .listview import TrsViewCtrl
+from .listview import TrsViewPanel
 
 # ----------------------------------------------------------------------------
 
@@ -88,12 +87,9 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
         """
         wx.LogMessage("Displaying file {:s} in TextView mode.".format(name))
-        cp = sppasCollapsiblePanel(self, label=name)
-        panel = TrsViewCtrl(cp, filename=name)
-        # panel.SetHighLightColor(self._hicolor)
-        cp.SetPane(panel)
-        self.GetSizer().Add(cp, 0, wx.EXPAND)
-        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, cp)
+        panel = TrsViewPanel(self, filename=name)
+        self.GetSizer().Add(panel, 0, wx.EXPAND)
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
 
         return panel
 
@@ -154,3 +150,4 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         panel = evt.GetEventObject()
         panel.SetFocus()
         self.ScrollChildIntoView(panel)
+        self.Layout()

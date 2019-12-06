@@ -287,9 +287,10 @@ class sppasCollapsiblePanel(sppasPanel):
     def Collapse(self, collapse=True):
         """Collapse or expand the pane window.
 
-        :param collapse: True` to collapse the pane window, False` to expand it.
+        :param collapse: True to collapse the pane window, False to expand it.
 
         """
+        collapse = bool(collapse)
         if self.IsCollapsed() == collapse:
             return
 

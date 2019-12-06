@@ -114,6 +114,35 @@ class sppasTranscription(object):
         self._meta.add_language_metadata()
         self._meta.add_license_metadata(0)
 
+    # ------------------------------------------------------------------------
+
+    def get_object(self, identifier):
+        """Return the object matching the given identifier.
+
+        :param identifier: (GUID)
+
+        """
+        if self.get_meta("id", None) is not None:
+            return self
+
+        obj = self.get_tier_from_id(identifier)
+        if obj is not None:
+            return obj
+
+        obj = self.get_media_from_id(identifier)
+        if obj is not None:
+            return obj
+
+        obj = self.get_ctrl_vocab_from_id(identifier)
+        if obj is not None:
+            return obj
+
+        for ann in self._tiers:
+            if ann.get_meta("id", None) is not None:
+                return ann
+
+        return None
+
     # -----------------------------------------------------------------------
     # Name
     # -----------------------------------------------------------------------

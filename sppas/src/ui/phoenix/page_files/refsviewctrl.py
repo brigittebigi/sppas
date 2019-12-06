@@ -364,6 +364,8 @@ class RefsTreeView(sppasScrolledPanel):
         for ref_id in self.__refps:
             if self.__refps[ref_id] == panel:
                 ref = self.__data.get_object(ref_id)
+                if ref.subjoined is None:
+                    ref.subjoined = dict()
                 ref.subjoined['expand'] = panel.IsExpanded()
                 break
         self.GetParent().SendSizeEvent()
@@ -578,13 +580,12 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
         listctrl = self.FindWindow("listctrl_atts")
 
         # The listctrl can have an horizontal scrollbar
-        h = 14
+        bar = 14
 
         n = listctrl.GetItemCount()
-        if n == 0:
-            n = 1
-        h += int(self.GetFont().GetPixelSize()[1] * 2.)
+        h = int(self.GetFont().GetPixelSize()[1] * 2.)
         listctrl.SetMinSize(wx.Size(-1, n * h))
+        listctrl.SetMaxSize(wx.Size(-1, (n * h) + bar))
 
     # ------------------------------------------------------------------------
     # Management the list of files
