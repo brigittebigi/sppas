@@ -305,9 +305,9 @@ class JuliusAligner(BaseAligner):
         p = Popen(command, shell=True, stdout=PIPE, stderr=STDOUT)
         p.wait()
         line = p.communicate()
-        msg = u(" ").join([u(l) for l in line])
         logging.debug('julius returns the following message:')
-        logging.debug(msg)
+        logging.debug(line)
+        msg = u(" ").join([u(l) for l in line])
 
         # Julius not installed
         if u("not found") in msg:

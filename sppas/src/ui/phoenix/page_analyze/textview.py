@@ -118,7 +118,7 @@ class TextViewPanel(sppasBaseViewPanel):
     def _create_content(self):
         """Create the content of the panel."""
         self.AddButton("save")
-        self.AddButton("restore")
+        self.AddButton("backup")
         self.AddButton("close")
         self._create_child_panel()
         self.Collapse(True)
@@ -134,7 +134,10 @@ class TextViewPanel(sppasBaseViewPanel):
         txtview.SetEditable(True)
         txtview.SetModified(False)
         self.SetPane(txtview)
+        self.__set_text_content()
 
+    def __set_text_content(self):
+        txtview = self.GetPane()
         content = "".join(self.__lines)
         txtview.SetValue(content)
 
@@ -144,9 +147,8 @@ class TextViewPanel(sppasBaseViewPanel):
         # Search for the height of the text
         nblines = len(self.__lines) + 1
         view_height = float(self.get_line_height()) * 1.1 * nblines
-        txtview.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(320), view_height))
-
-        self.GetPane().SetModified(False)
+        txtview.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(420), view_height))
+        txtview.SetModified(False)
 
     # -----------------------------------------------------------------------
 
@@ -159,8 +161,10 @@ class TextViewPanel(sppasBaseViewPanel):
         event_obj = event.GetButtonObj()
         event_name = event_obj.GetName()
 
-        if event_name == "restore":
-            wx.LogDebug("RESTORE CLICKED")
+        if event_name == "backup":
+            self.__set_text_content()
+            self.Layout()
+            self.Refresh()
 
         else:
             sppasBaseViewPanel._process_event(self, event)

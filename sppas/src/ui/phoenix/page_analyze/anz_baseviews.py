@@ -39,7 +39,6 @@ import wx
 from sppas import msg
 from sppas.src.utils import u
 
-from ..windows import sppasToolbar
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..main_events import ViewEvent, EVT_VIEW
@@ -297,15 +296,20 @@ class BaseViewFilesPanel(sppasPanel):
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         toolbar = self._create_toolbar()
         scrolled = self._create_scrolled_content()
-        main_sizer.Add(toolbar, 0, wx.EXPAND)
-        main_sizer.Add(scrolled, 1, wx.EXPAND)
+        main_sizer.Add(toolbar, 0, wx.EXPAND, 0)
+        main_sizer.Add(scrolled, 1, wx.EXPAND, 0)
         self.SetSizer(main_sizer)
 
     # -----------------------------------------------------------------------
 
     def _create_toolbar(self):
-        toolbar = sppasToolbar(self, name="toolbar_views")
-        return toolbar
+        """Create the main toolbar.
+
+        :return: (sppasPanel, wx.Panel, sppasToolbar, ...)
+
+        """
+        wx.LogDebug(" * * * * * *  CREATE TOOLBAR DE BASE * * * * * * ")
+        return sppasPanel(self, name="toolbar_views")
 
     # -----------------------------------------------------------------------
 

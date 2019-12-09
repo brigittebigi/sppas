@@ -38,7 +38,7 @@ import os
 import wx
 
 from sppas import paths
-
+from ..windows import sppasToolbar
 from .anz_baseviews import BaseViewFilesPanel
 from .listview import TrsListViewPanel
 
@@ -92,6 +92,29 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
 
         return panel
+
+    # -----------------------------------------------------------------------
+
+    def _create_toolbar(self):
+        """Create the main toolbar.
+
+        :return: (sppasPanel, wx.Panel, sppasToolbar, ...)
+
+        """
+        toolbar = sppasToolbar(self, name="toolbar_views")
+        #toolbar.set_focus_color()
+
+        toolbar.AddButton("tier_rename")
+        toolbar.AddButton("tier_delete")
+        toolbar.AddButton("tier_cut")
+        toolbar.AddButton("tier_copy")
+        toolbar.AddButton("tier_paste")
+        toolbar.AddButton("tier_duplicate")
+        toolbar.AddButton("tier_moveup")
+        toolbar.AddButton("tier_movedown")
+        toolbar.AddButton("tier_radius")
+        toolbar.AddButton("tier_view")
+        return toolbar
 
     # -----------------------------------------------------------------------
     # Events management

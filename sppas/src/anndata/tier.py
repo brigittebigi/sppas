@@ -147,6 +147,7 @@ class sppasTier(sppasMetaData):
         """Set the name of the tier.
 
         If no name is given, an GUID is randomly assigned.
+        Important: An empty string is accepted.
 
         :param name: (str) The identifier name or None.
         :returns: the formatted name
@@ -883,6 +884,16 @@ class sppasTier(sppasMetaData):
                 return ann.get_label_type()
 
         return ""
+
+    # -----------------------------------------------------------------------
+
+    def get_nb_filled_labels(self):
+        """Return the number annotation with a filled label."""
+        nb = 0
+        for ann in self.__ann:
+            if ann.is_labelled() is True:
+                nb += 1
+        return nb
 
     # -----------------------------------------------------------------------
     # Annotation validation
