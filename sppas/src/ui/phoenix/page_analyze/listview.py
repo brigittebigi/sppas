@@ -41,10 +41,7 @@ import wx
 import wx.dataview
 import wx.lib.newevent
 
-from sppas import sg
 from sppas import paths
-from sppas import u
-from sppas import msg
 
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
@@ -55,10 +52,10 @@ from sppas.src.anndata import sppasCtrlVocab
 from sppas.src.anndata import sppasMetaData
 from sppas.src.config import ui_translation
 
-from ..main_events import ViewEvent
-from ..windows import sppasPanel
+from ..windows import sppasScrolledPanel
 from ..windows import sppasCollapsiblePanel
 from ..tools import sppasSwissKnife
+from .baseview import sppasBaseViewPanel
 
 
 # ---------------------------------------------------------------------------
@@ -77,7 +74,7 @@ STATES_ICON_NAMES = {
 # ---------------------------------------------------------------------------
 
 
-class TrsViewPanel(sppasCollapsiblePanel):
+class TrsListViewPanel(sppasBaseViewPanel):
     """A panel to display the content of a sppasTranscription as a list.
 
     :author:       Brigitte Bigi
@@ -89,38 +86,12 @@ class TrsViewPanel(sppasCollapsiblePanel):
     """
 
     def __init__(self, parent, filename, name="listview-panel"):
-        super(TrsViewPanel, self).__init__(parent, label=filename, name=name)
-
-        self.__parser = sppasRW(filename)
         self.__trs = sppasTranscription()
         self.__dirty = False
-        self.__set_trs()
-
-        self._create_content()
-        self._setup_events()
-
-        # Look&feel
-        self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        super(TrsListViewPanel, self).__init__(parent, filename, name)
 
     # -----------------------------------------------------------------------
-
-    def SetFont(self, font):
-        """Override."""
-        # The name of the file is Bold
-        f = wx.Font(font.GetPointSize(),
-                    font.GetFamily(),
-                    font.GetStyle(),
-                    wx.FONTWEIGHT_BOLD,
-                    font.GetUnderlined(),
-                    font.GetFaceName())
-        sppasCollapsiblePanel.SetFont(self, f)
-        self.GetPane().SetFont(font)
-        self.Layout()
-
-    # -----------------------------------------------------------------------
-    # Manage the data
+    # Override from the parent
     # -----------------------------------------------------------------------
 
     def is_modified(self):
@@ -132,19 +103,42 @@ class TrsViewPanel(sppasCollapsiblePanel):
     def get_object(self):
         """Return the object created from the opened file.
 
-        This view does not load the file into a specific object.
+        :return: (sppasTranscription)
 
         """
         return self.__trs
 
     # -----------------------------------------------------------------------
 
-    def update(self):
-        """Update the controls to match the data."""
-        panel = self.FindWindow("tierctrl_panel")
-        for i, tier in enumerate(self.__trs.get_tier_list()):
-            #self.__update_tier(tier, i)
-            panel.add_item(tier)
+    def load_text(self):
+        """Override. Load filename in a sppasTranscription.
+
+        Add the appropriate metadata.
+        The tiers, medias and controlled vocab lists are collapsed if empty.
+
+        """
+        parser = sppasRW(self._filename)
+        self.__trs = parser.read()
+
+        if self.__trs.get_meta("checked", None) is None:
+            self.__trs.set_meta("checked", "False")
+        if self.__trs.get_meta("collapsed", None) is None:
+            self.__trs.set_meta("collapsed", "False")
+
+        for tier in self.__trs.get_tier_list():
+            if tier.get_meta("checked", None) is None:
+                tier.set_meta("checked", "False")
+        self.__trs.set_meta("tiers_collapsed", str(len(self.__trs.get_tier_list()) == 0))
+
+        for media in self.__trs.get_media_list():
+            if media.get_meta("checked", None) is None:
+                media.set_meta("checked", "False")
+        self.__trs.set_meta("media_collapsed", str(len(self.__trs.get_media_list()) == 0))
+
+        for vocab in self.__trs.get_ctrl_vocab_list():
+            if vocab.get_meta("checked", None) is None:
+                vocab.set_meta("checked", "False")
+        self.__trs.set_meta("vocabs_collapsed", str(len(self.__trs.get_ctrl_vocab_list()) == 0))
 
     # -----------------------------------------------------------------------
 
@@ -152,7 +146,8 @@ class TrsViewPanel(sppasCollapsiblePanel):
         """Save the displayed transcription into a file."""
         if self.__dirty is True:
             # the writer will increase the file version
-            self.__parser.write(self.__trs)
+            parser = sppasRW(self._filename)
+            parser.write(self.__trs)
             self.__dirty = False
             return True
         return False
@@ -160,15 +155,16 @@ class TrsViewPanel(sppasCollapsiblePanel):
     # -----------------------------------------------------------------------
 
     def _create_content(self):
-        """Create the content of the panel."""
+        """Override. Create the content of the panel."""
         self.AddButton("save")
         self.AddButton("close")
-        self.__create_child_panel()
+        self._create_child_panel()
         self.Collapse(self.str_to_bool(self.__trs.get_meta("collapsed")))
 
     # ------------------------------------------------------------------------
 
-    def __create_child_panel(self):
+    def _create_child_panel(self):
+        """Override. Create the child panel."""
         child_panel = self.GetPane()
 
         # todo: add metadata
@@ -196,61 +192,12 @@ class TrsViewPanel(sppasCollapsiblePanel):
         # s.Add(hy_ctrl, 0, wx.EXPAND)
         child_panel.SetSizerAndFit(s)
 
+        # The user clicked an item
+        child_panel.Bind(EVT_ITEM_CLICKED, self._process_item_clicked)
+
     # ------------------------------------------------------------------------
     # Events management
     # -----------------------------------------------------------------------
-
-    def notify(self, action):
-        evt = ViewEvent(action=action)
-        evt.SetEventObject(self)
-        wx.PostEvent(self.GetParent(), evt)
-
-    # -----------------------------------------------------------------------
-
-    def _setup_events(self):
-        """Associate a handler function with the events.
-
-        It means that when an event occurs then the process handler function
-        will be called.
-
-        """
-        self.GetPane().Bind(wx.EVT_SIZE, self.OnSize)
-
-        # The user pressed a key of its keyboard
-        # self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
-
-        # The user clicked an item
-        self.GetPane().Bind(EVT_ITEM_CLICKED, self._process_item_clicked)
-
-        # The user clicked a button of the collapsible panel toolbar
-        self.Bind(wx.EVT_BUTTON, self._process_event)
-
-    # -----------------------------------------------------------------------
-
-    def _process_event(self, event):
-        """Process any kind of event.
-
-        :param event: (wx.Event)
-
-        """
-        event_obj = event.GetButtonObj()
-        event_name = event_obj.GetName()
-
-        if event_name == "close":
-            wx.LogDebug("Parent is notified to close")
-            self.notify("close")
-
-        elif event_name == "save":
-            if self.is_modified() is True:
-                wx.LogDebug("Parent is notified to save")
-                self.notify("save")
-            else:
-                wx.LogDebug("File wasn't modified. Nothing to do.")
-
-        else:
-            event.Skip()
-
-    # ------------------------------------------------------------------------
 
     def _process_item_clicked(self, event):
         """Process an action event: an item was clicked.
@@ -294,17 +241,6 @@ class TrsViewPanel(sppasCollapsiblePanel):
 
     # ------------------------------------------------------------------------
 
-    def OnSize(self, event):
-        """Handle the wx.EVT_SIZE event.
-
-        :param event: a SizeEvent event to be processed.
-
-        """
-        # each time our size is changed, the child panel needs a resize.
-        self.Layout()
-
-    # ------------------------------------------------------------------------
-
     def OnCollapseChanged(self, evt=None):
         """One of the list child panel was collapsed/expanded."""
         panel = evt.GetEventObject()
@@ -335,33 +271,12 @@ class TrsViewPanel(sppasCollapsiblePanel):
 
     # -----------------------------------------------------------------------
 
-    def __set_trs(self):
-        """Use the parser to load filename and add appropriate metadata.
-
-        The tiers, medias and controlled vocab lists are collapsed if empty.
-
-        """
-        self.__trs = self.__parser.read()
-
-        if self.__trs.get_meta("checked", None) is None:
-            self.__trs.set_meta("checked", "False")
-        if self.__trs.get_meta("collapsed", None) is None:
-            self.__trs.set_meta("collapsed", "False")
-
-        for tier in self.__trs.get_tier_list():
-            if tier.get_meta("checked", None) is None:
-                tier.set_meta("checked", "False")
-        self.__trs.set_meta("tiers_collapsed", str(len(self.__trs.get_tier_list()) == 0))
-
-        for media in self.__trs.get_media_list():
-            if media.get_meta("checked", None) is None:
-                media.set_meta("checked", "False")
-        self.__trs.set_meta("media_collapsed", str(len(self.__trs.get_media_list()) == 0))
-
-        for vocab in self.__trs.get_ctrl_vocab_list():
-            if vocab.get_meta("checked", None) is None:
-                vocab.set_meta("checked", "False")
-        self.__trs.set_meta("vocabs_collapsed", str(len(self.__trs.get_ctrl_vocab_list()) == 0))
+    def update(self):
+        """Update the controls to match the data."""
+        panel = self.FindWindow("tierctrl_panel")
+        for i, tier in enumerate(self.__trs.get_tier_list()):
+            #self.__update_tier(tier, i)
+            panel.add_item(tier)
 
 # ---------------------------------------------------------------------------
 
@@ -507,7 +422,7 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
         info.Image = -1
         info.Align = 0
         lst.InsertColumn(0, info)
-        lst.SetColumnWidth(0, sppasPanel.fix_size(24))
+        lst.SetColumnWidth(0, sppasScrolledPanel.fix_size(24))
 
     # ------------------------------------------------------------------------
 
@@ -634,10 +549,10 @@ class TiersCollapsiblePanel(BaseObjectCollapsiblePanel):
         listctrl = self.FindWindow("listctrl")
         listctrl.AppendColumn("name",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(200))
+                              width=sppasScrolledPanel.fix_size(200))
         listctrl.AppendColumn("len",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(80))
+                              width=sppasScrolledPanel.fix_size(80))
 
     # ------------------------------------------------------------------------
 
@@ -675,10 +590,10 @@ class CtrlVocabCollapsiblePanel(BaseObjectCollapsiblePanel):
         listctrl = self.FindWindow("listctrl")
         listctrl.AppendColumn("name",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(200))
+                              width=sppasScrolledPanel.fix_size(200))
         listctrl.AppendColumn("description",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(80))
+                              width=sppasScrolledPanel.fix_size(80))
 
     # ------------------------------------------------------------------------
 
@@ -716,10 +631,10 @@ class MediaCollapsiblePanel(BaseObjectCollapsiblePanel):
         listctrl = self.FindWindow("listctrl")
         listctrl.AppendColumn("filename",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(200))
+                              width=sppasScrolledPanel.fix_size(200))
         listctrl.AppendColumn("mime",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(80))
+                              width=sppasScrolledPanel.fix_size(80))
 
     # ------------------------------------------------------------------------
 
@@ -737,15 +652,15 @@ class MediaCollapsiblePanel(BaseObjectCollapsiblePanel):
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(sppasPanel):
+class TestPanel(sppasScrolledPanel):
 
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent)
+        super(TestPanel, self).__init__(parent, name="TestPanel-listview")
 
         f1 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra")
         f2 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-salign.xra")
-        p1 = TrsViewPanel(self, f1)
-        p2 = TrsViewPanel(self, f2)
+        p1 = TrsListViewPanel(self, f1)
+        p2 = TrsListViewPanel(self, f2)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p1)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p2)
 
@@ -760,6 +675,7 @@ class TestPanel(sppasPanel):
         # self.FitInside()
         self.SetAutoLayout(True)
         self.Layout()
+        self.SetupScrolling(scroll_x=True, scroll_y=True)
 
     def OnCollapseChanged(self, evt=None):
         panel = evt.GetEventObject()

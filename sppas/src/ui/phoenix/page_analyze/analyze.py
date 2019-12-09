@@ -568,8 +568,7 @@ class sppasAnalyzePanel(sppasPanel):
         :param event: (wx.Event)
 
         """
-        page = event.GetEventObject()
-
+        # page = event.GetEventObject()
         try:
             action = event.action
             filename = event.filename
@@ -577,33 +576,15 @@ class sppasAnalyzePanel(sppasPanel):
             wx.LogError(str(e))
             return
 
-        if action == "save":
-            page.save_file(filename)
-
-        elif action == "close":
-            wx.LogDebug("Close...")
-            if page.is_modified() is False:
-                removed = page.remove_file(filename)
-            else:
-                wx.LogWarning("File contains not saved changes.")
-                # Ask the user to confirm to close (and changes are lost)
-                response = Confirm(CLOSE_CONFIRM, CLOSE)
-                if response == wx.ID_CANCEL:
-                    return False
-                removed = page.remove_file(filename, force=True)
-
-            if removed is True:
-                page.Layout()
-                page.Refresh()
-
-                # Unlock file
-                fns = [self.__data.get_object(filename)]
-                try:
-                    self.__data.unlock(fns)
-                    self.notify()
-                except Exception as e:
-                    wx.LogError(str(e))
-                    return False
+        if action == "close":
+            # Unlock the closed file
+            fns = [self.__data.get_object(filename)]
+            try:
+                self.__data.unlock(fns)
+                self.notify()
+            except Exception as e:
+                wx.LogError(str(e))
+                return False
 
     # -----------------------------------------------------------------------
     # Management of the book

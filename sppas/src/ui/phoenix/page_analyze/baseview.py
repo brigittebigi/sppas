@@ -41,8 +41,8 @@ from sppas import msg
 from sppas import paths
 from sppas.src.utils import u
 
-from ..windows import sppasPanel
-from ..windows import sppasStaticText
+from ..windows import sppasCollapsiblePanel
+from ..main_events import ViewEvent
 
 # ----------------------------------------------------------------------------
 # List of displayed messages:
@@ -53,11 +53,12 @@ def _(message):
 
 
 MSG_NO_CONTENT = _("Displaying a file is not implemented in this view.")
+MSG_NOT_SUPPORTED = _("The file can't be loaded by this view. ")
 
 # ----------------------------------------------------------------------------
 
 
-class sppasBaseViewPanel(sppasPanel):
+class sppasBaseViewPanel(sppasCollapsiblePanel):
     """Panel to display the content of a file.
 
     :author:       Brigitte Bigi
@@ -68,36 +69,39 @@ class sppasBaseViewPanel(sppasPanel):
 
     """
 
-    def __init__(self, parent, name="baseview", filename=""):
+    def __init__(self, parent, filename, name="baseview"):
         super(sppasBaseViewPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
             size=wx.DefaultSize,
+            label=filename,
             style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
         # The file this panel is displaying
         self._filename = filename
+        if filename is not None:
+            self.load_text()
 
         # Create the GUI
         self._hicolor = self.GetForegroundColour()
         self._create_content()
         self._setup_events()
 
-        if filename is not None:
-            self.load_text()
+        # Look&feel
+        self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
+        self.SetForegroundColour(wx.GetApp().settings.fg_color)
+        self.SetFont(wx.GetApp().settings.text_font)
 
-        self.Layout()
-
-    # -----------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def is_modified(self):
         """Return True if the content of the file has changed."""
         return False
 
     def load_text(self):
-        """Load the file and display it."""
+        """Load the file content into an object."""
         return False
 
     def save(self):
@@ -110,6 +114,21 @@ class sppasBaseViewPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def SetFont(self, font):
+        """Override."""
+        # The name of the file is Bold
+        f = wx.Font(font.GetPointSize(),
+                    font.GetFamily(),
+                    font.GetStyle(),
+                    wx.FONTWEIGHT_BOLD,
+                    font.GetUnderlined(),
+                    font.GetFaceName())
+        sppasCollapsiblePanel.SetFont(self, f)
+        self.GetPane().SetFont(font)
+        self.Layout()
+
+    # -----------------------------------------------------------------------
+
     def SetHighLightColor(self, color):
         """Set a color to highlight something."""
         self._hicolor = color
@@ -119,22 +138,29 @@ class sppasBaseViewPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _create_content(self):
-        """Create the main content, ie the content of the embedded panel."""
-        try:  # wx4
-            font = wx.SystemSettings().GetFont(wx.SYS_DEFAULT_GUI_FONT)
-        except AttributeError:  # wx3
-            font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
-        line_height = float(font.GetPixelSize()[1])
+        """Create the content of the panel."""
+        self.AddButton("save")
+        self.AddButton("close")
+        self._create_child_panel()
+        self.Collapse(True)
 
-        txt_msg = sppasStaticText(self, label=MSG_NO_CONTENT)
-        txt_msg.SetMinSize(wx.Size(-1, line_height * 2))
+    # -----------------------------------------------------------------------
 
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(txt_msg, 0, wx.EXPAND | wx.LEFT, sppasPanel.fix_size(34*2))
-        self.SetSizer(sizer)
+    def _create_child_panel(self):
+        """Override. Create the child panel."""
+        pass
 
     # -----------------------------------------------------------------------
     # Events management
+    # -----------------------------------------------------------------------
+
+    def notify(self, action):
+        wx.LogDebug("Parent is notified to {:s}".format(action))
+        wx.LogDebug("PARENT IS {:s}".format(self.GetParent().GetName()))
+        evt = ViewEvent(action=action)
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
     # -----------------------------------------------------------------------
 
     def _setup_events(self):
@@ -144,7 +170,45 @@ class sppasBaseViewPanel(sppasPanel):
         will be called.
 
         """
-        pass
+        self.GetPane().Bind(wx.EVT_SIZE, self.OnSize)
+
+        # The user pressed a key of its keyboard
+        # self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
+
+        # The user clicked a button of the collapsible panel toolbar
+        self.Bind(wx.EVT_BUTTON, self._process_event)
+
+    # -----------------------------------------------------------------------
+
+    def _process_event(self, event):
+        """Process any kind of event.
+
+        :param event: (wx.Event)
+
+        """
+        event_obj = event.GetButtonObj()
+        event_name = event_obj.GetName()
+
+        if event_name == "close":
+            self.notify("close")
+
+        elif event_name == "save":
+            self.notify("save")
+
+        else:
+            event.Skip()
+
+    # ------------------------------------------------------------------------
+
+    def OnSize(self, event):
+        """Handle the wx.EVT_SIZE event.
+
+        :param event: a SizeEvent event to be processed.
+
+        """
+        # each time our size is changed, the child panel needs a resize.
+        self.Layout()
+
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py

@@ -34,11 +34,13 @@
 
 """
 
+import os
 import wx
 
-from ..main_events import EVT_VIEW
+from sppas import paths
+
 from .anz_baseviews import BaseViewFilesPanel
-from .listview import TrsViewPanel
+from .listview import TrsListViewPanel
 
 # ----------------------------------------------------------------------------
 
@@ -59,8 +61,6 @@ class ListViewFilesPanel(BaseViewFilesPanel):
             parent,
             name=name,
             files=files)
-        self.SetupScrolling(scroll_x=True, scroll_y=True)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
 
     # -----------------------------------------------------------------------
 
@@ -80,15 +80,15 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     # -----------------------------------------------------------------------
 
     def _show_file(self, name):
-        """Create a CollapsiblePanel and a TextViewPanel to display a file.
+        """Create a ViewPanel to display a file.
 
         :param name: (str) Name of the file to view
         :return: wx.Window
 
         """
-        wx.LogMessage("Displaying file {:s} in TextView mode.".format(name))
-        panel = TrsViewPanel(self, filename=name)
-        self.GetSizer().Add(panel, 0, wx.EXPAND)
+        wx.LogMessage("Displaying file {:s} in ListView mode.".format(name))
+        panel = TrsListViewPanel(self, filename=name)
+        self.GetScrolledSizer().Add(panel, 0, wx.EXPAND)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
 
         return panel
@@ -97,57 +97,29 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     # Events management
     # -----------------------------------------------------------------------
 
-    def _setup_events(self):
-        """Associate an handler function with the events.
-
-        It means that when an event occurs then the process handler function
-        will be called.
-
-        """
-        self.Bind(EVT_VIEW, self._process_view_event)
-
-    # -----------------------------------------------------------------------
-
-    def _process_view_event(self, event):
-        """Process a view event: an action has to be performed.
-
-        :param event: (wx.Event)
-
-        """
-        try:
-            panel = event.GetEventObject()
-            panel_name = panel.GetName()
-
-            action = event.action
-            fn = None
-            for filename in self._files:
-                p = self._files[filename]
-                if p == panel:
-                    fn = filename
-                    break
-            if fn is None:
-                raise Exception("Unknown {:s} panel in ViewEvent."
-                                "".format(panel_name))
-        except Exception as e:
-            wx.LogError(str(e))
-            return
-
-        if action == "save":
-            self.notify(action="save", filename=fn)
-
-        elif action == "close":
-            self.notify(action="close", filename=fn)
-
-    # -----------------------------------------------------------------------
-
-    def OnSize(self, evt):
-        self.Layout()
-        self.Refresh()
-
-    # -----------------------------------------------------------------------
-
     def OnCollapseChanged(self, evt=None):
         panel = evt.GetEventObject()
         panel.SetFocus()
         self.ScrollChildIntoView(panel)
         self.Layout()
+
+
+# ----------------------------------------------------------------------------
+# Panel tested by test_glob.py
+# ----------------------------------------------------------------------------
+
+
+class TestPanel(ListViewFilesPanel):
+    TEST_FILES = (
+        os.path.join(paths.samples, "COPYRIGHT.txt"),
+        os.path.join(paths.samples, "annotation-results", "samples-fra",
+                     "F_F_B003-P8-palign.xra")
+    )
+
+    def __init__(self, parent):
+        super(TestPanel, self).__init__(
+            parent,
+            name="TestPanel-anz_baseviews",
+            files=TestPanel.TEST_FILES)
+        self.SetBackgroundColour(wx.Colour(128, 128, 128))
+

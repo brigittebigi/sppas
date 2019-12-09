@@ -36,14 +36,31 @@
 
 import wx
 
-from ..windows import sppasScrolledPanel
+from sppas import msg
+from sppas.src.utils import u
+
 from ..windows import sppasToolbar
-from ..main_events import ViewEvent
+from ..windows import sppasPanel
+from ..windows import sppasScrolledPanel
+from ..main_events import ViewEvent, EVT_VIEW
+from ..dialogs import Confirm
+
+# ---------------------------------------------------------------------------
+# List of displayed messages:
+
+
+def _(message):
+    return u(msg(message, "ui"))
+
+
+CLOSE = _("Close")
+CLOSE_CONFIRM = _("The file contains not saved work that will be lost."
+                  "Are you sure you want to close?")
 
 # ----------------------------------------------------------------------------
 
 
-class BaseViewFilesPanel(sppasScrolledPanel):
+class BaseViewFilesPanel(sppasPanel):
     """Panel to display the list of opened files and their content.
 
     :author:       Brigitte Bigi
@@ -70,6 +87,14 @@ class BaseViewFilesPanel(sppasScrolledPanel):
         self._create_content(files)
         self._setup_events()
 
+        # Look&feel
+        self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
+        self.SetForegroundColour(wx.GetApp().settings.fg_color)
+        self.SetFont(wx.GetApp().settings.text_font)
+
+        for f in files:
+            self.append_file(f)
+
         self.Layout()
 
     # -----------------------------------------------------------------------
@@ -87,7 +112,28 @@ class BaseViewFilesPanel(sppasScrolledPanel):
         self._hicolor = color
 
     # -----------------------------------------------------------------------
-    # Manage the files
+    # Manage the set of files
+    # -----------------------------------------------------------------------
+
+    def get_files(self):
+        """Return the list of filenames this panel is displaying."""
+        return list(self._files.keys())
+
+    # -----------------------------------------------------------------------
+    # Manage a given file
+    # -----------------------------------------------------------------------
+
+    def can_edit(self):
+        """Return True if this view can modify/save the file content.
+
+        Can be overridden.
+
+        If True, the methods 'is_modified' and 'save' should be implemented
+        in the view panel of each file.
+
+        """
+        return False
+
     # -----------------------------------------------------------------------
 
     def is_modified(self, name=None):
@@ -114,12 +160,6 @@ class BaseViewFilesPanel(sppasScrolledPanel):
                 pass
 
         return False
-
-    # -----------------------------------------------------------------------
-
-    def get_files(self):
-        """Return the list of filenames this panel is displaying."""
-        return list(self._files.keys())
 
     # -----------------------------------------------------------------------
 
@@ -159,13 +199,13 @@ class BaseViewFilesPanel(sppasScrolledPanel):
                 return False
 
             # Destroy the panel and remove of the sizer
-            for i, child in enumerate(self.GetChildren()):
+            for i, child in enumerate(self.GetScrolledChildren()):
                 if child == page:
-                    self.GetSizer().Remove(i)
+                    self.GetScrolledSizer().Remove(i)
                     break
                 for c in child.GetChildren():
                     if c == page:
-                        self.GetSizer().Remove(i)
+                        self.GetScrolledSizer().Remove(i)
                         break
 
             page.Destroy()
@@ -174,19 +214,6 @@ class BaseViewFilesPanel(sppasScrolledPanel):
             self._files.pop(name)
             return True
 
-        return False
-
-    # -----------------------------------------------------------------------
-
-    def can_edit(self):
-        """Return True if this view can modify/save the file content.
-
-        Can be overridden.
-
-        If True, the methods 'is_modified' and 'save' should be implemented
-        in the view panel of each file.
-
-        """
         return False
 
     # -----------------------------------------------------------------------
@@ -213,6 +240,39 @@ class BaseViewFilesPanel(sppasScrolledPanel):
         return saved
 
     # -----------------------------------------------------------------------
+    # Manage a given file and its page
+    # -----------------------------------------------------------------------
+
+    def close_page(self, filename):
+        """Close the page matching the given filename.
+
+        :param filename: (str)
+        :return: (bool) The page was closed.
+
+        """
+        if filename not in self._files:
+            return False
+        page = self._files[filename]
+
+        if page.is_modified() is True:
+            wx.LogWarning("File contains not saved changes.")
+            # Ask the user to confirm to close (and changes are lost)
+            response = Confirm(CLOSE_CONFIRM, CLOSE)
+            if response == wx.ID_CANCEL:
+                return False
+
+        removed = self.remove_file(filename, force=True)
+        if removed is True:
+            self.Layout()
+            self.Refresh()
+
+            # The parent will unlock the file in the workspace
+            self.notify(action="close", filename=filename)
+            return True
+
+        return False
+
+    # -----------------------------------------------------------------------
     # Private methods to construct the panel.
     # -----------------------------------------------------------------------
 
@@ -234,12 +294,45 @@ class BaseViewFilesPanel(sppasScrolledPanel):
         :param files: (list) List of filenames
 
         """
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(sizer)
-        for f in files:
-            self.append_file(f)
-        min_height = sppasScrolledPanel.fix_size(48)*len(self._files)
-        self.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(420), min_height))
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        toolbar = self._create_toolbar()
+        scrolled = self._create_scrolled_content()
+        main_sizer.Add(toolbar, 0, wx.EXPAND)
+        main_sizer.Add(scrolled, 1, wx.EXPAND)
+        self.SetSizer(main_sizer)
+
+    # -----------------------------------------------------------------------
+
+    def _create_toolbar(self):
+        toolbar = sppasToolbar(self, name="toolbar_views")
+        return toolbar
+
+    # -----------------------------------------------------------------------
+
+    def _create_scrolled_content(self):
+        content_panel = sppasScrolledPanel(self, name="scrolled_views")
+        content_sizer = wx.BoxSizer(wx.VERTICAL)
+        content_panel.SetupScrolling(scroll_x=True, scroll_y=True)
+        content_panel.SetSizer(content_sizer)
+        min_height = sppasPanel.fix_size(48)*len(self._files)
+        content_panel.SetMinSize(wx.Size(sppasPanel.fix_size(420), min_height))
+
+        return content_panel
+
+    # -----------------------------------------------------------------------
+
+    def GetScrolledSizer(self):
+        return self.FindWindow("scrolled_views").GetSizer()
+
+    # -----------------------------------------------------------------------
+
+    def GetScrolledChildren(self):
+        return self.FindWindow("scrolled_views").GetChildren()
+
+    # -----------------------------------------------------------------------
+
+    def ScrollChildIntoView(self, panel):
+        self.FindWindow("scrolled_views").ScrollChildIntoView(panel)
 
     # -----------------------------------------------------------------------
     # Events management
@@ -263,8 +356,39 @@ class BaseViewFilesPanel(sppasScrolledPanel):
 
         It means that when an event occurs then the process handler function
         will be called.
-        To be overridden.
 
         """
-        pass
+        self.Bind(EVT_VIEW, self._process_view_event)
 
+    # -----------------------------------------------------------------------
+
+    def _process_view_event(self, event):
+        """Process a view event: an action has to be performed.
+
+        :param event: (wx.Event)
+
+        """
+        wx.LogDebug("View Event received by {:s}".format(self.GetName()))
+        try:
+            panel = event.GetEventObject()
+            panel_name = panel.GetName()
+
+            action = event.action
+            fn = None
+            for filename in self._files:
+                p = self._files[filename]
+                if p == panel:
+                    fn = filename
+                    break
+            if fn is None:
+                raise Exception("Unknown {:s} panel in ViewEvent."
+                                "".format(panel_name))
+        except Exception as e:
+            wx.LogError(str(e))
+            return
+
+        if action == "save":
+            self.save_file(fn)
+
+        elif action == "close":
+            self.close_page(fn)
