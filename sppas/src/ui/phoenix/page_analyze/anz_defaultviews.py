@@ -55,12 +55,11 @@ class DefaultViewFilesPanel(BaseViewFilesPanel):
 
     """
 
-    def __init__(self, parent, name="default-view-files", files=tuple()):
+    def __init__(self, parent, name="defaultviewfiles", files=tuple()):
         super(DefaultViewFilesPanel, self).__init__(
             parent,
             name=name,
             files=files)
-        self.SetupScrolling(scroll_x=False, scroll_y=True)
 
     # -----------------------------------------------------------------------
 

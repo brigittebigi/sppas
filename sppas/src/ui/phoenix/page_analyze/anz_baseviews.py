@@ -43,6 +43,7 @@ from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..main_events import ViewEvent, EVT_VIEW
 from ..dialogs import Confirm
+from .errview import ErrorViewPanel
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
@@ -175,7 +176,15 @@ class BaseViewFilesPanel(sppasPanel):
             wx.LogError('Name {:s} is already in the list of files.')
             raise ValueError('Name {:s} is already in the list of files.')
 
-        self._files[name] = self._show_file(name)
+        try:
+            panel = self._show_file(name)
+        except Exception as e:
+            panel = ErrorViewPanel(self.GetScrolledPanel(), name)
+            panel.set_error_message(str(e))
+            self.GetScrolledSizer().Add(panel, 0, wx.EXPAND)
+            self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
+
+        self._files[name] = panel
 
     # -----------------------------------------------------------------------
 
@@ -325,6 +334,11 @@ class BaseViewFilesPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def GetScrolledPanel(self):
+        return self.FindWindow("scrolled_views")
+
+    # -----------------------------------------------------------------------
+
     def GetScrolledSizer(self):
         return self.FindWindow("scrolled_views").GetSizer()
 
@@ -396,3 +410,11 @@ class BaseViewFilesPanel(sppasPanel):
 
         elif action == "close":
             self.close_page(fn)
+
+    # -----------------------------------------------------------------------
+
+    def OnCollapseChanged(self, evt=None):
+        panel = evt.GetEventObject()
+        panel.SetFocus()
+        self.ScrollChildIntoView(panel)
+        self.Layout()

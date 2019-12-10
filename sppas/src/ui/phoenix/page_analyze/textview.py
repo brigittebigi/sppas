@@ -47,7 +47,6 @@ from ..windows import sppasScrolledPanel
 from ..windows import sppasTextCtrl
 
 from .baseview import sppasBaseViewPanel
-from .baseview import MSG_NOT_SUPPORTED
 
 # ---------------------------------------------------------------------------
 
@@ -61,10 +60,12 @@ class TextViewPanel(sppasBaseViewPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
+    The object this class is displaying is a list of lines.
+
     """
 
     def __init__(self, parent, filename, name="textview-panel"):
-        self.__lines = list()
+        self._object = list()
         super(TextViewPanel, self).__init__(parent, filename, name)
 
     # -----------------------------------------------------------------------
@@ -85,20 +86,20 @@ class TextViewPanel(sppasBaseViewPanel):
         :return: (List of loaded lines)
 
         """
-        return self.__lines
+        return self._object
 
     # ------------------------------------------------------------------------
 
     def load_text(self):
-        """Load the file content into an object."""
+        """Load the file content into an object.
+
+        :raises: IOError, UnicodeDecodeError, ...
+
+        """
         wx.LogMessage("Load text of file {:s}".format(self._filename))
-        try:
-            with codecs.open(self._filename, 'r', sg.__encoding__) as fp:
-                self.__lines = fp.readlines()
-            wx.LogMessage("Text loaded: {:d} lines.".format(len(self.__lines)))
-        except Exception as e:
-            self.__lines = [MSG_NOT_SUPPORTED]
-            self.__lines.append("{:s}".format(str(e)))
+        with codecs.open(self._filename, 'r', sg.__encoding__) as fp:
+            self._object = fp.readlines()
+        wx.LogMessage("Text loaded: {:d} lines.".format(len(self._object)))
 
     # -----------------------------------------------------------------------
 
@@ -136,16 +137,18 @@ class TextViewPanel(sppasBaseViewPanel):
         self.SetPane(txtview)
         self.__set_text_content()
 
+    # -----------------------------------------------------------------------
+
     def __set_text_content(self):
         txtview = self.GetPane()
-        content = "".join(self.__lines)
+        content = "".join(self._object)
         txtview.SetValue(content)
 
         # required under Windows
         txtview.SetStyle(0, len(content), txtview.GetDefaultStyle())
 
         # Search for the height of the text
-        nblines = len(self.__lines) + 1
+        nblines = len(self._object) + 1
         view_height = float(self.get_line_height()) * 1.1 * nblines
         txtview.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(420), view_height))
         txtview.SetModified(False)
@@ -171,15 +174,11 @@ class TextViewPanel(sppasBaseViewPanel):
 
     # -----------------------------------------------------------------------
 
-    def get_line_height(self):
-        font = self.GetFont()
-        return int(float(font.GetPixelSize()[1]))
-
-    # -----------------------------------------------------------------------
-
     def _eval_height(self):
         """Return the optimal height of the textctrl."""
-        view_height = float(self.get_line_height()) * 1.3 * len(self.__lines)
+        view_height = float(sppasBaseViewPanel.get_line_height()) \
+                      * 1.3 \
+                      * len(self._object)
         return int(view_height) + 6
 
 # ----------------------------------------------------------------------------

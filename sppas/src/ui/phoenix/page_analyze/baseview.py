@@ -34,26 +34,11 @@
 
 """
 
-import os
 import wx
-
-from sppas import msg
-from sppas import paths
-from sppas.src.utils import u
 
 from ..windows import sppasCollapsiblePanel
 from ..main_events import ViewEvent
 
-# ----------------------------------------------------------------------------
-# List of displayed messages:
-
-
-def _(message):
-    return u(msg(message, "ui"))
-
-
-MSG_NO_CONTENT = _("Displaying a file is not implemented in this view.")
-MSG_NOT_SUPPORTED = _("The file can't be loaded by this view. ")
 
 # ----------------------------------------------------------------------------
 
@@ -100,17 +85,33 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
         """Return True if the content of the file has changed."""
         return False
 
+    # ------------------------------------------------------------------------
+
     def load_text(self):
-        """Load the file content into an object."""
-        return False
+        """Load the file content into an object.
+
+        Raise an exception if the file is not supported or can't be read.
+
+        """
+        raise NotImplementedError
+
+    # ------------------------------------------------------------------------
 
     def save(self):
         """Save the displayed text into a file."""
         return False
 
+    # ------------------------------------------------------------------------
+
     def get_object(self):
         """Return the object created from the opened file."""
         return None
+
+    # -----------------------------------------------------------------------
+
+    def get_line_height(self):
+        font = self.GetFont()
+        return int(float(font.GetPixelSize()[1]))
 
     # -----------------------------------------------------------------------
 
@@ -148,15 +149,13 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
 
     def _create_child_panel(self):
         """Override. Create the child panel."""
-        pass
+        raise NotImplementedError
 
     # -----------------------------------------------------------------------
     # Events management
     # -----------------------------------------------------------------------
 
     def notify(self, action):
-        wx.LogDebug("Parent is notified to {:s}".format(action))
-        wx.LogDebug("PARENT IS {:s}".format(self.GetParent().GetName()))
         evt = ViewEvent(action=action)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
@@ -209,15 +208,3 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
         # each time our size is changed, the child panel needs a resize.
         self.Layout()
 
-
-# ----------------------------------------------------------------------------
-# Panel tested by test_glob.py
-# ----------------------------------------------------------------------------
-
-
-class TestPanel(sppasBaseViewPanel):
-
-    def __init__(self, parent):
-        super(TestPanel, self).__init__(
-            parent, filename=os.path.join(paths.samples, "COPYRIGHT.txt"))
-        self.SetBackgroundColour(wx.Colour(128, 128, 128))

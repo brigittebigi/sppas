@@ -96,16 +96,6 @@ class TextViewFilesPanel(BaseViewFilesPanel):
 
         return panel
 
-    # -----------------------------------------------------------------------
-    # Events management
-    # -----------------------------------------------------------------------
-
-    def OnCollapseChanged(self, evt=None):
-        panel = evt.GetEventObject()
-        panel.SetFocus()
-        self.ScrollChildIntoView(panel)
-        self.Layout()
-
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
 # ----------------------------------------------------------------------------

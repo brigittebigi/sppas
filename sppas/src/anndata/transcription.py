@@ -619,7 +619,7 @@ class sppasTranscription(object):
         Return it. If no index is specified, pop() removes
         and returns the last tier in the transcription.
 
-        :param index: (int) Index of the transcription to remove.
+        :param index: (int) Index of the tier to remove.
         :returns: (sppasTier)
         :raise: AnnDataIndexError
 
@@ -714,3 +714,14 @@ class sppasTranscription(object):
 
     def __getitem__(self, i):
         return self._tiers[i]
+
+    # -----------------------------------------------------------------------
+
+    def __contains__(self, tier):
+       if tier in self._tiers:
+           return True
+       for t in self._tiers:
+           if t.get_meta("id") == tier.get_meta("id"):
+               return True
+       return False
+

@@ -57,7 +57,6 @@ import sppas.src.ui.phoenix.page_analyze.anz_textviews as anztextviews
 import sppas.src.ui.phoenix.page_analyze.anz_listviews as anzlistviews
 import sppas.src.ui.phoenix.page_analyze.listview as listview
 import sppas.src.ui.phoenix.page_analyze.textview as textview
-import sppas.src.ui.phoenix.page_analyze.baseview as baseview
 import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
 
 # ----------------------------------------------------------------------------
@@ -80,7 +79,6 @@ class TestPanel(wx.Choicebook):
         self.AddPage(anzlistviews.TestPanel(self), "Analyze Summary view")
         self.AddPage(listview.TestPanel(self), "Summary view")
         self.AddPage(textview.TestPanel(self), "Text view")
-        self.AddPage(baseview.TestPanel(self), "Base view")
         self.AddPage(filesmanager.TestPanel(self), "Files manager")
         self.AddPage(anz_tabs.TestPanel(self), "Tabs analyze")
         self.AddPage(refsmanager.TestPanel(self), "References manager")

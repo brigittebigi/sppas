@@ -378,9 +378,6 @@ class TrsList(wx.Panel):
         self._box_title.SetForegroundColour(FG_FILE_DIRTY_COLOUR)
         self.Refresh()
 
-        logging.debug('Cut: returned clipboard tier is {:s}'.format(clipboard))
-        logging.debug('Cut. returned clipboard tier name is {:s}'.format(clipboard.get_name()))
-
         return clipboard
 
     # ----------------------------------------------------------------------

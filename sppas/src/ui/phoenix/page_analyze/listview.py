@@ -45,6 +45,8 @@ from sppas import paths
 
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
+from sppas.src.anndata.anndataexc import TrsAddError
+
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasMedia
 from sppas.src.anndata import sppasHierarchy
@@ -75,7 +77,7 @@ STATES_ICON_NAMES = {
 
 
 class TrsListViewPanel(sppasBaseViewPanel):
-    """A panel to display the content of a sppasTranscription as a list.
+    """A panel to display the content of a file as a list.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -83,24 +85,39 @@ class TrsListViewPanel(sppasBaseViewPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
+    The object this class is displaying is a sppasTranscription.
+
     """
 
     def __init__(self, parent, filename, name="listview-panel"):
-        self.__trs = sppasTranscription()
+        self._object = sppasTranscription()
         self.__dirty = False
-        self.__clipboard = list()
         super(TrsListViewPanel, self).__init__(parent, filename, name)
 
     # ----------------------------------------------------------------------
 
-    def is_selected(self, tier_name, case_sensitive=False):
+    def get_nb_checked_tier(self):
+        """Return the number of checked tiers."""
+        nb = 0
+        for tier in self._object.get_tier_list():
+            if tier.get_meta("checked") == "True":
+                nb += 1
+                wx.LogDebug("Tier {:s} is checked.".format(tier.get_name()))
+            else:
+                wx.LogDebug("Tier {:s} is not checked.".format(tier.get_name()))
+
+        return nb
+
+    # ----------------------------------------------------------------------
+
+    def is_selected_tier(self, tier_name, case_sensitive=False):
         """Return True if the tier is selected.
 
         :param tier_name: (str or None)
         :param case_sensitive: (bool)
 
         """
-        tier = self.__trs.find(tier_name, case_sensitive)
+        tier = self._object.find(tier_name, case_sensitive)
         checked = False
         if tier is not None:
             checked = tier.get_meta("checked")
@@ -108,7 +125,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     # ----------------------------------------------------------------------
 
-    def select(self, tier_name=None, case_sensitive=False):
+    def select_tier(self, tier_name=None, case_sensitive=False):
         """Select all tiers or the tier which name is exactly matching.
 
         :param tier_name: (str or None)
@@ -117,16 +134,16 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """
         panel = self.FindWindow("tiers-panel")
         if tier_name is not None:
-            tier = self.__trs.find(tier_name, case_sensitive)
+            tier = self._object.find(tier_name, case_sensitive)
             if tier is not None:
                 panel.change_state(tier.get_meta("id"), "True")
         else:
-            for tier in self.__trs.get_tier_list():
+            for tier in self._object.get_tier_list():
                 panel.change_state(tier.get_meta("id"), "True")
 
     # ----------------------------------------------------------------------
 
-    def unselect(self, tier_name=None, case_sensitive=False):
+    def unselect_tier(self, tier_name=None, case_sensitive=False):
         """Deselect all tiers or the tier which name is exactly matching.
 
         :param tier_name: (str or None)
@@ -135,16 +152,16 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """
         panel = self.FindWindow("tiers-panel")
         if tier_name is not None:
-            tier = self.__trs.find(tier_name, case_sensitive)
+            tier = self._object.find(tier_name, case_sensitive)
             if tier is not None:
                 panel.change_state(tier.get_meta("id"), "False")
         else:
-            for tier in self.__trs.get_tier_list():
+            for tier in self._object.get_tier_list():
                 panel.change_state(tier.get_meta("id"), "False")
 
     # ----------------------------------------------------------------------
 
-    def rename(self, new_name):
+    def rename_tier(self, new_name):
         """Rename the checked tier.
 
         :param new_name: (str)
@@ -153,7 +170,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         if len(new_name) == 0:
             new_name = None
         panel = self.FindWindow("tiers-panel")
-        for tier in self.__trs.get_tier_list():
+        for tier in self._object.get_tier_list():
             if tier.get_meta("checked") == "True":
                 old_name = tier.get_name()
                 if old_name != new_name:
@@ -165,7 +182,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     # ----------------------------------------------------------------------
 
-    def delete(self, tier_name=None):
+    def delete_tier(self, tier_name=None):
         """Delete all checked tiers or the tier which name is exactly matching.
 
         :param tier_name: (str or None)
@@ -173,78 +190,115 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """
         panel = self.FindWindow("tiers-panel")
         if tier_name is not None:
-            tier = self.__trs.find(tier_name, case_sensitive=True)
+            tier = self._object.find(tier_name, case_sensitive=True)
             if tier is not None:
                 panel.remove(tier.get_meta("id"))
         else:
-            for tier in self.__trs.get_tier_list():
+            i = len(self._object)
+            for tier in reversed(self._object.get_tier_list()):
+                i -= 1
                 if tier.get_meta("checked") == "True":
                     panel.remove(tier.get_meta("id"))
+                    self._object.pop(i)
 
         self.Layout()
 
     # ----------------------------------------------------------------------
 
-    def copy(self):
-        """Copy checked tiers to the clipboard."""
-        self.__clipboard = list()
-        for tier in self.__trs.get_tier_list():
-            # Copy the tier to the clipboard
-            new_tier = tier.copy()
-            new_tier.set_meta("tier_was_copied_from_id", tier.get_meta('id'))
-            new_tier.set_meta("tier_was_copied_from_name", tier.get_name())
-            new_tier.gen_id()
-            self.__clipboard.append(new_tier)
+    def cut_tier(self):
+        """Remove checked tiers of the transcription and return them.
+
+        :return: (list of sppasTier)
+
+        """
+        clipboard = list()
+        for tier in self._object.get_tier_list():
+            if tier.get_meta("checked") == "True":
+                # Copy the tier to the clipboard
+                new_tier = tier.copy()
+                clipboard.append(new_tier)
+
+        self.delete_tier()
+        return clipboard
 
     # ----------------------------------------------------------------------
 
-    def paste(self, clipboard=None):
+    def copy_tier(self):
+        """Copy checked tiers to the clipboard.
+
+        The new tiers have a different identifier.
+
+        """
+        clipboard = list()
+        for tier in self._object.get_tier_list():
+            if tier.get_meta("checked") == "True":
+                # Copy the tier to the clipboard
+                new_tier = tier.copy()
+                new_tier.set_meta("tier_copied_from_id", tier.get_meta('id'))
+                new_tier.set_meta("tier_copied_from_name", tier.get_name())
+                new_tier.gen_id()
+                clipboard.append(new_tier)
+
+        return clipboard
+
+    # ----------------------------------------------------------------------
+
+    def paste_tier(self, clipboard):
         """Paste the clipboard tier(s) to the current page.
 
         :param clipboard: (list of tiers, or None)
 
         """
+        added = 0
         panel = self.FindWindow("tiers-panel")
-        # Get the clipboard tiers
-        if clipboard is None:
-            clipboard = self.__clipboard
 
         # Append clipboard tiers to the transcription
         for tier in clipboard:
-            self.__trs.append(tier)
-            # .......WHAT ABOUT ITS MEDIA AND CTRL VOCAB......
-            # (to be copied or not... ???)
-            # The tier comes from another Transcription... must update infos.
-            if not (tier.get_parent() is self.__trs):
-                tier.set_parent(self.__trs)
-            panel.add(tier)
+            copied_tier = tier.copy()
+            copied_tier.gen_id()
+            try:
+                self._object.append(copied_tier)
+                # The tier comes from another Transcription... must update infos.
+                if not (copied_tier.get_parent() is self._object):
+                    copied_tier.set_parent(self._object)
+                panel.add(copied_tier)
+                added += 1
+            except TrsAddError as e:
+                wx.LogError("{:s}".format(str(e)))
 
-        self.Layout()
+        if added > 0:
+            self.Layout()
+        return added
 
     # ----------------------------------------------------------------------
 
-    def duplicate(self):
+    def duplicate_tier(self):
         """Duplicate the checked tiers."""
         panel = self.FindWindow("tiers-panel")
 
-        for tier in self.__trs.get_tier_list():
-            new_tier = tier.copy()
-            new_tier.gen_id()
-            new_tier.set_meta("tier_was_duplicated_from_id",
-                              tier.get_meta('id'))
-            new_tier.set_meta("tier_was_duplicated_from_name", tier.get_name())
-            self.__trs.append(tier)
-            panel.add(tier)
+        nb = 0
+        for tier in reversed(self._object.get_tier_list()):
+            if tier.get_meta("checked") == "True":
+                new_tier = tier.copy()
+                new_tier.gen_id()
+                new_tier.set_meta("checked", "False")
+                new_tier.set_meta("tier_was_duplicated_from_id", tier.get_meta('id'))
+                new_tier.set_meta("tier_was_duplicated_from_name", tier.get_name())
+                self._object.append(new_tier)
+                panel.add(new_tier)
+                nb += 1
+
+        return nb
 
     # ----------------------------------------------------------------------
 
-    def move_up(self):
+    def move_up_tier(self):
         """Move up the selected tiers (except for the first one)."""
         pass
 
     # ----------------------------------------------------------------------
 
-    def move_down(self):
+    def move_down_tier(self):
         """Move up the selected tiers (except for the first one)."""
         pass
 
@@ -253,11 +307,11 @@ class TrsListViewPanel(sppasBaseViewPanel):
     def radius(self, r, tier_name=None):
         """Fix a new radius value to the checked tier."""
         if tier_name is not None:
-            tier = self.__trs.find(tier_name, case_sensitive=True)
+            tier = self._object.find(tier_name, case_sensitive=True)
             if tier is not None:
                 tier.set_radius(r)
         else:
-            for tier in self.__trs.get_tier_list():
+            for tier in self._object.get_tier_list():
                 tier.set_radius(r)
 
     # -----------------------------------------------------------------------
@@ -276,7 +330,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         :return: (sppasTranscription)
 
         """
-        return self.__trs
+        return self._object
 
     # -----------------------------------------------------------------------
 
@@ -286,29 +340,31 @@ class TrsListViewPanel(sppasBaseViewPanel):
         Add the appropriate metadata.
         The tiers, medias and controlled vocab lists are collapsed if empty.
 
+        :raises: AioFileExtensionError
+
         """
         parser = sppasRW(self._filename)
-        self.__trs = parser.read()
+        self._object = parser.read()
 
-        if self.__trs.get_meta("checked", None) is None:
-            self.__trs.set_meta("checked", "False")
-        if self.__trs.get_meta("collapsed", None) is None:
-            self.__trs.set_meta("collapsed", "False")
+        if self._object.get_meta("checked", None) is None:
+            self._object.set_meta("checked", "False")
+        if self._object.get_meta("collapsed", None) is None:
+            self._object.set_meta("collapsed", "False")
 
-        for tier in self.__trs.get_tier_list():
+        for tier in self._object.get_tier_list():
             if tier.get_meta("checked", None) is None:
                 tier.set_meta("checked", "False")
-        self.__trs.set_meta("tiers_collapsed", str(len(self.__trs.get_tier_list()) == 0))
+        self._object.set_meta("tiers_collapsed", str(len(self._object.get_tier_list()) == 0))
 
-        for media in self.__trs.get_media_list():
+        for media in self._object.get_media_list():
             if media.get_meta("checked", None) is None:
                 media.set_meta("checked", "False")
-        self.__trs.set_meta("media_collapsed", str(len(self.__trs.get_media_list()) == 0))
+        self._object.set_meta("media_collapsed", str(len(self._object.get_media_list()) == 0))
 
-        for vocab in self.__trs.get_ctrl_vocab_list():
+        for vocab in self._object.get_ctrl_vocab_list():
             if vocab.get_meta("checked", None) is None:
                 vocab.set_meta("checked", "False")
-        self.__trs.set_meta("vocabs_collapsed", str(len(self.__trs.get_ctrl_vocab_list()) == 0))
+        self._object.set_meta("vocabs_collapsed", str(len(self._object.get_ctrl_vocab_list()) == 0))
 
     # -----------------------------------------------------------------------
 
@@ -327,7 +383,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
             parser = sppasRW(filename)
 
         if parser is not None:
-            parser.write(self.__trs)
+            parser.write(self._object)
             return True
         return False
 
@@ -338,7 +394,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         self.AddButton("save")
         self.AddButton("close")
         self._create_child_panel()
-        self.Collapse(self.str_to_bool(self.__trs.get_meta("collapsed")))
+        self.Collapse(self.str_to_bool(self._object.get_meta("collapsed")))
 
     # ------------------------------------------------------------------------
 
@@ -349,16 +405,16 @@ class TrsListViewPanel(sppasBaseViewPanel):
         # todo: add metadata
         # todo: add hierarchy
 
-        tier_ctrl = TiersCollapsiblePanel(child_panel, self.__trs.get_tier_list())
-        tier_ctrl.Collapse(self.str_to_bool(self.__trs.get_meta("tiers_collapsed")))
+        tier_ctrl = TiersCollapsiblePanel(child_panel, self._object.get_tier_list())
+        tier_ctrl.Collapse(self.str_to_bool(self._object.get_meta("tiers_collapsed")))
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, tier_ctrl)
 
-        media_ctrl = MediaCollapsiblePanel(child_panel, self.__trs.get_media_list())
-        media_ctrl.Collapse(self.str_to_bool(self.__trs.get_meta("media_collapsed")))
+        media_ctrl = MediaCollapsiblePanel(child_panel, self._object.get_media_list())
+        media_ctrl.Collapse(self.str_to_bool(self._object.get_meta("media_collapsed")))
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, media_ctrl)
 
-        vocab_ctrl = CtrlVocabCollapsiblePanel(child_panel, self.__trs.get_ctrl_vocab_list())
-        vocab_ctrl.Collapse(self.str_to_bool(self.__trs.get_meta("vocabs_collapsed")))
+        vocab_ctrl = CtrlVocabCollapsiblePanel(child_panel, self._object.get_ctrl_vocab_list())
+        vocab_ctrl.Collapse(self.str_to_bool(self._object.get_meta("vocabs_collapsed")))
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, vocab_ctrl)
 
         # y_ctrl = self.__create_hyctrl()
@@ -386,7 +442,6 @@ class TrsListViewPanel(sppasBaseViewPanel):
         :param event: (wx.Event)
 
         """
-        # the object is a FileBase (path, root or file)
         object_id = event.id
         obj = self.get_object_in_trs(object_id)
 
@@ -396,6 +451,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         if current_state == "False":
             new_state = "True"
         obj.set_meta("checked", new_state)
+        wx.LogDebug("New state {:s} for object {:s}. ".format(new_state, obj.get_name()))
 
         # update the corresponding panel(s)
         panel = event.GetEventObject()
@@ -404,15 +460,15 @@ class TrsListViewPanel(sppasBaseViewPanel):
     # ------------------------------------------------------------------------
 
     def get_object_in_trs(self, identifier):
-        obj = self.__trs.get_tier_from_id(identifier)
+        obj = self._object.get_tier_from_id(identifier)
         if obj is not None:
             return obj
 
-        obj = self.__trs.get_media_from_id(identifier)
+        obj = self._object.get_media_from_id(identifier)
         if obj is not None:
             return obj
 
-        obj = self.__trs.get_ctrl_vocab_from_id(identifier)
+        obj = self._object.get_ctrl_vocab_from_id(identifier)
         if obj is not None:
             return obj
 
@@ -424,11 +480,11 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """One of the list child panel was collapsed/expanded."""
         panel = evt.GetEventObject()
         if panel.GetName() == "tiers-panel":
-            self.__trs.set_meta("tiers_expanded", str(panel.IsExpanded()))
+            self._object.set_meta("tiers_expanded", str(panel.IsExpanded()))
         elif panel.GetName() == "media-panel":
-            self.__trs.set_meta("media_expanded", str(panel.IsExpanded()))
+            self._object.set_meta("media_expanded", str(panel.IsExpanded()))
         elif panel.GetName() == "vocabs-panel":
-            self.__trs.set_meta("vocab_expanded", str(panel.IsExpanded()))
+            self._object.set_meta("vocab_expanded", str(panel.IsExpanded()))
         else:
             return
 
@@ -453,7 +509,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
     def update(self):
         """Update the controls to match the data."""
         panel = self.FindWindow("tiers-panel")
-        for i, tier in enumerate(self.__trs.get_tier_list()):
+        for i, tier in enumerate(self._object.get_tier_list()):
             #self.__update_tier(tier, i)
             panel.add_item(tier)
 
@@ -728,17 +784,17 @@ class TiersCollapsiblePanel(BaseObjectCollapsiblePanel):
         listctrl = self.FindWindow("listctrl")
         listctrl.AppendColumn("name",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(200))
+                              width=sppasScrolledPanel.fix_size(160))
         listctrl.AppendColumn("len",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(40))
+                              width=sppasScrolledPanel.fix_size(30))
         listctrl.AppendColumn("loctype",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(40))
+                              width=sppasScrolledPanel.fix_size(50))
         listctrl.AppendColumn("begin",
                               format=wx.LIST_FORMAT_LEFT,
                               width=sppasScrolledPanel.fix_size(40))
-        listctrl.AppendColumn("begin",
+        listctrl.AppendColumn("end",
                               format=wx.LIST_FORMAT_LEFT,
                               width=sppasScrolledPanel.fix_size(40))
         listctrl.AppendColumn("tagtype",
@@ -746,7 +802,10 @@ class TiersCollapsiblePanel(BaseObjectCollapsiblePanel):
                               width=sppasScrolledPanel.fix_size(40))
         listctrl.AppendColumn("tagged",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(40))
+                              width=sppasScrolledPanel.fix_size(30))
+        listctrl.AppendColumn("id",
+                              format=wx.LIST_FORMAT_LEFT,
+                              width=sppasScrolledPanel.fix_size(220))
 
     # ------------------------------------------------------------------------
 
@@ -793,6 +852,7 @@ class TiersCollapsiblePanel(BaseObjectCollapsiblePanel):
             listctrl.SetItem(index, 5, end)
             listctrl.SetItem(index, 6, tier_tag_type)
             listctrl.SetItem(index, 7, str(obj.get_nb_filled_labels()))
+            listctrl.SetItem(index, 8, obj.get_meta("id"))
             listctrl.RefreshItem(index)
 
 # ---------------------------------------------------------------------------
@@ -824,6 +884,9 @@ class CtrlVocabCollapsiblePanel(BaseObjectCollapsiblePanel):
         listctrl.AppendColumn("description",
                               format=wx.LIST_FORMAT_LEFT,
                               width=sppasScrolledPanel.fix_size(80))
+        listctrl.AppendColumn("id",
+                              format=wx.LIST_FORMAT_LEFT,
+                              width=sppasScrolledPanel.fix_size(220))
 
     # ------------------------------------------------------------------------
 
@@ -834,6 +897,7 @@ class CtrlVocabCollapsiblePanel(BaseObjectCollapsiblePanel):
             index = self._objects.index(obj.get_meta("id"))
             listctrl.SetItem(index, 1, obj.get_name())
             listctrl.SetItem(index, 2, obj.get_description())
+            listctrl.SetItem(index, 3, obj.get_meta("id"))
             listctrl.RefreshItem(index)
 
 # ---------------------------------------------------------------------------
@@ -861,10 +925,13 @@ class MediaCollapsiblePanel(BaseObjectCollapsiblePanel):
         listctrl = self.FindWindow("listctrl")
         listctrl.AppendColumn("filename",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(200))
-        listctrl.AppendColumn("mime",
+                              width=sppasScrolledPanel.fix_size(300))
+        listctrl.AppendColumn("mimeheader",
                               format=wx.LIST_FORMAT_LEFT,
                               width=sppasScrolledPanel.fix_size(80))
+        listctrl.AppendColumn("id",
+                              format=wx.LIST_FORMAT_LEFT,
+                              width=sppasScrolledPanel.fix_size(220))
 
     # ------------------------------------------------------------------------
 
@@ -875,6 +942,7 @@ class MediaCollapsiblePanel(BaseObjectCollapsiblePanel):
             index = self._objects.index(obj.get_meta("id"))
             listctrl.SetItem(index, 1, obj.get_filename())
             listctrl.SetItem(index, 2, obj.get_mime_type())
+            listctrl.SetItem(index, 3, obj.get_meta("id"))
             listctrl.RefreshItem(index)
 
 # ----------------------------------------------------------------------------

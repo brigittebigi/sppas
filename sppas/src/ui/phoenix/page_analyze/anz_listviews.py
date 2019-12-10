@@ -38,9 +38,21 @@ import os
 import wx
 
 from sppas import paths
+
 from ..windows import sppasToolbar
+from ..dialogs import sppasTextEntryDialog
+from ..dialogs import Confirm
+
 from .anz_baseviews import BaseViewFilesPanel
 from .listview import TrsListViewPanel
+
+# ----------------------------------------------------------------------------
+
+MSG_CONFIRM = "Confirm?"
+TIER_MSG_ASK_NAME = "New name of the checked tiers: "
+TIER_ACT_RENAME = "Rename"
+TIER_MSG_CONFIRM_DEL = "Are you sure to delete {:d} tiers of {:d} files? " \
+                       "The process is irreversible."
 
 # ----------------------------------------------------------------------------
 
@@ -61,6 +73,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
             parent,
             name=name,
             files=files)
+        self.__clipboard = list()
 
     # -----------------------------------------------------------------------
 
@@ -87,7 +100,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
         """
         wx.LogMessage("Displaying file {:s} in ListView mode.".format(name))
-        panel = TrsListViewPanel(self, filename=name)
+        panel = TrsListViewPanel(self.GetScrolledPanel(), filename=name)
         self.GetScrolledSizer().Add(panel, 0, wx.EXPAND)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
 
@@ -114,18 +127,139 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         toolbar.AddButton("tier_movedown")
         toolbar.AddButton("tier_radius")
         toolbar.AddButton("tier_view")
+
+        toolbar.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
         return toolbar
 
     # -----------------------------------------------------------------------
-    # Events management
+
+    def _process_toolbar_event(self, event):
+        """Process a button of the toolbar event.
+
+        :param event: (wx.Event)
+
+        """
+        wx.LogDebug("Toolbar Event received by {:s}".format(self.GetName()))
+        btn = event.GetEventObject()
+        btn_name = btn.GetName()
+
+        if btn_name == "tier_rename":
+            self.rename_tiers()
+        elif btn_name == "tier_delete":
+            self.delete_tiers()
+        elif btn_name == "tier_cut":
+            self.cut_tiers()
+        elif btn_name == "tier_copy":
+            self.copy_tiers()
+        elif btn_name == "tier_paste":
+            self.paste_tiers()
+        elif btn_name == "tier_duplicate":
+            self.duplicate_tiers()
+
+        else:
+            event.Skip()
+
     # -----------------------------------------------------------------------
 
-    def OnCollapseChanged(self, evt=None):
-        panel = evt.GetEventObject()
-        panel.SetFocus()
-        self.ScrollChildIntoView(panel)
-        self.Layout()
+    def rename_tiers(self):
+        """Ask for a new name and set it to the checked tiers."""
+        dlg = sppasTextEntryDialog(
+            self, TIER_MSG_ASK_NAME, caption=TIER_ACT_RENAME, value="")
+        if dlg.ShowModal() == wx.ID_CANCEL:
+            return
+        tier_name = dlg.GetValue()
+        dlg.Destroy()
 
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                panel.rename_tier(tier_name)
+                # if the panel is not a ListView (an ErrorView for example)
+                # the method 'rename_tier' is not defined.
+
+    # -----------------------------------------------------------------------
+
+    def delete_tiers(self):
+        """Ask confirmation then delete the checked tiers."""
+        nbf = 0
+        nbt = 0
+        # How many checked tiers into how many files
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                nb_checks = panel.get_nb_checked_tier()
+                if nb_checks > 0:
+                    nbf += 1
+                    nbt += nb_checks
+
+        if nbf > 0:
+            # User must confirm to really delete
+            response = Confirm(TIER_MSG_CONFIRM_DEL.format(nbt, nbf), MSG_CONFIRM)
+            if response == wx.ID_CANCEL:
+                return
+
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                panel.delete_tier()
+
+    # -----------------------------------------------------------------------
+
+    def cut_tiers(self):
+        """Move checked tiers to the clipboard."""
+        self.__clipboard = list()
+        cut = 0
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                tiers = panel.cut_tier()
+                if len(tiers) > 0:
+                    self.__clipboard.extend(tiers)
+                    cut += len(tiers)
+
+        if cut > 0:
+            wx.LogMessage("{:d} tiers cut.".format(cut))
+            self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def copy_tiers(self):
+        """Copy checked tiers to the clipboard."""
+        self.__clipboard = list()
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                tiers = panel.copy_tier()
+                if len(tiers) > 0:
+                    self.__clipboard.extend(tiers)
+
+    # -----------------------------------------------------------------------
+
+    def paste_tiers(self):
+        """Paste tiers of the clipboard to the panels."""
+        paste = 0
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                paste += panel.paste_tier(self.__clipboard)
+
+        if paste > 0:
+            wx.LogMessage("{:d} tiers paste.".format(paste))
+            self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def duplicate_tiers(self):
+        """Duplicate checked tiers of the panels."""
+        copied = 0
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                copied += panel.duplicate_tier()
+
+        if copied > 0:
+            wx.LogMessage("{:d} tiers duplicated.".format(copied))
+            self.Layout()
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
@@ -135,6 +269,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 class TestPanel(ListViewFilesPanel):
     TEST_FILES = (
         os.path.join(paths.samples, "COPYRIGHT.txt"),
+        # os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.wav"),
         os.path.join(paths.samples, "annotation-results", "samples-fra",
                      "F_F_B003-P8-palign.xra")
     )
