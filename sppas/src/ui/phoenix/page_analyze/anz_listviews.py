@@ -161,11 +161,34 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
     # -----------------------------------------------------------------------
 
+    def __get_checked_nb(self):
+        """Return the number of checked files and checked tiers."""
+        nbf = 0
+        nbt = 0
+        # How many checked tiers into how many files
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                nb_checks = panel.get_nb_checked_tier()
+                if nb_checks > 0:
+                    nbf += 1
+                    nbt += nb_checks
+
+        return nbf, nbt
+
+    # -----------------------------------------------------------------------
+
     def rename_tiers(self):
         """Ask for a new name and set it to the checked tiers."""
+        nbf, nbt = self.__get_checked_nb()
+        if nbt == 0:
+            wx.LogWarning("Rename: no tier checked.")
+            return
+
         dlg = sppasTextEntryDialog(
             self, TIER_MSG_ASK_NAME, caption=TIER_ACT_RENAME, value="")
         if dlg.ShowModal() == wx.ID_CANCEL:
+            wx.LogMessage("Rename: cancelled.")
             return
         tier_name = dlg.GetValue()
         dlg.Destroy()
@@ -181,18 +204,9 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
     def delete_tiers(self):
         """Ask confirmation then delete the checked tiers."""
-        nbf = 0
-        nbt = 0
-        # How many checked tiers into how many files
-        for filename in self._files:
-            panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
-                nb_checks = panel.get_nb_checked_tier()
-                if nb_checks > 0:
-                    nbf += 1
-                    nbt += nb_checks
+        nbf, nbt = self.__get_checked_nb()
 
-        if nbf > 0:
+        if nbt > 0:
             # User must confirm to really delete
             response = Confirm(TIER_MSG_CONFIRM_DEL.format(nbt, nbf), MSG_CONFIRM)
             if response == wx.ID_CANCEL:
@@ -269,7 +283,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 class TestPanel(ListViewFilesPanel):
     TEST_FILES = (
         os.path.join(paths.samples, "COPYRIGHT.txt"),
-        # os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.wav"),
+        os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.wav"),
         os.path.join(paths.samples, "annotation-results", "samples-fra",
                      "F_F_B003-P8-palign.xra")
     )

@@ -317,7 +317,6 @@ class BaseViewFilesPanel(sppasPanel):
         :return: (sppasPanel, wx.Panel, sppasToolbar, ...)
 
         """
-        wx.LogDebug(" * * * * * *  CREATE TOOLBAR DE BASE * * * * * * ")
         return sppasPanel(self, name="toolbar_views")
 
     # -----------------------------------------------------------------------
@@ -376,7 +375,7 @@ class BaseViewFilesPanel(sppasPanel):
         will be called.
 
         """
-        self.Bind(EVT_VIEW, self._process_view_event)
+        self.GetScrolledPanel().Bind(EVT_VIEW, self._process_view_event)
 
     # -----------------------------------------------------------------------
 

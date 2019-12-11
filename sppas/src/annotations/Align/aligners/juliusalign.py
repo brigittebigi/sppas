@@ -305,9 +305,12 @@ class JuliusAligner(BaseAligner):
         p = Popen(command, shell=True, stdout=PIPE, stderr=STDOUT)
         p.wait()
         line = p.communicate()
-        logging.debug('julius returns the following message:')
-        logging.debug(line)
-        msg = u(" ").join([u(l) for l in line])
+        logging.info('julius returns the following message:')
+        logging.info(line)
+        try:
+            msg = u(" ").join([u(l) for l in line])
+        except UnicodeDecodeError:
+            msg = "An error occurred. See the logs."
 
         # Julius not installed
         if u("not found") in msg:

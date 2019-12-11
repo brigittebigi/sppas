@@ -55,6 +55,13 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
     """
 
     def __init__(self, parent, filename, name="baseview"):
+
+        # We wont create this panel if the file can't be loaded...
+        self._filename = filename
+        if filename is not None:
+            # The file this panel is displaying is loaded into an object
+            self.load_text()
+
         super(sppasBaseViewPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
@@ -63,11 +70,6 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
             label=filename,
             style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
-
-        # The file this panel is displaying
-        self._filename = filename
-        if filename is not None:
-            self.load_text()
 
         # Create the GUI
         self._hicolor = self.GetForegroundColour()
@@ -156,6 +158,8 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
     # -----------------------------------------------------------------------
 
     def notify(self, action):
+        wx.LogDebug("{:s} notifies its parent {:s} of action {:s}."
+                    "".format(self.GetName(), self.GetParent().GetName(), action))
         evt = ViewEvent(action=action)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
@@ -185,6 +189,7 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
         :param event: (wx.Event)
 
         """
+        wx.LogDebug("{:s} received a button event.".format(self.GetName()))
         event_obj = event.GetButtonObj()
         event_name = event_obj.GetName()
 
