@@ -82,7 +82,7 @@ class BaseViewFilesPanel(sppasPanel):
 
         # The files of this panel (key=name, value=wx.SizerItem)
         self._files = dict()
-        self._hicolor = self.GetForegroundColour()
+        self._hicolor = wx.Colour(200, 200, 180)
 
         self._create_content(files)
         self._setup_events()

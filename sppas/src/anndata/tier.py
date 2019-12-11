@@ -1009,6 +1009,7 @@ class sppasTier(sppasMetaData):
         """Fix a radius value to all points of the tier.
 
         :param radius: (int, float) New radius value
+        :raise: AnnDataTypeError, AnnDataNegValueError
 
         """
         for ann in self.__ann:

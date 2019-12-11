@@ -45,7 +45,6 @@ from ..dialogs import YesNoQuestion, Information
 from ..dialogs import sppasFileDialog
 from ..main_events import DataChangedEvent
 
-from .dv_filestreectrl import FilesTreeViewCtrl
 from .filesviewctrl import FileTreeView
 
 # ---------------------------------------------------------------------------

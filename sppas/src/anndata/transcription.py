@@ -476,8 +476,21 @@ class sppasTranscription(object):
     # -----------------------------------------------------------------------
 
     def is_empty(self):
-        """Return True if the transcription does not contains tiers."""
+        """Return True if the transcription does not contain tiers."""
         return len(self._tiers) == 0
+
+    # -----------------------------------------------------------------------
+
+    def contains(self, tier):
+        """Return True if the given tier is in the list of tiers.
+
+        """
+        if tier in self._tiers:
+            return True
+        for t in self._tiers:
+            if t.get_meta("id") == tier.get_meta("id"):
+                return True
+        return False
 
     # -----------------------------------------------------------------------
 
@@ -510,7 +523,7 @@ class sppasTranscription(object):
         """
         tier_id = str(tier_id).strip()
         for tier in self._tiers:
-            if tier.get_meta('id') == tier_id:
+            if tier.get_meta("id") == tier_id:
                 return tier
 
         return None
@@ -530,6 +543,20 @@ class sppasTranscription(object):
         if t is None:
             return -1
         return self._tiers.index(t)
+
+    # -----------------------------------------------------------------------
+
+    def get_tier_index_id(self, identifier):
+        """Get the index of a tier from its id.
+
+        :param identifier: (str) GUID
+        :returns: index or -1 if not found
+
+        """
+        for i, tier in enumerate(self._tiers):
+            if tier.get_meta("id") == identifier:
+                return i
+        return -1
 
     # -----------------------------------------------------------------------
 
@@ -593,7 +620,7 @@ class sppasTranscription(object):
         :param tier: (sppasTier) the tier to append
 
         """
-        if tier in self._tiers:
+        if self.contains(tier) is True:
             raise TrsAddError(tier.get_name(), self._name)
 
         self.rename_tier(tier)
@@ -718,10 +745,10 @@ class sppasTranscription(object):
     # -----------------------------------------------------------------------
 
     def __contains__(self, tier):
-       if tier in self._tiers:
-           return True
-       for t in self._tiers:
-           if t.get_meta("id") == tier.get_meta("id"):
-               return True
-       return False
+        if tier in self._tiers:
+            return True
+        for t in self._tiers:
+            if t.get_meta("id") == tier.get_meta("id"):
+                return True
+        return False
 

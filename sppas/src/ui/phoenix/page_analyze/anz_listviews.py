@@ -50,7 +50,9 @@ from .listview import TrsListViewPanel
 
 MSG_CONFIRM = "Confirm?"
 TIER_MSG_ASK_NAME = "New name of the checked tiers: "
+TIER_MSG_ASK_RADIUS = "Radius value of the checked tiers: "
 TIER_ACT_RENAME = "Rename"
+TIER_ACT_RADIUS = "Radius"
 TIER_MSG_CONFIRM_DEL = "Are you sure to delete {:d} tiers of {:d} files? " \
                        "The process is irreversible."
 
@@ -74,6 +76,16 @@ class ListViewFilesPanel(BaseViewFilesPanel):
             name=name,
             files=files)
         self.__clipboard = list()
+
+    # -----------------------------------------------------------------------
+
+    def SetHighLightColor(self, color):
+        """Set a color to highlight buttons, and for the focus."""
+        self._hicolor = color
+        # set to the panels
+        for filename in self._files:
+            panel = self._files[filename]
+            panel.SetHighLightColor(color)
 
     # -----------------------------------------------------------------------
 
@@ -101,7 +113,8 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         """
         wx.LogMessage("Displaying file {:s} in ListView mode.".format(name))
         panel = TrsListViewPanel(self.GetScrolledPanel(), filename=name)
-        self.GetScrolledSizer().Add(panel, 0, wx.EXPAND)
+        panel.SetHighLightColor(self.GetHighLightColor())
+        self.GetScrolledSizer().Add(panel, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 12)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
 
         return panel
@@ -115,13 +128,17 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
         """
         toolbar = sppasToolbar(self, name="toolbar_views")
-        #toolbar.set_focus_color()
+        # focus color of buttons performing an action on tiers
+        toolbar.set_focus_color(wx.Colour(180, 230, 255))
 
         toolbar.AddButton("tier_rename")
         toolbar.AddButton("tier_delete")
         toolbar.AddButton("tier_cut")
         toolbar.AddButton("tier_copy")
-        toolbar.AddButton("tier_paste")
+
+        tp = toolbar.AddButton("tier_paste")
+        tp.FocusColour = self._hicolor
+
         toolbar.AddButton("tier_duplicate")
         toolbar.AddButton("tier_moveup")
         toolbar.AddButton("tier_movedown")
@@ -155,6 +172,9 @@ class ListViewFilesPanel(BaseViewFilesPanel):
             self.paste_tiers()
         elif btn_name == "tier_duplicate":
             self.duplicate_tiers()
+
+        elif btn_name == "tier_radius":
+            self.radius_tiers()
 
         else:
             event.Skip()
@@ -205,6 +225,9 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     def delete_tiers(self):
         """Ask confirmation then delete the checked tiers."""
         nbf, nbt = self.__get_checked_nb()
+        if nbt == 0:
+            wx.LogWarning("Delete: no tier checked.")
+            return
 
         if nbt > 0:
             # User must confirm to really delete
@@ -222,6 +245,11 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     def cut_tiers(self):
         """Move checked tiers to the clipboard."""
         self.__clipboard = list()
+        nbf, nbt = self.__get_checked_nb()
+        if nbt == 0:
+            wx.LogWarning("Cut: no tier checked.")
+            return
+
         cut = 0
         for filename in self._files:
             panel = self._files[filename]
@@ -240,6 +268,11 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     def copy_tiers(self):
         """Copy checked tiers to the clipboard."""
         self.__clipboard = list()
+        nbf, nbt = self.__get_checked_nb()
+        if nbt == 0:
+            wx.LogWarning("Copy: no tier checked.")
+            return
+
         for filename in self._files:
             panel = self._files[filename]
             if isinstance(panel, TrsListViewPanel):
@@ -255,7 +288,8 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         for filename in self._files:
             panel = self._files[filename]
             if isinstance(panel, TrsListViewPanel):
-                paste += panel.paste_tier(self.__clipboard)
+                if panel.is_selected() is True:
+                    paste += panel.paste_tier(self.__clipboard)
 
         if paste > 0:
             wx.LogMessage("{:d} tiers paste.".format(paste))
@@ -265,6 +299,11 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
     def duplicate_tiers(self):
         """Duplicate checked tiers of the panels."""
+        nbf, nbt = self.__get_checked_nb()
+        if nbt == 0:
+            wx.LogWarning("Duplicate: no tier checked.")
+            return
+
         copied = 0
         for filename in self._files:
             panel = self._files[filename]
@@ -274,6 +313,35 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         if copied > 0:
             wx.LogMessage("{:d} tiers duplicated.".format(copied))
             self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def radius_tiers(self):
+        """Ask for a radius value and set it to checked tiers."""
+        nbf, nbt = self.__get_checked_nb()
+        if nbt == 0:
+            wx.LogWarning("Radius: no tier checked.")
+            return
+
+        dlg = sppasTextEntryDialog(
+            self, TIER_MSG_ASK_RADIUS, caption=TIER_ACT_RADIUS, value="")
+        if dlg.ShowModal() == wx.ID_CANCEL:
+            wx.LogMessage("Radius: cancelled.")
+            return
+        radius_str = dlg.GetValue()
+        dlg.Destroy()
+
+        try:
+            r = float(radius_str)
+            if (r-round(r, 0)) == 0.:
+                r = int(r)
+            for filename in self._files:
+                panel = self._files[filename]
+                if isinstance(panel, TrsListViewPanel):
+                    panel.radius(r)
+        except ValueError:
+            wx.LogError("Radius: expected an appropriate number.")
+
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py

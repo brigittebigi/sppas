@@ -396,6 +396,7 @@ class sppasMainWindow(sppasDialog):
 
         # then change to the page
         book.ChangeSelection(p)
+        self.Layout()
         self.Refresh()
 
 # ---------------------------------------------------------------------------

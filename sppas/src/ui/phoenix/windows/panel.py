@@ -268,6 +268,12 @@ class sppasCollapsiblePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def GetToolsPane(self):
+        """Return a reference to the embedded collapse tool window."""
+        return self.__tools_panel
+
+    # -----------------------------------------------------------------------
+
     def SetPane(self, pane):
         """Set given pane to the embedded pane window.
 

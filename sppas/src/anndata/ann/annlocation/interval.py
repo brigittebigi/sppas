@@ -251,7 +251,20 @@ class sppasInterval(sppasBaseLocalization):
     # -----------------------------------------------------------------------
 
     def set_radius(self, radius):
-        """Set a radius value to begin and end points."""
+        """Set a radius value to begin and end points.
+
+        :param radius: (int or float)
+        :raise: ValueError
+
+        """
+        duration = self.__end.get_midpoint() - self.__begin.get_midpoint()
+        if (float(radius)*2.) > float(duration):
+            raise ValueError(
+                "The radius value {r} can't be more than half-duration of "
+                "the interval [{b};{e}]."
+                "".format(r=radius,
+                          b=self.__begin.get_midpoint(),
+                          e=self.__end.get_midpoint()))
         self.__begin.set_radius(radius)
         self.__end.set_radius(radius)
 

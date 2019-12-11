@@ -248,6 +248,18 @@ class sppasPoint(sppasBaseLocalization):
 
     # -----------------------------------------------------------------------
 
+    def is_int(self):
+        """Return True if the value of the point is an integer."""
+        return isinstance(self.__midpoint, int)
+
+    # -----------------------------------------------------------------------
+
+    def is_float(self):
+        """Return True if the value of the point is a float."""
+        return isinstance(self.__midpoint, float)
+
+    # -----------------------------------------------------------------------
+
     @staticmethod
     def check_types(x, y):
         """True only if midpoint and radius are both of the same types.

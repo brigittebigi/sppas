@@ -45,7 +45,7 @@ from sppas import paths
 
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
-from sppas.src.anndata.anndataexc import TrsAddError
+from sppas.src.anndata.anndataexc import TrsAddError, AnnDataTypeError
 
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasMedia
@@ -59,6 +59,7 @@ from ..windows import sppasCollapsiblePanel
 from ..tools import sppasSwissKnife
 from .baseview import sppasBaseViewPanel
 
+TIER_BG_COLOUR = wx.Colour(180, 230, 255)
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when an item is clicked.
@@ -92,7 +93,25 @@ class TrsListViewPanel(sppasBaseViewPanel):
     def __init__(self, parent, filename, name="listview-panel"):
         self._object = sppasTranscription()
         self.__dirty = False
+        self._hicolor = wx.Colour(200, 200, 180)
+
         super(TrsListViewPanel, self).__init__(parent, filename, name)
+        self._bgcolor = self.GetBackgroundColour()
+        self.__set_selected(self._object.get_meta("selected"))
+
+    # ----------------------------------------------------------------------
+
+    def SetHighLightColor(self, color):
+        """Set a color to highlight the filename if selected."""
+        self._hicolor = color
+        self.SetBackgroundColour(self._bgcolor)
+        self.Refresh()
+
+    # ----------------------------------------------------------------------
+
+    def is_selected(self):
+        """Return True is this file is selected."""
+        return self.str_to_bool(self._object.get_meta("selected", "False"))
 
     # ----------------------------------------------------------------------
 
@@ -110,14 +129,13 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     # ----------------------------------------------------------------------
 
-    def is_selected_tier(self, tier_name, case_sensitive=False):
-        """Return True if the tier is selected.
+    def is_selected_tier(self, tier_id):
+        """Return True if the tier is checked.
 
-        :param tier_name: (str or None)
-        :param case_sensitive: (bool)
+        :param tier_id: (str)
 
         """
-        tier = self._object.find(tier_name, case_sensitive)
+        tier = self._object.find_id(tier_id)
         checked = False
         if tier is not None:
             checked = tier.get_meta("checked")
@@ -125,16 +143,15 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     # ----------------------------------------------------------------------
 
-    def select_tier(self, tier_name=None, case_sensitive=False):
+    def select_tier(self, tier_id=None):
         """Select all tiers or the tier which name is exactly matching.
 
-        :param tier_name: (str or None)
-        :param case_sensitive: (bool)
+        :param tier_id: (str or None)
 
         """
         panel = self.FindWindow("tiers-panel")
-        if tier_name is not None:
-            tier = self._object.find(tier_name, case_sensitive)
+        if tier_id is not None:
+            tier = self._object.find_id(tier_id)
             if tier is not None:
                 panel.change_state(tier.get_meta("id"), "True")
         else:
@@ -143,16 +160,15 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     # ----------------------------------------------------------------------
 
-    def unselect_tier(self, tier_name=None, case_sensitive=False):
+    def unselect_tier(self, tier_id=None):
         """Deselect all tiers or the tier which name is exactly matching.
 
-        :param tier_name: (str or None)
-        :param case_sensitive: (bool)
+        :param tier_id: (str or None)
 
         """
         panel = self.FindWindow("tiers-panel")
-        if tier_name is not None:
-            tier = self._object.find(tier_name, case_sensitive)
+        if tier_id is not None:
+            tier = self._object.find_id(tier_id)
             if tier is not None:
                 panel.change_state(tier.get_meta("id"), "False")
         else:
@@ -179,20 +195,24 @@ class TrsListViewPanel(sppasBaseViewPanel):
                     panel.update_item(tier)
                     wx.LogMessage("Tier {:s} renamed to {:s}"
                                   "".format(old_name, new_name))
+                    self.__dirty = True
 
     # ----------------------------------------------------------------------
 
-    def delete_tier(self, tier_name=None):
+    def delete_tier(self, tier_id=None):
         """Delete all checked tiers or the tier which name is exactly matching.
 
-        :param tier_name: (str or None)
+        :param tier_id: (str or None)
 
         """
         panel = self.FindWindow("tiers-panel")
-        if tier_name is not None:
-            tier = self._object.find(tier_name, case_sensitive=True)
+        if tier_id is not None:
+            tier = self._object.find_id(tier_id)
             if tier is not None:
                 panel.remove(tier.get_meta("id"))
+                i = self._object.get_tier_index_id(tier.get_meta("id"))
+                self._object.pop(i)
+
         else:
             i = len(self._object)
             for tier in reversed(self._object.get_tier_list()):
@@ -218,7 +238,10 @@ class TrsListViewPanel(sppasBaseViewPanel):
                 new_tier = tier.copy()
                 clipboard.append(new_tier)
 
-        self.delete_tier()
+        if len(clipboard) > 0:
+            self.delete_tier()
+            self.__dirty = True
+
         return clipboard
 
     # ----------------------------------------------------------------------
@@ -226,7 +249,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
     def copy_tier(self):
         """Copy checked tiers to the clipboard.
 
-        The new tiers have a different identifier.
+        :return: (list of sppasTier)
 
         """
         clipboard = list()
@@ -234,9 +257,6 @@ class TrsListViewPanel(sppasBaseViewPanel):
             if tier.get_meta("checked") == "True":
                 # Copy the tier to the clipboard
                 new_tier = tier.copy()
-                new_tier.set_meta("tier_copied_from_id", tier.get_meta('id'))
-                new_tier.set_meta("tier_copied_from_name", tier.get_name())
-                new_tier.gen_id()
                 clipboard.append(new_tier)
 
         return clipboard
@@ -247,6 +267,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """Paste the clipboard tier(s) to the current page.
 
         :param clipboard: (list of tiers, or None)
+        :return: (int) Number of tiers added
 
         """
         added = 0
@@ -255,7 +276,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         # Append clipboard tiers to the transcription
         for tier in clipboard:
             copied_tier = tier.copy()
-            copied_tier.gen_id()
+            # copied_tier.gen_id()
             try:
                 self._object.append(copied_tier)
                 # The tier comes from another Transcription... must update infos.
@@ -263,11 +284,10 @@ class TrsListViewPanel(sppasBaseViewPanel):
                     copied_tier.set_parent(self._object)
                 panel.add(copied_tier)
                 added += 1
+                self.__dirty = True
             except TrsAddError as e:
-                wx.LogError("{:s}".format(str(e)))
+                wx.LogError("Paste tier error: {:s}".format(str(e)))
 
-        if added > 0:
-            self.Layout()
         return added
 
     # ----------------------------------------------------------------------
@@ -287,32 +307,54 @@ class TrsListViewPanel(sppasBaseViewPanel):
                 self._object.append(new_tier)
                 panel.add(new_tier)
                 nb += 1
+                self.__dirty = True
 
         return nb
 
     # ----------------------------------------------------------------------
 
     def move_up_tier(self):
-        """Move up the selected tiers (except for the first one)."""
+        """Move up the checked tiers (except for the first one)."""
         pass
 
     # ----------------------------------------------------------------------
 
     def move_down_tier(self):
-        """Move up the selected tiers (except for the first one)."""
+        """Move up the checked tiers (except for the first one)."""
         pass
 
     # ----------------------------------------------------------------------
 
-    def radius(self, r, tier_name=None):
-        """Fix a new radius value to the checked tier."""
-        if tier_name is not None:
-            tier = self._object.find(tier_name, case_sensitive=True)
+    def radius(self, r, tier_id=None):
+        """Fix a new radius value to the given tier or the checked tiers.
+
+        :param r: (int or float) Value of the vagueness
+        :param tier_id: (str or None)
+
+        """
+        if tier_id is not None:
+            tier = self._object.find_id(tier_id)
             if tier is not None:
                 tier.set_radius(r)
         else:
             for tier in self._object.get_tier_list():
-                tier.set_radius(r)
+                p = tier.get_first_point()
+                if p is None:
+                    continue
+                if tier.get_meta("checked") == "True":
+                    try:
+                        radius = r
+                        if p.is_float() is True:
+                            radius = float(r)
+                        tier.set_radius(radius)
+                        self.__dirty = True
+                        wx.LogMessage(
+                            "Radius set to tier {:s} of file {:s}: {:s}"
+                            "".format(tier.get_name(), self._filename, str(r)))
+                    except Exception as e:
+                        wx.LogError(
+                            "Radius not set to tier {:s} of file {:s}: {:s}"
+                            "".format(tier.get_name(), self._filename, str(e)))
 
     # -----------------------------------------------------------------------
     # Override from the parent
@@ -345,6 +387,9 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """
         parser = sppasRW(self._filename)
         self._object = parser.read()
+
+        if self._object.get_meta("selected", None) is None:
+            self._object.set_meta("selected", "False")
 
         if self._object.get_meta("checked", None) is None:
             self._object.set_meta("checked", "False")
@@ -391,8 +436,10 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     def _create_content(self):
         """Override. Create the content of the panel."""
+        self.AddButton("select")
         self.AddButton("save")
         self.AddButton("close")
+
         self._create_child_panel()
         self.Collapse(self.str_to_bool(self._object.get_meta("collapsed")))
 
@@ -451,11 +498,43 @@ class TrsListViewPanel(sppasBaseViewPanel):
         if current_state == "False":
             new_state = "True"
         obj.set_meta("checked", new_state)
-        wx.LogDebug("New state {:s} for object {:s}. ".format(new_state, obj.get_name()))
 
         # update the corresponding panel(s)
         panel = event.GetEventObject()
         panel.change_state(object_id, new_state)
+
+    # -----------------------------------------------------------------------
+
+    def _process_event(self, event):
+        """Process any kind of event.
+
+        :param event: (wx.Event)
+
+        """
+        event_obj = event.GetButtonObj()
+        event_name = event_obj.GetName()
+
+        if event_name == "select":
+            self.__set_selected()
+
+        else:
+            sppasBaseViewPanel._process_event(self, event)
+
+    # ------------------------------------------------------------------------
+
+    def __set_selected(self, value=None):
+        """Force to set the given selected value or reverse the existing one."""
+        if value is None:
+            is_selected = self._object.get_meta("selected", "True")
+            if is_selected is "False":
+                value = "True"
+            else:
+                value = "False"
+
+        self._object.set_meta("selected", value)
+        wx.LogDebug("File {:s} selected: {:s}".format(self._filename, value))
+        self.SetBackgroundColour(self._bgcolor)
+        self.Refresh()
 
     # ------------------------------------------------------------------------
 
@@ -513,6 +592,18 @@ class TrsListViewPanel(sppasBaseViewPanel):
             #self.__update_tier(tier, i)
             panel.add_item(tier)
 
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        """Override."""
+        self._bgcolor = colour
+        wx.Panel.SetBackgroundColour(self, self._bgcolor)
+        for c in self.GetChildren():
+            c.SetBackgroundColour(colour)
+
+        if self._object.get_meta("selected", "False") == "True":
+            self.GetToolsPane().SetBackgroundColour(self._hicolor)
+
 # ---------------------------------------------------------------------------
 
 
@@ -531,7 +622,7 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
         super(BaseObjectCollapsiblePanel, self).__init__(
             parent, label=label, name=name)
 
-        self.__ils = list()
+        self._ils = list()
         self._create_content()
         self._create_columns()
         # self._setup_events()
@@ -551,18 +642,18 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
     # Public methods
     # -----------------------------------------------------------------------
 
-    def SetBackgroundColour(self, color):
-        """Calculate a lightness or darkness background color."""
-        r, g, b = color.Red(), color.Green(), color.Blue()
-        delta = 10
-        if (r + g + b) > 384:
-            color = wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
-        else:
-            color = wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
-
-        wx.Window.SetBackgroundColour(self, color)
-        for c in self.GetChildren():
-            c.SetBackgroundColour(color)
+    # def SetBackgroundColour(self, color):
+    #     """Calculate a lightness or darkness background color."""
+    #     r, g, b = color.Red(), color.Green(), color.Blue()
+    #     delta = 10
+    #     if (r + g + b) > 384:
+    #         color = wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
+    #     else:
+    #         color = wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
+    #
+    #     wx.Window.SetBackgroundColour(self, color)
+    #     for c in self.GetChildren():
+    #         c.SetBackgroundColour(color)
 
     # -----------------------------------------------------------------------
 
@@ -625,7 +716,7 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
 
         listctrl = self.FindWindow("listctrl")
         idx = self._objects.index(identifier)
-        listctrl.SetItem(idx, 0, "", imageId=self.__ils.index(icon_name))
+        listctrl.SetItem(idx, 0, "", imageId=self._ils.index(icon_name))
 
     # ------------------------------------------------------------------------
 
@@ -678,17 +769,17 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
         icon_size = int(float(lh * 1.4))
 
         il = wx.ImageList(icon_size, icon_size)
-        self.__ils = list()
+        self._ils = list()
 
         icon_name = "choice_checkbox"
         bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
         il.Add(bitmap)
-        self.__ils.append(icon_name)
+        self._ils.append(icon_name)
 
         icon_name = "choice_checked"
         bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
         il.Add(bitmap)
-        self.__ils.append(icon_name)
+        self._ils.append(icon_name)
 
         return il
 
@@ -711,8 +802,8 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
     def __add_item(self, obj):
         """Append an object."""
         listctrl = self.FindWindow("listctrl")
-        icon_name = STATES_ICON_NAMES[obj.get_meta("checked")]
-        img_index = self.__ils.index(icon_name)
+        icon_name = STATES_ICON_NAMES[obj.get_meta("checked", "False")]
+        img_index = self._ils.index(icon_name)
         listctrl.InsertItem(listctrl.GetItemCount(), img_index)
 
         self._objects.append(obj.get_meta("id"))
@@ -854,6 +945,30 @@ class TiersCollapsiblePanel(BaseObjectCollapsiblePanel):
             listctrl.SetItem(index, 7, str(obj.get_nb_filled_labels()))
             listctrl.SetItem(index, 8, obj.get_meta("id"))
             listctrl.RefreshItem(index)
+
+        state = obj.get_meta("checked", "False")
+        if state == "True":
+            listctrl.SetItemBackgroundColour(index, TIER_BG_COLOUR)
+
+    # ------------------------------------------------------------------------
+
+    def change_state(self, identifier, state):
+        """Update the state of the given identifier.
+
+        :param identifier: (str)
+        :param state: (str) True or False
+
+        """
+        icon_name = STATES_ICON_NAMES[state]
+
+        listctrl = self.FindWindow("listctrl")
+        idx = self._objects.index(identifier)
+        listctrl.SetItem(idx, 0, "", imageId=self._ils.index(icon_name))
+
+        if state == "True":
+            listctrl.SetItemBackgroundColour(idx, TIER_BG_COLOUR)
+        else:
+            listctrl.SetItemBackgroundColour(idx, self.GetBackgroundColour())
 
 # ---------------------------------------------------------------------------
 

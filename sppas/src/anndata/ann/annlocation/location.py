@@ -319,7 +319,12 @@ class sppasLocation(object):
     # -----------------------------------------------------------------------
 
     def set_radius(self, radius):
-        """Set a radius value to all localizations."""
+        """Set a radius value to all localizations.
+
+        :param radius: (int, float) New radius value
+        :raise: AnnDataTypeError, AnnDataNegValueError
+
+        """
         for t, s in self.__localizations:
             t.set_radius(radius)
 
