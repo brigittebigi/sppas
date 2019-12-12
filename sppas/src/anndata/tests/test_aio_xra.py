@@ -98,17 +98,17 @@ class TestXRA(unittest.TestCase):
         # ... First Tier
         self.assertEqual(len(xra3[0]), 2)
         self.assertEqual(xra3.get_tier_index("Intonation"), 0)
-        self.assertEqual(xra3[0].get_meta("id"), "t1")
+        self.assertEqual(xra3[0].get_id(), "t1")
         self.assertTrue(xra3[0].is_point())
         # ... Second Tier
         self.assertEqual(len(xra3[1]), 3)
         self.assertEqual(xra3.get_tier_index("TokensAlign"), 1)
-        self.assertEqual(xra3[1].get_meta("id"), "t2")
+        self.assertEqual(xra3[1].get_id(), "t2")
         self.assertTrue(xra3[1].is_interval())
         # ... 3rd Tier
         self.assertEqual(len(xra3[2]), 1)
         self.assertEqual(xra3.get_tier_index("IPU"), 2)
-        self.assertEqual(xra3[2].get_meta("id"), "t3")
+        self.assertEqual(xra3[2].get_id(), "t3")
         self.assertTrue(xra3[2].is_interval())
         # Controlled vocabulary
         self.assertEqual(len(xra3.get_ctrl_vocab_list()), 1)
@@ -135,17 +135,17 @@ class TestXRA(unittest.TestCase):
         # ... First Tier
         self.assertEqual(len(xra3[0]), 2)
         self.assertEqual(xra3.get_tier_index("Intonation"), 0)
-        self.assertEqual(xra3[0].get_meta("id"), "t1")
+        self.assertEqual(xra3[0].get_id(), "t1")
         self.assertTrue(xra3[0].is_point())
         # ... Second Tier
         self.assertEqual(len(xra3[1]), 3)
         self.assertEqual(xra3.get_tier_index("TokensAlign"), 1)
-        self.assertEqual(xra3[1].get_meta("id"), "t2")
+        self.assertEqual(xra3[1].get_id(), "t2")
         self.assertTrue(xra3[1].is_interval())
         # ... 3rd Tier
         self.assertEqual(len(xra3[2]), 1)
         self.assertEqual(xra3.get_tier_index("IPU"), 2)
-        self.assertEqual(xra3[2].get_meta("id"), "t3")
+        self.assertEqual(xra3[2].get_id(), "t3")
         self.assertTrue(xra3[2].is_interval())
         # Controlled vocabulary
         self.assertEqual(len(xra3.get_ctrl_vocab_list()), 1)
@@ -172,17 +172,17 @@ class TestXRA(unittest.TestCase):
         # ... First Tier
         self.assertEqual(len(xra3[0]), 2)
         self.assertEqual(xra3.get_tier_index("Intonation"), 0)
-        self.assertEqual(xra3[0].get_meta("id"), "t1")
+        self.assertEqual(xra3[0].get_id(), "t1")
         self.assertTrue(xra3[0].is_point())
         # ... Second Tier
         self.assertEqual(len(xra3[1]), 3)
         self.assertEqual(xra3.get_tier_index("TokensAlign"), 1)
-        self.assertEqual(xra3[1].get_meta("id"), "t2")
+        self.assertEqual(xra3[1].get_id(), "t2")
         self.assertTrue(xra3[1].is_interval())
         # ... 3rd Tier
         self.assertEqual(len(xra3[2]), 1)
         self.assertEqual(xra3.get_tier_index("IPU"), 2)
-        self.assertEqual(xra3[2].get_meta("id"), "t3")
+        self.assertEqual(xra3[2].get_id(), "t3")
         self.assertTrue(xra3[2].is_interval())
         # Controlled vocabulary
         self.assertEqual(len(xra3.get_ctrl_vocab_list()), 2)

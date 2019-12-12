@@ -350,7 +350,7 @@ class TestWEKA(unittest.TestCase):
         instances = weka._fix_instance_steps()
         self.assertEqual(len(instances), 10)  # only "toto", with 10 steps
 
-        weka.get_metadata().pop_meta('weka_instance_step')
+        weka.pop_meta('weka_instance_step')
         instances = weka._fix_instance_steps()
         self.assertEqual(len(instances), 0)
 

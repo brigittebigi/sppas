@@ -172,7 +172,10 @@ class ListViewFilesPanel(BaseViewFilesPanel):
             self.paste_tiers()
         elif btn_name == "tier_duplicate":
             self.duplicate_tiers()
-
+        elif btn_name == "tier_moveup":
+            self.move_tiers(up=True)
+        elif btn_name == "tier_movedown":
+            self.move_tiers(up=False)
         elif btn_name == "tier_radius":
             self.radius_tiers()
 
@@ -313,6 +316,23 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         if copied > 0:
             wx.LogMessage("{:d} tiers duplicated.".format(copied))
             self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def move_tiers(self, up=True):
+        """Move up or down checked tiers of the panels."""
+        nbf, nbt = self.__get_checked_nb()
+        if nbt == 0:
+            wx.LogWarning("Move: no tier checked.")
+            return
+
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                if up is True:
+                    panel.move_up_tier()
+                else:
+                    panel.move_down_tier()
 
     # -----------------------------------------------------------------------
 

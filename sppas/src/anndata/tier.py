@@ -131,18 +131,6 @@ class sppasTier(sppasMetaData):
     # Setters
     # -----------------------------------------------------------------------
 
-    def create_meta_id(self):
-        """Create a metadata with 'id' as key and a GUID as value.
-
-        :returns: GUID identifier
-
-        """
-        guid = sppasGUID().get()
-        self.set_meta("id", guid)
-        return guid
-
-    # -----------------------------------------------------------------------
-
     def set_name(self, name=None):
         """Set the name of the tier.
 
@@ -154,9 +142,9 @@ class sppasTier(sppasMetaData):
 
         """
         if name is None:
-            if self.get_meta("id") == "":
-                self.create_meta_id()
-            name = self.get_meta("id")
+            if self.get_id() == "":
+                self.gen_id()
+            name = self.get_id()
         su = sppasUnicode(name)
         self.__name = su.to_strip()
 
@@ -1200,7 +1188,15 @@ class sppasTier(sppasMetaData):
             return value in self.__ann
         else:
             for a in self.__ann:
-                if a.get_meta("id") == value:
+                if a.get_id() == value:
                     return True
         return False
+
+    # -----------------------------------------------------------------------
+
+    def __hash__(self):
+        # use the hashcode of self identifier since that is used
+        # for equality checks as well, like "tier in my_dict".
+        # not required by Python 2.7 but necessary for Python 3.4+
+        return hash(self.get_id())
 

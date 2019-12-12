@@ -615,7 +615,7 @@ class sppasAnnotation(sppasMetaData):
         # use the hashcode of self identifier since that is used
         # for equality checks as well, like "ann in my_dict".
         # not required by Python 2.7 but necessary for Python 3.4+
-        return hash(self.get_meta("id"))
+        return hash(self.get_id())
 
     # -----------------------------------------------------------------------
 

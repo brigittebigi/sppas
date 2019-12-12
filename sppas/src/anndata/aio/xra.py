@@ -476,8 +476,8 @@ class sppasXRA(sppasBaseIO):
         # Link to tiers
         for tier_node in media_root.findall('Tier'):
             tier_id = tier_node.attrib['id']
-            for tier in self:
-                if tier.get_meta("id") == tier_id:
+            for tier in self._tiers:
+                if tier.get_id() == tier_id:
                     tier.set_media(media)
 
     # -----------------------------------------------------------------------
@@ -502,9 +502,9 @@ class sppasXRA(sppasBaseIO):
             parent_tier = None
             child_tier = None
             for tier in self:
-                if tier.get_meta("id") == parent_tier_id:
+                if tier.get_id() == parent_tier_id:
                     parent_tier = tier
-                if tier.get_meta("id") == child_tier_id:
+                if tier.get_id() == child_tier_id:
                     child_tier = tier
 
             try:
@@ -580,7 +580,7 @@ class sppasXRA(sppasBaseIO):
         root.set('name', self.get_name())
 
         metadata_root = ET.SubElement(root, 'Metadata')
-        sppasXRA.format_metadata(metadata_root, self.get_metadata())
+        sppasXRA.format_metadata(metadata_root, self)
         if len(metadata_root.findall('Entry')) == 0:
             root.remove(metadata_root)
 

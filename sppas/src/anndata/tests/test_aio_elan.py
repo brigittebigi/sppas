@@ -267,7 +267,7 @@ class TestEAF(unittest.TestCase):
         self.assertEquals(1, len(parsed_media))
         self.assertEqual(media.get_filename(), parsed_media[0].get_filename())
         self.assertEqual(media.get_mime_type(), parsed_media[0].get_mime_type())
-        self.assertEqual(media.get_meta("id"), parsed_media[0].get_meta("id"))
+        self.assertEqual(media.get_id(), parsed_media[0].get_id())
         self.assertFalse(parsed_media[0].is_meta_key('RELATIVE_MEDIA_URL'))
         self.assertFalse(parsed_media[0].is_meta_key('TIME_ORIGIN'))
         self.assertFalse(parsed_media[0].is_meta_key('EXTRACTED_FROM'))

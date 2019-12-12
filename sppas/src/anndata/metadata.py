@@ -63,7 +63,13 @@ class sppasMetaData(object):
 
         """
         self.__metadata = OrderedDict()
-        self.__metadata['id'] = sppasGUID().get()
+        self.gen_id()
+
+    # -----------------------------------------------------------------------
+
+    def get_id(self):
+        """Return the identifier of this object."""
+        return self.__metadata['id']
 
     # -----------------------------------------------------------------------
 

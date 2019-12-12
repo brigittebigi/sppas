@@ -261,25 +261,23 @@ class sppasWEKA(sppasBaseIO):
 
     def check_metadata(self):
         """Check the metadata and fix the variable members."""
-        meta = self.get_metadata()
-
-        if meta.is_meta_key("weka_max_class_tags") is True:
+        if self.is_meta_key("weka_max_class_tags") is True:
             self.set_max_class_tags(
                 self.get_meta("weka_max_class_tags"))
 
-        if meta.is_meta_key("weka_max_attributes_tags") is True:
+        if self.is_meta_key("weka_max_attributes_tags") is True:
             self.set_max_attributes_tags(
                 self.get_meta("weka_max_attributes_tags"))
 
-        if meta.is_meta_key("weka_empty_annotation_tag") is True:
+        if self.is_meta_key("weka_empty_annotation_tag") is True:
             self.set_empty_annotation_tag(
                 self.get_meta("weka_empty_annotation_tag"))
 
-        if meta.is_meta_key("weka_empty_annotation_class_tag") is True:
+        if self.is_meta_key("weka_empty_annotation_class_tag") is True:
             self.set_empty_annotation_class_tag(
                 self.get_meta("weka_empty_annotation_class_tag"))
 
-        if meta.is_meta_key("weka_uncertain_annotation_tag") is True:
+        if self.is_meta_key("weka_uncertain_annotation_tag") is True:
             self.set_uncertain_annotation_tag(
                 self.get_meta("weka_uncertain_annotation_tag"))
 
@@ -405,7 +403,7 @@ class sppasWEKA(sppasBaseIO):
                 raise AioEmptyTierError("WEKA", tier.get_name())
 
         has_time_slice = False
-        if self.get_metadata().is_meta_key("weka_instance_step") is False:
+        if self.is_meta_key("weka_instance_step") is False:
             for tier in self:
                 if tier.is_meta_key("weka_instance_anchor"):
                     has_time_slice = True
@@ -601,7 +599,7 @@ class sppasWEKA(sppasBaseIO):
 
         # Fix the list of candidates for the instance points
         time_step = None
-        if self.get_metadata().is_meta_key("weka_instance_step") is True:
+        if self.is_meta_key("weka_instance_step") is True:
             time_step = float(self.get_meta("weka_instance_step"))
         anchor_tier = self._get_anchor_tier()
         all_points = self._fix_all_possible_instance_steps(begin,
@@ -856,7 +854,7 @@ class sppasARFF(sppasWEKA):
         """Serialize metadata in comments."""
 
         content = ""
-        for key in self.get_metadata().get_meta_keys():
+        for key in self.get_meta_keys():
             # todo: we should ignore metadata already in the header.
             value = self.get_meta(key)
             content += "% {:s}: {:s}\n".format(key, value)

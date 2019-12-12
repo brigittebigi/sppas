@@ -497,7 +497,6 @@ class TestTier(unittest.TestCase):
         tier = sppasTier("PointsTier")
         for i in range(5):
             tier.create_annotation(sppasLocation(sppasPoint(i)))
-            print(tier[i])
 
         # annotations = tier.find(sppasPoint(0), sppasPoint(5))
         # self.assertEqual(len(annotations), len(tier))

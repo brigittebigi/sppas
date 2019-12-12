@@ -54,7 +54,7 @@ from .ann.annotation import sppasAnnotation
 # ----------------------------------------------------------------------------
 
 
-class sppasTranscription(object):
+class sppasTranscription(sppasMetaData):
     """Representation of a transcription, a structured set of tiers.
 
     :author:       Brigitte Bigi
@@ -100,7 +100,8 @@ class sppasTranscription(object):
         :param name: (str) Name of the transcription.
 
         """
-        self._meta = sppasMetaData()
+        super(sppasTranscription, self).__init__()
+
         self._name = None
         self._media = list()      # a list of sppasMedia() instances
         self._ctrlvocab = list()  # a list of sppasCtrlVocab() instances
@@ -110,9 +111,9 @@ class sppasTranscription(object):
         self.set_name(name)
 
         # Add metadata about SPPAS, the language and the license.
-        self._meta.add_software_metadata()
-        self._meta.add_language_metadata()
-        self._meta.add_license_metadata(0)
+        self.add_software_metadata()
+        self.add_language_metadata()
+        self.add_license_metadata(0)
 
     # ------------------------------------------------------------------------
 
@@ -122,7 +123,7 @@ class sppasTranscription(object):
         :param identifier: (GUID)
 
         """
-        if self.get_meta("id", None) is not None:
+        if self.get_id() == identifier:
             return self
 
         obj = self.get_tier_from_id(identifier)
@@ -138,7 +139,7 @@ class sppasTranscription(object):
             return obj
 
         for ann in self._tiers:
-            if ann.get_meta("id", None) is not None:
+            if ann.get_id() == identifier:
                 return ann
 
         return None
@@ -166,31 +167,6 @@ class sppasTranscription(object):
         self._name = su.to_strip()
 
         return self._name
-
-    # -----------------------------------------------------------------------
-    # Metadata
-    # -----------------------------------------------------------------------
-
-    def get_metadata(self):
-        """Return the metadata object of this sppasTranscription."""
-        return self._meta
-
-    def get_meta_keys(self):
-        """Return the list of metadata keys."""
-        return self._meta.get_meta_keys()
-
-    def get_meta(self, entry, default=""):
-        """Return the value of the given key.
-
-        :param entry: (str) Entry to be checked as a key.
-        :param default: (str) Default value to return if entry is not a key.
-        :returns: (str) meta data value or default value
-
-        """
-        return self._meta.get_meta(entry, default)
-
-    def set_meta(self, key, value):
-        self._meta.set_meta(key, value)
 
     # ------------------------------------------------------------------------
     # Media
@@ -488,7 +464,7 @@ class sppasTranscription(object):
         if tier in self._tiers:
             return True
         for t in self._tiers:
-            if t.get_meta("id") == tier.get_meta("id"):
+            if t.get_id() == tier.get_id():
                 return True
         return False
 
@@ -523,7 +499,7 @@ class sppasTranscription(object):
         """
         tier_id = str(tier_id).strip()
         for tier in self._tiers:
-            if tier.get_meta("id") == tier_id:
+            if tier.get_id() == tier_id:
                 return tier
 
         return None
@@ -554,14 +530,36 @@ class sppasTranscription(object):
 
         """
         for i, tier in enumerate(self._tiers):
-            if tier.get_meta("id") == identifier:
+            if tier.get_id() == identifier:
                 return i
         return -1
 
     # -----------------------------------------------------------------------
 
+    def set_tier_index_id(self, identifier, new_index):
+        """Set the index of a tier from its identifier.
+
+        :param identifier: (str)
+        :param new_index: (int) New index of the tier in self
+        :returns: index or -1 if not found
+
+        """
+        old_index = self.get_tier_index_id(identifier)
+        if old_index == -1:
+            raise IndexError("No tier with identifier {:s}".format(identifier))
+
+        try:
+            self._tiers.insert(new_index, self._tiers.pop(old_index))
+        except:
+            raise IndexError("{:d} is not a valid index for tier {:s}"
+                             "".format(new_index, identifier))
+
+    # -----------------------------------------------------------------------
+
     def set_tier_index(self, name, new_index, case_sensitive=True):
         """Set the index of a tier from its name.
+
+        THIS SHOULD NEVER BE USED. USE TIER IDENTIFIER INSTEAD OF ITS NAME.
 
         :param name: (str) EXACT name of the tier
         :param new_index: (int) New index of the tier in self
@@ -748,7 +746,7 @@ class sppasTranscription(object):
         if tier in self._tiers:
             return True
         for t in self._tiers:
-            if t.get_meta("id") == tier.get_meta("id"):
+            if t.get_id() == tier.get_id():
                 return True
         return False
 

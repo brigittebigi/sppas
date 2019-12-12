@@ -516,7 +516,7 @@ class TrsList(wx.Panel):
             return
 
         # move up into the transcription
-        self._transcription.set_tier_index(tier.get_name(), sel_list-1)
+        self._transcription.set_tier_index_id(tier.get_id(), sel_list-1)
 
         # Delete old tier of the list
         self.tier_list.DeleteItem(sel_list)
@@ -554,7 +554,7 @@ class TrsList(wx.Panel):
             return
 
         # move down into the transcription
-        self._transcription.set_tier_index(tier.get_name(), sel_list+1)
+        self._transcription.set_tier_index_id(tier.get_id(), sel_list+1)
 
         # Delete old tier of the list
         self.tier_list.DeleteItem(sel_list)
