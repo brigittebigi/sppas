@@ -50,9 +50,20 @@ from .listview import TrsListViewPanel
 
 MSG_CONFIRM = "Confirm?"
 TIER_MSG_ASK_NAME = "New name of the checked tiers: "
+TIER_MSG_ASK_REGEXP = "Check tiers with name matching: "
 TIER_MSG_ASK_RADIUS = "Radius value of the checked tiers: "
+TIER_ACT_CHECK = "Check"
+TIER_ACT_UNCHECK = "Uncheck"
 TIER_ACT_RENAME = "Rename"
+TIER_ACT_DELETE = "Delete"
+TIER_ACT_CUT = "Cut"
+TIER_ACT_COPY = "Copy"
+TIER_ACT_PASTE = "Paste"
+TIER_ACT_DUPLICATE = "Duplicate"
+TIER_ACT_MOVE_UP = "Move Up"
+TIER_ACT_MOVE_DOWN = "Move Down"
 TIER_ACT_RADIUS = "Radius"
+TIER_ACT_VIEW = "View"
 TIER_MSG_CONFIRM_DEL = "Are you sure to delete {:d} tiers of {:d} files? " \
                        "The process is irreversible."
 
@@ -82,6 +93,9 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     def SetHighLightColor(self, color):
         """Set a color to highlight buttons, and for the focus."""
         self._hicolor = color
+        # set to toolbar
+        btn = self.FindWindow("toolbar_views").get_button("tier_paste")
+        btn.FocusColour = color
         # set to the panels
         for filename in self._files:
             panel = self._files[filename]
@@ -113,8 +127,8 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         """
         wx.LogMessage("Displaying file {:s} in ListView mode.".format(name))
         panel = TrsListViewPanel(self.GetScrolledPanel(), filename=name)
-        panel.SetHighLightColor(self.GetHighLightColor())
-        self.GetScrolledSizer().Add(panel, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 12)
+        panel.SetHighLightColor(self._hicolor)
+        self.GetScrolledSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.TOP | wx.BOTTOM, 20)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
 
         return panel
@@ -128,22 +142,61 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
         """
         toolbar = sppasToolbar(self, name="toolbar_views")
+        toolbar.SetMinSize(wx.Size(toolbar.get_height()*5, -1))
+
         # focus color of buttons performing an action on tiers
         toolbar.set_focus_color(wx.Colour(180, 230, 255))
+        toolbar.AddTitleText("Tiers: ", wx.Colour(180, 230, 255))
 
-        toolbar.AddButton("tier_rename")
-        toolbar.AddButton("tier_delete")
-        toolbar.AddButton("tier_cut")
-        toolbar.AddButton("tier_copy")
+        b = toolbar.AddButton("tier_check", TIER_ACT_CHECK)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
 
-        tp = toolbar.AddButton("tier_paste")
-        tp.FocusColour = self._hicolor
+        b = toolbar.AddButton("tier_uncheck", TIER_ACT_UNCHECK)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
 
-        toolbar.AddButton("tier_duplicate")
-        toolbar.AddButton("tier_moveup")
-        toolbar.AddButton("tier_movedown")
-        toolbar.AddButton("tier_radius")
-        toolbar.AddButton("tier_view")
+        b = toolbar.AddButton("tier_rename", TIER_ACT_RENAME)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
+
+        b = toolbar.AddButton("tier_delete", TIER_ACT_DELETE)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
+
+        b = toolbar.AddButton("tier_cut", TIER_ACT_CUT)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
+
+        b = toolbar.AddButton("tier_copy", TIER_ACT_COPY)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
+
+        b = toolbar.AddButton("tier_paste", TIER_ACT_PASTE)
+        b.FocusColour = self._hicolor
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
+
+        b = toolbar.AddButton("tier_duplicate", TIER_ACT_DUPLICATE)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
+
+        b = toolbar.AddButton("tier_moveup", TIER_ACT_MOVE_UP)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
+
+        b = toolbar.AddButton("tier_movedown", TIER_ACT_MOVE_DOWN)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
+
+        b = toolbar.AddButton("tier_radius", TIER_ACT_RADIUS)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
+
+        b = toolbar.AddButton("tier_view", TIER_ACT_VIEW)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
+        b.Enable(False)
 
         toolbar.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
         return toolbar
@@ -160,7 +213,11 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         btn = event.GetEventObject()
         btn_name = btn.GetName()
 
-        if btn_name == "tier_rename":
+        if btn_name == "tier_check":
+            self.check_tiers()
+        elif btn_name == "tier_uncheck":
+            self.uncheck_tiers()
+        elif btn_name == "tier_rename":
             self.rename_tiers()
         elif btn_name == "tier_delete":
             self.delete_tiers()
@@ -198,6 +255,36 @@ class ListViewFilesPanel(BaseViewFilesPanel):
                     nbt += nb_checks
 
         return nbf, nbt
+
+    # -----------------------------------------------------------------------
+
+    def check_tiers(self):
+        """Ask for a name and check tiers."""
+        dlg = sppasTextEntryDialog(
+            self, TIER_MSG_ASK_REGEXP, caption=TIER_ACT_CHECK, value="")
+        if dlg.ShowModal() == wx.ID_CANCEL:
+            wx.LogMessage("Check: cancelled.")
+            return
+        tier_name = dlg.GetValue()
+        dlg.Destroy()
+
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                try:
+                    panel.check_tier(tier_name)
+                except Exception as e:
+                    wx.LogError("Match pattern error: {:s}".format(str(e)))
+                    return
+
+    # -----------------------------------------------------------------------
+
+    def uncheck_tiers(self):
+        """Uncheck tiers."""
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                panel.uncheck_tier()
 
     # -----------------------------------------------------------------------
 
@@ -381,5 +468,5 @@ class TestPanel(ListViewFilesPanel):
             parent,
             name="TestPanel-anz_baseviews",
             files=TestPanel.TEST_FILES)
-        self.SetBackgroundColour(wx.Colour(128, 128, 128))
+        self.SetBackgroundColour(wx.Colour(100, 100, 100))
 

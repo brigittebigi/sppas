@@ -37,6 +37,7 @@
 """
 
 import os
+import re
 import wx
 import wx.dataview
 import wx.lib.newevent
@@ -129,51 +130,32 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     # -----------------------------------------------------------------------
 
-    def is_selected_tier(self, tier_id):
-        """Return True if the tier is checked.
-
-        :param tier_id: (str)
-
-        """
-        tier = self._object.find_id(tier_id)
-        checked = False
-        if tier is not None:
-            checked = tier.get_meta("checked")
-        return self.str_to_bool(checked)
+    def check_tier(self, name):
+        """Check tier matching the given regexp. Uncheck the others."""
+        panel = self.FindWindow("tiers-panel")
+        for tier in self._object.get_tier_list():
+            is_matching = re.match(name, tier.get_name())
+            if is_matching is not None:
+                if tier.get_meta("checked") == "False":
+                    tier.set_meta("checked", "True")
+                    panel.change_state(tier.get_id(), "True")
+                    self.__dirty = True
+            else:
+                if tier.get_meta("checked") == "True":
+                    tier.set_meta("checked", "False")
+                    panel.change_state(tier.get_id(), "False")
+                    self.__dirty = True
 
     # -----------------------------------------------------------------------
 
-    def select_tier(self, tier_id=None):
-        """Select all tiers or the tier which name is exactly matching.
-
-        :param tier_id: (str or None)
-
-        """
+    def uncheck_tier(self):
+        """Uncheck tiers."""
         panel = self.FindWindow("tiers-panel")
-        if tier_id is not None:
-            tier = self._object.find_id(tier_id)
-            if tier is not None:
-                panel.change_state(tier.get_id(), "True")
-        else:
-            for tier in self._object.get_tier_list():
-                panel.change_state(tier.get_id(), "True")
-
-    # -----------------------------------------------------------------------
-
-    def unselect_tier(self, tier_id=None):
-        """Deselect all tiers or the tier which name is exactly matching.
-
-        :param tier_id: (str or None)
-
-        """
-        panel = self.FindWindow("tiers-panel")
-        if tier_id is not None:
-            tier = self._object.find_id(tier_id)
-            if tier is not None:
+        for tier in self._object.get_tier_list():
+            if tier.get_meta("checked") == "True":
+                tier.set_meta("checked", "False")
                 panel.change_state(tier.get_id(), "False")
-        else:
-            for tier in self._object.get_tier_list():
-                panel.change_state(tier.get_id(), "False")
+                self.__dirty = True
 
     # -----------------------------------------------------------------------
 
@@ -522,6 +504,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         if current_state == "False":
             new_state = "True"
         obj.set_meta("checked", new_state)
+        self.__dirty = True
 
         # update the corresponding panel(s)
         panel = event.GetEventObject()
@@ -555,8 +538,10 @@ class TrsListViewPanel(sppasBaseViewPanel):
             else:
                 value = "False"
 
-        self._object.set_meta("selected", value)
-        wx.LogDebug("File {:s} selected: {:s}".format(self._filename, value))
+        if value != self._object.get_meta("selected", "x"):
+            self._object.set_meta("selected", value)
+            self.__dirty = True
+            wx.LogDebug("File {:s} selected: {:s}".format(self._filename, value))
         self.SetBackgroundColour(self._bgcolor)
         self.Refresh()
 
@@ -664,6 +649,18 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
 
     # -----------------------------------------------------------------------
     # Public methods
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        r, g, b = colour.Red(), colour.Green(), colour.Blue()
+        delta = 10
+        if (r + g + b) > 384:
+            cc = wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
+        else:
+            cc = wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
+
+        sppasCollapsiblePanel.SetBackgroundColour(self, cc)
+
     # -----------------------------------------------------------------------
 
     def SetFont(self, font):

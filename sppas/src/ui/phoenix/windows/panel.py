@@ -359,12 +359,11 @@ class sppasCollapsiblePanel(sppasPanel):
         btn.SetSpacing(0)
         btn.SetBorderWidth(0)
         btn.SetBitmapColour(self.GetForegroundColour())
-        h = self.GetButtonHeight()
-        btn_h = sppasPanel.fix_size(h)
+        btn_h = self.GetButtonHeight()
         btn_w = btn_h
-        btn.SetMinSize(wx.Size(btn_w, btn_h))
         btn.SetSize(wx.Size(btn_w, btn_h))
-        self.__tools_panel.GetSizer().Prepend(btn, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 0)
+        btn.SetMinSize(wx.Size(btn_w, btn_h))
+        self.__tools_panel.GetSizer().Prepend(btn, 0, wx.LEFT | wx.RIGHT, 1)
 
         return btn
 

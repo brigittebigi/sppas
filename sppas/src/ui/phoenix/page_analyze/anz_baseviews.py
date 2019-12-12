@@ -98,7 +98,20 @@ class BaseViewFilesPanel(sppasPanel):
         self.Layout()
 
     # -----------------------------------------------------------------------
-    # Colours
+    # Colours & Fonts
+    # -----------------------------------------------------------------------
+
+    def SetFont(self, font):
+        sppasPanel.SetFont(self, font)
+        f = wx.Font(int(font.GetPointSize() * 0.65),
+                    wx.FONTFAMILY_SWISS,   # family,
+                    wx.FONTSTYLE_NORMAL,   # style,
+                    wx.FONTWEIGHT_BOLD,    # weight,
+                    underline=False,
+                    faceName=font.GetFaceName(),
+                    encoding=wx.FONTENCODING_SYSTEM)
+        self.FindWindow("toolbar_views").SetFont(f)
+
     # -----------------------------------------------------------------------
 
     def GetHighLightColor(self):
@@ -181,7 +194,7 @@ class BaseViewFilesPanel(sppasPanel):
         except Exception as e:
             panel = ErrorViewPanel(self.GetScrolledPanel(), name)
             panel.set_error_message(str(e))
-            self.GetScrolledSizer().Add(panel, 0, wx.EXPAND)
+            self.GetScrolledSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.TOP | wx.BOTTOM, 20)
             self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
 
         self._files[name] = panel
