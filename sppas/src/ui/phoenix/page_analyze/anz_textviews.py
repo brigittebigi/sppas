@@ -90,7 +90,7 @@ class TextViewFilesPanel(BaseViewFilesPanel):
 
         """
         wx.LogMessage("Displaying file {:s} in TextView mode.".format(name))
-        panel = TextViewPanel(self, filename=name)
+        panel = TextViewPanel(self.GetScrolledPanel(), filename=name)
         self.GetScrolledSizer().Add(panel, 0, wx.EXPAND)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
 

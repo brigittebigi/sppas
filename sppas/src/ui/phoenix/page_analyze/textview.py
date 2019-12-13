@@ -43,7 +43,7 @@ import wx
 from sppas import sg
 from sppas import paths
 
-from ..windows import sppasScrolledPanel
+from ..windows import sppasPanel
 from ..windows import sppasTextCtrl
 
 from .baseview import sppasBaseViewPanel
@@ -150,7 +150,7 @@ class TextViewPanel(sppasBaseViewPanel):
         # Search for the height of the text
         nblines = len(self._object) + 1
         view_height = float(self.get_line_height()) * 1.1 * nblines
-        txtview.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(420), view_height))
+        txtview.SetMinSize(wx.Size(sppasPanel.fix_size(420), view_height))
         txtview.SetModified(False)
 
     # -----------------------------------------------------------------------
@@ -186,7 +186,7 @@ class TextViewPanel(sppasBaseViewPanel):
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(sppasScrolledPanel):
+class TestPanel(sppasPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="TestPanel-textview" )
@@ -213,7 +213,6 @@ class TestPanel(sppasScrolledPanel):
         # self.FitInside()
         self.SetAutoLayout(True)
         self.Layout()
-        self.SetupScrolling(scroll_x=True, scroll_y=True)
 
     def OnCollapseChanged(self, evt=None):
         panel = evt.GetEventObject()

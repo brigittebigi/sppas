@@ -55,7 +55,7 @@ from sppas.src.anndata import sppasCtrlVocab
 from sppas.src.anndata import sppasMetaData
 from sppas.src.config import ui_translation
 
-from ..windows import sppasScrolledPanel
+from ..windows import sppasPanel
 from ..windows import sppasCollapsiblePanel
 from ..tools import sppasSwissKnife
 from .baseview import sppasBaseViewPanel
@@ -755,7 +755,7 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
         info.Image = -1
         info.Align = 0
         lst.InsertColumn(0, info)
-        lst.SetColumnWidth(0, sppasScrolledPanel.fix_size(24))
+        lst.SetColumnWidth(0, sppasPanel.fix_size(24))
 
     # ------------------------------------------------------------------------
 
@@ -887,28 +887,28 @@ class TiersCollapsiblePanel(BaseObjectCollapsiblePanel):
         listctrl = self.FindWindow("listctrl")
         listctrl.AppendColumn("name",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(160))
+                              width=sppasPanel.fix_size(160))
         listctrl.AppendColumn("len",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(30))
+                              width=sppasPanel.fix_size(30))
         listctrl.AppendColumn("loctype",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(50))
+                              width=sppasPanel.fix_size(50))
         listctrl.AppendColumn("begin",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(40))
+                              width=sppasPanel.fix_size(40))
         listctrl.AppendColumn("end",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(40))
+                              width=sppasPanel.fix_size(40))
         listctrl.AppendColumn("tagtype",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(40))
+                              width=sppasPanel.fix_size(40))
         listctrl.AppendColumn("tagged",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(30))
+                              width=sppasPanel.fix_size(30))
         listctrl.AppendColumn("id",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(220))
+                              width=sppasPanel.fix_size(220))
 
     # ------------------------------------------------------------------------
 
@@ -1007,13 +1007,13 @@ class CtrlVocabCollapsiblePanel(BaseObjectCollapsiblePanel):
         listctrl = self.FindWindow("listctrl")
         listctrl.AppendColumn("name",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(200))
+                              width=sppasPanel.fix_size(200))
         listctrl.AppendColumn("description",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(80))
+                              width=sppasPanel.fix_size(80))
         listctrl.AppendColumn("id",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(220))
+                              width=sppasPanel.fix_size(220))
 
     # ------------------------------------------------------------------------
 
@@ -1052,13 +1052,13 @@ class MediaCollapsiblePanel(BaseObjectCollapsiblePanel):
         listctrl = self.FindWindow("listctrl")
         listctrl.AppendColumn("filename",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(300))
+                              width=sppasPanel.fix_size(300))
         listctrl.AppendColumn("mimeheader",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(80))
+                              width=sppasPanel.fix_size(80))
         listctrl.AppendColumn("id",
                               format=wx.LIST_FORMAT_LEFT,
-                              width=sppasScrolledPanel.fix_size(220))
+                              width=sppasPanel.fix_size(220))
 
     # ------------------------------------------------------------------------
 
@@ -1077,7 +1077,7 @@ class MediaCollapsiblePanel(BaseObjectCollapsiblePanel):
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(sppasScrolledPanel):
+class TestPanel(sppasPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="TestPanel-listview")
@@ -1100,7 +1100,6 @@ class TestPanel(sppasScrolledPanel):
         # self.FitInside()
         self.SetAutoLayout(True)
         self.Layout()
-        self.SetupScrolling(scroll_x=True, scroll_y=True)
 
     def OnCollapseChanged(self, evt=None):
         panel = evt.GetEventObject()

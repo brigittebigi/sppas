@@ -239,6 +239,7 @@ class sppasAnalyzePanel(sppasPanel):
         for fn in checked:
             try:
                 page.append_file(fn.get_id())
+                page.Layout()
                 self.__data.set_object_state(States().LOCKED, fn)
                 i += 1
             except Exception as e:

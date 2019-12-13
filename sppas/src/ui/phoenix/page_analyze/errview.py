@@ -41,7 +41,7 @@ import wx
 from sppas import msg
 from sppas.src.utils import u
 
-from ..windows import sppasScrolledPanel
+from ..windows import sppasPanel
 from ..windows import sppasTextCtrl
 
 from .baseview import sppasBaseViewPanel
@@ -128,4 +128,4 @@ class ErrorViewPanel(sppasBaseViewPanel):
         # Search for the height of the text
         nblines = len(error_message.split()) + 1
         view_height = float(self.get_line_height()) * 1.1 * nblines
-        txtview.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(420), view_height))
+        txtview.SetMinSize(wx.Size(sppasPanel.fix_size(420), view_height))
