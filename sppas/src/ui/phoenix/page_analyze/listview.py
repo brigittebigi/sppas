@@ -116,6 +116,17 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     # -----------------------------------------------------------------------
 
+    def get_checked_tier(self):
+        """Return the number of checked tiers."""
+        checked = list()
+        for tier in self._object.get_tier_list():
+            if tier.get_meta("checked") == "True":
+                checked.append(tier)
+
+        return checked
+
+    # -----------------------------------------------------------------------
+
     def get_nb_checked_tier(self):
         """Return the number of checked tiers."""
         nb = 0

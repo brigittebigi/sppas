@@ -13,6 +13,7 @@ from .feedback import Feedback
 from .file import sppasFileDialog
 from .settings import Settings
 from .entries import sppasTextEntryDialog
+from .tierview import TiersView
 
 __all__ = (
     'YesNoQuestion',
@@ -26,5 +27,6 @@ __all__ = (
     'Settings',
     'sppasFileDialog',
     'sppasChoiceDialog',
-    "sppasTextEntryDialog"
+    "sppasTextEntryDialog",
+    "TiersView"
 )

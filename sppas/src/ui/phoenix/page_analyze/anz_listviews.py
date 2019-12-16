@@ -42,6 +42,7 @@ from sppas import paths
 from ..windows import sppasToolbar
 from ..dialogs import sppasTextEntryDialog
 from ..dialogs import Confirm
+from ..dialogs import TiersView
 
 from .anz_baseviews import BaseViewFilesPanel
 from .listview import TrsListViewPanel
@@ -196,7 +197,6 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         b = toolbar.AddButton("tier_view", TIER_ACT_VIEW)
         b.LabelPosition = wx.BOTTOM
         b.Spacing = 1
-        b.Enable(False)
 
         toolbar.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
         return toolbar
@@ -235,6 +235,8 @@ class ListViewFilesPanel(BaseViewFilesPanel):
             self.move_tiers(up=False)
         elif btn_name == "tier_radius":
             self.radius_tiers()
+        elif btn_name == "tier_view":
+            self.view_tiers()
 
         else:
             event.Skip()
@@ -449,6 +451,22 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         except ValueError:
             wx.LogError("Radius: expected an appropriate number.")
 
+    # -----------------------------------------------------------------------
+
+    def view_tiers(self):
+        """Open a dialog to view the content of the checked tiers."""
+        nbf, nbt = self.__get_checked_nb()
+        if nbt == 0:
+            wx.LogWarning("Radius: no tier checked.")
+            return
+
+        tiers = list()
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                tiers.extend(panel.get_checked_tier())
+
+        TiersView(self, tiers)
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
