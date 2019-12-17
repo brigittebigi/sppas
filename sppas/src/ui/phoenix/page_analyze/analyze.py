@@ -275,8 +275,16 @@ class sppasAnalyzePanel(sppasPanel):
             wx.LogMessage("None of the files was modified. Nothing to do.")
             return
 
+        n = 0
         for filename in page.get_files():
-            page.save_file(filename)
+            saved = page.save_file(filename)
+            if saved:
+                n += 1
+
+        if n > 0:
+            wx.LogMessage("{:d} files saved.".format(n))
+        else:
+            wx.LogMessage("No saved files.")
 
     # ------------------------------------------------------------------------
 
@@ -429,7 +437,7 @@ class sppasAnalyzePanel(sppasPanel):
         tb.AddSpacer(1)
 
         # Add button to save files of the current tab
-        save_btn = tb.AddButton("save")
+        save_btn = tb.AddButton("save_all")
         save_btn.Enable(False)
 
         return tb
@@ -556,7 +564,7 @@ class sppasAnalyzePanel(sppasPanel):
         if event_name.startswith("data-view-"):
             self._switch_page_to_view(event_name)
 
-        elif event_name == "save":
+        elif event_name == "save_all":
             self.save_files()
 
         event.Skip()
@@ -738,7 +746,7 @@ class sppasAnalyzePanel(sppasPanel):
             txt_view.SetForegroundColour(sppasAnalyzePanel.HIGHLIGHT_COLOUR)
 
         book = self.FindWindow("content")
-        btn_save = toolbar.FindWindow("save")
+        btn_save = toolbar.FindWindow("save_all")
         try:
             page = book.GetPage(index)
             btn_save.Enable(page.can_edit())
@@ -759,7 +767,7 @@ class sppasAnalyzePanel(sppasPanel):
         toolbar = self.FindWindow("analyze-toolbar")
         toolbar.set_focus_color(sppasAnalyzePanel.HIGHLIGHT_COLOUR)
 
-        btn_save = toolbar.FindWindow("save")
+        btn_save = toolbar.FindWindow("save_all")
         btn_save.Enable(False)
 
         for view_name in sppasAnalyzePanel.VIEWS:

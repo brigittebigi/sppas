@@ -252,7 +252,7 @@ class BaseViewFilesPanel(sppasPanel):
             try:
                 saved = panel.save()
                 if saved is True:
-                    wx.LogMessage("File {:s} saved.".format(name))
+                    wx.LogMessage("File {:s} saved successfully.".format(name))
             except Exception as e:
                 saved = False
                 wx.LogError("Error while saving file {:s}: {:s}"

@@ -97,7 +97,6 @@ class TrsListViewPanel(sppasBaseViewPanel):
         self._hicolor = wx.Colour(200, 200, 180)
 
         super(TrsListViewPanel, self).__init__(parent, filename, name)
-        self._bgcolor = self.GetBackgroundColour()
         self.__set_selected(self._object.get_meta("selected"))
 
     # -----------------------------------------------------------------------
@@ -105,7 +104,11 @@ class TrsListViewPanel(sppasBaseViewPanel):
     def SetHighLightColor(self, color):
         """Set a color to highlight the filename if selected."""
         self._hicolor = color
-        self.SetBackgroundColour(self._bgcolor)
+        if self._object.get_meta("selected", "False") == "True":
+            self.GetToolsPane().SetBackgroundColour(self._hicolor)
+        else:
+            self.GetToolsPane().SetBackgroundColour(self.GetBackgroundColour())
+
         self.Refresh()
 
     # -----------------------------------------------------------------------
@@ -250,6 +253,12 @@ class TrsListViewPanel(sppasBaseViewPanel):
             if tier.get_meta("checked") == "True":
                 # Copy the tier to the clipboard
                 new_tier = tier.copy()
+
+                # Invalidate its links to other data of its transcription
+                new_tier.set_ctrl_vocab(None)
+                new_tier.set_media(None)
+                new_tier.set_parent(None)
+
                 clipboard.append(new_tier)
 
         return clipboard
@@ -533,6 +542,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         event_name = event_obj.GetName()
 
         if event_name == "select":
+            wx.LogDebug("* * * * * * * * * * * *  Select event received.")
             self.__set_selected()
 
         else:
@@ -542,19 +552,35 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     def __set_selected(self, value=None):
         """Force to set the given selected value or reverse the existing one."""
+        wx.LogDebug("Set Selected. Given value is {}".format(value))
+        # Old value can be unknown (not already set)
+        old_value = self._object.get_meta("selected", None)
+        if old_value is None:
+            self._object.set_meta("selected", "False")
+
+        # Given new value is None. We switch the old one.
         if value is None:
-            is_selected = self._object.get_meta("selected", "True")
-            if is_selected is "False":
+            if self._object.get_meta("selected") == "False":
                 value = "True"
             else:
                 value = "False"
+
+        wx.LogDebug("Old value is {:s}".format(old_value))
+        wx.LogDebug("New value to set is {:s}".format(value))
 
         if value != self._object.get_meta("selected", "x"):
             self._object.set_meta("selected", value)
             self.__dirty = True
             wx.LogDebug("File {:s} selected: {:s}".format(self._filename, value))
-        self.SetBackgroundColour(self._bgcolor)
-        self.Refresh()
+
+            if self._object.get_meta("selected", "False") == "True":
+                self.GetToolsPane().SetBackgroundColour(self._hicolor)
+            else:
+                self.GetToolsPane().SetBackgroundColour(self.GetBackgroundColour())
+
+            self.Refresh()
+        else:
+            wx.LogDebug("Old and new value are equals. Nothing to set.")
 
     # ------------------------------------------------------------------------
 
@@ -616,11 +642,12 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     def SetBackgroundColour(self, colour):
         """Override."""
-        self._bgcolor = colour
-        wx.Panel.SetBackgroundColour(self, self._bgcolor)
+        # set this bg color to all objects
+        wx.Panel.SetBackgroundColour(self, colour)
         for c in self.GetChildren():
             c.SetBackgroundColour(colour)
 
+        # but the tools can have a different one
         if self._object.get_meta("selected", "False") == "True":
             self.GetToolsPane().SetBackgroundColour(self._hicolor)
 

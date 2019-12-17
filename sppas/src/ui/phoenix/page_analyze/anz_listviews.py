@@ -113,7 +113,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         view panel of each file.
 
         """
-        return False   # True
+        return True
 
     # -----------------------------------------------------------------------
     # Manage the files
