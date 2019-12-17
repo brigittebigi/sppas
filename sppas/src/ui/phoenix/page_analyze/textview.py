@@ -67,15 +67,10 @@ class TextViewPanel(sppasBaseViewPanel):
     def __init__(self, parent, filename, name="textview-panel"):
         self._object = list()
         super(TextViewPanel, self).__init__(parent, filename, name)
+        self.Bind(wx.EVT_TEXT, self._process_text_changed)
 
     # -----------------------------------------------------------------------
     # Override from the parent
-    # -----------------------------------------------------------------------
-
-    def is_modified(self):
-        """Return True if the content of the file has changed."""
-        return self.GetPane().IsModified()
-
     # -----------------------------------------------------------------------
 
     def get_object(self):
@@ -96,7 +91,6 @@ class TextViewPanel(sppasBaseViewPanel):
         :raises: IOError, UnicodeDecodeError, ...
 
         """
-        wx.LogMessage("Load text of file {:s}".format(self._filename))
         with codecs.open(self._filename, 'r', sg.__encoding__) as fp:
             self._object = fp.readlines()
         wx.LogMessage("Text loaded: {:d} lines.".format(len(self._object)))
@@ -110,6 +104,7 @@ class TextViewPanel(sppasBaseViewPanel):
             fp.write(content)
 
         self.GetPane().SetModified(False)
+        self._dirty = False
         return True
 
     # -----------------------------------------------------------------------
@@ -171,6 +166,11 @@ class TextViewPanel(sppasBaseViewPanel):
 
         else:
             sppasBaseViewPanel._process_event(self, event)
+
+    # -----------------------------------------------------------------------
+
+    def _process_text_changed(self, evt):
+        self._dirty = True
 
     # -----------------------------------------------------------------------
 

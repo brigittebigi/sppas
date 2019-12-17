@@ -214,22 +214,22 @@ class BaseViewFilesPanel(sppasPanel):
         if force is True or self.is_modified(name) is False:
 
             # Remove of the object
-            page = self._files.get(name, None)
-            if page is None:
+            panel = self._files.get(name, None)
+            if panel is None:
                 wx.LogError("There's no file with name {:s}".format(name))
                 return False
 
             # Destroy the panel and remove of the sizer
             for i, child in enumerate(self.GetScrolledChildren()):
-                if child == page:
+                if child == panel:
                     self.GetScrolledSizer().Remove(i)
                     break
                 for c in child.GetChildren():
-                    if c == page:
+                    if c == panel:
                         self.GetScrolledSizer().Remove(i)
                         break
 
-            page.Destroy()
+            panel.Destroy()
 
             # Delete of the list
             self._files.pop(name)
@@ -253,12 +253,39 @@ class BaseViewFilesPanel(sppasPanel):
                 saved = panel.save()
                 if saved is True:
                     wx.LogMessage("File {:s} saved successfully.".format(name))
+                    # if we created the file, this "save" is perhaps the
+                    # first one and so the file is newly existing: it is not
+                    # is the workspace...
+                    self.notify(action="saved", filename=name)
             except Exception as e:
                 saved = False
                 wx.LogError("Error while saving file {:s}: {:s}"
                             "".format(name, str(e)))
 
         return saved
+
+    # -----------------------------------------------------------------------
+
+    def create_file(self, name):
+        """Add a new panel for an un-existing file.
+
+        :param name: (str)
+        :return: (bool) The panel was added or not
+
+        """
+        if name in self._files:
+            wx.LogError('Name {:s} is already in the list of files.')
+            raise ValueError('Name {:s} is already in the list of files.')
+
+        # Create an empty panel
+        panel = self._show_file(None)
+        panel.set_filename(name)
+
+        # Add to our list of name/panels
+        self._files[name] = panel
+
+        self.Layout()
+        self.Refresh()
 
     # -----------------------------------------------------------------------
     # Manage a given file and its page

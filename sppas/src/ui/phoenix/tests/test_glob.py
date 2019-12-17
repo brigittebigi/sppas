@@ -75,8 +75,8 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
-        self.AddPage(anztextviews.TestPanel(self), "Analyze Text view")
         self.AddPage(anzlistviews.TestPanel(self), "Analyze Summary view")
+        self.AddPage(anztextviews.TestPanel(self), "Analyze Text view")
         self.AddPage(listview.TestPanel(self), "Summary view")
         self.AddPage(textview.TestPanel(self), "Text view")
         self.AddPage(filesmanager.TestPanel(self), "Files manager")

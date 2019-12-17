@@ -112,7 +112,7 @@ class sppasRW(object):
     @staticmethod
     def extensions():
         """Return the list of supported extensions in lower case."""
-        return sppasRW.TRANSCRIPTION_TYPES.keys()
+        return list(sppasRW.TRANSCRIPTION_TYPES.keys())
 
     # -----------------------------------------------------------------------
 
@@ -247,3 +247,71 @@ class sppasRW(object):
             raise AioEncodingError(self.__filename, str(e))
         except Exception:
             raise
+
+# ---------------------------------------------------------------------------
+
+
+class FileFormatProperty(object):
+    """Represent one format and its properties.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
+
+    def __init__(self, extension):
+        """Create a FileFormatProperty instance.
+
+        :param extension: (str) File name extension.
+
+        """
+        self._extension = extension
+        if extension.startswith(".") is False:
+            self._extension = "." + extension
+        self._instance = sppasRW.TRANSCRIPTION_TYPES[extension]()
+        self._software = self._instance.software
+
+        try:
+            self._instance.read("")
+        except NotImplementedError:
+            self._reader = False
+        except Exception:
+            self._reader = True
+        try:
+            self._instance.write("")
+        except NotImplementedError:
+            self._writer = False
+        except Exception:
+            self._writer = True
+
+    # -----------------------------------------------------------------------
+
+    def get_extension(self):
+        """Return the extension, including the initial dot."""
+        return self._extension
+
+    def get_software(self):
+        """Return the name of the software matching the extension."""
+        return self._software
+
+    def get_reader(self):
+        """Return True if SPPAS can read files of the extension."""
+        return self._reader
+
+    def get_writer(self):
+        """Return True if SPPAS can write files of the extension."""
+        return self._writer
+
+    # -----------------------------------------------------------------------
+
+    def __format__(self, fmt):
+        return str(self).__format__(fmt)
+
+    # -----------------------------------------------------------------------
+
+    def __str__(self):
+        return 'FileFormatProperty() of extension {!s:s}' \
+               ''.format(self._extension)

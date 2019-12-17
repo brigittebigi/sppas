@@ -42,7 +42,7 @@ try:
     from sppas.src.config import error
 except ImportError:
     def error(index, domain=None):
-        """Return the string mathing the error index.
+        """Return the string matching the error index.
 
         Replace the original function which returns the error message 
         translated in the given domain.
@@ -57,7 +57,7 @@ except ImportError:
         if domain is not None:
             if index == 9010:
                 return 'Name {!s:s} does not match a file or a directory.'
-            if index == 9012:
+            if index == 9102:
                 return 'Name {!s:s} does not match a valid file.'
             if index == 9014:
                 return 'Name {!s:s} does not match a valid directory.'
@@ -81,7 +81,7 @@ class FileOSError(OSError):
     """
 
     def __init__(self, name):
-        self.parameter = error(9010) + (error(9010, "ui")).format(name)
+        self.parameter = error(9010) + (error(9010, "files")).format(name)
 
     def __str__(self):
         return repr(self.parameter)
@@ -97,7 +97,7 @@ class FileTypeError(TypeError):
     """
 
     def __init__(self, name):
-        self.parameter = error(9012) + (error(9012, "ui")).format(name)
+        self.parameter = error(9012) + (error(9012, "files")).format(name)
 
     def __str__(self):
         return repr(self.parameter)
@@ -113,7 +113,7 @@ class PathTypeError(TypeError):
     """
 
     def __init__(self, name):
-        self.parameter = error(9014) + (error(9014, "ui")).format(name)
+        self.parameter = error(9014) + (error(9014, "files")).format(name)
 
     def __str__(self):
         return repr(self.parameter)
@@ -129,7 +129,7 @@ class FileAttributeError(AttributeError):
     """
 
     def __init__(self, classname, method):
-        self.parameter = error(9020) + (error(9020, "ui")).format(classname, method)
+        self.parameter = error(9020) + (error(9020, "files")).format(classname, method)
 
     def __str__(self):
         return repr(self.parameter)
@@ -145,7 +145,7 @@ class FileRootValueError(ValueError):
     """
 
     def __init__(self, filename, rootname):
-        self.parameter = error(9030) + (error(9030, "ui")).format(filename, rootname)
+        self.parameter = error(9030) + (error(9030, "files")).format(filename, rootname)
 
     def __str__(self):
         return repr(self.parameter)
@@ -161,7 +161,7 @@ class FileLockedError(IOError):
     """
 
     def __init__(self, filename):
-        self.parameter = error(9040) + (error(9040, "ui")).format(filename)
+        self.parameter = error(9040) + (error(9040, "files")).format(filename)
 
     def __str__(self):
         return repr(self.parameter)

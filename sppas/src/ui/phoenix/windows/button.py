@@ -580,7 +580,7 @@ class BaseButton(wx.Window):
         if style not in [wx.PENSTYLE_SOLID, wx.PENSTYLE_LONG_DASH,
                          wx.PENSTYLE_SHORT_DASH, wx.PENSTYLE_DOT_DASH,
                          wx.PENSTYLE_HORIZONTAL_HATCH]:
-            wx.LogWarning("Invalid focus style {:s}.".format(str(style)))
+            wx.LogWarning("Invalid border style {:s}.".format(str(style)))
             return
         self._borderstyle = style
 
@@ -1186,6 +1186,22 @@ class BitmapTextButton(BaseButton):
             return
         self._align = align
 
+    # ------------------------------------------------------------------------
+
+    def GetLabel(self):
+        """Return the label text as it was passed to SetLabel."""
+        return self._label
+
+    # ------------------------------------------------------------------------
+
+    def SetLabel(self, label):
+        """Set the label text.
+
+        :param label: (str) Label text.
+
+        """
+        self._label = label
+
     # -----------------------------------------------------------------------
 
     LabelPosition = property(GetLabelPosition, SetLabelPosition)
@@ -1771,6 +1787,12 @@ class CheckButton(BaseCheckButton):
 
     # ------------------------------------------------------------------------
 
+    def GetLabel(self):
+        """Return the label text as it was passed to SetLabel."""
+        return self._label
+
+    # ------------------------------------------------------------------------
+
     def IsChecked(self):
         """Return if button is checked.
 
@@ -1830,22 +1852,6 @@ class CheckButton(BaseCheckButton):
     def GetValue(self):
         """Return the state of the button."""
         return self._pressed
-
-    # ------------------------------------------------------------------------
-
-    def GetLabel(self):
-        """Return the label text as it was passed to SetLabel."""
-        return self._label
-
-    # ------------------------------------------------------------------------
-
-    def SetLabel(self, label):
-        """Set the label text.
-
-        :param label: (str) Label text.
-
-        """
-        self._label = label
 
     # ------------------------------------------------------------------------
 
@@ -2115,12 +2121,15 @@ class TestPanelBitmapTextButton(wx.Panel):
         # b2.SetFont(bold_font)
 
         b3 = BitmapTextButton(self, label="SPPAS", pos=(180, 10), size=(50, 50))
-        b3.SetLabelPosition(wx.TOP)
+
         b4 = BitmapTextButton(self, label="Add", pos=(240, 10), size=(100, 50), name="add")
+        b4.SetLabel("ADD")
         b4.SetLabelPosition(wx.RIGHT)
-        b5 = BitmapTextButton(self, label="Add", pos=(350, 10), size=(100, 50), name="add")
+        b4.Refresh()
+
+        b5 = BitmapTextButton(self, label="Add", pos=(350, 10), size=(100, 50), name="add_lower")
         b5.SetLabelPosition(wx.LEFT)
-        b6 = BitmapTextButton(self, label="Room for a tiny bitmap", pos=(460, 10), size=(150, 50), name="add")
+        b6 = BitmapTextButton(self, label="Room for a tiny bitmap", pos=(460, 10), size=(150, 50), name="tiny")
         b6.SetLabelPosition(wx.LEFT)
 
 # ----------------------------------------------------------------------------

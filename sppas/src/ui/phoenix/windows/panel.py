@@ -71,7 +71,6 @@ class sppasPanel(wx.Panel):
             self.SetForegroundColour(s.fg_color)
             self.SetFont(s.text_font)
         except AttributeError:
-            wx.LogWarning("Settings not defined. Use default colors and fonts.")
             pass
         self.SetAutoLayout(True)
         self.SetMinSize(wx.Size(320, 200))
@@ -145,7 +144,6 @@ class sppasScrolledPanel(sc.ScrolledPanel):
             self.SetForegroundColour(s.fg_color)
             self.SetFont(s.text_font)
         except AttributeError:
-            wx.LogWarning("Settings not defined. Use default colors and fonts.")
             pass
 
     # -----------------------------------------------------------------------
@@ -227,7 +225,6 @@ class sppasCollapsiblePanel(sppasPanel):
             self.SetForegroundColour(s.fg_color)
             self.SetFont(s.text_font)
         except AttributeError:
-            wx.LogWarning("Settings not defined. Use default colors and fonts.")
             pass
 
         self.Bind(wx.EVT_BUTTON, self.OnButton, self.__btn)
@@ -366,6 +363,23 @@ class sppasCollapsiblePanel(sppasPanel):
         self.__tools_panel.GetSizer().Prepend(btn, 0, wx.LEFT | wx.RIGHT, 1)
 
         return btn
+
+    # ------------------------------------------------------------------------
+
+    def GetLabel(self):
+        """Return the label text of the collapsible button."""
+        return self.__btn.GetLabel()
+
+    # -----------------------------------------------------------------------
+
+    def SetLabel(self, value):
+        """Set a new label to the collapsible button.
+
+        :param value: (str) New string label
+
+        """
+        self.__btn.SetLabel(value)
+        self.__btn.Refresh()
 
     # -----------------------------------------------------------------------
 
@@ -582,7 +596,8 @@ class TestPanel(sc.ScrolledPanel):
         p3.SetPane(child_panel)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p3)
 
-        p4 = sppasCollapsiblePanel(self, label="wx.CollapsiblePane")
+        p4 = sppasCollapsiblePanel(self, label="this label should not be visible")
+        p4.SetLabel("This text is readable")
         child_panel = p4.GetPane()
         child_panel.SetBackgroundColour(wx.GREEN)
         self.MakePanelContent(child_panel)

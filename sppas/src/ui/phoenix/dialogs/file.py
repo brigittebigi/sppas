@@ -62,8 +62,8 @@ class sppasFileDialog(sppasDialog):
         This class supports the following styles:
 
             - wx.FC_DEFAULT_STYLE: The default style: wx.FC_OPEN
-            - wx.FC_OPEN: Creates an file control suitable for opening files. Cannot be combined with wx.FC_SAVE.
-            - wx.FC_SAVE: Creates an file control suitable for saving files. Cannot be combined with wx.FC_OPEN.
+            - wx.FC_OPEN: Creates a file control suitable for opening files. Cannot be combined with wx.FC_SAVE.
+            - wx.FC_SAVE: Creates a file control suitable for saving files. Cannot be combined with wx.FC_OPEN.
             - wx.FC_MULTIPLE: For open control only, Allows selecting multiple files. Cannot be combined with wx.FC_SAVE
             - wx.FC_NOSHOWHIDDEN: Hides the "Show Hidden Files" checkbox (Generic only)
 
@@ -112,9 +112,15 @@ class sppasFileDialog(sppasDialog):
 
     # -----------------------------------------------------------------------
 
-    def GetWildCard(self):
+    def GetFilterIndex(self):
+        """Return the zero-based index of the currently selected filter."""
+        return self.FindWindow("content").GetFilterIndex()
+
+    # -----------------------------------------------------------------------
+
+    def GetWildcard(self):
         """Return the current wildcard."""
-        return self.FindWindow("content").GetWildCard()
+        return self.FindWindow("content").GetWildcard()
 
     # -----------------------------------------------------------------------
 
@@ -139,8 +145,7 @@ class sppasFileDialog(sppasDialog):
 
     def _create_content(self, style):
         """Create the content of the file dialog."""
-        fc = wx.FileCtrl(self,  # defaultDirectory="", defaultFilename="", wildCard="",
-                         style=style)  # wx.FC_OPEN | wx.FC_MULTIPLE | wx.FC_NOSHOWHIDDEN)
+        fc = wx.FileCtrl(self, style=style)
         fc.SetMinSize(wx.Size(sppasDialog.fix_size(480),
                               sppasDialog.fix_size(320)))
         fc.SetBackgroundColour(self.GetBackgroundColour())

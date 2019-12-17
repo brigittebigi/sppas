@@ -57,6 +57,7 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
     def __init__(self, parent, filename, name="baseview"):
 
         # We wont create this panel if the file can't be loaded...
+        self._dirty = False
         self._filename = filename
         if filename is not None:
             # The file this panel is displaying is loaded into an object
@@ -85,7 +86,7 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
 
     def is_modified(self):
         """Return True if the content of the file has changed."""
-        return False
+        return self._dirty
 
     # ------------------------------------------------------------------------
 
@@ -102,6 +103,18 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
     def save(self):
         """Save the displayed text into a file."""
         return False
+
+    # ------------------------------------------------------------------------
+
+    def set_filename(self, name):
+        """Set a new name to the file.
+
+        :param name: (str) Name of a file. It is not verified.
+
+        """
+        self._filename = name
+        self.SetLabel(name)
+        self._dirty = True
 
     # ------------------------------------------------------------------------
 

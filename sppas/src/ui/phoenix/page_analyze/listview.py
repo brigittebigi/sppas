@@ -46,7 +46,8 @@ from sppas import paths
 
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
-from sppas.src.anndata.anndataexc import TrsAddError, AnnDataTypeError
+from sppas.src.anndata.aio.basetrs import sppasBaseIO
+from sppas.src.anndata.anndataexc import TrsAddError
 
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasMedia
@@ -92,11 +93,12 @@ class TrsListViewPanel(sppasBaseViewPanel):
     """
 
     def __init__(self, parent, filename, name="listview-panel"):
-        self._object = sppasTranscription()
-        self.__dirty = False
+        self._object = sppasTranscription("NewDocument")
+        self._dirty = False
         self._hicolor = wx.Colour(200, 200, 180)
 
         super(TrsListViewPanel, self).__init__(parent, filename, name)
+        self.__set_metadata()
         self.__set_selected(self._object.get_meta("selected"))
 
     # -----------------------------------------------------------------------
@@ -108,7 +110,6 @@ class TrsListViewPanel(sppasBaseViewPanel):
             self.GetToolsPane().SetBackgroundColour(self._hicolor)
         else:
             self.GetToolsPane().SetBackgroundColour(self.GetBackgroundColour())
-
         self.Refresh()
 
     # -----------------------------------------------------------------------
@@ -153,12 +154,12 @@ class TrsListViewPanel(sppasBaseViewPanel):
                 if tier.get_meta("checked") == "False":
                     tier.set_meta("checked", "True")
                     panel.change_state(tier.get_id(), "True")
-                    self.__dirty = True
+                    self._dirty = True
             else:
                 if tier.get_meta("checked") == "True":
                     tier.set_meta("checked", "False")
                     panel.change_state(tier.get_id(), "False")
-                    self.__dirty = True
+                    self._dirty = True
 
     # -----------------------------------------------------------------------
 
@@ -169,7 +170,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
             if tier.get_meta("checked") == "True":
                 tier.set_meta("checked", "False")
                 panel.change_state(tier.get_id(), "False")
-                self.__dirty = True
+                self._dirty = True
 
     # -----------------------------------------------------------------------
 
@@ -191,7 +192,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
                     panel.update_item(tier)
                     wx.LogMessage("Tier {:s} renamed to {:s}"
                                   "".format(old_name, new_name))
-                    self.__dirty = True
+                    self._dirty = True
 
     # -----------------------------------------------------------------------
 
@@ -236,7 +237,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
         if len(clipboard) > 0:
             self.delete_tier()
-            self.__dirty = True
+            self._dirty = True
 
         return clipboard
 
@@ -286,7 +287,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
                     copied_tier.set_parent(self._object)
                 panel.add(copied_tier)
                 added += 1
-                self.__dirty = True
+                self._dirty = True
             except TrsAddError as e:
                 wx.LogError("Paste tier error: {:s}".format(str(e)))
 
@@ -309,7 +310,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
                 self._object.append(new_tier)
                 panel.add(new_tier)
                 nb += 1
-                self.__dirty = True
+                self._dirty = True
 
         return nb
 
@@ -328,7 +329,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
                 # move up into the panel
                 panel.remove(tier.get_id())
                 panel.add(tier, i-1)
-                self.__dirty = True
+                self._dirty = True
 
     # ------------------------------------------------------------------------
 
@@ -347,7 +348,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
                 # move down into the panel
                 panel.remove(tier.get_id())
                 panel.add(tier, i+1)
-                self.__dirty = True
+                self._dirty = True
 
     # -----------------------------------------------------------------------
 
@@ -373,7 +374,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
                         if p.is_float() is True:
                             radius = float(r)
                         tier.set_radius(radius)
-                        self.__dirty = True
+                        self._dirty = True
                         wx.LogMessage(
                             "Radius set to tier {:s} of file {:s}: {:s}"
                             "".format(tier.get_name(), self._filename, str(r)))
@@ -384,12 +385,6 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     # -----------------------------------------------------------------------
     # Override from the parent
-    # -----------------------------------------------------------------------
-
-    def is_modified(self):
-        """Return True if the content of the file has changed."""
-        return self.__dirty
-
     # -----------------------------------------------------------------------
 
     def get_object(self):
@@ -403,7 +398,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
     # -----------------------------------------------------------------------
 
     def load_text(self):
-        """Override. Load filename in a sppasTranscription.
+        """Override. Load filename in a sppasBaseIO.
 
         Add the appropriate metadata.
         The tiers, medias and controlled vocab lists are collapsed if empty.
@@ -414,6 +409,10 @@ class TrsListViewPanel(sppasBaseViewPanel):
         parser = sppasRW(self._filename)
         self._object = parser.read()
 
+    # -----------------------------------------------------------------------
+
+    def __set_metadata(self):
+        """Set metadata to the object about checked or selected items."""
         if self._object.get_meta("selected", None) is None:
             self._object.set_meta("selected", "False")
 
@@ -446,10 +445,10 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
         """
         parser = None
-        if filename is None and self.__dirty is True:
+        if filename is None and self._dirty is True:
             # the writer will increase the file version
             parser = sppasRW(self._filename)
-            self.__dirty = False
+            self._dirty = False
         if filename is not None:
             parser = sppasRW(filename)
 
@@ -485,10 +484,20 @@ class TrsListViewPanel(sppasBaseViewPanel):
         media_ctrl = MediaCollapsiblePanel(child_panel, self._object.get_media_list())
         media_ctrl.Collapse(self.str_to_bool(self._object.get_meta("media_collapsed")))
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, media_ctrl)
+        if isinstance(self._object, sppasBaseIO) is False:
+            media_ctrl.Hide()
+        else:
+            if self._object.media_support() is False:
+                media_ctrl.Hide()
 
         vocab_ctrl = CtrlVocabCollapsiblePanel(child_panel, self._object.get_ctrl_vocab_list())
         vocab_ctrl.Collapse(self.str_to_bool(self._object.get_meta("vocabs_collapsed")))
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, vocab_ctrl)
+        if isinstance(self._object, sppasBaseIO) is False:
+            vocab_ctrl.Hide()
+        else:
+            if self._object.media_support() is False:
+                vocab_ctrl.Hide()
 
         # y_ctrl = self.__create_hyctrl()
 
@@ -524,7 +533,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         if current_state == "False":
             new_state = "True"
         obj.set_meta("checked", new_state)
-        self.__dirty = True
+        self._dirty = True
 
         # update the corresponding panel(s)
         panel = event.GetEventObject()
@@ -570,7 +579,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
         if value != self._object.get_meta("selected", "x"):
             self._object.set_meta("selected", value)
-            self.__dirty = True
+            self._dirty = True
             wx.LogDebug("File {:s} selected: {:s}".format(self._filename, value))
 
             if self._object.get_meta("selected", "False") == "True":
@@ -1122,14 +1131,19 @@ class TestPanel(sppasPanel):
 
         f1 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra")
         f2 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-salign.xra")
+        f3 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-stats.csv")
         p1 = TrsListViewPanel(self, f1)
         p2 = TrsListViewPanel(self, f2)
+        p3 = TrsListViewPanel(self, None)
+        p3.set_filename(f3)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p1)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p2)
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p3)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(p1, 0, wx.EXPAND)
         sizer.Add(p2, 0, wx.EXPAND)
+        sizer.Add(p3, 0, wx.EXPAND)
 
         self.SetBackgroundColour(wx.Colour(28, 28, 28))
         self.SetForegroundColour(wx.Colour(228, 228, 228))

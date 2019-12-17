@@ -54,6 +54,7 @@ Requires the following other packages:
 """
 from .aio import aioutils
 from .aio.readwrite import sppasRW
+from .aio.readwrite import FileFormatProperty
 from .metadata import sppasMetaData
 from .transcription import sppasTranscription
 from .tier import sppasTier
@@ -73,6 +74,7 @@ from .ann.annset import sppasAnnSet
 __all__ = (
     'sppasMetaData',
     'sppasRW',
+    'FileFormatProperty',
     'sppasTranscription',
     'sppasTier',
     'sppasAnnotation',

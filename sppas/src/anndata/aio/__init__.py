@@ -68,7 +68,8 @@ from .xra import sppasXRA
 # Variables
 # ----------------------------------------------------------------------------
 
-# TODO: get extension from the "default_extension" member of each class
+# The use os these variables is DEPRECATED:
+# Now: get extension of each format from the sppasRW() parser
 
 ext_sppas = ['.xra', '.[Xx][Rr][Aa]']
 ext_praat = ['.TextGrid', '.PitchTier', '.[Tt][eE][xX][tT][Gg][Rr][Ii][dD]','.[Pp][Ii][tT][cC][hH][Tt][Ii][Ee][rR]']

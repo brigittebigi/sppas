@@ -1,0 +1,36 @@
+# English translation for SPPAS
+# Copyright (c) 2011-2019 Brigitte Bigi
+# This file is distributed under the same license as the SPPAS package.
+# Brigitte Bigi <contact@sppas.org>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: SPPAS\n"
+"Report-Msgid-Bugs-To: contact@sppas.org\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: Brigitte Bigi <brigitte.bigi@gmail.com>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Language: en_US\n"
+"X-Generator: Poedit 2.0.6\n"
+
+msgid ":ERROR 9010: "
+msgstr "Name {!s:s} does not match a file or a directory."
+
+msgid ":ERROR 9012: "
+msgstr "Name {!s:s} does not match a valid file."
+
+msgid ":ERROR 9014: "
+msgstr "Name {!s:s} does not match a valid directory."
+
+msgid ":ERROR 9020: "
+msgstr "{:s} has no attribute '{:s}'."
+
+msgid ":ERROR 9030: "
+msgstr "'{:s}' does not match root '{:s}'."
+
+msgid ":ERROR 9040: "
+msgstr "{!s:s} is locked."

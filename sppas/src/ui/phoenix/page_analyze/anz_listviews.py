@@ -126,7 +126,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         :return: wx.Window
 
         """
-        wx.LogMessage("Displaying file {:s} in ListView mode.".format(name))
+        wx.LogMessage("Displaying file {} in ListView mode.".format(name))
         panel = TrsListViewPanel(self.GetScrolledPanel(), filename=name)
         panel.SetHighLightColor(self._hicolor)
         self.GetScrolledSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.TOP | wx.BOTTOM, 20)
@@ -477,8 +477,7 @@ class TestPanel(ListViewFilesPanel):
     TEST_FILES = (
         os.path.join(paths.samples, "COPYRIGHT.txt"),
         os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.wav"),
-        os.path.join(paths.samples, "annotation-results", "samples-fra",
-                     "F_F_B003-P8-palign.xra")
+        os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra")
     )
 
     def __init__(self, parent):
@@ -487,4 +486,5 @@ class TestPanel(ListViewFilesPanel):
             name="TestPanel-anz_baseviews",
             files=TestPanel.TEST_FILES)
         self.SetBackgroundColour(wx.Colour(100, 100, 100))
+        self.create_file(os.path.join(paths.samples, "F_F_B003-P8.xxx"))
 

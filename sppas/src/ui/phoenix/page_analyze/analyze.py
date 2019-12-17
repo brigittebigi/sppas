@@ -46,20 +46,24 @@
 
 """
 
+import os
 import logging
 import random
 import wx
 
 from sppas import sppasTypeError
+from sppas import paths
 from sppas import msg
 from sppas.src.utils import u
 from sppas.src.files import FileData, States
+from sppas.src.anndata import sppasRW, FileFormatProperty
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 from ..main_events import EVT_TAB_CHANGE
 from ..main_events import EVT_VIEW
 
-from ..dialogs import Information, Confirm
+from ..dialogs import Information, Confirm, Error
+from ..dialogs import sppasFileDialog
 from ..windows import sppasPanel
 from ..windows import sppasStaticLine
 from ..windows.book import sppasSimplebook
@@ -94,6 +98,8 @@ TAB_MSG_CONFIRM = _("The current tab contains not saved work that "
 VIEW_MSG_CONFIRM = _("The current view contains not saved work that "
                      "will be lost. Are you sure you want to change view?")
 
+TAB_ACT_CREATE = _("Create file")
+TAB_ACT_SAVEALL = _("Save all")
 TAB_ACT_SAVECURRENT_ERROR = _(
     "Files of the current tab can not be saved due to "
     "the following error: {:s}\nConfirm you still want to switch tab?")
@@ -288,6 +294,48 @@ class sppasAnalyzePanel(sppasPanel):
 
     # ------------------------------------------------------------------------
 
+    def create_file(self):
+        """Open a dialog to fix a filename and add the corresponding panel."""
+        # Which tab is currently selected to add the new file?
+        tabs = self.FindWindow("tabs")
+        cur_index = tabs.get_selected_tab()
+        if cur_index == -1:
+            Information(TAB_MSG_NO_SELECT)
+            return
+
+        dlg = sppasFileDialog(self,
+                              title="Path and name of a new file",
+                              style=wx.FC_SAVE | wx.FC_NOSHOWHIDDEN)
+        dlg.SetDirectory(paths.samples)
+        wildcard = list()
+        extensions = list()
+        for e in sppasRW.extensions():
+            f = FileFormatProperty(e)
+            if f.get_writer() is True:
+                wildcard.append(f.get_software() + " files (" + e + ")|*." + e)
+                extensions.append(e)
+        dlg.SetWildcard("|".join(wildcard))
+
+        if dlg.ShowModal() == wx.ID_OK:
+            filename = dlg.GetPath()
+            fn, fe = os.path.splitext(filename)
+            if len(fn) > 0:
+                if len(fe) == 0:
+                    filename += "." + extensions[dlg.GetFilterIndex()]
+
+                if os.path.exists(filename) is True:
+                    Error("Filename {:s} is already existing.".format(filename))
+                else:
+                    book = self.FindWindow("content")
+                    page = book.GetPage(cur_index)
+                    try:
+                        page.create_file(filename)
+                    except Exception as e:
+                        Error(str(e))
+        dlg.Destroy()
+
+    # ------------------------------------------------------------------------
+
     def append(self):
         """Append a tab/page/param to manage some of the data.
 
@@ -436,9 +484,16 @@ class sppasAnalyzePanel(sppasPanel):
 
         tb.AddSpacer(1)
 
+        # Add button to create a new (empty) file
+        create_btn = tb.AddButton("files-new-file", TAB_ACT_CREATE)
+        create_btn.LabelPosition = wx.BOTTOM
+        create_btn.Spacing = 1
+
         # Add button to save files of the current tab
-        save_btn = tb.AddButton("save_all")
+        save_btn = tb.AddButton("save_all", TAB_ACT_SAVEALL)
         save_btn.Enable(False)
+        save_btn.LabelPosition = wx.BOTTOM
+        save_btn.Spacing = 1
 
         return tb
 
@@ -567,6 +622,9 @@ class sppasAnalyzePanel(sppasPanel):
         elif event_name == "save_all":
             self.save_files()
 
+        elif event_name == "files-new-file":
+            self.create_file()
+
         event.Skip()
 
     # -----------------------------------------------------------------------
@@ -594,6 +652,15 @@ class sppasAnalyzePanel(sppasPanel):
             except Exception as e:
                 wx.LogError(str(e))
                 return False
+
+        elif action == "saved":
+            # A file was saved by the panel.
+            fn = self.__data.get_object(filename)
+            if fn is None:
+                added = self.__data.add_file(filename)
+                if len(added) > 0:
+                    self.__data.set_object_state(States().LOCKED, added[0])
+                    self.notify()
 
     # -----------------------------------------------------------------------
     # Management of the book

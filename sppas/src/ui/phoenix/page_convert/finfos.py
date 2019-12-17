@@ -42,6 +42,7 @@ import wx.dataview
 
 from sppas.src.config import ui_translation
 from sppas.src.anndata import sppasRW
+from sppas.src.anndata import FileFormatProperty
 
 from ..windows import sppasPanel
 from ..windows.baseviewctrl import BaseTreeViewCtrl
@@ -79,7 +80,7 @@ class FileSupports:
 # ---------------------------------------------------------------------------
 
 
-class FileFormatProperty:
+class FileFormatPropertySupport(FileFormatProperty):
     """Represent one format and its properties.
 
     :author:       Brigitte Bigi
@@ -96,40 +97,13 @@ class FileFormatProperty:
         :param extension: (str) File name extension.
 
         """
-        self.__extension = "." + extension
-        self.__instance = sppasRW.TRANSCRIPTION_TYPES[extension]()
-        self.__software = self.__instance.software
-
-        try:
-            self.__instance.read("")
-        except NotImplementedError:
-            self.__reader = False
-        except Exception:
-            self.__reader = True
-        try:
-            self.__instance.write("")
-        except NotImplementedError:
-            self.__writer = False
-        except Exception:
-            self.__writer = True
+        super(FileFormatPropertySupport, self).__init__(extension)
 
     # -----------------------------------------------------------------------
 
-    def get_extension(self):
-        return self.__extension
-
-    def get_software(self):
-        return self.__software
-
-    def get_reader(self):
-        return self.__reader
-
-    def get_writer(self):
-        return self.__writer
-
     def get_support(self, name):
         if name in list(FileSupports.supports.keys()):
-            return getattr(self.__instance, name)()
+            return getattr(self._instance, name)()
         return False
 
     # -----------------------------------------------------------------------
@@ -141,7 +115,7 @@ class FileFormatProperty:
 
     def __str__(self):
         return 'FileFormatProperty() of extension {!s:s}' \
-               ''.format(self.__extension)
+               ''.format(self._extension)
 
 # ---------------------------------------------------------------------------
 # The DataViewCtrl to display the list of file formats and to select one.
@@ -407,7 +381,7 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
         if not parent:
             i = 0
             for ext in self.__extensions:
-                ext_object = FileFormatProperty(ext)
+                ext_object = FileFormatPropertySupport(ext)
                 children.append(self.ObjectToItem(ext_object))
                 i += 1
             return i
@@ -558,7 +532,7 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
             col = ColumnProperties(title, name)
             col.width = sppasPanel.fix_size(40)
             col.align = wx.ALIGN_CENTRE
-            col.add_fct_name(FileFormatProperty, "get_"+name)
+            col.add_fct_name(FileFormatPropertySupport, "get_"+name)
             col.renderer = YesNoIconRenderer()
 
         else:
@@ -566,7 +540,7 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
             col = ColumnProperties(title, name)
             col.width = sppasPanel.fix_size(40)
             col.align = wx.ALIGN_CENTRE
-            col.add_fct_name(FileFormatProperty, "get_support", name)
+            col.add_fct_name(FileFormatPropertySupport, "get_support", name)
             col.renderer = YesNoIconRenderer()
 
         return col
