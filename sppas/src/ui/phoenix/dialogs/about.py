@@ -277,7 +277,7 @@ class sppasAboutDialog(sppasDialog):
         super(sppasAboutDialog, self).__init__(
             parent=parent,
             title="About",
-            style=wx.DEFAULT_FRAME_STYLE)
+            style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX)
 
         self.CreateHeader(MSG_HEADER_ABOUT, 'about')
         p = AboutSPPASPanel(self)
@@ -299,14 +299,14 @@ class sppasAboutPluginDialog(sppasDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     """
     def __init__(self, parent, plugin):
         super(sppasAboutPluginDialog, self).__init__(
             parent=parent,
             title="About",
-            style=wx.DEFAULT_FRAME_STYLE)
+            style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX)
 
         self.CreateHeader(MSG_HEADER_ABOUT + " " + plugin.get_key() + "...", 'about')
         p = AboutPluginPanel(self, plugin)

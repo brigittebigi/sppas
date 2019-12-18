@@ -108,7 +108,7 @@ class sppasSettingsDialog(sppasDialog):
         super(sppasSettingsDialog, self).__init__(
             parent=parent,
             title="Settings",
-            style=wx.DEFAULT_FRAME_STYLE | wx.DIALOG_NO_PARENT)
+            style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.STAY_ON_TOP)
 
         self._back_up = dict()
         self._backup_settings()

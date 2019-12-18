@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.dialogs.tierview.py
+    src.ui.phoenix.dialogs.tiersview.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -63,10 +63,12 @@ NOISE_BG_COLOUR = wx.Colour(230, 250, 230)
 # --------------------------------------------------------------------------
 
 MSG_HEADER_TIERSVIEW = ui_translation.gettext("View annotations of tiers")
+MSG_NO_TIER = ui_translation.gettext("No tier to view.")
 MSG_BEGIN = ui_translation.gettext("Begin")
 MSG_END = ui_translation.gettext("End")
-MSG_LABELS = ui_translation.gettext("Labels")
-MSG_POINT = ui_translation.gettext("Point")
+MSG_LABELS = ui_translation.gettext("Serialized list of labels")
+MSG_POINT = ui_translation.gettext("Midpoint")
+MSG_RADIUS = ui_translation.gettext("Radius")
 MSG_NB = ui_translation.gettext("Nb")
 MSG_TYPE = ui_translation.gettext("Type")
 
@@ -96,9 +98,10 @@ class sppasTiersViewDialog(sppasDialog):
         super(sppasTiersViewDialog, self).__init__(
             parent=parent,
             title="Tiers View",
-            style=wx.DEFAULT_FRAME_STYLE | wx.DIALOG_NO_PARENT)
+            style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.STAY_ON_TOP,
+            name="statsview-dialog")
 
-        self.CreateHeader(MSG_HEADER_TIERSVIEW, "tier_view")
+        self.CreateHeader(MSG_HEADER_TIERSVIEW, "tier_ann_view")
         self._create_content(tiers)
         self.CreateActions([wx.ID_OK])
 
@@ -145,6 +148,34 @@ class LineListCtrl(wx.ListCtrl):
         """
         wx.ListCtrl.__init__(self, parent, id, pos, size, style, validator, name)
 
+    # ---------------------------------------------------------------------
+
+    def RecolorizeBackground(self, index=-1):
+        """Set background color of items.
+
+        :param index: (int) Item to set the bg color. -1 to set all items.
+
+        """
+        bg = self.GetBackgroundColour()
+        r, g, b = bg.Red(), bg.Green(), bg.Blue()
+        delta = 10
+        if (r + g + b) > 384:
+            alt_bg = wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
+        else:
+            alt_bg = wx.Colour(r, g, b, 50).ChangeLightness(delta)
+
+        if index == -1:
+            for i in range(self.GetItemCount()):
+                if i % 2:
+                    self.SetItemBackgroundColour(i, bg)
+                else:
+                    self.SetItemBackgroundColour(i, alt_bg)
+        else:
+            if index % 2:
+                self.SetItemBackgroundColour(index, bg)
+            else:
+                self.SetItemBackgroundColour(index, alt_bg)
+
     # -----------------------------------------------------------------------
     # Override methods of wx.ListCtrl
     # -----------------------------------------------------------------------
@@ -153,7 +184,8 @@ class LineListCtrl(wx.ListCtrl):
         """Override.
 
         Insert a new column:
-            1. create a column with the line number if we create a column for the first time,
+            1. create a column with the line number if we create a column
+               for the first time,
             2. create the expected column
 
         """
@@ -181,12 +213,9 @@ class LineListCtrl(wx.ListCtrl):
 
         # we want to add somewhere in the list (and not append)...
         # shift the line numbers items (for items that are after the new one)
-        for i in range(index,self.GetItemCount()):
+        for i in range(index, self.GetItemCount()):
             wx.ListCtrl.SetItem(self, i, 0, self._num_to_str(i+1))
-            if i % 2:
-                self.SetItemBackgroundColour(i, LIGHT_GRAY)
-            else:
-                self.SetItemBackgroundColour(i, wx.WHITE)
+            self.RecolorizeBackground(i)
 
         return wx.ListCtrl.SetItem(self, index, 1, label)
 
@@ -213,11 +242,8 @@ class LineListCtrl(wx.ListCtrl):
         """
         # we added a column the user does not know!
         wx.ListCtrl.SetItem(self, index, col+1, label)
-        # just to look nice:
-        if index % 2:
-            self.SetItemBackgroundColour(index, LIGHT_GRAY)
-        else:
-            self.SetItemBackgroundColour(index, wx.WHITE)
+        # and to look nice:
+        self.RecolorizeBackground(index)
 
     # -----------------------------------------------------------------------
 
@@ -228,12 +254,9 @@ class LineListCtrl(wx.ListCtrl):
 
         """
         wx.ListCtrl.DeleteItem(self,index)
-        for i in range(index,self.GetItemCount()):
+        for i in range(index, self.GetItemCount()):
             wx.ListCtrl.SetItem(self, i, 0, self._num_to_str(i+1))
-            if i % 2:
-                self.SetItemBackgroundColour(i, LIGHT_GRAY)
-            else:
-                self.SetItemBackgroundColour(i, wx.WHITE)
+            self.RecolorizeBackground(index)
 
     # -----------------------------------------------------------------------
 
@@ -331,7 +354,7 @@ def TiersView(parent, tiers):
         else:
             wx.LogError("{} is not of type sppasTier".format(t))
     if len(view) == 0:
-        Information("No tier to view.")
+        Information(MSG_NO_TIER)
         return wx.ID_OK
 
     dialog = sppasTiersViewDialog(parent, view)

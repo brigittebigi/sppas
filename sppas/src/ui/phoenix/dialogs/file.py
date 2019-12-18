@@ -71,7 +71,7 @@ class sppasFileDialog(sppasDialog):
         super(sppasFileDialog, self).__init__(
             parent=parent,
             title=title,
-            style=wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP)
+            style=wx.FRAME_TOOL_WINDOW | wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.STAY_ON_TOP)
 
         self._create_content(style)
         self._create_buttons()
@@ -126,6 +126,11 @@ class sppasFileDialog(sppasDialog):
 
     def SetWildcard(self, wild_card):
         return self.FindWindow("content").SetWildcard(wild_card)
+
+    # -----------------------------------------------------------------------
+
+    def SetPath(self, path):
+        return self.FindWindow("content").SetPath(path)
 
     # -----------------------------------------------------------------------
 

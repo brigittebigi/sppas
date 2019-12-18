@@ -78,7 +78,7 @@ class sppasFeedbackDialog(sppasDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     """
 
@@ -91,7 +91,7 @@ class sppasFeedbackDialog(sppasDialog):
         super(sppasFeedbackDialog, self).__init__(
             parent=parent,
             title='{:s} Feedback'.format(sg.__name__),
-            style=wx.DEFAULT_FRAME_STYLE)
+            style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.STAY_ON_TOP)
 
         self.CreateHeader(MSG_HEADER_FEEDBACK, icon_name="mail-at")
         self._create_content()

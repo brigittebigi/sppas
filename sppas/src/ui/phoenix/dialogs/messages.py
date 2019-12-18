@@ -76,7 +76,7 @@ class sppasBaseMessageDialog(sppasDialog):
         super(sppasBaseMessageDialog, self).__init__(
             parent=parent,
             title="Message",
-            style=wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.STAY_ON_TOP)  # | wx.DIALOG_NO_PARENT)
+            style=wx.CAPTION | wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.STAY_ON_TOP)
 
         self._create_header(style, title)
         self._create_content(message, **kwargs)

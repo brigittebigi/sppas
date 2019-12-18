@@ -43,7 +43,7 @@ from ..windows import sppasToolbar
 from ..dialogs import sppasTextEntryDialog
 from ..dialogs import Confirm
 from ..dialogs import TiersView
-
+from ..dialogs import StatsView
 from .anz_baseviews import BaseViewFilesPanel
 from .listview import TrsListViewPanel
 
@@ -64,7 +64,8 @@ TIER_ACT_DUPLICATE = "Duplicate"
 TIER_ACT_MOVE_UP = "Move Up"
 TIER_ACT_MOVE_DOWN = "Move Down"
 TIER_ACT_RADIUS = "Radius"
-TIER_ACT_VIEW = "View"
+TIER_ACT_ANN_VIEW = "View"
+TIER_ACT_STAT_VIEW = "Stats"
 TIER_MSG_CONFIRM_DEL = "Are you sure to delete {:d} tiers of {:d} files? " \
                        "The process is irreversible."
 
@@ -194,7 +195,11 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         b.LabelPosition = wx.BOTTOM
         b.Spacing = 1
 
-        b = toolbar.AddButton("tier_view", TIER_ACT_VIEW)
+        b = toolbar.AddButton("tier_ann_view", TIER_ACT_ANN_VIEW)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
+
+        b = toolbar.AddButton("tier_stat_view", TIER_ACT_STAT_VIEW)
         b.LabelPosition = wx.BOTTOM
         b.Spacing = 1
 
@@ -235,8 +240,10 @@ class ListViewFilesPanel(BaseViewFilesPanel):
             self.move_tiers(up=False)
         elif btn_name == "tier_radius":
             self.radius_tiers()
-        elif btn_name == "tier_view":
-            self.view_tiers()
+        elif btn_name == "tier_stat_view":
+            self.view_stats_tiers()
+        elif btn_name == "tier_ann_view":
+            self.view_anns_tiers()
 
         else:
             event.Skip()
@@ -453,11 +460,11 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
     # -----------------------------------------------------------------------
 
-    def view_tiers(self):
+    def view_anns_tiers(self):
         """Open a dialog to view the content of the checked tiers."""
         nbf, nbt = self.__get_checked_nb()
         if nbt == 0:
-            wx.LogWarning("Radius: no tier checked.")
+            wx.LogWarning("View anns: no tier checked.")
             return
 
         tiers = list()
@@ -467,6 +474,25 @@ class ListViewFilesPanel(BaseViewFilesPanel):
                 tiers.extend(panel.get_checked_tier())
 
         TiersView(self, tiers)
+
+    # -----------------------------------------------------------------------
+
+    def view_stats_tiers(self):
+        """Open a dialog to view stats of annotations of the checked tiers."""
+        nbf, nbt = self.__get_checked_nb()
+        if nbt == 0:
+            wx.LogWarning("View stats: no tier checked.")
+            return
+
+        tiers = dict()
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                checked = panel.get_checked_tier()
+                if len(checked) > 0:
+                    tiers[filename] = checked
+
+        StatsView(self, tiers)
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py

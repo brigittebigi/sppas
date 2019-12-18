@@ -47,6 +47,7 @@ import sppas.src.ui.phoenix.windows.button as button
 import sppas.src.ui.phoenix.windows.panel as panel
 import sppas.src.ui.phoenix.panels.option as option
 
+import sppas.src.ui.phoenix.dialogs.statsview as statsview
 import sppas.src.ui.phoenix.page_files.filesmanager as filesmanager
 import sppas.src.ui.phoenix.page_files.filesviewctrl as filesviewctrl
 import sppas.src.ui.phoenix.page_files.refsviewctrl as refsviewctrl
@@ -75,6 +76,7 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
+        self.AddPage(statsview.TestPanel(self), "View Stats of tiers")
         self.AddPage(anzlistviews.TestPanel(self), "Analyze Summary view")
         self.AddPage(anztextviews.TestPanel(self), "Analyze Text view")
         self.AddPage(listview.TestPanel(self), "Summary view")

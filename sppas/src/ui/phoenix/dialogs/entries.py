@@ -59,13 +59,16 @@ class sppasTextEntryDialog(sppasDialog):
     def __init__(self, parent, message, caption=wx.GetTextFromUserPromptStr, value=""):
         """Create a dialog with a text entry.
 
+        The dialog has a small title bar which does not appear in the taskbar
+        under Windows or GTK+.
+
         :param parent: (wx.Window)
 
         """
         super(sppasTextEntryDialog, self).__init__(
             parent=parent,
             title=caption,
-            style=wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.STAY_ON_TOP)  # | wx.DIALOG_NO_PARENT)
+            style=wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.STAY_ON_TOP)
 
         self.__validator = LengthTextValidator()
         self.__validator.SetMaxLength(20)
