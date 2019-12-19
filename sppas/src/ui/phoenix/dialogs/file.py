@@ -53,7 +53,7 @@ class sppasFileDialog(sppasDialog):
 
     def __init__(self, parent,
                  title="Files and directories selection",
-                 style=wx.FC_OPEN | wx.FC_MULTIPLE | wx.FC_NOSHOWHIDDEN):
+                 style=wx.FC_OPEN | wx.FD_FILE_MUST_EXIST | wx.FC_MULTIPLE | wx.FC_NOSHOWHIDDEN):
         """Create a dialog with a file chooser.
 
         :param parent: (wx.Window)

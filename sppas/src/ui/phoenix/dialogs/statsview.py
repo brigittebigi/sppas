@@ -47,6 +47,7 @@ from ..dialogs import Confirm
 from ..dialogs import sppasFileDialog
 from ..windows import sppasDialog
 from ..windows import sppasPanel
+from ..windows import sppasRadioBoxPanel
 from ..windows.book import sppasNotebook
 
 # --------------------------------------------------------------------------
@@ -161,30 +162,38 @@ class sppasStatsViewDialog(sppasDialog):
         """Create a panel to fix options."""
         panel = sppasPanel(parent)
 
-        title_label = wx.StaticText(panel, label=" N-gram:  ")
+        ngram_text = wx.StaticText(panel, label=" N-gram:  ")
         nrange = [str(i) for i in range(1, 6)]
         ngrambox = wx.ComboBox(panel, -1, choices=nrange, style=wx.CB_READONLY)
         ngrambox.SetSelection(0)
         sizern = wx.BoxSizer(wx.HORIZONTAL)
-        sizern.Add(title_label, 0, wx.ALIGN_CENTER_VERTICAL)
+        sizern.Add(ngram_text, 0, wx.ALIGN_CENTER_VERTICAL)
         sizern.Add(ngrambox, 0, wx.ALIGN_CENTER_VERTICAL)
 
-        withaltbox = wx.RadioBox(
-            panel, label=OPT_TAGS,
+        alt_text = wx.StaticText(panel, label=OPT_TAGS)
+        withaltbox = sppasRadioBoxPanel(
+            panel,
             choices=[OPT_TAG_BEST, OPT_TAG_ALT],
-            majorDimension=1, style=wx.RA_SPECIFY_COLS)
+            majorDimension=0)
+        sizera = wx.BoxSizer(wx.VERTICAL)
+        sizera.Add(alt_text, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+        sizera.Add(withaltbox, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.EXPAND | wx.LEFT | wx.TOP, sppasPanel.fix_size(6))
 
-        withradiusbox = wx.RadioBox(
-            panel, label=OPT_DUR,
+        radius_text = wx.StaticText(panel, label=OPT_DUR)
+        withradiusbox = sppasRadioBoxPanel(
+            panel,
             choices=[OPT_MIDPOINT_ONLY, OPT_MIDPOINT_RADD, OPT_MIDPOINT_RDEL],
-            majorDimension=1, style=wx.RA_SPECIFY_COLS)
+            majorDimension=0)
+        sizerr = wx.BoxSizer(wx.VERTICAL)
+        sizerr.Add(radius_text, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+        sizerr.Add(withradiusbox, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.EXPAND | wx.LEFT | wx.TOP, sppasPanel.fix_size(6))
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(sizern, 2, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, border=10)
+        sizer.Add(sizern, 2, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, border=sppasPanel.fix_size(8))
         sizer.AddSpacer(1)
-        sizer.Add(withaltbox, 2, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, border=10)
+        sizer.Add(sizera, 2, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, border=sppasPanel.fix_size(8))
         sizer.AddSpacer(1)
-        sizer.Add(withradiusbox, 2, wx.EXPAND | wx.ALIGN_RIGHT | wx.ALL, border=10)
+        sizer.Add(sizerr, 2, wx.EXPAND | wx.ALIGN_RIGHT | wx.ALL, border=sppasPanel.fix_size(8))
         panel.SetSizer(sizer)
 
         self.Bind(wx.EVT_COMBOBOX, self._process_ngram, ngrambox)
@@ -239,9 +248,15 @@ class sppasStatsViewDialog(sppasDialog):
         evt_name = evt_object.GetName()
 
         if evt_name == "save":
+            pathname = os.path.dirname(paths.samples)
+            for ts in self._data:
+                pathname = os.path.dirname(self._data[ts])
+                break
             notebook = self.FindWindow("stats-notebook")
             page = notebook.GetPage(notebook.GetSelection())
-            page.SaveAs(outfilename="stats-%s.csv" % page.GetName())
+            filename = os.path.join(pathname, "stats-%s.csv" % page.GetName())
+            wx.LogDebug("Default output filename {:s}".format(filename))
+            page.SaveAs(outfilename=filename)
 
         event.Skip()
 
@@ -373,7 +388,7 @@ class BaseStatPanel(sppasPanel):
     def SaveAs(self, outfilename="stats.csv"):
         with sppasFileDialog(self,
                              title=MSG_ACT_SAVE,
-                             style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+                             style=wx.FD_SAVE,  # | wx.FD_OVERWRITE_PROMPT,
                              ) as dlg:
             dlg.SetWildcard("UTF-16 (*.csv)|*.csv |UTF-8 (*.csv)|*.csv")
             dlg.SetPath(outfilename)
