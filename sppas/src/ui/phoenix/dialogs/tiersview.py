@@ -119,7 +119,6 @@ class sppasTiersViewDialog(sppasDialog):
         for tier in tiers:
             page = TierAsListPanel(notebook, tier)
             notebook.AddPage(page, tier.get_name())
-        # notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnNotebookPageChanged)
         self.SetContent(notebook)
 
 # ---------------------------------------------------------------------------

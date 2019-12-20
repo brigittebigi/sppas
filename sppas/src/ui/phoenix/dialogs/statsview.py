@@ -61,10 +61,11 @@ OPT_MIDPOINT_RADD = ui_translation.gettext("Add the radius value")
 OPT_MIDPOINT_RDEL = ui_translation.gettext("Deduct the radius value")
 OPT_DUR = ui_translation.gettext("Annotation durations: ")
 MSG_CONFIRM_OVERRIDE = \
-    ui_translation.gettext("A file with name {:s} is already existing. " \
+    ui_translation.gettext("A file with name {:s} is already existing. "\
                            "Override it?")
 MSG_CONFIRM_NAME = ui_translation.gettext("Confirm file name?")
 MSG_ACT_SAVE = ui_translation.gettext("Save")
+MSS_SELECTED = ui_translation.gettext("Selected statistical distribution: {:s}")
 
 # --------------------------------------------------------------------------
 
@@ -205,38 +206,47 @@ class sppasStatsViewDialog(sppasDialog):
     # ------------------------------------------------------------------------
 
     def _create_content(self):
-        """Create the content of the message dialog."""
+        """Create the content of the message dialog.
+
+        notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, ...) not used because it
+        is bugged under MacOS (do not display the page content).
+
+        """
         main_panel = sppasPanel(self)
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
         # Propose some options to estimate stats
         tools = self._create_toolbar(main_panel)
+        main_sizer.Add(tools, 0, wx.EXPAND)
 
         # Make the notebook to show each stat
         notebook = sppasNotebook(main_panel, name="stats-notebook")
 
+        # Create and add the pages to the notebook with the label to show on the tab
         page1 = SummaryPanel(notebook,  "summary")
-        page2 = DetailedPanel(notebook, "occurrences")
-        page3 = DetailedPanel(notebook, "total")
-        page4 = DetailedPanel(notebook, "mean")
-        page5 = DetailedPanel(notebook, "median")
-        page6 = DetailedPanel(notebook, "stdev")
-
-        # add the pages to the notebook with the label to show on the tab
         notebook.AddPage(page1, "   Summary   ")
+
+        page2 = DetailedPanel(notebook, "occurrences")
         notebook.AddPage(page2, " Occurrences ")
+
+        page3 = DetailedPanel(notebook, "total")
         notebook.AddPage(page3, "Total durations")
+
+        page4 = DetailedPanel(notebook, "mean")
         notebook.AddPage(page4, "Mean durations")
+
+        page5 = DetailedPanel(notebook, "median")
         notebook.AddPage(page5, "Median durations")
+
+        page6 = DetailedPanel(notebook, "stdev")
         notebook.AddPage(page6, "Std dev. durations")
-        page1.ShowStats(self._data)
 
-        notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED,
-                      self._process_notebook_page_changed)
+        self.__show_stats()
 
-        main_sizer.Add(tools, 0, wx.EXPAND)
         main_sizer.Add(notebook, 1, wx.EXPAND)
+
         main_panel.SetSizer(main_sizer)
+        main_panel.Layout()
         self.SetContent(main_panel)
 
     # ------------------------------------------------------------------------
@@ -262,23 +272,6 @@ class sppasStatsViewDialog(sppasDialog):
 
     # ------------------------------------------------------------------------
 
-    def _process_notebook_page_changed(self, event):
-        try:
-            notebook = self.FindWindow("stats-notebook")
-        except RuntimeError:
-            # wrapped C/C++ object of type sppasStatsViewDialog has been deleted
-            return
-
-        old_selection = event.GetOldSelection()
-        new_selection = event.GetSelection()
-
-        if old_selection != new_selection:
-            page = notebook.GetPage(new_selection)
-            page.ShowStats(self._data)
-            page.Refresh()
-
-    # ------------------------------------------------------------------------
-
     def _process_ngram(self, event):
         # get new n value of the N-gram
         self.ngram = int(event.GetSelection() + 1)
@@ -293,7 +286,6 @@ class sppasStatsViewDialog(sppasDialog):
 
     def _process_alt(self, event):
         new_value = bool(event.GetSelection())
-        wx.LogDebug("New ALT value: {:d}".format(new_value))
         if self.withalt == new_value:
             return
         self.withalt = new_value
@@ -335,8 +327,10 @@ class sppasStatsViewDialog(sppasDialog):
 
     def __show_stats(self):
         notebook = self.FindWindow("stats-notebook")
-        page = notebook.GetPage(notebook.GetSelection())
-        page.ShowStats(self._data)
+        for i in range(notebook.GetPageCount()):
+            page = notebook.GetPage(i)
+            page.ShowStats(self._data)
+        self.Refresh()
 
 # ----------------------------------------------------------------------------
 # Base Stat Panel
@@ -359,13 +353,16 @@ class BaseStatPanel(sppasPanel):
 
         self.rowdata = []
         self.cols = ('',)
-        self.statctrl = SortListCtrl(self, size=(-1, 400))
+        self.statctrl = SortListCtrl(self, size=(-1, sppasPanel.fix_size(400)))
 
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        text = wx.StaticText(self, label=MSS_SELECTED.format(self.GetName()))
+        sizer.Add(text, 0, flag=wx.ALL | wx.EXPAND, border=2)
         sizer.Add(self.statctrl, 1, flag=wx.ALL | wx.EXPAND, border=2)
         self.SetSizer(sizer)
-        sizer.FitInside(self)
-        self.SetMinSize(wx.Size(420, 320))
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(420),
+                                sppasPanel.fix_size(320)))
+        self.Layout()
 
     # ------------------------------------------------------------------------
 
@@ -390,7 +387,11 @@ class BaseStatPanel(sppasPanel):
                              title=MSG_ACT_SAVE,
                              style=wx.FD_SAVE,  # | wx.FD_OVERWRITE_PROMPT,
                              ) as dlg:
-            dlg.SetWildcard("UTF-16 (*.csv)|*.csv |UTF-8 (*.csv)|*.csv")
+            if wx.Platform == "__WXMSW__":
+                dlg.SetWildcard("UTF-16 (*.csv)|*.csv |UTF-8 (*.csv)|*.csv")
+            else:
+                dlg.SetWildcard("UTF-8 (*.csv)|*.csv |UTF-16 (*.csv)|*.csv")
+
             dlg.SetPath(outfilename)
             if dlg.ShowModal() == wx.ID_CANCEL:
                 return
@@ -407,7 +408,10 @@ class BaseStatPanel(sppasPanel):
             if response == wx.ID_CANCEL:
                 return
 
-        encoding = "utf-16" if index == 0 else "utf-8"
+        if wx.Platform == "__WXMSW__":
+            encoding = "utf-16" if index == 0 else "utf-8"
+        else:
+            encoding = "utf-8" if index == 0 else "utf-16"
 
         self.rowdata.insert(0, self.cols)
         writecsv(pathname, self.rowdata, separator=";", encoding=encoding)
@@ -417,7 +421,7 @@ class BaseStatPanel(sppasPanel):
 
     # ------------------------------------------------------------------------
 
-    def AppendRow(self, i, row, listctrl):
+    def AppendRow(self, i, row):
         # append the row in the list
         pos = self.statctrl.InsertItem(i, row[0])
         for j in range(1, len(row)):
@@ -426,7 +430,7 @@ class BaseStatPanel(sppasPanel):
                 s = str(round(s, 4))
             elif isinstance(s, int):
                 s = str(s)
-            listctrl.SetItem(pos, j, s)
+            self.statctrl.SetItem(pos, j, s)
 
 # ----------------------------------------------------------------------------
 # First tab: summary
@@ -464,6 +468,7 @@ class SummaryPanel(BaseStatPanel):
         """Show descriptive statistics of set of tiers as list.
 
         """
+        wx.LogDebug("Show stats of page {:s}".format(self.GetName()))
         if data is None:
             data = dict()
 
@@ -486,9 +491,10 @@ class SummaryPanel(BaseStatPanel):
             # add the data content in rowdata
             self.rowdata.append(row)
             # add into the listctrl
-            self.AppendRow(i, row, self.statctrl)
+            self.AppendRow(i, row)
 
         self.statctrl.Refresh()
+        self.Layout()
 
     # ------------------------------------------------------------------------
 
@@ -534,6 +540,7 @@ class DetailedPanel(BaseStatPanel):
         :param data: (dict) Dictionary with key=TierStats and value=filename
 
         """
+        wx.LogDebug("Show stats of page {:s}".format(self.GetName()))
         if data is None:
             data = dict()
 
@@ -576,9 +583,10 @@ class DetailedPanel(BaseStatPanel):
             row = [item] + [statvalues[i].get(item, 0) for i in
                             range(len(statvalues))]
             self.rowdata.append(row)
-            self.AppendRow(i, row, self.statctrl)
+            self.AppendRow(i, row)
 
         self.statctrl.Refresh()
+        self.Layout()
 
 # -------------------------------------------------------------------------
 
