@@ -44,6 +44,7 @@ from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasCollapsiblePanel
 from ..windows import sppasSimpleText
+from ..windows.image import ColorizeImage
 from ..tools import sppasSwissKnife
 
 
@@ -902,6 +903,8 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
             if c != refsctrl:
                 c.SetForegroundColour(color)
         refsctrl.SetForegroundColour(wx.Colour(128, 128, 250, 196))
+        self.__il = self.__create_image_list()
+        self.FindWindow("listctrl_files").SetImageList(self.__il, wx.IMAGE_LIST_SMALL)
 
     # -----------------------------------------------------------------------
 
@@ -1126,7 +1129,9 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         for state in STATES_ICON_NAMES:
             icon_name = STATES_ICON_NAMES[state]
             bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
-            il.Add(bitmap)
+            img = bitmap.ConvertToImage()
+            ColorizeImage(img, wx.BLACK, self.GetForegroundColour())
+            il.Add(wx.Bitmap(img))
             self.__ils.append(icon_name)
 
         # The default icon to represent a missing (known) file

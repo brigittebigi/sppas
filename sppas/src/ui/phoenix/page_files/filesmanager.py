@@ -116,7 +116,6 @@ class FilesManager(sppasPanel):
     def _create_content(self):
         """Create the main content."""
         tb = self.__create_toolbar()
-        # fv = FilesTreeViewCtrl(self, name="filestree")
         fv = FileTreeView(self, name="filestree")
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -274,8 +273,8 @@ class TestPanel(FilesManager):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
-        self.SetBackgroundColour(wx.Colour(100, 100, 100))
-        self.SetForegroundColour(wx.Colour(0, 0, 10))
+        self.SetBackgroundColour(wx.Colour(50, 50, 50))
+        self.SetForegroundColour(wx.Colour(250, 250, 250))
         self.add_one_test_data()
 
     # ------------------------------------------------------------------------
