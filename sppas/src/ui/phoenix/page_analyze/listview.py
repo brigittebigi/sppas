@@ -56,12 +56,13 @@ from sppas.src.anndata import sppasCtrlVocab
 from sppas.src.anndata import sppasMetaData
 from sppas.src.config import ui_translation
 
+from ..windows.image import ColorizeImage
 from ..windows import sppasPanel
 from ..windows import sppasCollapsiblePanel
 from ..tools import sppasSwissKnife
 from .baseview import sppasBaseViewPanel
 
-TIER_BG_COLOUR = wx.Colour(180, 230, 255)
+TIER_BG_COLOUR = wx.Colour(180, 230, 255, 128)
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when an item is clicked.
@@ -710,6 +711,16 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
 
     # -----------------------------------------------------------------------
 
+    def SetForegroundColour(self, color):
+        """Override."""
+        wx.Window.SetForegroundColour(self, color)
+        for c in self.GetChildren():
+            c.SetForegroundColour(color)
+        self.__il = self.__create_image_list()
+        self.FindWindow("listctrl").SetImageList(self.__il, wx.IMAGE_LIST_SMALL)
+
+    # -----------------------------------------------------------------------
+
     def SetFont(self, font):
         """Override."""
         f = wx.Font(font.GetPointSize(),
@@ -827,12 +838,16 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
 
         icon_name = "choice_checkbox"
         bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
-        il.Add(bitmap)
+        img = bitmap.ConvertToImage()
+        ColorizeImage(img, wx.BLACK, self.GetForegroundColour())
+        il.Add(wx.Bitmap(img))
         self._ils.append(icon_name)
 
         icon_name = "choice_checked"
         bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
-        il.Add(bitmap)
+        img = bitmap.ConvertToImage()
+        ColorizeImage(img, wx.BLACK, self.GetForegroundColour())
+        il.Add(wx.Bitmap(img))
         self._ils.append(icon_name)
 
         return il

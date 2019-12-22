@@ -123,10 +123,10 @@ class sppasStatsViewDialog(sppasDialog):
         # Members to evaluate stats
         if tiers is None:
             tiers = dict()
-        self.ngram = 1
-        self.withradius = 0
+        self.ngram = 1        # n range 1..8
+        self.withradius = 0   # -1, 0 or 1
         self.withalt = False
-        self._data = dict()   # to store stats
+        self._data = dict()   # key=filename, value=list of sppasTier
         self.load_data(tiers)
 
         self.CreateHeader(MSG_HEADER_STATSVIEW, "tier_stat_view")
@@ -273,6 +273,7 @@ class sppasStatsViewDialog(sppasDialog):
     # ------------------------------------------------------------------------
 
     def _process_ngram(self, event):
+        wx.LogDebug("Process ngram")
         # get new n value of the N-gram
         self.ngram = int(event.GetSelection() + 1)
 
@@ -285,7 +286,10 @@ class sppasStatsViewDialog(sppasDialog):
     # ------------------------------------------------------------------------
 
     def _process_alt(self, event):
-        new_value = bool(event.GetSelection())
+        obj = event.GetEventObject()
+        new_value = bool(obj.GetSelection())
+        wx.LogDebug("Old value = {:s}".format(str(self.withalt)))
+        wx.LogDebug("New value = {:s}".format(str(new_value)))
         if self.withalt == new_value:
             return
         self.withalt = new_value
@@ -299,19 +303,21 @@ class sppasStatsViewDialog(sppasDialog):
     # ------------------------------------------------------------------------
 
     def _process_radius(self, event):
-        if event.GetSelection() == 0:
+        obj = event.GetEventObject()
+
+        if obj.GetSelection() == 0:
             if self.withradius != 0:
                 self.withradius = 0
             else:
                 return
 
-        elif event.GetSelection() == 1:
+        elif obj.GetSelection() == 1:
             if self.withradius != -1:
                 self.withradius = -1
             else:
                 return
 
-        elif event.GetSelection() == 2:
+        elif obj.GetSelection() == 2:
             if self.withradius != 1:
                 self.withradius = 1
             else:

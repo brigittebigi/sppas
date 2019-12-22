@@ -35,7 +35,6 @@
 """
 
 import wx
-import logging
 from .button import RadioButton, ButtonEvent
 from .panel import sppasPanel
 
@@ -134,7 +133,7 @@ class sppasRadioBoxPanel(sppasPanel):
     def SetSelection(self, n):
         """Set the selection to the given item.
 
-        :param n: (int) –
+        :param n: (int) – Index of the item
 
         """
         if n > len(self.__buttons):
@@ -146,10 +145,11 @@ class sppasRadioBoxPanel(sppasPanel):
         btn = self.__buttons[n]
         # do not select a disabled button
         if btn.IsEnabled() is True:
-            btn.SetValue(True)
             # un-select the current selected button
             self.__buttons[self.__selection].SetValue(False)
+            # select the expected one
             self.__selection = n
+            btn.SetValue(True)
 
     # ------------------------------------------------------------------------
 
@@ -171,21 +171,26 @@ class sppasRadioBoxPanel(sppasPanel):
         """Return the label of the selected item.
 
         :returns: (str) The label of the selected item
+
         """
         return self.__buttons[self.__selection].GetLabel()
 
     # ------------------------------------------------------------------------
 
     def GetItemLabel(self, n):
-        """Return the text of the n'th item in the radio box."""
+        """Return the text of the n'th item in the radio box.
+
+        :param n: (int) – The zero-based index.
+
+        """
         self.GetString(n)
 
     # ------------------------------------------------------------------------
 
     def IsItemEnabled(self, n):
-        """Return True if the item is enabled or False if it was disabled using Enable .
+        """Return True if the item is enabled or False if it was disabled using Enable.
 
-        :param n: (int) – The zero-based button position.
+        :param n: (int) – The zero-based index.
         :returns: (bool)
 
         """
@@ -197,6 +202,8 @@ class sppasRadioBoxPanel(sppasPanel):
 
     def SetItemLabel(self, n, text):
         """Set the text of the n’th item in the radio box.
+
+        :param n: (int) – The zero-based index.
 
         """
         raise NotImplementedError
@@ -228,9 +235,9 @@ class sppasRadioBoxPanel(sppasPanel):
     # ------------------------------------------------------------------------
 
     def IsItemShown(self, n):
-        """Return True if the item is currently shown or False if it was hidden using Show .
+        """Return True if the item is currently shown or False if it was hidden using Show.
 
-        :param n: (int) – The zero-based button position.
+        :param n: (int) – The zero-based item index.
         :returns: (bool)
 
         """
@@ -264,29 +271,22 @@ class sppasRadioBoxPanel(sppasPanel):
                     rows = majorDimension
                     cols = (len(choices)+1) // majorDimension
 
-        logging.debug('Number of rows: {:d}'.format(rows))
-        logging.debug('Number of cols: {:d}'.format(cols))
-
         grid = wx.GridBagSizer(rows, cols)
         if style == wx.RA_SPECIFY_COLS:
             for c in range(cols):
-                logging.debug(' - col nb: {:d}'.format(c))
                 for r in range(rows):
-                    logging.debug('   - row nb: {:d}'.format(r))
                     index = (c*rows)+r
                     if index < len(choices):
-                        btn = RadioButton(self, label=choices[index])
+                        btn = RadioButton(self, label=choices[index], name="radiobutton_%d_%d" % (c, r))
                         grid.Add(btn, pos=(r, c), flag=wx.EXPAND)
                         self.__buttons.append(btn)
 
         else:
             for r in range(rows):
-                logging.debug(' - row nb: {:d}'.format(r))
                 for c in range(cols):
-                    logging.debug('   - col nb: {:d}'.format(c))
                     index = (r*cols)+c
                     if index < len(choices):
-                        btn = RadioButton(self, label=choices[index])
+                        btn = RadioButton(self, label=choices[index], name="radiobutton_%d_%d" % (r, c))
                         grid.Add(btn, pos=(r, c), flag=wx.EXPAND)
                         self.__buttons.append(btn)
 
@@ -325,12 +325,8 @@ class sppasRadioBoxPanel(sppasPanel):
 
         """
         evt_btn = event.GetButtonObj()
-        for i, btn in enumerate(self.__buttons):
-            if btn is evt_btn:
-                self.__selection = i
-                btn.SetValue(True)
-            else:
-                btn.SetValue(False)
+        new_selected_index = self.__buttons.index(evt_btn)
+        self.SetSelection(new_selected_index)
         self.Notify()
 
 # ----------------------------------------------------------------------------
@@ -352,7 +348,8 @@ class TestPanelRadioBox(wx.Panel):
             size=wx.Size(200, 300),
             choices=["bananas", "pears", "tomatoes", "apples", "pineapples"],
             majorDimension=2,
-            style=wx.RA_SPECIFY_COLS)
+            style=wx.RA_SPECIFY_COLS,
+            name="radio_in_cols")
         rbc.Bind(wx.EVT_RADIOBOX, self.on_btn_event)
         # disable apples:
         rbc.EnableItem(3, False)
@@ -365,7 +362,8 @@ class TestPanelRadioBox(wx.Panel):
             size=wx.Size(300, 200),
             choices=["bananas", "pears", "tomatoes", "apples", "pineapples"],
             majorDimension=2,
-            style=wx.RA_SPECIFY_ROWS)
+            style=wx.RA_SPECIFY_ROWS,
+            name="radio_in_rows")
         rbr.Bind(wx.EVT_RADIOBOX, self.on_btn_event)
         # disable apples
         rbr.EnableItem(3, False)
@@ -374,7 +372,8 @@ class TestPanelRadioBox(wx.Panel):
 
     def on_btn_event(self, event):
         obj = event.GetEventObject()
-        logging.debug('* * * PANEL: RadioBox Event received by {:s} * * *'.format(obj.GetName()))
+        wx.LogDebug('* * * RadioBox Event by {:s} * * *'.format(obj.GetName()))
+        wx.LogDebug(" --> selection {:d}".format(obj.GetSelection()))
 
 # ----------------------------------------------------------------------------
 

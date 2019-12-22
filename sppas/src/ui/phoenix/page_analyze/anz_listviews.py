@@ -511,6 +511,5 @@ class TestPanel(ListViewFilesPanel):
             parent,
             name="TestPanel-anz_baseviews",
             files=TestPanel.TEST_FILES)
-        self.SetBackgroundColour(wx.Colour(100, 100, 100))
         self.create_file(os.path.join(paths.samples, "F_F_B003-P8.xxx"))
 

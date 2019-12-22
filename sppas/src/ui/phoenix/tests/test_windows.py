@@ -41,18 +41,11 @@ from sppas.src.ui.cfg import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
-import sppas.src.ui.phoenix.panels.option as option
-import sppas.src.ui.phoenix.dialogs.statsview as statsview
-import sppas.src.ui.phoenix.page_files.filesmanager as filesmanager
-import sppas.src.ui.phoenix.page_files.filesviewctrl as filesviewctrl
-import sppas.src.ui.phoenix.page_files.refsviewctrl as refsviewctrl
-import sppas.src.ui.phoenix.page_files.refsmanager as refsmanager
-import sppas.src.ui.phoenix.page_files.wksmanager as wksmanager
-import sppas.src.ui.phoenix.page_analyze.anz_tabs as anz_tabs
-import sppas.src.ui.phoenix.page_analyze.anz_textviews as anztextviews
-import sppas.src.ui.phoenix.page_analyze.anz_listviews as anzlistviews
-import sppas.src.ui.phoenix.page_analyze.listview as listview
-import sppas.src.ui.phoenix.page_analyze.textview as textview
+import sppas.src.ui.phoenix.windows.toolbar as toolbar
+import sppas.src.ui.phoenix.windows.line as line
+import sppas.src.ui.phoenix.windows.button as button
+import sppas.src.ui.phoenix.windows.panel as panel
+import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -70,18 +63,11 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
-        self.AddPage(statsview.TestPanel(self), "View Stats of tiers")
-        self.AddPage(anzlistviews.TestPanel(self), "Analyze Summary view")
-        self.AddPage(anztextviews.TestPanel(self), "Analyze Text view")
-        self.AddPage(listview.TestPanel(self), "Summary view")
-        self.AddPage(textview.TestPanel(self), "Text view")
-        self.AddPage(filesmanager.TestPanel(self), "Files manager")
-        self.AddPage(anz_tabs.TestPanel(self), "Tabs analyze")
-        self.AddPage(refsmanager.TestPanel(self), "References manager")
-        self.AddPage(wksmanager.TestPanel(self), "Workspaces manager")
-        self.AddPage(refsviewctrl.TestPanel(self), "Refs view ctrl")
-        self.AddPage(filesviewctrl.TestPanel(self), "Files view ctrl")
-        self.AddPage(option.TestPanel(self), "Configure options")
+        self.AddPage(toolbar.TestPanel(self), "Toolbar")
+        self.AddPage(panel.TestPanel(self), "Panels")
+        self.AddPage(buttonbox.TestPanel(self), "ButtonBox")
+        self.AddPage(button.TestPanel(self), "Buttons")
+        self.AddPage(line.TestPanel(self), "Lines")
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
