@@ -99,7 +99,7 @@ class sppasTiersViewDialog(sppasDialog):
             parent=parent,
             title="Tiers View",
             style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.STAY_ON_TOP,
-            name="statsview-dialog")
+            name="tiersview-dialog")
 
         self.CreateHeader(MSG_HEADER_TIERSVIEW, "tier_ann_view")
         self._create_content(tiers)

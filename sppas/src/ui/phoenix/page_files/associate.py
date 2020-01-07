@@ -37,6 +37,7 @@
 """
 
 import wx
+import wx.dataview
 
 from sppas import sppasTypeError
 from sppas import sg
@@ -226,6 +227,7 @@ class AssociatePanel(sppasPanel):
                 try:
                     data_set = self.__process_filter(data_filters, dlg.match_all)
                     if len(data_set) == 0:
+                        wx.EndBusyCursor()
                         Information(MSG_NO_CHECKED)
                     else:
                         # Uncheck all files (except the locked ones!) and all references
@@ -238,6 +240,7 @@ class AssociatePanel(sppasPanel):
                             root = self.__data.get_parent(fn)
                             if root not in roots:
                                 roots.append(root)
+                        wx.EndBusyCursor()
                         Information(MSG_NB_CHECKED.format(len(data_set)))
 
                         # Check references matching the checked files
@@ -246,7 +249,6 @@ class AssociatePanel(sppasPanel):
                                 ref.set_state(States().CHECKED)
 
                         self.notify()
-                    wx.EndBusyCursor()
 
                 except Exception as e:
                     wx.EndBusyCursor()
@@ -434,7 +436,7 @@ class sppasFilesFilterDialog(sppasDialog):
         tb.set_focus_color(wx.Colour(196, 196, 96, 128))
         tb.AddTextButton("filter_path", "+ Path")
         tb.AddTextButton("filter_name", "+ Name")
-        tb.AddTextButton("filter_ext", "+ Type")
+        tb.AddTextButton("filter_ext", "+ Ext.")
         tb.AddTextButton("filter_ref", "+ Ref.")
         tb.AddTextButton("filter_att", "+ Value")
         tb.AddSpacer()
@@ -497,7 +499,7 @@ class sppasFilesFilterDialog(sppasDialog):
             self.__append_filter("name")
 
         elif event_name == "filter_ext":
-            self.__append_filter("extension")
+            self.__append_filter("extension", show_case_sensitive=False)
 
         elif event_name == "filter_ref":
             self.__append_filter("ref")
@@ -533,8 +535,8 @@ class sppasFilesFilterDialog(sppasDialog):
 
     # ------------------------------------------------------------------------
 
-    def __append_filter(self, fct):
-        dlg = sppasStringFilterDialog(self)
+    def __append_filter(self, fct, show_case_sensitive=True):
+        dlg = sppasStringFilterDialog(self, show_case_sensitive)
         response = dlg.ShowModal()
         if response == wx.ID_OK:
             # Name of the method in sppasFileDataFilters,
@@ -556,7 +558,7 @@ class sppasStringFilterDialog(sppasDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -574,7 +576,7 @@ class sppasStringFilterDialog(sppasDialog):
                ("not match", "regexp")
               )
 
-    def __init__(self, parent):
+    def __init__(self, parent, show_case_sensitive=True):
         """Create a string filter dialog.
 
         :param parent: (wx.Window)
@@ -585,7 +587,7 @@ class sppasStringFilterDialog(sppasDialog):
             title='{:s} filter'.format(sg.__name__),
             style=wx.DEFAULT_FRAME_STYLE)
 
-        self._create_content()
+        self._create_content(show_case_sensitive)
         self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
 
         self.SetSize(wx.Size(380, 320))
@@ -624,7 +626,7 @@ class sppasStringFilterDialog(sppasDialog):
     # Methods to construct the GUI
     # -----------------------------------------------------------------------
 
-    def _create_content(self):
+    def _create_content(self, show_case_sensitive):
         """Create the content of the message dialog."""
         panel = sppasPanel(self, name="content")
 
@@ -640,6 +642,8 @@ class sppasStringFilterDialog(sppasDialog):
         self.radiobox.SetSelection(1)
         self.checkbox = CheckButton(panel, label="Case sensitive")
         self.checkbox.SetValue(False)
+        if show_case_sensitive is False:
+            self.checkbox.Hide()
 
         # Layout
         sizer = wx.BoxSizer(wx.VERTICAL)
