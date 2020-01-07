@@ -626,6 +626,21 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
 
     # -----------------------------------------------------------------------
 
+    def SetBackgroundColour(self, color):
+        """Calculate a lightness or darkness background color."""
+        r, g, b = color.Red(), color.Green(), color.Blue()
+        delta = 5
+        if (r + g + b) > 384:
+            color = wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
+        else:
+            color = wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
+
+        wx.Window.SetBackgroundColour(self, color)
+        for c in self.GetChildren():
+            c.SetBackgroundColour(color)
+
+    # -----------------------------------------------------------------------
+
     def SetFont(self, font):
         """Override."""
         f = wx.Font(font.GetPointSize(),

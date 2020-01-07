@@ -82,7 +82,6 @@ class TestPanel(wx.Choicebook):
 
         """
         key_code = event.GetKeyCode()
-        # logging.debug('Test panel received the key event {:d}'.format(key_code))
 
         # Keeps on going the event to the current page of the book.
         event.Skip()

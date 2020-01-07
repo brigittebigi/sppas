@@ -315,7 +315,6 @@ class sppasPluginsList(sppasScrolledPanel):
 
         for plugin_id in self._manager.get_plugin_ids():
             if event_name == plugin_id:
-                # logging.debug("User clicked plugin {:s}".format(plugin_id))
                 self.apply(plugin_id)
                 event.Skip()
                 break

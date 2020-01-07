@@ -40,7 +40,6 @@
 
 """
 
-import logging
 import wx
 
 from sppas import sppasTypeError
@@ -131,8 +130,6 @@ class sppasAnnotatePanel(sppasSimplebook):
         """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        logging.debug('New data to set in the annotate page. '
-                      'Id={:s}'.format(data.id))
 
         self.__param.set_workspace(data)
         self.__send_data(self.GetParent())
@@ -166,12 +163,10 @@ class sppasAnnotatePanel(sppasSimplebook):
         :param event: (wx.Event)
 
         """
-        logging.debug('Page changed')
         try:
             destination = event.to_page
             fct = event.fct
         except AttributeError:
-            logging.debug('ERROR ERROR')
             destination = "page_annot_actions"
             fct = ""
 
@@ -191,8 +186,8 @@ class sppasAnnotatePanel(sppasSimplebook):
         try:
             wkp = event.data
         except AttributeError:
-            logging.error('Data were not sent in the event emitted by {:s}'
-                          '.'.format(emitted.GetName()))
+            wx.LogError('Data were not sent in the event emitted by {:s}'
+                        '.'.format(emitted.GetName()))
             return
         self.__param.set_workspace(wkp)
         self.__send_data(emitted)
@@ -273,4 +268,4 @@ class sppasAnnotatePanel(sppasSimplebook):
             try:
                 getattr(dest_w, fct)()
             except AttributeError as e:
-                logging.error("{:s}".format(str(e)))
+                wx.LogError("Annotate show page. {:s}".format(str(e)))

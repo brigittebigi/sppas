@@ -176,8 +176,6 @@ class FilesManager(sppasPanel):
         key_code = event.GetKeyCode()
         cmd_down = event.CmdDown()
         shift_down = event.ShiftDown()
-        #logging.debug('Files manager received the key event {:d}'
-        #              ''.format(key_code))
 
         #if key_code == wx.WXK_F5 and cmd_down is False and shift_down is False:
         #    loggingFindWindow.debug('Refresh all the files [F5 keys pressed]')

@@ -34,7 +34,6 @@
 
 """
 
-import logging
 import wx
 
 from sppas.src.config import sg
@@ -132,7 +131,6 @@ class sppasHomePanel(sppasPanel):
         key_code = event.GetKeyCode()
         cmd_down = event.CmdDown()
         shift_down = event.ShiftDown()
-        logging.debug('Home page received a key event. key_code={:d}'.format(key_code))
 
         #if key_code == wx.WXK_F5 and cmd_down is False and shift_down is False:
         #    logging.debug('Refresh all the files [F5 keys pressed]')

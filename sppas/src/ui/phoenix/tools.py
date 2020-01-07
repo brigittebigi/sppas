@@ -36,7 +36,6 @@
 
 import os
 import wx
-import logging
 
 from sppas.src.config import paths
 

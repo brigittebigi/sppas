@@ -1,6 +1,5 @@
 import wx
 import sys
-import logging
 
 from os import path
 PROGRAM = path.abspath(__file__)
@@ -69,17 +68,14 @@ app = testApp()
 # demo = sppasFeedbackDialog(None)
 # response = demo.ShowModal()
 # demo.Destroy()
-# logging.info('Response: {:d}'.format(response))
 
 # demo = sppasAboutDialog(None)
 # response = demo.ShowModal()
 # demo.Destroy()
-# logging.info('Response: {:d}'.format(response))
 
 demo = sppasSettingsDialog(None)
 response = demo.ShowModal()
 demo.Destroy()
-logging.info('Response: {:d}'.format(response))
 
 app.SetTopWindow(demo)
 app.MainLoop()

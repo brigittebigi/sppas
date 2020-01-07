@@ -496,13 +496,13 @@ class BaseButton(wx.Window):
         value = int(value)
         w, h = self.GetClientSize()
         if value < 0:
-            # logging.warning("Invalid border width {:d} (negative value).".format(value))
+            # wx.LogWarning("Invalid border width {:d} (negative value).".format(value))
             return
         if w > 0 and value >= (w // 2):
-            # logging.warning("Invalid border width {:d} (highter than width {:d}).".format(value, w))
+            # wx.LogWarning("Invalid border width {:d} (highter than width {:d}).".format(value, w))
             return
         if h > 0 and value >= (h // 2):
-            # logging.warning("Invalid border width {:d} (highter than height {:d}).".format(value, h))
+            # wx.LogWarning("Invalid border width {:d} (highter than height {:d}).".format(value, h))
             return
         self._borderwidth = value
 
@@ -630,45 +630,45 @@ class BaseButton(wx.Window):
         if self.IsEnabled() is True:
 
             if event.Entering():
-                # logging.debug('{:s} Entering'.format(self.GetName()))
+                # wx.LogDebug('{:s} Entering'.format(self.GetName()))
                 self.OnMouseEnter(event)
 
             elif event.Leaving():
-                # logging.debug('{:s} Leaving'.format(self.GetName()))
+                # wx.LogDebug('{:s} Leaving'.format(self.GetName()))
                 self.OnMouseLeave(event)
 
             elif event.LeftDown():
-                # logging.debug('{:s} LeftDown'.format(self.GetName()))
+                # wx.LogDebug('{:s} LeftDown'.format(self.GetName()))
                 self.OnMouseLeftDown(event)
 
             elif event.LeftUp():
-                # logging.debug('{:s} LeftUp'.format(self.GetName()))
+                # wx.LogDebug('{:s} LeftUp'.format(self.GetName()))
                 self.OnMouseLeftUp(event)
 
             elif event.Moving():
-                # logging.debug('{:s} Moving'.format(self.GetName()))
+                # wx.LogDebug('{:s} Moving'.format(self.GetName()))
                 # a motion event and no mouse buttons were pressed.
                 self.OnMotion(event)
 
             elif event.Dragging():
-                # logging.debug('{:s} Dragging'.format(self.GetName()))
+                # wx.LogDebug('{:s} Dragging'.format(self.GetName()))
                 # motion while a button was pressed
                 self.OnDragging(event)
 
             elif event.ButtonDClick():
-                # logging.debug('{:s} ButtonDClick'.format(self.GetName()))
+                # wx.LogDebug('{:s} ButtonDClick'.format(self.GetName()))
                 self.OnMouseDoubleClick(event)
 
             elif event.RightDown():
-                # logging.debug('{:s} RightDown'.format(self.GetName()))
+                # wx.LogDebug('{:s} RightDown'.format(self.GetName()))
                 self.OnMouseRightDown(event)
 
             elif event.RightUp():
-                # logging.debug('{:s} RightUp'.format(self.GetName()))
+                # wx.LogDebug('{:s} RightUp'.format(self.GetName()))
                 self.OnMouseRightUp(event)
 
             else:
-                # logging.debug('{:s} Other mouse event'.format(self.GetName()))
+                # wx.LogDebug('{:s} Other mouse event'.format(self.GetName()))
                 pass
 
         event.Skip()
@@ -1813,7 +1813,7 @@ class CheckButton(BaseCheckButton):
         if spacing < 0:
             spacing = 0
         if spacing > 30:
-            # logging.warning('Spacing of a button is maximum 30px width. '
+            # wx.LogWarning('Spacing of a button is maximum 30px width. '
             #                'Got {:d}.'.format(spacing))
             spacing = 30
         # we should check if spacing < self height or width

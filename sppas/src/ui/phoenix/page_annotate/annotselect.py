@@ -34,12 +34,12 @@
 
 """
 
-import logging
 import wx
 
 from sppas import msg
 from sppas import u
 from sppas import annots
+from sppas import sppasUnicode
 
 from ..panels import sppasOptionsPanel
 from ..windows import sppasDialog
@@ -61,7 +61,7 @@ def _(message):
     return u(msg(message, "ui"))
 
 
-ANN_TYPE = _("Annotations of type {:s}")
+ANN_TYPE = _("Select annotations of type {:s}")
 MSG_CONFIG = _("Configure")
 
 # ---------------------------------------------------------------------------
@@ -74,7 +74,7 @@ class sppasAnnotationsPanel(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -103,9 +103,9 @@ class sppasAnnotationsPanel(sppasPanel):
         for i in range(self.__param.get_step_numbers()):
             a = self.__param.get_step(i)
             if a.get_activate() is True:
-                logging.info("Annotation {:s} is activated. "
-                             "Language is set to '{!s:s}'"
-                             "".format(a.get_name(), a.get_lang()))
+                wx.LogMessage("Annotation {:s} is activated. "
+                              "Language is set to '{!s:s}'"
+                              "".format(a.get_name(), a.get_lang()))
         return self.__param
 
     # -----------------------------------------------------------------------
@@ -118,9 +118,9 @@ class sppasAnnotationsPanel(sppasPanel):
                 if w is not None:
                     w.set_annparam(a)
                 else:
-                    logging.error("In annotation type '{:s}', panel not "
-                                  "found for annotation '{:s}'"
-                                  "".format(self.__anntype, a.get_key()))
+                    wx.LogError("In annotation type '{:s}', panel not "
+                                "found for annotation '{:s}'"
+                                "".format(self.__anntype, a.get_key()))
         self.__param = param
 
     # -----------------------------------------------------------------------
@@ -132,19 +132,20 @@ class sppasAnnotationsPanel(sppasPanel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         btn_size = sppasPanel.fix_size(64)
 
-        btn_back_top = BitmapTextButton(self, name="arrow_up")
+        top_panel = sppasPanel(self, name="annotselect_top_panel")
+        btn_back_top = BitmapTextButton(top_panel, name="arrow_up")
         btn_back_top.FocusWidth = 0
         btn_back_top.BorderWidth = 0
         btn_back_top.BitmapColour = self.GetForegroundColour()
         btn_back_top.SetMinSize(wx.Size(btn_size, btn_size))
 
         title = sppasStaticText(
-            self, label=ANN_TYPE.format(self.__anntype),
-            name="title_text")
+            top_panel, label=ANN_TYPE.format(self.__anntype), name="title_text")
 
         sizer_top = wx.BoxSizer(wx.HORIZONTAL)
         sizer_top.Add(btn_back_top, 0, wx.RIGHT, btn_size // 4)
         sizer_top.Add(title, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_CENTER_HORIZONTAL)
+        top_panel.SetSizerAndFit(sizer_top)
 
         scrolled = sppasScrolledPanel(self, name="anns_list", style=wx.BORDER_NONE)
         sizer_anns = wx.BoxSizer(wx.VERTICAL)
@@ -158,7 +159,7 @@ class sppasAnnotationsPanel(sppasPanel):
         scrolled.SetSizer(sizer_anns)
         scrolled.SetupScrolling(scroll_x=True, scroll_y=True)
 
-        sizer.Add(sizer_top, 0, wx.EXPAND)
+        sizer.Add(top_panel, 0, wx.EXPAND)
         sizer.Add(scrolled, 1, wx.EXPAND | wx.LEFT, btn_size // 4)
 
         self.SetSizer(sizer)
@@ -253,7 +254,7 @@ class sppasEnableAnnotation(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -267,8 +268,7 @@ class sppasEnableAnnotation(sppasPanel):
 
         self._create_content()
         self._setup_events()
-        self.SetMaxSize(wx.Size(-1, sppasPanel.fix_size(128)))
-
+        self.SetMinSize(wx.Size(-1, sppasPanel.fix_size(96)))
         self.Layout()
 
     # -----------------------------------------------------------------------
@@ -288,46 +288,52 @@ class sppasEnableAnnotation(sppasPanel):
         ls = self.__create_lang_sizer()
         ds = self.__create_description_sizer()
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(es, 0, wx.ALIGN_CENTRE)
-        sizer.Add(ls, 0, wx.ALIGN_CENTRE | wx.RIGHT | wx.LEFT, 8)
-        sizer.Add(ds, 1, wx.ALIGN_CENTRE)
+        sizer.Add(es, 0, wx.ALIGN_CENTRE | wx.RIGHT | wx.LEFT, sppasPanel.fix_size(8))
+        sizer.Add(ls, 0, wx.ALIGN_CENTRE | wx.RIGHT | wx.LEFT, sppasPanel.fix_size(8))
+        sizer.Add(ds, 1, wx.EXPAND | wx.RIGHT | wx.LEFT, sppasPanel.fix_size(8))
 
         self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
 
     def __create_enable_sizer(self):
+        panel = sppasPanel(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
-        w = sppasPanel.fix_size(128)
-        h = sppasPanel.fix_size(32)
+        w = sppasPanel.fix_size(156)
+        h = sppasPanel.fix_size(48)
 
         btn_enable = BitmapTextButton(
-            self, label=self.__annparam.get_name(), name="on-off-off")
+            panel, label=self.__annparam.get_name(), name="on-off-off")
         btn_enable.LabelPosition = wx.RIGHT
         btn_enable.Spacing = 12
         btn_enable.FocusWidth = 0
         btn_enable.BorderWidth = 0
         btn_enable.BitmapColour = self.GetForegroundColour()
-        btn_enable.SetMinSize(wx.Size(w, h))
+        btn_enable.SetMinSize(wx.Size(w-2, h-2))
+        btn_enable.SetMaxSize(wx.Size(w-2, h))
 
         btn_configure = sppasTextButton(
-            self, label=MSG_CONFIG + "...", name="configure")
+            panel, label=MSG_CONFIG + "...", name="configure")
         btn_configure.SetForegroundColour(wx.Colour(80, 100, 220))
-        btn_configure.SetMinSize(wx.Size(w, h))
+        btn_configure.SetMinSize(wx.Size(w-2, h-2))
+        btn_configure.SetMaxSize(wx.Size(w-2, h))
 
         sizer.Add(btn_enable, 1, wx.EXPAND)
-        sizer.Add(btn_configure, 1, wx.ALIGN_CENTRE | wx.EXPAND)
-        return sizer
+        sizer.Add(btn_configure, 1, wx.EXPAND)
+        panel.SetSizer(sizer)
+        return panel
 
     # -----------------------------------------------------------------------
 
     def __create_lang_sizer(self):
+        w = sppasPanel.fix_size(80)
         choice_list = self.__annparam.get_langlist()
 
-        # choice of the language
+        # choice of the language. Default is an empty panel.
         choice = sppasPanel(self, name="lang_panel")
 
-        # if there are different languages available, add a choice to the panel
+        # if there are different languages available,
+        # replace the default panel by a combo box.
         if len(choice_list) > 0:
             choice_list.append(LANG_NONE)
             lang = self.__annparam.get_lang()
@@ -338,13 +344,19 @@ class sppasEnableAnnotation(sppasPanel):
             choice.SetSelection(choice.GetItems().index(lang))
             choice.Bind(wx.EVT_COMBOBOX, self._on_lang_changed)
 
-        choice.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
+        choice.SetMinSize(wx.Size(w, -1))
 
         return choice
 
     # -----------------------------------------------------------------------
 
     def __create_description_sizer(self):
+        panel = sppasPanel(self)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        content = self.__annparam.get_descr()
+        su = sppasUnicode(content)
+        content = su.to_strip()
+
         text_style = wx.TAB_TRAVERSAL | \
                      wx.TE_MULTILINE | \
                      wx.TE_READONLY | \
@@ -353,10 +365,11 @@ class sppasEnableAnnotation(sppasPanel):
                      wx.NO_BORDER | \
                      wx.TE_RICH
         td = sppasTextCtrl(
-            self, value=self.__annparam.get_descr(), style=text_style)
-        #td.SetMinSize(wx.Size(sppasPanel.fix_size(512), -1))
+            panel, value=content, style=text_style)
 
-        return td
+        sizer.Add(td, 1, wx.EXPAND | wx.TOP | wx.BOTTOM, sppasPanel.fix_size(12))
+        panel.SetSizer(sizer)
+        return panel
 
     # -----------------------------------------------------------------------
     # Events management

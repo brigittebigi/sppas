@@ -33,7 +33,6 @@
 
 """
 
-import logging
 import wx
 
 from sppas import sg
@@ -185,8 +184,6 @@ class ReferencesManager(sppasPanel):
         key_code = event.GetKeyCode()
         cmd_down = event.CmdDown()
         shift_down = event.ShiftDown()
-        logging.debug('Files manager received the key event {:d}'
-                      ''.format(key_code))
 
         #if key_code == wx.WXK_F5 and cmd_down is False and shift_down is False:
         #    logging.debug('Refresh all the files [F5 keys pressed]')
@@ -229,7 +226,7 @@ class ReferencesManager(sppasPanel):
                 self.FindWindow('refsview').CreateRef(rname, rtype)
                 self.notify()
             except Exception as e:
-                logging.error(str(e))
+                wx.LogError("Add reference. {:s}".format(str(e)))
                 message = REF_MSG_CREATE_ERROR.format(rname, str(e))
                 Error(message)
         dlg.Destroy()
@@ -582,7 +579,6 @@ class sppasEditAttributes(sppasDialog):
             for a in r:
                 if a.id == att_id:
                     matching_att.append(a)
-                    logging.debug(' is matching: {:s}'.format(str(a)))
 
         if len(matching_att) > 0:
             d = set([a.get_description() for a in matching_att])
@@ -668,4 +664,4 @@ class TestPanel(ReferencesManager):
         fr3.add("place", "Aix-en-Provence")
         nb = self.FindWindow('refsview').AddRefs([fr1, fr2, fr3, fr3])
         if nb > 0:
-            logging.debug('Test added {:d} references (3 expected)'.format(nb))
+            wx.LogDebug('Test added {:d} references (3 expected)'.format(nb))

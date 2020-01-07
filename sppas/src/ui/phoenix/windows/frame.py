@@ -34,7 +34,6 @@
 
 """
 
-import logging
 import wx
 
 from sppas.src.config import sg
@@ -190,7 +189,6 @@ class sppasFrame(wx.Frame):
     def __alpha_cycle_out(self, *args):
         """Fade-out opacity of the dialog."""
         self.opacity_out += self.deltaN
-        logging.debug('opacity = {:d}'.format(self.opacity_out))
 
         if self.opacity_out >= 255:
             self.deltaN = -self.deltaN
@@ -364,7 +362,6 @@ class sppasTopFrame(wx.TopLevelWindow):
     def __alpha_cycle_out(self, *args):
         """Fade-out opacity of the dialog."""
         self.opacity_out += self.deltaN
-        logging.debug('opacity = {:d}'.format(self.opacity_out))
 
         if self.opacity_out >= 255:
             self.deltaN = -self.deltaN

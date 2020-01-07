@@ -116,7 +116,7 @@ class sppasStatsViewDialog(sppasDialog):
         """
         super(sppasStatsViewDialog, self).__init__(
             parent,
-            title="Tiers View",
+            title="Stats View",
             style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.STAY_ON_TOP,
             name="statsview-dialog")
 

@@ -38,7 +38,6 @@
 
 """
 
-import logging
 import wx
 
 from sppas import msg
@@ -63,14 +62,21 @@ def _(message):
     return u(msg(message, "ui"))
 
 
-PGS_TITLE = "Plugins: "
-PGS_ACT_ADD = "Install"
-PGS_ACT_DEL = "Delete"
-PGS_ACT_ADD_ERROR = "Plugin '{:s}' can't be installed due to the following" \
-                       " error:\n{!s:s}"
-PGS_ACT_DEL_ERROR = "Plugin '{:s}' can't be deleted due to the following" \
-                       " error:\n{!s:s}"
-FLS_MSG_CONFIRM_DEL = "Are you sure you want to delete the plugin {:s}?"
+PGS_TITLE = _("Plugins: ")
+PGS_ACT_ADD = _("Install")
+PGS_ACT_DEL = _("Delete")
+PGS_ACT_ADD_ERROR = _("Plugin '{:s}' can't be installed due to the following" \
+                      " error:\n{!s:s}")
+PGS_ACT_DEL_ERROR = _("Plugin '{:s}' can't be deleted due to the following" \
+                      " error:\n{!s:s}")
+FLS_MSG_CONFIRM_DEL = _("Are you sure you want to delete the plugin {:s}?")
+
+PGS_NO_PLUGINS = _("No plugin installed.")
+PGS_TO_DELETE = _("Select the plugin to delete:")
+PGS_DELETED = _("Plugin {:s} was successfully deleted.")
+PGS_INSTALLED = _("Plugin successfully installed in folder {:s}.")
+PGS_ERR_ADD = _("Install error")
+PGS_ERR_DEL = _("Delete error")
 
 # ----------------------------------------------------------------------------
 
@@ -187,7 +193,6 @@ class sppasPluginsPanel(sppasPanel):
         key_code = event.GetKeyCode()
         cmd_down = event.CmdDown()
         shift_down = event.ShiftDown()
-        logging.debug('Plugins page received a key event. key_code={:d}'.format(key_code))
 
         event.Skip()
 
@@ -200,7 +205,6 @@ class sppasPluginsPanel(sppasPanel):
 
         """
         name = event.GetButtonObj().GetName()
-        logging.debug("Event received of button: {:s}".format(name))
 
         if name == "plugin-import":
             self._install()
@@ -224,8 +228,8 @@ class sppasPluginsPanel(sppasPanel):
         try:
             wkp = event.data
         except AttributeError:
-            logging.error('Data were not sent in the event emitted by {:s}'
-                          '.'.format(emitted.GetName()))
+            wx.LogError("Data were not sent in the event emitted by {:s}."
+                        "".format(emitted.GetName()))
             return
 
         plg_panel = self.FindWindow("pluginslist")
@@ -247,25 +251,24 @@ class sppasPluginsPanel(sppasPanel):
 
     def _delete(self):
         """Delete a plugin."""
-        logging.debug('User asked to delete a plugin')
+        wx.LogMessage('User asked to delete a plugin')
         p = self.FindWindow("pluginslist")
 
         keys = p.get_plugins()
-        logging.debug('List of plugins: {:s}'.format(str(keys)))
+        wx.LogMessage('List of plugins: {:s}'.format(str(keys)))
         if len(keys) == 0:
-            Information("No plugin installed.")
+            Information(PGS_NO_PLUGINS)
             return None
 
-        plugin_id = None
-        dlg = sppasChoiceDialog("Select the plugin to delete:", choices=keys)
+        dlg = sppasChoiceDialog(PGS_TO_DELETE, choices=keys)
         if dlg.ShowModal() == wx.ID_OK:
             plugin_id = dlg.GetStringSelection()
             try:
                 p.delete(plugin_id)
-                Information("Plugin %s was successfully deleted." % plugin_id)
+                Information(PGS_DELETED.format(plugin_id))
             except Exception as e:
                 message = PGS_ACT_DEL_ERROR.format(plugin_id, str(e))
-                Error(message, "Delete error")
+                Error(message, PGS_ERR_DEL)
 
         dlg.Destroy()
 
@@ -273,7 +276,7 @@ class sppasPluginsPanel(sppasPanel):
 
     def _install(self):
         """Import a plugin from a zip file."""
-        logging.debug('User asked to install a plugin')
+        wx.LogMessage("User asked to install a plugin")
         p = self.FindWindow("pluginslist")
 
         # Get the name of the file to be imported
@@ -284,11 +287,10 @@ class sppasPluginsPanel(sppasPanel):
             filename = dlg.GetPath()
             try:
                 folder = p.install(filename)
-                Information("Plugin successfully installed in folder {:s}."
-                            "".format(folder))
+                Information(PGS_INSTALLED.format(folder))
 
             except Exception as e:
                 message = PGS_ACT_ADD_ERROR.format(filename, str(e))
-                Error(message, "Install error")
+                Error(message, PGS_ERR_ADD)
 
         dlg.Destroy()

@@ -81,7 +81,7 @@ class WxAppSettings(sppasBaseSettings):
             default_icons_theme="Refine",
             icons_theme="Refine",
 
-            fg_color=wx.Colour(218, 12, 12),
+            fg_color=wx.Colour(20, 20, 20),
             header_fg_color=wx.Colour(240, 240, 230),
             action_fg_color=wx.Colour(230, 230, 225),
 

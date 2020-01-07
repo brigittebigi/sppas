@@ -35,7 +35,6 @@
 """
 
 import wx
-import logging
 
 from ..tools import sppasSwissKnife
 
@@ -104,7 +103,7 @@ class sppasStaticBitmap(wx.StaticBitmap):
             ColorizeImage(img, current, colour)
             self.SetBitmap(wx.Bitmap(img))
         except:
-            logging.debug('SetForegroundColour not applied to image'
-                          'for button {:s}'.format(self.GetName()))
+            wx.LogDebug('SetForegroundColour not applied to image'
+                        'for button {:s}'.format(self.GetName()))
 
         wx.StaticBitmap.SetForegroundColour(self, colour)

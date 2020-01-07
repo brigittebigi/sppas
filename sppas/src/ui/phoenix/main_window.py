@@ -303,7 +303,6 @@ class sppasMainWindow(sppasDialog):
 
         """
         key_code = event.GetKeyCode()
-        logging.debug('Main window received a key event. key_code={:d}'.format(key_code))
 
         if key_code == wx.WXK_F4 and event.AltDown() and wx.Platform == "__WXMSW__":
             # ALT+F4 on Windows to exit with confirmation
@@ -524,6 +523,7 @@ class sppasActionsPanel(sppasPanel):
         btn.Spacing = 12
         btn.BorderWidth = 0
         btn.BitmapColour = self.GetForegroundColour()
+        btn.FocusColour = self.GetForegroundColour()
 
         min_size = sppasPanel.fix_size(28)
         btn.SetMinSize(wx.Size(min_size, min_size))

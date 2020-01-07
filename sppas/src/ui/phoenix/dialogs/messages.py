@@ -441,13 +441,14 @@ def YesNoQuestion(message):
     wx.ID_CANCEL is returned if the dialog is destroyed.
 
     """
-    logging.info(message)
+    wx.LogMessage(message)
     dialog = sppasYesNoDialog(message)
     response = dialog.ShowModal()
     dialog.Destroy()
-    logging.info("User clicked yes" if response == wx.ID_YES else "User clicked no")
+    wx.LogMessage("User clicked yes" if response == wx.ID_YES else "User clicked no")
     return response
 
+# ---------------------------------------------------------------------------
 
 def Confirm(message, title=None):
     """Display a confirmation after an error.
@@ -466,13 +467,14 @@ def Confirm(message, title=None):
     wx.ID_CANCEL is returned if the dialog is destroyed or cancel clicked.
 
     """
-    logging.error(message)
+    wx.LogMessage(message)
     dialog = sppasConfirm(message, title)
     response = dialog.ShowModal()
     dialog.Destroy()
-    logging.info("Confirmed by user." if response == wx.ID_YES else "User cancelled.")
+    wx.LogMessage("Confirmed by user." if response == wx.ID_YES else "User cancelled.")
     return response
 
+# ---------------------------------------------------------------------------
 
 def Error(message, title=None):
     """Display a error message.
@@ -490,12 +492,13 @@ def Error(message, title=None):
     wx.ID_CANCEL is returned if the dialog is destroyed.
 
     """
-    logging.error(message)
+    wx.LogError(message)
     dialog = sppasErrorDialog(message, title=None)
     response = dialog.ShowModal()
     dialog.Destroy()
     return response
 
+# ---------------------------------------------------------------------------
 
 def Information(message):
     """Display an information message.
@@ -510,12 +513,13 @@ def Information(message):
     :returns: wx.ID_OK
 
     """
-    logging.info(message)
+    wx.LogMessage(message)
     dialog = sppasInformationDialog(message)
     response = dialog.ShowModal()
     dialog.Destroy()
     return response
 
+# ---------------------------------------------------------------------------
 
 def Warn(message):
     """Display a warn message.
@@ -530,7 +534,7 @@ def Warn(message):
     :returns: wx.ID_OK
 
     """
-    logging.info(message)
+    wx.LogWarning(message)
     dialog = sppasWarnDialog(message)
     response = dialog.ShowModal()
     dialog.Destroy()

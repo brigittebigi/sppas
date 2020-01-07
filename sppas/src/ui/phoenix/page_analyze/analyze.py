@@ -47,7 +47,6 @@
 """
 
 import os
-import logging
 import random
 import wx
 
@@ -403,7 +402,8 @@ class sppasAnalyzePanel(sppasPanel):
         # check if a page is existing at the given index
         p = book.GetPage(page_index)
         if p == wx.NOT_FOUND:
-            logging.error("No page existing at index {:d}".format(page_index))
+            wx.LogError("Switch to... No page is existing at index {:d}"
+                        "".format(page_index))
             return
 
         # the index of the currently selected page
@@ -569,8 +569,8 @@ class sppasAnalyzePanel(sppasPanel):
         try:
             data = event.data
         except AttributeError:
-            logging.error('Data were not sent in the event emitted by {:s}'
-                          '.'.format(emitted.GetName()))
+            wx.LogError('Data were not sent in the event emitted by {:s}'
+                        '.'.format(emitted.GetName()))
             return
         self.__data = data
 

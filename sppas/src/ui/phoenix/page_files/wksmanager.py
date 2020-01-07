@@ -34,7 +34,6 @@
 """
 
 import os
-import logging
 import wx
 import wx.lib.newevent
 
@@ -152,8 +151,7 @@ class WorkspacesManager(sppasPanel):
         """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        logging.debug('New data to set in the workspace panel. '
-                      'Id={:s}'.format(data.id))
+
         self.__data = data
 
     # -----------------------------------------------------------------------
@@ -233,9 +231,6 @@ class WorkspacesManager(sppasPanel):
 
         """
         key_code = event.GetKeyCode()
-        logging.debug('Workspaces manager received the key event {:d}'
-                      ''.format(key_code))
-        logging.debug('Key event skipped by the workspace manager.')
         event.Skip()
 
     # -----------------------------------------------------------------------
@@ -248,7 +243,7 @@ class WorkspacesManager(sppasPanel):
         :param event: (wx.Event) WkpChangedEvent
 
         """
-        logging.debug('Workspaces manager processes a change of workspace '
+        wx.LogMessage('Workspaces manager processes a change of workspace '
                       'from {:d} to {:d}'.format(event.from_wkp, event.to_wkp))
         wkpslist = event.GetEventObject()
         wkp_name = wkpslist.get_wkp_name(event.to_wkp)
@@ -629,9 +624,8 @@ class WorkspacesPanel(sppasPanel):
         if index == 0:
             raise IndexError("The 'Blank' workspace can't be removed")
 
-        logging.debug('Remove workspace index {:d}'.format(index))
-
         # Remove of the sizer
+        wx.LogMessage('Remove workspace at index {:d}'.format(index))
         self.GetSizer().GetItem(index).DeleteWindows()
         self.GetSizer().Remove(index)
         self.Layout()
@@ -743,8 +737,8 @@ class WorkspacesPanel(sppasPanel):
 
         else:
             # user clicked the current workspace
-            logging.info('Workspace {:s} is already active.'
-                         ''.format(wkp_btn.GetLabel()))
+            wx.LogMessage('Workspace {:s} is already active.'
+                          ''.format(wkp_btn.GetLabel()))
             wkp_btn.SetValue(True)
 
     # -----------------------------------------------------------------------
@@ -758,8 +752,6 @@ class WorkspacesPanel(sppasPanel):
             self.__set_normal_btn_style(btn)
         btn.SetValue(state)
         btn.Refresh()
-        logging.debug('Workspace {:s} is checked: {:s}'
-                      ''.format(btn.GetLabel(), str(state)))
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
