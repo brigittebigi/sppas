@@ -42,6 +42,7 @@ from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
 import sppas.src.ui.phoenix.panels.option as option
+import sppas.src.ui.phoenix.dialogs.tiersfilters as tiersfilters
 import sppas.src.ui.phoenix.dialogs.statsview as statsview
 import sppas.src.ui.phoenix.page_files.filesmanager as filesmanager
 import sppas.src.ui.phoenix.page_files.filesviewctrl as filesviewctrl
@@ -70,7 +71,8 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
-        self.AddPage(statsview.TestPanel(self), "View Stats of tiers")
+        self.AddPage(tiersfilters.TestPanel(self), "DataFilter of tiers")
+        self.AddPage(statsview.TestPanel(self), "DataStats of tiers")
         self.AddPage(anzlistviews.TestPanel(self), "Analyze Summary view")
         self.AddPage(anztextviews.TestPanel(self), "Analyze Text view")
         self.AddPage(listview.TestPanel(self), "Summary view")
