@@ -34,14 +34,9 @@
 
 """
 
-import re
+import sys
 import wx
 import wx.dataview
-
-try:
-    from agw import floatspin as FS
-except ImportError:
-    import wx.lib.agw.floatspin as FS
 
 from sppas import sg
 from sppas.src.anndata import sppasTier
@@ -52,7 +47,6 @@ from ..windows import sppasPanel
 from ..windows import sppasToolbar
 from ..windows import BitmapTextButton, CheckButton
 from ..windows import sppasTextCtrl, sppasStaticText
-from ..windows import NotEmptyTextValidator
 from ..windows import sppasRadioBoxPanel
 from ..dialogs import Information
 from ..windows.book import sppasNotebook
@@ -61,7 +55,45 @@ from ..windows.book import sppasNotebook
 # --------------------------------------------------------------------------
 
 MSG_HEADER_TIERSFILTER = ui_translation.gettext("Filter annotations of tiers")
+
+MSG_TAG_FILTER = ui_translation.gettext("Filter on tags of annotations")
+MSG_LOC_FILTER = ui_translation.gettext("Filter on localization of annotations")
+MSG_DUR_FILTER = ui_translation.gettext("Filter on duration of annotations")
+
+MSG_LOC = ui_translation.gettext("The localization is:")
+MSG_DUR = ui_translation.gettext("The duration is:")
+
+MSG_TAG_TYPE_BOOL = ui_translation.gettext("Boolean value of the tag is:")
+MSG_TAG_TYPE_INT = ui_translation.gettext("Integer value of the tag is:")
+MSG_TAG_TYPE_FLOAT = ui_translation.gettext("Float value of the tag is:")
+MSG_TAG_TYPE_STR = ui_translation.gettext("Patterns to find, "
+                                          "separated by commas, are:")
 DEFAULT_LABEL = "tag1, tag2..."
+MSG_CASE = ui_translation.gettext("Case sensitive")
+
+MSG_FALSE = ui_translation.gettext("False")
+MSG_TRUE = ui_translation.gettext("True")
+
+MSG_EQUAL = ui_translation.gettext("equal to")
+MSG_NOT_EQUAL = ui_translation.gettext("not equal to")
+MSG_GT = ui_translation.gettext("greater than")
+MSG_LT = ui_translation.gettext("less than")
+MSG_GE = ui_translation.gettext("greater or equal to")
+MSG_LE = ui_translation.gettext("less or equal to")
+
+MSG_EXACT = ui_translation.gettext("exact")
+MSG_CONTAINS = ui_translation.gettext("contains")
+MSG_STARTSWITH = ui_translation.gettext("starts with")
+MSG_ENDSWITH = ui_translation.gettext("ends with")
+MSG_REGEXP = ui_translation.gettext("match (regexp)")
+MSG_NOT_EXACT = ui_translation.gettext("not exact")
+MSG_NOT_CONTAINS = ui_translation.gettext("not contains")
+MSG_NOT_STARTSWITH = ui_translation.gettext("not starts with")
+MSG_NOT_ENDSWITH = ui_translation.gettext("not ends with")
+MSG_NOT_REGEXP = ui_translation.gettext("not match (regexp)")
+MSG_FROM = ui_translation.gettext("starting at")
+MSG_TO = ui_translation.gettext("ending at")
+MSG_VALUE = ui_translation.gettext("this value:")
 
 # ---------------------------------------------------------------------------
 
@@ -264,15 +296,15 @@ class sppasTagFilterDialog(sppasDialog):
         """
         super(sppasTagFilterDialog, self).__init__(
             parent=parent,
-            title='- Tag filter'.format(sg.__name__),
+            title="+ Tag filter",
             style=wx.DEFAULT_FRAME_STYLE)
 
-        self.CreateHeader("Tag-based single filter", "tier_filter_add_tag")
+        self.CreateHeader(MSG_TAG_FILTER, "tier_filter_add_tag")
         self._create_content()
         self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
 
         self.SetSize(wx.Size(sppasPanel.fix_size(380),
-                             sppasPanel.fix_size(320)))
+                             sppasPanel.fix_size(300)))
         self.LayoutComponents()
         self.CenterOnParent()
 
@@ -335,28 +367,23 @@ class sppasTagStringPanel(sppasPanel):
     """
 
     choices = (
-               ("exact", "exact"),
-               ("contains", "contains"),
-               ("starts with", "startswith"),
-               ("ends with", "endswith"),
-               ("match (regexp)", "regexp"),
+               (MSG_EXACT, "exact"),
+               (MSG_CONTAINS, "contains"),
+               (MSG_STARTSWITH, "startswith"),
+               (MSG_ENDSWITH, "endswith"),
+               (MSG_REGEXP, "regexp"),
 
-               ("not exact", "exact"),
-               ("not contains", "contains"),
-               ("not starts with", "startswith"),
-               ("not ends with", "endswith"),
-               ("not match", "regexp"),
+               (MSG_NOT_EXACT, "exact"),
+               (MSG_NOT_CONTAINS, "contains"),
+               (MSG_NOT_STARTSWITH, "startswith"),
+               (MSG_NOT_ENDSWITH, "endswith"),
+               (MSG_NOT_REGEXP, "regexp"),
               )
 
     def __init__(self, parent):
         super(sppasTagStringPanel, self).__init__(parent)
-        top_label = sppasStaticText(
-            self,
-            label="Patterns to find, separated by commas: ")
-
-        self.text = sppasTextCtrl(
-            self,
-            value=DEFAULT_LABEL)
+        top_label = sppasStaticText(self, label=MSG_TAG_TYPE_STR)
+        self.text = sppasTextCtrl(self, value=DEFAULT_LABEL)
 
         functions = [row[0] for row in sppasTagStringPanel.choices]
         self.radiobox = sppasRadioBoxPanel(
@@ -366,8 +393,8 @@ class sppasTagStringPanel(sppasPanel):
             style=wx.RA_SPECIFY_COLS)
         self.radiobox.SetSelection(1)
 
-        self.checkbox = CheckButton(self, label="Case sensitive")
-        self.checkbox.SetValue(False)
+        self.checkbox = CheckButton(self, label=MSG_CASE)
+        self.checkbox.SetValue(True)
 
         # Layout
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -428,16 +455,14 @@ class sppasTagIntegerPanel(sppasPanel):
     """
 
     choices = (
-               (" is equal to...",     "equal"),
-               (" is greater than...", "greater"),
-               (" is less than...",    "lower"),
+               (MSG_EQUAL, "equal"),
+               (MSG_GT, "greater"),
+               (MSG_LT, "lower"),
              )
 
     def __init__(self, parent):
         super(sppasTagIntegerPanel, self).__init__(parent)
-        top_label = sppasStaticText(
-            self,
-            label="Integer value of the tag:")
+        top_label = sppasStaticText(self, label=MSG_TAG_TYPE_INT)
 
         functions = [row[0] for row in sppasTagIntegerPanel.choices]
         self.radiobox = sppasRadioBoxPanel(
@@ -494,23 +519,26 @@ class sppasTagFloatPanel(sppasPanel):
     """
 
     choices = (
-               (" is equal to...",     "equal"),
-               (" is greater than...", "greater"),
-               (" is less than...",    "lower"),
+               (MSG_EQUAL, "equal"),
+               (MSG_GT, "greater"),
+               (MSG_LT, "lower"),
              )
 
     def __init__(self, parent):
+        """Create a tag filter panel, for tags of type float.
+
+         :param parent: (wx.Window)
+
+         """
         super(sppasTagFloatPanel, self).__init__(parent)
-        top_label = sppasStaticText(
-            self,
-            label="Float value of the tag:")
+        top_label = sppasStaticText(self, label=MSG_TAG_TYPE_FLOAT)
 
         functions = [row[0] for row in sppasTagIntegerPanel.choices]
         self.radiobox = sppasRadioBoxPanel(
             self,
             choices=functions,
             style=wx.RA_SPECIFY_COLS)
-        self.radiobox.SetSelection(1)
+        self.radiobox.SetSelection(0)
 
         self.text = sppasTextCtrl(self, value="0.")
 
@@ -541,7 +569,7 @@ class sppasTagFloatPanel(sppasPanel):
         except ValueError:
             wx.LogError("{:s} can't be converted to a float"
                         "".format(str_value))
-            value = 0
+            value = 0.
 
         return "tag", given_fct, [value]
 
@@ -559,22 +587,17 @@ class sppasTagBooleanPanel(sppasPanel):
 
     """
 
-    choices = (
-               (" is False", "bool"),
-               (" is True",  "bool"),
-             )
-
     def __init__(self, parent):
-        super(sppasTagBooleanPanel, self).__init__(parent)
-        top_label = sppasStaticText(
-            self,
-            label="Boolean value of the tag:")
+        """Create a tag filter panel, for tags of type boolean.
 
-        functions = [row[0] for row in sppasTagIntegerPanel.choices]
+        :param parent: (wx.Window)
+
+        """
+        super(sppasTagBooleanPanel, self).__init__(parent)
+        top_label = sppasStaticText(self, label=MSG_TAG_TYPE_BOOL)
+
         self.radiobox = sppasRadioBoxPanel(
-            self,
-            choices=functions,
-            style=wx.RA_SPECIFY_COLS)
+            self, choices=[MSG_FALSE, MSG_TRUE], style=wx.RA_SPECIFY_COLS)
         self.radiobox.SetSelection(1)
 
         # Layout
@@ -591,10 +614,11 @@ class sppasTagBooleanPanel(sppasPanel):
 
         :returns: (tuple) with:
                - type (str): tag
-               - function (str): one of the methods in Compare
+               - function (str): bool
                - values (list): patterns to find
 
         """
+        # False is at index 0 so that bool(index) gives the value
         idx = self.radiobox.GetSelection()
         return "tag", "bool", [bool(idx)]
 
@@ -613,27 +637,119 @@ class sppasLocFilterDialog(sppasDialog):
     """
 
     choices = (
-        (" is starting at...", "rangefrom"),
-        (" is ending at...", "rangeto")
+        (MSG_FROM, "rangefrom"),
+        (MSG_TO, "rangeto")
     )
 
     def __init__(self, parent):
-        """Create a duration filter dialog.
+        """Create a localization filter dialog.
 
         :param parent: (wx.Window)
 
         """
         super(sppasLocFilterDialog, self).__init__(
             parent=parent,
-            title='{:s} filter'.format(sg.__name__),
+            title="+ Loc filter",
             style=wx.DEFAULT_FRAME_STYLE)
 
+        self.CreateHeader(MSG_LOC_FILTER, "tier_filter_add_loc")
         self._create_content()
         self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
 
-        self.SetSize(wx.Size(380, 320))
+        self.SetSize(wx.Size(sppasPanel.fix_size(380),
+                             sppasPanel.fix_size(300)))
         self.LayoutComponents()
         self.CenterOnParent()
+
+    # -----------------------------------------------------------------------
+
+    def get_data(self):
+        """Return the data defined by the user.
+
+        :returns: (tuple) with:
+               - type (str): tag
+               - function (str): one of the methods in Compare
+               - values (list): patterns to find
+
+        """
+        notebook = self.FindWindow("content")
+        page_idx = notebook.GetSelection()
+        data = notebook.GetPage(page_idx).get_data()
+        return data
+
+    # -----------------------------------------------------------------------
+    # Methods to construct the GUI
+    # -----------------------------------------------------------------------
+
+    def _create_content(self):
+        """Create the content of the message dialog.
+
+        notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, ...) not used because it
+        is bugged under MacOS (do not display the page content).
+
+        """
+        # Make the notebook to show each possible type of tag
+        notebook = sppasNotebook(self, name="content")
+
+        # Create and add the pages to the notebook
+        page1 = sppasLocFloatPanel(notebook)
+        notebook.AddPage(page1, " Float ")
+        page2 = sppasLocIntegerPanel(notebook)
+        notebook.AddPage(page2, " Integer ")
+
+        notebook.SetMinSize(wx.Size(sppasPanel.fix_size(320),
+                                    sppasPanel.fix_size(200)))
+        self.SetContent(notebook)
+
+# ---------------------------------------------------------------------------
+
+
+class sppasLocFloatPanel(sppasPanel):
+    """Panel to get a filter on a sppasLocalization if its type is 'float'.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent):
+        """Create a loc filter panel, for localizations of type float.
+
+        :param parent: (wx.Window)
+
+        """
+        super(sppasLocFloatPanel, self).__init__(parent)
+        top_label = sppasStaticText(self, label=MSG_LOC)
+        bottom_label = sppasStaticText(self, label=MSG_VALUE)
+
+        choices = [row[0] for row in sppasLocFilterDialog.choices]
+        self.radiobox = sppasRadioBoxPanel(
+            self,
+            choices=choices,
+            style=wx.RA_SPECIFY_COLS)
+        self.radiobox.SetSelection(1)
+
+        self.ctrl = wx.SpinCtrlDouble(
+            self, value="", min=0.0, max=sys.float_info.max,
+            inc=0.01, initial=0.)
+        self.ctrl.SetDigits(3)
+
+        # Layout
+        b = sppasPanel.fix_size(6)
+
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(bottom_label, 0, flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=b)
+        hbox.Add(self.ctrl, 1, flag=wx.EXPAND | wx.ALL, border=b)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(top_label, 0, flag=wx.EXPAND | wx.ALL, border=b)
+        sizer.Add(self.radiobox, 0, flag=wx.EXPAND | wx.ALL, border=b*2)
+        sizer.Add(hbox, 0, flag=wx.EXPAND | wx.ALL, border=0)
+
+        self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
 
@@ -643,55 +759,91 @@ class sppasLocFilterDialog(sppasDialog):
         :returns: (tuple) with
                type (str): loc
                function (str): "rangefrom" or "rangeto"
-               values (list): time value (represented by a 'str')
+               values (list): time value (represented by a float)
 
         """
         idx = self.radiobox.GetSelection()
         given_fct = sppasLocFilterDialog.choices[idx][1]
-        value = self.ctrl.GetValue()
+        str_value = self.ctrl.GetValue()
+        try:
+            value = float(str_value)
+        except ValueError:
+            wx.LogError("{:s} can't be converted to a float"
+                        "".format(str_value))
+            value = 0.
+
         return "loc", given_fct, [value]
 
-    # -----------------------------------------------------------------------
-    # Method to construct the GUI
-    # -----------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
-    def _create_content(self):
-        """Create the content of the message dialog."""
-        panel = sppasPanel(self, name="content")
 
-        top_label = sppasStaticText(panel, label="The time ")
-        bottom_label = sppasStaticText(panel, label="... this value in seconds: ")
+class sppasLocIntegerPanel(sppasPanel):
+    """Panel to get a filter on a sppasLocalization if its type is 'int'.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent):
+        """Create a loc filter panel, for localizations of type int.
+
+        :param parent: (wx.Window)
+
+        """
+        super(sppasLocIntegerPanel, self).__init__(parent)
+        top_label = sppasStaticText(self, label=MSG_LOC)
+        bottom_label = sppasStaticText(self, label=MSG_VALUE)
 
         choices = [row[0] for row in sppasLocFilterDialog.choices]
         self.radiobox = sppasRadioBoxPanel(
-            panel,
+            self,
             choices=choices,
-            majorDimension=1,
             style=wx.RA_SPECIFY_COLS)
         self.radiobox.SetSelection(1)
 
-        self.ctrl = FS.FloatSpin(self, min_val=0.0,
-                                 increment=0.001,
-                                 value=0,
-                                 digits=3)
+        self.ctrl = wx.SpinCtrl(self, value="", min=0, max=sys.maxsize//100,
+                                initial=0)
 
         # Layout
-        b = sppasPanel.fix_size(4)
+        b = sppasPanel.fix_size(6)
 
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        hbox.Add(bottom_label, flag=wx.EXPAND | wx.ALL, border=b)
-        hbox.Add(self.ctrl, flag=wx.EXPAND | wx.ALL, border=b)
+        hbox.Add(bottom_label, 0, flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=b)
+        hbox.Add(self.ctrl, 1, flag=wx.EXPAND | wx.ALL, border=b)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(top_label, flag=wx.EXPAND | wx.ALL, border=b)
-        sizer.Add(self.radiobox, 1, flag=wx.EXPAND | wx.ALL, border=0)
+        sizer.Add(top_label, 0, flag=wx.EXPAND | wx.ALL, border=b)
+        sizer.Add(self.radiobox, 0, flag=wx.EXPAND | wx.ALL, border=b*2)
         sizer.Add(hbox, 0, flag=wx.EXPAND | wx.ALL, border=0)
 
-        panel.SetSizer(sizer)
-        panel.SetMinSize(wx.Size(240, 160))
-        panel.SetAutoLayout(True)
-        self.SetContent(panel)
+        self.SetSizer(sizer)
 
+    # -----------------------------------------------------------------------
+
+    def get_data(self):
+        """Return the data defined by the user.
+
+        :returns: (tuple) with
+               type (str): loc
+               function (str): "rangefrom" or "rangeto"
+               values (list): loc value (represented by an int)
+
+        """
+        idx = self.radiobox.GetSelection()
+        given_fct = sppasLocFilterDialog.choices[idx][1]
+        str_value = self.ctrl.GetValue()
+        try:
+            value = int(str_value)
+        except ValueError:
+            wx.LogError("{:s} can't be converted to an integer"
+                        "".format(str_value))
+            value = 0
+
+        return "loc", given_fct, [value]
 
 # ---------------------------------------------------------------------------
 
@@ -708,12 +860,12 @@ class sppasDurFilterDialog(sppasDialog):
     """
 
     choices = (
-        (" is equal to...", "eq"),
-        (" is not equal to...", "ne"),
-        (" is greater than...", "gt"),
-        (" is less than...", "lt"),
-        (" is greater or equal to...", "ge"),
-        (" is lesser or equal to...", "le")
+        (MSG_EQUAL, "eq"),
+        (MSG_NOT_EQUAL, "ne"),
+        (MSG_GT, "gt"),
+        (MSG_LT, "lt"),
+        (MSG_GE, "ge"),
+        (MSG_LE, "le")
     )
 
     def __init__(self, parent):
@@ -727,10 +879,12 @@ class sppasDurFilterDialog(sppasDialog):
             title='{:s} filter'.format(sg.__name__),
             style=wx.DEFAULT_FRAME_STYLE)
 
+        self.CreateHeader(MSG_DUR_FILTER, "tier_filter_add_dur")
         self._create_content()
         self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
 
-        self.SetSize(wx.Size(380, 320))
+        self.SetSize(wx.Size(sppasPanel.fix_size(380),
+                             sppasPanel.fix_size(320)))
         self.LayoutComponents()
         self.CenterOnParent()
 
@@ -758,40 +912,35 @@ class sppasDurFilterDialog(sppasDialog):
         """Create the content of the message dialog."""
         panel = sppasPanel(self, name="content")
 
-        top_label = sppasStaticText(panel, label="The duration ")
-        bottom_label = sppasStaticText(panel, label="... this value in seconds: ")
+        top_label = sppasStaticText(panel, label=MSG_DUR)
+        bottom_label = sppasStaticText(panel, label=MSG_VALUE)
 
         choices = [row[0] for row in sppasDurFilterDialog.choices]
         self.radiobox = sppasRadioBoxPanel(
             panel,
             choices=choices,
-            majorDimension=1,
             style=wx.RA_SPECIFY_COLS)
-        self.radiobox.SetSelection(1)
+        self.radiobox.SetSelection(0)
 
-        self.ctrl = FS.FloatSpin(panel,
-                                 min_val=0.0,
-                                 increment=0.01,
-                                 value=0,
-                                 digits=3)
+        self.ctrl = wx.SpinCtrlDouble(
+            panel, value="", min=0.0, inc=0.01, initial=0.)
+        self.ctrl.SetDigits(3)
 
         # Layout
-        b = sppasPanel.fix_size(4)
+        b = sppasPanel.fix_size(6)
 
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        hbox.Add(bottom_label, flag=wx.EXPAND | wx.ALL, border=b)
-        hbox.Add(self.ctrl, flag=wx.EXPAND | wx.ALL, border=b)
+        hbox.Add(bottom_label, 0, flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=b)
+        hbox.Add(self.ctrl, 1, flag=wx.EXPAND | wx.ALL, border=b)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(top_label, 0, flag=wx.EXPAND | wx.ALL, border=b)
-        sizer.Add(self.radiobox, 1, flag=wx.EXPAND | wx.ALL, border=0)
+        sizer.Add(self.radiobox, 0, flag=wx.EXPAND | wx.ALL, border=2*b)
         sizer.Add(hbox, 0, flag=wx.EXPAND | wx.ALL, border=0)
 
         panel.SetSizer(sizer)
-        panel.SetMinSize(wx.Size(240, 160))
         panel.SetAutoLayout(True)
         self.SetContent(panel)
-
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
@@ -806,17 +955,17 @@ class TestPanel(sppasPanel):
         btn_tag = wx.Button(self,
                             pos=(10, 10),
                             size=(180, 70),
-                            label="Tag filter",
+                            label="+ Tag filter",
                             name="tag_btn")
         btn_loc = wx.Button(self,
                             pos=(200, 10),
                             size=(180, 70),
-                            label="Loc filter",
+                            label="+ Loc filter",
                             name="loc_btn")
         btn_dur = wx.Button(self,
                             pos=(390, 10),
                             size=(180, 70),
-                            label="Dur filter",
+                            label="+ Dur filter",
                             name="dur_btn")
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
@@ -847,20 +996,20 @@ class TestPanel(sppasPanel):
             if response == wx.ID_OK:
                 f = dlg.get_data()
                 if len(f[1].strip()) > 0:
-                    wx.LogMessage("'loc': filter='{:s}'; value='{:f}'"
-                                  "".format(f[1], f[2]))
+                    wx.LogMessage("'loc': filter='{:s}'; value='{:s}'"
+                                  "".format(f[1], str(f[2])))
                 else:
                     wx.LogError("Empty input pattern.")
             dlg.Destroy()
 
         elif event_name == "dur_btn":
-            dlg = sppasLocFilterDialog(self)
+            dlg = sppasDurFilterDialog(self)
             response = dlg.ShowModal()
             if response == wx.ID_OK:
                 f = dlg.get_data()
                 if len(f[1].strip()) > 0:
-                    wx.LogMessage("'dur': filter='{:s}'; value='{:f}'"
-                                  "".format(f[1], f[2]))
+                    wx.LogMessage("'dur': filter='{:s}'; value='{:s}'"
+                                  "".format(f[1], str(f[2])))
                 else:
                     wx.LogError("Empty input pattern.")
             dlg.Destroy()

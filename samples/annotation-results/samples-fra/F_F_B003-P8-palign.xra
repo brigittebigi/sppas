@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<Document author="SPPAS 1.9.9 (C) Brigitte Bigi" date="2018-10-22T10:44:00+02:00" format="1.4" name="8a53fe93-4a91-467a-8c2b-e03a04f3078d">
+<Document author="SPPAS 2.7 (C) Brigitte Bigi" date="2019-12-17T14:15:44+01:00" format="1.4" name="8a53fe93-4a91-467a-8c2b-e03a04f3078d">
 	<Metadata>
 		<Entry key="id">31cf924d-1f6f-42f0-93c4-a4468fb46b53</Entry>
 		<Entry key="software_name">SPPAS</Entry>
@@ -14,15 +14,28 @@
 		<Entry key="language_url_0">https://iso639-3.sil.org/code/und</Entry>
 		<Entry key="file_license_text_0">GNU GPL V3</Entry>
 		<Entry key="file_license_url_0">https://www.gnu.org/licenses/gpl-3.0.en.html</Entry>
-		<Entry key="file_writer">sppasXRA</Entry>
+		<Entry key="file_reader">sppasXRA</Entry>
 		<Entry key="file_name">F_F_B003-P8-palign.xra</Entry>
-		<Entry key="file_path">E:\bigi\Projets\sppas\samples\samples-fra</Entry>
+		<Entry key="file_path">/home/bigi/sppas/samples/annotation-results/samples-fra</Entry>
 		<Entry key="file_ext">.xra</Entry>
-		<Entry key="file_write_date">2018-10-22T10:44:00+02:00</Entry>
-		<Entry key="file_version">2</Entry>
+		<Entry key="file_read_date">2019-12-12T11:57:01+01:00</Entry>
+		<Entry key="file_created_date">2018-10-22T10:44:00+02:00</Entry>
+		<Entry key="file_created_author">SPPAS 1.9.9 (C) Brigitte Bigi</Entry>
+		<Entry key="file_writer">sppasXRA</Entry>
+		<Entry key="file_write_date">2019-12-17T14:15:44+01:00</Entry>
+		<Entry key="file_version">6</Entry>
+		<Entry key="selected">True</Entry>
+		<Entry key="checked">False</Entry>
+		<Entry key="collapsed">False</Entry>
+		<Entry key="tiers_collapsed">False</Entry>
+		<Entry key="media_collapsed">False</Entry>
+		<Entry key="vocabs_collapsed">True</Entry>
 	</Metadata>
 
 	<Tier id="50f2b40d-9543-4094-8550-4c33b139b2d8" tiername="PhonAlign">
+		<Metadata>
+			<Entry key="checked">False</Entry>
+		</Metadata>
 		<Annotation id="a865a934-3944-41f5-bc90-ba23b7e6ebdd">
 			<Location>
 				<Interval>
@@ -2501,6 +2514,9 @@
 	</Tier>
 
 	<Tier id="e2dc1092-0592-4a10-bb4a-82dd068e0314" tiername="TokensAlign">
+		<Metadata>
+			<Entry key="checked">True</Entry>
+		</Metadata>
 		<Annotation id="12c0caa2-64e0-4715-b4e4-7771dea147f4">
 			<Location>
 				<Interval>
@@ -3417,6 +3433,9 @@
 	</Tier>
 
 	<Tier id="b438dd31-f8af-49fb-83ab-03a86e9fd51e" tiername="PronTokAlign">
+		<Metadata>
+			<Entry key="checked">False</Entry>
+		</Metadata>
 		<Annotation id="58702fc8-9fe5-4b45-9404-3326c8a10c6f">
 			<Location>
 				<Interval>
@@ -4333,6 +4352,9 @@
 	</Tier>
 
 	<Tier id="aa56ca20-b57e-482a-8c06-959772a4070d" tiername="Activity-unfill">
+		<Metadata>
+			<Entry key="checked">False</Entry>
+		</Metadata>
 		<Annotation id="80d3fa09-9f4e-45cc-9d40-47935b209497">
 			<Location>
 				<Interval>
@@ -4482,6 +4504,9 @@
 		<Tier id="50f2b40d-9543-4094-8550-4c33b139b2d8" />
 		<Tier id="e2dc1092-0592-4a10-bb4a-82dd068e0314" />
 		<Tier id="b438dd31-f8af-49fb-83ab-03a86e9fd51e" />
+		<Metadata>
+			<Entry key="checked">False</Entry>
+		</Metadata>
 	</Media>
 
 	<Hierarchy>
