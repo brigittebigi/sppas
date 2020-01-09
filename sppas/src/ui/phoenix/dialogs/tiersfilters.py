@@ -41,10 +41,12 @@ import wx.dataview
 from sppas import sg
 from sppas.src.anndata import sppasTier
 from sppas.src.config import ui_translation
+from sppas.src.analysis import sppasTierFilters
 
 from ..windows import sppasDialog
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
+from ..windows import sppasProgressDialog
 from ..windows import BitmapTextButton, CheckButton
 from ..windows import sppasTextCtrl, sppasStaticText
 from ..windows import sppasRadioBoxPanel
@@ -98,6 +100,22 @@ MSG_VALUE = ui_translation.gettext("this value:")
 # ---------------------------------------------------------------------------
 
 
+def SingleFilter(parent, tiers):
+    """Filter selected tiers with Sel predicate."""
+
+    dlg = sppasTiersSingleFilterDialog(parent)
+    if dlg.ShowModal() in (wx.ID_OK, wx.ID_APPLY):
+        filters = dlg.get_filters()
+        if len(filters) > 0:
+            # process = SingleFilterProcess(filters, dlg.match_all, tiers)
+            # process.run()
+            pass
+
+    dlg.Destroy()
+
+# ---------------------------------------------------------------------------
+
+
 class sppasTiersSingleFilterDialog(sppasDialog):
     """A dialog to filter annotations of tiers.
 
@@ -111,7 +129,7 @@ class sppasTiersSingleFilterDialog(sppasDialog):
 
     """
 
-    def __init__(self, parent, tiers):
+    def __init__(self, parent):
         """Create a dialog to fix settings.
 
         :param parent: (wx.Window)
@@ -123,6 +141,9 @@ class sppasTiersSingleFilterDialog(sppasDialog):
             title="Tiers Filter",
             style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.STAY_ON_TOP,
             name="tierfilter-dialog")
+
+        self.__filters = list()
+        self.match_all = True
 
         self.CreateHeader(MSG_HEADER_TIERSFILTER, "tier_ann_view")
         self._create_content()
@@ -139,14 +160,8 @@ class sppasTiersSingleFilterDialog(sppasDialog):
     # -----------------------------------------------------------------------
 
     def get_filters(self):
-        """Return a list of (filter, function, values)."""
-        filters = list()
-        for i in range(self.listctrl.GetItemCount()):
-            filter_name = self.listctrl.GetValue(i, 0)
-            fct_name = self.listctrl.GetValue(i, 1)
-            values = self.listctrl.GetValue(i, 2)
-            filters.append((filter_name, fct_name, values))
-        return filters
+        """Return a list of tuples (filter, function, [typed values])."""
+        return self.__filters
 
     # -----------------------------------------------------------------------
     # Construct the GUI
@@ -156,17 +171,15 @@ class sppasTiersSingleFilterDialog(sppasDialog):
         """Create the content of the message dialog."""
         panel = sppasPanel(self, name="content")
         tb = self.__create_toolbar(panel)
-        self.listctrl = wx.dataview.DataViewListCtrl(panel, wx.ID_ANY)
-        self.listctrl.AppendTextColumn("filter", width=80)
-        self.listctrl.AppendTextColumn("function", width=90)
-        self.listctrl.AppendTextColumn("value", width=120)
+        lst = self.__create_list_filters(panel)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(tb, proportion=0, flag=wx.EXPAND, border=0)
-        sizer.Add(self.listctrl, proportion=1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT, border=5)
-        panel.SetSizer(sizer)
+        sizer.Add(tb, 0, wx.EXPAND, 0)
+        sizer.Add(lst, 1, wx.EXPAND | wx.ALL, sppasPanel.fix_size(6))
 
-        self.SetMinSize(wx.Size(320, 200))
+        panel.SetSizer(sizer)
+        panel.SetMinSize(wx.Size(sppasPanel.fix_size(320),
+                                 sppasPanel.fix_size(200)))
         panel.SetAutoLayout(True)
         self.SetContent(panel)
 
@@ -175,13 +188,30 @@ class sppasTiersSingleFilterDialog(sppasDialog):
     def __create_toolbar(self, parent):
         """Create the toolbar."""
         tb = sppasToolbar(parent)
-        tb.set_focus_color(wx.Colour(196, 196, 96, 128))
+        tb.set_focus_color(wx.Colour(180, 230, 255))
         tb.AddTextButton("tier_filter_add_tag", "+ Tag")
         tb.AddTextButton("tier_filter_add_loc", "+ Loc")
         tb.AddTextButton("tier_filter_add_dur", "+ Dur")
         tb.AddSpacer()
-        #tb.AddTextButton(None, "- Remove")
+        tb.AddTextButton("tier_filter_delete", "- Remove")
         return tb
+
+    # -----------------------------------------------------------------------
+
+    def __create_list_filters(self, parent):
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL | wx.LC_HRULES
+        lst = wx.ListCtrl(parent, style=style, name="filters_listctrl")
+        lst.AppendColumn("filter name",
+                         format=wx.LIST_FORMAT_LEFT,
+                         width=sppasPanel.fix_size(80))
+        lst.AppendColumn("function",
+                         format=wx.LIST_FORMAT_LEFT,
+                         width=sppasPanel.fix_size(90))
+        lst.AppendColumn("value",
+                         format=wx.LIST_FORMAT_LEFT,
+                         width=sppasPanel.fix_size(120))
+
+        return lst
 
     # -----------------------------------------------------------------------
 
@@ -241,17 +271,17 @@ class sppasTiersSingleFilterDialog(sppasDialog):
         elif event_name == "tier_filter_add_dur":
             self.__append_filter("dur")
 
+        elif event_name == "tier_filter_delete":
+            self.__remove_filter()
+
         elif event_name == "cancel":
-            self.SetReturnCode(wx.ID_CANCEL)
-            self.Close()
+            self.__action("cancel")
 
         elif event_name == "window-apply":
-            self.match_all = False
-            self.EndModal(wx.ID_APPLY)
+            self.__action("or")
 
         elif event_name == "ok":
-            self.match_all = True
-            self.EndModal(wx.ID_OK)
+            self.__action("and")
 
         else:
             event.Skip()
@@ -268,11 +298,42 @@ class sppasTiersSingleFilterDialog(sppasDialog):
         response = dlg.ShowModal()
         if response == wx.ID_OK:
             f = dlg.get_data()
-            if len(f[1].strip()) > 0:
-                self.listctrl.AppendItem([fct, f[0], f[1].strip()])
+            str_values = " ".join([str(v) for v in f[2]])
+            if len(str_values) > 0:
+                self.__filters.append(f)
+                listctrl = self.FindWindow("filters_listctrl")
+                str_values = " ".join(str(v) for v in f[2])
+                listctrl.Append([f[0], f[1], str_values])
             else:
                 wx.LogError("Empty input pattern.")
         dlg.Destroy()
+
+    # ------------------------------------------------------------------------
+
+    def __remove_filter(self):
+        listctrl = self.FindWindow("filters_listctrl")
+        if listctrl.GetSelectedItemCount() > 0:
+            index = listctrl.GetFirstSelected()
+            wx.LogDebug("Remove item selected at index {:d}".format(index))
+            self.__filters.pop(index)
+            listctrl.DeleteItem(index)
+        else:
+            wx.LogDebug("No filter selected to be removed.")
+
+    # ------------------------------------------------------------------------
+
+    def __action(self, name="cancel"):
+        """Close the dialog."""
+        if len(self.__filters) == 0 or name == "cancel":
+            self.SetReturnCode(wx.ID_CANCEL)
+            self.Close()
+        else:
+            if name == "and":
+                self.match_all = True
+                self.EndModal(wx.ID_OK)
+            elif name == "or":
+                self.match_all = False
+                self.EndModal(wx.ID_APPLY)
 
 # ---------------------------------------------------------------------------
 
@@ -967,7 +1028,14 @@ class TestPanel(sppasPanel):
                             size=(180, 70),
                             label="+ Dur filter",
                             name="dur_btn")
+        btn_sgl = wx.Button(self,
+                            pos=(10, 100),
+                            size=(260, 70),
+                            label="Single filter",
+                            name="sgl_btn")
         self.Bind(wx.EVT_BUTTON, self._process_event)
+
+    # -----------------------------------------------------------------------
 
     def _process_event(self, event):
         """Process any kind of events.
@@ -1013,4 +1081,16 @@ class TestPanel(sppasPanel):
                 else:
                     wx.LogError("Empty input pattern.")
             dlg.Destroy()
+
+        elif event_name == "sgl_btn":
+            dlg = sppasTiersSingleFilterDialog(self)
+            response = dlg.ShowModal()
+            if response in (wx.ID_OK, wx.ID_APPLY):
+                filters = dlg.get_filters()
+                wx.LogError("Filters {:s}:\n{:s}".format(
+                    str(dlg.match_all),
+                    "\n".join([str(f) for f in filters])
+                ))
+            dlg.Destroy()
+
 
