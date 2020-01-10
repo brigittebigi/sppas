@@ -385,6 +385,35 @@ class TrsListViewPanel(sppasBaseViewPanel):
                             "".format(tier.get_name(), self._filename, str(e)))
 
     # -----------------------------------------------------------------------
+
+    def single_filter(self, filters, match_all=False, tiername="Filtered"):
+        """Apply filters on the checked tiers.
+
+        :param filters: (list)
+        :param match_all: (bool)
+        :param tiername: (str)
+
+        """
+        for tier in self._object.get_tier_list():
+            if tier.get_meta("checked") == "True":
+                for f in filters:
+                    wx.LogMessage("{:s}: filter='{:s}'; values='{!s:s}'"
+                            "".format(f[0], f[1], str(f[2])))
+        pass
+
+    # -----------------------------------------------------------------------
+
+    def relation_filter(self, filters, y_tier, tiername="Filtered"):
+        """Apply filters on the checked tiers.
+
+        :param filters: (list)
+        :param y_tier: (str)
+        :param tiername: (str)
+
+        """
+        pass
+
+    # -----------------------------------------------------------------------
     # Override from the parent
     # -----------------------------------------------------------------------
 
@@ -858,7 +887,7 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
         """Fix the size of the child panel."""
         listctrl = self.GetPane()  # self.FindWindow("listctrl")
 
-        pxh = self.GetFont().GetPixelSize()[1]
+        pxh = self.get_font_height()
         n = listctrl.GetItemCount()
         h = int(pxh * 2.)
         listctrl.SetMinSize(wx.Size(-1, n * h))

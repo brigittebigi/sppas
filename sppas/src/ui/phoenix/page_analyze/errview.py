@@ -127,5 +127,5 @@ class ErrorViewPanel(sppasBaseViewPanel):
 
         # Search for the height of the text
         nblines = len(error_message.split()) + 1
-        view_height = float(self.get_line_height()) * 1.1 * nblines
+        view_height = float(self.get_font_height()) * 1.1 * nblines
         txtview.SetMinSize(wx.Size(sppasPanel.fix_size(420), view_height))

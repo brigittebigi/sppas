@@ -144,7 +144,7 @@ class TextViewPanel(sppasBaseViewPanel):
 
         # Search for the height of the text
         nblines = len(self._object) + 1
-        view_height = float(self.get_line_height()) * 1.1 * nblines
+        view_height = float(self.get_font_height()) * 1.1 * nblines
         txtview.SetMinSize(wx.Size(sppasPanel.fix_size(420), view_height))
         txtview.SetModified(False)
 
@@ -176,7 +176,7 @@ class TextViewPanel(sppasBaseViewPanel):
 
     def _eval_height(self):
         """Return the optimal height of the textctrl."""
-        view_height = float(sppasBaseViewPanel.get_line_height()) \
+        view_height = float(sppasBaseViewPanel.get_font_height()) \
                       * 1.3 \
                       * len(self._object)
         return int(view_height) + 6

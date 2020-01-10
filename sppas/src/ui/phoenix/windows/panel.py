@@ -116,6 +116,12 @@ class sppasPanel(wx.Panel):
             obj_size = int(value)
         return obj_size
 
+    # -----------------------------------------------------------------------
+
+    def get_font_height(self):
+        font = self.GetFont()
+        return int(float(font.GetPixelSize()[1]))
+
 # ---------------------------------------------------------------------------
 
 
@@ -385,7 +391,7 @@ class sppasCollapsiblePanel(sppasPanel):
 
     def GetButtonHeight(self):
         """Return the height assigned to the buttons in the toolbar."""
-        return self.get_line_height() * 2
+        return self.get_font_height() * 2
 
     # -----------------------------------------------------------------------
 
@@ -505,12 +511,6 @@ class sppasCollapsiblePanel(sppasPanel):
         """
         # each time our size is changed, the child panel needs a resize.
         self.Layout()
-
-    # -----------------------------------------------------------------------
-
-    def get_line_height(self):
-        font = self.GetFont()
-        return int(float(font.GetPixelSize()[1]))
 
     # -----------------------------------------------------------------------
 

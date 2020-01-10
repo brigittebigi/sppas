@@ -297,6 +297,8 @@ class sppasRadioBoxPanel(sppasPanel):
             grid.AddGrowableRow(r)
 
         self.__buttons[0].SetValue(True)
+        self.SetMinSize(wx.Size(
+            sppasPanel.fix_size(self.get_font_height()*rows), -1))
         self.SetSizer(grid)
 
     # -----------------------------------------------------------------------

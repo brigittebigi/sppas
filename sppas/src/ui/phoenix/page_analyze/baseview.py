@@ -124,12 +124,6 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
 
     # -----------------------------------------------------------------------
 
-    def get_line_height(self):
-        font = self.GetFont()
-        return int(float(font.GetPixelSize()[1]))
-
-    # -----------------------------------------------------------------------
-
     def SetFont(self, font):
         """Override."""
         # The name of the file is Bold

@@ -40,10 +40,13 @@ import wx
 from sppas import paths
 
 from ..windows import sppasToolbar
+from ..windows import sppasProgressDialog
 from ..dialogs import sppasTextEntryDialog
 from ..dialogs import Confirm
 from ..dialogs import TiersView
 from ..dialogs import StatsView
+from ..dialogs import sppasTiersSingleFilterDialog
+
 from .anz_baseviews import BaseViewFilesPanel
 from .listview import TrsListViewPanel
 
@@ -66,6 +69,7 @@ TIER_ACT_MOVE_DOWN = "Move Down"
 TIER_ACT_RADIUS = "Radius"
 TIER_ACT_ANN_VIEW = "View"
 TIER_ACT_STAT_VIEW = "Stats"
+TIER_ACT_SINGLE_FILTER = "Single Filter"
 TIER_MSG_CONFIRM_DEL = "Are you sure to delete {:d} tiers of {:d} files? " \
                        "The process is irreversible."
 
@@ -203,6 +207,10 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         b.LabelPosition = wx.BOTTOM
         b.Spacing = 1
 
+        b = toolbar.AddButton("tier_filter_single", TIER_ACT_SINGLE_FILTER)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
+
         toolbar.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
         return toolbar
 
@@ -244,6 +252,8 @@ class ListViewFilesPanel(BaseViewFilesPanel):
             self.view_stats_tiers()
         elif btn_name == "tier_ann_view":
             self.view_anns_tiers()
+        elif btn_name == "tier_filter_single":
+            self.single_filter_tiers()
 
         else:
             event.Skip()
@@ -493,6 +503,41 @@ class ListViewFilesPanel(BaseViewFilesPanel):
                     tiers[filename] = checked
 
         StatsView(self, tiers)
+
+    # -----------------------------------------------------------------------
+
+    def single_filter_tiers(self):
+        """Open a dialog to define filters and apply on the checked tiers."""
+        nbf, nbt = self.__get_checked_nb()
+        if nbt == 0:
+            wx.LogWarning("Single filter: no tier checked.")
+            return
+
+        filters = list()
+        dlg = sppasTiersSingleFilterDialog(self)
+        if dlg.ShowModal() in (wx.ID_OK, wx.ID_APPLY):
+            filters = dlg.get_filters()
+            tiername = dlg.get_tiername()
+            match_all = dlg.match_all
+        dlg.Destroy()
+
+        if len(filters) > 0:
+            total = len(self._files)
+            progress = sppasProgressDialog()
+            progress.set_new()
+            progress.set_header("Single filter processing...")
+            progress.set_fraction(0)
+            wx.BeginBusyCursor()
+            for i, filename in enumerate(self._files):
+                panel = self._files[filename]
+                progress.set_text(filename)
+                if isinstance(panel, TrsListViewPanel):
+                    panel.single_filter(filters, match_all, tiername)
+                progress.set_fraction(float((i+1))/float(total))
+
+            wx.EndBusyCursor()
+            progress.set_fraction(100)
+            progress.close()
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py

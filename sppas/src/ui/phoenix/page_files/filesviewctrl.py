@@ -1134,7 +1134,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         :return: (wx.ImageList)
 
         """
-        icon_size = int(float(self.get_line_height()) * 1.4)
+        icon_size = int(float(self.get_font_height()) * 1.4)
         wx.LogDebug("ListCtrl: images size is {:d} px".format(icon_size))
 
         il = wx.ImageList(icon_size, icon_size)

@@ -32,6 +32,9 @@
     src.ui.phoenix.dialogs.tiersfilters.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    A dialog to fix a list of filters and any parameter needed. DO NOT APPLY
+    THE FILTERS ON TIERS.
+
 """
 
 import sys
@@ -39,22 +42,18 @@ import wx
 import wx.dataview
 
 from sppas import sg
-from sppas.src.anndata import sppasTier
 from sppas.src.config import ui_translation
-from sppas.src.analysis import sppasTierFilters
 
 from ..windows import sppasDialog
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
-from ..windows import sppasProgressDialog
 from ..windows import BitmapTextButton, CheckButton
 from ..windows import sppasTextCtrl, sppasStaticText
 from ..windows import sppasRadioBoxPanel
-from ..dialogs import Information
 from ..windows.book import sppasNotebook
 
-
 # --------------------------------------------------------------------------
+
 
 MSG_HEADER_TIERSFILTER = ui_translation.gettext("Filter annotations of tiers")
 
@@ -96,22 +95,6 @@ MSG_NOT_REGEXP = ui_translation.gettext("not match (regexp)")
 MSG_FROM = ui_translation.gettext("starting at")
 MSG_TO = ui_translation.gettext("ending at")
 MSG_VALUE = ui_translation.gettext("this value:")
-
-# ---------------------------------------------------------------------------
-
-
-def SingleFilter(parent, tiers):
-    """Filter selected tiers with Sel predicate."""
-
-    dlg = sppasTiersSingleFilterDialog(parent)
-    if dlg.ShowModal() in (wx.ID_OK, wx.ID_APPLY):
-        filters = dlg.get_filters()
-        if len(filters) > 0:
-            # process = SingleFilterProcess(filters, dlg.match_all, tiers)
-            # process.run()
-            pass
-
-    dlg.Destroy()
 
 # ---------------------------------------------------------------------------
 
@@ -163,23 +146,33 @@ class sppasTiersSingleFilterDialog(sppasDialog):
         """Return a list of tuples (filter, function, [typed values])."""
         return self.__filters
 
+    def get_tiername(self):
+        """Return the expected name of the filtered tier."""
+        w = self.FindWindow("tiername_textctrl")
+        return w.GetValue()
+
     # -----------------------------------------------------------------------
     # Construct the GUI
     # -----------------------------------------------------------------------
 
     def _create_content(self):
         """Create the content of the message dialog."""
+        b = sppasPanel.fix_size(6)
         panel = sppasPanel(self, name="content")
         tb = self.__create_toolbar(panel)
         lst = self.__create_list_filters(panel)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        st = sppasStaticText(self, label="Name of the filtered tier:")
+        nt = sppasTextCtrl(self, value="Filtered", name="tiername_textctrl")
+        hbox.Add(st, 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, b)
+        hbox.Add(nt, 1, wx.EXPAND | wx.ALL, b)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(tb, 0, wx.EXPAND, 0)
-        sizer.Add(lst, 1, wx.EXPAND | wx.ALL, sppasPanel.fix_size(6))
+        sizer.Add(lst, 1, wx.EXPAND | wx.ALL, b)
+        sizer.Add(hbox, 0)
 
         panel.SetSizer(sizer)
-        panel.SetMinSize(wx.Size(sppasPanel.fix_size(320),
-                                 sppasPanel.fix_size(200)))
         panel.SetAutoLayout(True)
         self.SetContent(panel)
 
@@ -199,7 +192,7 @@ class sppasTiersSingleFilterDialog(sppasDialog):
     # -----------------------------------------------------------------------
 
     def __create_list_filters(self, parent):
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL | wx.LC_HRULES
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES
         lst = wx.ListCtrl(parent, style=style, name="filters_listctrl")
         lst.AppendColumn("filter name",
                          format=wx.LIST_FORMAT_LEFT,
@@ -304,6 +297,7 @@ class sppasTiersSingleFilterDialog(sppasDialog):
                 listctrl = self.FindWindow("filters_listctrl")
                 str_values = " ".join(str(v) for v in f[2])
                 listctrl.Append([f[0], f[1], str_values])
+                self.Layout()
             else:
                 wx.LogError("Empty input pattern.")
         dlg.Destroy()
@@ -317,6 +311,7 @@ class sppasTiersSingleFilterDialog(sppasDialog):
             wx.LogDebug("Remove item selected at index {:d}".format(index))
             self.__filters.pop(index)
             listctrl.DeleteItem(index)
+            self.Layout()
         else:
             wx.LogDebug("No filter selected to be removed.")
 
@@ -364,9 +359,8 @@ class sppasTagFilterDialog(sppasDialog):
         self._create_content()
         self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
 
-        self.SetSize(wx.Size(sppasPanel.fix_size(380),
-                             sppasPanel.fix_size(300)))
         self.LayoutComponents()
+        self.SetSizerAndFit(self.GetSizer())
         self.CenterOnParent()
 
     # -----------------------------------------------------------------------
@@ -409,8 +403,8 @@ class sppasTagFilterDialog(sppasDialog):
         page4 = sppasTagBooleanPanel(notebook)
         notebook.AddPage(page4, " Boolean ")
 
-        notebook.SetMinSize(wx.Size(sppasPanel.fix_size(320),
-                                    sppasPanel.fix_size(200)))
+        w, h = page1.GetMinSize()
+        notebook.SetMinSize(wx.Size(w, h+(sppasPanel().get_font_height()*2)))
         self.SetContent(notebook)
 
 # ---------------------------------------------------------------------------
@@ -444,6 +438,7 @@ class sppasTagStringPanel(sppasPanel):
     def __init__(self, parent):
         super(sppasTagStringPanel, self).__init__(parent)
         top_label = sppasStaticText(self, label=MSG_TAG_TYPE_STR)
+        top_label.SetMinSize(wx.Size(sppasPanel.fix_size(320), -1))
         self.text = sppasTextCtrl(self, value=DEFAULT_LABEL)
 
         functions = [row[0] for row in sppasTagStringPanel.choices]
@@ -464,7 +459,8 @@ class sppasTagStringPanel(sppasPanel):
         sizer.Add(self.text, 0, flag=wx.EXPAND | wx.ALL, border=b)
         sizer.Add(self.radiobox, 0, flag=wx.EXPAND | wx.ALL,border=b*2)
         sizer.Add(self.checkbox, 0, flag=wx.EXPAND | wx.ALL, border=b)
-        self.SetSizer(sizer)
+
+        self.SetSizerAndFit(sizer)
 
     # -----------------------------------------------------------------------
 
@@ -540,7 +536,7 @@ class sppasTagIntegerPanel(sppasPanel):
         sizer.Add(top_label, 0, flag=wx.EXPAND | wx.ALL, border=b)
         sizer.Add(self.radiobox, 0, flag=wx.EXPAND | wx.ALL, border=b*2)
         sizer.Add(self.text, 0, flag=wx.EXPAND | wx.ALL, border=b)
-        self.SetSizer(sizer)
+        self.SetSizerAndFit(sizer)
 
     # -----------------------------------------------------------------------
 
@@ -609,7 +605,7 @@ class sppasTagFloatPanel(sppasPanel):
         sizer.Add(top_label, 0, flag=wx.EXPAND | wx.ALL, border=b)
         sizer.Add(self.radiobox, 0, flag=wx.EXPAND | wx.ALL, border=b*2)
         sizer.Add(self.text, 0, flag=wx.EXPAND | wx.ALL, border=b)
-        self.SetSizer(sizer)
+        self.SetSizerAndFit(sizer)
 
     # -----------------------------------------------------------------------
 
@@ -666,7 +662,7 @@ class sppasTagBooleanPanel(sppasPanel):
         b = sppasPanel.fix_size(6)
         sizer.Add(top_label, 0, flag=wx.EXPAND | wx.ALL, border=b)
         sizer.Add(self.radiobox, 0, flag=wx.EXPAND | wx.ALL, border=b*2)
-        self.SetSizer(sizer)
+        self.SetSizerAndFit(sizer)
 
     # -----------------------------------------------------------------------
 
@@ -717,9 +713,8 @@ class sppasLocFilterDialog(sppasDialog):
         self._create_content()
         self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
 
-        self.SetSize(wx.Size(sppasPanel.fix_size(380),
-                             sppasPanel.fix_size(300)))
         self.LayoutComponents()
+        self.SetSizerAndFit(self.GetSizer())
         self.CenterOnParent()
 
     # -----------------------------------------------------------------------
@@ -758,8 +753,8 @@ class sppasLocFilterDialog(sppasDialog):
         page2 = sppasLocIntegerPanel(notebook)
         notebook.AddPage(page2, " Integer ")
 
-        notebook.SetMinSize(wx.Size(sppasPanel.fix_size(320),
-                                    sppasPanel.fix_size(200)))
+        w, h = page1.GetMinSize()
+        notebook.SetMinSize(wx.Size(w, h+(sppasPanel().get_font_height()*2)))
         self.SetContent(notebook)
 
 # ---------------------------------------------------------------------------
@@ -784,6 +779,7 @@ class sppasLocFloatPanel(sppasPanel):
         """
         super(sppasLocFloatPanel, self).__init__(parent)
         top_label = sppasStaticText(self, label=MSG_LOC)
+        top_label.SetMinSize(wx.Size(sppasPanel.fix_size(320), -1))
         bottom_label = sppasStaticText(self, label=MSG_VALUE)
 
         choices = [row[0] for row in sppasLocFilterDialog.choices]
@@ -810,7 +806,7 @@ class sppasLocFloatPanel(sppasPanel):
         sizer.Add(self.radiobox, 0, flag=wx.EXPAND | wx.ALL, border=b*2)
         sizer.Add(hbox, 0, flag=wx.EXPAND | wx.ALL, border=0)
 
-        self.SetSizer(sizer)
+        self.SetSizerAndFit(sizer)
 
     # -----------------------------------------------------------------------
 
@@ -944,9 +940,8 @@ class sppasDurFilterDialog(sppasDialog):
         self._create_content()
         self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
 
-        self.SetSize(wx.Size(sppasPanel.fix_size(380),
-                             sppasPanel.fix_size(320)))
         self.LayoutComponents()
+        self.SetSizerAndFit(self.GetSizer())
         self.CenterOnParent()
 
     # -----------------------------------------------------------------------
@@ -974,6 +969,7 @@ class sppasDurFilterDialog(sppasDialog):
         panel = sppasPanel(self, name="content")
 
         top_label = sppasStaticText(panel, label=MSG_DUR)
+        top_label.SetMinSize(wx.Size(sppasPanel.fix_size(320), -1))
         bottom_label = sppasStaticText(panel, label=MSG_VALUE)
 
         choices = [row[0] for row in sppasDurFilterDialog.choices]

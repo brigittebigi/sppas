@@ -336,7 +336,7 @@ class sppasDialog(wx.Dialog):
     # ---------------------------------------------------------------------------
 
     def LayoutComponents(self):
-        """Layout the components of the dialog."""
+        """Create the sizer and layout the components of the dialog."""
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         # Add header

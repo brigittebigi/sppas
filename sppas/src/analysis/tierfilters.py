@@ -34,6 +34,8 @@
 
 """
 
+import logging
+
 from sppas import sppasKeyError
 
 from sppas.src.utils import u
@@ -48,6 +50,135 @@ from sppas.src.anndata.ann.annlocation import sppasIntervalCompare
 # ---------------------------------------------------------------------------
 
 
+class FilterTier(object):
+    """This class applies predefined filters on a tier.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
+
+    Apply defined filters, as a list of tuples with:
+        - name of the filter: one of "tag", "loc", "dur", "rel"
+        - name of the function in sppasCompare (equal, lt, ...)
+        - value of its expected type (str, float, int, bool)
+
+    """
+
+    def __init__(self, filters, match_all=True, annot_format=False):
+        """Filter process for any kind of filters.
+
+        :param filters: (list) List of tuples
+        :param match_all: (bool) The annotations must match all the filters
+        (il set to True) or any of them (if set to False)
+        :param annot_format: (bool) The annotation result contains the
+        name of the filter (if True) or the original label (if False)
+
+
+        """
+        self.__filters = filters
+        self.__match_all = bool(match_all)
+        self.__annot_format = bool(annot_format)
+
+    # -----------------------------------------------------------------------
+
+    def single_filter(self, tier, out_tiername):
+        """Apply the filters on the given tier.
+
+        :param tier: (sppasTier)
+        :param out_tiername: (str) Name or the filtered tier
+        :return: sppasTier or None if no annotation is matching
+
+        """
+        for f in self.__filters:
+            if f[0] not in ("tag", "loc", "dur"):
+                raise ValueError("{:s} is not a Single Filter and can't be "
+                                 "applied".format(f[0]))
+
+        logging.info("Apply sppasFilter() on tier: {:s}".format(tier.get_name()))
+
+        # Apply each filter and append the result in a list of annotation sets
+        ann_sets = list()
+        sfilter = sppasTierFilters(tier)
+
+        for f in self.__filters:
+
+            if len(f[2]) == 0:
+                raise ValueError("No value defined for filter {:s}".format(f[0]))
+
+            value = sppasTierFilters.cast_data(tier, f[0], f[2][0])
+            if type(value) != type(f[2][0]):
+                raise TypeError(
+                    "Types error: tier is {:s} but filter value is {:s}."
+                    "".format(type(value), type(f[2][0])))
+
+            # a little bit of doc:
+            #   - getattr() returns the value of the named attributed of object:
+            #     it returns f.tag if called like getattr(f, "tag")
+            #   - func(**{'x': '3'}) is equivalent to func(x='3')
+            #
+            logging.info(" >>> filter.{:s}({:s}={!s:s})".format(f[0], f[1], value))
+
+            ann_set = getattr(sfilter, f[0])(**{f[1]: value})
+            for i in range(1, len(f[2])):
+                value = sppasTierFilters.cast_data(tier, f[0], f[2][i])
+                logging.info(" >>>    | filter.{:s}({:s}={!s:s})".format(f[0], f[1], value))
+                ann_set = ann_set | getattr(sfilter, f[0])(**{f[1]: value})
+            ann_sets.append(ann_set)
+
+        # no annotation is matching
+        if len(ann_sets) == 0:
+            return None
+
+        # Merge results (apply '&' or '|' on the resulting annotation sets)
+        ann_set = ann_sets[0]
+        if self.__match_all:
+            for i in range(1, len(ann_sets)):
+                ann_set = ann_set & ann_sets[i]
+                if len(ann_set) == 0:
+                    return None
+        else:
+            for i in range(1, len(ann_sets)):
+                ann_set = ann_set | ann_sets[i]
+
+        # convert the annotation sets into a tier
+        filtered_tier = ann_set.to_tier(name=out_tiername,
+                                        annot_value=self.__annot_format)
+
+        return filtered_tier
+
+    # -----------------------------------------------------------------------
+
+    def relation_filter(self, tier, tier_y, out_tiername):
+        """Apply the filters on the given tier.
+
+        :param tier: (sppasTier)
+        :param tier_y: (sppasTier)
+        :param out_tiername: (str) Name or the filtered tier
+
+        """
+        for f in self.__filters:
+            if f[0] not in ("rel"):
+                raise ValueError("{:s} is not a Relation Filter and can't be "
+                                 "applied".format(f[0]))
+
+        logging.info("Apply sppasFilter() on tier: {:s}".format(tier.get_name()))
+        sfilter = sppasTierFilters(tier)
+
+        ann_set = sfilter.rel(tier_y,
+                              *(self.__filters[0]),
+                              **{self.__filters[1][i][0]: self.__filters[1][i][1] for i in range(len(self.__filters[1]))})
+
+        # convert the annotations set into a tier
+        filtered_tier = ann_set.to_tier(name=out_tiername,
+                                        annot_value=self.__annot_format)
+
+        return filtered_tier
+
+# ---------------------------------------------------------------------------
+
+
 class sppasTierFilters(sppasBaseFilters):
     """This class implements the 'SPPAS tier filter system'.
 
@@ -57,7 +188,7 @@ class sppasTierFilters(sppasBaseFilters):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
 
-    Search in tiers. The class sppasTierFilters() allows to create several types
+    Search in tiers. The class sppasTierFilters() allows to apply several types
     of filter (tag, duration, ...), and the class sppasAnnSet() is a data set
     manager, i.e. it contains the annotations selected by a filter and a
     string representing the filter.
