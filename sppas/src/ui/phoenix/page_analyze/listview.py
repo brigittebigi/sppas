@@ -48,6 +48,7 @@ from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 from sppas.src.anndata.aio.basetrs import sppasBaseIO
 from sppas.src.anndata.anndataexc import TrsAddError
+from sppas.src.analysis.tierfilters import FilterTier
 
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasMedia
@@ -386,32 +387,61 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     # -----------------------------------------------------------------------
 
-    def single_filter(self, filters, match_all=False, tiername="Filtered"):
+    def single_filter(self, filters,
+                      match_all=False,
+                      annot_format=False,
+                      out_tiername="Filtered"):
         """Apply filters on the checked tiers.
 
-        :param filters: (list)
+        :param filters: (list of tuples)
         :param match_all: (bool)
-        :param tiername: (str)
+        :param annot_format: (bool) Replace the label by the name of the filter
+        :param out_tiername: (str)
 
         """
+        panel = self.FindWindow("tiers-panel")
+        nb = 0
+
+        ft = FilterTier(filters, match_all, annot_format)
         for tier in self._object.get_tier_list():
             if tier.get_meta("checked") == "True":
-                for f in filters:
-                    wx.LogMessage("{:s}: filter='{:s}'; values='{!s:s}'"
-                            "".format(f[0], f[1], str(f[2])))
-        pass
+                new_tier = ft.single_filter(tier, out_tiername)
+                if new_tier is not None:
+                    self._object.append(new_tier)
+                    self._dirty = True
+                    panel.add(new_tier, len(self._object))
+                    nb += 1
+
+        return nb
 
     # -----------------------------------------------------------------------
 
-    def relation_filter(self, filters, y_tier, tiername="Filtered"):
-        """Apply filters on the checked tiers.
+    def relation_filter(self, filters,
+                        y_tier,
+                        annot_format=False,
+                        out_tiername="Filtered"):
+        """Apply 'rel' filters on the checked tiers.
 
         :param filters: (list)
         :param y_tier: (str)
-        :param tiername: (str)
+        :param annot_format: (bool) Replace the label by the name of the filter
+        :param out_tiername: (str)
 
         """
-        pass
+        panel = self.FindWindow("tiers-panel")
+        nb = 0
+
+        ft = FilterTier(filters, annot_format)
+        for tier in self._object.get_tier_list():
+            if tier.get_meta("checked") == "True":
+                new_tier = ft.relation_filter(tier, y_tier, out_tiername)
+                if new_tier is not None:
+                    self._object.append(new_tier)
+                    self._dirty = True
+                    panel.add(new_tier, len(self._object))
+                    nb += 1
+
+        return nb
 
     # -----------------------------------------------------------------------
     # Override from the parent

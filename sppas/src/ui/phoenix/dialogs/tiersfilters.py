@@ -30,7 +30,7 @@
         ---------------------------------------------------------------------
 
     src.ui.phoenix.dialogs.tiersfilters.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     A dialog to fix a list of filters and any parameter needed. DO NOT APPLY
     THE FILTERS ON TIERS.
@@ -47,7 +47,8 @@ from sppas.src.config import ui_translation
 from ..windows import sppasDialog
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
-from ..windows import BitmapTextButton, CheckButton
+from ..windows import BitmapTextButton
+from ..windows import CheckButton
 from ..windows import sppasTextCtrl, sppasStaticText
 from ..windows import sppasRadioBoxPanel
 from ..windows.book import sppasNotebook
@@ -96,6 +97,8 @@ MSG_FROM = ui_translation.gettext("starting at")
 MSG_TO = ui_translation.gettext("ending at")
 MSG_VALUE = ui_translation.gettext("this value:")
 
+MSG_ANNOT_FORMAT = ui_translation.gettext("Replace the tag by the name of the filter")
+
 # ---------------------------------------------------------------------------
 
 
@@ -121,7 +124,7 @@ class sppasTiersSingleFilterDialog(sppasDialog):
         """
         super(sppasTiersSingleFilterDialog, self).__init__(
             parent=parent,
-            title="Tiers Filter",
+            title="Tiers Single Filter",
             style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.STAY_ON_TOP,
             name="tierfilter-dialog")
 
@@ -146,9 +149,18 @@ class sppasTiersSingleFilterDialog(sppasDialog):
         """Return a list of tuples (filter, function, [typed values])."""
         return self.__filters
 
+    # -----------------------------------------------------------------------
+
     def get_tiername(self):
         """Return the expected name of the filtered tier."""
         w = self.FindWindow("tiername_textctrl")
+        return w.GetValue()
+
+    # -----------------------------------------------------------------------
+
+    def get_annot_format(self):
+        """Return True if the label has to be replaced by the filter name."""
+        w = self.FindWindow("annotformat_checkbutton")
         return w.GetValue()
 
     # -----------------------------------------------------------------------
@@ -166,11 +178,15 @@ class sppasTiersSingleFilterDialog(sppasDialog):
         nt = sppasTextCtrl(self, value="Filtered", name="tiername_textctrl")
         hbox.Add(st, 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, b)
         hbox.Add(nt, 1, wx.EXPAND | wx.ALL, b)
+        an_box = CheckButton(self, label=MSG_ANNOT_FORMAT)
+        an_box.SetValue(False)
+        an_box.SetName("annotformat_checkbutton")
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(tb, 0, wx.EXPAND, 0)
         sizer.Add(lst, 1, wx.EXPAND | wx.ALL, b)
         sizer.Add(hbox, 0)
+        sizer.Add(an_box, 0, wx.EXPAND | wx.ALL, b)
 
         panel.SetSizer(sizer)
         panel.SetAutoLayout(True)
@@ -404,7 +420,7 @@ class sppasTagFilterDialog(sppasDialog):
         notebook.AddPage(page4, " Boolean ")
 
         w, h = page1.GetMinSize()
-        notebook.SetMinSize(wx.Size(w, h+(sppasPanel().get_font_height()*2)))
+        notebook.SetMinSize(wx.Size(w, h+(sppasPanel().get_font_height()*4)))
         self.SetContent(notebook)
 
 # ---------------------------------------------------------------------------
@@ -754,7 +770,7 @@ class sppasLocFilterDialog(sppasDialog):
         notebook.AddPage(page2, " Integer ")
 
         w, h = page1.GetMinSize()
-        notebook.SetMinSize(wx.Size(w, h+(sppasPanel().get_font_height()*2)))
+        notebook.SetMinSize(wx.Size(w, h + (sppasPanel().get_font_height()*4)))
         self.SetContent(notebook)
 
 # ---------------------------------------------------------------------------
@@ -804,7 +820,7 @@ class sppasLocFloatPanel(sppasPanel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(top_label, 0, flag=wx.EXPAND | wx.ALL, border=b)
         sizer.Add(self.radiobox, 0, flag=wx.EXPAND | wx.ALL, border=b*2)
-        sizer.Add(hbox, 0, flag=wx.EXPAND | wx.ALL, border=0)
+        sizer.Add(hbox, 0, flag=wx.EXPAND | wx.BOTTOM, border=b)
 
         self.SetSizerAndFit(sizer)
 
@@ -875,9 +891,9 @@ class sppasLocIntegerPanel(sppasPanel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(top_label, 0, flag=wx.EXPAND | wx.ALL, border=b)
         sizer.Add(self.radiobox, 0, flag=wx.EXPAND | wx.ALL, border=b*2)
-        sizer.Add(hbox, 0, flag=wx.EXPAND | wx.ALL, border=0)
+        sizer.Add(hbox, 0, flag=wx.EXPAND | wx.BOTTOM, border=b)
 
-        self.SetSizer(sizer)
+        self.SetSizerAndFit(sizer)
 
     # -----------------------------------------------------------------------
 
@@ -999,6 +1015,97 @@ class sppasDurFilterDialog(sppasDialog):
         panel.SetAutoLayout(True)
         self.SetContent(panel)
 
+
+# ---------------------------------------------------------------------------
+
+
+class sppasTiersRelationFilterDialog(sppasDialog):
+    """A dialog to filter annotations of tiers.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    Returns wx.ID_OK if ShowModal().
+
+    """
+
+    def __init__(self, parent):
+        """Create a dialog to fix settings.
+
+        :param parent: (wx.Window)
+        :param tiers: dictionary with key=filename, value=list of selected tiers
+
+        """
+        super(sppasTiersRelationFilterDialog, self).__init__(
+            parent=parent,
+            title="Tiers Relation Filter",
+            style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.STAY_ON_TOP,
+            name="tierfilter-dialog")
+
+        self.__filters = list()
+
+        self.CreateHeader(MSG_HEADER_TIERSFILTER, "tier_ann_view")
+        self._create_content()
+        self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
+
+        self.LayoutComponents()
+        self.GetSizer().Fit(self)
+        self.CenterOnParent()
+        self.FadeIn(deltaN=-8)
+
+    # -----------------------------------------------------------------------
+    # Public methods
+    # -----------------------------------------------------------------------
+
+    def get_filters(self):
+        """Return a list of tuples (filter, function, [typed values])."""
+        return self.__filters
+
+    # -----------------------------------------------------------------------
+
+    def get_tiername(self):
+        """Return the expected name of the filtered tier."""
+        w = self.FindWindow("tiername_textctrl")
+        return w.GetValue()
+
+    # -----------------------------------------------------------------------
+
+    def get_annot_format(self):
+        """Return True if the label has to be replaced by the filter name."""
+        w = self.FindWindow("annotformat_checkbutton")
+        return w.GetValue()
+
+    # -----------------------------------------------------------------------
+    # Construct the GUI
+    # -----------------------------------------------------------------------
+
+    def _create_content(self):
+        """Create the content of the message dialog."""
+        b = sppasPanel.fix_size(6)
+        panel = sppasPanel(self, name="content")
+        # lst = self.__create_list_relations(panel)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        st = sppasStaticText(self, label="Name of the filtered tier:")
+        nt = sppasTextCtrl(self, value="Filtered", name="tiername_textctrl")
+        hbox.Add(st, 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, b)
+        hbox.Add(nt, 1, wx.EXPAND | wx.ALL, b)
+        an_box = CheckButton(self, label=MSG_ANNOT_FORMAT)
+        an_box.SetValue(False)
+        an_box.SetName("annotformat_checkbutton")
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        # sizer.Add(lst, 1, wx.EXPAND | wx.ALL, b)
+        sizer.Add(hbox, 0)
+        sizer.Add(an_box, 0, wx.EXPAND | wx.ALL, b)
+
+        panel.SetSizer(sizer)
+        panel.SetAutoLayout(True)
+        self.SetContent(panel)
+
+
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
 # ----------------------------------------------------------------------------
@@ -1029,6 +1136,11 @@ class TestPanel(sppasPanel):
                             size=(260, 70),
                             label="Single filter",
                             name="sgl_btn")
+        btn_rel = wx.Button(self,
+                            pos=(200, 100),
+                            size=(260, 70),
+                            label="Relation filter",
+                            name="rel_btn")
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
     # -----------------------------------------------------------------------
@@ -1089,4 +1201,10 @@ class TestPanel(sppasPanel):
                 ))
             dlg.Destroy()
 
-
+        elif event_name == "rel_btn":
+            dlg = sppasTiersRelationFilterDialog(self)
+            response = dlg.ShowModal()
+            if response in (wx.ID_OK, wx.ID_APPLY):
+                filters = dlg.get_filters()
+                wx.LogError("Filters {:s}:\n".format("\n".join([str(f) for f in filters])))
+            dlg.Destroy()

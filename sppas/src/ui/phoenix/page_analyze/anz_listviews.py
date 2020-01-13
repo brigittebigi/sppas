@@ -518,9 +518,11 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         if dlg.ShowModal() in (wx.ID_OK, wx.ID_APPLY):
             filters = dlg.get_filters()
             tiername = dlg.get_tiername()
+            annot_format = dlg.get_annot_format()
             match_all = dlg.match_all
         dlg.Destroy()
 
+        filtered = 0
         if len(filters) > 0:
             total = len(self._files)
             progress = sppasProgressDialog()
@@ -532,12 +534,16 @@ class ListViewFilesPanel(BaseViewFilesPanel):
                 panel = self._files[filename]
                 progress.set_text(filename)
                 if isinstance(panel, TrsListViewPanel):
-                    panel.single_filter(filters, match_all, tiername)
+                    filtered += panel.single_filter(filters, match_all, annot_format, tiername)
                 progress.set_fraction(float((i+1))/float(total))
 
             wx.EndBusyCursor()
             progress.set_fraction(100)
             progress.close()
+
+        if filtered > 0:
+            wx.LogMessage("{:d} tiers created.".format(filtered))
+            self.Layout()
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py

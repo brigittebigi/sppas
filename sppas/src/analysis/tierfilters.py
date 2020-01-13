@@ -67,9 +67,9 @@ class FilterTier(object):
     """
 
     def __init__(self, filters, match_all=True, annot_format=False):
-        """Filter process for any kind of filters.
+        """Filter process of a tier.
 
-        :param filters: (list) List of tuples
+        :param filters: (list) List of tuples (filter, function, [typed values])
         :param match_all: (bool) The annotations must match all the filters
         (il set to True) or any of them (if set to False)
         :param annot_format: (bool) The annotation result contains the
@@ -83,8 +83,10 @@ class FilterTier(object):
 
     # -----------------------------------------------------------------------
 
-    def single_filter(self, tier, out_tiername):
+    def single_filter(self, tier, out_tiername="Filtered"):
         """Apply the filters on the given tier.
+
+        Applicable functions are "tag", "loc" and "dur".
 
         :param tier: (sppasTier)
         :param out_tiername: (str) Name or the filtered tier

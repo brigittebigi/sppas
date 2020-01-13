@@ -47,8 +47,10 @@ Requires the following other packages:
 
 from .tierstats import sppasTierStats
 from .tierfilters import sppasTierFilters
+from .tierfilters import FilterTier
 
 __all__ = (
     "sppasTierStats",
-    "sppasTierFilters"
+    "sppasTierFilters",
+    "FilterTier"
 )

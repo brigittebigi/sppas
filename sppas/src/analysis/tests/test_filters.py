@@ -41,6 +41,7 @@
     Tests of the filter system.
 
 """
+
 import unittest
 import os.path
 import time
@@ -57,6 +58,7 @@ from sppas.src.anndata.ann.annotation import sppasAnnotation
 
 from sppas.src.anndata.ann.annset import sppasAnnSet
 from ..tierfilters import sppasTierFilters
+from ..tierfilters import FilterTier
 
 # ---------------------------------------------------------------------------
 
@@ -222,7 +224,7 @@ class TestSetFilter(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestFilterTier(unittest.TestCase):
+class TestFiltersTier(unittest.TestCase):
     """Test filters on a single tier."""
 
     def setUp(self):
@@ -331,7 +333,6 @@ class TestFilterTier(unittest.TestCase):
 
         self.assertEqual(len(res1), len(res2))
         self.assertEqual(len(res1), len(res3))
-
 
 # ---------------------------------------------------------------------------
 
@@ -596,3 +597,27 @@ class TestFilterRelationTier(unittest.TestCase):
         res2 = f.rel(self.rtier, "overlaps") | f.rel(self.rtier, "overlappedby")
         self.assertEqual(res1, res2)
 
+# ---------------------------------------------------------------------------
+
+
+class TestFilterTier(unittest.TestCase):
+    """Test filters on a single tier."""
+
+    def setUp(self):
+        parser = sppasRW(os.path.join(DATA, "grenelle.antx"))
+        self.trs = parser.read(heuristic=False)
+
+    # -----------------------------------------------------------------------
+
+    def test_tag(self):
+        """Test tag is matching str."""
+        tier = self.trs.find('P-Phonemes')
+
+        f = sppasTierFilters(tier)
+        l = f.tag(exact=u("l"))
+        not_l = f.tag(not_exact=u('l'))
+
+        ft = FilterTier([("tag", "exact", ["l"])], match_all=True, annot_format=False)
+        nft = FilterTier([("tag", "not_exact", ["l"])], match_all=True, annot_format=False)
+        self.assertEqual(len(ft.single_filter(tier)), len(l))
+        self.assertEqual(len(nft.single_filter(tier)), len(not_l))
