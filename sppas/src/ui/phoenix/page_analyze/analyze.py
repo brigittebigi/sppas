@@ -81,12 +81,12 @@ def _(message):
     return u(msg(message, "ui"))
 
 
-VIEW_TITLE = _("View: ")
-VIEW_LIST = _("Summary")
-VIEW_TIME = _("Time line")
+VIEW_TITLE = _("Views: ")
+VIEW_LIST = _("Detailed")
 VIEW_TEXT = _("Text edit")
-VIEW_GRID = _("Grid details")
-VIEW_STAT = _("Statistics")
+VIEW_TIME = _("Time line")
+# VIEW_GRID = _("Grid details")
+VIEW_SCRIBE = _("Scriber")
 CLOSE = _("Close")
 
 TAB_MSG_NO_SELECT = _("No tab is currently checked.")
@@ -160,8 +160,7 @@ class sppasAnalyzePanel(sppasPanel):
         "data-view-list": VIEW_LIST,
         "data-view-timeline": VIEW_TIME,
         "data-view-text": VIEW_TEXT,
-        "data-view-grid": VIEW_GRID,
-        "data-view-stats": VIEW_STAT
+        "data-view-scribe": VIEW_SCRIBE
     }
 
     # ------------------------------------------------------------------------

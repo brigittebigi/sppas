@@ -58,7 +58,8 @@ from sppas.src.anndata.ann.annotation import sppasAnnotation
 
 from sppas.src.anndata.ann.annset import sppasAnnSet
 from ..tierfilters import sppasTierFilters
-from ..tierfilters import FilterTier
+from ..tierfilters import SingleFilterTier
+from ..tierfilters import RelationFilterTier
 
 # ---------------------------------------------------------------------------
 
@@ -617,7 +618,23 @@ class TestFilterTier(unittest.TestCase):
         l = f.tag(exact=u("l"))
         not_l = f.tag(not_exact=u('l'))
 
-        ft = FilterTier([("tag", "exact", ["l"])], match_all=True, annot_format=False)
-        nft = FilterTier([("tag", "not_exact", ["l"])], match_all=True, annot_format=False)
-        self.assertEqual(len(ft.single_filter(tier)), len(l))
-        self.assertEqual(len(nft.single_filter(tier)), len(not_l))
+        ft = SingleFilterTier([("tag", "exact", ["l"])], match_all=True, annot_format=False)
+        nft = SingleFilterTier([("tag", "not_exact", ["l"])], match_all=True, annot_format=False)
+        self.assertEqual(len(ft.filter_tier(tier)), len(l))
+        self.assertEqual(len(nft.filter_tier(tier)), len(not_l))
+
+    # -----------------------------------------------------------------------
+
+    def test_rel(self):
+        tier = self.trs.find('P-Phonemes')
+        tier_y = self.trs.find('P-Phonemes')
+
+        ft = RelationFilterTier((["overlaps"], []), annot_format=False)
+        self.assertEqual(len(ft.filter_tier(tier, tier_y)), 0)
+
+        ft = RelationFilterTier((["equals"], []), annot_format=False)
+        self.assertEqual(len(ft.filter_tier(tier, tier_y)), len(tier))
+
+        # tier_y = self.trs.find('P-Syllables')
+        # ft = RelationFilterTier((["starts"], []), annot_format=False)
+        # self.assertEqual(len(ft.filter_tier(tier, tier_y)), len(tier_y))

@@ -271,6 +271,13 @@ class TierAsListPanel(LineListCtrl):
 
     """
 
+    tag_types = {
+        "str":"String",
+        "int":"Integer",
+        "float":"Float",
+        "bool":"Boolean"
+    }
+
     def __init__(self, parent, tier):
         super(TierAsListPanel, self).__init__(parent=parent, style=wx.LC_REPORT)
         self._create_content(tier)
@@ -325,7 +332,7 @@ class TierAsListPanel(LineListCtrl):
 
             # properties of the labels
             self.SetItem(i, labeli+1, str(len(a.get_labels())))
-            self.SetItem(i, labeli+2, a.get_label_type())
+            self.SetItem(i, labeli+2, TierAsListPanel.tag_types[a.get_label_type()])
 
         self.SetColumnWidth(cols.index(MSG_LABELS), -1)
 

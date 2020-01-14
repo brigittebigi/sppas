@@ -47,10 +47,12 @@ Requires the following other packages:
 
 from .tierstats import sppasTierStats
 from .tierfilters import sppasTierFilters
-from .tierfilters import FilterTier
+from .tierfilters import SingleFilterTier
+from .tierfilters import RelationFilterTier
 
 __all__ = (
     "sppasTierStats",
     "sppasTierFilters",
-    "FilterTier"
+    "SingleFilterTier",
+    "RelationFilterTier"
 )

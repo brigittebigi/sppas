@@ -35,7 +35,6 @@
 """
 import wx
 
-import logging
 try:
     from agw import floatspin as FS
     import agw.ultimatelistctrl as ulc

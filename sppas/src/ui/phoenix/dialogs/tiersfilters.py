@@ -40,6 +40,12 @@
 import sys
 import wx
 import wx.dataview
+try:
+    from agw import floatspin as FS
+    import agw.ultimatelistctrl as ulc
+except ImportError:
+    import wx.lib.agw.floatspin as FS
+    import wx.lib.agw.ultimatelistctrl as ulc
 
 from sppas import sg
 from sppas.src.config import ui_translation
@@ -98,6 +104,96 @@ MSG_TO = ui_translation.gettext("ending at")
 MSG_VALUE = ui_translation.gettext("this value:")
 
 MSG_ANNOT_FORMAT = ui_translation.gettext("Replace the tag by the name of the filter")
+MSG_NAME = "Name"
+MSG_OPT = "Option"
+
+# ---------------------------------------------------------------------------
+
+Relations = (
+               ('equals', ' Equals', '', '', ''),
+               ('before', ' Before', 'Max delay\nin seconds: ', 3.0, 'max_delay'),
+               ('after', ' After', 'Max delay\nin seconds: ', 3.0, 'max_delay'),
+               ('meets', ' Meets', '', '', ''),
+               ('metby', ' Met by', '', '', ''),
+               ('overlaps', ' Overlaps', 'Min overlap\n in seconds: ', 0.030, 'overlap_min'),
+               ('overlappedby', ' Overlapped by', 'Min overlap\n in seconds: ', 0.030, 'overlap_min'),
+               ('starts', ' Starts', '', '', ''),
+               ('startedby', ' Started by', '', '', ''),
+               ('finishes', ' Finishes', '', '', ''),
+               ('finishedby', ' Finished by', '', '', ''),
+               ('during', ' During', '', '', ''),
+               ('contains', ' Contains', '', '', '')
+            )
+
+Illustrations = (
+               # equals
+               ('X |-----|\nY |-----|',
+                'Non efficient',
+                'Non efficient',
+                'X |\nY |'),
+               # before
+               ('X |-----|\nY' + ' ' * 15 + '|-----|',
+                'X |-----|\nY' + ' ' * 15 + '|',
+                'X |\nY   |-----|',
+                'X |\nY   |'),
+               # after
+               ('X' + ' ' * 15 + '|-----|\nY |-----|',
+                'X' + ' ' * 15 + '|\nY |-----|',
+                'X   |-----|\nY |',
+                'X   |\nY |'),
+               # meets
+               ('X |-----|\nY' + ' ' * 8 + '|-----|',
+                'Non efficient',
+                'Non efficient',
+                'Non efficient'),
+               # metby
+               ('X' + ' ' * 8 + '|-----|\nY |-----|',
+                'Non efficient',
+                'Non efficient',
+                'Non efficient'),
+               # overlaps
+               ('X |-----|\nY ' + ' ' * 5 + '|-----|',
+                'Non efficient',
+                'Non efficient',
+                'Non efficient'),
+               # overlappedby
+               ('X' + ' ' * 5 + '|-----|\nY |-----|',
+                'Non efficient',
+                'Non efficient',
+                'Non efficient'),
+               # starts
+               ('X |---|\nY |-----|',
+                'Non efficient',
+                'Non efficient',
+                'Non efficient'),
+               # startedby
+               ('X |-----|\nY |---|',
+                'Non efficient',
+                'Non efficient',
+                'Non efficient'),
+               # finishes
+               ('X |---|\nY    |------|',
+                'Non efficient',
+                'Non efficient',
+                'Non efficient'),
+               # finishedby
+               ('X |------|\nY    |---|',
+                'Non efficient',
+                'Non efficient',
+                'Non efficient'),
+               # during
+               ('X    |---|\nY |------|',
+                'Non efficient',
+                'X      |\nY |------|',
+                'Non efficient'),
+               # contains
+               ('X |------|\nY    |---|',
+                'X |-----|\nY     |',
+                'Non efficient',
+                'Non efficient'),
+               )
+
+ALLEN_RELATIONS = tuple(row + Illustrations[i] for i, row in enumerate(Relations))
 
 # ---------------------------------------------------------------------------
 
@@ -1032,6 +1128,92 @@ class sppasTiersRelationFilterDialog(sppasDialog):
 
     """
 
+    Relations = (
+        ('equals', 'Equals', '', '', ''),
+        ('before', 'Before', 'Max delay\nin seconds:', 3.0, 'max_delay'),
+        ('after', 'After', 'Max delay\nin seconds:', 3.0, 'max_delay'),
+        ('meets', 'Meets', '', '', ''),
+        ('metby', 'Met by', '', '', ''),
+        ('overlaps', 'Overlaps', 'Min overlap\n in seconds', 0.030, 'overlap_min'),
+        ('overlappedby', 'Overlapped by', 'Min overlap\n in seconds', 0.030, 'overlap_min'),
+        ('starts', 'Starts', '', '', ''),
+        ('startedby', 'Started by', '', '', ''),
+        ('finishes', 'Finishes', '', '', ''),
+        ('finishedby', 'Finished by', '', '', ''),
+        ('during', 'During', '', '', ''),
+        ('contains', 'Contains', '', '', '')
+    )
+
+    Illustrations = (
+        # equals
+        ('X |-----|\nY |-----|',
+         'Non efficient',
+         'Non efficient',
+         'X |\nY |'),
+        # before
+        ('X |-----|\nY' + ' ' * 15 + '|-----|',
+         'X |-----|\nY' + ' ' * 15 + '|',
+         'X |\nY   |-----|',
+         'X |\nY   |'),
+        # after
+        ('X' + ' ' * 15 + '|-----|\nY |-----|',
+         'X' + ' ' * 15 + '|\nY |-----|',
+         'X   |-----|\nY |',
+         'X   |\nY |'),
+        # meets
+        ('X |-----|\nY' + ' ' * 8 + '|-----|',
+         'Non efficient',
+         'Non efficient',
+         'Non efficient'),
+        # metby
+        ('X' + ' ' * 8 + '|-----|\nY |-----|',
+         'Non efficient',
+         'Non efficient',
+         'Non efficient'),
+        # overlaps
+        ('X |-----|\nY ' + ' ' * 5 + '|-----|',
+         'Non efficient',
+         'Non efficient',
+         'Non efficient'),
+        # overlappedby
+        ('X' + ' ' * 5 + '|-----|\nY |-----|',
+         'Non efficient',
+         'Non efficient',
+         'Non efficient'),
+        # starts
+        ('X |---|\nY |-----|',
+         'Non efficient',
+         'Non efficient',
+         'Non efficient'),
+        # startedby
+        ('X |-----|\nY |---|',
+         'Non efficient',
+         'Non efficient',
+         'Non efficient'),
+        # finishes
+        ('X |---|\nY    |------|',
+         'Non efficient',
+         'Non efficient',
+         'Non efficient'),
+        # finishedby
+        ('X |------|\nY    |---|',
+         'Non efficient',
+         'Non efficient',
+         'Non efficient'),
+        # during
+        ('X    |---|\nY |------|',
+         'Non efficient',
+         'X      |\nY |------|',
+         'Non efficient'),
+        # contains
+        ('X |------|\nY    |---|',
+         'X |-----|\nY     |',
+         'Non efficient',
+         'Non efficient'),
+    )
+
+    AllenTable = tuple(row + Illustrations[i] for i, row in enumerate(Relations))
+
     def __init__(self, parent):
         """Create a dialog to fix settings.
 
@@ -1043,9 +1225,7 @@ class sppasTiersRelationFilterDialog(sppasDialog):
             parent=parent,
             title="Tiers Relation Filter",
             style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.STAY_ON_TOP,
-            name="tierfilter-dialog")
-
-        self.__filters = list()
+            name="tierfilter_dialog")
 
         self.CreateHeader(MSG_HEADER_TIERSFILTER, "tier_ann_view")
         self._create_content()
@@ -1061,14 +1241,22 @@ class sppasTiersRelationFilterDialog(sppasDialog):
     # -----------------------------------------------------------------------
 
     def get_filters(self):
-        """Return a list of tuples (filter, function, [typed values])."""
-        return self.__filters
+        """Return a tuple ([list of functions], [list of options])."""
+        w = self.FindWindow("listctrl")
+        return w.get_selected_relations()
 
     # -----------------------------------------------------------------------
 
     def get_tiername(self):
         """Return the expected name of the filtered tier."""
         w = self.FindWindow("tiername_textctrl")
+        return w.GetValue()
+
+    # -----------------------------------------------------------------------
+
+    def get_relation_tiername(self):
+        """Return the tier Y."""
+        w = self.FindWindow("y_tier_textctrl")
         return w.GetValue()
 
     # -----------------------------------------------------------------------
@@ -1086,24 +1274,145 @@ class sppasTiersRelationFilterDialog(sppasDialog):
         """Create the content of the message dialog."""
         b = sppasPanel.fix_size(6)
         panel = sppasPanel(self, name="content")
-        # lst = self.__create_list_relations(panel)
+
+        # The list of relations and their options
+        lst = AllensRelationsTable(panel, name="listctrl")
+
+        # The name of the filtered tier
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        st = sppasStaticText(self, label="Name of the filtered tier:")
-        nt = sppasTextCtrl(self, value="Filtered", name="tiername_textctrl")
+        st = sppasStaticText(panel, label="Name of the filtered tier:")
+        nt = sppasTextCtrl(panel, value="Filtered", name="tiername_textctrl")
         hbox.Add(st, 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, b)
         hbox.Add(nt, 1, wx.EXPAND | wx.ALL, b)
-        an_box = CheckButton(self, label=MSG_ANNOT_FORMAT)
+
+        # The annot_format option (replace label by the name of the relation)
+        an_box = CheckButton(panel, label=MSG_ANNOT_FORMAT)
         an_box.SetValue(False)
         an_box.SetName("annotformat_checkbutton")
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        # sizer.Add(lst, 1, wx.EXPAND | wx.ALL, b)
+        sizer.Add(lst, 1, wx.EXPAND | wx.ALL, b)
         sizer.Add(hbox, 0)
         sizer.Add(an_box, 0, wx.EXPAND | wx.ALL, b)
 
         panel.SetSizer(sizer)
         panel.SetAutoLayout(True)
         self.SetContent(panel)
+
+# ---------------------------------------------------------------------------
+
+
+class AllensRelationsTable(ulc.UltimateListCtrl):
+
+    def __init__(self, parent, *args, **kwargs):
+        agw_style = ulc.ULC_REPORT | ulc.ULC_VRULES | ulc.ULC_HRULES |\
+                    ulc.ULC_HAS_VARIABLE_ROW_HEIGHT | ulc.ULC_NO_HEADER
+        ulc.UltimateListCtrl.__init__(self, parent, agwStyle=agw_style, *args, **kwargs)
+        self._optionCtrlList = []
+        self.InitUI()
+        try:
+            self.SetFont(wx.GetApp().settings.mono_font)
+        except:
+            mono_font = wx.Font(12,  # point size
+                                wx.FONTFAMILY_TELETYPE,  # family,
+                                wx.FONTSTYLE_NORMAL,   # style,
+                                wx.FONTWEIGHT_NORMAL,  # weight,
+                                underline=False,
+                                encoding=wx.FONTENCODING_SYSTEM)
+            self.SetFont(mono_font)
+
+    # -----------------------------------------------------------------------
+
+    def SetFont(self, font):
+        """Sets a new font size, but not the font itself."""
+        s = font.GetPointSize()
+        self.GetFont().SetPointSize(s)
+
+    # -----------------------------------------------------------------------
+
+    def InitUI(self):
+        headers = ('Name',
+                   'Option',
+                   'X: Interval \nY: Interval',
+                   'X: Interval \nY: Point',
+                   'X: Point \nY: Interval',
+                   'X: Point \nY: Point'
+                   )
+        # Create columns
+        for i, col in enumerate(headers):
+            self.InsertColumn(col=i, heading=col)
+
+        p = sppasPanel()
+        self.SetColumnWidth(col=0, width=p.fix_size(150))
+        self.SetColumnWidth(col=1, width=p.fix_size(180))
+        self.SetColumnWidth(col=2, width=p.fix_size(150))
+        self.SetColumnWidth(col=3, width=p.fix_size(100))
+        self.SetColumnWidth(col=4, width=p.fix_size(100))
+        self.SetColumnWidth(col=5, width=p.fix_size(100))
+
+        # Create first row, used as an header.
+        index = self.InsertStringItem(0, headers[0])
+        for i, col in enumerate(headers[1:], 1):
+            self.SetStringItem(index, i, col)
+
+        # Add rows for relations
+        for i, row in enumerate(ALLEN_RELATIONS, 1):
+            func, name, opt_label, opt_value, opt_name, desc1, desc2, desc3, desc4 = row
+
+            opt_panel = wx.Panel(self)
+            opt_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+            if isinstance(opt_value, float):
+                opt_ctrl = FS.FloatSpin(opt_panel,
+                                        min_val=0.005,
+                                        increment=0.010,
+                                        value=opt_value,
+                                        digits=3)
+            elif isinstance(opt_value, int):
+                opt_ctrl = wx.SpinCtrl(opt_panel, min=1, value=str(opt_value))
+            else:
+                opt_ctrl = wx.StaticText(opt_panel, label="")
+
+            self._optionCtrlList.append(opt_ctrl)
+            opt_text = wx.StaticText(opt_panel, label=opt_label)
+            opt_sizer.Add(opt_text)
+            opt_sizer.Add(opt_ctrl)
+            opt_panel.SetSizer(opt_sizer)
+
+            index = self.InsertStringItem(i, name, 1)
+            self.SetItemWindow(index, 1, opt_panel, expand=True)
+            self.SetStringItem(index, 2, desc1)
+            self.SetStringItem(index, 3, desc2)
+            self.SetStringItem(index, 4, desc3)
+            self.SetStringItem(index, 5, desc4)
+
+        item = self.GetItem(1)
+        self._mainWin.CheckItem(item)
+        self.SetMinSize(wx.Size(
+            p.fix_size(780),
+            p.fix_size(520)
+        ))
+
+    # -----------------------------------------------------------------------
+
+    def get_selected_relations(self):
+        """Return a tuple with a list of functions and a list of options."""
+        fcts = list()
+        opts = list()
+
+        for i, option in enumerate(self._optionCtrlList, 1):
+            if self.IsItemChecked(i, col=0):
+                func_name = ALLEN_RELATIONS[i-1][0]
+                fcts.append(func_name)
+
+                try:
+                    option_value = option.GetValue()
+                    option_name = ALLEN_RELATIONS[i-1][4]
+                    opts.append((option_name, option_value))
+                except:
+                    pass
+
+        return fcts, opts
 
 
 # ----------------------------------------------------------------------------
@@ -1137,7 +1446,7 @@ class TestPanel(sppasPanel):
                             label="Single filter",
                             name="sgl_btn")
         btn_rel = wx.Button(self,
-                            pos=(200, 100),
+                            pos=(310, 100),
                             size=(260, 70),
                             label="Relation filter",
                             name="rel_btn")

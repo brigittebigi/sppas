@@ -16,6 +16,7 @@ from .entries import sppasTextEntryDialog
 from .tiersview import TiersView
 from .statsview import StatsView
 from .tiersfilters import sppasTiersSingleFilterDialog
+from .tiersfilters import sppasTiersRelationFilterDialog
 
 __all__ = (
     'YesNoQuestion',
@@ -32,5 +33,6 @@ __all__ = (
     "sppasTextEntryDialog",
     "TiersView",
     "StatsView",
-    "sppasTiersSingleFilterDialog"
+    "sppasTiersSingleFilterDialog",
+    "sppasTiersRelationFilterDialog"
 )

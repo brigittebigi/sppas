@@ -50,7 +50,7 @@ from sppas.src.anndata.ann.annlocation import sppasIntervalCompare
 # ---------------------------------------------------------------------------
 
 
-class FilterTier(object):
+class SingleFilterTier(object):
     """This class applies predefined filters on a tier.
 
     :author:       Brigitte Bigi
@@ -66,15 +66,16 @@ class FilterTier(object):
 
     """
 
-    def __init__(self, filters, match_all=True, annot_format=False):
+    functions = ("tag", "loc", "dur")
+
+    def __init__(self, filters, annot_format=False, match_all=True):
         """Filter process of a tier.
 
         :param filters: (list) List of tuples (filter, function, [typed values])
-        :param match_all: (bool) The annotations must match all the filters
-        (il set to True) or any of them (if set to False)
         :param annot_format: (bool) The annotation result contains the
         name of the filter (if True) or the original label (if False)
-
+        :param match_all: (bool) The annotations must match all the filters
+        (il set to True) or any of them (if set to False)
 
         """
         self.__filters = filters
@@ -83,7 +84,7 @@ class FilterTier(object):
 
     # -----------------------------------------------------------------------
 
-    def single_filter(self, tier, out_tiername="Filtered"):
+    def filter_tier(self, tier, out_tiername="Filtered"):
         """Apply the filters on the given tier.
 
         Applicable functions are "tag", "loc" and "dur".
@@ -94,11 +95,11 @@ class FilterTier(object):
 
         """
         for f in self.__filters:
-            if f[0] not in ("tag", "loc", "dur"):
+            if f[0] not in SingleFilterTier.functions:
                 raise ValueError("{:s} is not a Single Filter and can't be "
                                  "applied".format(f[0]))
 
-        logging.info("Apply sppasFilter() on tier: {:s}".format(tier.get_name()))
+        logging.info("Apply sppasTiersFilter() on tier: {:s}".format(tier.get_name()))
 
         # Apply each filter and append the result in a list of annotation sets
         ann_sets = list()
@@ -150,9 +151,37 @@ class FilterTier(object):
 
         return filtered_tier
 
+# ---------------------------------------------------------------------------
+
+
+class RelationFilterTier(object):
+    """This class applies predefined filters on a tier.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
+
+    """
+
+    functions = ("rel")
+
+    def __init__(self, filters, annot_format=False):
+        """Filter process of a tier.
+
+        :param filters: (tuple) ([list of functions], [list of options])
+        each option is a tuple with (name, value)
+        :param annot_format: (bool) The annotation result contains the
+        name of the filter (if True) or the original label (if False)
+
+        """
+        self.__filters = filters
+        self.__annot_format = bool(annot_format)
+
     # -----------------------------------------------------------------------
 
-    def relation_filter(self, tier, tier_y, out_tiername):
+    def filter_tier(self, tier, tier_y, out_tiername="Filtered"):
         """Apply the filters on the given tier.
 
         :param tier: (sppasTier)
@@ -160,19 +189,15 @@ class FilterTier(object):
         :param out_tiername: (str) Name or the filtered tier
 
         """
-        for f in self.__filters:
-            if f[0] not in ("rel"):
-                raise ValueError("{:s} is not a Relation Filter and can't be "
-                                 "applied".format(f[0]))
-
-        logging.info("Apply sppasFilter() on tier: {:s}".format(tier.get_name()))
+        logging.info("Apply sppasTiersFilter() on tier: {:s}".format(tier.get_name()))
         sfilter = sppasTierFilters(tier)
 
-        ann_set = sfilter.rel(tier_y,
-                              *(self.__filters[0]),
-                              **{self.__filters[1][i][0]: self.__filters[1][i][1] for i in range(len(self.__filters[1]))})
+        ann_set = sfilter.rel(
+            tier_y,
+            *(self.__filters[0]),
+            **{self.__filters[1][i][0]: self.__filters[1][i][1] for i in range(len(self.__filters[1]))})
 
-        # convert the annotations set into a tier
+        # convert the set of annotations into a tier
         filtered_tier = ann_set.to_tier(name=out_tiername,
                                         annot_value=self.__annot_format)
 
@@ -454,7 +479,7 @@ class sppasTierFilters(sppasBaseFilters):
                 f_functions.append((comparator.get(func_name),
                                     logical_not))
             else:
-                raise sppasKeyError("args function name", func_name)
+                raise sppasKeyError("rel filter args function name", func_name)
 
         return f_functions
 

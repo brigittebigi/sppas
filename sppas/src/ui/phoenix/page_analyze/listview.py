@@ -48,7 +48,8 @@ from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 from sppas.src.anndata.aio.basetrs import sppasBaseIO
 from sppas.src.anndata.anndataexc import TrsAddError
-from sppas.src.analysis.tierfilters import FilterTier
+from sppas.src.analysis.tierfilters import SingleFilterTier
+from sppas.src.analysis.tierfilters import RelationFilterTier
 
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasMedia
@@ -57,10 +58,10 @@ from sppas.src.anndata import sppasCtrlVocab
 from sppas.src.anndata import sppasMetaData
 from sppas.src.config import ui_translation
 
+from ..tools import sppasSwissKnife
 from ..windows.image import ColorizeImage
 from ..windows import sppasPanel
 from ..windows import sppasCollapsiblePanel
-from ..tools import sppasSwissKnife
 from .baseview import sppasBaseViewPanel
 
 TIER_BG_COLOUR = wx.Colour(180, 230, 255, 128)
@@ -122,8 +123,14 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     # -----------------------------------------------------------------------
 
+    def get_tiernames(self):
+        """Return the list of all tier names."""
+        return [tier.get_name() for tier in self._object.get_tier_list()]
+
+    # -----------------------------------------------------------------------
+
     def get_checked_tier(self):
-        """Return the number of checked tiers."""
+        """Return the list of checked tiers."""
         checked = list()
         for tier in self._object.get_tier_list():
             if tier.get_meta("checked") == "True":
@@ -402,10 +409,10 @@ class TrsListViewPanel(sppasBaseViewPanel):
         panel = self.FindWindow("tiers-panel")
         nb = 0
 
-        ft = FilterTier(filters, match_all, annot_format)
+        ft = SingleFilterTier(filters, annot_format, match_all)
         for tier in self._object.get_tier_list():
             if tier.get_meta("checked") == "True":
-                new_tier = ft.single_filter(tier, out_tiername)
+                new_tier = ft.filter_tier(tier, out_tiername)
                 if new_tier is not None:
                     self._object.append(new_tier)
                     self._dirty = True
@@ -417,24 +424,31 @@ class TrsListViewPanel(sppasBaseViewPanel):
     # -----------------------------------------------------------------------
 
     def relation_filter(self, filters,
-                        y_tier,
+                        y_tiername,
                         annot_format=False,
                         out_tiername="Filtered"):
         """Apply 'rel' filters on the checked tiers.
 
         :param filters: (list)
-        :param y_tier: (str)
+        :param y_tiername: (str) Name of the tier to be in relation with.
         :param annot_format: (bool) Replace the label by the name of the filter
         :param out_tiername: (str)
 
         """
         panel = self.FindWindow("tiers-panel")
-        nb = 0
+        if self.get_nb_checked_tier() == 0:
+            return 0
+        y_tier = self._object.find(y_tiername)
+        if y_tier is None:
+            wx.LogWarning("No tier with name {:s} in {:s}."
+                          "".format(y_tiername, self._filename))
+            return 0
 
-        ft = FilterTier(filters, annot_format)
+        nb = 0
+        ft = RelationFilterTier(filters, annot_format)
         for tier in self._object.get_tier_list():
             if tier.get_meta("checked") == "True":
-                new_tier = ft.relation_filter(tier, y_tier, out_tiername)
+                new_tier = ft.filter_tier(tier, y_tier, out_tiername)
                 if new_tier is not None:
                     self._object.append(new_tier)
                     self._dirty = True

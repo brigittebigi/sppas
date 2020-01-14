@@ -40,19 +40,25 @@ import wx
 from sppas import paths
 
 from ..windows import sppasToolbar
+from ..windows import sppasPanel
 from ..windows import sppasProgressDialog
+from ..dialogs import sppasChoiceDialog
 from ..dialogs import sppasTextEntryDialog
 from ..dialogs import Confirm
 from ..dialogs import TiersView
 from ..dialogs import StatsView
 from ..dialogs import sppasTiersSingleFilterDialog
+from ..dialogs import sppasTiersRelationFilterDialog
 
 from .anz_baseviews import BaseViewFilesPanel
 from .listview import TrsListViewPanel
+from .listview import TIER_BG_COLOUR
 
 # ----------------------------------------------------------------------------
 
 MSG_CONFIRM = "Confirm?"
+MSG_TIERS = "Tiers: "
+MSG_ANNS = "Annotations: "
 TIER_MSG_ASK_NAME = "New name of the checked tiers: "
 TIER_MSG_ASK_REGEXP = "Check tiers with name matching: "
 TIER_MSG_ASK_RADIUS = "Radius value of the checked tiers: "
@@ -70,8 +76,10 @@ TIER_ACT_RADIUS = "Radius"
 TIER_ACT_ANN_VIEW = "View"
 TIER_ACT_STAT_VIEW = "Stats"
 TIER_ACT_SINGLE_FILTER = "Single Filter"
+TIER_ACT_RELATION_FILTER = "Relation Filter"
 TIER_MSG_CONFIRM_DEL = "Are you sure to delete {:d} tiers of {:d} files? " \
                        "The process is irreversible."
+TIER_REL_WITH = "Name of the tier to be in relation with: "
 
 # ----------------------------------------------------------------------------
 
@@ -100,7 +108,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         """Set a color to highlight buttons, and for the focus."""
         self._hicolor = color
         # set to toolbar
-        btn = self.FindWindow("toolbar_views").get_button("tier_paste")
+        btn = self.FindWindow("subtoolbar1").get_button("tier_paste")
         btn.FocusColour = color
         # set to the panels
         for filename in self._files:
@@ -147,12 +155,23 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         :return: (sppasPanel, wx.Panel, sppasToolbar, ...)
 
         """
-        toolbar = sppasToolbar(self, name="toolbar_views")
+        panel = sppasPanel(self, name="toolbar_views")
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self._create_toolbar_tiers(panel), 0, wx.ALIGN_LEFT | wx.EXPAND, 0)
+        sizer.Add(self._create_toolbar_anns(panel), 0, wx.ALIGN_LEFT | wx.EXPAND, 0)
+        panel.SetSizerAndFit(sizer)
+        return panel
+
+    # -----------------------------------------------------------------------
+
+    def _create_toolbar_tiers(self, parent):
+        """Create a toolbar for actions on tiers. """
+        toolbar = sppasToolbar(parent, name="subtoolbar1")
         toolbar.SetMinSize(wx.Size(toolbar.get_height()*5, -1))
 
         # focus color of buttons performing an action on tiers
-        toolbar.set_focus_color(wx.Colour(180, 230, 255))
-        toolbar.AddTitleText("Tiers: ", wx.Colour(180, 230, 255))
+        toolbar.set_focus_color(TIER_BG_COLOUR)
+        toolbar.AddTitleText(MSG_TIERS, TIER_BG_COLOUR)
 
         b = toolbar.AddButton("tier_check", TIER_ACT_CHECK)
         b.LabelPosition = wx.BOTTOM
@@ -195,6 +214,20 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         b.LabelPosition = wx.BOTTOM
         b.Spacing = 1
 
+        toolbar.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
+        return toolbar
+
+    # -----------------------------------------------------------------------
+
+    def _create_toolbar_anns(self, parent):
+        """Create a toolbar for actions on annotations of tiers. """
+        toolbar = sppasToolbar(parent, name="subtoolbar2")
+        toolbar.SetMinSize(wx.Size(toolbar.get_height() * 5, -1))
+
+        # focus color of buttons performing an action on tiers
+        toolbar.set_focus_color(wx.Colour(255, 230, 180, 128))
+        toolbar.AddTitleText(MSG_ANNS, wx.Colour(255, 230, 180, 128))
+
         b = toolbar.AddButton("tier_radius", TIER_ACT_RADIUS)
         b.LabelPosition = wx.BOTTOM
         b.Spacing = 1
@@ -210,6 +243,12 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         b = toolbar.AddButton("tier_filter_single", TIER_ACT_SINGLE_FILTER)
         b.LabelPosition = wx.BOTTOM
         b.Spacing = 1
+
+        b = toolbar.AddButton("tier_filter_relation", TIER_ACT_RELATION_FILTER)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
+
+        toolbar.AddSpacer(5)
 
         toolbar.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
         return toolbar
@@ -254,6 +293,8 @@ class ListViewFilesPanel(BaseViewFilesPanel):
             self.view_anns_tiers()
         elif btn_name == "tier_filter_single":
             self.single_filter_tiers()
+        elif btn_name == "tier_filter_relation":
+            self.relation_filter_tiers()
 
         else:
             event.Skip()
@@ -535,6 +576,69 @@ class ListViewFilesPanel(BaseViewFilesPanel):
                 progress.set_text(filename)
                 if isinstance(panel, TrsListViewPanel):
                     filtered += panel.single_filter(filters, match_all, annot_format, tiername)
+                progress.set_fraction(float((i+1))/float(total))
+
+            wx.EndBusyCursor()
+            progress.set_fraction(100)
+            progress.close()
+
+        if filtered > 0:
+            wx.LogMessage("{:d} tiers created.".format(filtered))
+            self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def relation_filter_tiers(self):
+        """Open a dialog to define filters and apply on the checked tiers."""
+        # Get the list of checked tiers and the list of tier names
+        tiers = list()
+        all_tiernames = list()
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                panel_tiers = panel.get_checked_tier()
+                if len(panel_tiers) > 0:
+                    tiers.extend(panel_tiers)
+                    all_tiernames.extend(panel.get_tiernames())
+
+        if len(tiers) == 0:
+            wx.LogWarning("Relation filter: no tier checked.")
+            return
+
+        # Create the list of names of tiers
+        y_tiername = None
+        tiernames = sorted(list(set(all_tiernames)))
+        dialog = sppasChoiceDialog(TIER_REL_WITH, title="Tier Name Choice", choices=tiernames)
+        if dialog.ShowModal() == wx.ID_OK:
+            y_tiername = dialog.GetStringSelection()
+        dialog.Destroy()
+        if y_tiername is None:
+            return
+
+        # Get the list of relations and their options
+        filters = list()
+        dlg = sppasTiersRelationFilterDialog(self)
+        if dlg.ShowModal() in (wx.ID_OK, wx.ID_APPLY):
+            filters = dlg.get_filters()
+            out_tiername = dlg.get_tiername()
+            annot_format = dlg.get_annot_format()
+        dlg.Destroy()
+
+        # Apply the filters on the checked tiers
+        filtered = 0
+        if len(filters) > 0:
+            total = len(self._files)
+            progress = sppasProgressDialog()
+            progress.set_new()
+            progress.set_header("Relation filter processing...")
+            progress.set_fraction(0)
+            wx.BeginBusyCursor()
+            for i, filename in enumerate(self._files):
+                panel = self._files[filename]
+                progress.set_text(filename)
+                if isinstance(panel, TrsListViewPanel):
+                    filtered += panel.relation_filter(
+                        filters, y_tiername, annot_format, out_tiername)
                 progress.set_fraction(float((i+1))/float(total))
 
             wx.EndBusyCursor()
