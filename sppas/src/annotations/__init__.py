@@ -69,6 +69,7 @@ from .Activity import sppasActivity
 from .RMS import sppasRMS
 from .OtherRepet import sppasOtherRepet
 from .ReOccurrences import sppasReOcc
+from .StopWords import StopWords
 
 from .searchtier import sppasFindTier
 from .param import sppasParam
@@ -90,6 +91,7 @@ __all__ = (
     'sppasActivity',
     'sppasRMS',
     'sppasOtherRepet',
+    'StopWords',
     'sppasFindTier',
     'sppasParam',
     'sppasAnnotationsManager'

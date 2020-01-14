@@ -83,7 +83,6 @@ class sppasOtherRepet(sppasBaseRepet):
         super(sppasOtherRepet, self).__init__("otherrepet.json", log)
 
         self.max_span = 12
-        self.max_alpha = 4.
 
     # -----------------------------------------------------------------------
     # Automatic Detection search
@@ -101,7 +100,8 @@ class sppasOtherRepet(sppasBaseRepet):
         if inputtier2.is_float():
             inputtier2.set_radius(0.04)
         # Use the appropriate stop-list: add un-relevant tokens of the echoing speaker
-        stop_words = self.fix_stop_list(inputtier2)
+        stop_words = self._stop_words.copy()
+        stop_words.evaluate(inputtier2, merge=True)
         # Create repeat objects
         repetition = OtherRepetition(stop_words)
         # Create output data

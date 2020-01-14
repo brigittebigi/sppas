@@ -147,6 +147,12 @@ class sppasVocabulary(object):
 
     # -----------------------------------------------------------------------
 
+    def clear(self):
+        """Remove all entries of the vocabulary."""
+        self.__entries = dict()
+
+    # -----------------------------------------------------------------------
+
     def copy(self):
         """Make a deep copy of the instance.
 

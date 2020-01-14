@@ -54,7 +54,7 @@ class SelfRepetition(DataRepetition):
     def __init__(self, stop_list=None):
         """Create a new SelfRepetitions instance.
 
-        :param stop_list: (sppasVocabulary) List of un-relevant tokens.
+        :param stop_list: (StopWords) List of un-relevant tokens.
 
         """
         super(SelfRepetition, self).__init__()

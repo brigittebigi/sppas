@@ -1,8 +1,8 @@
 {
-  "__version__": "2.7",
+  "__version__": "2.8",
   "__author__":  "Brigitte Bigi",
   "__contact__": "contact@sppas.org",
-  "__copyright__": "Copyright (C) 2011-2019 Brigitte Bigi",
+  "__copyright__": "Copyright (C) 2011-2020 Brigitte Bigi",
   "__license__": "GNU Public License, version 3",
   "__docformat__": "reStructedText en",
   "__name__": "SPPAS",

@@ -73,6 +73,12 @@
     },
 
     {
+      "id": "stopwords",
+      "config": "stopwords.json",
+      "cli": ""
+    },
+
+    {
       "id": "otherrepet",
       "config": "otherrepet.json",
       "cli": "otherrepetition.py"

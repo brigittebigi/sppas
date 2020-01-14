@@ -126,7 +126,8 @@ class sppasSelfRepet(sppasBaseRepet):
 
         """
         # Use the appropriate stop-list
-        stop_words = self.fix_stop_list(tier)
+        stop_words = self._stop_words.copy()
+        stop_words.evaluate(tier, merge=True)
         # Create a data structure to detect and store a source/echos
         repetition = SelfRepetition(stop_words)
         # Create output data

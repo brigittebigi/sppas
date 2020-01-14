@@ -39,12 +39,11 @@ from sppas import symbols
 from sppas import sppasTier
 from sppas import sppasLabel
 from sppas import sppasTag
-from sppas import sppasVocabulary
 from sppas import sppasWordStrain
-from sppas import sppasUnigram
 
 from ..baseannot import sppasBaseAnnotation
 from ..annotationsexc import AnnotationOptionError
+from ..StopWords.stpwds import StopWords
 
 # ---------------------------------------------------------------------------
 
@@ -77,16 +76,14 @@ class sppasBaseRepet(sppasBaseAnnotation):
         super(sppasBaseRepet, self).__init__(config, log)
 
         self.max_span = 8
-        self.max_alpha = 4.
 
         # List of options to configure this automatic annotation
         self._options = dict()
         self._options['span'] = 3
         self._options['stopwords'] = True
-        self._options['alpha'] = 0.5
 
         self._word_strain = sppasWordStrain()
-        self._stop_words = sppasVocabulary()
+        self._stop_words = StopWords()
 
     # -----------------------------------------------------------------------
 
@@ -126,19 +123,18 @@ class sppasBaseRepet(sppasBaseAnnotation):
         :param lang: (str)
 
         """
-        self._stop_words = sppasVocabulary()
         self._word_strain = sppasWordStrain()
         fn, fe = os.path.splitext(lang_resources)
 
         try:
             stp = fn + '.stp'
-            self._stop_words.load_from_ascii(stp)
+            self._stop_words.load(stp, merge=False)
             self.logfile.print_message(
                 "The initial list contains {:d} stop-words"
                 "".format(len(self._stop_words)), indent=0)
 
         except Exception as e:
-            self._stop_words = sppasVocabulary()
+            self._stop_words.clear()
             self.logfile.print_message(
                 "No stop-words loaded: {:s}".format(str(e)), indent=1)
 
@@ -198,61 +194,7 @@ class sppasBaseRepet(sppasBaseAnnotation):
         :param alpha: (float)
 
         """
-        alpha = float(alpha)
-        if 0. < alpha < self.max_alpha:
-            self._options['alpha'] = alpha
-        else:
-            raise IndexRangeException(alpha, 0, self.max_alpha)
-
-    # -----------------------------------------------------------------------
-
-    def fix_stop_list(self, tier=None):
-        """Return the expected list of stop-words.
-
-        It is either:
-
-            - the current stop-list or,
-            - this list + un-relevant tokens, estimated on the given tier.
-
-        A token 'w' is relevant for the speaker if its probability is
-        less than a threshold:
-
-            | P(w) <= 1 / (alpha * V)
-
-        where 'alpha' is an empirical coefficient and 'V' is the vocabulary
-        size of the speaker.
-
-        :param tier: (sppasTier) A tier with entries to be analyzed.
-        :returns: (sppasVocabulary) List of stop-words
-
-        """
-        if self._options['stopwords'] is False:
-            return sppasVocabulary()
-
-        if tier is None or len(tier) < 5:
-            return self._stop_words.copy()
-
-        # Create the sppasUnigram and put data
-        u = sppasUnigram()
-        for a in tier:
-            content = a.serialize_labels()
-            if content not in symbols.all:
-                u.add(content)
-
-        # Estimate values for relevance
-        _v = float(len(u))
-        threshold = 1. / (self._options["alpha"] * _v)
-
-        # Estimate if a token is relevant; if not: put it in the stop-list
-        stop_list = self._stop_words.copy()
-        for token in u.get_tokens():
-            p_w = float(u.get_count(token)) / float(u.get_sum())
-            if p_w > threshold:
-                stop_list.add(token)
-                self.logfile.print_message(
-                    'Add in the stop-list: {:s}'.format(token), indent=2)
-
-        return stop_list
+        self._stop_words.set_alpha(alpha)
 
     # -----------------------------------------------------------------------
     # Make tiers for the result

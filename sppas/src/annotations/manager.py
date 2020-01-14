@@ -60,6 +60,7 @@ from sppas.src.annotations.SelfRepet import sppasSelfRepet
 from sppas.src.annotations.OtherRepet import sppasOtherRepet
 from sppas.src.annotations.ReOccurrences import sppasReOcc
 from sppas.src.annotations.RMS import sppasRMS
+from sppas.src.annotations.StopWords import sppasStopWords
 
 from .infotier import sppasMetaInfoTier
 from .log import sppasLog
