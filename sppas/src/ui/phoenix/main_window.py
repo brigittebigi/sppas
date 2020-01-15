@@ -241,8 +241,7 @@ class sppasMainWindow(sppasDialog):
         self.FindWindow("content").Bind(EVT_DATA_CHANGED, self._process_data_changed)
 
         # Capture keys
-        # self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
-        # self.FindWindow("content").Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
+        self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
 
     # -----------------------------------------------------------------------
 
@@ -324,9 +323,30 @@ class sppasMainWindow(sppasDialog):
             # CMD+q on MacOS / Ctrl+q on Linux to force exit
             self.exit()
 
+        elif key_code == 70 and event.CmdDown():
+            # CMD+f
+            self.FindWindow("header").enable("page_files")
+            self.show_page("page_files")
+
+        elif key_code == wx.WXK_LEFT and event.CmdDown():
+            self.show_next_page(direction=-1)
+
+        elif key_code == wx.WXK_RIGHT and event.CmdDown():
+            self.show_next_page(direction=1)
+
+        elif key_code == wx.WXK_UP and event.CmdDown():
+            page_name = sppasMainWindow.pages[0]
+            self.FindWindow("header").enable(page_name)
+            self.show_page(page_name)
+
+        elif key_code == wx.WXK_DOWN and event.CmdDown():
+            page_name = sppasMainWindow.pages[-1]
+            self.FindWindow("header").enable(page_name)
+            self.show_page(page_name)
+
         else:
             # Keeps on going the event to the current page of the book.
-            wx.LogDebug('Key event skipped by the main window.')
+            # wx.LogDebug('Key event skipped by the main window.')
             event.Skip()
 
     # -----------------------------------------------------------------------
@@ -366,6 +386,27 @@ class sppasMainWindow(sppasDialog):
         if wx.Platform == "__WXMSW__":
             self.DestroyChildren()
         self.DestroyFadeOut(deltaN=-6)
+
+    # -----------------------------------------------------------------------
+
+    def show_next_page(self, direction=1):
+        """Show a page of the content panel, the next one.
+
+        :param direction: (int) Positive=Next; Negative=RIGHT
+
+        """
+        book = self.FindWindow("content")
+        c = book.GetSelection()
+        wx.LogDebug("Current page index = {:d}".format(c))
+        if direction > 0:
+            nextc = (c+1) % len(sppasMainWindow.pages)
+        elif direction < 0:
+            nextc = (c-1) % len(sppasMainWindow.pages)
+        else:
+            return
+        next_page_name = sppasMainWindow.pages[nextc]
+        self.FindWindow("header").enable(next_page_name)
+        self.show_page(next_page_name)
 
     # -----------------------------------------------------------------------
 

@@ -39,7 +39,8 @@ import wx
 import webbrowser
 
 from sppas.src.config import sg
-from sppas.src.config import ui_translation
+from sppas.src.config import msg
+from sppas.src.utils import u
 
 from ..tools import sppasSwissKnife
 from ..windows import sppasScrolledPanel
@@ -48,7 +49,7 @@ from ..windows import sppasMessageText
 
 # ----------------------------------------------------------------------------
 
-MSG_HEADER_ABOUT = ui_translation.gettext("About")
+MSG_HEADER_ABOUT = u(msg("About", "ui"))
 
 # ----------------------------------------------------------------------------
 

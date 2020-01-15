@@ -38,6 +38,8 @@ import wx
 import wx.lib.newevent
 
 from sppas import sppasTypeError
+from sppas.src.config import msg
+from sppas.src.utils import u
 from sppas.src.files.filedata import FileData
 from sppas.src.files.filebase import States
 from sppas.src.ui import sppasWorkspaces
@@ -61,39 +63,45 @@ WkpChangedCommandEvent, EVT_WKP_CHANGED_COMMAND = wx.lib.newevent.NewCommandEven
 # ---------------------------------------------------------------------------
 # List of displayed messages:
 
-WKP = "Workspace"
 
-WKP_TITLE = "Workspaces: "
-WKP_ACT_IMPORT = "Import from"
-WKP_ACT_EXPORT = "Export to"
-WKP_ACT_SAVE = "Pin & Save"
-WKP_ACT_RENAME = "Rename"
+def _(message):
+    return u(msg(message, "ui"))
 
-WKP_MSG_ASK_NAME = "New name of the workspace: "
 
-WKP_MSG_CONFIRM_SWITCH = "Confirm switch of workspace?"
-WKP_MSG_CONFIRM_DELETE = "Confirm delete of workspace?"
-WKP_MSG_CONFIRM_OVERRIDE = "A file with name {:s} is already existing. " \
-                           "Override it?"
-WKP_MSG_CONFIRM_NAME = "Confirm workspace name?"
-WKP_MSG_CONFIRM = "The current workspace contains not saved work that " \
-                  "will be lost. Are you sure you want to change workspace?"
+WKP = _("Workspace")
 
-WKP_MSG_LOAD_ERROR = "Data of the workspace {:s} can't be loaded due to " \
-                     "the following error: {:s}.\nDo you want to delete it?"
-WKP_ACT_SAVECURRENT_ERROR = "The current workspace can not be saved due to " \
-                     "the following error: {:s}\nAre you sure you want " \
-                     "to change workspace?"
-WKP_ACT_SAVE_ERROR = "Workspace '{:s}' can't be saved due to the following " \
-                     "error: {!s:s}"
-WKP_ACT_IMPORT_ERROR = "File '{:s}' can't be imported due to the following" \
-                       " error:\n{!s:s}"
-WKP_ACT_EXPORT_ERROR = "File '{:s}' can't be exported due to the following" \
-                       " error: {!s:s}"
-WKP_MSG_PIN_ERROR = "Pin of workspace '{:s}' is not possible due to the " \
-                    "following error: {!s:s}"
-WKP_ACT_RENAME_ERROR = "Workspace can't be renamed to '{:s}' due to the " \
-                       "following error: {!s:s}"
+WKP_TITLE = _("Workspaces: ")
+WKP_ACT_IMPORT = _("Import from")
+WKP_ACT_EXPORT = _("Export to")
+WKP_ACT_SAVE = _("Pin & Save")
+WKP_ACT_RENAME = _("Rename")
+
+WKP_MSG_ASK_NAME = _("New name of the workspace: ")
+
+WKP_MSG_CONFIRM_SWITCH = _("Confirm switch of workspace?")
+WKP_MSG_CONFIRM_DELETE = _("Confirm delete of workspace?")
+WKP_MSG_CONFIRM_OVERRIDE = _(
+    "A file with name {:s} is already existing. Override it?")
+WKP_MSG_CONFIRM_NAME = _("Confirm workspace name?")
+WKP_MSG_CONFIRM = _("The current workspace contains not saved work that will "
+                    "be lost. Are you sure you want to change workspace?")
+
+WKP_MSG_LOAD_ERROR = _(
+    "Data of the workspace {:s} can't be loaded due to the following error: "
+    "{:s}.\nDo you want to delete it?")
+WKP_ACT_SAVECURRENT_ERROR = _(
+    "The current workspace can not be saved due to the following error: {:s}\n"
+    "Are you sure you want to change workspace?")
+WKP_ACT_SAVE_ERROR = _(
+    "Workspace '{:s}' can't be saved due to the following error: {!s:s}")
+WKP_ACT_IMPORT_ERROR = _(
+    "File '{:s}' can't be imported due to the following error:\n{!s:s}")
+WKP_ACT_EXPORT_ERROR = _(
+    "File '{:s}' can't be exported due to the following error: {!s:s}")
+WKP_MSG_PIN_ERROR = _(
+    "Pin of workspace '{:s}' is not possible due to the following error: {!s:s}")
+WKP_ACT_RENAME_ERROR = _(
+    "Workspace can't be renamed to '{:s}' due to the following error: {!s:s}")
 
 # ---------------------------------------------------------------------------
 
@@ -105,11 +113,10 @@ class WorkspacesManager(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
-    # yellow-green
     HIGHLIGHT_COLOUR = wx.Colour(128, 228, 128, 196)
 
     # -----------------------------------------------------------------------
@@ -231,7 +238,14 @@ class WorkspacesManager(sppasPanel):
 
         """
         key_code = event.GetKeyCode()
-        event.Skip()
+        cmd_down = event.CmdDown()
+
+        # Ctrl+s
+        if key_code == 83 and cmd_down is True:
+            self.pin_save()
+
+        else:
+            event.Skip()
 
     # -----------------------------------------------------------------------
 
@@ -354,7 +368,7 @@ class WorkspacesManager(sppasPanel):
         """
         # get the name of the file to be exported to
         with sppasFileDialog(self, title=WKP_ACT_IMPORT,
-                              style=wx.FD_SAVE) as dlg:
+                             style=wx.FD_SAVE) as dlg:
             dlg.SetWildcard(WKP + " (*.wjson)|*.wjson")
             if dlg.ShowModal() == wx.ID_CANCEL:
                 return

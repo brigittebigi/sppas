@@ -35,6 +35,7 @@
     One of the main pages of the wx4-based GUI of SPPAS.
 
     It manages:
+
         - the set of workspaces,
         - the list of files of a workspace,
         - the list of references of a workspace, and
@@ -66,7 +67,7 @@ class sppasFilesPanel(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     This panel is managing 4 areas:
 
@@ -120,8 +121,8 @@ class sppasFilesPanel(sppasPanel):
         """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        wx.LogDebug('New data to set in the files page. '
-                      'Id={:s}'.format(data.id))
+        wx.LogDebug('New data to set in the files page. Id={:s}'.format(data.id))
+
         # Set to all children.
         self.__send_data(self.GetParent(), data)
 
@@ -190,8 +191,7 @@ class sppasFilesPanel(sppasPanel):
         key_code = event.GetKeyCode()
         cmd_down = event.CmdDown()
         shift_down = event.ShiftDown()
-        wx.LogDebug('Files book page received a key event. '
-                      'key_code={:d}'.format(key_code))
+        wx.LogDebug('Files page received a key event. key_code={:d}'.format(key_code))
 
         if key_code == wx.WXK_F5 and cmd_down is False and shift_down is False:
             wx.LogDebug(' ... [F5] key pressed')

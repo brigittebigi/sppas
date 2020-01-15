@@ -34,10 +34,10 @@
 
 """
 
-import logging
 import wx
 
-from sppas.src.config import ui_translation
+from sppas.src.config import msg
+from sppas.src.utils import u
 
 from ..windows import sppasMessageText
 from ..windows import sppasPanel
@@ -45,10 +45,11 @@ from ..windows import sppasDialog
 
 # ----------------------------------------------------------------------------
 
-MSG_HEADER_ERROR = ui_translation.gettext("Error")
-MSG_HEADER_WARNING = ui_translation.gettext("Warning")
-MSG_HEADER_QUESTION = ui_translation.gettext("Question")
-MSG_HEADER_INFO = ui_translation.gettext("Information")
+MSG_HEADER_ERROR = u(msg("Error", "ui"))
+MSG_HEADER_WARNING = u(msg("Warning", "ui"))
+MSG_HEADER_QUESTION = u(msg("Question", "ui"))
+MSG_HEADER_INFO = u(msg("Information", "ui"))
+MSG_MESSAGE = u(msg("Message", "ui"))
 
 # ----------------------------------------------------------------------------
 
@@ -60,7 +61,7 @@ class sppasBaseMessageDialog(sppasDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -75,7 +76,7 @@ class sppasBaseMessageDialog(sppasDialog):
         """
         super(sppasBaseMessageDialog, self).__init__(
             parent=parent,
-            title="Message",
+            title=MSG_MESSAGE,
             style=wx.CAPTION | wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.STAY_ON_TOP)
 
         self._create_header(style, title)
@@ -122,12 +123,14 @@ class sppasBaseMessageDialog(sppasDialog):
     def _create_content(self, message, **kwargs):
         """Create the content of the message dialog."""
         p = sppasPanel(self)
+        h = p.get_font_height()
         s = wx.BoxSizer(wx.HORIZONTAL)
         txt = sppasMessageText(p, message)
         s.Add(txt, 1, wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 10)
         p.SetSizer(s)
-        p.SetName("content")
-        p.SetMinSize(wx.Size(-1, sppasDialog.fix_size(96)))
+        # p.SetName("content")
+        p.SetMinSize(wx.Size(-1, h*4))
+        self.SetContent(p)
 
     # -----------------------------------------------------------------------
 
@@ -147,7 +150,7 @@ class sppasYesNoDialog(sppasBaseMessageDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     wx.ID_YES or wx.ID_NO is returned if a button is clicked.
     wx.ID_CANCEL is returned if the dialog is destroyed.
@@ -198,7 +201,7 @@ class sppasConfirm(sppasBaseMessageDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     wx.ID_YES is returned if 'yes' is clicked.
     wx.ID_CANCEL is returned if the dialog is destroyed or cancel is clicked.
@@ -250,7 +253,7 @@ class sppasInformationDialog(sppasBaseMessageDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     wx.ID_OK is returned when the button is clicked.
 
@@ -282,7 +285,7 @@ class sppasWarnDialog(sppasBaseMessageDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     wx.ID_OK is returned when the button is clicked.
 
@@ -314,7 +317,7 @@ class sppasErrorDialog(sppasBaseMessageDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     wx.ID_OK is returned if the button is clicked.
     wx.ID_CANCEL is returned if the dialog is destroyed.
@@ -348,7 +351,7 @@ class sppasChoiceDialog(sppasBaseMessageDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     wx.ID_OK is returned if the button is clicked.
     wx.ID_CANCEL is returned if the dialog is destroyed.
@@ -394,9 +397,10 @@ class sppasChoiceDialog(sppasBaseMessageDialog):
         s.Add(txt, 0, wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 10)
         s.Add(choice, 1, wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 10)
 
+        h = p.get_font_height()
         p.SetSizer(s)
-        p.SetName("content")
-        p.SetMinSize(wx.Size(-1, sppasDialog.fix_size(96)))
+        p.SetMinSize(wx.Size(-1, (len(c)+2) * h * 2))
+        self.SetContent(p)
 
     # -----------------------------------------------------------------------
 
@@ -432,7 +436,7 @@ def YesNoQuestion(message):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     :param message: (str) The question to ask
     :returns: the response
@@ -450,6 +454,7 @@ def YesNoQuestion(message):
 
 # ---------------------------------------------------------------------------
 
+
 def Confirm(message, title=None):
     """Display a confirmation after an error.
 
@@ -457,7 +462,7 @@ def Confirm(message, title=None):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     :param message: (str) The error and confirmation question
     :param title: (str) Title of the dialog window
@@ -500,6 +505,7 @@ def Error(message, title=None):
 
 # ---------------------------------------------------------------------------
 
+
 def Information(message):
     """Display an information message.
 
@@ -507,7 +513,7 @@ def Information(message):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     :param message: (str) The information to display
     :returns: wx.ID_OK
@@ -521,6 +527,7 @@ def Information(message):
 
 # ---------------------------------------------------------------------------
 
+
 def Warn(message):
     """Display a warn message.
 
@@ -528,7 +535,7 @@ def Warn(message):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     :param message: (str) The message to display
     :returns: wx.ID_OK

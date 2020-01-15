@@ -39,6 +39,8 @@ from sppas import sg
 from sppas import annots
 from sppas.src.files.fileref import FileReference, sppasAttribute
 from sppas.src.files.filebase import States
+from sppas.src.config import msg
+from sppas.src.utils import u
 
 from ..windows import sppasDialog
 from ..windows import sppasPanel
@@ -51,24 +53,27 @@ from ..dialogs import Information
 from ..dialogs import Error
 from ..main_events import DataChangedEvent
 
-#from .dv_refstreectrl import ReferencesTreeViewCtrl
 from .refsviewctrl import RefsTreeView
 from .filesutils import IdentifierTextValidator
-
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
 
-REF_TITLE = "References: "
-REF_ACT_CREATE = "Create"
-REF_ACT_EDIT = "Edit"
-REF_ACT_DEL = "Delete"
 
-REF_MSG_CREATE_ERROR = "The reference {:s} has not been created due to " \
-                       "the following error: {:s}"
-REF_MSG_DEL_ERROR = "An error occurred while removing the references: {:s}"
-REF_MSG_DEL_INFO = "{:d} references deleted."
-REF_MSG_NB_CHECKED = "No reference checked."
+def _(message):
+    return u(msg(message, "ui"))
+
+
+REF_TITLE = _("References: ")
+REF_ACT_CREATE = _("Create")
+REF_ACT_EDIT = _("Edit")
+REF_ACT_DEL = _("Delete")
+
+REF_MSG_CREATE_ERROR = _(
+    "The reference {:s} has not been created due to the following error: {:s}")
+REF_MSG_DEL_ERROR = _("An error occurred while removing the references: {:s}")
+REF_MSG_DEL_INFO = _("{:d} references deleted.")
+REF_MSG_NB_CHECKED = _("No reference checked.")
 
 # ----------------------------------------------------------------------------
 
@@ -80,11 +85,10 @@ class ReferencesManager(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
-    # light blue
     HIGHLIGHT_COLOUR = wx.Colour(128, 128, 250, 196)
 
     # ------------------------------------------------------------------------
@@ -128,6 +132,7 @@ class ReferencesManager(sppasPanel):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(tb, proportion=0, flag=wx.EXPAND, border=0)
+        sizer.Add(self.__create_hline(), 0, wx.EXPAND, 0)
         sizer.Add(cv, proportion=1, flag=wx.EXPAND, border=0)
         self.SetSizer(sizer)
 
@@ -142,6 +147,16 @@ class ReferencesManager(sppasPanel):
         tb.AddButton("refs-edit", REF_ACT_EDIT)
         tb.AddButton("refs-delete", REF_ACT_DEL)
         return tb
+
+    # -----------------------------------------------------------------------
+
+    def __create_hline(self):
+        """Create an horizontal line, used to separate the panels."""
+        line = sppasStaticLine(self, orient=wx.LI_HORIZONTAL)
+        line.SetMinSize(wx.Size(-1, 20))
+        line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
+        line.SetDepth(1)
+        return line
 
     # -----------------------------------------------------------------------
     # Events management
@@ -185,12 +200,11 @@ class ReferencesManager(sppasPanel):
         cmd_down = event.CmdDown()
         shift_down = event.ShiftDown()
 
-        #if key_code == wx.WXK_F5 and cmd_down is False and shift_down is False:
-        #    logging.debug('Refresh all the files [F5 keys pressed]')
-        #    self.FindWindow("refsview").update_data()
-        #    self.notify()
-
-        event.Skip()
+        # Ctrl+r
+        if key_code == 82 and cmd_down is True:
+            self._add()
+        else:
+            event.Skip()
 
     # ------------------------------------------------------------------------
 

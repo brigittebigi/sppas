@@ -175,7 +175,7 @@ class sppasTitleText(wx.TextCtrl):
             style=sppasTitleText.text_style,
             name=name)
 
-        self.align = wx.TEXT_ALIGNMENT_CENTER
+        self.align = wx.TEXT_ALIGNMENT_LEFT
         # Fix Look&Feel
         try:
             settings = wx.GetApp().settings
@@ -221,15 +221,17 @@ class sppasTitleText(wx.TextCtrl):
         self.SetStyle(0, len(self.GetValue()), attr)
 
     def SetAlignment(self, align):
-        """align is a wx.TextAttrAlignment."""
-        self.align = align
-        attr = wx.TextAttr()
-        attr.SetTextColour(self.GetForegroundColour())
-        attr.SetBackgroundColour(self.GetBackgroundColour())
-        attr.SetFont(self.GetFont())
-        attr.SetAlignment(align)
-        self.SetDefaultStyle(attr)
-        self.SetStyle(0, len(self.GetValue()), attr)
+        """Align is a wx.TextAttrAlignment."""
+        if align != self.align:
+            self.align = align
+            attr = wx.TextAttr()
+            attr.SetTextColour(self.GetForegroundColour())
+            attr.SetBackgroundColour(self.GetBackgroundColour())
+            attr.SetFont(self.GetFont())
+            attr.SetAlignment(align)
+            self.SetDefaultStyle(attr)
+            self.SetStyle(0, len(self.GetValue()), attr)
+            self.Refresh()
 
 # ---------------------------------------------------------------------------
 

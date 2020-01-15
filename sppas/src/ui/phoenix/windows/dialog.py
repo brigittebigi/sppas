@@ -37,24 +37,29 @@
 import wx
 
 from sppas.src.config import sg
-from sppas.src.config import ui_translation
+from sppas.src.config import msg
+from sppas.src.utils import u
 
 from ..tools import sppasSwissKnife
-from . import sppasBitmapTextButton
-from . import sppasStaticBitmap
-from . import sppasStaticLine
-from . import sppasTitleText
-from . import sppasPanel
+from .button import BitmapTextButton
+from .line import sppasStaticLine
+from .text import sppasTitleText
+from .panel import sppasPanel
 
 # ----------------------------------------------------------------------------
 
-MSG_ACTION_OK = ui_translation.gettext("Okay")
-MSG_ACTION_CANCEL = ui_translation.gettext("Cancel")
-MSG_ACTION_YES = ui_translation.gettext("Yes")
-MSG_ACTION_NO = ui_translation.gettext("No")
-MSG_ACTION_APPLY = ui_translation.gettext("Apply")
-MSG_ACTION_CLOSE = ui_translation.gettext("Close")
-MSG_ACTION_SAVE = ui_translation.gettext("Save")
+
+def _(message):
+    return u(msg(message, "ui"))
+
+
+MSG_ACTION_OK = _("Okay")
+MSG_ACTION_CANCEL = _("Cancel")
+MSG_ACTION_YES = _("Yes")
+MSG_ACTION_NO = _("No")
+MSG_ACTION_APPLY = _("Apply")
+MSG_ACTION_CLOSE = _("Close")
+MSG_ACTION_SAVE = _("Save")
 
 # ----------------------------------------------------------------------------
 
@@ -66,7 +71,7 @@ class sppasDialog(wx.Dialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -109,36 +114,47 @@ class sppasDialog(wx.Dialog):
         settings = wx.GetApp().settings
 
         # Fix minimum frame size
-        self.SetMinSize(wx.Size(320, 200))
+        self.SetMinSize(wx.Size(sppasDialog.fix_size(320),
+                                sppasDialog.fix_size(200)))
 
         # Fix frame name
         self.SetName('{:s}-{:d}'.format(sg.__name__, self.GetId()))
 
         # icon
         _icon = wx.Icon()
-        bmp = sppasSwissKnife.get_bmp_icon("sppas_32", height=64)
+        bmp = sppasSwissKnife.get_bmp_icon("sppas_64", height=64)
         _icon.CopyFromBitmap(bmp)
         self.SetIcon(_icon)
 
         # colors & font
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        self.SetBackgroundColour(settings.bg_color)
+        self.SetForegroundColour(settings.fg_color)
+        self.SetFont(settings.text_font)
 
     # -----------------------------------------------------------------------
     # Fade-in at start-up and Fade-out at close
     # -----------------------------------------------------------------------
 
     def FadeIn(self, deltaN=-10):
-        """Fade-in opacity."""
+        """Fade-in opacity.
+
+        :param deltaN: (int)
+
+        """
         self.deltaN = int(deltaN)
         self.SetTransparent(self.opacity_in)
         self.timer1 = wx.Timer(self, -1)
         self.timer1.Start(1)
         self.Bind(wx.EVT_TIMER, self.__alpha_cycle_in, self.timer1)
 
+    # -----------------------------------------------------------------------
+
     def DestroyFadeOut(self, deltaN=-10):
-        """Destroy with a fade-out opacity."""
+        """Destroy with a fade-out opacity.
+
+        :param deltaN: (int)
+
+        """
         self.deltaN = int(deltaN)
         self.timer2 = wx.Timer(self, -1)
         self.timer2.Start(1)
@@ -212,13 +228,13 @@ class sppasDialog(wx.Dialog):
 
         # Add the icon, at left, with its title
         if icon_name is not None:
-            static_bmp = sppasStaticBitmap(panel, icon_name)
-            sizer.Add(static_bmp, 0,
-                      wx.LEFT | wx.ALIGN_CENTER_VERTICAL, spacing)
+            static_bmp = BitmapTextButton(panel, name=icon_name)
+            static_bmp.SetBorderWidth(0)
+            static_bmp.SetFocusWidth(0)
+            sizer.Add(static_bmp, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, spacing)
 
         txt = sppasTitleText(panel, value=title)
-        txt.SetAlignment(wx.TEXT_ALIGNMENT_LEFT)
-        sizer.Add(txt, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, spacing)
+        sizer.Add(txt, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, spacing)
 
         # This header panel properties
         panel.SetSizer(sizer)
@@ -417,14 +433,17 @@ class sppasDialog(wx.Dialog):
             wx.ID_CLOSE: (MSG_ACTION_CLOSE, "window-close"),
             wx.ID_SAVE: (MSG_ACTION_SAVE, "save"),
         }
-        btn = sppasBitmapTextButton(parent, label=btns[flag][0], name=btns[flag][1])
+        btn = BitmapTextButton(parent, label=btns[flag][0], name=btns[flag][1])
+        btn.SetLabelPosition(wx.RIGHT)
+        btn.SetBorderWidth(0)
+        btn.SetFocusWidth(1)
+        btn.SetFocusColour(self.GetForegroundColour())
         btn.SetId(flag)
 
         if flag == wx.CANCEL:
             self.SetAffirmativeId(wx.ID_CANCEL)
 
         elif flag in (wx.CLOSE, wx.OK):
-            btn.SetDefault()
             btn.SetFocus()
             self.SetAffirmativeId(flag)
 
@@ -432,7 +451,7 @@ class sppasDialog(wx.Dialog):
             self.SetAffirmativeId(wx.ID_YES)
 
         elif flag == wx.OK:
-            btn.SetDefault()
+            pass
 
         return btn
 

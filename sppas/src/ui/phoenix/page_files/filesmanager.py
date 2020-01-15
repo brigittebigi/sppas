@@ -37,10 +37,14 @@ import os
 import wx
 
 from sppas import paths
+
+from sppas.src.config import msg
+from sppas.src.utils import u
 from sppas.src.files import States
 
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
+from ..windows import sppasStaticLine
 from ..dialogs import YesNoQuestion, Information
 from ..dialogs import sppasFileDialog
 from ..main_events import DataChangedEvent
@@ -50,12 +54,12 @@ from .filesviewctrl import FileTreeView
 # ---------------------------------------------------------------------------
 # List of displayed messages:
 
-FLS_TITLE = "Files: "
-FLS_ACT_ADD = "Add"
-FLS_ACT_REM = "Remove checked"
-FLS_ACT_DEL = "Delete checked"
+FLS_TITLE = u(msg("Files: ", "ui"))
+FLS_ACT_ADD = u(msg("Add", "ui"))
+FLS_ACT_REM = u(msg("Remove checked", "ui"))
+FLS_ACT_DEL = u(msg("Delete checked", "ui"))
 
-FLS_MSG_CONFIRM_DEL = "Are you sure you want to delete {:d} files?"
+FLS_MSG_CONFIRM_DEL = u(msg("Are you sure you want to delete {:d} files?"))
 
 # ----------------------------------------------------------------------------
 
@@ -67,7 +71,7 @@ class FilesManager(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -120,6 +124,7 @@ class FilesManager(sppasPanel):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(tb, proportion=0, flag=wx.EXPAND, border=0)
+        sizer.Add(self.__create_hline(), 0, wx.EXPAND, 0)
         sizer.Add(fv, proportion=1, flag=wx.EXPAND, border=0)
         self.SetSizer(sizer)
 
@@ -134,6 +139,16 @@ class FilesManager(sppasPanel):
         tb.AddButton("files-remove", FLS_ACT_REM)
         tb.AddButton("files-delete", FLS_ACT_DEL)
         return tb
+
+    # -----------------------------------------------------------------------
+
+    def __create_hline(self):
+        """Create an horizontal line, used to separate the panels."""
+        line = sppasStaticLine(self, orient=wx.LI_HORIZONTAL)
+        line.SetMinSize(wx.Size(-1, 20))
+        line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
+        line.SetDepth(1)
+        return line
 
     # -----------------------------------------------------------------------
     # Events management
@@ -151,6 +166,9 @@ class FilesManager(sppasPanel):
 
         # The user clicked (LeftDown - LeftUp) an action button of the toolbar
         self.Bind(wx.EVT_BUTTON, self._process_action)
+
+        # Capture keys
+        self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
 
     # ------------------------------------------------------------------------
 
@@ -176,13 +194,13 @@ class FilesManager(sppasPanel):
         key_code = event.GetKeyCode()
         cmd_down = event.CmdDown()
         shift_down = event.ShiftDown()
+        wx.LogDebug("Files manager. Key pressed: {:d}".format(key_code))
 
-        #if key_code == wx.WXK_F5 and cmd_down is False and shift_down is False:
-        #    loggingFindWindow.debug('Refresh all the files [F5 keys pressed]')
-        #    self.("filestree").update_data()
-        #    self.notify()
-
-        event.Skip()
+        # Ctrl+a
+        if key_code == 65 and cmd_down is True:
+            self._add()
+        else:
+            event.Skip()
 
     # ------------------------------------------------------------------------
 
