@@ -32,7 +32,7 @@
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
 *****************************************************************************
 config: configuration for all global things.
@@ -59,15 +59,17 @@ from .sglobal import sppasSymbolSettings
 from .sglobal import sppasSeparatorSettings
 from .sglobal import sppasAnnotationsSettings
 from .po import sppasTranslate
-from .support import PostInstall
+from .po import error, info, msg
+from .support import sppasPostInstall
 
 # ---------------------------------------------------------------------------
 # Fix the global un-modifiable settings
 # ---------------------------------------------------------------------------
 
 # create missing directories
-PostInstall().sppas_directories()
+sppasPostInstall().sppas_directories()
 
+# create an instance of each global settings
 sg = sppasGlobalSettings()
 paths = sppasPathSettings()
 symbols = sppasSymbolSettings()
@@ -89,71 +91,6 @@ except AttributeError:  # Python 2.7
 
 ui_translation = sppasTranslate().translation("ui")
 
-# ---------------------------------------------------------------------------
-
-
-def info(msg_id, domain=None):
-    """Return the info message from gettext.
-
-    :param msg_id: (str or int) Info id
-    :param domain: (str) Name of the domain
-
-    """
-    msg = ":INFO " + str(msg_id) + ": "
-    if domain is not None:
-        try:
-            st = sppasTranslate()
-            translation = st.translation(domain)
-            return translation.gettext(msg)
-        except:
-            pass
-
-    return msg
-
-# ---------------------------------------------------------------------------
-
-
-def error(msg_id, domain=None):
-    """Return the error message from gettext.
-
-    :param msg_id: (str or int) Error id
-    :param domain: (str) Name of the domain
-
-    """
-    msg = ":ERROR " + str(msg_id) + ": "
-    if domain is not None:
-        try:
-            st = sppasTranslate()
-            translation = st.translation(domain)
-            return translation.gettext(msg)
-        except:
-            pass
-
-    return msg
-
-# ---------------------------------------------------------------------------
-
-
-def msg(msg, domain=None):
-    """Return the message from gettext.
-
-    :param msg: (str or int) Message
-    :param domain: (str) Name of the domain
-
-    """
-    if domain is not None:
-        try:
-            st = sppasTranslate()
-            translation = st.translation(domain)
-            return translation.gettext(msg)
-        except:
-            pass
-
-    return msg
-
-# ---------------------------------------------------------------------------
-
-
 __all__ = (
     "sppasBaseSettings",
     "sg",
@@ -166,3 +103,4 @@ __all__ = (
     "error",
     "msg"
 )
+

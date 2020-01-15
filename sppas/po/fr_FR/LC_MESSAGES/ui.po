@@ -140,14 +140,17 @@ msgstr "Envoyer avec : "
 msgid "Other"
 msgstr "Autre"
 
-msgid "Confirm exit of {:s}"
-msgstr "Voulez-vous vraiment quitter {:s}?"
+msgid "Confirm exit?"
+msgstr "Voulez-vous vraiment quitter ?"
 
 msgid "Perform annotations"
 msgstr "Effectuer les annotations"
 
 msgid "Automatically annotate selected files"
 msgstr "Annoter automatiquement les fichier sélectionnés"
+
+msgid "Add comments here"
+msgstr "Ajouter vos commentaires ici"
 
 msgid "Add files"
 msgstr "Ajouter fichier"

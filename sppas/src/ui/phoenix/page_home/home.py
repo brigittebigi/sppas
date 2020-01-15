@@ -35,14 +35,14 @@
 """
 
 import wx
+import webbrowser
 
 from sppas.src.config import sg
 
-from sppas.src.ui.phoenix.windows import sppasTitleText
-from sppas.src.ui.phoenix.windows import sppasMessageText
-from sppas.src.ui.phoenix.windows import sppasPanel
-
-from sppas.src.ui.phoenix.tools import sppasSwissKnife
+from ..windows import sppasTitleText
+from ..windows import sppasMessageText
+from ..windows import sppasPanel
+from ..windows import BitmapTextButton
 
 # ---------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ class sppasHomePanel(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -71,38 +71,52 @@ class sppasHomePanel(sppasPanel):
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
 
+    # -----------------------------------------------------------------------
+
+    def SetFont(self, font):
+        sppasPanel.SetFont(self, font)
+        self.FindWindow("title").SetFont(wx.GetApp().settings.header_text_font)
+        self.Layout()
+
+    # ------------------------------------------------------------------------
+
+    def set_data(self, data):
+        pass
+
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
     # ------------------------------------------------------------------------
 
     def _create_content(self):
         """Create the main content."""
-        # create a banner
-        bmp = sppasSwissKnife.get_bmp_image('splash_transparent', 100)
-        sbmp = wx.StaticBitmap(self, wx.ID_ANY, bmp)
-
+        h = self.get_font_height()
+        title = "{:s} - {:s}".format(sg.__name__, sg.__title__)
         # Create a title
-        st = sppasTitleText(
-            parent=self,
-            value="Welcome")
+        st = sppasTitleText(self, value=title)
         st.SetName("title")
+        st.SetMinSize(wx.Size(len(title)*h*2, h*2))
 
         # Create the welcome message
         message = \
-            "This is the new and experimental version of the GUI - "\
-            "The Graphical User Interface, of {:s}. This version is " \
-            "based on WxPython version 4.\n\n"\
-            "The stable version of the GUI requires WxPython version 3.\n\n" \
-            "For any help, see the web page with the installation instructions " \
-            "and chapter 2 of the documentation.\n\n"\
-            "{:s}".format(sg.__name__, sg.__url__)
+            "This is the new version of the Graphical User Interface. " \
+            "It includes very interesting new features but is still under " \
+            "development and un-documented.\n"\
+            "For any help, see the web page and the documentation included " \
+            "in the package.\n"
         txt = sppasMessageText(self, message)
+
+        sppas_logo = BitmapTextButton(self, name="SPPAS")
+        sppas_logo.SetMinSize(wx.Size(sppasPanel.fix_size(64), -1))
+        sppas_logo.SetBorderWidth(0)
+        sppas_logo.SetLabelPosition(wx.TOP)
 
         # Organize the title and message
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(sbmp, 2, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 15)
-        sizer.Add(st, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER_HORIZONTAL, 15)
-        sizer.Add(txt, 6, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
+        sizer.AddStretchSpacer(1)
+        sizer.Add(st, 1, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, h)
+        sizer.Add(txt, 1, wx.EXPAND)
+        sizer.Add(sppas_logo, 1, wx.ALIGN_CENTER_HORIZONTAL)
+        sizer.AddStretchSpacer(2)
 
         self.SetSizer(sizer)
 
@@ -117,30 +131,20 @@ class sppasHomePanel(sppasPanel):
         will be called.
 
         """
-        # Capture keys
-        self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
+        self.Bind(wx.EVT_BUTTON, self._process_event)
 
     # -----------------------------------------------------------------------
 
-    def _process_key_event(self, event):
-        """Process a key event.
+    def _process_event(self, event):
+        """Process any kind of events.
 
         :param event: (wx.Event)
 
         """
-        key_code = event.GetKeyCode()
-        cmd_down = event.CmdDown()
-        shift_down = event.ShiftDown()
+        event_obj = event.GetEventObject()
+        event_name = event_obj.GetName()
 
-        #if key_code == wx.WXK_F5 and cmd_down is False and shift_down is False:
-        #    logging.debug('Refresh all the files [F5 keys pressed]')
-        #    self.FindWindow("files").RefreshData()
-
-        event.Skip()
-
-    # -----------------------------------------------------------------------
-
-    def SetFont(self, font):
-        sppasPanel.SetFont(self, font)
-        self.FindWindow("title").SetFont(wx.GetApp().settings.header_text_font)
-        self.Layout()
+        if event_name == "SPPAS":
+            webbrowser.open(sg.__url__)
+        else:
+            event.Skip()

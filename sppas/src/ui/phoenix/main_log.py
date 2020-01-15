@@ -39,17 +39,21 @@ import wx.lib.newevent
 import logging
 
 from sppas.src.config import sg
-from sppas.src.config import ui_translation
-from sppas.src.utils.datatype import sppasTime
+from sppas.src.config import msg
+from sppas.src.utils import u
+from sppas.src.utils import sppasTime
 
 from ..logs import sppasLogFile
+
 from .tools import sppasSwissKnife
 from .windows import sppasStaticLine
 from .windows import sppasPanel
-from .windows import sppasBitmapTextButton
+from .windows import sppasStaticText
+from .windows import BitmapTextButton
 from .dialogs import Feedback
 
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+
 
 # event used to send a logging record to a wx object
 wxLogEvent, EVT_WX_LOG_EVENT = wx.lib.newevent.NewEvent()
@@ -64,15 +68,20 @@ match_levels = {
     wx.LOG_Debug: 'DEBUG'
 }
 
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
-MSG_HEADER_LOG = ui_translation.gettext("Log Window")
-MSG_ACTION_CLEAR = ui_translation.gettext("Clear")
-MSG_ACTION_SAVE = ui_translation.gettext("Save")
-MSG_ACTION_SEND = ui_translation.gettext("Send")
-MSG_ADD_COMMENT = ui_translation.gettext("Add comments here.")
 
-# ---------------------------------------------------------------------------
+def _(message):
+    return u(msg(message, "ui"))
+
+
+MSG_HEADER_LOG = _("Log Window")
+MSG_ACTION_CLEAR = _("Clear")
+MSG_ACTION_SAVE = _("Save")
+MSG_ACTION_SEND = _("Send")
+MSG_ADD_COMMENT = _("Add comments here")
+
+# ----------------------------------------------------------------------------
 
 
 def log_level_to_wx(log_level):
@@ -207,7 +216,6 @@ class sppasLogWindow(wx.TopLevelWindow):
             parent=parent,
             title='{:s} Log'.format(sg.__name__),
             style=wx.CAPTION | wx.RESIZE_BORDER)
-            #style=wx.DEFAULT_FRAME_STYLE & ~wx.CLOSE_BOX)
 
         # To fade-in and fade-out the opacity
         self.opacity_in = 0
@@ -245,11 +253,11 @@ class sppasLogWindow(wx.TopLevelWindow):
         w = int(settings.frame_size[0] * 0.7)
         h = int(settings.frame_size[1] * 0.7)
         self.SetSize(wx.Size(w, h))
-        self.SetName('{:s}-log'.format(sg.__name__))
+        self.SetName('sppas_log_frm')
 
         # icon
         _icon = wx.Icon()
-        bmp = sppasSwissKnife.get_bmp_icon("sppas_32", height=64)
+        bmp = sppasSwissKnife.get_bmp_icon("sppas_64", height=64)
         _icon.CopyFromBitmap(bmp)
         self.SetIcon(_icon)
 
@@ -602,7 +610,7 @@ class sppasLogTitlePanel(sppasPanel):
         self.SetMinSize((-1, settings.title_height))
 
         # Create the title
-        st = wx.StaticText(parent=self, label=MSG_HEADER_LOG)
+        st = sppasStaticText(self, label=MSG_HEADER_LOG)
 
         # Put the title in a sizer
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -762,9 +770,9 @@ class sppasLogActionPanel(sppasPanel):
         self.SetMinSize((-1, settings.action_height))
 
         # create action buttons
-        clear_btn = sppasBitmapTextButton(self, MSG_ACTION_CLEAR, name="broom")
-        save_btn = sppasBitmapTextButton(self, MSG_ACTION_SAVE, name="save_log")
-        send_btn = sppasBitmapTextButton(self, MSG_ACTION_SEND, name="mail-at")
+        clear_btn = self._create_button(MSG_ACTION_CLEAR, "broom")
+        save_btn = self._create_button(MSG_ACTION_SAVE, "save_log")
+        send_btn = self._create_button(MSG_ACTION_SEND, "mail-at")
 
         # organize buttons in a sizer
         action_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -779,6 +787,25 @@ class sppasLogActionPanel(sppasPanel):
         self.SetFont(wx.GetApp().settings.action_text_font)
 
         self.SetSizer(action_sizer)
+
+    # -----------------------------------------------------------------------
+
+    def _create_button(self, text, icon):
+        btn = BitmapTextButton(self, label=text, name=icon)
+
+        # Get the font height for the header
+        h = self.get_font_height()
+
+        btn.LabelPosition = wx.RIGHT
+        btn.FocusStyle = wx.PENSTYLE_SOLID
+        btn.FocusWidth = h//4
+        btn.FocusColour = wx.Colour(128, 128, 128, 128)
+        btn.Spacing = sppasPanel.fix_size(h//2)
+        btn.BorderWidth = 0
+        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetMinSize(wx.Size(h*10, h*2))
+
+        return btn
 
     # ------------------------------------------------------------------------
 

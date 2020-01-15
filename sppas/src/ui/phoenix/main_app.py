@@ -71,7 +71,7 @@ class sppasApp(wx.App):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -214,7 +214,7 @@ class sppasApp(wx.App):
 
             # here we could fix things like:
             #  - is first launch? No? so create config! and/or display a welcome msg!
-            #  - fix config dir,
+            #  - check for update,
             #  - etc
 
             # Create the main frame of the application and show it.

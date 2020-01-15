@@ -41,7 +41,7 @@ class sppasBaseSettings(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     :Example:
 
@@ -69,11 +69,19 @@ class sppasBaseSettings(object):
     # -----------------------------------------------------------------------
 
     def load(self):
-        """Load the dictionary of settings from a file."""
+        """Load the dictionary of settings from a file.
+
+        To be overridden.
+
+        """
         pass
 
     # -----------------------------------------------------------------------
 
     def save(self):
-        """Save the dictionary of settings in a file."""
+        """Save the dictionary of settings in a file.
+
+        To be overridden.
+
+        """
         pass

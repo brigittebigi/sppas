@@ -34,17 +34,15 @@
 
 """
 
-import logging
 import wx
-import webbrowser
 
 from sppas.src.config import sg
-from sppas.src.config import ui_translation
+from sppas.src.config import msg
+from sppas.src.utils import u
 
 from .windows import sppasStaticLine
 from .windows import BitmapTextButton
-from .windows import sppasTextButton
-from .windows import sppasBitmapButton, sppasBitmapTextButton
+from .windows import ToggleButton
 from .windows import sppasPanel
 from .windows import sppasDialog
 from .windows.book import sppasSimplebook
@@ -64,19 +62,23 @@ from .main_events import DataChangedEvent, EVT_DATA_CHANGED
 
 # ---------------------------------------------------------------------------
 
-MSG_ACTION_HOME = ui_translation.gettext('Home')
-MSG_ACTION_FILES = ui_translation.gettext('Files')
-MSG_ACTION_ANNOTATE = ui_translation.gettext('Annotate')
-MSG_ACTION_ANALYZE = ui_translation.gettext('Analyze')
-MSG_ACTION_CONVERT = ui_translation.gettext('Convert')
-MSG_ACTION_PLUGINS = ui_translation.gettext('Plugins')
-MSG_ACTION_EXIT = ui_translation.gettext('Exit')
-MSG_ACTION_ABOUT = ui_translation.gettext('About')
-MSG_ACTION_SETTINGS = ui_translation.gettext('Settings')
-MSG_ACTION_VIEWLOGS = ui_translation.gettext('View logs')
 
-MSG_TOOLTIP_WEBSITE = ui_translation.gettext('Visit the website at ')
-MSG_CONFIRM = ui_translation.gettext("Confirm exit of {:s}").format(sg.__name__)
+def _(message):
+    return u(msg(message, "ui"))
+
+
+MSG_ACTION_HOME = _('Home')
+MSG_ACTION_FILES = _('Files')
+MSG_ACTION_ANNOTATE = _('Annotate')
+MSG_ACTION_ANALYZE = _('Analyze')
+MSG_ACTION_CONVERT = _('Convert')
+MSG_ACTION_PLUGINS = _('Plugins')
+MSG_ACTION_EXIT = _('Exit')
+MSG_ACTION_ABOUT = _('About')
+MSG_ACTION_SETTINGS = _('Settings')
+MSG_ACTION_VIEWLOGS = _('View logs')
+
+MSG_CONFIRM = _("Confirm exit?")
 
 # -----------------------------------------------------------------------
 
@@ -88,7 +90,7 @@ class sppasMainWindow(sppasDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     This class:
 
@@ -107,12 +109,18 @@ class sppasMainWindow(sppasDialog):
 
     """
 
+    # List of the page names of the main notebook
+    pages = ("page_home", "page_files", "page_annotate", "page_analyze",
+             "page_convert", "page_plugins")
+
     def __init__(self):
         super(sppasMainWindow, self).__init__(
             parent=None,
             title=wx.GetApp().GetAppDisplayName(),
-            style=wx.WANTS_CHARS | wx.TAB_TRAVERSAL | wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT,
-            name="sppas_main")
+            style=wx.WANTS_CHARS | wx.TAB_TRAVERSAL | wx.CAPTION |
+                  wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX |
+                  wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT,
+            name="sppas_main_dlg")
 
         # Members
         self._init_infos()
@@ -171,6 +179,7 @@ class sppasMainWindow(sppasDialog):
         self.SetActions(actions)
 
         # organize the content and lays out.
+        menus.enable(sppasMainWindow.pages[0])
         self.LayoutComponents()
 
     # -----------------------------------------------------------------------
@@ -187,7 +196,7 @@ class sppasMainWindow(sppasDialog):
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS,
             name="content"
         )
-        book.SetEffectsTimeouts(100, 200)
+        book.SetEffectsTimeouts(150, 200)
 
         # 1st page: a panel with a welcome message
         book.ShowNewPage(sppasHomePanel(book))
@@ -225,6 +234,7 @@ class sppasMainWindow(sppasDialog):
 
         # Bind all events from our buttons (including 'exit')
         self.Bind(wx.EVT_BUTTON, self._process_event)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_event)
 
         # The data have changed.
         # This event was sent by any of the children
@@ -232,7 +242,7 @@ class sppasMainWindow(sppasDialog):
 
         # Capture keys
         # self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
-        #self.FindWindow("content").Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
+        # self.FindWindow("content").Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
 
     # -----------------------------------------------------------------------
 
@@ -245,7 +255,6 @@ class sppasMainWindow(sppasDialog):
         event_obj = event.GetEventObject()
         event_name = event_obj.GetName()
         event_id = event_obj.GetId()
-        # wx.LogDebug("Received event id {:d} of {:s}".format(event_id, event_name))
 
         if event_name == "exit":
             self.exit()
@@ -259,8 +268,8 @@ class sppasMainWindow(sppasDialog):
         elif event_name == "settings":
             self.on_settings()
 
-        elif event_name in ("home", "files", "annotate", "analyze", "convert", "plugins"):
-            self.show_page("page_" + event_name)
+        elif event_name in sppasMainWindow.pages:
+            self.show_page(event_name)
 
         else:
             event.Skip()
@@ -275,23 +284,20 @@ class sppasMainWindow(sppasDialog):
         :param event: (wx.Event) An event with a FileData()
 
         """
-        # Names of the page panels which are requiring the workspace
-        pages = ("page_files", "page_annotate", "page_analyze", "page_convert", "page_plugins")
-
         # The object the event comes from
         emitted = event.GetEventObject()
         try:
             wkp = event.data
         except AttributeError:
-            logging.error("Workspace wasn't sent in the event emitted by {:s}"
-                          "".format(emitted.GetName()))
+            wx.LogError("Workspace wasn't sent in the event emitted by {:s}"
+                        "".format(emitted.GetName()))
             return
 
         # Set the data to appropriate children panels
         book = self.FindWindow('content')
         for i in range(book.GetPageCount()):
             page = book.GetPage(i)
-            if emitted != page and page.GetName() in pages:
+            if emitted != page and page.GetName() in sppasMainWindow.pages:
                 page.set_data(wkp)
 
     # -----------------------------------------------------------------------
@@ -308,17 +314,19 @@ class sppasMainWindow(sppasDialog):
             # ALT+F4 on Windows to exit with confirmation
             self.on_exit(event)
 
-        elif key_code == 87 and event.CmdDown() and wx.Platform != "__WXMSW__":
-            # CMD+w on MacOS to exit with confirmation
+        elif key_code == 87 and (event.CmdDown() or event.CtrlDown())\
+                and wx.Platform != "__WXMSW__":
+            # CMD+w on MacOS / Ctrl+w on Linux to exit with confirmation
             self.on_exit(event)
 
-        elif key_code == 81 and event.CmdDown() and wx.Platform != "__WXMSW__":
-            # CMD+q on MacOS to force exit
+        elif key_code == 81 and (event.CmdDown() or event.CtrlDown) \
+                and wx.Platform != "__WXMSW__":
+            # CMD+q on MacOS / Ctrl+q on Linux to force exit
             self.exit()
 
         else:
             # Keeps on going the event to the current page of the book.
-            logging.debug('Key event skipped by the main window.')
+            wx.LogDebug('Key event skipped by the main window.')
             event.Skip()
 
     # -----------------------------------------------------------------------
@@ -402,17 +410,16 @@ class sppasMainWindow(sppasDialog):
 
 
 class sppasMenuPanel(sppasPanel):
-    """Create my own menu panel with several action buttons.
+    """Create a custom menu panel with several action buttons.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
-
-    sppasMenuPanel() aims to replace the commons menus+toolbar.
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
+
     def __init__(self, parent):
         super(sppasMenuPanel, self).__init__(
             parent=parent,
@@ -424,55 +431,74 @@ class sppasMenuPanel(sppasPanel):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         bord = sppasPanel.fix_size(6)
 
-        home = sppasTextButton(self, MSG_ACTION_HOME, name="home")
+        sizer.AddStretchSpacer(2)
+
+        home = self._create_button(MSG_ACTION_HOME, "page_home")
         sizer.Add(home, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
 
-        files = sppasTextButton(self, MSG_ACTION_FILES, name="files")
+        files = self._create_button(MSG_ACTION_FILES, "page_files")
         sizer.Add(files, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
 
-        annotate = sppasTextButton(self, MSG_ACTION_ANNOTATE, name="annotate")
+        annotate = self._create_button(MSG_ACTION_ANNOTATE, "page_annotate")
         sizer.Add(annotate, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
 
-        analyze = sppasTextButton(self, MSG_ACTION_ANALYZE, name="analyze")
+        analyze = self._create_button(MSG_ACTION_ANALYZE, "page_analyze")
         sizer.Add(analyze, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
 
-        convert = sppasTextButton(self, MSG_ACTION_CONVERT, name="convert")
+        convert = self._create_button(MSG_ACTION_CONVERT, "page_convert")
         sizer.Add(convert, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
 
-        plugins = sppasTextButton(self, MSG_ACTION_PLUGINS, name="plugins")
+        plugins = self._create_button(MSG_ACTION_PLUGINS, "page_plugins")
         sizer.Add(plugins, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
 
         sizer.AddStretchSpacer(2)
 
-        sppas_logo = sppasBitmapButton(
-            parent=self,
-            name="sppas_64",
-            height=int(wx.GetApp().settings.title_height * 0.8)
-        )
-        sppas_logo.SetToolTip(MSG_TOOLTIP_WEBSITE + sg.__url__)
-        sizer.Add(sppas_logo, 0,
-                  wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, border=bord)
-
-        self.Bind(wx.EVT_BUTTON, self._process_event)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self.__on_tg_btn_event)
         self.SetSizer(sizer)
+
+    # ------------------------------------------------------------------------
+
+    def enable(self, btn_name):
+        """Enable a given button name.
+
+        :param btn_name: (str) Name of the page to enable the toggle button.
+
+        """
+        # Disable all the buttons
+        for name in sppasMainWindow.pages:
+            self.FindWindow(name).SetValue(False)
+        # Enable the expected one
+        self.FindWindow(btn_name).SetValue(True)
+
+    # -----------------------------------------------------------------------
+
+    def _create_button(self, text, icon):
+        btn = ToggleButton(self, label=text, name=icon)
+
+        # Get the font height for the header
+        h = self.get_font_height()
+
+        btn.LabelPosition = wx.RIGHT
+        btn.FocusStyle = wx.PENSTYLE_SOLID
+        btn.FocusWidth = h//4
+        btn.FocusColour = wx.Colour(128, 128, 128, 128)
+        btn.Spacing = sppasPanel.fix_size(h//2)
+        btn.BorderWidth = 0
+        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetMinSize(wx.Size(h*10, h*3))
+
+        return btn
 
     # ------------------------------------------------------------------------
     # Callback to events
     # ------------------------------------------------------------------------
 
-    def _process_event(self, event):
-        """Process any kind of events.
-
-        :param event: (wx.Event)
-
-        """
+    def __on_tg_btn_event(self, event):
         event_obj = event.GetEventObject()
         event_name = event_obj.GetName()
-
-        if event_name == "sppas_64":
-            webbrowser.open(sg.__url__)
-        else:
-            event.Skip()
+        if event_name in sppasMainWindow.pages:
+            self.enable(event_name)
+        event.Skip()
 
 # ---------------------------------------------------------------------------
 
@@ -484,14 +510,14 @@ class sppasActionsPanel(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
     def __init__(self, parent):
 
         super(sppasActionsPanel, self).__init__(
             parent=parent,
-            style = wx.WANTS_CHARS | wx.TAB_TRAVERSAL | wx.NO_BORDER,
+            style=wx.WANTS_CHARS | wx.TAB_TRAVERSAL | wx.NO_BORDER,
             name="actions")
 
         settings = wx.GetApp().settings
@@ -500,10 +526,11 @@ class sppasActionsPanel(sppasPanel):
         self.SetMinSize(wx.Size(-1, settings.action_height))
         sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        exit_btn = sppasBitmapTextButton(self, MSG_ACTION_EXIT, "exit")
-        about_btn = self.create_button(MSG_ACTION_ABOUT, "about")
-        settings_btn = self.create_button(MSG_ACTION_SETTINGS, "settings")
-        log_btn = self.create_button(MSG_ACTION_VIEWLOGS, "view_log")
+        # exit_btn = sppasBitmapTextButton(self, MSG_ACTION_EXIT, "exit")
+        exit_btn = self._create_button(MSG_ACTION_EXIT, "exit")
+        about_btn = self._create_button(MSG_ACTION_ABOUT, "about")
+        settings_btn = self._create_button(MSG_ACTION_SETTINGS, "settings")
+        log_btn = self._create_button(MSG_ACTION_VIEWLOGS, "view_log")
 
         sizer.Add(log_btn, 1, wx.ALL | wx.EXPAND, 0)
         sizer.Add(self.VertLine(), 0, wx.ALL | wx.EXPAND, 0)
@@ -517,16 +544,20 @@ class sppasActionsPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def create_button(self, text, icon):
+    def _create_button(self, text, icon):
         btn = BitmapTextButton(self, label=text, name=icon)
+
+        # Get the font height for the header
+        h = self.get_font_height()
+
         btn.LabelPosition = wx.RIGHT
-        btn.Spacing = 12
+        btn.FocusStyle = wx.PENSTYLE_SOLID
+        btn.FocusWidth = h//4
+        btn.FocusColour = wx.Colour(128, 128, 128, 128)
+        btn.Spacing = sppasPanel.fix_size(h//2)
         btn.BorderWidth = 0
         btn.BitmapColour = self.GetForegroundColour()
-        btn.FocusColour = self.GetForegroundColour()
-
-        min_size = sppasPanel.fix_size(28)
-        btn.SetMinSize(wx.Size(min_size, min_size))
+        btn.SetMinSize(wx.Size(h*10, h*2))
 
         return btn
 

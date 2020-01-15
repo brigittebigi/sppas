@@ -42,15 +42,26 @@ except ImportError:
     # Fall back to Python 2's urllib2
     from urllib2 import urlopen
 
-from .sglobal import sppasPathSettings, sppasGlobalSettings
+from .sglobal import sppasPathSettings
+from .sglobal import sppasGlobalSettings
+
+# ---------------------------------------------------------------------------
 
 
-class PostInstall:
+class sppasPostInstall:
+    """Check directories, etc.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
 
     @staticmethod
     def sppas_directories():
         """Create the required directories in the SPPAS package."""
-        logging.debug('Check for directories')
         with sppasPathSettings() as paths:
 
             if os.path.exists(paths.logs) is False:
@@ -59,11 +70,11 @@ class PostInstall:
                     "The directory {:s} to store logs is created."
                     "".format(paths.logs))
 
-            # if os.path.exists(paths.wkps) is False:
-            #     os.mkdir(paths.wkps)
-            #     logging.info(
-            #         "The directory {:s} to store workspaces is created."
-            #         "".format(paths.wkps))
+            if os.path.exists(paths.wkps) is False:
+                os.mkdir(paths.wkps)
+                logging.info(
+                    "The directory {:s} to store workspaces is created."
+                    "".format(paths.wkps))
 
             if os.path.exists(paths.trash) is False:
                 os.mkdir(paths.trash)
@@ -71,16 +82,42 @@ class PostInstall:
                     "The Trash directory {:s} is created."
                     "".format(paths.trash))
 
+    # -----------------------------------------------------------------------
 
-class Update:
+    @staticmethod
+    def sppas_dependencies():
+        """Enable or disable features depending on dependencies."""
+        pass
+
+# ---------------------------------------------------------------------------
+
+
+class sppasUpdate:
+    """Check if an update of SPPAS is available.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    This class is not implemented yet.
+
+    """
 
     @staticmethod
     def check_update():
         with sppasGlobalSettings as sg:
             current = sg.__version__
 
+            # Perhaps I should create a text file with the version number
             url = sg.__url__ + '/download.html'
             response = urlopen(url)
             data = str(response.read())
-            print(data)
+
+            # Extract last version from this page
+
+            # Compare to current version
+
+        return False
 

@@ -42,9 +42,10 @@ except ImportError:
     from urllib.parse import quote  # Python 3+
 
 from sppas.src.config import sg
-from sppas.src.config import ui_translation
+from sppas.src.config import msg
+from sppas.src.utils import u
 
-from ..windows import sppasBitmapTextButton
+from ..windows import BitmapTextButton
 from ..windows import sppasTextCtrl
 from ..windows import sppasPanel
 from ..windows import sppasDialog
@@ -52,21 +53,24 @@ from ..windows import sppasDialog
 from .messages import Information
 
 # -------------------------------------------------------------------------
-# Constants
-# -------------------------------------------------------------------------
 
-DESCRIBE_TEXT = ui_translation.gettext("Write your message here")
-SEND_WITH_OTHER = ui_translation.gettext(
+
+def _(message):
+    return u(msg(message, "ui"))
+
+
+DESCRIBE_TEXT = _("Write the message here")
+SEND_WITH_OTHER = _(
     "Copy and paste the message into your favorite email client and "
     "send it from there.")
 
-MSG_HEADER_FEEDBACK = ui_translation.gettext("Send e-mail")
-MSG_EMAIL_TO = ui_translation.gettext("To: ")
-MSG_EMAIL_SUBJECT = ui_translation.gettext("Subject: ")
-MSG_EMAIL_BODY = ui_translation.gettext("Body: ")
-MSG_EMAIL_SEND_WITH = ui_translation.gettext("Send with: ")
-MSG_ACTION_OTHER = ui_translation.gettext("Other")
-MSG_ACTION_CLOSE = ui_translation.gettext("Close")
+MSG_HEADER_FEEDBACK = _("Send e-mail")
+MSG_EMAIL_TO = _("To: ")
+MSG_EMAIL_SUBJECT = _("Subject: ")
+MSG_EMAIL_BODY = _("Body: ")
+MSG_EMAIL_SEND_WITH = _("Send with: ")
+MSG_ACTION_OTHER = _("Other")
+MSG_ACTION_CLOSE = _("Close")
 
 # ----------------------------------------------------------------------------
 
@@ -78,7 +82,7 @@ class sppasFeedbackDialog(sppasDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -91,14 +95,16 @@ class sppasFeedbackDialog(sppasDialog):
         super(sppasFeedbackDialog, self).__init__(
             parent=parent,
             title='{:s} Feedback'.format(sg.__name__),
-            style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.STAY_ON_TOP)
+            style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX |
+                  wx.MAXIMIZE_BOX | wx.STAY_ON_TOP)
 
         self.CreateHeader(MSG_HEADER_FEEDBACK, icon_name="mail-at")
         self._create_content()
-        self._create_buttons()
+        self.CreateActions([wx.ID_OK])
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
-        self.SetMinSize(wx.Size(480, 320))
+        self.SetMinSize(wx.Size(sppasDialog.fix_size(480),
+                                sppasDialog.fix_size(320)))
         self.LayoutComponents()
         self.CenterOnParent()
         self.FadeIn(deltaN=-8)
@@ -109,7 +115,7 @@ class sppasFeedbackDialog(sppasDialog):
         """Create the content of the message dialog."""
         panel = sppasPanel(self, name="content")
 
-        to = wx.StaticText(panel, label="To: ")
+        to = wx.StaticText(panel, label=MSG_EMAIL_TO)
         self.to_text = wx.StaticText(
             parent=panel,
             label=sg.__contact__)
@@ -144,6 +150,8 @@ class sppasFeedbackDialog(sppasDialog):
 
         s = wx.StaticText(panel, label=MSG_EMAIL_SEND_WITH)
         grid.Add(s, 0, wx.LEFT | wx.BOTTOM, 4)
+        send_panel = self._create_send_buttons(panel)
+        grid.Add(send_panel, 0, wx.LEFT | wx.BOTTOM, 4)
 
         panel.SetAutoLayout(True)
         panel.SetSizer(grid)
@@ -151,37 +159,58 @@ class sppasFeedbackDialog(sppasDialog):
 
     # -----------------------------------------------------------------------
 
-    def _create_buttons(self):
+    def _create_send_buttons(self, parent):
         """Create the buttons."""
-        panel = sppasPanel(self, name="actions")
+        panel = sppasPanel(parent, name="send_panel")
         panel.SetMinSize(wx.Size(-1, wx.GetApp().settings.action_height))
 
         # Create the buttons
-        gmail_btn = sppasBitmapTextButton(panel, "Gmail", name="gmail")
-        default_btn = sppasBitmapTextButton(panel, "E-mail", name="window-email")
-        other_btn = sppasBitmapTextButton(panel, MSG_ACTION_OTHER, name="at")
-        close_btn = sppasBitmapTextButton(panel, MSG_ACTION_CLOSE, name="window-close")
-
-        # Create vertical lines to separate buttons
-        vertical_line_1 = wx.StaticLine(panel, style=wx.LI_VERTICAL)
-        vertical_line_2 = wx.StaticLine(panel, style=wx.LI_VERTICAL)
-        vertical_line_3 = wx.StaticLine(panel, style=wx.LI_VERTICAL)
+        gmail_btn = self._create_button(panel, "Gmail", "gmail")
+        default_btn = self._create_button(panel, "E-mail", "window-email")
+        other_btn = self._create_button(panel, MSG_ACTION_OTHER, "at")
 
         # Organize buttons in a sizer
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(gmail_btn, 1, wx.EXPAND, 0)
-        sizer.Add(vertical_line_1, 0, wx.EXPAND, 0)
-        sizer.Add(default_btn, 1, wx.EXPAND, 0)
-        sizer.Add(vertical_line_2, 0, wx.EXPAND, 0)
-        sizer.Add(other_btn, 1, wx.EXPAND, 0)
-        sizer.Add(vertical_line_3, 0, wx.EXPAND, 0)
-        sizer.Add(close_btn, 2, wx.EXPAND, border=0)
+        sizer.Add(gmail_btn, 1, wx.EXPAND | wx.LEFT, panel.fix_size(6))
+        sizer.Add(default_btn, 1, wx.EXPAND | wx.LEFT, panel.fix_size(6))
+        sizer.Add(other_btn, 1, wx.EXPAND | wx.LEFT, panel.fix_size(6))
 
         panel.SetSizer(sizer)
-        self.SetActions(panel)
+        return panel
+
+    # -----------------------------------------------------------------------
+
+    def _create_button(self, parent, text, icon):
+        btn = BitmapTextButton(parent, label=text, name=icon)
+
+        # Get the font height for the header
+        h = parent.get_font_height()
+
+        btn.LabelPosition = wx.RIGHT
+        btn.FocusStyle = wx.PENSTYLE_SOLID
+        btn.FocusWidth = h//4
+        btn.FocusColour = wx.Colour(128, 128, 128, 128)
+        btn.Spacing = sppasPanel.fix_size(h//2)
+        btn.BorderWidth = 1
+        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetMinSize(wx.Size(h*10, h*2))
+
+        return btn
 
     # ------------------------------------------------------------------------
     # Callback to events
+    # ------------------------------------------------------------------------
+
+    def _setup_events(self):
+        """Associate a handler function with the events.
+
+        It means that when an event occurs then the process handler function
+        will be called.
+
+        """
+        # Bind close event from the close dialog 'x' on the frame
+        self.Bind(wx.EVT_BUTTON, self._process_event)
+
     # ------------------------------------------------------------------------
 
     def _process_event(self, event):
@@ -193,11 +222,7 @@ class sppasFeedbackDialog(sppasDialog):
         event_obj = event.GetEventObject()
         event_name = event_obj.GetName()
 
-        if event_name == "window-close":
-            self.SetReturnCode(wx.ID_CLOSE)
-            self.Close()
-
-        elif event_name == "window-email":
+        if event_name == "window-email":
             self.SendWithDefault()
 
         elif event_name == "gmail":

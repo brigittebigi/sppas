@@ -39,6 +39,7 @@ from .line import sppasStaticLine
 from .button import BitmapTextButton
 from .button import CheckButton
 from .button import RadioButton
+from .button import ToggleButton
 from .button import sppasBitmapTextButton
 from .button import sppasTextButton
 from .button import sppasBitmapButton
@@ -74,6 +75,7 @@ __all__ = (
     "sppasRadioBoxPanel",
     "CheckButton",
     "RadioButton",
+    "ToggleButton",
     "sppasStaticText",
     "sppasTitleText",
     "sppasMessageText",

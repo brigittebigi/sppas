@@ -558,8 +558,8 @@ class BaseButton(wx.Window):
         r, g, b = color.Red(), color.Green(), color.Blue()
         delta = 20
         if (r + g + b) > 384:
-            return wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
-        return wx.Colour(r, g, b, 50).ChangeLightness(delta)
+            return wx.Colour(r, g, b).ChangeLightness(100 - delta)
+        return wx.Colour(r, g, b).ChangeLightness(100 + delta)
 
     # -----------------------------------------------------------------------
 

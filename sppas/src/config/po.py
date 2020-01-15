@@ -33,6 +33,7 @@
     ~~~~~~~~~~~
 
 """
+
 import sys
 import gettext
 import locale
@@ -40,7 +41,7 @@ import locale
 from .sglobal import sppasPathSettings
 from .sglobal import sppasGlobalSettings
 
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 
 class T:
@@ -50,7 +51,7 @@ class T:
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -72,7 +73,7 @@ class T:
             with sppasGlobalSettings() as sg:
                 return msg.decode(sg.__encoding__)
 
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 
 class sppasTranslate(object):
@@ -82,24 +83,30 @@ class sppasTranslate(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     sppasTranslate is useful for the internationalization of texts for both
     Python 2 and Python 3.
 
     The locale is used to set the language and English is the default.
-    The path to search a domain translation is the one of SPPAS (po folder).
+    The path to search for a domain translation is the one of SPPAS (po folder).
 
-    >>> _ = sppasTranslate().translation("domain").gettext
-    >>> my_string = _("Some string in the domain.")
+    :Example:
+
+        >>> _ = sppasTranslate().translation("domain").gettext
+        >>> my_string = _("Some string in the domain.")
 
     """
 
     def __init__(self):
-        """Create a sppasTranslate instance: fix language."""
+        """Create a sppasTranslate instance.
+
+         Fix languages.
+
+         """
         self.lang = sppasTranslate.get_lang_list()
 
-    # -----------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     @staticmethod
     def get_lang_list():
@@ -118,14 +125,15 @@ class sppasTranslate(object):
 
         return ["en_US"]
 
-    # -----------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def translation(self, domain):
         """Create the GNUTranslations for a given domain.
 
-        :param domain: (str) Name of the domain.
         A domain corresponds to a ".po" file of the language in the 'po' folder
         of the SPPAS package.
+
+        :param domain: (str) Name of the domain.
         :returns: (GNUTranslations)
 
         """
@@ -150,3 +158,66 @@ class sppasTranslate(object):
         # No language installed. The messages won't be translated;
         # at least they are simply returned.
         return T()
+
+# ---------------------------------------------------------------------------
+
+
+def info(msg_id, domain=None):
+    """Return the info message from gettext.
+
+    :param msg_id: (str or int) Info id
+    :param domain: (str) Name of the domain
+
+    """
+    msg = ":INFO " + str(msg_id) + ": "
+    if domain is not None:
+        try:
+            st = sppasTranslate()
+            translation = st.translation(domain)
+            return translation.gettext(msg)
+        except:
+            pass
+
+    return msg
+
+# ---------------------------------------------------------------------------
+
+
+def error(msg_id, domain=None):
+    """Return the error message from gettext.
+
+    :param msg_id: (str or int) Error id
+    :param domain: (str) Name of the domain
+
+    """
+    msg = ":ERROR " + str(msg_id) + ": "
+    if domain is not None:
+        try:
+            st = sppasTranslate()
+            translation = st.translation(domain)
+            return translation.gettext(msg)
+        except:
+            pass
+
+    return msg
+
+# ---------------------------------------------------------------------------
+
+
+def msg(msg, domain=None):
+    """Return the message from gettext.
+
+    :param msg: (str) Message
+    :param domain: (str) Name of the domain
+
+    """
+    if domain is not None:
+        try:
+            st = sppasTranslate()
+            translation = st.translation(domain)
+            return translation.gettext(msg)
+        except:
+            pass
+
+    return msg
+

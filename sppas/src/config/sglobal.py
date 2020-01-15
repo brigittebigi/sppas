@@ -32,44 +32,10 @@
     ~~~~~~~~~~~~~~~~~
 
 """
+
 import os
 import json
 from .settings import sppasBaseSettings
-
-# ---------------------------------------------------------------------------
-
-
-class sppasPathSettings(sppasBaseSettings):
-    """Representation of global non-modifiable paths of SPPAS.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    def __init__(self):
-        """Create the sppasPathSettings dictionary."""
-        super(sppasPathSettings, self).__init__()
-
-        sppas_dir = os.path.dirname(os.path.dirname(
-            os.path.dirname(os.path.abspath(__file__))))
-
-        self.__dict__ = dict(
-            sppas=sppas_dir,
-            cli=os.path.join(sppas_dir, "bin"),
-            etc=os.path.join(sppas_dir, "etc"),
-            po=os.path.join(sppas_dir, "po"),
-            src=os.path.join(sppas_dir, "src"),
-            plugins=os.path.join(os.path.dirname(sppas_dir), "plugins"),
-            resources=os.path.join(os.path.dirname(sppas_dir), "resources"),
-            samples=os.path.join(os.path.dirname(sppas_dir), "samples"),
-            logs=os.path.join(os.path.dirname(sppas_dir), ".logs"),
-            wkps=os.path.join(os.path.dirname(sppas_dir), "workspaces"),
-            trash=os.path.join(os.path.dirname(sppas_dir), ".trash"),
-        )
 
 # ---------------------------------------------------------------------------
 
@@ -81,7 +47,7 @@ class sppasGlobalSettings(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     Includes the version, name, author, copyright, etc.
 
@@ -117,6 +83,43 @@ class sppasGlobalSettings(object):
 # ---------------------------------------------------------------------------
 
 
+class sppasPathSettings(sppasBaseSettings):
+    """Representation of global non-modifiable paths of SPPAS.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self):
+        """Create the sppasPathSettings dictionary."""
+        super(sppasPathSettings, self).__init__()
+
+        sppas_dir = os.path.dirname(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))))
+        base_dir = os.path.dirname(sppas_dir)
+
+        self.__dict__ = dict(
+            basedir=base_dir,
+            sppas=sppas_dir,
+            cli=os.path.join(sppas_dir, "bin"),
+            etc=os.path.join(sppas_dir, "etc"),
+            po=os.path.join(sppas_dir, "po"),
+            src=os.path.join(sppas_dir, "src"),
+            plugins=os.path.join(base_dir, "plugins"),
+            resources=os.path.join(base_dir, "resources"),
+            samples=os.path.join(base_dir, "samples"),
+            wkps=os.path.join(base_dir, "workspaces"),
+            logs=os.path.join(base_dir, ".logs"),
+            trash=os.path.join(base_dir, ".trash"),
+        )
+
+# ---------------------------------------------------------------------------
+
+
 class sppasSymbolSettings(sppasBaseSettings):
     """Representation of global non-modifiable symbols of SPPAS.
 
@@ -124,7 +127,7 @@ class sppasSymbolSettings(sppasBaseSettings):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     This class defines:
 
@@ -186,13 +189,14 @@ class sppasSeparatorSettings(sppasBaseSettings):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
     def __init__(self):
         """Create the sppasSeparatorSettings dictionary."""
         super(sppasSeparatorSettings, self).__init__()
+
         self.__dict__ = dict(
             phonemes="-",    # X-SAMPA standard
             syllables=".",   # X-SAMPA standard
@@ -209,13 +213,14 @@ class sppasAnnotationsSettings(sppasBaseSettings):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
     def __init__(self):
         """Create the sppasAnnotationsSettings dictionary."""
         super(sppasAnnotationsSettings, self).__init__()
+
         self.__dict__ = dict(
             error=-1,
             ok=0,
@@ -223,9 +228,10 @@ class sppasAnnotationsSettings(sppasBaseSettings):
             ignore=2,
             info=3,
 
+            # default file extension for annotated files created by SPPAS
             extension=".xra",
 
-            # all the types of the annotations implemented into SPPAS
+            # all the types of automatic annotations implemented into SPPAS
             types=("STANDALONE", "SPEAKER", "INTERACTION"),
 
             # standard iso639-3 code for an undetermined language.
