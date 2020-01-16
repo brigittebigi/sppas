@@ -64,7 +64,7 @@ class sppasWorkspaces(object):
 
     The extension of a workspace JSON files is: wjson
 
-    TODO: Use sppas exceptions
+    TODO: Use SPPAS exceptions and/or define new ones. Use PO for messages.
 
     """
 
