@@ -278,10 +278,10 @@ class TierAsListPanel(LineListCtrl):
     """
 
     tag_types = {
-        "str":"String",
-        "int":"Integer",
-        "float":"Float",
-        "bool":"Boolean"
+        "str": "String",
+        "int": "Integer",
+        "float": "Float",
+        "bool": "Boolean"
     }
 
     def __init__(self, parent, tier):
@@ -338,7 +338,12 @@ class TierAsListPanel(LineListCtrl):
 
             # properties of the labels
             self.SetItem(i, labeli+1, str(len(a.get_labels())))
-            self.SetItem(i, labeli+2, TierAsListPanel.tag_types[a.get_label_type()])
+            label_type = a.get_label_type()
+            if label_type not in TierAsListPanel.tag_types:
+                lt = "Unknown"
+            else:
+                lt = TierAsListPanel.tag_types[a.get_label_type()]
+            self.SetItem(i, labeli+2, lt)
 
         self.SetColumnWidth(cols.index(MSG_LABELS), -1)
 

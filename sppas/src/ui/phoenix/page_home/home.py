@@ -111,7 +111,7 @@ class sppasHomePanel(sppasPanel):
             "the documentation included in the package."
         txt = sppasMessageText(self, message)
 
-        sppas_logo = BitmapTextButton(self, name="SPPAS")
+        sppas_logo = BitmapTextButton(self, name="sppas_colored")
         sppas_logo.SetMinSize(wx.Size(sppasPanel.fix_size(64), -1))
         sppas_logo.SetBorderWidth(0)
         sppas_logo.SetLabelPosition(wx.TOP)
@@ -150,7 +150,7 @@ class sppasHomePanel(sppasPanel):
         event_obj = event.GetEventObject()
         event_name = event_obj.GetName()
 
-        if event_name == "SPPAS":
+        if event_name == "sppas_colored":
             webbrowser.open(sg.__url__)
         else:
             event.Skip()

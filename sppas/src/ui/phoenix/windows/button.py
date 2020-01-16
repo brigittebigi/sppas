@@ -2106,7 +2106,7 @@ class TestPanelBitmapTextButton(wx.Panel):
             style=wx.BORDER_NONE | wx.WANTS_CHARS,
             name="Test TextBitmapButton")
 
-        b1 = BitmapTextButton(self, label="SPPAS", pos=(10, 10), size=(50, 50))
+        b1 = BitmapTextButton(self, label="sppas_64", pos=(10, 10), size=(50, 50))
         #font = self.GetFont().MakeBold()
         #b1.SetFont(font)
 
@@ -2120,7 +2120,7 @@ class TestPanelBitmapTextButton(wx.Panel):
         #                     encoding=wx.FONTENCODING_SYSTEM)
         # b2.SetFont(bold_font)
 
-        b3 = BitmapTextButton(self, label="SPPAS", pos=(180, 10), size=(50, 50))
+        b3 = BitmapTextButton(self, label="sppas_colored", pos=(180, 10), size=(50, 50))
 
         b4 = BitmapTextButton(self, label="Add", pos=(240, 10), size=(100, 50), name="add")
         b4.SetLabel("ADD")
@@ -2200,7 +2200,7 @@ class TestPanelButtonsInSizer(wx.Panel):
             name="Test SizerButton")
 
         self.SetForegroundColour(wx.Colour(150, 160, 170))
-        # b1 = BitmapTextButton(self, label="SPPAS")
+        # b1 = BitmapTextButton(self, label="sppas_colored")
         # b2 = BitmapTextButton(self, name="like")
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
