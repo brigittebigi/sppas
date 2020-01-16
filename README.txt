@@ -40,12 +40,12 @@
     Need help?
 
     - Tutorials are available on the web site
-    - Explore the "documentation" folder of this package
-      or the documentation on the web
-	
+    - Explore the "documentation" folder of this package or the documentation
+      on the web
+
     -------------------------------------------------------------------------
 
-    By using SPPAS, you agree to cite a reference in your publications.
+    By using SPPAS, you agree to cite a reference in your publications:
 
         Brigitte BIGI (2015).
         SPPAS - Multi-lingual Approaches to the Automatic Annotation of Speech.

@@ -34,6 +34,7 @@
 
 """
 
+import logging
 import os
 
 from sppas.src.utils import sppasUnicode
@@ -48,6 +49,10 @@ from sppas.src.anndata import sppasMedia
 from sppas.src.anndata import sppasTranscription
 
 from ..annotationsexc import AnnotationOptionError
+from ..annotationsexc import AudioChannelError
+from ..annotationsexc import NoInputError
+from ..annotationsexc import BadInputError
+from ..annotationsexc import EmptyInputError
 from ..annotationsexc import EmptyOutputError
 from ..baseannot import sppasBaseAnnotation
 
@@ -63,7 +68,7 @@ class sppasRMS(sppasBaseAnnotation):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
     """
 
@@ -175,12 +180,15 @@ class sppasRMS(sppasBaseAnnotation):
 
         tier_spk = trs_input.find(self._options['tiername'], case_sensitive=False)
         if tier_spk is None:
-            raise Exception("Tier with name '{:s}' not found in input files."
-                            "".format(self._options['tiername']))
+            logging.error("Tier with name '{:s}' not found in input file {:s}."
+                          "".format(self._options['tiername'], input_file))
+            raise NoInputError
         if tier_spk.is_empty() is True:
-            raise Exception("Empty tier {:s}".format(self._options['tiername']))
+            raise EmptyInputError(self._options['tiername'])
         if tier_spk.is_interval() is False:
-            raise Exception("Tier {:s} is not of type Interval".format(self._options['tiername']))
+            logging.error("Tier {:s} is not of expected type Interval"
+                          "".format(self._options['tiername']))
+            raise BadInputError()
 
         return tier_spk
 
@@ -195,8 +203,7 @@ class sppasRMS(sppasBaseAnnotation):
         audio_speech = sppas.src.audiodata.aio.open(input_file)
         n = audio_speech.get_nchannels()
         if n != 1:
-            raise IOError("An audio file with only one channel is expected. "
-                          "Got {:d} channels.".format(n))
+            raise AudioChannelError(n)
 
         # Extract the channel and set it to the RMS estimator
         idx = audio_speech.extract_channel(0)

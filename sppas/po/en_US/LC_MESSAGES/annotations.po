@@ -241,6 +241,9 @@ msgstr "Unknown option with key {key}."
 msgid ":ERROR 1020: "
 msgstr "Empty input tier {name}."
 
+msgid ":ERROR 1021: "
+msgstr "Input tier {name} does not contains enough annotations."
+
 msgid ":ERROR 1025: "
 msgstr "Empty output result. No file created."
 

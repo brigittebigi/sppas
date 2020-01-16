@@ -78,7 +78,7 @@ def _(message):
 MSG_HEADER_LOG = _("Log Window")
 MSG_ACTION_CLEAR = _("Clear")
 MSG_ACTION_SAVE = _("Save")
-MSG_ACTION_SEND = _("Send")
+MSG_ACTION_SEND = _("Send feedback")
 MSG_ADD_COMMENT = _("Add comments here")
 
 # ----------------------------------------------------------------------------

@@ -34,6 +34,7 @@
 Exceptions for annotations package.
 
 """
+
 from sppas.src.config import error
 
 # -----------------------------------------------------------------------
@@ -84,6 +85,23 @@ class EmptyInputError(IOError):
     def __init__(self, name):
         self.parameter = error(1020) + \
                          (error(1020, "annotations")).format(name=name)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# -----------------------------------------------------------------------
+
+
+class TooSmallInputError(IOError):
+    """:ERROR 1021:.
+
+    Input tier {name} does not contains enough annotations.
+
+    """
+
+    def __init__(self, name):
+        self.parameter = error(1021) + \
+                         (error(1021, "annotations")).format(name=name)
 
     def __str__(self):
         return repr(self.parameter)

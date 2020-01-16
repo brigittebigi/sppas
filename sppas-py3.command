@@ -12,7 +12,7 @@
 #
 # ---------------------------------------------------------------------------
 #            Laboratoire Parole et Langage, Aix-en-Provence, France
-#                   Copyright (C) 2011-2019  Brigitte Bigi
+#                   Copyright (C) 2011-2020  Brigitte Bigi
 #
 #                   This banner notice must not be removed
 # ---------------------------------------------------------------------------
@@ -106,5 +106,5 @@ if [ "$unamestr" == "CYGWIN" ]; then
     fi
 fi
 
-echo "Graphical User Interface of SPPAS.";
+echo "Run the Graphical User Interface...";
 $PYTHON $PROGRAM_DIR/sppas/bin/sppasgui.py

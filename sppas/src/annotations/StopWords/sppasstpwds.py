@@ -33,6 +33,7 @@
 
 """
 
+import logging
 import os
 
 from sppas import symbols
@@ -44,6 +45,7 @@ from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasTag
 
+from ..annotationsexc import NoInputError
 from ..annotationsexc import EmptyOutputError
 from ..baseannot import sppasBaseAnnotation
 from ..annotationsexc import AnnotationOptionError
@@ -110,6 +112,7 @@ class sppasStopWords(sppasBaseAnnotation):
 
         """
         self._stops.set_alpha(alpha)
+        self._options['alpha'] = alpha
 
     # -----------------------------------------------------------------------
 
@@ -159,12 +162,9 @@ class sppasStopWords(sppasBaseAnnotation):
 
         tier_spk = trs_input.find(self._options['tiername'], case_sensitive=False)
         if tier_spk is None:
-            raise Exception("Tier with name '{:s}' not found in input files."
-                            "".format(self._options['tiername']))
-        if tier_spk.is_empty() is True:
-            raise Exception("Empty tier {:s}".format(self._options['tiername']))
-        if tier_spk.is_interval() is False:
-            raise Exception("Tier {:s} is not of type Interval".format(self._options['tiername']))
+            logging.error("Tier with name '{:s}' not found in input file {:s}."
+                          "".format(self._options['tiername'], input_file))
+            raise NoInputError
 
         return tier_spk
 
@@ -176,15 +176,30 @@ class sppasStopWords(sppasBaseAnnotation):
         :param tier: (sppasTier)
 
         """
+        # Evaluate the new list of stop words
+        stops = self._stops.copy()
+        nb = stops.evaluate(tier, merge=True)
+        self.logfile.print_message(
+            "Number of stop-words evaluated: {:d}".format(nb),
+            indent=1)
+        self.logfile.print_message(
+            "The list contains {:d} stop-words"
+            "".format(len(stops)), indent=1)
+        logging.info("Vocabulary size: {:d}".format(stops.get_v()))
+        logging.info("Threshold proba: {:f}".format(stops.get_threshold()))
+
         stp_tier = sppasTier('StopWord')
         for ann in tier:
-            token = ann.serialize_labels()
-            if token not in symbols.all:
-                stp = self._stops.is_in(token)
-                stp_tier.create_annotation(
-                    ann.get_location().copy(),
-                    sppasLabel(sppasTag(stp, tag_type="bool"))
-                )
+            new_labels = list()
+            for label in ann.get_labels():
+                tag = label.get_best()
+                content = tag.get_content()
+                if content not in symbols.all:
+                    stp = stops.is_in(content)
+                    new_labels.append(sppasLabel(sppasTag(stp, tag_type="bool")))
+
+            stp_tier.create_annotation(ann.get_location().copy(), new_labels)
+
         return stp_tier
 
     # -----------------------------------------------------------------------

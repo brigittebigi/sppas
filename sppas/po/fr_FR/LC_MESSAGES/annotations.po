@@ -239,6 +239,9 @@ msgstr "Option inconnue avec la clé {key}."
 msgid ":ERROR 1020: "
 msgstr "La tier {name} ne contient pas d'annotations."
 
+msgid ":ERROR 1021: "
+msgstr "La tier {name} ne contient pas suffisamment d'annotations."
+
 msgid ":ERROR 1025: "
 msgstr "Résultat sans annotations. Aucun fichier n'a été créé. "
 

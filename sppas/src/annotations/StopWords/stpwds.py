@@ -38,12 +38,13 @@ from sppas import IndexRangeException
 
 from sppas.src.resources import sppasVocabulary
 from sppas.src.resources import sppasUnigram
+from ..annotationsexc import EmptyInputError, TooSmallInputError
 
 # -----------------------------------------------------------------------
 
 
 class StopWords(sppasVocabulary):
-    """Automatic evaluation of a list of Stop-Words.
+    """A vocabulary that can automatically evaluate a list of Stop-Words.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -61,13 +62,40 @@ class StopWords(sppasVocabulary):
 
     """
 
+    MAX_ALPHA = 4.
+    MIN_ANN_NUMBER = 5
+
     def __init__(self, case_sensitive=False):
-        """Create a new StopWords instance. """
+        """Create a new StopWords instance.
+
+        :param case_sensitive: (bool) Considers the case of entries or not.
+
+        """
         super(StopWords, self).__init__(filename=None,
                                         nodump=True,
                                         case_sensitive=case_sensitive)
+        # Member
         self.__alpha = 0.5
-        self.max_alpha = 4.
+
+        # Estimated values (from a given sppasTier)
+        self.__threshold = 0.
+        self.__v = 0.
+
+    # -----------------------------------------------------------------------
+    # Getters and setters
+    # -----------------------------------------------------------------------
+
+    def get_alpha(self):
+        """Return the value of alpha coefficient (float)."""
+        return self.__alpha
+
+    def get_threshold(self):
+        """Return the last estimated threshold (float)."""
+        return self.__threshold
+
+    def get_v(self):
+        """Return the last estimated vocabulary size (int)."""
+        return self.__v
 
     # ------------------------------------------------------------------------
 
@@ -81,11 +109,17 @@ class StopWords(sppasVocabulary):
 
         """
         alpha = float(alpha)
-        if 0. < alpha < self.max_alpha:
+        if 0. < alpha <= self.MAX_ALPHA:
             self.__alpha = alpha
         else:
-            raise IndexRangeException(alpha, 0, self.max_alpha)
+            raise IndexRangeException(alpha, 0, StopWords.MAX_ALPHA)
 
+    # -----------------------------------------------------------------------
+
+    alpha = property(get_alpha, set_alpha)
+
+    # -----------------------------------------------------------------------
+    # Data management
     # -----------------------------------------------------------------------
 
     def copy(self):
@@ -97,6 +131,8 @@ class StopWords(sppasVocabulary):
         s = StopWords()
         for i in self:
             s.add(i)
+
+        s.set_alpha(self.__alpha)
 
         return s
 
@@ -119,31 +155,45 @@ class StopWords(sppasVocabulary):
     def evaluate(self, tier=None, merge=True):
         """Add entries to the list of stop-words from the content of a tier.
 
+        Estimate if a token is relevant: if not it adds it in the stop-list.
+
         :param tier: (sppasTier) A tier with entries to be analyzed.
         :param merge: (bool) Merge with the existing list (if True) or
         delete the existing list and create a new one (if False)
+        :returns: (int) Number of entries added into the list
+        :raises: EmptyInputError, TooSmallInputError
 
         """
-        if tier is None or len(tier) < 5:
-            return
+        if tier is None or tier.is_empty():
+            raise EmptyInputError(tier.get_name())
+        if len(tier) < StopWords.MIN_ANN_NUMBER:
+            raise TooSmallInputError(tier.get_name())
 
-        # Create the sppasUnigram and put data
-        u = sppasUnigram()
-        for a in tier:
-            content = a.serialize_labels()
-            if content not in symbols.all:
-                u.add(content)
+        # Create the sppasUnigram from the best tag of each label
+        # and put data into a sppasUnigram to estimate frequencies
+        unigram = sppasUnigram()
+        for ann in tier:
+            for label in ann.get_labels():
+                # get the content of the best tag in 'str' type
+                tag = label.get_best()
+                content = tag.get_content()
+                if content not in symbols.all:
+                    unigram.add(content)
 
-        # Estimate values for relevance
-        _v = float(len(u))
-        threshold = 1. / (self.__alpha * _v)
+        # Fix values for the estimation of the relevance
+        self.__v = len(unigram)
+        self.__threshold = 1. / (self.__alpha * float(self.__v))
 
-        # Estimate if a token is relevant; if not: put it in the stop-list
         if merge is False:
             self.clear()
 
-        for token in u.get_tokens():
-            p_w = float(u.get_count(token)) / float(u.get_sum())
-            if p_w > threshold:
+        # Estimate if a token is relevant: if not, add it in the stop-list
+        usum = float(unigram.get_sum())
+        nb = 0
+        for token in unigram.get_tokens():
+            p_w = float(unigram.get_count(token)) / usum
+            if p_w > self.__threshold:
                 self.add(token)
+                nb += 1
 
+        return nb
