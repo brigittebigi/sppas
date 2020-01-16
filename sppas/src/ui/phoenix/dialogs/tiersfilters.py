@@ -48,7 +48,8 @@ except ImportError:
     import wx.lib.agw.ultimatelistctrl as ulc
 
 from sppas import sg
-from sppas.src.config import ui_translation
+from sppas.src.config import msg
+from sppas.src.utils import u
 
 from ..windows import sppasDialog
 from ..windows import sppasPanel
@@ -62,50 +63,53 @@ from ..windows.book import sppasNotebook
 # --------------------------------------------------------------------------
 
 
-MSG_HEADER_TIERSFILTER = ui_translation.gettext("Filter annotations of tiers")
+def _(message):
+    return u(msg(message, "ui"))
 
-MSG_TAG_FILTER = ui_translation.gettext("Filter on tags of annotations")
-MSG_LOC_FILTER = ui_translation.gettext("Filter on localization of annotations")
-MSG_DUR_FILTER = ui_translation.gettext("Filter on duration of annotations")
 
-MSG_LOC = ui_translation.gettext("The localization is:")
-MSG_DUR = ui_translation.gettext("The duration is:")
+MSG_HEADER_TIERSFILTER = _("Filter annotations of tiers")
 
-MSG_TAG_TYPE_BOOL = ui_translation.gettext("Boolean value of the tag is:")
-MSG_TAG_TYPE_INT = ui_translation.gettext("Integer value of the tag is:")
-MSG_TAG_TYPE_FLOAT = ui_translation.gettext("Float value of the tag is:")
-MSG_TAG_TYPE_STR = ui_translation.gettext("Patterns to find, "
-                                          "separated by commas, are:")
+MSG_TAG_FILTER = _("Filter on tags of annotations")
+MSG_LOC_FILTER =_("Filter on localization of annotations")
+MSG_DUR_FILTER = _("Filter on duration of annotations")
+
+MSG_LOC = _("The localization is:")
+MSG_DUR = _("The duration is:")
+
+MSG_TAG_TYPE_BOOL = _("Boolean value of the tag is:")
+MSG_TAG_TYPE_INT = _("Integer value of the tag is:")
+MSG_TAG_TYPE_FLOAT = _("Float value of the tag is:")
+MSG_TAG_TYPE_STR = _("Patterns to find, separated by commas, are:")
 DEFAULT_LABEL = "tag1, tag2..."
-MSG_CASE = ui_translation.gettext("Case sensitive")
+MSG_CASE = _("Case sensitive")
 
-MSG_FALSE = ui_translation.gettext("False")
-MSG_TRUE = ui_translation.gettext("True")
+MSG_FALSE = _("False")
+MSG_TRUE = _("True")
 
-MSG_EQUAL = ui_translation.gettext("equal to")
-MSG_NOT_EQUAL = ui_translation.gettext("not equal to")
-MSG_GT = ui_translation.gettext("greater than")
-MSG_LT = ui_translation.gettext("less than")
-MSG_GE = ui_translation.gettext("greater or equal to")
-MSG_LE = ui_translation.gettext("less or equal to")
+MSG_EQUAL = _("equal to")
+MSG_NOT_EQUAL = _("not equal to")
+MSG_GT = _("greater than")
+MSG_LT = _("less than")
+MSG_GE = _("greater or equal to")
+MSG_LE = _("less or equal to")
 
-MSG_EXACT = ui_translation.gettext("exact")
-MSG_CONTAINS = ui_translation.gettext("contains")
-MSG_STARTSWITH = ui_translation.gettext("starts with")
-MSG_ENDSWITH = ui_translation.gettext("ends with")
-MSG_REGEXP = ui_translation.gettext("match (regexp)")
-MSG_NOT_EXACT = ui_translation.gettext("not exact")
-MSG_NOT_CONTAINS = ui_translation.gettext("not contains")
-MSG_NOT_STARTSWITH = ui_translation.gettext("not starts with")
-MSG_NOT_ENDSWITH = ui_translation.gettext("not ends with")
-MSG_NOT_REGEXP = ui_translation.gettext("not match (regexp)")
-MSG_FROM = ui_translation.gettext("starting at")
-MSG_TO = ui_translation.gettext("ending at")
-MSG_VALUE = ui_translation.gettext("this value:")
+MSG_EXACT = _("exact")
+MSG_CONTAINS = _("contains")
+MSG_STARTSWITH = _("starts with")
+MSG_ENDSWITH = _("ends with")
+MSG_REGEXP = _("match (regexp)")
+MSG_NOT_EXACT = _("not exact")
+MSG_NOT_CONTAINS = _("not contains")
+MSG_NOT_STARTSWITH = _("not starts with")
+MSG_NOT_ENDSWITH = _("not ends with")
+MSG_NOT_REGEXP = _("not match (regexp)")
+MSG_FROM = _("starting at")
+MSG_TO = _("ending at")
+MSG_VALUE = _("this value:")
 
-MSG_ANNOT_FORMAT = ui_translation.gettext("Replace the tag by the name of the filter")
-MSG_NAME = "Name"
-MSG_OPT = "Option"
+MSG_ANNOT_FORMAT = _("Replace the tag by the name of the filter")
+MSG_NAME = _("Name")
+MSG_OPT = _("Option")
 
 # ---------------------------------------------------------------------------
 

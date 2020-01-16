@@ -37,7 +37,8 @@
 import wx
 
 from sppas.src.anndata import sppasTier
-from sppas.src.config import ui_translation
+from sppas.src.config import msg
+from sppas.src.utils import u
 
 from ..windows import sppasDialog
 from ..dialogs import Information
@@ -62,15 +63,20 @@ NOISE_BG_COLOUR = wx.Colour(230, 250, 230)
 
 # --------------------------------------------------------------------------
 
-MSG_HEADER_TIERSVIEW = ui_translation.gettext("View annotations of tiers")
-MSG_NO_TIER = ui_translation.gettext("No tier to view.")
-MSG_BEGIN = ui_translation.gettext("Begin")
-MSG_END = ui_translation.gettext("End")
-MSG_LABELS = ui_translation.gettext("Serialized list of labels")
-MSG_POINT = ui_translation.gettext("Midpoint")
-MSG_RADIUS = ui_translation.gettext("Radius")
-MSG_NB = ui_translation.gettext("Nb")
-MSG_TYPE = ui_translation.gettext("Type")
+
+def _(message):
+    return u(msg(message, "ui"))
+
+
+MSG_HEADER_TIERSVIEW = _("View annotations of tiers")
+MSG_NO_TIER = _("No tier to view.")
+MSG_BEGIN = _("Begin")
+MSG_END = _("End")
+MSG_LABELS = _("Serialized list of labels with alternative tags")
+MSG_POINT = _("Midpoint")
+MSG_RADIUS = _("Radius")
+MSG_NB = _("Nb")
+MSG_TYPE = _("Type")
 
 # ---------------------------------------------------------------------------
 

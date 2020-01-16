@@ -37,13 +37,9 @@
 import wx
 
 from sppas.src.config import sg
-from sppas.src.config import ui_translation
 
 from ..tools import sppasSwissKnife
-from . import sppasBitmapTextButton
-from . import sppasStaticBitmap
 from . import sppasStaticLine
-from . import sppasPanel
 
 # ----------------------------------------------------------------------------
 

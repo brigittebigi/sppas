@@ -89,8 +89,6 @@ except AttributeError:  # Python 2.7
 # Fix the translation of each package
 # ---------------------------------------------------------------------------
 
-ui_translation = sppasTranslate().translation("ui")
-
 __all__ = (
     "sppasBaseSettings",
     "sg",
@@ -98,7 +96,6 @@ __all__ = (
     "symbols",
     "separators",
     "annots",
-    "ui_translation",
     "info",
     "error",
     "msg"

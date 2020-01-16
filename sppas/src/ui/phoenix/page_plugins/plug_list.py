@@ -270,7 +270,7 @@ class sppasPluginsList(sppasScrolledPanel):
         :param plugin (sppasPluginParam) The plugin to append
 
         """
-        border = sppasPanel.fix_size(64) // 8
+        border = sppasPanel.fix_size(12)
 
         pp = sppasPluginDescription(self, plugin)
         self.GetSizer().Add(self.HorizLine(self), 0, wx.EXPAND | wx.TOP | wx.RIGHT | wx.LEFT, border)

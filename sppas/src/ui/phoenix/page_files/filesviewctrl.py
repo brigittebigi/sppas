@@ -26,7 +26,7 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.page_files.filestreectrl.py
+    src.ui.phoenix.page_files.filesviewctrl.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -202,7 +202,7 @@ class FileTreeView(sppasScrolledPanel):
         The given entries must include their absolute path.
 
         :param entries: (list of str) Filename or folder with absolute path.
-        :return: (int) Number of items added in the tree (folders, roots and files)
+        :returns: (int) Number of items added in the tree (folders, roots and files)
 
         """
         modified = 0
@@ -227,7 +227,7 @@ class FileTreeView(sppasScrolledPanel):
     def RemoveCheckedFiles(self):
         """Remove all checked files.
 
-        :return: (list) List of removed filenames
+        :returns: (list) List of removed filenames
 
         """
         removed = list()
@@ -777,6 +777,8 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
                         self.add_root(fr)
                     else:
                         self.__frs[fr.get_id()].update(fr)
+
+                self._update_expander(fs)
             else:
                 return
 
@@ -824,14 +826,22 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def _create_content(self, fp):
-        collapse = True
-        if fp.subjoined is not None:
-            if "expand" in fp.subjoined:
-                collapse = not fp.subjoined["expand"]
-
-        self.Collapse(collapse)
+        self._update_expander(fp)
         self.AddButton("folder")
         self.AddButton("choice_checkbox")
+
+    # -----------------------------------------------------------------------
+
+    def _update_expander(self, fp):
+        expand = True
+        if fp.subjoined is not None:
+            if "expand" in fp.subjoined:
+                expand = fp.subjoined["expand"]
+
+        if expand is True:
+            self.Expand()
+        else:
+            self.Collapse()
 
     # -----------------------------------------------------------------------
     # Events management
@@ -1055,6 +1065,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
 
             self.set_refs(fs.get_references())
             self.change_state(fs.get_id(), fs.get_state())
+            self._update_expander(fs)
 
         elif isinstance(fs, FileName):
             self.change_state(fs.get_id(), fs.get_state())
@@ -1076,14 +1087,22 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         child_panel.SetSizer(child_sizer)
         self.SetPane(child_panel)
 
-        collapse = True
-        if fr.subjoined is not None:
-            if "expand" in fr.subjoined:
-                collapse = not fr.subjoined["expand"]
-
-        self.Collapse(collapse)
+        self._update_expander(fr)
         self.AddButton("root")
         self.AddButton("choice_checkbox")
+
+    # ------------------------------------------------------------------------
+
+    def _update_expander(self, fr):
+        expand = False
+        if fr.subjoined is not None:
+            if "expand" in fr.subjoined:
+                expand = fr.subjoined["expand"]
+
+        if expand is True:
+            self.Expand()
+        else:
+            self.Collapse()
 
     # ------------------------------------------------------------------------
 

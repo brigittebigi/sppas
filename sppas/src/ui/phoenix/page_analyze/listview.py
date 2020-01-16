@@ -56,7 +56,6 @@ from sppas.src.anndata import sppasMedia
 from sppas.src.anndata import sppasHierarchy
 from sppas.src.anndata import sppasCtrlVocab
 from sppas.src.anndata import sppasMetaData
-from sppas.src.config import ui_translation
 
 from ..tools import sppasSwissKnife
 from ..windows.image import ColorizeImage
