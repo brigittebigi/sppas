@@ -191,18 +191,12 @@ class sppasFilesPanel(sppasPanel):
         key_code = event.GetKeyCode()
         cmd_down = event.CmdDown()
         shift_down = event.ShiftDown()
-        wx.LogDebug('Files page received a key event. key_code={:d}'.format(key_code))
-
-        if key_code == wx.WXK_F5 and cmd_down is False and shift_down is False:
-            wx.LogDebug(' ... [F5] key pressed')
 
         # CMD+S: Pin&Save the workspace
-        elif key_code == 83 and cmd_down is True:
-            wx.LogDebug('Key event: Pin&Save the workspace')
+        if key_code == 83 and cmd_down is True:
             self.FindWindow("workspaces").pin_save()
 
         else:
-            wx.LogDebug('Key event skipped by the files book page.')
             event.Skip()
 
     # -----------------------------------------------------------------------

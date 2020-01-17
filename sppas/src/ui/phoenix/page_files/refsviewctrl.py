@@ -642,7 +642,6 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
 
     def notify(self, identifier):
         """The parent has to be informed of a change of content."""
-        wx.LogDebug("ITEM CLICKED")
         evt = ItemClickedEvent(id=identifier)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
