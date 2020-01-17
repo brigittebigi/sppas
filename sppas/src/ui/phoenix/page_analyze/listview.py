@@ -569,7 +569,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         if isinstance(self._object, sppasBaseIO) is False:
             vocab_ctrl.Hide()
         else:
-            if self._object.media_support() is False:
+            if self._object.ctrl_vocab_support() is False:
                 vocab_ctrl.Hide()
 
         # y_ctrl = self.__create_hyctrl()

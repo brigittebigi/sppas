@@ -82,6 +82,8 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
 
+        self.Layout()
+
     # ------------------------------------------------------------------------
 
     def is_modified(self):
