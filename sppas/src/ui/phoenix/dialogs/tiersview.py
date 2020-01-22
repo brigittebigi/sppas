@@ -351,7 +351,7 @@ class TierAsListPanel(LineListCtrl):
 
 
 def TiersView(parent, tiers):
-    """Display a dialog to display the content of a list of tiers.
+    """Open a dialog to display the content of a list of tiers.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
