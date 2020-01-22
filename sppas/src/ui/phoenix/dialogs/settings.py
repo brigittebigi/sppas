@@ -36,7 +36,8 @@
 
 import wx
 
-from sppas.src.config import ui_translation
+from sppas.src.config import msg
+from sppas.src.utils import u
 
 from ..windows import sppasDialog
 from ..windows import sppasPanel
@@ -47,15 +48,15 @@ from ..tools import sppasSwissKnife
 
 # ---------------------------------------------------------------------------
 
-MSG_HEADER_SETTINGS = ui_translation.gettext("Settings")
+MSG_HEADER_SETTINGS = u(msg("Settings", "ui"))
 
-MSG_FONT = ui_translation.gettext("Font")
-MSG_BG = ui_translation.gettext("Background color")
-MSG_FG = ui_translation.gettext("Foreground color")
-MSG_FONT_COLORS = ui_translation.gettext("Fonts and Colors")
-MSG_HEADER = ui_translation.gettext("Top")
-MSG_CONTENT = ui_translation.gettext("Main content")
-MSG_ACTIONS = ui_translation.gettext("Bottom")
+MSG_FONT = u(msg("Font", "ui"))
+MSG_BG = u(msg("Background color", "ui"))
+MSG_FG = u(msg("Foreground color", "ui"))
+MSG_FONT_COLORS = u(msg("Fonts and Colors", "ui"))
+MSG_HEADER = u(msg("Top", "ui"))
+MSG_CONTENT = u(msg("Main content", "ui"))
+MSG_ACTIONS = u(msg("Bottom", "ui"))
 
 # ---------------------------------------------------------------------------
 

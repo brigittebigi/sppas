@@ -39,6 +39,8 @@ import wx
 
 from sppas import paths
 import sppas.src.audiodata.aio
+from sppas.src.config import msg
+from sppas.src.utils import u
 
 from ..windows import sppasToolbar
 from ..windows import sppasPanel
@@ -58,30 +60,36 @@ from .listview import TIER_BG_COLOUR
 
 # ----------------------------------------------------------------------------
 
-MSG_CONFIRM = "Confirm?"
-MSG_TIERS = "Tiers: "
-MSG_ANNS = "Annotations: "
-TIER_MSG_ASK_NAME = "New name of the checked tiers: "
-TIER_MSG_ASK_REGEXP = "Check tiers with name matching: "
-TIER_MSG_ASK_RADIUS = "Radius value of the checked tiers: "
-TIER_ACT_CHECK = "Check"
-TIER_ACT_UNCHECK = "Uncheck"
-TIER_ACT_RENAME = "Rename"
-TIER_ACT_DELETE = "Delete"
-TIER_ACT_CUT = "Cut"
-TIER_ACT_COPY = "Copy"
-TIER_ACT_PASTE = "Paste"
-TIER_ACT_DUPLICATE = "Duplicate"
-TIER_ACT_MOVE_UP = "Move Up"
-TIER_ACT_MOVE_DOWN = "Move Down"
-TIER_ACT_RADIUS = "Radius"
-TIER_ACT_ANN_VIEW = "View"
-TIER_ACT_STAT_VIEW = "Stats"
-TIER_ACT_SINGLE_FILTER = "Single Filter"
-TIER_ACT_RELATION_FILTER = "Relation Filter"
-TIER_MSG_CONFIRM_DEL = "Are you sure to delete {:d} tiers of {:d} files? " \
-                       "The process is irreversible."
-TIER_REL_WITH = "Name of the tier to be in relation with: "
+
+def _(message):
+    return u(msg(message, "ui"))
+
+
+MSG_CONFIRM = u(msg("Confirm?"))
+MSG_TIERS = u(msg("Tiers: "))
+MSG_ANNS = u(msg("Annotations: "))
+TIER_MSG_ASK_NAME = u(msg("New name of the checked tiers: "))
+TIER_MSG_ASK_REGEXP = u(msg("Check tiers with name matching: "))
+TIER_MSG_ASK_RADIUS = u(msg("Radius value of the checked tiers: "))
+TIER_ACT_CHECK = u(msg("Check"))
+TIER_ACT_UNCHECK = u(msg("Uncheck"))
+TIER_ACT_RENAME = u(msg("Rename"))
+TIER_ACT_DELETE = u(msg("Delete"))
+TIER_ACT_CUT = u(msg("Cut"))
+TIER_ACT_COPY = u(msg("Copy"))
+TIER_ACT_PASTE = u(msg("Paste"))
+TIER_ACT_DUPLICATE = u(msg("Duplicate"))
+TIER_ACT_MOVE_UP = u(msg("Move Up"))
+TIER_ACT_MOVE_DOWN = u(msg("Move Down"))
+TIER_ACT_RADIUS = u(msg("Radius"))
+TIER_ACT_ANN_VIEW = u(msg("View"))
+TIER_ACT_STAT_VIEW = u(msg("Statistics"))
+TIER_ACT_SINGLE_FILTER = u(msg("Single Filter"))
+TIER_ACT_RELATION_FILTER = u(msg("Relation Filter"))
+TIER_MSG_CONFIRM_DEL = \
+    u(msg("Are you sure to delete {:d} tiers of {:d} files? "
+          "The process is irreversible."))
+TIER_REL_WITH = u(msg("Name of the tier to be in relation with: "))
 
 # ----------------------------------------------------------------------------
 
@@ -93,7 +101,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -111,7 +119,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         self._hicolor = color
         # set to toolbar
         btn = self.FindWindow("subtoolbar1").get_button("tier_paste")
-        btn.FocusColour = color
+        btn.SetFocusColour(color)
         # set to the panels
         for filename in self._files:
             panel = self._files[filename]

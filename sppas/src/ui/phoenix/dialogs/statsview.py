@@ -39,7 +39,8 @@ import wx
 import codecs
 
 from sppas import paths
-from sppas.src.config import ui_translation
+from sppas.src.config import msg
+from sppas.src.utils import u
 from sppas.src.anndata import sppasRW
 from sppas.src.analysis.tierstats import sppasTierStats
 
@@ -52,20 +53,20 @@ from ..windows.book import sppasNotebook
 
 # --------------------------------------------------------------------------
 
-MSG_HEADER_STATSVIEW = ui_translation.gettext("View descriptive stats of tiers")
-OPT_TAG_BEST = ui_translation.gettext("Use only the tag with the best score")
-OPT_TAG_ALT = ui_translation.gettext("Use alternative tags")
-OPT_TAGS = ui_translation.gettext("Annotation label tags: ")
-OPT_MIDPOINT_ONLY = ui_translation.gettext("Use only midpoint value")
-OPT_MIDPOINT_RADD = ui_translation.gettext("Add the radius value")
-OPT_MIDPOINT_RDEL = ui_translation.gettext("Deduct the radius value")
-OPT_DUR = ui_translation.gettext("Annotation durations: ")
+
+MSG_HEADER_STATSVIEW = u(msg("View descriptive stats of tiers", "ui"))
+OPT_TAG_BEST = u(msg("Use only the tag with the best score", "ui"))
+OPT_TAG_ALT = u(msg("Use alternative tags", "ui"))
+OPT_TAGS = u(msg("Annotation label tags: ", "ui"))
+OPT_MIDPOINT_ONLY = u(msg("Use only midpoint value", "ui"))
+OPT_MIDPOINT_RADD = u(msg("Add the radius value", "ui"))
+OPT_MIDPOINT_RDEL = u(msg("Deduct the radius value", "ui"))
+OPT_DUR = u(msg("Annotation durations: ", "ui"))
 MSG_CONFIRM_OVERRIDE = \
-    ui_translation.gettext("A file with name {:s} is already existing. "\
-                           "Override it?")
-MSG_CONFIRM_NAME = ui_translation.gettext("Confirm file name?")
-MSG_ACT_SAVE = ui_translation.gettext("Save")
-MSS_SELECTED = ui_translation.gettext("Selected statistical distribution: {:s}")
+    u(msg("A file with name {:s} is already existing. Override it?", "ui"))
+MSG_CONFIRM_NAME = u(msg("Confirm file name?", "ui"))
+MSG_ACT_SAVE = u(msg("Save", "ui"))
+MSS_SELECTED = u(msg("Selected statistical distribution: {:s}", "ui"))
 
 # --------------------------------------------------------------------------
 

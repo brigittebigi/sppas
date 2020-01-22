@@ -40,7 +40,8 @@ import wx
 import wx.lib.newevent
 import wx.dataview
 
-from sppas.src.config import ui_translation
+from sppas.src.config import msg
+from sppas.src.utils import u
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import FileFormatProperty
 
@@ -59,22 +60,26 @@ FormatChangedCommandEvent, EVT_FORMAT_CHANGED_COMMAND = wx.lib.newevent.NewComma
 # ---------------------------------------------------------------------------
 
 
+def _(message):
+    return u(msg(message, "ui"))
+
+
 class FileSupports:
 
     supports = {
-        "metadata_support": ui_translation.gettext('Metadata'),
-        "multi_tiers_support": ui_translation.gettext('Multi tiers'),
-        "no_tiers_support": ui_translation.gettext('No tier'),
-        "point_support": ui_translation.gettext('Point'),
-        "interval_support": ui_translation.gettext('Interval'),
-        "gaps_support": ui_translation.gettext('Gaps'),
-        "overlaps_support": ui_translation.gettext('Overlaps'),
-        "hierarchy_support": ui_translation.gettext('Hierarchy'),
-        "ctrl_vocab_support": ui_translation.gettext('Ctrl vocab'),
-        "media_support": ui_translation.gettext('Media'),
-        "radius_support": ui_translation.gettext('Vagueness'),
-        "alternative_localization_support": ui_translation.gettext('Alt. loc'),
-        "alternative_tag_support": ui_translation.gettext('Alt. tag'),
+        "metadata_support": _('Metadata'),
+        "multi_tiers_support": _('Multi tiers'),
+        "no_tiers_support": _('No tier'),
+        "point_support": _('Point'),
+        "interval_support": _('Interval'),
+        "gaps_support": _('Gaps'),
+        "overlaps_support": _('Overlaps'),
+        "hierarchy_support": _('Hierarchy'),
+        "ctrl_vocab_support": _('Ctrl vocab'),
+        "media_support": _('Media'),
+        "radius_support": _('Vagueness'),
+        "alternative_localization_support": _('Alt. loc'),
+        "alternative_tag_support": _('Alt. tag'),
     }
 
 # ---------------------------------------------------------------------------
@@ -242,10 +247,10 @@ class FormatsViewModel(wx.dataview.PyDataViewModel):
         # Map between the displayed columns and the workspace data
         self.__mapper = dict()
         self.__mapper[0] = FormatsViewModel.__create_col("", "icon")
-        self.__mapper[1] = FormatsViewModel.__create_col(ui_translation.gettext('Extension'), "extension")
-        self.__mapper[2] = FormatsViewModel.__create_col(ui_translation.gettext('Software'), "software")
-        self.__mapper[3] = FormatsViewModel.__create_col(ui_translation.gettext('Reader'), 'reader')
-        self.__mapper[4] = FormatsViewModel.__create_col(ui_translation.gettext('Writer'), 'writer')
+        self.__mapper[1] = FormatsViewModel.__create_col(_('Extension'), "extension")
+        self.__mapper[2] = FormatsViewModel.__create_col(_('Software'), "software")
+        self.__mapper[3] = FormatsViewModel.__create_col(_('Reader'), 'reader')
+        self.__mapper[4] = FormatsViewModel.__create_col(_('Writer'), 'writer')
         for i, c in enumerate(FileSupports.supports):
             t = FileSupports.supports[c]
             self.__mapper[i+5] = FormatsViewModel.__create_col(t, c)

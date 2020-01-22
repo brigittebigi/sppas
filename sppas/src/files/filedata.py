@@ -105,6 +105,8 @@ class FileData(FileBase):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
+    TODO: Rename FileData to sppasWorkspace
+
     FileData is the container for a  list of files and a catalog.
     It organizes files hierarchically as a collection of FilePath instances,
     each of which is a collection of FileRoot instances, each of which is a 

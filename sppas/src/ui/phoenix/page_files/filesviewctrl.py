@@ -26,7 +26,7 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.page_files.filestreectrl.py
+    src.ui.phoenix.page_files.filesviewctrl.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -46,7 +46,7 @@ from ..windows import sppasCollapsiblePanel
 from ..windows import sppasSimpleText
 from ..windows.image import ColorizeImage
 from ..tools import sppasSwissKnife
-
+from ..main_events import DataChangedEvent
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when an item is clicked.
@@ -202,7 +202,7 @@ class FileTreeView(sppasScrolledPanel):
         The given entries must include their absolute path.
 
         :param entries: (list of str) Filename or folder with absolute path.
-        :return: (int) Number of items added in the tree (folders, roots and files)
+        :returns: (int) Number of items added in the tree (folders, roots and files)
 
         """
         modified = 0
@@ -227,7 +227,7 @@ class FileTreeView(sppasScrolledPanel):
     def RemoveCheckedFiles(self):
         """Remove all checked files.
 
-        :return: (list) List of removed filenames
+        :returns: (list) List of removed filenames
 
         """
         removed = list()
@@ -340,7 +340,7 @@ class FileTreeView(sppasScrolledPanel):
         :return: list of added items
 
         """
-        wx.LogDebug('Add folder: {:s}'.format(str(foldername)))
+        wx.LogMessage('Add folder: {:s}'.format(str(foldername)))
         added = list()
 
         # Get or create the FilePath of the foldername
@@ -378,7 +378,7 @@ class FileTreeView(sppasScrolledPanel):
         :return: (bool)
 
         """
-        wx.LogDebug('Add file: {:s}'.format(str(filename)))
+        wx.LogMessage('Add file: {:s}'.format(str(filename)))
         added = list()
 
         # get the FilePath of this filename
@@ -451,7 +451,6 @@ class FileTreeView(sppasScrolledPanel):
         p = FilePathCollapsiblePanel(self, fp)
         p.SetFocus()
         self.ScrollChildIntoView(p)
-        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p)
         p.GetPane().Bind(EVT_ITEM_CLICKED, self._process_item_clicked)
 
         self.GetSizer().Add(p, 0, wx.EXPAND | wx.ALL, border=8)
@@ -524,6 +523,9 @@ class FileTreeView(sppasScrolledPanel):
         # The user clicked an item
         self.Bind(EVT_ITEM_CLICKED, self._process_item_clicked)
 
+
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged)
+
     # ------------------------------------------------------------------------
 
     def _process_item_clicked(self, event):
@@ -537,7 +539,6 @@ class FileTreeView(sppasScrolledPanel):
         # the object is a FileBase (path, root or file)
         object_id = event.id
         filebase = self.__data.get_object(object_id)
-        wx.LogDebug("Process ItemClicked {:s}".format(object_id))
 
         # change state of the item
         current_state = filebase.get_state()
@@ -548,7 +549,6 @@ class FileTreeView(sppasScrolledPanel):
 
         # update the corresponding panel(s)
         for fs in modified:
-            wx.LogDebug("Modified: {:s}".format(fs.id))
             panel = self.__get_path_panel(fs)
             if panel is not None:
                 panel.change_state(fs.get_id(), fs.get_state())
@@ -571,7 +571,7 @@ class FileTreeView(sppasScrolledPanel):
     # ------------------------------------------------------------------------
 
     def OnCollapseChanged(self, evt=None):
-        """One of the roots was collapsed/expanded."""
+        """One of the paths was collapsed/expanded."""
         panel = evt.GetEventObject()
         panel.SetFocus()
         fs_id = panel.get_id()
@@ -582,7 +582,10 @@ class FileTreeView(sppasScrolledPanel):
 
         if isinstance(fs, FilePath):
             self.Layout()
-            self.GetParent().SendSizeEvent()
+            # self.GetParent().SendSizeEvent()
+            evt = DataChangedEvent()
+            evt.SetEventObject(self)
+            wx.PostEvent(self.GetParent(), evt)
 
     # ------------------------------------------------------------------------
 
@@ -777,6 +780,8 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
                         self.add_root(fr)
                     else:
                         self.__frs[fr.get_id()].update(fr)
+
+                self._update_expander(fs)
             else:
                 return
 
@@ -824,14 +829,22 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def _create_content(self, fp):
-        collapse = True
-        if fp.subjoined is not None:
-            if "expand" in fp.subjoined:
-                collapse = not fp.subjoined["expand"]
-
-        self.Collapse(collapse)
+        self._update_expander(fp)
         self.AddButton("folder")
         self.AddButton("choice_checkbox")
+
+    # -----------------------------------------------------------------------
+
+    def _update_expander(self, fp):
+        expand = True
+        if fp.subjoined is not None:
+            if "expand" in fp.subjoined:
+                expand = fp.subjoined["expand"]
+
+        if expand is True:
+            self.Expand()
+        else:
+            self.Collapse()
 
     # -----------------------------------------------------------------------
     # Events management
@@ -856,13 +869,13 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
 
     # ------------------------------------------------------------------------
 
-    def OnCollapseChanged(self, evt=None):
+    def OnCollapseChanged(self, evt):
         """One of the roots was collapsed/expanded."""
         panel = evt.GetEventObject()
         panel.SetFocus()
         self.Layout()
         wx.PostEvent(self.GetParent(), evt)
-        self.GetParent().SendSizeEvent()
+        # self.GetParent().SendSizeEvent()
 
     # ------------------------------------------------------------------------
 
@@ -1055,6 +1068,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
 
             self.set_refs(fs.get_references())
             self.change_state(fs.get_id(), fs.get_state())
+            self._update_expander(fs)
 
         elif isinstance(fs, FileName):
             self.change_state(fs.get_id(), fs.get_state())
@@ -1076,14 +1090,22 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         child_panel.SetSizer(child_sizer)
         self.SetPane(child_panel)
 
-        collapse = True
-        if fr.subjoined is not None:
-            if "expand" in fr.subjoined:
-                collapse = not fr.subjoined["expand"]
-
-        self.Collapse(collapse)
+        self._update_expander(fr)
         self.AddButton("root")
         self.AddButton("choice_checkbox")
+
+    # ------------------------------------------------------------------------
+
+    def _update_expander(self, fr):
+        expand = False
+        if fr.subjoined is not None:
+            if "expand" in fr.subjoined:
+                expand = fr.subjoined["expand"]
+
+        if expand is True:
+            self.Expand()
+        else:
+            self.Collapse()
 
     # ------------------------------------------------------------------------
 
@@ -1135,7 +1157,6 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
 
         """
         icon_size = int(float(self.get_font_height()) * 1.4)
-        wx.LogDebug("ListCtrl: images size is {:d} px".format(icon_size))
 
         il = wx.ImageList(icon_size, icon_size)
         self.__ils = list()

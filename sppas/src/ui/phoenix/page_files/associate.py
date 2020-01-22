@@ -41,7 +41,8 @@ import wx.dataview
 
 from sppas import sppasTypeError
 from sppas import sg
-from sppas.src.config import ui_translation
+from sppas.src.config import msg
+from sppas.src.utils import u
 from sppas.src.files import FileData
 from sppas.src.files import States
 from sppas.src.files import sppasFileDataFilters
@@ -59,12 +60,13 @@ from .filesutils import IdentifierTextValidator
 
 # ---------------------------------------------------------------------------
 
-MSG_HEADER_FILTER = ui_translation.gettext("Checking files")
-MSG_NB_CHECKED = "{:d} files were matching the given filters and were checked."
-MSG_NO_CHECKED = "None of the files is matching the given filters."
+MSG_HEADER_FILTER = u(msg("Checking files", "ui"))
+MSG_NB_CHECKED = \
+    u(msg("{:d} files were matching the given filters and were checked.", "ui"))
+MSG_NO_CHECKED = u(msg("None of the files is matching the given filters.", "ui"))
 
-ASS_ACT_CHECK_ERROR = "Files can't be filtered due to the following" \
-                       " error:\n{!s:s}"
+ASS_ACT_CHECK_ERROR = \
+    u(msg("Files can't be filtered due to the following error:\n{!s:s}", "ui"))
 
 # ---------------------------------------------------------------------------
 
@@ -113,8 +115,6 @@ class AssociatePanel(sppasPanel):
         """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        wx.LogDebug('New data to set in the associate panel. '
-                    'Id={:s}'.format(data.id))
         self.__data = data
 
     # ------------------------------------------------------------------------

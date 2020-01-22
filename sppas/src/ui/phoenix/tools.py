@@ -63,10 +63,14 @@ class sppasSwissKnife:
         :returns: (wx.Bitmap)
 
         """
-        img = sppasSwissKnife.get_image(name, default)
-        if height is not None:
-            img.Rescale(height, height, wx.IMAGE_QUALITY_HIGH)
-
+        try:
+            img = sppasSwissKnife.get_image(name, default)
+            if height is not None:
+                img.Rescale(height, height, wx.IMAGE_QUALITY_HIGH)
+        except:
+            img = sppasSwissKnife.get_image(default, default)
+            if height is not None:
+                img.Rescale(height, height, wx.IMAGE_QUALITY_HIGH)
         return wx.Bitmap(img)
 
     # ------------------------------------------------------------------------

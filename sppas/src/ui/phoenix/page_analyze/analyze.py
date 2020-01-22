@@ -106,7 +106,7 @@ VIEW_ACT_SAVECURRENT_ERROR = _(
     "Files of the current view can not be saved due to "
     "the following error: {:s}\nConfirm you still want to switch view?")
 
-CLOSE_CONFIRM = _("The file contains not saved work that will be lost."
+CLOSE_CONFIRM = _("The file contains not saved work that will be lost. "
                   "Are you sure you want to close?")
 
 # ---------------------------------------------------------------------------

@@ -273,7 +273,6 @@ class ReferencesManager(sppasPanel):
             dlg = sppasEditAttributes(self, refs)
             response = dlg.ShowModal()
             if response == wx.ID_OK:
-                self.notify()
                 if dlg.get_action() == 0:
                     # The user choose to delete an attribute
                     view.RemoveAttribute(dlg.get_id())
@@ -288,6 +287,7 @@ class ReferencesManager(sppasPanel):
                         )
                     except Exception as e:
                         Error(str(e))
+                self.notify()
 
             dlg.Destroy()
 
