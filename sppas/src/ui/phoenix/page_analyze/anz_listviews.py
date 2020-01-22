@@ -38,6 +38,7 @@ import os
 import wx
 
 from sppas import paths
+import sppas.src.audiodata.aio
 
 from ..windows import sppasToolbar
 from ..windows import sppasPanel
@@ -51,6 +52,7 @@ from ..dialogs import sppasTiersSingleFilterDialog
 from ..dialogs import sppasTiersRelationFilterDialog
 
 from .anz_baseviews import BaseViewFilesPanel
+from .listview import AudioListViewPanel
 from .listview import TrsListViewPanel
 from .listview import TIER_BG_COLOUR
 
@@ -139,9 +141,16 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         :return: wx.Window
 
         """
-        wx.LogMessage("Displaying file {} in ListView mode.".format(name))
-        panel = TrsListViewPanel(self.GetScrolledPanel(), filename=name)
-        panel.SetHighLightColor(self._hicolor)
+        fe = ""
+        if name is not None:
+            fn, fe = os.path.splitext(name)
+        if fe.lower() in sppas.src.audiodata.aio.extensions:
+            wx.LogMessage("Displaying audio file {} in ListView mode.".format(name))
+            panel = AudioListViewPanel(self.GetScrolledPanel(), filename=name)
+        else:
+            wx.LogMessage("Displaying text file {} in ListView mode.".format(name))
+            panel = TrsListViewPanel(self.GetScrolledPanel(), filename=name)
+            panel.SetHighLightColor(self._hicolor)
         self.GetScrolledSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.TOP | wx.BOTTOM, 20)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
 
@@ -658,7 +667,8 @@ class TestPanel(ListViewFilesPanel):
     TEST_FILES = (
         os.path.join(paths.samples, "COPYRIGHT.txt"),
         os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.wav"),
-        os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra")
+        os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"),
+        os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
     )
 
     def __init__(self, parent):

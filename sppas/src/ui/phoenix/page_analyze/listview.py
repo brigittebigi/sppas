@@ -44,6 +44,7 @@ import wx.lib.newevent
 
 from sppas import paths
 
+import sppas.src.audiodata.aio
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 from sppas.src.anndata.aio.basetrs import sppasBaseIO
@@ -60,6 +61,7 @@ from sppas.src.config import ui_translation
 
 from ..tools import sppasSwissKnife
 from ..windows.image import ColorizeImage
+from ..windows import sppasStaticText
 from ..windows import sppasPanel
 from ..windows import sppasCollapsiblePanel
 from .baseview import sppasBaseViewPanel
@@ -79,6 +81,173 @@ STATES_ICON_NAMES = {
     "True": "choice_checked",
 }
 
+LABEL_LIST = {"duration": "Duration (seconds): ",
+              "framerate": "Frame rate (Hz): ",
+              "sampwidth": "Sample width (bits): ",
+              "channels": "Channels: "}
+
+NO_INFO_LABEL = " ... "
+
+ERROR_COLOUR = wx.Colour(220, 30, 10, 128)     # red
+WARNING_COLOUR = wx.Colour(240, 190, 45, 128)  # orange
+
+# ---------------------------------------------------------------------------
+
+
+class AudioListViewPanel(sppasBaseViewPanel):
+    """A panel to display the content of an audio as a list.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    The object this class is displaying is a sppasAudio.
+    Can not be constructed if the file is not supported and/or if an error
+    occurred when opening or reading.
+
+    """
+
+    def __init__(self, parent, filename, name="listview-panel"):
+        self._object = None
+        self._dirty = False
+        self._labels = dict()
+        self._values = dict()
+
+        super(AudioListViewPanel, self).__init__(parent, filename, name)
+        self.fix_values()
+
+    # -----------------------------------------------------------------------
+    # Public methods
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        r, g, b = colour.Red(), colour.Green(), colour.Blue()
+        delta = 10
+        if (r + g + b) > 384:
+            cc = wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
+        else:
+            cc = wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
+
+        sppasCollapsiblePanel.SetBackgroundColour(self, colour)
+        self.GetPane().SetBackgroundColour(cc)
+
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        sppasCollapsiblePanel.SetForegroundColour(self, colour)
+        if self._object is not None and len(self._values) > 0:
+            self.fix_values()
+
+    # -----------------------------------------------------------------------
+
+    def fix_values(self):
+        """Display information of a sound file. """
+        self.__fix_duration()
+        self.__fix_framerate()
+        self.__fix_sampwidth()
+        self.__fix_nchannels()
+
+    # -----------------------------------------------------------------------
+
+    def cancel_values(self):
+        """Reset displayed information. """
+        for v in self._values:
+            v.ChangeValue(NO_INFO_LABEL)
+            v.SetForegroundColour(self.GetForegroundColour())
+
+    # -----------------------------------------------------------------------
+    # Override from the parent
+    # -----------------------------------------------------------------------
+
+    def Destroy(self):
+        self._object.close()
+        wx.Window.Destroy(self)
+
+    # -----------------------------------------------------------------------
+
+    def get_object(self):
+        """Return the object created from the opened file.
+
+        :return: (sppasTranscription)
+
+        """
+        return self._object
+
+    # -----------------------------------------------------------------------
+
+    def load_text(self):
+        """Override. Load audio filename in the object.
+
+        :raises: IOError
+
+        """
+        self._object = sppas.src.audiodata.aio.open(self._filename)
+
+    # -----------------------------------------------------------------------
+
+    def _create_content(self):
+        """Override. Create the content of the panel."""
+        # self.AddButton("more")
+        self.AddButton("close")
+
+        self._create_child_panel()
+        self.Expand()
+
+    # -----------------------------------------------------------------------
+
+    def _create_child_panel(self):
+        child_panel = self.GetPane()
+        gbs = wx.GridBagSizer()
+
+        for i, label in enumerate(LABEL_LIST):
+            static_tx = sppasStaticText(child_panel, label=LABEL_LIST[label])
+            self._labels[label] = static_tx
+            gbs.Add(static_tx, (i, 0), flag=wx.ALL, border=sppasPanel.fix_size(6))
+
+            tx = wx.TextCtrl(child_panel, -1, NO_INFO_LABEL, style=wx.TE_READONLY | wx.BORDER_NONE)
+            self._values[label] = tx
+            gbs.Add(tx, (i, 1), flag=wx.EXPAND | wx.RIGHT, border=sppasPanel.fix_size(6))
+
+        gbs.AddGrowableCol(1)
+        child_panel.SetSizer(gbs)
+
+    # -----------------------------------------------------------------------
+
+    def __fix_duration(self):
+        duration = self._object.get_duration()
+        self._values["duration"].ChangeValue(str(round(float(duration), 3)))
+        self._values["duration"].SetForegroundColour(self.GetForegroundColour())
+
+    def __fix_framerate(self):
+        framerate = self._object.get_framerate()
+        self._values["framerate"].ChangeValue(str(framerate))
+        if framerate < 16000:
+            self._values["framerate"].SetForegroundColour(ERROR_COLOUR)
+        elif framerate in [16000, 32000, 48000]:
+            self._values["framerate"].SetForegroundColour(self.GetForegroundColour())
+        else:
+            self._values["framerate"].SetForegroundColour(WARNING_COLOUR)
+
+    def __fix_sampwidth(self):
+        sampwidth = self._object.get_sampwidth()
+        self._values["sampwidth"].ChangeValue(str(sampwidth*8))
+        if sampwidth == 1:
+            self._values["sampwidth"].SetForegroundColour(ERROR_COLOUR)
+        elif sampwidth == 2:
+            self._values["sampwidth"].SetForegroundColour(self.GetForegroundColour())
+        else:
+            self._values["sampwidth"].SetForegroundColour(WARNING_COLOUR)
+
+    def __fix_nchannels(self):
+        nchannels = self._object.get_nchannels()
+        self._values["channels"].ChangeValue(str(nchannels))
+        if nchannels == 1:
+            self._values["channels"].SetForegroundColour(self.GetForegroundColour())
+        else:
+            self._values["channels"].SetForegroundColour(ERROR_COLOUR)
+
 # ---------------------------------------------------------------------------
 
 
@@ -92,6 +261,8 @@ class TrsListViewPanel(sppasBaseViewPanel):
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     The object this class is displaying is a sppasTranscription.
+    Can not be constructed if the file is not supported and/or if an error
+    occurred when opening or reading.
 
     """
 
@@ -738,7 +909,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
 
 class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
-    """A panel to display a list of tiers.
+    """A panel to display a list of objects.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -876,7 +1047,7 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def _create_content(self):
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL | wx.LC_HRULES
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL  # | wx.LC_HRULES
         lst = wx.ListCtrl(self, style=style, name="listctrl")
         lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
         self.SetPane(lst)
@@ -1166,7 +1337,7 @@ class CtrlVocabCollapsiblePanel(BaseObjectCollapsiblePanel):
 
 
 class MediaCollapsiblePanel(BaseObjectCollapsiblePanel):
-    """A panel to display a list of metadata.
+    """A panel to display a list of media.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -1217,13 +1388,16 @@ class TestPanel(sppasPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="TestPanel-listview")
 
+        f0 = os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
         f1 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra")
         f2 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-salign.xra")
         f3 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-stats.csv")
+        p0 = AudioListViewPanel(self, f0)
         p1 = TrsListViewPanel(self, f1)
         p2 = TrsListViewPanel(self, f2)
         p3 = TrsListViewPanel(self, None)
         p3.set_filename(f3)
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p0)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p1)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p2)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p3)
@@ -1232,12 +1406,12 @@ class TestPanel(sppasPanel):
         sizer.Add(p1, 0, wx.EXPAND)
         sizer.Add(p2, 0, wx.EXPAND)
         sizer.Add(p3, 0, wx.EXPAND)
+        sizer.Add(p0, 0, wx.EXPAND)
 
         self.SetBackgroundColour(wx.Colour(28, 28, 28))
         self.SetForegroundColour(wx.Colour(228, 228, 228))
 
         self.SetSizer(sizer)
-        # self.FitInside()
         self.SetAutoLayout(True)
         self.Layout()
 
