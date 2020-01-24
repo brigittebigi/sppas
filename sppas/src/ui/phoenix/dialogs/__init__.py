@@ -17,6 +17,7 @@ from .tiersview import TiersView
 from .statsview import StatsView
 from .tiersfilters import sppasTiersSingleFilterDialog
 from .tiersfilters import sppasTiersRelationFilterDialog
+from .audioroamer import AudioRoamer
 
 __all__ = (
     'YesNoQuestion',
@@ -34,5 +35,6 @@ __all__ = (
     "TiersView",
     "StatsView",
     "sppasTiersSingleFilterDialog",
-    "sppasTiersRelationFilterDialog"
+    "sppasTiersRelationFilterDialog",
+    "AudioRoamer"
 )

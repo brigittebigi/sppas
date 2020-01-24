@@ -59,6 +59,7 @@ from sppas.src.anndata import sppasCtrlVocab
 from sppas.src.anndata import sppasMetaData
 
 from ..tools import sppasSwissKnife
+from ..dialogs import AudioRoamer
 from ..windows.image import ColorizeImage
 from ..windows import sppasStaticText
 from ..windows import sppasPanel
@@ -116,6 +117,10 @@ class AudioListViewPanel(sppasBaseViewPanel):
 
         super(AudioListViewPanel, self).__init__(parent, filename, name)
         self.fix_values()
+        if self._object.get_duration() > 300.:
+            self.FindWindow("window-more").Enable(False)
+            wx.LogWarning("Audio Roamer is disabled: the audio file {} "
+                          "is too long.".format(filename))
 
     # -----------------------------------------------------------------------
     # Public methods
@@ -188,7 +193,7 @@ class AudioListViewPanel(sppasBaseViewPanel):
 
     def _create_content(self):
         """Override. Create the content of the panel."""
-        # self.AddButton("more")
+        self.AddButton("window-more")
         self.AddButton("close")
 
         self._create_child_panel()
@@ -246,6 +251,23 @@ class AudioListViewPanel(sppasBaseViewPanel):
             self._values["channels"].SetForegroundColour(self.GetForegroundColour())
         else:
             self._values["channels"].SetForegroundColour(ERROR_COLOUR)
+
+    # -----------------------------------------------------------------------
+
+    def _process_event(self, event):
+        """Process any kind of event.
+
+        :param event: (wx.Event)
+
+        """
+        event_obj = event.GetButtonObj()
+        event_name = event_obj.GetName()
+
+        if event_name == "window-more":
+            AudioRoamer(self, self._object)
+
+        else:
+            sppasBaseViewPanel._process_event(self, event)
 
 # ---------------------------------------------------------------------------
 
@@ -795,7 +817,6 @@ class TrsListViewPanel(sppasBaseViewPanel):
         event_name = event_obj.GetName()
 
         if event_name == "select":
-            wx.LogDebug("* * * * * * * * * * * *  Select event received.")
             self.__set_selected()
 
         else:
@@ -805,7 +826,6 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     def __set_selected(self, value=None):
         """Force to set the given selected value or reverse the existing one."""
-        wx.LogDebug("Set Selected. Given value is {}".format(value))
         # Old value can be unknown (not already set)
         old_value = self._object.get_meta("selected", None)
         if old_value is None:
@@ -818,13 +838,9 @@ class TrsListViewPanel(sppasBaseViewPanel):
             else:
                 value = "False"
 
-        wx.LogDebug("Old value is {:s}".format(old_value))
-        wx.LogDebug("New value to set is {:s}".format(value))
-
         if value != self._object.get_meta("selected", "x"):
             self._object.set_meta("selected", value)
             self._dirty = True
-            wx.LogDebug("File {:s} selected: {:s}".format(self._filename, value))
 
             if self._object.get_meta("selected", "False") == "True":
                 self.GetToolsPane().SetBackgroundColour(self._hicolor)
@@ -832,8 +848,6 @@ class TrsListViewPanel(sppasBaseViewPanel):
                 self.GetToolsPane().SetBackgroundColour(self.GetBackgroundColour())
 
             self.Refresh()
-        else:
-            wx.LogDebug("Old and new value are equals. Nothing to set.")
 
     # ------------------------------------------------------------------------
 
