@@ -78,6 +78,8 @@ WKP_ACT_RENAME = _("Rename")
 
 WKP_MSG_ASK_NAME = _("New name of the workspace: ")
 
+WKP_SWITCH_DISABLED = _("The current workspace contains locked files. Close files first.")
+WKP_ERROR = _("Error")
 WKP_MSG_CONFIRM_SWITCH = _("Confirm switch of workspace?")
 WKP_MSG_CONFIRM_DELETE = _("Confirm delete of workspace?")
 WKP_MSG_CONFIRM_OVERRIDE = _(
@@ -262,9 +264,15 @@ class WorkspacesManager(sppasPanel):
         wkpslist = event.GetEventObject()
         wkp_name = wkpslist.get_wkp_name(event.to_wkp)
 
+        # Can't switch if locked files. Files must be closed first.
+        if self.__data.has_locked_files():
+            Error(WKP_SWITCH_DISABLED, WKP_ERROR)
+            # the workspace panel has to switch back to the current
+            wkpslist.switch_to(event.from_wkp)
+            return
+
         # Save the currently displayed data (they correspond to the previous wkp)
-        if self.__data.has_locked_files() or \
-                (event.from_wkp == 0 and self.__data.is_empty() is False) or \
+        if (event.from_wkp == 0 and self.__data.is_empty() is False) or \
                 self.__data.get_state() != States().UNUSED:
 
             # User must confirm to really switch
