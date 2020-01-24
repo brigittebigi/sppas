@@ -345,13 +345,13 @@ class ChannelInfosPanel(sppasPanel):
     def _create_content(self):
         """Create the main sizer, add content then return it."""
         sizer = wx.BoxSizer(wx.VERTICAL)
-        border = sppasPanel.fix_size(6)
+        border = sppasPanel.fix_size(12)
 
         top_panel = sppasPanel(self)
         top_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        info = self._create_content_infos()
-        clip = self._create_content_clipping()
-        ipus = self._create_content_ipus()
+        info = self._create_content_infos(top_panel)
+        clip = self._create_content_clipping(top_panel)
+        ipus = self._create_content_ipus(top_panel)
         top_sizer.Add(info, 1, wx.EXPAND)
         top_sizer.Add(clip, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
         top_sizer.Add(ipus, 1, wx.EXPAND)
@@ -367,49 +367,49 @@ class ChannelInfosPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def _create_content_infos(self):
+    def _create_content_infos(self, parent):
         """GUI design for amplitude and volume information."""
         gbs = wx.GridBagSizer(vgap=sppasPanel.fix_size(4),
                               hgap=sppasPanel.fix_size(4))
 
-        static_tx = sppasStaticText(self, label=MSG_HEAD_AMPS, name="static_head1")
+        static_tx = sppasStaticText(parent, label=MSG_HEAD_AMPS, name="static_head1")
         gbs.Add(static_tx, (0, 0), (1, 2), flag=wx.LEFT)
         self._wxobj["titleamplitude"] = (static_tx, None)
 
-        self.__add_info(self, gbs, "nframes", 1)
-        self.__add_info(self, gbs, "minmax", 2)
-        self.__add_info(self, gbs, "cross", 3)
+        self.__add_info(parent, gbs, "nframes", 1)
+        self.__add_info(parent, gbs, "minmax", 2)
+        self.__add_info(parent, gbs, "cross", 3)
 
-        static_tx = sppasStaticText(self, label="")
+        static_tx = sppasStaticText(parent, label="")
         gbs.Add(static_tx, (4, 0), (1, 2), flag=wx.LEFT)
 
-        cfm = wx.ComboBox(self, -1, choices=ChannelInfosPanel.FRAMERATES, style=wx.CB_READONLY)
-        cfm.SetMinSize(wx.Size(sppasPanel.fix_size(100), -1))
-        self.__add_modifiable(self, gbs, cfm, "framerate", 5)
+        cfm = wx.ComboBox(parent, -1, choices=ChannelInfosPanel.FRAMERATES, style=wx.CB_READONLY)
+        # cfm.SetMinSize(wx.Size(sppasPanel.fix_size(100), -1))
+        self.__add_modifiable(parent, gbs, cfm, "framerate", 5)
         self.Bind(wx.EVT_COMBOBOX, self.OnModif, cfm)
 
-        csp = wx.ComboBox(self, -1, choices=ChannelInfosPanel.SAMPWIDTH, style=wx.CB_READONLY)
+        csp = wx.ComboBox(parent, -1, choices=ChannelInfosPanel.SAMPWIDTH, style=wx.CB_READONLY)
         csp.SetMinSize(wx.Size(sppasPanel.fix_size(100), -1))
-        self.__add_modifiable(self, gbs, csp, "sampwidth", 6)
+        self.__add_modifiable(parent, gbs, csp, "sampwidth", 6)
         self.Bind(wx.EVT_COMBOBOX, self.OnModif, csp)
 
-        txm = sppasTextCtrl(self, value=ChannelInfosPanel.INFO_LABELS["mul"][1],
+        txm = sppasTextCtrl(parent, value=ChannelInfosPanel.INFO_LABELS["mul"][1],
                             validator=TextAsNumericValidator(),
                             style=wx.TE_PROCESS_ENTER)
         txm.SetInsertionPoint(0)
-        self.__add_modifiable(self, gbs, txm, "mul", 7)
+        self.__add_modifiable(parent, gbs, txm, "mul", 7)
         self.Bind(wx.EVT_TEXT_ENTER, self.OnModif, txm)
 
-        txb = sppasTextCtrl(self, value=ChannelInfosPanel.INFO_LABELS["bias"][1],
+        txb = sppasTextCtrl(parent, value=ChannelInfosPanel.INFO_LABELS["bias"][1],
                             validator=TextAsNumericValidator(),
                             style=wx.TE_PROCESS_ENTER)
         txb.SetInsertionPoint(0)
-        self.__add_modifiable(self, gbs, txb, "bias", 8)
+        self.__add_modifiable(parent, gbs, txb, "bias", 8)
         self.Bind(wx.EVT_TEXT_ENTER, self.OnModif, txb)
 
-        cb = wx.CheckBox(self, -1, style=wx.NO_BORDER)
+        cb = wx.CheckBox(parent, -1, style=wx.NO_BORDER)
         cb.SetValue(ChannelInfosPanel.INFO_LABELS["offset"][1])
-        self.__add_modifiable(self, gbs, cb, "offset", 9)
+        self.__add_modifiable(parent, gbs, cb, "offset", 9)
         self.Bind(wx.EVT_CHECKBOX, self.OnModif, cb)
 
         gbs.AddGrowableCol(1)
@@ -418,45 +418,45 @@ class ChannelInfosPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def _create_content_clipping(self):
+    def _create_content_clipping(self, parent):
         """GUI design for clipping information."""
         gbs = wx.GridBagSizer(vgap=sppasPanel.fix_size(4),
                               hgap=sppasPanel.fix_size(4))
 
-        static_tx = sppasStaticText(self, label=MSG_HEAD_CLIPPING, name="static_head2")
+        static_tx = sppasStaticText(parent, label=MSG_HEAD_CLIPPING, name="static_head2")
         gbs.Add(static_tx, (0, 0), (1, 2), flag=wx.LEFT)
         self._wxobj["titleclipping"] = (static_tx, None)
 
         for i in range(1, 10):
-            self.__add_clip(self, gbs, i)
+            self.__add_clip(parent, gbs, i)
 
         return gbs
 
     # -----------------------------------------------------------------------
 
-    def _create_content_ipus(self):
+    def _create_content_ipus(self, parent):
         """GUI design for information about an IPUs segmentation..."""
         gbs = wx.GridBagSizer(vgap=sppasPanel.fix_size(4),
                               hgap=sppasPanel.fix_size(4))
 
-        static_tx = sppasStaticText(self, label=MSG_HEAD_RMS, name="static_head3")
+        static_tx = sppasStaticText(parent, label=MSG_HEAD_RMS, name="static_head3")
         gbs.Add(static_tx, (0, 0), (1, 2), flag=wx.LEFT)
         self._wxobj["titlevolume"] = (static_tx, None)
 
-        self.__add_info(self, gbs, "volmin", 1)
-        self.__add_info(self, gbs, "volmax", 2)
-        self.__add_info(self, gbs, "volavg", 3)
+        self.__add_info(parent, gbs, "volmin", 1)
+        self.__add_info(parent, gbs, "volmax", 2)
+        self.__add_info(parent, gbs, "volavg", 3)
 
-        static_tx = sppasStaticText(self, label="")
+        static_tx = sppasStaticText(parent, label="")
         gbs.Add(static_tx, (4, 0), (1, 2), flag=wx.LEFT)
 
-        static_tx = sppasStaticText(self, label=MSG_HEAD_IPUS, name="static_head4")
+        static_tx = sppasStaticText(parent, label=MSG_HEAD_IPUS, name="static_head4")
         gbs.Add(static_tx, (5, 0), (1, 2), flag=wx.LEFT)
         self._wxobj["titleipus"] = (static_tx, None)
 
-        self.__add_info(self, gbs, "volsil",  6)
-        self.__add_info(self, gbs, "nbipus",  7)
-        self.__add_info(self, gbs, "duripus", 8)
+        self.__add_info(parent, gbs, "volsil",  6)
+        self.__add_info(parent, gbs, "nbipus",  7)
+        self.__add_info(parent, gbs, "duripus", 8)
 
         return gbs
 
