@@ -106,10 +106,10 @@ class sppasTextEntryDialog(sppasDialog):
         s = wx.BoxSizer(wx.VERTICAL)
 
         txt = sppasStaticText(p, label=message)
-        s.Add(txt, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL, 10)
+        s.Add(txt, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL, sppasDialog.fix_size(10))
 
         entry = sppasTextCtrl(p, value=value, validator=self.__validator, name="text_value")
-        s.Add(entry, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL, 10)
+        s.Add(entry, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL, sppasDialog.fix_size(10))
 
         p.SetSizer(s)
         p.SetName("content")

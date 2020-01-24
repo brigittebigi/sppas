@@ -367,7 +367,7 @@ class WorkspacesManager(sppasPanel):
 
         """
         # get the name of the file to be exported to
-        with sppasFileDialog(self, title=WKP_ACT_IMPORT,
+        with sppasFileDialog(self, title=WKP_ACT_EXPORT,
                              style=wx.FD_SAVE) as dlg:
             dlg.SetWildcard(WKP + " (*.wjson)|*.wjson")
             if dlg.ShowModal() == wx.ID_CANCEL:
