@@ -61,7 +61,7 @@ from sppas.src.anndata import sppasMetaData
 from ..tools import sppasSwissKnife
 from ..dialogs import AudioRoamer
 from ..windows.image import ColorizeImage
-from ..windows import sppasStaticText
+from ..windows import sppasStaticText, sppasTextCtrl
 from ..windows import sppasPanel
 from ..windows import sppasCollapsiblePanel
 from .baseview import sppasBaseViewPanel
@@ -208,11 +208,13 @@ class AudioListViewPanel(sppasBaseViewPanel):
         for i, label in enumerate(LABEL_LIST):
             static_tx = sppasStaticText(child_panel, label=LABEL_LIST[label])
             self._labels[label] = static_tx
-            gbs.Add(static_tx, (i, 0), flag=wx.ALL, border=sppasPanel.fix_size(6))
+            gbs.Add(static_tx, (i, 0), flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=sppasPanel.fix_size(6))
 
-            tx = wx.TextCtrl(child_panel, -1, NO_INFO_LABEL, style=wx.TE_READONLY | wx.BORDER_NONE)
+            # tx = sppasTextCtrl(child_panel, value=NO_INFO_LABEL, style=wx.TE_READONLY | wx.BORDER_NONE)
+            tx = sppasStaticText(child_panel, label=NO_INFO_LABEL)
+            tx.SetMinSize(wx.Size(sppasPanel.fix_size(200), -1))
             self._values[label] = tx
-            gbs.Add(tx, (i, 1), flag=wx.EXPAND | wx.RIGHT, border=sppasPanel.fix_size(6))
+            gbs.Add(tx, (i, 1), flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=sppasPanel.fix_size(6))
 
         gbs.AddGrowableCol(1)
         child_panel.SetSizer(gbs)
@@ -221,12 +223,14 @@ class AudioListViewPanel(sppasBaseViewPanel):
 
     def __fix_duration(self):
         duration = self._object.get_duration()
-        self._values["duration"].ChangeValue(str(round(float(duration), 3)))
+        # self._values["duration"].ChangeValue(str(round(float(duration), 3)))
+        self._values["duration"].SetLabel(str(round(float(duration), 3)))
         self._values["duration"].SetForegroundColour(self.GetForegroundColour())
 
     def __fix_framerate(self):
         framerate = self._object.get_framerate()
-        self._values["framerate"].ChangeValue(str(framerate))
+        # self._values["framerate"].ChangeValue(str(framerate))
+        self._values["framerate"].SetLabel(str(framerate))
         if framerate < 16000:
             self._values["framerate"].SetForegroundColour(ERROR_COLOUR)
         elif framerate in [16000, 32000, 48000]:
@@ -236,7 +240,8 @@ class AudioListViewPanel(sppasBaseViewPanel):
 
     def __fix_sampwidth(self):
         sampwidth = self._object.get_sampwidth()
-        self._values["sampwidth"].ChangeValue(str(sampwidth*8))
+        # self._values["sampwidth"].ChangeValue(str(sampwidth*8))
+        self._values["sampwidth"].SetLabel(str(sampwidth*8))
         if sampwidth == 1:
             self._values["sampwidth"].SetForegroundColour(ERROR_COLOUR)
         elif sampwidth == 2:
@@ -246,7 +251,8 @@ class AudioListViewPanel(sppasBaseViewPanel):
 
     def __fix_nchannels(self):
         nchannels = self._object.get_nchannels()
-        self._values["channels"].ChangeValue(str(nchannels))
+        # self._values["channels"].ChangeValue(str(nchannels))
+        self._values["channels"].SetLabel(str(nchannels))
         if nchannels == 1:
             self._values["channels"].SetForegroundColour(self.GetForegroundColour())
         else:
@@ -773,6 +779,9 @@ class TrsListViewPanel(sppasBaseViewPanel):
         s.Add(media_ctrl, 0, wx.EXPAND)
         s.Add(vocab_ctrl, 0, wx.EXPAND)
         # s.Add(hy_ctrl, 0, wx.EXPAND)
+        p = sppasPanel(child_panel)
+        p.SetMinSize(wx.Size(-1, 24))  # for the auto horiz scrollbar
+        s.Add(p, 0, wx.EXPAND)
         child_panel.SetSizerAndFit(s)
 
         # The user clicked an item

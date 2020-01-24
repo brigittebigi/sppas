@@ -179,7 +179,7 @@ class sppasAudioViewDialog(sppasDialog):
         self.CenterOnParent()
         self.FadeIn(deltaN=-8)
         self.SetMinSize(wx.Size(sppasPanel.fix_size(540),
-                                sppasPanel.fix_size(380)))
+                                sppasPanel.fix_size(400)))
 
     # -----------------------------------------------------------------------
 
