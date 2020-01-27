@@ -46,6 +46,7 @@ import sppas.src.ui.phoenix.windows.line as line
 import sppas.src.ui.phoenix.windows.button as button
 import sppas.src.ui.phoenix.windows.panel as panel
 import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
+import sppas.src.ui.phoenix.windows.media as media
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -63,6 +64,7 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
+        self.AddPage(media.TestPanel(self), "Media Control")
         self.AddPage(toolbar.TestPanel(self), "Toolbar")
         self.AddPage(panel.TestPanel(self), "Panels")
         self.AddPage(buttonbox.TestPanel(self), "ButtonBox")

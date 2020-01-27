@@ -347,7 +347,7 @@ class ChannelInfosPanel(sppasPanel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         border = sppasPanel.fix_size(12)
 
-        top_panel = sppasPanel(self)
+        top_panel = sppasPanel(self, name="content")
         top_sizer = wx.BoxSizer(wx.HORIZONTAL)
         info = self._create_content_infos(top_panel)
         clip = self._create_content_clipping(top_panel)
@@ -384,12 +384,14 @@ class ChannelInfosPanel(sppasPanel):
         gbs.Add(static_tx, (4, 0), (1, 2), flag=wx.LEFT)
 
         cfm = wx.ComboBox(parent, -1, choices=ChannelInfosPanel.FRAMERATES, style=wx.CB_READONLY)
-        # cfm.SetMinSize(wx.Size(sppasPanel.fix_size(100), -1))
+        cfm.SetMinSize(wx.Size(sppasPanel.fix_size(100),
+                               sppasPanel.fix_size(12)))
         self.__add_modifiable(parent, gbs, cfm, "framerate", 5)
         self.Bind(wx.EVT_COMBOBOX, self.OnModif, cfm)
 
         csp = wx.ComboBox(parent, -1, choices=ChannelInfosPanel.SAMPWIDTH, style=wx.CB_READONLY)
-        csp.SetMinSize(wx.Size(sppasPanel.fix_size(100), -1))
+        csp.SetMinSize(wx.Size(sppasPanel.fix_size(100),
+                               sppasPanel.fix_size(12)))
         self.__add_modifiable(parent, gbs, csp, "sampwidth", 6)
         self.Bind(wx.EVT_COMBOBOX, self.OnModif, csp)
 
@@ -562,10 +564,11 @@ class ChannelInfosPanel(sppasPanel):
                             font.GetFaceName(),
                             font.GetEncoding())
         for child in self.GetChildren():
-            if child.GetName().startswith("static_head"):
-                child.SetFont(bold_font)
-            else:
-                child.SetFont(font)
+            child.SetFont(font)
+            if child.GetName() == "content":
+                for content_child in child.GetChildren():
+                    if content_child.GetName().startswith("static_head"):
+                        content_child.SetFont(bold_font)
 
     # ----------------------------------------------------------------------
     # Methods of the workers
