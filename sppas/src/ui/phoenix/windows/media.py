@@ -193,8 +193,10 @@ class sppasMedia(wx.media.MediaCtrl):
 
     # -------------------------------------------------------------------------
 
-    def SetPlaybackRate(self, dRate):
-        raise NotImplementedError
+    def ShowPlayerControls(self, flags=wx.media.MEDIACTRLPLAYERCONTROLS_NONE):
+        wx.media.MediaCtrl.ShowPlayerControls(
+            self,
+            wx.media.MEDIACTRLPLAYERCONTROLS_NONE)
 
     # -------------------------------------------------------------------------
 
@@ -388,6 +390,7 @@ class sppasMedia(wx.media.MediaCtrl):
 
             # On MacOS, it seems that offset is not precise enough...
             # It can be + or - 3 compared to the expected value!
+
 
 # ---------------------------------------------------------------------------
 

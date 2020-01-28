@@ -41,6 +41,7 @@ from sppas.src.ui.cfg import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
+import sppas.src.ui.phoenix.panels.player as player
 import sppas.src.ui.phoenix.panels.option as option
 import sppas.src.ui.phoenix.dialogs.test_dialogs as test_dialogs
 import sppas.src.ui.phoenix.dialogs.tiersfilters as tiersfilters
@@ -85,7 +86,8 @@ class TestPanel(wx.Choicebook):
         self.AddPage(wksmanager.TestPanel(self), "Workspaces manager")
         self.AddPage(refsviewctrl.TestPanel(self), "Refs view ctrl")
         self.AddPage(filesviewctrl.TestPanel(self), "Files view ctrl")
-        self.AddPage(option.TestPanel(self), "Configure options")
+        self.AddPage(option.TestPanel(self), "Configure options panel")
+        self.AddPage(player.TestPanel(self), "Media player panel")
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)

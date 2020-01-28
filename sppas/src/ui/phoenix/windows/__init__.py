@@ -55,6 +55,8 @@ from .text import NotEmptyTextValidator
 
 from .image import sppasStaticBitmap
 
+from .media import sppasMedia
+
 from .panel import sppasPanel
 from .panel import sppasScrolledPanel
 from .panel import sppasCollapsiblePanel
@@ -76,6 +78,7 @@ __all__ = (
     "CheckButton",
     "RadioButton",
     "ToggleButton",
+    "sppasMedia",
     "sppasStaticText",
     "sppasTitleText",
     "sppasMessageText",
