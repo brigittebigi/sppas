@@ -345,7 +345,7 @@ class ChannelInfosPanel(sppasPanel):
     def _create_content(self):
         """Create the main sizer, add content then return it."""
         sizer = wx.BoxSizer(wx.VERTICAL)
-        border = sppasPanel.fix_size(12)
+        border = sppasPanel.fix_size(24)
 
         top_panel = sppasPanel(self, name="content")
         top_sizer = wx.BoxSizer(wx.HORIZONTAL)

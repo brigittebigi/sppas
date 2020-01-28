@@ -120,14 +120,19 @@ class sppasMedia(wx.media.MediaCtrl):
 
         self.__reset()
         self._filename = fileName
-        wx.LogDebug("sppasMedia: Load of {:s}".format(fileName))
-        return wx.media.MediaCtrl.Load(self, fileName)
+        wx.LogMessage("sppasMedia: Load of {:s}".format(fileName))
+        self._loaded = wx.media.MediaCtrl.Load(self, fileName)
+        return self._loaded
 
     # -----------------------------------------------------------------------
 
     def __on_media_loaded(self, event):
+        """Sent when a media has enough data that it can start playing.
+
+        Not sent under windows, but required on MacOS and Linux.
+
+        """
         wx.LogDebug("sppasMedia file {:s} loaded.".format(self._filename))
-        self._timer.Start(self._refreshTimer)
         self._loaded = True
         # Now, loaded is True, but length is 0 until we attempt to play.
         event.Skip()
@@ -142,13 +147,18 @@ class sppasMedia(wx.media.MediaCtrl):
             return False
         if length != self._length:
             self._length = length
-            self._offsets = (0, self._length)
-            wx.media.MediaCtrl.Seek(self, 0, mode=wx.FromStart)
-            wx.LogDebug("Offsets ranges 0:{:d}".format(self._length))
+            if self._offsets == (0, 0):
+                # We din't already fixed a period.
+                # We set the period to the whole content
+                wx.LogMessage("Offset period set to: 0 - {:d}".format(self._length))
+                self._offsets = (0, self._length)
+            wx.media.MediaCtrl.Seek(self, self._offsets[0], mode=wx.FromStart)
+            wx.LogMessage("Media seek to: {:d}".format(self._offsets[0]))
+
             if self._slider is not None:
-                self._slider.SetRange(0, self._length)
-                self._slider.SetValue(0)
-                self._slider.SetTickFreq(int(self._length/10))
+                self._slider.SetRange(self._offsets[0], self._offsets[1])
+                self._slider.SetValue(self._offsets[0])
+                self._slider.SetTickFreq(int(self._offsets[1]/10))
         return True
 
     # -----------------------------------------------------------------------
@@ -158,6 +168,7 @@ class sppasMedia(wx.media.MediaCtrl):
         self._filename = None
         self._loaded = False
         self._offsets = (0, 0)
+        wx.LogMessage("Offset period set to: 0 - 0")
         self._length = 0
         self._timer.Stop()
         self._refreshTimer = 10
@@ -205,8 +216,6 @@ class sppasMedia(wx.media.MediaCtrl):
         state = self.GetState()
         if state == wx.media.MEDIASTATE_PLAYING:
             wx.media.MediaCtrl.Pause(self)
-        # elif state == wx.media.MEDIASTATE_PAUSED:
-        #    self.Play()
 
     # ----------------------------------------------------------------------
 
@@ -222,7 +231,7 @@ class sppasMedia(wx.media.MediaCtrl):
                 wx.LogMessage("File {:s} is already playing.".format(self._filename))
                 return True
             elif state != wx.media.MEDIASTATE_PAUSED:
-                # it's propably the first attempt of playing
+                # it's probably the first attempt of playing
                 if self.__set_length_infos() is False:
                     wx.LogError("Media loaded but got length 0.")
                     return False
@@ -230,6 +239,7 @@ class sppasMedia(wx.media.MediaCtrl):
             wx.LogError("Media is not loaded (length is 0).")
             return False
 
+        self._timer.Start(self._refreshTimer)
         return wx.media.MediaCtrl.Play(self)
 
     # -------------------------------------------------------------------------
@@ -258,25 +268,29 @@ class sppasMedia(wx.media.MediaCtrl):
         try:
             wx.media.MediaCtrl.Stop(self)
             self.Seek(self._offsets[0])
+            if self._slider is not None:
+                self._slider.SetValue(self._offsets[0])
+            self._timer.Stop()
+            self._autoreplay = False
         except Exception as e:
             # provide errors like:
             # Fatal IO error 11 (Resource temporarily unavailable)
             wx.LogMessage(str(e))
             pass
-        self._autoreplay = False
 
     # ----------------------------------------------------------------------
 
     def Close(self, force=False):
         """Close the MediaCtrl."""
-        self._timer.Stop()
+        self.Stop()
+        del self._timer
         wx.Window.Close(self, force)
 
     # ----------------------------------------------------------------------
 
     def Destroy(self):
         """Destroy the MediaCtrl."""
-        self._timer.Stop()
+        self.Stop()
         del self._timer
         wx.Window.Destroy(self)
 
@@ -320,40 +334,34 @@ class sppasMedia(wx.media.MediaCtrl):
         :param end: (int) End time in milliseconds
 
         """
-        if self._length == 0:
-            return
-
         if self.GetState() == wx.media.MEDIASTATE_PLAYING:
             self.Stop()
 
         # Check the given interval
-        if start < 0:
-            # bad start value
+        if start is None or start < 0:
             start = 0
-        length = self.Length()
-        if end-start < self._refreshTimer:
-            # the interval is not large enough
-            end = start + self._refreshTimer
-        if end > length:
-            # bad end value
-            end = length
+        if end is None:
+            end = self._length
 
         self._offsets = (start, end)
+        wx.LogMessage("Offset period set to: {:d} - {:d}".format(start, end))
         if self._slider is not None:
             self._slider.SetRange(start, end)
 
     # ----------------------------------------------------------------------
 
-    def AutoPlay(self):
+    def AutoPlay(self, start=None, end=None):
         """Play the music and re-play from the beginning."""
         self._autoreplay = True
+        self.SetOffsetPeriod(start, end)
         self.Play()
 
     # ----------------------------------------------------------------------
 
-    def NormalPlay(self):
+    def NormalPlay(self, start=None, end=None):
         """Play the music once. Disable auto-replay."""
         self._autoreplay = False
+        self.SetOffsetPeriod(start, end)
         self.Play()
 
     # ----------------------------------------------------------------------
@@ -362,22 +370,24 @@ class sppasMedia(wx.media.MediaCtrl):
         """"""
         state = self.GetState()
         offset = self.Tell()
-        if self._slider is not None:
+        if state == wx.media.MEDIASTATE_PLAYING and self._slider is not None:
             self._slider.SetValue(offset)
 
-        if state != wx.media.MEDIASTATE_PAUSED:
-            finished = False
-            omin, omax = self._offsets
-            if offset < omin + 3 or offset > omax - 3:
-                finished = True
-                # On MacOS, it seems that offset is not precise enough...
-                # It can be + or - 3 compared to the expected value!
-
-            if finished is True and self._autoreplay is True:
+        if state == wx.media.MEDIASTATE_STOPPED or \
+                (state == wx.media.MEDIASTATE_PLAYING and (offset + 3 > self._offsets[1])):
+            # Media reached the end of the file and automatically stopped
+            # but our Stop() does much more things
+            # or
+            # Media is playing and the current position is very close to the
+            # end of our limit, so we can stop playing.
+            if self._autoreplay is True:
                 self.Stop()
-                self.AutoPlay()
+                self.AutoPlay(self._offsets[0], self._offsets[1])
+            else:
+                self.Stop()
 
-        event.Skip()
+            # On MacOS, it seems that offset is not precise enough...
+            # It can be + or - 3 compared to the expected value!
 
 # ---------------------------------------------------------------------------
 
@@ -407,7 +417,8 @@ class TestPanel(wx.Panel):
         # the following event is not sent with the Windows default backend
         # MEDIABACKEND_DIRECTSHOW
         # choose above e.g. MEDIABACKEND_WMP10 if this is a problem for you
-        self.Bind(wx.media.EVT_MEDIA_LOADED, self.OnMediaLoaded)
+        self.mc.Bind(wx.media.EVT_MEDIA_LOADED, self.OnMediaLoaded)
+        self.mc.Bind(wx.EVT_TIMER, self.OnTimer)
 
         btn1 = wx.Button(self, -1, "Load File")
         self.Bind(wx.EVT_BUTTON, self.OnLoadFile, btn1)
@@ -425,7 +436,7 @@ class TestPanel(wx.Panel):
         btn5 = wx.Button(self, -1, "AutoPlay")
         self.Bind(wx.EVT_BUTTON, self.OnAutoPlay, btn5)
 
-        slider = wx.Slider(self, -1, 0, 0, 10)
+        slider = wx.Slider(self, -1, 0, 0, 10, style=wx.SL_HORIZONTAL)
         slider.SetMinSize(wx.Size(250, -1))
 
         self.st_len = StaticText(self, -1, size=(100, -1))
@@ -522,3 +533,4 @@ class TestPanel(wx.Panel):
     def OnTimer(self, evt):
         offset = self.mc.Tell()
         self.st_pos.SetLabel('Position: %d' % offset)
+        evt.Skip()
