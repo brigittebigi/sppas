@@ -40,9 +40,10 @@ import wx.media
 
 from sppas import paths
 
-from ..windows import sppasPanel
+from ..windows import sppasPanel, sppasCollapsiblePanel
 from ..windows import sppasMedia
 from ..windows import sppasStaticLine
+from ..windows import sppasStaticText
 from ..windows import BitmapTextButton
 from ..windows import ToggleButton
 
@@ -60,8 +61,12 @@ class sppasPlayerPanel(sppasPanel):
 
     """
 
-    def __init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition,
-                 size=wx.DefaultSize, style=0, name="CollapsiblePane"):
+    def __init__(self, parent, id=wx.ID_ANY,
+                 align=wx.ALIGN_TOP,
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 style=0,
+                 name="CollapsiblePane"):
         """Create a sppasPlayerPanel.
 
         :param parent: (wx.Window) Parent window must NOT be none
@@ -70,12 +75,13 @@ class sppasPlayerPanel(sppasPanel):
         :param size: (wx.Size) the control size
         :param style: (int) the underlying window style
         :param name: (str) the widget name.
+        :param align: (wx.ALIGN_TOP or wx.ALIGN_BOTTOM) position of the toolbar (top or bottom)
 
         """
 
         sppasPanel.__init__(self, parent, id, pos, size, style, name)
 
-        self._create_content()
+        self._create_content(align)
         self._setup_events()
 
         # Look&feel
@@ -83,60 +89,217 @@ class sppasPlayerPanel(sppasPanel):
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
 
-        self.SetMinSize(wx.Size(sppasPanel.fix_size(240), -1))
-        self.SetInitialSize()
+        # self.SetInitialSize()
+        self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def add_media(self, filename):
+        """Add a media into the player.
+
+        Under Windows, the player crashes if the media is not supported.
+        Other platforms raise an exception.
+
+        :param filename: (str)
+
+        """
+        # We will embed the media into a collapsible panel
+        parent_panel = self.FindWindow("media_player_panel")
+        panel = sppasCollapsiblePanel(parent_panel, label=filename)
+        panel.SetMinSize(wx.Size(sppasPanel.fix_size(480),
+                                 sppasPanel.fix_size(64)))
+
+        # Create the media and add to the panel
+        backend = ""  # choose default backend, i.e. the system dependent one
+        mc = sppasMedia(panel, style=wx.SIMPLE_BORDER, szBackend=backend)
+        panel.SetPane(mc)
+
+        # Load the media
+        if mc.Load(filename) is True:
+            self.__set_media_size(mc)
+            panel.Expand()
+        else:
+            panel.Collapse()
+            mc.SetMinSize(wx.Size(sppasPanel.fix_size(480),
+                                  sppasPanel.fix_size(32)))
+            mc.Bind(wx.media.EVT_MEDIA_LOADED, self.__process_media_loaded)
+
+        self.__add_to_audio_sizer(panel)
         self.Layout()
 
     # -----------------------------------------------------------------------
     # Construct the GUI
     # -----------------------------------------------------------------------
 
-    def _create_content(self):
-        """Create the content of the panel."""
+    def _create_content(self, align):
+        """Create the content of the panel, a toolbar and a content panel.
+
+        :param align: wx.ALIGN_BOTTOM for bottom, anything else for top alignment.
+
+        """
         tb = self.__create_toolbar()
+        pp = self.__create_media_panel()
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(tb, 0, wx.EXPAND, 0)
-        self.SetSizer(sizer)
+        if align == wx.ALIGN_BOTTOM:
+            sizer.Add(pp, 0, wx.EXPAND, 0)
+            sizer.Add(tb, 0, wx.EXPAND, 0)
+        else:
+            sizer.Add(tb, 0, wx.EXPAND, 0)
+            sizer.Add(pp, 0, wx.EXPAND, 0)
+        self.SetSizerAndFit(sizer)
+
+    # -----------------------------------------------------------------------
+
+    def __get_video_sizer(self):
+        """Return the sizer to display video medias."""
+        main_panel = self.FindWindow("media_player_panel")
+        return main_panel.GetSizer()
+
+    # -----------------------------------------------------------------------
+
+    def __add_to_video_sizer(self, panel):
+        """Add a panel to the sizer to display video medias."""
+        main_panel = self.FindWindow("media_player_panel")
+        main_panel.GetSizer().Add(panel, 0, wx.EXPAND)
+
+    # -----------------------------------------------------------------------
+
+    def __get_audio_sizer(self):
+        """Return the sizer to display audio medias."""
+        main_panel = self.FindWindow("media_player_panel")
+        return main_panel.GetSizer()
+
+    # -----------------------------------------------------------------------
+
+    def __add_to_audio_sizer(self, panel):
+        """Add a panel to the sizer to display audio waveform."""
+        main_panel = self.FindWindow("media_player_panel")
+        main_panel.GetSizer().Add(panel, 0, wx.EXPAND)
+        main_panel.GetSizer().Add(self.__create_hline(), 0, wx.EXPAND)
+
+    # -----------------------------------------------------------------------
+
+    def __create_media_panel(self):
+        """Main panel to display the content of the media."""
+        panel = sppasPanel(self, name="media_player_panel")
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        panel.SetSizer(sizer)
+        return panel
 
     # -----------------------------------------------------------------------
 
     def __create_toolbar(self):
-        tb = sppasPanel(self, name="toolbar_player_panel")
+        """Tools to manage the media (a player, a slider, the volume...)."""
+        panel = sppasPanel(self, name="toolbar_player_panel")
 
-        nav = sppasPanel(tb, name="tb_nav_panel")
-        sizer_nav = wx.BoxSizer(wx.VERTICAL)
+        file_btn = self.__create_filename_button(panel)
+        nav_panel = self.__create_player_buttons(panel)
+        sld_panel = self.__create_slider_media(panel)
+        vol_panel = self.__create_slider_volume(panel)
+        player_sizer = wx.BoxSizer(wx.VERTICAL)
+        player_sizer.Add(nav_panel, 2, wx.EXPAND, 0)
+        player_sizer.Add(sld_panel, 1, wx.EXPAND, 0)
 
-        btn_play = BitmapTextButton(nav, label="", name="media_play")
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(file_btn, 0, wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(player_sizer, 1, wx.EXPAND, 0)
+        sizer.Add(vol_panel, 0, wx.ALIGN_CENTER_VERTICAL)
+
+        panel.SetSizerAndFit(sizer)
+        return panel
+
+    # -----------------------------------------------------------------------
+
+    def __create_filename_button(self, parent):
+        """A button to collapse/expand all media of the displayed root."""
+        btn = BitmapTextButton(parent, label="No file", name="media_multimedia")
+        self.__button_properties(btn)
+        btn.SetLabelPosition(wx.RIGHT)
+        btn.SetSpacing(sppasPanel.fix_size(8))
+        btn.SetMinSize(wx.Size(sppasPanel.fix_size(128),
+                               sppasPanel.fix_size(64)))
+        return btn
+
+    # -----------------------------------------------------------------------
+
+    def __create_player_buttons(self, parent):
+        """Return a panel with the buttons to play/pause/stop the media."""
+        panel = sppasPanel(parent, name="tb_nav_panel")
+
+        btn_rewind = BitmapTextButton(panel, label="", name="media_rewind")
+        self.__button_properties(btn_rewind)
+        btn_rewind.Enable(False)
+
+        btn_play = BitmapTextButton(panel, label="", name="media_play")
         self.__button_properties(btn_play)
-        btn_play.SetMinSize(wx.Size(sppasPanel.fix_size(48),
-                                    sppasPanel.fix_size(48)))
+        btn_play.SetMinSize(wx.Size(sppasPanel.fix_size(40),
+                                    sppasPanel.fix_size(40)))
 
-        btn_pause = BitmapTextButton(nav, label="", name="media_pause")
-        self.__button_properties(btn_pause)
+        btn_forward = BitmapTextButton(panel, label="", name="media_forward")
+        self.__button_properties(btn_forward)
+        btn_forward.Enable(False)
 
-        btn_stop = BitmapTextButton(nav, label="", name="media_stop")
+        btn_stop = BitmapTextButton(panel, label="", name="media_stop")
         self.__button_properties(btn_stop)
 
-        btn_replay = ToggleButton(nav, label="", name="media_stop")
+        btn_replay = ToggleButton(panel, label="", name="media_replay")
         btn_replay = self.__button_properties(btn_replay)
-
-        sizer_btns = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_btns.Add(btn_play, 0, wx.EXPAND, 0)
-        sizer_btns.Add(btn_pause, 0, wx.EXPAND, 0)
-        sizer_btns.Add(btn_stop, 0, wx.EXPAND, 0)
-        sizer_btns.Add(btn_replay, 0, wx.EXPAND, 0)
-
-        slider = wx.Slider(nav)
-        sizer_nav.Add(sizer_btns, 1, wx.EXPAND)
-        sizer_nav.Add(slider, 1, wx.EXPAND)
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddStretchSpacer(1)
-        sizer.Add(sizer_nav, 1, wx.EXPAND)
+        sizer.Add(btn_rewind, 0, wx.EXPAND, 0)
+        sizer.Add(btn_play, 0, wx.EXPAND, 0)
+        sizer.Add(btn_forward, 0, wx.EXPAND, 0)
+        sizer.Add(btn_stop, 0, wx.EXPAND, 0)
+        sizer.Add(btn_replay, 0, wx.EXPAND, 0)
         sizer.AddStretchSpacer(1)
-        tb.SetSizer(sizer)
-        return tb
+
+        panel.SetSizerAndFit(sizer)
+        return panel
+
+    # -----------------------------------------------------------------------
+
+    def __create_slider_media(self, parent):
+        """Return a panel with the slider and left-right labels."""
+        panel = sppasPanel(parent, name="tb_slider_panel")
+
+        lt = sppasStaticText(panel, label="---.---", style=wx.ALIGN_RIGHT)
+        lt.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
+
+        rt = sppasStaticText(panel, label="---.---", style=wx.ALIGN_LEFT)
+        rt.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
+
+        slider = wx.Slider(panel, -1, 0, 0, 10, style=wx.SL_HORIZONTAL)
+        slider.SetMinSize(wx.Size(sppasPanel.fix_size(200), -1))
+
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(lt, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT | wx.RIGHT, sppasPlayerPanel.fix_size(4))
+        sizer.Add(slider, 1, wx.EXPAND, 0)
+        sizer.Add(rt, 0, wx.ALIGN_CENTER | wx.LEFT, sppasPlayerPanel.fix_size(4))
+        panel.SetSizer(sizer)
+
+        return panel
+
+    # -----------------------------------------------------------------------
+
+    def __create_slider_volume(self, parent):
+        """Return a panel with the slider and mute button."""
+        panel = sppasPanel(parent, name="tb_vol_panel")
+
+        btn_mute = BitmapTextButton(panel, label="", name="vol_mute")
+        self.__button_properties(btn_mute)
+
+        slider = wx.Slider(panel, value=50, minValue=0, maxValue=100, style=wx.SL_HORIZONTAL)
+        slider.SetMinSize(wx.Size(sppasPanel.fix_size(80),
+                                  sppasPanel.fix_size(64)))
+
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(btn_mute, 0, wx.ALIGN_CENTER, sppasPlayerPanel.fix_size(4))
+        sizer.Add(slider, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND | wx.ALIGN_LEFT, 0)
+        panel.SetSizerAndFit(sizer)
+
+        return panel
 
     # -----------------------------------------------------------------------
 
@@ -207,6 +370,23 @@ class sppasPlayerPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def __process_media_loaded(self, event):
+        """Process the end of load of a media."""
+        # wx.LogMessage("Media size is {:s}".format(str(media_size)))
+        media = event.GetEventObject()
+        self.__set_media_size(media)
+        media.GetParent().Expand()
+
+    # -----------------------------------------------------------------------
+
+    def __set_media_size(self, media):
+        """Fix the size of the media."""
+        #media.SetInitialSize()
+        media.SetMinSize(wx.Size(sppasPanel.fix_size(480),
+                                 sppasPanel.fix_size(128)))
+
+    # -----------------------------------------------------------------------
+
     def _process_action(self, event):
         """Process a button event: an action has to be performed.
 
@@ -218,21 +398,39 @@ class sppasPlayerPanel(sppasPanel):
         if name == "media_play":
             self.play()
 
-        elif name == "media_pause":
-            self.pause()
+        elif name == "media_stop":
+            self.stop()
 
         event.Skip()
 
     # -----------------------------------------------------------------------
 
     def play(self):
-        pass
+        """Play the selected media."""
+        main_panel = self.FindWindow("media_player_panel")
+        replay = self.FindWindow("media_replay").GetValue()
+        for child in main_panel.GetChildren():
+            pane = child.GetPane()
+            try:
+                if child.IsExpanded() is True:
+                    if replay is True:
+                        pane.AutoPlay()
+                    else:
+                        pane.NormalPlay()
+            except AttributeError:
+                wx.LogMessage("Child panel {:s} is not a media.".format(pane.GetName()))
 
     # -----------------------------------------------------------------------
 
-    def pause(self):
-        pass
-
+    def stop(self):
+        """Stop the media currently playing."""
+        main_panel = self.FindWindow("media_player_panel")
+        for child in main_panel.GetChildren():
+            pane = child.GetPane()
+            try:
+                pane.Stop()
+            except AttributeError:
+                wx.LogMessage("Child panel {:s} is not a media.".format(pane.GetName()))
 
 # ---------------------------------------------------------------------------
 
@@ -241,4 +439,11 @@ class TestPanel(sppasPlayerPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(
             parent, -1, style=wx.TAB_TRAVERSAL|wx.CLIP_CHILDREN)
-
+        self.SetBackgroundColour(wx.Colour(20, 20, 20))
+        self.SetForegroundColour(wx.Colour(220, 220, 220))
+        self.add_media(os.path.join(paths.samples,
+                                    "samples-fra",
+                                    "F_F_B003-P8.wav"))
+        self.add_media(os.path.join(paths.samples,
+                                    "samples-fra",
+                                    "F_F_C006-P6.wav"))

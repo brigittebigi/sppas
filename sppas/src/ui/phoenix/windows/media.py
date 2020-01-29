@@ -368,8 +368,14 @@ class sppasMedia(wx.media.MediaCtrl):
 
     # ----------------------------------------------------------------------
 
+    def GetFilename(self):
+        """Return the file associated to the media."""
+        return self._filename
+
+    # ----------------------------------------------------------------------
+
     def onTimer(self, event):
-        """"""
+        """Call it if EVT_TIMER is captured."""
         state = self.GetState()
         offset = self.Tell()
         if state == wx.media.MEDIASTATE_PLAYING and self._slider is not None:

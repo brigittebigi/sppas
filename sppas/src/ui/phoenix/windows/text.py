@@ -62,6 +62,10 @@ class sppasStaticText(wx.StaticText):
                 pos=DefaultPosition, size=DefaultSize, style=0,
                 name=StaticTextNameStr)
 
+        A StaticText that only updates the label if it has changed, to
+        help reduce potential flicker since its control would be
+        updated very frequently otherwise.
+
         """
         super(sppasStaticText, self).__init__(*args, **kw)
 
@@ -70,6 +74,10 @@ class sppasStaticText(wx.StaticText):
         self.SetFont(settings.text_font)
         self.SetBackgroundColour(settings.bg_color)
         self.SetForegroundColour(settings.fg_color)
+
+    def SetLabel(self, label):
+        if label != self.GetLabel():
+            wx.StaticText.SetLabel(self, label)
 
 # ---------------------------------------------------------------------------
 
