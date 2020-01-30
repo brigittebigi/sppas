@@ -1938,7 +1938,7 @@ class CheckButton(BaseCheckButton):
     # ------------------------------------------------------------------------
 
     def OnEraseBackground(self, event):
-        """Handle the wx.EVT_ERASE_BACKGROUND event for CustomCheckBox.
+        """Handle the wx.EVT_ERASE_BACKGROUND event.
 
         Override the base method.
 

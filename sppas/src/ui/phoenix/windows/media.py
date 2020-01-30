@@ -35,6 +35,7 @@
 """
 
 import os
+import mimetypes
 import wx
 import wx.media
 
@@ -56,6 +57,10 @@ class sppasMedia(wx.media.MediaCtrl):
     a period int time to play.
 
     """
+
+    # By default, we use a 23:9 ratio
+    MIN_WIDTH = 128
+    MIN_HEIGHT = 50
 
     def __init__(self, parent,
                  id=-1,
@@ -91,9 +96,25 @@ class sppasMedia(wx.media.MediaCtrl):
             parent, id, fileName, pos, size, style, szBackend,
             validator, name)
 
-        self._timer = wx.Timer(self)
+        try:
+            s = wx.GetApp().settings
+            self.SetBackgroundColour(s.bg_color)
+            self.SetForegroundColour(s.fg_color)
+            self.SetFont(s.text_font)
+        except AttributeError:
+            pass
 
-        self.Bind(wx.EVT_TIMER, self.onTimer)
+        # Border width to draw (0=no border)
+        self._borderwidth = 2
+        self._bordercolor = self.GetForegroundColour()
+        self._borderstyle = wx.PENSTYLE_SOLID
+
+        self._timer = wx.Timer(self)
+        self.SetInitialSize(size)
+
+        # Bind the events related to our window
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.Bind(wx.EVT_TIMER, self.OnTimer)
         self.Bind(wx.media.EVT_MEDIA_LOADED, self.__on_media_loaded)
 
     # -----------------------------------------------------------------------
@@ -120,7 +141,7 @@ class sppasMedia(wx.media.MediaCtrl):
 
         self.__reset()
         self._filename = fileName
-        wx.LogMessage("sppasMedia: Load of {:s}".format(fileName))
+        wx.LogDebug("sppasMedia: Load of {:s}".format(fileName))
         self._loaded = wx.media.MediaCtrl.Load(self, fileName)
         return self._loaded
 
@@ -150,10 +171,10 @@ class sppasMedia(wx.media.MediaCtrl):
             if self._offsets == (0, 0):
                 # We din't already fixed a period.
                 # We set the period to the whole content
-                wx.LogMessage("Offset period set to: 0 - {:d}".format(self._length))
+                wx.LogDebug("Offset period set to: 0 - {:d}".format(self._length))
                 self._offsets = (0, self._length)
             wx.media.MediaCtrl.Seek(self, self._offsets[0], mode=wx.FromStart)
-            wx.LogMessage("Media seek to: {:d}".format(self._offsets[0]))
+            wx.LogDebug("Media seek to: {:d}".format(self._offsets[0]))
 
             if self._slider is not None:
                 self._slider.SetRange(self._offsets[0], self._offsets[1])
@@ -296,6 +317,49 @@ class sppasMedia(wx.media.MediaCtrl):
         del self._timer
         wx.Window.Destroy(self)
 
+    # ----------------------------------------------------------------------
+
+    def SetInitialSize(self, size=None):
+        """Calculate and set a good size.
+
+        Either a size is given and this media size is then forced to it, or
+        no size is given and we have two options:
+
+            - the media is a video and the video is already loaded:
+              we know its size so we'll set size to it;
+            - the media is an audio: its size is (0, 0),
+              so we'll force to a min size.
+
+        :param size: an instance of wx.Size.
+
+        """
+        self.SetMinSize(wx.Size(sppasMedia.MIN_WIDTH, sppasMedia.MIN_HEIGHT))
+        if size is None:
+            (w, h) = wx.media.MediaCtrl.GetBestSize(self)
+        else:
+            (w, h) = size
+        wx.LogDebug("w={:d}, h={:d}".format(w, h))
+
+        if w <= 0:
+            w = sppasMedia.MIN_WIDTH
+        if h <= 0:
+            h = sppasMedia.MIN_HEIGHT
+
+        # Ensure a minimum size with the correct aspect ratio
+        i = 1.
+        w = float(w)
+        while w < sppasMedia.MIN_WIDTH:
+            w *= 1.5
+            i += 1.
+            wx.LogDebug("w={:f}, i={:f}".format(w, i))
+        w = int(w)
+        if i > 1.:
+            h = int(float(h) * 1.5 * i)
+
+        wx.media.MediaCtrl.SetInitialSize(self, wx.Size(w, h))
+
+    SetBestSize = SetInitialSize
+
     # -----------------------------------------------------------------------
     # New features
     # -----------------------------------------------------------------------
@@ -324,7 +388,6 @@ class sppasMedia(wx.media.MediaCtrl):
             return
         offset = self._slider.GetValue()
         wx.media.MediaCtrl.Seek(self, offset)
-        wx.LogDebug("Slider seeks to offset: {:d}".format(offset))
         event.Skip()
 
     # -----------------------------------------------------------------------
@@ -373,8 +436,10 @@ class sppasMedia(wx.media.MediaCtrl):
         return self._filename
 
     # ----------------------------------------------------------------------
+    # Event callbacks
+    # ----------------------------------------------------------------------
 
-    def onTimer(self, event):
+    def OnTimer(self, event):
         """Call it if EVT_TIMER is captured."""
         state = self.GetState()
         offset = self.Tell()
@@ -394,9 +459,168 @@ class sppasMedia(wx.media.MediaCtrl):
             else:
                 self.Stop()
 
+        self.Draw()
             # On MacOS, it seems that offset is not precise enough...
             # It can be + or - 3 compared to the expected value!
 
+    # ------------------------------------------------------------------------
+
+    def OnEraseBackground(self, event):
+        """Handle the wx.EVT_ERASE_BACKGROUND event.
+
+        Override the base method.
+
+        """
+        # This is intentionally empty, because we are using the combination
+        # of wx.BufferedDC + an empty OnEraseBackground event to
+        # reduce flicker
+        pass
+
+    # -----------------------------------------------------------------------
+
+    def OnErase(self, evt):
+        """Trap the erase event to keep the background transparent on windows.
+
+        :param evt: wx.EVT_ERASE_BACKGROUND
+
+        """
+        pass
+
+    # -----------------------------------------------------------------------
+
+    def OnSize(self, event):
+        """Handle the wx.EVT_SIZE event.
+
+        :param event: a wx.SizeEvent event to be processed.
+
+        """
+        event.Skip()
+        self.Draw()
+
+    # -----------------------------------------------------------------------
+    # Draw methods (private)
+    # -----------------------------------------------------------------------
+
+    def PrepareDraw(self):
+        """Prepare the DC to draw the button.
+
+        :returns: gc
+
+        """
+        # Create the Graphic Context
+        gc = wx.GCDC()
+        gc.SetBackground(wx.Brush(self.GetParent().GetBackgroundColour()))
+
+        # In any case, the brush is transparent
+        gc.SetBrush(wx.TRANSPARENT_BRUSH)
+        gc.SetBackgroundMode(wx.TRANSPARENT)
+        if wx.Platform in ['__WXGTK__', '__WXMSW__']:
+            # The background needs some help to look transparent on
+            # Gtk and Windows
+            gc.SetBackground(self.GetBackgroundBrush())
+
+        # Font
+        gc.SetFont(self.GetFont())
+
+        return gc
+
+    # ----------------------------------------------------------------------
+
+    def Draw(self):
+        """Draw after the WX_EVT_PAINT event.
+
+        """
+        # Get the actual client size of ourselves
+        width, height = self.GetClientSize()
+        wx.LogDebug("Draw method. {:d} {:d}".format(width, height))
+        if not width or not height:
+            # Nothing to do, we still don't have dimensions!
+            return
+
+        gc = self.PrepareDraw()
+        self.DrawBackground(gc)
+        self.DrawBorder(gc)
+        self.DrawContent(gc)
+
+    # -----------------------------------------------------------------------
+
+    def DrawBackground(self, gc):
+        w, h = self.GetClientSize()
+
+        brush = self.GetBackgroundBrush()
+        if brush is not None:
+            gc.SetBackground(brush)
+            gc.Clear()
+
+        gc.SetPen(wx.TRANSPARENT_PEN)
+        gc.SetBrush(brush)
+        gc.DrawRectangle(self._borderwidth,
+                         self._borderwidth,
+                         w - (2 * self._borderwidth),
+                         h - (2 * self._borderwidth))
+
+    # -----------------------------------------------------------------------
+
+    def DrawBorder(self, gc):
+        w, h = self.GetClientSize()
+
+        pen = wx.Pen(self._bordercolor, 1, self._borderstyle)
+        gc.SetPen(pen)
+
+        # draw the upper left sides
+        for i in range(self._borderwidth):
+            # upper
+            gc.DrawLine(0, i, w - i, i)
+            # left
+            gc.DrawLine(i, 0, i, h - i)
+
+        # draw the lower right sides
+        for i in range(self._borderwidth):
+            gc.DrawLine(i, h - i - 1, w + 1, h - i - 1)
+            gc.DrawLine(w - i - 1, i, w - i - 1, h)
+
+    # ------------------------------------------------------------------------
+
+    def DrawContent(self, gc):
+        self.__draw_label(gc, 20, 50)
+
+    # -----------------------------------------------------------------------
+
+    def __draw_label(self, gc, x, y):
+        font = self.GetParent().GetFont()
+        gc.SetFont(font)
+        gc.SetTextForeground(self.GetParent().GetForegroundColour())
+
+        if self._filename is not None:
+            text = self._filename
+        else:
+            text = "no file"
+
+        gc.SetTextForeground(self.GetParent().GetForegroundColour())
+        gc.DrawText(text, x, y)
+
+    # ------------------------------------------------------------------------
+
+    def GetBackgroundBrush(self):
+        """Get the brush for drawing the background of the button.
+
+        :returns: (wx.Brush)
+
+        """
+        color = self.GetParent().GetBackgroundColour()
+        if wx.Platform == '__WXMAC__':
+            return wx.TRANSPARENT_BRUSH
+
+        brush = wx.Brush(color, wx.SOLID)
+        my_attr = self.GetDefaultAttributes()
+        p_attr = self.GetParent().GetDefaultAttributes()
+        my_def = color == my_attr.colBg
+        p_def = self.GetParent().GetBackgroundColour() == p_attr.colBg
+        if my_def and not p_def:
+            color = self.GetParent().GetBackgroundColour()
+            return wx.Brush(color, wx.SOLID)
+
+        return brush
 
 # ---------------------------------------------------------------------------
 
@@ -509,9 +733,7 @@ class TestPanel(wx.Panel):
                           "ERROR",
                           wx.ICON_ERROR | wx.OK)
         else:
-            self.mc.SetInitialSize()
-            self.GetSizer().Layout()
-            self.st_len.SetLabel('length: {:f} seconds'.format(float(self.mc.Length())/1000.))
+            self.__set_media()
 
     # ----------------------------------------------------------------------
 
@@ -523,9 +745,24 @@ class TestPanel(wx.Panel):
                           "ERROR",
                           wx.ICON_ERROR | wx.OK)
         else:
+            self.__set_media()
+
+    # ----------------------------------------------------------------------
+
+    def __set_media(self):
+        m = mimetypes.guess_type(self.mc.GetFilename())
+        if m[0] is None:
+            mime_type = "unknown"
+        else:
+            mime_type = m[0]
+
+        if "video" in mime_type:
             self.mc.SetInitialSize()
-            self.GetSizer().Layout()
-            self.st_len.SetLabel('length: {:f} seconds'.format(float(self.mc.Length())/1000.))
+        else:
+            self.mc.SetInitialSize(wx.Size(250, 250))
+        self.GetSizer().Layout()
+        self.st_len.SetLabel(
+            'length: {:f} seconds'.format(float(self.mc.Length()) / 1000.))
 
     # ----------------------------------------------------------------------
 
