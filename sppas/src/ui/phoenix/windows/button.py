@@ -558,8 +558,8 @@ class BaseButton(wx.Window):
         r, g, b = color.Red(), color.Green(), color.Blue()
         delta = 20
         if (r + g + b) > 384:
-            return wx.Colour(r, g, b).ChangeLightness(100 - delta)
-        return wx.Colour(r, g, b).ChangeLightness(100 + delta)
+            return wx.Colour(r, g, b, 128).ChangeLightness(100 - delta)
+        return wx.Colour(r, g, b, 128).ChangeLightness(100 + delta)
 
     # -----------------------------------------------------------------------
 
@@ -892,27 +892,29 @@ class BaseButton(wx.Window):
         :returns: (wx.Brush)
 
         """
-        color = self.GetParent().GetBackgroundColour()
+        c = self.GetParent().GetBackgroundColour()
+        color = wx.Colour(c.Red(), c.Green(), c.Blue(), alpha=128)
         state = self._state[1]
 
         if state != BaseButton.PRESSED:
+            return wx.Brush(color, wx.BRUSHSTYLE_TRANSPARENT)
+            """
             if wx.Platform == '__WXMAC__':
                 return wx.TRANSPARENT_BRUSH
 
-            brush = wx.Brush(color, wx.SOLID)
+            brush = wx.Brush(color, wx.BRUSHSTYLE_TRANSPARENT)
             my_attr = self.GetDefaultAttributes()
             p_attr = self.GetParent().GetDefaultAttributes()
             my_def = color == my_attr.colBg
             p_def = self.GetParent().GetBackgroundColour() == p_attr.colBg
             if my_def and not p_def:
                 color = self.GetParent().GetBackgroundColour()
-                brush = wx.Brush(color, wx.SOLID)
-
+                brush = wx.Brush(color, wx.BRUSHSTYLE_TRANSPARENT)
+            """
         else:
             # this line assumes that a pressed button should be highlighted with
             # a solid colour even if the background is supposed to be transparent
-            c = self.GetHighlightedBackgroundColour()
-            brush = wx.Brush(c, wx.SOLID)
+            brush = wx.Brush(self.GetHighlightedBackgroundColour(), wx.SOLID)
 
         return brush
 
@@ -929,8 +931,8 @@ class BaseButton(wx.Window):
         # Create the Graphic Context
         dc = wx.AutoBufferedPaintDCFactory(self)
         gc = wx.GCDC(dc)
-        dc.SetBackground(wx.Brush(self.GetParent().GetBackgroundColour()))
-        dc.Clear()
+        # dc.SetBackground(wx.Brush(self.GetParent().GetBackgroundColour()))
+        # dc.Clear()
 
         # In any case, the brush is transparent
         dc.SetBrush(wx.TRANSPARENT_BRUSH)

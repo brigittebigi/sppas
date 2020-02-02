@@ -390,6 +390,7 @@ class sppasMedia(wx.Window):
     def SetSlider(self, slider):
         """Set a slider to the media.
 
+        The values MUST be in milliseconds, like for the offset period.
         The value of the slider is updated with a timer.
 
         :param slider: (wx.Slider)
@@ -591,7 +592,7 @@ class sppasMedia(wx.Window):
         if self:
             # Get the actual client size of ourselves
             width, height = self.GetClientSize()
-            wx.LogDebug("Draw method. {:d} {:d}".format(width, height))
+            # wx.LogDebug("Draw method. {:d} {:d}".format(width, height))
             if width <= 0 or height <= 0:
                 # Nothing to do, we still don't have dimensions!
                 return

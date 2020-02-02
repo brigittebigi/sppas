@@ -73,6 +73,8 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
+        self.AddPage(player.TestPanel(self), "Media player panel")
+        """
         self.AddPage(test_dialogs.TestPanel(self), "Various dialogs")
         self.AddPage(tiersfilters.TestPanel(self), "DataFilter of tiers")
         self.AddPage(statsview.TestPanel(self), "DataStats of tiers")
@@ -87,8 +89,7 @@ class TestPanel(wx.Choicebook):
         self.AddPage(refsviewctrl.TestPanel(self), "Refs view ctrl")
         self.AddPage(filesviewctrl.TestPanel(self), "Files view ctrl")
         self.AddPage(option.TestPanel(self), "Configure options panel")
-        self.AddPage(player.TestPanel(self), "Media player panel")
-
+        """
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
         self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
