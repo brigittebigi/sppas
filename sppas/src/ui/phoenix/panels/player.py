@@ -198,34 +198,24 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
 
     # -----------------------------------------------------------------------
 
-    def SetLeftTick(self, text):
-        """Set the text to display at left/top of the slider.
-
-        :param text: (str) a short text
-
-        """
-        transport_panel = self.FindWindow("transport_panel")
-        lt = transport_panel.FindWindow("left_text_splitter")
-        lt.SetLabel(text)
-
-    # -----------------------------------------------------------------------
-
-    def SetRightTick(self, text):
-        """Set the text to display at right/bottom of the slider.
-
-        :param text: (str) a short text
-
-        """
-        transport_panel = self.FindWindow("transport_panel")
-        rt = transport_panel.FindWindow("right_text_splitter")
-        rt.SetLabel(text)
-
-    # -----------------------------------------------------------------------
-
     def IsReplay(self):
         """Return True if the button to replay is enabled."""
         transport_panel = self.FindWindow("transport_panel")
         return transport_panel.FindWindow("media_replay").IsPressed()
+
+    # -----------------------------------------------------------------------
+
+    def EnableReplay(self, enable=True):
+        """Enable or disable the Replay button.
+
+        The replay button should be disabled if several media of different
+        durations have to be played...
+
+        :param enable: (bool)
+
+        """
+        transport_panel = self.FindWindow("transport_panel")
+        transport_panel.FindWindow("media_replay").Enable(enable)
 
     # -----------------------------------------------------------------------
 
@@ -247,10 +237,13 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
 
         """
         transport_panel = self.FindWindow("transport_panel")
+        btn = transport_panel.FindWindow("media_play")
         if value is True:
-            transport_panel.FindWindow("media_play").SetImage("media_play")
+            btn.SetImage("media_pause")
+            btn.Refresh()
         else:
-            transport_panel.FindWindow("media_play").SetImage("media_pause")
+            btn.SetImage("media_play")
+            btn.Refresh()
 
     # -----------------------------------------------------------------------
 
@@ -315,7 +308,7 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
 
         btn_play = BitmapTextButton(panel, label="", name="media_play")
         self.SetButtonProperties(btn_play)
-        btn_play.Enable(False)
+        # btn_play.Enable(False)
 
         btn_forward = BitmapTextButton(panel, label="", name="media_forward")
         self.SetButtonProperties(btn_forward)
@@ -524,7 +517,8 @@ class sppasPlayerPanel(sppasPanel):
         sppasPanel.__init__(self, parent, id, pos, size, style, name)
 
         # The list of collapsible panels embedding a media.
-        self._media = list()
+        # key = sppasMedia, value = bool (selected or not)
+        self._media = dict()
 
         self._create_content()
         self._setup_events()
@@ -560,7 +554,6 @@ class sppasPlayerPanel(sppasPanel):
         mc = sppasMedia(panel)
         panel.SetPane(mc)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._OnCollapseChanged, panel)
-        self._media.append(panel)
 
         if media_type == MediaType().audio:
             # Audio is inserted at the first position
@@ -572,9 +565,9 @@ class sppasPlayerPanel(sppasPanel):
 
         # Load the media
         if mc.Load(filename) is True:
-            self.__set_media_size(mc)
-            panel.Expand()
+            self.__set_media_properties(mc)
         else:
+            self._media[panel] = False
             panel.Collapse()
             mc.Bind(wx.media.EVT_MEDIA_LOADED, self.__process_media_loaded)
 
@@ -597,13 +590,13 @@ class sppasPlayerPanel(sppasPanel):
         splitter = wx.SplitterWindow(self,
                                      style=wx.SP_LIVE_UPDATE | wx.NO_BORDER,
                                      name="splitter")
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer = wx.BoxSizer()
         sizer.Add(splitter, 1, wx.EXPAND)
         self.SetSizer(sizer)
 
         # Window 1 of the splitter: player controls
         p1 = sppasPlayerControlsPanel(splitter, name="player_controls_panel")
-        self.__customize_controls(p1)
+        self.__add_custom_controls(p1)
 
         # Window 2 of the splitter: a scrolled panel with all media
         p2 = sppasScrolledPanel(splitter, name="media_panel")
@@ -618,8 +611,8 @@ class sppasPlayerPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def __customize_controls(self, control_panel):
-
+    def __add_custom_controls(self, control_panel):
+        """Add custom widgets to the player controls panel."""
         # to switch panels of the splitter
         btn1 = BitmapTextButton(control_panel.GetWidgetsPanel(), label="", name="exchange_1")
         control_panel.SetButtonProperties(btn1)
@@ -629,14 +622,6 @@ class sppasPlayerPanel(sppasPanel):
         btn3 = BitmapTextButton(control_panel.GetWidgetsPanel(), label="", name="rotate_screen")
         control_panel.SetButtonProperties(btn3)
         control_panel.AddWidget(btn3)
-
-        # a static label to indicate something
-        text = sppasStaticText(control_panel.GetWidgetsPanel(),
-                               label="No file",
-                               style=wx.ALIGN_CENTRE | wx.TRANSPARENT_WINDOW,
-                               name="free_statictext")
-        text.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
-        control_panel.AddWidget(text)
 
     # -----------------------------------------------------------------------
     # Events management
@@ -685,16 +670,16 @@ class sppasPlayerPanel(sppasPanel):
         """Process the end of load of a media."""
         wx.LogMessage("Media loaded event received.")
         media = event.GetEventObject()
-        self.__set_media_size(media)
-        media.GetParent().Expand()
-
+        self.__set_media_properties(media)
         self.FindWindow("splitter").SizeWindows()
 
     # -----------------------------------------------------------------------
 
-    def __set_media_size(self, media):
-        """Fix the size of the media."""
+    def __set_media_properties(self, media):
+        """Fix the properties of the media."""
         media.SetInitialSize()
+        self._media[media] = True
+        media.GetParent().Expand()
         # media.SetMinSize(wx.Size(sppasPanel.fix_size(480),
         #                         sppasPanel.fix_size(128)))
 
@@ -717,6 +702,12 @@ class sppasPlayerPanel(sppasPanel):
         elif name == "stop":
             self.stop()
 
+        elif name == "rewind":
+            self.rewind()
+
+        elif name == "forward":
+            self.forward()
+
         event.Skip()
 
     # -----------------------------------------------------------------------
@@ -738,37 +729,58 @@ class sppasPlayerPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def is_playing(self):
-        """Return True if at least one of the media is playing."""
-        for panel in self._media:
-            if panel.IsExpanded() is True:
-                pass
-        return False
+        """Return the first media we found playing, None instead."""
+        for media in self._media:
+            if self._media[media] is True and media.IsPlaying() is True:
+                return media
+        return None
 
     # -----------------------------------------------------------------------
 
     def play(self):
         """Play the selected media."""
         controls = self.FindWindow("player_controls_panel")
-        replay = controls.IsReplay()
         is_playing = self.is_playing()
-        for panel in self._media:
-            if panel.IsExpanded() is True:
-                if is_playing is True:
+        paused_now = False
+        for media in self._media:
+            if self._media[media] is True:
+                if is_playing is not None:
                     # this media is stopped or playing
-                    panel.GetPane().Pause()
+                    media.Pause()
+                    paused_now = True
                 else:
                     # this media is stopped or paused
-                    if replay is True:
-                        panel.GetPane().AutoPlay()
-                    else:
-                        panel.GetPane().NormalPlay()
+                    self.__play_media(media)
+
+        controls.Paused(paused_now)
+
+    # -----------------------------------------------------------------------
+
+    def __play_media(self, media):
+        controls = self.FindWindow("player_controls_panel")
+        if controls.IsReplay() is True:
+            media.AutoPlay()
+        else:
+            media.NormalPlay()
 
     # -----------------------------------------------------------------------
 
     def stop(self):
         """Stop the media currently playing."""
-        for panel in self._media:
-            panel.GetPane().Stop()
+        for media in self._media:
+            media.Stop()
+
+    # -----------------------------------------------------------------------
+
+    def rewind(self):
+        """Rewind of 1 sec."""
+        pass
+
+    # -----------------------------------------------------------------------
+
+    def forward(self):
+        """Forward of 1 sec."""
+        pass
 
     # -----------------------------------------------------------------------
     # Properties of the splitter and panels
@@ -776,10 +788,35 @@ class sppasPlayerPanel(sppasPanel):
 
     def _OnCollapseChanged(self, evt=None):
         panel = evt.GetEventObject()
-        wx.LogDebug("Collapse/Expand for panel {:s}".format(panel.GetName()))
         panel.SetFocus()
-        panel.GetParent().Layout()
-        panel.GetParent().ScrollChildIntoView(panel)
+        media = panel.GetPane()
+        expanded = panel.IsExpanded()
+        self._media[media] = expanded
+        if expanded is False:
+            # The media was expanded, now it is collapsed.
+            wx.LogDebug("The media {:s} was expanded, now it is collapsed: {:s} (==> false?)"
+                        "".format(media.GetFilename(), str(expanded)))
+            media.Stop()
+        else:
+            wx.LogDebug("The media {:s} was collapsed, now it is expanded: {:s} (==> true?)"
+                        "".format(media.GetFilename(), str(expanded)))
+            # The media was collapsed, and now it is expanded.
+            m = self.is_playing()
+            if m is not None:
+                # Another media is currently playing. We'll play too.
+                wx.LogDebug(" ... a media was playing? {:s}".format(str(m)))
+                # this media is stopped or paused
+                media.SetOffsetPeriod(m.GetStartPeriod(), m.GetEndPeriod())
+                media.Seek(m.Tell())
+                self.__play_media(media)
+            else:
+                wx.LogDebug(" ... no media was playing.")
+
+        controls = self.FindWindow("player_controls_panel")
+        is_paused = any(m.IsPaused() for m in self._media if self._media[m] is True)
+        controls.Paused(is_paused)
+        self.Layout()
+        # panel.GetParent().ScrollChildIntoView(panel)
 
     # -----------------------------------------------------------------------
 

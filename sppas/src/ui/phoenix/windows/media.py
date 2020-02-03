@@ -159,6 +159,30 @@ class sppasMedia(wx.Window):
     # Public methods.
     # -----------------------------------------------------------------------
 
+    def IsPaused(self):
+        """Return True if state is wx.media.MEDIASTATE_PAUSED."""
+        return self._mc.GetState() == wx.media.MEDIASTATE_PAUSED
+
+    # -----------------------------------------------------------------------
+
+    def IsPlaying(self):
+        """Return True if state is wx.media.MEDIASTATE_PLAYING."""
+        return self._mc.GetState() == wx.media.MEDIASTATE_PLAYING
+
+    # -----------------------------------------------------------------------
+
+    def GetStartPeriod(self):
+        """Return start offset (milliseconds)."""
+        return self._offsets[0]
+
+    # -----------------------------------------------------------------------
+
+    def GetEndPeriod(self):
+        """Return end offset (milliseconds)."""
+        return self._offsets[1]
+
+    # -----------------------------------------------------------------------
+
     @staticmethod
     def ExpectedMediaType(filename):
         """Return the expected media type of the given filename.
@@ -276,15 +300,24 @@ class sppasMedia(wx.Window):
     def Seek(self, offset, mode=wx.FromStart):
         """Seek to a position within the movie.
 
+        Offset must be in the range of the offset period. If the offset period
+        is not set, we'll Seek to 0.
+
         :param offset: (wx.FileOffset)
         :param mode: (SeekMode)
-        :return: wx.FileOffset
+        :return: (wx.FileOffset)
 
         """
         if self._loaded is False or self._length == 0:
             return False
         if self._slider is not None:
             self._slider.SetValue(offset)
+
+        if offset < self._offsets[0]:
+            offset = self._offsets[0]
+        if offset > self._offsets[1]:
+            offset = self._offsets[1]
+
         return self._mc.Seek(offset, mode)
 
     # ----------------------------------------------------------------------
@@ -485,7 +518,7 @@ class sppasMedia(wx.Window):
         if state == wx.media.MEDIASTATE_PLAYING and self._slider is not None:
             self._slider.SetValue(offset)
 
-        wx.LogDebug("Offset=%d, omin=%d, omax=%d, state=%d" % (offset, self._offsets[0], self._offsets[1], state))
+        # wx.LogDebug("Offset=%d, omin=%d, omax=%d, state=%d" % (offset, self._offsets[0], self._offsets[1], state))
         if state == wx.media.MEDIASTATE_STOPPED or \
                 (state == wx.media.MEDIASTATE_PLAYING and (offset + 3 > self._offsets[1])):
             # Media reached the end of the file and automatically stopped
