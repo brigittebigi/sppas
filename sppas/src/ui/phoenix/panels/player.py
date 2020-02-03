@@ -38,16 +38,15 @@ import os
 import wx
 import wx.media
 import wx.lib.newevent
-from wx.lib.splitter import MultiSplitterWindow
-
 
 from sppas import paths
 
-from ..windows import sppasPanel, sppasCollapsiblePanel
+from ..windows import sppasPanel, sppasCollapsiblePanel, sppasImgBgPanel, sppasScrolledPanel
 from ..windows import sppasMedia, MediaType
 from ..windows import sppasStaticText
 from ..windows import BitmapTextButton
 from ..windows import ToggleButton
+from ..windows import sppasMultiSplitterPanel
 from ..tools import sppasSwissKnife
 
 # ---------------------------------------------------------------------------
@@ -59,118 +58,7 @@ PlayerCommandEvent, EVT_PLAYER_COMMAND = wx.lib.newevent.NewCommandEvent()
 # ---------------------------------------------------------------------------
 
 
-class sppasMultiSplitterPanel(MultiSplitterWindow):
-    def __init__(self, *args, **kwargs):
-        super(sppasMultiSplitterPanel, self).__init__(*args, **kwargs)
-
-    def SetBackgroundColour(self, color):
-        """Set the back ground colour.
-
-        :param color: (wx.Colour) the colour to use
-
-        """
-        wx.Panel.SetBackgroundColour(self, color)
-        self._drawSashInBackgroundColour = False
-        # if  wx.NullColour == color:
-        #     self._drawSashInBackgroundColour = False
-
-    def _OnPaint(self, evt):
-        """Override to provide RunTimeError."""
-        if self:
-            dc = wx.PaintDC(self)
-            self._DrawSash(dc)
-
-# ---------------------------------------------------------------------------
-
-
-class sppasAudioAmplitudePanel(sppasPanel):
-    """Create a panel with an image as background representing amplitudes.
-
-    """
-    def __init__(self, parent, id=wx.ID_ANY,
-                 orient=wx.HORIZONTAL,
-                 pos=wx.DefaultPosition,
-                 size=wx.DefaultSize,
-                 style=0,
-                 name="audio_amp_panel"):
-        super(sppasAudioAmplitudePanel, self).__init__(parent, id, pos, size, style, name)
-        self.SetMinSize(wx.Size(sppasPanel.fix_size(384),
-                                sppasPanel.fix_size(128)))
-
-        # Bind the events related to our window
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
-
-    # -----------------------------------------------------------------------
-
-    def SetBackgroundColour(self, colour):
-        return
-
-    def OnEraseBackground(self, evt):
-        """Trap the erase event to keep the background transparent on windows.
-
-        :param evt: wx.EVT_ERASE_BACKGROUND
-
-        """
-        # yanked from ColourDB.py
-        dc = evt.GetDC()
-
-        if not dc:
-            dc = wx.ClientDC(self)
-        dc.Clear()
-
-        w, h = self.GetClientSize()
-        img = sppasSwissKnife.get_image("audio")
-        img.Rescale(w, h)
-        dc.DrawBitmap(wx.Bitmap(img), 0, 0)
-
-
-# ---------------------------------------------------------------------------
-
-
-class sppasVideoAmplitudePanel(sppasPanel):
-    """Create a panel with an image as background representing amplitudes.
-
-    """
-    def __init__(self, parent, id=wx.ID_ANY,
-                 orient=wx.HORIZONTAL,
-                 pos=wx.DefaultPosition,
-                 size=wx.DefaultSize,
-                 style=0,
-                 name="audio_amp_panel"):
-        super(sppasVideoAmplitudePanel, self).__init__(parent, id, pos, size, style, name)
-        self.SetMinSize(wx.Size(sppasPanel.fix_size(384),   # a 16:9 ratio
-                                sppasPanel.fix_size(216)))
-
-        # Bind the events related to our window
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
-
-    # -----------------------------------------------------------------------
-
-    def SetBackgroundColour(self, colour):
-        return
-
-    def OnEraseBackground(self, evt):
-        """Trap the erase event to keep the background transparent on windows.
-
-        :param evt: wx.EVT_ERASE_BACKGROUND
-
-        """
-        # yanked from ColourDB.py
-        dc = evt.GetDC()
-
-        if not dc:
-            dc = wx.ClientDC(self)
-        dc.Clear()
-
-        w, h = self.GetClientSize()
-        img = sppasSwissKnife.get_image("video")
-        img.Rescale(w, h)
-        dc.DrawBitmap(wx.Bitmap(img), 0, 0)
-
-# ---------------------------------------------------------------------------
-
-
-class sppasPlayerControlsPanel(sppasPanel):
+class sppasPlayerControlsPanel(sppasImgBgPanel):
     """Create a panel with controls for a list of media.
 
     :author:       Brigitte Bigi
@@ -206,7 +94,8 @@ class sppasPlayerControlsPanel(sppasPanel):
         :param orient: wx.HORIZONTAL or wx.VERTICAL
 
         """
-        super(sppasPlayerControlsPanel, self).__init__(parent, id, pos, size, style, name)
+        super(sppasPlayerControlsPanel, self).__init__(
+            parent, id, "bg1", pos, size, style, name)
 
         if orient == wx.HORIZONTAL:
             self.SetMinSize(wx.Size(sppasPanel.fix_size(384),
@@ -220,9 +109,6 @@ class sppasPlayerControlsPanel(sppasPanel):
         self._create_content(orient)
         self._setup_events()
 
-        # Bind the events related to our window
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
-
         # Look&feel
         # self.SetBackgroundColour(wx.GetApp().settings.bg_color)
         self.SetForegroundColour(wx.Colour(200, 200, 200))
@@ -230,29 +116,6 @@ class sppasPlayerControlsPanel(sppasPanel):
 
         self.SetInitialSize()
         self.Layout()
-
-    # -----------------------------------------------------------------------
-
-    def SetBackgroundColour(self, colour):
-        return
-
-    def OnEraseBackground(self, evt):
-        """Trap the erase event to keep the background transparent on windows.
-
-        :param evt: wx.EVT_ERASE_BACKGROUND
-
-        """
-        # yanked from ColourDB.py
-        dc = evt.GetDC()
-
-        if not dc:
-            dc = wx.ClientDC(self)
-        dc.Clear()
-
-        w, h = self.GetClientSize()
-        img = sppasSwissKnife.get_image("trbg4")
-        img.Rescale(w, h)
-        dc.DrawBitmap(wx.Bitmap(img), 0, 0)
 
     # -----------------------------------------------------------------------
     # Public methods
@@ -433,7 +296,7 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     def __create_widgets_panel(self, orient):
         """Return an empty panel with a wrap sizer."""
-        panel = sppasPanel(self, name="widgets_panel")
+        panel = sppasPanel(self, style=wx.TRANSPARENT_WINDOW, name="widgets_panel")
         if orient == wx.HORIZONTAL:
             sizer = wx.WrapSizer(orient=wx.VERTICAL)
         else:
@@ -503,7 +366,7 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     def __create_volume_panel(self, orient):
         """Return a panel with a slider for the volume and a mute button."""
-        panel = sppasPanel(self, name="volume_panel")
+        panel = sppasPanel(self, style=wx.TRANSPARENT_WINDOW, name="volume_panel")
 
         btn_mute = ToggleButton(panel, label="", name="volume_mute")
         btn_mute.SetImage("volume_high")
@@ -545,7 +408,6 @@ class sppasPlayerControlsPanel(sppasPanel):
         """The parent has to be informed that an action is required.
 
         An action can be:
-            - exchange_1/exchange_2/rotate_screen, without value;
             - play/stop/rewind/forward, without value;
             - volume, with a percentage value;
             - seek, the slider value (a percentage by default).
@@ -692,20 +554,21 @@ class sppasPlayerPanel(sppasPanel):
             raise TypeError("File {:s} is of an unknown type.")
 
         # We embed the media into a collapsible panel
-        if media_type == MediaType().audio:
-            parent_panel = self.FindWindow("audio_panel")
-        elif media_type == MediaType().video:
-            parent_panel = self.FindWindow("video_panel")
+        parent_panel = self.FindWindow("media_panel")
 
         panel = sppasCollapsiblePanel(parent_panel, label=filename)
         mc = sppasMedia(panel)
         panel.SetPane(mc)
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._OnCollapseChanged, panel)
         self._media.append(panel)
 
         if media_type == MediaType().audio:
-            parent_panel.GetSizer().Add(panel, 0, wx.EXPAND)
-        elif media_type == MediaType().video:
-            parent_panel.GetSizer().Add(panel, 0, wx.EXPAND)
+            # Audio is inserted at the first position
+            pos = 0
+        else:
+            # Video is inserted at the end (append)
+            pos = parent_panel.GetSizer().GetItemCount()
+        parent_panel.GetSizer().Insert(pos, panel, 0, wx.EXPAND)
 
         # Load the media
         if mc.Load(filename) is True:
@@ -715,7 +578,7 @@ class sppasPlayerPanel(sppasPanel):
             panel.Collapse()
             mc.Bind(wx.media.EVT_MEDIA_LOADED, self.__process_media_loaded)
 
-        self.Layout()
+        parent_panel.Layout()
 
     # -----------------------------------------------------------------------
     # Construct the GUI
@@ -727,58 +590,51 @@ class sppasPlayerPanel(sppasPanel):
         Three panels are created and organized:
 
             - player_controls_panel
-            - audio_panel
-            - video_panel
+            - media_panel
 
         """
-        # Add the splitter window and a panel to control its properties
-        splitter = sppasMultiSplitterPanel(self,
-                                           style=wx.SP_LIVE_UPDATE,
-                                           name="splitter")
-        splitter.SetOrientation(wx.VERTICAL)
-        splitter.SetMinimumPaneSize(sppasPanel.fix_size(112))
+        # Add the splitter window
+        splitter = wx.SplitterWindow(self,
+                                     style=wx.SP_LIVE_UPDATE | wx.NO_BORDER,
+                                     name="splitter")
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(splitter, 1, wx.EXPAND)
         self.SetSizer(sizer)
 
-        # Fill in the splitter with panels
-        tb = sppasPlayerControlsPanel(splitter, name="player_controls_panel")
-        self.__customize_controls(tb)
-        splitter.AppendWindow(tb, tb.GetSize()[1])
+        # Window 1 of the splitter: player controls
+        p1 = sppasPlayerControlsPanel(splitter, name="player_controls_panel")
+        self.__customize_controls(p1)
 
-        pa = sppasPanel(splitter, name="audio_panel")
-        pa_sizer = wx.BoxSizer(wx.VERTICAL)
-        pa_sizer.Add(sppasAudioAmplitudePanel(pa), 1, wx.EXPAND)
-        pa.SetSizer(pa_sizer)
-        splitter.AppendWindow(pa, sppasPanel.fix_size(128))
+        # Window 2 of the splitter: a scrolled panel with all media
+        p2 = sppasScrolledPanel(splitter, name="media_panel")
+        p2_sizer = wx.BoxSizer(wx.VERTICAL)
+        p2.SetSizer(p2_sizer)
+        p2.SetupScrolling(scroll_x=False, scroll_y=True)
 
-        pv = sppasPanel(splitter, name="video_panel")
-        pv_sizer = wx.WrapSizer(orient=wx.HORIZONTAL)
-        pv_sizer.Add(sppasVideoAmplitudePanel(pv), 1, wx.EXPAND)
-        pv.SetSizer(pv_sizer)
-        splitter.AppendWindow(pv, sppasPanel.fix_size(128))
+        best_size = p1.GetBestSize()
+        splitter.SetMinimumPaneSize(best_size[1])
+        splitter.SplitHorizontally(p1, p2, best_size[1])
+        splitter.SetSashGravity(0.)
 
     # -----------------------------------------------------------------------
 
     def __customize_controls(self, control_panel):
 
-        # to switch panels 1 & 3
+        # to switch panels of the splitter
         btn1 = BitmapTextButton(control_panel.GetWidgetsPanel(), label="", name="exchange_1")
         control_panel.SetButtonProperties(btn1)
         control_panel.AddWidget(btn1)
 
-        # to switch panels 2 & 3
-        btn2 = BitmapTextButton(control_panel.GetWidgetsPanel(), label="", name="exchange_2")
-        control_panel.SetButtonProperties(btn2)
-        control_panel.AddWidget(btn2)
-
-        # change the orientation
+        # to change the orientation of the splitter
         btn3 = BitmapTextButton(control_panel.GetWidgetsPanel(), label="", name="rotate_screen")
         control_panel.SetButtonProperties(btn3)
         control_panel.AddWidget(btn3)
 
         # a static label to indicate something
-        text = sppasStaticText(control_panel.GetWidgetsPanel(), label="No file", style=wx.ALIGN_CENTRE, name="free_statictext")
+        text = sppasStaticText(control_panel.GetWidgetsPanel(),
+                               label="No file",
+                               style=wx.ALIGN_CENTRE | wx.TRANSPARENT_WINDOW,
+                               name="free_statictext")
         text.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
         control_panel.AddWidget(text)
 
@@ -801,8 +657,8 @@ class sppasPlayerPanel(sppasPanel):
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
         # The splitter sash position is changing/changed
-        self.FindWindow("splitter").Bind(wx.EVT_SPLITTER_SASH_POS_CHANGED, self.OnChanged)
-        self.FindWindow("splitter").Bind(wx.EVT_SPLITTER_SASH_POS_CHANGING, self.OnChanging)
+        # self.FindWindow("splitter").Bind(wx.EVT_SPLITTER_SASH_POS_CHANGED, self.OnChanged)
+        # self.FindWindow("splitter").Bind(wx.EVT_SPLITTER_SASH_POS_CHANGING, self.OnChanging)
 
     # -----------------------------------------------------------------------
 
@@ -832,7 +688,7 @@ class sppasPlayerPanel(sppasPanel):
         self.__set_media_size(media)
         media.GetParent().Expand()
 
-        self.Layout()
+        self.FindWindow("splitter").SizeWindows()
 
     # -----------------------------------------------------------------------
 
@@ -874,14 +730,10 @@ class sppasPlayerPanel(sppasPanel):
         name = obj.GetName()
 
         if name == "exchange_1":
-            self.SwapPanels(1, 3)
-
-        elif name == "exchange_2":
-            self.SwapPanels(2, 3)
+            self.SwapPanels()
 
         elif name == "rotate_screen":
-            # self.SetOrientation()
-            pass
+            self.Rotate()
 
     # -----------------------------------------------------------------------
 
@@ -919,35 +771,15 @@ class sppasPlayerPanel(sppasPanel):
             panel.GetPane().Stop()
 
     # -----------------------------------------------------------------------
-    # Properties of the splitter
+    # Properties of the splitter and panels
     # -----------------------------------------------------------------------
 
-    def OnChanging(self, evt):
-        wx.LogDebug("Changing sash:%d  %s\n" %
-                    (evt.GetSashIdx(), evt.GetSashPosition()))
-
-        # This is one way to control the sash limits
-        if evt.GetSashPosition() > sppasPanel.fix_size(512):
-            evt.Veto()
-
-        # Or you can reset the sash position to whatever you want
-        #if evt.GetSashPosition() < 5:
-        #    evt.SetSashPosition(25)
-
-    # -----------------------------------------------------------------------
-
-    def OnChanged(self, evt):
-        wx.LogDebug("Changed sash:%d  %s\n" %
-                    (evt.GetSashIdx(), evt.GetSashPosition()))
-
-    # -----------------------------------------------------------------------
-
-    def SetOrientation(self, value):
-        if value:
-            self.FindWindow("splitter").SetOrientation(wx.VERTICAL)
-        else:
-            self.FindWindow("splitter").SetOrientation(wx.HORIZONTAL)
-        self.FindWindow("splitter").SizeWindows()
+    def _OnCollapseChanged(self, evt=None):
+        panel = evt.GetEventObject()
+        wx.LogDebug("Collapse/Expand for panel {:s}".format(panel.GetName()))
+        panel.SetFocus()
+        panel.GetParent().Layout()
+        panel.GetParent().ScrollChildIntoView(panel)
 
     # -----------------------------------------------------------------------
 
@@ -959,10 +791,52 @@ class sppasPlayerPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def SwapPanels(self, orig, dest):
-        win_orig = self.FindWindow("splitter").GetWindow(orig)
-        win_dest = self.FindWindow("splitter").GetWindow(dest)
-        self.FindWindow("splitter").ExchangeWindows(win_orig, win_dest)
+    def SwapPanels(self):
+        splitter = self.FindWindow("splitter")
+        win_1 = splitter.GetWindow1()
+        win_2 = splitter.GetWindow2()
+        w, h = win_2.GetSize()
+        splitter.Unsplit(toRemove=win_1)
+        splitter.Unsplit(toRemove=win_2)
+
+        if splitter.GetSplitMode() == wx.SPLIT_VERTICAL:
+            splitter.SplitVertically(win_2, win_1, w)
+        else:
+            splitter.SplitHorizontally(win_2, win_1, h)
+
+        if win_1.GetName() == "player_controls_panel":
+            splitter.SetSashGravity(1.)
+        else:
+            splitter.SetSashGravity(0.)
+
+        self.Layout()
+        splitter.UpdateSize()
+
+    # -----------------------------------------------------------------------
+
+    def Rotate(self):
+        splitter = self.FindWindow("splitter")
+        win_1 = splitter.GetWindow1()
+        win_2 = splitter.GetWindow2()
+        w, h = win_1.GetSize()
+        splitter.Unsplit(toRemove=win_1)
+        splitter.Unsplit(toRemove=win_2)
+        if splitter.GetSplitMode() == wx.SPLIT_VERTICAL:
+            orient = wx.HORIZONTAL
+            splitter.SplitHorizontally(win_1, win_2, w)
+        else:
+            orient = wx.VERTICAL
+            splitter.SplitVertically(win_1, win_2, h)
+
+        if win_1.GetName() == "player_controls_panel":
+            splitter.SetSashGravity(0.)
+            win_1.SetOrientation(orient)
+        else:
+            splitter.SetSashGravity(1.)
+            win_2.SetOrientation(orient)
+
+        self.Layout()
+        splitter.UpdateSize()
 
 # ---------------------------------------------------------------------------
 
@@ -972,11 +846,12 @@ class TestPanel(sppasPlayerPanel):
         super(TestPanel, self).__init__(
             parent, -1, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
 
-        # self.add_media(os.path.join(paths.samples,
-        #                             "samples-fra",
-        #                             "F_F_B003-P8.wav"))
-        # self.add_media(os.path.join(paths.samples,
-        #                             "samples-fra",
-        #                             "F_F_C006-P6.wav"))
+        self.add_media(os.path.join(paths.samples,
+                                    "samples-fra",
+                                    "F_F_B003-P8.wav"))
+        self.add_media(os.path.join(paths.samples,
+                                    "samples-fra",
+                                    "F_F_C006-P6.wav"))
         # self.add_media("/Users/bigi/Movies/Monsters_Inc.For_the_Birds.mpg")
+        self.add_media("/E/Videos/Monsters_Inc.For_the_Birds.mpg")
         # self.add_media(os.path.join(paths.samples, "multimedia-fra", "video.mkv"))

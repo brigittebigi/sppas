@@ -59,8 +59,11 @@ from .media import sppasMedia
 from .media import MediaType
 
 from .panel import sppasPanel
+from .panel import sppasImgBgPanel
 from .panel import sppasScrolledPanel
 from .panel import sppasCollapsiblePanel
+
+from .splitter import sppasMultiSplitterPanel
 
 from .progress import sppasProgressDialog
 from .dialog import sppasDialog
@@ -81,6 +84,7 @@ __all__ = (
     "ToggleButton",
     "sppasMedia",
     "MediaType",
+    "sppasMultiSplitterPanel",
     "sppasStaticText",
     "sppasTitleText",
     "sppasMessageText",
@@ -90,6 +94,7 @@ __all__ = (
     "sppasStaticBitmap",
     "sppasProgressDialog",
     "sppasPanel",
+    "sppasImgBgPanel",
     "sppasScrolledPanel",
     "sppasCollapsiblePanel",
     "sppasDialog",

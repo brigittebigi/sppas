@@ -1238,6 +1238,15 @@ class BitmapTextButton(BaseButton):
         w -= (2 * bd)
         h -= ((2 * bd) + self.FocusWidth + 2)
 
+        if w >= 4 and h >= 4:
+            self._DrawContent(dc, gc, x, y, w, h)
+
+        if self._borderwidth > 0:
+            self.DrawBorder(dc, gc)
+
+    # -----------------------------------------------------------------------
+
+    def _DrawContent(self, dc, gc, x, y, w, h):
         # No label is defined. 
         # Draw the square bitmap icon at the center with a 5% margin all around
         if self._label is None:
@@ -1300,9 +1309,6 @@ class BitmapTextButton(BaseButton):
                         self.__draw_label(dc, gc, x, (h - (th//2)) // 2)
                     elif self._align == wx.ALIGN_RIGHT:
                         self.__draw_label(dc, gc, (w - tw), (h - (th//2)) // 2)
-
-        if self._borderwidth > 0:
-            self.DrawBorder(dc, gc)
 
     # -----------------------------------------------------------------------
 

@@ -41,6 +41,7 @@
 import wx
 import wx.lib.scrolledpanel as sc
 
+from ..tools import sppasSwissKnife
 from .button import BitmapTextButton
 
 # ---------------------------------------------------------------------------
@@ -63,17 +64,29 @@ class sppasPanel(wx.Panel):
 
     """
 
-    def __init_(self, *args, **kw):
-        super(sppasPanel, self).__init__(*args, **kw)
+    def __init_(self, parent, id=-1,
+                 pos=wx.DefaultPosition, size=wx.DefaultSize,
+                 style=0, name="sppas_panel"):
+        # always turn on tab traversal
+        style |= wx.TAB_TRAVERSAL
+
+        # and turn off any border styles
+        style &= ~wx.BORDER_MASK
+        style |= wx.BORDER_NONE
+
+        super(sppasPanel, self).__init__(parent, id, pos, size, style, name)
+        self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
+
         try:
             s = wx.GetApp().settings
             self.SetBackgroundColour(s.bg_color)
             self.SetForegroundColour(s.fg_color)
             self.SetFont(s.text_font)
         except AttributeError:
-            pass
+            self.InheritAttributes()
         self.SetAutoLayout(True)
-        self.SetMinSize(wx.Size(320, 200))
+        self.SetMinSize(wx.Size(self.fix_size(320),
+                                self.fix_size(200)))
 
     # -----------------------------------------------------------------------
 
@@ -123,6 +136,93 @@ class sppasPanel(wx.Panel):
         return int(float(font.GetPixelSize()[1]))
 
 # ---------------------------------------------------------------------------
+
+
+DefaultImageName = "trbg1"
+
+
+class sppasImgBgPanel(sppasPanel):
+    """Create a panel with an optional image as background.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, id=wx.ID_ANY,
+                 img_name=DefaultImageName,
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 style=0,
+                 name="imgbg_panel"):
+
+        self._imgname = DefaultImageName
+        if img_name == "":
+            self._imgname = ""
+        else:
+            self.SetImageName(img_name)
+
+        super(sppasImgBgPanel, self).__init__(parent, id, pos, size, style, name)
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(384),
+                                sppasPanel.fix_size(128)))
+
+        # Bind the events related to our window
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+
+    # -----------------------------------------------------------------------
+
+    def GetImageName(self):
+        """Return the name of the background image."""
+        return self._imgname
+
+    # -----------------------------------------------------------------------
+
+    def SetImageName(self, name=""):
+        """Set the name of the image, must be one of the SPPAS images.
+
+        :param name: (str) Name of the background image or empty string to
+        disable the background image.
+
+        """
+        if name != "":
+            filename = sppasSwissKnife.get_image_filename(name)
+            if filename.endswith("default.png"):
+                wx.LogError("Image {:s} not found.".format(name))
+                return False
+        self._imgname = name
+        return True
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        return
+
+    # -----------------------------------------------------------------------
+
+    def OnEraseBackground(self, evt):
+        """Trap the erase event to draw the image as background.
+
+        :param evt: wx.EVT_ERASE_BACKGROUND
+
+        """
+        if self._imgname != "":
+            # yanked from ColourDB.py
+            dc = evt.GetDC()
+
+            if not dc:
+                dc = wx.ClientDC(self)
+            dc.Clear()
+
+            w, h = self.GetClientSize()
+            img = sppasSwissKnife.get_image(self._imgname)
+            img.Rescale(w, h)
+            dc.DrawBitmap(wx.Bitmap(img), 0, 0)
+
+# ---------------------------------------------------------------------------
+
 
 
 class sppasScrolledPanel(sc.ScrolledPanel):
@@ -574,7 +674,7 @@ class TestPanel(sc.ScrolledPanel):
             parent,
             style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.HSCROLL | wx.VSCROLL,
             name="Test Panels")
-        self.SetBackgroundColour(wx.WHITE)
+        self.SetBackgroundColour(wx.Colour(128, 128, 128))
 
         p1 = sppasPanel(self)
         self.MakePanelContent(p1)
@@ -603,11 +703,24 @@ class TestPanel(sc.ScrolledPanel):
         self.MakePanelContent(child_panel)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p4)
 
+        # No image defined. It's the default one.
+        p5 = sppasImgBgPanel(self, img_name="")
+        self.MakePanelContent(p5)
+        # bg image defined.
+        p6 = sppasImgBgPanel(self)
+        self.MakePanelContent(p6)
+        # A bg image defined.
+        p7 = sppasImgBgPanel(self, img_name="bg2")
+        self.MakePanelContent(p7)
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(p1, 0, wx.EXPAND)
         sizer.Add(p2, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, border=10)
         sizer.Add(p3, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, border=10)
         sizer.Add(p4, 0, wx.EXPAND | wx.ALL, border=10)
+        sizer.Add(p5, 0, wx.EXPAND | wx.ALL, border=10)
+        sizer.Add(p6, 0, wx.EXPAND | wx.ALL, border=10)
+        sizer.Add(p7, 0, wx.EXPAND | wx.ALL, border=10)
 
         self.SetSizerAndFit(sizer)
         self.Layout()
