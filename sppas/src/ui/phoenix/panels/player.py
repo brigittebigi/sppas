@@ -196,6 +196,13 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
 
     # -----------------------------------------------------------------------
 
+    def GetSlider(self):
+        """Return the slider to indicate offsets."""
+        transport_panel = self.FindWindow("transport_panel")
+        return transport_panel.FindWindow("seek_slider")
+
+    # -----------------------------------------------------------------------
+
     def IsReplay(self):
         """Return True if the button to replay is enabled."""
         transport_panel = self.FindWindow("transport_panel")
@@ -280,6 +287,7 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
         sizer = wx.BoxSizer(orient)
         sizer.Add(panel1, 3, wx.ALIGN_CENTRE | wx.EXPAND | wx.ALL, border)
         sizer.Add(panel2, 6, wx.ALIGN_CENTER | wx.EXPAND | wx.ALL, border)
+        sizer.AddStretchSpacer(1)
         sizer.Add(panel3, 1, wx.ALIGN_CENTER | wx.EXPAND | wx.ALL, border)
         self.SetSizer(sizer)
 
@@ -669,7 +677,6 @@ class sppasPlayerPanel(sppasPanel):
         wx.LogMessage("Media loaded event received.")
         media = event.GetEventObject()
         self.__set_media_properties(media)
-        self.FindWindow("splitter").SizeWindows()
 
     # -----------------------------------------------------------------------
 
@@ -678,8 +685,51 @@ class sppasPlayerPanel(sppasPanel):
         media.SetInitialSize()
         self._media[media] = True
         media.GetParent().Expand()
+        m = self.is_playing()
+        if m is not None:
+            # Another media is currently playing. We'll play too.
+            # this media is stopped or paused
+            media.SetOffsetPeriod(m.GetStartPeriod(), m.GetEndPeriod())
+            media.Seek(m.Tell())
+            self.__play_media(media)
+        else:
+            self.__set_slider()
         # media.SetMinSize(wx.Size(sppasPanel.fix_size(480),
         #                         sppasPanel.fix_size(128)))
+
+    # -----------------------------------------------------------------------
+
+    def __set_slider(self):
+        """Assign the slider of the controls to the longest playing media."""
+        if len(self._media) == 0:
+            return
+        longuest_playing = (None, 0)
+        longuest_expanded = (None, 0)
+        longuest = (None, 0)
+        for media in self._media:
+            media.SetSlider(None)
+            duration = media.Length()
+            if duration >= longuest[1]:
+                longuest = (media, duration)
+            if self._media[media] is True:
+                if duration >= longuest_expanded[1]:
+                    longuest_expanded = (media, duration)
+                if media.IsPlaying() or media.IsPaused():
+                    if duration >= longuest_playing[1]:
+                        longuest_playing = (media, duration)
+
+        controls = self.FindWindow("player_controls_panel")
+        if longuest_playing[0] is not None:
+            m = longuest_playing[0]
+            wx.LogDebug("Slider assigned to LONGEST PLAYING...")
+        elif longuest_expanded[0] is not None:
+            m = longuest_expanded[0]
+            wx.LogDebug("Slider assigned to LONGEST EXPANDED...")
+        else:
+            m = longuest[0]
+
+        m.SetSlider(controls.GetSlider())
+        wx.LogDebug("Slider assigned to {:s}".format(m.GetFilename()))
 
     # -----------------------------------------------------------------------
 
@@ -742,6 +792,7 @@ class sppasPlayerPanel(sppasPanel):
         paused_now = False
         for media in self._media:
             if self._media[media] is True:
+
                 if is_playing is not None:
                     # this media is stopped or playing
                     media.Pause()
@@ -795,17 +846,12 @@ class sppasPlayerPanel(sppasPanel):
         self._media[media] = expanded
         if expanded is False:
             # The media was expanded, now it is collapsed.
-            wx.LogDebug("The media {:s} was expanded, now it is collapsed: {:s} (==> false?)"
-                        "".format(media.GetFilename(), str(expanded)))
             media.Stop()
         else:
-            wx.LogDebug("The media {:s} was collapsed, now it is expanded: {:s} (==> true?)"
-                        "".format(media.GetFilename(), str(expanded)))
             # The media was collapsed, and now it is expanded.
             m = self.is_playing()
             if m is not None:
                 # Another media is currently playing. We'll play too.
-                wx.LogDebug(" ... a media was playing? {:s}".format(str(m)))
                 # this media is stopped or paused
                 media.SetOffsetPeriod(m.GetStartPeriod(), m.GetEndPeriod())
                 media.Seek(m.Tell())
@@ -816,6 +862,7 @@ class sppasPlayerPanel(sppasPanel):
         controls = self.FindWindow("player_controls_panel")
         is_paused = any(m.IsPaused() for m in self._media if self._media[m] is True)
         controls.Paused(is_paused)
+        self.__set_slider()
         self.Layout()
         # panel.GetParent().ScrollChildIntoView(panel)
 

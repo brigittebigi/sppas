@@ -136,7 +136,6 @@ class sppasMedia(wx.Window):
         self._timer = wx.Timer(self)
         self._mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER, szBackend="")
         self._mt = MediaType().unknown
-        wx.LogDebug(" == 0 == Media Type unknown.")
 
         try:
             s = wx.GetApp().settings
@@ -149,7 +148,7 @@ class sppasMedia(wx.Window):
         self.SetInitialSize(size)
 
         # Bind the events related to our window
-        self.Bind(wx.EVT_SIZE, self.OnSize)
+        # self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Bind(wx.EVT_TIMER, self.OnTimer)
         self._mc.Bind(wx.media.EVT_MEDIA_LOADED, self.OnMediaLoaded)
         self.Bind(wx.EVT_PAINT, lambda evt: self.Draw())
@@ -429,13 +428,15 @@ class sppasMedia(wx.Window):
         :param slider: (wx.Slider)
 
         """
-        if self._slider is not None:
-            raise Exception("A slider is already assigned.")
-        if isinstance(slider, wx.Slider):
+        if slider is None:
+            self._slider = None
+        elif isinstance(slider, wx.Slider):
             self._slider = slider
+            self._slider.SetRange(self._offsets[0], self._offsets[1])
+            self._slider.SetValue(self.Tell())
             self._slider.Bind(wx.EVT_SLIDER, self.__on_slider_seek)
         else:
-            raise TypeError("Expected a wx.Slider. Get {:s} instead."
+            raise TypeError("Expected a wx.Slider. Got {:s} instead."
                             "".format(type(slider)))
 
     # -----------------------------------------------------------------------
@@ -443,8 +444,9 @@ class sppasMedia(wx.Window):
     def __on_slider_seek(self, event):
         if self._loaded is False or self._length == 0:
             return
-        offset = self._slider.GetValue()
-        self._mc.Seek(offset)
+        if self._slider is not None:
+            offset = self._slider.GetValue()
+            self._mc.Seek(offset)
         event.Skip()
 
     # -----------------------------------------------------------------------
