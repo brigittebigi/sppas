@@ -170,8 +170,6 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
         slider_volume = volume_panel.FindWindow("volume_slider")
         slider_volume.SetWindowStyle(sl_orient)
 
-        transport_panel.SetBackgroundColour(wx.RED)
-        volume_panel.SetBackgroundColour(wx.BLUE)
         self.Layout()
 
     # -----------------------------------------------------------------------
@@ -703,10 +701,10 @@ class sppasPlayerPanel(sppasPanel):
             self.stop()
 
         elif name == "rewind":
-            self.rewind()
+            self.shift(-2000)
 
         elif name == "forward":
-            self.forward()
+            self.shift(2000)
 
         event.Skip()
 
@@ -772,15 +770,18 @@ class sppasPlayerPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def rewind(self):
-        """Rewind of 1 sec."""
-        pass
+    def shift(self, value=2000):
+        """Rewind or forward of 'value' milliseconds.
 
-    # -----------------------------------------------------------------------
+        :param value: (int) Time to shift
 
-    def forward(self):
-        """Forward of 1 sec."""
-        pass
+        """
+        playing_media = self.is_playing()
+        pos = playing_media.Tell()
+        new_pos = pos + value
+        if playing_media is not None:
+            for media in self._media:
+                media.Seek(new_pos)
 
     # -----------------------------------------------------------------------
     # Properties of the splitter and panels

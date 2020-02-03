@@ -310,14 +310,14 @@ class sppasMedia(wx.Window):
         """
         if self._loaded is False or self._length == 0:
             return False
-        if self._slider is not None:
-            self._slider.SetValue(offset)
 
         if offset < self._offsets[0]:
             offset = self._offsets[0]
         if offset > self._offsets[1]:
             offset = self._offsets[1]
 
+        if self._slider is not None:
+            self._slider.SetValue(offset)
         return self._mc.Seek(offset, mode)
 
     # ----------------------------------------------------------------------
