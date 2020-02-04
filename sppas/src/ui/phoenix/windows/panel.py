@@ -569,7 +569,7 @@ class sppasCollapsiblePanel(sppasPanel):
 
         if self.IsExpanded():
             pbs = self.__child_panel.GetBestSize()
-            size.width = max(size.GetWidth(), pbs.x)
+            size.width = max(size.GetWidth() + self.__border, pbs.x)
             size.height = size.y + self.__border + pbs.y
 
         return size

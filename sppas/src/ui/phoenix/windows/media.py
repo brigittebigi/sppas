@@ -155,7 +155,7 @@ class sppasMedia(wx.Window):
         self.SetSizerAndFit(s)
 
         # Bind the events related to our window
-        # self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Bind(wx.EVT_TIMER, self.OnTimer)
         self._mc.Bind(wx.media.EVT_MEDIA_LOADED, self.OnMediaLoaded)
         self.Bind(wx.EVT_PAINT, lambda evt: self.Draw())
@@ -186,6 +186,26 @@ class sppasMedia(wx.Window):
         if value > 300:
             value = 300
         self._zoom = value
+
+    # -----------------------------------------------------------------------
+
+    def GetVolume(self):
+        """Return the volume (float).
+
+        :return: (float) The volume of the media is a 0.0 to 1.0 range.
+
+        """
+        return self._mc.GetVolume()
+
+    # -----------------------------------------------------------------------
+
+    def SetVolume(self, value):
+        """Sets the volume of the media from a 0.0 to 1.0 range.
+
+        :param value: (float)
+
+        """
+        self._mc.SetVolume(value)
 
     # -----------------------------------------------------------------------
 
@@ -256,9 +276,10 @@ class sppasMedia(wx.Window):
 
         self.__reset()
         self._filename = filename
-        wx.LogDebug("sppasMedia: Load of {:s}".format(filename))
         self._loaded = self._mc.Load(filename)
 
+        # The current media state is -1. It does not match any of the
+        # known media states.
         return self._loaded
 
     # -----------------------------------------------------------------------
@@ -303,23 +324,24 @@ class sppasMedia(wx.Window):
         if self._filename is None:
             wx.LogError("No media file defined.")
             return False
-        if self._loaded is True:
-            state = self._mc.GetState()
-            # Media is currently playing
-            if state == wx.media.MEDIASTATE_PLAYING:
-                wx.LogMessage("Media file {:s} is already playing.".format(self._filename))
-                return True
-            elif state != wx.media.MEDIASTATE_PAUSED:
-                wx.LogMessage("CALL TO SET LENGTH INFOS")
-                # it's probably the first attempt of playing
-                if self.__set_length_infos() is False:
-                    return False
-        else:
+
+        if self._loaded is False:
             wx.LogError("Media is not loaded.")
             return False
 
-        self._timer.Start(self._refreshtimer)
+        # OK. We have a filename and the media is declared to be loaded.
+        state = self._mc.GetState()
+        # Media is currently playing
+        if state == wx.media.MEDIASTATE_PLAYING:
+            wx.LogMessage("Media file {:s} is already playing.".format(self._filename))
+            return True
+        elif state != wx.media.MEDIASTATE_PAUSED:
+            # it's probably the first attempt of playing
+            if self.__set_infos() is False:
+                return False
+
         self.__validate_offsets()
+        self._timer.Start(self._refreshtimer)
         played = self._mc.Play()
         return played
 
@@ -427,7 +449,6 @@ class sppasMedia(wx.Window):
         else:
             self._mc.SetInitialSize()
             (w, h) = self._mc.GetSize()
-            wx.LogMessage("SetInitialSize. MC SIZE IS: {:d} {:d}".format(w, h))
 
         # If the media still don't have dimensions
         if w <= 0:
@@ -451,6 +472,7 @@ class sppasMedia(wx.Window):
 
         # Fix our size
         wx.Window.SetInitialSize(self, wx.Size(w, h))
+        wx.LogDebug("{:s}. SetInitialSize to: {:d} {:d}".format(str(self._filename), w, h))
 
         # Fix the size of our wx.media.MediaCtrl (0 if not video)
         if self._mt == MediaType().video:
@@ -651,20 +673,6 @@ class sppasMedia(wx.Window):
 
         return dc, gc
 
-    # -----------------------------------------------------------------------
-
-    def DrawBackground(self, dc, gc):
-        w, h = self.GetClientSize()
-
-        brush = self.GetBackgroundBrush(dc)
-        if brush is not None:
-            dc.SetBackground(brush)
-            dc.Clear()
-
-        dc.SetPen(wx.TRANSPARENT_PEN)
-        dc.SetBrush(brush)
-        dc.DrawRectangle(0, 0, w, h)
-
     # ----------------------------------------------------------------------
 
     def Draw(self):
@@ -680,8 +688,22 @@ class sppasMedia(wx.Window):
                 return
 
             dc, gc = self.PrepareDraw()
-            self.DrawBackground(dc, gc)
+            self._DrawBackground(dc, gc)
             self._DrawContent(dc, gc)
+
+    # -----------------------------------------------------------------------
+
+    def _DrawBackground(self, dc, gc):
+        w, h = self.GetClientSize()
+
+        brush = self.GetBackgroundBrush(dc)
+        if brush is not None:
+            dc.SetBackground(brush)
+            dc.Clear()
+
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.SetBrush(brush)
+        dc.DrawRectangle(0, 0, w, h)
 
     # ------------------------------------------------------------------------
 
@@ -690,13 +712,13 @@ class sppasMedia(wx.Window):
 
         """
         if self._mt == MediaType().unknown:
-            self.__draw_label(dc, gc, 20, 30, "No view.")
+            self.__draw_label(dc, gc, 20, 20, "No view.")
 
         elif self._mt == MediaType().unsupported:
-            self.__draw_label(dc, gc, 20, 30, "File format not supported.")
+            self.__draw_label(dc, gc, 20, 20, "File format not supported.")
 
         elif self._mt == MediaType().audio:
-            self.__draw_label(dc, gc, 20, 30, "View of an audio file is not available.")
+            self.__draw_label(dc, gc, 20, 20, "View of an audio file is not available.")
             pen = wx.Pen(wx.Colour(128, 128, 128, 128), 2, wx.SOLID)
             w, h = self.GetClientSize()
             dc.SetPen(pen)
@@ -755,7 +777,7 @@ class sppasMedia(wx.Window):
 
     # -----------------------------------------------------------------------
 
-    def __set_length_infos(self):
+    def __set_infos(self):
         """Set the length of the media and apply it to objects.
 
         :return: (bool)
@@ -768,8 +790,7 @@ class sppasMedia(wx.Window):
         length = self._mc.Length()
         if length == 0:  # **** BUG of the MediaPlayer? ****
             self._mt = MediaType().unsupported
-            wx.LogWarning("Media type is unsupported. The file {:s} is "
-                          "loaded but its length is 0."
+            wx.LogWarning("The file {:s} is loaded but its length is 0."
                           "".format(self._filename))
             return False
 
@@ -781,7 +802,8 @@ class sppasMedia(wx.Window):
                 self._refreshtimer = 40
             else:
                 self._refreshtimer = 10
-            wx.LogMessage("Media type is {:d}".format(self._mt))
+
+            wx.LogDebug("Media type is {:d}".format(self._mt))
             self.SetInitialSize()
 
             # if the offset was not fixed

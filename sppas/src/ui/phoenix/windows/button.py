@@ -1511,12 +1511,11 @@ class TextButton(BaseButton):
         gc.SetFont(font)
         dc.SetFont(font)
         if wx.Platform == '__WXGTK__':
-            dc.SetTextForeground(self.GetParent().GetForegroundColour())
+            dc.SetTextForeground(self.GetForegroundColour())
             dc.DrawText(self._label, x, y)
         else:
-            gc.SetTextForeground(self.GetParent().GetForegroundColour())
+            gc.SetTextForeground(self.GetForegroundColour())
             gc.DrawText(self._label, x, y)
-
 
 # ---------------------------------------------------------------------------
 

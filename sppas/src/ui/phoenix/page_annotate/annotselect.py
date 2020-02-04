@@ -48,7 +48,7 @@ from ..windows import sppasScrolledPanel
 from ..windows import sppasStaticLine
 from ..windows import sppasStaticText
 from ..windows import sppasTextCtrl
-from ..windows import BitmapTextButton, sppasTextButton
+from ..windows import BitmapTextButton, TextButton, sppasTextButton
 
 from .annotevent import PageChangeEvent
 
@@ -312,11 +312,12 @@ class sppasEnableAnnotation(sppasPanel):
         btn_enable.SetMinSize(wx.Size(w-2, h-2))
         btn_enable.SetMaxSize(wx.Size(w-2, h))
 
-        btn_configure = sppasTextButton(
+        # btn_configure = sppasTextButton(
+        btn_configure = TextButton(
             panel, label=MSG_CONFIG + "...", name="configure")
         btn_configure.SetForegroundColour(wx.Colour(80, 100, 220))
         btn_configure.SetMinSize(wx.Size(w-2, h-2))
-        btn_configure.SetMaxSize(wx.Size(w-2, h))
+        btn_configure.SetBorderWidth(0)
 
         sizer.Add(btn_enable, 1, wx.EXPAND)
         sizer.Add(btn_configure, 1, wx.EXPAND)
@@ -429,6 +430,8 @@ class sppasEnableAnnotation(sppasPanel):
         for c in self.GetChildren():
             if c.GetName() != "configure":
                 c.SetForegroundColour(colour)
+            else:
+                c.SetForegroundColour(wx.Colour(80, 100, 220))
 
     # -----------------------------------------------------------------------
 

@@ -36,6 +36,7 @@
 
 from .line import sppasStaticLine
 
+from .button import TextButton
 from .button import BitmapTextButton
 from .button import CheckButton
 from .button import RadioButton
@@ -75,6 +76,7 @@ from .toolbar import sppasToolbar
 
 __all__ = (
     "sppasStaticLine",
+    'TextButton',
     'BitmapTextButton',
     'sppasBitmapTextButton',
     "sppasTextButton",
@@ -95,6 +97,7 @@ __all__ = (
     "sppasStaticBitmap",
     "sppasProgressDialog",
     "sppasPanel",
+    "sppasTransparentPanel",
     "sppasImgBgPanel",
     "sppasScrolledPanel",
     "sppasCollapsiblePanel",

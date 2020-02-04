@@ -36,6 +36,7 @@
 
 import os
 import wx
+import time
 import wx.media
 import wx.lib.newevent
 
@@ -117,6 +118,11 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
 
     # -----------------------------------------------------------------------
     # Public methods
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        return
+
     # -----------------------------------------------------------------------
 
     def SetOrientation(self, orient):
@@ -386,7 +392,7 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
     # -----------------------------------------------------------------------
 
     def SetButtonProperties(self, btn):
-        # btn.SetTransparent(128)
+        btn.SetTransparent(128)
         btn.FocusWidth = 1
         btn.Spacing = 0
         btn.FocusColour = self.GetForegroundColour()
@@ -473,7 +479,7 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
             if to_notify is True:
                 mute_btn.SetImage("volume_mute")
                 mute_btn.Refresh()
-                self.notify(action="volume", value=0)
+                self.notify(action="volume", value=0.)
         else:
             # get the volume value from the slider
             slider = vol_panel.FindWindow("volume_slider")
@@ -487,6 +493,9 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
             else:
                 mute_btn.SetImage("volume_high")
             mute_btn.Refresh()
+
+            # convert this percentage in a volume value ranging [0..1]
+            volume = float(volume) / 100.
             self.notify(action="volume", value=volume)
 
 # ---------------------------------------------------------------------------
@@ -566,6 +575,8 @@ class sppasPlayerPanel(sppasPanel):
 
         # Load the media
         if mc.Load(filename) is True:
+            # Under Windows, the Load methods always return True, even if the media is not loaded...
+            time.sleep(0.1)
             self.__set_media_properties(mc)
         else:
             self._media[panel] = False
@@ -696,50 +707,46 @@ class sppasPlayerPanel(sppasPanel):
         self._media[media] = True
         media.GetParent().Expand()
         m = self.is_playing()
+        self.__set_slider()
         if m is not None:
             # Another media is currently playing. We'll play too.
             # this media is stopped or paused
             media.SetOffsetPeriod(m.GetStartPeriod(), m.GetEndPeriod())
             media.Seek(m.Tell())
             self.__play_media(media)
-        else:
-            self.__set_slider()
-        # media.SetMinSize(wx.Size(sppasPanel.fix_size(480),
-        #                         sppasPanel.fix_size(128)))
 
     # -----------------------------------------------------------------------
 
     def __set_slider(self):
-        """Assign the slider of the controls to the longest playing media."""
+        """Assign the seek slider to the longest appropriate media."""
         if len(self._media) == 0:
             return
-        longuest_playing = (None, 0)
-        longuest_expanded = (None, 0)
-        longuest = (None, 0)
+        # Search for the longest media currently playing, the longest in
+        # expanded panels and the longest in absolute.
+        longest_playing = (None, 0)
+        longest_expanded = (None, 0)
+        longest = (None, 0)
         for media in self._media:
             media.SetSlider(None)
             duration = media.Length()
-            if duration >= longuest[1]:
-                longuest = (media, duration)
+            if duration >= longest[1]:
+                longest = (media, duration)
             if self._media[media] is True:
-                if duration >= longuest_expanded[1]:
-                    longuest_expanded = (media, duration)
+                if duration >= longest_expanded[1]:
+                    longest_expanded = (media, duration)
                 if media.IsPlaying() or media.IsPaused():
-                    if duration >= longuest_playing[1]:
-                        longuest_playing = (media, duration)
+                    if duration >= longest_playing[1]:
+                        longest_playing = (media, duration)
 
         controls = self.FindWindow("player_controls_panel")
-        if longuest_playing[0] is not None:
-            m = longuest_playing[0]
-            wx.LogDebug("Slider assigned to LONGEST PLAYING...")
-        elif longuest_expanded[0] is not None:
-            m = longuest_expanded[0]
-            wx.LogDebug("Slider assigned to LONGEST EXPANDED...")
+        if longest_playing[0] is not None:
+            m = longest_playing[0]
+        elif longest_expanded[0] is not None:
+            m = longest_expanded[0]
         else:
-            m = longuest[0]
+            m = longest[0]
 
         m.SetSlider(controls.GetSlider())
-        wx.LogDebug("Slider assigned to {:s}".format(m.GetFilename()))
 
     # -----------------------------------------------------------------------
 
@@ -765,6 +772,9 @@ class sppasPlayerPanel(sppasPanel):
 
         elif name == "forward":
             self.shift(2000)
+
+        elif name == "volume":
+            self.volume(event.value)
 
         event.Skip()
 
@@ -844,23 +854,32 @@ class sppasPlayerPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def play(self):
-        """Play the selected media."""
+        """Play/Pause the selected media."""
         controls = self.FindWindow("player_controls_panel")
         is_playing = self.is_playing()
         paused_now = False
         for media in self._media:
             if self._media[media] is True:
-
                 if is_playing is not None:
                     # this media is stopped or playing
                     media.Pause()
                     paused_now = True
                 else:
                     # this media is stopped or paused
-                    self.__play_media(media)
+                    # self.__play_media(media)
+                    played = media.Play()
+                    media.Pause()
+                    size = media.GetParent().DoGetBestSize()
+                    media.GetParent().SetInitialSize(size)
 
         controls.Paused(paused_now)
-        self.Layout()
+        # self.Layout()
+
+        # If we have to play the media we'll do it now.
+        if paused_now == 0:
+            for media in self._media:
+                if self._media[media] is True:
+                    self.__play_media(media)
 
     # -----------------------------------------------------------------------
 
@@ -870,6 +889,8 @@ class sppasPlayerPanel(sppasPanel):
             media.AutoPlay()
         else:
             media.NormalPlay()
+        media.GetParent().Refresh()
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
@@ -892,6 +913,13 @@ class sppasPlayerPanel(sppasPanel):
         if playing_media is not None:
             for media in self._media:
                 media.Seek(new_pos)
+
+    # -----------------------------------------------------------------------
+
+    def volume(self, value):
+        wx.LogDebug("Set volume to {:f}".format(value))
+        for media in self._media:
+            media.SetVolume(value)
 
     # -----------------------------------------------------------------------
     # Properties of the splitter and panels
