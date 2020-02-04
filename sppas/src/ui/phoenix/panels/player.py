@@ -42,12 +42,10 @@ import wx.lib.newevent
 from sppas import paths
 
 from ..windows import sppasPanel, sppasCollapsiblePanel, sppasImgBgPanel, sppasScrolledPanel
+from ..windows import sppasTransparentPanel
 from ..windows import sppasMedia, MediaType
-from ..windows import sppasStaticText
 from ..windows import BitmapTextButton
 from ..windows import ToggleButton
-from ..windows import sppasMultiSplitterPanel
-from ..tools import sppasSwissKnife
 
 # ---------------------------------------------------------------------------
 # Event to be used by a player.
@@ -295,7 +293,7 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
 
     def __create_widgets_panel(self, orient):
         """Return an empty panel with a wrap sizer."""
-        panel = sppasPanel(self, style=wx.TRANSPARENT_WINDOW, name="widgets_panel")
+        panel = sppasTransparentPanel(self, style=wx.TRANSPARENT_WINDOW, name="widgets_panel")
         if orient == wx.HORIZONTAL:
             sizer = wx.WrapSizer(orient=wx.VERTICAL)
         else:
@@ -307,7 +305,7 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
 
     def __create_transport_panel(self, orient):
         """Return a panel with the buttons to play/pause/stop the media."""
-        panel = sppasPanel(self, style=wx.TRANSPARENT_WINDOW, name="transport_panel")
+        panel = sppasTransparentPanel(self, style=wx.TRANSPARENT_WINDOW, name="transport_panel")
 
         btn_rewind = BitmapTextButton(panel, label="", name="media_rewind")
         self.SetButtonProperties(btn_rewind)
@@ -365,7 +363,7 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
 
     def __create_volume_panel(self, orient):
         """Return a panel with a slider for the volume and a mute button."""
-        panel = sppasPanel(self, style=wx.TRANSPARENT_WINDOW, name="volume_panel")
+        panel = sppasTransparentPanel(self, style=wx.TRANSPARENT_WINDOW, name="volume_panel")
 
         btn_mute = ToggleButton(panel, label="", name="volume_mute")
         btn_mute.SetImage("volume_high")
@@ -555,11 +553,8 @@ class sppasPlayerPanel(sppasPanel):
 
         # We embed the media into a collapsible panel
         parent_panel = self.FindWindow("media_panel")
-
-        panel = sppasCollapsiblePanel(parent_panel, label=filename)
-        mc = sppasMedia(panel)
-        panel.SetPane(mc)
-        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._OnCollapseChanged, panel)
+        panel = self.__create_media_panel(parent_panel, filename)
+        mc = panel.GetPane()
 
         if media_type == MediaType().audio:
             # Audio is inserted at the first position
@@ -578,6 +573,21 @@ class sppasPlayerPanel(sppasPanel):
             mc.Bind(wx.media.EVT_MEDIA_LOADED, self.__process_media_loaded)
 
         parent_panel.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def __create_media_panel(self, parent, filename):
+        """Create the collapsible panel for a media."""
+        panel = sppasCollapsiblePanel(parent, label=filename)
+        panel.AddButton("zoom_in")
+        panel.AddButton("zoom_out")
+        panel.AddButton("zoom")
+        panel.AddButton("close")
+        mc = sppasMedia(panel)
+        panel.SetPane(mc)
+        self.media_zoom(mc, 0)  # 100% zoom = initial size
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._OnCollapseChanged, panel)
+        return panel
 
     # -----------------------------------------------------------------------
     # Construct the GUI
@@ -774,6 +784,18 @@ class sppasPlayerPanel(sppasPanel):
         elif name == "rotate_screen":
             self.Rotate()
 
+        elif name == "zoom":
+            self.media_zoom(obj, 0)
+
+        elif name == "zoom_in":
+            self.media_zoom(obj, 1)
+
+        elif name == "zoom_out":
+            self.media_zoom(obj, -1)
+
+        else:
+            event.Skip()
+
     # -----------------------------------------------------------------------
 
     def is_playing(self):
@@ -782,6 +804,42 @@ class sppasPlayerPanel(sppasPanel):
             if self._media[media] is True and media.IsPlaying() is True:
                 return media
         return None
+
+    # -----------------------------------------------------------------------
+
+    def media_zoom(self, obj, direction):
+        """Zoom the media of the given panel.
+
+        :param obj: One of the objects of a sppasCollapsiblePanel with
+        an embedded media
+        :param direction: (int) -1 to zoom out, +1 to zoom in and 0 to reset
+        to the initial size.
+
+        """
+        panel = None
+        for p in self.FindWindow("media_panel").GetChildren():
+            if p.IsChild(obj) is True:
+                panel = p
+                break
+        assert panel is not None
+        zooms = (10, 25, 50, 75, 100, 125, 150, 200, 250, 300)
+        if panel.IsExpanded() is False:
+            return
+
+        media = panel.GetPane()
+        if direction == 0:
+            media.SetZoom(100)
+        else:
+            idx_zoom = zooms.index(media.GetZoom())
+            if direction < 0:
+                new_idx_zoom = max(0, idx_zoom-1)
+            else:
+                new_idx_zoom = min(len(zooms)-1, idx_zoom+1)
+            media.SetZoom(zooms[new_idx_zoom])
+
+        media.SetInitialSize()
+        panel.Refresh()
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
@@ -802,6 +860,7 @@ class sppasPlayerPanel(sppasPanel):
                     self.__play_media(media)
 
         controls.Paused(paused_now)
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
@@ -847,7 +906,13 @@ class sppasPlayerPanel(sppasPanel):
         if expanded is False:
             # The media was expanded, now it is collapsed.
             media.Stop()
+            panel.EnableButton("zoom", False)
+            panel.EnableButton("zoom_in", False)
+            panel.EnableButton("zoom_out", False)
         else:
+            panel.EnableButton("zoom", True)
+            panel.EnableButton("zoom_in", True)
+            panel.EnableButton("zoom_out", True)
             # The media was collapsed, and now it is expanded.
             m = self.is_playing()
             if m is not None:
@@ -864,7 +929,6 @@ class sppasPlayerPanel(sppasPanel):
         controls.Paused(is_paused)
         self.__set_slider()
         self.Layout()
-        # panel.GetParent().ScrollChildIntoView(panel)
 
     # -----------------------------------------------------------------------
 
@@ -931,12 +995,11 @@ class TestPanel(sppasPlayerPanel):
         super(TestPanel, self).__init__(
             parent, -1, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
 
-        self.add_media(os.path.join(paths.samples,
-                                    "samples-fra",
-                                    "F_F_B003-P8.wav"))
-        self.add_media(os.path.join(paths.samples,
-                                    "samples-fra",
-                                    "F_F_C006-P6.wav"))
+        # self.add_media(os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
+        # self.add_media(os.path.join(paths.samples, "samples-fra", "F_F_C006-P6.wav"))
         # self.add_media("/Users/bigi/Movies/Monsters_Inc.For_the_Birds.mpg")
-        self.add_media("/E/Videos/Monsters_Inc.For_the_Birds.mpg")
-        # self.add_media(os.path.join(paths.samples, "multimedia-fra", "video.mkv"))
+        # self.add_media("/E/Videos/Monsters_Inc.For_the_Birds.mpg")
+
+        self.add_media(os.path.join(paths.samples, "multimedia-fra", "audio_left.wav"))
+        self.add_media(os.path.join(paths.samples, "multimedia-fra", "audio_right.wav"))
+        self.add_media(os.path.join(paths.samples, "multimedia-fra", "video.mkv"))

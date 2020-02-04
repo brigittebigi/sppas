@@ -66,7 +66,8 @@ class MediaType(object):
     def __init__(self):
         """Create the dictionary."""
         self.__dict__ = dict(
-            unknown=0,
+            unknown=-1,
+            unsupported=0,
             audio=1,
             video=2
         )
@@ -85,7 +86,7 @@ class MediaType(object):
 
 
 class sppasMedia(wx.Window):
-    """Create an extended media control. Inherited from the existing MediaCtrl.
+    """Create an extended media control.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -93,13 +94,14 @@ class sppasMedia(wx.Window):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
+    sppasMedia is using the wx.media.MediaCtrl.
     Extended feature is to display the waveform if the media is an audio.
 
     """
 
     # By default, we use a DFHD aspect ratio (super ultra-wide displays), 32:9
-    MIN_WIDTH = 356
-    MIN_HEIGHT = 100
+    MIN_WIDTH = 178
+    MIN_HEIGHT = 50
 
     # -----------------------------------------------------------------------
 
@@ -136,6 +138,7 @@ class sppasMedia(wx.Window):
         self._timer = wx.Timer(self)
         self._mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER, szBackend="")
         self._mt = MediaType().unknown
+        self._zoom = 100
 
         try:
             s = wx.GetApp().settings
@@ -147,6 +150,10 @@ class sppasMedia(wx.Window):
 
         self.SetInitialSize(size)
 
+        s = wx.BoxSizer()
+        s.Add(self._mc, 1)
+        self.SetSizerAndFit(s)
+
         # Bind the events related to our window
         # self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Bind(wx.EVT_TIMER, self.OnTimer)
@@ -156,6 +163,30 @@ class sppasMedia(wx.Window):
 
     # -----------------------------------------------------------------------
     # Public methods.
+    # -----------------------------------------------------------------------
+
+    def GetZoom(self):
+        """Return the current zoom value."""
+        return self._zoom
+
+    # -----------------------------------------------------------------------
+
+    def SetZoom(self, value):
+        """Fix the zoom coefficient.
+
+        This coefficient is applied when SetInitialSize is called to enlarge
+        or reduce our size and the size of the displayed media.
+
+        :param value: (int) Percentage of zooming, in range 5 .. 300
+
+        """
+        value = int(value)
+        if value < 5:
+            value = 5
+        if value > 300:
+            value = 300
+        self._zoom = value
+
     # -----------------------------------------------------------------------
 
     def IsPaused(self):
@@ -269,24 +300,22 @@ class sppasMedia(wx.Window):
 
     def Play(self):
         """Play the media."""
-        wx.LogDebug("Play.")
         if self._filename is None:
             wx.LogError("No media file defined.")
             return False
         if self._loaded is True:
-            wx.LogDebug("Loaded is True.")
             state = self._mc.GetState()
             # Media is currently playing
             if state == wx.media.MEDIASTATE_PLAYING:
                 wx.LogMessage("Media file {:s} is already playing.".format(self._filename))
                 return True
             elif state != wx.media.MEDIASTATE_PAUSED:
+                wx.LogMessage("CALL TO SET LENGTH INFOS")
                 # it's probably the first attempt of playing
                 if self.__set_length_infos() is False:
-                    wx.LogError("Media loaded but got length 0.")
                     return False
         else:
-            wx.LogError("Media is not loaded (length is 0).")
+            wx.LogError("Media is not loaded.")
             return False
 
         self._timer.Start(self._refreshtimer)
@@ -327,7 +356,9 @@ class sppasMedia(wx.Window):
         :return: wx.FileOffset
 
         """
-        return self._mc.Tell()
+        if self:
+            return self._mc.Tell()
+        return 0
 
     # ----------------------------------------------------------------------
 
@@ -369,6 +400,12 @@ class sppasMedia(wx.Window):
     def SetInitialSize(self, size=None):
         """Calculate and set a good size.
 
+        Also sets the window’s minsize to the value passed in for use with
+        sizers. This means that if a full or partial size is passed to this
+        function then the sizers will use that size instead of the results
+        of GetBestSize to determine the minimum needs of the window for
+        layout.
+
         Either a size is given and this media size is then forced to it, or
         no size is given and we have two options:
 
@@ -380,25 +417,34 @@ class sppasMedia(wx.Window):
         :param size: an instance of wx.Size.
 
         """
-        self.SetMinSize(wx.Size(sppasMedia.MIN_WIDTH, sppasMedia.MIN_HEIGHT))
-        if size is None:
-            (w, h) = self._mc.GetBestSize()
-        else:
-            (w, h) = size
-        wx.LogDebug("w={:d}, h={:d}".format(w, h))
+        # In any case, we fix a min size...
+        self.SetMinSize(wx.Size(sppasMedia.MIN_WIDTH,
+                                sppasMedia.MIN_HEIGHT))
 
+        # If a size is given, we'll use it, and that's it!
+        if size is not None:
+            (w, h) = size
+        else:
+            self._mc.SetInitialSize()
+            (w, h) = self._mc.GetSize()
+            wx.LogMessage("SetInitialSize. MC SIZE IS: {:d} {:d}".format(w, h))
+
+        # If the media still don't have dimensions
         if w <= 0:
             w = sppasMedia.MIN_WIDTH
         if h <= 0:
             h = sppasMedia.MIN_HEIGHT
 
-        # Ensure a minimum size with the correct aspect ratio
+        # Apply the zoom coefficient
+        w = int(float(w) * float(self._zoom) / 100.)
+        h = int(float(h) * float(self._zoom) / 100.)
+
+        # Ensure a minimum size keeping the current aspect ratio
         i = 1.
         w = float(w)
         while w < sppasMedia.MIN_WIDTH:
             w *= 1.5
             i += 1.
-            wx.LogDebug("w={:f}, i={:f}".format(w, i))
         w = int(w)
         if i > 1.:
             h = int(float(h) * 1.5 * i)
@@ -409,7 +455,6 @@ class sppasMedia(wx.Window):
         # Fix the size of our wx.media.MediaCtrl (0 if not video)
         if self._mt == MediaType().video:
             self._mc.SetMinSize(wx.Size(w, h))
-            self._mc.SetSize(wx.Size(w, h))
         else:
             self._mc.SetSize(wx.Size(0, 0))
 
@@ -468,7 +513,7 @@ class sppasMedia(wx.Window):
             end = self._length
 
         self._offsets = (start, end)
-        wx.LogDebug("Offset period set to: {:d} - {:d}".format(start, end))
+        # wx.LogMessage("Offset period set to: {:d} - {:d}".format(start, end))
         if self._slider is not None:
             self._slider.SetRange(start, end)
 
@@ -515,6 +560,8 @@ class sppasMedia(wx.Window):
 
     def OnTimer(self, event):
         """Call it if EVT_TIMER is captured."""
+        if not self._mc:
+            return
         state = self._mc.GetState()
         offset = self._mc.Tell()
         if state == wx.media.MEDIASTATE_PLAYING and self._slider is not None:
@@ -627,33 +674,37 @@ class sppasMedia(wx.Window):
         if self:
             # Get the actual client size of ourselves
             width, height = self.GetClientSize()
-            # wx.LogDebug("Draw method. {:d} {:d}".format(width, height))
+            wx.LogDebug("Draw method. {:d} {:d}".format(width, height))
             if width <= 0 or height <= 0:
                 # Nothing to do, we still don't have dimensions!
                 return
 
             dc, gc = self.PrepareDraw()
             self.DrawBackground(dc, gc)
-            self.DrawContent(dc, gc)
+            self._DrawContent(dc, gc)
 
     # ------------------------------------------------------------------------
 
-    def DrawContent(self, dc, gc):
-        """Draw a content if media is audio or unknown."""
+    def _DrawContent(self, dc, gc):
+        """Draw a content if media is audio or unknown.
 
+        """
         if self._mt == MediaType().unknown:
-            self.__draw_label(dc, gc, 20, 30)
+            self.__draw_label(dc, gc, 20, 30, "No view.")
+
+        elif self._mt == MediaType().unsupported:
+            self.__draw_label(dc, gc, 20, 30, "File format not supported.")
 
         elif self._mt == MediaType().audio:
-            pen = wx.Pen(wx.RED, 5, wx.SOLID)
+            self.__draw_label(dc, gc, 20, 30, "View of an audio file is not available.")
+            pen = wx.Pen(wx.Colour(128, 128, 128, 128), 2, wx.SOLID)
+            w, h = self.GetClientSize()
             dc.SetPen(pen)
-            dc.DrawRectangle(10, 10, 40, 40)
+            dc.DrawRectangle(0, 0, w, h)
 
     # -----------------------------------------------------------------------
 
-    def __draw_label(self, dc, gc, x, y):
-        label = "File not loaded."
-
+    def __draw_label(self, dc, gc, x, y, label):
         font = self.GetParent().GetFont()
         gc.SetFont(font)
         dc.SetFont(font)
@@ -711,26 +762,32 @@ class sppasMedia(wx.Window):
 
         """
         if self._loaded is False:
-            wx.LogDebug(" == 1 == Media Type unknown.")
             self._mt = MediaType().unknown
             return False
 
         length = self._mc.Length()
         if length == 0:  # **** BUG of the MediaPlayer? ****
-            wx.LogDebug(" == 2 == Media Type unknown.")
-            self._mt = MediaType().unknown
+            self._mt = MediaType().unsupported
+            wx.LogWarning("Media type is unsupported. The file {:s} is "
+                          "loaded but its length is 0."
+                          "".format(self._filename))
             return False
 
         # if the length has changed (was 0 or was already fixed)
         if length != self._length:
             self._length = length
             self._mt = sppasMedia.ExpectedMediaType(self._filename)
+            if self._mt == MediaType().video:
+                self._refreshtimer = 40
+            else:
+                self._refreshtimer = 10
+            wx.LogMessage("Media type is {:d}".format(self._mt))
+            self.SetInitialSize()
 
             # if the offset was not fixed
             if self._offsets == (0, 0):
                 # We din't already fixed a period.
                 # We set the period to the whole content
-                wx.LogDebug("Offset period set to: 0 - {:d}".format(self._length))
                 self._offsets = (0, self._length)
 
             # Seek to the beginning of the media
@@ -740,7 +797,6 @@ class sppasMedia(wx.Window):
             if self._slider is not None:
                 self._slider.SetRange(self._offsets[0], self._offsets[1])
                 self._slider.SetValue(self._offsets[0])
-                self._slider.SetTickFreq(int(self._offsets[1]/10))
 
         return True
 
@@ -796,7 +852,7 @@ class TestPanel(wx.Panel):
 
         # setup the layout
         sizer = wx.GridBagSizer(6, 5)
-        sizer.Add(self.mc, (1, 1), span=(6, 1))
+        sizer.Add(self.mc, (1, 1), flag=wx.EXPAND, span=(6, 1))
         sizer.Add(btn1, (1, 3))
         sizer.Add(btn2, (2, 3))
         sizer.Add(btn3, (3, 3))
@@ -808,10 +864,8 @@ class TestPanel(wx.Panel):
         self.SetSizer(sizer)
 
         self.mc.SetSlider(slider)
-        wx.CallAfter(self.DoLoadFile,
-                     os.path.join(paths.samples,
-                                  "samples-fra",
-                                  "F_F_B003-P8.wav"))
+        wx.CallAfter(self.DoLoadFile, os.path.join(paths.samples, "multimedia-fra", "video.mkv"))
+                    # os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
 
     # ----------------------------------------------------------------------
 
@@ -835,6 +889,8 @@ class TestPanel(wx.Panel):
         else:
             self.mc.SetInitialSize()
             self.GetSizer().Layout()
+            w, h = self.mc.GetSize()
+            wx.LogMessage("File loaded. Size is w={:d}, h={:d}".format(w, h))
             self.playBtn.Enable()
 
     # ----------------------------------------------------------------------

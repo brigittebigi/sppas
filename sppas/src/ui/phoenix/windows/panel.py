@@ -138,6 +138,48 @@ class sppasPanel(wx.Panel):
 # ---------------------------------------------------------------------------
 
 
+class sppasTransparentPanel(sppasPanel):
+    """Create a panel with a transparent background.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, id=wx.ID_ANY,
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 style=0,
+                 name="transparent_panel"):
+        # always turn on transparency
+        style |= wx.TRANSPARENT_WINDOW
+
+        super(sppasTransparentPanel, self).__init__(parent, id, pos, size, style, name)
+
+        # Bind the events related to our window
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        return
+
+    # -----------------------------------------------------------------------
+
+    def OnEraseBackground(self, evt):
+        """Trap the erase event to be transparent even under windows.
+
+        :param evt: wx.EVT_ERASE_BACKGROUND
+
+        """
+        pass
+
+# ---------------------------------------------------------------------------
+
+
 DefaultImageName = "trbg1"
 
 
@@ -377,6 +419,18 @@ class sppasCollapsiblePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def IsChild(self, obj):
+        """Return true if obj is one of the children."""
+        for c in self.GetChildren():
+            if c is obj:
+                return True
+            for cc in c.GetChildren():
+                if cc is obj:
+                    return True
+        return False
+
+    # -----------------------------------------------------------------------
+
     def SetPane(self, pane):
         """Set given pane to the embedded pane window.
 
@@ -469,6 +523,18 @@ class sppasCollapsiblePanel(sppasPanel):
         self.__tools_panel.GetSizer().Prepend(btn, 0, wx.LEFT | wx.RIGHT, 1)
 
         return btn
+
+    # -----------------------------------------------------------------------
+
+    def EnableButton(self, icon, value):
+        """Enable or disable a button.
+
+        :param icon: (str) Name of the .png file of the icon
+        :param value: (bool)
+
+        """
+        btn = self.__tools_panel.FindWindow(icon)
+        btn.Enable(value)
 
     # ------------------------------------------------------------------------
 

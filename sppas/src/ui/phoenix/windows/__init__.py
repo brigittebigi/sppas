@@ -59,6 +59,7 @@ from .media import sppasMedia
 from .media import MediaType
 
 from .panel import sppasPanel
+from .panel import sppasTransparentPanel
 from .panel import sppasImgBgPanel
 from .panel import sppasScrolledPanel
 from .panel import sppasCollapsiblePanel

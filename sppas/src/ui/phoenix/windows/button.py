@@ -337,14 +337,16 @@ class BaseButton(wx.Window):
         self._state = [BaseButton.NORMAL, BaseButton.NORMAL]
 
         # Border width to draw (0=no border)
+        pc = self.GetPenForegroundColour()
         self._borderwidth = 2
-        self._default_bordercolor = self.GetPenForegroundColour()
+        self._default_bordercolor = pc
         self._bordercolor = self._default_bordercolor
         self._borderstyle = wx.PENSTYLE_SOLID
 
         # Focus (True when mouse/keyboard is entered)
         self._hasfocus = False
-        self._focuscolor = self.GetPenForegroundColour()
+        self._default_focuscolor = pc
+        self._focuscolor = self._default_focuscolor
         self._focuswidth = 1
         self._focusstyle = wx.PENSTYLE_DOT
 
@@ -374,12 +376,18 @@ class BaseButton(wx.Window):
 
         """
         wx.Window.SetForegroundColour(self, colour)
+        pc = self.GetPenForegroundColour()
 
         # If the bordercolor wasn't changed by the user
         if self._bordercolor == self._default_bordercolor:
-            self._bordercolor = self.GetPenForegroundColour()
+            self._bordercolor = pc
 
-        self._default_bordercolor = self.GetPenForegroundColour()
+        # If the focuscolor wasn't changed by the user
+        if self._focuscolor == self._default_focuscolor:
+            self._focuscolor = pc
+
+        self._default_bordercolor = pc
+        self._default_focuscolor = pc
 
     # -----------------------------------------------------------------------
 
@@ -897,8 +905,7 @@ class BaseButton(wx.Window):
         state = self._state[1]
 
         if state != BaseButton.PRESSED:
-            return wx.Brush(color, wx.BRUSHSTYLE_TRANSPARENT)
-            """
+            # return wx.Brush(color, wx.BRUSHSTYLE_TRANSPARENT)
             if wx.Platform == '__WXMAC__':
                 return wx.TRANSPARENT_BRUSH
 
@@ -910,7 +917,6 @@ class BaseButton(wx.Window):
             if my_def and not p_def:
                 color = self.GetParent().GetBackgroundColour()
                 brush = wx.Brush(color, wx.BRUSHSTYLE_TRANSPARENT)
-            """
         else:
             # this line assumes that a pressed button should be highlighted with
             # a solid colour even if the background is supposed to be transparent
@@ -931,18 +937,16 @@ class BaseButton(wx.Window):
         # Create the Graphic Context
         dc = wx.AutoBufferedPaintDCFactory(self)
         gc = wx.GCDC(dc)
-        # dc.SetBackground(wx.Brush(self.GetParent().GetBackgroundColour()))
-        # dc.Clear()
 
         # In any case, the brush is transparent
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
         gc.SetBrush(wx.TRANSPARENT_BRUSH)
         gc.SetBackgroundMode(wx.TRANSPARENT)
-        if wx.Platform in ['__WXGTK__', '__WXMSW__']:
+        #if wx.Platform in ['__WXGTK__', '__WXMSW__']:
             # The background needs some help to look transparent on
             # Gtk and Windows
-            gc.SetBackground(self.GetBackgroundBrush(gc))
-            gc.Clear()
+        #    gc.SetBackground(self.GetBackgroundBrush(gc))
+        #    gc.Clear()
 
         # Font
         gc.SetFont(self.GetFont())
