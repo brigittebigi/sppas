@@ -516,7 +516,7 @@ class sppasMedia(wx.Window):
     def Close(self, force=False):
         """Close the sppasMedia."""
         self.Stop()
-        del self._timer
+        # del self._timer
         wx.Window.Close(self, force)
 
     # ----------------------------------------------------------------------
@@ -630,8 +630,6 @@ class sppasMedia(wx.Window):
         Do not accept the event: it could interfere with the media control.
 
         """
-        wx.LogDebug("Received a mouse event.")
-
         if event.Entering():
             pass
 

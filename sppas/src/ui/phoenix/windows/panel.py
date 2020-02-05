@@ -367,14 +367,6 @@ class sppasCollapsiblePanel(sppasPanel):
         self.__child_panel.SetSizer(wx.BoxSizer(wx.VERTICAL))
         self.__border = sppasCollapsiblePanel.fix_size(2)
 
-        try:
-            s = wx.GetApp().settings
-            self.SetBackgroundColour(s.bg_color)
-            self.SetForegroundColour(s.fg_color)
-            self.SetFont(s.text_font)
-        except AttributeError:
-            pass
-
         self.Bind(wx.EVT_BUTTON, self.OnButton, self.__btn)
         self.Bind(wx.EVT_SIZE, self.OnSize)
         self.SetInitialSize()
@@ -439,7 +431,8 @@ class sppasCollapsiblePanel(sppasPanel):
         """
         if pane.GetParent() != self:
             raise ValueError("Bad parent for pane {:s}.".format(pane.GetName()))
-        self.__child_panel.Destroy()
+        if self.__child_panel:
+            self.__child_panel.Destroy()
         self.__child_panel = pane
         if self.__collapsed is True:
             self.__child_panel.Hide()
@@ -464,10 +457,11 @@ class sppasCollapsiblePanel(sppasPanel):
         else:
             self.__btn.SetImage("arrow_expanded")
 
-        if collapse is True:
-            self.__child_panel.Hide()
-        else:
-            self.__child_panel.Show()
+        if self.__child_panel:
+            if collapse is True:
+                self.__child_panel.Hide()
+            else:
+                self.__child_panel.Show()
         self.__collapsed = collapse
         self.InvalidateBestSize()
 
@@ -567,7 +561,7 @@ class sppasCollapsiblePanel(sppasPanel):
         # size = self.__btn.GetSize()
         size = self.__tools_panel.GetSize()
 
-        if self.IsExpanded():
+        if self.IsExpanded() and self.__child_panel:
             pbs = self.__child_panel.GetBestSize()
             size.width = max(size.GetWidth() + self.__border, pbs.x)
             size.height = size.y + self.__border + pbs.y

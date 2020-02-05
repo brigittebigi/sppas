@@ -85,16 +85,6 @@ class sppasPlayerPanel(sppasPanel):
         self._create_content()
         self._setup_events()
 
-        try:
-            # Apply look&feel defined by SPPAS Application
-            s = wx.GetApp().settings
-            self.SetBackgroundColour(s.bg_color)
-            self.SetForegroundColour(s.fg_color)
-            self.SetFont(s.text_font)
-        except AttributeError:
-            # Apply look&feel defined by the parent
-            self.InheritAttributes()
-
         # self.Layout()
 
     # -----------------------------------------------------------------------
@@ -197,14 +187,9 @@ class sppasPlayerPanel(sppasPanel):
     def __add_custom_controls(self, control_panel):
         """Add custom widgets to the player controls panel."""
         # to switch panels of the splitter
-        btn1 = BitmapTextButton(control_panel.GetWidgetsPanel(), label="", name="exchange_1")
+        btn1 = BitmapTextButton(control_panel.GetWidgetsPanel(), label="", name="way_up_down")
         control_panel.SetButtonProperties(btn1)
         control_panel.AddWidget(btn1)
-
-        # to change the orientation of the splitter
-        btn3 = BitmapTextButton(control_panel.GetWidgetsPanel(), label="", name="rotate_screen")
-        control_panel.SetButtonProperties(btn3)
-        control_panel.AddWidget(btn3)
 
     # -----------------------------------------------------------------------
     # Events management
@@ -345,11 +330,8 @@ class sppasPlayerPanel(sppasPanel):
         obj = event.GetEventObject()
         name = obj.GetName()
 
-        if name == "exchange_1":
+        if name == "way_up_down":
             self.SwapPanels()
-
-        elif name == "rotate_screen":
-            self.Rotate()
 
         elif name == "zoom":
             self.media_zoom(obj, 0)
@@ -359,6 +341,9 @@ class sppasPlayerPanel(sppasPanel):
 
         elif name == "zoom_out":
             self.media_zoom(obj, -1)
+
+        elif name == "close":
+            self.media_remove(obj)
 
         else:
             event.Skip()
@@ -371,6 +356,26 @@ class sppasPlayerPanel(sppasPanel):
             if self._media[media] is True and media.IsPlaying() is True:
                 return media
         return None
+
+    # -----------------------------------------------------------------------
+
+    def media_remove(self, obj):
+        """Remove the media we clicked on the collapsible panel close button."""
+        panel = None
+        for i, p in enumerate(self.FindWindow("media_panel").GetChildren()):
+            if isinstance(p, sppasCollapsiblePanel) and p.IsChild(obj) is True:
+                panel = p
+                break
+        assert panel is not None
+        media = panel.GetPane()
+
+        media.Stop()
+        media.Destroy()
+        self._media.pop(media)
+        self.FindWindow("media_panel").GetSizer().Detach(panel)
+        # panel.Destroy()
+        panel.Hide()
+        self.FindWindow("media_panel").SendSizeEvent()
 
     # -----------------------------------------------------------------------
 
@@ -464,11 +469,12 @@ class sppasPlayerPanel(sppasPanel):
 
         """
         playing_media = self.is_playing()
-        pos = playing_media.Tell()
-        new_pos = pos + value
         if playing_media is not None:
-            for media in self._media:
-                media.Seek(new_pos)
+            pos = playing_media.Tell()
+            new_pos = pos + value
+            if playing_media is not None:
+                for media in self._media:
+                    media.Seek(new_pos)
 
     # -----------------------------------------------------------------------
 
@@ -545,32 +551,6 @@ class sppasPlayerPanel(sppasPanel):
         self.Layout()
         splitter.UpdateSize()
 
-    # -----------------------------------------------------------------------
-
-    def Rotate(self):
-        splitter = self.FindWindow("splitter")
-        win_1 = splitter.GetWindow1()
-        win_2 = splitter.GetWindow2()
-        w, h = win_1.GetSize()
-        splitter.Unsplit(toRemove=win_1)
-        splitter.Unsplit(toRemove=win_2)
-        if splitter.GetSplitMode() == wx.SPLIT_VERTICAL:
-            orient = wx.HORIZONTAL
-            splitter.SplitHorizontally(win_1, win_2, w)
-        else:
-            orient = wx.VERTICAL
-            splitter.SplitVertically(win_1, win_2, h)
-
-        if win_1.GetName() == "player_controls_panel":
-            splitter.SetSashGravity(0.)
-            win_1.SetOrientation(orient)
-        else:
-            splitter.SetSashGravity(1.)
-            win_2.SetOrientation(orient)
-
-        self.Layout()
-        splitter.UpdateSize()
-
 # ---------------------------------------------------------------------------
 
 
@@ -581,8 +561,8 @@ class TestPanel(sppasPlayerPanel):
 
         self.add_media(os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
         self.add_media(os.path.join(paths.samples, "samples-fra", "F_F_C006-P6.wav"))
-        self.add_media("/Users/bigi/Movies/Monsters_Inc.For_the_Birds.mpg")
-        # self.add_media("/E/Videos/Monsters_Inc.For_the_Birds.mpg")
+        # self.add_media("/Users/bigi/Movies/Monsters_Inc.For_the_Birds.mpg")
+        self.add_media("/E/Videos/Monsters_Inc.For_the_Birds.mpg")
 
         # self.add_media(os.path.join(paths.samples, "multimedia-fra", "audio_left.wav"))
         # self.add_media(os.path.join(paths.samples, "multimedia-fra", "audio_right.wav"))

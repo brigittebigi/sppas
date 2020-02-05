@@ -63,7 +63,6 @@ class sppasPlayerControlsPanel(sppasPanel):
     """
 
     def __init__(self, parent, id=wx.ID_ANY,
-                 orient=wx.HORIZONTAL,
                  pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
                  style=0,
@@ -82,21 +81,8 @@ class sppasPlayerControlsPanel(sppasPanel):
         super(sppasPlayerControlsPanel, self).__init__(
             parent, id, pos, size, style, name)
 
-        # Fix our min size
-        self.SetInitialSize(size)
-
-        self._create_content(orient)
+        self._create_content()
         self._setup_events()
-
-        try:
-            # Apply look&feel defined by SPPAS Application
-            s = wx.GetApp().settings
-            self.SetBackgroundColour(s.bg_color)
-            self.SetForegroundColour(s.fg_color)
-            self.SetFont(s.text_font)
-        except AttributeError:
-            # Apply look&feel defined by the parent
-            self.InheritAttributes()
 
         self.Layout()
 
@@ -104,56 +90,8 @@ class sppasPlayerControlsPanel(sppasPanel):
     # Public methods
     # -----------------------------------------------------------------------
 
-    def SetOrientation(self, orient):
-        """Set the orientation of all the sizers.
-
-        :param orient: wx.HORIZONTAL or wx.VERTICAL
-
-        """
-        if orient == self.GetSizer().GetOrientation():
-            return
-
-        if orient == wx.HORIZONTAL:
-            sl_orient = wx.SL_HORIZONTAL
-            sl_reversed = wx.SL_VERTICAL
-            reversed_orient = wx.VERTICAL
-        elif orient == wx.VERTICAL:
-            sl_orient = wx.SL_VERTICAL
-            sl_reversed = wx.SL_HORIZONTAL
-            reversed_orient = wx.HORIZONTAL
-        else:
-            return
-
-        # The main panel
-        self.GetSizer().SetOrientation(orient)
-
-        # The panels that are in orientation
-        self.FindWindow("widgets_panel").GetSizer().SetOrientation(orient)
-
-        # The panels that are in the reversed orientation
-        transport_panel = self.FindWindow("transport_panel")
-        volume_panel = self.FindWindow("volume_panel")
-        tps = transport_panel.GetSizer()
-        tps.SetOrientation(reversed_orient)
-        for child in tps.GetChildren():
-            s = child.GetSizer()
-            if s is not None:
-                s.SetOrientation(orient)
-
-        # The sliders
-        slider_seek = transport_panel.FindWindow("seek_slider")
-        slider_seek.SetWindowStyle(sl_reversed | wx.SL_MIN_MAX_LABELS)
-        slider_seek.Refresh()
-        slider_volume = volume_panel.FindWindow("volume_slider")
-        slider_volume.SetWindowStyle(sl_orient)
-        slider_volume.Refresh()
-
-        self.Layout()
-
-    # -----------------------------------------------------------------------
-
     def GetWidgetsPanel(self):
-        """Return the panel..."""
+        """Return the customizable panel."""
         return self.FindWindow("widgets_panel")
 
     # -----------------------------------------------------------------------
@@ -231,7 +169,7 @@ class sppasPlayerControlsPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def SetRange(self, min_value=0, max_value=100):
-        """Set the range values of the transport slider.
+        """Set the range values of the seek slider.
 
         Value of the slider is then set to the min.
 
@@ -261,57 +199,62 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def SetInitialSize(self, size=wx.DefaultSize):
-        """Calculate and set a good size. """
-        self.SetMinSize(size)
-        if self.GetSizer() is not None:
-            if self.GetSizer().GetOrientation() == wx.HORIZONTAL:
-                self.SetMinSize(wx.Size(sppasPanel.fix_size(384),
-                                        sppasPanel.fix_size(64)))
-                self.SetMaxSize(wx.Size(-1, sppasPanel.fix_size(128)))
-            else:
-                self.SetMinSize(wx.Size(sppasPanel.fix_size(64),
-                                        sppasPanel.fix_size(384)))
-                self.SetMaxSize(wx.Size(sppasPanel.fix_size(128), -1))
-
-    # -----------------------------------------------------------------------
-
-    def _create_content(self, orient):
+    def _create_content(self):
         """Create the content of the panel.
 
         :param orient: wx.HORIZONTAL or wx.VERTICAL
 
         """
         # Create the main panels
-        panel1 = self.__create_widgets_panel(orient)
-        panel1.Hide()
-        panel2 = self.__create_transport_panel(orient)
-        panel3 = self.__create_volume_panel(orient)
+        panel1 = self.__create_widgets_panel()
+        # panel1.Hide()
+        panel2 = self.__create_transport_panel()
+        panel3 = self.__create_volume_panel()
+        slider = self.__create_seek_slider_panel()
 
         # Organize the panels into the main sizer
-        border = sppasPanel.fix_size(4)
-        sizer = wx.BoxSizer(orient)
-        sizer.Add(panel1, 3, wx.ALIGN_CENTRE | wx.EXPAND | wx.ALL, border)
-        sizer.Add(panel2, 6, wx.ALIGN_CENTER | wx.EXPAND | wx.ALL, border)
-        sizer.AddStretchSpacer(1)
-        sizer.Add(panel3, 1, wx.ALIGN_CENTER | wx.EXPAND | wx.ALL, border)
+        border = sppasPanel.fix_size(2)
+        nav_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        nav_sizer.Add(panel1, 3, wx.ALIGN_CENTRE | wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.Add(panel2, 5, wx.ALIGN_CENTER | wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.Add(panel3, 3, wx.ALIGN_CENTER | wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(slider, 0, wx.ALIGN_CENTRE | wx.EXPAND | wx.ALL, border)
+        sizer.Add(nav_sizer, 0, wx.ALIGN_CENTRE | wx.EXPAND | wx.ALL, border)
+
         self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
 
-    def __create_widgets_panel(self, orient):
+    def __create_widgets_panel(self):
         """Return an empty panel with a wrap sizer."""
         panel = sppasPanel(self, name="widgets_panel")
-        if orient == wx.HORIZONTAL:
-            sizer = wx.WrapSizer(orient=wx.VERTICAL)
-        else:
-            sizer = wx.WrapSizer(orient=wx.HORIZONTAL)
+        sizer = wx.WrapSizer(orient=wx.VERTICAL)
         panel.SetSizerAndFit(sizer)
         return panel
 
     # -----------------------------------------------------------------------
 
-    def __create_transport_panel(self, orient):
+    def __create_seek_slider_panel(self):
+        """Return a panel with a slider to indicate the position in time."""
+        panel = sppasPanel(self, name="widgets_panel")
+
+        # Labels of wx.Slider are not supported under MacOS.
+        slider = wx.Slider(self, style=wx.SL_HORIZONTAL | wx.SL_MIN_MAX_LABELS)
+        slider.SetRange(0, 100)
+        slider.SetValue(0)
+        slider.SetName("seek_slider")
+
+        border = sppasPanel.fix_size(2)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(slider, 1, wx.EXPAND | wx.ALL, border)
+        panel.SetSizer(sizer)
+        return panel
+
+    # -----------------------------------------------------------------------
+
+    def __create_transport_panel(self):
         """Return a panel with the buttons to play/pause/stop the media."""
         panel = sppasPanel(self, name="transport_panel")
 
@@ -322,8 +265,8 @@ class sppasPlayerControlsPanel(sppasPanel):
         self.SetButtonProperties(btn_play)
         # btn_play.Enable(False)
         btn_play.SetFocus()
-        btn_play.SetMinSize(wx.Size(sppasPanel.fix_size(56),
-                                    sppasPanel.fix_size(56)))
+        btn_play.SetMinSize(wx.Size(sppasPanel.fix_size(32),
+                                    sppasPanel.fix_size(32)))
 
         btn_forward = BitmapTextButton(panel, label="", name="media_forward")
         self.SetButtonProperties(btn_forward)
@@ -334,45 +277,22 @@ class sppasPlayerControlsPanel(sppasPanel):
         btn_replay = ToggleButton(panel, label="", name="media_repeat")
         btn_replay = self.SetButtonProperties(btn_replay)
 
-        # Labels of wx.Slider are not supported under MacOS.
-        if orient == wx.HORIZONTAL:
-            slider = wx.Slider(panel, style=wx.SL_HORIZONTAL | wx.SL_MIN_MAX_LABELS)
-            # slider.SetMinSize(wx.Size(sppasPanel.fix_size(200), -1))
-        else:
-            slider = wx.Slider(panel, style=wx.SL_VERTICAL | wx.SL_MIN_MAX_LABELS)
-            # slider.SetMinSize(wx.Size(-1, sppasPanel.fix_size(200)))
-        slider.SetRange(0, 100)
-        slider.SetValue(0)
-        slider.SetName("seek_slider")
-
         border = sppasPanel.fix_size(2)
-        nav_sizer = wx.BoxSizer(orient)
-        nav_sizer.AddStretchSpacer(1)
-        nav_sizer.Add(btn_rewind, 0, wx.ALL | wx.ALIGN_CENTER, border)
-        nav_sizer.Add(btn_play, 0, wx.ALL | wx.ALIGN_CENTER, border)
-        nav_sizer.Add(btn_forward, 0, wx.ALL | wx.ALIGN_CENTER, border)
-        nav_sizer.Add(btn_stop, 0, wx.ALL | wx.ALIGN_CENTER, border)
-        nav_sizer.Add(btn_replay, 0, wx.ALL | wx.ALIGN_CENTER, border)
-        nav_sizer.AddStretchSpacer(1)
-
-        # Organize the previous sizers into the main sizer
-        if orient == wx.HORIZONTAL:
-            sizer = wx.BoxSizer(wx.VERTICAL)
-        else:
-            sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.AddStretchSpacer(1)
-        sizer.Add(nav_sizer, 4, wx.EXPAND | wx.ALIGN_CENTER, 0)
+        sizer.Add(btn_rewind, 0, wx.ALL | wx.ALIGN_CENTER, border)
+        sizer.Add(btn_play, 0, wx.ALL | wx.ALIGN_CENTER, border)
+        sizer.Add(btn_forward, 0, wx.ALL | wx.ALIGN_CENTER, border)
+        sizer.Add(btn_stop, 0, wx.ALL | wx.ALIGN_CENTER, border)
+        sizer.Add(btn_replay, 0, wx.ALL | wx.ALIGN_CENTER, border)
         sizer.AddStretchSpacer(1)
-        sizer.Add(slider, 3, wx.EXPAND | wx.ALIGN_CENTER, 0)
-        sizer.AddStretchSpacer(1)
-
         panel.SetSizer(sizer)
 
         return panel
 
     # -----------------------------------------------------------------------
 
-    def __create_volume_panel(self, orient):
+    def __create_volume_panel(self):
         """Return a panel with a slider for the volume and a mute button."""
         panel = sppasPanel(self, name="volume_panel")
 
@@ -381,17 +301,15 @@ class sppasPlayerControlsPanel(sppasPanel):
         self.SetButtonProperties(btn_mute)
 
         # Labels of wx.Slider are not supported under MacOS.
-        if orient == wx.HORIZONTAL:
-            slider = wx.Slider(panel, style=wx.SL_VERTICAL | wx.SL_INVERSE)
-        else:
-            slider = wx.Slider(panel, style=wx.SL_HORIZONTAL | wx.SL_MIN_MAX_LABELS)
+        slider = wx.Slider(panel, style=wx.SL_HORIZONTAL | wx.SL_MIN_MAX_LABELS)
         slider.SetName("volume_slider")
         slider.SetValue(100)
         slider.SetRange(0, 100)
 
-        sizer = wx.BoxSizer(orient)
-        sizer.Add(btn_mute, 0, wx.ALIGN_CENTER, 0)
-        sizer.Add(slider, 1, wx.ALIGN_CENTER | wx.EXPAND, 0)
+        border = sppasPanel.fix_size(2)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(btn_mute, 0, wx.ALIGN_CENTER | wx.ALL, border)
+        sizer.Add(slider, 1, wx.ALIGN_CENTER | wx.EXPAND, border)
         panel.SetSizer(sizer)
 
         return panel
@@ -402,8 +320,8 @@ class sppasPlayerControlsPanel(sppasPanel):
         btn.FocusWidth = 1
         btn.Spacing = 0
         btn.BorderWidth = 0
-        btn.SetMinSize(wx.Size(sppasPanel.fix_size(42),
-                               sppasPanel.fix_size(42)))
+        btn.SetMinSize(wx.Size(sppasPanel.fix_size(28),
+                               sppasPanel.fix_size(28)))
         return btn
 
     # -----------------------------------------------------------------------
@@ -412,7 +330,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         """Return a color slightly different of the given one."""
         color = self.GetParent().GetBackgroundColour()
         r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
-        return wx.Colour(r, g, b, a).ChangeLightness(75)
+        return wx.Colour(r, g, b, a).ChangeLightness(80)
 
     # -----------------------------------------------------------------------
     # Manage events
@@ -515,20 +433,15 @@ class sppasPlayerControlsPanel(sppasPanel):
 class TestPanel(sppasPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
-        p = sppasPlayerControlsPanel(self, orient=wx.VERTICAL)
-        p.SetOrientation(wx.HORIZONTAL)
-        btn1 = BitmapTextButton(p.GetWidgetsPanel(), label="", name="exchange_1")
+
+        p = sppasPlayerControlsPanel(self)
+
+        btn1 = BitmapTextButton(p.GetWidgetsPanel(), label="", name="way_up_down")
         p.SetButtonProperties(btn1)
         p.AddWidget(btn1)
 
-        # to change the orientation of the splitter
-        btn3 = BitmapTextButton(p.GetWidgetsPanel(), label="", name="rotate_screen")
-        p.SetButtonProperties(btn3)
-        p.AddWidget(btn3)
-
         s = wx.BoxSizer()
-        s.Add(p, 0, wx.EXPAND)
+        s.Add(p, 1, wx.EXPAND)
         self.SetSizer(s)
-
         self.SetBackgroundColour(wx.Colour(60, 60, 60))
         self.SetForegroundColour(wx.Colour(225, 225, 225))
