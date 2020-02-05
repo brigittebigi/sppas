@@ -351,7 +351,7 @@ class BaseButton(wx.Window):
         self._focusstyle = wx.PENSTYLE_DOT
 
         # Setup Initial Size
-        self.InheritAttributes()
+        # self.InheritAttributes()
         self.SetInitialSize(size)
 
         # Bind the events related to our window
@@ -413,7 +413,11 @@ class BaseButton(wx.Window):
         :returns: an instance of wx.VisualAttributes.
 
         """
-        return self.GetParent().GetClassDefaultAttributes()
+        att = wx.VisualAttributes()
+        # att.colBg = wx.Colour(0, 0, 0, 255)
+        # att.colFg = self.GetForegroundColour()
+        # att.font = self.GetFont()
+        return att   # self.GetParent().GetClassDefaultAttributes()
 
     # -----------------------------------------------------------------------
 
@@ -745,7 +749,7 @@ class BaseButton(wx.Window):
     def OnMotion(self, event):
         """Handle the wx.EVT_MOTION event.
 
-        To be overriden.
+        To be overridden.
 
         :param event: a :class:wx.MouseEvent event to be processed.
 
@@ -757,7 +761,7 @@ class BaseButton(wx.Window):
     def OnDragging(self, event):
         """Handle the wx.EVT_MOTION event.
 
-        To be overriden.
+        To be overridden.
 
         :param event: a :class:wx.MouseEvent event to be processed.
 

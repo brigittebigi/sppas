@@ -392,7 +392,7 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
     # -----------------------------------------------------------------------
 
     def SetButtonProperties(self, btn):
-        btn.SetTransparent(128)
+        # btn.SetTransparent(128)
         btn.FocusWidth = 1
         btn.Spacing = 0
         btn.FocusColour = self.GetForegroundColour()
@@ -419,7 +419,8 @@ class sppasPlayerControlsPanel(sppasImgBgPanel):
         :param value: (any) Any kind of value linked to the action
 
         """
-        evt = PlayerEvent(action=action, value=value)
+        # evt = PlayerEvent(action=action, value=value)
+        evt = sppasMedia.MediaActionEvent(action=action, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
 
@@ -598,6 +599,8 @@ class sppasPlayerPanel(sppasPanel):
         panel.SetPane(mc)
         self.media_zoom(mc, 0)  # 100% zoom = initial size
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._OnCollapseChanged, panel)
+        panel.Bind(sppasMedia.EVT_MEDIA_ACTION, self._process_action)
+
         return panel
 
     # -----------------------------------------------------------------------
@@ -665,7 +668,8 @@ class sppasPlayerPanel(sppasPanel):
         self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
 
         # The user clicked (LeftDown - LeftUp) an action button of the toolbar
-        self.FindWindow("splitter").Bind(EVT_PLAYER, self._process_action)
+        # self.FindWindow("splitter").Bind(EVT_PLAYER, self._process_action)
+        self.FindWindow("splitter").Bind(sppasMedia.EVT_MEDIA_ACTION, self._process_action)
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
         # The splitter sash position is changing/changed
@@ -828,7 +832,7 @@ class sppasPlayerPanel(sppasPanel):
         """
         panel = None
         for p in self.FindWindow("media_panel").GetChildren():
-            if p.IsChild(obj) is True:
+            if isinstance(p, sppasCollapsiblePanel) and p.IsChild(obj) is True:
                 panel = p
                 break
         assert panel is not None
@@ -872,8 +876,7 @@ class sppasPlayerPanel(sppasPanel):
                     size = media.GetParent().DoGetBestSize()
                     media.GetParent().SetInitialSize(size)
 
-        controls.Paused(paused_now)
-        # self.Layout()
+        controls.Paused(not paused_now)
 
         # If we have to play the media we'll do it now.
         if paused_now == 0:
@@ -954,7 +957,7 @@ class sppasPlayerPanel(sppasPanel):
 
         controls = self.FindWindow("player_controls_panel")
         is_paused = any(m.IsPaused() for m in self._media if self._media[m] is True)
-        controls.Paused(is_paused)
+        controls.Paused(not is_paused)
         self.__set_slider()
         self.Layout()
 
@@ -1023,11 +1026,11 @@ class TestPanel(sppasPlayerPanel):
         super(TestPanel, self).__init__(
             parent, -1, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
 
-        # self.add_media(os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
-        # self.add_media(os.path.join(paths.samples, "samples-fra", "F_F_C006-P6.wav"))
-        # self.add_media("/Users/bigi/Movies/Monsters_Inc.For_the_Birds.mpg")
+        self.add_media(os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
+        self.add_media(os.path.join(paths.samples, "samples-fra", "F_F_C006-P6.wav"))
+        self.add_media("/Users/bigi/Movies/Monsters_Inc.For_the_Birds.mpg")
         # self.add_media("/E/Videos/Monsters_Inc.For_the_Birds.mpg")
 
-        self.add_media(os.path.join(paths.samples, "multimedia-fra", "audio_left.wav"))
-        self.add_media(os.path.join(paths.samples, "multimedia-fra", "audio_right.wav"))
-        self.add_media(os.path.join(paths.samples, "multimedia-fra", "video.mkv"))
+        # self.add_media(os.path.join(paths.samples, "multimedia-fra", "audio_left.wav"))
+        # self.add_media(os.path.join(paths.samples, "multimedia-fra", "audio_right.wav"))
+        # self.add_media(os.path.join(paths.samples, "multimedia-fra", "video.mkv"))
