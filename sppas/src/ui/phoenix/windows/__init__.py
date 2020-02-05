@@ -58,6 +58,7 @@ from .image import sppasStaticBitmap
 
 from .media import sppasMedia
 from .media import MediaType
+from .media import sppasPlayerControlsPanel
 
 from .panel import sppasPanel
 from .panel import sppasTransparentPanel
@@ -87,6 +88,7 @@ __all__ = (
     "ToggleButton",
     "sppasMedia",
     "MediaType",
+    "sppasPlayerControlsPanel",
     "sppasMultiSplitterPanel",
     "sppasStaticText",
     "sppasTitleText",

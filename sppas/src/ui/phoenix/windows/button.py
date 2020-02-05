@@ -336,6 +336,9 @@ class BaseButton(wx.Window):
         # Preceding state and current one
         self._state = [BaseButton.NORMAL, BaseButton.NORMAL]
 
+        # Background
+        self._bgcolor = None
+
         # Border width to draw (0=no border)
         pc = self.GetPenForegroundColour()
         self._borderwidth = 2
@@ -366,6 +369,16 @@ class BaseButton(wx.Window):
 
         # Allow sub-classes to bind other events
         self.InitOtherEvents()
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        """Override. Apply bg colour instead of transparency.
+
+        :param colour: (wx.Colour) None to be transparent
+
+        """
+        self._bgcolor = colour
 
     # -----------------------------------------------------------------------
 
@@ -413,11 +426,11 @@ class BaseButton(wx.Window):
         :returns: an instance of wx.VisualAttributes.
 
         """
-        att = wx.VisualAttributes()
+        # att = wx.VisualAttributes()
         # att.colBg = wx.Colour(0, 0, 0, 255)
         # att.colFg = self.GetForegroundColour()
         # att.font = self.GetFont()
-        return att   # self.GetParent().GetClassDefaultAttributes()
+        return self.GetParent().GetClassDefaultAttributes()
 
     # -----------------------------------------------------------------------
 
@@ -566,12 +579,16 @@ class BaseButton(wx.Window):
     # -----------------------------------------------------------------------
 
     def GetHighlightedBackgroundColour(self):
-        color = self.GetParent().GetBackgroundColour()
-        r, g, b = color.Red(), color.Green(), color.Blue()
-        delta = 20
+        if self._bgcolor is not None:
+            color = self._bgcolor
+        else:
+            color = self.GetParent().GetBackgroundColour()
+        r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
+
+        delta = 15
         if (r + g + b) > 384:
-            return wx.Colour(r, g, b, 128).ChangeLightness(100 - delta)
-        return wx.Colour(r, g, b, 128).ChangeLightness(100 + delta)
+            return wx.Colour(r, g, b, a).ChangeLightness(100 - delta)
+        return wx.Colour(r, g, b, a).ChangeLightness(100 + delta)
 
     # -----------------------------------------------------------------------
 
@@ -904,29 +921,20 @@ class BaseButton(wx.Window):
         :returns: (wx.Brush)
 
         """
-        c = self.GetParent().GetBackgroundColour()
-        color = wx.Colour(c.Red(), c.Green(), c.Blue(), alpha=128)
-        state = self._state[1]
+        if self._state[1] != BaseButton.PRESSED:
+            if self._bgcolor is None:
+                if wx.Platform == '__WXMAC__':
+                    return wx.TRANSPARENT_BRUSH
 
-        if state != BaseButton.PRESSED:
-            # return wx.Brush(color, wx.BRUSHSTYLE_TRANSPARENT)
-            if wx.Platform == '__WXMAC__':
-                return wx.TRANSPARENT_BRUSH
-
-            brush = wx.Brush(color, wx.BRUSHSTYLE_TRANSPARENT)
-            my_attr = self.GetDefaultAttributes()
-            p_attr = self.GetParent().GetDefaultAttributes()
-            my_def = color == my_attr.colBg
-            p_def = self.GetParent().GetBackgroundColour() == p_attr.colBg
-            if my_def and not p_def:
                 color = self.GetParent().GetBackgroundColour()
-                brush = wx.Brush(color, wx.BRUSHSTYLE_TRANSPARENT)
+                return wx.Brush(color, wx.BRUSHSTYLE_TRANSPARENT)
+            else:
+                return wx.Brush(self._bgcolor, wx.SOLID)
+
         else:
             # this line assumes that a pressed button should be highlighted with
             # a solid colour even if the background is supposed to be transparent
-            brush = wx.Brush(self.GetHighlightedBackgroundColour(), wx.SOLID)
-
-        return brush
+            return wx.Brush(self.GetHighlightedBackgroundColour(), wx.SOLID)
 
     # -----------------------------------------------------------------------
     # Draw methods (private)
@@ -2069,6 +2077,7 @@ class TestPanelBaseButton(wx.Panel):
             btn.Bind(wx.EVT_BUTTON, self.on_btn_event)
 
         vertical = BaseButton(self, pos=(560, 10), size=(50, 110))
+        vertical.SetBackgroundColour(wx.Colour(128, 255, 196))
 
     # -----------------------------------------------------------------------
 
