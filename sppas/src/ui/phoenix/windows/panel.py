@@ -266,7 +266,6 @@ class sppasImgBgPanel(sppasPanel):
 # ---------------------------------------------------------------------------
 
 
-
 class sppasScrolledPanel(sc.ScrolledPanel):
     """A panel is a window on which controls are placed.
 
@@ -356,16 +355,17 @@ class sppasCollapsiblePanel(sppasPanel):
 
         """
         
-        sppasPanel.__init__(self, parent, id, pos, size, style, name)
+        super(sppasCollapsiblePanel, self).__init__(
+            parent, id, pos, size, style, name)
 
         self.__collapsed = True
         self.__btn = None
-        self.__tools_panel = self.create_toolbar(label)
-        self.__child_panel = sppasPanel(self, style=wx.TAB_TRAVERSAL | wx.NO_BORDER, name="content")
-        self.__child_panel.Hide()
-        self.__child_panel.SetAutoLayout(True)
-        self.__child_panel.SetSizer(wx.BoxSizer(wx.VERTICAL))
-        self.__border = sppasCollapsiblePanel.fix_size(2)
+        self._tools_panel = self.create_toolbar(label)
+        self._child_panel = sppasPanel(self, style=wx.TAB_TRAVERSAL | wx.NO_BORDER, name="content")
+        self._child_panel.Hide()
+        self._child_panel.SetAutoLayout(True)
+        self._child_panel.SetSizer(wx.BoxSizer(wx.VERTICAL))
+        self._border = sppasCollapsiblePanel.fix_size(2)
 
         self.Bind(wx.EVT_BUTTON, self.OnButton, self.__btn)
         self.Bind(wx.EVT_SIZE, self.OnSize)
@@ -401,13 +401,13 @@ class sppasCollapsiblePanel(sppasPanel):
 
     def GetPane(self):
         """Return a reference to the embedded pane window."""
-        return self.__child_panel
+        return self._child_panel
 
     # -----------------------------------------------------------------------
 
     def GetToolsPane(self):
         """Return a reference to the embedded collapse tool window."""
-        return self.__tools_panel
+        return self._tools_panel
 
     # -----------------------------------------------------------------------
 
@@ -431,11 +431,11 @@ class sppasCollapsiblePanel(sppasPanel):
         """
         if pane.GetParent() != self:
             raise ValueError("Bad parent for pane {:s}.".format(pane.GetName()))
-        if self.__child_panel:
-            self.__child_panel.Destroy()
-        self.__child_panel = pane
+        if self._child_panel:
+            self._child_panel.Destroy()
+        self._child_panel = pane
         if self.__collapsed is True:
-            self.__child_panel.Hide()
+            self._child_panel.Hide()
         self.Layout()
 
     # -----------------------------------------------------------------------
@@ -457,11 +457,11 @@ class sppasCollapsiblePanel(sppasPanel):
         else:
             self.__btn.SetImage("arrow_expanded")
 
-        if self.__child_panel:
+        if self._child_panel:
             if collapse is True:
-                self.__child_panel.Hide()
+                self._child_panel.Hide()
             else:
-                self.__child_panel.Show()
+                self._child_panel.Show()
         self.__collapsed = collapse
         self.InvalidateBestSize()
 
@@ -491,7 +491,7 @@ class sppasCollapsiblePanel(sppasPanel):
 
     def FindButton(self, icon):
         """Return the button with the given icon name or None."""
-        for child in self.__tools_panel.GetChildren():
+        for child in self._tools_panel.GetChildren():
             if child.GetName() == icon:
                 return child
         return None
@@ -504,7 +504,7 @@ class sppasCollapsiblePanel(sppasPanel):
         :param icon: (str) Name of the .png file of the icon or None
 
         """
-        btn = BitmapTextButton(self.__tools_panel, name=icon)
+        btn = BitmapTextButton(self._tools_panel, name=icon)
         btn.SetLabelPosition(wx.RIGHT)
         btn.SetFocusWidth(0)
         btn.SetSpacing(0)
@@ -514,7 +514,7 @@ class sppasCollapsiblePanel(sppasPanel):
         btn_w = btn_h
         btn.SetSize(wx.Size(btn_w, btn_h))
         btn.SetMinSize(wx.Size(btn_w, btn_h))
-        self.__tools_panel.GetSizer().Prepend(btn, 0, wx.LEFT | wx.RIGHT, 1)
+        self._tools_panel.GetSizer().Prepend(btn, 0, wx.LEFT | wx.RIGHT, 1)
 
         return btn
 
@@ -527,7 +527,7 @@ class sppasCollapsiblePanel(sppasPanel):
         :param value: (bool)
 
         """
-        btn = self.__tools_panel.FindWindow(icon)
+        btn = self._tools_panel.FindWindow(icon)
         btn.Enable(value)
 
     # ------------------------------------------------------------------------
@@ -559,12 +559,12 @@ class sppasCollapsiblePanel(sppasPanel):
         """Get the size which best suits the window."""
         # size = self.__btn.GetMinSize()
         # size = self.__btn.GetSize()
-        size = self.__tools_panel.GetSize()
+        size = self._tools_panel.GetSize()
 
-        if self.IsExpanded() and self.__child_panel:
-            pbs = self.__child_panel.GetBestSize()
-            size.width = max(size.GetWidth() + self.__border, pbs.x)
-            size.height = size.y + self.__border + pbs.y
+        if self.IsExpanded() and self._child_panel:
+            pbs = self._child_panel.GetBestSize()
+            size.width = max(size.GetWidth() + self._border, pbs.x)
+            size.height = size.y + self._border + pbs.y
 
         return size
 
@@ -573,28 +573,27 @@ class sppasCollapsiblePanel(sppasPanel):
     def Layout(self):
         """Do the layout."""
         # we need to complete the creation first
-        if not self.__tools_panel or not self.__child_panel:
+        if not self._tools_panel or not self._child_panel:
             return False
 
         w, h = self.GetSize()
-        bw = w - self.__border
+        bw = w - self._border
         bh = self.GetButtonHeight()
         # fix pos and size of the top panel with tools
-        self.__tools_panel.SetPosition((self.__border, 0))
-        self.__tools_panel.SetSize(wx.Size(bw, bh))
+        self._tools_panel.SetPosition((self._border, 0))
+        self._tools_panel.SetSize(wx.Size(bw, bh))
 
         if self.IsExpanded():
             # fix pos and size of the child window
             pw, ph = self.GetSize()
-            x = self.__border + bh  # shift of the icon size (a square).
-            y = bh + self.__border
-            pw = pw - x - self.__border      # left-right borders
-            ph = ph - y - self.__border      # top-bottom borders
-            self.__child_panel.SetSize(wx.Size(pw, ph))
-            self.__child_panel.SetPosition((x, y))
-            self.__child_panel.Show(True)
-            self.__child_panel.Layout()
-            self.__child_panel.Refresh()
+            x = self._border + bh  # shift of the icon size (a square).
+            y = bh + self._border
+            pw = pw - x - self._border      # left-right borders
+            ph = ph - y - self._border      # top-bottom borders
+            self._child_panel.SetSize(wx.Size(pw, ph))
+            self._child_panel.SetPosition((x, y))
+            self._child_panel.Show(True)
+            self._child_panel.Layout()
 
         return True
 
@@ -610,6 +609,7 @@ class sppasCollapsiblePanel(sppasPanel):
         top = self.GetParent()
 
         if top.GetSizer():
+            # top.GetSizer().SetItemMinSize(self, sz)
             if (wx.Platform == "__WXGTK__" and self.IsCollapsed()) or \
                     wx.Platform != "__WXGTK__":
                 top.GetSizer().SetSizeHints(top)
@@ -622,6 +622,7 @@ class sppasCollapsiblePanel(sppasPanel):
         else:
             # collapsed -> expanded transition
             top.Fit()
+            self.SetFocus()
 
         wx.GetTopLevelParent(self).Layout()
         self.Refresh()
@@ -634,8 +635,8 @@ class sppasCollapsiblePanel(sppasPanel):
         :param size: an instance of wx.Size.
 
         """
-        bw, bh = self.__tools_panel.GetMinSize()
-        self.SetMinSize(wx.Size(bw, bh + self.__border))
+        bw, bh = self._tools_panel.GetMinSize()
+        self.SetMinSize(wx.Size(bw, bh + self._border))
         if size is None:
             size = wx.DefaultSize
         wx.Window.SetInitialSize(self, size)
@@ -792,7 +793,6 @@ class TestPanel(sc.ScrolledPanel):
 
     def OnCollapseChanged(self, evt=None):
         panel = evt.GetEventObject()
-        panel.SetFocus()
         self.ScrollChildIntoView(panel)
 
     def OnCkeckedPanel(self, evt):

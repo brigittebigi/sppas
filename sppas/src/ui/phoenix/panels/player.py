@@ -36,14 +36,14 @@
 
 import os
 import wx
-import time
 import wx.media
 import wx.lib.newevent
 
 from sppas import paths
 
-from ..windows import sppasPanel, sppasCollapsiblePanel, sppasScrolledPanel
+from ..windows import sppasPanel, sppasScrolledPanel
 from ..windows import sppasMedia, MediaType
+from ..windows import sppasMediaPanel
 from ..windows import BitmapTextButton
 from ..windows import sppasPlayerControlsPanel
 
@@ -85,7 +85,7 @@ class sppasPlayerPanel(sppasPanel):
         self._create_content()
         self._setup_events()
 
-        # self.Layout()
+        self.Layout()
 
     # -----------------------------------------------------------------------
     # Public methods
@@ -100,51 +100,28 @@ class sppasPlayerPanel(sppasPanel):
         :param filename: (str)
 
         """
-        media_type = sppasMedia.ExpectedMediaType(filename)
-        if media_type == MediaType().unknown:
-            raise TypeError("File {:s} is of an unknown type.")
-
         # We embed the media into a collapsible panel
         parent_panel = self.FindWindow("media_panel")
-        panel = self.__create_media_panel(parent_panel, filename)
+        try:
+            panel = sppasMediaPanel(parent_panel, filename=filename)
+        except Exception as e:
+            wx.LogError(str(e))
+            return
         mc = panel.GetPane()
+        self._media[mc] = False
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._OnCollapseChanged, panel)
+        panel.Bind(sppasMedia.EVT_MEDIA_ACTION, self._process_action)
 
-        if media_type == MediaType().audio:
+        # Insert in the sizer
+        if mc.GetMediaType() == MediaType().audio:
             # Audio is inserted at the first position
             pos = 0
         else:
             # Video is inserted at the end (append)
             pos = parent_panel.GetSizer().GetItemCount()
-        parent_panel.GetSizer().Insert(pos, panel, 0, wx.EXPAND)
-
-        # Load the media
-        if mc.Load(filename) is True:
-            # Under Windows, the Load methods always return True, even if the media is not loaded...
-            time.sleep(0.1)
-            self.__set_media_properties(mc)
-        else:
-            self._media[panel] = False
-            panel.Collapse()
-            mc.Bind(wx.media.EVT_MEDIA_LOADED, self.__process_media_loaded)
-
+        parent_panel.GetSizer().Insert(pos, panel, 0, wx.EXPAND | wx.TOP,
+                                       sppasPanel.fix_size(4))
         parent_panel.Layout()
-
-    # -----------------------------------------------------------------------
-
-    def __create_media_panel(self, parent, filename):
-        """Create the collapsible panel for a media."""
-        panel = sppasCollapsiblePanel(parent, label=filename)
-        panel.AddButton("zoom_in")
-        panel.AddButton("zoom_out")
-        panel.AddButton("zoom")
-        panel.AddButton("close")
-        mc = sppasMedia(panel)
-        panel.SetPane(mc)
-        self.media_zoom(mc, 0)  # 100% zoom = initial size
-        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._OnCollapseChanged, panel)
-        panel.Bind(sppasMedia.EVT_MEDIA_ACTION, self._process_action)
-
-        return panel
 
     # -----------------------------------------------------------------------
     # Construct the GUI
@@ -172,10 +149,10 @@ class sppasPlayerPanel(sppasPanel):
         self.__add_custom_controls(p1)
 
         # Window 2 of the splitter: a scrolled panel with all media
-        p2 = sppasScrolledPanel(splitter, name="media_panel")
+        p2 = sppasPanel(splitter, name="media_panel")
         p2_sizer = wx.BoxSizer(wx.VERTICAL)
         p2.SetSizer(p2_sizer)
-        p2.SetupScrolling(scroll_x=False, scroll_y=True)
+        # p2.SetupScrolling(scroll_x=False, scroll_y=True)
 
         best_size = p1.GetBestSize()
         splitter.SetMinimumPaneSize(best_size[1])
@@ -333,18 +310,6 @@ class sppasPlayerPanel(sppasPanel):
         if name == "way_up_down":
             self.SwapPanels()
 
-        elif name == "zoom":
-            self.media_zoom(obj, 0)
-
-        elif name == "zoom_in":
-            self.media_zoom(obj, 1)
-
-        elif name == "zoom_out":
-            self.media_zoom(obj, -1)
-
-        elif name == "close":
-            self.media_remove(obj)
-
         else:
             event.Skip()
 
@@ -356,62 +321,6 @@ class sppasPlayerPanel(sppasPanel):
             if self._media[media] is True and media.IsPlaying() is True:
                 return media
         return None
-
-    # -----------------------------------------------------------------------
-
-    def media_remove(self, obj):
-        """Remove the media we clicked on the collapsible panel close button."""
-        panel = None
-        for i, p in enumerate(self.FindWindow("media_panel").GetChildren()):
-            if isinstance(p, sppasCollapsiblePanel) and p.IsChild(obj) is True:
-                panel = p
-                break
-        assert panel is not None
-        media = panel.GetPane()
-
-        media.Stop()
-        media.Destroy()
-        self._media.pop(media)
-        self.FindWindow("media_panel").GetSizer().Detach(panel)
-        # panel.Destroy()
-        panel.Hide()
-        self.FindWindow("media_panel").SendSizeEvent()
-
-    # -----------------------------------------------------------------------
-
-    def media_zoom(self, obj, direction):
-        """Zoom the media of the given panel.
-
-        :param obj: One of the objects of a sppasCollapsiblePanel with
-        an embedded media
-        :param direction: (int) -1 to zoom out, +1 to zoom in and 0 to reset
-        to the initial size.
-
-        """
-        panel = None
-        for p in self.FindWindow("media_panel").GetChildren():
-            if isinstance(p, sppasCollapsiblePanel) and p.IsChild(obj) is True:
-                panel = p
-                break
-        assert panel is not None
-        zooms = (10, 25, 50, 75, 100, 125, 150, 200, 250, 300)
-        if panel.IsExpanded() is False:
-            return
-
-        media = panel.GetPane()
-        if direction == 0:
-            media.SetZoom(100)
-        else:
-            idx_zoom = zooms.index(media.GetZoom())
-            if direction < 0:
-                new_idx_zoom = max(0, idx_zoom-1)
-            else:
-                new_idx_zoom = min(len(zooms)-1, idx_zoom+1)
-            media.SetZoom(zooms[new_idx_zoom])
-
-        media.SetInitialSize()
-        panel.Refresh()
-        self.Layout()
 
     # -----------------------------------------------------------------------
 
@@ -489,20 +398,10 @@ class sppasPlayerPanel(sppasPanel):
 
     def _OnCollapseChanged(self, evt=None):
         panel = evt.GetEventObject()
-        panel.SetFocus()
         media = panel.GetPane()
         expanded = panel.IsExpanded()
         self._media[media] = expanded
-        if expanded is False:
-            # The media was expanded, now it is collapsed.
-            media.Stop()
-            panel.EnableButton("zoom", False)
-            panel.EnableButton("zoom_in", False)
-            panel.EnableButton("zoom_out", False)
-        else:
-            panel.EnableButton("zoom", True)
-            panel.EnableButton("zoom_in", True)
-            panel.EnableButton("zoom_out", True)
+        if expanded is True:
             # The media was collapsed, and now it is expanded.
             m = self.is_playing()
             if m is not None:

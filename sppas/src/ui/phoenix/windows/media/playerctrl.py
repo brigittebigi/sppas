@@ -56,9 +56,12 @@ class sppasPlayerControlsPanel(sppasPanel):
         - widgets_panel: a panel, free to be used to add widgets
         - transport_panel: all buttons to play a media and a slider
         - volume_panel: a button to mute and a slider to adjust the volume
+        - slider_panel: a wx.Slider
 
     Any action of the user (click on a button, move a slider...) is sent to
-    the parent by the event: EVT_PLAYER.
+    the parent by the event: EVT_MEDIA_ACTION.
+
+    Any widget added to the widgets panel will send its own events.
 
     """
 
@@ -75,7 +78,6 @@ class sppasPlayerControlsPanel(sppasPanel):
         :param size: (wx.Size) the control size
         :param style: (int) the underlying window style
         :param name: (str) the widget name.
-        :param orient: wx.HORIZONTAL or wx.VERTICAL
 
         """
         super(sppasPlayerControlsPanel, self).__init__(

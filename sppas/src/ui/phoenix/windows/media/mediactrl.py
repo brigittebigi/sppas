@@ -41,6 +41,160 @@ import wx.media
 import wx.lib.newevent
 
 from sppas import paths
+from ..panel import sppasPanel
+from sppas.src.audiodata import sppasAudioPCM
+import sppas.src.audiodata.aio
+
+# ---------------------------------------------------------------------------
+
+
+class AudioListView(object):
+    """Represent the possible views of an audio.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
+
+    """
+
+    INFOS_HEIGHT = 20
+    WAVEFORM_HEIGHT = 100
+    SPECTRAL_HEIGHT = 100
+    LEVEL_HEIGHT = 30
+
+    # -----------------------------------------------------------------------
+
+    def __init__(self, audio_filename):
+        """Create the AudioListView.
+
+        :param audio_filename: (str)
+
+        """
+        # All possible views and value (enabled=True, disabled=False)
+        self.__infos = True
+        self.__waveform = False
+        self.__spectral = False
+        self.__level = False
+
+        # The audio PCM
+        try:
+            self.__audio = sppas.src.audiodata.aio.open(audio_filename)
+        except Exception as e:
+            wx.LogError("No view is available for the audio file."
+                        "{:s}".format(str(e)))
+            self.__audio = sppasAudioPCM()
+            self.__infos = True
+
+    # -----------------------------------------------------------------------
+    # Getters for audio infos
+    # -----------------------------------------------------------------------
+
+    def GetNumberChannels(self):
+        return self.__audio.get_nchannels()
+
+    nchannels = property(fget=GetNumberChannels)
+
+    # -----------------------------------------------------------------------
+
+    def GetSampWidth(self):
+        return self.__audio.get_sampwidth()
+
+    sampwidth = property(fget=GetSampWidth)
+
+    # -----------------------------------------------------------------------
+
+    def GetFramerate(self):
+        return self.__audio.get_framerate()
+
+    framerate = property(fget=GetFramerate)
+
+    # -----------------------------------------------------------------------
+    # Enable/Disable views
+    # -----------------------------------------------------------------------
+
+    def EnableInfos(self, value):
+        """Enable the view of the infos.
+
+        :param value: (bool)
+        :return: (bool)
+
+        """
+        value = bool(value)
+        if value is True and self.__audio.get_nchannels() > 0:
+            self.__infos = True
+
+        self.__infos = False
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def EnableWaveform(self, value):
+        """Enable the view of the waveform.
+
+        :param value: (bool)
+        :return: (bool)
+
+        """
+        value = bool(value)
+        if value is True and self.__audio.get_nchannels() == 1:
+            self.__waveform = True
+            return True
+
+        self.__waveform = False
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def EnableSpectral(self, value):
+        """Enable the view of the spectrogram.
+
+        :param value: (bool)
+        :return: (bool)
+
+        """
+        value = bool(value)
+        if value is True and self.__audio.get_nchannels() == 1:
+            self.__spectral = True
+            return True
+
+        self.__spectral = False
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def EnableLevel(self, value):
+        """Enable the view of the level.
+
+        :param value: (bool)
+        :return: (bool)
+
+        """
+        value = bool(value)
+        if value is True and self.__audio.get_nchannels() == 1:
+            self.__level = True
+            return True
+
+        self.__level = False
+        return False
+
+    # -----------------------------------------------------------------------
+    # Height of views
+    # -----------------------------------------------------------------------
+
+    def GetMinHeight(self):
+        """Return the min height required to draw all views."""
+        h = 0
+        if self.__waveform is True:
+            h += AudioListView.WAVEFORM_HEIGHT
+        if self.__spectral is True:
+            h += AudioListView.SPECTRAL_HEIGHT
+        if self.__infos is True:
+            h += AudioListView.INFOS_HEIGHT
+        if self.__level is True:
+            h += AudioListView.LEVEL_HEIGHT
+        return h
 
 # ---------------------------------------------------------------------------
 
@@ -86,7 +240,7 @@ class MediaType(object):
 # ---------------------------------------------------------------------------
 
 
-class sppasMedia(wx.Window):
+class sppasMedia(sppasPanel):
     """Create an extended media control.
 
     :author:       Brigitte Bigi
@@ -159,16 +313,7 @@ class sppasMedia(wx.Window):
         self._mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER, szBackend="")
         self._mt = MediaType().unknown
         self._zoom = 100
-
-        try:
-            # Apply look&feel defined by SPPAS Application
-            s = wx.GetApp().settings
-            self.SetBackgroundColour(s.bg_color)
-            self.SetForegroundColour(s.fg_color)
-            self.SetFont(s.text_font)
-        except AttributeError:
-            # Apply look&feel defined by the parent
-            self.InheritAttributes()
+        self._audio = None
 
         # Fix our min size
         self.SetInitialSize(size)
@@ -177,6 +322,7 @@ class sppasMedia(wx.Window):
         s = wx.BoxSizer()
         s.Add(self._mc, 1)
         self.SetSizerAndFit(s)
+        self.SetAutoLayout(True)
 
         # Bind the events related to our window
         self.Bind(wx.EVT_SIZE, self.OnSize)
@@ -232,7 +378,6 @@ class sppasMedia(wx.Window):
             end = self._length
 
         self._offsets = (start, end)
-        # wx.LogMessage("Offset period set to: {:d} - {:d}".format(start, end))
         if self._slider is not None:
             self._slider.SetRange(start, end)
 
@@ -354,6 +499,16 @@ class sppasMedia(wx.Window):
     def GetFilename(self):
         """Return the file associated to the media."""
         return self._filename
+
+    # -----------------------------------------------------------------------
+
+    def GetMediaType(self):
+        """Return the media type of the given filename.
+
+        :return: (MediaType) Integer value of the media type
+
+        """
+        return self._mt
 
     # -----------------------------------------------------------------------
 
@@ -528,6 +683,53 @@ class sppasMedia(wx.Window):
         del self._timer
         wx.Window.Destroy(self)
 
+    # -----------------------------------------------------------------------
+
+    def DoGetBestSize(self):
+        """Get the size which best suits the window."""
+        (w, h) = (sppasMedia.MIN_WIDTH, sppasMedia.MIN_HEIGHT)
+        if self._mt == MediaType().video:
+            self._mc.SetInitialSize()
+            (w, h) = self._mc.GetSize()
+        elif self._mt == MediaType().audio and self._audio is not None:
+            h = sppasPanel.fix_size(self._audio.GetMinHeight())
+
+        # Apply the zoom coefficient
+        w = int(float(w) * float(self._zoom) / 100.)
+        h = int(float(h) * float(self._zoom) / 100.)
+
+        # If the media still don't have dimensions
+        if w <= 0:
+            w = sppasMedia.MIN_WIDTH
+        if h <= 0:
+            h = sppasMedia.MIN_HEIGHT
+
+        # Ensure a minimum size keeping the current aspect ratio
+        i = 1.
+        w = float(w)
+        while w < sppasMedia.MIN_WIDTH:
+            w *= 1.5
+            i += 1.
+        w = int(w)
+        if i > 1.:
+            h = int(float(h) * 1.5 * i)
+
+        return wx.Size(w, h)
+
+    # ----------------------------------------------------------------------
+
+    def SetSize(self, size):
+        # SetMinSize is required to have the appropriate video size
+        wx.Panel.SetMinSize(self, size)
+        # SetSize is required to have the appropriate size for Draw method.
+        wx.Panel.SetSize(self, size)
+        # Fix the size of the wx.media.MediaCtrl (visible only if video)
+        if self._mt == MediaType().video:
+            self._mc.SetMinSize(size)
+        else:
+            self._mc.SetSize(wx.Size(0, 0))
+        self.GetSizer().Layout()
+
     # ----------------------------------------------------------------------
 
     def SetInitialSize(self, size=None):
@@ -550,47 +752,30 @@ class sppasMedia(wx.Window):
         :param size: an instance of wx.Size.
 
         """
-        # In any case, we fix a min size...
-        self.SetMinSize(wx.Size(sppasMedia.MIN_WIDTH,
-                                sppasMedia.MIN_HEIGHT))
+        (w, h) = (sppasMedia.MIN_WIDTH, sppasMedia.MIN_HEIGHT)
 
         # If a size is given, we'll use it, and that's it!
         if size is not None:
             (w, h) = size
-        else:
-            self._mc.SetInitialSize()
-            (w, h) = self._mc.GetSize()
 
-        # If the media still don't have dimensions
-        if w <= 0:
-            w = sppasMedia.MIN_WIDTH
-        if h <= 0:
-            h = sppasMedia.MIN_HEIGHT
+        # In any case, we fix a min size...
+        self.SetMinSize(wx.Size(sppasMedia.MIN_WIDTH, sppasMedia.MIN_HEIGHT))
 
-        # Apply the zoom coefficient
-        w = int(float(w) * float(self._zoom) / 100.)
-        h = int(float(h) * float(self._zoom) / 100.)
-
-        # Ensure a minimum size keeping the current aspect ratio
-        i = 1.
-        w = float(w)
-        while w < sppasMedia.MIN_WIDTH:
-            w *= 1.5
-            i += 1.
-        w = int(w)
-        if i > 1.:
-            h = int(float(h) * 1.5 * i)
-
-        # Fix our size
-        wx.Window.SetInitialSize(self, wx.Size(w, h))
-
-        # Fix the size of our wx.media.MediaCtrl (0 if not video)
+        # Fix the size of the wx.media.MediaCtrl (visible only if video)
         if self._mt == MediaType().video:
             self._mc.SetMinSize(wx.Size(w, h))
         else:
             self._mc.SetSize(wx.Size(0, 0))
 
-    SetBestSize = SetInitialSize
+    # ----------------------------------------------------------------------
+
+    def GetBestSize(self):
+        return self.DoGetBestSize()
+
+    # ----------------------------------------------------------------------
+
+    def SetBestSize(self):
+        self.SetSize(self.DoGetBestSize())
 
     # ----------------------------------------------------------------------
     # Event callbacks
@@ -603,7 +788,6 @@ class sppasMedia(wx.Window):
         :param value: (any) Any kind of value linked to the action
 
         """
-        wx.LogDebug("Notify parent of an action {:s}".format(action))
         evt = sppasMedia.MediaActionEvent(action=action, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
@@ -616,7 +800,6 @@ class sppasMedia(wx.Window):
         Not sent under windows, but required on MacOS and Linux.
 
         """
-        wx.LogDebug("sppasMedia file {:s} loaded.".format(self._filename))
         self._loaded = True
 
         # Now, loaded is True, but length is 0 until we attempt to play.
@@ -640,7 +823,6 @@ class sppasMedia(wx.Window):
             pass
 
         elif event.LeftUp():
-            wx.LogDebug('{:s} LeftUp'.format(self.GetName()))
             self.notify(action="play")
 
         elif event.Moving():
@@ -652,7 +834,6 @@ class sppasMedia(wx.Window):
             pass
 
         elif event.ButtonDClick():
-            wx.LogDebug('{:s} DClick'.format(self.GetName()))
             self.notify(action="stop")
 
         elif event.RightDown():
@@ -674,7 +855,8 @@ class sppasMedia(wx.Window):
         if state == wx.media.MEDIASTATE_PLAYING and self._slider is not None:
             self._slider.SetValue(offset)
 
-        # wx.LogDebug("Offset=%d, omin=%d, omax=%d, state=%d" % (offset, self._offsets[0], self._offsets[1], state))
+        # On MacOS, it seems that offset is not precise enough...
+        # It can be + or - 3 compared to the expected value!
         if state == wx.media.MEDIASTATE_STOPPED or \
                 (state == wx.media.MEDIASTATE_PLAYING and (offset + 3 > self._offsets[1])):
             # Media reached the end of the file and automatically stopped
@@ -689,8 +871,6 @@ class sppasMedia(wx.Window):
                 self.Stop()
 
         self.Refresh()
-            # On MacOS, it seems that offset is not precise enough...
-            # It can be + or - 3 compared to the expected value!
 
     # -----------------------------------------------------------------------
 
@@ -728,16 +908,6 @@ class sppasMedia(wx.Window):
         # Create the Graphic Context
         dc = wx.AutoBufferedPaintDCFactory(self)
         gc = wx.GCDC(dc)
-
-        # In any case, the brush is transparent
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        gc.SetBrush(wx.TRANSPARENT_BRUSH)
-        gc.SetBackgroundMode(wx.TRANSPARENT)
-        if wx.Platform in ['__WXGTK__', '__WXMSW__']:
-            # The background needs some help to look transparent on
-            # Gtk and Windows
-            gc.SetBackground(self.GetBackgroundBrush(gc))
-            gc.Clear()
 
         # Font
         dc.SetTextForeground(self.GetForegroundColour())
@@ -781,7 +951,7 @@ class sppasMedia(wx.Window):
     # ------------------------------------------------------------------------
 
     def _DrawContent(self, dc, gc):
-        """Draw a content if media is audio or unknown.
+        """Draw a content if media is audio, unsupported or unknown.
 
         """
         if self._mt == MediaType().unknown:
@@ -791,11 +961,29 @@ class sppasMedia(wx.Window):
             self.__draw_label(dc, gc, 20, 20, "File format not supported.")
 
         elif self._mt == MediaType().audio:
-            self.__draw_label(dc, gc, 20, 20, "View of an audio file is not available.")
-            pen = wx.Pen(wx.Colour(128, 128, 128, 128), 2, wx.SOLID)
-            w, h = self.GetClientSize()
-            dc.SetPen(pen)
-            dc.DrawRectangle(0, 0, w, h)
+            if self._audio is not None:
+                self.__draw_audio_infos(dc, gc)
+            else:
+                self.__draw_label(dc, gc, 10, 10, "View of the audio file is not currently available.")
+
+    # -----------------------------------------------------------------------
+
+    def __draw_audio_infos(self, dc, gc):
+        """Draw the information of the audio file."""
+        label = str(self._audio.framerate) + " Hz, "
+        label += str(self._audio.sampwidth * 8) + " bits, "
+        c = self._audio.nchannels
+        if c == 1:
+            label += "Mono"
+        elif c == 2:
+            label += "Stereo"
+        elif c > 2:
+            label += "%d channels" % c
+
+        w, h = self.GetClientSize()
+        h = sppasPanel.fix_size(AudioListView.INFOS_HEIGHT)
+        dc.GradientFillLinear((0, 0, w, h), self.GetBackgroundColour(), self.GetHighlightedBackgroundColour(), wx.WEST)
+        self.__draw_label(dc, gc, 10, h // 2, label)
 
     # -----------------------------------------------------------------------
 
@@ -816,18 +1004,18 @@ class sppasMedia(wx.Window):
         :returns: (wx.Brush)
 
         """
-        color = self.GetParent().GetBackgroundColour()
+        return wx.Brush(self.GetHighlightedBackgroundColour(), wx.SOLID)
 
-        brush = wx.Brush(color, wx.SOLID)
-        my_attr = self.GetDefaultAttributes()
-        p_attr = self.GetParent().GetDefaultAttributes()
-        my_def = color == my_attr.colBg
-        p_def = self.GetParent().GetBackgroundColour() == p_attr.colBg
-        if my_def and not p_def:
-            color = self.GetParent().GetBackgroundColour()
-            brush = wx.Brush(color, wx.SOLID)
+    # -----------------------------------------------------------------------
 
-        return brush
+    def GetHighlightedBackgroundColour(self):
+        color = self.GetBackgroundColour()
+        r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
+
+        delta = 15
+        if (r + g + b) > 384:
+            return wx.Colour(r, g, b, a).ChangeLightness(100 - delta)
+        return wx.Colour(r, g, b, a).ChangeLightness(100 + delta)
 
     # -----------------------------------------------------------------------
     # Private
@@ -859,7 +1047,7 @@ class sppasMedia(wx.Window):
     # -----------------------------------------------------------------------
 
     def __set_infos(self):
-        """Set the length of the media and apply it to objects.
+        """Set all the infos of the media.
 
         :return: (bool)
 
@@ -883,9 +1071,10 @@ class sppasMedia(wx.Window):
                 self._refreshtimer = 40
             else:
                 self._refreshtimer = 10
+            if self._mt == MediaType().audio:
+                self._audio = AudioListView(self._filename)
 
-            wx.LogDebug("Media type is {:d}".format(self._mt))
-            self.SetInitialSize()
+            self.SetBestSize()
 
             # if the offset was not fixed
             if self._offsets == (0, 0):
@@ -1006,8 +1195,8 @@ class TestPanel(wx.Panel):
                           wx.ICON_ERROR | wx.OK)
             self.playBtn.Disable()
         else:
-            self.mc.SetInitialSize()
-            self.GetSizer().Layout()
+            # self.mc.SetInitialSize()
+            # self.GetSizer().Layout()
             w, h = self.mc.GetSize()
             wx.LogMessage("File loaded. Size is w={:d}, h={:d}".format(w, h))
             self.playBtn.Enable()
@@ -1075,4 +1264,4 @@ class TestPanel(wx.Panel):
     def OnTimer(self, evt):
         offset = self.mc.Tell()
         self.st_pos.SetLabel('Position: %d' % offset)
-        evt.Skip()
+
