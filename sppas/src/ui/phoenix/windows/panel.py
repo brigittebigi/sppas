@@ -374,31 +374,6 @@ class sppasCollapsiblePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def SetBackgroundColour(self, colour):
-        """Override."""
-        wx.Panel.SetBackgroundColour(self, colour)
-        for c in self.GetChildren():
-            c.SetBackgroundColour(colour)
-
-    # -----------------------------------------------------------------------
-
-    def SetForegroundColour(self, colour):
-        """Override."""
-        wx.Panel.SetForegroundColour(self, colour)
-        for c in self.GetChildren():
-            c.SetForegroundColour(colour)
-
-    # -----------------------------------------------------------------------
-
-    def SetFont(self, font):
-        """Override."""
-        wx.Panel.SetFont(self, font)
-        for c in self.GetChildren():
-            c.SetFont(font)
-        self.Layout()
-
-    # -----------------------------------------------------------------------
-
     def GetPane(self):
         """Return a reference to the embedded pane window."""
         return self._child_panel
@@ -609,10 +584,9 @@ class sppasCollapsiblePanel(sppasPanel):
         top = self.GetParent()
 
         if top.GetSizer():
-            # top.GetSizer().SetItemMinSize(self, sz)
-            if (wx.Platform == "__WXGTK__" and self.IsCollapsed()) or \
-                    wx.Platform != "__WXGTK__":
-                top.GetSizer().SetSizeHints(top)
+            # if (wx.Platform == "__WXGTK__" and self.IsCollapsed()) or \
+            #        wx.Platform != "__WXGTK__":
+            top.GetSizer().SetSizeHints(top)
 
         if self.IsCollapsed():
             # expanded -> collapsed transition

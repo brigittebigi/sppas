@@ -40,6 +40,7 @@ from sppas import msg
 from sppas.src.utils import u
 
 from ..windows import sppasPanel
+from ..windows import sppasToolbar
 from ..windows import sppasScrolledPanel
 from ..main_events import ViewEvent, EVT_VIEW
 from ..dialogs import Confirm
@@ -88,9 +89,12 @@ class BaseViewFilesPanel(sppasPanel):
         self._setup_events()
 
         # Look&feel
-        self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        try:
+            self.SetBackgroundColour(wx.GetApp().settings.bg_color)
+            self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            self.SetFont(wx.GetApp().settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
         for f in files:
             self.append_file(f)
@@ -357,7 +361,7 @@ class BaseViewFilesPanel(sppasPanel):
         :return: (sppasPanel, wx.Panel, sppasToolbar, ...)
 
         """
-        return sppasPanel(self, name="toolbar_views")
+        return sppasToolbar(self, name="toolbar_views")
 
     # -----------------------------------------------------------------------
 
@@ -454,6 +458,5 @@ class BaseViewFilesPanel(sppasPanel):
 
     def OnCollapseChanged(self, evt=None):
         panel = evt.GetEventObject()
-        panel.SetFocus()
-        self.ScrollChildIntoView(panel)
+        self.GetScrolledPanel().ScrollChildIntoView(panel)
         self.Layout()

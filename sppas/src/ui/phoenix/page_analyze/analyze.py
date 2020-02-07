@@ -71,6 +71,7 @@ from ..windows import sppasToolbar
 from .anz_tabs import TabsManager
 from .anz_textviews import TextViewFilesPanel
 from .anz_listviews import ListViewFilesPanel
+from .anz_timeviews import TimeViewFilesPanel
 from .anz_defaultviews import DefaultViewFilesPanel
 
 # ---------------------------------------------------------------------------
@@ -82,11 +83,9 @@ def _(message):
 
 
 VIEW_TITLE = _("Views: ")
-VIEW_LIST = _("Detailed")
-VIEW_TEXT = _("Text edit")
-VIEW_TIME = _("Time line")
-# VIEW_GRID = _("Grid details")
-VIEW_SCRIBE = _("Scriber")
+VIEW_LIST = _("Detailed list")
+VIEW_TEXT = _("Text editor")
+VIEW_TIME = _("Multi-Player")
 CLOSE = _("Close")
 
 TAB_MSG_NO_SELECT = _("No tab is currently checked.")
@@ -140,7 +139,7 @@ class sppasAnalyzePanel(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     The panel is made of 3 areas:
 
@@ -159,8 +158,7 @@ class sppasAnalyzePanel(sppasPanel):
     VIEWS = {
         "data-view-list": VIEW_LIST,
         "data-view-timeline": VIEW_TIME,
-        "data-view-text": VIEW_TEXT,
-        "data-view-scribe": VIEW_SCRIBE
+        "data-view-text": VIEW_TEXT
     }
 
     # ------------------------------------------------------------------------
@@ -182,9 +180,12 @@ class sppasAnalyzePanel(sppasPanel):
         self._create_content()
         self._setup_events()
 
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        try:
+            self.SetBackgroundColour(wx.GetApp().settings.bg_color)
+            self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            self.SetFont(wx.GetApp().settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
         # Organize items and fix a size for each of them
         self.Layout()
@@ -680,6 +681,9 @@ class sppasAnalyzePanel(sppasPanel):
 
         elif view_name == "data-view-list":
             new_page = ListViewFilesPanel(book, name="new_page", files=files)
+
+        elif view_name == "data-view-timeline":
+            new_page = TimeViewFilesPanel(book, name="new_page", files=files)
 
         else:
             wx.LogWarning("{:s} view is not currently supported."
