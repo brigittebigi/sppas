@@ -191,7 +191,7 @@ class sppasPlayerControlsPanel(sppasPanel):
     def SetBackgroundColour(self, colour):
         """"""
         wx.Panel.SetBackgroundColour(self, colour)
-        hi_color = self.GetHighlightedColour(colour)
+        hi_color = self.GetHighlightedColour()
 
         for name in ("transport", "widgets", "volume"):
             w = self.FindWindow(name + "_panel")
@@ -202,11 +202,7 @@ class sppasPlayerControlsPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _create_content(self):
-        """Create the content of the panel.
-
-        :param orient: wx.HORIZONTAL or wx.VERTICAL
-
-        """
+        """Create the content of the panel."""
         # Create the main panels
         panel1 = self.__create_widgets_panel()
         # panel1.Hide()
@@ -260,23 +256,23 @@ class sppasPlayerControlsPanel(sppasPanel):
         """Return a panel with the buttons to play/pause/stop the media."""
         panel = sppasPanel(self, name="transport_panel")
 
-        btn_rewind = BitmapTextButton(panel, label="", name="media_rewind")
+        btn_rewind = BitmapTextButton(panel, name="media_rewind")
         self.SetButtonProperties(btn_rewind)
 
-        btn_play = BitmapTextButton(panel, label="", name="media_play")
+        btn_play = BitmapTextButton(panel, name="media_play")
         self.SetButtonProperties(btn_play)
         # btn_play.Enable(False)
         btn_play.SetFocus()
         btn_play.SetMinSize(wx.Size(sppasPanel.fix_size(32),
                                     sppasPanel.fix_size(32)))
 
-        btn_forward = BitmapTextButton(panel, label="", name="media_forward")
+        btn_forward = BitmapTextButton(panel, name="media_forward")
         self.SetButtonProperties(btn_forward)
 
-        btn_stop = BitmapTextButton(panel, label="", name="media_stop")
+        btn_stop = BitmapTextButton(panel, name="media_stop")
         self.SetButtonProperties(btn_stop)
 
-        btn_replay = ToggleButton(panel, label="", name="media_repeat")
+        btn_replay = ToggleButton(panel, name="media_repeat")
         btn_replay = self.SetButtonProperties(btn_replay)
 
         border = sppasPanel.fix_size(2)
@@ -298,7 +294,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         """Return a panel with a slider for the volume and a mute button."""
         panel = sppasPanel(self, name="volume_panel")
 
-        btn_mute = ToggleButton(panel, label="", name="volume_mute")
+        btn_mute = ToggleButton(panel, name="volume_mute")
         btn_mute.SetImage("volume_high")
         self.SetButtonProperties(btn_mute)
 
@@ -328,7 +324,7 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def GetHighlightedColour(self, color):
+    def GetHighlightedColour(self):
         """Return a color slightly different of the given one."""
         color = self.GetParent().GetBackgroundColour()
         r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
@@ -438,7 +434,7 @@ class TestPanel(sppasPanel):
 
         p = sppasPlayerControlsPanel(self)
 
-        btn1 = BitmapTextButton(p.GetWidgetsPanel(), label="", name="way_up_down")
+        btn1 = BitmapTextButton(p.GetWidgetsPanel(), name="way_up_down")
         p.SetButtonProperties(btn1)
         p.AddWidget(btn1)
 

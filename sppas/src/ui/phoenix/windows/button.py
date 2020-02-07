@@ -1095,7 +1095,7 @@ class BitmapTextButton(BaseButton):
 
         :param parent: the parent (required);
         :param id: window identifier.
-        :param label: label text of the check button;
+        :param label: label text of the button (None for a BitmapButton);
         :param pos: the position;
         :param size: the size;
         :param name: the name of the bitmap.
@@ -1528,6 +1528,27 @@ class TextButton(BaseButton):
         else:
             gc.SetTextForeground(self.GetForegroundColour())
             gc.DrawText(self._label, x, y)
+
+# ---------------------------------------------------------------------------
+
+
+class BitmapButton(BitmapTextButton):
+    def __init__(self, parent,
+                 id=wx.ID_ANY,
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 name=wx.ButtonNameStr):
+        """A BitmapTextButton, without the text.
+
+        :param parent: the parent (required);
+        :param id: window identifier.
+        :param pos: the position;
+        :param size: the size;
+        :param name: the name of the bitmap.
+
+        """
+        super(BitmapButton, self).__init__(
+            parent, id, None, pos, size, name)
 
 # ---------------------------------------------------------------------------
 
@@ -2095,13 +2116,13 @@ class TestPanelBitmapButton(wx.Panel):
             style=wx.BORDER_NONE | wx.WANTS_CHARS,
             name="Test BitmapButton")
 
-        b1 = BitmapTextButton(self, pos=(10, 10), size=(50, 50))
-        b2 = BitmapTextButton(self, pos=(70, 10), size=(50, 50))
-        b3 = BitmapTextButton(self, pos=(130, 10), size=(100, 50), name="like")
-        b4 = BitmapTextButton(self, pos=(240, 10), size=(30, 50), name="like")
-        b5 = BitmapTextButton(self, pos=(280, 10), size=(30, 30), name="like")
-        b6 = BitmapTextButton(self, pos=(320, 10), size=(50, 30), name="like")
-        b7 = BitmapTextButton(self, pos=(380, 10), size=(50, 50), name="add")
+        b1 = BitmapButton(self, pos=(10, 10), size=(50, 50))
+        b2 = BitmapButton(self, pos=(70, 10), size=(50, 50))
+        b3 = BitmapButton(self, pos=(130, 10), size=(100, 50), name="like")
+        b4 = BitmapButton(self, pos=(240, 10), size=(30, 50), name="like")
+        b5 = BitmapButton(self, pos=(280, 10), size=(30, 30), name="like")
+        b6 = BitmapButton(self, pos=(320, 10), size=(50, 30), name="like")
+        b7 = BitmapButton(self, pos=(380, 10), size=(50, 50), name="add")
         b7.SetBorderWidth(0)
         b7.SetFocusColour(wx.Colour(30, 120, 240))
         b7.SetFocusWidth(3)
@@ -2271,7 +2292,7 @@ class TestPanel(sc.ScrolledPanel):
         sizer.Add(wx.StaticText(self, label="BaseButton()"), 0, wx.TOP | wx.BOTTOM, 2)
         sizer.Add(TestPanelBaseButton(self), 1, wx.EXPAND | wx.TOP | wx.BOTTOM, 2)
         sizer.Add(wx.StaticLine(self))
-        sizer.Add(wx.StaticText(self, label="BitmapTextButton() - no text"), 0, wx.TOP | wx.BOTTOM, 2)
+        sizer.Add(wx.StaticText(self, label="BitmapButton() - no text"), 0, wx.TOP | wx.BOTTOM, 2)
         sizer.Add(TestPanelBitmapButton(self), 1, wx.EXPAND | wx.TOP | wx.BOTTOM, 2)
         sizer.Add(wx.StaticLine(self))
         sizer.Add(wx.StaticText(self, label="BitmapTextButton() - with text"), 0, wx.TOP | wx.BOTTOM, 2)

@@ -81,7 +81,7 @@ class sppasSplitterWindow(wx.SplitterWindow):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -97,8 +97,6 @@ class sppasSplitterWindow(wx.SplitterWindow):
             c.SetFont(font)
         self.Layout()
 
-# -----------------------------------------------------------------------
-# -----------------------------------------------------------------------
 # -----------------------------------------------------------------------
 
 
@@ -124,9 +122,6 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
     def SetHighLightColor(self, color):
         """Set a color to highlight buttons, and for the focus."""
         self._hicolor = color
-        # set to toolbar
-        btn = self.FindWindow("subtoolbar1").get_button("tier_paste")
-        btn.SetFocusColour(color)
         # set to the panels
         for filename in self._files:
             panel = self._files[filename]
@@ -207,7 +202,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
                                        name="horiz_splitter")
 
         # Window 1 of the splitter: player controls
-        p1 = sppasPlayerControlsPanel(splitter, name="player_controls_panel")
+        p1 = sppasPlayerControlsPanel(splitter, style=wx.BORDER_SIMPLE, name="player_controls_panel")
         best_size = p1.GetBestSize()
         # self.__add_custom_controls(p1)
 
@@ -231,7 +226,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
 
         # Window 1 of the splitter: time view of media and other files
         p1 = sppasScrolledPanel(splitter,
-                                style=wx.SHOW_SB_ALWAYS | wx.VSCROLL,
+                                style=wx.SHOW_SB_ALWAYS | wx.VSCROLL | wx.BORDER_SIMPLE,
                                 name="scrolled_views")
         sizer = wx.BoxSizer(wx.VERTICAL)
         p1.SetupScrolling(scroll_x=False, scroll_y=True)
@@ -241,7 +236,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         # panel.SetMinSize(wx.Size(sppasPanel.fix_size(420), min_height))
 
         # Window 2 of the splitter: edit view of annotated files
-        p2 = sppasPanel(splitter)
+        p2 = sppasPanel(splitter, style=wx.BORDER_SIMPLE)
         p2.SetMinSize(wx.Size(sppasPanel.fix_size(128), -1))
 
         # Fix size&layout
