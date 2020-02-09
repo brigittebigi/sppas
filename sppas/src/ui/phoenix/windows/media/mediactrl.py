@@ -44,6 +44,7 @@ from sppas import paths
 from ..panel import sppasPanel
 from sppas.src.audiodata import sppasAudioPCM
 import sppas.src.audiodata.aio
+from .mediaevents import MediaEvents
 
 # ---------------------------------------------------------------------------
 
@@ -240,7 +241,7 @@ class MediaType(object):
 # ---------------------------------------------------------------------------
 
 
-class sppasMedia(sppasPanel):
+class sppasMediaPanel(sppasPanel):
     """Create an extended media control.
 
     :author:       Brigitte Bigi
@@ -249,7 +250,7 @@ class sppasMedia(sppasPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    sppasMedia is using the wx.media.MediaCtrl.
+    sppasMediaPanel is using the wx.media.MediaCtrl.
     Extended features are:
 
         - a normal play or an auto play (to replay);
@@ -264,11 +265,6 @@ class sppasMedia(sppasPanel):
     event and to draw a custom "picture" if media is not a video.
 
     """
-
-    # -----------------------------------------------------------------------
-    # Event to be used by the parent to perform an action.
-    MediaActionEvent, EVT_MEDIA_ACTION = wx.lib.newevent.NewEvent()
-    MediaActionCommandEvent, EVT_MEDIA_ACTION_COMMAND = wx.lib.newevent.NewCommandEvent()
 
     # -----------------------------------------------------------------------
     # This object size.
@@ -297,7 +293,7 @@ class sppasMedia(sppasPanel):
 
         """
 
-        super(sppasMedia, self).__init__(
+        super(sppasMediaPanel, self).__init__(
             parent, id, pos, size,
             style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
             name=name)
@@ -541,7 +537,7 @@ class sppasMedia(sppasPanel):
 
         # we already opened the same file
         if filename == self._filename:
-            wx.LogWarning('sppasMedia: file {:s} is already loaded.'
+            wx.LogWarning('sppasMediaPanel: file {:s} is already loaded.'
                           ''.format(filename))
             return True
 
@@ -669,7 +665,7 @@ class sppasMedia(sppasPanel):
     # ----------------------------------------------------------------------
 
     def Close(self, force=False):
-        """Close the sppasMedia."""
+        """Close the sppasMediaPanel."""
         self.Stop()
         # del self._timer
         wx.Window.Close(self, force)
@@ -677,7 +673,7 @@ class sppasMedia(sppasPanel):
     # ----------------------------------------------------------------------
 
     def Destroy(self):
-        """Destroy the sppasMedia."""
+        """Destroy the sppasMediaPanel."""
         self.Stop()
         wx.Window.DeletePendingEvents(self)
         del self._timer
@@ -687,7 +683,7 @@ class sppasMedia(sppasPanel):
 
     def DoGetBestSize(self):
         """Get the size which best suits the window."""
-        (w, h) = (sppasMedia.MIN_WIDTH, sppasMedia.MIN_HEIGHT)
+        (w, h) = (sppasMediaPanel.MIN_WIDTH, sppasMediaPanel.MIN_HEIGHT)
         if self._mt == MediaType().video:
             self._mc.SetInitialSize()
             (w, h) = self._mc.GetSize()
@@ -700,14 +696,14 @@ class sppasMedia(sppasPanel):
 
         # If the media still don't have dimensions
         if w <= 0:
-            w = sppasMedia.MIN_WIDTH
+            w = sppasMediaPanel.MIN_WIDTH
         if h <= 0:
-            h = sppasMedia.MIN_HEIGHT
+            h = sppasMediaPanel.MIN_HEIGHT
 
         # Ensure a minimum size keeping the current aspect ratio
         i = 1.
         w = float(w)
-        while w < sppasMedia.MIN_WIDTH:
+        while w < sppasMediaPanel.MIN_WIDTH:
             w *= 1.5
             i += 1.
         w = int(w)
@@ -752,14 +748,14 @@ class sppasMedia(sppasPanel):
         :param size: an instance of wx.Size.
 
         """
-        (w, h) = (sppasMedia.MIN_WIDTH, sppasMedia.MIN_HEIGHT)
+        (w, h) = (sppasMediaPanel.MIN_WIDTH, sppasMediaPanel.MIN_HEIGHT)
 
         # If a size is given, we'll use it, and that's it!
         if size is not None:
             (w, h) = size
 
         # In any case, we fix a min size...
-        self.SetMinSize(wx.Size(sppasMedia.MIN_WIDTH, sppasMedia.MIN_HEIGHT))
+        self.SetMinSize(wx.Size(sppasMediaPanel.MIN_WIDTH, sppasMediaPanel.MIN_HEIGHT))
 
         # Fix the size of the wx.media.MediaCtrl (visible only if video)
         if self._mt == MediaType().video:
@@ -788,7 +784,7 @@ class sppasMedia(sppasPanel):
         :param value: (any) Any kind of value linked to the action
 
         """
-        evt = sppasMedia.MediaActionEvent(action=action, value=value)
+        evt = MediaEvents.MediaActionEvent(action=action, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
 
@@ -1066,7 +1062,7 @@ class sppasMedia(sppasPanel):
         # if the length has changed (was 0 or was already fixed)
         if length != self._length:
             self._length = length
-            self._mt = sppasMedia.ExpectedMediaType(self._filename)
+            self._mt = sppasMediaPanel.ExpectedMediaType(self._filename)
             if self._mt == MediaType().video:
                 self._refreshtimer = 40
             else:
@@ -1129,10 +1125,10 @@ class TestPanel(wx.Panel):
             parent, -1, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
 
         # Create some controls
-        self.mc = sppasMedia(self)
+        self.mc = sppasMediaPanel(self)
 
         self.mc.Bind(wx.media.EVT_MEDIA_LOADED, self.OnMediaLoaded)
-        self.Bind(sppasMedia.EVT_MEDIA_ACTION, self.OnMediaAction)
+        self.Bind(sppasMediaPanel.EVT_MEDIA_ACTION, self.OnMediaAction)
         self.mc.Bind(wx.EVT_TIMER, self.OnTimer)
 
         btn1 = wx.Button(self, -1, "Load File")

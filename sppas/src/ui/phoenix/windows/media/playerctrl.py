@@ -38,7 +38,7 @@ import wx
 
 from ..button import ToggleButton, BitmapTextButton
 from ..panel import sppasPanel
-from .mediactrl import sppasMedia
+from .mediaevents import MediaEvents
 
 # ---------------------------------------------------------------------------
 
@@ -346,7 +346,8 @@ class sppasPlayerControlsPanel(sppasPanel):
         :param value: (any) Any kind of value linked to the action
 
         """
-        evt = sppasMedia.MediaActionEvent(action=action, value=value)
+        wx.LogDebug("Send action event to parent {:s}".format(self.GetParent().GetName()))
+        evt = MediaEvents.MediaActionEvent(action=action, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
 

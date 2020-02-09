@@ -42,8 +42,7 @@ import wx.lib.newevent
 from sppas import paths
 
 from ..windows import sppasPanel, sppasScrolledPanel
-from ..windows import sppasMedia, MediaType
-from ..windows import sppasMediaPanel
+from ..windows import sppasMediaPanel, MediaType
 from ..windows import BitmapTextButton
 from ..windows import sppasPlayerControlsPanel
 
@@ -110,7 +109,7 @@ class sppasPlayerPanel(sppasPanel):
         mc = panel.GetPane()
         self._media[mc] = False
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._OnCollapseChanged, panel)
-        panel.Bind(sppasMedia.EVT_MEDIA_ACTION, self._process_action)
+        panel.Bind(sppasMediaPanel.EVT_MEDIA_ACTION, self._process_action)
 
         # Insert in the sizer
         if mc.GetMediaType() == MediaType().audio:
@@ -183,8 +182,7 @@ class sppasPlayerPanel(sppasPanel):
         self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
 
         # The user clicked (LeftDown - LeftUp) an action button of the toolbar
-        # self.FindWindow("splitter").Bind(EVT_PLAYER, self._process_action)
-        self.FindWindow("splitter").Bind(sppasMedia.EVT_MEDIA_ACTION, self._process_action)
+        self.FindWindow("splitter").Bind(sppasMediaPanel.EVT_MEDIA_ACTION, self._process_action)
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
         # The splitter sash position is changing/changed
@@ -381,9 +379,8 @@ class sppasPlayerPanel(sppasPanel):
         if playing_media is not None:
             pos = playing_media.Tell()
             new_pos = pos + value
-            if playing_media is not None:
-                for media in self._media:
-                    media.Seek(new_pos)
+            for media in self._media:
+                media.Seek(new_pos)
 
     # -----------------------------------------------------------------------
 

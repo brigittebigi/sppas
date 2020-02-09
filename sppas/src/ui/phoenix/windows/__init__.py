@@ -56,8 +56,8 @@ from .text import NotEmptyTextValidator
 
 from .image import sppasStaticBitmap
 
-from .media import sppasMedia
 from .media import MediaType
+from .media import MediaEvents
 from .media import sppasMediaPanel
 from .media import sppasPlayerControlsPanel
 
@@ -87,9 +87,9 @@ __all__ = (
     "CheckButton",
     "RadioButton",
     "ToggleButton",
-    "sppasMedia",
-    "MediaType",
     "sppasMediaPanel",
+    "MediaType",
+    "MediaEvents",
     "sppasPlayerControlsPanel",
     "sppasMultiSplitterPanel",
     "sppasStaticText",

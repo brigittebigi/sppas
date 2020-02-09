@@ -55,7 +55,7 @@ def _(message):
     return u(msg(message, "ui"))
 
 
-MSG_ERROR = _("The file {:s} can't be loaded by this view.")
+MSG_ERROR = _("The file {:s} can't be displayed by this view.")
 MSG_UNK = _("Unknown error.")
 
 # ---------------------------------------------------------------------------

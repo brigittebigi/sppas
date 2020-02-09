@@ -36,9 +36,11 @@
 
 import os
 import wx
+import mimetypes
 
 from sppas import paths
 import sppas.src.audiodata.aio
+import sppas.src.anndata.aio
 from sppas.src.config import msg
 from sppas.src.utils import u
 
@@ -90,6 +92,75 @@ TIER_MSG_CONFIRM_DEL = \
     u(msg("Are you sure to delete {:d} tiers of {:d} files? "
           "The process is irreversible."))
 TIER_REL_WITH = u(msg("Name of the tier to be in relation with: "))
+
+# ----------------------------------------------------------------------------
+
+
+class ListViewType(object):
+    """Enum of all types of supported data by the ListView.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
+
+    :Example:
+
+        >>>with ListViewType() as tt:
+        >>>    print(tt.transcription)
+
+    This class is a solution to mimic an 'Enum' but is compatible with both
+    Python 2.7 and Python 3+.
+
+    """
+
+    def __init__(self):
+        """Create the dictionary."""
+        self.__dict__ = dict(
+            unknown=-1,
+            unsupported=0,
+            audio=1,
+            transcription=3
+        )
+
+    # -----------------------------------------------------------------------
+
+    def __enter__(self):
+        return self
+
+    # -----------------------------------------------------------------------
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
+
+    # -----------------------------------------------------------------------
+
+    def GuessType(self, filename):
+        """Return the expected type of the given filename.
+
+        :return: (MediaType) Integer value of the type
+
+        """
+        mime_type = "unknown"
+        if filename is not None:
+            m = mimetypes.guess_type(filename)
+            if m[0] is not None:
+                mime_type = m[0]
+
+        if "video" in mime_type:
+            return self.unsupported
+
+        fn, fe = os.path.splitext(filename)
+        if "audio" in mime_type:
+            if fe.lower() in sppas.src.audiodata.aio.extensions:
+                return self.audio
+            return self.unsupported
+
+        if fe.lower() in sppas.src.anndata.aio.extensions:
+            return self.transcription
+
+        return self.unknown
 
 # ----------------------------------------------------------------------------
 
@@ -149,17 +220,24 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         :return: wx.Window
 
         """
-        fe = ""
-        if name is not None:
-            fn, fe = os.path.splitext(name)
-        if fe.lower() in sppas.src.audiodata.aio.extensions:
-            wx.LogMessage("Displaying audio file {} in ListView mode.".format(name))
-            panel = AudioListViewPanel(self.GetScrolledPanel(), filename=name)
-        else:
-            wx.LogMessage("Displaying text file {} in ListView mode.".format(name))
-            panel = TrsListViewPanel(self.GetScrolledPanel(), filename=name)
+        if name is None:
+            # In case we created a new file, it'll be a transcription!
+            panel = TrsListViewPanel(self.GetScrolledPanel(), filename=None)
             panel.SetHighLightColor(self._hicolor)
-        self.GetScrolledSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.TOP | wx.BOTTOM, 20)
+        else:
+            with ListViewType() as tt:
+                if tt.GuessType(name) == tt.audio:
+                    panel = AudioListViewPanel(self.GetScrolledPanel(), filename=name)
+                elif tt.GuessType(name) == tt.transcription:
+                    panel = TrsListViewPanel(self.GetScrolledPanel(), filename=name)
+                    panel.SetHighLightColor(self._hicolor)
+                elif tt.GuessType(name) == tt.unsupported:
+                    raise IOError("File format not supported.")
+                elif tt.GuessType(name) == tt.unknown:
+                    raise TypeError("Unknown file format.")
+
+        border = sppasPanel.fix_size(10)
+        self.GetScrolledSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.TOP | wx.BOTTOM, border)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
 
         return panel

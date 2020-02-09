@@ -1,11 +1,11 @@
-from .mediactrl import sppasMedia
+from .mediaevents import MediaEvents
 from .mediactrl import MediaType
-from .mediapanel import sppasMediaPanel
+from .mediactrl import sppasMediaPanel
 from .playerctrl import sppasPlayerControlsPanel
 
 __all__ = (
-    "sppasMedia",
+    "MediaEvents",
+    "MediaType",
     "sppasMediaPanel",
     "sppasPlayerControlsPanel",
-    "MediaType"
 )

@@ -188,15 +188,17 @@ class sppasToolbar(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def AddButton(self, icon, text=""):
+    def AddButton(self, icon, text=None):
         """Append a button into the toolbar.
 
         The button can contain either:
             - an icon only;
-            - an icon with a text.
+            - a text only;
+            - an icon and a text.
 
-        :param icon: (str) Name of the .png file of the icon or None
-        :param text: (str) Label of the button
+        :param icon: (str) Name of the .png file of the icon or None to have a TextButton.
+        :param text: (str) Label of the button. None to have a BitmapButton.
+        :raise: (TypeError) if no icon nor text is given.
 
         """
         btn = self.create_button(text, icon)
@@ -292,9 +294,17 @@ class sppasToolbar(sppasPanel):
     # -----------------------------------------------------------------------
 
     def create_button(self, text, icon):
+        if text is None and icon is None:
+            raise TypeError("At least an icon or a text is required to create a button")
         if icon is not None:
             btn = BitmapTextButton(self, label=text, name=icon)
             btn.LabelPosition = wx.RIGHT
+            if text is None:
+                btn.SetSpacing(0)
+                btn.SetMaxSize(wx.Size(self._h*2, self._h*2))
+            else:
+                btn.SetSpacing(sppasPanel.fix_size(12))
+                btn.SetMaxSize(wx.Size(self._h*4, self._h*2))
 
         else:
             btn = TextButton(self, label=text)
@@ -303,7 +313,6 @@ class sppasToolbar(sppasPanel):
         btn.FocusStyle = self._fs
         btn.FocusWidth = self._fw
         btn.FocusColour = self._fc
-        btn.Spacing = sppasPanel.fix_size(12)
         btn.BorderWidth = 0
         btn.BitmapColour = self.GetForegroundColour()
         btn.SetMinSize(wx.Size(self._h, self._h))

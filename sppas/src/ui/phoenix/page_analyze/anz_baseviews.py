@@ -78,7 +78,7 @@ class BaseViewFilesPanel(sppasPanel):
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
             size=wx.DefaultSize,
-            style=wx.BORDER_NONE | wx.VSCROLL | wx.HSCROLL | wx.NO_FULL_REPAINT_ON_RESIZE,
+            style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
         # The files of this panel (key=name, value=wx.SizerItem)
@@ -106,7 +106,9 @@ class BaseViewFilesPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def SetFont(self, font):
-        sppasPanel.SetFont(self, font)
+        wx.Panel.SetFont(self, font)
+        for c in self.GetChildren():
+            c.SetFont(font)
         f = wx.Font(int(font.GetPointSize() * 0.65),
                     wx.FONTFAMILY_SWISS,   # family,
                     wx.FONTSTYLE_NORMAL,   # style,
@@ -115,6 +117,7 @@ class BaseViewFilesPanel(sppasPanel):
                     faceName=font.GetFaceName(),
                     encoding=wx.FONTENCODING_SYSTEM)
         self.FindWindow("toolbar_views").SetFont(f)
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
@@ -366,7 +369,9 @@ class BaseViewFilesPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _create_scrolled_content(self):
-        content_panel = sppasScrolledPanel(self, name="scrolled_views")
+        content_panel = sppasScrolledPanel(self,
+                                           style=wx.SHOW_SB_ALWAYS | wx.HSCROLL | wx.VSCROLL | wx.BORDER_SIMPLE,
+                                           name="scrolled_views")
         content_sizer = wx.BoxSizer(wx.VERTICAL)
         content_panel.SetupScrolling(scroll_x=True, scroll_y=True)
         content_panel.SetSizer(content_sizer)

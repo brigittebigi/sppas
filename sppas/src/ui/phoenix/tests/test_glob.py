@@ -54,8 +54,10 @@ import sppas.src.ui.phoenix.page_analyze.anz_tabs as anz_tabs
 import sppas.src.ui.phoenix.page_analyze.anz_textviews as anztextviews
 import sppas.src.ui.phoenix.page_analyze.anz_listviews as anzlistviews
 import sppas.src.ui.phoenix.page_analyze.anz_timeviews as anztimeviews
+import sppas.src.ui.phoenix.page_analyze.anz_defaultviews as anzdefaultviews
 import sppas.src.ui.phoenix.page_analyze.listview as listview
 import sppas.src.ui.phoenix.page_analyze.textview as textview
+import sppas.src.ui.phoenix.page_analyze.timeview as timeview
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -73,13 +75,17 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
-        self.AddPage(anztimeviews.TestPanel(self), "Timeline view")
+        self.AddPage(timeview.TestPanel(self), "Time view")
+
+        self.AddPage(anztimeviews.TestPanel(self), "Analyze Timeline view")
+        self.AddPage(anzlistviews.TestPanel(self), "Analyze Summary view")
+        self.AddPage(anztextviews.TestPanel(self), "Analyze Text view")
+        self.AddPage(anzdefaultviews.TestPanel(self), "Analyze Default view")
         """
         self.AddPage(test_dialogs.TestPanel(self), "Various dialogs")
         self.AddPage(tiersfilters.TestPanel(self), "DataFilter of tiers")
         self.AddPage(statsview.TestPanel(self), "DataStats of tiers")
-        self.AddPage(anzlistviews.TestPanel(self), "Analyze Summary view")
-        self.AddPage(anztextviews.TestPanel(self), "Analyze Text view")
+
         self.AddPage(listview.TestPanel(self), "Summary view")
         self.AddPage(textview.TestPanel(self), "Text view")
         self.AddPage(filesmanager.TestPanel(self), "Files manager")

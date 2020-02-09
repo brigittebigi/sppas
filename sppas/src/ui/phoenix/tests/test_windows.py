@@ -47,7 +47,6 @@ import sppas.src.ui.phoenix.windows.button as button
 import sppas.src.ui.phoenix.windows.panel as panel
 import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
 import sppas.src.ui.phoenix.windows.media.mediactrl as media
-import sppas.src.ui.phoenix.windows.media.mediapanel as mediapanel
 import sppas.src.ui.phoenix.windows.media.playerctrl as player
 
 # ----------------------------------------------------------------------------
@@ -67,7 +66,6 @@ class TestPanel(wx.Choicebook):
 
         # Make the bunch of test panels for the choice book
         self.AddPage(player.TestPanel(self), "Player Control")
-        self.AddPage(mediapanel.TestPanel(self), "Media Collapsible Panel")
         self.AddPage(media.TestPanel(self), "Media Control")
         self.AddPage(toolbar.TestPanel(self), "Toolbar")
         self.AddPage(panel.TestPanel(self), "Panels")
