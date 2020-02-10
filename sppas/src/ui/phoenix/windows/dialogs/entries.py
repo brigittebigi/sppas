@@ -1,45 +1,92 @@
-# -*- coding: UTF-8 -*-
-"""
-    ..
-        ---------------------------------------------------------------------
-         ___   __    __    __    ___
-        /     |  \  |  \  |  \  /              the automatic
-        \__   |__/  |__/  |___| \__             annotation and
-           \  |     |     |   |    \             analysis
-        ___/  |     |     |   | ___/              of speech
-
-        http://www.sppas.org/
-
-        Use of this software is governed by the GNU Public License, version 3.
-
-        SPPAS is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
-
-        SPPAS is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
-
-        You should have received a copy of the GNU General Public License
-        along with SPPAS. If not, see <http://www.gnu.org/licenses/>.
-
-        This banner notice must not be removed.
-
-        ---------------------------------------------------------------------
-
-    src.ui.phoenix.dialogs.entries.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-"""
-
 import wx
 
-from ..windows import sppasDialog
-from ..windows import sppasPanel
-from ..windows import sppasStaticText
-from ..windows import sppasTextCtrl
+from ..panel import sppasPanel
+from ..text import sppasMessageText, sppasStaticText, sppasTextCtrl
+from .dialog import sppasDialog
+from .messages import sppasBaseMessageDialog
+
+# ---------------------------------------------------------------------------
+
+
+class sppasChoiceDialog(sppasBaseMessageDialog):
+    """Create a message and a list of choices.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    wx.ID_OK is returned if the button is clicked.
+    wx.ID_CANCEL is returned if the dialog is destroyed.
+
+    >>> dialog = sppasChoiceDialog("a message", choices=["apples", "pears"])
+    >>> dialog.ShowModal()
+    >>> dialog.Destroy()
+
+    """
+
+    def __init__(self, message, title=None, **kwargs):
+        super(sppasChoiceDialog, self).__init__(
+            parent=None,
+            message=message,
+            title=title,
+            style=wx.ICON_QUESTION,
+            **kwargs)
+
+    # -----------------------------------------------------------------------
+
+    def GetSelection(self):
+        return self.FindWindow("choices").GetSelection()
+
+    # -----------------------------------------------------------------------
+
+    def GetStringSelection(self):
+        return self.FindWindow("choices").GetStringSelection()
+
+    # -----------------------------------------------------------------------
+
+    def _create_content(self, message, **kwargs):
+        """Overridden. Create the content of the message dialog."""
+        c = ["None"]
+        if "choices" in kwargs:
+            c = kwargs["choices"]
+
+        p = sppasPanel(self)
+        txt = sppasMessageText(p, message)
+        choice = wx.Choice(p, choices=c, name="choices")
+        choice.SetSelection(0)
+
+        s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(txt, 0, wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 10)
+        s.Add(choice, 1, wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 10)
+
+        h = p.get_font_height()
+        p.SetSizer(s)
+        p.SetMinSize(wx.Size(-1, (len(c)+2) * h * 2))
+        self.SetContent(p)
+
+    # -----------------------------------------------------------------------
+
+    def _create_buttons(self):
+        self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
+        self.Bind(wx.EVT_BUTTON, self._process_event)
+        self.SetAffirmativeId(wx.ID_OK)
+
+    # -----------------------------------------------------------------------
+
+    def _process_event(self, event):
+        """Process any kind of events.
+
+        :param event: (wx.Event)
+
+        """
+        event_obj = event.GetEventObject()
+        event_id = event_obj.GetId()
+        if event_id == wx.ID_CANCEL:
+            self.EndModal(wx.ID_CANCEL)
+        else:
+            event.Skip()
 
 # ----------------------------------------------------------------------------
 

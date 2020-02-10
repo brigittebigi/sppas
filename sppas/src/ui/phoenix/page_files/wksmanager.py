@@ -44,9 +44,9 @@ from sppas.src.files.filedata import FileData
 from sppas.src.files.filebase import States
 from sppas.src.ui import sppasWorkspaces
 
-from ..dialogs import Confirm, Error
-from ..dialogs import sppasTextEntryDialog
-from ..dialogs import sppasFileDialog
+from ..windows import Confirm, Error
+from ..windows import sppasTextEntryDialog
+from ..windows import sppasFileDialog
 from ..windows import sppasStaticLine
 from ..windows import sppasPanel
 from ..windows import sppasToolbar

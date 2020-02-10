@@ -44,7 +44,7 @@ from sppas.src.files import FileData, States
 from sppas.src.anndata import sppasRW
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
-from ..dialogs import Warn
+from ..windows import Warn
 from ..windows import sppasStaticText
 from ..windows import sppasScrolledPanel
 from ..windows import BitmapTextButton, CheckButton

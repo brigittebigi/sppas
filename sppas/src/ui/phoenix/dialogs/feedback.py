@@ -49,8 +49,7 @@ from ..windows import BitmapTextButton
 from ..windows import sppasTextCtrl
 from ..windows import sppasPanel
 from ..windows import sppasDialog
-
-from .messages import Information
+from ..windows import Information
 
 # -------------------------------------------------------------------------
 

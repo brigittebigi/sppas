@@ -34,6 +34,18 @@
 
 """
 
+from .dialogs import sppasDialog
+from .dialogs import sppasChoiceDialog
+from .dialogs import sppasFileDialog
+from .dialogs import sppasTextEntryDialog
+from .dialogs import Information
+from .dialogs import Confirm
+from .dialogs import Warn
+from .dialogs import Error
+from .dialogs import YesNoQuestion
+from .dialogs import sppasProgressDialog
+from .dialogs import sppasDialog
+
 from .line import sppasStaticLine
 
 from .button import TextButton
@@ -67,16 +79,25 @@ from .panel import sppasImgBgPanel
 from .panel import sppasScrolledPanel
 from .panel import sppasCollapsiblePanel
 
+from .splitter import sppasSplitterWindow
 from .splitter import sppasMultiSplitterPanel
 
-from .progress import sppasProgressDialog
-from .dialog import sppasDialog
 from .frame import sppasTopFrame
 from .frame import sppasFrame
 
+from .listctrl import LineListCtrl
 from .toolbar import sppasToolbar
 
 __all__ = (
+    "sppasDialog",
+    "sppasChoiceDialog",
+    "sppasFileDialog",
+    "sppasTextEntryDialog",
+    "Information",
+    "Confirm",
+    "Warn",
+    "Error",
+    "YesNoQuestion",
     "sppasStaticLine",
     'TextButton',
     'BitmapTextButton',
@@ -91,6 +112,7 @@ __all__ = (
     "MediaType",
     "MediaEvents",
     "sppasPlayerControlsPanel",
+    "sppasSplitterWindow",
     "sppasMultiSplitterPanel",
     "sppasStaticText",
     "sppasTitleText",
@@ -108,5 +130,6 @@ __all__ = (
     "sppasDialog",
     "sppasTopFrame",
     "sppasFrame",
-    "sppasToolbar"
+    "sppasToolbar",
+    "LineListCtrl"
 )

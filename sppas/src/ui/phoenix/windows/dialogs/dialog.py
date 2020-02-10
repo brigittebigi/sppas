@@ -40,11 +40,11 @@ from sppas.src.config import sg
 from sppas.src.config import msg
 from sppas.src.utils import u
 
-from ..tools import sppasSwissKnife
-from .button import BitmapTextButton
-from .line import sppasStaticLine
-from .text import sppasTitleText
-from .panel import sppasPanel
+from sppas.src.ui.phoenix.tools import sppasSwissKnife
+from sppas.src.ui.phoenix.windows.button import BitmapTextButton
+from sppas.src.ui.phoenix.windows.line import sppasStaticLine
+from sppas.src.ui.phoenix.windows.text import sppasTitleText
+from sppas.src.ui.phoenix.windows.panel import sppasPanel
 
 # ----------------------------------------------------------------------------
 

@@ -54,7 +54,7 @@ from .page_analyze import sppasAnalyzePanel
 from .page_convert import sppasConvertPanel
 from .page_plugins import sppasPluginsPanel
 
-from .dialogs import YesNoQuestion
+from .windows import YesNoQuestion
 from .dialogs import About
 from .dialogs import Settings
 from .main_log import sppasLogWindow

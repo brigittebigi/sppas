@@ -1139,7 +1139,7 @@ class TestPanel(wx.Panel):
         self.mc = sppasMediaPanel(self)
 
         self.mc.Bind(wx.media.EVT_MEDIA_LOADED, self.OnMediaLoaded)
-        self.Bind(sppasMediaPanel.EVT_MEDIA_ACTION, self.OnMediaAction)
+        self.Bind(MediaEvents.EVT_MEDIA_ACTION, self.OnMediaAction)
         self.mc.Bind(wx.EVT_TIMER, self.OnTimer)
 
         btn1 = wx.Button(self, -1, "Load File")

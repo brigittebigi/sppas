@@ -61,8 +61,8 @@ from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 from ..main_events import EVT_TAB_CHANGE
 from ..main_events import EVT_VIEW
 
-from ..dialogs import Information, Confirm, Error
-from ..dialogs import sppasFileDialog
+from ..windows.dialogs import Information, Confirm, Error
+from ..windows.dialogs import sppasFileDialog
 from ..windows import sppasPanel
 from ..windows import sppasStaticLine
 from ..windows.book import sppasSimplebook

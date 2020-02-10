@@ -38,6 +38,7 @@ import wx
 import os
 
 from sppas import paths
+
 from .anz_baseviews import BaseViewFilesPanel
 from .baseview import sppasBaseViewPanel
 

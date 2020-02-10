@@ -45,8 +45,8 @@ from sppas.src.files import States
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
 from ..windows import sppasStaticLine
-from ..dialogs import YesNoQuestion, Information
-from ..dialogs import sppasFileDialog
+from ..windows import YesNoQuestion, Information
+from ..windows import sppasFileDialog
 from ..main_events import DataChangedEvent
 
 from .filesviewctrl import FileTreeView

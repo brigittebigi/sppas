@@ -39,7 +39,7 @@ import wx.lib.agw.floatspin
 
 from sppas.src.structs.baseoption import sppasOption
 
-from ..dialogs import sppasFileDialog
+from ..windows import sppasFileDialog
 from ..windows import sppasScrolledPanel
 from ..windows import sppasStaticText
 from ..windows import sppasTextCtrl

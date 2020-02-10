@@ -35,7 +35,8 @@
 """
 
 import wx
-from ..windows import sppasDialog
+
+from .dialog import sppasDialog
 
 # ----------------------------------------------------------------------------
 

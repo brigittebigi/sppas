@@ -42,8 +42,8 @@ from sppas.src.utils import u
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
 from ..windows import sppasScrolledPanel
+from ..windows.dialogs import Confirm
 from ..main_events import ViewEvent, EVT_VIEW
-from ..dialogs import Confirm
 from .errview import ErrorViewPanel
 
 # ---------------------------------------------------------------------------

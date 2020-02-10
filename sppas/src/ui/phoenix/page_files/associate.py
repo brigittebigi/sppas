@@ -47,7 +47,7 @@ from sppas.src.files import FileData
 from sppas.src.files import States
 from sppas.src.files import sppasFileDataFilters
 
-from ..dialogs import Information, Error
+from ..windows import Information, Error
 from ..windows import sppasStaticText, sppasTextCtrl
 from ..windows import sppasPanel
 from ..windows import sppasDialog

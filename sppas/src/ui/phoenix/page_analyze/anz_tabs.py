@@ -40,7 +40,7 @@ import wx.lib.newevent
 from sppas import msg
 from sppas import u
 
-from ..dialogs import Error
+from ..windows import Error
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
 from ..windows import sppasStaticLine

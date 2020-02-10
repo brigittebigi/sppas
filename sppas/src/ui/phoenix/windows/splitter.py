@@ -2,11 +2,37 @@ import wx
 
 _RENDER_VER = (2, 6, 1, 1)
 
-# ----------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+
+
+class sppasSplitterWindow(wx.SplitterWindow):
+    """Override the splitter base class.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init_(self, *args, **kwargs):
+        super(sppasSplitterWindow, self).__init__(*args, **kwargs)
+
+    # -----------------------------------------------------------------------
+
+    def SetFont(self, font):
+        """Override."""
+        wx.Window.SetFont(self, font)
+        for c in self.GetChildren():
+            c.SetFont(font)
+        self.Layout()
+
+# ---------------------------------------------------------------------------
 
 
 class sppasMultiSplitterPanel(wx.Panel):
-    """Adaptation of MultiSplitterWindow of wx.lib.splitter, by R. Dunn.
+    """Adapted version of MultiSplitterWindow of wx.lib.splitter, by R. Dunn.
 
     """
 
@@ -94,6 +120,16 @@ class sppasMultiSplitterPanel(wx.Panel):
         self._drawSashInBackgroundColour = True
         if wx.NullColour == color:
             self._drawSashInBackgroundColour = False
+
+    # -----------------------------------------------------------------------
+
+    def SetFont(self, font):
+        """Override."""
+        wx.Window.SetFont(self, font)
+        for c in self.GetChildren():
+            c.SetFont(font)
+
+        self._SizeWindows()
 
     # -----------------------------------------------------------------------
 
@@ -190,8 +226,7 @@ class sppasMultiSplitterPanel(wx.Panel):
 
 
     def ExchangeWindows(self, window1, window2):
-        """
-        Trade the positions in the splitter of the two windows.
+        """Trade the positions in the splitter of the two windows.
 
         :param `window1`: the first window to switch position
         :param `window2`: the second window to switch position
@@ -207,8 +242,7 @@ class sppasMultiSplitterPanel(wx.Panel):
 
 
     def GetWindow(self, idx):
-        """
-        Returns the idx'th window being managed by the splitter.
+        """Return the idx'th window being managed by the splitter.
 
         :param int `idx`: get the window at the given index
 
@@ -218,8 +252,7 @@ class sppasMultiSplitterPanel(wx.Panel):
 
 
     def GetSashPosition(self, idx):
-        """
-        Returns the position of the idx'th sash, measured from the
+        """Return the position of the idx'th sash, measured from the
         left/top of the window preceding the sash.
 
         :param int `idx`: get the sash position of the given index
@@ -256,8 +289,9 @@ class sppasMultiSplitterPanel(wx.Panel):
     # -----------------------------------------------------------------------
 
     def DoGetBestSize(self):
-        """
-        Overridden base class virtual.  Determines the best size of
+        """Overridden base class virtual.
+
+        Determines the best size of
         the control based on the best sizes of the child windows.
         """
         best = wx.Size(0, 0)
@@ -765,7 +799,8 @@ class sppasMultiSplitterPanel(wx.Panel):
     def _DoSendEvent(self, evt):
         return not self.GetEventHandler().ProcessEvent(evt) or evt.IsAllowed()
 
-#----------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+
 
 class MultiSplitterEvent(wx.PyCommandEvent):
     """

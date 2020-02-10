@@ -41,7 +41,6 @@ from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasCollapsiblePanel
 from ..windows import sppasSimpleText
-from ..tools import sppasSwissKnife
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when an item is clicked.

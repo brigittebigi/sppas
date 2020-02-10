@@ -47,12 +47,14 @@ import sppas.src.anndata
 from ..windows import sppasToolbar
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
+from ..windows import sppasSplitterWindow
 from ..windows import sppasPlayerControlsPanel
 from ..windows import MediaEvents
 from ..windows import sppasProgressDialog
-from ..dialogs import sppasChoiceDialog
-from ..dialogs import sppasTextEntryDialog
-from ..dialogs import Confirm
+from ..windows import sppasChoiceDialog
+from ..windows import sppasTextEntryDialog
+from ..windows import Confirm
+from ..panels import sppasTiersEditWindow
 
 from .anz_baseviews import BaseViewFilesPanel
 from .timeview import MediaTimeViewPanel
@@ -137,31 +139,6 @@ class TimeViewType(object):
 
         return self.unknown
 
-# ---------------------------------------------------------------------------
-
-
-class sppasSplitterWindow(wx.SplitterWindow):
-    """Override the splitter base class.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
-    """
-
-    def __init_(self, *args, **kwargs):
-        super(sppasSplitterWindow, self).__init__(*args, **kwargs)
-
-    # -----------------------------------------------------------------------
-
-    def SetFont(self, font):
-        """Override."""
-        wx.Window.SetFont(self, font)
-        for c in self.GetChildren():
-            c.SetFont(font)
-        self.Layout()
 
 # -----------------------------------------------------------------------
 
@@ -291,7 +268,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
     # -----------------------------------------------------------------------
 
     def __create_scrolled_panel(self, parent):
-        """The scrolled panel is at left in a splitter."""
+        """The returned scrolled panel is at left in a splitter."""
         splitter = sppasSplitterWindow(parent,
                                        style=wx.SP_LIVE_UPDATE | wx.NO_BORDER,
                                        name="vert_splitter")
@@ -306,7 +283,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         p1.Bind(MediaEvents.EVT_MEDIA_ACTION, self._process_media_action)
 
         # Window 2 of the splitter: edit view of annotated files
-        p2 = sppasPanel(splitter, style=wx.BORDER_SIMPLE)
+        p2 = sppasTiersEditWindow(splitter, name="tiers_edit_splitter")
 
         # Fix size&layout
         splitter.SetMinimumPaneSize(sppasPanel.fix_size(128))

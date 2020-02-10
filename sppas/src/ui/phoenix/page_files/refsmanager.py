@@ -49,8 +49,8 @@ from ..windows import sppasStaticText
 from ..windows import sppasTextCtrl
 from ..windows import RadioButton
 from ..windows import sppasToolbar
-from ..dialogs import Information
-from ..dialogs import Error
+from ..windows import Information
+from ..windows import Error
 from ..main_events import DataChangedEvent
 
 from .refsviewctrl import RefsTreeView

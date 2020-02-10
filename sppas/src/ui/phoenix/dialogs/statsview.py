@@ -44,8 +44,8 @@ from sppas.src.utils import u
 from sppas.src.anndata import sppasRW
 from sppas.src.analysis.tierstats import sppasTierStats
 
-from ..dialogs import Confirm
-from ..dialogs import sppasFileDialog
+from ..windows import Confirm
+from ..windows import sppasFileDialog
 from ..windows import sppasDialog
 from ..windows import sppasPanel
 from ..windows import sppasRadioBoxPanel
@@ -148,6 +148,8 @@ class sppasStatsViewDialog(sppasDialog):
         :param tiers: dictionary with key=filename, value=list of selected tiers
 
         """
+        if tiers is None or len(tiers) == 0:
+            return
         for k, v in tiers.items():
             # k = filename, v = list of tiers
             for tier in v:
@@ -713,7 +715,7 @@ def StatsView(parent, tiers):
     return response
 
 # ----------------------------------------------------------------------------
-# Panel tested by test_glob.py
+# Panel that can be tested by test_glob.py
 # ----------------------------------------------------------------------------
 
 

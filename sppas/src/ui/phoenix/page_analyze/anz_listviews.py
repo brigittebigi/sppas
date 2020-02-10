@@ -47,9 +47,9 @@ from sppas.src.utils import u
 from ..windows import sppasToolbar
 from ..windows import sppasPanel
 from ..windows import sppasProgressDialog
-from ..dialogs import sppasChoiceDialog
-from ..dialogs import sppasTextEntryDialog
-from ..dialogs import Confirm
+from ..windows.dialogs import sppasChoiceDialog
+from ..windows.dialogs import sppasTextEntryDialog
+from ..windows.dialogs import Confirm
 from ..dialogs import TiersView
 from ..dialogs import StatsView
 from ..dialogs import sppasTiersSingleFilterDialog

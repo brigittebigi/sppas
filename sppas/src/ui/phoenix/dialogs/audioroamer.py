@@ -50,8 +50,8 @@ from sppas.src.config import msg
 from sppas.src.config import sg
 from sppas.src.utils import u
 
-from ..dialogs import Error
-from ..dialogs import sppasFileDialog
+from ..windows import Error
+from ..windows import sppasFileDialog
 from ..windows import sppasDialog
 from ..windows import sppasStaticText, sppasTextCtrl
 from ..windows.book import sppasNotebook

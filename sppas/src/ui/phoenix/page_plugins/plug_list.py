@@ -44,7 +44,7 @@ from sppas import sppasTypeError
 from sppas.src.plugins import sppasPluginsManager
 from sppas.src.files import FileData, States
 
-from ..dialogs import Error, Information, AboutPlugin
+from ..windows import Error, Information
 from ..windows import sppasDialog
 from ..windows import sppasScrolledPanel
 from ..windows import sppasProgressDialog
@@ -52,8 +52,8 @@ from ..windows import sppasPanel
 from ..windows import sppasMessageText, sppasTitleText
 from ..windows import sppasStaticLine
 from ..windows import BitmapTextButton, sppasTextButton
-
 from ..panels import sppasOptionsPanel
+from ..dialogs import AboutPlugin
 from ..main_events import DataChangedEvent
 
 # ---------------------------------------------------------------------------
