@@ -244,6 +244,14 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
     # Media management
     # -----------------------------------------------------------------------
 
+    def media_offset_get_start(self):
+        """Return the start position of the current period (milliseconds)."""
+        self.GetPane().GetOffsetPeriod()[0]
+
+    def media_offset_get_end(self):
+        """Return the end position of the current period (milliseconds)."""
+        self.GetPane().GetOffsetPeriod()[1]
+
     def media_offset_period(self, start, end):
         """Fix a start position and a end position to play the media.
 
@@ -299,6 +307,12 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
 
     # -----------------------------------------------------------------------
 
+    def media_length(self):
+        """Return the duration of the media (milliseconds)."""
+        return self.GetPane().Length()
+
+    # -----------------------------------------------------------------------
+
     def media_tell(self):
         """Return the current position in time (milliseconds)."""
         return self.GetPane().Tell()
@@ -342,6 +356,12 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
         size = self.DoGetBestSize()
         self.SetSize(size)
         self.GetParent().Layout()
+
+    # -----------------------------------------------------------------------
+
+    def media_slider(self, slider):
+        """Assign a slider to the media."""
+        self.GetPane().SetSlider(slider)
 
     # -----------------------------------------------------------------------
 

@@ -357,8 +357,14 @@ class sppasMediaPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def GetOffsetPeriod(self):
+        """Return the (start, end) positions to play the media (ms)."""
+        return self._offsets
+
+    # -----------------------------------------------------------------------
+
     def SetOffsetPeriod(self, start, end):
-        """Fix a start position and a end position to play the media.
+        """Fix a start position and a end position to play the media (ms).
 
         :param start: (int) Start time in milliseconds
         :param end: (int) End time in milliseconds
@@ -555,9 +561,14 @@ class sppasMediaPanel(sppasPanel):
     def Length(self):
         """Obtain the total amount of time the media has in milliseconds.
 
-        :return: (int)
+        :return: (int) -1 if the media is not supported or not loaded
 
         """
+        if self._loaded is False:
+            return -1
+        if self._loaded is True and self._length == 0:
+            return -1
+
         return self._length
 
     # -------------------------------------------------------------------------

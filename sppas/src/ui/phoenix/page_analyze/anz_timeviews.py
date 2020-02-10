@@ -382,15 +382,17 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         :return:
 
         """
-        wx.LogDebug(" JE SUIS ICI : MEDIA LOADED.")
         m = self.media_playing()
-        # TODO: self.__set_slider()
+        self.__set_slider()
         if m is not None:
             # Another media is currently playing. We'll play too.
             # this media is stopped or paused
-            # panel.media_offset_period(m.media_start_period(), m.media_end_period())
+            panel.media_offset_period(m.media_offset_get_start(), m.media_offset_get_end())
             panel.media_seek(m.media_tell())
             self.__play_media_panel(panel)
+
+        self.FindWindow("vert_splitter").Layout()
+        self.FindWindow("vert_splitter").UpdateSize()
 
     # -----------------------------------------------------------------------
 
@@ -404,11 +406,13 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
                 # The media of the expanded panel is stopped.
                 panel.media_play(replay=None)
                 panel.media_pause()
-                # TODO: panel.media_offset_period(m.GetStartPeriod(), m.GetEndPeriod())
+                panel.media_offset_period(m.media_offset_get_start(), m.media_offset_get_end())
                 panel.media_seek(m.media_tell())
                 self.__play_media_panel(panel)
             else:
                 wx.LogDebug(" ... no media was playing.")
+        else:
+            self.__set_slider()
 
         # Adjust control to the current state (playing or paused)
         controls = self.FindWindow("player_controls_panel")
@@ -417,7 +421,6 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         else:
             controls.Paused(False)
 
-        # TODO: self.__set_slider()
         self.GetScrolledPanel().ScrollChildIntoView(panel)
         self.FindWindow("vert_splitter").Layout()
         self.FindWindow("vert_splitter").UpdateSize()
@@ -463,7 +466,11 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
     # -----------------------------------------------------------------------
 
     def set_offset_period(self, start, end):
-        """Fix the time range to play the media (milliseconds)."""
+        """Fix the time range to play the media (milliseconds).
+
+        The change of offset period will stop all the media.
+
+        """
         for filename in self._files:
             panel = self._files[filename]
             if isinstance(panel, MediaTimeViewPanel):
@@ -532,6 +539,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
     def __play_media_panel(self, panel):
         controls = self.FindWindow("player_controls_panel")
         panel.media_play(replay=controls.IsReplay())
+        self.__set_slider()
         splitter = self.FindWindow("vert_splitter")
         splitter.Layout()
         splitter.UpdateSize()
@@ -574,6 +582,46 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
             if isinstance(panel, MediaTimeViewPanel):
                 panel.media_volume(coeff)
 
+    # -----------------------------------------------------------------------
+
+    def __set_slider(self):
+        """Assign the seek slider to the longest appropriate media."""
+        if len(self._files) == 0:
+            return
+        # Search for the longest media currently playing, the longest in
+        # expanded panels and the longest in absolute.
+        longest_playing = (None, 0)
+        longest_expanded = (None, 0)
+        longest = (None, 0)
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, MediaTimeViewPanel) is False:
+                continue
+            panel.media_slider(None)
+            duration = panel.media_length()
+            if duration >= longest[1]:
+                longest = (panel, duration)
+            if panel.IsExpanded() is True:
+                if duration >= longest_expanded[1]:
+                    longest_expanded = (panel, duration)
+                if panel.media_playing() or panel.media_paused():
+                    if duration >= longest_playing[1]:
+                        longest_playing = (panel, duration)
+
+        controls = self.FindWindow("player_controls_panel")
+        p = None
+        if longest_playing[0] is not None:
+            p = longest_playing[0]
+        elif longest_expanded[0] is not None:
+            p = longest_expanded[0]
+        elif longest[0] is not None:
+            p = longest[0]
+
+        if p is not None:
+            p.media_slider(controls.GetSlider())
+            wx.LogDebug("Slider assigned to {:s}. Duration={:d}"
+                        "".format(p.GetPane().GetFilename(), p.media_length()))
+
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
 # ----------------------------------------------------------------------------
@@ -594,4 +642,3 @@ class TestPanel(TimeViewFilesPanel):
             parent,
             name="TestPanel-anz_timeviews",
             files=TestPanel.TEST_FILES)
-
