@@ -36,17 +36,28 @@
 
 import os
 import wx
+import json
+import xml.etree.cElementTree as ET
 
+from sppas.src.config import msg
+from sppas.src.config import paths
+from sppas.src.utils import u
+from sppas.src.anndata import sppasTier
+from sppas.src.anndata import sppasRW
+from sppas.src.anndata.aio import sppasXRA
+from sppas.src.anndata.aio.xra import sppasJRA
+
+from ..windows import sppasToolbar
 from ..windows import sppasPanel
+from ..windows import sppasTextCtrl
 from ..windows import sppasSplitterWindow
 from ..windows import LineListCtrl
-from sppas.src.config import msg
-from sppas.src.utils import u
-
+from ..windows.book import sppasNotebook
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
+
 
 DARK_GRAY = wx.Colour(35, 35, 35)
 LIGHT_GRAY = wx.Colour(245, 245, 240)
@@ -95,16 +106,30 @@ class sppasTierListCtrl(LineListCtrl):
 
     def __init__(self, parent, tier):
         super(sppasTierListCtrl, self).__init__(parent=parent, style=wx.LC_REPORT | wx.NO_BORDER)
-        self._create_content(tier)
+        self._tier = tier
+        self._create_content()
 
     # -----------------------------------------------------------------------
 
-    def _create_content(self, tier):
+    def get_selected_annotation(self):
+        """Return the annotation matching the selected line in the list.
+
+        :return: (sppasAnnotation) None if no selected item in the list
+
+        """
+        index = self.GetFirstSelected()
+        if index == -1:
+            return None
+        return self._tier[index]
+
+    # -----------------------------------------------------------------------
+
+    def _create_content(self):
         """Show a tier in a listctrl.
 
         """
         # create columns
-        is_point_tier = tier.is_point()
+        is_point_tier = self._tier.is_point()
         if not is_point_tier:
             cols = (MSG_BEGIN, MSG_END, MSG_LABELS, MSG_NB, MSG_TYPE)
         else:
@@ -114,7 +139,7 @@ class sppasTierListCtrl(LineListCtrl):
             self.SetColumnWidth(i, 100)
 
         # fill rows
-        for i, a in enumerate(tier):
+        for i, a in enumerate(self._tier):
 
             # fix location
             if not is_point_tier:
@@ -165,25 +190,184 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     """
 
     def __init__(self, parent, name="tiers_edit_splitter"):
-        super(sppasTiersEditWindow, self).__init__(
-            parent, id=wx.ID_ANY,
-            pos=wx.DefaultPosition,
-            size=wx.DefaultSize,
-            style=wx.SP_LIVE_UPDATE | wx.NO_BORDER | wx.SP_3D,
-            name=name)
+        super(sppasTiersEditWindow, self).__init__(parent, name=name)
 
-        # Window 1 of the splitter: tier view
-        p1 = sppasPanel(self)   #, style=wx.BORDER_SIMPLE)
+        # Window 1 of the splitter: a ListCtrl of each tier in a notebook
+        p1 = sppasNotebook(self, style=wx.BORDER_SIMPLE, name="tiers_notebook")
+        # p1.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self._on_page_changing)
+        p1.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self._on_page_changed)
 
-        # Window 2 of the splitter: annotation editor
-        p2 = sppasPanel(self)   #, style=wx.BORDER_SIMPLE)
+        # Window 2 of the splitter: an annotation editor
+        p2 = self.__create_annotation_editor()
 
         # Fix size&layout
         self.SetMinimumPaneSize(sppasPanel.fix_size(128))
         self.SplitHorizontally(p1, p2, sppasPanel.fix_size(512))
         self.SetSashGravity(0.9)
 
+    # -----------------------------------------------------------------------
 
-# --------------------------------------------------------------------------
+    def __create_annotation_editor(self):
+        """"""
+        panel = sppasPanel(self, style=wx.BORDER_SIMPLE)
 
+        toolbar = sppasToolbar(panel, name="ann_toolbar")
+        toolbar.set_height(24)
+        toolbar.AddButton("way_up_down")
+        toolbar.AddSpacer(1)
+        toolbar.AddToggleButton("code_review", value=True, group_name="view_mode")
+        toolbar.AddToggleButton("code_xml", group_name="view_mode")
+        btn = toolbar.AddToggleButton("code_json", group_name="view_mode")
+        # btn.Enable(False)
+        toolbar.AddSpacer(1)
+        self.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_toolbar_event)
+
+        body_style = wx.TAB_TRAVERSAL | wx.TE_BESTWRAP | \
+                     wx.TE_MULTILINE | wx.BORDER_STATIC
+        text = sppasTextCtrl(panel, style=body_style, name="ann_textctrl")
+        text.Bind(wx.EVT_CHAR, self._on_char, text)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(toolbar, 0, wx.EXPAND)
+        sizer.Add(text, 1, wx.EXPAND)
+
+        panel.SetSizer(sizer)
+        return panel
+
+    # -----------------------------------------------------------------------
+
+    def add_tiers(self, tiers):
+        notebook = self.FindWindow("tiers_notebook")
+        for tier in tiers:
+            page = sppasTierListCtrl(notebook, tier)
+            page.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_annotation_selected)
+            notebook.AddPage(page, tier.get_name())
+
+    # -----------------------------------------------------------------------
+
+    def refresh_annotation(self):
+        notebook = self.FindWindow("tiers_notebook")
+        textctrl = self.FindWindow("ann_textctrl")
+        tb = self.FindWindow("ann_toolbar")
+
+        page_index = notebook.GetSelection()
+        listctrl = notebook.GetPage(page_index)
+        ann = listctrl.get_selected_annotation()
+        if ann is None:
+            textctrl.SetValue("")
+        else:
+            # Which view is currently toggled?
+            textctrl.SetFocus()
+            if tb.get_button("code_xml", "view_mode").IsPressed():
+                root = ET.Element('Annotation')
+                for label in ann.get_labels():
+                    label_root = ET.SubElement(root, 'Label')
+                    sppasXRA.format_label(label_root, label)
+                sppasXRA.indent(root)
+                xml_text = ET.tostring(root, encoding="utf-8", method="xml")
+                textctrl.SetValue(xml_text)
+
+            elif tb.get_button("code_json", "view_mode").IsPressed():
+                root = list()
+                for label in ann.get_labels():
+                    sppasJRA.format_label(root, label)
+                json_text = json.dumps(root, indent=4, separators=(',', ': '))
+                textctrl.SetValue(json_text)
+
+            elif tb.get_button("code_review", "view_mode").IsPressed():
+                textctrl.SetValue(ann.serialize_labels())
+
+    # -----------------------------------------------------------------------
+
+    def swap_top_down_panels(self):
+        win_1 = self.GetWindow1()
+        win_2 = self.GetWindow2()
+        w, h = win_2.GetSize()
+        self.Unsplit(toRemove=win_1)
+        self.Unsplit(toRemove=win_2)
+        self.SplitHorizontally(win_2, win_1, h)
+
+        if win_1.GetName() == "tiers_notebook":
+            self.SetSashGravity(0.9)
+        else:
+            self.SetSashGravity(0.1)
+
+        self.UpdateSize()
+
+    # -----------------------------------------------------------------------
+    # Events management
+    # -----------------------------------------------------------------------
+
+    def _process_toolbar_event(self, event):
+        """Process a button of the toolbar event.
+
+        :param event: (wx.Event)
+
+        """
+        wx.LogDebug("Toolbar Event received by {:s}".format(self.GetName()))
+        btn = event.GetEventObject()
+        btn_name = btn.GetName()
+
+        if btn_name == "way_up_down":
+            self.swap_top_down_panels()
+
+        elif btn_name in ("code_review", "code_xml", "code_json"):
+            self.refresh_annotation()
+
+        else:
+            event.Skip()
+
+    # -----------------------------------------------------------------------
+
+    def _on_char(self, evt):
+        text = evt.GetEventObject()
+        if evt.ControlDown() and evt.KeyCode == 1:
+            # Ctrl+A
+            text.SelectAll()
+
+        else:
+            evt.Skip()
+
+    # -----------------------------------------------------------------------
+
+    def _on_annotation_selected(self, evt):
+        """An annotation is selected in the list."""
+        self.refresh_annotation()
+
+    # -----------------------------------------------------------------------
+
+    def _on_page_changing(self, evt):
+        """The notebook is being to change page."""
+        pass
+
+    # -----------------------------------------------------------------------
+
+    def _on_page_changed(self, evt):
+        """The notebook is being to change page."""
+        if not self:
+            return
+        wx.LogDebug("THE PAGE OF THE NOTEBOOK CHANGED.")
+        self.refresh_annotation()
+
+
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+
+
+class TestPanel(sppasTiersEditWindow):
+    def __init__(self, parent):
+        f1 = os.path.join(paths.samples, "annotation-results",
+                          "samples-fra", "F_F_B003-P8-palign.xra")
+        f2 = os.path.join(paths.samples, "annotation-results",
+                          "samples-fra", "F_F_B003-P8-phon.xra")
+
+        parser = sppasRW(f1)
+        trs1 = parser.read()
+        parser.set_filename(f2)
+        trs2 = parser.read()
+        super(TestPanel, self).__init__(parent)
+        self.add_tiers(trs1.get_tier_list())
+        self.add_tiers(trs2.get_tier_list())
 

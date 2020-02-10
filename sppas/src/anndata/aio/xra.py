@@ -56,6 +56,43 @@ from .basetrs import sppasBaseIO
 # ---------------------------------------------------------------------------
 
 
+class sppasJRA(object):
+    """JRA is intended to be the next default format of annotated files."""
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def format_label(label_root, label):
+        """Add a 'Label' in the dict from a sppasLabel().
+
+        :param label_root: (list)
+        :param label: (sppasLabel)
+
+        """
+        tags = list()
+        for tag, score in label:
+            tag_node = dict()
+            tag_node['score'] = score
+            sppasJRA._format_tag(tag_node, tag)
+            tags.append(tag_node)
+        label_root.append(tags)
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def _format_tag(tag_node, tag):
+        """Add a 'Tag' element from a sppasTag().
+
+        :param tag_node: (dict)
+        :param tag: (sppasTag)
+
+        """
+        tag_node['type'] = tag.get_type()
+        tag_node['text'] = tag.get_content()
+
+# ---------------------------------------------------------------------------
+
+
 class sppasXRA(sppasBaseIO):
     """SPPAS XRA reader and writer.
 

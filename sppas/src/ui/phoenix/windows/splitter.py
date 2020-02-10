@@ -16,8 +16,14 @@ class sppasSplitterWindow(wx.SplitterWindow):
 
     """
 
-    def __init_(self, *args, **kwargs):
-        super(sppasSplitterWindow, self).__init__(*args, **kwargs)
+    def __init__(self, parent,
+                 id=wx.ID_ANY,
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 style=wx.SP_LIVE_UPDATE | wx.SP_NOBORDER,
+                 name="splitter_window"):
+        super(sppasSplitterWindow, self).__init__(
+            parent, id, pos, size, style, name)
 
     # -----------------------------------------------------------------------
 

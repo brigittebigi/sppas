@@ -108,6 +108,7 @@ class sppasToolbar(sppasPanel):
             self.SetMinSize(wx.Size(-1, self._h))
         else:
             self.SetMinSize(wx.Size(self._h, -1))
+        wx.LogDebug("Toolbar min height fixed to: {:d}".format(self._h))
 
     # -----------------------------------------------------------------------
 

@@ -39,6 +39,52 @@ import wx
 # ---------------------------------------------------------------------------
 
 
+class sppasChoicebook(wx.Choicebook):
+    """A notebook is a control, which manages multiple pages with tabs.
+
+    Possible constructors:
+        - sppasNotebook()
+        - sppasNotebook(parent, id=ID_ANY, pos=DefaultPosition,
+            size=DefaultSize, style=0, name=NotebookNameStr)
+
+    """
+    def __init_(self, *args, **kw):
+        super(sppasChoicebook, self).__init__(*args, **kw)
+        s = wx.GetApp().settings
+        self.SetBackgroundColour(s.bg_color)
+        self.SetForegroundColour(s.fg_color)
+        self.SetFont(s.text_font)
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        """Override."""
+        wx.Choicebook.SetBackgroundColour(self, colour)
+        for i in range(self.GetPageCount()):
+            page = self.GetPage(i)
+            page.SetBackgroundColour(colour)
+
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        """Override."""
+        wx.Choicebook.SetForegroundColour(self, colour)
+        for i in range(self.GetPageCount()):
+            page = self.GetPage(i)
+            page.SetForegroundColour(colour)
+
+    # -----------------------------------------------------------------------
+
+    def SetFont(self, font):
+        """Override."""
+        wx.Choicebook.SetFont(self, font)
+        for i in range(self.GetPageCount()):
+            page = self.GetPage(i)
+            page.SetFont(font)
+
+# ---------------------------------------------------------------------------
+
+
 class sppasNotebook(wx.Notebook):
     """A notebook is a control, which manages multiple pages with tabs.
 

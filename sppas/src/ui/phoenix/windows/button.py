@@ -306,8 +306,8 @@ class BaseButton(wx.Window):
     HIGHLIGHT = 2
 
     # Button Min Size
-    MIN_WIDTH = 32
-    MIN_HEIGHT = 32
+    MIN_WIDTH = 12
+    MIN_HEIGHT = 12
 
     # -----------------------------------------------------------------------
 

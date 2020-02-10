@@ -202,6 +202,10 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
             elif tt.GuessType(name) == tt.transcription:
                 panel = TrsListViewPanel(self.GetScrolledPanel(), filename=name)
                 panel.SetHighLightColor(self._hicolor)
+                trs = panel.get_object()
+                if trs is not None:
+                    w = self.FindWindow("tiers_edit_splitter")
+                    w.add_tiers(trs.get_tier_list())
             elif tt.GuessType(name) == tt.unsupported:
                 raise IOError("File format not supported.")
             elif tt.GuessType(name) == tt.unknown:
@@ -245,9 +249,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         :return: (sppasPanel, wx.Panel, sppasScrolled, ...)
 
         """
-        splitter = sppasSplitterWindow(self,
-                                       style=wx.SP_LIVE_UPDATE | wx.NO_BORDER,
-                                       name="horiz_splitter")
+        splitter = sppasSplitterWindow(self, name="horiz_splitter")
 
         # Window 1 of the splitter: player controls
         p1 = sppasPlayerControlsPanel(splitter, style=wx.BORDER_SIMPLE, name="player_controls_panel")
@@ -269,9 +271,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
 
     def __create_scrolled_panel(self, parent):
         """The returned scrolled panel is at left in a splitter."""
-        splitter = sppasSplitterWindow(parent,
-                                       style=wx.SP_LIVE_UPDATE | wx.NO_BORDER,
-                                       name="vert_splitter")
+        splitter = sppasSplitterWindow(parent, name="vert_splitter")
 
         # Window 1 of the splitter: time view of media and other files
         p1 = sppasScrolledPanel(splitter,
