@@ -75,6 +75,12 @@
     {
       "id": "stopwords",
       "config": "stopwords.json",
+      "cli": "stopwords.py"
+    },
+
+    {
+      "id": "lexmetric",
+      "config": "lexmetric.json",
       "cli": ""
     },
 

@@ -46,21 +46,7 @@ from sppas.src.anndata import sppasTranscription, sppasRW
 import sppas.src.audiodata.aio
 import sppas.src.anndata.aio
 
-from sppas.src.annotations.Momel import sppasMomel
-from sppas.src.annotations.Intsint import sppasIntsint
-from sppas.src.annotations.SearchIPUs import sppasSearchIPUs
-from sppas.src.annotations.FillIPUs import sppasFillIPUs
-from sppas.src.annotations.TextNorm import sppasTextNorm
-from sppas.src.annotations.Phon import sppasPhon
-from sppas.src.annotations.Align import sppasAlign
-from sppas.src.annotations.Syll import sppasSyll
-from sppas.src.annotations.TGA import sppasTGA
-from sppas.src.annotations.Activity import sppasActivity
-from sppas.src.annotations.SelfRepet import sppasSelfRepet
-from sppas.src.annotations.OtherRepet import sppasOtherRepet
-from sppas.src.annotations.ReOccurrences import sppasReOcc
-from sppas.src.annotations.RMS import sppasRMS
-from sppas.src.annotations.StopWords import sppasStopWords
+from sppas.src.annotations import *
 
 from .infotier import sppasMetaInfoTier
 from .log import sppasLog

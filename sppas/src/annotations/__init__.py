@@ -71,6 +71,7 @@ from .OtherRepet import sppasOtherRepet
 from .ReOccurrences import sppasReOcc
 from .StopWords import StopWords
 from .StopWords import sppasStopWords
+from .LexMetric import sppasLexMetric
 
 from .searchtier import sppasFindTier
 from .param import sppasParam
@@ -94,6 +95,7 @@ __all__ = (
     'sppasOtherRepet',
     'StopWords',
     'sppasStopWords',
+    'sppasLexMetric',
     'sppasFindTier',
     'sppasParam',
     'sppasAnnotationsManager'
