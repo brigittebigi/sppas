@@ -50,6 +50,7 @@ from ..windows import sppasScrolledPanel
 from ..windows import sppasSplitterWindow
 from ..windows import sppasPlayerControlsPanel
 from ..windows import MediaEvents
+from ..windows import BitmapTextButton
 from ..windows import sppasProgressDialog
 from ..windows import sppasChoiceDialog
 from ..windows import sppasTextEntryDialog
@@ -223,6 +224,22 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
 
     # -----------------------------------------------------------------------
 
+    def _create_content(self, files):
+        """Create the main content.
+
+        :param files: (list) List of filenames
+
+        """
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        # toolbar = self._create_toolbar()
+        scrolled = self._create_scrolled_content()
+        # main_sizer.Add(toolbar, 0, wx.EXPAND, 0)
+        main_sizer.Add(scrolled, 1, wx.EXPAND, 0)
+        self.SetSizer(main_sizer)
+        self.Bind(wx.EVT_BUTTON, self._process_event)
+
+    # -----------------------------------------------------------------------
+
     def _create_toolbar(self):
         """Create the main toolbar.
 
@@ -233,7 +250,6 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         # to switch panels of the splitter
         toolbar.AddButton(icon="way_up_down")
         toolbar.AddButton(icon="way_left_right")
-        toolbar.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
         return toolbar
 
     # -----------------------------------------------------------------------
@@ -254,7 +270,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         # Window 1 of the splitter: player controls
         p1 = sppasPlayerControlsPanel(splitter, style=wx.BORDER_SIMPLE, name="player_controls_panel")
         best_size = p1.GetBestSize()
-        # self.__add_custom_controls(p1)
+        self.__add_custom_controls(p1)
         splitter.Bind(MediaEvents.EVT_MEDIA_ACTION, self._process_media_action)
 
         # Window 2 of the splitter: a scrolled panel with all media
@@ -293,10 +309,23 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         return splitter
 
     # -----------------------------------------------------------------------
+
+    def __add_custom_controls(self, control_panel):
+        """Add custom widgets to the player controls panel."""
+        # to switch panels of the splitter
+        btn1 = BitmapTextButton(control_panel.GetWidgetsPanel(), name="way_up_down")
+        control_panel.SetButtonProperties(btn1)
+        control_panel.AddWidget(btn1)
+
+        btn2 = BitmapTextButton(control_panel.GetWidgetsPanel(), name="way_left_right")
+        control_panel.SetButtonProperties(btn2)
+        control_panel.AddWidget(btn2)
+
+    # -----------------------------------------------------------------------
     # Events management
     # -----------------------------------------------------------------------
 
-    def _process_toolbar_event(self, event):
+    def _process_event(self, event):
         """Process a button of the toolbar event.
 
         :param event: (wx.Event)
