@@ -108,6 +108,12 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
 
     # ------------------------------------------------------------------------
 
+    def get_filename(self):
+        """Return the filename this panel is displaying."""
+        return self._filename
+
+    # ------------------------------------------------------------------------
+
     def set_filename(self, name):
         """Set a new name to the file.
 

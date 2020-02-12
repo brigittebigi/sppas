@@ -434,7 +434,6 @@ class BaseViewFilesPanel(sppasPanel):
         :param event: (wx.Event)
 
         """
-        wx.LogDebug("View Event received by {:s}".format(self.GetName()))
         try:
             panel = event.GetEventObject()
             panel_name = panel.GetName()

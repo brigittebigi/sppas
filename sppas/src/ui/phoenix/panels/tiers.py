@@ -53,6 +53,7 @@ from ..windows import sppasTextCtrl
 from ..windows import sppasSplitterWindow
 from ..windows import LineListCtrl
 from ..windows.book import sppasNotebook
+from ..main_events import ViewEvent, EVT_VIEW
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -104,10 +105,25 @@ class sppasTierListCtrl(LineListCtrl):
         "bool": "Boolean"
     }
 
-    def __init__(self, parent, tier):
+    def __init__(self, parent, tier, filename):
         super(sppasTierListCtrl, self).__init__(parent=parent, style=wx.LC_REPORT | wx.NO_BORDER)
         self._tier = tier
+        self.__filename = filename
         self._create_content()
+
+        # select the first annotation
+        if len(self._tier) > 0:
+            self.Select(0, on=1)
+
+    # -----------------------------------------------------------------------
+
+    def get_tiername(self):
+        return self._tier.get_name()
+
+    # -----------------------------------------------------------------------
+
+    def get_filename(self):
+        return self.__filename
 
     # -----------------------------------------------------------------------
 
@@ -237,10 +253,40 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
     # -----------------------------------------------------------------------
 
-    def add_tiers(self, tiers):
+    def get_filename(self):
+        """Return the name of the file of the current page."""
+        notebook = self.FindWindow("tiers_notebook")
+        page_index = notebook.GetSelection()
+        listctrl = notebook.GetPage(page_index)
+        return listctrl.get_filename()
+
+    # -----------------------------------------------------------------------
+
+    def get_tiername(self):
+        """Return the name of the tier of the current page."""
+        notebook = self.FindWindow("tiers_notebook")
+        page_index = notebook.GetSelection()
+        listctrl = notebook.GetPage(page_index)
+        return listctrl.get_tiername()
+
+    # -----------------------------------------------------------------------
+
+    def set_selected_tier(self, filename, tier_name):
+        """Change page selection of the notebook to match given data."""
+        notebook = self.FindWindow("tiers_notebook")
+        for i in range(notebook.GetPageCount()):
+            page = notebook.GetPage(i)
+            if page.get_filename() == filename and page.get_tiername() == tier_name:
+                notebook.ChangeSelection(i)
+                self.__annotation_selected()
+
+    # -----------------------------------------------------------------------
+
+    def add_tiers(self, filename, tiers):
+        """Add a set of tiers of the file."""
         notebook = self.FindWindow("tiers_notebook")
         for tier in tiers:
-            page = sppasTierListCtrl(notebook, tier)
+            page = sppasTierListCtrl(notebook, tier, filename)
             page.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_annotation_selected)
             notebook.AddPage(page, tier.get_name())
 
@@ -277,6 +323,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
             elif tb.get_button("code_review", "view_mode").IsPressed():
                 textctrl.SetValue(ann.serialize_labels())
+        return ann
 
     # -----------------------------------------------------------------------
 
@@ -297,6 +344,15 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
     # -----------------------------------------------------------------------
     # Events management
+    # -----------------------------------------------------------------------
+
+    def Notify(self, action, value):
+        """Sends a EVT_VIEW event to the listener (if any)."""
+        evt = ViewEvent(action=action, value=value)
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+        wx.LogDebug("Notify parent {:s} of view event".format(self.GetParent().GetName()))
+
     # -----------------------------------------------------------------------
 
     def _process_toolbar_event(self, event):
@@ -333,7 +389,22 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
     def _on_annotation_selected(self, evt):
         """An annotation is selected in the list."""
-        self.refresh_annotation()
+        self.__annotation_selected()
+
+    def __annotation_selected(self):
+        ann = self.refresh_annotation()
+        if ann is not None:
+            start_point = ann.get_lowest_localization()
+            start = start_point.get_midpoint()
+            r = start_point.get_radius()
+            if r is not None:
+                start -= r
+            end_point = ann.get_highest_localization()
+            end = end_point.get_midpoint()
+            r = end_point.get_radius()
+            if r is not None:
+                end += r
+            self.Notify(action="period_selected", value=(start, end))
 
     # -----------------------------------------------------------------------
 
@@ -347,9 +418,8 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         """The notebook is being to change page."""
         if not self:
             return
-        wx.LogDebug("THE PAGE OF THE NOTEBOOK CHANGED.")
-        self.refresh_annotation()
-
+        self.Notify(action="tier_selected", value=None)
+        self.__annotation_selected()
 
 # ---------------------------------------------------------------------------
 

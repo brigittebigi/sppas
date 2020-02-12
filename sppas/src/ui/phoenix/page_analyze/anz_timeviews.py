@@ -44,7 +44,6 @@ from sppas.src.config import msg
 from sppas.src.utils import u
 import sppas.src.anndata
 
-from ..windows import sppasToolbar
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasSplitterWindow
@@ -56,10 +55,11 @@ from ..windows import sppasChoiceDialog
 from ..windows import sppasTextEntryDialog
 from ..windows import Confirm
 from ..panels import sppasTiersEditWindow
+from ..main_events import EVT_VIEW
 
 from .anz_baseviews import BaseViewFilesPanel
 from .timeview import MediaTimeViewPanel
-from .listview import TrsListViewPanel
+from .timeview import TrsTimeViewPanel
 
 # ----------------------------------------------------------------------------
 
@@ -116,7 +116,7 @@ class TimeViewType(object):
 
     # -----------------------------------------------------------------------
 
-    def GuessType(self, filename):
+    def guess_type(self, filename):
         """Return the expected media type of the given filename.
 
         :return: (MediaType) Integer value of the media type
@@ -161,6 +161,19 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
             name=name,
             files=files)
 
+        # By default, select the first tier of the first file
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsTimeViewPanel):
+                trs = panel.get_object()
+                if len(trs) > 0:
+                    tier_name = trs[0].get_name()
+                    panel.set_selected_tier(tier_name)
+                    # enable the tier into the notebook of tier views
+                    w = self.FindWindow("tiers_edit_splitter")
+                    w.set_selected_tier(filename, tier_name)
+                    break
+
     # -----------------------------------------------------------------------
 
     def SetHighLightColor(self, color):
@@ -196,20 +209,20 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
 
         """
         with TimeViewType() as tt:
-            if tt.GuessType(name) == tt.video:
+            if tt.guess_type(name) == tt.video:
                 panel = MediaTimeViewPanel(self.GetScrolledPanel(), filename=name)
-            elif tt.GuessType(name) == tt.audio:
+            elif tt.guess_type(name) == tt.audio:
                 panel = MediaTimeViewPanel(self.GetScrolledPanel(), filename=name)
-            elif tt.GuessType(name) == tt.transcription:
-                panel = TrsListViewPanel(self.GetScrolledPanel(), filename=name)
+            elif tt.guess_type(name) == tt.transcription:
+                panel = TrsTimeViewPanel(self.GetScrolledPanel(), filename=name)
                 panel.SetHighLightColor(self._hicolor)
                 trs = panel.get_object()
                 if trs is not None:
                     w = self.FindWindow("tiers_edit_splitter")
-                    w.add_tiers(trs.get_tier_list())
-            elif tt.GuessType(name) == tt.unsupported:
+                    w.add_tiers(name, trs.get_tier_list())
+            elif tt.guess_type(name) == tt.unsupported:
                 raise IOError("File format not supported.")
-            elif tt.GuessType(name) == tt.unknown:
+            elif tt.guess_type(name) == tt.unknown:
                 raise TypeError("Unknown file format.")
 
         border = sppasPanel.fix_size(10)
@@ -225,32 +238,19 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
     # -----------------------------------------------------------------------
 
     def _create_content(self, files):
-        """Create the main content.
+        """Override base class. Create the main content.
+
+        No toolbar is created. Action buttons are included into the player
+        controls.
 
         :param files: (list) List of filenames
 
         """
         main_sizer = wx.BoxSizer(wx.VERTICAL)
-        # toolbar = self._create_toolbar()
         scrolled = self._create_scrolled_content()
-        # main_sizer.Add(toolbar, 0, wx.EXPAND, 0)
         main_sizer.Add(scrolled, 1, wx.EXPAND, 0)
         self.SetSizer(main_sizer)
         self.Bind(wx.EVT_BUTTON, self._process_event)
-
-    # -----------------------------------------------------------------------
-
-    def _create_toolbar(self):
-        """Create the main toolbar.
-
-        :return: (sppasPanel, wx.Panel, sppasToolbar, ...)
-
-        """
-        toolbar = sppasToolbar(self, name="toolbar_views")
-        # to switch panels of the splitter
-        toolbar.AddButton(icon="way_up_down")
-        toolbar.AddButton(icon="way_left_right")
-        return toolbar
 
     # -----------------------------------------------------------------------
 
@@ -300,6 +300,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
 
         # Window 2 of the splitter: edit view of annotated files
         p2 = sppasTiersEditWindow(splitter, name="tiers_edit_splitter")
+        splitter.Bind(EVT_VIEW, self._process_editview_event)
 
         # Fix size&layout
         splitter.SetMinimumPaneSize(sppasPanel.fix_size(128))
@@ -323,6 +324,65 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
 
     # -----------------------------------------------------------------------
     # Events management
+    # -----------------------------------------------------------------------
+
+    def _process_view_event(self, event):
+        """Process a view event: an action has to be performed.
+
+        :param event: (wx.Event)
+
+        """
+        BaseViewFilesPanel._process_view_event(self, event)
+        action = event.action
+
+        if action == "tier_selected":
+            panel = event.GetEventObject()
+            trs_filename = panel.get_filename()
+            tier_name = panel.get_selected_tier()
+
+            # enable the tier into the notebook of tier views
+            w = self.FindWindow("tiers_edit_splitter")
+            w.set_selected_tier(trs_filename, tier_name)
+
+            self.__enable_tier_into_scrolled(trs_filename, tier_name)
+
+    # -----------------------------------------------------------------------
+
+    def _process_editview_event(self, event):
+        """Process a view event: an action has to be performed.
+
+        :param event: (wx.Event)
+
+        """
+        action = event.action
+        if action == "tier_selected":
+            w = event.GetEventObject()
+            trs_filename = w.get_filename()
+            tier_name = w.get_tiername()
+            self.__enable_tier_into_scrolled(trs_filename, tier_name)
+
+        elif action == "period_selected":
+            period = event.value
+            start = int(period[0] * 1000.)
+            end = int(period[1] * 1000.)
+            self.set_offset_period(start, end)
+
+    # -----------------------------------------------------------------------
+
+    def __enable_tier_into_scrolled(self, trs_filename, tier_name):
+        """Disable the currently selected tier and enable the new one.
+
+        into the scrolled panel only.
+
+        """
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsTimeViewPanel):
+                if filename != trs_filename:
+                    panel.set_selected_tier(None)
+                else:
+                    panel.set_selected_tier(tier_name)
+
     # -----------------------------------------------------------------------
 
     def _process_event(self, event):
@@ -477,6 +537,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         The change of offset period will stop all the media.
 
         """
+        wx.LogDebug("Set offset period: {:d} {:d}".format(start, end))
         for filename in self._files:
             panel = self._files[filename]
             if isinstance(panel, MediaTimeViewPanel):
