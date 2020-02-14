@@ -29,8 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.media.media.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.windows.media.mediactrl.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -41,9 +41,10 @@ import wx.media
 import wx.lib.newevent
 
 from sppas import paths
-from ..panel import sppasPanel
 from sppas.src.audiodata import sppasAudioPCM
 import sppas.src.audiodata.aio
+
+from ..panel import sppasPanel
 from .mediaevents import MediaEvents
 
 # ---------------------------------------------------------------------------
@@ -253,10 +254,7 @@ class sppasMediaPanel(sppasPanel):
     sppasMediaPanel is using the wx.media.MediaCtrl.
     Extended features are:
 
-        - a normal play or an auto play (to replay);
-        - fix an offset period (from, to) in milliseconds;
         - a zoom (percentage) to fix the size of this panel and its media;
-        - update a slider (if set);
         - display of the waveform if the media is an audio (To do);
         - send a MediaActionEvent if the mouse did something on the media
           we're interested in.
@@ -299,16 +297,28 @@ class sppasMediaPanel(sppasPanel):
             name=name)
 
         self._filename = None
-        self._offsets = (0, 0)      # from/to offsets
-        self._autoreplay = False    # a play mode
         self._length = 0            # duration of the media in milliseconds
-        self._refreshtimer = 10     # 10 for audios but should be 40 for videos
         self._loaded = False
-        self._slider = None
-        self._timer = wx.Timer(self)
-        self._mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER, szBackend="")
-        self._mt = MediaType().unknown
         self._zoom = 100
+
+        #backend=wx.media.MEDIABACKEND_DIRECTSHOW
+        #backend=wx.media.MEDIABACKEND_WMP10
+        back_end = ""  # The default backend
+        if wx.Platform == "__WXMSW__":
+            back_end = wx.media.MEDIABACKEND_WMP10
+
+        # Create some controls
+        try:
+            self._mc = wx.media.MediaCtrl()
+            ok = self._mc.Create(self, style=wx.SIMPLE_BORDER, szBackend=back_end)
+            if not ok:
+                raise NotImplementedError
+        except NotImplementedError:
+            self.Destroy()
+            raise
+
+        # self._mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER, szBackend=back_end)
+        self._mt = MediaType().unknown
         self._audio = None
 
         # Fix our min size
@@ -322,7 +332,6 @@ class sppasMediaPanel(sppasPanel):
 
         # Bind the events related to our window
         self.Bind(wx.EVT_SIZE, self.OnSize)
-        self.Bind(wx.EVT_TIMER, self.OnTimer)
         self._mc.Bind(wx.media.EVT_MEDIA_LOADED, self.OnMediaLoaded)
         self.Bind(wx.EVT_PAINT, lambda evt: self.Draw())
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
@@ -333,56 +342,6 @@ class sppasMediaPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
     # New features: Public methods
-    # -----------------------------------------------------------------------
-
-    def SetSlider(self, slider):
-        """Set a slider to the media.
-
-        The values MUST be in milliseconds, like for the offset period.
-        The value of the slider is updated with a timer.
-
-        :param slider: (wx.Slider)
-
-        """
-        if slider is None:
-            self._slider = None
-        elif isinstance(slider, wx.Slider):
-            self._slider = slider
-            self._slider.SetRange(self._offsets[0], self._offsets[1])
-            self._slider.SetValue(self.Tell())
-            self._slider.Bind(wx.EVT_SLIDER, self.__on_slider_seek)
-        else:
-            raise TypeError("Expected a wx.Slider. Got {:s} instead."
-                            "".format(type(slider)))
-
-    # -----------------------------------------------------------------------
-
-    def GetOffsetPeriod(self):
-        """Return the (start, end) positions to play the media (ms)."""
-        return self._offsets
-
-    # -----------------------------------------------------------------------
-
-    def SetOffsetPeriod(self, start, end):
-        """Fix a start position and a end position to play the media (ms).
-
-        :param start: (int) Start time in milliseconds
-        :param end: (int) End time in milliseconds
-
-        """
-        if self._mc.GetState() == wx.media.MEDIASTATE_PLAYING:
-            self.Stop()
-
-        # Check the given interval
-        if start is None or start < 0:
-            start = 0
-        if end is None:
-            end = self._length
-
-        self._offsets = (start, end)
-        if self._slider is not None:
-            self._slider.SetRange(start, end)
-
     # -----------------------------------------------------------------------
 
     def GetZoom(self):
@@ -430,6 +389,7 @@ class sppasMediaPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def GetState(self):
+        """Return the state of the media."""
         return self._mc.GetState()
 
     # -----------------------------------------------------------------------
@@ -449,18 +409,6 @@ class sppasMediaPanel(sppasPanel):
     def IsStopped(self):
         """Return True if state is wx.media.MEDIASTATE_STOPPED."""
         return self._mc.GetState() == wx.media.MEDIASTATE_STOPPED
-
-    # -----------------------------------------------------------------------
-
-    def GetStartPeriod(self):
-        """Return start offset (milliseconds)."""
-        return self._offsets[0]
-
-    # -----------------------------------------------------------------------
-
-    def GetEndPeriod(self):
-        """Return end offset (milliseconds)."""
-        return self._offsets[1]
 
     # -----------------------------------------------------------------------
 
@@ -484,22 +432,6 @@ class sppasMediaPanel(sppasPanel):
             return MediaType().audio
 
         return MediaType().unknown
-
-    # ----------------------------------------------------------------------
-
-    def AutoPlay(self, start=None, end=None):
-        """Play the music and re-play from the beginning."""
-        self._autoreplay = True
-        self.SetOffsetPeriod(start, end)
-        self.Play()
-
-    # ----------------------------------------------------------------------
-
-    def NormalPlay(self, start=None, end=None):
-        """Play the music once. Disable auto-replay."""
-        self._autoreplay = False
-        self.SetOffsetPeriod(start, end)
-        self.Play()
 
     # ----------------------------------------------------------------------
 
@@ -536,7 +468,7 @@ class sppasMediaPanel(sppasPanel):
     def Load(self, filename):
         """Load the file that filename refers to.
 
-        It resets all known information like the length but also the period.
+        It resets all known information like the length.
 
         :param filename: (str)
         :return: (bool) False if not already loaded
@@ -595,6 +527,7 @@ class sppasMediaPanel(sppasPanel):
         :return: (bool)
 
         """
+        wx.LogMessage("Play {:s}".format(self._filename))
         if self._filename is None:
             wx.LogError("No media file defined.")
             return False
@@ -616,8 +549,6 @@ class sppasMediaPanel(sppasPanel):
             if self.__set_infos() is False:
                 return False
 
-        self.__validate_offsets()
-        self._timer.Start(self._refreshtimer)
         played = self._mc.Play()
         return played
 
@@ -637,13 +568,6 @@ class sppasMediaPanel(sppasPanel):
         if self._loaded is False or self._length == 0:
             return 0
 
-        if offset < self._offsets[0]:
-            offset = self._offsets[0]
-        if offset > self._offsets[1]:
-            offset = self._offsets[1]
-
-        if self._slider is not None:
-            self._slider.SetValue(offset)
         return self._mc.Seek(offset, mode)
 
     # ----------------------------------------------------------------------
@@ -661,15 +585,12 @@ class sppasMediaPanel(sppasPanel):
     # ----------------------------------------------------------------------
 
     def Stop(self):
-        """Stops the media and disable auto-replay."""
+        """Stops the media."""
         if self._loaded is False or self._length == 0:
             return
 
         try:
             self._mc.Stop()
-            self.Seek(self._offsets[0])
-            self._timer.Stop()
-            self._autoreplay = False
         except Exception as e:
             # provide errors like:
             # Fatal IO error 11 (Resource temporarily unavailable)
@@ -682,7 +603,7 @@ class sppasMediaPanel(sppasPanel):
 
     def Close(self, force=False):
         """Close the sppasMediaPanel."""
-        self.Stop()
+        self._mc.Stop()
         # del self._timer
         wx.Window.Close(self, force)
 
@@ -690,9 +611,8 @@ class sppasMediaPanel(sppasPanel):
 
     def Destroy(self):
         """Destroy the sppasMediaPanel."""
-        self.Stop()
+        self._mc.Stop()
         wx.Window.DeletePendingEvents(self)
-        del self._timer
         wx.Window.Destroy(self)
 
     # -----------------------------------------------------------------------
@@ -812,6 +732,7 @@ class sppasMediaPanel(sppasPanel):
         Not sent under windows, but required on MacOS and Linux.
 
         """
+        wx.LogDebug(" ON MEDIA LOADED DU *****MEDIA***** PANEL * * * ")
         self._loaded = True
 
         # Now, loaded is True, but length is 0 until we attempt to play.
@@ -855,34 +776,6 @@ class sppasMediaPanel(sppasPanel):
             pass
 
         event.StopPropagation()
-
-    # ----------------------------------------------------------------------
-
-    def OnTimer(self, event):
-        """Call it if EVT_TIMER is captured."""
-        if not self._mc:
-            return
-        state = self._mc.GetState()
-        offset = self._mc.Tell()
-        if state == wx.media.MEDIASTATE_PLAYING and self._slider is not None:
-            self._slider.SetValue(offset)
-
-        # On MacOS, it seems that offset is not precise enough...
-        # It can be + or - 3 compared to the expected value!
-        if state == wx.media.MEDIASTATE_STOPPED or \
-                (state == wx.media.MEDIASTATE_PLAYING and (offset + 3 > self._offsets[1])):
-            # Media reached the end of the file and automatically stopped
-            # but our Stop() does much more things
-            # or
-            # Media is playing and the current position is very close to the
-            # end of our limit, so we can stop playing.
-            if self._autoreplay is True:
-                self.Stop()
-                self.AutoPlay(self._offsets[0], self._offsets[1])
-            else:
-                self.Stop()
-
-        self.Refresh()
 
     # -----------------------------------------------------------------------
 
@@ -1033,28 +926,12 @@ class sppasMediaPanel(sppasPanel):
     # Private
     # -----------------------------------------------------------------------
 
-    def __on_slider_seek(self, event):
-        if self._loaded is False or self._length == 0:
-            return
-        if self._slider is not None:
-            offset = self._slider.GetValue()
-            self._mc.Seek(offset)
-        event.Skip()
-
-    # -----------------------------------------------------------------------
-
     def __reset(self):
         """Reset the media: cancel all known information."""
         self._filename = None
         self._loaded = False
-        self._offsets = (0, 0)
         self._length = 0
-        self._timer.Stop()
-        self._refreshtimer = 10
         self._mt = MediaType().unknown
-        if self._slider is not None:
-            self._slider.SetRange(0, 100)
-            self._slider.SetValue(0)
 
     # -----------------------------------------------------------------------
 
@@ -1079,45 +956,12 @@ class sppasMediaPanel(sppasPanel):
         if length != self._length:
             self._length = length
             self._mt = sppasMediaPanel.ExpectedMediaType(self._filename)
-            if self._mt == MediaType().video:
-                self._refreshtimer = 40
-            else:
-                self._refreshtimer = 10
             if self._mt == MediaType().audio:
                 self._audio = AudioListView(self._filename)
 
             self.SetBestSize()
 
-            # if the offset was not fixed
-            if self._offsets == (0, 0):
-                # We din't already fixed a period.
-                # We set the period to the whole content
-                self._offsets = (0, self._length)
-
-            # Seek to the beginning of the media
-            self._mc.Seek(self._offsets[0], mode=wx.FromStart)
-
-            # Apply to the slider
-            if self._slider is not None:
-                self._slider.SetRange(self._offsets[0], self._offsets[1])
-                self._slider.SetValue(self._offsets[0])
-
         return True
-
-    # ----------------------------------------------------------------------
-
-    def __validate_offsets(self):
-        """Adjust if given offsets are not in an appropriate range."""
-        # validate current position
-        offset = self._mc.Tell()
-        if offset < self._offsets[0]:
-            self.Seek(self._offsets[0])
-        elif offset > self._offsets[1]:
-            self.Seek(self._offsets[0])
-
-        # validate end position
-        if self._offsets[1] > self._length:
-            self._offsets = (self._offsets[0], self._length)
 
 # ---------------------------------------------------------------------------
 
@@ -1145,7 +989,6 @@ class TestPanel(wx.Panel):
 
         self.mc.Bind(wx.media.EVT_MEDIA_LOADED, self.OnMediaLoaded)
         self.Bind(MediaEvents.EVT_MEDIA_ACTION, self.OnMediaAction)
-        self.mc.Bind(wx.EVT_TIMER, self.OnTimer)
 
         btn1 = wx.Button(self, -1, "Load File")
         self.Bind(wx.EVT_BUTTON, self.OnLoadFile, btn1)
@@ -1160,11 +1003,9 @@ class TestPanel(wx.Panel):
         btn4 = wx.Button(self, -1, "Stop")
         self.Bind(wx.EVT_BUTTON, self.OnStop, btn4)
 
-        btn5 = wx.Button(self, -1, "AutoPlay")
-        self.Bind(wx.EVT_BUTTON, self.OnAutoPlay, btn5)
-
-        slider = wx.Slider(self, -1, 0, 0, 10, style=wx.SL_HORIZONTAL)
-        slider.SetMinSize(wx.Size(250, -1))
+        self.slider = wx.Slider(self, -1, 0, 0, 10, style=wx.SL_HORIZONTAL)
+        self.slider.SetMinSize(wx.Size(250, -1))
+        self.Bind(wx.EVT_SLIDER, self.OnSeek, self.slider)
 
         self.st_len = StaticText(self, -1, size=(100, -1))
         self.st_pos = StaticText(self, -1, size=(100, -1))
@@ -1176,16 +1017,18 @@ class TestPanel(wx.Panel):
         sizer.Add(btn2, (2, 3))
         sizer.Add(btn3, (3, 3))
         sizer.Add(btn4, (4, 3))
-        sizer.Add(btn5, (5, 3))
-        sizer.Add(slider, (7, 1), flag=wx.EXPAND)
+        sizer.Add(self.slider, (7, 1), flag=wx.EXPAND)
         sizer.Add(self.st_len, (1, 5))
         sizer.Add(self.st_pos, (2, 5))
         self.SetSizer(sizer)
 
-        self.mc.SetSlider(slider)
         wx.CallAfter(
             self.DoLoadFile,
             os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
+
+        self.timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.OnTimer)
+        self.timer.Start(10)
 
     # ----------------------------------------------------------------------
 
@@ -1211,11 +1054,14 @@ class TestPanel(wx.Panel):
             # self.GetSizer().Layout()
             w, h = self.mc.GetSize()
             wx.LogMessage("File loaded. Size is w={:d}, h={:d}".format(w, h))
+            self.slider.SetRange(0, self.mc.Length())
             self.playBtn.Enable()
 
     # ----------------------------------------------------------------------
 
     def OnMediaLoaded(self, evt):
+        wx.LogDebug(" ON MEDIA LOADED DU TEST PANEL * * * ")
+        self.slider.SetRange(0, self.mc.Length())
         self.playBtn.Enable()
 
     # ----------------------------------------------------------------------
@@ -1233,33 +1079,17 @@ class TestPanel(wx.Panel):
     # ----------------------------------------------------------------------
 
     def OnPlay(self, evt):
-        if self.mc.NormalPlay() is False:
+        if self.mc.Play() is False:
             self.st_pos.SetLabel('position: 0')
             self.st_len.SetLabel('length: -- seconds')
             wx.MessageBox("Unable to Play media : Unsupported format?",
                           "ERROR",
                           wx.ICON_ERROR | wx.OK)
         else:
-            self.__set_media()
-
-    # ----------------------------------------------------------------------
-
-    def OnAutoPlay(self, evt):
-        if self.mc.AutoPlay() is False:
-            self.st_pos.SetLabel('position: 0')
-            self.st_len.SetLabel('length: -- seconds')
-            wx.MessageBox("Unable to Play media : Unsupported format?",
-                          "ERROR",
-                          wx.ICON_ERROR | wx.OK)
-        else:
-            self.__set_media()
-
-    # ----------------------------------------------------------------------
-
-    def __set_media(self):
-        self.GetSizer().Layout()
-        self.st_len.SetLabel(
-            'length: {:f} seconds'.format(float(self.mc.Length()) / 1000.))
+            self.GetSizer().Layout()
+            self.st_len.SetLabel(
+                'length: {:f} seconds'.format(float(self.mc.Length()) / 1000.))
+            self.slider.SetRange(0, self.mc.Length())
 
     # ----------------------------------------------------------------------
 
@@ -1273,7 +1103,24 @@ class TestPanel(wx.Panel):
 
     # ----------------------------------------------------------------------
 
+    def OnSeek(self, evt):
+        offset = self.slider.GetValue()
+        self.mc.Seek(offset)
+
+    # ----------------------------------------------------------------------
+
     def OnTimer(self, evt):
         offset = self.mc.Tell()
-        self.st_pos.SetLabel('Position: %d' % offset)
+        self.slider.SetValue(offset)
+        self.st_len.SetLabel('length: %d seconds' % (self.mc.Length()/1000))
+        self.st_pos.SetLabel('position: %d' % offset)
+
+    # ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+
+    def Destroy(self):
+        self.timer.Stop()
+        del self.timer
+        wx.Panel.Destroy(self)
+
 

@@ -34,17 +34,24 @@
 
 """
 
+import os
+import time
 import wx
+import wx.media
+
+from sppas.src.config import paths
 
 from ..button import ToggleButton, BitmapTextButton
 from ..panel import sppasPanel
+from .mediatest import sppasMediaPanel
 from .mediaevents import MediaEvents
+from .mediactrl import MediaType
 
 # ---------------------------------------------------------------------------
 
 
 class sppasPlayerControlsPanel(sppasPanel):
-    """Create a panel with controls for a list of media.
+    """Create a panel with controls for media.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -89,7 +96,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         self.Layout()
 
     # -----------------------------------------------------------------------
-    # Public methods
+    # Public methods, for the controls
     # -----------------------------------------------------------------------
 
     def GetWidgetsPanel(self):
@@ -116,8 +123,7 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     def GetSlider(self):
         """Return the slider to indicate offsets."""
-        transport_panel = self.FindWindow("transport_panel")
-        return transport_panel.FindWindow("seek_slider")
+        return self.FindWindow("seek_slider")
 
     # -----------------------------------------------------------------------
 
@@ -183,6 +189,28 @@ class sppasPlayerControlsPanel(sppasPanel):
         slider = transport_panel.FindWindow("seek_slider")
         slider.SetRange(min_value, max_value)
         slider.SetValue(min_value)
+
+    # -----------------------------------------------------------------------
+    # Public methods, for the media
+    # -----------------------------------------------------------------------
+
+    def play(self):
+        self.notify(action="play", value=None)
+
+    # -----------------------------------------------------------------------
+
+    def stop(self):
+        self.notify(action="stop", value=None)
+
+    # -----------------------------------------------------------------------
+
+    def rewind(self):
+        self.notify(action="rewind", value=None)
+
+    # -----------------------------------------------------------------------
+
+    def forward(self):
+        self.notify(action="forward", value=None)
 
     # -----------------------------------------------------------------------
     # Construct the GUI
@@ -261,7 +289,6 @@ class sppasPlayerControlsPanel(sppasPanel):
 
         btn_play = BitmapTextButton(panel, name="media_play")
         self.SetButtonProperties(btn_play)
-        # btn_play.Enable(False)
         btn_play.SetFocus()
         btn_play.SetMinSize(wx.Size(sppasPanel.fix_size(32),
                                     sppasPanel.fix_size(32)))
@@ -377,9 +404,20 @@ class sppasPlayerControlsPanel(sppasPanel):
         """
         obj = event.GetEventObject()
         name = obj.GetName()
+        wx.LogDebug("Process action from {:s}".format(name))
 
-        if name in ("media_play", "media_stop", "media_rewind", "media_forward"):
-            self.notify(action=name[6:], value=None)
+        if name == "media_play":
+            wx.LogMessage("PLAY ACTION")
+            self.play()
+
+        elif name == "media_stop":
+            self.stop()
+
+        elif name == "media_rewind":
+            self.rewind()
+
+        elif name == "media_forward":
+            self.forward()
 
         elif name == "volume_mute":
             self.__action_volume(to_notify=True)
@@ -429,18 +467,271 @@ class sppasPlayerControlsPanel(sppasPanel):
 # ---------------------------------------------------------------------------
 
 
+class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
+    """Create a panel with controls to manage a list of media.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
+
+    A player controls panel to play several media at a time.
+
+    """
+
+    def __init__(self, parent, id=-1,
+                 media=list(),
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 style=0,
+                 name="multi_player_panel"):
+        """Create a sppasMultiPlayerPanel.
+
+        :param parent: (wx.Window) Parent window must NOT be none
+        :param id: (int) window identifier or -1
+        :param media: (list) List of wx.media.MediaCtrl
+        :param pos: (wx.Pos) the control position
+        :param size: (wx.Size) the control size
+        :param style: (int) the underlying window style
+        :param name: (str) the widget name.
+
+        """
+        super(sppasMultiPlayerPanel, self).__init__(
+            parent, id, pos, size, style, name)
+
+        self.__media = media
+        self._length = 0
+        self._offsets = (0, 0)
+        self._autoreplay = True
+        self._timer = wx.Timer(self)
+        self._refreshtimer = 40
+        self.Bind(wx.EVT_TIMER, self.OnTimer)
+
+    # -----------------------------------------------------------------------
+
+    def set_media(self, media_lst):
+        """Set a new list of media.
+
+        :param media_lst: (list)
+
+        """
+        self.__reset()
+        self.__media = list()
+
+        for m in media_lst:
+            self.__add_and_init_media(m)
+
+        # re-evaluate length
+        self._length = max(m.Length() for m in self.__media)
+
+        # validate current offsets
+        self.__validate_offsets()
+
+        # seek at the beginning of the period
+        self.media_seek(self._offsets[0])
+
+    # -----------------------------------------------------------------------
+
+    def __add_and_init_media(self, m):
+        try:
+            m.Play()
+            time.sleep(0.1)
+            m.Stop()
+            self.__media.append(m)
+        except Exception as e:
+            wx.LogError(str(e))
+
+    # -----------------------------------------------------------------------
+
+    def add_media(self, media):
+        """Add a media into the list of media managed by this control."""
+        if media in self.__media:
+            return False
+        self.__media.append(media)
+
+        # seek the new media to the current position.
+        media.seek(self.media_tell())
+
+        # re-evaluate length
+        self._length = max(m.Length() for m in self.__media)
+
+    # -----------------------------------------------------------------------
+
+    def media_playing(self):
+        """Return the first media we found playing, None instead."""
+        for m in self.__media:
+            if m.GetState() == wx.media.MEDIASTATE_PLAYING:
+                return m
+        return None
+
+    # -----------------------------------------------------------------------
+
+    def media_paused(self):
+        """Return the first media we found playing, None instead."""
+        for m in self.__media:
+            if m.GetState() == wx.media.MEDIASTATE_PAUSED:
+                return m
+        return None
+
+    # -----------------------------------------------------------------------
+
+    def media_stopped(self):
+        """Return the first media we found playing, None instead."""
+        for m in self.__media:
+            if m.GetState() == wx.media.MEDIASTATE_STOPPED:
+                return m
+        return None
+
+    # -----------------------------------------------------------------------
+
+    def media_tell(self):
+        """Return the actual position in time in a media."""
+        # In theory, all media should return the same value... but framerate
+        # of the media are different. Tell() in an audio is more precise.
+        # And in theory it should be equal to the cursor value.
+        value = self.GetSlider().GetValue()
+        wx.LogMessage("MEDIA TELL. SLIDER VALUE IS {:d}".format(value))
+        # Search for an audio first
+        for m in self.__media:
+            if m.GetMediaType() == MediaType().audio:
+                wx.LogMessage("MEDIA TELL. AUDIO VALUE IS {:d}".format(m.Tell()))
+                return m.Tell()
+        # No audio... search for a video
+        for m in self.__media:
+            if m.GetMediaType() == MediaType().video:
+                wx.LogMessage("MEDIA TELL. VIDEO VALUE IS {:d}".format(m.Tell()))
+                return m.Tell()
+
+        # No audio nor video in the list of media
+        wx.LogMessage("MEDIA TELL. No audio nor video. VALUE IS 0")
+        return 0
+
+    # -----------------------------------------------------------------------
+
+    def media_seek(self, offset):
+
+        if offset < self._offsets[0]:
+            offset = self._offsets[0]
+        if offset > self._offsets[1]:
+            offset = self._offsets[1]
+
+        for m in self.__media:
+            m.Seek(offset)
+
+    # -----------------------------------------------------------------------
+
+    def play(self):
+        """Override. Play the media and notify parent."""
+        wx.LogMessage("Play media... period is {:s}".format(str(self._offsets)))
+        self._timer.Start(self._refreshtimer)
+        self.notify(action="play", value=None)
+        for m in self.__media:
+            if m.GetMediaType() == MediaType().video:
+                m.Play()
+        for m in self.__media:
+            if m.GetMediaType() == MediaType().audio:
+                m.Play()
+
+    # -----------------------------------------------------------------------
+
+    def stop(self):
+        """Override. Stop playing the media and notify parent."""
+        self._timer.Stop()
+        self.notify(action="stop", value=None)
+        for m in self.__media:
+            m.Stop()
+
+    # ----------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+
+    def OnTimer(self, event):
+        """Call it if EVT_TIMER is captured."""
+
+        offset = self.media_tell()
+        if self.media_playing():
+            self.GetSlider().SetValue(offset)
+
+        # On MacOS, it seems that offset is not precise enough...
+        # It can be + or - 3 compared to the expected value!
+        if self.media_stopped() or \
+                (self.media_playing() and (offset + 3 > self._offsets[1])):
+            # Media reached the end of the file and automatically stopped
+            # but our Stop() does much more things
+            # or
+            # Media is playing and the current position is very close to the
+            # end of our limit, so we can stop playing.
+            if self._autoreplay is True:
+                self.stop()
+                self._autoreplay = True
+                self.play()
+            else:
+                self.stop()
+
+    # ----------------------------------------------------------------------
+
+    def __reset(self):
+        self.stop()
+        self._length = 0
+        self.__offsets = (0, 0)
+
+    # ----------------------------------------------------------------------
+
+    def __validate_offsets(self):
+        """Adjust if given offsets are not in an appropriate range."""
+        if len(self.__media) > 0:
+            offset = self.media_tell()
+            if offset < self._offsets[0] or offset > self._offsets[1]:
+                self.media_seek(self._offsets[0])
+                self.GetSlider().SetValue(offset)
+
+        # validate end position (no longer than the length)
+        if self._offsets[1] > self._length:
+            self._offsets = (self._offsets[0], self._length)
+            self.GetSlider().SetRange(self._offsets[0], self._offsets[1])
+
+# ---------------------------------------------------------------------------
+
+
 class TestPanel(sppasPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
 
-        p = sppasPlayerControlsPanel(self)
+        p1 = sppasPlayerControlsPanel(self)
+        btn1 = BitmapTextButton(p1.GetWidgetsPanel(), name="way_up_down")
+        p1.SetButtonProperties(btn1)
+        p1.AddWidget(btn1)
 
-        btn1 = BitmapTextButton(p.GetWidgetsPanel(), name="way_up_down")
-        p.SetButtonProperties(btn1)
-        p.AddWidget(btn1)
+        self.p2 = sppasMultiPlayerPanel(self)
+        self.mc = sppasMediaPanel(self)
+        self.mc.Bind(wx.media.EVT_MEDIA_LOADED, self.OnMediaLoaded)
 
-        s = wx.BoxSizer()
-        s.Add(p, 1, wx.EXPAND)
+        s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(p1, 0, wx.EXPAND)
+        s.Add(self.p2, 0, wx.EXPAND)
         self.SetSizer(s)
         self.SetBackgroundColour(wx.Colour(60, 60, 60))
         self.SetForegroundColour(wx.Colour(225, 225, 225))
+
+        wx.CallAfter(
+            self.DoLoadFile,
+            os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
+
+    # ----------------------------------------------------------------------
+
+    def OnMediaLoaded(self, evt):
+        wx.LogDebug(" ON MEDIA LOADED DU TEST PANEL * * * ")
+
+    # ----------------------------------------------------------------------
+
+    def DoLoadFile(self, path):
+        if self.mc.Load(path) is False:
+            wx.MessageBox("Unable to load %s: Unsupported format?" % path,
+                          "ERROR",
+                          wx.ICON_ERROR | wx.OK)
+        else:
+            # self.mc.SetInitialSize()
+            # self.GetSizer().Layout()
+            wx.LogMessage("File loaded. Length is {:d}".format(self.mc._length))
+            self.p2.set_media([self.mc])

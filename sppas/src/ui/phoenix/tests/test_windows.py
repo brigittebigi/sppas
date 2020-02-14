@@ -46,7 +46,7 @@ import sppas.src.ui.phoenix.windows.line as line
 import sppas.src.ui.phoenix.windows.button as button
 import sppas.src.ui.phoenix.windows.panel as panel
 import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
-import sppas.src.ui.phoenix.windows.media.mediactrl as media
+import sppas.src.ui.phoenix.windows.media.mediatest as media
 import sppas.src.ui.phoenix.windows.media.playerctrl as player
 
 # ----------------------------------------------------------------------------
