@@ -1,0 +1,461 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Document author="SPPAS 2.8 (C) Brigitte Bigi" date="2020-01-24T17:19:33+01:00" format="1.4" name="Phonetization">
+	<Metadata>
+		<Entry key="id">129ac3e4-be82-4a9d-85e2-8f1c20f4c6ad</Entry>
+		<Entry key="software_name">SPPAS</Entry>
+		<Entry key="software_version">2.8</Entry>
+		<Entry key="software_url">http://www.sppas.org/</Entry>
+		<Entry key="software_author">Brigitte Bigi</Entry>
+		<Entry key="software_contact">contact@sppas.org</Entry>
+		<Entry key="software_copyright">Copyright (C) 2011-2020 Brigitte Bigi</Entry>
+		<Entry key="language_iso">iso639-3</Entry>
+		<Entry key="language_code_0">und</Entry>
+		<Entry key="language_name_0">Undetermined</Entry>
+		<Entry key="language_url_0">https://iso639-3.sil.org/code/und</Entry>
+		<Entry key="file_license_text_0">GNU GPL V3</Entry>
+		<Entry key="file_license_url_0">https://www.gnu.org/licenses/gpl-3.0.en.html</Entry>
+		<Entry key="text_phonetization_result_of">/Users/bigi/Projects/sppas/samples/samples-fra/F_F_B003-P9-token.xra</Entry>
+		<Entry key="text_phonetization_dict">/Users/bigi/Projects/sppas/resources/dict/fra.dict</Entry>
+		<Entry key="file_writer">sppasXRA</Entry>
+		<Entry key="file_name">F_F_B003-P9-phon.xra</Entry>
+		<Entry key="file_path">/Users/bigi/Projects/sppas/samples/samples-fra</Entry>
+		<Entry key="file_ext">.xra</Entry>
+		<Entry key="file_write_date">2020-01-24T17:19:33+01:00</Entry>
+		<Entry key="file_version">1</Entry>
+	</Metadata>
+
+	<Tier id="71961164-3c85-43aa-acdd-3de296ef89d0" tiername="Phones">
+		<Annotation id="618ff750-53fc-45a8-ac8e-eea7958d64c3">
+			<Location>
+				<Interval>
+					<Begin midpoint="0.0" radius="0.0" />
+					<End midpoint="1.222" radius="0.0005" />
+				</Interval>
+			</Location>
+			<Label>
+				<Tag>sil</Tag>
+			</Label>
+		</Annotation>
+		<Annotation id="883c0187-502a-4dfe-b7d4-ad9c03a54e05">
+			<Location>
+				<Interval>
+					<Begin midpoint="1.222" radius="0.0005" />
+					<End midpoint="3.47487167564" radius="0.0005" />
+				</Interval>
+			</Location>
+			<Label>
+				<Tag>Z</Tag>
+				<Tag>S</Tag>
+			</Label>
+			<Label>
+				<Tag>E</Tag>
+				<Tag>e</Tag>
+			</Label>
+			<Label>
+				<Tag>Z-A/-m-e</Tag>
+				<Tag>Z-A/-m-E-z</Tag>
+				<Tag>Z-A/-m-e-z</Tag>
+				<Tag>Z-A/-m-E</Tag>
+			</Label>
+			<Label>
+				<Tag>R-E-y-s-i</Tag>
+				<Tag>R-e-y-s-i</Tag>
+			</Label>
+			<Label>
+				<Tag>A/</Tag>
+			</Label>
+			<Label>
+				<Tag>d-O/-R-m-i-R</Tag>
+			</Label>
+			<Label>
+				<Tag>p-a~-d-a~-t</Tag>
+				<Tag>p-a~-d-a~</Tag>
+			</Label>
+			<Label>
+				<Tag>d</Tag>
+				<Tag>t</Tag>
+				<Tag>d-@</Tag>
+			</Label>
+			<Label>
+				<Tag>l-O~</Tag>
+				<Tag>l-O~-z</Tag>
+			</Label>
+			<Label>
+				<Tag>t-R-A/-Z-E</Tag>
+				<Tag>t-R-A/-Z-E-z</Tag>
+			</Label>
+			<Label>
+				<Tag>a~-t-R-U~/</Tag>
+			</Label>
+		</Annotation>
+		<Annotation id="b6f0f5c3-daf3-4102-8d68-9cefef2486c1">
+			<Location>
+				<Interval>
+					<Begin midpoint="3.47487167564" radius="0.0005" />
+					<End midpoint="4.148" radius="0.0005" />
+				</Interval>
+			</Location>
+			<Label>
+				<Tag>sil</Tag>
+			</Label>
+		</Annotation>
+		<Annotation id="5d6fd483-79a1-4fc8-9bcc-08adb45ca086">
+			<Location>
+				<Interval>
+					<Begin midpoint="4.148" radius="0.0005" />
+					<End midpoint="7.486" radius="0.0005" />
+				</Interval>
+			</Location>
+			<Label>
+				<Tag>d-A/-b-O/-R</Tag>
+			</Label>
+			<Label>
+				<Tag>p-A/-R-s-k</Tag>
+				<Tag>p-A/-s-k-@</Tag>
+				<Tag>p-s-k</Tag>
+				<Tag>p-A/-s-@</Tag>
+				<Tag>p-A/-R-s-@-k-@</Tag>
+			</Label>
+			<Label>
+				<Tag>Z</Tag>
+				<Tag>S</Tag>
+			</Label>
+			<Label>
+				<Tag>E</Tag>
+				<Tag>e</Tag>
+			</Label>
+			<Label>
+				<Tag>Z-A/-m-e</Tag>
+				<Tag>Z-A/-m-E-z</Tag>
+				<Tag>Z-A/-m-e-z</Tag>
+				<Tag>Z-A/-m-E</Tag>
+			</Label>
+			<Label>
+				<Tag>p-y</Tag>
+			</Label>
+			<Label>
+				<Tag>t-R-u-v-e-R</Tag>
+				<Tag>t-R-u-v-e</Tag>
+			</Label>
+			<Label>
+				<Tag>y-n</Tag>
+				<Tag>y-n-@</Tag>
+			</Label>
+			<Label>
+				<Tag>b-O/-n-@</Tag>
+				<Tag>b-O/-n</Tag>
+			</Label>
+			<Label>
+				<Tag>p-O/-z-i-s-j-O~</Tag>
+			</Label>
+			<Label>
+				<Tag>p-u-R</Tag>
+			</Label>
+			<Label>
+				<Tag>m</Tag>
+				<Tag>E-m</Tag>
+			</Label>
+			<Label>
+				<Tag>A/-s-w-A/-R</Tag>
+			</Label>
+			<Label>
+				<Tag>k-O~-f-O/-R-t-A/-b-l-2-m-a~-t</Tag>
+				<Tag>k-O~-f-O/-R-t-A/-b-l-2-m-a~</Tag>
+			</Label>
+		</Annotation>
+		<Annotation id="2cb8fcaf-3ebd-4c01-ae03-6d5e4a157410">
+			<Location>
+				<Interval>
+					<Begin midpoint="7.486" radius="0.0005" />
+					<End midpoint="7.86483108852" radius="0.0005" />
+				</Interval>
+			</Location>
+			<Label>
+				<Tag>sil</Tag>
+			</Label>
+		</Annotation>
+		<Annotation id="0186a629-e56a-4098-8fa0-2a2756b7d935">
+			<Location>
+				<Interval>
+					<Begin midpoint="7.86483108852" radius="0.0005" />
+					<End midpoint="9.308" radius="0.0005" />
+				</Interval>
+			</Location>
+			<Label>
+				<Tag>a~-s-H-i-t</Tag>
+				<Tag>a~-s-H-i-t-@</Tag>
+			</Label>
+			<Label>
+				<Tag>i-l-j-A/</Tag>
+				<Tag>i-l-i-j-A/</Tag>
+				<Tag>j-A/</Tag>
+			</Label>
+			<Label>
+				<Tag>l-e</Tag>
+				<Tag>l-@</Tag>
+				<Tag>l-E-z</Tag>
+				<Tag>l-E</Tag>
+				<Tag>l-e-z</Tag>
+			</Label>
+			<Label>
+				<Tag>O/-t-R-@-z</Tag>
+				<Tag>O/-t-R-z</Tag>
+				<Tag>O/-t-R</Tag>
+				<Tag>O/-t</Tag>
+				<Tag>O/-t-R-@</Tag>
+			</Label>
+			<Label>
+				<Tag>v-w-A/-j-A/-Z-9-R</Tag>
+				<Tag>v-w-A/-j-A/-Z-9-R-z</Tag>
+			</Label>
+		</Annotation>
+		<Annotation id="5041c077-5143-424b-a980-c7f5586d483a">
+			<Location>
+				<Interval>
+					<Begin midpoint="9.308" radius="0.0005" />
+					<End midpoint="9.73719010164" radius="0.0005" />
+				</Interval>
+			</Location>
+			<Label>
+				<Tag>sil</Tag>
+			</Label>
+		</Annotation>
+		<Annotation id="66709210-2806-4f1b-8963-dcb9ce7193e2">
+			<Location>
+				<Interval>
+					<Begin midpoint="9.73719010164" radius="0.0005" />
+					<End midpoint="12.544" radius="0.0005" />
+				</Interval>
+			</Location>
+			<Label>
+				<Tag>k-a~-t</Tag>
+				<Tag>k-a~</Tag>
+			</Label>
+			<Label>
+				<Tag>s</Tag>
+			</Label>
+			<Label>
+				<Tag>E-t</Tag>
+				<Tag>E-s-t-@</Tag>
+				<Tag>e-t</Tag>
+				<Tag>E</Tag>
+				<Tag>e</Tag>
+				<Tag>t</Tag>
+				<Tag>E-s-t</Tag>
+			</Label>
+			<Label>
+				<Tag>p-A/-z</Tag>
+				<Tag>p-A/</Tag>
+			</Label>
+			<Label>
+				<Tag>s-2-z</Tag>
+				<Tag>s-2</Tag>
+			</Label>
+			<Label>
+				<Tag>k</Tag>
+				<Tag>k-j</Tag>
+				<Tag>k-i</Tag>
+			</Label>
+			<Label>
+				<Tag>p-A/-R-l-@</Tag>
+				<Tag>p-A/-R-l-2-t</Tag>
+				<Tag>p-A/-R-l</Tag>
+			</Label>
+			<Label>
+				<Tag>f-O/-R-t</Tag>
+				<Tag>f-O/-R</Tag>
+			</Label>
+			<Label>
+				<Tag>noise</Tag>
+			</Label>
+			<Label>
+				<Tag>s</Tag>
+			</Label>
+			<Label>
+				<Tag>E-t</Tag>
+				<Tag>E-s-t-@</Tag>
+				<Tag>e-t</Tag>
+				<Tag>E</Tag>
+				<Tag>e</Tag>
+				<Tag>t</Tag>
+				<Tag>E-s-t</Tag>
+			</Label>
+			<Label>
+				<Tag>s-2-z</Tag>
+				<Tag>s-2</Tag>
+			</Label>
+			<Label>
+				<Tag>k</Tag>
+				<Tag>k-j</Tag>
+				<Tag>k-i</Tag>
+			</Label>
+			<Label>
+				<Tag>s-@</Tag>
+				<Tag>s</Tag>
+			</Label>
+			<Label>
+				<Tag>m-E-t</Tag>
+				<Tag>m-E-t-2-t</Tag>
+			</Label>
+			<Label>
+				<Tag>A/</Tag>
+			</Label>
+			<Label>
+				<Tag>R-O~-f-l-e-R</Tag>
+				<Tag>R-O~-f-l-e</Tag>
+			</Label>
+		</Annotation>
+		<Annotation id="234d8f56-2cd7-4f66-a042-4821cce75546">
+			<Location>
+				<Interval>
+					<Begin midpoint="12.544" radius="0.0005" />
+					<End midpoint="13.0358032032" radius="0.0005" />
+				</Interval>
+			</Location>
+			<Label>
+				<Tag>sil</Tag>
+			</Label>
+		</Annotation>
+		<Annotation id="fb56da29-7eec-4bc9-a63c-bf29e07b5881">
+			<Location>
+				<Interval>
+					<Begin midpoint="13.0358032032" radius="0.0005" />
+					<End midpoint="19.766" radius="0.0005" />
+				</Interval>
+			</Location>
+			<Label>
+				<Tag>E</Tag>
+				<Tag>e</Tag>
+			</Label>
+			<Label>
+				<Tag>a~-n-p-l-y-z</Tag>
+				<Tag>p-l-y-z</Tag>
+				<Tag>p-l-y-s</Tag>
+				<Tag>a~-p-l-y</Tag>
+				<Tag>a~-p-l-y-z</Tag>
+				<Tag>a~-p-l-y-s</Tag>
+				<Tag>p-l-y</Tag>
+				<Tag>a~-n-p-l-y</Tag>
+				<Tag>a~-n-p-l-y-s</Tag>
+			</Label>
+			<Label>
+				<Tag>A/</Tag>
+			</Label>
+			<Label>
+				<Tag>s-a~-z</Tag>
+				<Tag>s-a~</Tag>
+			</Label>
+			<Label>
+				<Tag>A/-R-e</Tag>
+				<Tag>A/-R-E</Tag>
+			</Label>
+			<Label>
+				<Tag>d</Tag>
+				<Tag>d-y</Tag>
+			</Label>
+			<Label>
+				<Tag>b-R-y-i-t</Tag>
+				<Tag>b-R-y-i</Tag>
+			</Label>
+			<Label>
+				<Tag>d-e-z</Tag>
+				<Tag>d-E</Tag>
+				<Tag>d</Tag>
+				<Tag>d-E-z</Tag>
+				<Tag>d-e</Tag>
+			</Label>
+			<Label>
+				<Tag>R-u-z</Tag>
+				<Tag>R-u</Tag>
+			</Label>
+			<Label>
+				<Tag>s-y-R</Tag>
+			</Label>
+			<Label>
+				<Tag>l-e</Tag>
+				<Tag>l-@</Tag>
+				<Tag>l-E-z</Tag>
+				<Tag>l-E</Tag>
+				<Tag>l-e-z</Tag>
+			</Label>
+			<Label>
+				<Tag>R-A/-j</Tag>
+				<Tag>R-A/-j-z</Tag>
+			</Label>
+			<Label>
+				<Tag>noise</Tag>
+			</Label>
+			<Label>
+				<Tag>E</Tag>
+				<Tag>e</Tag>
+			</Label>
+			<Label>
+				<Tag>s</Tag>
+				<Tag>s-i</Tag>
+			</Label>
+			<Label>
+				<Tag>sil</Tag>
+			</Label>
+			<Label>
+				<Tag>p-A/-R</Tag>
+			</Label>
+			<Label>
+				<Tag>S-a~-s-@</Tag>
+				<Tag>S-a~-s</Tag>
+			</Label>
+			<Label>
+				<Tag>Z</Tag>
+				<Tag>S</Tag>
+			</Label>
+			<Label>
+				<Tag>A/-R-i-v-@</Tag>
+				<Tag>A/-R-i-v</Tag>
+			</Label>
+			<Label>
+				<Tag>A/</Tag>
+			</Label>
+			<Label>
+				<Tag>m</Tag>
+				<Tag>E-m</Tag>
+			</Label>
+			<Label>
+				<Tag>a~-d-O/-R-m-i-R</Tag>
+			</Label>
+			<Label>
+				<Tag>noise</Tag>
+			</Label>
+			<Label>
+				<Tag>v-l-A/</Tag>
+				<Tag>v-w-A/-l-A/</Tag>
+			</Label>
+			<Label>
+				<Tag>l</Tag>
+				<Tag>l-@</Tag>
+				<Tag>l-e</Tag>
+			</Label>
+			<Label>
+				<Tag>k-O~-t-R-O/-l-9-R</Tag>
+			</Label>
+			<Label>
+				<Tag>k</Tag>
+				<Tag>k-j</Tag>
+				<Tag>k-i</Tag>
+			</Label>
+			<Label>
+				<Tag>A/-R-i-v-@</Tag>
+				<Tag>A/-R-i-v</Tag>
+			</Label>
+		</Annotation>
+		<Annotation id="f126bd81-b94e-4cbf-97e4-7bf1d7a7a22e">
+			<Location>
+				<Interval>
+					<Begin midpoint="19.766" radius="0.0005" />
+					<End midpoint="20.7557" radius="0.0005" />
+				</Interval>
+			</Location>
+		</Annotation>
+	</Tier>
+
+	<Hierarchy />
+</Document>
+

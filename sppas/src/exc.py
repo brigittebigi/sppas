@@ -167,6 +167,26 @@ class IndexRangeException(IndexError):
 # -----------------------------------------------------------------------
 
 
+class IntervalRangeException(ValueError):
+    """:ERROR 016:.
+
+    Value {} is out of range [{},{}].
+
+    """
+
+    def __init__(self, value, min_value, max_value):
+        self.parameter = error('016') + \
+                         (error('016', "globals")).format(
+                             value=value,
+                             min_value=min_value,
+                             max_value=max_value)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# -----------------------------------------------------------------------
+
+
 class IOExtensionException(IOError):
     """:ERROR 110:.
 

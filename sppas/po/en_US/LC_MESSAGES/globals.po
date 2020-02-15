@@ -26,6 +26,9 @@ msgstr "Min value {min_value} is bigger than max value {max_value}."
 msgid ":ERROR 014: "
 msgstr "List index {value} out of range [{min_value},{max_value}]"
 
+msgid ":ERROR 016: "
+msgstr "Value {value} out of range [{min_value},{max_value}]"
+
 msgid ":ERROR 100: "
 msgstr "{!s:s} is not of the expected type '{:s}'."
 

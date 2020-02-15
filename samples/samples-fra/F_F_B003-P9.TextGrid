@@ -1,58 +1,58 @@
 File type = "ooTextFile"
 Object class = "TextGrid"
 
-xmin = 0 
-xmax = 20.7557 
-tiers? <exists> 
-size = 1 
-item []: 
-    item [1]:
-        class = "IntervalTier" 
-        name = "transcription" 
-        xmin = 0 
-        xmax = 20.7557 
-        intervals: size = 11 
-        intervals [1]:
-            xmin = 0 
-            xmax = 1.222 
-            text = "#" 
-        intervals [2]:
-            xmin = 1.222 
-            xmax = 3.47487167564 
-            text = "j'ai jamais réussi à dormir pendant de longs trajets en train" 
-        intervals [3]:
-            xmin = 3.47487167564 
-            xmax = 4.148 
-            text = "#" 
-        intervals [4]:
-            xmin = 4.148 
-            xmax = 7.486 
-            text = "d'abord parce que j'ai jamais pu trouver une bonne position pour m'asseoir confortablement" 
-        intervals [5]:
-            xmin = 7.486 
-            xmax = 7.86483108852 
-            text = "#" 
-        intervals [6]:
-            xmin = 7.86483108852 
-            xmax = 9.308 
-            text = "ensuite il y a les autres voyageurs" 
-        intervals [7]:
-            xmin = 9.308 
-            xmax = 9.73719010164 
-            text = "#" 
-        intervals [8]:
-            xmin = 9.73719010164 
-            xmax = 12.544 
-            text = "quand c'est pas ceux qui parlent fort * c'est ceux qui se mettent à ronfler" 
-        intervals [9]:
-            xmin = 12.544 
-            xmax = 13.0358032032 
-            text = "#" 
-        intervals [10]:
-            xmin = 13.0358032032 
-            xmax = 19.766 
-            text = "et en plus a sans arrêt du bruit des roues sur les rails * et si + par chance j'arrive à m'endormir * voilà le contrôleur qui arrive" 
-        intervals [11]:
-            xmin = 19.766 
-            xmax = 20.7557 
-            text = "" 
+xmin = 0.0
+xmax = 20.7557
+tiers? <exists>
+size = 1
+item []:
+	item [1]:
+		class = "IntervalTier"
+		name = "transcription"
+		xmin = 0.0
+		xmax = 20.7557
+		intervals: size = 11
+		intervals [1]:
+			xmin = 0.0
+			xmax = 1.222
+			text = "#"
+		intervals [2]:
+			xmin = 1.222
+			xmax = 3.47487167564
+			text = "j'ai jamais réussi à dormir pendant de longs trajets en train"
+		intervals [3]:
+			xmin = 3.47487167564
+			xmax = 4.148
+			text = "#"
+		intervals [4]:
+			xmin = 4.148
+			xmax = 7.486
+			text = "d'abord parce que j'ai jamais pu trouver une bonne position pour m'asseoir confortablement"
+		intervals [5]:
+			xmin = 7.486
+			xmax = 7.86483108852
+			text = "#"
+		intervals [6]:
+			xmin = 7.86483108852
+			xmax = 9.308
+			text = "ensuite il y a les autres voyageurs"
+		intervals [7]:
+			xmin = 9.308
+			xmax = 9.73719010164
+			text = "#"
+		intervals [8]:
+			xmin = 9.73719010164
+			xmax = 12.544
+			text = "quand c'est pas ceux qui parlent fort * c'est ceux qui se mettent à ronfler"
+		intervals [9]:
+			xmin = 12.544
+			xmax = 13.0358032032
+			text = "#"
+		intervals [10]:
+			xmin = 13.0358032032
+			xmax = 19.766
+			text = "et en plus a sans arrêt du bruit des roues sur les rails * et si + par chance j'arrive à m'endormir * voilà le contrôleur qui arrive"
+		intervals [11]:
+			xmin = 19.766
+			xmax = 20.7557
+			text = ""
