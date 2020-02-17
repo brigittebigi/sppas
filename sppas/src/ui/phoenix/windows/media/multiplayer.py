@@ -43,7 +43,7 @@ from sppas.src.exc import IntervalRangeException
 
 from ..panel import sppasPanel
 from ..button import BitmapTextButton
-from .mediatest import sppasMediaPanel
+from .mediactrl import sppasMediaCtrl
 from .mediactrl import MediaType
 from .playerctrl import sppasPlayerControlsPanel
 from .mediaevents import MediaEvents
@@ -437,12 +437,12 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         #        self.GetSlider().SetValue(offset)
 
         # validate end position (no longer than the length)
-        if self.get_end_pos() > self._length:
-            self.GetSlider().SetRange(self.get_start_pos(), self._length)
+        if self.end_pos > self._length:
+            self.GetSlider().SetRange(self.start_pos, self._length)
 
         offset = self.media_tell()
-        if offset < self.get_start_pos() or offset > self.get_end_pos():
-            self.media_seek(self.get_start_pos())
+        if offset < self.start_pos or offset > self.end_pos:
+            self.media_seek(self.start_pos)
             real_cur_pos = self.media_tell()
             self.GetSlider().SetValue(real_cur_pos)
 
@@ -457,18 +457,17 @@ class TestPanel(sppasPanel):
 
         self.mp = sppasMultiPlayerPanel(self)
 
-        self.mc1 = sppasMediaPanel(self)
+        self.mc1 = sppasMediaCtrl(self)
         self.mc1.Hide()
 
-        self.mc2 = sppasMediaPanel(self)
+        self.mc2 = sppasMediaCtrl(self)
         self.mc2.Hide()
 
-        self.mc3 = sppasMediaPanel(self)
+        self.mc3 = sppasMediaCtrl(self)
         self.mc3.Hide()
 
         self.Bind(MediaEvents.EVT_MEDIA_LOADED, self.OnMediaLoaded)
         self.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.OnMediaNotLoaded)
-        # self.Bind(MediaEvents.EVT_MEDIA_ACTION, self.OnMediaAction)
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(self.mp, 0, wx.EXPAND)
@@ -487,7 +486,7 @@ class TestPanel(sppasPanel):
         wx.LogDebug(" - Media length: {:d}".format(media.Length()))
         wx.LogDebug(" - Media type: {:s}".format(self.mediatype(media.GetMediaType())))
         self.mp.add_media(media)
-        self.mp.set_range(1000, 4000)
+        self.mp.set_range()
 
     # ----------------------------------------------------------------------
 

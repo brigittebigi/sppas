@@ -44,8 +44,9 @@ import wx.lib.newevent
 
 from sppas import paths
 from ..panel import sppasCollapsiblePanel, sppasScrolledPanel
-from .mediactrl import sppasMedia
+from .mediactrl import sppasMediaCtrl
 from .mediactrl import MediaType
+from .mediaevents import MediaEvents
 
 # ---------------------------------------------------------------------------
 
@@ -70,7 +71,7 @@ class sppasMediaPanel(sppasCollapsiblePanel):
         The parent can Bind the wx.EVT_COLLAPSIBLEPANE_CHANGED.
 
         """
-        media_type = sppasMedia.ExpectedMediaType(filename)
+        media_type = sppasMediaCtrl.ExpectedMediaType(filename)
         if media_type == MediaType().unknown:
             raise TypeError("File {:s} is of an unknown type "
                             "(no audio nor video).".format(filename))
@@ -83,21 +84,18 @@ class sppasMediaPanel(sppasCollapsiblePanel):
         self.AddButton("zoom_out")
         self.AddButton("zoom")
         self.AddButton("close")
-        mc = sppasMedia(self)
+        mc = sppasMediaCtrl(self)
+        mc.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__process_media_loaded)
+        mc.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__process_media_not_loaded)
+
         self.SetPane(mc)
+        self.Collapse()
+
         self.media_zoom(0)  # 100% zoom = initial size
-        # self.Bind(sppasMedia.EVT_MEDIA_ACTION, self._process_action)
-        self.Bind(wx.EVT_BUTTON, self._process_event)
+        # self.Bind(wx.EVT_BUTTON, self._process_event)
 
         # Load the media
-        if mc.Load(filename) is True:
-            # Under Windows, the Load methods always return True,
-            # even if the media is not loaded...
-            time.sleep(0.1)
-            self.__set_media_properties(mc)
-        else:
-            self.Collapse()
-            mc.Bind(wx.media.EVT_MEDIA_LOADED, self.__process_media_loaded)
+        mc.Load(filename)
 
     # -----------------------------------------------------------------------
 
@@ -105,15 +103,16 @@ class sppasMediaPanel(sppasCollapsiblePanel):
         """Process the end of load of a media."""
         wx.LogMessage("Media loaded event received.")
         media = event.GetEventObject()
-        self.__set_media_properties(media)
-
-    # -----------------------------------------------------------------------
-
-    def __set_media_properties(self, media):
-        """Fix the properties of the media."""
         media_size = media.DoGetBestSize()
         media.SetSize(media_size)
         self.Expand()
+
+    # -----------------------------------------------------------------------
+
+    def __process_media_not_loaded(self, event):
+        """Process the end of a failed load of a media."""
+        wx.LogMessage("Media loaded event received.")
+        self.Collapse()
 
     # -----------------------------------------------------------------------
 
@@ -240,20 +239,28 @@ class TestPanel(sppasScrolledPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
 
-        p1 = sppasMediaPanel(self,
-             filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
+        p1 = sppasMediaPanel(
+            self,
+            filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
         p1.GetPane().Play()
 
-        p2 = sppasMediaPanel(self,
-             filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"))
+        p2 = sppasMediaPanel(
+            self,
+            filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"))
 
-        p3 = sppasMediaPanel(self,
+        p3 = sppasMediaPanel(
+            self,
             filename=os.path.join(paths.samples, "samples-fra", "F_F_C006-P6.wav"))
+
+        p4 = sppasMediaPanel(
+            self,
+            filename=os.path.join(paths.samples, "toto.wav"))
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(p1, 0, wx.EXPAND)
         s.Add(p2, 0, wx.EXPAND)
         s.Add(p3, 0, wx.EXPAND)
+        s.Add(p4, 0, wx.EXPAND)
         self.SetSizer(s)
         self.SetupScrolling(scroll_x=False, scroll_y=True)
 
