@@ -169,7 +169,7 @@ class sppasPlayerControlsPanel(sppasPanel):
             btn.Refresh()
 
     # -----------------------------------------------------------------------
-    # Public methods, for the media
+    # Public methods, for the media. To be overridden.
     # -----------------------------------------------------------------------
 
     def play(self):
@@ -182,13 +182,27 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def rewind(self):
+    def media_rewind(self):
+        """To be overridden. Seek media to some time earlier."""
         self.notify(action="rewind", value=None)
 
     # -----------------------------------------------------------------------
 
-    def forward(self):
+    def media_forward(self):
+        """To be overridden. Seek media to some time later."""
         self.notify(action="forward", value=None)
+
+    # -----------------------------------------------------------------------
+
+    def media_seek(self, value):
+        """To be overridden. Seek media to the given offset value (ms)."""
+        self.notify(action="seek", value=value)
+
+    # -----------------------------------------------------------------------
+
+    def media_volume(self, value):
+        """To be overridden. Adjust volume to the given scale value."""
+        self.notify(action="volume", value=value)
 
     # -----------------------------------------------------------------------
     # Construct the GUI
@@ -245,7 +259,7 @@ class sppasPlayerControlsPanel(sppasPanel):
 
         # Labels of wx.Slider are not supported under MacOS.
         slider = wx.Slider(self, style=wx.SL_HORIZONTAL | wx.SL_MIN_MAX_LABELS)
-        slider.SetRange(0, 100)
+        slider.SetRange(0, 0)
         slider.SetValue(0)
         slider.SetName("seek_slider")
 
@@ -381,20 +395,18 @@ class sppasPlayerControlsPanel(sppasPanel):
         """
         obj = event.GetEventObject()
         name = obj.GetName()
-        wx.LogDebug("Process action from {:s}".format(name))
 
         if name == "media_play":
-            wx.LogMessage("PLAY ACTION")
             self.play()
 
         elif name == "media_stop":
             self.stop()
 
         elif name == "media_rewind":
-            self.rewind()
+            self.media_rewind()
 
         elif name == "media_forward":
-            self.forward()
+            self.media_forward()
 
         elif name == "volume_mute":
             self.__action_volume(to_notify=True)
@@ -403,7 +415,7 @@ class sppasPlayerControlsPanel(sppasPanel):
             self.__action_volume(to_notify=False)
 
         elif name == "seek_slider":
-            self.notify(action="seek", value=obj.GetValue())
+            self.media_seek(obj.GetValue())
 
         else:
             event.Skip()
@@ -422,7 +434,9 @@ class sppasPlayerControlsPanel(sppasPanel):
             if to_notify is True:
                 mute_btn.SetImage("volume_mute")
                 mute_btn.Refresh()
-                self.notify(action="volume", value=0.)
+                # self.notify(action="volume", value=0.)
+                self.media_volume(0.)
+
         else:
             # get the volume value from the slider
             slider = vol_panel.FindWindow("volume_slider")
@@ -439,7 +453,8 @@ class sppasPlayerControlsPanel(sppasPanel):
 
             # convert this percentage in a volume value ranging [0..1]
             volume = float(volume) / 100.
-            self.notify(action="volume", value=volume)
+            # self.notify(action="volume", value=volume)
+            self.media_volume(volume)
 
 # ---------------------------------------------------------------------------
 
@@ -461,5 +476,5 @@ class TestPanel(sppasPanel):
         self.SetForegroundColour(wx.Colour(225, 225, 225))
 
     def process_action(self, evt):
-        wx.LogMessage("Action received: {:s} with value={:s}"
-                      "".format(evt.action, str(evt.value)))
+        wx.LogDebug("Action received: {:s} with value={:s}"
+                    "".format(evt.action, str(evt.value)))

@@ -66,9 +66,9 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
-        # self.AddPage(multiplayer.TestPanel(self), "Multi Media Player")
+        self.AddPage(multiplayer.TestPanel(self), "Multi Media Player")
         # self.AddPage(player.TestPanel(self), "Player Control")
-        self.AddPage(media.TestPanel(self), "Media Control")
+        # self.AddPage(media.TestPanel(self), "Media Control")
         self.AddPage(toolbar.TestPanel(self), "Toolbar")
         self.AddPage(panel.TestPanel(self), "Panels")
         self.AddPage(buttonbox.TestPanel(self), "ButtonBox")
