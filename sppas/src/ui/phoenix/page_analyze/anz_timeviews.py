@@ -47,7 +47,7 @@ import sppas.src.anndata
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasSplitterWindow
-from ..windows import sppasPlayerControlsPanel
+from ..windows import sppasMultiPlayerPanel
 from ..windows import MediaEvents
 from ..windows import BitmapTextButton
 from ..windows import sppasProgressDialog
@@ -268,7 +268,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         splitter = sppasSplitterWindow(self, name="horiz_splitter")
 
         # Window 1 of the splitter: player controls
-        p1 = sppasPlayerControlsPanel(splitter, style=wx.BORDER_SIMPLE, name="player_controls_panel")
+        p1 = sppasMultiPlayerPanel(splitter, style=wx.BORDER_SIMPLE, name="player_controls_panel")
         best_size = p1.GetBestSize()
         self.__add_custom_controls(p1)
         splitter.Bind(MediaEvents.EVT_MEDIA_ACTION, self._process_media_action)
@@ -415,77 +415,29 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
 
         """
         name = event.action
+        value = event.value
         wx.LogDebug("Received a player event. "
                     "Action is {:s}. Value is {:s}"
                     "".format(name, str(event.value)))
 
         if name == "loaded":
-            self.media_loaded(event.GetEventObject())
-
-        elif name == "play":
-            self.play()
-
-        elif name == "stop":
-            self.stop()
-
-        elif name == "rewind":
-            self.shift(-1)
-
-        elif name == "forward":
-            self.shift(1)
-
-        elif name == "volume":
-            self.volume(event.value)
+            if value is True:
+                ctrls = self.FindWindow("player_controls_panel")
+                ctrls.add_media(event.GetEventObject().get_object())
 
         event.Skip()
 
     # -----------------------------------------------------------------------
 
-    def media_loaded(self, panel):
-        """
-
-        :param panel:
-        :return:
-
-        """
-        m = self.media_playing()
-        self.__set_slider()
-        if m is not None:
-            # Another media is currently playing. We'll play too.
-            # this media is stopped or paused
-            panel.media_offset_period(m.media_offset_get_start(), m.media_offset_get_end())
-            panel.media_seek(m.media_tell())
-            self.__play_media_panel(panel)
-
-        self.FindWindow("vert_splitter").Layout()
-        self.FindWindow("vert_splitter").UpdateSize()
-
-    # -----------------------------------------------------------------------
-
     def OnCollapseChanged(self, evt=None):
+        ctrls = self.FindWindow("player_controls_panel")
+
         panel = evt.GetEventObject()
         if panel.IsExpanded() is True:
             # The panel was collapsed, and now it is expanded.
-            m = self.media_playing()
-            if m is not None:
-                # Another media is currently playing. We'll play too.
-                # The media of the expanded panel is stopped.
-                panel.media_play(replay=None)
-                panel.media_pause()
-                panel.media_offset_period(m.media_offset_get_start(), m.media_offset_get_end())
-                panel.media_seek(m.media_tell())
-                self.__play_media_panel(panel)
-            else:
-                wx.LogDebug(" ... no media was playing.")
+            ctrls.add_media(panel.GetPane())
         else:
-            self.__set_slider()
-
-        # Adjust control to the current state (playing or paused)
-        controls = self.FindWindow("player_controls_panel")
-        if self.media_paused():
-            controls.Paused(True)
-        else:
-            controls.Paused(False)
+            ctrls.remove_media(panel.GetPane())
 
         self.GetScrolledPanel().ScrollChildIntoView(panel)
         self.FindWindow("vert_splitter").Layout()
@@ -538,156 +490,22 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
 
         """
         wx.LogDebug("Set offset period: {:d} {:d}".format(start, end))
-        for filename in self._files:
-            panel = self._files[filename]
-            if isinstance(panel, MediaTimeViewPanel):
-                panel.media_offset_period(start, end)
+        ctrls = self.FindWindow("player_controls_panel")
+        ctrls.set_range(start, end)
 
     # -----------------------------------------------------------------------
 
     def media_playing(self):
         """Return the first panel we found playing, None instead."""
-        for filename in self._files:
-            panel = self._files[filename]
-            if isinstance(panel, MediaTimeViewPanel):
-                if panel.media_playing() is True:
-                    return panel
-        return None
+        ctrls = self.FindWindow("player_controls_panel")
+        return ctrls.media_playing()
 
     # -----------------------------------------------------------------------
 
     def media_paused(self):
         """Return the first panel with a paused media or None."""
-        for filename in self._files:
-            panel = self._files[filename]
-            if isinstance(panel, MediaTimeViewPanel):
-                if panel.media_paused() is True:
-                    return panel
-        return None
-
-    # -----------------------------------------------------------------------
-
-    def play(self):
-        """Play all the media at a time."""
-        # Adjust the size of the media to be played because for video files,
-        # we can only know our size after we started to play...
-        controls = self.FindWindow("player_controls_panel")
-        is_playing = self.media_playing()
-        paused_now = False
-        to_play = list()
-        s = None
-        if is_playing is not None:
-            s = is_playing.media_tell()
-        for filename in self._files:
-            panel = self._files[filename]
-            if isinstance(panel, MediaTimeViewPanel) and panel.IsExpanded():
-                if is_playing is not None:
-                    # this media is stopped or playing
-                    panel.media_pause()
-                    paused_now = True
-                else:
-                    # this media is stopped or paused
-                    panel.media_play(replay=None)
-                    panel.media_pause()
-                    if s is not None:
-                        panel.media_seek(s)
-                    to_play.append(panel)
-
-        # Adapt the play button of the player controls
-        controls.Paused(not paused_now)
-
-        # If we have to play some media we'll do it now.
-        if paused_now == 0:
-            for panel in to_play:
-                self.__play_media_panel(panel)
-
-    # -----------------------------------------------------------------------
-
-    def __play_media_panel(self, panel):
-        controls = self.FindWindow("player_controls_panel")
-        panel.media_play(replay=controls.IsReplay())
-        self.__set_slider()
-        splitter = self.FindWindow("vert_splitter")
-        splitter.Layout()
-        splitter.UpdateSize()
-
-    # -----------------------------------------------------------------------
-
-    def stop(self):
-        """Stop playing/paused all the media at a time."""
-        for filename in self._files:
-            panel = self._files[filename]
-            if isinstance(panel, MediaTimeViewPanel) and panel.IsExpanded():
-                panel.media_stop()
-
-    # -----------------------------------------------------------------------
-
-    def shift(self, direction=0):
-        """Seek all the media to a previous/next position in time."""
-        if direction == 0:
-            return
-        if direction > 0:
-            value = 2000    # In a future version, the value will be defined by the user.
-        else:
-            value = -2000
-
-        playing_media = self.media_playing()
-        if playing_media is not None:
-            pos = playing_media.media_tell()
-            new_pos = pos + value
-            for filename in self._files:
-                panel = self._files[filename]
-                if isinstance(panel, MediaTimeViewPanel):
-                    panel.media_seek(new_pos)
-
-    # -----------------------------------------------------------------------
-
-    def volume(self, coeff):
-        """Adjust the volume with a coeff ranging from 0 to 1."""
-        for filename in self._files:
-            panel = self._files[filename]
-            if isinstance(panel, MediaTimeViewPanel):
-                panel.media_volume(coeff)
-
-    # -----------------------------------------------------------------------
-
-    def __set_slider(self):
-        """Assign the seek slider to the longest appropriate media."""
-        if len(self._files) == 0:
-            return
-        # Search for the longest media currently playing, the longest in
-        # expanded panels and the longest in absolute.
-        longest_playing = (None, 0)
-        longest_expanded = (None, 0)
-        longest = (None, 0)
-        for filename in self._files:
-            panel = self._files[filename]
-            if isinstance(panel, MediaTimeViewPanel) is False:
-                continue
-            panel.media_slider(None)
-            duration = panel.media_length()
-            if duration >= longest[1]:
-                longest = (panel, duration)
-            if panel.IsExpanded() is True:
-                if duration >= longest_expanded[1]:
-                    longest_expanded = (panel, duration)
-                if panel.media_playing() or panel.media_paused():
-                    if duration >= longest_playing[1]:
-                        longest_playing = (panel, duration)
-
-        controls = self.FindWindow("player_controls_panel")
-        p = None
-        if longest_playing[0] is not None:
-            p = longest_playing[0]
-        elif longest_expanded[0] is not None:
-            p = longest_expanded[0]
-        elif longest[0] is not None:
-            p = longest[0]
-
-        if p is not None:
-            p.media_slider(controls.GetSlider())
-            wx.LogDebug("Slider assigned to {:s}. Duration={:d}"
-                        "".format(p.GetPane().GetFilename(), p.media_length()))
+        ctrls = self.FindWindow("player_controls_panel")
+        return ctrls.media_paused()
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
@@ -698,7 +516,7 @@ class TestPanel(TimeViewFilesPanel):
     TEST_FILES = (
         os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"),
         os.path.join("/Users/bigi/Movies/Monsters_Inc.For_the_Birds.mpg"),
-        os.path.join(paths.samples, "COPYRIGHT.txt"),
+        # os.path.join(paths.samples, "COPYRIGHT.txt"),
         os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"),
         os.path.join(paths.samples, "toto.xxx"),
         os.path.join(paths.samples, "toto.ogg")

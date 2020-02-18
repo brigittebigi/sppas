@@ -36,6 +36,7 @@
 
 import os
 import wx
+import wx.lib
 import wx.media
 
 from sppas import paths
@@ -46,7 +47,8 @@ import sppas.src.audiodata.aio
 from ..windows import sppasScrolledPanel
 from ..windows import sppasCollapsiblePanel
 from .baseview import sppasBaseViewPanel
-from ..windows import sppasMediaPanel
+# from ..windows import sppasMediaPanel
+from ..windows import sppasMediaCtrl
 from ..windows import sppasPanel
 from ..windows import MediaType
 from ..windows import MediaEvents
@@ -75,9 +77,10 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    The object this class is displaying is a sppasAudio.
+    The object this class is a sppasMediaCtrl.
     Can not be constructed if the file is not supported and/or if an error
     occurred when opening or reading.
+    Send action 'loaded' with True or False value.
 
     """
 
@@ -85,7 +88,7 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
     ZOOMS = (10, 25, 50, 75, 100, 125, 150, 200, 250, 300)
 
     def __init__(self, parent, filename, name="media_timeview_panel"):
-        media_type = sppasMediaPanel.ExpectedMediaType(filename)
+        media_type = sppasMediaCtrl.ExpectedMediaType(filename)
         if media_type == MediaType().unknown:
             raise TypeError("File {:s} is of an unknown type "
                             "(no audio nor video).".format(filename))
@@ -96,6 +99,11 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
 
         # self.Bind(sppasMedia.EVT_MEDIA_ACTION, self._process_action)
         self.Bind(wx.EVT_BUTTON, self._process_event)
+        self.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__process_media_loaded)
+        self.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__process_media_not_loaded)
+
+        mc = self.GetPane()
+        mc.Load(self._filename)
 
     # -----------------------------------------------------------------------
 
@@ -106,25 +114,15 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
         self.AddButton("zoom")
         self.AddButton("close")
         self._create_child_panel()
-        self.Expand()
+        self.Collapse()
 
     # -----------------------------------------------------------------------
 
     def _create_child_panel(self):
         """Override. Create the child panel."""
-        mc = sppasMediaPanel(self)
+        mc = sppasMediaCtrl(self)
         self.SetPane(mc)
         self.media_zoom(0)  # 100% zoom = initial size
-        mc = self.GetPane()
-        # Load the media
-        if mc.Load(self._filename) is True:
-            # Under Windows, the Load methods always return True,
-            # even if the media is not loaded...
-            # time.sleep(0.1)
-            self.__set_media_properties(mc)
-        else:
-            self.Collapse()
-            mc.Bind(wx.media.EVT_MEDIA_LOADED, self.__process_media_loaded)
 
     # ------------------------------------------------------------------------
 
@@ -138,21 +136,32 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
 
     # -----------------------------------------------------------------------
 
+    def get_object(self):
+        """Return the sppasMediaCtrl."""
+        return self.GetPane()
+
+    # -----------------------------------------------------------------------
+
     def __process_media_loaded(self, event):
         """Process the end of load of a media."""
         wx.LogMessage("Media loaded event received.")
         media = event.GetEventObject()
-        self.__set_media_properties(media)
-
-    # -----------------------------------------------------------------------
-
-    def __set_media_properties(self, media):
-        """Fix the properties of the media."""
         media_size = media.DoGetBestSize()
         media.SetSize(media_size)
         self.Expand()
+
         wx.LogDebug("Send MediaActionEvent with action=loaded to parent: {:s}".format(self.GetParent().GetName()))
-        evt = MediaEvents.MediaActionEvent(action="loaded", value=None)
+        evt = MediaEvents.MediaActionEvent(action="loaded", value=True)
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
+    # -----------------------------------------------------------------------
+
+    def __process_media_not_loaded(self, event):
+        """Process the end of a failed load of a media."""
+        self.Collapse()
+        wx.LogDebug("Send MediaActionEvent with action=not loaded to parent: {:s}".format(self.GetParent().GetName()))
+        evt = MediaEvents.MediaActionEvent(action="loaded", value=False)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
 
@@ -232,7 +241,6 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
         sppasCollapsiblePanel.OnButton(self, event)
         if self.IsExpanded() is False:
             # The media was expanded, now it is collapsed.
-            self._child_panel.Stop()
             self.EnableButton("zoom", False)
             self.EnableButton("zoom_in", False)
             self.EnableButton("zoom_out", False)
@@ -244,27 +252,6 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
 
     # -----------------------------------------------------------------------
     # Media management
-    # -----------------------------------------------------------------------
-
-    def media_offset_get_start(self):
-        """Return the start position of the current period (milliseconds)."""
-        return self.GetPane().GetOffsetPeriod()[0]
-
-    def media_offset_get_end(self):
-        """Return the end position of the current period (milliseconds)."""
-        return self.GetPane().GetOffsetPeriod()[1]
-
-    def media_offset_period(self, start, end):
-        """Fix a start position and a end position to play the media.
-
-        Stop the media if playing or paused.
-
-        :param start: (int) Start time in milliseconds
-        :param end: (int) End time in milliseconds
-
-        """
-        self.GetPane().SetOffsetPeriod(start, end)
-
     # -----------------------------------------------------------------------
 
     def media_playing(self):
@@ -285,27 +272,9 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
 
     # -----------------------------------------------------------------------
 
-    def media_play(self, replay=None):
-        """Play the media."""
-        if replay is None:
-            return self.GetPane().Play()
-        if replay is False:
-            return self.GetPane().NormalPlay()
-        if replay is True:
-            return self.GetPane().AutoPlay()
-        return False
-
-    # -----------------------------------------------------------------------
-
-    def media_pause(self):
-        """Pause the media (if playing)."""
-        return self.GetPane().Pause()
-
-    # -----------------------------------------------------------------------
-
-    def media_stop(self):
-        """Stop the media (if playing or paused)."""
-        return self.GetPane().Stop()
+    def media_loading(self):
+        """Return True if the embedded media is loading."""
+        return self.GetPane().IsLoading()
 
     # -----------------------------------------------------------------------
 
@@ -318,20 +287,6 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
     def media_tell(self):
         """Return the current position in time (milliseconds)."""
         return self.GetPane().Tell()
-
-    # -----------------------------------------------------------------------
-
-    def media_seek(self, position):
-        """Seek to a position within the media (milliseconds)."""
-        self.GetPane().Seek(position, mode=wx.FromStart)
-
-    # -----------------------------------------------------------------------
-
-    def media_volume(self, value=None):
-        """Adjust the volume of the media, ranging 0.0 .. 1.0."""
-        if value is not None:
-            self.GetPane().SetVolume(value)
-        return self.GetPane().GetVolume()
 
     # -----------------------------------------------------------------------
 
@@ -361,15 +316,9 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
 
     # -----------------------------------------------------------------------
 
-    def media_slider(self, slider):
-        """Assign a slider to the media."""
-        self.GetPane().SetSlider(slider)
-
-    # -----------------------------------------------------------------------
-
     def media_remove(self, obj):
         """Remove the media we clicked on the collapsible panel close button."""
-        self._child_panel.Destroy()
+        # self._child_panel.Destroy()
         self.Destroy()
 
 # ---------------------------------------------------------------------------
@@ -893,7 +842,7 @@ class TestPanel(sppasScrolledPanel):
 
         p1 = MediaTimeViewPanel(self,
              filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
-        p1.GetPane().Play()
+        # p1.GetPane().media_play()
 
         p2 = TrsTimeViewPanel(self,
              filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.TextGrid"))

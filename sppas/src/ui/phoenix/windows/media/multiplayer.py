@@ -234,6 +234,25 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
     # -----------------------------------------------------------------------
 
+    def remove_media(self, media):
+        """Remove a media of the list of media managed by this control.
+
+        :param media:
+
+        """
+        if media not in self.__media:
+            return False
+        media.Stop()
+        self.__media.remove(media)
+
+        # re-evaluate length
+        if len(self.__media) > 0:
+            self._length = max(m.Length() for m in self.__media)
+        else:
+            self.__reset()
+
+    # -----------------------------------------------------------------------
+
     def media_playing(self):
         """Return the first media we found playing, None instead."""
         for m in self.__media:
