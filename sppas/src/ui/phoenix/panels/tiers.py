@@ -52,6 +52,7 @@ from ..windows import sppasPanel
 from ..windows import sppasTextCtrl
 from ..windows import sppasSplitterWindow
 from ..windows import LineListCtrl
+from ..windows.dialogs import Error, Confirm
 from ..windows.book import sppasNotebook
 from ..main_events import ViewEvent, EVT_VIEW
 
@@ -89,12 +90,24 @@ MSG_POINT = _("Midpoint")
 MSG_RADIUS = _("Radius")
 MSG_NB = _("Nb")
 MSG_TYPE = _("Type")
+ERR_ANN_SET_LABELS=_("Invalid annotation labels.")
+MSG_CANCEL=_("Cancel changes?")
 
 # --------------------------------------------------------------------------
 
 
 class sppasTierListCtrl(LineListCtrl):
-    """List-view of a tier.
+    """List-view of annotations of a tier.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    A ListCtrl to represent annotations of a tier.
+     - Only the best localization is displayed.
+     - Labels are serialized.
 
     """
 
@@ -105,8 +118,18 @@ class sppasTierListCtrl(LineListCtrl):
         "bool": "Boolean"
     }
 
+    # -----------------------------------------------------------------------
+
     def __init__(self, parent, tier, filename):
+        """Create a sppasTierListCtrl.
+
+        :param parent: (wx.Window)
+        :param tier: (sppasTier)
+        :param filename: (str) The file this tier was extracted from.
+
+        """
         super(sppasTierListCtrl, self).__init__(parent=parent, style=wx.LC_REPORT | wx.NO_BORDER)
+
         self._tier = tier
         self.__filename = filename
         self._create_content()
@@ -118,11 +141,13 @@ class sppasTierListCtrl(LineListCtrl):
     # -----------------------------------------------------------------------
 
     def get_tiername(self):
+        """Return the name of the tier this listctrl is displaying."""
         return self._tier.get_name()
 
     # -----------------------------------------------------------------------
 
     def get_filename(self):
+        """Return the name of the file this listctrl is displaying a tier."""
         return self.__filename
 
     # -----------------------------------------------------------------------
@@ -138,6 +163,20 @@ class sppasTierListCtrl(LineListCtrl):
             return None
         return self._tier[index]
 
+    # -----------------------------------------------------------------------
+
+    def set_annotation_labels(self, idx, labels):
+        """Set the labels of an annotation.
+
+        :param idx: (int) Index of the annotation in the list
+        :param labels: (list) List of labels
+
+        """
+        annotation = self._tier[idx]
+        annotation.set_labels(labels)
+
+    # -----------------------------------------------------------------------
+    # Construct the window
     # -----------------------------------------------------------------------
 
     def _create_content(self):
@@ -196,6 +235,29 @@ class sppasTierListCtrl(LineListCtrl):
             self.SetItem(i, labeli+2, lt)
 
         self.SetColumnWidth(cols.index(MSG_LABELS), -1)
+
+    # ---------------------------------------------------------------------
+
+    def Select(self, idx, on):
+        """Override. Selects/deselects an item.
+
+        Highlight the selected item with a Bigger & Bold font (the native
+        system can't be disabled and is different on each system).
+
+        """
+        wx.ListCtrl.Select(self, idx, on)
+        font = self.GetFont()
+        if on:
+            bold = wx.Font(int(float(font.GetPointSize())*1.3),
+                           font.GetFamily(),
+                           font.GetStyle(),
+                           wx.FONTWEIGHT_BOLD,  # weight,
+                           underline=False,
+                           faceName=font.GetFaceName(),
+                           encoding=wx.FONTENCODING_SYSTEM)
+            self.SetItemFont(idx, bold)
+        else:
+            self.SetItemFont(idx, font)
 
 # ----------------------------------------------------------------------------
 
@@ -288,41 +350,86 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         for tier in tiers:
             page = sppasTierListCtrl(notebook, tier, filename)
             page.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_annotation_selected)
+            page.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_annotation_deselected)
             notebook.AddPage(page, tier.get_name())
+
+    # -----------------------------------------------------------------------
+
+    def text_to_labels(self):
+        """Return the labels created from the text content.
+
+        :return (list of sppasLabel)
+
+        """
+        tb = self.FindWindow("ann_toolbar")
+
+        # The text is in XML (.xra) format
+        if tb.get_button("code_xml", "view_mode").IsPressed():
+            pass
+
+        # The text is in JSON (.jra) format
+        if tb.get_button("code_json", "view_mode").IsPressed():
+            pass
+
+        # The text is serialized
+        if tb.get_button("code_review", "view_mode").IsPressed():
+            pass
+
+        return ""
+
+    # -----------------------------------------------------------------------
+
+    def labels_to_text(self, labels):
+        if len(labels) == 0:
+            return ""
+
+        tb = self.FindWindow("ann_toolbar")
+
+        # The annotation labels are in XML (.xra) format
+        if tb.get_button("code_xml", "view_mode").IsPressed():
+            root = ET.Element('Annotation')
+            for label in labels:
+                label_root = ET.SubElement(root, 'Label')
+                sppasXRA.format_label(label_root, label)
+            sppasXRA.indent(root)
+            xml_text = ET.tostring(root, encoding="utf-8", method="xml")
+            return xml_text
+
+        # The annotation labels are in JSON (.jra) format
+        if tb.get_button("code_json", "view_mode").IsPressed():
+            root = list()
+            for label in labels:
+                sppasJRA.format_label(root, label)
+            json_text = json.dumps(root, indent=4, separators=(',', ': '))
+            return json_text
+
+        # The annotation labels are serialized
+        if tb.get_button("code_review", "view_mode").IsPressed():
+            if len(labels) == 1:
+                return labels[0].serialize("", alt=True)
+            c = list()
+            for label in labels:
+                c.append(label.serialize("", alt=True))
+            return "\n".join(c)
+
+        return ""
 
     # -----------------------------------------------------------------------
 
     def refresh_annotation(self):
         notebook = self.FindWindow("tiers_notebook")
         textctrl = self.FindWindow("ann_textctrl")
-        tb = self.FindWindow("ann_toolbar")
-
         page_index = notebook.GetSelection()
         listctrl = notebook.GetPage(page_index)
+
         ann = listctrl.get_selected_annotation()
         if ann is None:
             textctrl.SetValue("")
         else:
             # Which view is currently toggled?
             textctrl.SetFocus()
-            if tb.get_button("code_xml", "view_mode").IsPressed():
-                root = ET.Element('Annotation')
-                for label in ann.get_labels():
-                    label_root = ET.SubElement(root, 'Label')
-                    sppasXRA.format_label(label_root, label)
-                sppasXRA.indent(root)
-                xml_text = ET.tostring(root, encoding="utf-8", method="xml")
-                textctrl.SetValue(xml_text)
+            textctrl.SetValue(self.labels_to_text(ann.get_labels()))
 
-            elif tb.get_button("code_json", "view_mode").IsPressed():
-                root = list()
-                for label in ann.get_labels():
-                    sppasJRA.format_label(root, label)
-                json_text = json.dumps(root, indent=4, separators=(',', ': '))
-                textctrl.SetValue(json_text)
-
-            elif tb.get_button("code_review", "view_mode").IsPressed():
-                textctrl.SetValue(ann.serialize_labels())
         return ann
 
     # -----------------------------------------------------------------------
@@ -387,8 +494,33 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
     # -----------------------------------------------------------------------
 
+    def _on_annotation_deselected(self, evt):
+        """An annotation is de-selected in the list.
+
+        If the content was modified, we have to push the text content into
+        the annotation of the tier.
+
+        """
+        listctrl = evt.GetEventObject()
+        index = evt.GetIndex()
+        wx.LogMessage("DESELECTED = {}".format(index))
+        try:
+            labels = self.text_to_labels()
+            # listctrl.set_annotation_labels(labels)
+        except Exception as e:
+            msg = ERR_ANN_SET_LABELS + "{:s}".format(str(e)) + MSG_CANCEL
+            response = Confirm(msg)
+
+        listctrl.Select(index, on=0)
+
+    # -----------------------------------------------------------------------
+
     def _on_annotation_selected(self, evt):
         """An annotation is selected in the list."""
+        listctrl = evt.GetEventObject()
+        index = evt.GetIndex()
+        wx.LogMessage("SELECTED = {}".format(index))
+        listctrl.Select(index, on=1)
         self.__annotation_selected()
 
     def __annotation_selected(self):
@@ -415,9 +547,13 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     # -----------------------------------------------------------------------
 
     def _on_page_changed(self, evt):
-        """The notebook is being to change page."""
+        """The notebook changed its page."""
         if not self:
             return
+        new_selection = evt.GetSelection()
+        notebook = self.FindWindow("tiers_notebook")
+        page = notebook.GetPage(new_selection)
+        page.Refresh()
         self.Notify(action="tier_selected", value=None)
         self.__annotation_selected()
 

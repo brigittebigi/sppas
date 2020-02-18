@@ -416,11 +416,19 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     def OnTimer(self, event):
         """Call it if EVT_TIMER is captured.
 
-        There's a delay (about 450-500ms) between the time the timer
-        started and the time the media really starts to play.
+        Known BUGS of backends:
+
+        Under MacOS:
+        There's a delay (about 450-500ms) between the moment the timer
+        started and the moment the media really starts to play.
+
+        Under Windows:
+        The media is continuing to play after we requested it to stop
+        (about 200ms-300ms).
 
         """
-        # If the media didn't started to play...
+        # If the media didn't started to play... Use "tell" of the media to
+        # know where we really are in time.
         if self.pos == self.start_pos:
             new_pos = self.media_tell()
         else:
