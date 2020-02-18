@@ -433,11 +433,12 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         ctrls = self.FindWindow("player_controls_panel")
 
         panel = evt.GetEventObject()
-        if panel.IsExpanded() is True:
-            # The panel was collapsed, and now it is expanded.
-            ctrls.add_media(panel.GetPane())
-        else:
-            ctrls.remove_media(panel.GetPane())
+        if isinstance(panel, MediaTimeViewPanel) is True:
+            if panel.IsExpanded() is True:
+                # The panel was collapsed, and now it is expanded.
+                ctrls.add_media(panel.GetPane())
+            else:
+                ctrls.remove_media(panel.GetPane())
 
         self.GetScrolledPanel().ScrollChildIntoView(panel)
         self.FindWindow("vert_splitter").Layout()

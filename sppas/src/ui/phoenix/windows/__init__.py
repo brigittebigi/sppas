@@ -70,7 +70,6 @@ from .image import sppasStaticBitmap
 
 from .media import MediaType
 from .media import MediaEvents
-from .media import sppasMediaPanel
 from .media import sppasMediaCtrl
 from .media import sppasPlayerControlsPanel
 from .media import sppasMultiPlayerPanel
@@ -110,7 +109,6 @@ __all__ = (
     "CheckButton",
     "RadioButton",
     "ToggleButton",
-    "sppasMediaPanel",
     "sppasMediaCtrl",
     "MediaType",
     "MediaEvents",

@@ -116,6 +116,10 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     def set_range(self, start=None, end=None):
         """Fix period to be played (milliseconds).
 
+        In theory, this range would be as wanted, but backend have serious
+        limitations.
+        Under Windows the end offset is not respected.
+
         :param start: (int) Start time. Default is 0.
         :param end: (int) End time. Default is length.
 
@@ -124,15 +128,26 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
             start = 0
         if end is None:
             end = self._length
+        message = "Set range. Requested = [%d, %d]. " % (start, end)
 
         assert int(start) <= int(end)
+
+        # if (end-start) < 1000:
+        #     start -= 500
+        #     end += 500
+
         if start < 0:
             start = 0
         if end > self._length:
             end = self._length
+
         self.GetSlider().SetRange(start, end)
-        if self.pos < start or self.pos > end:
-            self.set_pos(start)
+        self.set_pos(start)
+        self.media_seek(start)
+        message += "Fixed = [%d, %d], pos = %d" % (start, end, self.pos)
+
+        wx.LogMessage(message)
+        return start, end
 
     # -----------------------------------------------------------------------
 
@@ -249,7 +264,8 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         if len(self.__media) > 0:
             self._length = max(m.Length() for m in self.__media)
         else:
-            self.__reset()
+            self._length = 0
+            #self.__reset()
 
     # -----------------------------------------------------------------------
 
@@ -290,7 +306,6 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         """
         if len(self.__media) > 0:
             values = [m.Tell() for m in self.__media]
-            wx.LogDebug("  --> TELL VALUES ARE {:s}".format(str(values)))
             return min(values)
 
         # No audio nor video in the list of media
@@ -399,10 +414,13 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     # ----------------------------------------------------------------------
 
     def OnTimer(self, event):
-        """Call it if EVT_TIMER is captured."""
-        # There's a delay (about 450-500ms) between the time the timer
-        # started and the time the media really starts to play.
-        # If the media didn't started to play anymore...
+        """Call it if EVT_TIMER is captured.
+
+        There's a delay (about 450-500ms) between the time the timer
+        started and the time the media really starts to play.
+
+        """
+        # If the media didn't started to play...
         if self.pos == self.start_pos:
             new_pos = self.media_tell()
         else:
@@ -429,7 +447,12 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     # ----------------------------------------------------------------------
 
     def __resynchronize(self):
-        """Re-synchronize slider position and media tell() position."""
+        """Re-synchronize slider position at media tell() position."""
+        if len(self.__media) == 0:
+            return self.pos
+        if len(self.__media) == 1:
+            return self.__media[0].Tell()
+
         # check where the media really are in time
         values = [m.Tell() for m in self.__media]
         wx.LogDebug("Position values of media: {:s}".format(str(values)))
@@ -457,15 +480,13 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         # validate end position (no longer than the length)
         if self.end_pos > self._length:
-            self.GetSlider().SetRange(self.start_pos, self._length)
+            self.set_range(self.start_pos, self._length)
 
         offset = self.media_tell()
         if offset < self.start_pos or offset > self.end_pos:
             self.media_seek(self.start_pos)
-            real_cur_pos = self.media_tell()
-            self.GetSlider().SetValue(real_cur_pos)
-
-        wx.LogDebug(" START {:d}  END {:d}  POS {:d}".format(self.start_pos, self.end_pos, self.pos))
+            # real_cur_pos = self.media_tell()
+            # self.GetSlider().SetValue(real_cur_pos)
 
 # ---------------------------------------------------------------------------
 
