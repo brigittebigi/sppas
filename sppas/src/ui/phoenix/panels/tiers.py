@@ -96,6 +96,17 @@ MSG_CANCEL=_("Cancel changes?")
 # --------------------------------------------------------------------------
 
 
+def serialize_labels(labels):
+    if len(labels) == 1:
+        return labels[0].serialize("", alt=True)
+    c = list()
+    for label in labels:
+        c.append(label.serialize("", alt=True))
+    return "\n".join(c)
+
+# --------------------------------------------------------------------------
+
+
 class sppasTierListCtrl(LineListCtrl):
     """List-view of annotations of a tier.
 
@@ -132,6 +143,7 @@ class sppasTierListCtrl(LineListCtrl):
 
         self._tier = tier
         self.__filename = filename
+        self._dirty = False
         self._create_content()
 
         # select the first annotation
@@ -173,7 +185,11 @@ class sppasTierListCtrl(LineListCtrl):
 
         """
         annotation = self._tier[idx]
-        annotation.set_labels(labels)
+        old = serialize_labels(annotation.get_labels())
+        new = serialize_labels(labels)
+        if old != new:
+            annotation.set_labels(labels)
+            self._dirty = True
 
     # -----------------------------------------------------------------------
     # Construct the window
@@ -273,7 +289,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         # Window 1 of the splitter: a ListCtrl of each tier in a notebook
         p1 = sppasNotebook(self, style=wx.BORDER_SIMPLE, name="tiers_notebook")
         # p1.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self._on_page_changing)
-        p1.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self._on_page_changed)
+        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self._on_page_changed)
 
         # Window 2 of the splitter: an annotation editor
         p2 = self.__create_annotation_editor()
@@ -352,6 +368,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             page.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_annotation_selected)
             page.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_annotation_deselected)
             notebook.AddPage(page, tier.get_name())
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
@@ -385,7 +402,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
         tb = self.FindWindow("ann_toolbar")
 
-        # The annotation labels are in XML (.xra) format
+        # The annotation labels are to be displayed in XML (.xra) format
         if tb.get_button("code_xml", "view_mode").IsPressed():
             root = ET.Element('Annotation')
             for label in labels:
@@ -395,7 +412,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             xml_text = ET.tostring(root, encoding="utf-8", method="xml")
             return xml_text
 
-        # The annotation labels are in JSON (.jra) format
+        # The annotation labels are to be displayed in JSON (.jra) format
         if tb.get_button("code_json", "view_mode").IsPressed():
             root = list()
             for label in labels:
@@ -403,14 +420,9 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             json_text = json.dumps(root, indent=4, separators=(',', ': '))
             return json_text
 
-        # The annotation labels are serialized
+        # The annotation labels are to be displayed in text
         if tb.get_button("code_review", "view_mode").IsPressed():
-            if len(labels) == 1:
-                return labels[0].serialize("", alt=True)
-            c = list()
-            for label in labels:
-                c.append(label.serialize("", alt=True))
-            return "\n".join(c)
+            return serialize_labels(labels)
 
         return ""
 
@@ -550,10 +562,6 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         """The notebook changed its page."""
         if not self:
             return
-        new_selection = evt.GetSelection()
-        notebook = self.FindWindow("tiers_notebook")
-        page = notebook.GetPage(new_selection)
-        page.Refresh()
         self.Notify(action="tier_selected", value=None)
         self.__annotation_selected()
 
@@ -574,6 +582,6 @@ class TestPanel(sppasTiersEditWindow):
         parser.set_filename(f2)
         trs2 = parser.read()
         super(TestPanel, self).__init__(parent)
-        self.add_tiers(trs1.get_tier_list())
-        self.add_tiers(trs2.get_tier_list())
+        self.add_tiers(f1, trs1.get_tier_list())
+        self.add_tiers(f2, trs2.get_tier_list())
 
