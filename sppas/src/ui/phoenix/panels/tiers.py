@@ -90,8 +90,8 @@ MSG_POINT = _("Midpoint")
 MSG_RADIUS = _("Radius")
 MSG_NB = _("Nb")
 MSG_TYPE = _("Type")
-ERR_ANN_SET_LABELS=_("Invalid annotation labels.")
-MSG_CANCEL=_("Cancel changes?")
+ERR_ANN_SET_LABELS = _("Invalid annotation labels.")
+MSG_CANCEL = _("Cancel changes?")
 
 # --------------------------------------------------------------------------
 
@@ -132,7 +132,7 @@ class sppasTierListCtrl(LineListCtrl):
     # -----------------------------------------------------------------------
 
     def __init__(self, parent, tier, filename):
-        """Create a sppasTierListCtrl.
+        """Create a sppasTierListCtrl and select the first annotation.
 
         :param parent: (wx.Window)
         :param tier: (sppasTier)
@@ -146,7 +146,9 @@ class sppasTierListCtrl(LineListCtrl):
         self._dirty = False
         self._create_content()
 
-        # select the first annotation
+        # select the first annotation. Under MacOS, the first annotation
+        # is systematically selected but not under the other platforms.
+        # So, we have to select it... to be consistent.
         if len(self._tier) > 0:
             self.Select(0, on=1)
 
@@ -352,23 +354,65 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     def set_selected_tier(self, filename, tier_name):
         """Change page selection of the notebook to match given data."""
         notebook = self.FindWindow("tiers_notebook")
+
+        # Currently selected annotation is deselected in a proper way!
+        page_index = notebook.GetSelection()
+        listctrl = notebook.GetPage(page_index)
+        cur_index = listctrl.GetFirstSelected()
+        if cur_index != -1:
+            self.__annotation_deselected(cur_index)
+
+        # Select requested tier (... and an annotation)
         for i in range(notebook.GetPageCount()):
             page = notebook.GetPage(i)
             if page.get_filename() == filename and page.get_tiername() == tier_name:
                 notebook.ChangeSelection(i)
-                self.__annotation_selected()
+                listctrl = notebook.GetPage(i)
+                cur_index = listctrl.GetFirstSelected()
+                if cur_index == -1:
+                    cur_index = 0
+                start, end = self.__annotation_selected(cur_index)
+                self.Notify(action="period_selected", value=(start, end))
 
     # -----------------------------------------------------------------------
 
     def add_tiers(self, filename, tiers):
-        """Add a set of tiers of the file."""
+        """Add a set of tiers of the file.
+
+        Select the first annotation of the first given tier and notify parent.
+
+        :param filename: (str)
+        :param tiers: (list of sppasTier)
+
+        """
         notebook = self.FindWindow("tiers_notebook")
         for tier in tiers:
-            page = sppasTierListCtrl(notebook, tier, filename)
-            page.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_annotation_selected)
-            page.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_annotation_deselected)
-            notebook.AddPage(page, tier.get_name())
+            if len(tier) > 0:
+                page = sppasTierListCtrl(notebook, tier, filename)
+                page.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_annotation_selected)
+                page.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_annotation_deselected)
+                notebook.AddPage(page, tier.get_name())
+            else:
+                wx.LogError("Page not created. "
+                            "No annotation in tier: {:s}".format(tier.get_name()))
         self.Layout()
+        self.set_selected_tier(tiers[0])
+
+    # -----------------------------------------------------------------------
+
+    def set_selected_annotation(self, idx):
+        """Change the selected annotation.
+
+        :param idx: (int) Index of the annotation to select.
+
+        """
+        notebook = self.FindWindow("tiers_notebook")
+        page_index = notebook.GetSelection()
+        listctrl = notebook.GetPage(page_index)
+        cur_index = listctrl.GetFirstSelected()
+        if cur_index != -1:
+            self.__annotation_deselected(cur_index)
+        self.__annotation_selected(idx)
 
     # -----------------------------------------------------------------------
 
@@ -435,6 +479,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         listctrl = notebook.GetPage(page_index)
 
         ann = listctrl.get_selected_annotation()
+
         if ann is None:
             textctrl.SetValue("")
         else:
@@ -513,9 +558,14 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         the annotation of the tier.
 
         """
-        listctrl = evt.GetEventObject()
         index = evt.GetIndex()
         wx.LogMessage("DESELECTED = {}".format(index))
+        self.__annotation_deselected(evt.GetIndex())
+
+    def __annotation_deselected(self, idx):
+        notebook = self.FindWindow("tiers_notebook")
+        page_index = notebook.GetSelection()
+        listctrl = notebook.GetPage(page_index)
         try:
             labels = self.text_to_labels()
             # listctrl.set_annotation_labels(labels)
@@ -523,19 +573,23 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             msg = ERR_ANN_SET_LABELS + "{:s}".format(str(e)) + MSG_CANCEL
             response = Confirm(msg)
 
-        listctrl.Select(index, on=0)
+        listctrl.Select(idx, on=0)
 
     # -----------------------------------------------------------------------
 
     def _on_annotation_selected(self, evt):
         """An annotation is selected in the list."""
-        listctrl = evt.GetEventObject()
         index = evt.GetIndex()
         wx.LogMessage("SELECTED = {}".format(index))
-        listctrl.Select(index, on=1)
-        self.__annotation_selected()
+        start, end = self.__annotation_selected(evt.GetIndex())
+        self.Notify(action="period_selected", value=(start, end))
 
-    def __annotation_selected(self):
+    def __annotation_selected(self, idx):
+        notebook = self.FindWindow("tiers_notebook")
+        page_index = notebook.GetSelection()
+        listctrl = notebook.GetPage(page_index)
+        listctrl.Select(idx, on=1)
+
         ann = self.refresh_annotation()
         if ann is not None:
             start_point = ann.get_lowest_localization()
@@ -548,13 +602,19 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             r = end_point.get_radius()
             if r is not None:
                 end += r
-            self.Notify(action="period_selected", value=(start, end))
+        return start, end
 
     # -----------------------------------------------------------------------
 
     def _on_page_changing(self, evt):
         """The notebook is being to change page."""
-        pass
+
+        notebook = self.FindWindow("tiers_notebook")
+        page_index = notebook.GetSelection()
+        listctrl = notebook.GetPage(page_index)
+        cur_index = listctrl.GetFirstSelected()
+        if cur_index != -1:
+            self.__annotation_deselected(cur_index)
 
     # -----------------------------------------------------------------------
 
@@ -563,7 +623,14 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         if not self:
             return
         self.Notify(action="tier_selected", value=None)
-        self.__annotation_selected()
+
+        notebook = self.FindWindow("tiers_notebook")
+        page_index = notebook.GetSelection()
+        listctrl = notebook.GetPage(page_index)
+        cur_index = listctrl.GetFirstSelected()
+        if cur_index != -1:
+            cur_index = 0
+        self.__annotation_selected(cur_index)
 
 # ---------------------------------------------------------------------------
 

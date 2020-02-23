@@ -63,7 +63,16 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     A player controls panel to play several media at a time.
     It is supposed that all the given media are already loaded.
 
+    If MIN_RANGE is set to a value lesser than 1000 ms, MacOS will
+    display an error message and won't play the sound. Error is:
+    Python[14410:729361] CMTimeMakeWithSeconds(2.400 seconds, timescale 1):
+    warning: error of -0.400 introduced due to very low timescale
+
     """
+
+    MIN_RANGE = 1000
+
+    # -----------------------------------------------------------------------
 
     def __init__(self, parent, id=-1,
                  media=None,
@@ -118,23 +127,27 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         In theory, this range would be as wanted, but backend have serious
         limitations.
-        Under Windows the end offset is not respected.
+        - Under Windows, the end offset is not respected. It's continuing to
+        play about 400ms after the end offset.
+        - Under MacOS, a short period less than 1 sec is not played at all.
 
         :param start: (int) Start time. Default is 0.
         :param end: (int) End time. Default is length.
+        :return: Real start and end positions.
 
         """
         if start is None:
             start = 0
         if end is None:
             end = self._length
-        message = "Set range. Requested = [%d, %d]. " % (start, end)
+        message = "Set range. Requested is [%d, %d]. " % (start, end)
+        wx.LogDebug(message)
 
-        assert int(start) <= int(end)
-
-        # if (end-start) < 1000:
-        #     start -= 500
-        #     end += 500
+        delta = int(end) - int(start)
+        assert delta >= 0
+        if delta < sppasMultiPlayerPanel.MIN_RANGE:
+            start = (start // sppasMultiPlayerPanel.MIN_RANGE) * sppasMultiPlayerPanel.MIN_RANGE
+            end = start + sppasMultiPlayerPanel.MIN_RANGE
 
         if start < 0:
             start = 0
@@ -142,11 +155,10 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
             end = self._length
 
         self.GetSlider().SetRange(start, end)
-        self.set_pos(start)
         self.media_seek(start)
-        message += "Fixed = [%d, %d], pos = %d" % (start, end, self.pos)
+        message = "Set range. Fixed to [%d, %d], Seek at pos = %d" % (start, end, self.pos)
+        wx.LogDebug(message)
 
-        wx.LogMessage(message)
         return start, end
 
     # -----------------------------------------------------------------------
@@ -154,6 +166,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     def set_pos(self, offset):
         assert int(offset) >= 0
         if offset < self.start_pos or offset > self.end_pos:
+            wx.LogDebug("start %d, end %d, offset %d" % (self.start_pos, self.end_pos, offset))
             raise IntervalRangeException(offset, self.start_pos, self.end_pos)
         self.GetSlider().SetValue(offset)
 
@@ -304,9 +317,13 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         Observed differences on MacOS are about 11-24 ms between each media.
 
         """
+        wx.LogDebug("Call to media tell...")
         if len(self.__media) > 0:
             values = [m.Tell() for m in self.__media]
+            wx.LogDebug(" ... Media tell values %s." % str(values))
             return min(values)
+
+        wx.LogDebug(" ... no media. Return 0.")
 
         # No audio nor video in the list of media
         return 0
@@ -314,7 +331,15 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     # -----------------------------------------------------------------------
 
     def media_seek(self, offset):
+        """Seek all media to the given offset.
 
+        LIMITATIONS: Under MacOS, some errors can occur. It produces messages
+        like: error of -0.040 introduced due to very low timescale.
+        The offset should always be a multiple of 1000 to work properly.
+
+        :param offset: (int) Value in milliseconds.
+
+        """
         if offset < self.start_pos:
             offset = self.start_pos
         if offset > self.end_pos:
@@ -333,12 +358,6 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
             wx.LogError(str(e))
             return
 
-        # BUG OF MACOS BACKEND:
-        # Seek of media is not precise at all...
-        # It produces messages like:
-        # error of -0.040 introduced due to very low timescale
-        cur_pos = self.media_tell()
-        self.set_pos(cur_pos)
         if force_pause is True:
             self.play()
 

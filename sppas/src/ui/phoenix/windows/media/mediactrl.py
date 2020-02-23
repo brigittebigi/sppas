@@ -356,10 +356,13 @@ class sppasMediaCtrl(sppasPanel):
         self._filename = None
         self._length = 0    # duration of the media in milliseconds
         self._zoom = 100    # zoom level in percentage
-        self._mc = self._create_media()
+        self._mc = None
         self._mt = MediaType().unknown
         self._ms = MediaState().unknown
         self._audio = None
+
+        # Create the media, or destroy ourself
+        self._mc = self._create_media()
 
         # Fix our min size
         self.SetInitialSize(size)
@@ -384,7 +387,8 @@ class sppasMediaCtrl(sppasPanel):
         if wx.Platform == "__WXMSW__":
             # default is wx.media.MEDIABACKEND_DIRECTSHOW
             back_end = wx.media.MEDIABACKEND_WMP10
-
+        # elif wx.Platform == "__WXMAC__":
+        #     back_end = wx.media.MEDIABACKEND_QUICKTIME
         # Create the media control
         try:
             mc = wx.media.MediaCtrl()
@@ -393,7 +397,7 @@ class sppasMediaCtrl(sppasPanel):
                 style=wx.SIMPLE_BORDER | wx.ALIGN_CENTER_HORIZONTAL,
                 szBackend=back_end)
             if not ok:
-                raise NotImplementedError
+                raise NotImplementedError("Can't create a media object: requested backend not implemented.")
         except NotImplementedError:
             self.Destroy()
             raise
@@ -693,7 +697,8 @@ class sppasMediaCtrl(sppasPanel):
 
     def Destroy(self):
         """Destroy the sppasMediaCtrl."""
-        self._mc.Stop()
+        if self._mc:
+            self._mc.Stop()
         wx.Window.DeletePendingEvents(self)
         wx.Window.Destroy(self)
 
