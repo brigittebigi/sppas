@@ -55,7 +55,7 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     Four children panels are to be created and organized into a BoxSizer:
         - widgets_panel: a panel, free to be used to add widgets
-        - transport_panel: all buttons to play a media and a slider
+        - transport_panel: all buttons to play a media
         - volume_panel: a button to mute and a slider to adjust the volume
         - slider_panel: a wx.Slider
 
@@ -109,7 +109,8 @@ class sppasPlayerControlsPanel(sppasPanel):
         widgets_panel = self.FindWindow("widgets_panel")
         if wxwindow.GetParent() != widgets_panel:
             return False
-        widgets_panel.GetSizer().Add(wxwindow, 0, wx.ALIGN_CENTER | wx.ALL, sppasPanel.fix_size(2))
+        widgets_panel.GetSizer().Add(wxwindow, 0, wx.ALIGN_CENTER | wx.ALL,
+                                     sppasPanel.fix_size(2))
         widgets_panel.Show(True)
         return True
 

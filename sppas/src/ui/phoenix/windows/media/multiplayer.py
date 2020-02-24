@@ -63,16 +63,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     A player controls panel to play several media at a time.
     It is supposed that all the given media are already loaded.
 
-    If MIN_RANGE is set to a value lesser than 1000 ms, MacOS will
-    display an error message and won't play the sound. Error is:
-    Python[14410:729361] CMTimeMakeWithSeconds(2.400 seconds, timescale 1):
-    warning: error of -0.400 introduced due to very low timescale
-
     """
-
-    MIN_RANGE = 1000
-
-    # -----------------------------------------------------------------------
 
     def __init__(self, parent, id=-1,
                  media=None,
@@ -129,7 +120,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         limitations.
         - Under Windows, the end offset is not respected. It's continuing to
         play about 400ms after the end offset.
-        - Under MacOS, a short period less than 1 sec is not played at all.
+        - Under MacOS, a period less than 1 sec is not played at all.
 
         :param start: (int) Start time. Default is 0.
         :param end: (int) End time. Default is length.
@@ -140,14 +131,16 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
             start = 0
         if end is None:
             end = self._length
-        message = "Set range. Requested is [%d, %d]. " % (start, end)
-        wx.LogDebug(message)
 
+        min_range = 1000
+        if len(self.__media) > 0:
+            min_range = self.__media[0].min_range
         delta = int(end) - int(start)
         assert delta >= 0
-        if delta < sppasMultiPlayerPanel.MIN_RANGE:
-            start = (start // sppasMultiPlayerPanel.MIN_RANGE) * sppasMultiPlayerPanel.MIN_RANGE
-            end = start + sppasMultiPlayerPanel.MIN_RANGE
+        if delta < min_range:
+            min_range = (min_range - delta) + 1
+            start = start - (min_range // 2)
+            end = end + (min_range // 2)
 
         if start < 0:
             start = 0
@@ -156,8 +149,6 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         self.GetSlider().SetRange(start, end)
         self.media_seek(start)
-        message = "Set range. Fixed to [%d, %d], Seek at pos = %d" % (start, end, self.pos)
-        wx.LogDebug(message)
 
         return start, end
 

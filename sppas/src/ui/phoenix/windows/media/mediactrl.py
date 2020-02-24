@@ -311,7 +311,28 @@ class sppasMediaCtrl(sppasPanel):
     The media is embedded and not inherited to allow to capture the paint
     event and to draw a custom "picture" if media is not a video.
 
+    Known problems while playing a media during a given period of time:
+
+     - Under Linux (Gstreamer backend), no problem is observed.
+
+     - Under Windows, if a period is given to be played, the sound is played
+       after the end is reached (about 400ms).
+
+     - Under MacOS, if MIN_RANGE is set to a value lesser than 1000 ms, the
+       backend will display an error message and won't play the sound. Error is:
+       Python[14410:729361] CMTimeMakeWithSeconds(2.400 seconds, timescale 1):
+       warning: error of -0.400 introduced due to very low timescale
+
     """
+
+    # -----------------------------------------------------------------------
+    # The minimum duration the backend can play - empirically estimated.
+    if wx.Platform == "__WXMSW__":
+        MIN_RANGE = 400
+    elif wx.Platform == "__WXMAC__":
+        MIN_RANGE = 1000
+    else:
+        MIN_RANGE = 40
 
     # -----------------------------------------------------------------------
     # This object size.
@@ -360,6 +381,7 @@ class sppasMediaCtrl(sppasPanel):
         self._mt = MediaType().unknown
         self._ms = MediaState().unknown
         self._audio = None
+        self.min_range = sppasMediaCtrl.MIN_RANGE
 
         # Create the media, or destroy ourself
         self._mc = self._create_media()
