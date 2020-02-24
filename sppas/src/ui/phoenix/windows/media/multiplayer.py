@@ -558,7 +558,8 @@ class TestPanel(sppasPanel):
         wx.LogDebug("Start loading media...")
         self.mc1.Load(os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
         self.mc2.Load(os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"))
-        self.mc3.Load("/Users/bigi/Movies/Monsters_Inc.For_the_Birds.mpg")
+        # self.mc3.Load("/Users/bigi/Movies/Monsters_Inc.For_the_Birds.mpg")
+        # self.mc3.Load("/E/Videos/Monsters_Inc.For_the_Birds.mpg")
 
     # ----------------------------------------------------------------------
 

@@ -84,17 +84,31 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
 
     """
 
+    # -----------------------------------------------------------------------
     # List of accepted percentages of zooming
-    ZOOMS = (10, 25, 50, 75, 100, 125, 150, 200, 250, 300)
+    ZOOMS = (25, 50, 75, 100, 125, 150, 200, 250, 300, 400)
+
+    # -----------------------------------------------------------------------
 
     def __init__(self, parent, filename, name="media_timeview_panel"):
-        media_type = sppasMediaCtrl.ExpectedMediaType(filename)
-        if media_type == MediaType().unknown:
-            raise TypeError("File {:s} is of an unknown type "
-                            "(no audio nor video).".format(filename))
-        self._mt = media_type
-        self._object = None
+        """Create a MediaTimeViewPanel.
 
+        :param parent: (wx.Window) Parent window must NOT be none
+        :param filename: (str) The name of the file of the media
+        :param name: (str) the widget name.
+
+        """
+        try:
+            # Before creating the media, check if the file type is supported.
+            media_type = sppasMediaCtrl.ExpectedMediaType(filename)
+            if media_type == MediaType().unknown:
+                raise TypeError("File {:s} is of an unknown type "
+                                "(no audio nor video).".format(filename))
+        except TypeError:
+            self.Destroy()
+            raise
+
+        self._object = None
         super(MediaTimeViewPanel, self).__init__(parent, filename, name)
 
         # self.Bind(sppasMedia.EVT_MEDIA_ACTION, self._process_action)
@@ -106,152 +120,12 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
         mc.Load(self._filename)
 
     # -----------------------------------------------------------------------
-
-    def _create_content(self):
-        """Override. Create the content of the panel."""
-        self.AddButton("zoom_in")
-        self.AddButton("zoom_out")
-        self.AddButton("zoom")
-        self.AddButton("close")
-        self._create_child_panel()
-        self.Collapse()
-
-    # -----------------------------------------------------------------------
-
-    def _create_child_panel(self):
-        """Override. Create the child panel."""
-        mc = sppasMediaCtrl(self)
-        self.SetPane(mc)
-        self.media_zoom(0)  # 100% zoom = initial size
-
-    # ------------------------------------------------------------------------
-
-    def load_text(self):
-        """Load the file content into an object.
-
-        Raise an exception if the file is not supported or can't be read.
-
-        """
-        pass
-
-    # -----------------------------------------------------------------------
-
-    def get_object(self):
-        """Return the sppasMediaCtrl."""
-        return self.GetPane()
-
-    # -----------------------------------------------------------------------
-
-    def __process_media_loaded(self, event):
-        """Process the end of load of a media."""
-        wx.LogMessage("Media loaded event received.")
-        media = event.GetEventObject()
-        media_size = media.DoGetBestSize()
-        media.SetSize(media_size)
-        self.Expand()
-
-        wx.LogDebug("Send MediaActionEvent with action=loaded to parent: {:s}".format(self.GetParent().GetName()))
-        evt = MediaEvents.MediaActionEvent(action="loaded", value=True)
-        evt.SetEventObject(self)
-        wx.PostEvent(self.GetParent(), evt)
-
-    # -----------------------------------------------------------------------
-
-    def __process_media_not_loaded(self, event):
-        """Process the end of a failed load of a media."""
-        self.Collapse()
-        wx.LogDebug("Send MediaActionEvent with action=not loaded to parent: {:s}".format(self.GetParent().GetName()))
-        evt = MediaEvents.MediaActionEvent(action="loaded", value=False)
-        evt.SetEventObject(self)
-        wx.PostEvent(self.GetParent(), evt)
-
+    # Media management
     # -----------------------------------------------------------------------
 
     def GetMediaType(self):
-        return self._child_panel.GetMediaType()
+        return self.GetPane().GetMediaType()
 
-    # -----------------------------------------------------------------------
-
-    def Layout(self):
-        """Do the layout.
-
-        Normally, the layout makes the child panel to be adjusted to the size
-        of self. Instead, here we let the child panel suiting its best height,
-        and we adjust its width with our borders.
-
-        """
-        # we need to complete the creation first
-        if not self._tools_panel or not self._child_panel:
-            return False
-
-        w, h = self.GetSize()
-        bw = w - self._border
-        bh = self.GetButtonHeight()
-        # fix pos and size of the top panel with tools
-        self._tools_panel.SetPosition((self._border, 0))
-        self._tools_panel.SetSize(wx.Size(bw, bh))
-
-        if self.IsExpanded():
-            cw, ch = self._child_panel.DoGetBestSize()
-            # fix pos and size of the child window
-            pw, ph = self.GetSize()
-            x = self._border + bh  # shift of the icon size (a square).
-            y = bh + self._border
-            pw = pw - x - self._border      # left-right borders
-            ph = ph - y - self._border      # top-bottom borders
-            self._child_panel.SetSize(wx.Size(pw, ch))
-            self._child_panel.SetPosition((x, y))
-            self._child_panel.Show(True)
-
-        return True
-
-    # -----------------------------------------------------------------------
-
-    def _process_event(self, event):
-        """
-        :param event: (wx.Event)
-
-        """
-        obj = event.GetEventObject()
-        name = obj.GetName()
-
-        if name == "zoom":
-            self.media_zoom(0)
-
-        elif name == "zoom_in":
-            self.media_zoom(1)
-
-        elif name == "zoom_out":
-            self.media_zoom(-1)
-
-        elif name == "close":
-            self.media_remove(obj)
-
-        else:
-            event.Skip()
-
-    # ------------------------------------------------------------------------
-
-    def OnButton(self, event):
-        """Override. Handle the wx.EVT_BUTTON event.
-
-        :param event: a CommandEvent event to be processed.
-
-        """
-        sppasCollapsiblePanel.OnButton(self, event)
-        if self.IsExpanded() is False:
-            # The media was expanded, now it is collapsed.
-            self.EnableButton("zoom", False)
-            self.EnableButton("zoom_in", False)
-            self.EnableButton("zoom_out", False)
-        else:
-            self.EnableButton("zoom", True)
-            self.EnableButton("zoom_in", True)
-            self.EnableButton("zoom_out", True)
-        event.Skip()
-
-    # -----------------------------------------------------------------------
-    # Media management
     # -----------------------------------------------------------------------
 
     def media_playing(self):
@@ -320,6 +194,146 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
         """Remove the media we clicked on the collapsible panel close button."""
         # self._child_panel.Destroy()
         self.Destroy()
+
+    # -----------------------------------------------------------------------
+    # Construct the GUI
+    # -----------------------------------------------------------------------
+
+    def _create_content(self):
+        """Override. Create the content of the panel."""
+        self.AddButton("zoom_in")
+        self.AddButton("zoom_out")
+        self.AddButton("zoom")
+        # self.AddButton("close")
+        self._create_child_panel()
+        self.Collapse()
+
+    # -----------------------------------------------------------------------
+
+    def _create_child_panel(self):
+        """Override. Create the child panel."""
+        mc = sppasMediaCtrl(self)
+        self.SetPane(mc)
+        self.media_zoom(0)  # 100% zoom = initial size
+
+    # ------------------------------------------------------------------------
+
+    def load_text(self):
+        """Override. Load the file content into an object."""
+        pass
+
+    # -----------------------------------------------------------------------
+
+    def get_object(self):
+        """Override. Return the sppasMediaCtrl."""
+        return self.GetPane()
+
+    # -----------------------------------------------------------------------
+
+    def TestLayout(self):
+        """Do the layout.
+
+        Normally, the layout makes the child panel to be adjusted to the size
+        of self. Instead, here we let the child panel suiting its best height,
+        and we adjust its width with our borders.
+
+        """
+        # we need to complete the creation first
+        if not self._tools_panel or not self._child_panel:
+            return False
+
+        w, h = self.GetSize()
+        bw = w - self._border
+        bh = self.GetButtonHeight()
+        # fix pos and size of the top panel with tools
+        self._tools_panel.SetPosition((self._border, 0))
+        self._tools_panel.SetSize(wx.Size(bw, bh))
+
+        if self.IsExpanded():
+            cw, ch = self._child_panel.DoGetBestSize()
+            # fix pos and size of the child window
+            pw, ph = self.GetSize()
+            x = self._border + bh  # shift of the icon size (a square).
+            y = bh + self._border
+            pw = pw - x - self._border      # left-right borders
+            ph = ph - y - self._border      # top-bottom borders
+            self._child_panel.SetSize(wx.Size(pw, ch))
+            self._child_panel.SetPosition((x, y))
+            self._child_panel.Show(True)
+
+        return True
+
+    # -----------------------------------------------------------------------
+    # Events management
+    # -----------------------------------------------------------------------
+
+    def __process_media_loaded(self, event):
+        """Process the end of load of a media."""
+        wx.LogMessage("Media loaded event received.")
+        media = event.GetEventObject()
+        media_size = media.DoGetBestSize()
+        media.SetSize(media_size)
+        self.Expand()
+
+        wx.LogDebug("Send MediaActionEvent with action=loaded to parent: {:s}".format(self.GetParent().GetName()))
+        evt = MediaEvents.MediaActionEvent(action="loaded", value=True)
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
+    # -----------------------------------------------------------------------
+
+    def __process_media_not_loaded(self, event):
+        """Process the end of a failed load of a media."""
+        self.Collapse()
+        wx.LogDebug("Send MediaActionEvent with action=not loaded to parent: {:s}".format(self.GetParent().GetName()))
+        evt = MediaEvents.MediaActionEvent(action="loaded", value=False)
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
+    # -----------------------------------------------------------------------
+
+    def _process_event(self, event):
+        """
+        :param event: (wx.Event)
+
+        """
+        obj = event.GetEventObject()
+        name = obj.GetName()
+
+        if name == "zoom":
+            self.media_zoom(0)
+
+        elif name == "zoom_in":
+            self.media_zoom(1)
+
+        elif name == "zoom_out":
+            self.media_zoom(-1)
+
+        elif name == "close":
+            self.media_remove(obj)
+
+        else:
+            event.Skip()
+
+    # ------------------------------------------------------------------------
+
+    def OnButton(self, event):
+        """Override. Handle the wx.EVT_BUTTON event.
+
+        :param event: a CommandEvent event to be processed.
+
+        """
+        sppasCollapsiblePanel.OnButton(self, event)
+        if self.IsExpanded() is False:
+            # The media was expanded, now it is collapsed.
+            self.EnableButton("zoom", False)
+            self.EnableButton("zoom_in", False)
+            self.EnableButton("zoom_out", False)
+        else:
+            self.EnableButton("zoom", True)
+            self.EnableButton("zoom_in", True)
+            self.EnableButton("zoom_out", True)
+        event.Skip()
 
 # ---------------------------------------------------------------------------
 
@@ -851,7 +865,7 @@ class TestPanel(sppasScrolledPanel):
                               filename=os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"))
 
         p4 = MediaTimeViewPanel(self,
-            filename=os.path.join(paths.samples, "samples-fra", "F_F_C006-P6.wav"))
+            filename="/E/Videos/Monsters_Inc.For_the_Birds.mpg")
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(p1, 0, wx.EXPAND)

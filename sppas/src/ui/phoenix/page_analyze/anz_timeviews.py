@@ -516,11 +516,12 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
 class TestPanel(TimeViewFilesPanel):
     TEST_FILES = (
         os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"),
-        os.path.join("/Users/bigi/Movies/Monsters_Inc.For_the_Birds.mpg"),
+        # os.path.join("/Users/bigi/Movies/Monsters_Inc.For_the_Birds.mpg"),
+        os.path.join("/E/Videos/Monsters_Inc.For_the_Birds.mpg"),
         # os.path.join(paths.samples, "COPYRIGHT.txt"),
         os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"),
-        os.path.join(paths.samples, "toto.xxx"),
-        os.path.join(paths.samples, "toto.ogg")
+        # os.path.join(paths.samples, "toto.xxx"),
+        # os.path.join(paths.samples, "toto.ogg")
     )
 
     def __init__(self, parent):

@@ -396,7 +396,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                 wx.LogError("Page not created. "
                             "No annotation in tier: {:s}".format(tier.get_name()))
         self.Layout()
-        self.set_selected_tier(tiers[0])
+        self.set_selected_tier(filename, tiers[0])
 
     # -----------------------------------------------------------------------
 

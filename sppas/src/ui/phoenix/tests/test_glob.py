@@ -54,7 +54,6 @@ import sppas.src.ui.phoenix.page_files.refsmanager as refsmanager
 import sppas.src.ui.phoenix.page_files.wksmanager as wksmanager
 import sppas.src.ui.phoenix.page_files.filesviewctrl as filesviewctrl
 import sppas.src.ui.phoenix.page_files.refsviewctrl as refsviewctrl
-import sppas.src.ui.phoenix.page_files.refsviewctrl as refsviewctrl
 import sppas.src.ui.phoenix.panels.option as option
 
 
@@ -76,14 +75,14 @@ class TestPanel(wx.Choicebook):
         # Make the bunch of test panels for the choice book
 
         # page analyze
-        self.AddPage(anz_tabs.TestPanel(self), "Tabs analyze")
-        self.AddPage(anztimeviews.TestPanel(self), "Analyze Timeline view")
-        self.AddPage(anzlistviews.TestPanel(self), "Analyze Summary view")
-        self.AddPage(anztextviews.TestPanel(self), "Analyze Text view")
-        self.AddPage(anzdefaultviews.TestPanel(self), "Analyze Default view")
+        # self.AddPage(anztimeviews.TestPanel(self), "Analyze Timeline view")
+        # self.AddPage(anzlistviews.TestPanel(self), "Analyze Summary view")
+        # self.AddPage(anztextviews.TestPanel(self), "Analyze Text view")
+        # self.AddPage(anzdefaultviews.TestPanel(self), "Analyze Default view")
         self.AddPage(timeview.TestPanel(self), "Time view")
         self.AddPage(listview.TestPanel(self), "Summary view")
         self.AddPage(textview.TestPanel(self), "Text view")
+        self.AddPage(anz_tabs.TestPanel(self), "Tabs analyze")
 
         # page files
         self.AddPage(filesmanager.TestPanel(self), "Files manager")
