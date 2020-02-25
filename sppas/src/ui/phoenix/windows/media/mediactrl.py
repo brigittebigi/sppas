@@ -34,6 +34,7 @@
 
 """
 
+import logging
 import os
 import mimetypes
 import wx
@@ -44,8 +45,9 @@ from sppas import paths
 from sppas.src.audiodata import sppasAudioPCM
 import sppas.src.audiodata.aio
 
-from ..panel import sppasPanel
-from .mediaevents import MediaEvents
+from sppas.src.ui.phoenix.windows.panel import sppasPanel
+from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
+
 
 # ---------------------------------------------------------------------------
 
@@ -337,8 +339,8 @@ class sppasMediaCtrl(sppasPanel):
     MIN_WIDTH = 178
     MIN_HEIGHT = 50
 
-    DEFAULT_WIDTH = MIN_WIDTH * 4
-    DEFAULT_HEIGHT = MIN_HEIGHT * 4
+    DEFAULT_WIDTH = MIN_WIDTH * 3
+    DEFAULT_HEIGHT = MIN_HEIGHT * 3
 
     # -----------------------------------------------------------------------
     # Delays for loading media files
@@ -350,7 +352,6 @@ class sppasMediaCtrl(sppasPanel):
     def __init__(self, parent,
                  id=wx.ID_ANY,
                  pos=wx.DefaultPosition,
-                 size=wx.DefaultSize,
                  name="media_panel"):
         """Create an instance of sppasMediaCtrl.
 
@@ -362,24 +363,23 @@ class sppasMediaCtrl(sppasPanel):
         :param pos: the control position. (-1, -1) indicates a default
          position, chosen by either the windowing system or wxPython,
          depending on platform;
-        :param size: the control size. (-1, -1) indicates a default size,
-         chosen by either the windowing system or wxPython, depending on
-         platform;
         :param name: (str) Name of the media panel.
 
         """
+        size = wx.Size(sppasMediaCtrl.DEFAULT_WIDTH,
+                       sppasMediaCtrl.DEFAULT_HEIGHT)
         super(sppasMediaCtrl, self).__init__(
             parent, id, pos, size,
             style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
             name=name)
 
         # Members
-        self._filename = None
-        self._length = 0    # duration of the media in milliseconds
-        self._zoom = 100    # zoom level in percentage
-        self._mc = None
         self._mt = MediaType().unknown
         self._ms = MediaState().unknown
+        self._mc = None
+        self._zoom = 100    # zoom level in percentage
+        self._filename = None
+        self._length = 0    # duration of the media in milliseconds
         self._audio = None
         self.min_range = sppasMediaCtrl.MIN_RANGE
 
@@ -394,6 +394,9 @@ class sppasMediaCtrl(sppasPanel):
 
         # Allow sub-classes to bind other events
         self.InitOtherEvents()
+
+        # Set our min size
+        self.SetInitialSize()
 
     # -----------------------------------------------------------------------
     # Construct the window
@@ -437,7 +440,7 @@ class sppasMediaCtrl(sppasPanel):
         """Construct our panel, made only of the media control."""
         s = wx.BoxSizer()
         s.Add(self._mc, 1, wx.EXPAND, border=0)
-        self.SetSizerAndFit(s)
+        self.SetSizer(s)
         self.SetAutoLayout(True)
 
     # -----------------------------------------------------------------------
@@ -465,6 +468,7 @@ class sppasMediaCtrl(sppasPanel):
         if value > 400:
             value = 400
         self._zoom = value
+        self.Refresh()
 
     # ----------------------------------------------------------------------
 
@@ -593,9 +597,9 @@ class sppasMediaCtrl(sppasPanel):
             elif self._ms != MediaState().unknown:
                 # re-draw to come back to an initial image
                 self.Stop()
-                self.SetInitialSize()
-                self.Layout()
-                self.Refresh()
+                # # self.SetInitialSize()
+                # # self.Layout()
+                # # self.Refresh()
 
         # Reset all known information
         self._filename = filename
@@ -614,6 +618,8 @@ class sppasMediaCtrl(sppasPanel):
         d = sppasMediaCtrl.LOAD_DELAY
         wx.CallLater(d, lambda: wx.PostEvent(self, MediaEvents.MediaLoadedEvent(time=d)))
 
+        #  logging.debug("%s load. call to refresh." % self._filename)
+        self.Refresh()
         return False
 
     # -------------------------------------------------------------------------
@@ -737,12 +743,21 @@ class sppasMediaCtrl(sppasPanel):
     # -----------------------------------------------------------------------
 
     def DoGetBestSize(self):
-        """Return the size which best suits the window."""
+        """Return the size which best suits the window.
+
+        The best size of self is the best size of its embedded media if video
+        or the area to draw if audio.
+
+        """
+        #  logging.debug("Do Get Best Size. ")
         (w, h) = (sppasMediaCtrl.DEFAULT_WIDTH, sppasMediaCtrl.DEFAULT_HEIGHT)
-        if self._mt == MediaType().video:
-            (w, h) = self._mc.GetSize()
-        elif self._mt == MediaType().audio and self._audio is not None:
-            h = sppasPanel.fix_size(self._audio.GetMinHeight())
+        # Adjust height, except if video
+        with MediaType() as mt:
+            if self._mt == mt.audio and self._audio is not None:
+                h = sppasPanel.fix_size(self._audio.GetMinHeight())
+
+            elif self._mt in (mt.unknown, mt.unsupported):
+                h = sppasMediaCtrl.MIN_HEIGHT
 
         # Apply the zoom coefficient
         w = int(float(w) * float(self._zoom) / 100.)
@@ -769,14 +784,22 @@ class sppasMediaCtrl(sppasPanel):
     # ----------------------------------------------------------------------
 
     def SetSize(self, size):
-        # SetSize is required to have the appropriate size for Draw method.
-        wx.Panel.SetSize(self, size)
-        # Fix the size of the wx.media.MediaCtrl (visible only if video)
+        best_size = self.DoGetBestSize()
+
+        # the appropriate width is the max between our best and the given one
+        w = max(size[0], sppasMediaCtrl.MIN_WIDTH)    # size[0], best_size[0])
+        # the appropriate height is the one of the embedded media
+        h = best_size[1]
+
+        wx.Panel.SetSize(self, wx.Size(w, h))
+
+        # The size of the mc is set by our sizer, depending on our size.
+        # because we enabled auto-layout.
         if self._mt == MediaType().video:
-            self._mc.SetMinSize(size)
+            self._mc.Show()
         else:
-            self._mc.SetSize(wx.Size(0, 0))
-        self.GetSizer().Layout()
+            self._mc.SetSize(wx.Size(sppasMediaCtrl.MIN_WIDTH, sppasMediaCtrl.MIN_HEIGHT))
+            self._mc.Hide()
 
     # ----------------------------------------------------------------------
 
@@ -800,6 +823,7 @@ class sppasMediaCtrl(sppasPanel):
         :param size: (wx.Size)
 
         """
+        #  logging.debug("%s. Set Initial Size. %s" % (self._filename, str(size)))
         (w, h) = (sppasMediaCtrl.MIN_WIDTH, sppasMediaCtrl.MIN_HEIGHT)
 
         # If a size is given we'll use it, except if -1 or less than our min
@@ -812,7 +836,7 @@ class sppasMediaCtrl(sppasPanel):
         self.SetMinSize(wx.Size(w, h))
 
         # We fix our optimal size
-        self.SetSize(self.DoGetBestSize())
+        self.SetBestSize()
 
     # ----------------------------------------------------------------------
 
@@ -822,6 +846,7 @@ class sppasMediaCtrl(sppasPanel):
     # ----------------------------------------------------------------------
 
     def SetBestSize(self):
+        #  logging.debug("%s. Set Best Size. " % (self._filename))
         self.SetSize(self.DoGetBestSize())
 
     # ----------------------------------------------------------------------
@@ -841,7 +866,7 @@ class sppasMediaCtrl(sppasPanel):
         # To draw the audio
         self.Bind(wx.EVT_PAINT, lambda evt: self.Draw())
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
+        # self.Bind(wx.EVT_SIZE, self.OnSize)
 
     # ----------------------------------------------------------------------
 
@@ -911,12 +936,13 @@ class sppasMediaCtrl(sppasPanel):
         # We've got a length. It means the media is supported and loaded.
         self._length = media_length
         self._mt = sppasMediaCtrl.ExpectedMediaType(self._filename)
+        #  logging.debug("Media type: %d" % self._mt)
         self._ms = MediaState().stopped
         if self._mt == MediaType().audio:
             self._audio = AudioViewProperties(self._filename)
-        # We can fix our size
-        self.SetBestSize()
+            #  logging.debug("AUdio properties created")
 
+        self.SetBestSize()
         # Inform the parent we're ready.
         self.notify_loaded(True)
 
@@ -968,6 +994,8 @@ class sppasMediaCtrl(sppasPanel):
 
         """
         event.Skip()
+        logging.debug("On Size event received. %s" % str(event.Size))
+        self.SetSize(event.Size)
         self.Refresh()
 
     # ------------------------------------------------------------------------
@@ -1013,10 +1041,13 @@ class sppasMediaCtrl(sppasPanel):
         if self:
             # Get the actual client size of ourselves
             width, height = self.GetClientSize()
+            #  logging.debug("%s. Draw: %d, %d" % (self._filename, width, height))
             if width <= 0 or height <= 0:
                 # Nothing to do, we still don't have dimensions!
                 return
 
+            #with MediaType() as mt:
+            #    if self._mt != mt.video:
             dc, gc = self.PrepareDraw()
             self._DrawBackground(dc, gc)
             self._DrawContent(dc, gc)
@@ -1033,7 +1064,6 @@ class sppasMediaCtrl(sppasPanel):
 
         dc.SetPen(wx.TRANSPARENT_PEN)
         dc.SetBrush(brush)
-        dc.DrawRectangle(0, 0, w, h)
 
     # ------------------------------------------------------------------------
 
@@ -1043,10 +1073,13 @@ class sppasMediaCtrl(sppasPanel):
         """
         with MediaType() as mt:
             if self._mt == mt.unknown:
-                self.__draw_label(dc, gc, 20, 20, "No view.")
+                if self._ms == MediaState().loading:
+                    self.__draw_label(dc, gc, 10, 10, "Loading media file...")
+                else:
+                    self.__draw_label(dc, gc, 10, 10, "Unknown file format.")
 
             elif self._mt == mt.unsupported:
-                self.__draw_label(dc, gc, 20, 20, "File format not supported.")
+                self.__draw_label(dc, gc, 10, 10, "File format not supported.")
 
             elif self._mt == mt.audio:
                 if self._audio is not None:
@@ -1074,7 +1107,8 @@ class sppasMediaCtrl(sppasPanel):
                               self.GetBackgroundColour(),
                               self.GetHighlightedBackgroundColour(),
                               wx.WEST)
-        self.__draw_label(dc, gc, 10, h // 2, label)
+        dc.DrawRectangle(0, 0, w, h)
+        self.__draw_label(dc, gc, 10, h // 4, label)
 
     # -----------------------------------------------------------------------
 
@@ -1172,11 +1206,24 @@ class TestPanel(wx.Panel):
         sizer.Add(self.st_pos, (2, 5))
         sizer.Add(self.st_type, (3, 5))
         sizer.Add(self.st_file, (4, 5))
-        self.SetSizer(sizer)
+
+        mc2 = sppasMediaCtrl(self)
+        mc2.Load(
+            "C:\\Users\\bigi\\Videos\\agay_2.mp4")
+            # os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
+
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        main_sizer.Add(sizer, 0, wx.EXPAND)
+        main_sizer.Add(mc2, 0, wx.EXPAND)
+        self.SetSizer(main_sizer)
 
         wx.CallAfter(
             self.DoLoad,
-            os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
+            os.path.join(paths.samples, "samples-fra", "F_F_C006-P6.wav")
+            #"C:\\Users\\bigi\\Videos\\agay_2.mp4"
+            )
+
+        # mc2.SetZoom(50)
 
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.OnTimer)
@@ -1206,24 +1253,26 @@ class TestPanel(wx.Panel):
 
     def OnMediaLoaded(self, evt):
         media = evt.GetEventObject()
-        assert media == self.mc
-        wx.LogDebug(str(media))
-        wx.LogDebug(media.GetFilename())
-        self.slider.SetRange(0, media.Length())
-        self.playBtn.Enable(True)
-        self.st_len.SetLabel('length: %d seconds' % (media.Length()/1000))
-        self.st_pos.SetLabel('position: %d' % media.Tell())
-        self.st_type.SetLabel('type: %s' % self.mediatype(media.GetMediaType()))
+        if media == self.mc:
+            wx.LogDebug(str(media))
+            wx.LogDebug(media.GetFilename())
+            self.slider.SetRange(0, media.Length())
+            self.playBtn.Enable(True)
+            self.st_len.SetLabel('length: %d seconds' % (media.Length()/1000))
+            self.st_pos.SetLabel('position: %d' % media.Tell())
+            self.st_type.SetLabel('type: %s' % self.mediatype(media.GetMediaType()))
         self.Layout()
 
     # ----------------------------------------------------------------------
 
     def OnMediaNotLoaded(self, evt):
-        self.slider.SetRange(0, 0)
-        self.playBtn.Enable(False)
-        self.st_len.SetLabel('length: -- seconds')
-        self.st_pos.SetLabel('position: %d' % self.mc.Tell())
-        self.st_type.SetLabel('type: %s' % self.mediatype(self.mc.GetMediaType()))
+        media = evt.GetEventObject()
+        if media == self.mc:
+            self.slider.SetRange(0, 0)
+            self.playBtn.Enable(False)
+            self.st_len.SetLabel('length: -- seconds')
+            self.st_pos.SetLabel('position: %d' % self.mc.Tell())
+            self.st_type.SetLabel('type: %s' % self.mediatype(self.mc.GetMediaType()))
         self.Layout()
 
     # ----------------------------------------------------------------------
@@ -1296,6 +1345,7 @@ class TestPanel(wx.Panel):
 
     def Destroy(self):
         self.timer.Stop()
+        self.DeletePendingEvents()
         del self.timer
         wx.Panel.Destroy(self)
 

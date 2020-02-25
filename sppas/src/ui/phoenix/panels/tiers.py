@@ -352,7 +352,11 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     # -----------------------------------------------------------------------
 
     def set_selected_tier(self, filename, tier_name):
-        """Change page selection of the notebook to match given data."""
+        """Change page selection of the notebook to match given data.
+
+        :return: (int, int) Selected period in milliseconds
+
+        """
         notebook = self.FindWindow("tiers_notebook")
 
         # Currently selected annotation is deselected in a proper way!
@@ -362,6 +366,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         if cur_index != -1:
             self.__annotation_deselected(cur_index)
 
+        start = end = 0
         # Select requested tier (... and an annotation)
         for i in range(notebook.GetPageCount()):
             page = notebook.GetPage(i)
@@ -372,7 +377,9 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                 if cur_index == -1:
                     cur_index = 0
                 start, end = self.__annotation_selected(cur_index)
-                self.Notify(action="period_selected", value=(start, end))
+                break
+
+        return int(start * 1000.), int(end * 1000.)
 
     # -----------------------------------------------------------------------
 

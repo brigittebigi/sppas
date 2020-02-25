@@ -34,6 +34,7 @@
 
 """
 
+import logging
 import os
 import wx
 import wx.media
@@ -42,7 +43,6 @@ from sppas.src.config import paths
 from sppas.src.exc import IntervalRangeException
 
 from ..panel import sppasPanel
-from ..button import BitmapTextButton
 from .mediactrl import sppasMediaCtrl
 from .mediactrl import MediaType
 from .playerctrl import sppasPlayerControlsPanel
@@ -116,6 +116,9 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     def set_range(self, start=None, end=None):
         """Fix period to be played (milliseconds).
 
+        It is not verified that given end value is not larger than the
+        length: it allows to fix the range before the media are defined.
+
         In theory, this range would be as wanted, but backend have serious
         limitations.
         - Under Windows, the end offset is not respected. It's continuing to
@@ -144,10 +147,10 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         if start < 0:
             start = 0
-        if end > self._length:
-            end = self._length
 
         self.GetSlider().SetRange(start, end)
+        self.GetSlider().Layout()
+        self.GetSlider().Refresh()
         self.media_seek(start)
 
         return start, end
@@ -183,6 +186,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         It is supposed that all media are already loaded.
         If a media type is unsupported or unknown, the media is not added.
+        The range is set to the largest one.
 
         :param media_lst: (list)
 
@@ -232,7 +236,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     def add_media(self, media):
         """Add a media into the list of media managed by this control.
 
-        Set also the range if media is the first media in the list.
+        Re-evaluate our length, but do not set the range.
 
         :param media:
 
@@ -243,12 +247,9 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         if ok is True:
             # re-evaluate length
             self._length = max(m.Length() for m in self.__media)
-            if len(self.__media) == 1 and self.end_pos == 0:
-                self.set_range()
-
-            self.__validate_offsets()
             # seek the new media to the current position.
-            media.Seek(self.GetSlider().GetValue())
+            media.Seek(self.pos)
+
         return ok
 
     # -----------------------------------------------------------------------

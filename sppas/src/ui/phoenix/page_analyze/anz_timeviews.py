@@ -34,6 +34,7 @@
 
 """
 
+import logging
 import os
 import wx
 import mimetypes
@@ -161,17 +162,19 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
             name=name,
             files=files)
 
-        # By default, select the first tier of the first file
+        # Select the first annotation of the tier of the first file
         for filename in self._files:
             panel = self._files[filename]
             if isinstance(panel, TrsTimeViewPanel):
                 trs = panel.get_object()
                 if len(trs) > 0:
+                    # enable the tier into the panel of time tier views
                     tier_name = trs[0].get_name()
                     panel.set_selected_tier(tier_name)
-                    # enable the tier into the notebook of tier views
+                    # enable the tier into the notebook of list tier views
                     w = self.FindWindow("tiers_edit_splitter")
                     w.set_selected_tier(filename, tier_name)
+                    # an event is sent by w to fix the selected period
                     break
 
     # -----------------------------------------------------------------------
@@ -303,9 +306,9 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         splitter.Bind(EVT_VIEW, self._process_editview_event)
 
         # Fix size&layout
-        splitter.SetMinimumPaneSize(sppasPanel.fix_size(128))
+        splitter.SetMinimumPaneSize(sppasPanel.fix_size(178))
         splitter.SplitVertically(p1, p2, sppasPanel.fix_size(512))
-        splitter.SetSashGravity(0.5)
+        splitter.SetSashGravity(0.)
 
         return splitter
 
@@ -475,7 +478,11 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         splitter.Unsplit(toRemove=win_2)
 
         splitter.SplitVertically(win_2, win_1, w)
-        splitter.SetSashGravity(0.5)
+        if win_1.GetName() == "scrolled_views":
+            splitter.SetSashGravity(1.)
+        else:
+            splitter.SetSashGravity(0.)
+
 
         self.Layout()
         splitter.UpdateSize()
@@ -516,6 +523,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
 class TestPanel(TimeViewFilesPanel):
     TEST_FILES = (
         os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"),
+        "C:\\Users\\bigi\\Videos\\agay_2.mp4",
         # os.path.join("/Users/bigi/Movies/Monsters_Inc.For_the_Birds.mpg"),
         os.path.join("/E/Videos/Monsters_Inc.For_the_Birds.mpg"),
         # os.path.join(paths.samples, "COPYRIGHT.txt"),

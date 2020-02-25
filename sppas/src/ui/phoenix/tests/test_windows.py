@@ -123,7 +123,7 @@ class TestApp(wx.App):
                         clearSigInt=True)
 
         # create the frame
-        frm = wx.Frame(None, title='Test frame', size=wx.Size(800, 600))
+        frm = wx.Frame(None, title='Test frame', size=wx.Size(900, 600))
         frm.SetMinSize(wx.Size(640, 480))
         self.SetTopWindow(frm)
 

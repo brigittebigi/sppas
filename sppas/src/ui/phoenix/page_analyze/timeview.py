@@ -175,7 +175,7 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
             return
 
         if direction == 0:
-            self._child_panel.SetZoom(100)
+            self.GetPane().SetZoom(100)
         else:
             idx_zoom = MediaTimeViewPanel.ZOOMS.index(self._child_panel.GetZoom())
             if direction < 0:
@@ -227,41 +227,6 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
     def get_object(self):
         """Override. Return the sppasMediaCtrl."""
         return self.GetPane()
-
-    # -----------------------------------------------------------------------
-
-    def TestLayout(self):
-        """Do the layout.
-
-        Normally, the layout makes the child panel to be adjusted to the size
-        of self. Instead, here we let the child panel suiting its best height,
-        and we adjust its width with our borders.
-
-        """
-        # we need to complete the creation first
-        if not self._tools_panel or not self._child_panel:
-            return False
-
-        w, h = self.GetSize()
-        bw = w - self._border
-        bh = self.GetButtonHeight()
-        # fix pos and size of the top panel with tools
-        self._tools_panel.SetPosition((self._border, 0))
-        self._tools_panel.SetSize(wx.Size(bw, bh))
-
-        if self.IsExpanded():
-            cw, ch = self._child_panel.DoGetBestSize()
-            # fix pos and size of the child window
-            pw, ph = self.GetSize()
-            x = self._border + bh  # shift of the icon size (a square).
-            y = bh + self._border
-            pw = pw - x - self._border      # left-right borders
-            ph = ph - y - self._border      # top-bottom borders
-            self._child_panel.SetSize(wx.Size(pw, ch))
-            self._child_panel.SetPosition((x, y))
-            self._child_panel.Show(True)
-
-        return True
 
     # -----------------------------------------------------------------------
     # Events management
@@ -865,7 +830,8 @@ class TestPanel(sppasScrolledPanel):
                               filename=os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"))
 
         p4 = MediaTimeViewPanel(self,
-            filename="/E/Videos/Monsters_Inc.For_the_Birds.mpg")
+            #filename="/E/Videos/Monsters_Inc.For_the_Birds.mpg")
+            filename="C:\\Users\\bigi\\Videos\\agay_2.mp4")
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(p1, 0, wx.EXPAND)
@@ -874,4 +840,23 @@ class TestPanel(sppasScrolledPanel):
         s.Add(p4, 0, wx.EXPAND)
         self.SetSizer(s)
         self.SetupScrolling(scroll_x=False, scroll_y=True)
+        self.Bind(MediaEvents.EVT_MEDIA_ACTION, self._process_media_action)
 
+    # -----------------------------------------------------------------------
+
+    def _process_media_action(self, event):
+        """Process an action event from the player.
+
+        An action on media files has to be performed.
+
+        :param event: (wx.Event)
+
+        """
+        name = event.action
+        value = event.value
+
+        if name == "loaded":
+            if value is True:
+                event.GetEventObject().get_object().Play()
+
+        event.Skip()
