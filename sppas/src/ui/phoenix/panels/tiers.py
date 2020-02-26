@@ -188,11 +188,8 @@ class sppasTierListCtrl(LineListCtrl):
 
         """
         annotation = self._tier[idx]
-        old = serialize_labels(annotation.get_labels())
-        new = serialize_labels(labels)
-        if old != new:
-            annotation.set_labels(labels)
-            self._dirty = True
+        annotation.set_labels(labels)
+        self._dirty = True
 
     # -----------------------------------------------------------------------
     # Construct the window
@@ -336,21 +333,33 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
     # -----------------------------------------------------------------------
 
+    def __get_notebook(self):
+        return self.FindWindow("tiers_notebook")
+
+    notebook = property(__get_notebook, None)
+
+    def __get_toolbar(self):
+        return self.FindWindow("ann_toolbar")
+
+    toolbar = property(__get_toolbar, None)
+
+    def __get_listctrl(self):
+        page_index = self.notebook.GetSelection()
+        return self.notebook.GetPage(page_index)
+
+    listctrl = property(__get_listctrl, None)
+
+    # -----------------------------------------------------------------------
+
     def get_filename(self):
         """Return the name of the file of the current page."""
-        notebook = self.FindWindow("tiers_notebook")
-        page_index = notebook.GetSelection()
-        listctrl = notebook.GetPage(page_index)
-        return listctrl.get_filename()
+        return self.listctrl.get_filename()
 
     # -----------------------------------------------------------------------
 
     def get_tiername(self):
         """Return the name of the tier of the current page."""
-        notebook = self.FindWindow("tiers_notebook")
-        page_index = notebook.GetSelection()
-        listctrl = notebook.GetPage(page_index)
-        return listctrl.get_tiername()
+        return self.listctrl.get_tiername()
 
     # -----------------------------------------------------------------------
 
@@ -360,30 +369,27 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :return: (int, int) Selected period in milliseconds
 
         """
-        notebook = self.FindWindow("tiers_notebook")
-
-        # Currently selected annotation is deselected in a proper way!
-        page_index = notebook.GetSelection()
-        listctrl = notebook.GetPage(page_index)
-        cur_index = listctrl.GetFirstSelected()
-        if cur_index != -1:
-            self.__annotation_validator(cur_index)
-            listctrl.Select(cur_index, on=0)
-            logging.debug("{} Dé-SELECTED = {}"
-                      "".format(listctrl._tier.get_name(), cur_index))
-
         start = end = 0
-        # Select requested tier (... and an annotation)
-        for i in range(notebook.GetPageCount()):
-            page = notebook.GetPage(i)
-            if page.get_filename() == filename and page.get_tiername() == tier_name:
-                notebook.ChangeSelection(i)
-                listctrl = notebook.GetPage(i)
-                cur_index = listctrl.GetFirstSelected()
-                if cur_index == -1:
-                    cur_index = 0
-                start, end = self.__annotation_selected(cur_index)
-                break
+
+        # De-select the currently selected annotation.
+        cur_index = self.listctrl.GetFirstSelected()
+        ok = True
+        if cur_index != -1:
+            ok = self.__annotation_deselected(cur_index)
+            # re-set start and end to the currently selected ann
+
+        if ok is True:
+            # Select requested tier (... and an annotation)
+            for i in range(self.notebook.GetPageCount()):
+                page = self.notebook.GetPage(i)
+                if page.get_filename() == filename and page.get_tiername() == tier_name:
+                    self.notebook.ChangeSelection(i)
+                    listctrl = self.notebook.GetPage(i)
+                    cur_index = listctrl.GetFirstSelected()
+                    if cur_index == -1:
+                        cur_index = 0
+                    start, end = self.__annotation_selected(cur_index)
+                    break
 
         return int(start * 1000.), int(end * 1000.)
 
@@ -398,13 +404,12 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :param tiers: (list of sppasTier)
 
         """
-        notebook = self.FindWindow("tiers_notebook")
         for tier in tiers:
             if len(tier) > 0:
-                page = sppasTierListCtrl(notebook, tier, filename)
+                page = sppasTierListCtrl(self.notebook, tier, filename)
                 page.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_annotation_selected)
                 page.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_annotation_deselected)
-                notebook.AddPage(page, tier.get_name())
+                self.notebook.AddPage(page, tier.get_name())
             else:
                 wx.LogError("Page not created. "
                             "No annotation in tier: {:s}".format(tier.get_name()))
@@ -419,15 +424,12 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :param idx: (int) Index of the annotation to select.
 
         """
-        notebook = self.FindWindow("tiers_notebook")
-        page_index = notebook.GetSelection()
-        listctrl = notebook.GetPage(page_index)
-        cur_index = listctrl.GetFirstSelected()
+        cur_index = self.listctrl.GetFirstSelected()
         if cur_index != -1:
             self.__annotation_validator(cur_index)
-            listctrl.Select(cur_index, on=0)
+            self.listctrl.Select(cur_index, on=0)
             logging.debug("{} Dé-SELECTED = {}"
-                          "".format(listctrl._tier.get_name(), cur_index))
+                          "".format(self.listctrl._tier.get_name(), cur_index))
 
         self.__annotation_selected(idx)
 
@@ -439,18 +441,16 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :return (list of sppasLabel)
 
         """
-        tb = self.FindWindow("ann_toolbar")
-
         # The text is in XML (.xra) format
-        if tb.get_button("code_xml", "view_mode").IsPressed():
+        if self.toolbar.get_button("code_xml", "view_mode").IsPressed():
             pass
 
         # The text is in JSON (.jra) format
-        if tb.get_button("code_json", "view_mode").IsPressed():
+        if self.toolbar.get_button("code_json", "view_mode").IsPressed():
             pass
 
         # The text is serialized
-        if tb.get_button("code_review", "view_mode").IsPressed():
+        if self.toolbar.get_button("code_review", "view_mode").IsPressed():
             pass
 
         return ""
@@ -461,10 +461,8 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         if len(labels) == 0:
             return ""
 
-        tb = self.FindWindow("ann_toolbar")
-
         # The annotation labels are to be displayed in XML (.xra) format
-        if tb.get_button("code_xml", "view_mode").IsPressed():
+        if self.toolbar.get_button("code_xml", "view_mode").IsPressed():
             root = ET.Element('Annotation')
             for label in labels:
                 label_root = ET.SubElement(root, 'Label')
@@ -474,7 +472,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             return xml_text
 
         # The annotation labels are to be displayed in JSON (.jra) format
-        if tb.get_button("code_json", "view_mode").IsPressed():
+        if self.toolbar.get_button("code_json", "view_mode").IsPressed():
             root = list()
             for label in labels:
                 sppasJRA.format_label(root, label)
@@ -482,7 +480,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             return json_text
 
         # The annotation labels are to be displayed in text
-        if tb.get_button("code_review", "view_mode").IsPressed():
+        if self.toolbar.get_button("code_review", "view_mode").IsPressed():
             return serialize_labels(labels)
 
         return ""
@@ -490,10 +488,9 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     # -----------------------------------------------------------------------
 
     def refresh_annotation(self):
-        notebook = self.FindWindow("tiers_notebook")
         textctrl = self.FindWindow("ann_textctrl")
-        page_index = notebook.GetSelection()
-        listctrl = notebook.GetPage(page_index)
+        page_index = self.notebook.GetSelection()
+        listctrl = self.notebook.GetPage(page_index)
 
         ann = listctrl.get_selected_annotation()
 
@@ -516,7 +513,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         self.Unsplit(toRemove=win_2)
         self.SplitHorizontally(win_2, win_1, h)
 
-        if win_1.GetName() == "tiers_notebook":
+        if win_1 == self.notebook:
             self.SetSashGravity(0.9)
         else:
             self.SetSashGravity(0.1)
@@ -575,22 +572,34 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         the annotation of the tier.
 
         """
-        index = evt.GetIndex()
-        self.__annotation_validator(index)
-        notebook = self.FindWindow("tiers_notebook")
-        page_index = notebook.GetSelection()
-        listctrl = notebook.GetPage(page_index)
-        listctrl.Select(index, on=0)
-        logging.debug("{} Dé-SELECTED = {}"
-                      "".format(listctrl._tier.get_name(), index))
+        self.__annotation_deselected(evt.GetIndex())
+
+    # -----------------------------------------------------------------------
+
+    def __annotation_deselected(self, index):
+        ok = self.__annotation_validator(index)
+        if ok is True:
+            self.listctrl.Select(index, on=0)
+            logging.debug("{} Dé-SELECTED = {}"
+                          "".format(self.get_tiername(), index))
+        return ok
+
+    # -----------------------------------------------------------------------
 
     def __annotation_validator(self, idx):
+        cur_labels = self.listctrl.get_selected_annotation().get_labels()
+
         try:
             labels = self.text_to_labels()
-            # listctrl.set_annotation_labels(labels)
+            if serialize_labels(labels) != serialize_labels(cur_labels):
+                self.listctrl.set_annotation_labels(labels)
+            return True
+
         except Exception as e:
             msg = ERR_ANN_SET_LABELS + "{:s}".format(str(e)) + MSG_CANCEL
             response = Confirm(msg)
+
+        return False
 
     # -----------------------------------------------------------------------
 
@@ -600,14 +609,22 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         start, end = self.__annotation_selected(evt.GetIndex())
         self.Notify(action="period_selected", value=(start, end))
 
-    def __annotation_selected(self, idx):
-        notebook = self.FindWindow("tiers_notebook")
-        page_index = notebook.GetSelection()
-        listctrl = notebook.GetPage(page_index)
-        listctrl.Select(idx, on=1)
-        logging.debug("{} SELECTED = {}".format(listctrl._tier.get_name(), idx))
+    # -----------------------------------------------------------------------
 
-        ann = self.refresh_annotation()
+    def __annotation_selected(self, idx):
+        self.listctrl.Select(idx, on=1)
+        logging.debug("{} SELECTED = {}".format(self.get_tiername(), idx))
+
+        self.refresh_annotation()
+        return self.get_ann_period()
+
+    # -----------------------------------------------------------------------
+
+    def get_ann_period(self):
+        """Return the time period of the currently selected annotation."""
+        ann = self.listctrl.get_selected_annotation()
+        start = end = 0
+
         if ann is not None:
             start_point = ann.get_lowest_localization()
             start = start_point.get_midpoint()
@@ -619,36 +636,33 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             r = end_point.get_radius()
             if r is not None:
                 end += r
+
         return start, end
 
     # -----------------------------------------------------------------------
 
     def _on_page_changing(self, evt):
-        """The notebook is being to change page."""
+        """The notebook is being to change page.
 
-        notebook = self.FindWindow("tiers_notebook")
-        page_index = notebook.GetSelection()
-        listctrl = notebook.GetPage(page_index)
-
-        cur_index = listctrl.GetFirstSelected()
+        """
+        cur_index = self.listctrl.GetFirstSelected()
         if cur_index != -1:
             self.__annotation_validator(cur_index)
 
     # -----------------------------------------------------------------------
 
     def _on_page_changed(self, evt):
-        """The notebook changed its page."""
+        """The notebook changed its page.
+
+        """
         if not self:
             return
         self.Notify(action="tier_selected", value=None)
 
-        notebook = self.FindWindow("tiers_notebook")
-        page_index = notebook.GetSelection()
-        listctrl = notebook.GetPage(page_index)
-
-        cur_index = listctrl.GetFirstSelected()
+        cur_index = self.listctrl.GetFirstSelected()
         if cur_index == -1:
-            logging.debug("No annotation was previously selected in {}".format(listctrl._tier.get_name()))
+            logging.debug("No annotation was previously selected in {}"
+                          "".format(self.get_tiername()))
             cur_index = 0
 
         start, end = self.__annotation_selected(cur_index)
