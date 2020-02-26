@@ -34,6 +34,7 @@
 
 """
 
+import logging
 import os
 import wx
 import json
@@ -263,6 +264,8 @@ class sppasTierListCtrl(LineListCtrl):
         system can't be disabled and is different on each system).
 
         """
+        assert 0 <= idx < self.GetItemCount()
+
         wx.ListCtrl.Select(self, idx, on)
         font = self.GetFont()
         if on:
@@ -290,7 +293,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
         # Window 1 of the splitter: a ListCtrl of each tier in a notebook
         p1 = sppasNotebook(self, style=wx.BORDER_SIMPLE, name="tiers_notebook")
-        # p1.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self._on_page_changing)
+        p1.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self._on_page_changing)
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self._on_page_changed)
 
         # Window 2 of the splitter: an annotation editor
@@ -364,7 +367,10 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         listctrl = notebook.GetPage(page_index)
         cur_index = listctrl.GetFirstSelected()
         if cur_index != -1:
-            self.__annotation_deselected(cur_index)
+            self.__annotation_validator(cur_index)
+            listctrl.Select(cur_index, on=0)
+            logging.debug("{} Dé-SELECTED = {}"
+                      "".format(listctrl._tier.get_name(), cur_index))
 
         start = end = 0
         # Select requested tier (... and an annotation)
@@ -418,7 +424,11 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         listctrl = notebook.GetPage(page_index)
         cur_index = listctrl.GetFirstSelected()
         if cur_index != -1:
-            self.__annotation_deselected(cur_index)
+            self.__annotation_validator(cur_index)
+            listctrl.Select(cur_index, on=0)
+            logging.debug("{} Dé-SELECTED = {}"
+                          "".format(listctrl._tier.get_name(), cur_index))
+
         self.__annotation_selected(idx)
 
     # -----------------------------------------------------------------------
@@ -566,13 +576,15 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
         """
         index = evt.GetIndex()
-        wx.LogMessage("DESELECTED = {}".format(index))
-        self.__annotation_deselected(evt.GetIndex())
-
-    def __annotation_deselected(self, idx):
+        self.__annotation_validator(index)
         notebook = self.FindWindow("tiers_notebook")
         page_index = notebook.GetSelection()
         listctrl = notebook.GetPage(page_index)
+        listctrl.Select(index, on=0)
+        logging.debug("{} Dé-SELECTED = {}"
+                      "".format(listctrl._tier.get_name(), index))
+
+    def __annotation_validator(self, idx):
         try:
             labels = self.text_to_labels()
             # listctrl.set_annotation_labels(labels)
@@ -580,14 +592,11 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             msg = ERR_ANN_SET_LABELS + "{:s}".format(str(e)) + MSG_CANCEL
             response = Confirm(msg)
 
-        listctrl.Select(idx, on=0)
-
     # -----------------------------------------------------------------------
 
     def _on_annotation_selected(self, evt):
         """An annotation is selected in the list."""
         index = evt.GetIndex()
-        wx.LogMessage("SELECTED = {}".format(index))
         start, end = self.__annotation_selected(evt.GetIndex())
         self.Notify(action="period_selected", value=(start, end))
 
@@ -596,6 +605,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         page_index = notebook.GetSelection()
         listctrl = notebook.GetPage(page_index)
         listctrl.Select(idx, on=1)
+        logging.debug("{} SELECTED = {}".format(listctrl._tier.get_name(), idx))
 
         ann = self.refresh_annotation()
         if ann is not None:
@@ -619,9 +629,10 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         notebook = self.FindWindow("tiers_notebook")
         page_index = notebook.GetSelection()
         listctrl = notebook.GetPage(page_index)
+
         cur_index = listctrl.GetFirstSelected()
         if cur_index != -1:
-            self.__annotation_deselected(cur_index)
+            self.__annotation_validator(cur_index)
 
     # -----------------------------------------------------------------------
 
@@ -634,10 +645,14 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         notebook = self.FindWindow("tiers_notebook")
         page_index = notebook.GetSelection()
         listctrl = notebook.GetPage(page_index)
+
         cur_index = listctrl.GetFirstSelected()
-        if cur_index != -1:
+        if cur_index == -1:
+            logging.debug("No annotation was previously selected in {}".format(listctrl._tier.get_name()))
             cur_index = 0
-        self.__annotation_selected(cur_index)
+
+        start, end = self.__annotation_selected(cur_index)
+        self.Notify(action="period_selected", value=(start, end))
 
 # ---------------------------------------------------------------------------
 
