@@ -305,7 +305,7 @@ class sppasMediaCtrl(sppasPanel):
     Extended features are:
 
         - TODO: display of waveform/spectrogram/volume if the media is an audio;
-        - a zoom (percentage) to fix the size of this panel and its media;
+        - a zoom (percentage) to fix the height of this panel and its media;
         - works exactly the same on all platforms, except for Seek().
 
     Other known problems:
@@ -459,6 +459,7 @@ class sppasMediaCtrl(sppasPanel):
         if value > 400:
             value = 400
         self._zoom = value
+        self.SetBestSize()
         self.Refresh()
 
     # ----------------------------------------------------------------------
@@ -744,7 +745,6 @@ class sppasMediaCtrl(sppasPanel):
                 h = sppasMediaCtrl.MIN_HEIGHT
 
         # Apply the zoom coefficient
-        w = int(float(w) * float(self._zoom) / 100.)
         h = int(float(h) * float(self._zoom) / 100.)
 
         return wx.Size(w, h)

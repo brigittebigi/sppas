@@ -317,13 +317,19 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
     def __add_custom_controls(self, control_panel):
         """Add custom widgets to the player controls panel."""
         # to switch panels of the splitter
-        btn1 = BitmapTextButton(control_panel.GetWidgetsPanel(), name="way_up_down")
+        btn1 = BitmapTextButton(control_panel.widgets_panel, name="way_up_down")
         control_panel.SetButtonProperties(btn1)
         control_panel.AddWidget(btn1)
 
-        btn2 = BitmapTextButton(control_panel.GetWidgetsPanel(), name="way_left_right")
+        btn2 = BitmapTextButton(control_panel.widgets_panel, name="way_left_right")
         control_panel.SetButtonProperties(btn2)
         control_panel.AddWidget(btn2)
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def _player_controls_panel(self):
+        return self.FindWindow("player_controls_panel")
 
     # -----------------------------------------------------------------------
     # Events management
@@ -335,10 +341,35 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         :param event: (wx.Event)
 
         """
-        BaseViewFilesPanel._process_view_event(self, event)
-        action = event.action
+        try:
+            panel = event.GetEventObject()
+            panel_name = panel.GetName()
 
-        if action == "tier_selected":
+            action = event.action
+            fn = None
+            for filename in self._files:
+                p = self._files[filename]
+                if p == panel:
+                    fn = filename
+                    break
+            if fn is None:
+                raise Exception("Unknown {:s} panel in ViewEvent."
+                                "".format(panel_name))
+        except Exception as e:
+            wx.LogError(str(e))
+            return
+
+        if action == "save":
+            self.save_file(fn)
+
+        elif action == "close":
+            # If the closed page is a media, this media must be removed of the
+            # multimedia player control.
+            if isinstance(panel, MediaTimeViewPanel):
+                self._player_controls_panel.remove_media(panel.GetPane())
+            closed = self.close_page(fn)
+
+        elif action == "tier_selected":
             panel = event.GetEventObject()
             trs_filename = panel.get_filename()
             tier_name = panel.get_selected_tier()
@@ -425,23 +456,21 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
 
         if name == "loaded":
             if value is True:
-                ctrls = self.FindWindow("player_controls_panel")
-                ctrls.add_media(event.GetEventObject().get_object())
+                panel = event.GetEventObject()
+                self._player_controls_panel.add_media(panel.GetPane())
 
         event.Skip()
 
     # -----------------------------------------------------------------------
 
     def OnCollapseChanged(self, evt=None):
-        ctrls = self.FindWindow("player_controls_panel")
-
         panel = evt.GetEventObject()
         if isinstance(panel, MediaTimeViewPanel) is True:
             if panel.IsExpanded() is True:
                 # The panel was collapsed, and now it is expanded.
-                ctrls.add_media(panel.GetPane())
+                self._player_controls_panel.add_media(panel.GetPane())
             else:
-                ctrls.remove_media(panel.GetPane())
+                self._player_controls_panel.remove_media(panel.GetPane())
 
         self.GetScrolledPanel().ScrollChildIntoView(panel)
         self.FindWindow("vert_splitter").Layout()
@@ -459,7 +488,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         splitter.Unsplit(toRemove=win_2)
         splitter.SplitHorizontally(win_2, win_1, h)
 
-        if win_1.GetName() == "player_controls_panel":
+        if win_1 == self._player_controls_panel:
             splitter.SetSashGravity(1.)
         else:
             splitter.SetSashGravity(0.)
@@ -497,23 +526,19 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         The change of offset period will stop all the media.
 
         """
-        wx.LogDebug("Set offset period: {:d} {:d}".format(start, end))
-        ctrls = self.FindWindow("player_controls_panel")
-        ctrls.set_range(start, end)
+        self._player_controls_panel.set_range(start, end)
 
     # -----------------------------------------------------------------------
 
     def media_playing(self):
         """Return the first panel we found playing, None instead."""
-        ctrls = self.FindWindow("player_controls_panel")
-        return ctrls.media_playing()
+        return self._player_controls_panel.media_playing()
 
     # -----------------------------------------------------------------------
 
     def media_paused(self):
         """Return the first panel with a paused media or None."""
-        ctrls = self.FindWindow("player_controls_panel")
-        return ctrls.media_paused()
+        return self._player_controls_panel.media_paused()
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py

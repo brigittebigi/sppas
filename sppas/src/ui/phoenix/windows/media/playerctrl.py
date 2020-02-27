@@ -45,7 +45,7 @@ from .mediaevents import MediaEvents
 
 
 class sppasPlayerControlsPanel(sppasPanel):
-    """Create a panel with controls for media.
+    """Create a panel with controls for managing media.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -93,39 +93,25 @@ class sppasPlayerControlsPanel(sppasPanel):
     # Public methods, for the controls
     # -----------------------------------------------------------------------
 
-    def GetWidgetsPanel(self):
-        """Return the customizable panel."""
-        return self.FindWindow("widgets_panel")
-
-    # -----------------------------------------------------------------------
-
     def AddWidget(self, wxwindow):
-        """Add a widget into the first panel.
+        """Add a widget into the customizable panel.
 
         :param wxwindow: (wx.Window)
         :return: True if added, False if parent does not match.
 
         """
-        widgets_panel = self.FindWindow("widgets_panel")
-        if wxwindow.GetParent() != widgets_panel:
+        if wxwindow.GetParent() != self.widgets_panel:
             return False
-        widgets_panel.GetSizer().Add(wxwindow, 0, wx.ALIGN_CENTER | wx.ALL,
-                                     sppasPanel.fix_size(2))
-        widgets_panel.Show(True)
+        self.widgets_panel.GetSizer().Add(
+            wxwindow, 0, wx.ALIGN_CENTER | wx.ALL, sppasPanel.fix_size(2))
+        self.widgets_panel.Show(True)
         return True
-
-    # -----------------------------------------------------------------------
-
-    def GetSlider(self):
-        """Return the slider to indicate offsets."""
-        return self.FindWindow("seek_slider")
 
     # -----------------------------------------------------------------------
 
     def IsReplay(self):
         """Return True if the button to replay is enabled."""
-        transport_panel = self.FindWindow("transport_panel")
-        return transport_panel.FindWindow("media_repeat").IsPressed()
+        return self._transport_panel.FindWindow("media_repeat").IsPressed()
 
     # -----------------------------------------------------------------------
 
@@ -138,8 +124,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         :param enable: (bool)
 
         """
-        transport_panel = self.FindWindow("transport_panel")
-        transport_panel.FindWindow("media_repeat").Enable(enable)
+        self._transport_panel.FindWindow("media_repeat").Enable(enable)
 
     # -----------------------------------------------------------------------
 
@@ -149,8 +134,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         :param enable: (bool)
 
         """
-        transport_panel = self.FindWindow("transport_panel")
-        transport_panel.FindWindow("media_play").Enable(enable)
+        self._transport_panel.FindWindow("media_play").Enable(enable)
 
     # -----------------------------------------------------------------------
 
@@ -160,8 +144,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         :param value: (bool) True to make the button in Pause position
 
         """
-        transport_panel = self.FindWindow("transport_panel")
-        btn = transport_panel.FindWindow("media_play")
+        btn = self._transport_panel.FindWindow("media_play")
         if value is True:
             btn.SetImage("media_pause")
             btn.Refresh()
@@ -210,15 +193,38 @@ class sppasPlayerControlsPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def SetBackgroundColour(self, colour):
-        """"""
+        """Set the background of our panel to the given color."""
         wx.Panel.SetBackgroundColour(self, colour)
-        hi_color = self.GetHighlightedColour()
+        hi_color = self.GetHighlightedBackgroundColour()
 
         for name in ("transport", "widgets", "volume"):
             w = self.FindWindow(name + "_panel")
             for c in w.GetChildren():
                 if isinstance(c, BitmapTextButton) is True:
                     c.SetBackgroundColour(hi_color)
+
+    # -----------------------------------------------------------------------
+
+    def GetHighlightedBackgroundColour(self):
+        """Return a color slightly different of the parent background one."""
+        color = self.GetParent().GetBackgroundColour()
+        r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
+        return wx.Colour(r, g, b, a).ChangeLightness(80)
+
+    # -----------------------------------------------------------------------
+
+    def SetButtonProperties(self, btn):
+        """Set the properties of a button.
+
+        :param btn: (BaseButton of sppas)
+
+        """
+        btn.FocusWidth = 1
+        btn.Spacing = 0
+        btn.BorderWidth = 0
+        btn.SetMinSize(wx.Size(sppasPanel.fix_size(28),
+                               sppasPanel.fix_size(28)))
+        return btn
 
     # -----------------------------------------------------------------------
 
@@ -242,6 +248,27 @@ class sppasPlayerControlsPanel(sppasPanel):
         sizer.Add(nav_sizer, 0, wx.ALIGN_CENTRE | wx.EXPAND | wx.ALL, border)
 
         self.SetSizer(sizer)
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def _transport_panel(self):
+        """Return the panel embedding buttons to manage the media."""
+        return self.FindWindow("transport_panel")
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def _slider(self):
+        """Return the slider to indicate offsets."""
+        return self.FindWindow("seek_slider")
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def widgets_panel(self):
+        """Return the panel to be customized."""
+        return self.FindWindow("widgets_panel")
 
     # -----------------------------------------------------------------------
 
@@ -332,24 +359,6 @@ class sppasPlayerControlsPanel(sppasPanel):
         return panel
 
     # -----------------------------------------------------------------------
-
-    def SetButtonProperties(self, btn):
-        btn.FocusWidth = 1
-        btn.Spacing = 0
-        btn.BorderWidth = 0
-        btn.SetMinSize(wx.Size(sppasPanel.fix_size(28),
-                               sppasPanel.fix_size(28)))
-        return btn
-
-    # -----------------------------------------------------------------------
-
-    def GetHighlightedColour(self):
-        """Return a color slightly different of the given one."""
-        color = self.GetParent().GetBackgroundColour()
-        r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
-        return wx.Colour(r, g, b, a).ChangeLightness(80)
-
-    # -----------------------------------------------------------------------
     # Manage events
     # -----------------------------------------------------------------------
 
@@ -435,7 +444,6 @@ class sppasPlayerControlsPanel(sppasPanel):
             if to_notify is True:
                 mute_btn.SetImage("volume_mute")
                 mute_btn.Refresh()
-                # self.notify(action="volume", value=0.)
                 self.media_volume(0.)
 
         else:
@@ -454,7 +462,6 @@ class sppasPlayerControlsPanel(sppasPanel):
 
             # convert this percentage in a volume value ranging [0..1]
             volume = float(volume) / 100.
-            # self.notify(action="volume", value=volume)
             self.media_volume(volume)
 
 # ---------------------------------------------------------------------------
@@ -465,7 +472,7 @@ class TestPanel(sppasPanel):
         super(TestPanel, self).__init__(parent)
 
         p1 = sppasPlayerControlsPanel(self)
-        btn1 = BitmapTextButton(p1.GetWidgetsPanel(), name="way_up_down")
+        btn1 = BitmapTextButton(p1.widgets_panel, name="way_up_down")
         p1.SetButtonProperties(btn1)
         p1.AddWidget(btn1)
         p1.Bind(MediaEvents.EVT_MEDIA_ACTION, self.process_action)

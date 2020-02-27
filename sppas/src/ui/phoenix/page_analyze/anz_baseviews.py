@@ -318,6 +318,7 @@ class BaseViewFilesPanel(sppasPanel):
 
         removed = self.remove_file(filename, force=True)
         if removed is True:
+            self.GetScrolledPanel().Layout()
             self.Layout()
             self.Refresh()
 

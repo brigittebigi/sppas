@@ -34,7 +34,6 @@
 
 """
 
-import logging
 import os
 import wx
 import wx.media
@@ -61,7 +60,15 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
     A player controls panel to play several media at a time.
-    It is supposed that all the given media are already loaded.
+    All the media are requested to be played but depending on the backend,
+    they'll really start to play at different time values.
+    Observed differences:
+        - Linux (Gstreamer): about 2-3 ms
+        - MacOS (AvPlayer): about 11-13 ms
+        - Windows (Wmp10): to do
+
+    Notice that media are not displayed by this panel and it is supposed that
+    all the given media are already loaded.
 
     Known problems while playing a media during a given period of time:
 
@@ -72,6 +79,9 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
     # -----------------------------------------------------------------------
     # The minimum duration the backend can play - empirically estimated.
+    # We should fix these values depending on the backend system instead of
+    # the operating system.
+    # GStreamer = 40 // AvPlayer = 1000 // Wmp10 = 400
     if wx.Platform == "__WXMSW__":
         MIN_RANGE = 400
     elif wx.Platform == "__WXMAC__":
@@ -108,31 +118,37 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         self._autoreplay = True
         self._timer = wx.Timer(self)
         self._refreshtimer = 10
+        self.__shift = 1000
         self.min_range = sppasMultiPlayerPanel.MIN_RANGE
 
-        self.Bind(wx.EVT_TIMER, self.OnTimer)
+        self.Bind(wx.EVT_TIMER, self._on_timer)
 
     # -----------------------------------------------------------------------
-    # Manage offset and period
+    # Public methods to manage offset and period
     # -----------------------------------------------------------------------
 
     def get_start_pos(self):
-        return self.GetSlider().GetRange()[0]
+        """Return the start position in time (milliseconds)."""
+        return self._slider.GetRange()[0]
 
     # -----------------------------------------------------------------------
 
     def get_end_pos(self):
-        return self.GetSlider().GetRange()[1]
+        """Return the end position in time (milliseconds)."""
+        return self._slider.GetRange()[1]
 
     # -----------------------------------------------------------------------
 
     def get_pos(self):
-        return self.GetSlider().GetValue()
+        """Return the current position in time (milliseconds)."""
+        return self._slider.GetValue()
 
     # -----------------------------------------------------------------------
 
     def set_range(self, start=None, end=None):
         """Fix period to be played (milliseconds).
+
+        The slider range, its position and the media position are modified.
 
         It is not verified that given end value is not larger than the
         length: it allows to fix the range before the media are defined.
@@ -143,10 +159,11 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         play about 400ms after the end offset.
         - Under MacOS, a period less than 1 sec is not played at all and it
         must start at X*1000 ms.
+        Those problems are requiring to adapt requested start/end positions...
 
         :param start: (int) Start time. Default is 0.
         :param end: (int) End time. Default is length.
-        :return: Real start and end positions.
+        :return: Real start and end positions fixed.
 
         """
         if start is None:
@@ -166,9 +183,9 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         # Move end to ensure a min range
         end = max(end, start + self.min_range)
 
-        self.GetSlider().SetRange(start, end)
-        self.GetSlider().Layout()
-        self.GetSlider().Refresh()
+        self._slider.SetRange(start, end)
+        self._slider.Layout()
+        self._slider.Refresh()
         self.media_seek(start)
 
         return start, end
@@ -176,11 +193,17 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     # -----------------------------------------------------------------------
 
     def set_pos(self, offset):
+        """Set the current position in time (milliseconds) for the slider.
+
+        Notice that it sets only the slider and not the position in the media.
+
+        """
         assert int(offset) >= 0
         if offset < self.start_pos or offset > self.end_pos:
-            wx.LogDebug("start %d, end %d, offset %d" % (self.start_pos, self.end_pos, offset))
+            wx.LogError("Current range is [%d, %d], but requested offset is %d"
+                        "" % (self.start_pos, self.end_pos, offset))
             raise IntervalRangeException(offset, self.start_pos, self.end_pos)
-        self.GetSlider().SetValue(offset)
+        self._slider.SetValue(offset)
 
     # -----------------------------------------------------------------------
 
@@ -189,11 +212,11 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     pos = property(get_pos, set_pos)
 
     # -----------------------------------------------------------------------
+    # Public methods to manage the media
     # -----------------------------------------------------------------------
 
     def get_autoreplay(self):
-        transport_panel = self.FindWindow("transport_panel")
-        return transport_panel.FindWindow("media_repeat").IsPressed()
+        return self._transport_panel.FindWindow("media_repeat").IsPressed()
 
     autoreplay = property(get_autoreplay, None)
 
@@ -207,6 +230,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         The range is set to the largest one.
 
         :param media_lst: (list)
+        :return: (int) Number of media added.
 
         """
         self.__reset()
@@ -218,36 +242,10 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         if len(self.__media) > 0:
             # re-evaluate length
             self._length = max(m.Length() for m in self.__media)
-            # fix the largest range
+            # fix the largest range and seek at the beginning of the period
             self.set_range()
 
-            # seek at the beginning of the period
-            self.media_seek(self.start_pos)
-
-    # -----------------------------------------------------------------------
-
-    def __append_media(self, m):
-        mt = m.GetMediaType()
-        if mt == MediaType().unknown:
-            wx.LogError("Media {:s} is not added to the player: unknown format."
-                        "".format(m.GetFilename()))
-
-        elif mt == MediaType().unsupported:
-            wx.LogError("Media {:s} is not added to the player: unsupported format."
-                        "".format(m.GetFilename()))
-
-        else:
-            ml = m.Length()
-            if ml == -1:
-                wx.LogError("Media {:s} is not added to the player: load not completed."
-                            "".format(m.GetFilename()))
-            else:
-                wx.LogDebug("Media {:s} is added to the player."
-                            "".format(m.GetFilename()))
-                self.__media.append(m)
-                return True
-
-        return False
+        return len(self.__media)
 
     # -----------------------------------------------------------------------
 
@@ -255,8 +253,10 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         """Add a media into the list of media managed by this control.
 
         Re-evaluate our length, but do not set the range.
+        Seek at the beginning of the range.
 
         :param media:
+        :return: (bool)
 
         """
         if media in self.__media:
@@ -265,8 +265,11 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         if ok is True:
             # re-evaluate length
             self._length = max(m.Length() for m in self.__media)
-            # seek the new media to the current position.
-            media.Seek(self.pos)
+
+            # seek the new media to the current position is not possible with
+            # macOS AvPlayer backend which must seek to X*1000 ms...
+            # we'll seek all the media at the current start pos.
+            self.media_seek(self.start_pos)
 
         return ok
 
@@ -276,6 +279,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         """Remove a media of the list of media managed by this control.
 
         :param media:
+        :return: (bool)
 
         """
         if media not in self.__media:
@@ -288,7 +292,8 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
             self._length = max(m.Length() for m in self.__media)
         else:
             self._length = 0
-            #self.__reset()
+
+        return True
 
     # -----------------------------------------------------------------------
 
@@ -327,13 +332,9 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         Observed differences on MacOS are about 11-24 ms between each media.
 
         """
-        wx.LogDebug("Call to media tell...")
         if len(self.__media) > 0:
             values = [m.Tell() for m in self.__media]
-            wx.LogDebug(" ... Media tell values %s." % str(values))
             return min(values)
-
-        wx.LogDebug(" ... no media. Return 0.")
 
         # No audio nor video in the list of media
         return 0
@@ -373,16 +374,38 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
     # -----------------------------------------------------------------------
 
+    def get_shift(self):
+        """Return the time delay to rewind or forward. Default is 1000 ms."""
+        return self.__shift
+
+    # -----------------------------------------------------------------------
+
+    def set_shift(self, value):
+        """Set the time delay to rewind or forward.
+
+        :param value: (int) Value (min is 50, max is length/2 of media)
+
+        """
+        value = int(value)
+        if value < 50:
+            self.__shift = 50
+        elif self._length > 0 and value > (self._length // 2):
+            self.__shift = self._length // 2
+        else:
+            self.__shift = value
+
+    # -----------------------------------------------------------------------
+
     def media_rewind(self):
-        """Seek media to some time earlier."""
-        new_pos = self.pos - 2000
+        """Seek media to some time earlier. Default is 1000 ms."""
+        new_pos = self.pos - self.__shift
         self.media_seek(new_pos)
 
     # -----------------------------------------------------------------------
 
     def media_forward(self):
-        """Seek media to some time later on."""
-        new_pos = self.pos + 2000
+        """Seek media to some time later on. Default is 1000 ms."""
+        new_pos = self.pos + self.__shift
         self.media_seek(new_pos)
 
     # -----------------------------------------------------------------------
@@ -439,13 +462,13 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         self.set_pos(self.start_pos)
 
     # ----------------------------------------------------------------------
-
+    # Callbacks to events
     # ----------------------------------------------------------------------
 
-    def OnTimer(self, event):
+    def _on_timer(self, event):
         """Call it if EVT_TIMER is captured.
 
-        Known BUGS of backends:
+        Known BUGS of backends we're trying to manage:
 
         Under MacOS:
         There's a delay (about 450-500ms) between the moment the timer
@@ -475,6 +498,8 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
                 self.play()
 
     # ----------------------------------------------------------------------
+    # Private methods
+    # ----------------------------------------------------------------------
 
     def __reset(self):
         self.stop()
@@ -492,7 +517,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         # check where the media really are in time
         values = [m.Tell() for m in self.__media]
-        wx.LogDebug("Position values of media: {:s}".format(str(values)))
+        wx.LogMessage(" ... Positions (ms) in the media: %s." % str(values))
         max_pos = max(values)
 
         # Cant re-synchronize under MacOS, either Seek:
@@ -505,25 +530,34 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         return max_pos
 
-    # ----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
-    def __validate_offsets(self):
-        """Adjust if given offsets are not in an appropriate range."""
-        # if len(self.__media) > 0:
-        #    offset = self.media_tell()
-        #    if offset < self.get_start_pos() or offset > self.get_end_pos():
-        #        self.media_seek(self.get_start_pos())
-        #        self.GetSlider().SetValue(offset)
+    def __append_media(self, m):
+        """Append a media to the list of media."""
+        mt = m.GetMediaType()
+        if mt == MediaType().unknown:
+            wx.LogError("Media {:s} is not added to the player: "
+                        "unknown format."
+                        "".format(m.GetFilename()))
 
-        # validate end position (no longer than the length)
-        if self.end_pos > self._length:
-            self.set_range(self.start_pos, self._length)
+        elif mt == MediaType().unsupported:
+            wx.LogError("Media {:s} is not added to the player: "
+                        "unsupported format."
+                        "".format(m.GetFilename()))
 
-        offset = self.media_tell()
-        if offset < self.start_pos or offset > self.end_pos:
-            self.media_seek(self.start_pos)
-            # real_cur_pos = self.media_tell()
-            # self.GetSlider().SetValue(real_cur_pos)
+        else:
+            ml = m.Length()
+            if ml == -1:
+                wx.LogError("Media {:s} is not added to the player: "
+                            "load not completed."
+                            "".format(m.GetFilename()))
+            else:
+                wx.LogDebug("Media {:s} is added to the player."
+                            "".format(m.GetFilename()))
+                self.__media.append(m)
+                return True
+
+        return False
 
 # ---------------------------------------------------------------------------
 

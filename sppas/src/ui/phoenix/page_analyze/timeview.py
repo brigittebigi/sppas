@@ -111,7 +111,6 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
         self._object = None
         super(MediaTimeViewPanel, self).__init__(parent, filename, name)
 
-        # self.Bind(sppasMedia.EVT_MEDIA_ACTION, self._process_action)
         self.Bind(wx.EVT_BUTTON, self._process_event)
         self.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__process_media_loaded)
         self.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__process_media_not_loaded)
@@ -184,16 +183,11 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
                 new_idx_zoom = min(len(MediaTimeViewPanel.ZOOMS)-1, idx_zoom+1)
             self._child_panel.SetZoom(MediaTimeViewPanel.ZOOMS[new_idx_zoom])
 
-        size = self.DoGetBestSize()
-        self.SetSize(size)
-        self.GetParent().Layout()
-
-    # -----------------------------------------------------------------------
-
-    def media_remove(self, obj):
-        """Remove the media we clicked on the collapsible panel close button."""
-        # self._child_panel.Destroy()
-        self.Destroy()
+        # Adapt our size to the new media size and the parent updates its layout
+        self.Freeze()
+        self.InvalidateBestSize()
+        self.Thaw()
+        self.SetStateChange(self.GetBestSize())
 
     # -----------------------------------------------------------------------
     # Construct the GUI
@@ -204,7 +198,7 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
         self.AddButton("zoom_in")
         self.AddButton("zoom_out")
         self.AddButton("zoom")
-        # self.AddButton("close")
+        self.AddButton("close")
         self._create_child_panel()
         self.Collapse()
 
@@ -234,13 +228,11 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
 
     def __process_media_loaded(self, event):
         """Process the end of load of a media."""
-        wx.LogMessage("Media loaded event received.")
         media = event.GetEventObject()
         media_size = media.DoGetBestSize()
         media.SetSize(media_size)
         self.Expand()
 
-        wx.LogDebug("Send MediaActionEvent with action=loaded to parent: {:s}".format(self.GetParent().GetName()))
         evt = MediaEvents.MediaActionEvent(action="loaded", value=True)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
@@ -250,7 +242,7 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
     def __process_media_not_loaded(self, event):
         """Process the end of a failed load of a media."""
         self.Collapse()
-        wx.LogDebug("Send MediaActionEvent with action=not loaded to parent: {:s}".format(self.GetParent().GetName()))
+
         evt = MediaEvents.MediaActionEvent(action="loaded", value=False)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
@@ -275,7 +267,7 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
             self.media_zoom(-1)
 
         elif name == "close":
-            self.media_remove(obj)
+            self.notify("close")
 
         else:
             event.Skip()
