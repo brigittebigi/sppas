@@ -63,7 +63,23 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     A player controls panel to play several media at a time.
     It is supposed that all the given media are already loaded.
 
+    Known problems while playing a media during a given period of time:
+
+     - Under Windows, if a period is given to be played, the sound is played
+       after the end is reached (about 400ms).
+
     """
+
+    # -----------------------------------------------------------------------
+    # The minimum duration the backend can play - empirically estimated.
+    if wx.Platform == "__WXMSW__":
+        MIN_RANGE = 400
+    elif wx.Platform == "__WXMAC__":
+        MIN_RANGE = 1000
+    else:
+        MIN_RANGE = 40
+
+    # -----------------------------------------------------------------------
 
     def __init__(self, parent, id=-1,
                  media=None,
@@ -92,6 +108,8 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         self._autoreplay = True
         self._timer = wx.Timer(self)
         self._refreshtimer = 10
+        self.min_range = sppasMultiPlayerPanel.MIN_RANGE
+
         self.Bind(wx.EVT_TIMER, self.OnTimer)
 
     # -----------------------------------------------------------------------
@@ -119,11 +137,12 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         It is not verified that given end value is not larger than the
         length: it allows to fix the range before the media are defined.
 
-        In theory, this range would be as wanted, but backend have serious
-        limitations.
+        In theory, this range would be as wanted, but some backends have
+        serious limitations:
         - Under Windows, the end offset is not respected. It's continuing to
         play about 400ms after the end offset.
-        - Under MacOS, a period less than 1 sec is not played at all.
+        - Under MacOS, a period less than 1 sec is not played at all and it
+        must start at X*1000 ms.
 
         :param start: (int) Start time. Default is 0.
         :param end: (int) End time. Default is length.
@@ -135,18 +154,17 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         if end is None:
             end = self._length
 
-        min_range = 1000
-        if len(self.__media) > 0:
-            min_range = self.__media[0].min_range
-        delta = int(end) - int(start)
-        assert delta >= 0
-        if delta < min_range:
-            min_range = (min_range - delta) + 1
-            start = start - (min_range // 2)
-            end = end + (min_range // 2)
+        if wx.Platform == "__WXMAC__":
+            # To be consistent with AvPlayer backend (no comment!)
+            if start % 1000 > 0:
+                # Force to start at a timescale in seconds
+                start = int(float(start) // 1000.) * 1000
+        else:
+            # Start 5ms before the requested start pos
+            start = max(0, start - 5)
 
-        if start < 0:
-            start = 0
+        # Move end to ensure a min range
+        end = max(end, start + self.min_range)
 
         self.GetSlider().SetRange(start, end)
         self.GetSlider().Layout()

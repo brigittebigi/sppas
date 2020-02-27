@@ -48,7 +48,6 @@ import sppas.src.audiodata.aio
 from sppas.src.ui.phoenix.windows.panel import sppasPanel
 from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
 
-
 # ---------------------------------------------------------------------------
 
 
@@ -305,33 +304,26 @@ class sppasMediaCtrl(sppasPanel):
     sppasMediaCtrl is using the wx.media.MediaCtrl.
     Extended features are:
 
+        - TODO: display of waveform/spectrogram/volume if the media is an audio;
         - a zoom (percentage) to fix the size of this panel and its media;
-        - TODO: display of the waveform/spectrogram if the media is an audio;
-        - send a MediaActionEvent if the mouse did something on the media
-          we're interested in.
+        - works exactly the same on all platforms, except for Seek().
 
-    Known problems while playing a media during a given period of time:
+    Other known problems:
 
-     - Under Linux (Gstreamer backend), no problem is observed.
+     - Under MacOS, if start position is set to a value other than X*1000 ms,
+       the backend will display an error message and will seek to the X*1000
+       position instead of the required one. Error message is:
+       Python[14410:729361] CMTimeMakeWithSeconds(2.870 seconds, timescale 1):
+       warning: error of -0.870 introduced due to very low timescale
+       (AvPlayer backend)
 
-     - Under Windows, if a period is given to be played, the sound is played
-       after the end is reached (about 400ms).
+    Events emitted by this class:
 
-     - Under MacOS, if MIN_RANGE is set to a value lesser than 1000 ms, the
-       backend will display an error message and won't play the sound. Error is:
-       Python[14410:729361] CMTimeMakeWithSeconds(2.400 seconds, timescale 1):
-       warning: error of -0.400 introduced due to very low timescale
+        - MediaEvents.MediaActionEvent
+        - MediaEvents.MediaLoadedEvent
+        - MediaEvents.MediaNotLoadedEvent
 
     """
-
-    # -----------------------------------------------------------------------
-    # The minimum duration the backend can play - empirically estimated.
-    if wx.Platform == "__WXMSW__":
-        MIN_RANGE = 400
-    elif wx.Platform == "__WXMAC__":
-        MIN_RANGE = 1000
-    else:
-        MIN_RANGE = 40
 
     # -----------------------------------------------------------------------
     # This object size.
@@ -381,7 +373,6 @@ class sppasMediaCtrl(sppasPanel):
         self._filename = None
         self._length = 0    # duration of the media in milliseconds
         self._audio = None
-        self.min_range = sppasMediaCtrl.MIN_RANGE
 
         # Create the media, or destroy ourself
         self._mc = self._create_media()
@@ -510,17 +501,7 @@ class sppasMediaCtrl(sppasPanel):
         return self._mt
 
     # -----------------------------------------------------------------------
-
-    def InitOtherEvents(self):
-        """Initialize other events than paint, mouse, timer or focus.
-
-        Override this method in a subclass to initialize any other events that
-        need to be bound. Added so __init__ method doesn't need to be
-        overridden, which is complicated with multiple inheritance.
-
-        """
-        pass
-
+    # Media states
     # -----------------------------------------------------------------------
 
     def IsPaused(self):
@@ -681,6 +662,9 @@ class sppasMediaCtrl(sppasPanel):
     def Seek(self, offset, mode=wx.FromStart):
         """Seek to a position within the media.
 
+        Under MacOS, with AVPLAYER backend, the seek position must be
+        X * 1000 ms. If not, it will be forced to it by the backend!
+
         :param offset: (wx.FileOffset)
         :param mode: (SeekMode)
         :return: (wx.FileOffset) Value in milliseconds
@@ -706,7 +690,7 @@ class sppasMediaCtrl(sppasPanel):
     # ----------------------------------------------------------------------
 
     def Stop(self):
-        """Stops the media."""
+        """Stop playing/pausing the media."""
         if self._length <= 0:
             return
 
@@ -725,7 +709,8 @@ class sppasMediaCtrl(sppasPanel):
 
     def Close(self, force=False):
         """Close the sppasMediaCtrl."""
-        self._mc.Stop()
+        if self._mc:
+            self._mc.Stop()
         wx.Window.DeletePendingEvents(self)
         wx.Window.Close(self, force)
 
@@ -745,11 +730,10 @@ class sppasMediaCtrl(sppasPanel):
     def DoGetBestSize(self):
         """Return the size which best suits the window.
 
-        The best size of self is the best size of its embedded media if video
-        or the area to draw if audio.
+        The best size of self is the default size when zoom is applied.
+        We don't matter of the original size of the video, if any.
 
         """
-        #  logging.debug("Do Get Best Size. ")
         (w, h) = (sppasMediaCtrl.DEFAULT_WIDTH, sppasMediaCtrl.DEFAULT_HEIGHT)
         # Adjust height, except if video
         with MediaType() as mt:
@@ -762,22 +746,6 @@ class sppasMediaCtrl(sppasPanel):
         # Apply the zoom coefficient
         w = int(float(w) * float(self._zoom) / 100.)
         h = int(float(h) * float(self._zoom) / 100.)
-
-        # If the media still don't have dimensions
-        if w <= 0:
-            w = sppasMediaCtrl.MIN_WIDTH
-        if h <= 0:
-            h = sppasMediaCtrl.MIN_HEIGHT
-
-        # Ensure a minimum size keeping the current aspect ratio
-        i = 1.
-        w = float(w)
-        while w < sppasMediaCtrl.MIN_WIDTH:
-            w *= 1.5
-            i += 1.
-        w = int(w)
-        if i > 1.:
-            h = int(float(h) * 1.5 * i)
 
         return wx.Size(w, h)
 
@@ -823,7 +791,6 @@ class sppasMediaCtrl(sppasPanel):
         :param size: (wx.Size)
 
         """
-        #  logging.debug("%s. Set Initial Size. %s" % (self._filename, str(size)))
         (w, h) = (sppasMediaCtrl.MIN_WIDTH, sppasMediaCtrl.MIN_HEIGHT)
 
         # If a size is given we'll use it, except if -1 or less than our min
@@ -841,37 +808,49 @@ class sppasMediaCtrl(sppasPanel):
     # ----------------------------------------------------------------------
 
     def GetBestSize(self):
+        """Return the best acceptable minimal size for the window."""
         return self.DoGetBestSize()
 
     # ----------------------------------------------------------------------
 
     def SetBestSize(self):
-        #  logging.debug("%s. Set Best Size. " % (self._filename))
         self.SetSize(self.DoGetBestSize())
 
     # ----------------------------------------------------------------------
-    # Event callbacks
+    # Events management
     # ----------------------------------------------------------------------
 
+    def InitOtherEvents(self):
+        """Initialize other events than paint, mouse, timer or focus.
+
+        Override this method in a subclass to initialize any other events that
+        need to be bound. Added so __init__ method doesn't need to be
+        overridden, which is complicated with multiple inheritance.
+
+        """
+        pass
+
+    # -----------------------------------------------------------------------
+
     def _setup_events(self):
-        """Bind the events related to our window."""
+        """Initialize the events related to our window."""
         # Capture events emitted by the wx.media.MediaCtrl to oversee their
         # operation and provide our own implementation.
-        self._mc.Bind(wx.media.EVT_MEDIA_LOADED, self.OnNativeMediaLoaded)
+        self._mc.Bind(wx.media.EVT_MEDIA_LOADED, self.__on_native_media_loaded)
         self._mc.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvents)
+        self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvents)
 
         # Custom event to inform the parent the media is loaded
-        self.Bind(MediaEvents.EVT_MEDIA_LOADED, self.OnMediaLoaded)
+        self.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_custom_media_loaded)
 
         # To draw the audio
         self.Bind(wx.EVT_PAINT, lambda evt: self.Draw())
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
-        # self.Bind(wx.EVT_SIZE, self.OnSize)
 
     # ----------------------------------------------------------------------
 
     def notify_loaded(self, value=True):
-        """The parent has to be informed that the media is loaded or not.
+        """The parent is informed that the media is loaded or not.
 
         :param value: (any) Media is loaded, or media is not loaded.
 
@@ -886,7 +865,7 @@ class sppasMediaCtrl(sppasPanel):
     # ----------------------------------------------------------------------
 
     def notify_action(self, action, value=None):
-        """The parent has to be informed that an action is asked.
+        """The parent is informed that an action is required.
 
         :param action: (str) Name of the action
         :param value: (any) Any kind of value linked to the action
@@ -898,8 +877,8 @@ class sppasMediaCtrl(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def OnNativeMediaLoaded(self, event):
-        """Sent by wx.media.MediaCtrl a media has enough data.
+    def __on_native_media_loaded(self, event):
+        """Sent by wx.media.MediaCtrl to notify a media has enough data.
 
         This event is platform dependent: so the event vetoed!
 
@@ -908,43 +887,48 @@ class sppasMediaCtrl(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def OnMediaLoaded(self, event):
+    def __on_custom_media_loaded(self, event):
         """Sent sppasMediaCtrl.LOAD_DELAY ms after Load was called.
 
         """
         event.Skip()
         delay = event.time
+
+        # If the delay is reached, the backend failed to load the media.
         if delay >= sppasMediaCtrl.MAX_LOAD_DELAY:
             self._mt = MediaType().unsupported
             self._ms = MediaState().unknown
             wx.LogError("The media backend failed to load {:s}: "
-                        "Unsupported format?.".format(self._filename))
+                        "Unsupported format?".format(self._filename))
+            self.SetInitialSize()
             # Inform the parent the media was not loaded.
             self.notify_loaded(False)
-            return
 
-        media_length = self._mc.Length()
-        if not media_length or type(media_length) not in (int, float) or media_length == -1:
-            wx.LogWarning("The media failed to be loaded by the backend after "
-                          "a delay of {:d} ms. Will try again later.".format(delay))
-            # If not, we'll try again later
-            delay += sppasMediaCtrl.LOAD_DELAY
-            wx.CallLater(sppasMediaCtrl.LOAD_DELAY,
-                         lambda: wx.PostEvent(self, MediaEvents.MediaLoadedEvent(time=delay)))
-            return
+        else:
 
-        # We've got a length. It means the media is supported and loaded.
-        self._length = media_length
-        self._mt = sppasMediaCtrl.ExpectedMediaType(self._filename)
-        #  logging.debug("Media type: %d" % self._mt)
-        self._ms = MediaState().stopped
-        if self._mt == MediaType().audio:
-            self._audio = AudioViewProperties(self._filename)
-            #  logging.debug("AUdio properties created")
+            media_length = self._mc.Length()
+            # We still don't have a length.
+            # It means the backend is still loading. We'll try again later.
+            if not media_length or type(media_length) not in (int, float) or media_length == -1:
+                wx.LogWarning("The media failed to be loaded by the backend "
+                              "after a delay of {:d} ms. Will try again later."
+                              "".format(delay))
+                delay += sppasMediaCtrl.LOAD_DELAY
+                wx.CallLater(sppasMediaCtrl.LOAD_DELAY,
+                             lambda: wx.PostEvent(self, MediaEvents.MediaLoadedEvent(time=delay)))
 
-        self.SetBestSize()
-        # Inform the parent we're ready.
-        self.notify_loaded(True)
+            else:
+                # We have a length. It means the media is supported and loaded.
+                self._length = media_length
+                self._mt = sppasMediaCtrl.ExpectedMediaType(self._filename)
+                self._ms = MediaState().stopped
+                self._mc.Seek(0)
+                if self._mt == MediaType().audio:
+                    self._audio = AudioViewProperties(self._filename)
+
+                self.SetBestSize()
+                # Inform the parent we're ready.
+                self.notify_loaded(True)
 
     # ----------------------------------------------------------------------
 
@@ -975,28 +959,15 @@ class sppasMediaCtrl(sppasPanel):
             pass
 
         elif event.ButtonDClick():
-            self.notify_action(action="stop")
+            pass
 
         elif event.RightDown():
             pass
 
         elif event.RightUp():
-            pass
+            self.notify_action(action="stop")
 
-        event.StopPropagation()
-
-    # -----------------------------------------------------------------------
-
-    def OnSize(self, event):
-        """Handle the wx.EVT_SIZE event.
-
-        :param event: a wx.SizeEvent event to be processed.
-
-        """
         event.Skip()
-        logging.debug("On Size event received. %s" % str(event.Size))
-        self.SetSize(event.Size)
-        self.Refresh()
 
     # ------------------------------------------------------------------------
 
@@ -1039,18 +1010,17 @@ class sppasMediaCtrl(sppasPanel):
         # The paint event could be received after the object was destroyed,
         # because the EVT_TIMER and EVT_PAINT are not queued like others.
         if self:
-            # Get the actual client size of ourselves
-            width, height = self.GetClientSize()
-            #  logging.debug("%s. Draw: %d, %d" % (self._filename, width, height))
-            if width <= 0 or height <= 0:
-                # Nothing to do, we still don't have dimensions!
-                return
+            if self._mt != MediaType().video:
 
-            #with MediaType() as mt:
-            #    if self._mt != mt.video:
-            dc, gc = self.PrepareDraw()
-            self._DrawBackground(dc, gc)
-            self._DrawContent(dc, gc)
+                # Get the actual client size of ourselves
+                width, height = self.GetClientSize()
+                if width <= 0 or height <= 0:
+                    # Nothing to do, we still don't have dimensions!
+                    return
+
+                dc, gc = self.PrepareDraw()
+                self._DrawBackground(dc, gc)
+                self._DrawContent(dc, gc)
 
     # -----------------------------------------------------------------------
 
@@ -1209,8 +1179,8 @@ class TestPanel(wx.Panel):
 
         mc2 = sppasMediaCtrl(self)
         mc2.Load(
-            "C:\\Users\\bigi\\Videos\\agay_2.mp4")
-            # os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
+            #"C:\\Users\\bigi\\Videos\\agay_2.mp4")
+            os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
 
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         main_sizer.Add(sizer, 0, wx.EXPAND)
@@ -1223,7 +1193,7 @@ class TestPanel(wx.Panel):
             #"C:\\Users\\bigi\\Videos\\agay_2.mp4"
             )
 
-        # mc2.SetZoom(50)
+        mc2.SetZoom(200)
 
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.OnTimer)
@@ -1293,13 +1263,16 @@ class TestPanel(wx.Panel):
     # ----------------------------------------------------------------------
 
     def OnMediaAction(self, evt):
+        logging.debug("Media Action event received. action is %s" % evt.action)
         if evt.action == "play":
             if self.mc.IsPlaying():
                 self.OnPause(evt)
             else:
                 self.OnPlay(evt)
+
         elif evt.action == "stop":
             self.OnStop(evt)
+
         evt.StopPropagation()
 
     # ----------------------------------------------------------------------
@@ -1324,6 +1297,7 @@ class TestPanel(wx.Panel):
     def OnStop(self, evt):
         self.mc.Stop()
         self.timer.Stop()
+        self.slider.SetValue(0)
 
     # ----------------------------------------------------------------------
 
