@@ -53,7 +53,12 @@ class sppasStaticText(wx.StaticText):
 
     """
 
-    def __init__(self, *args, **kw):
+    def __init__(self, parent, id=wx.ID_ANY,
+                 label="",
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 style=wx.BORDER_NONE,
+                 name=wx.StaticTextNameStr):
         """Create a static text for a content panel.
 
         Possible constructors:
@@ -67,13 +72,21 @@ class sppasStaticText(wx.StaticText):
         updated very frequently otherwise.
 
         """
-        super(sppasStaticText, self).__init__(*args, **kw)
+        # always turn off auto resize
+        style |= wx.ST_NO_AUTORESIZE
+
+        # and turn off any border styles
+        style &= ~wx.BORDER_MASK
+        style |= wx.BORDER_NONE
+
+        super(sppasStaticText, self).__init__(
+            parent, id, label, pos, size, style, name)
 
         try:
             settings = wx.GetApp().settings
-            self.SetFont(settings.text_font)
             self.SetBackgroundColour(settings.bg_color)
             self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
         except AttributeError:
             self.InheritAttributes()
 
@@ -90,6 +103,13 @@ class sppasStaticText(wx.StaticText):
         """
         if label != self.GetLabel():
             wx.StaticText.SetLabel(self, label)
+            (w, h) = self.DoGetBestSize()
+            try:
+                c = wx.GetApp().settings.size_coeff
+            except AttributeError:
+                c = 1.
+
+            self.SetMinSize(wx.Size(int(float(w)*c), h))
 
 # ---------------------------------------------------------------------------
 
