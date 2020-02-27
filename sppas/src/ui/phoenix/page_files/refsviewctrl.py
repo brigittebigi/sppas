@@ -583,8 +583,8 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
 
         n = listctrl.GetItemCount()
         h = int(self.GetFont().GetPixelSize()[1] * 2.)
-        listctrl.SetMinSize(wx.Size(-1, n * h))
-        listctrl.SetMaxSize(wx.Size(-1, (n * h) + bar))
+        listctrl.SetMinSize(wx.Size(-1, (n * h) + bar))
+        listctrl.SetMaxSize(wx.Size(-1, ((n * h) + bar) * 2))
 
     # ------------------------------------------------------------------------
     # Management the list of files

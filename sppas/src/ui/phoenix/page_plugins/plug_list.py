@@ -51,7 +51,7 @@ from ..windows import sppasProgressDialog
 from ..windows import sppasPanel
 from ..windows import sppasMessageText, sppasTitleText
 from ..windows import sppasStaticLine
-from ..windows import BitmapTextButton, sppasTextButton
+from ..windows import BitmapTextButton, TextButton
 from ..panels import sppasOptionsPanel
 from ..dialogs import AboutPlugin
 from ..main_events import DataChangedEvent
@@ -391,8 +391,9 @@ class sppasPluginDescription(sppasPanel):
         w = sppasPanel.fix_size(96)
         h = sppasPanel.fix_size(32)
 
-        btn_about = sppasTextButton(
+        btn_about = TextButton(
             self, label=MSG_ABOUT + "...", name="about_plugin")
+        btn_about.SetBorderWidth(0)
         btn_about.SetForegroundColour(wx.Colour(80, 100, 220))
         btn_about.SetMinSize(wx.Size(w, h))
 

@@ -512,7 +512,6 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         else:
             splitter.SetSashGravity(0.)
 
-
         self.Layout()
         splitter.UpdateSize()
 

@@ -69,13 +69,25 @@ class sppasStaticText(wx.StaticText):
         """
         super(sppasStaticText, self).__init__(*args, **kw)
 
-        # Fix Look&Feel
-        settings = wx.GetApp().settings
-        self.SetFont(settings.text_font)
-        self.SetBackgroundColour(settings.bg_color)
-        self.SetForegroundColour(settings.fg_color)
+        try:
+            settings = wx.GetApp().settings
+            self.SetFont(settings.text_font)
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+        except AttributeError:
+            self.InheritAttributes()
+
+    # -----------------------------------------------------------------------
 
     def SetLabel(self, label):
+        """Update the label if it has changed.
+
+        Help reduce potential flicker since these controls would be updated
+        very frequently otherwise.
+
+        :param label: (str)
+
+        """
         if label != self.GetLabel():
             wx.StaticText.SetLabel(self, label)
 

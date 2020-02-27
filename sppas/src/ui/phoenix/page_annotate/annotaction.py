@@ -44,7 +44,7 @@ from ..windows import sppasStaticLine
 from ..windows import sppasToolbar
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
-from ..windows import sppasSimpleText
+from ..windows import sppasStaticText
 from ..windows import BitmapTextButton, CheckButton
 
 from .annotevent import PageChangeEvent
@@ -165,7 +165,7 @@ class sppasActionAnnotatePanel(sppasPanel):
         """The output file format (step 1)."""
         p = sppasPanel(parent)
 
-        st = sppasSimpleText(p, MSG_STEP_FORMAT)
+        st = sppasStaticText(p, label=MSG_STEP_FORMAT)
         all_formats = ['.xra', '.TextGrid', '.eaf', '.antx', '.mrk', '.csv']
         default = self.__param.get_output_format()
         wx.LogMessage("Default output format is {:s}".format(default))
@@ -185,7 +185,7 @@ class sppasActionAnnotatePanel(sppasPanel):
         """The language (step 2)."""
         p = sppasPanel(parent)
 
-        st = sppasSimpleText(p, MSG_STEP_LANG)
+        st = sppasStaticText(p, label=MSG_STEP_LANG)
         all_langs = list()
         for i in range(self.__param.get_step_numbers()):
             a = self.__param.get_step(i)
@@ -208,7 +208,7 @@ class sppasActionAnnotatePanel(sppasPanel):
     def __create_action_annselect(self, parent):
         """The annotations to select (step 3)."""
         p = sppasPanel(parent)
-        st = sppasSimpleText(p, MSG_STEP_ANNCHOICE)
+        st = sppasStaticText(p, label=MSG_STEP_ANNCHOICE)
 
         pbts = sppasPanel(p)
         sbts = wx.BoxSizer(wx.VERTICAL)
@@ -230,7 +230,7 @@ class sppasActionAnnotatePanel(sppasPanel):
     def __create_action_annot(self, parent):
         """The button to run annotations (step 4)."""
         p = sppasPanel(parent)
-        st = sppasSimpleText(p, MSG_STEP_RUN)
+        st = sppasStaticText(p, label=MSG_STEP_RUN)
         self.btn_run = self.__create_select_annot_btn(p, MSG_BTN_RUN)
         self.btn_run.SetName("wizard")
         self.btn_run.SetImage("wizard")
@@ -248,7 +248,7 @@ class sppasActionAnnotatePanel(sppasPanel):
     def __create_action_report(self, parent):
         """The button to show the report."""
         p = sppasPanel(parent)
-        st = sppasSimpleText(p, MSG_STEP_REPORT)
+        st = sppasStaticText(p, label=MSG_STEP_REPORT)
         self.btn_por = self.__create_select_annot_btn(p, MSG_BTN_REPORT)
         self.btn_por.SetName("save_as")
         self.btn_por.SetImage("save_as")

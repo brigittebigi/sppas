@@ -1953,6 +1953,9 @@ class CheckButton(BaseCheckButton):
         w, h = self.GetClientSize()
         tw, th = CheckButton.__get_text_extend(dc, gc, self._label)
         y = ((h - th) // 2)
+        font = self.GetParent().GetFont()
+        gc.SetFont(font)
+        dc.SetFont(font)
         if wx.Platform == '__WXGTK__':
             dc.SetTextForeground(self.GetPenForegroundColour())
             dc.DrawText(self._label, x, y)

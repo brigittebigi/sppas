@@ -75,7 +75,7 @@ class sppasTiersViewDialog(sppasDialog):
     """
 
     def __init__(self, parent, tiers):
-        """Create a dialog to fix settings.
+        """Create a dialog to display tiers.
 
         :param parent: (wx.Window)
         :param tiers: (List of sppasTier)
@@ -103,7 +103,7 @@ class sppasTiersViewDialog(sppasDialog):
         # Make the notebook and an image list
         notebook = sppasNotebook(self, name="content")
         for tier in tiers:
-            page = sppasTierListCtrl(notebook, tier)
+            page = sppasTierListCtrl(notebook, tier, "")
             notebook.AddPage(page, tier.get_name())
         self.SetContent(notebook)
 

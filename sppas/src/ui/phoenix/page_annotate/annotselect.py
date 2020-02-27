@@ -93,7 +93,15 @@ class sppasAnnotationsPanel(sppasPanel):
         # Construct the panel
         self._create_content()
         self._setup_events()
-        self.Layout()
+
+        # Look&feel
+        try:
+            settings = wx.GetApp().settings
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
     # -----------------------------------------------------------------------
     # Public methods to manage the data
@@ -284,7 +292,7 @@ class sppasEnableAnnotation(sppasPanel):
 
     def _create_content(self):
         """Create the main content."""
-        es = self.__create_enable_sizer()
+        es = self.__create_enable_panel()
         ls = self.__create_lang_sizer()
         ds = self.__create_description_sizer()
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -296,8 +304,8 @@ class sppasEnableAnnotation(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def __create_enable_sizer(self):
-        panel = sppasPanel(self)
+    def __create_enable_panel(self):
+        panel = sppasPanel(self, name="enable_panel")
         sizer = wx.BoxSizer(wx.VERTICAL)
         w = sppasPanel.fix_size(156)
         h = sppasPanel.fix_size(48)
@@ -312,12 +320,11 @@ class sppasEnableAnnotation(sppasPanel):
         btn_enable.SetMinSize(wx.Size(w-2, h-2))
         btn_enable.SetMaxSize(wx.Size(w-2, h))
 
-        # btn_configure = sppasTextButton(
         btn_configure = TextButton(
             panel, label=MSG_CONFIG + "...", name="configure")
+        btn_configure.SetBorderWidth(0)
         btn_configure.SetForegroundColour(wx.Colour(80, 100, 220))
         btn_configure.SetMinSize(wx.Size(w-2, h-2))
-        btn_configure.SetBorderWidth(0)
 
         sizer.Add(btn_enable, 1, wx.EXPAND)
         sizer.Add(btn_configure, 1, wx.EXPAND)
@@ -428,10 +435,9 @@ class sppasEnableAnnotation(sppasPanel):
     def SetForegroundColour(self, colour):
         wx.Window.SetForegroundColour(self, colour)
         for c in self.GetChildren():
-            if c.GetName() != "configure":
-                c.SetForegroundColour(colour)
-            else:
-                c.SetForegroundColour(wx.Colour(80, 100, 220))
+            for cc in c.GetChildren():
+                if cc.GetName() != "configure":
+                    cc.SetForegroundColour(colour)
 
     # -----------------------------------------------------------------------
 
