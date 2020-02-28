@@ -89,8 +89,10 @@ MSG_END = _("End")
 MSG_LABELS = _("Serialized list of labels with alternative tags")
 MSG_POINT = _("Midpoint")
 MSG_RADIUS = _("Radius")
-MSG_NB = _("Nb")
-MSG_TYPE = _("Type")
+MSG_NB = _("Nb labels")
+MSG_TYPE = _("Labels type")
+MSG_ID = _("Identifier")
+MSG_META = _("Metadata")
 ERR_ANN_SET_LABELS = _("Invalid annotation labels.")
 MSG_CANCEL = _("Ignore changes?")
 
@@ -140,18 +142,13 @@ class sppasTierListCtrl(LineListCtrl):
         :param filename: (str) The file this tier was extracted from.
 
         """
-        super(sppasTierListCtrl, self).__init__(parent=parent, style=wx.LC_REPORT | wx.NO_BORDER)
+        super(sppasTierListCtrl, self).__init__(
+            parent, style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.NO_BORDER)
 
         self._tier = tier
         self.__filename = filename
         self._dirty = False
         self._create_content()
-
-        # select the first annotation. Under MacOS, the first annotation
-        # is systematically selected but not under the other platforms.
-        # So, we have to select it... to be consistent.
-        if len(self._tier) > 0:
-            self.Select(0, on=1)
 
     # -----------------------------------------------------------------------
 
@@ -173,10 +170,10 @@ class sppasTierListCtrl(LineListCtrl):
         :return: (sppasAnnotation) None if no selected item in the list
 
         """
-        index = self.GetFirstSelected()
-        if index == -1:
+        selected = self.GetFirstSelected()
+        if selected == -1:
             return None
-        return self._tier[index]
+        return self._tier[selected]
 
     # -----------------------------------------------------------------------
 
@@ -213,86 +210,83 @@ class sppasTierListCtrl(LineListCtrl):
 
         """
         # Create columns
-        is_point_tier = self._tier.is_point()
-        if not is_point_tier:
-            cols = (MSG_BEGIN, MSG_END, MSG_LABELS, MSG_NB, MSG_TYPE, "Id")
+        if self._tier.is_point() is False:
+            cols = (MSG_BEGIN, MSG_END, MSG_LABELS, MSG_NB, MSG_TYPE, MSG_ID)
         else:
-            cols = (MSG_POINT, MSG_LABELS, MSG_NB, MSG_TYPE, "Id")
+            cols = (MSG_POINT, MSG_LABELS, MSG_NB, MSG_TYPE, MSG_ID)
         for i, col in enumerate(cols):
             self.InsertColumn(i, col)
             self.SetColumnWidth(i, 100)
 
-        # fill rows
+        # Fill rows
         for i, a in enumerate(self._tier):
+            self.SetItemAnnotation(i)
 
-            # fix location
-            if not is_point_tier:
-                self.InsertItem(i, str(a.get_lowest_localization().get_midpoint()))
-                self.SetItem(i, 1, str(a.get_highest_localization().get_midpoint()))
-                labeli = 2
-            else:
-                self.InsertItem(i, str(a.get_highest_localization().get_midpoint()))
-                labeli = 1
-
-            # fix label
-            if a.is_labelled():
-                label_str = a.serialize_labels(separator=" - ")
-                self.SetItem(i, labeli, label_str)
-
-                # customize label look
-                if label_str in ['#', 'sil']:
-                    self.SetItemTextColour(i, SILENCE_FG_COLOUR)
-                    self.SetItemBackgroundColour(i, SILENCE_BG_COLOUR)
-                if label_str == '+':
-                    self.SetItemTextColour(i, SILENCE_FG_COLOUR)
-                if label_str in ['@', '@@', 'lg', 'laugh']:
-                    self.SetItemTextColour(i, LAUGH_FG_COLOUR)
-                    self.SetItemBackgroundColour(i, LAUGH_BG_COLOUR)
-                if label_str in ['*', 'gb', 'noise', 'dummy']:
-                    self.SetItemTextColour(i, NOISE_FG_COLOUR)
-                    self.SetItemBackgroundColour(i, NOISE_BG_COLOUR)
-            else:
-                self.SetItemTextColour(i, UNLABELLED_FG_COLOUR)
-
-            # properties of the labels
-            self.SetItem(i, labeli+1, str(len(a.get_labels())))
-
-            label_type = a.get_label_type()
-            if label_type not in sppasTierListCtrl.tag_types:
-                lt = "Unknown"
-            else:
-                lt = sppasTierListCtrl.tag_types[a.get_label_type()]
-            self.SetItem(i, labeli+2, lt)
-
-            # Metadata
-            self.SetItem(i, labeli+3, a.get_meta("id"))
-
+        # Columns with optimal width (estimated depending on its content)
         self.SetColumnWidth(cols.index(MSG_LABELS), -1)
+        self.SetColumnWidth(cols.index(MSG_ID), -1)
 
     # ---------------------------------------------------------------------
 
-    def Select(self, idx, on):
-        """Override. Selects/deselects an item.
+    def SetItemAnnotation(self, idx):
+        """Update list item of the annotation at the given index.
 
-        Highlight the selected item with a Bigger & Bold font (the native
-        system can't be disabled and is different on each system).
+        :param idx: (int) Index of an annotation/item in the tier/list
 
         """
-        assert 0 <= idx < self.GetItemCount()
+        assert 0 <= idx <= len(self._tier)
 
-        wx.ListCtrl.Select(self, idx, on)
-        font = self.GetFont()
-        if on:
-            bold = wx.Font(int(float(font.GetPointSize())*1.3),
-                           font.GetFamily(),
-                           font.GetStyle(),
-                           wx.FONTWEIGHT_BOLD,  # weight,
-                           underline=False,
-                           faceName=font.GetFaceName(),
-                           encoding=wx.FONTENCODING_SYSTEM)
-            self.SetItemFont(idx, bold)
+        ann = self._tier[idx]
+
+        # fix location
+        if self._tier.is_point() is False:
+            self.InsertItem(idx, str(ann.get_lowest_localization().get_midpoint()))
+            self.SetItem(idx, 1, str(ann.get_highest_localization().get_midpoint()))
+            labeli = 2
         else:
-            self.SetItemFont(idx, font)
+            self.InsertItem(idx, str(ann.get_highest_localization().get_midpoint()))
+            labeli = 1
+
+        # fix label
+        self.__set_item_label(idx, labeli, ann)
+
+        # properties of the labels
+        self.SetItem(idx, labeli + 1, str(len(ann.get_labels())))
+
+        label_type = ann.get_label_type()
+        if label_type not in sppasTierListCtrl.tag_types:
+            lt = "Unknown"
+        else:
+            lt = sppasTierListCtrl.tag_types[ann.get_label_type()]
+        self.SetItem(idx, labeli + 2, lt)
+
+        # metadata
+        self.SetItem(idx, labeli + 3, ann.get_meta("id"))
+
+    # ---------------------------------------------------------------------
+
+    def __set_item_label(self, row, col, ann):
+        """Fill the row-th col-th item with the given annotation labels.
+
+        """
+        if ann.is_labelled():
+            label_str = ann.serialize_labels(separator=" - ")
+            self.SetItem(row, col, label_str)
+
+            # customize label look
+            if label_str in ['#', 'sil']:
+                self.SetItemTextColour(row, SILENCE_FG_COLOUR)
+                self.SetItemBackgroundColour(row, SILENCE_BG_COLOUR)
+            if label_str == '+':
+                self.SetItemTextColour(row, SILENCE_FG_COLOUR)
+            if label_str in ['@', '@@', 'lg', 'laugh']:
+                self.SetItemTextColour(row, LAUGH_FG_COLOUR)
+                self.SetItemBackgroundColour(row, LAUGH_BG_COLOUR)
+            if label_str in ['*', 'gb', 'noise', 'dummy']:
+                self.SetItemTextColour(row, NOISE_FG_COLOUR)
+                self.SetItemBackgroundColour(row, NOISE_BG_COLOUR)
+        else:
+            self.SetItemTextColour(row, UNLABELLED_FG_COLOUR)
 
 # ----------------------------------------------------------------------------
 
@@ -372,6 +366,8 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     @property
     def __listctrl(self):
         page_index = self.__notebook.GetSelection()
+        if page_index == -1:
+            return None
         return self.__notebook.GetPage(page_index)
 
     # -----------------------------------------------------------------------
@@ -380,13 +376,17 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
     def get_filename(self):
         """Return the name of the file of the current page."""
-        return self.__listctrl.get_filename()
+        if self.__listctrl is not None:
+            return self.__listctrl.get_filename()
+        return ""
 
     # -----------------------------------------------------------------------
 
     def get_tiername(self):
         """Return the name of the tier of the current page."""
-        return self.__listctrl.get_tiername()
+        if self.__listctrl is not None:
+            return self.__listctrl.get_tiername()
+        return ""
 
     # -----------------------------------------------------------------------
 
@@ -434,14 +434,13 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         for tier in tiers:
             if len(tier) > 0:
                 page = sppasTierListCtrl(self.__notebook, tier, filename)
-                page.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_annotation_selected)
-                page.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_annotation_deselected)
+                self.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_annotation_selected, page)
+                self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_annotation_deselected, page)
                 self.__notebook.AddPage(page, tier.get_name())
             else:
                 wx.LogError("Page not created. "
                             "No annotation in tier: {:s}".format(tier.get_name()))
         self.Layout()
-        self.set_selected_tier(filename, tiers[0])
 
     # -----------------------------------------------------------------------
 
@@ -451,19 +450,23 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :param idx: (int) Index of the annotation to select.
 
         """
-        cur_index = self.__listctrl.GetFirstSelected()
-        if cur_index != -1:
-            self.__annotation_validator(cur_index)
-            self.__listctrl.Select(cur_index, on=0)
-            logging.debug("{} Dé-SELECTED = {}"
-                          "".format(self.__listctrl._tier.get_name(), cur_index))
+        assert self.__listctrl is not None
 
-        self.__annotation_selected(idx)
+        cur_index = self.__listctrl.GetFirstSelected()
+        valid = True
+        if cur_index != -1:
+            valid = self.__annotation_validator(cur_index)
+            self.__listctrl.Select(cur_index, on=0)
+
+        if valid is True:
+            self.__annotation_selected(idx)
 
     # -----------------------------------------------------------------------
 
     def get_ann_period(self):
         """Return the time period of the currently selected annotation."""
+        assert self.__listctrl is not None
+
         ann = self.__listctrl.get_selected_annotation()
         start = end = 0
 
@@ -638,6 +641,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         the annotation of the tier.
 
         """
+        logging.debug("On Annotation DeSelected.")
         self.__annotation_deselected(evt.GetIndex())
 
     # -----------------------------------------------------------------------
@@ -646,6 +650,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         """An annotation is selected in the list.
         
         """
+        logging.debug("On Annotation Selected.")
         start, end = self.__annotation_selected(evt.GetIndex())
         self._notify(action="period_selected", value=(start, end))
 
@@ -684,7 +689,6 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
     def __annotation_selected(self, idx):
         self.__listctrl.Select(idx, on=1)
-        logging.debug("{} SELECTED = {}".format(self.get_tiername(), idx))
 
         self.refresh_annotation()
         return self.get_ann_period()
@@ -695,8 +699,6 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         ok = self.__annotation_validator(index)
         if ok is True:
             self.__listctrl.Select(index, on=0)
-            logging.debug("{} Dé-SELECTED = {}"
-                          "".format(self.get_tiername(), index))
         return ok
 
     # -----------------------------------------------------------------------
@@ -737,6 +739,6 @@ class TestPanel(sppasTiersEditWindow):
         parser.set_filename(f2)
         trs2 = parser.read()
         super(TestPanel, self).__init__(parent)
-        self.add_tiers(f1, trs1.get_tier_list())
         self.add_tiers(f2, trs2.get_tier_list())
+        self.add_tiers(f1, trs1.get_tier_list())
 
