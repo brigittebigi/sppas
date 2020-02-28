@@ -233,14 +233,21 @@ class CheckListCtrl(wx.ListCtrl):
         """
         if index in self.sel:
             self.sel.remove(index)
-        wx.ListCtrl.DeleteItem(self,index)
+
+        # we want to del somewhere in the list (and not append)...
+        # shift the index of selected items (for items that are after)
+        for i in range(len(self.sel)):
+            if self.sel[i] >= index:
+                self.sel[i] = self.sel[i] - 1
+
+        wx.ListCtrl.DeleteItem(self, index)
 
     # ---------------------------------------------------------------------
     # Override selection of items.
     # Create our own list of selected items, and do not use the default one.
     # ---------------------------------------------------------------------
 
-    def Select(self, index, on):
+    def Select(self, index, on=1):
         """
         Override.
 

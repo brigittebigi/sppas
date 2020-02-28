@@ -44,8 +44,9 @@ from sppas.src.ui.phoenix.main_settings import WxAppSettings
 import sppas.src.ui.phoenix.windows.toolbar as toolbar
 import sppas.src.ui.phoenix.windows.line as line
 import sppas.src.ui.phoenix.windows.button as button
-import sppas.src.ui.phoenix.windows.panel as panel
 import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
+import sppas.src.ui.phoenix.windows.panel as panel
+import sppas.src.ui.phoenix.windows.listctrl as listctrl
 import sppas.src.ui.phoenix.windows.media.mediactrl as media
 import sppas.src.ui.phoenix.windows.media.playerctrl as player
 import sppas.src.ui.phoenix.windows.media.multiplayer as multiplayer
@@ -70,6 +71,7 @@ class TestPanel(wx.Choicebook):
         self.AddPage(player.TestPanel(self), "Player Control")
         self.AddPage(media.TestPanel(self), "Media Control")
         self.AddPage(toolbar.TestPanel(self), "Toolbar")
+        self.AddPage(listctrl.TestPanel(self), "ListCtrl")
         self.AddPage(panel.TestPanel(self), "Panels")
         self.AddPage(buttonbox.TestPanel(self), "ButtonBox")
         self.AddPage(button.TestPanel(self), "Buttons")

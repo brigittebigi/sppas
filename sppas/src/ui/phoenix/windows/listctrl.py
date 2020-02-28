@@ -36,12 +36,11 @@
 
 import wx
 
-
 # ---------------------------------------------------------------------------
 
 
-class LineListCtrl(wx.ListCtrl):
-    """A ListCtrl with line numbers in the first column.
+class sppasListCtrl(wx.ListCtrl):
+    """A ListCtrl with the same look&feel on each platform.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -49,10 +48,14 @@ class LineListCtrl(wx.ListCtrl):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
+    The default is a multiple selection of items. Use wx.LC_SINGLE_SEL style
+    for single selection with wx.LC_REPORT style.
+
     """
+
     def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
-                 size=wx.DefaultSize, style=wx.NO_BORDER,
-                 validator=wx.DefaultValidator, name="LineListCtrl",):
+                 size=wx.DefaultSize, style=wx.NO_BORDER | wx.LC_REPORT,
+                 validator=wx.DefaultValidator, name="listctrl"):
         """Initialize a new ListCtrl instance.
 
         :param parent: Parent window. Must not be None.
@@ -66,7 +69,211 @@ class LineListCtrl(wx.ListCtrl):
         :param name:      Window name.
 
         """
-        wx.ListCtrl.__init__(self, parent, id, pos, size, style, validator, name)
+        super(sppasListCtrl, self).__init__(
+            parent, id, pos, size, style, validator, name)
+
+        try:
+            settings = wx.GetApp().settings
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetTextColour(settings.fg_color)
+            self.SetFont(settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
+
+        # List of selected items
+        self._selected = list()
+
+        # Bind some events to manage properly the list of selected items
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self)
+        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemDeselected, self)
+
+    # -----------------------------------------------------------------------
+
+    def InsertItem(self, index, label):
+        """Override. Create a row and insert label.
+
+        Create a row.
+        Shift the selection of items if necessary.
+
+        """
+        sel = False
+        if self.GetItemCount() == 0:
+            sel = True
+        idx = wx.ListCtrl.InsertItem(self, index, label)
+
+        if sel is False:
+            if index < self.GetItemCount():
+                for i in range(len(self._selected)):
+                    if self._selected[i] >= index:
+                        self._selected[i] = self._selected[i] + 1
+        else:
+            # de-select the first item. Under MacOS, the first item
+            # is systematically selected but not under the other platforms.
+            self.Select(0, on=0)
+
+        return idx
+
+    # ---------------------------------------------------------------------
+
+    def DeleteItem(self, index):
+        """Override.
+
+        Delete an item in the list. Must be overridden to also remove it of the
+        selected list (if appropriate) and update selected item indexes.
+
+        """
+        if index in self._selected:
+            self._selected.remove(index)
+
+        for i in range(len(self._selected)):
+            if self._selected[i] >= index:
+                self._selected[i] = self._selected[i] - 1
+
+        wx.ListCtrl.DeleteItem(self, index)
+
+    # ---------------------------------------------------------------------
+
+    def GetFirstSelected(self, *args):
+        """Returns the first selected item, or -1 when none is selected.
+
+        :return: (int) -1 if no item selected
+
+        """
+        if len(self._selected) == 0:
+            return -1
+        return self._selected[0]
+
+    # ---------------------------------------------------------------------
+
+    def GetNextSelected(self, item):
+        """Override.
+
+        """
+        s = sorted(self._selected)
+        i = self.GetNextItem(item)
+        while i != -1:
+            if i in s:
+                return i
+            i = self.GetNextItem(i)
+        return -1
+
+    # ---------------------------------------------------------------------
+
+    def GetSelectedItemCount(self):
+        """Override.
+
+        """
+        return len(self._selected)
+
+    # ---------------------------------------------------------------------
+
+    def IsSelected(self, index):
+        """Override. Return True if the item is checked."""
+        return index in self._selected
+
+    # ---------------------------------------------------------------------
+
+    def Select(self, idx, on=1):
+        """Override. Selects/deselects an item.
+
+        Highlight the selected item with a Bigger & Bold font (the native
+        system can't be disabled and is different on each system).
+
+        :param idx: (int) Index of an annotation/item in the tier/list
+        :param on: (int/bool) 0 to deselect, 1 to select
+
+        """
+        assert 0 <= idx < self.GetItemCount()
+
+        font = self.GetFont()
+        # if single selection, de-select current item
+        # (except if it is the asked one).
+        if self.HasFlag(wx.LC_SINGLE_SEL) and len(self._selected) > 0:
+            i = self._selected[0]
+            if i != idx:
+                self._selected = list()
+                self.SetItemFont(i, font)
+
+        if on == 0:
+            # De-select the given index
+            if idx in self._selected:
+                self._selected.remove(idx)
+                self.SetItemFont(idx, font)
+        else:
+            # Select the given index
+            if idx not in self._selected:
+                self._selected.append(idx)
+            bold = wx.Font(int(float(font.GetPointSize())*1.2),
+                           font.GetFamily(),
+                           font.GetStyle(),
+                           wx.FONTWEIGHT_BOLD,  # weight,
+                           underline=False,
+                           faceName=font.GetFaceName(),
+                           encoding=wx.FONTENCODING_SYSTEM)
+            self.SetItemFont(idx, bold)
+
+    # ---------------------------------------------------------------------
+    # Callbacks
+    # ---------------------------------------------------------------------
+
+    def OnItemSelected(self, evt):
+        """Callback.
+
+        """
+        item = evt.GetItem()
+        item_index = item.GetId()
+        # cancel the selection managed by wx.ListCtrl
+        wx.ListCtrl.Select(self, item_index, on=0)
+        # manage our own selection
+        self.Select(item_index, on=1)
+
+        evt.Skip()
+
+    # ---------------------------------------------------------------------
+
+    def OnItemDeselected(self, evt):
+        """Callback.
+
+        """
+        item = evt.GetItem()
+        item_index = item.GetId()
+        wx.ListCtrl.Select(self, item_index, on=0)
+        self.Select(item_index, on=0)
+
+        evt.Skip()
+
+# ---------------------------------------------------------------------------
+
+
+class LineListCtrl(sppasListCtrl):
+    """A ListCtrl with line numbers in the first column.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+    def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
+                 size=wx.DefaultSize, style=wx.NO_BORDER | wx.LC_REPORT,
+                 validator=wx.DefaultValidator, name="LineListCtrl"):
+        """Initialize a new ListCtrl instance.
+
+        :param parent: Parent window. Must not be None.
+        :param id:     A value of -1 indicates a default value.
+        :param pos:    If the position (-1, -1) is specified
+                       then a default position is chosen.
+        :param size:   If the default size (-1, -1) is specified
+                       then a default size is chosen.
+        :param style:  often LC_REPORT
+        :param validator: Window validator.
+        :param name:      Window name.
+
+        """
+        super(LineListCtrl, self).__init__(
+            parent, id, pos, size, style, validator, name)
 
     # ---------------------------------------------------------------------
 
@@ -110,9 +317,9 @@ class LineListCtrl(wx.ListCtrl):
         """
         if colnum == 0:
             # insert a first column, with whitespace
-            wx.ListCtrl.InsertColumn(self, 0, " "*16, wx.LIST_FORMAT_CENTRE)
+            sppasListCtrl.InsertColumn(self, 0, " "*16, wx.LIST_FORMAT_CENTRE)
 
-        wx.ListCtrl.InsertColumn(self, colnum+1, colname)
+        sppasListCtrl.InsertColumn(self, colnum+1, colname)
 
     # -----------------------------------------------------------------------
 
@@ -123,20 +330,19 @@ class LineListCtrl(wx.ListCtrl):
         Shift the selection of items if necessary.
 
         """
-        wx.ListCtrl.InsertItem(self, index, self._num_to_str(index+1))
-        item = self.GetItem(index,0)
+        idx = sppasListCtrl.InsertItem(self, index, self._num_to_str(index+1))
+        item = self.GetItem(index, 0)
         item.SetAlign(wx.LIST_FORMAT_CENTER)
         #item.SetMask(item.GetMask() | wx.LIST_MASK_FORMAT)
-        #item.SetBackgroundColour(wx.Colour(200,220,200))   # not efficient
-        #item.SetTextColour(wx.Colour(70,100,70))           # not efficient
 
         # we want to add somewhere in the list (and not append)...
         # shift the line numbers items (for items that are after the new one)
         for i in range(index, self.GetItemCount()):
-            wx.ListCtrl.SetItem(self, i, 0, self._num_to_str(i+1))
+            sppasListCtrl.SetItem(self, i, 0, self._num_to_str(i+1))
             self.RecolorizeBackground(i)
 
-        return wx.ListCtrl.SetItem(self, index, 1, label)
+        sppasListCtrl.SetItem(self, index, 1, label)
+        return idx
 
     # -----------------------------------------------------------------------
 
@@ -146,20 +352,20 @@ class LineListCtrl(wx.ListCtrl):
         Fix also the first column.
 
         """
-        wx.ListCtrl.SetColumnWidth(self, 0, wx.LIST_AUTOSIZE_USEHEADER)
-        wx.ListCtrl.SetColumnWidth(self, col+1, width)
+        sppasListCtrl.SetColumnWidth(self, 0, wx.LIST_AUTOSIZE_USEHEADER)
+        sppasListCtrl.SetColumnWidth(self, col+1, width)
 
     # -----------------------------------------------------------------------
 
-    def SetItem(self, index, col, label):
+    def SetItem(self, index, col, label, imageId=-1):
         """Override. Set the string of an item.
 
         The column number must be changed to be efficient; and alternate
         background colors (just for the list to be easier to read).
 
         """
-        # we added a column the user does not know!
-        wx.ListCtrl.SetItem(self, index, col+1, label)
+        sppasListCtrl.SetItem(self, index, col+1, label, imageId)
+
         # and to look nice:
         self.RecolorizeBackground(index)
 
@@ -171,9 +377,9 @@ class LineListCtrl(wx.ListCtrl):
         It must be overridden to update line numbers.
 
         """
-        wx.ListCtrl.DeleteItem(self,index)
+        sppasListCtrl.DeleteItem(self,index)
         for i in range(index, self.GetItemCount()):
-            wx.ListCtrl.SetItem(self, i, 0, self._num_to_str(i+1))
+            sppasListCtrl.SetItem(self, i, 0, self._num_to_str(i+1))
             self.RecolorizeBackground(index)
 
     # -----------------------------------------------------------------------
@@ -182,4 +388,95 @@ class LineListCtrl(wx.ListCtrl):
     def _num_to_str(num):
         return " -- " + str(num) + " -- "
 
+# ---------------------------------------------------------------------------
+# Test panel (should be extended to test more functions)
+# ---------------------------------------------------------------------------
 
+
+musicdata = {
+    1: ("Bad English", "The Price Of Love", "Rock"),
+    2: ("DNA featuring Suzanne Vega", "Tom's Diner", "Rock"),
+    3: ("George Michael", "Praying For Time", "Rock"),
+    4: ("Gloria Estefan", "Here We Are", "Rock"),
+    5: ("Linda Ronstadt", "Don't Know Much", "Rock"),
+    6: ("Michael Bolton", "How Am I Supposed To Live Without You", "Blues"),
+    7: ("Paul Young", "Oh Girl", "Rock"),
+    8: ("Paula Abdul", "Opposites Attract", "Rock"),
+    9: ("Richard Marx", "Should've Known Better", "Rock"),
+    10: ("Rod Stewart", "Forever Young", "Rock"),
+    11: ("Roxette", "Dangerous", "Rock"),
+    12: ("Sheena Easton", "The Lover In Me", "Rock"),
+    13: ("Sinead O'Connor", "Nothing Compares 2 U", "Rock"),
+    14: ("Stevie B.", "Because I Love You", "Rock"),
+    15: ("Taylor Dayne", "Love Will Lead You Back", "Rock"),
+    16: ("The Bangles", "Eternal Flame", "Rock"),
+    17: ("Wilson Phillips", "Release Me", "Rock"),
+    18: ("Billy Joel", "Blonde Over Blue", "Rock"),
+    19: ("Billy Joel", "Famous Last Words", "Rock"),
+    20: ("Janet Jackson", "State Of The World", "Rock"),
+    21: ("Janet Jackson", "The Knowledge", "Rock"),
+    22: ("Spyro Gyra", "End of Romanticism", "Jazz"),
+    23: ("Spyro Gyra", "Heliopolis", "Jazz"),
+    24: ("Spyro Gyra", "Jubilee", "Jazz"),
+    25: ("Spyro Gyra", "Little Linda", "Jazz"),
+    26: ("Spyro Gyra", "Morning Dance", "Jazz"),
+    27: ("Spyro Gyra", "Song for Lorraine", "Jazz"),
+    28: ("Yes", "Owner Of A Lonely Heart", "Rock"),
+    29: ("Yes", "Rhythm Of Love", "Rock"),
+    30: ("Billy Joel", "Lullabye (Goodnight, My Angel)", "Rock"),
+    31: ("Billy Joel", "The River Of Dreams", "Rock"),
+    32: ("Billy Joel", "Two Thousand Years", "Rock"),
+    33: ("Janet Jackson", "Alright", "Rock"),
+    34: ("Janet Jackson", "Black Cat", "Rock"),
+    35: ("Janet Jackson", "Come Back To Me", "Rock"),
+    36: ("Janet Jackson", "Escapade", "Rock"),
+    37: ("Janet Jackson", "Love Will Never Do (Without You)", "Rock"),
+    38: ("Janet Jackson", "Miss You Much", "Rock"),
+    39: ("Janet Jackson", "Rhythm Nation", "Rock"),
+    40: ("Cusco", "Dream Catcher", "New Age"),
+    41: ("Cusco", "Geronimos Laughter", "New Age"),
+    42: ("Cusco", "Ghost Dance", "New Age"),
+    43: ("Blue Man Group", "Drumbone", "New Age"),
+    44: ("Blue Man Group", "Endless Column", "New Age"),
+    45: ("Blue Man Group", "Klein Mandelbrot", "New Age"),
+    46: ("Kenny G", "Silhouette", "Jazz"),
+    47: ("Sade", "Smooth Operator", "Jazz"),
+    48: ("David Arkenstone", "Papillon (On The Wings Of The Butterfly)", "New Age"),
+    49: ("David Arkenstone", "Stepping Stars", "New Age"),
+    50: ("David Arkenstone", "Carnation Lily Lily Rose", "New Age"),
+    51: ("David Lanz", "Behind The Waterfall", "New Age"),
+    52: ("David Lanz", "Cristofori's Dream", "New Age"),
+    53: ("David Lanz", "Heartsounds", "New Age"),
+    54: ("David Lanz", "Leaves on the Seine", "New Age"),
+}
+
+
+class TestPanel(LineListCtrl):
+
+    def __init__(self, parent):
+        super(TestPanel, self).__init__(
+            parent,
+            style=wx.LC_REPORT | wx.LC_SINGLE_SEL,
+            name="Test Panels")
+        self.SetBackgroundColour(wx.Colour(128, 128, 128))
+
+        # The simplest way to create columns
+        self.InsertColumn(0, "Artist")
+        self.InsertColumn(1, "Title")
+        self.InsertColumn(2, "Genre")
+
+        # Fill rows
+        items = musicdata.items()
+        for key, data in items:
+            idx = self.InsertItem(self.GetItemCount(), data[0])
+            self.SetItem(idx, 1, data[1])
+            self.SetItem(idx, 2, data[2])
+            # self.SetItemData(idx, key)
+
+        # Adjust columns width
+        self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+        self.SetColumnWidth(1, wx.LIST_AUTOSIZE)
+        self.SetColumnWidth(2, 100)
+
+        # show how to select an item
+        self.SetItemState(5, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)

@@ -660,6 +660,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         """The notebook is being to change page.
 
         """
+        assert self.__listctrl is not None
         cur_index = self.__listctrl.GetFirstSelected()
         if cur_index != -1:
             self.__annotation_validator(cur_index)
