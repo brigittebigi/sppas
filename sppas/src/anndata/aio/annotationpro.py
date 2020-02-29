@@ -44,6 +44,7 @@ Annotation Pro is a tool for annotation of audio and text files:
 http://annotationpro.org/
 
 """
+
 import os
 import zipfile
 import shutil

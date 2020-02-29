@@ -40,6 +40,7 @@ import codecs
 
 from sppas.src.config import sg
 from sppas.src.config import paths
+import sppas.src.anndata.aio.aioutils as aioutils
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasLocation
 from sppas.src.anndata import sppasPoint
@@ -283,15 +284,15 @@ class TestTracksReader(unittest.TestCase):
         self.assertEqual(12, len(tier_tok))
         self.assertEqual(12, len(tier_pron))
 
-        self.assertEqual("dh", tier_phn[1].serialize_labels())
-        self.assertEqual("ax", tier_phn[2].serialize_labels())
-        self.assertEqual("f", tier_phn[3].serialize_labels())
-        self.assertEqual("l", tier_phn[4].serialize_labels())
-        self.assertEqual("ay", tier_phn[5].serialize_labels())
-        self.assertEqual("t", tier_phn[6].serialize_labels())
+        self.assertEqual("dh", aioutils.serialize_labels(tier_phn[1]))
+        self.assertEqual("ax", aioutils.serialize_labels(tier_phn[2]))
+        self.assertEqual("f", aioutils.serialize_labels(tier_phn[3]))
+        self.assertEqual("l", aioutils.serialize_labels(tier_phn[4]))
+        self.assertEqual("ay", aioutils.serialize_labels(tier_phn[5]))
+        self.assertEqual("t", aioutils.serialize_labels(tier_phn[6]))
 
-        self.assertEqual("dh-ax", tier_pron[1].serialize_labels())
-        self.assertEqual("f-l-ay-t", tier_pron[2].serialize_labels())
+        self.assertEqual("dh-ax", aioutils.serialize_labels(tier_pron[1]))
+        self.assertEqual("f-l-ay-t", aioutils.serialize_labels(tier_pron[2]))
 
 # ---------------------------------------------------------------------------
 
@@ -428,15 +429,15 @@ class TestTracksReaderWriter(unittest.TestCase):
         self.assertEqual(12, len(tier_tok))
         self.assertEqual(12, len(tier_pron))
 
-        self.assertEqual("D", tier_phn[1].serialize_labels())
-        self.assertEqual("@", tier_phn[2].serialize_labels())
-        self.assertEqual("f", tier_phn[3].serialize_labels())
-        self.assertEqual("l", tier_phn[4].serialize_labels())
-        self.assertEqual("aI", tier_phn[5].serialize_labels())
-        self.assertEqual("t", tier_phn[6].serialize_labels())
+        self.assertEqual("D", aioutils.serialize_labels(tier_phn[1]))
+        self.assertEqual("@", aioutils.serialize_labels(tier_phn[2]))
+        self.assertEqual("f", aioutils.serialize_labels(tier_phn[3]))
+        self.assertEqual("l", aioutils.serialize_labels(tier_phn[4]))
+        self.assertEqual("aI", aioutils.serialize_labels(tier_phn[5]))
+        self.assertEqual("t", aioutils.serialize_labels(tier_phn[6]))
 
-        self.assertEqual("D-@", tier_pron[1].serialize_labels())
-        self.assertEqual("f-l-aI-t", tier_pron[2].serialize_labels())
+        self.assertEqual("D-@", aioutils.serialize_labels(tier_pron[1]))
+        self.assertEqual("f-l-aI-t", aioutils.serialize_labels(tier_pron[2]))
 
 # ---------------------------------------------------------------------------
 
@@ -484,14 +485,14 @@ class TestAlign(unittest.TestCase):
         self.assertEqual(39, len(tier_tok))
         self.assertEqual(39, len(tier_pron))
 
-        self.assertEqual("D", tier_phn[1].serialize_labels())
-        self.assertEqual("@", tier_phn[2].serialize_labels())
-        self.assertEqual("f", tier_phn[3].serialize_labels())
-        self.assertEqual("l", tier_phn[4].serialize_labels())
-        self.assertEqual("aI", tier_phn[5].serialize_labels())
-        self.assertEqual("t", tier_phn[6].serialize_labels())
-        self.assertEqual("{", tier_phn[21].serialize_labels())
-        self.assertEqual("{-n-d", tier_pron[7].serialize_labels())
+        self.assertEqual("D", aioutils.serialize_labels(tier_phn[1]))
+        self.assertEqual("@", aioutils.serialize_labels(tier_phn[2]))
+        self.assertEqual("f", aioutils.serialize_labels(tier_phn[3]))
+        self.assertEqual("l", aioutils.serialize_labels(tier_phn[4]))
+        self.assertEqual("aI", aioutils.serialize_labels(tier_phn[5]))
+        self.assertEqual("t", aioutils.serialize_labels(tier_phn[6]))
+        self.assertEqual("{", aioutils.serialize_labels(tier_phn[21]))
+        self.assertEqual("{-n-d", aioutils.serialize_labels(tier_pron[7]))
 
     # -----------------------------------------------------------------------
 

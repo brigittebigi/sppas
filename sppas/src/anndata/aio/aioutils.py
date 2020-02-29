@@ -121,18 +121,53 @@ def is_ortho_tier(tier_name):
 
     return False
 
+# --------------------------------------------------------------------------
+
+
+def serialize_labels(labels, separator="\n", empty="", alt=True):
+    """Create a text from a list of labels.
+
+    Use the separator to split the text into labels.
+    Use the "{ | }" system to parse the alternative tags.
+
+    :param labels: (list of sppasLabel)
+    :param separator: (str) String separating labels
+    :param empty: (str) The text representing an empty tag
+    :param alt: (bool) Include alternative tags. If False, only the best tag is serialized.
+
+    :returns: list of sppasLabel
+
+    """
+    if len(labels) == 0:
+        return empty
+
+    if len(labels) == 1:
+        return labels[0].serialize(empty, alt)
+
+    c = list()
+    for label in labels:
+        c.append(label.serialize(empty, alt))
+
+    return separator.join(c)
+
 # ---------------------------------------------------------------------------
 
 
-def format_labels(text, separator="\n", empty=""):
+def format_labels(text, separator="\n", empty="", tag_type="str"):
     """Create a set of labels from a text.
 
     Use the separator to split the text into labels.
     Use the "{ | }" system to parse the alternative tags.
 
+    :examples:
+        text = "{le|les} {chat|chats}" is 2 labels with 2 tags each
+
+    TODO: text = "{le=0.6|les=0.4}" is a label with 2 tags and their score
+
     :param text: (str)
     :param separator: (str) String to separate labels.
     :param empty: (str) The text representing an empty tag.
+    :param tag_type: (str): One of: ('str', 'int', 'float', 'bool').
 
     :returns: list of sppasLabel
 
@@ -147,7 +182,7 @@ def format_labels(text, separator="\n", empty=""):
 
     labels = list()
     for line in text.split(sppasUnicode(separator).unicode()):
-        label = format_label(line, empty)
+        label = format_label(line, empty, tag_type)
         labels.append(label)
 
     return labels
@@ -155,13 +190,15 @@ def format_labels(text, separator="\n", empty=""):
 # ---------------------------------------------------------------------------
 
 
-def format_label(text, empty=""):
+def format_label(text, empty="", tag_type="str"):
     """Create a label from a text.
 
-    Remark: use the "{ | }" system to parse the alternative tags.
+    Use the "{ | }" system to parse the alternative tags.
+    # TODO: and = for scores.
 
     :param text: (str)
     :param empty: (str) The text representing an empty tag.
+    :param tag_type: (str): One of: ('str', 'int', 'float', 'bool').
 
     :returns: sppasLabel
 
@@ -176,11 +213,31 @@ def format_label(text, empty=""):
         text = text[1:-1]
         tag = list()
         for content in text.split(u('|')):
-            tag.append(sppasTag(content))
+            tag.append(format_tag(content, empty, tag_type))
     else:
-        tag = sppasTag(text)
+        tag = format_tag(text, empty, tag_type)
 
     return sppasLabel(tag)
+
+# ---------------------------------------------------------------------------
+
+
+def format_tag(text, empty="", tag_type="str"):
+    """Return a tag from a text.
+
+    TODO: return a tag and its score
+
+    :param text: (str) Unicode text
+    :param empty: (str) The text representing an empty tag.
+    :param tag_type: (str): The type of this content.\
+        One of: ('str', 'int', 'float', 'bool').
+
+    :returns: sppasTag
+
+    """
+    if len(text) == 0:
+        return sppasTag(empty, tag_type)
+    return sppasTag(text, tag_type)
 
 # ---------------------------------------------------------------------------
 

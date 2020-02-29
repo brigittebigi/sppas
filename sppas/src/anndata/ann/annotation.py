@@ -34,8 +34,10 @@
 
 """
 
-from ..anndataexc import AnnDataTypeError
-from ..metadata import sppasMetaData
+import warnings
+
+from sppas.src.anndata.anndataexc import AnnDataTypeError
+from sppas.src.anndata.metadata import sppasMetaData
 
 from .annlabel import sppasTag
 from .annlabel import sppasLabel
@@ -52,7 +54,7 @@ class sppasAnnotation(sppasMetaData):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     A sppasAnnotation() is defined as a container for:
 
@@ -467,7 +469,9 @@ class sppasAnnotation(sppasMetaData):
     # -----------------------------------------------------------------------
 
     def serialize_labels(self, separator="\n", empty="", alt=True):
-        """Return labels serialized into a string.
+        """DEPRECATED. Return labels serialized into a string.
+
+        TODO: REMOVE THIS METHOD. Use aioutils.serialize_labels() instead.
 
         :param separator: (str) String to separate labels.
         :param empty: (str) The text to return if a tag is empty or not set.
@@ -475,6 +479,9 @@ class sppasAnnotation(sppasMetaData):
         :returns: (str)
 
         """
+        warnings.warn("Use aioutils.serialize_labels() instead",
+                      DeprecationWarning)
+
         if len(self.__labels) == 0:
             return empty
 

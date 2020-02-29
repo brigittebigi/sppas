@@ -566,7 +566,7 @@ class sppasSTM(sppasBaseSclite):
             NOTE: no pathnames or extensions are expected.
         <C> -> The waveform channel. Either "A" or "B".
             The text of the waveform channel is not restricted by sclite.
-            The text can be any text string without witespace so long as the
+            The text can be any text string without whitespace so long as the
             matching string is found in both the reference and hypothesis
             input files.
         <S> -> The speaker id, no restrictions apply to this name.

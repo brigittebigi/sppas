@@ -43,9 +43,11 @@ import xml.etree.cElementTree as ET
 from sppas.src.config import msg
 from sppas.src.config import paths
 from sppas.src.utils import u
-from sppas.src.anndata import sppasTier
+# from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata.aio import sppasXRA
+from sppas.src.anndata.aio.aioutils import serialize_labels
+from sppas.src.anndata.aio.aioutils import format_labels
 from sppas.src.anndata.aio.xra import sppasJRA
 
 from ..windows import sppasToolbar
@@ -82,7 +84,6 @@ def _(message):
     return u(msg(message, "ui"))
 
 
-MSG_HEADER_TIERSVIEW = _("View annotations of tiers")
 MSG_NO_TIER = _("No tier to view.")
 MSG_BEGIN = _("Begin")
 MSG_END = _("End")
@@ -95,17 +96,6 @@ MSG_ID = _("Identifier")
 MSG_META = _("Metadata")
 ERR_ANN_SET_LABELS = _("Invalid annotation labels.")
 MSG_CANCEL = _("Ignore changes?")
-
-# --------------------------------------------------------------------------
-
-
-def serialize_labels(labels):
-    if len(labels) == 1:
-        return labels[0].serialize("", alt=True)
-    c = list()
-    for label in labels:
-        c.append(label.serialize("", alt=True))
-    return "\n".join(c)
 
 # --------------------------------------------------------------------------
 
@@ -211,9 +201,9 @@ class sppasTierListCtrl(LineListCtrl):
         """
         # Create columns
         if self._tier.is_point() is False:
-            cols = (MSG_BEGIN, MSG_END, MSG_LABELS, MSG_NB, MSG_TYPE, MSG_ID)
+            cols = (MSG_BEGIN, MSG_END, MSG_LABELS, MSG_NB, MSG_TYPE, MSG_ID, MSG_META)
         else:
-            cols = (MSG_POINT, MSG_LABELS, MSG_NB, MSG_TYPE, MSG_ID)
+            cols = (MSG_POINT, MSG_LABELS, MSG_NB, MSG_TYPE, MSG_ID, MSG_META)
         for i, col in enumerate(cols):
             self.InsertColumn(i, col)
             self.SetColumnWidth(i, 100)
@@ -225,6 +215,7 @@ class sppasTierListCtrl(LineListCtrl):
         # Columns with optimal width (estimated depending on its content)
         self.SetColumnWidth(cols.index(MSG_LABELS), -1)
         self.SetColumnWidth(cols.index(MSG_ID), -1)
+        self.SetColumnWidth(cols.index(MSG_META), -1)
 
     # ---------------------------------------------------------------------
 
@@ -260,8 +251,14 @@ class sppasTierListCtrl(LineListCtrl):
             lt = sppasTierListCtrl.tag_types[ann.get_label_type()]
         self.SetItem(idx, labeli + 2, lt)
 
-        # metadata
+        # All metadata, but 'id' in a separated column.
         self.SetItem(idx, labeli + 3, ann.get_meta("id"))
+        meta_list = list()
+        for key in ann.get_meta_keys():
+            if key != 'id':
+                value = ann.get_meta(key)
+                meta_list.append(key + "=" + value)
+        self.SetItem(idx, labeli + 4, ", ".join(meta_list))
 
     # ---------------------------------------------------------------------
 
@@ -274,12 +271,12 @@ class sppasTierListCtrl(LineListCtrl):
             self.SetItem(row, col, label_str)
 
             # customize label look
-            if label_str in ['#', 'sil']:
+            if label_str in ['#', 'sil', 'silence']:
                 self.SetItemTextColour(row, SILENCE_FG_COLOUR)
                 self.SetItemBackgroundColour(row, SILENCE_BG_COLOUR)
-            if label_str == '+':
+            if label_str in ['+', 'sp', 'pause']:
                 self.SetItemTextColour(row, SILENCE_FG_COLOUR)
-            if label_str in ['@', '@@', 'lg', 'laugh']:
+            if label_str in ['@', '@@', 'lg', 'laugh', 'laughter']:
                 self.SetItemTextColour(row, LAUGH_FG_COLOUR)
                 self.SetItemBackgroundColour(row, LAUGH_BG_COLOUR)
             if label_str in ['*', 'gb', 'noise', 'dummy']:
@@ -307,23 +304,25 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     # -----------------------------------------------------------------------
 
     def _create_content(self):
-        """Create the main content of the window."""
-        # Window 1 of the splitter: a ListCtrl of each tier in a notebook
-        p1 = sppasNotebook(self, style=wx.BORDER_SIMPLE, name="tiers_notebook")
+        """Create the main content of the window.
 
-        # Window 2 of the splitter: an annotation editor
-        p2 = self.__create_annotation_editor()
+        - Window 1 of the splitter: a ListCtrl of each tier in a notebook;
+        - Window 2 of the splitter: an annotation editor.
+
+        """
+        w1 = sppasNotebook(self, style=wx.BORDER_SIMPLE, name="tiers_notebook")
+        w2 = self.__create_annotation_editor()
 
         # Fix size&layout
         self.SetMinimumPaneSize(sppasPanel.fix_size(128))
-        self.SplitHorizontally(p1, p2, sppasPanel.fix_size(512))
+        self.SplitHorizontally(w1, w2, sppasPanel.fix_size(512))
         self.SetSashGravity(0.9)
 
     # -----------------------------------------------------------------------
 
     def __create_annotation_editor(self):
         """Create a panel to edit labels of an annotation.
-        
+
         Todo: add the possibility to edit/add/remove metadata.
         
         """

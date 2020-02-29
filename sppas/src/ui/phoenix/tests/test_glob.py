@@ -36,8 +36,7 @@
 
 import wx
 import logging
-import sys
-sys.path.extend(['D:\\Projets\\sppas', 'D:/Projets/audeo'])
+
 from sppas.src.ui.cfg import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
@@ -50,13 +49,12 @@ import sppas.src.ui.phoenix.page_analyze.anz_tabs as anz_tabs
 import sppas.src.ui.phoenix.page_analyze.timeview as timeview
 import sppas.src.ui.phoenix.page_analyze.listview as listview
 import sppas.src.ui.phoenix.page_analyze.textview as textview
+
 import sppas.src.ui.phoenix.page_files.filesmanager as filesmanager
 import sppas.src.ui.phoenix.page_files.refsmanager as refsmanager
 import sppas.src.ui.phoenix.page_files.wksmanager as wksmanager
 import sppas.src.ui.phoenix.page_files.filesviewctrl as filesviewctrl
 import sppas.src.ui.phoenix.page_files.refsviewctrl as refsviewctrl
-import sppas.src.ui.phoenix.panels.option as option
-
 
 # ----------------------------------------------------------------------------
 # Panel to test
