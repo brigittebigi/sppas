@@ -297,7 +297,7 @@ class BaseButton(wx.Window):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
     # Button States
@@ -339,7 +339,7 @@ class BaseButton(wx.Window):
         # Background
         self._bgcolor = None
 
-        # Border width to draw (0=no border)
+        # Border to draw (0=no border)
         pc = self.GetPenForegroundColour()
         self._borderwidth = 2
         self._default_bordercolor = pc
@@ -997,33 +997,13 @@ class BaseButton(wx.Window):
 
         self.DrawBackground(dc, gc)
 
-        if self._state[1] == BaseButton.HIGHLIGHT:
-            self.DrawFocusIndicator(dc, gc)
-
         if self._borderwidth > 0:
             self.DrawBorder(dc, gc)
 
+        if self._state[1] == BaseButton.HIGHLIGHT:
+            self.DrawFocusIndicator(dc, gc)
+
         return dc, gc
-
-    # -----------------------------------------------------------------------
-
-    def DrawBorder(self, dc, gc):
-        w, h = self.GetClientSize()
-
-        pen = wx.Pen(self._bordercolor, 1, self._borderstyle)
-        dc.SetPen(pen)
-
-        # draw the upper left sides
-        for i in range(self._borderwidth):
-            # upper
-            dc.DrawLine(0, i, w - i, i)
-            # left
-            dc.DrawLine(i, 0, i, h - i)
-
-        # draw the lower right sides
-        for i in range(self._borderwidth):
-            dc.DrawLine(i, h - i - 1, w + 1, h - i - 1)
-            dc.DrawLine(w - i - 1, i, w - i - 1, h)
 
     # -----------------------------------------------------------------------
 
@@ -1037,10 +1017,36 @@ class BaseButton(wx.Window):
 
         dc.SetPen(wx.TRANSPARENT_PEN)
         dc.SetBrush(brush)
-        dc.DrawRectangle(self._borderwidth,
-                         self._borderwidth,
-                         w - (2 * self._borderwidth),
-                         h - (2 * self._borderwidth))
+        dc.DrawRoundedRectangle(
+            self._borderwidth,
+            self._borderwidth,
+            w - (2 * self._borderwidth),
+            h - (2 * self._borderwidth),
+            self._borderwidth)
+
+    # -----------------------------------------------------------------------
+
+    def DrawBorder(self, dc, gc):
+        w, h = self.GetClientSize()
+        r = self._bordercolor.Red()
+        g = self._bordercolor.Green()
+        b = self._bordercolor.Blue()
+        a = self._bordercolor.Alpha()
+
+        for i in reversed(range(self._borderwidth)):
+            # gradient border color, using transparency
+            alpha = max(a - (i * 25), 0)
+            pen = wx.Pen(wx.Colour(r, g, b, alpha), 1, self._borderstyle)
+            dc.SetPen(pen)
+
+            # upper line
+            dc.DrawLine(self._borderwidth - i, i, w - self._borderwidth + i, i)
+            # left line
+            dc.DrawLine(i, self._borderwidth - i, i, h - self._borderwidth + i)
+            # bottom line
+            dc.DrawLine(self._borderwidth - i, h - i - 1, w - self._borderwidth + i, h - i - 1)
+            # right line
+            dc.DrawLine(w - i - 1, self._borderwidth - i, w - i - 1, h - self._borderwidth + i)
 
     # -----------------------------------------------------------------------
 
@@ -1055,10 +1061,9 @@ class BaseButton(wx.Window):
         w, h = self.GetClientSize()
         dc.SetPen(focus_pen)
         gc.SetPen(focus_pen)
-        dc.DrawLine(self._borderwidth + 2,
-                    h - self._borderwidth - self._focuswidth - 2,
-                    w - (2 * self._borderwidth) - 2,
-                    h - self._borderwidth - self._focuswidth - 2)
+        x = (self._borderwidth * 2) + 2
+        y = h - self._borderwidth - self._focuswidth - 2
+        dc.DrawLine(x, y, w - x - 2, y)
 
     # -----------------------------------------------------------------------
     # Private
@@ -1254,11 +1259,11 @@ class BitmapTextButton(BaseButton):
         w -= (2 * bd)
         h -= ((2 * bd) + self.FocusWidth + 2)
 
-        if w >= 4 and h >= 4:
-            self._DrawContent(dc, gc, x, y, w, h)
-
         if self._borderwidth > 0:
             self.DrawBorder(dc, gc)
+
+        if w >= 4 and h >= 4:
+            self._DrawContent(dc, gc, x, y, w, h)
 
     # -----------------------------------------------------------------------
 
@@ -1501,12 +1506,12 @@ class TextButton(BaseButton):
         elif self._labelpos == wx.RIGHT:
             self.__draw_label(dc, gc, w - tw - 2 , (h - th) // 2)
 
+        if self._borderwidth > 0:
+            self.DrawBorder(dc, gc)
+
         else:
             # Center the text.
             self.__draw_label(dc, gc, (w - tw) // 2, (h - th) // 2)
-
-        if self._borderwidth > 0:
-            self.DrawBorder(dc, gc)
 
     # -----------------------------------------------------------------------
 
@@ -2232,6 +2237,7 @@ class TestPanelRadioButton(wx.Panel):
         font = self.GetFont().MakeBold().Scale(1.4)
         btn_check_m.SetFont(font)
         btn_check_m.Bind(wx.EVT_BUTTON, self.on_btn_event)
+        btn_check_m.SetBorderWidth(8)
 
     def on_btn_event(self, event):
         obj = event.GetEventObject()

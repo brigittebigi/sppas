@@ -137,7 +137,6 @@ class sppasTierListCtrl(LineListCtrl):
 
         self._tier = tier
         self.__filename = filename
-        self._dirty = False
         self._create_content()
 
     # -----------------------------------------------------------------------
@@ -189,7 +188,6 @@ class sppasTierListCtrl(LineListCtrl):
         """
         annotation = self._tier[idx]
         annotation.set_labels(labels)
-        self._dirty = True
 
     # -----------------------------------------------------------------------
     # Construct the window
@@ -369,6 +367,10 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             return None
         return self.__notebook.GetPage(page_index)
 
+    @property
+    def __textctrl(self):
+        return self.FindWindow("ann_textctrl")
+
     # -----------------------------------------------------------------------
     # Public methods
     # -----------------------------------------------------------------------
@@ -443,6 +445,17 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
     # -----------------------------------------------------------------------
 
+    def remove_tiers(self, filename, tiers):
+        """Remove a set of tiers of the file.
+
+        :param filename: (str)
+        :param tiers: (list of sppasTier)
+
+        """
+        raise NotImplementedError
+
+    # -----------------------------------------------------------------------
+
     def set_selected_annotation(self, idx):
         """Change the selected annotation.
 
@@ -491,6 +504,8 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :return (list of sppasLabel)
 
         """
+        content = self.__textctrl.GetValue()
+
         # The text is in XML (.xra) format
         if self.__toolbar.get_button("code_xml", "view_mode").IsPressed():
             pass
@@ -501,13 +516,18 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
         # The text is serialized
         if self.__toolbar.get_button("code_review", "view_mode").IsPressed():
-            pass
+            return format_labels(content)
 
-        return ""
+        return list()
 
     # -----------------------------------------------------------------------
 
     def labels_to_text(self, labels):
+        """Return the text created from the given labels.
+
+        :return (list of sppasLabel)
+
+        """
         if len(labels) == 0:
             return ""
 
@@ -538,18 +558,17 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     # -----------------------------------------------------------------------
 
     def refresh_annotation(self):
-        textctrl = self.FindWindow("ann_textctrl")
         page_index = self.__notebook.GetSelection()
         listctrl = self.__notebook.GetPage(page_index)
 
         ann = listctrl.get_selected_annotation()
 
         if ann is None:
-            textctrl.SetValue("")
+            self.__textctrl.SetValue("")
         else:
             # Which view is currently toggled?
-            textctrl.SetFocus()
-            textctrl.SetValue(self.labels_to_text(ann.get_labels()))
+            self.__textctrl.SetFocus()
+            self.__textctrl.SetValue(self.labels_to_text(ann.get_labels()))
 
         return ann
 
@@ -707,9 +726,10 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         cur_labels = self.__listctrl.get_annotation_labels(idx)
 
         try:
-            # labels = self.text_to_labels()
+            labels = self.text_to_labels()
             # if serialize_labels(labels) != serialize_labels(cur_labels):
             #     self.__listctrl.set_annotation_labels(idx, labels)
+            # notify parent we modified the tier at index idx
             return True
 
         except Exception as e:
