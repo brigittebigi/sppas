@@ -251,6 +251,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         """
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         scrolled = self._create_scrolled_content()
+        # main_sizer.Add(self._create_hline(self), 0, wx.EXPAND, 0)
         main_sizer.Add(scrolled, 1, wx.EXPAND, 0)
         self.SetSizer(main_sizer)
         self.Bind(wx.EVT_BUTTON, self._process_event)
@@ -271,7 +272,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         splitter = sppasSplitterWindow(self, name="horiz_splitter")
 
         # Window 1 of the splitter: player controls
-        p1 = sppasMultiPlayerPanel(splitter, style=wx.BORDER_SIMPLE, name="player_controls_panel")
+        p1 = sppasMultiPlayerPanel(splitter, style=wx.BORDER_NONE, name="player_controls_panel")
         best_size = p1.GetBestSize()
         self.__add_custom_controls(p1)
         splitter.Bind(MediaEvents.EVT_MEDIA_ACTION, self._process_media_action)

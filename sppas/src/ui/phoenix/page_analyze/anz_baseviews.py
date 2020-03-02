@@ -39,6 +39,7 @@ import wx
 from sppas import msg
 from sppas.src.utils import u
 
+from ..windows import sppasStaticLine
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
 from ..windows import sppasScrolledPanel
@@ -354,6 +355,7 @@ class BaseViewFilesPanel(sppasPanel):
         toolbar = self._create_toolbar()
         scrolled = self._create_scrolled_content()
         main_sizer.Add(toolbar, 0, wx.EXPAND, 0)
+        main_sizer.Add(self._create_hline(self), 0, wx.EXPAND, 0)
         main_sizer.Add(scrolled, 1, wx.EXPAND, 0)
         self.SetSizer(main_sizer)
 
@@ -371,7 +373,7 @@ class BaseViewFilesPanel(sppasPanel):
 
     def _create_scrolled_content(self):
         content_panel = sppasScrolledPanel(self,
-                                           style=wx.SHOW_SB_ALWAYS | wx.HSCROLL | wx.VSCROLL | wx.BORDER_SIMPLE,
+                                           style=wx.SHOW_SB_ALWAYS | wx.HSCROLL | wx.VSCROLL | wx.BORDER_NONE,
                                            name="scrolled_views")
         content_sizer = wx.BoxSizer(wx.VERTICAL)
         content_panel.SetupScrolling(scroll_x=True, scroll_y=True)
@@ -380,6 +382,16 @@ class BaseViewFilesPanel(sppasPanel):
         content_panel.SetMinSize(wx.Size(sppasPanel.fix_size(420), min_height))
 
         return content_panel
+
+    # -----------------------------------------------------------------------
+
+    def _create_hline(self, parent):
+        """Create an horizontal line, used to separate the panels."""
+        line = sppasStaticLine(parent, orient=wx.LI_HORIZONTAL)
+        line.SetMinSize(wx.Size(-1, 20))
+        line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
+        line.SetDepth(1)
+        return line
 
     # -----------------------------------------------------------------------
 
