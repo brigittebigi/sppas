@@ -293,7 +293,7 @@ class sppasXRA(sppasBaseIO):
 
         labels = list()
         for label_root in annotation_root.findall('Label'):
-            labels.append(sppasXRA._parse_label(label_root))
+            labels.append(sppasXRA.parse_label(label_root))
 
         ann = tier.create_annotation(location, labels)
         sppasXRA._parse_metadata(ann, annotation_root.find('Metadata'))
@@ -458,7 +458,7 @@ class sppasXRA(sppasBaseIO):
     # -----------------------------------------------------------------------
 
     @staticmethod
-    def _parse_label(label_root):
+    def parse_label(label_root):
         """Parse a 'Label' element and return it.
 
         :param label_root: (ET) XML Element tree root.

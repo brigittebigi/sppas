@@ -1,3 +1,42 @@
+# -*- coding: UTF-8 -*-
+"""
+    ..
+        ---------------------------------------------------------------------
+         ___   __    __    __    ___
+        /     |  \  |  \  |  \  /              the automatic
+        \__   |__/  |__/  |___| \__             annotation and
+           \  |     |     |   |    \             analysis
+        ___/  |     |     |   | ___/              of speech
+
+        http://www.sppas.org/
+
+        Use of this software is governed by the GNU Public License, version 3.
+
+        SPPAS is free software: you can redistribute it and/or modify
+        it under the terms of the GNU General Public License as published by
+        the Free Software Foundation, either version 3 of the License, or
+        (at your option) any later version.
+
+        SPPAS is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU General Public License for more details.
+
+        You should have received a copy of the GNU General Public License
+        along with SPPAS. If not, see <http://www.gnu.org/licenses/>.
+
+        This banner notice must not be removed.
+
+        ---------------------------------------------------------------------
+
+    src.ui.phoenix.panels.ann.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Editor for a sppasAnnotation().
+    Allows to modify its labels and metadata.
+
+"""
+
 import os
 import wx
 import logging
@@ -13,14 +52,13 @@ from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.anndata.aio.aioutils import format_labels
 
 from ..windows import sppasPanel
-from ..windows import sppasTextCtrl
 from ..windows import sppasToolbar
 
 # ---------------------------------------------------------------------------
 
 
 class sppasAnnEditPanel(sppasPanel):
-    """TextCtrl to edit an annotation of a tier.
+    """Edit an annotation of a tier.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -28,29 +66,35 @@ class sppasAnnEditPanel(sppasPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    Existing shortcuts:
-        - Ctrl+a - select all
-        - Ctrl+c - copy
-        - Ctrl+h - del previous char or selection
-        - Ctrl+i - Insert tab
-        - Ctrl+j - Enter (which means to create a new label)
-        - Ctrl+m - like ctrl+j - Enter
-        - Ctrl+v - paste
-        - Ctrl+x - cut
-        - Ctrl+z - undo
+    Existing shortcuts in a richtextctrl:
+        - ctrl+a - select all
+        - ctrl+c - copy
+        - ctrl+y - del the character after the cursor
+        - ctrl+v - paste
+        - ctrl+x - cut
+        - ctrl+z - undo
 
     """
 
     def __init__(self, parent, ann=None):
+        """Create a sppasAnnEditPanel.
+
+        :param parent: (wx.Window)
+        :param ann: (sppasAnnotation)
+
+        """
         super(sppasAnnEditPanel, self).__init__(
             parent,
-            style=wx.BORDER_SIMPLE | wx.TAB_TRAVERSAL)
+            style=wx.BORDER_SIMPLE | wx.TAB_TRAVERSAL,
+            name="annedit_panel")
         self._create_content()
         self._setup_events()
         self.__ann = ann
         self.__refresh()
         self._code_edit = "code_review"
 
+    # -----------------------------------------------------------------------
+    # Get/Set of the sppasAnnotation()
     # -----------------------------------------------------------------------
 
     def set_ann(self, ann):
@@ -66,10 +110,25 @@ class sppasAnnEditPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def is_text_modified(self):
+        """Return True if the text has changed compared to labels of ann."""
+        ann_text_labels = serialize_labels(self.__ann.get_labels())
+        try:
+            textctrl_text_labels = serialize_labels(self.text_to_labels())
+        except:
+            # The text is invalid: it means it was manually modified!
+            return True
+
+        return ann_text_labels == textctrl_text_labels
+
+    # -----------------------------------------------------------------------
+    # Convert Text <-> List of sppasLabel() instances
     # -----------------------------------------------------------------------
 
     def text_to_labels(self):
         """Return the labels created from the text content.
+
+        Can raise exceptions if the text can't be parsed.
 
         :return (list of sppasLabel)
 
@@ -79,7 +138,9 @@ class sppasAnnEditPanel(sppasPanel):
 
         # The text is in XML (.xra) format
         if self._code_edit == "code_xml":
-            pass
+            tree = ET.fromstring(content)
+            for label_root in tree.findall('Label'):
+                labels.append(sppasXRA.parse_label(label_root))
 
         # The text is in JSON (.jra) format
         elif self._code_edit == "code_json":
@@ -106,7 +167,7 @@ class sppasAnnEditPanel(sppasPanel):
 
         # The annotation labels are to be displayed in XML (.xra) format
         if self._code_edit == "code_xml":
-            root = ET.Element('Annotation')
+            root = ET.Element('Labels')
             for label in labels:
                 label_root = ET.SubElement(root, 'Label')
                 sppasXRA.format_label(label_root, label)
@@ -129,51 +190,58 @@ class sppasAnnEditPanel(sppasPanel):
         return ""
 
     # -----------------------------------------------------------------------
+    # Construct the GUI
     # -----------------------------------------------------------------------
 
     def _create_content(self):
         """Create the main panel to edit an annotation.
 
         """
-        toolbar = sppasToolbar(self, name="ann_toolbar")
-        toolbar.set_height(24)
-        toolbar.AddButton("way_up_down")
-        toolbar.AddSpacer(1)
-        toolbar.AddButton("restore")
-        toolbar.AddToggleButton("code_review", value=True, group_name="view_mode")
-        btn_xml = toolbar.AddToggleButton("code_xml", group_name="view_mode")
-        # btn_xml.Enable(False)
-        btn_json = toolbar.AddToggleButton("code_json", group_name="view_mode")
-        # btn_json.Enable(False)
-        toolbar.AddSpacer(1)
-        meta = toolbar.AddButton("tags")
-        meta.Enable(False)
-        toolbar.AddSpacer(1)
-
-        text = sppasTextCtrl(
-            self, -1, "",
-            style=wx.TE_MULTILINE | wx.TE_BESTWRAP,
-            name="ann_textctrl")
-        # text.Bind(wx.EVT_CHAR, self._on_char, text)
+        toolbar = self.__create_toolbar()
+        textctrl = self.__create_textctrl()
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(toolbar, 0, wx.EXPAND)
-        sizer.Add(text, 1, wx.EXPAND)
+        sizer.Add(textctrl, 1, wx.EXPAND)
 
         self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
 
-    def is_text_modified(self):
-        """Return True if the text has changed compared to labels of ann."""
-        ann_text_labels = serialize_labels(self.__ann.get_labels())
-        try:
-            textctrl_text_labels = serialize_labels(self.text_to_labels())
-        except:
-            # The new labels are invalid: they were manually modified!
-            return True
+    def __create_toolbar(self):
+        toolbar = sppasToolbar(self, name="ann_toolbar")
+        toolbar.set_height(24)
+        toolbar.AddButton("way_up_down")
+        toolbar.AddSpacer(1)
 
-        return ann_text_labels == textctrl_text_labels
+        toolbar.AddButton("restore")
+        toolbar.AddToggleButton("code_review", value=True, group_name="view_mode")
+        toolbar.AddToggleButton("code_xml", group_name="view_mode")
+        toolbar.AddToggleButton("code_json", group_name="view_mode")
+        toolbar.AddSpacer(1)
+
+        meta = toolbar.AddButton("tags")
+        meta.Enable(False)
+        toolbar.AddSpacer(1)
+
+        return toolbar
+
+    # -----------------------------------------------------------------------
+
+    def __create_textctrl(self):
+        # A simple TextCtrl can't be used under MacOS because of automatic quotes substitutions.
+        text = wx.richtext.RichTextCtrl(
+            self, -1, "",
+            style=wx.TE_MULTILINE | wx.TE_BESTWRAP,
+            name="ann_textctrl")
+        try:
+            text.SetBackgroundColour(wx.GetApp().settings.bg_color)
+            text.SetForegroundColour(wx.GetApp().settings.fg_color)
+            text.SetFont(wx.GetApp().settings.text_font)
+        except AttributeError:
+            text.InheritAttributes()
+        # text.Bind(wx.EVT_CHAR, self._on_char, text)
+        return text
 
     # -----------------------------------------------------------------------
 
@@ -185,6 +253,8 @@ class sppasAnnEditPanel(sppasPanel):
     def __textctrl(self):
         return self.FindWindow("ann_textctrl")
 
+    # -----------------------------------------------------------------------
+    # Management of events
     # -----------------------------------------------------------------------
 
     def _setup_events(self):
@@ -212,8 +282,9 @@ class sppasAnnEditPanel(sppasPanel):
         elif btn_name in ("code_review", "code_xml", "code_json"):
             try:
                 new_labels = self.text_to_labels()
-            except:
-                wx.LogError("The labels can't be parsed. Annotation labels are restored.")
+            except Exception as e:
+                wx.LogError("The labels can't be parsed: {}. Annotation "
+                            "labels are restored.".format(e))
                 # enable the current view.
                 self.__toolbar.get_button(btn_name).SetValue(False)
                 self.__toolbar.get_button(self._code_edit).SetValue(True)
@@ -233,7 +304,7 @@ class sppasAnnEditPanel(sppasPanel):
         kc = evt.GetKeyCode()
         text = evt.GetEventObject()
         if evt.ControlDown() and kc == 83:    # Ctrl+s
-            pass  # text.GetParent().GetParent().SetFocus()
+            pass  # send ann to parent ???
         else:
             evt.Skip()
 

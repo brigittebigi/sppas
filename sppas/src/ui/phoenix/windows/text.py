@@ -129,6 +129,17 @@ class sppasTextCtrl(wx.TextCtrl):
                  size=DefaultSize, style=0, validator=DefaultValidator,
                  name=TextCtrlNameStr)
 
+    Existing shortcuts in a textctrl (tested under Windows):
+        - Ctrl+a - select all
+        - Ctrl+c - copy
+        - Ctrl+h - del previous char or selection
+        - Ctrl+i - Insert tab
+        - Ctrl+j - Enter (which means to create a new label)
+        - Ctrl+m - like ctrl+j - Enter
+        - Ctrl+v - paste
+        - Ctrl+x - cut
+        - Ctrl+z - undo
+
     Font, foreground and background are taken from the application settings.
 
     """
