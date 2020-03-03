@@ -326,7 +326,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         - Window 2 of the splitter: an annotation editor.
 
         """
-        w1 = sppasNotebook(self, style=wx.BORDER_SIMPLE, name="tiers_notebook")
+        w1 = sppasNotebook(self, style=wx.BORDER_SIMPLE | wx.TAB_TRAVERSAL, name="tiers_notebook")
         w2 = self.__create_annotation_editor()
 
         # Fix size&layout
@@ -357,10 +357,8 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         meta.Enable(False)
         toolbar.AddSpacer(1)
 
-        body_style = wx.TAB_TRAVERSAL | wx.TE_BESTWRAP | \
-                     wx.TE_MULTILINE | wx.BORDER_STATIC
+        body_style = wx.TE_BESTWRAP | wx.TE_MULTILINE | wx.BORDER_STATIC
         text = sppasTextCtrl(panel, style=body_style, name="ann_textctrl")
-        text.Bind(wx.EVT_CHAR, self._on_char, text)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(toolbar, 0, wx.EXPAND)
@@ -532,7 +530,11 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     # -----------------------------------------------------------------------
 
     def get_ann_period(self):
-        """Return the time period of the currently selected annotation."""
+        """Return the time period of the currently selected annotation.
+
+        :return: (int, int) Start and end values in milliseconds
+
+        """
         if self.__listctrl is None:
             return 0, 0
 
@@ -641,6 +643,21 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         self.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
         self.Bind(wx.EVT_TOGGLEBUTTON, self._process_toolbar_event)
 
+        # Capture keys
+        self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
+
+    # -----------------------------------------------------------------------
+
+    def _process_key_event(self, event):
+        """Process a key event.
+
+        :param event: (wx.Event)
+
+        """
+        key_code = event.GetKeyCode()
+        logging.debug("Key event skipped by the TiersEdit panel {}".format(key_code))
+        event.Skip()
+
     # -----------------------------------------------------------------------
 
     def _process_toolbar_event(self, event):
@@ -669,16 +686,6 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
         else:
             event.Skip()
-
-    # -----------------------------------------------------------------------
-
-    def _on_char(self, evt):
-        text = evt.GetEventObject()
-        if evt.ControlDown() and evt.KeyCode == 1:
-            # Ctrl+A
-            text.SelectAll()
-        else:
-            evt.Skip()
 
     # -----------------------------------------------------------------------
 
@@ -819,10 +826,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             self.__textctrl.SetValue("")
         else:
             # Which view is currently toggled?
-            # self.__textctrl.SetFocus()
             self.__textctrl.SetValue(self.labels_to_text(labels))
-
-# ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
 
@@ -854,6 +858,8 @@ class TestPanel(sppasPanel):
         # start, end = p.set_selected_annotation(4)
         # logging.debug("Selected annotation period: {} {}".format(start, end))
 
+
+    # -----------------------------------------------------------------------
 
     def _process_view_event(self, evt):
         logging.debug("Received action {} with value {}"

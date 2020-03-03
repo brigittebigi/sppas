@@ -87,6 +87,13 @@ class sppasToolbar(sppasPanel):
         self.Bind(wx.EVT_TOGGLEBUTTON, self.__on_tg_btn_event)
 
     # -----------------------------------------------------------------------
+
+    def AcceptsFocusFromKeyboard(self):
+        """Can this window be given focus by tab key?"""
+        # return True
+        return False
+
+    # -----------------------------------------------------------------------
     # Public methods to access the components and their properties
     # -----------------------------------------------------------------------
 

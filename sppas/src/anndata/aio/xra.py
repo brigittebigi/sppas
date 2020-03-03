@@ -90,6 +90,33 @@ class sppasJRA(object):
         tag_node['type'] = tag.get_type()
         tag_node['text'] = tag.get_content()
 
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def parse_label(tags_list):
+        """Create a sppasLabel from a list of tag dictionaries.
+
+        """
+        tags = list()
+        scores = list()
+        for tag_item in tags_list:
+            tags.append(sppasJRA._parse_tag(tag_item))
+            scores.append(tag_item['score'])
+
+        return sppasLabel(tags, scores)
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def _parse_tag(tag_dict):
+        """Create a 'sppasTag' from a 'Tag' dict.
+
+        :param tag_dict: (dict) 2 keys expected: text and type
+        :return: (sppasTag)
+
+        """
+        return sppasTag(tag_dict['text'], tag_dict['type'])
+
 # ---------------------------------------------------------------------------
 
 

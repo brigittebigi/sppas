@@ -135,7 +135,6 @@ class sppasMainWindow(sppasDialog):
 
         # Fix this frame properties
         self.Enable()
-        self.SetFocus()
         self.CenterOnScreen(wx.BOTH)
         self.FadeIn(deltaN=-4)
         self.Show(True)
@@ -313,17 +312,15 @@ class sppasMainWindow(sppasDialog):
             # ALT+F4 on Windows to exit with confirmation
             self.on_exit(event)
 
-        elif key_code == 87 and (event.CmdDown() or event.CtrlDown())\
-                and wx.Platform != "__WXMSW__":
+        elif key_code == 87 and event.ControlDown() and wx.Platform != "__WXMSW__":
             # CMD+w on MacOS / Ctrl+w on Linux to exit with confirmation
             self.on_exit(event)
 
-        elif key_code == 81 and (event.CmdDown() or event.CtrlDown) \
-                and wx.Platform != "__WXMSW__":
+        elif key_code == 81 and event.ControlDown() and wx.Platform != "__WXMSW__":
             # CMD+q on MacOS / Ctrl+q on Linux to force exit
             self.exit()
 
-        elif key_code == 70 and event.CmdDown():
+        elif key_code == 70 and event.ControlDown():
             # CMD+f
             self.FindWindow("header").enable("page_files")
             self.show_page("page_files")

@@ -20,10 +20,46 @@ class sppasSplitterWindow(wx.SplitterWindow):
                  id=wx.ID_ANY,
                  pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
-                 style=wx.SP_LIVE_UPDATE | wx.SP_NOBORDER,
+                 style=wx.SP_LIVE_UPDATE | wx.SP_NOBORDER | wx.TAB_TRAVERSAL,
                  name="splitter_window"):
         super(sppasSplitterWindow, self).__init__(
             parent, id, pos, size, style, name)
+
+        try:
+            settings = wx.GetApp().settings
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
+
+    # -----------------------------------------------------------------------
+
+    def AcceptsFocus(self):
+        """Override. Indicate this window accepts focus."""
+        return True
+
+    # -----------------------------------------------------------------------
+
+    def AcceptsFocusRecursively(self):
+        """Override. Indicate this window or its children accepts focus."""
+        return True
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        """Override."""
+        wx.SplitterWindow.SetBackgroundColour(self, colour)
+        for c in self.GetChildren():
+            c.SetBackgroundColour(colour)
+
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        """Override."""
+        wx.SplitterWindow.SetForegroundColour(self, colour)
+        for c in self.GetChildren():
+            c.SetForegroundColour(colour)
 
     # -----------------------------------------------------------------------
 

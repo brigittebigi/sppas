@@ -193,15 +193,30 @@ class sppasPlayerControlsPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def SetBackgroundColour(self, colour):
-        """Set the background of our panel to the given color."""
+        """Set the background of our panel to the given color or hi-color."""
         wx.Panel.SetBackgroundColour(self, colour)
         hi_color = self.GetHighlightedBackgroundColour()
 
-        for name in ("transport", "widgets", "volume"):
+        for name in ("transport", "widgets", "volume", "seek_slider"):
             w = self.FindWindow(name + "_panel")
+            w.SetBackgroundColour(colour)
             for c in w.GetChildren():
                 if isinstance(c, BitmapTextButton) is True:
                     c.SetBackgroundColour(hi_color)
+                else:
+                    c.SetBackgroundColour(colour)
+
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        """Set the foreground of our panel to the given color."""
+        wx.Panel.SetForegroundColour(self, colour)
+
+        for name in ("transport", "widgets", "volume", "seek_slider"):
+            w = self.FindWindow(name + "_panel")
+            w.SetForegroundColour(colour)
+            for c in w.GetChildren():
+                c.SetForegroundColour(colour)
 
     # -----------------------------------------------------------------------
 
@@ -283,7 +298,7 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     def __create_seek_slider_panel(self):
         """Return a panel with a slider to indicate the position in time."""
-        panel = sppasPanel(self, name="widgets_panel")
+        panel = sppasPanel(self, name="seek_slider_panel")
 
         # Labels of wx.Slider are not supported under MacOS.
         slider = wx.Slider(self, style=wx.SL_HORIZONTAL | wx.SL_MIN_MAX_LABELS)

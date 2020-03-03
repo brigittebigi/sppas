@@ -79,6 +79,7 @@ class sppasListCtrl(wx.ListCtrl):
             self.SetForegroundColour(settings.fg_color)
             self.SetTextColour(settings.fg_color)
             self.SetFont(settings.text_font)
+            # Attributes of the header are not set: Not implemented by wx.ListCtrl.
         except AttributeError:
             self.InheritAttributes()
 
@@ -88,6 +89,40 @@ class sppasListCtrl(wx.ListCtrl):
         # Bind some events to manage properly the list of selected items
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self)
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemDeselected, self)
+
+    # ---------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        wx.ListCtrl.SetBackgroundColour(self, colour)
+        if not self.GetWindowStyleFlag() & wx.LC_HRULES:
+            self.RecolorizeBackground(-1)
+
+    # ---------------------------------------------------------------------
+
+    def RecolorizeBackground(self, index=-1):
+        """Set background color of items.
+
+        :param index: (int) Item to set the bg color. -1 to set all items.
+
+        """
+        bg = self.GetBackgroundColour()
+        r, g, b, a = bg.Red(), bg.Green(), bg.Blue(), bg.Alpha()
+        if (r + g + b) > 384:
+            alt_bg = wx.Colour(r, g, b, a).ChangeLightness(80)
+        else:
+            alt_bg = wx.Colour(r, g, b, a).ChangeLightness(110)
+
+        if index == -1:
+            for i in range(self.GetItemCount()):
+                if i % 2:
+                    self.SetItemBackgroundColour(i, bg)
+                else:
+                    self.SetItemBackgroundColour(i, alt_bg)
+        else:
+            if index % 2:
+                self.SetItemBackgroundColour(index, bg)
+            else:
+                self.SetItemBackgroundColour(index, alt_bg)
 
     # -----------------------------------------------------------------------
 
@@ -113,7 +148,24 @@ class sppasListCtrl(wx.ListCtrl):
             # is systematically selected but not under the other platforms.
             self.Select(0, on=0)
 
+        if not self.GetWindowStyleFlag() & wx.LC_HRULES:
+            for i in range(index, self.GetItemCount()):
+                self.RecolorizeBackground(i)
+
         return idx
+
+    # -----------------------------------------------------------------------
+
+    def SetItem(self, index, col, label, imageId=-1):
+        """Override. Set the string of an item.
+
+        The column number must be changed to be efficient; and alternate
+        background colors (just for the list to be easier to read).
+
+        """
+        wx.ListCtrl.SetItem(self, index, col, label, imageId)
+        if not self.GetWindowStyleFlag() & wx.LC_HRULES:
+            self.RecolorizeBackground(index)
 
     # ---------------------------------------------------------------------
 
@@ -132,6 +184,10 @@ class sppasListCtrl(wx.ListCtrl):
                 self._selected[i] = self._selected[i] - 1
 
         wx.ListCtrl.DeleteItem(self, index)
+
+        if not self.GetWindowStyleFlag() & wx.LC_HRULES:
+            for i in range(index, self.GetItemCount()):
+                self.RecolorizeBackground(index)
 
     # ---------------------------------------------------------------------
 
@@ -296,34 +352,6 @@ class LineListCtrl(sppasListCtrl):
         super(LineListCtrl, self).__init__(
             parent, id, pos, size, style, validator, name)
 
-    # ---------------------------------------------------------------------
-
-    def RecolorizeBackground(self, index=-1):
-        """Set background color of items.
-
-        :param index: (int) Item to set the bg color. -1 to set all items.
-
-        """
-        bg = self.GetBackgroundColour()
-        r, g, b = bg.Red(), bg.Green(), bg.Blue()
-        delta = 10
-        if (r + g + b) > 384:
-            alt_bg = wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
-        else:
-            alt_bg = wx.Colour(r, g, b, 50).ChangeLightness(delta)
-
-        if index == -1:
-            for i in range(self.GetItemCount()):
-                if i % 2:
-                    self.SetItemBackgroundColour(i, bg)
-                else:
-                    self.SetItemBackgroundColour(i, alt_bg)
-        else:
-            if index % 2:
-                self.SetItemBackgroundColour(index, bg)
-            else:
-                self.SetItemBackgroundColour(index, alt_bg)
-
     # -----------------------------------------------------------------------
     # Override methods of wx.ListCtrl
     # -----------------------------------------------------------------------
@@ -360,7 +388,6 @@ class LineListCtrl(sppasListCtrl):
         # shift the line numbers items (for items that are after the new one)
         for i in range(index, self.GetItemCount()):
             sppasListCtrl.SetItem(self, i, 0, self._num_to_str(i+1))
-            self.RecolorizeBackground(i)
 
         sppasListCtrl.SetItem(self, index, 1, label)
         return idx
@@ -387,9 +414,6 @@ class LineListCtrl(sppasListCtrl):
         """
         sppasListCtrl.SetItem(self, index, col+1, label, imageId)
 
-        # and to look nice:
-        self.RecolorizeBackground(index)
-
     # -----------------------------------------------------------------------
 
     def DeleteItem(self, index):
@@ -401,7 +425,6 @@ class LineListCtrl(sppasListCtrl):
         sppasListCtrl.DeleteItem(self,index)
         for i in range(index, self.GetItemCount()):
             sppasListCtrl.SetItem(self, i, 0, self._num_to_str(i+1))
-            self.RecolorizeBackground(index)
 
     # -----------------------------------------------------------------------
 
@@ -508,6 +531,9 @@ class TestPanel(wx.Panel):
         self.SetSizer(s)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_selected_item)
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_deselected_item)
+
+        listctrl.SetForegroundColour(wx.Colour(25, 35, 45))
+        listctrl.SetBackgroundColour(wx.Colour(225, 235, 245))
 
     def _on_selected_item(self, evt):
         logging.debug("Parent received selected item event. Index {}"

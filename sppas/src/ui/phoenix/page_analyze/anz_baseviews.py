@@ -110,14 +110,19 @@ class BaseViewFilesPanel(sppasPanel):
         wx.Panel.SetFont(self, font)
         for c in self.GetChildren():
             c.SetFont(font)
-        f = wx.Font(int(font.GetPointSize() * 0.65),
-                    wx.FONTFAMILY_SWISS,   # family,
-                    wx.FONTSTYLE_NORMAL,   # style,
-                    wx.FONTWEIGHT_BOLD,    # weight,
-                    underline=False,
-                    faceName=font.GetFaceName(),
-                    encoding=wx.FONTENCODING_SYSTEM)
-        self.FindWindow("toolbar_views").SetFont(f)
+
+        # a smaller font for the toolbar
+        tb = self.FindWindow("toolbar_views")
+        if tb is not None:
+            f = wx.Font(int(font.GetPointSize() * 0.65),
+                        wx.FONTFAMILY_SWISS,   # family,
+                        wx.FONTSTYLE_NORMAL,   # style,
+                        wx.FONTWEIGHT_BOLD,    # weight,
+                        underline=False,
+                        faceName=font.GetFaceName(),
+                        encoding=wx.FONTENCODING_SYSTEM)
+            tb.SetFont(f)
+
         self.Layout()
 
     # -----------------------------------------------------------------------

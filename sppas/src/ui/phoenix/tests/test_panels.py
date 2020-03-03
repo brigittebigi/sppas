@@ -41,6 +41,7 @@ from sppas.src.ui.cfg import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 import sppas.src.ui.phoenix.panels.tiers as tiers
+import sppas.src.ui.phoenix.panels.ann as ann
 import sppas.src.ui.phoenix.panels.option as option
 
 # ----------------------------------------------------------------------------
@@ -59,6 +60,7 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
+        self.AddPage(ann.TestPanel(self), "Annotation edit panel")
         self.AddPage(tiers.TestPanel(self), "Tiers edit window")
         self.AddPage(option.TestPanel(self), "Configure options panel")
 

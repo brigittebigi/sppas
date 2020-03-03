@@ -436,7 +436,8 @@ class BaseButton(wx.Window):
 
     def AcceptsFocusFromKeyboard(self):
         """Can this window be given focus by tab key?"""
-        return True
+        # return True
+        return False
 
     # -----------------------------------------------------------------------
 
