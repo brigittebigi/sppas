@@ -34,6 +34,7 @@
 
 """
 
+import logging
 import os
 import wx
 import wx.lib
@@ -343,15 +344,34 @@ class TrsTimeViewPanel(sppasBaseViewPanel):
 
     # -----------------------------------------------------------------------
 
-    def get_selected_tier(self):
+    def get_selected_tiername(self):
         """Return the name of the selected tier or None."""
-        return self.GetPane().get_selected_tier()
+        return self.GetPane().get_selected_tiername()
 
     # -----------------------------------------------------------------------
 
-    def set_selected_tier(self, tier_name):
+    def set_selected_tiername(self, tier_name):
         """Set the selected tier."""
-        self.GetPane().set_selected_tier(tier_name)
+        self.GetPane().set_selected_tiername(tier_name)
+
+    # -----------------------------------------------------------------------
+
+    def get_selected_ann(self):
+        """Return the index of the selected ann or -1."""
+        return self.GetPane().get_selected_ann()
+
+    # -----------------------------------------------------------------------
+
+    def set_selected_ann(self, idx):
+        """Set the index of the selected ann or -1."""
+        return self.GetPane().set_selected_ann(idx)
+
+    # -----------------------------------------------------------------------
+
+    def update_ann(self, idx):
+        """"""
+        self._dirty = True
+        return self.GetPane().update_ann(idx)
 
     # -----------------------------------------------------------------------
     # Override from the parent
@@ -423,7 +443,6 @@ class TrsTimeViewPanel(sppasBaseViewPanel):
         :param event: (wx.Event)
 
         """
-        wx.LogDebug("... COLLAPSIBLE PANE RECEIVED A TIER SELECTED EVENT ...")
         evt = ViewEvent(action="tier_selected", value=self._filename)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
@@ -448,17 +467,17 @@ class TrsTimePanel(sppasPanel):
     def SetForegroundColour(self, colour):
         wx.Panel.SetForegroundColour(self, colour)
         for child in self.GetChildren():
-            if child.GetTierName() != self.__selected:
+            if child.get_tiername() != self.__selected:
                 child.SetForegroundColour(colour)
 
     # -----------------------------------------------------------------------
 
-    def get_selected_tier(self):
+    def get_selected_tiername(self):
         return self.__selected
 
     # -----------------------------------------------------------------------
 
-    def set_selected_tier(self, tier_name=None):
+    def set_selected_tiername(self, tier_name=None):
         """Set the selected tier.
 
         :param tier_name: (str)
@@ -468,16 +487,44 @@ class TrsTimePanel(sppasPanel):
             assert tier_name in [t.get_name() for t in self.__trs]
 
         for child in self.GetChildren():
-            if child.GetTierName() == tier_name:
+            if child.get_tiername() == tier_name:
                 child.SetForegroundColour(wx.RED)
                 child.SetBorderColour(wx.RED)
                 child.Refresh()
-            elif child.GetTierName() == self.__selected:
+            elif child.get_tiername() == self.__selected:
                 child.SetForegroundColour(self.GetForegroundColour())
                 child.SetBorderColour(self.GetForegroundColour())
                 child.Refresh()
         self.__selected = tier_name
 
+    # -----------------------------------------------------------------------
+
+    def get_selected_ann(self):
+        if self.__selected is None:
+            return -1
+
+        for child in self.GetChildren():
+            if child.get_tiername() == self.__selected:
+                return child.get_selected_ann()
+
+        return -1
+
+    # -----------------------------------------------------------------------
+
+    def set_selected_ann(self, idx):
+        for child in self.GetChildren():
+            if child.get_tiername() == self.__selected:
+                child.set_selected_ann(idx)
+
+    # -----------------------------------------------------------------------
+
+    def update_ann(self, idx):
+        for child in self.GetChildren():
+            if child.get_tiername() == self.__selected:
+                child.update_ann(idx)
+
+    # -----------------------------------------------------------------------
+    # Construct the GUI
     # -----------------------------------------------------------------------
 
     def _create_content(self):
@@ -508,7 +555,7 @@ class TrsTimePanel(sppasPanel):
             if event.action == "tier_selected":
                 tier = event.value
                 if tier.get_name() != self.__selected:
-                    self.set_selected_tier(tier.get_name())
+                    self.set_selected_tiername(tier.get_name())
                     self.Notify()
         except AttributeError:
             return
@@ -523,7 +570,9 @@ class TierTimeCtrl(wx.Window):
             parent,
             style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
             name=tier.get_name()+"_ctrl")
+
         self.__tier = tier
+        self.__ann_idx = -1
 
         # Background
         self._bgcolor = None
@@ -544,7 +593,25 @@ class TierTimeCtrl(wx.Window):
 
     # -----------------------------------------------------------------------
 
-    def GetTierName(self):
+    def get_selected_ann(self):
+        return self.__ann_idx
+
+    # -----------------------------------------------------------------------
+
+    def set_selected_ann(self, idx):
+        logging.debug("annotation selected : {}".format(idx))
+        self.__ann_idx = idx
+        self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def update_ann(self, idx):
+        logging.debug("annotation modified : {}".format(idx))
+        self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def get_tiername(self):
         return self.__tier.get_name()
 
     # -----------------------------------------------------------------------
@@ -765,6 +832,9 @@ class TierTimeCtrl(wx.Window):
         tw, th = self.get_text_extend(dc, gc, tier_name)
         self.__draw_label(dc, gc, x, y + ((h - th) // 2), tier_name)
         self.__draw_label(dc, gc, x + 200, y + ((h - th) // 2), str(len(self.__tier))+" annotations")
+        if self.__ann_idx > -1:
+            self.__draw_label(dc, gc, x + 400, y + ((h - th) // 2),
+                             "(-- {:d} -- is selected)".format(self.__ann_idx+1))
 
     # -----------------------------------------------------------------------
 

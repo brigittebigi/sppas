@@ -327,7 +327,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
     # -----------------------------------------------------------------------
 
-    def get_tiername(self):
+    def get_selected_tiername(self):
         """Return the name of the tier of the current page."""
         if self.__listctrl is not None:
             return self.__listctrl.get_tiername()
@@ -335,21 +335,22 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
     # -----------------------------------------------------------------------
 
-    def set_selected_tier(self, filename, tier_name):
+    def set_selected_tiername(self, filename, tier_name):
         """Change page selection of the notebook to match given data.
 
-        :return: (int, int) Selected period in milliseconds
+        :return: (bool)
 
         """
         start = end = 0
 
         # De-select the currently selected annotation.
-        valid = True
         if self.__cur_index != -1:
-            valid = self.__annotation_deselected(self.__cur_index)
+            c = self.__cur_index
+            self.__can_select = self.__annotation_deselected(self.__cur_index)
+            self.__listctrl.Select(c, on=1)
 
         # Select requested tier (... and an annotation)
-        if valid is True:
+        if self.__can_select is True:
             for i in range(self.__notebook.GetPageCount()):
                 page = self.__notebook.GetPage(i)
                 if page.get_filename() == filename and page.get_tiername() == tier_name:
@@ -359,10 +360,14 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                     self.__cur_index = listctrl.GetFirstSelected()
                     if self.__cur_index == -1:
                         self.__cur_index = 0
+                    ann = self.__listctrl.get_selected_annotation()
+                    self.__annpanel.set_ann(ann)
+                    self._notify(action="ann_selected", value=self.__cur_index)
                     start, end = self.__annotation_selected(self.__cur_index)
+                    self._notify(action="period_selected", value=(start, end))
                     break
 
-        return int(start * 1000.), int(end * 1000.)
+        return self.__can_select
 
     # -----------------------------------------------------------------------
 
@@ -393,8 +398,10 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         if self.__listctrl is None and sel_tier is not None:
             self.__cur_index = self.__listctrl.GetFirstSelected()
             if self.__cur_index == -1:
-                start, end = self.set_selected_tier(filename, sel_tier)
-                self._notify(action="period_selected", value=(start, end))
+                changed = self.set_selected_tiername(filename, sel_tier)
+                if changed is True:
+                    start, end = self.__annotation_selected(self.__cur_index)
+                    self._notify(action="period_selected", value=(start, end))
 
         self.Layout()
 
@@ -589,9 +596,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         the annotation of the tier.
 
         """
-        logging.debug("on annotation deselected event received.")
         self.__can_select = self.__annotation_deselected(evt.GetIndex())
-        logging.debug(" can select = {}".format(self.__can_select))
 
     # -----------------------------------------------------------------------
 
@@ -638,7 +643,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             self.__cur_index = self.__listctrl.GetFirstSelected()
             if self.__cur_index == -1:
                 logging.debug("No annotation was previously selected in {}"
-                              "".format(self.get_tiername()))
+                              "".format(self.get_selected_tiername()))
                 self.__cur_index = 0
 
             start, end = self.__annotation_selected(self.__cur_index)
@@ -673,6 +678,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             self.__cur_index = idx
             self.__listctrl.Select(idx, on=1)
 
+        self._notify(action="ann_selected", value=self.__cur_index)
         return valid
 
     # -----------------------------------------------------------------------
@@ -690,6 +696,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         ann = self.__listctrl.get_selected_annotation()
         self.__annpanel.set_ann(ann)
         self.__cur_index = idx
+        self._notify(action="ann_selected", value=self.__cur_index)
 
         return self.get_ann_period()
 
@@ -702,7 +709,6 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :return: (bool)
 
         """
-        # The text was modified but is not valid (error while creating labels)
         modif = self.__annpanel.text_modified()
 
         # The annotation labels were not modified.
@@ -733,7 +739,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             ann = self.__listctrl.get_annotation(idx)
             self.__annpanel.set_ann(ann)
             # notify parent we modified the tier at index idx
-            self._notify(action="modified", value=idx)
+            self._notify(action="ann_modified", value=idx)
             return True
 
 # ---------------------------------------------------------------------------

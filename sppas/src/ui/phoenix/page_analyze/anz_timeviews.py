@@ -170,10 +170,10 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
                 if len(trs) > 0:
                     # enable the tier into the panel of time tier views
                     tier_name = trs[0].get_name()
-                    panel.set_selected_tier(tier_name)
+                    panel.set_selected_tiername(tier_name)
                     # enable the tier into the notebook of list tier views
                     w = self.FindWindow("tiers_edit_splitter")
-                    w.set_selected_tier(filename, tier_name)
+                    w.set_selected_tiername(filename, tier_name)
                     # an event is sent by w to fix the selected period
                     break
 
@@ -332,6 +332,10 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
     def _player_controls_panel(self):
         return self.FindWindow("player_controls_panel")
 
+    @property
+    def _scrolled_view(self):
+        return self.FindWindow("scrolled_views")
+
     # -----------------------------------------------------------------------
     # Events management
     # -----------------------------------------------------------------------
@@ -373,13 +377,14 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         elif action == "tier_selected":
             panel = event.GetEventObject()
             trs_filename = panel.get_filename()
-            tier_name = panel.get_selected_tier()
+            tier_name = panel.get_selected_tiername()
 
-            # enable the tier into the notebook of tier views
+            # change selected tier into the notebook of tier views
             w = self.FindWindow("tiers_edit_splitter")
-            w.set_selected_tier(trs_filename, tier_name)
-
-            self.__enable_tier_into_scrolled(trs_filename, tier_name)
+            changed = w.set_selected_tiername(trs_filename, tier_name)
+            if changed is False:
+                # switch back to the previously selected tier
+                self.__enable_tier_into_scrolled(trs_filename, w.get_selected_tiername())
 
     # -----------------------------------------------------------------------
 
@@ -393,7 +398,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         if action == "tier_selected":
             w = event.GetEventObject()
             trs_filename = w.get_filename()
-            tier_name = w.get_tiername()
+            tier_name = w.get_selected_tiername()
             self.__enable_tier_into_scrolled(trs_filename, tier_name)
 
         elif action == "period_selected":
@@ -401,6 +406,16 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
             start = int(period[0] * 1000.)
             end = int(period[1] * 1000.)
             self.set_offset_period(start, end)
+
+        elif action == "ann_modified":
+            w = event.GetEventObject()
+            trs_filename = w.get_filename()
+            self.__ann_into_scrolled(trs_filename, event.value, what="update")
+
+        elif action == "ann_selected":
+            w = event.GetEventObject()
+            trs_filename = w.get_filename()
+            self.__ann_into_scrolled(trs_filename, event.value, what="select")
 
     # -----------------------------------------------------------------------
 
@@ -414,9 +429,27 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
             panel = self._files[filename]
             if isinstance(panel, TrsTimeViewPanel):
                 if filename != trs_filename:
-                    panel.set_selected_tier(None)
+                    panel.set_selected_tiername(None)
+                    panel.set_selected_ann(-1)
                 else:
-                    panel.set_selected_tier(tier_name)
+                    panel.set_selected_tiername(tier_name)
+
+    # -----------------------------------------------------------------------
+
+    def __ann_into_scrolled(self, trs_filename, idx, what="select"):
+        """Modify annotation.
+
+        into the scrolled panel only.
+
+        """
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsTimeViewPanel):
+                if filename == trs_filename:
+                    if what == "select":
+                        panel.set_selected_ann(idx)
+                    elif what == "update":
+                        panel.update_ann(idx)
 
     # -----------------------------------------------------------------------
 
@@ -508,7 +541,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         splitter.Unsplit(toRemove=win_2)
 
         splitter.SplitVertically(win_2, win_1, w)
-        if win_1.GetName() == "scrolled_views":
+        if win_1 == self._scrolled_view:
             splitter.SetSashGravity(1.)
         else:
             splitter.SetSashGravity(0.)
@@ -548,10 +581,10 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
 class TestPanel(TimeViewFilesPanel):
     TEST_FILES = (
         os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"),
-        "C:\\Users\\bigi\\Videos\\agay_2.mp4",
+        # "C:\\Users\\bigi\\Videos\\agay_2.mp4",
         # os.path.join("/Users/bigi/Movies/Monsters_Inc.For_the_Birds.mpg"),
-        os.path.join("/E/Videos/Monsters_Inc.For_the_Birds.mpg"),
-        # os.path.join(paths.samples, "COPYRIGHT.txt"),
+        # os.path.join("/E/Videos/Monsters_Inc.For_the_Birds.mpg"),
+        os.path.join(paths.samples, "COPYRIGHT.txt"),
         os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"),
         # os.path.join(paths.samples, "toto.xxx"),
         # os.path.join(paths.samples, "toto.ogg")

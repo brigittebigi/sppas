@@ -143,10 +143,13 @@ class sppasAnnEditPanel(sppasPanel):
         Return -1 if the text has changed but can't create valid labels.
 
         """
+        if self.__ann is None:
+            return 0
+
         try:
             textctrl_text_labels = serialize_labels(self.__text_to_labels())
         except Exception as e:
-            wx.LogError(str(e))
+            # wx.LogError(str(e))
             return -1
 
         if textctrl_text_labels == serialize_labels(self.__ann.get_labels()):
