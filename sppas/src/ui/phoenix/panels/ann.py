@@ -75,9 +75,11 @@ class sppasAnnEditPanel(sppasPanel):
         - ctrl+x - cut
         - ctrl+z - undo
 
+    Labels of the given annotation are not modified but edited in a TextCtrl.
+
     """
 
-    def __init__(self, parent, ann=None):
+    def __init__(self, parent, ann=None, name="annedit_panel"):
         """Create a sppasAnnEditPanel.
 
         :param parent: (wx.Window)
@@ -87,7 +89,7 @@ class sppasAnnEditPanel(sppasPanel):
         super(sppasAnnEditPanel, self).__init__(
             parent,
             style=wx.BORDER_SIMPLE | wx.TAB_TRAVERSAL,
-            name="annedit_panel")
+            name=name)
         self._create_content()
         self._setup_events()
 
@@ -101,51 +103,69 @@ class sppasAnnEditPanel(sppasPanel):
         self.__set_styles()
         self.__textctrl.SetDefaultStyle(self.text_attr)
         self.__ann = ann
-        self.__refresh()
+        self.update()
         self.__code_edit = "code_review"
 
     # -----------------------------------------------------------------------
     # Public methods to access data
     # -----------------------------------------------------------------------
 
-    def set_ann(self, ann):
+    def set_ann(self, ann=None):
+        """Set a new annotation.
+
+        Any changes in the text editor of labels are lost.
+
+        :param ann: (sppasAnnotation)
+
+        """
         self.__ann = ann
-        self.__refresh()
-
-    # -----------------------------------------------------------------------
-
-    def ann_labels(self):
-        if self.__ann is None:
-            return list()
-        return self.__ann.get_labels()
+        self.update()
 
     # -----------------------------------------------------------------------
 
     def text_labels(self):
+        """Return a list of labels made from the text editor.
+
+        Raise exception if labels can't be created from the raw text.
+
+        :return: (list of sppasLabel instances)
+
+        """
         return self.__text_to_labels()
 
     # -----------------------------------------------------------------------
 
-    def is_text_valid(self):
+    def text_modified(self):
+        """Ask for modif in the text.
+
+        Return 0 if the text wasn't changed.
+        Return 1 if the text has changed and can create valid labels.
+        Return -1 if the text has changed but can't create valid labels.
+
+        """
         try:
-            serialize_labels(self.__text_to_labels())
-            return True
-        except:
-            # The text is invalid: it means it was manually modified!
-            return False
+            textctrl_text_labels = serialize_labels(self.__text_to_labels())
+        except Exception as e:
+            wx.LogError(str(e))
+            return -1
+
+        if textctrl_text_labels == serialize_labels(self.__ann.get_labels()):
+            return 0
+
+        return 1
 
     # -----------------------------------------------------------------------
 
-    def is_text_modified(self):
-        """Return True if the text has changed compared to labels of ann."""
-        ann_text_labels = serialize_labels(self.__ann.get_labels())
-        try:
-            textctrl_text_labels = serialize_labels(self.__text_to_labels())
-        except:
-            # The text is invalid: it means it was manually modified!
-            return True
+    def update(self):
+        """Reset the textctrl with the labels of the annotation.
 
-        return ann_text_labels == textctrl_text_labels
+        """
+        self.__textctrl.SetValue("")
+
+        if self.__ann is not None:
+            labels = self.__ann.get_labels()
+            if len(labels) > 0:
+                self.__set_text_value(self.__labels_to_text(labels))
 
     # -----------------------------------------------------------------------
     # Convert Text <-> List of sppasLabel() instances
@@ -282,10 +302,10 @@ class sppasAnnEditPanel(sppasPanel):
         self.text_attr.SetFont(fs)
 
         # Bold font for special chars: {}|<>[]/
-        self.alt_tags = wx.richtext.RichTextAttr()
-        self.alt_tags.SetTextColour(fg)
-        self.alt_tags.SetBackgroundColour(bg)
-        self.alt_tags.SetFont(
+        self.tags_attr = wx.richtext.RichTextAttr()
+        self.tags_attr.SetTextColour(fg)
+        self.tags_attr.SetBackgroundColour(bg)
+        self.tags_attr.SetFont(
             wx.Font(fs.GetPointSize(),
                     fs.GetFamily(),
                     fs.GetStyle(),
@@ -367,7 +387,7 @@ class sppasAnnEditPanel(sppasPanel):
         btn_name = btn.GetName()
 
         if btn_name == "restore":
-            self.__refresh()
+            self.update()
 
         elif btn_name in ("code_review", "code_xml", "code_json"):
             self.__switch_code(btn_name)
@@ -388,7 +408,7 @@ class sppasAnnEditPanel(sppasPanel):
             # enable the current view (restore).
             self.__toolbar.get_button(view_name).SetValue(False)
             self.__toolbar.get_button(self.__code_edit).SetValue(True)
-            self.__refresh()
+            self.update()
 
         else:
             self.__code_edit = view_name
@@ -404,22 +424,11 @@ class sppasAnnEditPanel(sppasPanel):
         if evt.ControlDown() and kc == 83:    # Ctrl+s
             pass  # send ann to parent ???
 
-        elif any((evt.ControlDown(), evt.AltDown())) is False:
-            self.__append_styled_text(char)
+        elif any((evt.ControlDown(), evt.AltDown())) is False and kc > 31 and kc != 127:
+            self.__append_styled_char(char)
 
         else:
             evt.Skip()
-
-    # -----------------------------------------------------------------------
-
-    def __refresh(self):
-        """Refresh the item of the selected annotation in the textctrl."""
-        self.__textctrl.SetValue("")
-
-        if self.__ann is not None:
-            labels = self.__ann.get_labels()
-            if len(labels) > 0:
-                self.__set_text_value(self.__labels_to_text(labels))
 
     # -----------------------------------------------------------------------
 
@@ -427,19 +436,24 @@ class sppasAnnEditPanel(sppasPanel):
         """Set a text with the appropriate style."""
         self.__textctrl.SetValue("")
         for char in content:
-            self.__append_styled_text(char)
+            self.__append_styled_char(char)
 
     # -----------------------------------------------------------------------
 
-    def __append_styled_text(self, text):
-        """Append a text with the appropriate style."""
-        if text in ('{', '}', '[', ']', '<', '>', '/', '|'):
-            self.__textctrl.BeginStyle(self.alt_tags)
-        else:
-            self.__textctrl.BeginStyle(self.text_attr)
+    def __append_styled_char(self, text):
+        """Append a character with the appropriate style."""
+        if text in ('{', '[', '<', '/', '|'):
+            self.__textctrl.BeginStyle(self.tags_attr)
+            self.__textctrl.WriteText(text)
+            self.__textctrl.EndStyle()
 
-        self.__textctrl.WriteText(text)
-        self.__textctrl.EndStyle()
+        elif text in (u('}'), u(']'), u('>')):
+            self.__textctrl.BeginStyle(self.tags_attr)
+            self.__textctrl.WriteText(text)
+            self.__textctrl.EndStyle()
+
+        else:
+            self.__textctrl.WriteText(text)
 
 # ---------------------------------------------------------------------------
 

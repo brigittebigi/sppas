@@ -60,8 +60,8 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
-        self.AddPage(ann.TestPanel(self), "Annotation edit panel")
         self.AddPage(tiers.TestPanel(self), "Tiers edit window")
+        self.AddPage(ann.TestPanel(self), "Annotation edit panel")
         self.AddPage(option.TestPanel(self), "Configure options panel")
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
