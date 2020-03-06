@@ -116,6 +116,9 @@ class AudioViewProperties(object):
     # Enable/Disable views
     # -----------------------------------------------------------------------
 
+    def get_infos(self):
+        return self.__infos
+
     def EnableInfos(self, value):
         """Enable the view of the infos.
 
@@ -133,6 +136,9 @@ class AudioViewProperties(object):
         return False
 
     # -----------------------------------------------------------------------
+
+    def get_waveform(self):
+        return self.__waveform
 
     def EnableWaveform(self, value):
         """Enable the view of the waveform.
@@ -374,7 +380,7 @@ class sppasMediaCtrl(sppasPanel):
         self._length = 0    # duration of the media in milliseconds
         self._audio = None
 
-        # Create the media, or destroy ourself
+        # Create the media, or destroy ourselves
         self._mc = self._create_media()
 
         # Create the content of the window: only the media.
@@ -1025,8 +1031,6 @@ class sppasMediaCtrl(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _DrawBackground(self, dc, gc):
-        w, h = self.GetClientSize()
-
         brush = self.GetBackgroundBrush(dc)
         if brush is not None:
             dc.SetBackground(brush)
@@ -1034,6 +1038,8 @@ class sppasMediaCtrl(sppasPanel):
 
         dc.SetPen(wx.TRANSPARENT_PEN)
         dc.SetBrush(brush)
+        w, h = self.GetClientSize()
+        dc.DrawRectangle(0, 0, w, h)
 
     # ------------------------------------------------------------------------
 
@@ -1041,44 +1047,84 @@ class sppasMediaCtrl(sppasPanel):
         """Draw a content if media is audio, unsupported or unknown.
 
         """
-        with MediaType() as mt:
-            if self._mt == mt.unknown:
-                if self._ms == MediaState().loading:
-                    self.__draw_label(dc, gc, 10, 10, "Loading media file...")
-                else:
-                    self.__draw_label(dc, gc, 10, 10, "Unknown file format.")
-
-            elif self._mt == mt.unsupported:
-                self.__draw_label(dc, gc, 10, 10, "File format not supported.")
-
-            elif self._mt == mt.audio:
-                if self._audio is not None:
-                    self.__draw_audio_infos(dc, gc)
-                else:
-                    self.__draw_label(dc, gc, 10, 10, "View of the audio file is not currently available.")
+        w, h = self.GetClientSize()
+        x = y = 0
+        if self._audio is None:
+            self.__draw_audio_infos(dc, gc, x, y, w, h)
+        else:
+            if self._audio.get_infos() is True:
+                h = AudioViewProperties.INFOS_HEIGHT
+                self.__draw_audio_infos(dc, gc, x, y, w, h)
+                y += h
+            if self._audio.get_waveform() is True:
+                h = AudioViewProperties.WAVEFORM_HEIGHT
+                self.__draw_audio_waveform(dc, gc, x, y, w, h)
+                y += h
 
     # -----------------------------------------------------------------------
 
-    def __draw_audio_infos(self, dc, gc):
-        """Draw the information of the audio file."""
-        label = str(self._audio.framerate) + " Hz, "
-        label += str(self._audio.sampwidth * 8) + " bits, "
-        c = self._audio.nchannels
-        if c == 1:
-            label += "Mono"
-        elif c == 2:
-            label += "Stereo"
-        elif c > 2:
-            label += "%d channels" % c
+    def __draw_audio_infos(self, dc, gc, x, y, w, h):
+        """Draw the information of the audio file or an error message.
 
-        w, h = self.GetClientSize()
-        h = sppasPanel.fix_size(AudioViewProperties.INFOS_HEIGHT)
-        dc.GradientFillLinear((0, 0, w, h),
+        """
+        # Draw the background of the audio infos area
+        dc.GradientFillLinear((x, y, w, h),
                               self.GetBackgroundColour(),
                               self.GetHighlightedBackgroundColour(),
                               wx.WEST)
-        dc.DrawRectangle(0, 0, w, h)
-        self.__draw_label(dc, gc, 10, h // 4, label)
+
+        # Draw the content (information message)
+        label = ""
+        with MediaType() as mt:
+            if self._mt == mt.unknown:
+                if self._ms == MediaState().loading:
+                    label = "Loading media file"
+                else:
+                    label = "Unknown file format"
+
+            elif self._mt == mt.unsupported:
+                label = "File format not supported"
+
+            elif self._mt == mt.audio:
+                if self._audio is None:
+                    label = "View of the audio file is not currently available"
+                else:
+                    label = str(self._audio.framerate) + " Hz, "
+                    label += str(self._audio.sampwidth * 8) + " bits, "
+                    c = self._audio.nchannels
+                    if c == 1:
+                        label += "Mono"
+                    elif c == 2:
+                        label += "Stereo"
+                    elif c > 2:
+                        label += "%d channels" % c
+
+        lw, lh = self.get_text_extend(dc, gc, label)
+        self.__draw_label(dc, gc, 10, y+(h//2) - (lh//2), label)
+
+    # -----------------------------------------------------------------------
+
+    def __draw_audio_volume(self, dc, gc, x, y, w, h):
+        """Draw the volume level of the audio file.
+
+        """
+        pass
+
+    # -----------------------------------------------------------------------
+
+    def __draw_audio_waveform(self, dc, gc, x, y, w, h):
+        """Draw the waveform of the audio file.
+
+        """
+        # Draw the background of the waveform area
+        dc.GradientFillLinear((x, y, w, h // 2),
+                              self.GetBackgroundColour(),
+                              self.GetHighlightedBackgroundColour(),
+                              wx.NORTH)
+        dc.GradientFillLinear((x, y + (h // 2), w, h // 2),
+                              self.GetBackgroundColour(),
+                              self.GetHighlightedBackgroundColour(),
+                              wx.SOUTH)
 
     # -----------------------------------------------------------------------
 
@@ -1090,6 +1136,14 @@ class sppasMediaCtrl(sppasPanel):
             dc.DrawText(label, x, y)
         else:
             gc.DrawText(label, x, y)
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def get_text_extend(dc, gc, text):
+        if wx.Platform == '__WXGTK__':
+            return dc.GetTextExtent(text)
+        return gc.GetTextExtent(text)
 
     # -----------------------------------------------------------------------
 
