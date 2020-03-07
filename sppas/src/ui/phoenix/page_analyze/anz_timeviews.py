@@ -417,6 +417,11 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
             trs_filename = w.get_filename()
             self.__ann_into_scrolled(trs_filename, event.value, what="select")
 
+        elif action == "ann_deleted":
+            w = event.GetEventObject()
+            trs_filename = w.get_filename()
+            self.__ann_into_scrolled(trs_filename, event.value, what="delete")
+
     # -----------------------------------------------------------------------
 
     def __enable_tier_into_scrolled(self, trs_filename, tier_name):
@@ -450,6 +455,8 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
                         panel.set_selected_ann(idx)
                     elif what == "update":
                         panel.update_ann(idx)
+                    elif what == "delete":
+                        panel.delete_ann(idx)
 
     # -----------------------------------------------------------------------
 

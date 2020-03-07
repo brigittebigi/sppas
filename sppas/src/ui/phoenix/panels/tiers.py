@@ -46,7 +46,7 @@ from sppas.src.anndata import sppasRW
 from ..windows import sppasPanel
 from ..windows import sppasSplitterWindow
 from ..windows import LineListCtrl
-from ..windows.dialogs import Confirm
+from ..windows.dialogs import Confirm, Error
 from ..windows.book import sppasNotebook
 from ..main_events import ViewEvent, EVT_VIEW
 
@@ -172,6 +172,28 @@ class sppasTierListCtrl(LineListCtrl):
         """
         assert 0 <= idx < len(self._tier)
         return self._tier[idx]
+
+    # -----------------------------------------------------------------------
+
+    def delete_annotation(self, idx):
+        """Delete the annotation at given index.
+
+        If idx was selected and no annotation is selected after deletion,
+        next annotation is selected.
+
+        :param idx: (int) Index of the annotation in the list
+
+        """
+        assert 0 <= idx < len(self._tier)
+        self._tier.pop(idx)
+        self.DeleteItem(idx)
+
+        selected = self.GetFirstSelected()
+        if selected == -1 and self.GetItemCount() > 0:
+            if idx == self.GetItemCount():
+                idx = idx - 1
+
+            self.Select(idx, on=1)
 
     # -----------------------------------------------------------------------
 
@@ -584,6 +606,9 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         if btn_name == "way_up_down":
             self.swap_top_down_panels()
 
+        elif btn_name == "delete":
+            self.__delete_annotation()
+
         else:
             event.Skip()
 
@@ -658,6 +683,25 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     # Private
     # -----------------------------------------------------------------------
 
+    def __delete_annotation(self):
+        """Delete the currently selected annotation."""
+        try:
+            self.__listctrl.delete_annotation(self.__cur_index)
+            self._notify(action="ann_deleted", value=self.__cur_index)
+
+            # new selected annotation
+            self.__cur_index = self.__listctrl.GetFirstSelected()
+            if self.__cur_index != -1:
+                self.__annotation_selected(self.__cur_index)
+            else:
+                # clear the annotation editor if no new selected ann
+                self.__annpanel.set_ann(ann=None)
+
+        except Exception as e:
+            Error("Annotation can't be deleted: {:s}".format(str(e)))
+
+    # -----------------------------------------------------------------------
+
     def __annotation_deselected(self, idx):
         """De-select the annotation of given index in our controls.
 
@@ -686,7 +730,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     def __annotation_selected(self, idx):
         """Select the annotation of given index in our controls.
 
-        :return: (int, int) pediod
+        :return: (int, int) period
 
         """
         if self.__listctrl is None:

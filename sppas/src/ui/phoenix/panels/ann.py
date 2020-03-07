@@ -264,6 +264,9 @@ class sppasAnnEditPanel(sppasPanel):
         toolbar.AddSpacer(1)
 
         toolbar.AddButton("restore")
+        toolbar.AddButton("delete")
+        toolbar.AddSpacer(1)
+
         toolbar.AddToggleButton("code_review", value=True, group_name="view_mode")
         toolbar.AddToggleButton("code_xml", group_name="view_mode")
         toolbar.AddToggleButton("code_json", group_name="view_mode")

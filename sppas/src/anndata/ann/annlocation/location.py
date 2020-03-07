@@ -212,6 +212,30 @@ class sppasLocation(object):
 
     # -----------------------------------------------------------------------
 
+    def get_lowest_localization(self):
+        """Return a copy of the sppasPoint with the lowest localization."""
+        if self.is_point():
+            min_localization = min([l[0] for l in self.__localizations])
+        else:
+            min_localization = min([l[0].get_begin() for l in self.__localizations])
+
+        # We return a copy to be sure the original loc won't be modified
+        return min_localization.copy()
+
+    # -----------------------------------------------------------------------
+
+    def get_highest_localization(self):
+        """Return a copy of the sppasPoint with the highest loc."""
+        if self.is_point():
+            max_localization = max([l[0] for l in self.__localizations])
+        else:
+            max_localization = max([l[0].get_end() for l in self.__localizations])
+
+        # We return a copy to ensure the original loc won't be modified
+        return max_localization.copy()
+
+    # -----------------------------------------------------------------------
+
     def match_duration(self, dur_functions, logic_bool="and"):
         """Return True if a duration matches all or any of the functions.
 

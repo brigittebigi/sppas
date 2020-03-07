@@ -355,12 +355,18 @@ class sppasTier(sppasMetaData):
         :param end: (sppasPoint)
         :param overlaps: (bool)
         :returns: the number of removed annotations
+        :raises: HierarchyContainsError
 
         """
         if end < begin:
             raise IntervalBoundsError(begin, end)
 
         annotations = self.find(begin, end, overlaps)
+
+        if self.__parent is not None:
+            for a in annotations:
+                self.__parent.invalidate_annotation_location(a.get_location())
+
         for a in reversed(annotations):
             self.__ann.remove(a)
 
@@ -375,17 +381,25 @@ class sppasTier(sppasMetaData):
         and returns the last annotation in the tier.
 
         :param index: (int) Index of the annotation to remove.
+        :raises: HierarchyContainsError
 
         """
         try:
-            self.__ann.pop(index)
+            ann = self.__ann[index]
         except IndexError:
             raise AnnDataIndexError(index)
+
+        if self.__parent is not None:
+            self.__parent.invalidate_annotation_location(self, ann.get_location())
+
+        self.__ann.pop(index)
 
     # -----------------------------------------------------------------------
 
     def remove_unlabelled(self):
         """Remove annotations without labels.
+
+        Do not remove an annotation if it invalidates the hierarchy.
 
         :returns: the number of removed annotations
 
@@ -393,8 +407,13 @@ class sppasTier(sppasMetaData):
         nb = 0
         for a in reversed(self.__ann):
             if a.is_labelled() is False:
-                self.__ann.remove(a)
-                nb += 1
+                try:
+                    self.__parent.invalidate_annotation_location(self, a.get_location())
+                    self.__ann.remove(a)
+                    nb += 1
+                except:
+                    # we should write a message to logging
+                    pass
         return nb
 
     # -----------------------------------------------------------------------
@@ -436,13 +455,30 @@ class sppasTier(sppasMetaData):
         """Return True if the tier contains a given point.
 
         :param point: (sppasPoint) The point to find in the tier.
-        :returns: Boolean
+        :returns: (bool)
 
         """
         if isinstance(point, sppasPoint) is False:
             raise AnnDataTypeError(point, "sppasPoint")
 
         return point in self.get_all_points()
+
+    # -----------------------------------------------------------------------
+
+    def has_location(self, location):
+        """Return True if the tier has the given location.
+
+        to be tested.
+
+        """
+        # Use 'find' for a faster search
+        begin = location.get_lowest_localization()
+        end = location.get_highest_localization()
+        anns = self.find(begin, end, overlaps=False)
+        for a in anns:
+            if a.get_location() == location:
+                return True
+        return False
 
     # -----------------------------------------------------------------------
 

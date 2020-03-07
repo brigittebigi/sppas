@@ -374,6 +374,13 @@ class TrsTimeViewPanel(sppasBaseViewPanel):
         return self.GetPane().update_ann(idx)
 
     # -----------------------------------------------------------------------
+
+    def delete_ann(self, idx):
+        """"""
+        self._dirty = True
+        return self.GetPane().delete_ann(idx)
+
+    # -----------------------------------------------------------------------
     # Override from the parent
     # -----------------------------------------------------------------------
 
@@ -524,6 +531,13 @@ class TrsTimePanel(sppasPanel):
                 child.update_ann(idx)
 
     # -----------------------------------------------------------------------
+
+    def delete_ann(self, idx):
+        for child in self.GetChildren():
+            if child.get_tiername() == self.__selected:
+                child.delete_ann(idx)
+
+    # -----------------------------------------------------------------------
     # Construct the GUI
     # -----------------------------------------------------------------------
 
@@ -607,6 +621,12 @@ class TierTimeCtrl(wx.Window):
 
     def update_ann(self, idx):
         logging.debug("annotation modified : {}".format(idx))
+        self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def delete_ann(self, idx):
+        logging.debug("annotation deleted : {}".format(idx))
         self.Refresh()
 
     # -----------------------------------------------------------------------
