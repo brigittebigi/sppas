@@ -381,6 +381,20 @@ class TrsTimeViewPanel(sppasBaseViewPanel):
         return self.GetPane().delete_ann(idx)
 
     # -----------------------------------------------------------------------
+
+    def get_selected_period(self):
+        """Return the time period of the currently selected annotation.
+
+        :return: (int, int) Start and end values in milliseconds
+
+        """
+        idx = self.GetPane().get_selected_ann()
+        if idx == -1:
+            return 0, 0
+
+        return self.GetPane().get_selected_period()
+
+    # -----------------------------------------------------------------------
     # Override from the parent
     # -----------------------------------------------------------------------
 
@@ -518,6 +532,21 @@ class TrsTimePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def get_selected_period(self):
+        if self.__selected is None:
+            return 0, 0
+
+        for child in self.GetChildren():
+            if child.get_tiername() == self.__selected:
+                period = child.get_selected_localization()
+                start = int(period[0] * 1000.)
+                end = int(period[1] * 1000.)
+                return start, end
+
+        return 0, 0
+
+    # -----------------------------------------------------------------------
+
     def set_selected_ann(self, idx):
         for child in self.GetChildren():
             if child.get_tiername() == self.__selected:
@@ -609,6 +638,27 @@ class TierTimeCtrl(wx.Window):
 
     def get_selected_ann(self):
         return self.__ann_idx
+
+    # -----------------------------------------------------------------------
+
+    def get_selected_localization(self):
+        """Return begin and end time value (float)."""
+        if self.__ann_idx == -1:
+            return 0, 0
+        ann = self.__tier[self.__ann_idx]
+
+        start_point = ann.get_lowest_localization()
+        start = start_point.get_midpoint()
+        r = start_point.get_radius()
+        if r is not None:
+            start -= r
+        end_point = ann.get_highest_localization()
+        end = end_point.get_midpoint()
+        r = end_point.get_radius()
+        if r is not None:
+            end += r
+
+        return start, end
 
     # -----------------------------------------------------------------------
 

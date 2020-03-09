@@ -182,6 +182,7 @@ class sppasTierListCtrl(LineListCtrl):
         next annotation is selected.
 
         :param idx: (int) Index of the annotation in the list
+        :raise: Exception if annotation can't be deleted of the tier
 
         """
         assert 0 <= idx < len(self._tier)
@@ -197,6 +198,79 @@ class sppasTierListCtrl(LineListCtrl):
 
     # -----------------------------------------------------------------------
 
+    def merge_annotation(self, idx, direction=1):
+        """Merge the annotation at given index with next or previous one.
+
+        if direction > 0:
+            ann_idx:  [begin_idx, end_idx, labels_idx]
+            next_ann: [begin_n, end_n, labels_n]
+            result:   [begin_idx, end_n, labels_idx + labels_n]
+
+        if direction < 0:
+            prev_ann: [begin_p, end_p, labels_p]
+            ann_idx:  [begin_idx, end_idx, labels_idx]
+            result:   [begin_p, end_idx, labels_p + labels_idx]
+
+        :param idx: (int) Index of the annotation in the list
+        :param direction: (int) Positive for next, Negative for previous
+        :return: (bool) False if direction does not match with index
+        :raise: Exception if merged annotation can't be deleted of the tier
+
+        """
+        assert 0 <= idx < len(self._tier)
+
+        if direction == 0:
+            return False
+        if self._tier.is_point() is True:
+            wx.LogMessage("Annotations of a PointTier can't be merged.")
+            return False
+
+        # Get the next or previous annotation
+        if direction > 0:
+            merge_idx = idx + 1
+            if merge_idx == len(self._tier):
+                return False
+        else:
+            if idx == 0:
+                return False
+            merge_idx = idx - 1
+        merge_ann = self._tier[merge_idx]
+
+        merge_labels = [l.copy() for l in merge_ann.get_labels()]
+        merge_loc = merge_ann.get_location().get_best()
+
+        # Create a copy of its labels and its localization
+        copied_ann = self._tier[idx].copy()
+        localization = self._tier[idx].get_location().get_best()
+        labels = self._tier[idx].get_labels()
+        try:
+            # Modify the annotation at idx
+            if direction > 0:
+                localization.set_end(merge_loc.get_end())
+                new_labels = labels + merge_labels
+            else:
+                localization.set_begin(merge_loc.get_begin())
+                new_labels = merge_labels + labels
+            self.__set_item_localization(idx)
+            self.set_annotation_labels(idx, new_labels)
+
+            # Delete the next/previous annotation of the list and of the tier
+            self._tier.pop(merge_idx)
+            self.DeleteItem(merge_idx)
+        except:
+            # Restore modified ann and item
+            self._tier[idx].get_location().set_begin(
+                copied_ann.get_location().get_begin())
+            self._tier[idx].get_location().set_end(
+                copied_ann.get_location().get_end())
+            self.__set_item_localization(idx)
+            self.set_annotation_labels(idx, labels)
+            raise
+
+        return True
+
+    # -----------------------------------------------------------------------
+
     def set_annotation_labels(self, idx, labels):
         """Set the labels of an annotation.
 
@@ -208,12 +282,25 @@ class sppasTierListCtrl(LineListCtrl):
         cur_labels = annotation.get_labels()
         try:
             annotation.set_labels(labels)
-            self.__set_item_label(idx, self._cols.index(MSG_LABELS))
+            self.__set_item_label(idx)
         except:
             # Restore properly the labels and the item before raising
             annotation.set_labels(cur_labels)
-            self.__set_item_label(idx, self._cols.index(MSG_LABELS))
+            self.__set_item_label(idx)
             raise
+
+    # -----------------------------------------------------------------------
+
+    def set_annotation_localization(self, idx, localization):
+        """Set the localization of an annotation.
+
+        :param idx: (int) Index of the annotation in the list
+        :param localization: (sppasLocalization)
+
+        """
+        annotation = self._tier[idx]
+        annotation.set_best_localization(localization)
+        self.__set_item_localization(idx)
 
     # -----------------------------------------------------------------------
     # Construct the window
@@ -250,46 +337,57 @@ class sppasTierListCtrl(LineListCtrl):
 
         """
         assert 0 <= idx <= len(self._tier)
-
         ann = self._tier[idx]
+        self.InsertItem(idx, "")
 
         # fix location
-        if self._tier.is_point() is False:
-            self.InsertItem(idx, str(ann.get_lowest_localization().get_midpoint()))
-            self.SetItem(idx, 1, str(ann.get_highest_localization().get_midpoint()))
-            labeli = 2
-        else:
-            self.InsertItem(idx, str(ann.get_highest_localization().get_midpoint()))
-            labeli = 1
+        self.__set_item_localization(idx)
 
         # fix label
-        self.__set_item_label(idx, labeli)
+        self.__set_item_label(idx)
 
         # properties of the labels
-        self.SetItem(idx, labeli + 1, str(len(ann.get_labels())))
+        self.SetItem(idx, self._cols.index(MSG_NB), str(len(ann.get_labels())))
 
         label_type = ann.get_label_type()
         if label_type not in sppasTierListCtrl.tag_types:
             lt = "Unknown"
         else:
             lt = sppasTierListCtrl.tag_types[ann.get_label_type()]
-        self.SetItem(idx, labeli + 2, lt)
+        self.SetItem(idx, self._cols.index(MSG_TYPE), lt)
 
         # All metadata, but 'id' in a separated column.
-        self.SetItem(idx, labeli + 3, ann.get_meta("id"))
+        self.SetItem(idx, self._cols.index(MSG_ID), ann.get_meta("id"))
         meta_list = list()
         for key in ann.get_meta_keys():
             if key != 'id':
                 value = ann.get_meta(key)
                 meta_list.append(key + "=" + value)
-        self.SetItem(idx, labeli + 4, ", ".join(meta_list))
+        self.SetItem(idx, self._cols.index(MSG_META), ", ".join(meta_list))
 
     # ---------------------------------------------------------------------
 
-    def __set_item_label(self, row, col):
-        """Fill the row-th col-th item with the given annotation labels.
+    def __set_item_localization(self, row):
+        """Fill the row-th col-th item with the annotation localization.
 
         """
+        ann = self._tier[row]
+        if self._tier.is_point() is False:
+            col = self._cols.index(MSG_BEGIN)
+            self.SetItem(row, col, str(ann.get_lowest_localization().get_midpoint()))
+            col = self._cols.index(MSG_END)
+            self.SetItem(row, col, str(ann.get_highest_localization().get_midpoint()))
+        else:
+            col = self._cols.index(MSG_POINT)
+            self.SetItem(row, col, str(ann.get_highest_localization().get_midpoint()))
+
+    # ---------------------------------------------------------------------
+
+    def __set_item_label(self, row):
+        """Fill the row-th item with the annotation labels.
+
+        """
+        col = self._cols.index(MSG_LABELS)
         ann = self._tier[row]
         if ann.is_labelled():
             label_str = ann.serialize_labels(separator=" ")
@@ -385,8 +483,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                     ann = self.__listctrl.get_selected_annotation()
                     self.__annpanel.set_ann(ann)
                     self._notify(action="ann_selected", value=self.__cur_index)
-                    start, end = self.__annotation_selected(self.__cur_index)
-                    self._notify(action="period_selected", value=(start, end))
+                    self.__annotation_selected(self.__cur_index)
                     break
 
         return self.__can_select
@@ -422,8 +519,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             if self.__cur_index == -1:
                 changed = self.set_selected_tiername(filename, sel_tier)
                 if changed is True:
-                    start, end = self.__annotation_selected(self.__cur_index)
-                    self._notify(action="period_selected", value=(start, end))
+                    self.__annotation_selected(self.__cur_index)
 
         self.Layout()
 
@@ -460,36 +556,6 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         if valid is True:
             self.__cur_index = idx
             self.__annotation_selected(idx)
-
-        return self.get_ann_period()
-
-    # -----------------------------------------------------------------------
-
-    def get_ann_period(self):
-        """Return the time period of the currently selected annotation.
-
-        :return: (int, int) Start and end values in milliseconds
-
-        """
-        if self.__listctrl is None:
-            return 0, 0
-
-        ann = self.__listctrl.get_selected_annotation()
-        start = end = 0
-
-        if ann is not None:
-            start_point = ann.get_lowest_localization()
-            start = start_point.get_midpoint()
-            r = start_point.get_radius()
-            if r is not None:
-                start -= r
-            end_point = ann.get_highest_localization()
-            end = end_point.get_midpoint()
-            r = end_point.get_radius()
-            if r is not None:
-                end += r
-
-        return start, end
 
     # -----------------------------------------------------------------------
     # Construct the GUI
@@ -574,7 +640,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self._on_page_changed)
         
         self.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
-        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_toolbar_event)
+        # self.Bind(wx.EVT_TOGGLEBUTTON, self._process_toolbar_event)
 
         # Capture keys
         self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
@@ -609,6 +675,12 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         elif btn_name == "delete":
             self.__delete_annotation()
 
+        elif btn_name == "merge_previous":
+            self.__merge_annotation(-1)
+
+        elif btn_name == "merge_next":
+            self.__merge_annotation(1)
+
         else:
             event.Skip()
 
@@ -635,8 +707,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
         """
         if self.__can_select is True:
-            start, end = self.__annotation_selected(evt.GetIndex())
-            self._notify(action="period_selected", value=(start, end))
+            self.__annotation_selected(evt.GetIndex())
         else:
             # restore the selected
             self.__listctrl.Select(self.__cur_index, on=1)
@@ -671,8 +742,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                               "".format(self.get_selected_tiername()))
                 self.__cur_index = 0
 
-            start, end = self.__annotation_selected(self.__cur_index)
-            self._notify(action="period_selected", value=(start, end))
+            self.__annotation_selected(self.__cur_index)
             self.__cur_page = self.__notebook.GetSelection()
         else:
             # go back to the cur_page
@@ -687,6 +757,10 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         """Delete the currently selected annotation."""
         try:
             self.__listctrl.delete_annotation(self.__cur_index)
+        except Exception as e:
+            Error("Annotation can't be deleted: {:s}".format(str(e)))
+        else:
+            # OK. The annotation was deleted is the listctrl.
             self._notify(action="ann_deleted", value=self.__cur_index)
 
             # new selected annotation
@@ -697,8 +771,28 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                 # clear the annotation editor if no new selected ann
                 self.__annpanel.set_ann(ann=None)
 
+    # -----------------------------------------------------------------------
+
+    def __merge_annotation(self, direction):
+        """Merge the currently selected annotation.
+
+        :param direction: (int) Positive to merge with next, Negative with prev
+
+        """
+        try:
+            merged = self.__listctrl.merge_annotation(self.__cur_index, direction)
         except Exception as e:
-            Error("Annotation can't be deleted: {:s}".format(str(e)))
+            Error("Annotation can't be merged: {:s}".format(str(e)))
+        else:
+            if merged is True:
+                # OK. The annotation was merged is the listctrl.
+                if direction > 0:
+                    self._notify(action="ann_deleted", value=self.__cur_index+1)
+                else:
+                    self._notify(action="ann_deleted", value=self.__cur_index-1)
+                self._notify(action="ann_modified", value=self.__cur_index)
+                ann = self.__listctrl.get_selected_annotation()
+                self.__annpanel.set_ann(ann)
 
     # -----------------------------------------------------------------------
 
@@ -730,8 +824,6 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     def __annotation_selected(self, idx):
         """Select the annotation of given index in our controls.
 
-        :return: (int, int) period
-
         """
         if self.__listctrl is None:
             return 0, 0
@@ -741,8 +833,6 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         self.__annpanel.set_ann(ann)
         self.__cur_index = idx
         self._notify(action="ann_selected", value=self.__cur_index)
-
-        return self.get_ann_period()
 
     # -----------------------------------------------------------------------
 
@@ -812,9 +902,6 @@ class TestPanel(sppasPanel):
         trs2 = parser.read()
         p.add_tiers(f2, trs2.get_tier_list())
         p.add_tiers(f1, trs1.get_tier_list())
-
-        # start, end = p.set_selected_annotation(4)
-        # logging.debug("Selected annotation period: {} {}".format(start, end))
 
     # -----------------------------------------------------------------------
 

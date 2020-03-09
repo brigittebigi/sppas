@@ -386,6 +386,13 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
                 # switch back to the previously selected tier
                 self.__enable_tier_into_scrolled(trs_filename, w.get_selected_tiername())
 
+        # not implemented yet: child panels don't allow to modify ann boundaries
+        elif action == "period_selected":
+            period = event.value
+            start = int(period[0] * 1000.)
+            end = int(period[1] * 1000.)
+            self.set_offset_period(start, end)
+
     # -----------------------------------------------------------------------
 
     def _process_editview_event(self, event):
@@ -400,12 +407,6 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
             trs_filename = w.get_filename()
             tier_name = w.get_selected_tiername()
             self.__enable_tier_into_scrolled(trs_filename, tier_name)
-
-        elif action == "period_selected":
-            period = event.value
-            start = int(period[0] * 1000.)
-            end = int(period[1] * 1000.)
-            self.set_offset_period(start, end)
 
         elif action == "ann_modified":
             w = event.GetEventObject()
@@ -438,15 +439,16 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
                     panel.set_selected_ann(-1)
                 else:
                     panel.set_selected_tiername(tier_name)
+                    start, end = panel.get_selected_period()
+                    self.set_offset_period(start, end)
 
     # -----------------------------------------------------------------------
 
     def __ann_into_scrolled(self, trs_filename, idx, what="select"):
-        """Modify annotation.
-
-        into the scrolled panel only.
+        """Modify annotation into the scrolled panel only.
 
         """
+        panel = None
         for filename in self._files:
             panel = self._files[filename]
             if isinstance(panel, TrsTimeViewPanel):
@@ -457,6 +459,10 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
                         panel.update_ann(idx)
                     elif what == "delete":
                         panel.delete_ann(idx)
+
+                    start, end = panel.get_selected_period()
+                    self.set_offset_period(start, end)
+                    break
 
     # -----------------------------------------------------------------------
 

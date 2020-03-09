@@ -33,7 +33,10 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Editor for a sppasAnnotation().
-    Allows to modify its labels and metadata.
+    The given sppasAnnotation() instance is not modified. When a change is
+    performed on a wx.Window representing the object, an event is sent to
+    the parent.
+    Allows to operate on its labels and metadata but not on its location.
 
 """
 
@@ -76,6 +79,12 @@ class sppasAnnEditPanel(sppasPanel):
         - ctrl+z - undo
 
     Labels of the given annotation are not modified but edited in a TextCtrl.
+
+    wx.EVT_BUTTON is sent to the parent with the following button names:
+        - way_up_down
+        - delete
+        - merge_previous
+        - merge_next
 
     """
 
@@ -126,9 +135,8 @@ class sppasAnnEditPanel(sppasPanel):
     def text_labels(self):
         """Return a list of labels made from the text editor.
 
-        Raise exception if labels can't be created from the raw text.
-
         :return: (list of sppasLabel instances)
+        :raises: Raise exception if labels can't be created from the raw text.
 
         """
         return self.__text_to_labels()
@@ -136,11 +144,13 @@ class sppasAnnEditPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def text_modified(self):
-        """Ask for modif in the text.
+        """Ask for modification in the text.
 
         Return 0 if the text wasn't changed.
         Return 1 if the text has changed and can create valid labels.
         Return -1 if the text has changed but can't create valid labels.
+
+        :return: (int)
 
         """
         if self.__ann is None:
@@ -149,7 +159,7 @@ class sppasAnnEditPanel(sppasPanel):
         try:
             textctrl_text_labels = serialize_labels(self.__text_to_labels())
         except Exception as e:
-            # wx.LogError(str(e))
+            wx.LogError(str(e))
             return -1
 
         if textctrl_text_labels == serialize_labels(self.__ann.get_labels()):
@@ -265,6 +275,8 @@ class sppasAnnEditPanel(sppasPanel):
 
         toolbar.AddButton("restore")
         toolbar.AddButton("delete")
+        toolbar.AddButton("merge_previous")
+        toolbar.AddButton("merge_next")
         toolbar.AddSpacer(1)
 
         toolbar.AddToggleButton("code_review", value=True, group_name="view_mode")
