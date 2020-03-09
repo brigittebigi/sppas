@@ -369,16 +369,23 @@ class TrsTimeViewPanel(sppasBaseViewPanel):
     # -----------------------------------------------------------------------
 
     def update_ann(self, idx):
-        """"""
+        """An annotation was modified."""
         self._dirty = True
         return self.GetPane().update_ann(idx)
 
     # -----------------------------------------------------------------------
 
     def delete_ann(self, idx):
-        """"""
+        """An annotation was deleted."""
         self._dirty = True
         return self.GetPane().delete_ann(idx)
+
+    # -----------------------------------------------------------------------
+
+    def create_ann(self, idx):
+        """An annotation was created."""
+        self._dirty = True
+        return self.GetPane().create_ann(idx)
 
     # -----------------------------------------------------------------------
 
@@ -555,6 +562,7 @@ class TrsTimePanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def update_ann(self, idx):
+        """An annotation was modified."""
         for child in self.GetChildren():
             if child.get_tiername() == self.__selected:
                 child.update_ann(idx)
@@ -562,9 +570,18 @@ class TrsTimePanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def delete_ann(self, idx):
+        """An annotation was deleted."""
         for child in self.GetChildren():
             if child.get_tiername() == self.__selected:
                 child.delete_ann(idx)
+
+    # -----------------------------------------------------------------------
+
+    def create_ann(self, idx):
+        """An annotation was created."""
+        for child in self.GetChildren():
+            if child.get_tiername() == self.__selected:
+                child.create_ann(idx)
 
     # -----------------------------------------------------------------------
     # Construct the GUI
@@ -677,6 +694,12 @@ class TierTimeCtrl(wx.Window):
 
     def delete_ann(self, idx):
         logging.debug("annotation deleted : {}".format(idx))
+        self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def create_ann(self, idx):
+        logging.debug("annotation created : {}".format(idx))
         self.Refresh()
 
     # -----------------------------------------------------------------------

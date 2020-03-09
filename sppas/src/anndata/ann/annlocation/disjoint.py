@@ -194,6 +194,26 @@ class sppasDisjoint(sppasBaseLocalization):
 
     # -----------------------------------------------------------------------
 
+    def middle(self):
+        """Return a sppasPoint() at the middle of the time interval.
+
+        To be tested.
+
+        :returns: (sppasPoint)
+
+        """
+        if len(self.__intervals) == 0:
+            return None
+        m = float((self.get_begin().get_midpoint() + self.get_end().get_midpoint())) / 2.
+        r = float((self.get_begin().get_radius() + self.get_end().get_radius())) / 2.
+
+        if self.__intervals[0].is_float():
+            return sppasPoint(m, r)
+
+        return sppasPoint(int(m), int(r))
+
+    # -----------------------------------------------------------------------
+
     def is_bound(self, point):
         """Return True if point is a bound of an interval."""
         return any([i.is_bound(point) for i in self.__intervals])

@@ -34,6 +34,7 @@
 
 """
 
+import logging
 import warnings
 
 from sppas.src.anndata.anndataexc import AnnDataTypeError

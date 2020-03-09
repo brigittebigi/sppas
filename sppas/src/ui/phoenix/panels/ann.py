@@ -274,9 +274,11 @@ class sppasAnnEditPanel(sppasPanel):
         toolbar.AddSpacer(1)
 
         toolbar.AddButton("restore")
-        toolbar.AddButton("delete")
-        toolbar.AddButton("merge_previous")
-        toolbar.AddButton("merge_next")
+        toolbar.AddButton("cell_delete")
+        toolbar.AddButton("cell_merge_previous")
+        toolbar.AddButton("cell_merge_next")
+        toolbar.AddButton("cell_split")
+        toolbar.AddButton("cell_split_next")
         toolbar.AddSpacer(1)
 
         toolbar.AddToggleButton("code_review", value=True, group_name="view_mode")

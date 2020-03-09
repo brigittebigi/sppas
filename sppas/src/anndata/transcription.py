@@ -34,6 +34,8 @@
 
 """
 
+import logging
+
 from sppas.src.files import sppasGUID
 from sppas.src.utils import sppasUnicode
 
@@ -398,6 +400,7 @@ class sppasTranscription(sppasMetaData):
                     # check if child has an annotation with the same location
                     if child_tier.has_location(location):
                         raise TierHierarchyError(tier.get_name())
+                    # check if child has the same localizations and self has no other ones
 
     # -----------------------------------------------------------------------
 
@@ -415,7 +418,8 @@ class sppasTranscription(sppasMetaData):
             link_type = self._hierarchy.get_hierarchy_type(tier)
 
             if link_type == "TimeAssociation":
-                raise TierHierarchyError(tier.get_name())
+                sppasHierarchy.validate_time_association(parent_tier, tier)
+                # raise TierHierarchyError(tier.get_name())
 
             # The parent must have such location...
             if link_type == "TimeAlignment":
@@ -458,6 +462,24 @@ class sppasTranscription(sppasMetaData):
     def get_hierarchy(self):
         """Return the hierarchy."""
         return self._hierarchy
+
+    # -----------------------------------------------------------------------
+
+    def validate_hierarchy(self, tier):
+        parent_tier = self._hierarchy.get_parent(tier)
+        if parent_tier is not None:
+            link_type = self._hierarchy.get_hierarchy_type(tier)
+            if link_type == "TimeAssociation":
+                sppasHierarchy.validate_time_association(parent_tier, tier)
+            if link_type == "TimeAlignment":
+                sppasHierarchy.validate_time_alignment(parent_tier, tier)
+        else:
+            for child_tier in self._hierarchy.get_children(tier):
+                link_type = self._hierarchy.get_hierarchy_type(child_tier)
+                if link_type == "TimeAssociation":
+                    sppasHierarchy.validate_time_association(tier, child_tier)
+                elif link_type == "TimeAlignment":
+                    sppasHierarchy.validate_time_alignment(tier, child_tier)
 
     # -----------------------------------------------------------------------
     # Tiers

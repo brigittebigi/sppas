@@ -33,7 +33,7 @@ item []:
 			xmax = 7.86483108852
 			text = "#"
 		intervals [6]:
-			xmin = 7.86483108852
+			xmin = 7.8648
 			xmax = 9.308
 			text = "ensuite il y a les autres voyageurs"
 		intervals [7]:

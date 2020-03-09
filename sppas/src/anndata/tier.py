@@ -34,7 +34,8 @@
 
 """
 
-from sppas.src.files import sppasGUID
+import logging
+
 from sppas.src.utils import sppasUnicode
 
 from .anndataexc import AnnDataTypeError
@@ -929,6 +930,12 @@ class sppasTier(sppasMetaData):
     # Annotation validation
     # -----------------------------------------------------------------------
 
+    def validate(self):
+        if self.__parent is not None:
+            self.__parent.validate_hierarchy(self)
+
+    # -----------------------------------------------------------------------
+
     def validate_annotation(self, annotation):
         """Validate the annotation and set its parent to this tier.
 
@@ -981,6 +988,18 @@ class sppasTier(sppasMetaData):
         if label.is_tagged():
             if label.get_type() != self.get_labels_type():
                 raise AnnDataTypeError(label, self.get_labels_type())
+
+    # -----------------------------------------------------------------------
+
+    def invalidate_annotation_location(self, location):
+        """Ask the parent to invalidate a location.
+
+        :param location: (sppasLocation)
+        :raises: AnnDataTypeError, HierarchyContainsError, HierarchyTypeError
+
+        """
+        if self.__parent is not None:
+            self.__parent.invalidate_annotation_location(self, location)
 
     # -----------------------------------------------------------------------
 

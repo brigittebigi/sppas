@@ -42,6 +42,7 @@ from sppas.src.config import msg
 from sppas.src.config import paths
 from sppas.src.utils import u
 from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasLocation, sppasInterval
 
 from ..windows import sppasPanel
 from ..windows import sppasSplitterWindow
@@ -240,9 +241,11 @@ class sppasTierListCtrl(LineListCtrl):
         merge_loc = merge_ann.get_location().get_best()
 
         # Create a copy of its labels and its localization
-        copied_ann = self._tier[idx].copy()
-        localization = self._tier[idx].get_location().get_best()
+        ann = self._tier[idx]
+        localization = ann.get_location().get_best()
+        copied_loc = localization.copy()
         labels = self._tier[idx].get_labels()
+
         try:
             # Modify the annotation at idx
             if direction > 0:
@@ -251,6 +254,10 @@ class sppasTierListCtrl(LineListCtrl):
             else:
                 localization.set_begin(merge_loc.get_begin())
                 new_labels = merge_labels + labels
+
+            # will raise an exception is modifs imply to brake hierarchy
+            self._tier.validate()
+
             self.__set_item_localization(idx)
             self.set_annotation_labels(idx, new_labels)
 
@@ -259,15 +266,67 @@ class sppasTierListCtrl(LineListCtrl):
             self.DeleteItem(merge_idx)
         except:
             # Restore modified ann and item
-            self._tier[idx].get_location().set_begin(
-                copied_ann.get_location().get_begin())
-            self._tier[idx].get_location().set_end(
-                copied_ann.get_location().get_end())
+            self._tier[idx].get_location().set_begin(copied_loc.get_begin())
+            self._tier[idx].get_location().set_end(copied_loc.get_end())
             self.__set_item_localization(idx)
             self.set_annotation_labels(idx, labels)
             raise
 
         return True
+
+    # -----------------------------------------------------------------------
+
+    def split_annotation(self, idx, direction=1):
+        """Split the annotation at given index.
+
+        Transport the label to the next if direction > 0.
+
+        if direction <= 0:
+            ann_idx:  [begin_idx, end_idx, labels_idx]
+            result:   [begin_idx, middle, labels_idx]
+                      [middle, end_idx, ]
+
+        if direction > 0:
+            ann_idx:  [begin_idx, end_idx, labels_idx]
+            result:   [begin_idx, middle, ]
+                      [middle, end_idx, labels_idx]
+
+        :param idx: (int) Index of the annotation in the list
+        :param direction: (int) Positive for label in next
+        :return: (bool) False if direction does not match with index
+        :raise: Exception if annotation can't be splitted
+
+        """
+        assert 0 <= idx < len(self._tier)
+
+        if self._tier.is_point() is True:
+            wx.LogMessage("Annotations of a PointTier can't be splitted.")
+            return False
+
+        # Set the end localization to the middle of the ann at idx
+        ann = self._tier[idx]
+        localization = ann.get_location().get_best()
+        end = localization.get_end().copy()
+        middle = localization.middle()
+
+        try:
+            localization.set_end(middle)
+            ann.validate_location()
+            self.__set_item_localization(idx)
+        except:
+            localization.set_end(end)
+            raise
+
+        # Create the new annotation
+        self._tier.create_annotation(
+                sppasLocation(sppasInterval(middle.copy(), end)))
+        self.SetItemAnnotation(idx+1)
+
+        # Move (or not) labels
+        if direction > 0:
+            labels = [l.copy() for l in self._tier[idx].get_labels()]
+            self.set_annotation_labels(idx, list())
+            self.set_annotation_labels(idx+1, labels)
 
     # -----------------------------------------------------------------------
 
@@ -672,14 +731,20 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         if btn_name == "way_up_down":
             self.swap_top_down_panels()
 
-        elif btn_name == "delete":
+        elif btn_name == "cell_delete":
             self.__delete_annotation()
 
-        elif btn_name == "merge_previous":
+        elif btn_name == "cell_merge_previous":
             self.__merge_annotation(-1)
 
-        elif btn_name == "merge_next":
+        elif btn_name == "cell_merge_next":
             self.__merge_annotation(1)
+
+        elif btn_name == "cell_split":
+            self.__split_annotation(0)
+
+        elif btn_name == "cell_split_next":
+            self.__split_annotation(1)
 
         else:
             event.Skip()
@@ -785,11 +850,31 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             Error("Annotation can't be merged: {:s}".format(str(e)))
         else:
             if merged is True:
-                # OK. The annotation was merged is the listctrl.
+                # OK. The annotation was merged in the listctrl.
                 if direction > 0:
                     self._notify(action="ann_deleted", value=self.__cur_index+1)
                 else:
                     self._notify(action="ann_deleted", value=self.__cur_index-1)
+                self._notify(action="ann_modified", value=self.__cur_index)
+                ann = self.__listctrl.get_selected_annotation()
+                self.__annpanel.set_ann(ann)
+
+    # -----------------------------------------------------------------------
+
+    def __split_annotation(self, direction):
+        """Split the currently selected annotation.
+
+        :param direction: (int) Positive to transport labels to next
+
+        """
+        try:
+            splitted = self.__listctrl.split_annotation(self.__cur_index, direction)
+        except Exception as e:
+            Error("Annotation can't be splitted: {:s}".format(str(e)))
+        else:
+            if splitted is True:
+                # OK. The annotation was splitted in the listctrl.
+                self._notify(action="ann_created", value=self.__cur_index+1)
                 self._notify(action="ann_modified", value=self.__cur_index)
                 ann = self.__listctrl.get_selected_annotation()
                 self.__annpanel.set_ann(ann)

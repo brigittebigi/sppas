@@ -448,7 +448,6 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         """Modify annotation into the scrolled panel only.
 
         """
-        panel = None
         for filename in self._files:
             panel = self._files[filename]
             if isinstance(panel, TrsTimeViewPanel):
@@ -459,6 +458,8 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
                         panel.update_ann(idx)
                     elif what == "delete":
                         panel.delete_ann(idx)
+                    elif what == "create":
+                        panel.create_ann(idx)
 
                     start, end = panel.get_selected_period()
                     self.set_offset_period(start, end)
@@ -598,7 +599,8 @@ class TestPanel(TimeViewFilesPanel):
         # os.path.join("/Users/bigi/Movies/Monsters_Inc.For_the_Birds.mpg"),
         # os.path.join("/E/Videos/Monsters_Inc.For_the_Birds.mpg"),
         os.path.join(paths.samples, "COPYRIGHT.txt"),
-        os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"),
+        #os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"),
+        os.path.join(paths.samples, "samples-fra", "F_F_B003-P8-merge.TextGrid"),
         # os.path.join(paths.samples, "toto.xxx"),
         # os.path.join(paths.samples, "toto.ogg")
     )
