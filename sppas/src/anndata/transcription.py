@@ -367,43 +367,6 @@ class sppasTranscription(sppasMetaData):
 
     # -----------------------------------------------------------------------
 
-    def invalidate_annotation_location(self, tier, location):
-        """Validate a location in case it is removed.
-
-        The location can't be removed:
-            - If tier is a child/parent of a TimeAssociation,
-            - If tier is a parent of a TimeAlignment and child has the location
-
-        :param tier: (Tier) The reference tier
-        :param location: (sppasLocation)
-        :raises: AnnDataTypeError, HierarchyContainsError, HierarchyTypeError
-
-        to be tested.
-
-        """
-        # if tier is a child
-        parent_tier = self._hierarchy.get_parent(tier)
-        if parent_tier is not None:
-            link_type = self._hierarchy.get_hierarchy_type(tier)
-            if link_type == "TimeAssociation":
-                raise TierHierarchyError(tier.get_name())
-
-        else:
-            # if current tier is a parent
-            for child_tier in self._hierarchy.get_children(tier):
-                link_type = self._hierarchy.get_hierarchy_type(child_tier)
-
-                # Ensure the hierarchy will still be valid with children
-                if link_type == "TimeAssociation":
-                    raise TierHierarchyError(tier.get_name())
-                elif link_type == "TimeAlignment":
-                    # check if child has an annotation with the same location
-                    if child_tier.has_location(location):
-                        raise TierHierarchyError(tier.get_name())
-                    # check if child has the same localizations and self has no other ones
-
-    # -----------------------------------------------------------------------
-
     def validate_annotation_location(self, tier, location):
         """Validate a location.
 

@@ -42,8 +42,14 @@
 """
 import unittest
 from ..anndataexc import TrsAddError
+from ..anndataexc import HierarchyAssociationError
 
+from ..ann.annlocation import sppasLocation
+from ..ann.annlocation import sppasInterval
+from ..ann.annlocation import sppasPoint
 from ..ann.annlabel import sppasTag
+from ..ann.annlabel import sppasLabel
+from ..ann.annotation import sppasAnnotation
 from ..tier import sppasTier
 from ..transcription import sppasTranscription
 
@@ -159,3 +165,97 @@ class TestTranscription(unittest.TestCase):
         self.assertEqual(self.tier1.get_media(), m1)
         self.trs.remove_media(m1)
         self.assertEqual(self.tier1.get_media(), None)
+
+    def test_tier_split_annotation(self):
+        """Test split of an annotation in a tier."""
+        a = sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(1), sppasPoint(3))))
+        parent = sppasTier("test")
+        parent.append(a)
+        child = sppasTier("child")
+        child.append(a.copy())
+
+        trs = sppasTranscription()
+        trs.append(parent)
+        trs.append(child)
+
+        # Hierarchy
+        trs.add_hierarchy_link("TimeAssociation", parent, child)
+        parent.validate()
+        child.validate()
+
+        with self.assertRaises(HierarchyAssociationError):
+            parent.split(0)
+        with self.assertRaises(HierarchyAssociationError):
+            child.split(0)
+
+    def test_tier_merge_annotation(self):
+        """Test merge of an annotation in a tier."""
+        a1 = sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(1), sppasPoint(3))))
+        a2 = sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(4), sppasPoint(5))))
+        parent = sppasTier("test")
+        parent.append(a1)
+        parent.append(a2)
+        child = sppasTier("child")
+        child.append(a1.copy())
+        child.append(a2.copy())
+
+        trs = sppasTranscription()
+        trs.append(parent)
+        trs.append(child)
+
+        # Hierarchy
+        trs.add_hierarchy_link("TimeAssociation", parent, child)
+        parent.validate()
+        child.validate()
+
+        with self.assertRaises(HierarchyAssociationError):
+            parent.merge(0, direction=1)
+        with self.assertRaises(HierarchyAssociationError):
+            child.merge(0, direction=1)
+
+    def test_tier_pop(self):
+        """Test pop of an annotation in a tier."""
+        a = sppasAnnotation(
+            sppasLocation(sppasInterval(sppasPoint(1), sppasPoint(3))))
+        parent = sppasTier("parent")
+        parent.append(a)
+        child = sppasTier("child")
+        child.append(a.copy())
+
+        trs = sppasTranscription()
+        trs.append(parent)
+        trs.append(child)
+
+        # Hierarchy
+        trs.add_hierarchy_link("TimeAssociation", parent, child)
+        parent.validate()
+        child.validate()
+
+        with self.assertRaises(HierarchyAssociationError):
+            parent.pop(0)
+        with self.assertRaises(HierarchyAssociationError):
+            child.pop(0)
+
+    def test_tier_remove(self):
+        """Test pop of an annotation in a tier."""
+        a = sppasAnnotation(
+            sppasLocation(sppasInterval(sppasPoint(1), sppasPoint(3))))
+        parent = sppasTier("parent")
+        parent.append(a)
+        child = sppasTier("child")
+        ac = a.copy()
+        child.append(ac)
+
+        trs = sppasTranscription()
+        trs.append(parent)
+        trs.append(child)
+
+        # Hierarchy
+        trs.add_hierarchy_link("TimeAssociation", parent, child)
+        parent.validate()
+        child.validate()
+
+        with self.assertRaises(HierarchyAssociationError):
+            parent.remove(a.get_lowest_localization(), a.get_highest_localization())
+        with self.assertRaises(HierarchyAssociationError):
+            child.remove(1, 3)

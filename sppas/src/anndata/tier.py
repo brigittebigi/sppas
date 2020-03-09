@@ -364,14 +364,19 @@ class sppasTier(sppasMetaData):
 
         annotations = self.find(begin, end, overlaps)
 
-        if self.__parent is not None:
-            for a in annotations:
-                self.__parent.invalidate_annotation_location(a.get_location())
-
+        copied_anns = list()
         for a in reversed(annotations):
+            copied_anns.append(a.copy())
             self.__ann.remove(a)
 
-        return len(annotations)
+        if self.__parent is not None:
+            try:
+                self.validate()
+            except:
+                for a in copied_anns:
+                    self.add(a)
+
+        return len(copied_anns)
 
     # -----------------------------------------------------------------------
 
@@ -387,13 +392,17 @@ class sppasTier(sppasMetaData):
         """
         try:
             ann = self.__ann[index]
+            copied_ann = ann.copy()
         except IndexError:
             raise AnnDataIndexError(index)
 
-        if self.__parent is not None:
-            self.__parent.invalidate_annotation_location(self, ann.get_location())
-
         self.__ann.pop(index)
+        if self.__parent is not None:
+            try:
+                self.validate()
+            except:
+                self.add(copied_ann)
+                raise
 
     # -----------------------------------------------------------------------
 
@@ -409,13 +418,114 @@ class sppasTier(sppasMetaData):
         for a in reversed(self.__ann):
             if a.is_labelled() is False:
                 try:
-                    self.__parent.invalidate_annotation_location(self, a.get_location())
                     self.__ann.remove(a)
                     nb += 1
                 except:
                     # we should write a message to logging
                     pass
         return nb
+
+    # -----------------------------------------------------------------------
+
+    def split(self, idx):
+        """Split annotation at the given index into 2 annotations.
+
+        :param idx: (int) Index of the annotation to split.
+        :return: newly created annotation (at index idx+1)
+
+        """
+        if self.is_point() is True:
+            raise AnnDataTypeError(self.get_name(), "Interval, Disjoint")
+
+        try:
+            ann = self.__ann[idx]
+        except IndexError:
+            raise AnnDataIndexError(idx)
+
+        localization = ann.get_location().get_best()
+        end = localization.get_end().copy()
+        middle = localization.middle()
+
+        try:
+            localization.set_end(middle)
+            self.validate()
+            new_ann = self.create_annotation(
+                sppasLocation(sppasInterval(middle.copy(), end)))
+        except:
+            localization.set_end(end)
+            raise
+
+        return new_ann
+
+    # -----------------------------------------------------------------------
+
+    def merge(self, idx, direction):
+        """Merge the annotation at given index with next or previous one.
+
+        if direction > 0:
+            ann_idx:  [begin_idx, end_idx, labels_idx]
+            next_ann: [begin_n, end_n, labels_n]
+            result:   [begin_idx, end_n, labels_idx + labels_n]
+
+        if direction < 0:
+            prev_ann: [begin_p, end_p, labels_p]
+            ann_idx:  [begin_idx, end_idx, labels_idx]
+            result:   [begin_p, end_idx, labels_p + labels_idx]
+
+        :param idx: (int) Index of the annotation in the list
+        :param direction: (int) Positive for next, Negative for previous
+        :return: (bool) False if direction does not match with index
+        :raise: Exception if merged annotation can't be deleted of the tier
+
+        """
+        if self.is_point() is True:
+            raise AnnDataTypeError(self.get_name(), "Interval, Disjoint")
+
+        try:
+            ann = self.__ann[idx]
+        except IndexError:
+            raise AnnDataIndexError(idx)
+
+        # Get the next or previous annotation
+        if direction > 0:
+            merge_idx = idx + 1
+            if merge_idx == len(self.__ann):
+                return False
+        else:
+            if idx == 0:
+                return False
+            merge_idx = idx - 1
+        merge_ann = self.__ann[merge_idx]
+
+        merge_labels = [l.copy() for l in merge_ann.get_labels()]
+        merge_loc = merge_ann.get_location().get_best()
+
+        # Create a copy of its labels and its localization
+        localization = ann.get_location().get_best()
+        copied_loc = localization.copy()
+        labels = self.__ann[idx].get_labels()
+
+        try:
+            # Modify the localization at idx
+            if direction > 0:
+                localization.set_end(merge_loc.get_end())
+                new_labels = labels + merge_labels
+            else:
+                localization.set_begin(merge_loc.get_begin())
+                new_labels = merge_labels + labels
+            # will raise an exception is modifs imply to brake hierarchy
+            self.validate()
+
+            # Update labels and delete next/previous ann
+            ann.set_labels(new_labels)
+            self.pop(merge_idx)
+        except:
+            # Restore modified ann
+            ann.set_best_localization(copied_loc)
+            ann.set_labels(labels)
+            raise
+
+        return True
 
     # -----------------------------------------------------------------------
     # Localizations
@@ -988,18 +1098,6 @@ class sppasTier(sppasMetaData):
         if label.is_tagged():
             if label.get_type() != self.get_labels_type():
                 raise AnnDataTypeError(label, self.get_labels_type())
-
-    # -----------------------------------------------------------------------
-
-    def invalidate_annotation_location(self, location):
-        """Ask the parent to invalidate a location.
-
-        :param location: (sppasLocation)
-        :raises: AnnDataTypeError, HierarchyContainsError, HierarchyTypeError
-
-        """
-        if self.__parent is not None:
-            self.__parent.invalidate_annotation_location(self, location)
 
     # -----------------------------------------------------------------------
 

@@ -202,8 +202,13 @@ class sppasHierarchy(sppasMetaData):
         :raises: HierarchyAssociationError
 
         """
-        if parent_tier.is_superset(child_tier) is False and \
-           child_tier.is_superset(parent_tier) is False:
+        way_down = parent_tier.is_superset(child_tier)
+        if way_down is False:
+            raise HierarchyAssociationError(parent_tier.get_name(),
+                                            child_tier.get_name())
+
+        way_up = child_tier.is_superset(parent_tier)
+        if way_up is False:
             raise HierarchyAssociationError(parent_tier.get_name(),
                                             child_tier.get_name())
 

@@ -220,59 +220,21 @@ class sppasTierListCtrl(LineListCtrl):
         """
         assert 0 <= idx < len(self._tier)
 
-        if direction == 0:
-            return False
-        if self._tier.is_point() is True:
-            wx.LogMessage("Annotations of a PointTier can't be merged.")
-            return False
+        # Merge annotation into the tier
+        merged = self._tier.merge(idx, direction)
+        if merged is True:
 
-        # Get the next or previous annotation
-        if direction > 0:
-            merge_idx = idx + 1
-            if merge_idx == len(self._tier):
-                return False
-        else:
-            if idx == 0:
-                return False
-            merge_idx = idx - 1
-        merge_ann = self._tier[merge_idx]
-
-        merge_labels = [l.copy() for l in merge_ann.get_labels()]
-        merge_loc = merge_ann.get_location().get_best()
-
-        # Create a copy of its labels and its localization
-        ann = self._tier[idx]
-        localization = ann.get_location().get_best()
-        copied_loc = localization.copy()
-        labels = self._tier[idx].get_labels()
-
-        try:
-            # Modify the annotation at idx
+            # Update the list
             if direction > 0:
-                localization.set_end(merge_loc.get_end())
-                new_labels = labels + merge_labels
+                self.__set_item_localization(idx)
+                self.__set_item_label(idx)
+                self.DeleteItem(idx + 1)
             else:
-                localization.set_begin(merge_loc.get_begin())
-                new_labels = merge_labels + labels
+                self.__set_item_localization(idx-1)
+                self.__set_item_label(idx-1)
+                self.DeleteItem(idx)
 
-            # will raise an exception is modifs imply to brake hierarchy
-            self._tier.validate()
-
-            self.__set_item_localization(idx)
-            self.set_annotation_labels(idx, new_labels)
-
-            # Delete the next/previous annotation of the list and of the tier
-            self._tier.pop(merge_idx)
-            self.DeleteItem(merge_idx)
-        except:
-            # Restore modified ann and item
-            self._tier[idx].get_location().set_begin(copied_loc.get_begin())
-            self._tier[idx].get_location().set_end(copied_loc.get_end())
-            self.__set_item_localization(idx)
-            self.set_annotation_labels(idx, labels)
-            raise
-
-        return True
+        return merged
 
     # -----------------------------------------------------------------------
 
@@ -299,33 +261,18 @@ class sppasTierListCtrl(LineListCtrl):
         """
         assert 0 <= idx < len(self._tier)
 
-        if self._tier.is_point() is True:
-            wx.LogMessage("Annotations of a PointTier can't be splitted.")
-            return False
+        # Split annotation into the tier
+        self._tier.split(idx)
 
-        # Set the end localization to the middle of the ann at idx
-        ann = self._tier[idx]
-        localization = ann.get_location().get_best()
-        end = localization.get_end().copy()
-        middle = localization.middle()
-
-        try:
-            localization.set_end(middle)
-            ann.validate_location()
-            self.__set_item_localization(idx)
-        except:
-            localization.set_end(end)
-            raise
-
-        # Create the new annotation
-        self._tier.create_annotation(
-                sppasLocation(sppasInterval(middle.copy(), end)))
+        # Update the list
+        self.__set_item_localization(idx)
         self.SetItemAnnotation(idx+1)
 
         # Move (or not) labels
         if direction > 0:
             labels = [l.copy() for l in self._tier[idx].get_labels()]
             self.set_annotation_labels(idx, list())
+            logging.debug("Ann at index {}: {}".format(idx, self._tier[idx]))
             self.set_annotation_labels(idx+1, labels)
 
     # -----------------------------------------------------------------------
@@ -342,7 +289,9 @@ class sppasTierListCtrl(LineListCtrl):
         try:
             annotation.set_labels(labels)
             self.__set_item_label(idx)
-        except:
+        except Exception as e:
+            wx.LogError("Labels {} can't be set to annotation {}. {}"
+                        "".format(str(labels), annotation, str(e)))
             # Restore properly the labels and the item before raising
             annotation.set_labels(cur_labels)
             self.__set_item_label(idx)
@@ -405,16 +354,6 @@ class sppasTierListCtrl(LineListCtrl):
         # fix label
         self.__set_item_label(idx)
 
-        # properties of the labels
-        self.SetItem(idx, self._cols.index(MSG_NB), str(len(ann.get_labels())))
-
-        label_type = ann.get_label_type()
-        if label_type not in sppasTierListCtrl.tag_types:
-            lt = "Unknown"
-        else:
-            lt = sppasTierListCtrl.tag_types[ann.get_label_type()]
-        self.SetItem(idx, self._cols.index(MSG_TYPE), lt)
-
         # All metadata, but 'id' in a separated column.
         self.SetItem(idx, self._cols.index(MSG_ID), ann.get_meta("id"))
         meta_list = list()
@@ -469,6 +408,16 @@ class sppasTierListCtrl(LineListCtrl):
 
         else:
             self.SetItem(row, col, "")
+
+        # properties of the labels (nb/type)
+        self.SetItem(row, self._cols.index(MSG_NB), str(len(ann.get_labels())))
+
+        label_type = ann.get_label_type()
+        if label_type not in sppasTierListCtrl.tag_types:
+            lt = "Unknown"
+        else:
+            lt = sppasTierListCtrl.tag_types[ann.get_label_type()]
+        self.SetItem(row, self._cols.index(MSG_TYPE), lt)
 
 # ----------------------------------------------------------------------------
 
@@ -868,16 +817,15 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
         """
         try:
-            splitted = self.__listctrl.split_annotation(self.__cur_index, direction)
+            self.__listctrl.split_annotation(self.__cur_index, direction)
         except Exception as e:
             Error("Annotation can't be splitted: {:s}".format(str(e)))
         else:
-            if splitted is True:
-                # OK. The annotation was splitted in the listctrl.
-                self._notify(action="ann_created", value=self.__cur_index+1)
-                self._notify(action="ann_modified", value=self.__cur_index)
-                ann = self.__listctrl.get_selected_annotation()
-                self.__annpanel.set_ann(ann)
+            # OK. The annotation was splitted in the listctrl.
+            self._notify(action="ann_created", value=self.__cur_index+1)
+            self._notify(action="ann_modified", value=self.__cur_index)
+            ann = self.__listctrl.get_selected_annotation()
+            self.__annpanel.set_ann(ann)
 
     # -----------------------------------------------------------------------
 
