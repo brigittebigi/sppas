@@ -228,7 +228,7 @@ class sppasTierListCtrl(LineListCtrl):
             if direction > 0:
                 self.__set_item_localization(idx)
                 self.__set_item_label(idx)
-                self.DeleteItem(idx + 1)
+                self.DeleteItem(idx+1)
             else:
                 self.__set_item_localization(idx-1)
                 self.__set_item_label(idx-1)

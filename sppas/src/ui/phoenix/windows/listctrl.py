@@ -422,9 +422,10 @@ class LineListCtrl(sppasListCtrl):
         It must be overridden to update line numbers.
 
         """
-        sppasListCtrl.DeleteItem(self,index)
+        # sppasListCtrl.DeleteItem(self, index)
+        sppasListCtrl.DeleteItem(self, index)
         for i in range(index, self.GetItemCount()):
-            sppasListCtrl.SetItem(self, i, 0, self._num_to_str(i+1))
+            self.SetItem(i, 0, self._num_to_str(i+1))
 
     # -----------------------------------------------------------------------
 
@@ -503,7 +504,7 @@ class TestPanel(wx.Panel):
         super(TestPanel, self).__init__(parent, name="test_panel")
         listctrl = LineListCtrl(self,
             style=wx.LC_REPORT | wx.LC_SINGLE_SEL,
-            name="Test Panels")
+            name="listctrl")
 
         # The simplest way to create columns
         listctrl.InsertColumn(0, "Artist")
@@ -531,7 +532,7 @@ class TestPanel(wx.Panel):
         self.SetSizer(s)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_selected_item)
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_deselected_item)
-
+        listctrl.Bind(wx.EVT_KEY_UP, self._on_char)
         listctrl.SetForegroundColour(wx.Colour(25, 35, 45))
         listctrl.SetBackgroundColour(wx.Colour(225, 235, 245))
 
@@ -542,3 +543,13 @@ class TestPanel(wx.Panel):
     def _on_deselected_item(self, evt):
         logging.debug("Parent received de-selected item event. Index {}"
                       "".format(evt.GetIndex()))
+
+    def _on_char(self, evt):
+        kc = evt.GetKeyCode()
+        wx.LogMessage(str(kc))
+        char = chr(kc)
+        if kc == 127:
+            lst = self.FindWindow("listctrl")
+            selected = lst.GetFirstSelected()
+            if selected != -1:
+                lst.DeleteItem(selected)
