@@ -52,6 +52,13 @@ class sppasListCtrl(wx.ListCtrl):
     The default is a multiple selection of items. Use wx.LC_SINGLE_SEL style
     for single selection with wx.LC_REPORT style.
 
+    Known bug of wx.ListCtrl:
+    If the it is defined as a page of a wx.Notebook, under Windows only,
+    DeleteItem() returns the following error message:
+    listctrl.cpp(2614) in wxListCtrl::MSWOnNotify(): invalid internal data pointer?
+    A solution is to use a simplebook, a choicebook, a listbook or a
+    toolbook instead!
+
     """
 
     def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
@@ -187,7 +194,7 @@ class sppasListCtrl(wx.ListCtrl):
 
         if not self.GetWindowStyleFlag() & wx.LC_HRULES:
             for i in range(index, self.GetItemCount()):
-                self.RecolorizeBackground(index)
+                self.RecolorizeBackground(i)
 
     # ---------------------------------------------------------------------
 
@@ -408,9 +415,6 @@ class LineListCtrl(sppasListCtrl):
     def SetItem(self, index, col, label, imageId=-1):
         """Override. Set the string of an item.
 
-        The column number must be changed to be efficient; and alternate
-        background colors (just for the list to be easier to read).
-
         """
         sppasListCtrl.SetItem(self, index, col+1, label, imageId)
 
@@ -422,10 +426,9 @@ class LineListCtrl(sppasListCtrl):
         It must be overridden to update line numbers.
 
         """
-        # sppasListCtrl.DeleteItem(self, index)
         sppasListCtrl.DeleteItem(self, index)
-        for i in range(index, self.GetItemCount()):
-            self.SetItem(i, 0, self._num_to_str(i+1))
+        for idx in range(index, self.GetItemCount()):
+            wx.ListCtrl.SetItem(self, idx, 0, self._num_to_str(idx + 1))
 
     # -----------------------------------------------------------------------
 
@@ -502,6 +505,7 @@ class TestPanel(wx.Panel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="test_panel")
+
         listctrl = LineListCtrl(self,
             style=wx.LC_REPORT | wx.LC_SINGLE_SEL,
             name="listctrl")
@@ -546,9 +550,8 @@ class TestPanel(wx.Panel):
 
     def _on_char(self, evt):
         kc = evt.GetKeyCode()
-        wx.LogMessage(str(kc))
         char = chr(kc)
-        if kc == 127:
+        if kc in (8, 127):
             lst = self.FindWindow("listctrl")
             selected = lst.GetFirstSelected()
             if selected != -1:
