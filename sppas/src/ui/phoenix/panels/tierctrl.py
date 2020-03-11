@@ -288,6 +288,28 @@ class sppasTierListCtrl(LineListCtrl):
 
     # -----------------------------------------------------------------------
 
+    def add_annotation(self, idx, direction):
+        """Create an annotation before or after the given one.
+
+        :param idx: (int) Index of the annotation in the list
+        :param direction: (int) Positive for after, Negative for before
+        :return: (bool) False if direction does not match with index
+        :raise: Exception if annotation can't be created
+
+        """
+        assert 0 <= idx < len(self._tier)
+
+        if direction == 0:
+            return False
+        elif direction > 0:
+            self._tier.create_annotation_after(idx)
+            self.SetItemAnnotation(idx+1)
+        else:
+            self._tier.create_annotation_before(idx)
+            self.SetItemAnnotation(idx)
+
+    # -----------------------------------------------------------------------
+
     def set_annotation_labels(self, idx, labels):
         """Set the labels of an annotation.
 

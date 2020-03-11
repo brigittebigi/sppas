@@ -263,6 +263,61 @@ class sppasTier(sppasMetaData):
 
     # -----------------------------------------------------------------------
 
+    def create_annotation_before(self, idx):
+        """Create and add a new annotation in the hole before idx.
+
+        :param idx: (int)
+        :returns: sppasAnnotation
+
+        """
+        if self.is_point():
+            raise AnnDataTypeError(self.get_name(), "Interval, Disjoint")
+
+        try:
+            ann = self.__ann[idx]
+        except IndexError:
+            raise AnnDataIndexError(idx)
+
+        if idx == 0:
+            if self.is_int():
+                begin = sppasPoint(0)
+            else:
+                begin = sppasPoint(0.)
+        else:
+            prev_ann = self.__ann[idx-1]
+            begin = prev_ann.get_highest_localization()
+        end = ann.get_lowest_localization()
+
+        new_ann = self.create_annotation(sppasLocation(sppasInterval(begin, end)))
+        return new_ann
+
+    # -----------------------------------------------------------------------
+
+    def create_annotation_after(self, idx):
+        """Create and add a new annotation in the hole after idx.
+
+        :param idx: (int)
+        :returns: sppasAnnotation
+
+        """
+        if self.is_point():
+            raise AnnDataTypeError(self.get_name(), "Interval, Disjoint")
+        if idx+1 == len(self.__ann):
+            raise AnnDataIndexError(idx+1)
+        try:
+            ann = self.__ann[idx]
+            next_ann = self.__ann[idx+1]
+        except IndexError:
+            raise AnnDataIndexError(idx)
+
+        begin = ann.get_highest_localization()
+        end = next_ann.get_lowest_localization()
+
+        new_ann = self.create_annotation(sppasLocation(sppasInterval(begin, end)))
+        return new_ann
+
+    # -----------------------------------------------------------------------
+
     def is_empty(self):
         """Return True if the tier does not contain annotations."""
         return len(self.__ann) == 0

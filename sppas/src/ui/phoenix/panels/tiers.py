@@ -329,9 +329,13 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
     def _on_char(self, evt):
         kc = evt.GetKeyCode()
-        if kc in (8, 127):
-            # Suppr or Del
+        if kc in (8, 127):  # Suppr or Del
             self.__delete_annotation()
+        elif kc == 43:
+            if evt.ControlDown() is False:
+                self.__add_annotation(1)
+            else:
+                self.__add_annotation(-1)
         else:
             evt.Skip()
 
@@ -376,6 +380,12 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
         elif btn_name == "cell_split_next":
             self.__split_annotation(1)
+
+        elif btn_name == "cell_add_before":
+            self.__add_annotation(-1)
+
+        elif btn_name == "cell_add_after":
+            self.__add_annotation(1)
 
         else:
             event.Skip()
@@ -510,13 +520,37 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         try:
             self.__tierctrl.split_annotation(self.__cur_index, direction)
         except Exception as e:
-            Error("Annotation can't be splitted: {:s}".format(str(e)))
+            Error("Annotation can't be split: {:s}".format(str(e)))
         else:
-            # OK. The annotation was splitted in the listctrl.
+            # OK. The annotation was split in the listctrl.
             self._notify(action="ann_created", value=self.__cur_index+1)
             self._notify(action="ann_modified", value=self.__cur_index)
             ann = self.__tierctrl.get_selected_annotation()
             self.__annpanel.set_ann(ann)
+
+    # -----------------------------------------------------------------------
+
+    def __add_annotation(self, direction):
+        """Add an annotation after/before the currently selected annotation.
+
+        :param direction: (int) Positive add after. Negative to add before.
+
+        """
+        if self.__cur_index == -1:
+            return
+
+        try:
+            added = self.__tierctrl.add_annotation(self.__cur_index, direction)
+        except Exception as e:
+            Error("Annotation can't be added: {:s}".format(str(e)))
+        else:
+            if added is True:
+                # OK. The annotation was added in the listctrl.
+                if direction > 0:
+                    self._notify(action="ann_created", value=self.__cur_index+1)
+                else:
+                    self._notify(action="ann_created", value=self.__cur_index)
+                    self.__cur_index += 1
 
     # -----------------------------------------------------------------------
 

@@ -273,17 +273,19 @@ class sppasAnnEditPanel(sppasPanel):
         toolbar.AddButton("way_up_down")
         toolbar.AddSpacer(1)
 
-        toolbar.AddButton("restore")
         toolbar.AddButton("cell_delete")
         toolbar.AddButton("cell_merge_previous")
         toolbar.AddButton("cell_merge_next")
         toolbar.AddButton("cell_split")
         toolbar.AddButton("cell_split_next")
+        toolbar.AddButton("cell_add_before")
+        toolbar.AddButton("cell_add_after")
         toolbar.AddSpacer(1)
 
         toolbar.AddToggleButton("code_review", value=True, group_name="view_mode")
         toolbar.AddToggleButton("code_xml", group_name="view_mode")
         toolbar.AddToggleButton("code_json", group_name="view_mode")
+        toolbar.AddButton("restore")
         toolbar.AddSpacer(1)
 
         meta = toolbar.AddButton("tags")
