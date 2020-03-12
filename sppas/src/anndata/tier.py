@@ -456,7 +456,7 @@ class sppasTier(sppasMetaData):
             try:
                 self.validate()
             except:
-                self.add(copied_ann)
+                self.__ann.insert(index, copied_ann)
                 raise
 
     # -----------------------------------------------------------------------

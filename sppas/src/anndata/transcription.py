@@ -431,12 +431,14 @@ class sppasTranscription(sppasMetaData):
     def validate_hierarchy(self, tier):
         parent_tier = self._hierarchy.get_parent(tier)
         if parent_tier is not None:
+            # Given tier is a child
             link_type = self._hierarchy.get_hierarchy_type(tier)
             if link_type == "TimeAssociation":
                 sppasHierarchy.validate_time_association(parent_tier, tier)
             if link_type == "TimeAlignment":
                 sppasHierarchy.validate_time_alignment(parent_tier, tier)
         else:
+            # Given tier is a parent
             for child_tier in self._hierarchy.get_children(tier):
                 link_type = self._hierarchy.get_hierarchy_type(child_tier)
                 if link_type == "TimeAssociation":
