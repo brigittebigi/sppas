@@ -46,11 +46,10 @@ from sppas.src.anndata import sppasRW
 from ..windows import sppasPanel
 from ..windows import sppasSplitterWindow
 from ..windows.dialogs import Confirm, Error
-from ..windows.book import sppasNotebook
 from ..main_events import ViewEvent, EVT_VIEW
 
 from .ann import sppasAnnEditPanel
-from .tierctrl import sppasTierListCtrl
+from .tierctrl import sppasTiersbook
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -149,12 +148,13 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
         # Select requested tier (... and an annotation)
         if self.__can_select is True:
-            for i in range(self.__notebook.GetPageCount()):
-                page = self.__notebook.GetPage(i)
+            for i in range(self.__tiersbook.GetPageCount()):
+                page = self.__tiersbook.GetPage(i)
                 if page.get_filename() == filename and page.get_tiername() == tier_name:
-                    self.__notebook.ChangeSelection(i)
+                    self.__tiersbook.ChangeSelection(i)
+                    page.Bind(wx.EVT_KEY_UP, self._on_char, page)
                     self.__cur_page = i
-                    listctrl = self.__notebook.GetPage(i)
+                    listctrl = self.__tiersbook.GetPage(i)
                     self.__cur_index = listctrl.GetFirstSelected()
                     if self.__cur_index == -1:
                         self.__cur_index = 0
@@ -178,26 +178,14 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :param tiers: (list of sppasTier)
 
         """
-        sel_tier = None
-        for tier in tiers:
-            if len(tier) > 0:
-                page = sppasTierListCtrl(self.__notebook, tier, filename, style=wx.BORDER_SIMPLE)
-                page.Bind(wx.EVT_KEY_UP, self._on_char)
-
-                self.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_annotation_selected, page)
-                self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_annotation_deselected, page)
-                self.__notebook.AddPage(page, tier.get_name())
-                if sel_tier is None:
-                    sel_tier = tier
-            else:
-                wx.LogError("Page not created. "
-                            "No annotation in tier: {:s}".format(tier.get_name()))
+        sel_tiername = self.__tiersbook.add_tiers(filename, tiers)
+        self.__cur_page = self.__tiersbook.GetSelection()
 
         # no tier was previously added and we added at least a non-empty one
-        if self.__tierctrl is None and sel_tier is not None:
+        if len(sel_tiername) > 0:
             self.__cur_index = self.__tierctrl.GetFirstSelected()
             if self.__cur_index == -1:
-                changed = self.set_selected_tiername(filename, sel_tier)
+                changed = self.set_selected_tiername(filename, sel_tiername)
                 if changed is True:
                     self.__annotation_selected(self.__cur_index)
 
@@ -248,8 +236,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         - Window 2 of the splitter: an annotation editor.
 
         """
-        # w1 = sppasNotebook(self, style=wx.BORDER_SIMPLE | wx.TAB_TRAVERSAL, name="tiers_notebook")
-        w1 = wx.Choicebook(self, style=wx.TAB_TRAVERSAL, name="tiers_notebook")
+        w1 = sppasTiersbook(self)
         w2 = sppasAnnEditPanel(self, ann=None, name="annedit_panel")
 
         # Fix size&layout
@@ -268,7 +255,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         self.Unsplit(toRemove=win_2)
         self.SplitHorizontally(win_2, win_1, h)
 
-        if win_1 == self.__notebook:
+        if win_1 == self.__tiersbook:
             self.SetSashGravity(0.9)
         else:
             self.SetSashGravity(0.1)
@@ -280,19 +267,16 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     # -----------------------------------------------------------------------
 
     @property
-    def __notebook(self):
-        return self.FindWindow("tiers_notebook")
+    def __annpanel(self):
+        return self.FindWindow("annedit_panel")
+
+    @property
+    def __tiersbook(self):
+        return self.FindWindow("tiersbook")
 
     @property
     def __tierctrl(self):
-        page_index = self.__notebook.GetSelection()
-        if page_index == -1:
-            return None
-        return self.__notebook.GetPage(page_index)
-
-    @property
-    def __annpanel(self):
-        return self.FindWindow("annedit_panel")
+        return self.__tiersbook.tierctrl
 
     # -----------------------------------------------------------------------
     # Events management
@@ -319,15 +303,20 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         """
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self._on_page_changing)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self._on_page_changed)
-        
-        self.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
 
-        # Capture keys
-        self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_annotation_selected)
+        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_annotation_deselected)
+
+        self.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
 
     # -----------------------------------------------------------------------
 
     def _on_char(self, evt):
+        """Process a key event on the selected tierctrl.
+
+        :param evt: (wx.Event)
+
+        """
         kc = evt.GetKeyCode()
         if kc in (8, 127):  # Suppr or Del
             self.__delete_annotation()
@@ -337,19 +326,8 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             else:
                 self.__add_annotation(-1)
         else:
+            logging.debug("Key event skipped by the TiersEdit panel {}".format(kc))
             evt.Skip()
-
-    # -----------------------------------------------------------------------
-
-    def _process_key_event(self, event):
-        """Process a key event.
-
-        :param event: (wx.Event)
-
-        """
-        key_code = event.GetKeyCode()
-        logging.debug("Key event skipped by the TiersEdit panel {}".format(key_code))
-        event.Skip()
 
     # -----------------------------------------------------------------------
 
@@ -421,7 +399,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     # -----------------------------------------------------------------------
 
     def _on_page_changing(self, evt):
-        """The notebook is being to change page.
+        """The book is being to change page.
 
         Current annotation is de-selected.
 
@@ -435,7 +413,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     # -----------------------------------------------------------------------
 
     def _on_page_changed(self, evt):
-        """The notebook changed its page.
+        """The book changed its page.
 
         A new tier is selected, so a new annotation too.
 
@@ -444,16 +422,18 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             self._notify(action="tier_selected", value=None)
             self.__cur_index = self.__tierctrl.GetFirstSelected()
             if self.__cur_index == -1:
-                logging.debug("No annotation was previously selected in {}"
-                              "".format(self.get_selected_tiername()))
                 self.__cur_index = 0
 
             self.__annotation_selected(self.__cur_index)
-            self.__cur_page = self.__notebook.GetSelection()
+            self.__cur_page = self.__tiersbook.GetSelection()
+
         else:
             # go back to the cur_page
-            self.__notebook.ChangeSelection(self.__cur_page)
+            self.__tiersbook.ChangeSelection(self.__cur_page)
             self.__tierctrl.Select(self.__cur_index, on=1)
+
+        page = self.__tiersbook.GetPage(self.__cur_page)
+        page.Bind(wx.EVT_KEY_UP, self._on_char, page)
 
     # -----------------------------------------------------------------------
     # Private

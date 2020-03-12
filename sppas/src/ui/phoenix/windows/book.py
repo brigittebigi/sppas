@@ -50,10 +50,13 @@ class sppasChoicebook(wx.Choicebook):
     """
     def __init_(self, *args, **kw):
         super(sppasChoicebook, self).__init__(*args, **kw)
-        s = wx.GetApp().settings
-        self.SetBackgroundColour(s.bg_color)
-        self.SetForegroundColour(s.fg_color)
-        self.SetFont(s.text_font)
+        try:
+            s = wx.GetApp().settings
+            self.SetBackgroundColour(s.bg_color)
+            self.SetForegroundColour(s.fg_color)
+            self.SetFont(s.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
     # -----------------------------------------------------------------------
 

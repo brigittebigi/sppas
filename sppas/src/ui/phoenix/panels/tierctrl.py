@@ -45,7 +45,7 @@ from sppas.src.anndata import sppasRW
 
 from ..windows import sppasPanel
 from ..windows import LineListCtrl
-from ..windows.book import sppasSimplebook
+from ..windows.book import sppasChoicebook
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -454,6 +454,57 @@ class sppasTierListCtrl(LineListCtrl):
 
 # ---------------------------------------------------------------------------
 
+
+class sppasTiersbook(sppasChoicebook):
+
+    def __init__(self, parent):
+        super(sppasTiersbook, self).__init__(parent,
+                                             style=wx.TAB_TRAVERSAL,
+                                             name="tiersbook")
+
+    # -----------------------------------------------------------------------
+
+    def add_tiers(self, filename, tiers):
+        """Add a set of tiers of the file.
+
+        If no tier was previously selected, select the first one.
+
+        :param filename: (str)
+        :param tiers: (list of sppasTier)
+        :return: selected tier name
+
+        """
+        if self.GetPageCount() > 0:
+            # A page is already selected
+            sel_tier = ""
+        else:
+            sel_tier = None
+
+        for tier in tiers:
+            if len(tier) > 0:
+                page = sppasTierListCtrl(self, tier, filename, style=wx.BORDER_SIMPLE)
+
+                self.AddPage(page, tier.get_name())
+                if sel_tier is None:
+                    sel_tier = tier.get_name()
+            else:
+                wx.LogError("Page not created. "
+                            "No annotation in tier: {:s}".format(tier.get_name()))
+
+        if sel_tier is None:
+            return ""
+        return sel_tier
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def tierctrl(self):
+        page_index = self.GetSelection()
+        if page_index == -1:
+            return None
+        return self.GetPage(page_index)
+
+
 # ---------------------------------------------------------------------------
 
 
@@ -464,38 +515,70 @@ class TestPanel(sppasPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
 
+        # Create content
+        self.__book = sppasTiersbook(self)
+        s = wx.BoxSizer()
+        s.Add(self.__book, 1, wx.EXPAND)
+        self.SetSizer(s)
+
+        # Setup events
+        self.__book.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self._on_page_changing)
+        self.__book.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self._on_page_changed)
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_selected_item)
+        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_deselected_item)
+
+        # Add data
         f1 = os.path.join(paths.samples, "annotation-results",
                           "samples-fra", "F_F_B003-P8-palign.xra")
+        f2 = os.path.join(paths.samples, "annotation-results",
+                          "samples-fra", "F_F_B003-P8-phon.xra")
+
         parser = sppasRW(f1)
         trs1 = parser.read()
-        trs1.get_hierarchy().remove_tier(trs1[0])
-        self.__notebook = wx.Listbook(self, style=wx.BORDER_SIMPLE | wx.TAB_TRAVERSAL | wx.LB_TOP, name="tiers_notebook")
+        parser.set_filename(f2)
+        trs2 = parser.read()
+        self.__book.add_tiers(f2, trs2.get_tier_list())
+        self.__book.add_tiers(f1, trs1.get_tier_list())
+        # trs1.get_hierarchy().remove_tier(trs1[0])
+        page = self.__book.GetPage(self.__book.GetSelection())
+        page.Bind(wx.EVT_KEY_UP, self._on_char, page)
 
-        page = sppasTierListCtrl(self.__notebook, trs1[0], f1)
-        page.Bind(wx.EVT_KEY_UP, self._on_char)
-
-        self.__notebook.AddPage(page, trs1[0].get_name())
-
-        s = wx.BoxSizer()
-        s.Add(self.__notebook, 1, wx.EXPAND)
-        self.SetSizer(s)
+    # -----------------------------------------------------------------------
 
     @property
     def __tierctrl(self):
-        page_index = self.__notebook.GetSelection()
-        if page_index == -1:
-            return None
-        return self.__notebook.GetPage(page_index)
+        return self.__book.tierctrl
+
+    # -----------------------------------------------------------------------
+
+    def _on_page_changing(self, evt):
+        """The book is being to change page."""
+        logging.debug("Test panel received page changing event.")
+
+    # -----------------------------------------------------------------------
+
+    def _on_page_changed(self, evt):
+        """The book changed its page. """
+        logging.debug("Test panel received page changed event.")
+        page = self.__book.GetPage(self.__book.GetSelection())
+        page.Bind(wx.EVT_KEY_UP, self._on_char, page)
+
+    # -----------------------------------------------------------------------
 
     def _on_selected_item(self, evt):
         logging.debug("Test panel received selected item event. Index {}"
                       "".format(evt.GetIndex()))
 
+    # -----------------------------------------------------------------------
+
     def _on_deselected_item(self, evt):
         logging.debug("Test panel received de-selected item event. Index {}"
                       "".format(evt.GetIndex()))
 
+    # -----------------------------------------------------------------------
+
     def _on_char(self, evt):
+        logging.debug("Test panel received key event.")
         kc = evt.GetKeyCode()
         char = chr(kc)
         if kc in (8, 127):
