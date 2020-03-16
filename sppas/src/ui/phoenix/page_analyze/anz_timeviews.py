@@ -77,7 +77,7 @@ ACT_MOVE_DOWN = u(msg("Move Down"))
 
 
 class TimeViewType(object):
-    """Enum of all types of supported data by the TimeView.
+    """Enum all types of supported data by the TimeView.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -162,15 +162,25 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
             name=name,
             files=files)
 
-        # Select the first annotation of the tier of the first file
+        self.__select_first()
+
+    # -----------------------------------------------------------------------
+
+    def __select_first(self):
+        """Select the first annotation of the first tier of the first file."""
         for filename in self._files:
+            logging.debug(" - filename: {}".format(filename))
             panel = self._files[filename]
             if isinstance(panel, TrsTimeViewPanel):
                 trs = panel.get_object()
+                logging.debug(" - panel is trs with {} tiers".format(len(trs.get_name())))
                 if len(trs) > 0:
+
                     # enable the tier into the panel of time tier views
                     tier_name = trs[0].get_name()
-                    panel.set_selected_tiername(tier_name)
+                    self.__enable_tier_into_scrolled(filename, tier_name)
+                    logging.info("Tier {} of file {} selected.".format(tier_name, filename))
+
                     # enable the tier into the notebook of list tier views
                     w = self.FindWindow("tiers_edit_splitter")
                     w.set_selected_tiername(filename, tier_name)
@@ -223,12 +233,19 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
                 if trs is not None:
                     w = self.FindWindow("tiers_edit_splitter")
                     w.add_tiers(name, trs.get_tier_list())
+                    # This is the first trs of the panel.
+                    if len(self._files) == 0:
+                        tier_name = trs[0].get_name()
+                        selected = w.set_selected_tiername(name, tier_name)
+                        if selected is True:
+                            panel.set_selected_tiername(tier_name)
+
             elif tt.guess_type(name) == tt.unsupported:
                 raise IOError("File format not supported.")
             elif tt.guess_type(name) == tt.unknown:
                 raise TypeError("Unknown file format.")
 
-        border = sppasPanel.fix_size(10)
+        border = sppasPanel.fix_size(8)
         self.GetScrolledSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.TOP | wx.BOTTOM, border)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
 
@@ -384,7 +401,10 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
             changed = w.set_selected_tiername(trs_filename, tier_name)
             if changed is False:
                 # switch back to the previously selected tier
-                self.__enable_tier_into_scrolled(trs_filename, w.get_selected_tiername())
+                self.__enable_tier_into_scrolled(w.get_filename(),
+                                                 w.get_selected_tiername())
+            else:
+                self.__enable_tier_into_scrolled(trs_filename, tier_name)
 
         # not implemented yet: child panels don't allow to modify ann boundaries
         elif action == "period_selected":
