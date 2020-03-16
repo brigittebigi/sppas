@@ -148,12 +148,14 @@ class sppasMapping(sppasDictRepl):
 
     # -----------------------------------------------------------------------
 
-    def map(self, mstr, delimiters=DEFAULT_SEP):
+    def map(self, mstr, delimiters=DEFAULT_SEP, separator=""):
         """Run the Mapping process on an input string.
 
         :param mstr: input string to map
         :param delimiters: (list) list of character delimiters. Default is:\
                [';', ',', ' ', '.', '|', '+', '-']
+        :param separator: (char) used to separate parts of the mapped result
+        (when longest matching algorithm was used to map a string)
         :returns: a string
 
         """
@@ -199,8 +201,9 @@ class sppasMapping(sppasDictRepl):
             else:
                 mapped = self.map_entry(v)
                 if mapped == self._miss_symbol:
-                    logging.debug('In {:s}, missing symbol {:s}. Mapped into {:s}.'
+                    logging.debug('In {:s}, missing symbol {:s}. '
+                                  'Mapped into {:s}.'
                                   ''.format(mstr, v, mapped))
                 map_tab.append(mapped)
 
-        return "".join(map_tab)
+        return separator.join(map_tab)

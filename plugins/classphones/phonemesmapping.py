@@ -75,6 +75,10 @@ parser.add_argument("--quiet",
                     action='store_true',
                     help="Disable the verbosity")
 
+parser.add_argument("--symbols",
+                    action='store_true',
+                    help="Map the non-speech symbols (silence, pause, laughter...)")
+
 if len(sys.argv) <= 1:
     sys.argv.append('-h')
 
@@ -113,6 +117,8 @@ with codecs.open(args.m, "r", sg.__encoding__) as fp:
         mapping.set_keep_miss(False)     # keep unknown entries as given
         mapping.set_miss_symbol(args.s)  # mapping symbol in case of unknown entry
         mapping.set_delimiters([])
+        if args.symbols:
+            mapping.set_map_symbols(True)
         mappings[name] = mapping
 
     for line in fp.readlines():

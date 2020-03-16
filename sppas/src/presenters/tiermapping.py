@@ -98,7 +98,7 @@ class sppasMappingTier(sppasMapping):
     # -----------------------------------------------------------------------
 
     def set_map_symbols(self, value):
-        """Define if symbols has to be mapped or not.
+        """Define if symbols have to be mapped or not.
 
         :param value: (bool)
 
