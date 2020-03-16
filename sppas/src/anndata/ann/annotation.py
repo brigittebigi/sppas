@@ -95,6 +95,12 @@ class sppasAnnotation(sppasMetaData):
     # Member getters
     # -----------------------------------------------------------------------
 
+    def get_parent(self):
+        """Return the parent tier or None."""
+        return self.__parent
+
+    # -----------------------------------------------------------------------
+
     def get_score(self):
         """Return the score of this annotation or None if no score is set."""
         return self.__score

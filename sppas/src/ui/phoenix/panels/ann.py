@@ -209,7 +209,17 @@ class sppasAnnEditPanel(sppasPanel):
 
         # The text is serialized
         elif self.__code_edit == "code_review":
-            labels = format_labels(content)
+            tag_type = "str"
+            parent = self.__ann.get_parent()
+            if parent is not None:
+                tag_type = parent.get_labels_type()
+                if tag_type == "":
+                    tag_type = "str"
+
+            labels = format_labels(content,
+                                   separator="\n",
+                                   empty="",
+                                   tag_type=tag_type)
 
         return labels
 
