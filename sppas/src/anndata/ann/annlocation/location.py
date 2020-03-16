@@ -116,7 +116,9 @@ class sppasLocation(object):
             raise AnnDataTypeError(localization, "sppasBaseLocalization")
 
         if len(self.__localizations) == 1:
-            self.__localizations = list()
+            raise IndexError("A location must contain at least one "
+                             "localization. The single one can't be removed.")
+            # self.__localizations = list()
         else:
             for l in self.__localizations:
                 if l[0] == localization:

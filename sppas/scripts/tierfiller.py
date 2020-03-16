@@ -33,7 +33,7 @@
     scripts.tierfiller.py
     ~~~~~~~~~~~~~~~~~~~~~~
 
-    ... a script to fill empty labels of a tier of an annotated file.
+    ... a script to fill in empty labels of a tier of an annotated file.
 
 """
 import sys
@@ -64,7 +64,7 @@ parser.add_argument("-i",
 parser.add_argument("-t",
                     metavar="name",
                     required=True,
-                    help='Name of the tier to fill.')
+                    help='Name of the tier to fill in.')
 
 parser.add_argument("-o",
                     metavar="file",
@@ -73,7 +73,7 @@ parser.add_argument("-o",
 parser.add_argument("-f",
                     metavar="text",
                     default="#",
-                    help='Text to fill with (default:#)')
+                    help='Text to fill in with (default:#)')
 
 if len(sys.argv) <= 1:
     sys.argv.append('-h')
@@ -100,26 +100,20 @@ if len(tier_input) < 2:
     print('The tier does not contains enough intervals.')
     sys.exit(1)
 
-if args.o:
-    tier = tier_input.copy()
-    tier.set_name(tier_input.get_name()+"-fill")
-else:
-    tier = tier_input
-
 # ---------------------------------------------------------------------------
 # Create the tag to fill empty intervals
 # ---------------------------------------------------------------------------
 
-if tier.is_int():
+if tier_input.is_int():
     filler = sppasTag(args.f, "int")
-elif tier.is_float():
+elif tier_input.is_float():
     filler = sppasTag(args.f, "float")
-elif tier.is_bool():
+elif tier_input.is_bool():
     filler = sppasTag(args.f, "bool")
 else:
     filler = sppasTag(args.f)
 
-ctrl_vocab = tier.get_ctrl_vocab()
+ctrl_vocab = tier_input.get_ctrl_vocab()
 if ctrl_vocab is not None:
     if ctrl_vocab.contains(filler) is False:
         ctrl_vocab.add(filler, description="Filler")
@@ -129,7 +123,12 @@ if ctrl_vocab is not None:
 # ----------------------------------------------------------------------------
 
 # Temporal gaps/holes between annotations are filled with an un-labelled ann.
-tier = fill_gaps(tier)
+tier = fill_gaps(tier_input)
+if tier is tier_input:
+    tier = tier_input.copy()
+    tier.gen_id()
+
+tier.set_name(tier.get_name()+"-fill")
 
 # Fill in un-labelled / un-tagged annotations
 for ann in tier:

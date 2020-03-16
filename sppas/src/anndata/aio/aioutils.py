@@ -284,6 +284,7 @@ def fill_gaps(tier, min_loc=None, max_loc=None):
     """
     if tier.is_empty() and min_loc is not None and max_loc is not None:
         new_tier = tier.copy()
+        new_tier.gen_id()
         interval = sppasInterval(min_loc, max_loc)
         new_tier.add(sppasAnnotation(sppasLocation(interval)))
         return new_tier
@@ -301,6 +302,7 @@ def fill_gaps(tier, min_loc=None, max_loc=None):
 
     # Right, we have things to do...
     new_tier = tier.copy()
+    new_tier.gen_id()
 
     # Check firstly the begin/end
     if min_loc is not None and format_point_to_float(tier.get_first_point()) > format_point_to_float(min_loc):
