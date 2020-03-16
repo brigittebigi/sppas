@@ -148,6 +148,8 @@ class sppasBasePraat(sppasBaseIO):
         """
         try:
             line = line.strip()
+            if line.endswith(":") is True:
+                line = line[:-1]
             val = line[line.rfind(' ') + 1:]
             return int(val)
         except:
