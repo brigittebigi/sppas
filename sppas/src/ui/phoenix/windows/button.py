@@ -219,14 +219,14 @@ class sppasBitmapButton(GenBitmapButton):
 class ButtonEvent(wx.PyCommandEvent):
     """Base class for an event sent when the button is activated."""
 
-    def __init__(self, eventType, eventId):
+    def __init__(self, event_type, event_id):
         """Default class constructor.
 
-        :param eventType: the event type;
-        :param eventId: the event identifier.
+        :param event_type: the event type;
+        :param event_id: the event identifier.
 
         """
-        super(ButtonEvent, self).__init__(eventType, eventId)
+        super(ButtonEvent, self).__init__(event_type, event_id)
         self.__button = None
 
     # ------------------------------------------------------------------------
@@ -234,7 +234,7 @@ class ButtonEvent(wx.PyCommandEvent):
     def SetButtonObj(self, btn):
         """Set the event object for the event.
 
-        :param `btn`: the button object, an instance of L{FileButton}.
+        :param btn: the button object
 
         """
         self.__button = btn
@@ -256,30 +256,30 @@ class ButtonEvent(wx.PyCommandEvent):
 class ToggleButtonEvent(ButtonEvent):
     """Base class for an event sent when the toggle button is activated."""
 
-    def __init__(self, eventType, eventId):
+    def __init__(self, event_type, event_id):
         """Default class constructor.
 
-        :param eventType: the event type;
-        :param eventId: the event identifier.
+        :param event_type: the event type;
+        :param event_id: the event identifier.
 
         """
-        super(ToggleButtonEvent, self).__init__(eventType, eventId)
+        super(ToggleButtonEvent, self).__init__(event_type, event_id)
         self.__isdown = False
 
     # -----------------------------------------------------------------------
 
-    def SetIsDown(self, isDown):
+    def SetIsDown(self, is_down):
         """Set the button toggle status as 'down' or 'up'.
 
         :param isDown: (bool) True if the button is clicked, False otherwise.
 
         """
-        self.__isdown = bool(isDown)
+        self.__isdown = bool(is_down)
 
     # -----------------------------------------------------------------------
 
     def GetIsDown(self):
-        """Return the button toggle status as ``True`` if the button is down.
+        """Return the button toggle status as True if the button is down.
 
         :returns: (bool)
 

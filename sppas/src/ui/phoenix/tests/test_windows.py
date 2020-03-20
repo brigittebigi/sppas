@@ -41,6 +41,7 @@ from sppas.src.ui.cfg import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
+import sppas.src.ui.phoenix.windows.basedraw as basedraw
 import sppas.src.ui.phoenix.windows.toolbar as toolbar
 import sppas.src.ui.phoenix.windows.line as line
 import sppas.src.ui.phoenix.windows.button as button
@@ -76,6 +77,7 @@ class TestPanel(wx.Choicebook):
         self.AddPage(buttonbox.TestPanel(self), "ButtonBox")
         self.AddPage(button.TestPanel(self), "Buttons")
         self.AddPage(line.TestPanel(self), "Lines")
+        self.AddPage(basedraw.TestPanel(self), "Base Window")
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
