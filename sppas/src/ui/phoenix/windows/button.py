@@ -69,7 +69,8 @@ from wx.lib.buttons import GenBitmapTextButton, GenButton, GenBitmapButton
 
 from ..tools import sppasSwissKnife
 from .image import ColorizeImage
-from .basedraw import sppasDrawWindow
+from .basedraw import sppasBaseWindow
+from .basedraw import WindowState
 
 # ---------------------------------------------------------------------------
 
@@ -291,7 +292,7 @@ class ToggleButtonEvent(ButtonEvent):
 # ---------------------------------------------------------------------------
 
 
-class BaseButton(sppasDrawWindow):
+class BaseButton(sppasBaseWindow):
     """BaseButton is a custom type of window to represent a button.
 
     :author:       Brigitte Bigi
@@ -301,12 +302,6 @@ class BaseButton(sppasDrawWindow):
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
-    # Button States
-    NORMAL = 0
-    PRESSED = 1
-    HIGHLIGHT = 2
-
-    # -----------------------------------------------------------------------
 
     def __init__(self, parent,
                  id=wx.ID_ANY,
@@ -325,9 +320,6 @@ class BaseButton(sppasDrawWindow):
         :param name: (str) Name of the button.
 
         """
-        # Preceding state and current one
-        self._state = [BaseButton.NORMAL, BaseButton.NORMAL]
-
         super(BaseButton, self).__init__(
             parent, id, pos, size,
             style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
@@ -345,202 +337,12 @@ class BaseButton(sppasDrawWindow):
 
     # -----------------------------------------------------------------------
 
-    def SetFocus(self):
-        """Overridden. Force this button to have the focus."""
-        if self._state[1] != BaseButton.PRESSED:
-            self._set_state(BaseButton.HIGHLIGHT)
-        super(BaseButton, self).SetFocus()
-
-    # -----------------------------------------------------------------------
-
-    def GetPenForegroundColour(self):
-        """Get the foreground color for the pen.
-
-        Pen foreground is normal if the button is enabled and state is normal,
-        but this color is lightness if button is disabled and darkness if
-        state is highlighted, or the contrary depending on the color.
-
-        """
-        color = self.GetForegroundColour()
-        if self.IsEnabled() is True and self._state != BaseButton.HIGHLIGHT:
-            return color
-
-        r, g, b = color.Red(), color.Green(), color.Blue()
-        delta = 40
-        if ((r + g + b) > 384 and self.IsEnabled() is False) or \
-                ((r + g + b) < 384 and self._state == BaseButton.HIGHLIGHT):
-            return wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
-
-        return wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
-
-    # -----------------------------------------------------------------------
-    # Callbacks
-    # -----------------------------------------------------------------------
-
-    def OnMouseLeftDown(self, event):
-        """Handle the wx.EVT_LEFT_DOWN event.
-
-        :param event: a wx.MouseEvent event to be processed.
-
-        """
-        if not self.IsEnabled():
-            return
-
-        self._set_state(BaseButton.PRESSED)
-        self.CaptureMouse()
-        self.SetFocus()
-        self.Refresh()
-
-    # -----------------------------------------------------------------------
-
-    def OnMouseLeftUp(self, event):
-        """Handle the wx.EVT_LEFT_UP event.
-
-        :param event: a wx.MouseEvent event to be processed.
-
-        """
-        if not self.IsEnabled():
-            return
-
-        if not self.HasCapture():
-            return
-
-        s = self._state[0]
-        self.ReleaseMouse()
-        # If the button was down when the mouse was released...
-        if self._state[1] == BaseButton.PRESSED:
-            self.Notify()
-            # if we haven't been destroyed by this notify...
-            if self:
-                self._set_state(s)
-
-    # -----------------------------------------------------------------------
-
-    def OnMouseEnter(self, event):
-        """Handle the wx.EVT_ENTER_WINDOW event.
-
-        :param event: a wx.MouseEvent event to be processed.
-
-        """
-        if self._state[1] == BaseButton.NORMAL:
-            self._set_state(BaseButton.HIGHLIGHT)
-            self.Refresh()
-
-    # -----------------------------------------------------------------------
-
-    def OnMouseLeave(self, event):
-        """Handle the wx.EVT_LEAVE_WINDOW event.
-
-        :param event: a wx.MouseEvent event to be processed.
-
-        """
-        self._set_state(BaseButton.NORMAL)
-        self.Refresh()
-
-    # -----------------------------------------------------------------------
-
-    def OnGainFocus(self, event):
-        """Handle the wx.EVT_SET_FOCUS event.
-
-        :param event: a wx.FocusEvent event to be processed.
-
-        """
-        if self._state[1] == BaseButton.NORMAL:
-            self._set_state(BaseButton.HIGHLIGHT)
-            self.Refresh()
-            self.Update()
-
-    # -----------------------------------------------------------------------
-
-    def OnLoseFocus(self, event):
-        """Handle the wx.EVT_KILL_FOCUS event.
-
-        :param event: a wx.FocusEvent event to be processed.
-
-        """
-        if self._state[1] == BaseButton.HIGHLIGHT:
-            self._set_state(self._state[0])
-            self.Refresh()
-
-    # -----------------------------------------------------------------------
-
-    def OnKeyUp(self, event):
-        """Handle the wx.EVT_KEY_UP event.
-
-        :param event: a wx.KeyEvent event to be processed.
-
-        """
-        if event.GetKeyCode() == wx.WXK_SPACE:
-            self.Notify()
-            self._set_state(BaseButton.HIGHLIGHT)
-
-        elif event.GetKeyCode() == wx.WXK_ENTER:
-            self.Notify()
-            self._set_state(BaseButton.PRESSED)
-            wx.CallLater(100, self._set_state, BaseButton.HIGHLIGHT)
-
-    # -----------------------------------------------------------------------
-    # Design
-    # -----------------------------------------------------------------------
-
     def Notify(self):
         """Sends a wx.EVT_BUTTON event to the listener (if any)."""
         evt = ButtonEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, self.GetId())
         evt.SetButtonObj(self)
         evt.SetEventObject(self)
         self.GetEventHandler().ProcessEvent(evt)
-
-    # -----------------------------------------------------------------------
-    # Draw methods (private)
-    # -----------------------------------------------------------------------
-
-    def Draw(self):
-        """Draw some parts of the button.
-
-            1. Prepare the Drawing Context
-            2. Draw the background
-            3. Draw focus indicator (if state is 'HIGHLIGHT')
-            4. Draw the border (if border > 0)
-
-        :returns: dc, gc
-
-        """
-        dc, gc = self.PrepareDraw()
-
-        self.DrawBackground(dc, gc)
-
-        if (self._horiz_border_width + self._vert_border_width) > 0:
-            self.DrawBorder(dc, gc)
-
-        if self._state[1] == BaseButton.HIGHLIGHT:
-            self.DrawFocusIndicator(dc, gc)
-
-        return dc, gc
-
-    # -----------------------------------------------------------------------
-    # Private
-    # -----------------------------------------------------------------------
-
-    def _set_state(self, state):
-        """Manually set the state of the button.
-
-        :param `state`: (int) one of the state values
-
-        """
-        self._state[0] = self._state[1]
-        self._state[1] = state
-
-        if state == BaseButton.HIGHLIGHT:
-            self._has_focus = True
-        else:
-            self._has_focus = False
-
-        # if it's not an 'exit' button, we still exist!
-        if self:
-            if wx.Platform == '__WXMSW__':
-                self.GetParent().RefreshRect(self.Rect, False)
-            else:
-                self.Refresh()
 
 # ---------------------------------------------------------------------------
 
@@ -691,32 +493,13 @@ class BitmapTextButton(BaseButton):
 
     # -----------------------------------------------------------------------
 
-    def Draw(self):
-        """Draw some parts of the button.
-
-            1. Prepare the Drawing Context
-            2. Draw the background
-            3. Draw the border (if border > 0)
-            4. Draw focus indicator (if state is 'HIGHLIGHT')
-
-        :returns: dc, gc
-
-        """
-        dc, gc = self.PrepareDraw()
-
-        self.DrawBackground(dc, gc)
-
-        if self._state[1] == BaseButton.HIGHLIGHT:
-            self.DrawFocusIndicator(dc, gc)
+    def DrawContent(self, dc, gc):
 
         x, y, w, h = self.GetClientRect()
         x += max(self._vert_border_width, 2)
         y += max(self._horiz_border_width, 2)
         w -= (2 * self._vert_border_width)
         h -= ((2 * self._horiz_border_width) + self._focus_width + 2)
-
-        if (self._horiz_border_width + self._vert_border_width) > 0:
-            self.DrawBorder(dc, gc)
 
         if w >= 4 and h >= 4:
             self._DrawContent(dc, gc, x, y, w, h)
@@ -852,10 +635,10 @@ class BitmapTextButton(BaseButton):
         gc.SetFont(font)
         dc.SetFont(font)
         if wx.Platform == '__WXGTK__':
-            dc.SetTextForeground(self.GetParent().GetForegroundColour())
+            dc.SetTextForeground(self.GetForegroundColour())
             dc.DrawText(self._label, x, y)
         else:
-            gc.SetTextForeground(self.GetParent().GetForegroundColour())
+            gc.SetTextForeground(self.GetForegroundColour())
             gc.DrawText(self._label, x, y)
 
 # ---------------------------------------------------------------------------
@@ -922,23 +705,7 @@ class TextButton(BaseButton):
 
     # -----------------------------------------------------------------------
 
-    def Draw(self):
-        """Draw some parts of the button.
-
-            1. Prepare the Drawing Context
-            2. Draw the background
-            3. Draw the border (if border > 0)
-            4. Draw focus indicator (if state is 'HIGHLIGHT')
-
-        :returns: dc, gc
-
-        """
-        dc, gc = self.PrepareDraw()
-
-        self.DrawBackground(dc, gc)
-
-        if self._state[1] == BaseButton.HIGHLIGHT:
-            self.DrawFocusIndicator(dc, gc)
+    def DrawContent(self, dc, gc):
 
         x, y, w, h = self.GetClientRect()
         x += self._vert_border_width
@@ -960,9 +727,6 @@ class TextButton(BaseButton):
 
         elif self._labelpos == wx.RIGHT:
             self.__draw_label(dc, gc, w - tw - 2, (h - th) // 2)
-
-        if (self._horiz_border_width + self._vert_border_width) > 0:
-            self.DrawBorder(dc, gc)
 
         else:
             # Center the text.
@@ -1047,9 +811,9 @@ class ToggleButton(BitmapTextButton):
         if self._pressed != value:
             self._pressed = value
             if value:
-                self._set_state(BaseButton.PRESSED)
+                self._set_state(WindowState().selected)
             else:
-                self._set_state(BaseButton.NORMAL)
+                self._set_state(WindowState().normal)
             self.Refresh()
 
     # -----------------------------------------------------------------------
@@ -1085,13 +849,13 @@ class ToggleButton(BitmapTextButton):
         self.ReleaseMouse()
 
         # If the button was down when the mouse was released...
-        if self._state[1] == BaseButton.PRESSED:
+        if self._state[1] == WindowState().selected:
             self.Notify()
 
             if self._pressed:
-                self._set_state(BaseButton.PRESSED)
+                self._set_state(WindowState().selected)
             else:
-                self._set_state(BaseButton.HIGHLIGHT)
+                self._set_state(WindowState().focused)
 
             # test self, in case the button was destroyed in the eventhandler
             if self:
@@ -1107,16 +871,16 @@ class ToggleButton(BitmapTextButton):
 
         """
         if self._pressed is True:
-            self._set_state(BaseButton.PRESSED)
+            self._set_state(WindowState().selected)
             return
 
-        if self._state[1] == BaseButton.HIGHLIGHT:
-            self._set_state(BaseButton.NORMAL)
+        if self._state[1] == WindowState().focused:
+            self._set_state(WindowState().normal)
             self.Refresh()
             event.Skip()
 
-        elif self._state[1] == BaseButton.PRESSED:
-            self._state[0] = BaseButton.NORMAL
+        elif self._state[1] == WindowState().selected:
+            self._state[0] = WindowState().normal
             self.Refresh()
             event.Skip()
 
@@ -1173,9 +937,9 @@ class BaseCheckButton(BaseButton):
         if self._pressed != value:
             self._pressed = value
             if value:
-                self._set_state(BaseButton.PRESSED)
+                self._set_state(WindowState().selected)
             else:
-                self._set_state(BaseButton.NORMAL)
+                self._set_state(WindowState().normal)
             self.Refresh()
 
     # -----------------------------------------------------------------------
@@ -1211,13 +975,13 @@ class BaseCheckButton(BaseButton):
         self.ReleaseMouse()
 
         # If the button was down when the mouse was released...
-        if self._state[1] == BaseButton.PRESSED:
+        if self._state[1] == WindowState().selected:
             self.Notify()
 
             if self._pressed:
-                self._set_state(BaseButton.PRESSED)
+                self._set_state(WindowState().selected)
             else:
-                self._set_state(BaseButton.HIGHLIGHT)
+                self._set_state(WindowState().focused)
 
             # test self, in case the button was destroyed in the eventhandler
             if self:
@@ -1233,16 +997,16 @@ class BaseCheckButton(BaseButton):
 
         """
         if self._pressed is True:
-            self._set_state(BaseButton.PRESSED)
+            self._set_state(WindowState().selected)
             return
 
-        if self._state[1] == BaseButton.HIGHLIGHT:
-            self._set_state(BaseButton.NORMAL)
+        if self._state[1] == WindowState().focused:
+            self._set_state(WindowState().normal)
             self.Refresh()
             event.Skip()
 
-        elif self._state[1] == BaseButton.PRESSED:
-            self._state[0] = BaseButton.NORMAL
+        elif self._state[1] == WindowState().selected:
+            self._state[0] = WindowState().normal
             self.Refresh()
             event.Skip()
 
@@ -1414,19 +1178,7 @@ class CheckButton(BaseCheckButton):
 
     # ------------------------------------------------------------------------
 
-    def DrawWindow(self):
-        """Draw the button.
-
-        Override the base method.
-
-        """
-        # Get the actual client size of ourselves
-        width, height = self.GetClientSize()
-        if not width or not height:
-            # Nothing to do, we still don't have dimensions!
-            return
-
-        dc, gc = self.Draw()
+    def DrawContent(self, dc, gc):
         img_size = self.DrawCheckImage(dc, gc)
         if self._label:
             self.__DrawLabel(dc, gc, img_size + self._spacing)

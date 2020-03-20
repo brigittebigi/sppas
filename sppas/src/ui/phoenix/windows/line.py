@@ -178,22 +178,8 @@ class sppasStaticLine(sppasDrawWindow):
     # Draw methods (private)
     # ------------------------------------------------------------------------
 
-    def Draw(self):
-        """Draw the line after the WX_EVT_PAINT event.
-
-        """
-        dc, gc = self.PrepareDraw()
+    def DrawContent(self, dc, gc):
         w, h = self.GetClientSize()
-
-        brush = self.GetBackgroundBrush()
-        if brush is not None:
-            dc.SetBackground(brush)
-            dc.Clear()
-
-        dc.SetPen(wx.TRANSPARENT_PEN)
-        dc.SetBrush(brush)
-        dc.DrawRectangle(0, 0, w, h)
-
         pen = wx.Pen(self.GetForegroundColour(),
                      self.__depth,
                      self.__pen_style)
@@ -211,6 +197,12 @@ class sppasStaticLine(sppasDrawWindow):
                         self._horiz_border_width,
                         (w - self.__depth) // 2,
                         h - (2 * self._horiz_border_width))
+
+    def DrawBorder(self, dc, gc):
+        pass
+
+    def DrawFocusIndicator(self, dc, gc):
+        pass
 
 # ---------------------------------------------------------------------------
 

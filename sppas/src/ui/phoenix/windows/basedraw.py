@@ -45,6 +45,91 @@ import wx
 # ---------------------------------------------------------------------------
 
 
+class sppasWindowEvent(wx.PyCommandEvent):
+    """Base class for an event sent when needed.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, event_type, event_id):
+        """Default class constructor.
+
+        :param event_type: the event type;
+        :param event_id: the event identifier.
+
+        """
+        super(sppasWindowEvent, self).__init__(event_type, event_id)
+        self.__window = None
+
+    # ------------------------------------------------------------------------
+
+    def SetObj(self, win):
+        """Set the event object for the event.
+
+        :param win: (wx.Window) the window object
+
+        """
+        self.__window = win
+
+    # ------------------------------------------------------------------------
+
+    def GetObj(self):
+        """Return the object associated with this event."""
+        return self.__window
+
+    # -----------------------------------------------------------------------
+
+    Window = property(GetObj, SetObj)
+
+# ---------------------------------------------------------------------------
+
+
+class WindowState(object):
+    """All states of any sppasBaseWindow.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    :Example:
+
+        >>>with WindowState() as s:
+        >>>    print(s.disabled)
+
+    This class is a solution to mimic an 'Enum' but is compatible with both
+    Python 2.7 and Python 3+.
+
+    """
+
+    def __init__(self):
+        """Create the dictionary."""
+        self.__dict__ = dict(
+            disabled=0,
+            normal=1,
+            focused=2,
+            selected=3
+        )
+
+    # -----------------------------------------------------------------------
+
+    def __enter__(self):
+        return self
+
+    # -----------------------------------------------------------------------
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
+
+# ---------------------------------------------------------------------------
+
+
 class sppasDrawWindow(wx.Window):
     """A base window with a DC to draw some data.
 
@@ -53,6 +138,8 @@ class sppasDrawWindow(wx.Window):
     :contact:      develop@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    A very basic window which can't have the focus.
 
     """
 
@@ -89,22 +176,12 @@ class sppasDrawWindow(wx.Window):
         self._border_color = self._default_border_color
         self._border_style = wx.PENSTYLE_SOLID
 
-        # Focus (True when mouse/keyboard is entered)
-        self._has_focus = False
-        self._default_focus_color = pc
-        self._focus_color = self._default_focus_color
-        self._focus_width = 1
-        self._focus_style = wx.PENSTYLE_DOT
-
         # Bind the events related to our window
         self.Bind(wx.EVT_PAINT, lambda evt: self.DrawWindow())
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnErase)
         self.Bind(wx.EVT_SIZE, self.OnSize)
 
         self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvents)
-
-        self.Bind(wx.EVT_SET_FOCUS, self.OnGainFocus)
-        self.Bind(wx.EVT_KILL_FOCUS, self.OnLoseFocus)
 
         # Setup Initial Size
         # self.SetInitialSize(size)
@@ -143,16 +220,11 @@ class sppasDrawWindow(wx.Window):
         wx.Window.SetForegroundColour(self, colour)
         pc = self.GetPenForegroundColour()
 
-        # If the bordercolor wasn't changed by the user
+        # If the border color wasn't changed by the user
         if self._border_color == self._default_border_color:
             self._border_color = pc
 
-        # If the focuscolor wasn't changed by the user
-        if self._focus_color == self._default_focus_color:
-            self._focus_color = pc
-
         self._default_border_color = pc
-        self._default_focus_color = pc
 
     # -----------------------------------------------------------------------
 
@@ -168,20 +240,19 @@ class sppasDrawWindow(wx.Window):
 
     def AcceptsFocusFromKeyboard(self):
         """Can this window be given focus by tab key?"""
-        # return True
         return False
 
     # -----------------------------------------------------------------------
 
     def AcceptsFocus(self):
         """Can this window be given focus by mouse click?"""
-        return self.IsShown() and self.IsEnabled()
+        return False
 
     # -----------------------------------------------------------------------
 
     def HasFocus(self):
         """Return whether or not we have the focus."""
-        return self._has_focus
+        return False
 
     # -----------------------------------------------------------------------
 
@@ -201,34 +272,6 @@ class sppasDrawWindow(wx.Window):
             wx.Window.Enable(self, enable)
             # re-assign an appropriate border color (Pen)
             self.SetForegroundColour(self.GetForegroundColour())
-
-    # ----------------------------------------------------------------------
-
-    def SetFocusWidth(self, value):
-        """Set the width of the focus at bottom of the button.
-
-        :param value: (int) Focus size. Minimum is 1.
-
-        """
-        value = int(value)
-        w, h = self.GetClientSize()
-        if value < 0:
-            return
-        if value >= (w // 4):
-            return
-        if value >= (h // 4):
-            return
-        self._focus_width = value
-
-    # -----------------------------------------------------------------------
-
-    def GetFocusWidth(self):
-        """Return the width of the focus at bottom of the button.
-
-        :returns: (int)
-
-        """
-        return self._focus_width
 
     # -----------------------------------------------------------------------
 
@@ -319,7 +362,7 @@ class sppasDrawWindow(wx.Window):
     # -----------------------------------------------------------------------
 
     def GetBorderColour(self):
-        """Return the colour of the border all around the button.
+        """Return the colour of the border all around the window.
 
         :returns: (int)
 
@@ -347,20 +390,8 @@ class sppasDrawWindow(wx.Window):
 
     # -----------------------------------------------------------------------
 
-    def GetFocusColour(self):
-        return self._focus_color
-
-    # -----------------------------------------------------------------------
-
-    def SetFocusColour(self, color):
-        if color == self.GetParent().GetBackgroundColour():
-            return
-        self._focus_color = color
-
-    # -----------------------------------------------------------------------
-
     def GetBorderStyle(self):
-        return self._focus_style
+        return self._border_style
 
     # -----------------------------------------------------------------------
 
@@ -374,28 +405,10 @@ class sppasDrawWindow(wx.Window):
 
     # -----------------------------------------------------------------------
 
-    def GetFocusStyle(self):
-        return self._focus_style
-
-    # -----------------------------------------------------------------------
-
-    def SetFocusStyle(self, style):
-        if style not in [wx.PENSTYLE_SOLID, wx.PENSTYLE_LONG_DASH,
-                         wx.PENSTYLE_SHORT_DASH, wx.PENSTYLE_DOT_DASH,
-                         wx.PENSTYLE_HORIZONTAL_HATCH]:
-            wx.LogWarning("Invalid focus style {:s}.".format(str(style)))
-            return
-        self._focus_style = style
-
-    # -----------------------------------------------------------------------
-
     VertBorderWidth = property(GetVertBorderWidth, SetVertBorderWidth)
     HorizBorderWidth = property(GetHorizBorderWidth, SetHorizBorderWidth)
     BorderColour = property(GetBorderColour, SetBorderColour)
     BorderStyle = property(GetBorderStyle, SetBorderStyle)
-    FocusWidth = property(GetFocusWidth, SetFocusWidth)
-    FocusColour = property(GetFocusColour, SetFocusColour)
-    FocusStyle = property(GetFocusStyle, SetFocusStyle)
 
     # -----------------------------------------------------------------------
     # Callbacks to mouse events
@@ -427,12 +440,12 @@ class sppasDrawWindow(wx.Window):
 
             elif event.Moving():
                 # wx.LogDebug('{:s} Moving'.format(self.GetName()))
-                # a motion event and no mouse buttons were pressed.
+                # a motion event and no mouse windows were pressed.
                 self.OnMotion(event)
 
             elif event.Dragging():
                 # wx.LogDebug('{:s} Dragging'.format(self.GetName()))
-                # motion while a button was pressed
+                # motion while a window was pressed
                 self.OnDragging(event)
 
             elif event.ButtonDClick():
@@ -525,7 +538,7 @@ class sppasDrawWindow(wx.Window):
         :param event: a wx.MouseEvent event to be processed.
 
         """
-        self._has_focus = True
+        pass
 
     # -----------------------------------------------------------------------
 
@@ -535,7 +548,7 @@ class sppasDrawWindow(wx.Window):
         :param event: a wx.MouseEvent event to be processed.
 
         """
-        self._has_focus = False
+        pass
 
     # -----------------------------------------------------------------------
 
@@ -578,7 +591,7 @@ class sppasDrawWindow(wx.Window):
         :param event: a wx.FocusEvent event to be processed.
 
         """
-        self._has_focus = True
+        pass
 
     # -----------------------------------------------------------------------
 
@@ -588,7 +601,7 @@ class sppasDrawWindow(wx.Window):
         :param event: a wx.FocusEvent event to be processed.
 
         """
-        self._has_focus = False
+        pass
 
     # -----------------------------------------------------------------------
     # Design
@@ -671,12 +684,12 @@ class sppasDrawWindow(wx.Window):
     # -----------------------------------------------------------------------
 
     def Draw(self):
-        """Draw some parts of the button.
+        """Draw some parts of the window.
 
             1. Prepare the Drawing Context
             2. Draw the background
-            3. Draw focus indicator (if state is 'HIGHLIGHT')
-            4. Draw the border (if border > 0)
+            3. Draw the border (if border > 0)
+            4. Draw the content
 
         :returns: dc, gc
 
@@ -688,14 +701,14 @@ class sppasDrawWindow(wx.Window):
         if (self._vert_border_width + self._horiz_border_width) > 0:
             self.DrawBorder(dc, gc)
 
-        if self._has_focus is True:
-            self.DrawFocusIndicator(dc, gc)
+        self.DrawContent(dc, gc)
 
         return dc, gc
 
     # -----------------------------------------------------------------------
 
     def DrawBackground(self, dc, gc):
+        """Draw the background with a color or transparent."""
         w, h = self.GetClientSize()
 
         brush = self.GetBackgroundBrush()
@@ -745,6 +758,378 @@ class sppasDrawWindow(wx.Window):
 
     # -----------------------------------------------------------------------
 
+    def DrawContent(self, dc, gc):
+        """To be overridden."""
+        pass
+
+# ----------------------------------------------------------------------------
+
+
+class sppasBaseWindow(sppasDrawWindow):
+    """A base window with a DC to draw some data.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    MIN_WIDTH = 24
+    MIN_HEIGHT = 12
+
+    HORIZ_MARGIN_SIZE = 6
+    VERT_MARGIN_SIZE = 6
+
+    # -----------------------------------------------------------------------
+
+    def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
+                 name="basectrl"):
+        """Initialize a new sppasBaseDataWindow instance.
+
+        :param parent: Parent window. Must not be None.
+        :param id:     A value of -1 indicates a default value.
+        :param pos:    If the position (-1, -1) is specified
+                       then a default position is chosen.
+        :param size:   If the default size (-1, -1) is specified
+                       then a default size is chosen.
+        :param style:  often LC_REPORT
+        :param name:      Window name.
+
+        """
+        # The previous and the current states
+        self._state = [WindowState().normal, WindowState().normal]
+
+        super(sppasBaseWindow, self).__init__(
+            parent, id, pos, size, style, name)
+
+        # Focus (True when mouse/keyboard is entered)
+        pc = self.GetPenForegroundColour()
+        self._default_focus_color = pc
+        self._focus_color = self._default_focus_color
+        self._focus_width = 1
+        self._focus_style = wx.PENSTYLE_DOT
+
+        self.Bind(wx.EVT_SET_FOCUS, self.OnGainFocus)
+        self.Bind(wx.EVT_KILL_FOCUS, self.OnLoseFocus)
+
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        """Override.
+
+        :param colour: (wx.Colour)
+
+        """
+        super(sppasBaseWindow, self).SetForegroundColour(colour)
+        pc = self.GetPenForegroundColour()
+
+        # If the focus color wasn't changed by the user
+        if self._focus_color == self._default_focus_color:
+            self._focus_color = pc
+
+        self._default_focus_color = pc
+
+    # -----------------------------------------------------------------------
+
+    def AcceptsFocus(self):
+        """Can this window be given focus by mouse click?"""
+        return self.IsShown() and self.IsEnabled()
+
+    # -----------------------------------------------------------------------
+
+    def HasFocus(self):
+        """Return whether or not we have the focus."""
+        return self._state[1] == WindowState().focused
+
+    # -----------------------------------------------------------------------
+
+    def IsSelected(self):
+        return self._state[1] == WindowState().selected
+
+    # ----------------------------------------------------------------------
+
+    def IsEnabled(self):
+        return self._state[1] != WindowState().disabled
+
+    # ----------------------------------------------------------------------
+
+    def Enable(self, enable=True):
+        """Enable or disable the window.
+
+        :param enable: (bool) True to enable the window.
+
+        """
+        enable = bool(enable)
+        if enable != self.IsEnabled():
+            # wx.Window.Enable(self, enable)
+            if enable is False:
+                self._set_state(WindowState().disabled)
+            else:
+                # set to the previous state
+                if self._state[0] == WindowState().focused and self.HasCapture() is False:
+                    self._set_state(WindowState().normal)
+                else:
+                    self._set_state(self._state[0])
+            # re-assign an appropriate border color (Pen)
+            self.SetForegroundColour(self.GetForegroundColour())
+
+    # -----------------------------------------------------------------------
+
+    def SetFocus(self):
+        """Overridden. Force this window to have the focus."""
+        if self._state[1] != WindowState().selected:
+            self._set_state(WindowState().focused)
+        super(sppasDrawWindow, self).SetFocus()
+
+    # ----------------------------------------------------------------------
+
+    def SetFocusWidth(self, value):
+        """Set the width of the focus at bottom of the window.
+
+        :param value: (int) Focus size. Minimum is 1.
+
+        """
+        value = int(value)
+        w, h = self.GetClientSize()
+        if value < 0:
+            return
+        if value >= (w // 4):
+            return
+        if value >= (h // 4):
+            return
+        self._focus_width = value
+
+    # -----------------------------------------------------------------------
+
+    def GetFocusWidth(self):
+        """Return the width of the focus at bottom of the window.
+
+        :returns: (int)
+
+        """
+        return self._focus_width
+
+    # -----------------------------------------------------------------------
+
+    def GetFocusColour(self):
+        return self._focus_color
+
+    # -----------------------------------------------------------------------
+
+    def SetFocusColour(self, color):
+        if color == self.GetParent().GetBackgroundColour():
+            return
+        self._focus_color = color
+
+    # -----------------------------------------------------------------------
+
+    def GetFocusStyle(self):
+        return self._focus_style
+
+    # -----------------------------------------------------------------------
+
+    def SetFocusStyle(self, style):
+        if style not in [wx.PENSTYLE_SOLID, wx.PENSTYLE_LONG_DASH,
+                         wx.PENSTYLE_SHORT_DASH, wx.PENSTYLE_DOT_DASH,
+                         wx.PENSTYLE_HORIZONTAL_HATCH]:
+            wx.LogWarning("Invalid focus style {:s}.".format(str(style)))
+            return
+        self._focus_style = style
+
+    # -----------------------------------------------------------------------
+
+    FocusWidth = property(GetFocusWidth, SetFocusWidth)
+    FocusColour = property(GetFocusColour, SetFocusColour)
+    FocusStyle = property(GetFocusStyle, SetFocusStyle)
+
+    # -----------------------------------------------------------------------
+
+    def GetPenForegroundColour(self):
+        """Get the foreground color for the pen.
+
+        Pen foreground is normal if the window is enabled and state is normal,
+        but this color is lightness if window is disabled and darkness if
+        state is focused, or the contrary depending on the color.
+
+        """
+        color = self.GetForegroundColour()
+        if self.IsEnabled() is True and self.HasFocus() is False:
+            return color
+
+        r, g, b = color.Red(), color.Green(), color.Blue()
+        delta = 40
+        if ((r + g + b) > 384 and self.IsEnabled() is False) or \
+                ((r + g + b) < 384 and self.HasFocus() is True):
+            return wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
+
+        return wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
+
+    # -----------------------------------------------------------------------
+
+    def Notify(self):
+        evt = sppasWindowEvent(wx.wxEVT_COMMAND_LEFT_CLICK, self.GetId())
+        evt.SetObj(self)
+        evt.SetEventObject(self)
+        self.GetEventHandler().ProcessEvent(evt)
+
+    # -----------------------------------------------------------------------
+
+    def OnMouseLeftDown(self, event):
+        """Handle the wx.EVT_LEFT_DOWN event.
+
+        :param event: a wx.MouseEvent event to be processed.
+
+        """
+        if self.IsEnabled() is False:
+            return
+
+        self._set_state(WindowState().selected)
+        self.CaptureMouse()
+        self.SetFocus()
+        self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def OnMouseLeftUp(self, event):
+        """Handle the wx.EVT_LEFT_UP event.
+
+        :param event: a wx.MouseEvent event to be processed.
+
+        """
+        if self.IsEnabled() is False:
+            return
+
+        # Mouse was down outside of the window (but is up inside)
+        if self.HasCapture() is False:
+            return
+
+        # Directs all mouse input to this window
+        self.ReleaseMouse()
+
+        # If the window was down when the mouse was released...
+        s = self._state[0]
+        if self._state[1] == WindowState().selected:
+            self.Notify()
+            # if we haven't been destroyed by this notify...
+            if self:
+                self._set_state(s)
+
+    # -----------------------------------------------------------------------
+
+    def OnMouseEnter(self, event):
+        """Handle the wx.EVT_ENTER_WINDOW event.
+
+        :param event: a wx.MouseEvent event to be processed.
+
+        """
+        if self._state[1] == WindowState().normal:
+            self._set_state(WindowState().focused)
+            self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def OnMouseLeave(self, event):
+        """Handle the wx.EVT_LEAVE_WINDOW event.
+
+        :param event: a wx.MouseEvent event to be processed.
+
+        """
+        # mouse is leaving either while button is pressed (state is selected)
+        # or not (state is focused). In both cases, we switch to normal state.
+        self._set_state(WindowState().normal)
+        self._set_state(WindowState().normal)
+        self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def OnGainFocus(self, event):
+        """Handle the wx.EVT_SET_FOCUS event.
+
+        :param event: a wx.FocusEvent event to be processed.
+
+        """
+        if self._state[1] == WindowState().normal:
+            self._set_state(WindowState().focused)
+            self.Refresh()
+            self.Update()
+
+    # -----------------------------------------------------------------------
+
+    def OnLoseFocus(self, event):
+        """Handle the wx.EVT_KILL_FOCUS event.
+
+        :param event: a wx.FocusEvent event to be processed.
+
+        """
+        if self._state[1] == WindowState().focused:
+            self._set_state(self._state[0])
+            self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def _set_state(self, state):
+        """Manually set the state of the button.
+
+        :param `state`: (int) one of the state values
+
+        """
+        self._state[0] = self._state[1]
+        self._state[1] = state
+
+        if state == WindowState().focused:
+            self._has_focus = True
+        else:
+            self._has_focus = False
+
+        if self:
+            if wx.Platform == '__WXMSW__':
+                self.GetParent().RefreshRect(self.Rect, False)
+            else:
+                self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def Draw(self):
+        """Draw normally then add focus indicator."""
+        dc, gc = super(sppasBaseWindow, self).Draw()
+
+        if self._state[1] == WindowState().focused:
+            self.DrawFocusIndicator(dc, gc)
+
+    # -----------------------------------------------------------------------
+
+    def DrawContent(self, dc, gc):
+        """Must be overridden.
+
+        Here, we draw the active state of the window.
+
+        """
+        label = "unknown"
+        with WindowState() as s:
+            if self._state[1] == s.disabled:
+                label = "disabled"
+            elif self._state[1] == s.normal:
+                label = "normal"
+            elif self._state[1] == s.selected:
+                label = "selected"
+            elif self._state[1] == s.focused:
+                label = "focused"
+
+        x, y, w, h = self.GetClientRect()
+        x += self._vert_border_width
+        y += self._horiz_border_width
+        w -= (2 * self._vert_border_width)
+        h -= ((2 * self._horiz_border_width) + self._focus_width + 2)
+        tw, th = self.get_text_extend(dc, gc, label)
+
+        self.draw_label(dc, gc, label, (w - tw) // 2, (h - th) // 2)
+
+    # -----------------------------------------------------------------------
+
     def DrawFocusIndicator(self, dc, gc):
         """The focus indicator is a line at the bottom of the window."""
         if self._focus_width == 0:
@@ -760,6 +1145,28 @@ class sppasDrawWindow(wx.Window):
         x = (self._vert_border_width * 2) + 2
         y = h - self._horiz_border_width - self._focus_width - 2
         dc.DrawLine(x, y, w - x - 2, y)
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def get_text_extend(dc, gc, text):
+        if wx.Platform == '__WXGTK__':
+            return dc.GetTextExtent(text)
+        return gc.GetTextExtent(text)
+
+    # -----------------------------------------------------------------------
+
+    def draw_label(self, dc, gc, label, x, y):
+        font = self.GetFont()
+        gc.SetFont(font)
+        dc.SetFont(font)
+        if wx.Platform == '__WXGTK__':
+            dc.SetTextForeground(self.GetForegroundColour())
+            dc.DrawText(label, x, y)
+        else:
+            gc.SetTextForeground(self.GetForegroundColour())
+            gc.DrawText(label, x, y)
+
 
 # ----------------------------------------------------------------------------
 # Panels to test
@@ -799,7 +1206,7 @@ class TestPanel(wx.Panel):
         h = 50
         c = 10
         for i in range(1, 6):
-            win = sppasDrawWindow(self, pos=(x, 70), size=(w, h))
+            win = sppasBaseWindow(self, pos=(x, 70), size=(w, h))
             win.SetBorderWidth(1)
             win.SetFocusWidth(i)
             win.SetFocusColour(wx.Colour(c, c, c))
@@ -807,7 +1214,7 @@ class TestPanel(wx.Panel):
             c += 40
             x += w + 10
 
-        win = sppasDrawWindow(self, pos=(560, 10), size=(50, 110))
+        win = sppasBaseWindow(self, pos=(560, 10), size=(50, 110))
         win.SetHorizBorderWidth(10)
         win.SetVertBorderWidth(2)
         win.SetBackgroundColour(wx.Colour(128, 255, 196))

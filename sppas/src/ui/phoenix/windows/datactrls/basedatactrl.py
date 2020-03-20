@@ -38,9 +38,11 @@
 """
 
 import wx
+import logging
 
 from ..winevents import sppasWindowEvent
-from ..basedraw import sppasDrawWindow
+from ..basedraw import sppasBaseWindow
+from ..basedraw import WindowState
 
 # ---------------------------------------------------------------------------
 
@@ -74,7 +76,8 @@ class sppasWindowSelectedEvent(sppasWindowEvent):
         :param value: (bool) True if the window is selected, False otherwise.
 
         """
-        self.__selected = bool(value)
+        value = bool(value)
+        self.__selected = value
 
     # -----------------------------------------------------------------------
 
@@ -93,7 +96,7 @@ class sppasWindowSelectedEvent(sppasWindowEvent):
 # ---------------------------------------------------------------------------
 
 
-class sppasBaseCtrl(sppasDrawWindow):
+class sppasBaseDataWindow(sppasBaseWindow):
     """A base window with a DC to draw some data.
 
     :author:       Brigitte Bigi
@@ -115,8 +118,8 @@ class sppasBaseCtrl(sppasDrawWindow):
     def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
                  style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
-                 name="listctrl"):
-        """Initialize a new sppasBaseCtrl instance.
+                 name="datactrl"):
+        """Initialize a new sppasBaseDataWindow instance.
 
         :param parent: Parent window. Must not be None.
         :param id:     A value of -1 indicates a default value.
@@ -128,8 +131,58 @@ class sppasBaseCtrl(sppasDrawWindow):
         :param name:      Window name.
 
         """
-        super(sppasBaseCtrl, self).__init__(parent, id, pos, size, style, name)
+        super(sppasBaseDataWindow, self).__init__(
+            parent, id, pos, size, style, name)
 
-        # Members
-        self._is_selected = False
-        self._can_select = True
+# ----------------------------------------------------------------------------
+# Panels to test
+# ----------------------------------------------------------------------------
+
+
+class TestPanel(wx.Panel):
+
+    def __init__(self, parent):
+        super(TestPanel, self).__init__(
+            parent,
+            style=wx.BORDER_NONE | wx.WANTS_CHARS,
+            name="Test BaseDataWindow")
+
+        self.SetForegroundColour(wx.Colour(150, 160, 170))
+        st = [wx.PENSTYLE_SHORT_DASH,
+              wx.PENSTYLE_LONG_DASH,
+              wx.PENSTYLE_DOT_DASH,
+              wx.PENSTYLE_SOLID,
+              wx.PENSTYLE_HORIZONTAL_HATCH]
+
+        # play with the border
+        x = 10
+        w = 120
+        h = 80
+        c = 10
+        for i in range(1, 6):
+            btn = sppasBaseDataWindow(self, pos=(x, 10), size=(w, h))
+            btn.SetBorderWidth(i)
+            btn.SetBorderColour(wx.Colour(c, c, c))
+            btn.SetBorderStyle(st[i-1])
+            c += 40
+            x += w + 10
+
+        # play with the focus
+        x = 10
+        w = 120
+        h = 80
+        c = 10
+        for i in range(1, 6):
+            btn = sppasBaseDataWindow(self, pos=(x, 100), size=(w, h))
+            btn.SetBorderWidth(1)
+            btn.SetFocusWidth(i)
+            btn.SetFocusColour(wx.Colour(c, c, c))
+            btn.SetFocusStyle(st[i-1])
+            c += 40
+            x += w + 10
+
+        vertical = sppasBaseDataWindow(self, pos=(10, 300), size=(50, 110))
+        vertical.SetBackgroundColour(wx.Colour(128, 255, 196))
+
+        btn = sppasBaseDataWindow(self, pos=(100, 300), size=(50, 110))
+        btn.Enable(False)
