@@ -489,10 +489,10 @@ class ChannelInfosPanel(sppasPanel):
 
     def __create_action_button(self, parent, text, icon):
         btn = BitmapTextButton(parent, label=text, name=icon)
-        btn.LabelPosition = wx.RIGHT
-        btn.Spacing = sppasDialog.fix_size(12)
-        btn.BorderWidth = 1
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetLabelPosition(wx.RIGHT)
+        btn.SetSpacing(sppasDialog.fix_size(12))
+        btn.SetBorderWidth(1)
+        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(sppasDialog.fix_size(64),
                                sppasDialog.fix_size(32)))
 

@@ -485,6 +485,7 @@ class TabsPanel(sppasPanel):
         label = TAB + " #{:d}".format(self.__counter)
 
         btn = RadioButton(self, label=label, name=name)
+        btn.SetBorderWidth(2)
         btn.SetValue(False)
         btn.SetSpacing(sppasPanel.fix_size(12))
         btn.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
@@ -556,7 +557,7 @@ class TabsPanel(sppasPanel):
 
     def __set_normal_btn_style(self, button):
         """Set a normal style to a button."""
-        button.BorderWidth = 0
+        button.SetBorderWidth(0)
         button.BorderColour = self.GetForegroundColour()
         button.BorderStyle = wx.PENSTYLE_SOLID
         button.FocusColour = TabsManager.HIGHLIGHT_COLOUR
@@ -565,9 +566,9 @@ class TabsPanel(sppasPanel):
 
     def __set_active_btn_style(self, button):
         """Set a special style to the button."""
-        button.BorderWidth = 1
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = self.GetForegroundColour()
+        button.SetBorderWidth(1)
+        button.SetBorderStyle(wx.PENSTYLE_SOLID)
+        button.SetFocusColour(self.GetForegroundColour())
         if button in self.__colors:
             button.SetBorderColour(self.__colors[button])
 

@@ -376,11 +376,10 @@ class sppasPluginDescription(sppasPanel):
         btn_enable.SetImage(
             os.path.join(self.__plugin.get_directory(),
                          self.__plugin.get_icon()))
-        btn_enable.LabelPosition = wx.BOTTOM
-        btn_enable.Spacing = 6
-        btn_enable.FocusWidth = 0
-        btn_enable.BorderWidth = 0
-        btn_enable.BitmapColour = self.GetForegroundColour()
+        btn_enable.SetLabelPosition(wx.BOTTOM)
+        btn_enable.SetSpacing(sppasPanel.fix_size(6))
+        btn_enable.SetFocusWidth(0)
+        btn_enable.SetBitmapColour(self.GetForegroundColour())
         btn_enable.SetMinSize(wx.Size(w, h))
 
         return btn_enable

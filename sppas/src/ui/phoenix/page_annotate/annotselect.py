@@ -142,9 +142,8 @@ class sppasAnnotationsPanel(sppasPanel):
 
         top_panel = sppasPanel(self, name="annotselect_top_panel")
         btn_back_top = BitmapTextButton(top_panel, name="arrow_up")
-        btn_back_top.FocusWidth = 0
-        btn_back_top.BorderWidth = 0
-        btn_back_top.BitmapColour = self.GetForegroundColour()
+        btn_back_top.SetFocusWidth(0)
+        btn_back_top.SetBitmapColour(self.GetForegroundColour())
         btn_back_top.SetMinSize(wx.Size(btn_size, btn_size))
 
         title = sppasStaticText(
@@ -313,10 +312,9 @@ class sppasEnableAnnotation(sppasPanel):
         btn_enable = BitmapTextButton(
             panel, label=self.__annparam.get_name(), name="on-off-off")
         btn_enable.LabelPosition = wx.RIGHT
-        btn_enable.Spacing = 12
-        btn_enable.FocusWidth = 0
-        btn_enable.BorderWidth = 0
-        btn_enable.BitmapColour = self.GetForegroundColour()
+        btn_enable.SetSpacing(sppasPanel.fix_size(12))
+        btn_enable.SetFocusWidth(0)
+        btn_enable.SetBitmapColour(self.GetForegroundColour())
         btn_enable.SetMinSize(wx.Size(w-2, h-2))
         btn_enable.SetMaxSize(wx.Size(w-2, h))
 

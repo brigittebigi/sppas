@@ -666,15 +666,14 @@ class sppasCollapsiblePanel(sppasPanel):
         else:
             icon = "arrow_expanded"
         btn = BitmapTextButton(parent, label=text, name=icon)
-        btn.LabelPosition = wx.RIGHT
-        btn.Align = wx.ALIGN_LEFT
+        btn.SetLabelPosition(wx.RIGHT)
+        btn.SetAlign(wx.ALIGN_LEFT)
 
-        btn.FocusStyle = wx.PENSTYLE_SOLID
-        btn.FocusWidth = 1
-        btn.FocusColour = self.GetForegroundColour()
-        btn.Spacing = sppasPanel.fix_size(4)
-        btn.BorderWidth = 0
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetFocusStyle(wx.PENSTYLE_SOLID)
+        btn.SetFocusWidth(1)
+        btn.SetFocusColour(self.GetForegroundColour())
+        btn.SetSpacing(sppasPanel.fix_size(4))
+        btn.SetBitmapColour(self.GetForegroundColour())
         h = self.GetButtonHeight()
         btn_w = sppasPanel.fix_size(h*10)
         btn_h = sppasPanel.fix_size(h)

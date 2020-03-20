@@ -293,11 +293,11 @@ class sppasActionAnnotatePanel(sppasPanel):
         h = sppasPanel.fix_size(42)
 
         btn = BitmapTextButton(parent, label=label)
-        btn.LabelPosition = wx.RIGHT
-        btn.Spacing = 12
-        btn.BorderWidth = 2
-        btn.BorderColour = wx.Colour(128, 128, 128, 128)
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetBorderWidth(2)
+        btn.SetLabelPosition(wx.RIGHT)
+        btn.SetSpacing(12)
+        btn.SetBorderColour(wx.Colour(128, 128, 128, 128))
+        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(w, h))
         return btn
 
@@ -574,19 +574,19 @@ class ReportsPanel(sppasScrolledPanel):
 
     def __set_normal_btn_style(self, button):
         """Set a normal style to a button."""
-        button.BorderWidth = 0
-        button.BorderColour = self.GetForegroundColour()
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = wx.Colour(128, 128, 128, 128)
+        button.SetBorderWidth(0)
+        button.SetBorderColour(self.GetForegroundColour())
+        button.SetBorderStyle(wx.PENSTYLE_SOLID)
+        button.SetFocusColour(wx.Colour(128, 128, 128, 128))
 
     # -----------------------------------------------------------------------
 
     def __set_active_btn_style(self, button):
         """Set a highlight style to the button."""
-        button.BorderWidth = 1
-        button.BorderColour = ReportsPanel.HIGHLIGHT_COLOR
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = self.GetForegroundColour()
+        button.SetBorderWidth(1)
+        button.SetBorderColour(ReportsPanel.HIGHLIGHT_COLOR)
+        button.SetBorderStyle(wx.PENSTYLE_SOLID)
+        button.SetFocusColour(self.GetForegroundColour())
 
     # -----------------------------------------------------------------------
     # Private methods

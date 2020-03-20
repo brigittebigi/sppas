@@ -309,7 +309,7 @@ class sppasToolbar(sppasPanel):
             raise TypeError("At least an icon or a text is required to create a button")
         if icon is not None:
             btn = BitmapTextButton(self, label=text, name=icon)
-            btn.LabelPosition = wx.RIGHT
+            btn.SetLabelPosition(wx.RIGHT)
             if text is None:
                 btn.SetSpacing(0)
                 btn.SetMaxSize(wx.Size(self._h*2, self._h*2))
@@ -319,13 +319,13 @@ class sppasToolbar(sppasPanel):
 
         else:
             btn = TextButton(self, label=text)
-            btn.LabelPosition = wx.CENTRE
+            btn.SetLabelPosition(wx.CENTRE)
 
-        btn.FocusStyle = self._fs
-        btn.FocusWidth = self._fw
-        btn.FocusColour = self._fc
-        btn.BorderWidth = 0
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetFocusStyle(self._fs)
+        btn.SetFocusWidth(self._fw)
+        btn.SetFocusColour(self._fc)
+        btn.SetBorderWidth(0)
+        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(self._h, self._h))
 
         return btn

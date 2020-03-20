@@ -216,8 +216,7 @@ class sppasOptionsPanel(sppasScrolledPanel):
         filebtn = BitmapTextButton(self, name="folder-add")
         filebtn.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(24),
                                    sppasScrolledPanel.fix_size(24)))
-        filebtn.BorderWidth = 0
-        filebtn.Spacing = 0
+        filebtn.SetSpacing(0)
         filebtn.Bind(wx.EVT_BUTTON, self.__on_select_filename)
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)

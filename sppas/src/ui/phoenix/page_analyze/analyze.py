@@ -480,6 +480,7 @@ class sppasAnalyzePanel(sppasPanel):
                 sppasAnalyzePanel.VIEWS[view_name],
                 value=False,
                 group_name="views")
+            btn.SetBorderWidth(2)
             # btn.Enable(False)
 
         tb.AddSpacer(1)

@@ -234,9 +234,8 @@ class sppasPlayerControlsPanel(sppasPanel):
         :param btn: (BaseButton of sppas)
 
         """
-        btn.FocusWidth = 1
-        btn.Spacing = 0
-        btn.BorderWidth = 0
+        btn.SetFocusWidth(1)
+        btn.SetSpacing(0)
         btn.SetMinSize(wx.Size(sppasPanel.fix_size(28),
                                sppasPanel.fix_size(28)))
         return btn

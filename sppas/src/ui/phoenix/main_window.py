@@ -522,7 +522,6 @@ class sppasMenuPanel(sppasPanel):
         btn.FocusWidth = h//4
         btn.FocusColour = wx.Colour(128, 128, 128, 128)
         btn.Spacing = sppasPanel.fix_size(h//2)
-        btn.BorderWidth = 0
         btn.BitmapColour = self.GetForegroundColour()
         btn.SetMinSize(wx.Size(h*10, h*3))
 
@@ -594,7 +593,6 @@ class sppasActionsPanel(sppasPanel):
         btn.FocusWidth = h//4
         btn.FocusColour = wx.Colour(128, 128, 128, 128)
         btn.Spacing = sppasPanel.fix_size(h//2)
-        btn.BorderWidth = 0
         btn.BitmapColour = self.GetForegroundColour()
         btn.SetMinSize(wx.Size(h*10, h*2))
 

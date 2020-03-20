@@ -69,6 +69,7 @@ from wx.lib.buttons import GenBitmapTextButton, GenButton, GenBitmapButton
 
 from ..tools import sppasSwissKnife
 from .image import ColorizeImage
+from .basedraw import sppasDrawWindow
 
 # ---------------------------------------------------------------------------
 
@@ -271,7 +272,7 @@ class ToggleButtonEvent(ButtonEvent):
     def SetIsDown(self, is_down):
         """Set the button toggle status as 'down' or 'up'.
 
-        :param isDown: (bool) True if the button is clicked, False otherwise.
+        :param is_down: (bool) True if the button is clicked, False otherwise.
 
         """
         self.__isdown = bool(is_down)
@@ -290,7 +291,7 @@ class ToggleButtonEvent(ButtonEvent):
 # ---------------------------------------------------------------------------
 
 
-class BaseButton(wx.Window):
+class BaseButton(sppasDrawWindow):
     """BaseButton is a custom type of window to represent a button.
 
     :author:       Brigitte Bigi
@@ -304,10 +305,6 @@ class BaseButton(wx.Window):
     NORMAL = 0
     PRESSED = 1
     HIGHLIGHT = 2
-
-    # Button Min Size
-    MIN_WIDTH = 12
-    MIN_HEIGHT = 12
 
     # -----------------------------------------------------------------------
 
@@ -328,128 +325,23 @@ class BaseButton(wx.Window):
         :param name: (str) Name of the button.
 
         """
+        # Preceding state and current one
+        self._state = [BaseButton.NORMAL, BaseButton.NORMAL]
+
         super(BaseButton, self).__init__(
             parent, id, pos, size,
             style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
             name=name)
 
-        # Preceding state and current one
-        self._state = [BaseButton.NORMAL, BaseButton.NORMAL]
+        # By default, our buttons don't have borders
+        self._vert_border_width = 0
+        self._horiz_border_width = 0
 
-        # Background
-        self._bgcolor = None
-
-        # Border to draw (0=no border)
-        pc = self.GetPenForegroundColour()
-        self._borderwidth = 2
-        self._default_bordercolor = pc
-        self._bordercolor = self._default_bordercolor
-        self._borderstyle = wx.PENSTYLE_SOLID
-
-        # Focus (True when mouse/keyboard is entered)
-        self._hasfocus = False
-        self._default_focuscolor = pc
-        self._focuscolor = self._default_focuscolor
-        self._focuswidth = 1
-        self._focusstyle = wx.PENSTYLE_DOT
+        self._min_width = 12
+        self._min_height = 12
 
         # Setup Initial Size
-        # self.InheritAttributes()
         self.SetInitialSize(size)
-
-        # Bind the events related to our window
-        self.Bind(wx.EVT_PAINT, lambda evt: self.DrawButton())
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnErase)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
-
-        self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvents)
-
-        self.Bind(wx.EVT_SET_FOCUS, self.OnGainFocus)
-        self.Bind(wx.EVT_KILL_FOCUS, self.OnLoseFocus)
-
-        # Allow sub-classes to bind other events
-        self.InitOtherEvents()
-
-    # -----------------------------------------------------------------------
-
-    def SetBackgroundColour(self, colour):
-        """Override. Apply bg colour instead of transparency.
-
-        :param colour: (wx.Colour) None to be transparent
-
-        """
-        self._bgcolor = colour
-
-    # -----------------------------------------------------------------------
-
-    def SetForegroundColour(self, colour):
-        """Override. Apply fg colour to both the image and the text.
-
-        :param colour: (wx.Colour)
-
-        """
-        wx.Window.SetForegroundColour(self, colour)
-        pc = self.GetPenForegroundColour()
-
-        # If the bordercolor wasn't changed by the user
-        if self._bordercolor == self._default_bordercolor:
-            self._bordercolor = pc
-
-        # If the focuscolor wasn't changed by the user
-        if self._focuscolor == self._default_focuscolor:
-            self._focuscolor = pc
-
-        self._default_bordercolor = pc
-        self._default_focuscolor = pc
-
-    # -----------------------------------------------------------------------
-
-    def InitOtherEvents(self):
-        """Initialize other events than paint, mouse or focus.
-
-        Override this method in a subclass to initialize any other events that
-        need to be bound.  Added so __init__ method doesn't need to be
-        overridden, which is complicated with multiple inheritance.
-
-        """
-        pass
-
-    # -----------------------------------------------------------------------
-
-    def GetDefaultAttributes(self):
-        """Overridden base class virtual.
-
-        By default we should use the same font/colour attributes as the
-        native class wx.Button, but for this custom button we use the
-        parent ones.
-
-        :returns: an instance of wx.VisualAttributes.
-
-        """
-        # att = wx.VisualAttributes()
-        # att.colBg = wx.Colour(0, 0, 0, 255)
-        # att.colFg = self.GetForegroundColour()
-        # att.font = self.GetFont()
-        return self.GetParent().GetClassDefaultAttributes()
-
-    # -----------------------------------------------------------------------
-
-    def AcceptsFocusFromKeyboard(self):
-        """Can this window be given focus by tab key?"""
-        # return True
-        return False
-
-    # -----------------------------------------------------------------------
-
-    def AcceptsFocus(self):
-        """Can this window be given focus by mouse click?"""
-        return self.IsShown() and self.IsEnabled()
-
-    # -----------------------------------------------------------------------
-
-    def HasFocus(self):
-        """Return whether or not we have the focus."""
-        return self._hasfocus
 
     # -----------------------------------------------------------------------
 
@@ -458,89 +350,6 @@ class BaseButton(wx.Window):
         if self._state[1] != BaseButton.PRESSED:
             self._set_state(BaseButton.HIGHLIGHT)
         super(BaseButton, self).SetFocus()
-
-    # -----------------------------------------------------------------------
-
-    def ShouldInheritColours(self):
-        """Overridden base class virtual.
-
-        Buttons usually don't inherit the parent's colours but we do it. We
-        are customizing!!!
-
-        """
-        return True
-
-    # ----------------------------------------------------------------------
-
-    def Enable(self, enable=True):
-        """Enable or disable the button.
-
-        :param enable: (bool) True to enable the button.
-
-        """
-        if enable != self.IsEnabled():
-            wx.Window.Enable(self, enable)
-            # re-assign an appropriate border color (Pen)
-            self.SetForegroundColour(self.GetForegroundColour())
-
-    # ----------------------------------------------------------------------
-
-    def SetFocusWidth(self, value):
-        """Set the width of the focus at bottom of the button.
-
-        :param value: (int) Focus size. Minimum is 1.
-
-        """
-        value = int(value)
-        w, h = self.GetClientSize()
-        if value < 0:
-            return
-        if value >= (w // 4):
-            return
-        if value >= (h // 4):
-            return
-        self._focuswidth = value
-
-    # -----------------------------------------------------------------------
-
-    def GetFocusWidth(self):
-        """Return the width of the focus at bottom of the button.
-
-        :returns: (int)
-
-        """
-        return self._focuswidth
-
-    # -----------------------------------------------------------------------
-
-    def SetBorderWidth(self, value):
-        """Set the width of the border all around the button.
-
-        :param value: (int) Border size. Not applied if not appropriate.
-
-        """
-        value = int(value)
-        w, h = self.GetClientSize()
-        if value < 0:
-            # wx.LogWarning("Invalid border width {:d} (negative value).".format(value))
-            return
-        if w > 0 and value >= (w // 2):
-            # wx.LogWarning("Invalid border width {:d} (highter than width {:d}).".format(value, w))
-            return
-        if h > 0 and value >= (h // 2):
-            # wx.LogWarning("Invalid border width {:d} (highter than height {:d}).".format(value, h))
-            return
-        self._borderwidth = value
-
-    # -----------------------------------------------------------------------
-
-    def GetBorderWidth(self):
-        """Return the width of the border all around the button.
-
-        :returns: (int)
-
-        """
-        return self._borderwidth
 
     # -----------------------------------------------------------------------
 
@@ -565,164 +374,7 @@ class BaseButton(wx.Window):
         return wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
 
     # -----------------------------------------------------------------------
-
-    def GetBorderColour(self):
-        """Return the colour of the border all around the button.
-
-        :returns: (int)
-
-        """
-        return self._bordercolor
-
-    def SetBorderColour(self, color):
-        self._bordercolor = color
-
-    # -----------------------------------------------------------------------
-
-    def GetHighlightedBackgroundColour(self):
-        if self._bgcolor is not None:
-            color = self._bgcolor
-        else:
-            color = self.GetParent().GetBackgroundColour()
-        r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
-
-        delta = 15
-        if (r + g + b) > 384:
-            return wx.Colour(r, g, b, a).ChangeLightness(100 - delta)
-        return wx.Colour(r, g, b, a).ChangeLightness(100 + delta)
-
-    # -----------------------------------------------------------------------
-
-    def GetFocusColour(self):
-        return self._focuscolor
-
-    def SetFocusColour(self, color):
-        if color == self.GetParent().GetBackgroundColour():
-            return
-        self._focuscolor = color
-
-    # -----------------------------------------------------------------------
-
-    def GetBorderStyle(self):
-        return self._focusstyle
-
-    def SetBorderStyle(self, style):
-        if style not in [wx.PENSTYLE_SOLID, wx.PENSTYLE_LONG_DASH,
-                         wx.PENSTYLE_SHORT_DASH, wx.PENSTYLE_DOT_DASH,
-                         wx.PENSTYLE_HORIZONTAL_HATCH]:
-            wx.LogWarning("Invalid border style {:s}.".format(str(style)))
-            return
-        self._borderstyle = style
-
-    # -----------------------------------------------------------------------
-
-    def GetFocusStyle(self):
-        return self._focusstyle
-
-    def SetFocusStyle(self, style):
-        if style not in [wx.PENSTYLE_SOLID, wx.PENSTYLE_LONG_DASH,
-                         wx.PENSTYLE_SHORT_DASH, wx.PENSTYLE_DOT_DASH,
-                         wx.PENSTYLE_HORIZONTAL_HATCH]:
-            wx.LogWarning("Invalid focus style {:s}.".format(str(style)))
-            return
-        self._focusstyle = style
-
-    # -----------------------------------------------------------------------
-
-    BorderWidth = property(GetBorderWidth, SetBorderWidth)
-    BorderColour = property(GetBorderColour, SetBorderColour)
-    BorderStyle = property(GetBorderStyle, SetBorderStyle)
-    FocusWidth = property(GetFocusWidth, SetFocusWidth)
-    FocusColour = property(GetFocusColour, SetFocusColour)
-    FocusStyle = property(GetFocusStyle, SetFocusStyle)
-
-    # -----------------------------------------------------------------------
     # Callbacks
-    # -----------------------------------------------------------------------
-
-    def OnSize(self, event):
-        """Handle the wx.EVT_SIZE event.
-
-        :param event: a wx.SizeEvent event to be processed.
-
-        """
-        event.Skip()
-        self.Refresh()
-
-    # -----------------------------------------------------------------------
-
-    def OnMouseEvents(self, event):
-        """Handle the wx.EVT_MOUSE_EVENTS event.
-
-        Do not accept the event if the button is disabled.
-
-        """
-        if self.IsEnabled() is True:
-
-            if event.Entering():
-                # wx.LogDebug('{:s} Entering'.format(self.GetName()))
-                self.OnMouseEnter(event)
-
-            elif event.Leaving():
-                # wx.LogDebug('{:s} Leaving'.format(self.GetName()))
-                self.OnMouseLeave(event)
-
-            elif event.LeftDown():
-                # wx.LogDebug('{:s} LeftDown'.format(self.GetName()))
-                self.OnMouseLeftDown(event)
-
-            elif event.LeftUp():
-                # wx.LogDebug('{:s} LeftUp'.format(self.GetName()))
-                self.OnMouseLeftUp(event)
-
-            elif event.Moving():
-                # wx.LogDebug('{:s} Moving'.format(self.GetName()))
-                # a motion event and no mouse buttons were pressed.
-                self.OnMotion(event)
-
-            elif event.Dragging():
-                # wx.LogDebug('{:s} Dragging'.format(self.GetName()))
-                # motion while a button was pressed
-                self.OnDragging(event)
-
-            elif event.ButtonDClick():
-                # wx.LogDebug('{:s} ButtonDClick'.format(self.GetName()))
-                self.OnMouseDoubleClick(event)
-
-            elif event.RightDown():
-                # wx.LogDebug('{:s} RightDown'.format(self.GetName()))
-                self.OnMouseRightDown(event)
-
-            elif event.RightUp():
-                # wx.LogDebug('{:s} RightUp'.format(self.GetName()))
-                self.OnMouseRightUp(event)
-
-            else:
-                # wx.LogDebug('{:s} Other mouse event'.format(self.GetName()))
-                pass
-
-        event.Skip()
-
-    # -----------------------------------------------------------------------
-
-    def OnMouseRightDown(self, event):
-        """Handle the wx.EVT_RIGHT_DOWN event.
-
-        :param event: a wx.MouseEvent event to be processed.
-
-        """
-        pass
-
-    # -----------------------------------------------------------------------
-
-    def OnMouseRightUp(self, event):
-        """Handle the wx.EVT_RIGHT_UP event.
-
-        :param event: a wx.MouseEvent event to be processed.
-
-        """
-        pass
-
     # -----------------------------------------------------------------------
 
     def OnMouseLeftDown(self, event):
@@ -761,30 +413,6 @@ class BaseButton(wx.Window):
             # if we haven't been destroyed by this notify...
             if self:
                 self._set_state(s)
-
-    # -----------------------------------------------------------------------
-
-    def OnMotion(self, event):
-        """Handle the wx.EVT_MOTION event.
-
-        To be overridden.
-
-        :param event: a :class:wx.MouseEvent event to be processed.
-
-        """
-        pass
-
-    # -----------------------------------------------------------------------
-
-    def OnDragging(self, event):
-        """Handle the wx.EVT_MOTION event.
-
-        To be overridden.
-
-        :param event: a :class:wx.MouseEvent event to be processed.
-
-        """
-        pass
 
     # -----------------------------------------------------------------------
 
@@ -836,16 +464,6 @@ class BaseButton(wx.Window):
 
     # -----------------------------------------------------------------------
 
-    def OnKeyDown(self, event):
-        """Handle the wx.EVT_KEY_DOWN event.
-
-        :param event: a wx.KeyEvent event to be processed.
-
-        """
-        pass
-
-    # -----------------------------------------------------------------------
-
     def OnKeyUp(self, event):
         """Handle the wx.EVT_KEY_UP event.
 
@@ -862,49 +480,7 @@ class BaseButton(wx.Window):
             wx.CallLater(100, self._set_state, BaseButton.HIGHLIGHT)
 
     # -----------------------------------------------------------------------
-
-    def OnMouseDoubleClick(self, event):
-        """Handle the wx.EVT_LEFT_DCLICK or wx.EVT_RIGHT_DCLICK event.
-
-        :param event: a wx.MouseEvent event to be processed.
-
-        """
-        pass
-
-    # -----------------------------------------------------------------------
-
-    def OnErase(self, evt):
-        """Trap the erase event to keep the background transparent on windows.
-
-        :param evt: wx.EVT_ERASE_BACKGROUND
-
-        """
-        pass
-
-    # -----------------------------------------------------------------------
     # Design
-    # -----------------------------------------------------------------------
-
-    def SetInitialSize(self, size=None):
-        """Calculate and set a good size.
-
-        :param size: an instance of wx.Size.
-
-        """
-        self.SetMinSize(wx.Size(BaseButton.MIN_WIDTH, BaseButton.MIN_HEIGHT))
-        if size is None:
-            size = wx.DefaultSize
-
-        (w, h) = size
-        if w < BaseButton.MIN_WIDTH:
-            w = BaseButton.MIN_WIDTH
-        if h < BaseButton.MIN_HEIGHT:
-            h = BaseButton.MIN_HEIGHT
-
-        wx.Window.SetInitialSize(self, wx.Size(w, h))
-
-    SetBestSize = SetInitialSize
-
     # -----------------------------------------------------------------------
 
     def Notify(self):
@@ -915,72 +491,7 @@ class BaseButton(wx.Window):
         self.GetEventHandler().ProcessEvent(evt)
 
     # -----------------------------------------------------------------------
-
-    def GetBackgroundBrush(self, dc):
-        """Get the brush for drawing the background of the button.
-
-        :returns: (wx.Brush)
-
-        """
-        if self._state[1] != BaseButton.PRESSED:
-            if self._bgcolor is None:
-                if wx.Platform == '__WXMAC__':
-                    return wx.TRANSPARENT_BRUSH
-
-                color = self.GetParent().GetBackgroundColour()
-                return wx.Brush(color, wx.BRUSHSTYLE_TRANSPARENT)
-            else:
-                return wx.Brush(self._bgcolor, wx.SOLID)
-
-        else:
-            # this line assumes that a pressed button should be highlighted with
-            # a solid colour even if the background is supposed to be transparent
-            return wx.Brush(self.GetHighlightedBackgroundColour(), wx.SOLID)
-
-    # -----------------------------------------------------------------------
     # Draw methods (private)
-    # -----------------------------------------------------------------------
-
-    def PrepareDraw(self):
-        """Prepare the DC to draw the button.
-
-        :returns: (tuple) dc, gc
-
-        """
-        # Create the Graphic Context
-        dc = wx.AutoBufferedPaintDCFactory(self)
-        gc = wx.GCDC(dc)
-
-        # In any case, the brush is transparent
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        gc.SetBrush(wx.TRANSPARENT_BRUSH)
-        gc.SetBackgroundMode(wx.TRANSPARENT)
-        #if wx.Platform in ['__WXGTK__', '__WXMSW__']:
-            # The background needs some help to look transparent on
-            # Gtk and Windows
-        #    gc.SetBackground(self.GetBackgroundBrush(gc))
-        #    gc.Clear()
-
-        # Font
-        gc.SetFont(self.GetFont())
-        dc.SetFont(self.GetFont())
-
-        return dc, gc
-
-    # -----------------------------------------------------------------------
-
-    def DrawButton(self):
-        """Draw the button after the WX_EVT_PAINT event.
-
-        """
-        # Get the actual client size of ourselves
-        width, height = self.GetClientSize()
-        if not width or not height:
-            # Nothing to do, we still don't have dimensions!
-            return
-
-        self.Draw()
-
     # -----------------------------------------------------------------------
 
     def Draw(self):
@@ -998,73 +509,13 @@ class BaseButton(wx.Window):
 
         self.DrawBackground(dc, gc)
 
-        if self._borderwidth > 0:
+        if (self._horiz_border_width + self._vert_border_width) > 0:
             self.DrawBorder(dc, gc)
 
         if self._state[1] == BaseButton.HIGHLIGHT:
             self.DrawFocusIndicator(dc, gc)
 
         return dc, gc
-
-    # -----------------------------------------------------------------------
-
-    def DrawBackground(self, dc, gc):
-        w, h = self.GetClientSize()
-
-        brush = self.GetBackgroundBrush(dc)
-        if brush is not None:
-            dc.SetBackground(brush)
-            dc.Clear()
-
-        dc.SetPen(wx.TRANSPARENT_PEN)
-        dc.SetBrush(brush)
-        dc.DrawRoundedRectangle(
-            self._borderwidth,
-            self._borderwidth,
-            w - (2 * self._borderwidth),
-            h - (2 * self._borderwidth),
-            self._borderwidth)
-
-    # -----------------------------------------------------------------------
-
-    def DrawBorder(self, dc, gc):
-        w, h = self.GetClientSize()
-        r = self._bordercolor.Red()
-        g = self._bordercolor.Green()
-        b = self._bordercolor.Blue()
-        a = self._bordercolor.Alpha()
-
-        for i in reversed(range(self._borderwidth)):
-            # gradient border color, using transparency
-            alpha = max(a - (i * 25), 0)
-            pen = wx.Pen(wx.Colour(r, g, b, alpha), 1, self._borderstyle)
-            dc.SetPen(pen)
-
-            # upper line
-            dc.DrawLine(self._borderwidth - i, i, w - self._borderwidth + i, i)
-            # left line
-            dc.DrawLine(i, self._borderwidth - i, i, h - self._borderwidth + i)
-            # bottom line
-            dc.DrawLine(self._borderwidth - i, h - i - 1, w - self._borderwidth + i, h - i - 1)
-            # right line
-            dc.DrawLine(w - i - 1, self._borderwidth - i, w - i - 1, h - self._borderwidth + i)
-
-    # -----------------------------------------------------------------------
-
-    def DrawFocusIndicator(self, dc, gc):
-        if self._focuswidth == 0:
-            return
-
-        focus_pen = wx.Pen(self._focuscolor,
-                           self._focuswidth,
-                           self._focusstyle)
-
-        w, h = self.GetClientSize()
-        dc.SetPen(focus_pen)
-        gc.SetPen(focus_pen)
-        x = (self._borderwidth * 2) + 2
-        y = h - self._borderwidth - self._focuswidth - 2
-        dc.DrawLine(x, y, w - x - 2, y)
 
     # -----------------------------------------------------------------------
     # Private
@@ -1078,6 +529,11 @@ class BaseButton(wx.Window):
         """
         self._state[0] = self._state[1]
         self._state[1] = state
+
+        if state == BaseButton.HIGHLIGHT:
+            self._has_focus = True
+        else:
+            self._has_focus = False
 
         # if it's not an 'exit' button, we still exist!
         if self:
@@ -1165,9 +621,9 @@ class BitmapTextButton(BaseButton):
 
         dc = wx.ClientDC(self)
         dc.SetFont(self.GetFont())
-        retWidth, retHeight = dc.GetTextExtent(label)
+        ret_width, ret_height = dc.GetTextExtent(label)
 
-        width = int(max(retWidth, retHeight) * 1.5)
+        width = int(max(ret_width, ret_height) * 1.5)
         return wx.Size(width, width)
 
     # -----------------------------------------------------------------------
@@ -1254,13 +710,12 @@ class BitmapTextButton(BaseButton):
             self.DrawFocusIndicator(dc, gc)
 
         x, y, w, h = self.GetClientRect()
-        bd = max(self.GetBorderWidth(), 2)
-        x += bd
-        y += bd
-        w -= (2 * bd)
-        h -= ((2 * bd) + self.FocusWidth + 2)
+        x += max(self._vert_border_width, 2)
+        y += max(self._horiz_border_width, 2)
+        w -= (2 * self._vert_border_width)
+        h -= ((2 * self._horiz_border_width) + self._focus_width + 2)
 
-        if self._borderwidth > 0:
+        if (self._horiz_border_width + self._vert_border_width) > 0:
             self.DrawBorder(dc, gc)
 
         if w >= 4 and h >= 4:
@@ -1275,12 +730,12 @@ class BitmapTextButton(BaseButton):
             x_pos, y_pos, bmp_size = self.__get_bitmap_properties(x, y, w, h)
             designed = self.__draw_bitmap(dc, gc, x_pos, y_pos, bmp_size)
             if designed is False:
-                pen = wx.Pen(self.GetPenForegroundColour(), 1, self._borderstyle)
+                pen = wx.Pen(self.GetPenForegroundColour(), 1, self._border_style)
                 dc.SetPen(pen)
-                dc.DrawRectangle(self._borderwidth,
-                                 self._borderwidth,
-                                 w - (2 * self._borderwidth),
-                                 h - (2 * self._borderwidth))
+                dc.DrawRectangle(self._vert_border_width,
+                                 self._horiz_border_width,
+                                 w - (2 * self._vert_border_width),
+                                 h - (2 * self._horiz_border_width))
 
         else:
             tw, th = self.get_text_extend(dc, gc, self._label)
@@ -1486,11 +941,10 @@ class TextButton(BaseButton):
             self.DrawFocusIndicator(dc, gc)
 
         x, y, w, h = self.GetClientRect()
-        bd = max(self.GetBorderWidth(), 2)
-        x += bd
-        y += bd
-        w -= (2 * bd)
-        h -= ((2 * bd) + self.FocusWidth + 2)
+        x += self._vert_border_width
+        y += self._horiz_border_width
+        w -= (2 * self._vert_border_width)
+        h -= ((2 * self._horiz_border_width) + self._focus_width + 2)
 
         # No label is defined.
         tw, th = self.get_text_extend(dc, gc, self._label)
@@ -1505,9 +959,9 @@ class TextButton(BaseButton):
             self.__draw_label(dc, gc, 2, (h - th) // 2)
 
         elif self._labelpos == wx.RIGHT:
-            self.__draw_label(dc, gc, w - tw - 2 , (h - th) // 2)
+            self.__draw_label(dc, gc, w - tw - 2, (h - th) // 2)
 
-        if self._borderwidth > 0:
+        if (self._horiz_border_width + self._vert_border_width) > 0:
             self.DrawBorder(dc, gc)
 
         else:
@@ -1877,17 +1331,6 @@ class CheckButton(BaseCheckButton):
 
     # ------------------------------------------------------------------------
 
-    def GetDefaultAttributes(self):
-        """Overridden base class virtual.
-
-        By default we should use
-        the same font/colour attributes as the native wx.CheckBox.
-
-        """
-        return wx.CheckBox.GetClassDefaultAttributes()
-
-    # ------------------------------------------------------------------------
-
     def SetValue(self, value):
         """Set the state of the button.
 
@@ -1971,7 +1414,7 @@ class CheckButton(BaseCheckButton):
 
     # ------------------------------------------------------------------------
 
-    def DrawButton(self):
+    def DrawWindow(self):
         """Draw the button.
 
         Override the base method.
@@ -1987,42 +1430,6 @@ class CheckButton(BaseCheckButton):
         img_size = self.DrawCheckImage(dc, gc)
         if self._label:
             self.__DrawLabel(dc, gc, img_size + self._spacing)
-
-    # ------------------------------------------------------------------------
-
-    def OnEraseBackground(self, event):
-        """Handle the wx.EVT_ERASE_BACKGROUND event.
-
-        Override the base method.
-
-        """
-        # This is intentionally empty, because we are using the combination
-        # of wx.BufferedPaintDC + an empty OnEraseBackground event to
-        # reduce flicker
-        pass
-
-    # ------------------------------------------------------------------------
-
-    def GetBackgroundBrush(self, dc):
-        """Get the brush for drawing the background of the button.
-
-        :returns: (wx.Brush)
-
-        """
-        color = self.GetParent().GetBackgroundColour()
-        if wx.Platform == '__WXMAC__':
-            return wx.TRANSPARENT_BRUSH
-
-        brush = wx.Brush(color, wx.SOLID)
-        my_attr = self.GetDefaultAttributes()
-        p_attr = self.GetParent().GetDefaultAttributes()
-        my_def = color == my_attr.colBg
-        p_def = self.GetParent().GetBackgroundColour() == p_attr.colBg
-        if my_def and not p_def:
-            color = self.GetParent().GetBackgroundColour()
-            return wx.Brush(color, wx.SOLID)
-
-        return brush
 
 # ---------------------------------------------------------------------------
 
@@ -2132,18 +1539,15 @@ class TestPanelBitmapButton(wx.Panel):
         b5 = BitmapButton(self, pos=(280, 10), size=(30, 30), name="like")
         b6 = BitmapButton(self, pos=(320, 10), size=(50, 30), name="like")
         b7 = BitmapButton(self, pos=(380, 10), size=(50, 50), name="add")
-        b7.SetBorderWidth(0)
         b7.SetFocusColour(wx.Colour(30, 120, 240))
         b7.SetFocusWidth(3)
         b7.SetFocusStyle(wx.PENSTYLE_SOLID)
         b8 = BitmapTextButton(self, pos=(440, 10), size=(50, 50), name="remove")
-        b8.SetBorderWidth(0)
         b8.SetFocusColour(wx.Colour(30, 120, 240))
         b8.SetBitmapColour(wx.Colour(230, 120, 40))
         b8.SetFocusWidth(3)
         b8.SetFocusStyle(wx.PENSTYLE_SOLID)
         b9 = BitmapTextButton(self, pos=(500, 10), size=(50, 50), name="delete")
-        b9.SetBorderWidth(0)
         b9.SetFocusColour(wx.Colour(30, 120, 240))
         b9.SetBitmapColour(wx.Colour(240, 10, 10))
         b9.SetFocusWidth(3)
@@ -2175,8 +1579,10 @@ class TestPanelBitmapTextButton(wx.Panel):
         # b2.SetFont(bold_font)
 
         b3 = BitmapTextButton(self, label="sppas_colored", pos=(180, 10), size=(50, 50))
+        b3.SetBorderWidth(1)
 
         b4 = BitmapTextButton(self, label="Add", pos=(240, 10), size=(100, 50), name="add")
+        b4.SetBorderWidth(2)
         b4.SetLabel("ADD")
         b4.SetLabelPosition(wx.RIGHT)
         b4.Refresh()

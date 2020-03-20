@@ -103,11 +103,11 @@ class sppasDrawWindow(wx.Window):
 
         self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvents)
 
-        # self.Bind(wx.EVT_SET_FOCUS, self.OnGainFocus)
-        # self.Bind(wx.EVT_KILL_FOCUS, self.OnLoseFocus)
+        self.Bind(wx.EVT_SET_FOCUS, self.OnGainFocus)
+        self.Bind(wx.EVT_KILL_FOCUS, self.OnLoseFocus)
 
         # Setup Initial Size
-        self.SetInitialSize(size)
+        # self.SetInitialSize(size)
 
     # -----------------------------------------------------------------------
     # -----------------------------------------------------------------------

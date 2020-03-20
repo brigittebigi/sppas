@@ -145,13 +145,12 @@ class AssociatePanel(sppasPanel):
 
     def __create_button(self, icon, label=None):
         btn = BitmapTextButton(self, name=icon, label=label)
-        btn.FocusStyle = wx.PENSTYLE_SOLID
-        btn.FocusWidth = 3
-        btn.FocusColour = wx.Colour(128, 128, 196, 128)  # violet
-        btn.LabelPosition = wx.BOTTOM
-        btn.Spacing = 4
-        btn.BorderWidth = 0
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetFocusStyle(wx.PENSTYLE_SOLID)
+        btn.SetFocusWidth(3)
+        btn.SetFocusColour(wx.Colour(128, 128, 196, 128))   # violet
+        btn.SetLabelPosition(wx.BOTTOM)
+        btn.SetSpacing(sppasPanel.fix_size(4))
+        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(sppasPanel.fix_size(24),
                                sppasPanel.fix_size(24)))
         return btn
@@ -470,10 +469,9 @@ class sppasFilesFilterDialog(sppasDialog):
 
     def __create_action_button(self, parent, text, icon):
         btn = BitmapTextButton(parent, label=text, name=icon)
-        btn.LabelPosition = wx.RIGHT
-        btn.Spacing = sppasDialog.fix_size(12)
-        btn.BorderWidth = 0
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetLabelPosition(wx.RIGHT)
+        btn.SetSpacing(sppasDialog.fix_size(12))
+        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(sppasDialog.fix_size(32),
                                sppasDialog.fix_size(32)))
 

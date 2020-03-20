@@ -87,6 +87,8 @@ class sppasStaticLine(sppasDrawWindow):
         self._vert_border_width = 1
         self._horiz_border_width = 1
 
+        self.SetInitialSize(size)
+
     # ------------------------------------------------------------------------
     # Getters/Setters of members
     # ------------------------------------------------------------------------

@@ -679,6 +679,7 @@ class WorkspacesPanel(sppasPanel):
 
         """
         btn = RadioButton(self, label=name, name=name)
+        btn.SetBorderWidth(2)
         btn.SetSpacing(sppasPanel.fix_size(12))
         btn.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
         btn.SetSize(wx.Size(-1, sppasPanel.fix_size(32)))
@@ -696,19 +697,19 @@ class WorkspacesPanel(sppasPanel):
 
     def __set_normal_btn_style(self, button):
         """Set a normal style to a button."""
-        button.BorderWidth = 0
-        button.BorderColour = self.GetForegroundColour()
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = WorkspacesManager.HIGHLIGHT_COLOUR
+        button.SetBorderWidth(0)
+        button.SetBorderColour(self.GetForegroundColour())
+        button.SetBorderStyle(wx.PENSTYLE_SOLID)
+        button.SetFocusColour(WorkspacesManager.HIGHLIGHT_COLOUR)
 
     # -----------------------------------------------------------------------
 
     def __set_active_btn_style(self, button):
         """Set a special style to the button."""
-        button.BorderWidth = 1
-        button.BorderColour = WorkspacesManager.HIGHLIGHT_COLOUR
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = self.GetForegroundColour()
+        button.SetBorderWidth(1)
+        button.SetBorderColour(WorkspacesManager.HIGHLIGHT_COLOUR)
+        button.SetBorderStyle(wx.PENSTYLE_SOLID)
+        button.SetFocusColour(self.GetForegroundColour())
 
     # -----------------------------------------------------------------------
     # Events management
