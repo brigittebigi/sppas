@@ -41,6 +41,8 @@
 """
 
 import wx
+import random
+import logging
 
 # ---------------------------------------------------------------------------
 
@@ -146,10 +148,10 @@ class sppasDrawWindow(wx.Window):
     def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
                  style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
-                 name="listctrl"):
+                 name="dcwindow"):
         """Initialize a new sppasDrawWindow instance.
 
-        :param parent: Parent window. Must not be None.
+        :param parent: Parent window.
         :param id:     A value of -1 indicates a default value.
         :param pos:    If the position (-1, -1) is specified
                        then a default position is chosen.
@@ -157,6 +159,10 @@ class sppasDrawWindow(wx.Window):
                        then a default size is chosen.
         :param style:  often LC_REPORT
         :param name:      Window name.
+
+        By default, the background is transparent; but the foreground
+        and the font are inherited of the parent (if any) or from the
+        main settings of SPPAS GUI.
 
         """
         super(sppasDrawWindow, self).__init__(parent, id, pos, size, style, name)
@@ -183,10 +189,43 @@ class sppasDrawWindow(wx.Window):
 
         self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvents)
 
+        # By default, the background is transparent; but foreground
+        # and font are inherited of the parent (if any) or from the
+        # main settings of SPPAS GUI.
+        if parent is not None:
+            sppasDrawWindow.SetFont(self, self.GetParent().GetFont())
+            sppasDrawWindow.SetForegroundColour(self, self.GetParent().GetForegroundColour())
+            wx.Window.SetBackgroundColour(self, self.GetParent().GetBackgroundColour())
+        else:
+            try:
+                settings = wx.GetApp().settings
+                sppasDrawWindow.SetForegroundColour(self, settings.fg_color)
+                sppasDrawWindow.SetFont(self, settings.text_font)
+                wx.Window.SetBackgroundColour(self, settings.bg_color)
+            except AttributeError:
+                self.InheritAttributes()
+
         # Setup Initial Size
         # self.SetInitialSize(size)
 
     # -----------------------------------------------------------------------
+
+    def InheritsBackgroundColour(self):
+        """Return False.
+
+        Return True if this window inherits the background colour from its
+        parent. But our window has a transparent background by default or
+        a custom color.
+
+        """
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def InheritsForegroundColour(self):
+        """Return True if this window inherits the foreground colour."""
+        return True
+
     # -----------------------------------------------------------------------
 
     def InitOtherEvents(self):
@@ -228,13 +267,24 @@ class sppasDrawWindow(wx.Window):
 
     # -----------------------------------------------------------------------
 
+    def SetFont(self, font):
+        """"""
+        wx.Window.SetFont(self, font)
+
+    # -----------------------------------------------------------------------
+
     def GetDefaultAttributes(self):
         """Overridden base class virtual.
+
+        We should create a customized Visual Attribute with our settings.
+        But the wx.VisualAttributes are more-or-less read-only, there is no
+        SetVisualAttributes or similar.
 
         :returns: an instance of wx.VisualAttributes.
 
         """
-        return self.GetParent().GetClassDefaultAttributes()
+        # return self.GetParent().GetClassDefaultAttributes()
+        return self.GetClassDefaultAttributes()
 
     # -----------------------------------------------------------------------
 
@@ -258,7 +308,7 @@ class sppasDrawWindow(wx.Window):
 
     def ShouldInheritColours(self):
         """Overridden base class virtual."""
-        return True
+        return False
 
     # ----------------------------------------------------------------------
 
@@ -355,9 +405,9 @@ class sppasDrawWindow(wx.Window):
         r, g, b = color.Red(), color.Green(), color.Blue()
         delta = 40
         if (r + g + b) > 384 and self.IsEnabled() is False:
-            return wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
+            return wx.Colour(r, g, b, 64).ChangeLightness(100 - delta)
 
-        return wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
+        return wx.Colour(r, g, b, 64).ChangeLightness(100 + delta)
 
     # -----------------------------------------------------------------------
 
@@ -774,6 +824,9 @@ class sppasBaseWindow(sppasDrawWindow):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
+    This window is implemented as "the focus follows mouse" so that when the
+    mouse is over the window, it gives it the focus.
+
     """
 
     MIN_WIDTH = 24
@@ -787,8 +840,8 @@ class sppasBaseWindow(sppasDrawWindow):
     def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
                  style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
-                 name="basectrl"):
-        """Initialize a new sppasBaseDataWindow instance.
+                 name="sppaswindow"):
+        """Initialize a new sppasBaseWindow instance.
 
         :param parent: Parent window. Must not be None.
         :param id:     A value of -1 indicates a default value.
@@ -870,12 +923,9 @@ class sppasBaseWindow(sppasDrawWindow):
                 self._set_state(WindowState().disabled)
             else:
                 # set to the previous state
-                if self._state[0] == WindowState().focused and self.HasCapture() is False:
-                    self._set_state(WindowState().normal)
-                else:
-                    self._set_state(self._state[0])
+                self._set_state(self._state[0])
             # re-assign an appropriate border color (Pen)
-            self.SetForegroundColour(self.GetForegroundColour())
+            # self.SetForegroundColour(self.GetForegroundColour())
 
     # -----------------------------------------------------------------------
 
@@ -890,17 +940,18 @@ class sppasBaseWindow(sppasDrawWindow):
     def SetFocusWidth(self, value):
         """Set the width of the focus at bottom of the window.
 
-        :param value: (int) Focus size. Minimum is 1.
+        :param value: (int) Focus size. Minimum is 0 ; maximum is height/4.
 
         """
         value = int(value)
         w, h = self.GetClientSize()
         if value < 0:
-            return
+            value = 0
         if value >= (w // 4):
-            return
+            value = w // 4
         if value >= (h // 4):
-            return
+            value = h // 4
+
         self._focus_width = value
 
     # -----------------------------------------------------------------------
@@ -987,10 +1038,9 @@ class sppasBaseWindow(sppasDrawWindow):
         if self.IsEnabled() is False:
             return
 
-        self._set_state(WindowState().selected)
         self.CaptureMouse()
         self.SetFocus()
-        self.Refresh()
+        self._set_state(WindowState().selected)
 
     # -----------------------------------------------------------------------
 
@@ -1003,7 +1053,7 @@ class sppasBaseWindow(sppasDrawWindow):
         if self.IsEnabled() is False:
             return
 
-        # Mouse was down outside of the window (but is up inside)
+        # Mouse was down outside of the window but is up inside.
         if self.HasCapture() is False:
             return
 
@@ -1011,12 +1061,11 @@ class sppasBaseWindow(sppasDrawWindow):
         self.ReleaseMouse()
 
         # If the window was down when the mouse was released...
-        s = self._state[0]
         if self._state[1] == WindowState().selected:
             self.Notify()
             # if we haven't been destroyed by this notify...
             if self:
-                self._set_state(s)
+                self._set_state(self._state[0])
 
     # -----------------------------------------------------------------------
 
@@ -1028,7 +1077,6 @@ class sppasBaseWindow(sppasDrawWindow):
         """
         if self._state[1] == WindowState().normal:
             self._set_state(WindowState().focused)
-            self.Refresh()
 
     # -----------------------------------------------------------------------
 
@@ -1040,9 +1088,9 @@ class sppasBaseWindow(sppasDrawWindow):
         """
         # mouse is leaving either while button is pressed (state is selected)
         # or not (state is focused). In both cases, we switch to normal state.
-        self._set_state(WindowState().normal)
-        self._set_state(WindowState().normal)
-        self.Refresh()
+        if self._state[1] != WindowState().disabled:
+            self._state[1] = WindowState().normal
+            self._set_state(WindowState().normal)
 
     # -----------------------------------------------------------------------
 
@@ -1054,7 +1102,6 @@ class sppasBaseWindow(sppasDrawWindow):
         """
         if self._state[1] == WindowState().normal:
             self._set_state(WindowState().focused)
-            self.Refresh()
             self.Update()
 
     # -----------------------------------------------------------------------
@@ -1067,14 +1114,13 @@ class sppasBaseWindow(sppasDrawWindow):
         """
         if self._state[1] == WindowState().focused:
             self._set_state(self._state[0])
-            self.Refresh()
 
     # -----------------------------------------------------------------------
 
     def _set_state(self, state):
         """Manually set the state of the button.
 
-        :param `state`: (int) one of the state values
+        :param state: (int) one of the state values
 
         """
         self._state[0] = self._state[1]
@@ -1087,7 +1133,7 @@ class sppasBaseWindow(sppasDrawWindow):
 
         if self:
             if wx.Platform == '__WXMSW__':
-                self.GetParent().RefreshRect(self.Rect, False)
+                self.GetParent().RefreshRect(self.GetRect(), False)
             else:
                 self.Refresh()
 
@@ -1099,6 +1145,21 @@ class sppasBaseWindow(sppasDrawWindow):
 
         if self._state[1] == WindowState().focused:
             self.DrawFocusIndicator(dc, gc)
+
+    # -----------------------------------------------------------------------
+
+    def GetContentRect(self):
+        """Return Rect and Size to draw the content."""
+        x, y, w, h = self.GetClientRect()
+        x += self._vert_border_width
+        y += self._horiz_border_width
+        w -= (2 * self._vert_border_width)
+        if self._focus_width > 0:
+            h -= ((2 * self._horiz_border_width) + self._focus_width + 3)
+        else:
+            h -= (2 * self._horiz_border_width)
+
+        return x, y, w, h
 
     # -----------------------------------------------------------------------
 
@@ -1119,11 +1180,7 @@ class sppasBaseWindow(sppasDrawWindow):
             elif self._state[1] == s.focused:
                 label = "focused"
 
-        x, y, w, h = self.GetClientRect()
-        x += self._vert_border_width
-        y += self._horiz_border_width
-        w -= (2 * self._vert_border_width)
-        h -= ((2 * self._horiz_border_width) + self._focus_width + 2)
+        x, y, w, h = self.GetContentRect()
         tw, th = self.get_text_extend(dc, gc, label)
 
         self.draw_label(dc, gc, label, (w - tw) // 2, (h - th) // 2)
@@ -1160,13 +1217,12 @@ class sppasBaseWindow(sppasDrawWindow):
         font = self.GetFont()
         gc.SetFont(font)
         dc.SetFont(font)
-        if wx.Platform == '__WXGTK__':
-            dc.SetTextForeground(self.GetForegroundColour())
-            dc.DrawText(label, x, y)
-        else:
-            gc.SetTextForeground(self.GetForegroundColour())
-            gc.DrawText(label, x, y)
-
+        # if wx.Platform == '__WXGTK__':
+        #     dc.SetTextForeground(self.GetPenForegroundColour())
+        #     dc.DrawText(label, x, y)
+        # else:
+        gc.SetTextForeground(self.GetPenForegroundColour())
+        gc.DrawText(label, x, y)
 
 # ----------------------------------------------------------------------------
 # Panels to test
@@ -1180,7 +1236,13 @@ class TestPanel(wx.Panel):
             parent,
             name="Test sppasBaseWindow")
 
-        self.SetForegroundColour(wx.Colour(150, 160, 170))
+        bgbtn = wx.Button(self, label="BG", pos=(10, 10), size=(64, 64), name="bg_color")
+        fgbtn = wx.Button(self, label="FG", pos=(100, 10), size=(64, 64), name="font_color")
+        fontbtn = wx.Button(self, label="FONT", pos=(200, 10), size=(64, 64), name="font")
+        self.Bind(wx.EVT_BUTTON, self.on_bg_color, bgbtn)
+        self.Bind(wx.EVT_BUTTON, self.on_fg_color, fgbtn)
+        self.Bind(wx.EVT_BUTTON, self.on_font, fontbtn)
+
         st = [wx.PENSTYLE_SHORT_DASH,
               wx.PENSTYLE_LONG_DASH,
               wx.PENSTYLE_DOT_DASH,
@@ -1193,7 +1255,7 @@ class TestPanel(wx.Panel):
         h = 50
         c = 10
         for i in range(1, 6):
-            win = sppasDrawWindow(self, pos=(x, 10), size=(w, h))
+            win = sppasDrawWindow(self, pos=(x, 100), size=(w, h))
             win.SetBorderWidth(i)
             win.SetBorderColour(wx.Colour(c, c, c))
             win.SetBorderStyle(st[i-1])
@@ -1206,7 +1268,7 @@ class TestPanel(wx.Panel):
         h = 50
         c = 10
         for i in range(1, 6):
-            win = sppasBaseWindow(self, pos=(x, 70), size=(w, h))
+            win = sppasBaseWindow(self, pos=(x, 170), size=(w, h))
             win.SetBorderWidth(1)
             win.SetFocusWidth(i)
             win.SetFocusColour(wx.Colour(c, c, c))
@@ -1214,8 +1276,43 @@ class TestPanel(wx.Panel):
             c += 40
             x += w + 10
 
-        win = sppasBaseWindow(self, pos=(560, 10), size=(50, 110))
+        win = sppasBaseWindow(self, pos=(10, 300), size=(50, 110))
         win.SetHorizBorderWidth(10)
         win.SetVertBorderWidth(2)
         win.SetBackgroundColour(wx.Colour(128, 255, 196))
 
+        btn = sppasBaseWindow(self, pos=(100, 300), size=(50, 110))
+        btn.Enable(False)
+
+    def on_bg_color(self, event):
+        self.SetBackgroundColour(wx.Colour(
+            random.randint(10, 250),
+            random.randint(10, 250),
+            random.randint(10, 250)
+        ))
+        self.Refresh()
+
+    def on_fg_color(self, event):
+        color = wx.Colour(
+            random.randint(10, 250),
+            random.randint(10, 250),
+            random.randint(10, 250))
+        self.SetForegroundColour(color)
+        for c in self.GetChildren():
+            c.SetForegroundColour(color)
+        self.Refresh()
+
+    def on_font(self, event):
+        data = wx.FontData()
+        data.EnableEffects(True)
+        data.SetColour(wx.GetApp().settings.fg_color)
+        data.SetInitialFont(wx.GetApp().settings.text_font)
+        dlg = wx.FontDialog(self, data)
+        if dlg.ShowModal() == wx.ID_OK:
+            data = dlg.GetFontData()
+            font = data.GetChosenFont()
+            self.SetFont(font)
+            for c in self.GetChildren():
+                c.SetFont(font)
+
+        self.Refresh()
