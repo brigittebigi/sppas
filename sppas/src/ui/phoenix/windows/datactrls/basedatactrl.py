@@ -133,6 +133,122 @@ class sppasBaseDataWindow(sppasBaseWindow):
         """
         super(sppasBaseDataWindow, self).__init__(
             parent, id, pos, size, style, name)
+        self._selected = False
+        self._is_selectable = False
+
+    # -----------------------------------------------------------------------
+
+    def IsSelectable(self):
+        """Return if the window can be selected."""
+        return self._is_selectable
+
+    # -----------------------------------------------------------------------
+
+    def SetSelectable(self, value):
+        value = bool(value)
+        self._is_selectable = value
+
+    # -----------------------------------------------------------------------
+
+    def IsSelected(self):
+        """Return if window is selected."""
+        return self._selected
+
+    # -----------------------------------------------------------------------
+
+    def SetSelected(self, value):
+        """Select or deselect the window except if not selectable.
+
+        :param value: (bool)
+
+        """
+        if self._is_selectable is False:
+            return
+
+        value = bool(value)
+        if self._selected != value:
+            self._selected = value
+            if value is True:
+                self._set_state(WindowState().selected)
+            else:
+                self._set_state(WindowState().normal)
+            self.Refresh()
+
+    # -----------------------------------------------------------------------
+    # Override BaseButton
+    # -----------------------------------------------------------------------
+
+    def OnMouseLeftDown(self, event):
+        """Handle the wx.EVT_LEFT_DOWN event.
+
+        :param event: a wx.MouseEvent event to be processed.
+
+        """
+        if self.IsEnabled() is True:
+            if self._is_selectable is True:
+                self._selected = not self._selected
+            super(sppasBaseDataWindow, self).OnMouseLeftDown(event)
+
+    # -----------------------------------------------------------------------
+
+    def OnMouseLeftUp(self, event):
+        """Handle the wx.EVT_LEFT_UP event.
+
+        :param event: a wx.MouseEvent event to be processed.
+
+        """
+        if not self.IsEnabled():
+            return
+
+        # Mouse was down outside of the button (but is up inside)
+        if not self.HasCapture():
+            return
+
+        # Directs all mouse input to this window
+        self.ReleaseMouse()
+
+        # If the button was down when the mouse was released...
+        if self._state[1] == WindowState().selected:
+            self.Notify()
+            # if we haven't been destroyed by this notify...
+            if self:
+                if self._is_selectable is False:
+                    self._set_state(self._state[0])
+                else:
+                    if self._selected is True:
+                        self._set_state(WindowState().selected)
+                    else:
+                        self._set_state(WindowState().focused)
+                # event.Skip()
+
+    # -----------------------------------------------------------------------
+
+    def OnMouseLeave(self, event):
+        """Handle the wx.EVT_LEAVE_WINDOW event.
+
+        :param event: a wx.MouseEvent event to be processed.
+
+        """
+        # mouse is leaving either while button is pressed (state is selected)
+        # or not (state is focused). In both cases, we switch to normal state.
+        if self._state[1] != WindowState().disabled:
+            if self._is_selectable is False:
+                self._state[1] = WindowState().normal
+                self._set_state(WindowState().normal)
+            else:
+
+                if self._selected is True:
+                    self._set_state(WindowState().selected)
+                    return
+
+                #if self._state[1] == WindowState().focused:
+                self._set_state(WindowState().normal)
+                #elif self._state[1] == WindowState().selected:
+                #    self._state[0] = WindowState().normal
+                #    self.Refresh()
+                event.Skip()
+
+        self._selected = False
 
 # ----------------------------------------------------------------------------
 # Panels to test
@@ -178,6 +294,7 @@ class TestPanel(wx.Panel):
             btn.SetFocusWidth(i)
             btn.SetFocusColour(wx.Colour(c, c, c))
             btn.SetFocusStyle(st[i-1])
+            btn.SetSelectable(True)
             c += 40
             x += w + 10
 
