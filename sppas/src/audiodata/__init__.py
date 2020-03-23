@@ -47,9 +47,11 @@ Requires the following other packages:
 """
 
 from .audio import sppasAudioPCM
+from .audioframes import sppasAudioFrames
 from .channel import sppasChannel
 
 __all__ = (
     'sppasAudioPCM',
+    "sppasAudioFrames",
     'sppasChannel'
 )

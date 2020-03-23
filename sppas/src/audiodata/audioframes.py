@@ -150,21 +150,18 @@ class sppasAudioFrames(object):
 
     def min(self):
         """Return the minimum of the values of all frames."""
-
         return audioop.minmax(self._frames, self._sampwidth)[0]
 
     # -----------------------------------------------------------------------
 
     def max(self):
         """Return the maximum of the values of all frames."""
-
         return audioop.minmax(self._frames, self._sampwidth)[1]
 
     # -----------------------------------------------------------------------
 
     def avg(self):
         """Return the average of all the frames."""
-
         return audioop.avg(self._frames, self._sampwidth)
 
     # -----------------------------------------------------------------------

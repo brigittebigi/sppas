@@ -500,6 +500,7 @@ class BitmapTextButton(BaseButton):
                 designed = self.__draw_bitmap(dc, gc, x_pos, y_pos, bmp_size)
                 if designed is False:
                     pen = wx.Pen(self.GetPenForegroundColour(), 1, self._border_style)
+                    pen.SetCap(wx.CAP_BUTT)
                     dc.SetPen(pen)
                     dc.DrawRectangle(self._vert_border_width,
                                      self._horiz_border_width,

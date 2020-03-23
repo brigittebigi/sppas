@@ -311,6 +311,7 @@ class sppasAudioPCM(object):
         if self._audio_fp is None:
             raise AudioError
 
+        nframes = int(nframes)
         return sppasAudioConverter().unpack_data(self.read_frames(nframes),
                                                  self.get_sampwidth(),
                                                  self.get_nchannels())

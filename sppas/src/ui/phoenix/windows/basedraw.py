@@ -1138,6 +1138,8 @@ class sppasBaseWindow(sppasDrawWindow):
                 self.Refresh()
 
     # -----------------------------------------------------------------------
+    # Draw methods
+    # -----------------------------------------------------------------------
 
     def Draw(self):
         """Draw normally then add focus indicator."""

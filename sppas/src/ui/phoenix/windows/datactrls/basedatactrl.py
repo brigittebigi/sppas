@@ -107,15 +107,9 @@ class sppasBaseDataWindow(sppasBaseWindow):
 
     """
 
-    MIN_WIDTH = 24
-    MIN_HEIGHT = 12
-
-    HORIZ_MARGIN_SIZE = 6
-    VERT_MARGIN_SIZE = 6
-
-    # -----------------------------------------------------------------------
-
-    def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
+    def __init__(self, parent, id=-1,
+                 data=None,
+                 pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
                  style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
                  name="datactrl"):
@@ -123,6 +117,7 @@ class sppasBaseDataWindow(sppasBaseWindow):
 
         :param parent: Parent window. Must not be None.
         :param id:     A value of -1 indicates a default value.
+        :param data:   Data to draw.
         :param pos:    If the position (-1, -1) is specified
                        then a default position is chosen.
         :param size:   If the default size (-1, -1) is specified
@@ -135,6 +130,16 @@ class sppasBaseDataWindow(sppasBaseWindow):
             parent, id, pos, size, style, name)
         self._selected = False
         self._is_selectable = False
+        self._data = None
+        if data is not None:
+            self.SetData(data)
+
+    # -----------------------------------------------------------------------
+
+    def SetData(self, data):
+        """Set new data content."""
+        self._data = data
+        self.Refresh()
 
     # -----------------------------------------------------------------------
 
