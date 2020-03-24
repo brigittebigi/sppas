@@ -812,6 +812,29 @@ class sppasDrawWindow(wx.Window):
         """To be overridden."""
         pass
 
+    # -----------------------------------------------------------------------
+    # Utilities
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def get_text_extend(dc, gc, text):
+        if wx.Platform == '__WXGTK__':
+            return dc.GetTextExtent(text)
+        return gc.GetTextExtent(text)
+
+    # -----------------------------------------------------------------------
+
+    def DrawLabel(self, label, dc, gc, x, y):
+        font = self.GetFont()
+        gc.SetFont(font)
+        dc.SetFont(font)
+        if wx.Platform == '__WXGTK__':
+            dc.SetTextForeground(self.GetPenForegroundColour())
+            dc.DrawText(label, x, y)
+        else:
+            gc.SetTextForeground(self.GetPenForegroundColour())
+            gc.DrawText(label, x, y)
+
 # ----------------------------------------------------------------------------
 
 

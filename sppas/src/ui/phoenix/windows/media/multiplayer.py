@@ -188,6 +188,10 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         self._slider.Refresh()
         self.media_seek(start)
 
+        for m in self.__media:
+            m.SetDrawPeriod(start, end)
+            m.Refresh()
+
         return start, end
 
     # -----------------------------------------------------------------------

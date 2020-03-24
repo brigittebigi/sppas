@@ -37,14 +37,12 @@
 """
 
 import os
-import time
 import wx
 
 from sppas import paths
 from sppas.src.audiodata.aio import open as audio_open
-from sppas.src.audiodata.autils import extract_channel_fragment
 from sppas.src.audiodata import sppasAudioFrames
-from sppas.src.audiodata import sppasChannel
+
 from .basedatactrl import sppasBaseDataWindow
 
 # ---------------------------------------------------------------------------
@@ -61,7 +59,8 @@ class sppasWaveformWindow(sppasBaseDataWindow):
 
     """
 
-    def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
+    def __init__(self, parent, id=-1,
+                 pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
                  data=None,
                  style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
@@ -79,18 +78,41 @@ class sppasWaveformWindow(sppasBaseDataWindow):
         :param name:      Window name.
 
         """
+        super(sppasWaveformWindow, self).__init__(
+            parent, id, None, pos, size, style, name)
+
+        self.SetSelectable(False)
+        self.SetFocusWidth(0)
+
         self._auto_scroll = False
         self._data_max = 0
         self._data_min = 0
         self._sampwidth = 0
 
-        super(sppasWaveformWindow, self).__init__(
-            parent, id, data, pos, size, style, name)
-
-        self.SetSelectable(False)
-        self.SetFocusWidth(0)
-
         self._pen_width = 1
+        self._draw_style = "lines"
+
+        self.SetData(data)
+
+    # -----------------------------------------------------------------------
+    # How the waveform will look...
+    # -----------------------------------------------------------------------
+
+    def SetLineStyle(self, style="lines"):
+        """Set the draw style: lines or bars."""
+        if style not in ("lines", "bars"):
+            style = "lines"
+        self._draw_style = style
+
+    # -----------------------------------------------------------------------
+
+    def SetPenWidth(self, value):
+        value = int(value)
+        if value < 1:
+            value = 1
+        if value > 20:
+            value = 20
+        self._pen_width = value
 
     # -----------------------------------------------------------------------
 
@@ -98,9 +120,10 @@ class sppasWaveformWindow(sppasBaseDataWindow):
         value = bool(value)
         if value != self._auto_scroll:
             self._auto_scroll = value
-            self.SetData([self._data, self._sampwidth])
-            self.Refresh()
+            self.__reset_minmax()
 
+    # -----------------------------------------------------------------------
+    # Samples to draw
     # -----------------------------------------------------------------------
 
     def SetData(self, data):
@@ -109,79 +132,230 @@ class sppasWaveformWindow(sppasBaseDataWindow):
         :param data: (list of samples, samples width)
 
         """
-        self._data = data[0]
-        self._sampwidth = data[1]
-
-        if self._auto_scroll is False:
-            self._data_max = sppasAudioFrames().get_maxval(self._sampwidth)
-            self._data_min = -self._data_max
+        if data is None:
+            self._data = None
+            self._data_max = 0
+            self._data_min = 0
+            self._sampwidth = 0
+            self.Refresh()
         else:
+            if data[0] != self._data or data[1] != self._sampwidth:
+                self._data = data[0]
+                self._sampwidth = data[1]
+                self.__reset_minmax()
+
+    def __reset_minmax(self):
+
+        self._data_max = sppasAudioFrames().get_maxval(self._sampwidth)
+        self._data_min = -self._data_max
+        if self._auto_scroll is True:
             # autoscroll is limited to at least 10%
-            self._data_max = max(max(self._data) + 1, (self._data_max * 0.1))
-            self._data_min = min(min(self._data) - 1, -(self._data_max * 0.1))
+            self._data_max = int(max(float(max(self._data)) * 1.1, float(self._data_max) * 0.1))
+            self._data_min = int(min(float(min(self._data)) * 1.1, float(self._data_min) * 0.1))
 
         self.Refresh()
 
     # -----------------------------------------------------------------------
+    # Draw
+    # -----------------------------------------------------------------------
 
     def DrawContent(self, dc, gc):
         """Draw the amplitude values as a waveform."""
+        x, y, w, h = self.GetContentRect()
+
+        # Draw horizontal lines and amplitude values
+        self.__DrawContentAxes(dc, gc, x, y, w, h)
 
         if self._data is None:
             return
 
-        x, y, w, h = self.GetContentRect()
-        ycenter = y + (h // 2)
-        ypixelsminprec = ycenter
-        xprec = x
-        xcur = (x + (self._pen_width // 2))
-        d = 0
+        if len(self._data) > (w*2):
+            if self._draw_style == "bars":
+                self.__DrawContentAsBars(dc, gc, x, y, w, h)
+            else:
+                self.__DrawContentAsJointLines(dc, gc, x, y, w, h)
+        else:
+            # More pixels than values to draw...
+            self.__DrawContentSmallData(dc, gc, x, y, w, h)
 
-        # Number of samples to be read at each step
-        incd = int(len(self._data) / (w/self._pen_width))
-        while incd < 2:
-            self._pen_width += 1
-            incd = int(len(self._data) / (w/self._pen_width))
+    # -----------------------------------------------------------------------
 
-        # Draw an horizontal line at the middle (0 value)
-        pen = wx.Pen(wx.Colour(64, 64, 212, 128), 1, wx.PENSTYLE_SOLID)
+    def __DrawContentAxes(self, dc, gc, x, y, w, h):
+        """Draw an horizontal line at the middle (indicate 0 value). """
+        p = h // 100
+        y_center = y + (h // 2)
+        pen = wx.Pen(wx.Colour(128, 128, 212, 128), p, wx.PENSTYLE_SOLID)
+        pen.SetCap(wx.CAP_BUTT)
         dc.SetPen(pen)
-        dc.DrawLine(x, ycenter, x+w, ycenter)
+
+        # Line at the centre
+        th, tw = self.get_text_extend(dc, gc, "-0.0")
+        dc.DrawLine(x, y_center, x + w, y_center)
+        self.DrawLabel("0", dc, gc, x, y_center - (th // 3))
+
+        if self._auto_scroll is False:
+            # Lines at top and bottom
+            dc.DrawLine(x, y + (p//2), x + w, y + (p//2))
+            dc.DrawLine(x, h - (p//2), x + w, h - (p//2))
+
+            # Scale at top and bottom
+            self.DrawLabel("1", dc, gc, x, y)
+            self.DrawLabel("-1", dc, gc, x, h - (th//2))
+
+            if h > 200:
+                pen = wx.Pen(wx.Colour(128, 128, 212, 196), 1, wx.PENSTYLE_DOT)
+                pen.SetCap(wx.CAP_BUTT)
+                dc.SetPen(pen)
+                dc.DrawLine(x, h//4, x + w, h//4)
+                dc.DrawLine(x, y_center + h//4, x + w, y_center + h//4)
+
+        else:
+            if self._data is not None:
+                pen = wx.Pen(wx.Colour(128, 128, 212, 196), 2, wx.PENSTYLE_DOT)
+                pen.SetCap(wx.CAP_BUTT)
+                dc.SetPen(pen)
+                # the height we should use to draw the whole scale
+                audio_data_max = sppasAudioFrames().get_maxval(self._sampwidth)
+                viewed_ratio = float(max(self._data)) / float(audio_data_max)
+                viewed_ratio = round(viewed_ratio, 1)
+                value = viewed_ratio * float(audio_data_max)
+
+                # Lines at top and bottom
+                ypixels = int(value * (float(h) / 2.0) / float(self._data_max))
+                dc.DrawLine(x, y_center - ypixels, x + w, y_center - ypixels)
+                self.DrawLabel(str(viewed_ratio), dc, gc, x, y_center - ypixels - (th // 3))
+
+                dc.DrawLine(x, y_center + ypixels, x + w, y_center + ypixels)
+                self.DrawLabel(str(-viewed_ratio), dc, gc, x, y_center + ypixels - (th // 3))
+
+    # -----------------------------------------------------------------------
+
+    def __DrawContentAsJointLines(self, dc, gc, x, y, w, h):
+        """Draw the waveform as joint lines.
+
+        Current min/max observed values are joint to the next ones by a
+        line. It looks like an analogic signal more than a discrete one.
+
+        """
+        y_center = y + (h // 2)
+        ypixelsminprec = y_center
+        xstep = self._pen_width
+        x += (xstep // 2)
+        xcur = x
 
         # Fix the pen style and color
         pen = wx.Pen(self.GetPenForegroundColour(), self._pen_width, wx.PENSTYLE_SOLID)
         dc.SetPen(pen)
 
-        while xcur < (x+w):
+        while xcur < (x + w):
 
-            # Get data of n frames (data of xsteps pixels of time) -- width
-            dnext = min((d+incd), len(self._data))
-            if d == dnext:
-                data = self._data[d:d+1]
-            else:
-                data = self._data[d:dnext]
+            # Get value of n samples between xcur and xnext
+            dcur = (xcur - x) * len(self._data) // w
+            dnext = (xcur + xstep - x) * len(self._data) // w
+            data = self._data[dcur:dnext]
 
             # Get min and max (take care if saturation...)
             datamin = max(min(data), self._data_min + 1)
             datamax = min(max(data), self._data_max - 1)
 
-            # convert the data into a "number of pixels" -- height
-            ypixelsmax = int(float(datamax) * (float(h)/2.0) / float(self._data_max))
+            # Convert the data into a "number of pixels" -- height
+            ypixelsmax = int(float(datamax) * (float(h) / 2.0) / float(self._data_max))
             if self._data_min != 0:
-                ypixelsmin = int(float(datamin) * (float(h)/2.0) / float(abs(self._data_min)))
+                ypixelsmin = int(float(datamin) * (float(h) / 2.0) / float(abs(self._data_min)))
             else:
                 ypixelsmin = 0
 
             # draw a line between prec. value to current value
-            dc.DrawLine(xprec, ycenter-ypixelsminprec, xcur, ycenter-ypixelsmax)
-            dc.DrawLine(xcur,  ycenter-ypixelsmin, xcur, ycenter-ypixelsmax)
+            if xcur != x:
+                dc.DrawLine(xcur, y_center - ypixelsminprec, xcur, y_center - ypixelsmax)
+                dc.DrawLine(xcur + xstep, y_center - ypixelsmin, xcur + xstep, y_center - ypixelsmax)
 
             ypixelsminprec = ypixelsmin
 
-            # set values for next step
-            xprec = xcur
-            xcur = xcur + self._pen_width
-            d = dnext
+            # Set values for next step
+            xcur += xstep
+
+    # -----------------------------------------------------------------------
+
+    def __DrawContentAsBars(self, dc, gc, x, y, w, h):
+        """Draw the waveform as vertical bars.
+
+        Current min/max observed values are drawn by a vertical line.
+
+        """
+        y_center = y + (h // 2)
+        xstep = self._pen_width + (self._pen_width // 3)
+        x += (xstep // 2)
+        xcur = x
+
+        # Fix the pen style and color
+        pen = wx.Pen(self.GetPenForegroundColour(), self._pen_width, wx.PENSTYLE_SOLID)
+        dc.SetPen(pen)
+
+        while xcur < (x + w):
+
+            # Get value of n samples between xcur and xnext
+            dcur = (xcur - x) * len(self._data) // w
+            dnext = (xcur + xstep - x) * len(self._data) // w
+            data = self._data[dcur:dnext]
+
+            # Get min and max (take care if saturation...)
+            datamin = max(min(data), self._data_min + 1)
+            datamax = min(max(data), self._data_max - 1)
+
+            # Convert the data into a "number of pixels" -- height
+            ypixelsmax = int(float(datamax) * (float(h) / 2.0) / float(self._data_max))
+            if self._data_min != 0:
+                ypixelsmin = int(float(datamin) * (float(h) / 2.0) / float(abs(self._data_min)))
+            else:
+                ypixelsmin = 0
+
+            # draw a vertical line
+            if xcur != x:
+                dc.DrawLine(xcur, y_center - ypixelsmax, xcur, y_center - ypixelsmin)
+
+            # Set values for next step
+            xcur += xstep
+
+    # -----------------------------------------------------------------------
+
+    def __DrawContentSmallData(self, dc, gc, x, y, w, h):
+        """Draw the data with vertical lines.
+
+        Apply only if there are less data values than pixels to draw them.
+
+        """
+        y_center = y + (h // 2)
+        xstep = round(float(w * 1.5) / float(len(self._data)))
+        x += (xstep // 2)
+        xcur = x
+        while (xcur + xstep) < (x + w):
+
+            # Get value of n samples between xcur and xnext
+            dcur = (xcur - x) * len(self._data) // w
+            dnext = (xcur + xstep - x) * len(self._data) // w
+            data = self._data[dcur:dnext]
+
+            for value in data:
+                pen = wx.Pen(self.GetPenForegroundColour(), 1, wx.PENSTYLE_SOLID)
+                dc.SetPen(pen)
+                if value > 0:
+                    # convert the data into a "number of pixels" -- height
+                    y_pixels = int(float(value) * (float(h) / 2.0) / float(self._data_max))
+                else:
+                    y_pixels = int(float(value) * (float(h) / 2.0) / float(abs(self._data_min)))
+
+                if xstep > 1:
+                    point_size = xstep
+                    dc.DrawLine(xcur, y_center, xcur, y_center - y_pixels)
+                else:
+                    point_size = 3
+
+                pen = wx.Pen(self.GetPenForegroundColour(), point_size, wx.PENSTYLE_SOLID)
+                dc.SetPen(pen)
+                dc.DrawPoint(xcur, y_center - y_pixels)
+
+            xcur += xstep
 
 # ----------------------------------------------------------------------------
 # Panels to test
@@ -200,8 +374,14 @@ class TestPanel(wx.Panel):
         self._audio = audio_open(sample)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
+        w0 = self.__draw_waveform(0., 100.)
+        w0.SetBorderWidth(0)
         w1 = self.__draw_waveform(2., 3.)
+        w1.SetPenWidth(9)
+        w1.SetLineStyle("bars")
+        w1.SetAutoScroll(True)
         w2 = self.__draw_waveform(2.56, 2.60)
+        sizer.Add(w0, 1, wx.EXPAND)
         sizer.Add(w1, 1, wx.EXPAND)
         sizer.Add(w2, 1, wx.EXPAND)
         self.SetSizer(sizer)
@@ -213,7 +393,4 @@ class TestPanel(wx.Panel):
         data = self._audio.read_samples(nframes)
         w = sppasWaveformWindow(self, data=(data[0], self._audio.get_sampwidth()))
         return w
-
-
-
 

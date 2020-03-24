@@ -45,6 +45,7 @@ from sppas import paths
 from sppas.src.audiodata import sppasAudioPCM
 import sppas.src.audiodata.aio
 
+from sppas.src.ui.phoenix.windows.datactrls import sppasWaveformWindow
 from sppas.src.ui.phoenix.windows.panel import sppasPanel
 from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
 
@@ -69,15 +70,17 @@ class AudioViewProperties(object):
 
     # -----------------------------------------------------------------------
 
-    def __init__(self, audio_filename):
+    def __init__(self, parent, audio_filename):
         """Create the AudioTimeView.
 
+        :param parent: (wx.Window) Must not be None.
         :param audio_filename: (str)
 
         """
+        self.__parent = parent
         # All possible views and value (enabled=True, disabled=False)
         self.__infos = True
-        self.__waveform = False
+        self.__waveform = None
         self.__spectral = False
         self.__level = False
 
@@ -151,10 +154,10 @@ class AudioViewProperties(object):
         """
         value = bool(value)
         if value is True and self.__audio.get_nchannels() == 1:
-            self.__waveform = True
+            self.__waveform = sppasWaveformWindow(self.__parent)
             return True
 
-        self.__waveform = False
+        self.__waveform = None
         return False
 
     # -----------------------------------------------------------------------
@@ -204,13 +207,25 @@ class AudioViewProperties(object):
         h = 0
         if self.__infos is True:
             h += AudioViewProperties.INFOS_HEIGHT
-        if self.__waveform is True:
+        if self.__waveform is not None:
             h += AudioViewProperties.WAVEFORM_HEIGHT
         if self.__spectral is True:
             h += AudioViewProperties.SPECTRAL_HEIGHT
         if self.__level is True:
             h += AudioViewProperties.LEVEL_HEIGHT
         return h
+
+    # -----------------------------------------------------------------------
+
+    def DrawWaveform(self, pos, size, start_time, end_time):
+        self.__waveform.SetPosition(pos)
+        self.__waveform.SetSize(size)
+
+        nframes = int((end_time - start_time) * self.__audio.get_framerate())
+        self.__audio.seek(int(start_time * float(self.__audio.get_framerate())))
+        # read samples of all channels. Channel 0 is data[0]
+        data = self.__audio.read_samples(nframes)
+        self.__waveform.SetData([data[0], self.__audio.get_sampwidth()])
 
 # ---------------------------------------------------------------------------
 
@@ -379,6 +394,7 @@ class sppasMediaCtrl(sppasPanel):
         self._filename = None
         self._length = 0    # duration of the media in milliseconds
         self._audio = None
+        self._period = None   # a period to draw the audio. Default: whole.
 
         # Create the media, or destroy ourselves
         self._mc = self._create_media()
@@ -402,7 +418,7 @@ class sppasMediaCtrl(sppasPanel):
     def _create_media(self):
         """Return the wx.media.MediaCtrl with the appropriate backend.
 
-        Todo: create a media control based on mplayer
+        Todo: create a media control based on mplayer or gstreamer
               (certainly more reliable than native backends!).
 
         """
@@ -444,6 +460,17 @@ class sppasMediaCtrl(sppasPanel):
     # New features: Public methods
     # -----------------------------------------------------------------------
 
+    def GetAudioProperties(self):
+        """Return a AudioViewProperties() or None.
+
+        It allows to define look&feel of the displayed audio properties:
+        information, waveform, etc
+
+        """
+        return self._audio
+
+    # -----------------------------------------------------------------------
+
     def GetZoom(self):
         """Return the current zoom percentage value."""
         return self._zoom
@@ -467,6 +494,11 @@ class sppasMediaCtrl(sppasPanel):
         self._zoom = value
         self.SetBestSize()
         self.Refresh()
+
+    # ----------------------------------------------------------------------
+
+    def SetDrawPeriod(self, start, end):
+        self._period = (start, end)
 
     # ----------------------------------------------------------------------
 
@@ -930,7 +962,7 @@ class sppasMediaCtrl(sppasPanel):
                 self._ms = MediaState().stopped
                 self._mc.Seek(0)
                 if self._mt == MediaType().audio:
-                    self._audio = AudioViewProperties(self._filename)
+                    self._audio = AudioViewProperties(self, self._filename)
 
                 self.SetBestSize()
                 # Inform the parent we're ready.
@@ -1056,7 +1088,7 @@ class sppasMediaCtrl(sppasPanel):
                 h = AudioViewProperties.INFOS_HEIGHT
                 self.__draw_audio_infos(dc, gc, x, y, w, h)
                 y += h
-            if self._audio.get_waveform() is True:
+            if self._audio.get_waveform() is not None:
                 h = AudioViewProperties.WAVEFORM_HEIGHT
                 self.__draw_audio_waveform(dc, gc, x, y, w, h)
                 y += h
@@ -1125,6 +1157,17 @@ class sppasMediaCtrl(sppasPanel):
                               self.GetBackgroundColour(),
                               self.GetHighlightedBackgroundColour(),
                               wx.SOUTH)
+
+        pos = wx.Point(x, y)
+        size = wx.Size(w, h)
+        if self._period is not None:
+            start = float(self._period[0]) / 1000.
+            end = float(self._period[1]) / 1000.
+            self._audio.DrawWaveform(pos, size, start, end)
+        else:
+            start = 0.
+            end = float(self._length) / 1000.
+        self._audio.DrawWaveform(pos, size, start, end)
 
     # -----------------------------------------------------------------------
 
@@ -1231,21 +1274,26 @@ class TestPanel(wx.Panel):
         sizer.Add(self.st_type, (3, 5))
         sizer.Add(self.st_file, (4, 5))
 
+        # Test another one mediactrl
+
         mc2 = sppasMediaCtrl(self)
-        mc2.Load(
-            #"C:\\Users\\bigi\\Videos\\agay_2.mp4")
-            os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
 
         main_sizer = wx.BoxSizer(wx.VERTICAL)
-        main_sizer.Add(sizer, 0, wx.EXPAND)
-        main_sizer.Add(mc2, 0, wx.EXPAND)
+        main_sizer.Add(sizer, 1, wx.EXPAND)
+        main_sizer.Add(mc2, 1, wx.EXPAND)
         self.SetSizer(main_sizer)
 
         wx.CallAfter(
             self.DoLoad,
+            mc2,
             os.path.join(paths.samples, "samples-fra", "F_F_C006-P6.wav")
             #"C:\\Users\\bigi\\Videos\\agay_2.mp4"
             )
+        wx.CallAfter(
+            self.DoLoad,
+            self.mc,
+            #"C:\\Users\\bigi\\Videos\\agay_2.mp4")
+            os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
 
         mc2.SetZoom(200)
 
@@ -1254,13 +1302,13 @@ class TestPanel(wx.Panel):
 
     # ----------------------------------------------------------------------
 
-    def DoLoad(self, filename):
+    def DoLoad(self, mc, filename):
         self.playBtn.Enable(False)
-        self.mc.Load(filename)
-        self.st_len.SetLabel('length: %d seconds' % (self.mc.Length()/1000))
+        mc.Load(filename)
+        self.st_len.SetLabel('length: %d seconds' % (mc.Length()/1000))
         self.st_pos.SetLabel('position: %d' % self.mc.Tell())
-        self.st_type.SetLabel('type: %s' % self.mediatype(self.mc.GetMediaType()))
-        self.st_file.SetLabel('file: %s' % self.mc.GetFilename())
+        self.st_type.SetLabel('type: %s' % self.mediatype(mc.GetMediaType()))
+        self.st_file.SetLabel('file: %s' % mc.GetFilename())
 
     # ----------------------------------------------------------------------
 
@@ -1285,6 +1333,12 @@ class TestPanel(wx.Panel):
             self.st_len.SetLabel('length: %d seconds' % (media.Length()/1000))
             self.st_pos.SetLabel('position: %d' % media.Tell())
             self.st_type.SetLabel('type: %s' % self.mediatype(media.GetMediaType()))
+
+        audio_prop = media.GetAudioProperties()
+        if audio_prop is not None:
+            audio_prop.EnableWaveform(True)
+            media.SetBestSize()
+
         self.Layout()
 
     # ----------------------------------------------------------------------

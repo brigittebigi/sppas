@@ -623,15 +623,7 @@ class BitmapTextButton(BaseButton):
     # -----------------------------------------------------------------------
 
     def __draw_label(self, dc, gc, x, y):
-        font = self.GetFont()
-        gc.SetFont(font)
-        dc.SetFont(font)
-        if wx.Platform == '__WXGTK__':
-            dc.SetTextForeground(self.GetPenForegroundColour())
-            dc.DrawText(self._label, x, y)
-        else:
-            gc.SetTextForeground(self.GetPenForegroundColour())
-            gc.DrawText(self._label, x, y)
+        self.DrawLabel(self._label, dc, gc, x, y)
 
 # ---------------------------------------------------------------------------
 

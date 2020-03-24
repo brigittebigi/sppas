@@ -78,7 +78,7 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    The object this class is a sppasMediaCtrl.
+    The object of this class is a sppasMediaCtrl.
     Can not be constructed if the file is not supported and/or if an error
     occurred when opening or reading.
     Send action 'loaded' with True or False value.
@@ -230,6 +230,12 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
     def __process_media_loaded(self, event):
         """Process the end of load of a media."""
         media = event.GetEventObject()
+
+        # by default, show the waveform of audio files
+        audio_prop = media.GetAudioProperties()
+        if audio_prop is not None:
+            audio_prop.EnableWaveform(True)
+
         media_size = media.DoGetBestSize()
         media.SetSize(media_size)
         self.Expand()
