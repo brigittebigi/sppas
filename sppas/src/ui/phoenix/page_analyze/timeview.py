@@ -229,16 +229,11 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
 
     def __process_media_loaded(self, event):
         """Process the end of load of a media."""
-        media = event.GetEventObject()
-
-        # by default, show the waveform of audio files
-        audio_prop = media.GetAudioProperties()
-        if audio_prop is not None:
-            audio_prop.EnableWaveform(True)
-
-        media_size = media.DoGetBestSize()
-        media.SetSize(media_size)
-        self.Expand()
+        # media = event.GetEventObject()
+        # media_size = media.DoGetBestSize()
+        # media.SetSize(media_size)
+        # self.Expand()
+        self.Collapse()
 
         evt = MediaEvents.MediaActionEvent(action="loaded", value=True)
         evt.SetEventObject(self)

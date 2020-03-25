@@ -265,6 +265,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         """
         if media in self.__media:
             return False
+
         ok = self.__append_media(media)
         if ok is True:
             # re-evaluate length
@@ -559,9 +560,25 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
                 wx.LogDebug("Media {:s} is added to the player."
                             "".format(m.GetFilename()))
                 self.__media.append(m)
+                if mt == MediaType().audio:
+                    self.__media_audio_properties(m)
+
                 return True
 
         return False
+
+    # -----------------------------------------------------------------------
+
+    def __media_audio_properties(self, media):
+        audio_prop = media.GetAudioProperties()
+        if audio_prop is not None:
+            # by default, show the waveform of audio files
+            audio_prop.EnableWaveform(True)
+            w = audio_prop.get_waveform()
+            # disable the border of the waveform
+            w.SetBorderWidth(0)
+            # fix the period to draw
+            media.SetDrawPeriod(self.start_pos, self.end_pos)
 
 # ---------------------------------------------------------------------------
 

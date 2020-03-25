@@ -526,6 +526,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
             if value is True:
                 panel = event.GetEventObject()
                 self._player_controls_panel.add_media(panel.GetPane())
+                panel.Expand()
 
         event.Skip()
 

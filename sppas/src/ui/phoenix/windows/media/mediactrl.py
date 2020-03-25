@@ -202,6 +202,50 @@ class AudioViewProperties(object):
     # Height of views
     # -----------------------------------------------------------------------
 
+    def GetWaveformHeight(self):
+        """Return the height required to draw the Waveform."""
+        h = AudioViewProperties.WAVEFORM_HEIGHT
+        try:
+            h = self.__parent.fix_size(h)
+        except AttributeError:
+            pass
+        return h
+
+    # -----------------------------------------------------------------------
+
+    def GetInfosHeight(self):
+        """Return the height required to draw the audio information."""
+        h = AudioViewProperties.INFOS_HEIGHT
+        try:
+            h = self.__parent.fix_size(h)
+        except AttributeError:
+            pass
+        return h
+
+    # -----------------------------------------------------------------------
+
+    def GetLevelHeight(self):
+        """Return the height required to draw the audio volume level."""
+        h = AudioViewProperties.LEVEL_HEIGHT
+        try:
+            h = self.__parent.fix_size(h)
+        except AttributeError:
+            pass
+        return h
+
+    # -----------------------------------------------------------------------
+
+    def GetSpectralHeight(self):
+        """Return the height required to draw the audio spectrum."""
+        h = AudioViewProperties.SPECTRAL_HEIGHT
+        try:
+            h = self.__parent.fix_size(h)
+        except AttributeError:
+            pass
+        return h
+
+    # -----------------------------------------------------------------------
+
     def GetMinHeight(self):
         """Return the min height required to draw all views."""
         h = 0
@@ -209,10 +253,16 @@ class AudioViewProperties(object):
             h += AudioViewProperties.INFOS_HEIGHT
         if self.__waveform is not None:
             h += AudioViewProperties.WAVEFORM_HEIGHT
-        if self.__spectral is True:
-            h += AudioViewProperties.SPECTRAL_HEIGHT
         if self.__level is True:
             h += AudioViewProperties.LEVEL_HEIGHT
+        if self.__spectral is True:
+            h += AudioViewProperties.SPECTRAL_HEIGHT
+
+        try:
+            h = self.__parent.fix_size(h)
+        except AttributeError:
+            pass
+
         return h
 
     # -----------------------------------------------------------------------
@@ -777,7 +827,7 @@ class sppasMediaCtrl(sppasPanel):
         # Adjust height, except if video
         with MediaType() as mt:
             if self._mt == mt.audio and self._audio is not None:
-                h = sppasPanel.fix_size(self._audio.GetMinHeight())
+                h = self._audio.GetMinHeight()
 
             elif self._mt in (mt.unknown, mt.unsupported):
                 h = sppasMediaCtrl.MIN_HEIGHT
@@ -1085,11 +1135,13 @@ class sppasMediaCtrl(sppasPanel):
             self.__draw_audio_infos(dc, gc, x, y, w, h)
         else:
             if self._audio.get_infos() is True:
-                h = AudioViewProperties.INFOS_HEIGHT
+                h = self._audio.GetInfosHeight()
+                h = int(float(h) * float(self._zoom) / 100.)
                 self.__draw_audio_infos(dc, gc, x, y, w, h)
                 y += h
             if self._audio.get_waveform() is not None:
-                h = AudioViewProperties.WAVEFORM_HEIGHT
+                h = self._audio.GetWaveformHeight()
+                h = int(float(h) * float(self._zoom) / 100.)
                 self.__draw_audio_waveform(dc, gc, x, y, w, h)
                 y += h
 
