@@ -46,7 +46,7 @@ from sppas.src.utils import u
 
 from ..windows import sppasToolbar
 from ..windows import sppasPanel
-from ..windows import sppasProgressDialog
+from ..windows.dialogs import sppasProgressDialog
 from ..windows.dialogs import sppasChoiceDialog
 from ..windows.dialogs import sppasTextEntryDialog
 from ..windows.dialogs import Confirm
@@ -671,7 +671,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
                 progress.set_text(filename)
                 if isinstance(panel, TrsListViewPanel):
                     filtered += panel.single_filter(filters, match_all, annot_format, tiername)
-                progress.set_fraction(float((i+1))/float(total))
+                progress.set_fraction(int(100. * float((i+1)) / float(total)))
 
             wx.EndBusyCursor()
             progress.set_fraction(100)
@@ -734,7 +734,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
                 if isinstance(panel, TrsListViewPanel):
                     filtered += panel.relation_filter(
                         filters, y_tiername, annot_format, out_tiername)
-                progress.set_fraction(float((i+1))/float(total))
+                progress.set_fraction(int(100. * float((i+1)) / float(total)))
 
             wx.EndBusyCursor()
             progress.set_fraction(100)

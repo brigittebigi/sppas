@@ -63,6 +63,7 @@ from ..main_events import EVT_VIEW
 
 from ..windows.dialogs import Information, Confirm, Error
 from ..windows.dialogs import sppasFileDialog
+from ..windows.dialogs import sppasProgressDialog
 from ..windows import sppasPanel
 from ..windows import sppasStaticLine
 from ..windows.book import sppasSimplebook
@@ -240,22 +241,34 @@ class sppasAnalyzePanel(sppasPanel):
 
         # Add checked files to the page
         checked = self.__data.get_filename_from_state(States().CHECKED)
-        i = 0
-        for fn in sorted(checked):
+        success = 0
+        total = len(checked)
+        progress = sppasProgressDialog()
+        progress.set_new()
+        progress.set_header("Open files...")
+        progress.set_fraction(0)
+        wx.BeginBusyCursor()
+        for i, fn in enumerate(sorted(checked)):
             try:
+                fraction = float((i+1)) / float(total)
+                message = os.path.basename(fn.get_id())
+                progress.update(fraction, message)
                 page.append_file(fn.get_id())
                 page.Layout()
                 self.__data.set_object_state(States().LOCKED, fn)
-                i += 1
+                success += 1
             except Exception as e:
                 wx.LogError(str(e))
+        wx.EndBusyCursor()
+        progress.set_fraction(1)
+        progress.close()
 
         # send data to the parent
-        if i > 0:
+        if success > 0:
             self.Layout()
             self.Refresh()
             wx.LogMessage("{:d} files opened in page {:s}."
-                          "".format(i, page.GetName()))
+                          "".format(success, page.GetName()))
             self.notify()
         else:
             wx.LogMessage("No file opened in page {:s}.".format(page.GetName()))

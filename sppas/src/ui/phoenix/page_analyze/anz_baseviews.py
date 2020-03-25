@@ -35,6 +35,7 @@
 """
 
 import wx
+import os
 
 from sppas import msg
 from sppas.src.utils import u
@@ -44,6 +45,7 @@ from ..windows import sppasPanel
 from ..windows import sppasToolbar
 from ..windows import sppasScrolledPanel
 from ..windows.dialogs import Confirm
+from ..windows.dialogs import sppasProgressDialog
 from ..main_events import ViewEvent, EVT_VIEW
 from .errview import ErrorViewPanel
 
@@ -97,8 +99,8 @@ class BaseViewFilesPanel(sppasPanel):
         except AttributeError:
             self.InheritAttributes()
 
-        for f in files:
-            self.append_file(f)
+        if len(files) > 0:
+            self.append_files(files)
 
         self.Layout()
 
@@ -186,6 +188,35 @@ class BaseViewFilesPanel(sppasPanel):
                 pass
 
         return False
+
+    # -----------------------------------------------------------------------
+
+    def append_files(self, files):
+        """Add a list of files and display their content.
+
+        Do not refresh/layout the GUI.
+
+        :param files: (list of str)
+        :raise: ValueError
+
+        """
+        total = len(files)
+        progress = sppasProgressDialog()
+        progress.set_new()
+        progress.set_header("Open files...")
+        progress.set_fraction(0)
+        wx.BeginBusyCursor()
+        for i, f in enumerate(sorted(files)):
+            try:
+                fraction = float((i+1)) / float(total)
+                message = os.path.basename(f)
+                progress.update(fraction, message)
+                self.append_file(f)
+            except Exception as e:
+                wx.LogError(str(e))
+        wx.EndBusyCursor()
+        progress.set_fraction(1)
+        progress.close()
 
     # -----------------------------------------------------------------------
 

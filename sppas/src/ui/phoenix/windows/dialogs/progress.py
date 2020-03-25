@@ -133,8 +133,8 @@ class sppasProgressDialog(wx.GenericProgressDialog, sppasBaseProgress):
     def update(self, percent=None, message=None):
         """Overridden. Update the progress box.
 
-        :param message: (str) progress bar value (default: 0)
-        :param percent: (float) progress bar text  (default: None)
+        :param percent: (float) progress bar value as percentage or fraction
+        :param message: (str) progress bar text
 
         """
         if percent is not None:
@@ -151,7 +151,7 @@ class sppasProgressDialog(wx.GenericProgressDialog, sppasBaseProgress):
             message = self.GetMessage()
 
         self.Update(fraction, message)
-        wx.MilliSleep(200)
+        wx.MilliSleep(50)
 
     # -----------------------------------------------------------------------
 
