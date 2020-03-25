@@ -340,8 +340,7 @@ class TabsManager(sppasPanel):
         if current == -1:
             Error("No tab is checked to open files.")
         else:
-            evt = TabChangeEvent(action="open",
-                                 dest_tab=None)
+            evt = TabChangeEvent(action="open", dest_tab=None)
             evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)
 

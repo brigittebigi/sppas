@@ -310,6 +310,7 @@ class sppasToolbar(sppasPanel):
         if icon is not None:
             btn = BitmapTextButton(self, label=text, name=icon)
             btn.SetLabelPosition(wx.RIGHT)
+            btn.SetBitmapColour(self.GetForegroundColour())
             if text is None:
                 btn.SetSpacing(0)
                 btn.SetMaxSize(wx.Size(self._h*2, self._h*2))
@@ -325,7 +326,6 @@ class sppasToolbar(sppasPanel):
         btn.SetFocusWidth(self._fw)
         btn.SetFocusColour(self._fc)
         btn.SetBorderWidth(0)
-        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(self._h, self._h))
 
         return btn

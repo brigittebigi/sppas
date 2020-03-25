@@ -575,7 +575,6 @@ class FileTreeView(sppasScrolledPanel):
     def OnCollapseChanged(self, evt=None):
         """One of the paths was collapsed/expanded."""
         panel = evt.GetEventObject()
-        panel.SetFocus()
         fs_id = panel.get_id()
         fs = self.__data.get_object(fs_id)
         if fs.subjoined is None:
@@ -590,6 +589,8 @@ class FileTreeView(sppasScrolledPanel):
             # Required for the parent to do properly its layout:
             # (i.e. estimate the height needed by each panel and refresh)
             self.GetParent().SendSizeEvent()
+
+        self.ScrollChildIntoView(panel)
 
     # ------------------------------------------------------------------------
 
@@ -876,7 +877,6 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
     def OnCollapseChanged(self, evt):
         """One of the roots was collapsed/expanded."""
         panel = evt.GetEventObject()
-        panel.SetFocus()
         self.Layout()
         wx.PostEvent(self.GetParent(), evt)
 

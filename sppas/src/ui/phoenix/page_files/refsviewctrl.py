@@ -358,7 +358,6 @@ class RefsTreeView(sppasScrolledPanel):
     def OnCollapseChanged(self, evt=None):
         """One of the roots was collapsed/expanded."""
         panel = evt.GetEventObject()
-        panel.SetFocus()
         self.Layout()
         for ref_id in self.__refps:
             if self.__refps[ref_id] == panel:
@@ -368,6 +367,7 @@ class RefsTreeView(sppasScrolledPanel):
                 ref.subjoined['expand'] = panel.IsExpanded()
                 break
         self.GetParent().SendSizeEvent()
+        self.ScrollChildIntoView(panel)
 
     # ------------------------------------------------------------------------
 

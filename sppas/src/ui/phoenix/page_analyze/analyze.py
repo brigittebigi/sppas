@@ -241,7 +241,7 @@ class sppasAnalyzePanel(sppasPanel):
         # Add checked files to the page
         checked = self.__data.get_filename_from_state(States().CHECKED)
         i = 0
-        for fn in checked:
+        for fn in sorted(checked):
             try:
                 page.append_file(fn.get_id())
                 page.Layout()

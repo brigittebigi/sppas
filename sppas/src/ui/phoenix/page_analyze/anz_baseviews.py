@@ -480,5 +480,5 @@ class BaseViewFilesPanel(sppasPanel):
 
     def OnCollapseChanged(self, evt=None):
         panel = evt.GetEventObject()
-        self.GetScrolledPanel().ScrollChildIntoView(panel)
         self.Layout()
+        self.GetScrolledPanel().ScrollChildIntoView(panel)

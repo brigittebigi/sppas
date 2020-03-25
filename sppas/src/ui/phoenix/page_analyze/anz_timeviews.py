@@ -471,6 +471,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         for filename in self._files:
             panel = self._files[filename]
             if isinstance(panel, TrsTimeViewPanel):
+                self.GetScrolledPanel().ScrollChildIntoView(panel)
                 if filename == trs_filename:
                     if what == "select":
                         panel.set_selected_ann(idx)
@@ -541,9 +542,9 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
             else:
                 self._player_controls_panel.remove_media(panel.GetPane())
 
-        self.GetScrolledPanel().ScrollChildIntoView(panel)
         self.FindWindow("vert_splitter").Layout()
         self.FindWindow("vert_splitter").UpdateSize()
+        self.GetScrolledPanel().ScrollChildIntoView(panel)
 
     # -----------------------------------------------------------------------
     # -----------------------------------------------------------------------
