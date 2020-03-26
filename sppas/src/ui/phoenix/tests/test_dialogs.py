@@ -41,7 +41,7 @@ import logging
 from sppas import paths
 from sppas.src.plugins import sppasPluginsManager
 import sppas.src.audiodata.aio
-
+from sppas.src.anndata import sppasMetaData
 from sppas.src.ui.cfg import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 from sppas.src.ui.phoenix.windows import sppasPanel
@@ -52,6 +52,7 @@ from sppas.src.ui.phoenix.dialogs.about import AboutPlugin
 from sppas.src.ui.phoenix.dialogs.settings import Settings
 from sppas.src.ui.phoenix.dialogs.tiersview import TiersView
 from sppas.src.ui.phoenix.dialogs.statsview import StatsView
+from sppas.src.ui.phoenix.dialogs.metaedit import MetaDataEdit
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
@@ -71,7 +72,6 @@ class TestPanel(sppasPanel):
         btn2 = wx.Button(self,
                          pos=(200, 10), size=(180, 70),
                          label="About plugin", name="about_plugin_btn")
-
         btn3 = wx.Button(self,
                          pos=(390, 10), size=(180, 70),
                          label="Settings", name="settings_btn")
@@ -79,14 +79,16 @@ class TestPanel(sppasPanel):
         btn5 = wx.Button(self,
                          pos=(10, 100), size=(180, 70),
                          label="Audio Roamer", name="audio_btn")
-
         btn6 = wx.Button(self,
                          pos=(200, 100), size=(180, 70),
                          label="Tier View", name="tierview_btn")
-
         btn6 = wx.Button(self,
                          pos=(390, 100), size=(180, 70),
                          label="Stats View", name="statview_btn")
+
+        btn7 = wx.Button(self,
+                         pos=(10, 200), size=(180, 70),
+                         label="Metadata Edit", name="metadata_btn")
 
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
@@ -124,6 +126,10 @@ class TestPanel(sppasPanel):
         elif event_name == "statview_btn":
             # TODO. Add a list of tiers to test StatsView
             StatsView(self, [])
+
+        elif event_name == "metadata_btn":
+            print("METADATA")
+            MetaDataEdit(self, sppasMetaData())
 
 # ----------------------------------------------------------------------------
 # App to test

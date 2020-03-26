@@ -87,6 +87,8 @@ from .frame import sppasTopFrame
 from .frame import sppasFrame
 
 from .listctrl import LineListCtrl
+from .listctrl import sppasListCtrl
+
 from .toolbar import sppasToolbar
 
 __all__ = (
@@ -133,5 +135,6 @@ __all__ = (
     "sppasTopFrame",
     "sppasFrame",
     "sppasToolbar",
+    "sppasListCtrl",
     "LineListCtrl"
 )
