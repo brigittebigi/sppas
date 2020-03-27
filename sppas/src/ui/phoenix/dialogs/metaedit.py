@@ -110,7 +110,9 @@ class sppasMetaDataEditDialog(sppasDialog):
         tb2 = self.__create_toolbar_groups(p)
         s = wx.BoxSizer(wx.HORIZONTAL)
         s.Add(tb1, 0, wx.EXPAND)
+        s.Add(self.__create_vline(p), 0, wx.EXPAND)
         s.Add(lst, 1, wx.EXPAND | wx.TOP | wx.BOTTOM, sppasPanel.fix_size(12))
+        s.Add(self.__create_vline(p), 0, wx.EXPAND)
         s.Add(tb2, 0, wx.EXPAND)
         p.SetSizer(s)
         p.Layout()
@@ -157,7 +159,7 @@ class sppasMetaDataEditDialog(sppasDialog):
 
     def __create_list(self, parent):
         lst = sppasListCtrl(parent, style=wx.LC_REPORT | wx.LC_EDIT_LABELS)
-        lst.SetMinSize(wx.Size(sppasPanel.fix_size(240), -1))
+        lst.SetMinSize(wx.Size(sppasPanel.fix_size(320), -1))
 
         lst.AppendColumn("Key", format=wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(120))
         lst.AppendColumn("Value", format=wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(400))
@@ -174,11 +176,11 @@ class sppasMetaDataEditDialog(sppasDialog):
 
     # -----------------------------------------------------------------------
 
-    def __create_vline(self):
+    def __create_vline(self, parent):
         """Create an horizontal line, used to separate the panels."""
-        line = sppasStaticLine(self, orient=wx.LI_VERTICAL)
-        line.SetMinSize(wx.Size(6, -1))
-        line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
+        line = sppasStaticLine(parent, orient=wx.LI_VERTICAL)
+        line.SetMinSize(wx.Size(7, -1))
+        line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(1)
         return line
 

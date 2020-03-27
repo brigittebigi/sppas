@@ -53,11 +53,15 @@ class sppasListCtrl(wx.ListCtrl):
     for single selection with wx.LC_REPORT style.
 
     Known bug of wx.ListCtrl:
-    If the it is defined as a page of a wx.Notebook, under Windows only,
-    DeleteItem() returns the following error message:
-    listctrl.cpp(2614) in wxListCtrl::MSWOnNotify(): invalid internal data pointer?
-    A solution is to use a simplebook, a choicebook, a listbook or a
-    toolbook instead!
+
+    - If the it is defined as a page of a wx.Notebook, under Windows only,
+      DeleteItem() returns the following error message:
+      listctrl.cpp(2614) in wxListCtrl::MSWOnNotify(): invalid internal data pointer?
+      A solution is to use a simplebook, a choicebook, a listbook or a
+      toolbook instead!
+    - Items can't be edited. The events (begin/end edit label) are never sent.
+      The wxDemo "ListCtrl_edit" does not work, clicking or double clicking
+      on items does.... nothing.
 
     """
 
@@ -77,6 +81,9 @@ class sppasListCtrl(wx.ListCtrl):
         :param name:      Window name.
 
         """
+        if style & wx.LC_EDIT_LABELS:
+            style &= ~wx.LC_EDIT_LABELS
+
         super(sppasListCtrl, self).__init__(
             parent, id, pos, size, style, validator, name)
 
@@ -298,29 +305,41 @@ class sppasListCtrl(wx.ListCtrl):
         # cancel the selection managed by wx.ListCtrl
         wx.ListCtrl.Select(self, item_index, on=0)
         # manage our own selection
-        self.Select(item_index, on=1)
-
-        evt.Skip()
+        if self.HasFlag(wx.LC_SINGLE_SEL):
+            self.Select(item_index, on=1)
+            evt.Skip()
+        else:
+            if item_index in self._selected:
+                self.Select(item_index, on=0)
+                nex_evt = wx.ListEvent(wx.wxEVT_COMMAND_LIST_ITEM_DESELECTED, self.GetId())
+                nex_evt.SetEventObject(self)
+                nex_evt.SetItem(item)
+                nex_evt.SetIndex(item_index)
+                nex_evt.SetColumn(evt.GetColumn())
+                wx.PostEvent(self.GetParent(), nex_evt)
+            else:
+                self.Select(item_index, on=1)
+                evt.Skip()
 
     # ---------------------------------------------------------------------
 
     def OnItemDeselected(self, evt):
         """Callback.
 
-        The item index is the selected one.
+        Hum... the item index of the event is the selected one!
 
         """
         item = evt.GetItem()
         item_index = item.GetId()
+        wx.ListCtrl.Select(self, item_index, on=0)
 
-        if item_index in self._selected:
-            wx.ListCtrl.Select(self, item_index, on=0)
-            self.Select(item_index, on=0)
-            evt.Skip()
-        else:
-            # send the event with the de-selected item,
+        if self.HasFlag(wx.LC_SINGLE_SEL):
+            if item_index in self._selected:
+                self.Select(item_index, on=0)
+
+            # re-send the event with the de-selected item,
             # and not the selected one
-            if self.HasFlag(wx.LC_SINGLE_SEL) and len(self._selected) > 0:
+            if len(self._selected) > 0:
                 i = self._selected[0]
                 if i != item_index:
                     evt.SetIndex(i)
@@ -507,7 +526,7 @@ class TestPanel(wx.Panel):
         super(TestPanel, self).__init__(parent, name="test_panel")
 
         listctrl = LineListCtrl(self,
-            style=wx.LC_REPORT | wx.LC_SINGLE_SEL,
+            style=wx.LC_REPORT,  #  | wx.LC_SINGLE_SEL,
             name="listctrl")
 
         # The simplest way to create columns
@@ -556,3 +575,9 @@ class TestPanel(wx.Panel):
             selected = lst.GetFirstSelected()
             if selected != -1:
                 lst.DeleteItem(selected)
+        evt.Skip()
+
+    def _on_edit_starts(self, evt):
+        logging.debug("Parent received LABEL BEGIN EDIT item event. Index {}"
+                      "".format(evt.GetIndex()))
+
