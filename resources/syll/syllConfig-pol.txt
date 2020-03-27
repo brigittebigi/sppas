@@ -32,6 +32,8 @@ PHONCLASS ## #
 PHONCLASS + #
 PHONCLASS * #
 PHONCLASS @@ #
+PHONCLASS laugh #
+PHONCLASS noise #
 PHONCLASS sp #
 PHONCLASS gb #
 PHONCLASS sil #
@@ -40,6 +42,7 @@ PHONCLASS fp #
 
 # list of vowels
 PHONCLASS a V
+PHONCLASS e V
 PHONCLASS E V
 PHONCLASS E~ V
 PHONCLASS i V
@@ -56,7 +59,7 @@ PHONCLASS w G
 
 # list of liquids, use L symbol
 PHONCLASS l L
-PHONCLASS r L
+PHONCLASS R\ L
 
 # list of plosives, use P symbol
 PHONCLASS p P
@@ -76,20 +79,20 @@ PHONCLASS N N
 PHONCLASS J N
 
 # list of fricatives, use F symbol
-PHONCLASS dz F
-PHONCLASS dZ F
+PHONCLASS d^z\ F
+PHONCLASS d^z F
+PHONCLASS d^Z F
 PHONCLASS f F
 PHONCLASS v F
 PHONCLASS x F
-PHONCLASS tS F
-PHONCLASS ts F
-PHONCLASS ts` F
-PHONCLASS dz` F
+PHONCLASS t^S F
+PHONCLASS t^s F
+PHONCLASS t^s\ F
 PHONCLASS z F
 PHONCLASS z` F
 PHONCLASS Z F
 
-PHONCLASS s` S
+PHONCLASS s\ S
 PHONCLASS s S
 PHONCLASS S S
 
@@ -194,53 +197,53 @@ EXCRULE VPSSV 0
 # For example, the line "OTHRULE ANY ANY p t 0" means that the boundary will
 # be applied between the 'p' and 't' phoneme. Replacing 0 by -1 means the
 # boundary will be between 'ANY' and 'p'.
-# CHANGES from SPPAS 1.7.3:
+# CHANGES fR\om SPPAS 1.7.3:
 #  1. we can force the phoneme to be a vowel
 #  2. the last phoneme (not mentionned in the sequence) is the vowel
 
 # for VCCV - correction of errors of the general rules
-OTHRULE ANY ANY V b dz` -1
+OTHRULE ANY ANY V b d^z\ -1
 OTHRULE ANY ANY V d g -1
 OTHRULE ANY ANY V f s -1
-OTHRULE ANY ANY V f s` -1
+OTHRULE ANY ANY V f s\ -1
 OTHRULE ANY ANY V f S -1
 OTHRULE ANY ANY V g d -1
 OTHRULE ANY ANY V g g -1
 OTHRULE ANY ANY V k p -1
 OTHRULE ANY ANY V k t -1
 OTHRULE ANY ANY V l l -1
-OTHRULE ANY ANY V l dZ -1
+OTHRULE ANY ANY V l d^Z -1
 OTHRULE ANY ANY V m b -1
 OTHRULE ANY ANY V m J -1
 OTHRULE ANY ANY V m n -1
 OTHRULE ANY ANY V m n` -1
-OTHRULE ANY ANY V m r -1
+OTHRULE ANY ANY V m R\ -1
 OTHRULE ANY ANY V p c -1
 OTHRULE ANY ANY V p k -1
 OTHRULE ANY ANY V p p -1
-OTHRULE ANY ANY V p ts -1
-OTHRULE ANY ANY V p ts` -1
+OTHRULE ANY ANY V p t^s -1
+OTHRULE ANY ANY V p t^s\ -1
 OTHRULE ANY ANY V p t -1
 OTHRULE ANY ANY V S p -1
 OTHRULE ANY ANY V t c -1
 OTHRULE ANY ANY V t k -1
-OTHRULE ANY ANY V v dz` -1
+OTHRULE ANY ANY V v d^z\ -1
 OTHRULE ANY ANY V x S -1
 OTHRULE ANY ANY V z` b -1
 OTHRULE ANY ANY V z` Z -1
 
 # for VCCV - correction of errors of the exception rules
-OTHRULE ANY ANY V b dz 1
+OTHRULE ANY ANY V b d^z 1
 OTHRULE ANY ANY V b f 1
 OTHRULE ANY ANY V b m 1
-OTHRULE ANY ANY V dz` b 1
-OTHRULE ANY ANY V dz` g 1
-OTHRULE ANY ANY V dz` Z 1
-OTHRULE ANY ANY V dZ b 1
-OTHRULE ANY ANY V dZ dZ 1
-OTHRULE ANY ANY V dZ Z 1
-OTHRULE ANY ANY V d dz 1
-OTHRULE ANY ANY V d dz` 1
+OTHRULE ANY ANY V d^z\ b 1
+OTHRULE ANY ANY V d^z\ g 1
+OTHRULE ANY ANY V d^z\ Z 1
+OTHRULE ANY ANY V d^Z b 1
+OTHRULE ANY ANY V d^Z dZ 1
+OTHRULE ANY ANY V d^Z Z 1
+OTHRULE ANY ANY V d d^z 1
+OTHRULE ANY ANY V d d^z\ 1
 OTHRULE ANY ANY V d J 1
 OTHRULE ANY ANY V d s 1
 OTHRULE ANY ANY V d z 1
@@ -250,34 +253,34 @@ OTHRULE ANY ANY V f m 1
 OTHRULE ANY ANY V f t 1
 OTHRULE ANY ANY V g J 1
 OTHRULE ANY ANY V g s 1
-OTHRULE ANY ANY V p ts 1
+OTHRULE ANY ANY V p t^s 1
 OTHRULE ANY ANY V p z 1
-OTHRULE ANY ANY V s` ts 1
-OTHRULE ANY ANY V s ts` 1
-OTHRULE ANY ANY V s tS 1
-OTHRULE ANY ANY V s` tS 1
-OTHRULE ANY ANY V tS g 1
-OTHRULE ANY ANY V tS p 1
-OTHRULE ANY ANY V tS tS 1
-OTHRULE ANY ANY V tS ts` 1
-OTHRULE ANY ANY V tS ts 1
-OTHRULE ANY ANY V ts ts 1
-OTHRULE ANY ANY V ts tS 1
-OTHRULE ANY ANY V ts ts` 1
-OTHRULE ANY ANY V ts` p 1
-OTHRULE ANY ANY V ts` ts 1
-OTHRULE ANY ANY V ts` ts` 1
-OTHRULE ANY ANY V ts` tS 1
+OTHRULE ANY ANY V s\ t^s 1
+OTHRULE ANY ANY V s t^s\ 1
+OTHRULE ANY ANY V s t^S 1
+OTHRULE ANY ANY V s\ t^S 1
+OTHRULE ANY ANY V t^S g 1
+OTHRULE ANY ANY V t^S p 1
+OTHRULE ANY ANY V t^S tS 1
+OTHRULE ANY ANY V t^S t^s\ 1
+OTHRULE ANY ANY V t^S t^s 1
+OTHRULE ANY ANY V t^s ts 1
+OTHRULE ANY ANY V t^s t^S 1
+OTHRULE ANY ANY V t^s t^s\ 1
+OTHRULE ANY ANY V t^s\ p 1
+OTHRULE ANY ANY V t^s\ t^s 1
+OTHRULE ANY ANY V t^s\ ts\ 1
+OTHRULE ANY ANY V t^s\ t^S 1
 OTHRULE ANY ANY V t s 1
-OTHRULE ANY ANY V t s` 1
-OTHRULE ANY ANY V t ts 1
-OTHRULE ANY ANY V t ts` 1
-OTHRULE ANY ANY V t tS 1
+OTHRULE ANY ANY V t s\ 1
+OTHRULE ANY ANY V t t^s 1
+OTHRULE ANY ANY V t t^s\ 1
+OTHRULE ANY ANY V t t^S 1
 OTHRULE ANY ANY V v b 1
 OTHRULE ANY ANY V v g 1
 OTHRULE ANY ANY V v N 1
 OTHRULE ANY ANY V v v 1
-OTHRULE ANY ANY V v dz 1
+OTHRULE ANY ANY V v d^z 1
 OTHRULE ANY ANY V x b 1
 OTHRULE ANY ANY V x d 1
 OTHRULE ANY ANY V x k 1
@@ -285,15 +288,15 @@ OTHRULE ANY ANY V x p 1
 OTHRULE ANY ANY V z` g 1
 OTHRULE ANY ANY V Z b 1
 OTHRULE ANY ANY V Z g 1
-OTHRULE ANY ANY V Z dz` 1
-OTHRULE ANY ANY V z dz` 1
+OTHRULE ANY ANY V Z d^z\ 1
+OTHRULE ANY ANY V z d^z\ 1
 OTHRULE ANY ANY V z g 1
 OTHRULE ANY ANY V z J 1
 OTHRULE ANY ANY V z z 1
 OTHRULE ANY ANY V z Z 1
 
 # shift to the right (the only case of VCC|V)
-OTHRULE ANY ANY V l dZ 1
+OTHRULE ANY ANY V l d^Z 1
 
 
 # for VCCCV
@@ -301,16 +304,16 @@ OTHRULE ANY ANY V l dZ 1
 # false general rule, shift to left
 OTHRULE ANY V b b w -1
 OTHRULE ANY V b d j -1
-OTHRULE ANY V b d r -1
-OTHRULE ANY V b p r -1
+OTHRULE ANY V b d R\ -1
+OTHRULE ANY V b p R\ -1
 OTHRULE ANY V c c j -1
-OTHRULE ANY V dZ b j -1
-OTHRULE ANY V dz` b w -1
-OTHRULE ANY V dz` g n -1
+OTHRULE ANY V d^Z b j -1
+OTHRULE ANY V d^z\ b w -1
+OTHRULE ANY V d^z\ g n -1
 OTHRULE ANY V f c j -1
-OTHRULE ANY V f f r -1
+OTHRULE ANY V f f R\ -1
 OTHRULE ANY V f k l -1
-OTHRULE ANY V f k r -1
+OTHRULE ANY V f k R\ -1
 OTHRULE ANY V f k t -1
 OTHRULE ANY V f k w -1
 OTHRULE ANY V f p j -1
@@ -318,90 +321,90 @@ OTHRULE ANY V f p l -1
 OTHRULE ANY V f p n -1
 OTHRULE ANY V f p S -1
 OTHRULE ANY V f p w -1
-OTHRULE ANY V f r j -1
-OTHRULE ANY V f r s -1
+OTHRULE ANY V f R\ j -1
+OTHRULE ANY V f R\ s -1
 OTHRULE ANY V f s c -1
 OTHRULE ANY V f s k -1
 OTHRULE ANY V f s n -1
 OTHRULE ANY V f s p -1
-OTHRULE ANY V f s ts -1
-OTHRULE ANY V f s` ts` -1
-OTHRULE ANY V f S tS -1
+OTHRULE ANY V f s t^s -1
+OTHRULE ANY V f s\ t^s\ -1
+OTHRULE ANY V f S t^S -1
 OTHRULE ANY V f s t -1
 OTHRULE ANY V f S t -1
 OTHRULE ANY V f s x -1
 OTHRULE ANY V f t c -1
 OTHRULE ANY V f t k -1
 OTHRULE ANY V f t p -1
-OTHRULE ANY V f t r -1
+OTHRULE ANY V f t R\ -1
 OTHRULE ANY V f t S -1
 OTHRULE ANY V f t w -1
-OTHRULE ANY V k t r -1
+OTHRULE ANY V k t R\ -1
 OTHRULE ANY V l l j -1
 OTHRULE ANY V m g n` -1
 OTHRULE ANY V m J j -1
 OTHRULE ANY V m m l -1
 OTHRULE ANY V p c j -1
-OTHRULE ANY V p k r -1
+OTHRULE ANY V p k R\ -1
 OTHRULE ANY V p k w -1
 OTHRULE ANY V p p l -1
 OTHRULE ANY V p t k -1
-OTHRULE ANY V p t r -1
+OTHRULE ANY V p t R\ -1
 OTHRULE ANY V S c j -1
 OTHRULE ANY V s c j -1
 OTHRULE ANY V s f j -1
-OTHRULE ANY V s` f j -1
+OTHRULE ANY V s\ f j -1
 OTHRULE ANY V S f j -1
 OTHRULE ANY V s f l -1
-OTHRULE ANY V s f r -1
+OTHRULE ANY V s f R\ -1
 OTHRULE ANY V s k f -1
 OTHRULE ANY V S k f -1
 OTHRULE ANY V s k l -1
 OTHRULE ANY V S k l -1
 OTHRULE ANY V s k n -1
 OTHRULE ANY V s k n` -1
-OTHRULE ANY V s k r -1
+OTHRULE ANY V s k R\ -1
 OTHRULE ANY V s k S -1
 OTHRULE ANY V s k w -1
 OTHRULE ANY V s l c -1
 OTHRULE ANY V s m j -1
-OTHRULE ANY V s` m j -1
-OTHRULE ANY V s m r -1
+OTHRULE ANY V s\ m j -1
+OTHRULE ANY V s m R\ -1
 OTHRULE ANY V s p l -1
-OTHRULE ANY V S tS f -1
-OTHRULE ANY V s ts j -1
+OTHRULE ANY V S t^S f -1
+OTHRULE ANY V s t^s j -1
 OTHRULE ANY V s t c -1
 OTHRULE ANY V s t f -1
 OTHRULE ANY V s t k -1
 OTHRULE ANY V s t n -1
 OTHRULE ANY V s t n` -1
-OTHRULE ANY V s t r -1
+OTHRULE ANY V s t R\ -1
 OTHRULE ANY V s t S -1
-OTHRULE ANY V s t ts -1
+OTHRULE ANY V s t t^s -1
 OTHRULE ANY V s x j -1
 OTHRULE ANY V s x k -1
 OTHRULE ANY V s x l -1
-OTHRULE ANY V s x r -1
-OTHRULE ANY V ts k l -1
-OTHRULE ANY V ts k n -1
-OTHRULE ANY V ts k n` -1
-OTHRULE ANY V tS k n -1
-OTHRULE ANY V tS k n` -1
-OTHRULE ANY V ts` m j -1
-OTHRULE ANY V tS m j -1
-OTHRULE ANY V tS p j -1
-OTHRULE ANY V ts s c -1
-OTHRULE ANY V tS s c -1
-OTHRULE ANY V ts s k -1
-OTHRULE ANY V ts s p -1
-OTHRULE ANY V ts t f -1
+OTHRULE ANY V s x R\ -1
+OTHRULE ANY V t^s k l -1
+OTHRULE ANY V t^s k n -1
+OTHRULE ANY V t^s k n` -1
+OTHRULE ANY V t^S k n -1
+OTHRULE ANY V t^S k n` -1
+OTHRULE ANY V t^s\ m j -1
+OTHRULE ANY V t^S m j -1
+OTHRULE ANY V t^S p j -1
+OTHRULE ANY V t^s s c -1
+OTHRULE ANY V t^S s c -1
+OTHRULE ANY V t^s s k -1
+OTHRULE ANY V t^s s p -1
+OTHRULE ANY V t^s t f -1
 OTHRULE ANY V t k f -1
 OTHRULE ANY V t k l -1
 OTHRULE ANY V t k n -1
 OTHRULE ANY V t t j -1
 OTHRULE ANY V v b j -1
 OTHRULE ANY V v d m -1
-OTHRULE ANY V v d r -1
+OTHRULE ANY V v d R\ -1
 OTHRULE ANY V v g l -1
 OTHRULE ANY V v g w -1
 OTHRULE ANY V v J j -1
@@ -411,92 +414,92 @@ OTHRULE ANY V v z g -1
 OTHRULE ANY V v z l -1
 OTHRULE ANY V v z m -1
 OTHRULE ANY V v z n -1
-OTHRULE ANY V v z r -1
+OTHRULE ANY V v z R\ -1
 OTHRULE ANY V v z v -1
 OTHRULE ANY V x m j -1
-OTHRULE ANY V x r j -1
-OTHRULE ANY V x S ts` -1
-OTHRULE ANY V z` dz` b -1
+OTHRULE ANY V x R\ j -1
+OTHRULE ANY V x S t^s\ -1
+OTHRULE ANY V z` d^z\ b -1
 OTHRULE ANY V z d j -1
-OTHRULE ANY V z d r -1
-OTHRULE ANY V z g r -1
+OTHRULE ANY V z d R\ -1
+OTHRULE ANY V z g R\ -1
 OTHRULE ANY V z m j -1
 OTHRULE ANY V z` m j -1
 OTHRULE ANY V Z m j -1
 OTHRULE ANY V z m n` -1
-OTHRULE ANY V z v r -1
+OTHRULE ANY V z v R\ -1
 
 # false general rule: shift to the right
-OTHRULE ANY V r w S  1
-OTHRULE ANY V s ts ts  1
-OTHRULE ANY V d m dz`  2
+OTHRULE ANY V R\ w S  1
+OTHRULE ANY V s t^s ts  1
+OTHRULE ANY V d m d^z\  2
 OTHRULE ANY V g z b  2
-OTHRULE ANY V j dz` Z  1
+OTHRULE ANY V j d^z\ Z  1
 OTHRULE ANY V j p f  1
 OTHRULE ANY V j Z m  1
 OTHRULE ANY V k s p  2
 OTHRULE ANY V k S p  2
-OTHRULE ANY V l dZ Z  1
+OTHRULE ANY V l d^Z Z  1
 OTHRULE ANY V l d b  1
 OTHRULE ANY V l m s  1
 OTHRULE ANY V l v f  1
-OTHRULE ANY V n` dz` b  1
-OTHRULE ANY V n` dz` m  1
-OTHRULE ANY V n dZ v  1
-OTHRULE ANY V n` dz` Z  1
+OTHRULE ANY V n` d^z\ b  1
+OTHRULE ANY V n` d^z\ m  1
+OTHRULE ANY V n d^Z v  1
+OTHRULE ANY V n` d^z\ Z  1
 OTHRULE ANY V n d b  1
 OTHRULE ANY V N g b  1
 OTHRULE ANY V N k p  1
-OTHRULE ANY V n` ts` k  1
-OTHRULE ANY V n tS p  1
-OTHRULE ANY V n` ts` s  1
-OTHRULE ANY V n` ts` s`  1
-OTHRULE ANY V n ts x  1
-OTHRULE ANY V n ts z  1
-OTHRULE ANY V n tS S  2
+OTHRULE ANY V n` t^s\ k  1
+OTHRULE ANY V n t^S p  1
+OTHRULE ANY V n` t^s\ s  1
+OTHRULE ANY V n` t^s\ s\  1
+OTHRULE ANY V n t^s x  1
+OTHRULE ANY V n t^s z  1
+OTHRULE ANY V n t^S S  2
 OTHRULE ANY V n t m  1
-OTHRULE ANY V n t ts`  1
+OTHRULE ANY V n t t^s\  1
 OTHRULE ANY V n x b  1
-OTHRULE ANY V r l s  1
-OTHRULE ANY V r l z  1
-OTHRULE ANY V r m k  1
-OTHRULE ANY V r N c  1
-OTHRULE ANY V r N k  1
-OTHRULE ANY V r n ts  1
-OTHRULE ANY V r n tS  1
-OTHRULE ANY V r n x  1
-OTHRULE ANY V r ts x  1
-OTHRULE ANY V r ts Z  1
-OTHRULE ANY V s` l ts`  1
-OTHRULE ANY V s` m dz`  1
-OTHRULE ANY V s` ts` k  1
+OTHRULE ANY V R\ l s  1
+OTHRULE ANY V R\ l z  1
+OTHRULE ANY V R\ m k  1
+OTHRULE ANY V R\ N c  1
+OTHRULE ANY V R\ N k  1
+OTHRULE ANY V R\ n t^s  1
+OTHRULE ANY V R\ n t^S  1
+OTHRULE ANY V R\ n x  1
+OTHRULE ANY V R\ t^s x  1
+OTHRULE ANY V R\ t^s Z  1
+OTHRULE ANY V s\ l t^s\  1
+OTHRULE ANY V s\ m d^z\  1
+OTHRULE ANY V s\ t^s\ k  1
 OTHRULE ANY V s t p  1
 OTHRULE ANY V s t s  1
-OTHRULE ANY V t l ts`  2
-OTHRULE ANY V t r k  2
+OTHRULE ANY V t l t^s\  2
+OTHRULE ANY V t R\ k  2
 OTHRULE ANY V w m s  1
-OTHRULE ANY V w n` ts`  1
+OTHRULE ANY V w n` t^s\  1
 OTHRULE ANY V w s k  1
 OTHRULE ANY V x l x  1
 OTHRULE ANY V x t k  1
 OTHRULE ANY V x t m  1
 
 # VPCCV - false exceptions
-OTHRULE ANY V b dz v  1
-OTHRULE ANY V d dz v  1
-OTHRULE ANY V d dz` v  1
+OTHRULE ANY V b d^z v  1
+OTHRULE ANY V d d^z v  1
+OTHRULE ANY V d d^z\ v  1
 OTHRULE ANY V d J j  1
 OTHRULE ANY V d l n`  1
 OTHRULE ANY V d m j  1
 OTHRULE ANY V d m n  1
-OTHRULE ANY V d m r  1
+OTHRULE ANY V d m R\  1
 OTHRULE ANY V d m w  1
-OTHRULE ANY V d r dz  1
+OTHRULE ANY V d R\ d^z  1
 OTHRULE ANY V d s s  1
-OTHRULE ANY V d v dz`  1
+OTHRULE ANY V d v d^z\  1
 OTHRULE ANY V d v l  1
 OTHRULE ANY V d v n  1
-OTHRULE ANY V d v r  1
+OTHRULE ANY V d v R\  1
 OTHRULE ANY V d v w  1
 OTHRULE ANY V d v z  1
 OTHRULE ANY V d v Z  1
@@ -507,31 +510,31 @@ OTHRULE ANY V d z v  1
 OTHRULE ANY V d z w  1
 OTHRULE ANY V g w Z  1
 OTHRULE ANY V k s k  2
-OTHRULE ANY V k s ts  2
+OTHRULE ANY V k s t^s  2
 OTHRULE ANY V p s c  1
-OTHRULE ANY V p r s  2
-OTHRULE ANY V p s ts  2
-OTHRULE ANY V t f r  1
+OTHRULE ANY V p R\ s  2
+OTHRULE ANY V p s t^s  2
+OTHRULE ANY V t f R\  1
 OTHRULE ANY V t f S  1
-OTHRULE ANY V t f tS  1
-OTHRULE ANY V t s` f  1
+OTHRULE ANY V t f t^S  1
+OTHRULE ANY V t s\ f  1
 OTHRULE ANY V t s k  1
 OTHRULE ANY V t S k  1
-OTHRULE ANY V t s` l  1
+OTHRULE ANY V t s\ l  1
 OTHRULE ANY V t s m  1
-OTHRULE ANY V t s` n`  1
+OTHRULE ANY V t s\ n`  1
 OTHRULE ANY V t S n  1
 OTHRULE ANY V t s p  1
-OTHRULE ANY V t s` p  1
+OTHRULE ANY V t s\ p  1
 OTHRULE ANY V t S p  1
-OTHRULE ANY V t s` r  1
-OTHRULE ANY V t s ts  1
-OTHRULE ANY V t s` ts`  1
-OTHRULE ANY V t S tS  1
+OTHRULE ANY V t s\ R\  1
+OTHRULE ANY V t s t^s  1
+OTHRULE ANY V t s\ t^s\  1
+OTHRULE ANY V t S t^S  1
 OTHRULE ANY V t s t  1
 OTHRULE ANY V t S t  1
 OTHRULE ANY V t s w  1
-OTHRULE ANY V t tS w  1
+OTHRULE ANY V t t^S w  1
 OTHRULE ANY V t x f  1
 OTHRULE ANY V t x m  1
 OTHRULE ANY V t x S  1
@@ -544,94 +547,94 @@ OTHRULE ANY V z z w  1
 
 # VCCCCV
 
-OTHRULE  V b r v j -1
+OTHRULE  V b R\ v j -1
 OTHRULE  V b Z m j -1
-OTHRULE  V d r g n -1
-OTHRULE  V d r g n` -1
-OTHRULE  V d r v j -1
+OTHRULE  V d R\ g n -1
+OTHRULE  V d R\ g n` -1
+OTHRULE  V d R\ v j -1
 OTHRULE  V d s s x -1
-OTHRULE  V f r s c -1
+OTHRULE  V f R\ s c -1
 OTHRULE  V f s c j -1
 OTHRULE  V f s k S -1
 OTHRULE  V f s p j -1
 OTHRULE  V fs t f j -1
 OTHRULE  V f s t f -1
-OTHRULE  V f s t r -1
+OTHRULE  V f s t R\ -1
 OTHRULE  V g Z b j -1
 OTHRULE  V g Z m j -1
-OTHRULE  V k r f j -1
-OTHRULE  V p r s c -1
+OTHRULE  V k R\ f j -1
+OTHRULE  V p R\ s c -1
 OTHRULE  V ps t f j -1
 OTHRULE  V p s t f -1
-OTHRULE  V p s t r -1
+OTHRULE  V p s t R\ -1
 OTHRULE  V p s t S -1
-OTHRULE  V p t r j -1
+OTHRULE  V p t R\ j -1
 OTHRULE  V s t f j -1
-OTHRULE  V s t r j -1
-OTHRULE  V ts s t f -1
-OTHRULE  V ts t f j -1
+OTHRULE  V s t R\ j -1
+OTHRULE  V t^s s t f -1
+OTHRULE  V t^s t f j -1
 OTHRULE  V t k f j -1
 OTHRULE  V v z b j -1
-OTHRULE  V v z b r -1
-OTHRULE  V v z d r -1
+OTHRULE  V v z b R\ -1
+OTHRULE  V v z d R\ -1
 OTHRULE  V v z d w -1
 OTHRULE  V v z g l -1
 OTHRULE  V v z m j -1
 OTHRULE  V v z v j -1
 
-OTHRULE V r n tS k 1
-OTHRULE V j p f r  1
+OTHRULE V R\ n t^S k 1
+OTHRULE V j p f R\  1
 OTHRULE V j t S f  1
 OTHRULE V k s k l  1
-OTHRULE V k s k r  1
+OTHRULE V k s k R\  1
 OTHRULE V k s p j  1
 OTHRULE V k s p l  1
-OTHRULE V k s p r  1
+OTHRULE V k s p R\  1
 OTHRULE V l g z d  1
 OTHRULE V l m s c  1
 OTHRULE V n d z b  1
-OTHRULE V n` j tS n  1
+OTHRULE V n` j t^S n  1
 OTHRULE V N k p l  1
-OTHRULE V n ts k n  1
-OTHRULE V n ts k r  1
-OTHRULE V n` ts` k r  1
-OTHRULE V n ts z w  1
+OTHRULE V n t^s k n  1
+OTHRULE V n t^s k R\  1
+OTHRULE V n` t^s\ k R\  1
+OTHRULE V n t^s z w  1
 OTHRULE V n t c j  1
 OTHRULE V n t p j  1
 OTHRULE V n t p l  1
 OTHRULE V n t s t  1
 OTHRULE V n t t n` 1
 OTHRULE V p s c j  1
-OTHRULE V p s p r  1
-OTHRULE V r dz` v j 1
-OTHRULE V r m s c  1
-OTHRULE V r m s k  1
-OTHRULE V r m t r  1
-OTHRULE V r n tS c 1
-OTHRULE V r t s m  1
-OTHRULE V s` l s c 1
+OTHRULE V p s p R\  1
+OTHRULE V R\ d^z\ v j 1
+OTHRULE V R\ m s c  1
+OTHRULE V R\ m s k  1
+OTHRULE V R\ m t R\  1
+OTHRULE V R\ n t^S c 1
+OTHRULE V R\ t s m  1
+OTHRULE V s\ l s c 1
 OTHRULE V s N c j  1
-OTHRULE V s` ts` t n` 1
+OTHRULE V s\ t^s\ t n` 1
 OTHRULE V s t c j  1
-OTHRULE V ts s c j 1
-OTHRULE V t r c j  1
+OTHRULE V t^s s c j 1
+OTHRULE V t R\ c j  1
 OTHRULE V w m s c  1
 OTHRULE V x t k l  1
 
-OTHRULE V n d r g  2
-OTHRULE V n d r v  2
-OTHRULE V n t r c  2
-OTHRULE V n t r k  2
-OTHRULE V n t r m  2
-OTHRULE V n t r n  2
-OTHRULE V n t r p  2
-OTHRULE V n t r r  2
-OTHRULE V n t r s  2
-OTHRULE V n t r ts  2
-OTHRULE V n t r t  2
-OTHRULE V n t r x  2
-OTHRULE V r l s p  2
-OTHRULE V r l z b  2
+OTHRULE V n d R\ g  2
+OTHRULE V n d R\ v  2
+OTHRULE V n t R\ c  2
+OTHRULE V n t R\ k  2
+OTHRULE V n t R\ m  2
+OTHRULE V n t R\ n  2
+OTHRULE V n t R\ p  2
+OTHRULE V n t R\ R\  2
+OTHRULE V n t R\ s  2
+OTHRULE V n t R\ t^s  2
+OTHRULE V n t R\ t  2
+OTHRULE V n t R\ x  2
+OTHRULE V R\ l s p  2
+OTHRULE V R\ l z b  2
 OTHRULE V w x t f  2
 
 
@@ -644,18 +647,18 @@ OTHRULE  j s t f j -1
 OTHRULE  l s t f j -1
 OTHRULE  m p s t f -1
 OTHRULE  m s t f j -1
-OTHRULE  N k s t r -1
-OTHRULE  n ts t f j -1
-OTHRULE  n t r c j 1
-OTHRULE  n t r p r 1
-OTHRULE  n t r s w 1
-OTHRULE  n t r x f 1
-OTHRULE  r s t c j -1
-OTHRULE  r s t f j -1
-OTHRULE  r l s p l 1
-OTHRULE  s t r m b 2
+OTHRULE  N k s t R\ -1
+OTHRULE  n t^s t f j -1
+OTHRULE  n t R\ c j 1
+OTHRULE  n t R\ p R\ 1
+OTHRULE  n t R\ s w 1
+OTHRULE  n t R\ x f 1
+OTHRULE  R\ s t c j -1
+OTHRULE  R\ s t f j -1
+OTHRULE  R\ l s p l 1
+OTHRULE  s t R\ m b 2
 OTHRULE  w b Z m j -1
-OTHRULE  w s t r j -1
+OTHRULE  w s t R\ j -1
 OTHRULE  z b Z m j -1
 OTHRULE  z v z g l -1
 

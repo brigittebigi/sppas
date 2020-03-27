@@ -37,6 +37,7 @@
 """
 
 import wx
+import logging
 
 from sppas.src.config import msg
 from sppas.src.utils import u
@@ -46,10 +47,12 @@ from ..windows import sppasDialog
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
 from ..windows import sppasListCtrl
+from ..windows import sppasStaticLine
 
 # ---------------------------------------------------------------------------
 
 MSG_HEADER_META = u(msg("Metadata", "ui"))
+MSG_SETS = u(msg("Trusted sets:"))
 
 # ----------------------------------------------------------------------------
 
@@ -79,7 +82,7 @@ class sppasMetaDataEditDialog(sppasDialog):
             style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.STAY_ON_TOP)
 
         self._back_up = sppasMetaData()
-        self._backup_metadata(meta_object)
+        self.__backup_metadata(meta_object)
         self._meta = meta_object
 
         self.CreateHeader(MSG_HEADER_META, "tag")
@@ -92,26 +95,23 @@ class sppasMetaDataEditDialog(sppasDialog):
 
         self.LayoutComponents()
         self.CenterOnParent()
+        self.GetSizer().Fit(self)
         self.FadeIn(deltaN=-8)
 
     # -----------------------------------------------------------------------
-
-    def _backup_metadata(self, meta_object):
-        """Copy metadata in a backup."""
-        self._back_up = sppasMetaData()
-        for key in meta_object.get_meta_keys():
-            self._back_up.set_meta(key, meta_object.get_meta(key))
-
+    # Create the GUI
     # -----------------------------------------------------------------------
 
     def _create_content(self):
         """Create the content of the dialog."""
         p = sppasPanel(self, name="content")
-        tb = self.__create_toolbar(p)
-        lst = sppasListCtrl(p)
+        tb1 = self.__create_toolbar(p)
+        lst = self.__create_list(p)
+        tb2 = self.__create_toolbar_groups(p)
         s = wx.BoxSizer(wx.HORIZONTAL)
-        s.Add(tb, 0, wx.EXPAND)
-        s.Add(lst, 1, wx.EXPAND)
+        s.Add(tb1, 0, wx.EXPAND)
+        s.Add(lst, 1, wx.EXPAND | wx.TOP | wx.BOTTOM, sppasPanel.fix_size(12))
+        s.Add(tb2, 0, wx.EXPAND)
         p.SetSizer(s)
         p.Layout()
         self.SetContent(p)
@@ -120,20 +120,67 @@ class sppasMetaDataEditDialog(sppasDialog):
 
     def __create_toolbar(self, parent):
         tb = sppasToolbar(parent, orient=wx.VERTICAL)
-        tb.SetMinSize(wx.Size(sppasPanel.fix_size(140), -1))
+        tb.SetMinSize(wx.Size(sppasPanel.fix_size(120), -1))
 
-        tb.AddButton("tag_add", "Add tag")
-        tb.AddButton("tags", "Annotator tags")
-        tb.AddButton("tags", "Project tags")
-        tb.AddButton("tags", "Language tags")
-        tb.AddButton("tags", "Software tags")
-        tb.AddButton("tags", "License tags")
         tb.AddSpacer(1)
-        tb.AddButton("tag_del", "Remove")
+        b = tb.AddButton("tag_add", "Add tag")
+        b.SetBorderWidth(1)
+        b = tb.AddButton("tag_del", "Remove")
+        b.SetBorderWidth(1)
+        b = tb.AddButton("backup", "Restore")
+        b.SetBorderWidth(1)
         tb.AddSpacer(1)
-        tb.AddButton("backup", "Restore all")
 
         return tb
+
+    # ------------------------------------------------------------------------
+
+    def __create_toolbar_groups(self, parent):
+        tb = sppasToolbar(parent, orient=wx.VERTICAL)
+        tb.SetMinSize(wx.Size(sppasPanel.fix_size(120), -1))
+
+        tb.AddTitleText("Trusted sets:")
+        b = tb.AddButton("tags", "Annotator")
+        b.SetBorderWidth(1)
+        b = tb.AddButton("tags", "Project")
+        b.SetBorderWidth(1)
+        b = tb.AddButton("tags", "Language")
+        b.SetBorderWidth(1)
+        b = tb.AddButton("tags", "Software")
+        b.SetBorderWidth(1)
+        b = tb.AddButton("tags", "License")
+        b.SetBorderWidth(1)
+
+        return tb
+
+    # ------------------------------------------------------------------------
+
+    def __create_list(self, parent):
+        lst = sppasListCtrl(parent, style=wx.LC_REPORT | wx.LC_EDIT_LABELS)
+        lst.SetMinSize(wx.Size(sppasPanel.fix_size(240), -1))
+
+        lst.AppendColumn("Key", format=wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(120))
+        lst.AppendColumn("Value", format=wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(400))
+
+        for key in self._meta.get_meta_keys():
+            value = self._meta.get_meta(key)
+            idx = lst.InsertItem(lst.GetItemCount(), key)
+            lst.SetItem(idx, 1, value)
+
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_selected_item)
+        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_deselected_item)
+
+        return lst
+
+    # -----------------------------------------------------------------------
+
+    def __create_vline(self):
+        """Create an horizontal line, used to separate the panels."""
+        line = sppasStaticLine(self, orient=wx.LI_VERTICAL)
+        line.SetMinSize(wx.Size(6, -1))
+        line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
+        line.SetDepth(1)
+        return line
 
     # ------------------------------------------------------------------------
     # Callback to events
@@ -164,10 +211,35 @@ class sppasMetaDataEditDialog(sppasDialog):
 
     # ------------------------------------------------------------------------
 
+    def _on_selected_item(self, evt):
+        logging.debug("Parent received selected item event. Index {}"
+                      "".format(evt.GetIndex()))
+
+    # ------------------------------------------------------------------------
+
+    def _on_deselected_item(self, evt):
+        logging.debug("Parent received de-selected item event. Index {}"
+                      "".format(evt.GetIndex()))
+
+    # ------------------------------------------------------------------------
+    # Utilities
+    # ------------------------------------------------------------------------
+
+    def __backup_metadata(self, meta_object):
+        """Copy metadata in a backup."""
+        self._back_up = sppasMetaData()
+        for key in meta_object.get_meta_keys():
+            self._back_up.set_meta(key, meta_object.get_meta(key))
+
+    # -----------------------------------------------------------------------
+
     def _restore(self):
-        """Restore initial key/values of metadata."""
+        """Restore backup to metadata."""
         # remove all entries of the given metadata
+        keys = list()
         for key in self._meta.get_meta_keys():
+            keys.append(key)
+        for key in reversed(keys):
             self._meta.pop_meta(key)
         # add keys and values of the backup
         for key in self._back_up.get_meta_keys():

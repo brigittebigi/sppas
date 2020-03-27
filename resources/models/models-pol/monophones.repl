@@ -1,17 +1,14 @@
 a a
 b b
-c c
 cc C
 d d
 dummy dummy
-dummy <UNK>
 dz d^z
 dz_backslash d^z\
 dzz d^Z
 e e
 ee E
 ee~ E~
-e~ e~
 f f
 fp fp
 g g
@@ -34,7 +31,6 @@ rr_backslash R\
 s s
 s_backslash s\
 sil #
-sil +
 sp +
 t t
 ts t^s
