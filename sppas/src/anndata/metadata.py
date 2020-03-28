@@ -133,6 +133,8 @@ class sppasMetaData(object):
         :param key: (str)
 
         """
+        if key == 'id':
+            raise ValueError("Identifier key can't be removed of the metadata.")
         if key in self.__metadata:
             del self.__metadata[key]
 
@@ -151,7 +153,11 @@ class sppasMetaData(object):
     # -----------------------------------------------------------------------
 
     def add_software_metadata(self):
-        """Add metadata about this software."""
+        """Add metadata about this software.
+
+        TODO: CHECK IF KEYS NOT ALREADY EXISTING.
+
+        """
         self.set_meta('software_name', sg.__name__)
         self.set_meta('software_version', sg.__version__)
         self.set_meta('software_url', sg.__url__)
@@ -162,7 +168,11 @@ class sppasMetaData(object):
     # -----------------------------------------------------------------------
 
     def add_language_metadata(self):
-        """Add metadata about the language (und)."""
+        """Add metadata about the language (und).
+
+        TODO: CHECK IF KEYS NOT ALREADY EXISTING.
+
+        """
         # Elan
         self.set_meta('language_iso', "iso639-3")
         self.set_meta('language_code_0', "und")
@@ -175,6 +185,7 @@ class sppasMetaData(object):
         """Add metadata about the project this object is included-in.
 
         Currently do not assign any value.
+        TODO: CHECK IF KEYS NOT ALREADY EXISTING.
 
         """
         # annotation pro
@@ -195,6 +206,8 @@ class sppasMetaData(object):
         :param name: (str)
         :param version: (str)
         :param version_date: (str)
+
+        TODO: CHECK IF KEYS ARE NOT ALREADY EXISTING.
 
         """
         # subtitle, transcriber, elan

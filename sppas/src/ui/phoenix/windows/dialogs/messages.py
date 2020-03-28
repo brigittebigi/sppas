@@ -320,7 +320,6 @@ class sppasErrorDialog(sppasBaseMessageDialog):
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     wx.ID_OK is returned if the button is clicked.
-    wx.ID_CANCEL is returned if the dialog is destroyed.
 
     >>> dialog = sppasErrorDialog("an error occurred")
     >>> dialog.ShowModal()
@@ -412,7 +411,6 @@ def Error(message, title=None):
     :returns: the response
 
     wx.ID_OK is returned if a button is clicked.
-    wx.ID_CANCEL is returned if the dialog is destroyed.
 
     """
     wx.LogError(message)

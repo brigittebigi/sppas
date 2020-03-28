@@ -48,6 +48,8 @@ from ..windows import sppasPanel
 from ..windows import sppasToolbar
 from ..windows import sppasListCtrl
 from ..windows import sppasStaticLine
+from ..windows import sppasTextCtrl, sppasStaticText
+from ..windows.dialogs import Error
 
 # ---------------------------------------------------------------------------
 
@@ -104,35 +106,53 @@ class sppasMetaDataEditDialog(sppasDialog):
 
     def _create_content(self):
         """Create the content of the dialog."""
-        p = sppasPanel(self, name="content")
-        tb1 = self.__create_toolbar(p)
-        lst = self.__create_list(p)
-        tb2 = self.__create_toolbar_groups(p)
+        panel = sppasPanel(self, name="content")
+        entries = self.__create_entries_panel(panel)
+        lst = self.__create_list(panel)
+        tb2 = self.__create_toolbar_groups(panel)
+
+        s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(lst, 1, wx.EXPAND | wx.TOP | wx.BOTTOM, sppasPanel.fix_size(8))
+        s.Add(entries, 0, wx.EXPAND)
+
+        main_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        main_sizer.Add(s, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 2)
+        main_sizer.Add(self.__create_vline(panel), 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 2)
+        main_sizer.Add(tb2, 0, wx.EXPAND | wx.BOTTOM, sppasPanel.fix_size(8))
+        panel.SetSizer(main_sizer)
+        panel.Layout()
+        self.SetContent(panel)
+
+    # ------------------------------------------------------------------------
+
+    def __create_entries_panel(self, parent):
+        p = sppasPanel(parent, name="entries_panel")
+
+        txt1 = sppasStaticText(p, label="Key: ")
+        txt2 = sppasStaticText(p, label="Value: ")
+        txt_key = sppasTextCtrl(p, name="entry_key")
+        txt_val = sppasTextCtrl(p, name="entry_val")
+
+        fgs = wx.FlexGridSizer(2, 2, 10, 10)
+        fgs.AddMany([(txt1), (txt_key, 1, wx.EXPAND), (txt2), (txt_val, 1, wx.EXPAND)])
+        fgs.AddGrowableCol(1, 1)
+
+        tb = self.__create_toolbar(p)
+
         s = wx.BoxSizer(wx.HORIZONTAL)
-        s.Add(tb1, 0, wx.EXPAND)
-        s.Add(self.__create_vline(p), 0, wx.EXPAND)
-        s.Add(lst, 1, wx.EXPAND | wx.TOP | wx.BOTTOM, sppasPanel.fix_size(12))
-        s.Add(self.__create_vline(p), 0, wx.EXPAND)
-        s.Add(tb2, 0, wx.EXPAND)
+        s.Add(fgs, 1, wx.EXPAND)
+        s.Add(tb, 1, wx.EXPAND | wx.LEFT, 2)
         p.SetSizer(s)
-        p.Layout()
-        self.SetContent(p)
+        return p
 
     # ------------------------------------------------------------------------
 
     def __create_toolbar(self, parent):
-        tb = sppasToolbar(parent, orient=wx.VERTICAL)
-        tb.SetMinSize(wx.Size(sppasPanel.fix_size(120), -1))
-
-        tb.AddSpacer(1)
-        b = tb.AddButton("tag_add", "Add tag")
+        tb = sppasToolbar(parent, orient=wx.HORIZONTAL)
+        b = tb.AddButton("tag_add")
         b.SetBorderWidth(1)
-        b = tb.AddButton("tag_del", "Remove")
+        b = tb.AddButton("tag_del")
         b.SetBorderWidth(1)
-        b = tb.AddButton("backup", "Restore")
-        b.SetBorderWidth(1)
-        tb.AddSpacer(1)
-
         return tb
 
     # ------------------------------------------------------------------------
@@ -142,15 +162,15 @@ class sppasMetaDataEditDialog(sppasDialog):
         tb.SetMinSize(wx.Size(sppasPanel.fix_size(120), -1))
 
         tb.AddTitleText("Trusted sets:")
-        b = tb.AddButton("tags", "Annotator")
+        b = tb.AddTextButton("add_annotator", "Annotator")
         b.SetBorderWidth(1)
-        b = tb.AddButton("tags", "Project")
+        b = tb.AddTextButton("add_project", "Project")
         b.SetBorderWidth(1)
-        b = tb.AddButton("tags", "Language")
+        b = tb.AddTextButton("add_language", "Language")
         b.SetBorderWidth(1)
-        b = tb.AddButton("tags", "Software")
+        b = tb.AddTextButton("add_software", "Software")
         b.SetBorderWidth(1)
-        b = tb.AddButton("tags", "License")
+        b = tb.AddTextButton("add_license", "License")
         b.SetBorderWidth(1)
 
         return tb
@@ -158,11 +178,11 @@ class sppasMetaDataEditDialog(sppasDialog):
     # ------------------------------------------------------------------------
 
     def __create_list(self, parent):
-        lst = sppasListCtrl(parent, style=wx.LC_REPORT | wx.LC_EDIT_LABELS)
-        lst.SetMinSize(wx.Size(sppasPanel.fix_size(320), -1))
+        lst = sppasListCtrl(parent, style=wx.LC_REPORT | wx.LC_SINGLE_SEL, name="lstctrl")
+        lst.SetMinSize(wx.Size(sppasPanel.fix_size(400), -1))
 
         lst.AppendColumn("Key", format=wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(120))
-        lst.AppendColumn("Value", format=wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(400))
+        lst.AppendColumn("Value", format=wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(500))
 
         for key in self._meta.get_meta_keys():
             value = self._meta.get_meta(key)
@@ -184,6 +204,20 @@ class sppasMetaDataEditDialog(sppasDialog):
         line.SetDepth(1)
         return line
 
+    # -----------------------------------------------------------------------
+
+    @property
+    def _lstctrl(self):
+        return self.FindWindow("lstctrl")
+
+    @property
+    def _entry_key(self):
+        return self.FindWindow("entry_key")
+
+    @property
+    def _entry_val(self):
+        return self.FindWindow("entry_val")
+
     # ------------------------------------------------------------------------
     # Callback to events
     # ------------------------------------------------------------------------
@@ -199,6 +233,16 @@ class sppasMetaDataEditDialog(sppasDialog):
 
         if event_name == "cancel":
             self.on_cancel(event)
+
+        elif event_name == "tag_add":
+            self.set_meta()
+
+        elif event_name == "tag_del":
+            self.delete_selected()
+
+        elif event_name.startswith("add_"):
+            self.set_meta_group(event_name[4:])
+
         else:
             event.Skip()
 
@@ -206,7 +250,7 @@ class sppasMetaDataEditDialog(sppasDialog):
 
     def on_cancel(self, event):
         """Restore initial settings and close dialog."""
-        self._restore()
+        self.restore()
         # close the dialog with a wx.ID_CANCEL response
         self.SetReturnCode(wx.ID_CANCEL)
         event.Skip()
@@ -214,14 +258,15 @@ class sppasMetaDataEditDialog(sppasDialog):
     # ------------------------------------------------------------------------
 
     def _on_selected_item(self, evt):
-        logging.debug("Parent received selected item event. Index {}"
-                      "".format(evt.GetIndex()))
+        idx = evt.GetIndex()
+        self._entry_key.SetValue(self._lstctrl.GetItemText(idx, 0))
+        self._entry_val.SetValue(self._lstctrl.GetItemText(idx, 1))
 
     # ------------------------------------------------------------------------
 
     def _on_deselected_item(self, evt):
-        logging.debug("Parent received de-selected item event. Index {}"
-                      "".format(evt.GetIndex()))
+        self._entry_key.SetValue("")
+        self._entry_val.SetValue("")
 
     # ------------------------------------------------------------------------
     # Utilities
@@ -235,15 +280,97 @@ class sppasMetaDataEditDialog(sppasDialog):
 
     # -----------------------------------------------------------------------
 
-    def _restore(self):
+    def set_meta(self):
+        """Add or modify an entry of the metadata."""
+        key = self._entry_key.GetValue().strip()
+        if len(key) == 0:
+            wx.LogWarning("A key must be defined to add an entry in the metadata.")
+        else:
+            val = self._entry_val.GetValue()
+            if self._meta.is_meta_key(key):
+                # The key is already in the list (but which item?)
+                idx = 0
+                while self._lstctrl.GetItemText(idx, 0) != key:
+                    idx += 1
+                    if idx > self._lstctrl.GetItemCount():
+                        wx.LogError("Key {} not found...")
+                        return
+                self._meta.set_meta(key, val)
+                value = self._meta.get_meta(key)
+                self._lstctrl.SetItem(idx, 1, value)
+                self._lstctrl.Select(idx, on=1)
+
+            else:
+                # The key is unknown. Add a new entry
+                self._meta.set_meta(key, val)
+                value = self._meta.get_meta(key)
+                idx = self._lstctrl.InsertItem(self._lstctrl.GetItemCount(), key)
+                self._lstctrl.SetItem(idx, 1, value)
+                self._lstctrl.Select(idx, on=1)
+
+    # -----------------------------------------------------------------------
+
+    def set_meta_group(self, group_name):
+        """Add a group of trusted metadata."""
+        if group_name == "license":
+            self._meta.add_license_metadata(0)
+
+        elif group_name == "language":
+            self._meta.add_language_metadata()
+
+        elif group_name == "software":
+            self._meta.add_software_metadata()
+
+        elif group_name == "project":
+            self._meta.add_project_metadata()
+
+        elif group_name == "annotator":
+            self._meta.add_annotator_metadata()
+
+        # Update the listctrl
+        listctrl_keys = [self._lstctrl.GetItemText(i, 0) for i in range(self._lstctrl.GetItemCount())]
+        for key in self._meta.get_meta_keys():
+            if key not in listctrl_keys:
+                value = self._meta.get_meta(key)
+                idx = self._lstctrl.InsertItem(self._lstctrl.GetItemCount(), key)
+                self._lstctrl.SetItem(idx, 1, value)
+
+    # -----------------------------------------------------------------------
+
+    def delete_selected(self):
+        """Delete the currently selected metadata, except if 'id'."""
+        item = self._lstctrl.GetFirstSelected()
+        if item == -1:
+            wx.LogWarning("No selected entry in the list to delete.")
+        else:
+            try:
+                self._meta.pop_meta(self._lstctrl.GetItemText(item, 0))
+            except ValueError as e:
+                Error(str(e))
+                item = -1
+            else:
+                self._entry_key.SetValue("")
+                self._entry_val.SetValue("")
+                self._lstctrl.DeleteItem(item)
+
+        return item
+
+    # -----------------------------------------------------------------------
+
+    def restore(self):
         """Restore backup to metadata."""
-        # remove all entries of the given metadata
+        # remove entries of the given metadata if there are not in the backup
         keys = list()
         for key in self._meta.get_meta_keys():
-            keys.append(key)
+            if self._back_up.is_meta_key(key) is False:
+                keys.append(key)
         for key in reversed(keys):
-            self._meta.pop_meta(key)
-        # add keys and values of the backup
+            try:
+                self._meta.pop_meta(key)
+            except ValueError:
+                pass
+
+        # add keys/values of the backup or modify the value
         for key in self._back_up.get_meta_keys():
             self._meta.set_meta(key, self._back_up.get_meta(key))
 
