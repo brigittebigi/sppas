@@ -64,6 +64,8 @@ from ..windows.image import ColorizeImage
 from ..windows import sppasStaticText, sppasTextCtrl
 from ..windows import sppasPanel
 from ..windows import sppasCollapsiblePanel
+from ..windows.dialogs import MetaDataEdit
+
 from .baseview import sppasBaseViewPanel
 
 TIER_BG_COLOUR = wx.Colour(180, 230, 255, 128)
@@ -733,6 +735,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     def _create_content(self):
         """Override. Create the content of the panel."""
+        self.AddButton("tags")
         self.AddButton("select")
         self.AddButton("save")
         self.AddButton("close")
@@ -827,6 +830,9 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
         if event_name == "select":
             self.__set_selected()
+
+        elif event_name == "tags":
+            MetaDataEdit(self, self._object)
 
         else:
             sppasBaseViewPanel._process_event(self, event)

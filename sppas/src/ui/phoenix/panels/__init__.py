@@ -1,5 +1,5 @@
-from .ann import sppasAnnEditPanel
 from .option import sppasOptionsPanel
+from .ann import sppasAnnEditPanel
 from .tierctrl import sppasTierListCtrl
 from .tiers import sppasTiersEditWindow
 

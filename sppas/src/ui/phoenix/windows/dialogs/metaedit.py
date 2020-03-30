@@ -43,13 +43,14 @@ from sppas.src.config import msg
 from sppas.src.utils import u
 from sppas.src.anndata import sppasMetaData
 
-from ..windows import sppasDialog
-from ..windows import sppasPanel
-from ..windows import sppasToolbar
-from ..windows import sppasListCtrl
-from ..windows import sppasStaticLine
-from ..windows import sppasTextCtrl, sppasStaticText
-from ..windows.dialogs import Error
+from ..panel import sppasPanel
+from ..toolbar import sppasToolbar
+from ..listctrl import sppasListCtrl
+from ..line import sppasStaticLine
+from ..text import sppasTextCtrl, sppasStaticText
+
+from .messages import Error
+from .dialog import sppasDialog
 
 # ---------------------------------------------------------------------------
 
@@ -140,8 +141,8 @@ class sppasMetaDataEditDialog(sppasDialog):
         tb = self.__create_toolbar(p)
 
         s = wx.BoxSizer(wx.HORIZONTAL)
-        s.Add(fgs, 1, wx.EXPAND)
-        s.Add(tb, 1, wx.EXPAND | wx.LEFT, 2)
+        s.Add(fgs, 3, wx.EXPAND)
+        s.Add(tb, 2, wx.EXPAND | wx.LEFT, 2)
         p.SetSizer(s)
         return p
 

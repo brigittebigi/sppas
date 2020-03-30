@@ -44,7 +44,7 @@ from .dialogs import Warn
 from .dialogs import Error
 from .dialogs import YesNoQuestion
 from .dialogs import sppasProgressDialog
-from .dialogs import sppasDialog
+from .dialogs import sppasMetaData, MetaDataEdit
 
 from .line import sppasStaticLine
 
@@ -136,5 +136,7 @@ __all__ = (
     "sppasFrame",
     "sppasToolbar",
     "sppasListCtrl",
-    "LineListCtrl"
+    "LineListCtrl",
+    "sppasMetaData",
+    "MetaDataEdit"
 )

@@ -57,6 +57,7 @@ from sppas.src.anndata.aio.aioutils import format_labels
 
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
+from ..windows.dialogs import MetaDataEdit
 
 # ---------------------------------------------------------------------------
 
@@ -299,7 +300,6 @@ class sppasAnnEditPanel(sppasPanel):
         toolbar.AddSpacer(1)
 
         meta = toolbar.AddButton("tags")
-        meta.Enable(False)
         toolbar.AddSpacer(1)
 
         return toolbar
@@ -423,6 +423,11 @@ class sppasAnnEditPanel(sppasPanel):
 
         elif btn_name in ("code_review", "code_xml", "code_json"):
             self.__switch_code(btn_name)
+
+        elif btn_name == "tags":
+            response = MetaDataEdit(self, meta_object=self.__ann)
+            if response == wx.ID_OK:
+                event.Skip()
 
         else:
             # send the button event to the parent

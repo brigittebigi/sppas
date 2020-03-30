@@ -358,7 +358,7 @@ class sppasTierListCtrl(LineListCtrl):
             self._cols = (MSG_POINT, MSG_LABELS, MSG_NB, MSG_TYPE, MSG_ID, MSG_META)
         for i, col in enumerate(self._cols):
             self.InsertColumn(i, col)
-            self.SetColumnWidth(i, 100)
+            self.SetColumnWidth(i, sppasPanel.fix_size(90))
 
         # Fill rows
         for i, a in enumerate(self._tier):
@@ -366,13 +366,13 @@ class sppasTierListCtrl(LineListCtrl):
 
         # Columns with optimal width (estimated depending on its content)
         self.SetColumnWidth(self._cols.index(MSG_LABELS), -1)
-        self.SetColumnWidth(self._cols.index(MSG_ID), -1)
-        self.SetColumnWidth(self._cols.index(MSG_META), -1)
+        self.SetColumnWidth(self._cols.index(MSG_ID), sppasPanel.fix_size(280))
+        self.SetColumnWidth(self._cols.index(MSG_META), sppasPanel.fix_size(300))
 
     # ---------------------------------------------------------------------
 
     def SetItemAnnotation(self, idx):
-        """Update list item of the annotation at the given index.
+        """Insert list item of the annotation at the given index.
 
         :param idx: (int) Index of an annotation/item in the tier/list
 
@@ -380,6 +380,18 @@ class sppasTierListCtrl(LineListCtrl):
         assert 0 <= idx <= len(self._tier)
         ann = self._tier[idx]
         self.InsertItem(idx, "")
+        self.UpdateItem(idx)
+
+    # ---------------------------------------------------------------------
+
+    def UpdateItem(self, idx):
+        """Reset list item of the annotation at the given index.
+
+        :param idx: (int) Index of an annotation/item in the tier/list
+
+        """
+        assert 0 <= idx <= len(self._tier)
+        ann = self._tier[idx]
 
         # fix location
         self.__set_item_localization(idx)

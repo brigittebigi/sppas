@@ -11,6 +11,9 @@ from .entries import sppasChoiceDialog
 from .entries import sppasTextEntryDialog
 from .progress import sppasProgressDialog
 
+from .metaedit import sppasMetaData, MetaDataEdit
+
+
 __all__ = (
     'sppasDialog',
     'YesNoQuestion',
@@ -21,5 +24,7 @@ __all__ = (
     'sppasFileDialog',
     'sppasChoiceDialog',
     "sppasTextEntryDialog",
-    "sppasProgressDialog"
+    "sppasProgressDialog",
+    "sppasMetaData",
+    "MetaDataEdit"
 )

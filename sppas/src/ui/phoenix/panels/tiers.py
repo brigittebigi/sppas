@@ -365,6 +365,10 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         elif btn_name == "cell_add_after":
             self.__add_annotation(1)
 
+        elif btn_name == "tags":
+            if self.__cur_index != -1:
+                self.__tierctrl.UpdateItem(self.__cur_index)
+
         else:
             event.Skip()
 

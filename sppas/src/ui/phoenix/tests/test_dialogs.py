@@ -52,7 +52,7 @@ from sppas.src.ui.phoenix.dialogs.about import AboutPlugin
 from sppas.src.ui.phoenix.dialogs.settings import Settings
 from sppas.src.ui.phoenix.dialogs.tiersview import TiersView
 from sppas.src.ui.phoenix.dialogs.statsview import StatsView
-from sppas.src.ui.phoenix.dialogs.metaedit import MetaDataEdit
+from sppas.src.ui.phoenix.windows.dialogs.metaedit import MetaDataEdit
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
