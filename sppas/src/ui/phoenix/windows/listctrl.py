@@ -284,8 +284,8 @@ class sppasListCtrl(wx.ListCtrl):
 
         """
         assert 0 <= idx < self.GetItemCount()
+        wx.ListCtrl.Select(self, idx, on=0)
 
-        font = self.GetFont()
         # if single selection, de-select current item
         # (except if it is the asked one).
         if on == 1 and self.HasFlag(wx.LC_SINGLE_SEL) and len(self._selected) > 0:
@@ -335,6 +335,7 @@ class sppasListCtrl(wx.ListCtrl):
 
         # cancel the selection managed by wx.ListCtrl
         wx.ListCtrl.Select(self, item_index, on=0)
+
         # manage our own selection
         if self.HasFlag(wx.LC_SINGLE_SEL):
             self.Select(item_index, on=1)
@@ -412,7 +413,7 @@ class LineListCtrl(sppasListCtrl):
     # Override methods of wx.ListCtrl
     # -----------------------------------------------------------------------
 
-    def InsertColumn(self, colnum, colname):
+    def InsertColumn(self, colnum, colname, format=wx.LIST_FORMAT_LEFT, width=wx.LIST_AUTOSIZE):
         """Override. Insert a new column.
 
         1. create a column with the line number if we create a column
@@ -427,7 +428,7 @@ class LineListCtrl(sppasListCtrl):
                                        format=wx.LIST_FORMAT_CENTRE,
                                        width=sppasListCtrl.fix_size(80))
 
-        sppasListCtrl.InsertColumn(self, colnum+1, colname)
+        sppasListCtrl.InsertColumn(self, colnum+1, colname, format, width)
 
     # -----------------------------------------------------------------------
 
@@ -500,6 +501,7 @@ class CheckListCtrl(sppasListCtrl):
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
+
     def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
                  size=wx.DefaultSize, style=wx.NO_BORDER | wx.LC_REPORT,
                  validator=wx.DefaultValidator, name="LineListCtrl"):
@@ -543,6 +545,17 @@ class CheckListCtrl(sppasListCtrl):
         self.__il = self.__create_image_list()
         self.SetImageList(self.__il, wx.IMAGE_LIST_SMALL)
 
+    # -----------------------------------------------------------------------
+
+    def SetFont(self, font):
+        """Override."""
+        wx.ListCtrl.SetFont(self, font)
+
+        # The change of font implies to re-draw all proportional objects
+        self.__il = self.__create_image_list()
+        self.SetImageList(self.__il, wx.IMAGE_LIST_SMALL)
+        self.Layout()
+
     # ------------------------------------------------------------------------
 
     def __create_image_list(self):
@@ -576,8 +589,12 @@ class CheckListCtrl(sppasListCtrl):
     # -----------------------------------------------------------------------
     # Override methods of wx.ListCtrl
     # -----------------------------------------------------------------------
+    def AppendColumn(self, heading, format=wx.LIST_FORMAT_LEFT, width=-1):
+        self.InsertColumn(self.GetColumnCount(), heading, format, width)
 
-    def InsertColumn(self, colnum, colname):
+    # -----------------------------------------------------------------------
+
+    def InsertColumn(self, colnum, colname, format=wx.LIST_FORMAT_LEFT, width=wx.LIST_AUTOSIZE):
         """Override. Insert a new column.
 
         1. create a column with the line number if we create a column
@@ -593,7 +610,7 @@ class CheckListCtrl(sppasListCtrl):
             wx.ListCtrl.InsertColumn(self, 0, info)
             wx.ListCtrl.SetColumnWidth(self, 0, sppasListCtrl.fix_size(24))
 
-        sppasListCtrl.InsertColumn(self, colnum+1, colname)
+        sppasListCtrl.InsertColumn(self, colnum+1, colname, format, width)
 
     # -----------------------------------------------------------------------
 

@@ -58,7 +58,7 @@ from ..dialogs import sppasTiersRelationFilterDialog
 from .anz_baseviews import BaseViewFilesPanel
 from .listview import AudioListViewPanel
 from .listview import TrsListViewPanel
-from .listview import TIER_BG_COLOUR
+TIER_BG_COLOUR = wx.Colour(180, 230, 250, 128)
 
 # ----------------------------------------------------------------------------
 

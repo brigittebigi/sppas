@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.tests.test_glob.py
+    src.ui.phoenix.tests.test_anz.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -50,12 +50,6 @@ import sppas.src.ui.phoenix.page_analyze.timeview as timeview
 import sppas.src.ui.phoenix.page_analyze.listview as listview
 import sppas.src.ui.phoenix.page_analyze.textview as textview
 
-import sppas.src.ui.phoenix.page_files.filesmanager as filesmanager
-import sppas.src.ui.phoenix.page_files.refsmanager as refsmanager
-import sppas.src.ui.phoenix.page_files.wksmanager as wksmanager
-import sppas.src.ui.phoenix.page_files.filesviewctrl as filesviewctrl
-import sppas.src.ui.phoenix.page_files.refsviewctrl as refsviewctrl
-
 # ----------------------------------------------------------------------------
 # Panel to test
 # ----------------------------------------------------------------------------
@@ -73,23 +67,15 @@ class TestPanel(wx.Choicebook):
 
         # Make the bunch of test panels for the choice book
 
-        # page files
-        self.AddPage(filesmanager.TestPanel(self), "Files manager")
-        self.AddPage(refsmanager.TestPanel(self), "References manager")
-        self.AddPage(wksmanager.TestPanel(self), "Workspaces manager")
-        self.AddPage(filesviewctrl.TestPanel(self), "Files view ctrl")
-        self.AddPage(refsviewctrl.TestPanel(self), "Refs view ctrl")
-
-        # page annotate
-        # no tests
-
-        # page plugins
-
-        # page convert
-        # no tests
-
-        # page home
-        # no tests
+        # page analyze
+        self.AddPage(anztimeviews.TestPanel(self), "Analyze Timeline view")
+        self.AddPage(anzlistviews.TestPanel(self), "Analyze Summary view")
+        self.AddPage(anztextviews.TestPanel(self), "Analyze Text view")
+        self.AddPage(anzdefaultviews.TestPanel(self), "Analyze Default view")
+        self.AddPage(timeview.TestPanel(self), "Time view")
+        self.AddPage(listview.TestPanel(self), "Summary view")
+        self.AddPage(textview.TestPanel(self), "Text view")
+        self.AddPage(anz_tabs.TestPanel(self), "Tabs analyze")
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
