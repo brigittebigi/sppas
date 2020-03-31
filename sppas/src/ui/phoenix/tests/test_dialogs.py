@@ -128,10 +128,15 @@ class TestPanel(sppasPanel):
             StatsView(self, [])
 
         elif event_name == "metadata_btn":
-            m = sppasMetaData()
-            m.set_meta("language", "fra")
-            m.set_meta("speaker", "Brigitte Bigi")
-            MetaDataEdit(self, m)
+            m1 = sppasMetaData()
+            m1.set_meta('id', 'meta_of_page_1')
+            m1.set_meta("language", "fra")
+            m1.set_meta("speaker", "Brigitte Bigi")
+            m2 = sppasMetaData()
+            m2.set_meta('id', 'meta_of_page_2')
+            m3 = sppasMetaData()
+            m3.set_meta('id', 'meta_of_page_3')
+            MetaDataEdit(self, [m1, m2, m3])
 
 # ----------------------------------------------------------------------------
 # App to test

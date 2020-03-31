@@ -425,7 +425,7 @@ class sppasAnnEditPanel(sppasPanel):
             self.__switch_code(btn_name)
 
         elif btn_name == "tags":
-            response = MetaDataEdit(self, meta_object=self.__ann)
+            response = MetaDataEdit(self, meta_object=[self.__ann])
             if response == wx.ID_OK:
                 event.Skip()
 

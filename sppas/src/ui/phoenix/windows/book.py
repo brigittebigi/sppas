@@ -48,6 +48,7 @@ class sppasChoicebook(wx.Choicebook):
             size=DefaultSize, style=0, name=NotebookNameStr)
 
     """
+
     def __init_(self, *args, **kw):
         super(sppasChoicebook, self).__init__(*args, **kw)
         try:
@@ -97,6 +98,7 @@ class sppasNotebook(wx.Notebook):
             size=DefaultSize, style=0, name=NotebookNameStr)
 
     """
+
     def __init_(self, *args, **kw):
         super(sppasNotebook, self).__init__(*args, **kw)
         s = wx.GetApp().settings
@@ -163,12 +165,16 @@ class sppasSimplebook(wx.Simplebook):
     >>> n.ShowNewPage(page)
 
     """
+
     def __init_(self, *args, **kw):
         super(sppasSimplebook, self).__init__(*args, **kw)
-        s = wx.GetApp().settings
-        self.SetBackgroundColour(s.bg_color)
-        self.SetForegroundColour(s.fg_color)
-        self.SetFont(s.text_font)
+        try:
+            s = wx.GetApp().settings
+            self.SetBackgroundColour(s.bg_color)
+            self.SetForegroundColour(s.fg_color)
+            self.SetFont(s.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
     # -----------------------------------------------------------------------
 

@@ -823,7 +823,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
             self.__set_selected()
 
         elif event_name == "tags":
-            MetaDataEdit(self, self._object)
+            MetaDataEdit(self, [self._object])
 
         else:
             sppasBaseViewPanel._process_event(self, event)
