@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<Document author="SPPAS 2.8 (C) Brigitte Bigi" date="2020-01-24T17:19:36+01:00" format="1.4" name="11ac12e3-e3ac-4c6c-96d0-c92da50ea48e">
+<Document author="SPPAS 2.8 (C) Brigitte Bigi" date="2020-03-31T12:25:58+02:00" format="1.4" name="11ac12e3-e3ac-4c6c-96d0-c92da50ea48e">
 	<Metadata>
 		<Entry key="id">8faffd05-1ceb-44c9-9714-e9f98f3a7369</Entry>
 		<Entry key="software_name">SPPAS</Entry>
@@ -14,12 +14,22 @@
 		<Entry key="language_url_0">https://iso639-3.sil.org/code/und</Entry>
 		<Entry key="file_license_text_0">GNU GPL V3</Entry>
 		<Entry key="file_license_url_0">https://www.gnu.org/licenses/gpl-3.0.en.html</Entry>
-		<Entry key="file_writer">sppasXRA</Entry>
+		<Entry key="file_reader">sppasXRA</Entry>
 		<Entry key="file_name">F_F_B003-P9-merge.xra</Entry>
-		<Entry key="file_path">/Users/bigi/Projects/sppas/samples/samples-fra</Entry>
+		<Entry key="file_path">/F/home/bigi/Projets/sppas/samples/samples-fra</Entry>
 		<Entry key="file_ext">.xra</Entry>
-		<Entry key="file_write_date">2020-01-24T17:19:36+01:00</Entry>
-		<Entry key="file_version">1</Entry>
+		<Entry key="file_read_date">2020-03-31T12:23:40+02:00</Entry>
+		<Entry key="file_created_date">2020-01-24T17:19:36+01:00</Entry>
+		<Entry key="file_created_author">SPPAS 2.8 (C) Brigitte Bigi</Entry>
+		<Entry key="file_writer">sppasXRA</Entry>
+		<Entry key="file_write_date">2020-03-31T12:25:58+02:00</Entry>
+		<Entry key="file_version">2</Entry>
+		<Entry key="selected">False</Entry>
+		<Entry key="checked">False</Entry>
+		<Entry key="collapsed">False</Entry>
+		<Entry key="tiers_collapsed">False</Entry>
+		<Entry key="media_collapsed">False</Entry>
+		<Entry key="vocabs_collapsed">True</Entry>
 	</Metadata>
 
 	<Tier id="a0d0cb62-d687-4afc-a7e5-b6db8c3d1f3e" tiername="Tokens">
@@ -30,6 +40,7 @@
 			<Entry key="text_normalization_enable_action_numbers">true</Entry>
 			<Entry key="text_normalization_enable_action_lower">true</Entry>
 			<Entry key="text_normalization_enable_action_punct">true</Entry>
+			<Entry key="checked">True</Entry>
 		</Metadata>
 		<Annotation id="372d17f3-400d-43dc-ac54-564b9a5a7f30">
 			<Location>
@@ -365,6 +376,9 @@
 	</Tier>
 
 	<Tier id="d4b56cb1-8a6e-4f1e-bc70-43770a469104" tiername="Occ-Tokens">
+		<Metadata>
+			<Entry key="checked">False</Entry>
+		</Metadata>
 		<Annotation id="1a8b8dd7-903e-4016-a8af-ee67af1b7469">
 			<Location>
 				<Interval>
@@ -489,6 +503,9 @@
 	</Tier>
 
 	<Tier id="f271665c-3754-47ac-a0a1-8d2adca29b64" tiername="Dur-Tokens">
+		<Metadata>
+			<Entry key="checked">False</Entry>
+		</Metadata>
 		<Annotation id="a7c388f7-8bbd-4a75-a455-e670aa828fd1">
 			<Location>
 				<Interval>
@@ -613,6 +630,9 @@
 	</Tier>
 
 	<Tier id="71961164-3c85-43aa-acdd-3de296ef89d0" tiername="Phones">
+		<Metadata>
+			<Entry key="checked">False</Entry>
+		</Metadata>
 		<Annotation id="618ff750-53fc-45a8-ac8e-eea7958d64c3">
 			<Location>
 				<Interval>
@@ -1045,6 +1065,9 @@
 	</Tier>
 
 	<Tier id="f965d7e4-9220-43ea-877b-2ece32494c71" tiername="PhonAlign">
+		<Metadata>
+			<Entry key="checked">False</Entry>
+		</Metadata>
 		<Annotation id="efc93758-3321-45d5-b95b-c3059bc469a8">
 			<Location>
 				<Interval>
@@ -3545,6 +3568,9 @@
 	</Tier>
 
 	<Tier id="7c9bb7b4-1f5b-4afd-aaeb-fdfd4aff4230" tiername="TokensAlign">
+		<Metadata>
+			<Entry key="checked">False</Entry>
+		</Metadata>
 		<Annotation id="2dfe5ffc-dd6c-46be-b4bf-8eca04fe873b">
 			<Location>
 				<Interval>
@@ -4439,6 +4465,9 @@
 	</Tier>
 
 	<Tier id="3756efd9-979a-49c6-926b-d88d2b1c9774" tiername="PronTokAlign">
+		<Metadata>
+			<Entry key="checked">False</Entry>
+		</Metadata>
 		<Annotation id="407dd377-2c1d-401e-a87f-ca45348965ef">
 			<Location>
 				<Interval>
@@ -5333,6 +5362,9 @@
 	</Tier>
 
 	<Tier id="4e5923f8-fea1-4394-a7e0-47019d9cbad9" tiername="MetaInformation">
+		<Metadata>
+			<Entry key="checked">False</Entry>
+		</Metadata>
 		<Annotation id="f83088ba-c1f8-4a01-8bdb-fa1c5fc90cf7">
 			<Location>
 				<Interval>
@@ -5482,6 +5514,9 @@
 		<Tier id="f965d7e4-9220-43ea-877b-2ece32494c71" />
 		<Tier id="7c9bb7b4-1f5b-4afd-aaeb-fdfd4aff4230" />
 		<Tier id="3756efd9-979a-49c6-926b-d88d2b1c9774" />
+		<Metadata>
+			<Entry key="checked">False</Entry>
+		</Metadata>
 	</Media>
 
 	<Hierarchy />

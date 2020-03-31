@@ -294,14 +294,14 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
         super(TrsListViewPanel, self).__init__(parent, filename, name)
         self.__set_metadata()
-        self.__set_selected(self._object.get_meta("selected"))
+        self.__set_selected(self._object.get_meta("private_selected"))
 
     # -----------------------------------------------------------------------
 
     def SetHighLightColor(self, color):
         """Set a color to highlight the filename if selected."""
         self._hicolor = color
-        if self._object.get_meta("selected", "False") == "True":
+        if self._object.get_meta("private_selected", "False") == "True":
             self.GetToolsPane().SetBackgroundColour(self._hicolor)
         else:
             self.GetToolsPane().SetBackgroundColour(self.GetBackgroundColour())
@@ -311,7 +311,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     def is_selected(self):
         """Return True is this file is selected."""
-        return self.str_to_bool(self._object.get_meta("selected", "False"))
+        return self.str_to_bool(self._object.get_meta("private_selected", "False"))
 
     # -----------------------------------------------------------------------
 
@@ -325,7 +325,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """Return the list of checked tiers."""
         checked = list()
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 checked.append(tier)
 
         return checked
@@ -336,7 +336,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """Return the number of checked tiers."""
         nb = 0
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 nb += 1
                 wx.LogDebug("Tier {:s} is checked.".format(tier.get_name()))
             else:
@@ -352,13 +352,13 @@ class TrsListViewPanel(sppasBaseViewPanel):
         for tier in self._object.get_tier_list():
             is_matching = re.match(name, tier.get_name())
             if is_matching is not None:
-                if tier.get_meta("checked") == "False":
-                    tier.set_meta("checked", "True")
+                if tier.get_meta("private_checked") == "False":
+                    tier.set_meta("private_checked", "True")
                     panel.change_state(tier.get_id(), "True")
                     self._dirty = True
             else:
-                if tier.get_meta("checked") == "True":
-                    tier.set_meta("checked", "False")
+                if tier.get_meta("private_checked") == "True":
+                    tier.set_meta("private_checked", "False")
                     panel.change_state(tier.get_id(), "False")
                     self._dirty = True
 
@@ -368,8 +368,8 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """Uncheck tiers."""
         panel = self.FindWindow("tiers-panel")
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
-                tier.set_meta("checked", "False")
+            if tier.get_meta("private_checked") == "True":
+                tier.set_meta("private_checked", "False")
                 panel.change_state(tier.get_id(), "False")
                 self._dirty = True
 
@@ -385,7 +385,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
             new_name = None
         panel = self.FindWindow("tiers-panel")
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 old_name = tier.get_name()
                 if old_name != new_name:
                     tier.set_name(new_name)
@@ -415,7 +415,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
             i = len(self._object)
             for tier in reversed(self._object.get_tier_list()):
                 i -= 1
-                if tier.get_meta("checked") == "True":
+                if tier.get_meta("private_checked") == "True":
                     panel.remove(tier.get_id())
                     self._object.pop(i)
 
@@ -431,7 +431,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """
         clipboard = list()
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 # Copy the tier to the clipboard
                 new_tier = tier.copy()
                 clipboard.append(new_tier)
@@ -452,7 +452,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """
         clipboard = list()
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 # Copy the tier to the clipboard
                 new_tier = tier.copy()
 
@@ -502,10 +502,10 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
         nb = 0
         for tier in reversed(self._object.get_tier_list()):
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 new_tier = tier.copy()
                 new_tier.gen_id()
-                new_tier.set_meta("checked", "False")
+                new_tier.set_meta("private_checked", "False")
                 new_tier.set_meta("tier_was_duplicated_from_id", tier.get_meta('id'))
                 new_tier.set_meta("tier_was_duplicated_from_name", tier.get_name())
                 self._object.append(new_tier)
@@ -522,7 +522,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         panel = self.FindWindow("tiers-panel")
 
         for i, tier in enumerate(self._object.get_tier_list()):
-            if tier.get_meta("checked") == "True" and i > 0:
+            if tier.get_meta("private_checked") == "True" and i > 0:
                 # move up into the transcription
                 self._object.set_tier_index_id(tier.get_id(), i - 1)
                 wx.LogDebug("Tier {:s} moved to index {:d}".format(tier.get_name(), i-1))
@@ -541,7 +541,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         i = len(self._object.get_tier_list())
         for tier in reversed(self._object.get_tier_list()):
             i = i - 1
-            if tier.get_meta("checked") == "True" and (i+1) < len(tier):
+            if tier.get_meta("private_checked") == "True" and (i+1) < len(tier):
                 # move down into the transcription
                 self._object.set_tier_index_id(tier.get_id(), i + 1)
                 wx.LogDebug("Tier {:s} moved to index {:d}".format(tier.get_name(), i+1))
@@ -569,7 +569,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
                 p = tier.get_first_point()
                 if p is None:
                     continue
-                if tier.get_meta("checked") == "True":
+                if tier.get_meta("private_checked") == "True":
                     try:
                         radius = r
                         if p.is_float() is True:
@@ -603,7 +603,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
         ft = SingleFilterTier(filters, annot_format, match_all)
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 new_tier = ft.filter_tier(tier, out_tiername)
                 if new_tier is not None:
                     self._object.append(new_tier)
@@ -639,7 +639,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         nb = 0
         ft = RelationFilterTier(filters, annot_format)
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 new_tier = ft.filter_tier(tier, y_tier, out_tiername)
                 if new_tier is not None:
                     self._object.append(new_tier)
@@ -679,28 +679,28 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     def __set_metadata(self):
         """Set metadata to the object about checked or selected items."""
-        if self._object.get_meta("selected", None) is None:
-            self._object.set_meta("selected", "False")
+        if self._object.get_meta("private_selected", None) is None:
+            self._object.set_meta("private_selected", "False")
 
-        if self._object.get_meta("checked", None) is None:
-            self._object.set_meta("checked", "False")
-        if self._object.get_meta("collapsed", None) is None:
-            self._object.set_meta("collapsed", "False")
+        if self._object.get_meta("private_checked", None) is None:
+            self._object.set_meta("private_checked", "False")
+        if self._object.get_meta("private_collapsed", None) is None:
+            self._object.set_meta("private_collapsed", "False")
 
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked", None) is None:
-                tier.set_meta("checked", "False")
-        self._object.set_meta("tiers_collapsed", str(len(self._object.get_tier_list()) == 0))
+            if tier.get_meta("private_checked", None) is None:
+                tier.set_meta("private_checked", "False")
+        self._object.set_meta("private_tiers_collapsed", str(len(self._object.get_tier_list()) == 0))
 
         for media in self._object.get_media_list():
-            if media.get_meta("checked", None) is None:
-                media.set_meta("checked", "False")
-        self._object.set_meta("media_collapsed", str(len(self._object.get_media_list()) == 0))
+            if media.get_meta("private_checked", None) is None:
+                media.set_meta("private_checked", "False")
+        self._object.set_meta("private_media_collapsed", str(len(self._object.get_media_list()) == 0))
 
         for vocab in self._object.get_ctrl_vocab_list():
-            if vocab.get_meta("checked", None) is None:
-                vocab.set_meta("checked", "False")
-        self._object.set_meta("vocabs_collapsed", str(len(self._object.get_ctrl_vocab_list()) == 0))
+            if vocab.get_meta("private_checked", None) is None:
+                vocab.set_meta("private_checked", "False")
+        self._object.set_meta("private_vocabs_collapsed", str(len(self._object.get_ctrl_vocab_list()) == 0))
 
     # -----------------------------------------------------------------------
 
@@ -733,7 +733,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         self.AddButton("close")
 
         self._create_child_panel()
-        self.Collapse(self.str_to_bool(self._object.get_meta("collapsed")))
+        self.Collapse(self.str_to_bool(self._object.get_meta("private_collapsed")))
 
     # ------------------------------------------------------------------------
 
@@ -744,11 +744,11 @@ class TrsListViewPanel(sppasBaseViewPanel):
         # todo: add hierarchy
 
         tier_ctrl = TiersCollapsiblePanel(child_panel, self._object.get_tier_list())
-        tier_ctrl.Collapse(self.str_to_bool(self._object.get_meta("tiers_collapsed")))
+        tier_ctrl.Collapse(self.str_to_bool(self._object.get_meta("private_tiers_collapsed")))
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, tier_ctrl)
 
         media_ctrl = MediaCollapsiblePanel(child_panel, self._object.get_media_list())
-        media_ctrl.Collapse(self.str_to_bool(self._object.get_meta("media_collapsed")))
+        media_ctrl.Collapse(self.str_to_bool(self._object.get_meta("private_media_collapsed")))
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, media_ctrl)
         if isinstance(self._object, sppasBaseIO) is False:
             media_ctrl.Hide()
@@ -757,7 +757,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
                 media_ctrl.Hide()
 
         vocab_ctrl = CtrlVocabCollapsiblePanel(child_panel, self._object.get_ctrl_vocab_list())
-        vocab_ctrl.Collapse(self.str_to_bool(self._object.get_meta("vocabs_collapsed")))
+        vocab_ctrl.Collapse(self.str_to_bool(self._object.get_meta("private_vocabs_collapsed")))
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, vocab_ctrl)
         if isinstance(self._object, sppasBaseIO) is False:
             vocab_ctrl.Hide()
@@ -797,11 +797,11 @@ class TrsListViewPanel(sppasBaseViewPanel):
         obj = self.get_object_in_trs(object_id)
 
         # change state of the item
-        current_state = obj.get_meta("checked")
+        current_state = obj.get_meta("private_checked")
         new_state = "False"
         if current_state == "False":
             new_state = "True"
-        obj.set_meta("checked", new_state)
+        obj.set_meta("private_checked", new_state)
         self._dirty = True
 
         # update the corresponding panel(s)
@@ -833,22 +833,22 @@ class TrsListViewPanel(sppasBaseViewPanel):
     def __set_selected(self, value=None):
         """Force to set the given selected value or reverse the existing one."""
         # Old value can be unknown (not already set)
-        old_value = self._object.get_meta("selected", None)
+        old_value = self._object.get_meta("private_selected", None)
         if old_value is None:
-            self._object.set_meta("selected", "False")
+            self._object.set_meta("private_selected", "False")
 
         # Given new value is None. We switch the old one.
         if value is None:
-            if self._object.get_meta("selected") == "False":
+            if self._object.get_meta("private_selected") == "False":
                 value = "True"
             else:
                 value = "False"
 
-        if value != self._object.get_meta("selected", "x"):
-            self._object.set_meta("selected", value)
+        if value != self._object.get_meta("private_selected", "x"):
+            self._object.set_meta("private_selected", value)
             self._dirty = True
 
-            if self._object.get_meta("selected", "False") == "True":
+            if self._object.get_meta("private_selected", "False") == "True":
                 self.GetToolsPane().SetBackgroundColour(self._hicolor)
             else:
                 self.GetToolsPane().SetBackgroundColour(self.GetBackgroundColour())
@@ -878,11 +878,11 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """One of the list child panel was collapsed/expanded."""
         panel = evt.GetEventObject()
         if panel.GetName() == "tiers-panel":
-            self._object.set_meta("tiers_expanded", str(panel.IsExpanded()))
+            self._object.set_meta("private_tiers_expanded", str(panel.IsExpanded()))
         elif panel.GetName() == "media-panel":
-            self._object.set_meta("media_expanded", str(panel.IsExpanded()))
+            self._object.set_meta("private_media_expanded", str(panel.IsExpanded()))
         elif panel.GetName() == "vocabs-panel":
-            self._object.set_meta("vocab_expanded", str(panel.IsExpanded()))
+            self._object.set_meta("private_vocab_expanded", str(panel.IsExpanded()))
         else:
             return
 
@@ -921,7 +921,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
             c.SetBackgroundColour(colour)
 
         # but the tools can have a different one
-        if self._object.get_meta("selected", "False") == "True":
+        if self._object.get_meta("private_selected", "False") == "True":
             self.GetToolsPane().SetBackgroundColour(self._hicolor)
 
 # ---------------------------------------------------------------------------
@@ -1362,7 +1362,7 @@ class TiersCollapsiblePanel(BaseObjectCollapsiblePanel):
             self._listctrl.SetItem(index, 7, obj.get_id())
             self._listctrl.RefreshItem(index)
 
-            state = obj.get_meta("checked", "False")
+            state = obj.get_meta("private_checked", "False")
             if state == "True":
                 self._listctrl.Select(index, on=1)
 

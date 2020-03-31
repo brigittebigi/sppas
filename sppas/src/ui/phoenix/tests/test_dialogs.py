@@ -134,6 +134,7 @@ class TestPanel(sppasPanel):
             m1.set_meta("speaker", "Brigitte Bigi")
             m2 = sppasMetaData()
             m2.set_meta('id', 'meta_of_page_2')
+            m2.set_meta('private_selected', 'True')
             m3 = sppasMetaData()
             m3.set_meta('id', 'meta_of_page_3')
             MetaDataEdit(self, [m1, m2, m3])

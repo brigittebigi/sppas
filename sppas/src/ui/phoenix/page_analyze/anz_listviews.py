@@ -50,6 +50,7 @@ from ..windows.dialogs import sppasProgressDialog
 from ..windows.dialogs import sppasChoiceDialog
 from ..windows.dialogs import sppasTextEntryDialog
 from ..windows.dialogs import Confirm
+from ..windows.dialogs import MetaDataEdit
 from ..dialogs import TiersView
 from ..dialogs import StatsView
 from ..dialogs import sppasTiersSingleFilterDialog
@@ -73,6 +74,7 @@ MSG_ANNS = u(msg("Annotations: "))
 TIER_MSG_ASK_NAME = u(msg("New name of the checked tiers: "))
 TIER_MSG_ASK_REGEXP = u(msg("Check tiers with name matching: "))
 TIER_MSG_ASK_RADIUS = u(msg("Radius value of the checked tiers: "))
+TIER_ACT_METADATA = u(msg("Metadata"))
 TIER_ACT_CHECK = u(msg("Check"))
 TIER_ACT_UNCHECK = u(msg("Uncheck"))
 TIER_ACT_RENAME = u(msg("Rename"))
@@ -268,6 +270,10 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         toolbar.set_focus_color(TIER_BG_COLOUR)
         toolbar.AddTitleText(MSG_TIERS, TIER_BG_COLOUR)
 
+        b = toolbar.AddButton("tags", TIER_ACT_METADATA)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
+
         b = toolbar.AddButton("tier_check", TIER_ACT_CHECK)
         b.LabelPosition = wx.BOTTOM
         b.Spacing = 1
@@ -360,7 +366,9 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         btn = event.GetEventObject()
         btn_name = btn.GetName()
 
-        if btn_name == "tier_check":
+        if btn_name == "tags":
+            self.metadata_tiers()
+        elif btn_name == "tier_check":
             self.check_tiers()
         elif btn_name == "tier_uncheck":
             self.uncheck_tiers()
@@ -410,6 +418,18 @@ class ListViewFilesPanel(BaseViewFilesPanel):
                     nbt += nb_checks
 
         return nbf, nbt
+
+    # -----------------------------------------------------------------------
+
+    def metadata_tiers(self):
+        """Edit metadata of selected tiers."""
+        tiers = list()
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                tiers.extend(panel.get_checked_tier())
+
+        MetaDataEdit(self, tiers)
 
     # -----------------------------------------------------------------------
 

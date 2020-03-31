@@ -141,8 +141,8 @@ class sppasMetaDataEditDialog(sppasDialog):
         tb2 = self.__create_toolbar_groups(panel)
 
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(bp, 1, wx.EXPAND | wx.TOP | wx.BOTTOM, sppasPanel.fix_size(4))
-        s.Add(entries, 0, wx.EXPAND | wx.TOP, sppasPanel.fix_size(4))
+        s.Add(bp, 1, wx.EXPAND | wx.TOP | wx.BOTTOM, 2)
+        s.Add(entries, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 2)
 
         main_sizer = wx.BoxSizer(wx.HORIZONTAL)
         main_sizer.Add(s, 1, wx.EXPAND | wx.LEFT, 2)
@@ -382,8 +382,12 @@ class sppasMetaDataEditDialog(sppasDialog):
 
     def _on_selected_item(self, evt):
         idx = evt.GetIndex()
-        self._entry_key.SetValue(self._lstctrl.GetItemText(idx, 0))
-        self._entry_val.SetValue(self._lstctrl.GetItemText(idx, 1))
+        key = self._lstctrl.GetItemText(idx, 0)
+        if key.startswith("private_") is False:
+            self._entry_key.SetValue(key)
+            self._entry_val.SetValue(self._lstctrl.GetItemText(idx, 1))
+        else:
+            wx.LogMessage("Private keys can't be edited.")
 
     # ------------------------------------------------------------------------
 
