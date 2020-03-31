@@ -157,7 +157,7 @@ class sppasDrawWindow(wx.Window):
                        then a default position is chosen.
         :param size:   If the default size (-1, -1) is specified
                        then a default size is chosen.
-        :param style:  often LC_REPORT
+        :param style:
         :param name:      Window name.
 
         By default, the background is transparent; but the foreground

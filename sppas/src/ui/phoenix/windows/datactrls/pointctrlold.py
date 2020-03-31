@@ -1,57 +1,118 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# ---------------------------------------------------------------------------
-#            ___   __    __    __    ___
-#           /     |  \  |  \  |  \  /              Automatic
-#           \__   |__/  |__/  |___| \__             Annotation
-#              \  |     |     |   |    \             of
-#           ___/  |     |     |   | ___/              Speech
-#
-#
-#                           http://www.sppas.org/
-#
-# ---------------------------------------------------------------------------
-#            Laboratoire Parole et Langage, Aix-en-Provence, France
-#                   Copyright (C) 2011-2016  Brigitte Bigi
-#
-#                   This banner notice must not be removed
-# ---------------------------------------------------------------------------
-# Use of this software is governed by the GNU Public License, version 3.
-#
-# SPPAS is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# SPPAS is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with SPPAS. If not, see <http://www.gnu.org/licenses/>.
-#
-# ---------------------------------------------------------------------------
-# File: pointctrlold.py
-# ---------------------------------------------------------------------------
+"""
+    ..
+        ---------------------------------------------------------------------
+         ___   __    __    __    ___
+        /     |  \  |  \  |  \  /              the automatic
+        \__   |__/  |__/  |___| \__             annotation and
+           \  |     |     |   |    \             analysis
+        ___/  |     |     |   | ___/              of speech
 
-__docformat__ = """epytext"""
-__authors__ = """Brigitte Bigi (develop@sppas.org)"""
-__copyright__ = """Copyright (C) 2011-2015  Brigitte Bigi"""
+        http://www.sppas.org/
 
-# ----------------------------------------------------------------------------
-# Imports
-# ----------------------------------------------------------------------------
+        Use of this software is governed by the GNU Public License, version 3.
+
+        SPPAS is free software: you can redistribute it and/or modify
+        it under the terms of the GNU General Public License as published by
+        the Free Software Foundation, either version 3 of the License, or
+        (at your option) any later version.
+
+        SPPAS is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU General Public License for more details.
+
+        You should have received a copy of the GNU General Public License
+        along with SPPAS. If not, see <http://www.gnu.org/licenses/>.
+
+        This banner notice must not be removed.
+
+        ---------------------------------------------------------------------
+
+    src.ui.phoenix.windows.datactrls.pointctrlold.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
 
 import wx
+import random
 import wx.lib.newevent
 
-import sppas.src.ui.wxgui.cutils.imageutils as imageutils
-import sppas.src.ui.wxgui.cutils.colorutils as colorutils
+from sppas.src.anndata import sppasPoint
+from sppas.src.utils import b
+
+
+def CreateCursorFromXPMData(xpm_data, hot_spot):
+    """Return a wx.Cursor from a vectorized image.
+
+    """
+    d = list()
+    for line in xpm_data:
+        d.append(b(line))
+
+    # get cursor image
+    bmp = wx.Bitmap(d)
+    image = wx.ImageFromBitmap(bmp)
+
+    # since this image didn't come from a .cur file,
+    # tell it where the hot spot is
+    # image.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_X, hot_spot)
+    # image.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_Y, hot_spot)
+
+    # make the image into a cursor
+    return wx.CursorFromImage(image)
+
+
+def LightenColor(crColor, byIncreaseVal):
+    """Lightens a colour."""
+
+    byRed = crColor.Red()
+    byGreen = crColor.Green()
+    byBlue = crColor.Blue()
+
+    byRed = (byRed + byIncreaseVal <= 255 and [byRed + byIncreaseVal] or [255])[0]
+    byGreen = (byGreen + byIncreaseVal <= 255 and [byGreen + byIncreaseVal] or [255])[0]
+    byBlue = (byBlue + byIncreaseVal <= 255 and [byBlue + byIncreaseVal] or [255])[0]
+
+    return wx.Colour(byRed, byGreen, byBlue)
+
+
+def DarkenColor(crColor, byReduceVal):
+    """Darkens a colour."""
+
+    byRed   = crColor.Red()
+    byGreen = crColor.Green()
+    byBlue  = crColor.Blue()
+
+    byRed   = (byRed >= byReduceVal and [byRed - byReduceVal] or [0])[0]
+    byGreen = (byGreen >= byReduceVal and [byGreen - byReduceVal] or [0])[0]
+    byBlue  = (byBlue >= byReduceVal and [byBlue - byReduceVal] or [0])[0]
+
+    return wx.Colour(byRed, byGreen, byBlue)
+
+
+def ContrastiveColour(crColor):
+    """Return a contrastive (ie lighten or darken) color."""
+
+    byRed   = crColor.Red()
+    byGreen = crColor.Green()
+    byBlue  = crColor.Blue()
+
+    if byRed+byGreen+byBlue < 191:
+        return LightenColor(crColor, random.sample(range(15,30),1)[0])
+
+    if byRed+byGreen+byBlue < 382:
+        return LightenColor(crColor, random.sample(range(40,60),1)[0])
+
+    if byRed+byGreen+byBlue < 510:
+        return DarkenColor(crColor, random.sample(range(15,30),1)[0])
+
+    return DarkenColor(crColor, random.sample(range(40,60),1)[0])
 
 # ----------------------------------------------------------------------------
 # Constants
 # ----------------------------------------------------------------------------
+
 
 MIN_W = 3
 MIN_H = 6
@@ -141,16 +202,18 @@ cursor_expand = [
 
 
 class PointCtrl(wx.Window):
-    """Used to display a TimePoint instance (see anndata for details).
+    """Used to display a sppasPoint instance.
 
-    @author:  Brigitte Bigi
-    @contact: develop@sppas.org
-    @license: GPL, v3
-    
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
     PointCtrl implements a vertical line that can be placed anywhere to any
     wxPython widget.
 
-    It represents a TimePoint of an annotation, defined by both:
+    It represents a sppasPoint of an annotation, defined by both:
         
         - a midpoint value m (float),
         - a radius value r (float).
@@ -177,6 +240,7 @@ class PointCtrl(wx.Window):
         tooltip. It is never modified.
 
         """
+
         wx.Window.__init__(self, parent, id, pos, size, STYLE)
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
         self.SetDoubleBuffered(True)
@@ -255,7 +319,7 @@ class PointCtrl(wx.Window):
             torepaint = True
 
         if colourradius is not None and colourradius != self._colourradius:
-            self._penbounds = wx.Pen(colorutils.ContrastiveColour(colourradius), 1, wx.SOLID)
+            self._penbounds = wx.Pen(ContrastiveColour(colourradius), 1, wx.SOLID)
             self._colourradius = colourradius
             torepaint = True
 
@@ -529,7 +593,7 @@ class PointCtrl(wx.Window):
         self._colourradius = COLOUR_RADIUS
 
         self._penmidpoint = wx.Pen(COLOUR_MID, 1, wx.SOLID)
-        self._penbounds = wx.Pen(colorutils.ContrastiveColour(COLOUR_RADIUS), 1, wx.SOLID)
+        self._penbounds = wx.Pen(ContrastiveColour(COLOUR_RADIUS), 1, wx.SOLID)
 
     # -----------------------------------------------------------------------
 
@@ -537,10 +601,10 @@ class PointCtrl(wx.Window):
         """Create new cursors to be used while Moving or Resizing."""
 
         # Cursor while moving
-        self._cursormove = imageutils.CreateCursorFromXPMData(cursor_move, 8)
+        self._cursormove = CreateCursorFromXPMData(cursor_move, 8)
 
         # Cursor while resizing
-        self._cursorexpand = imageutils.CreateCursorFromXPMData(cursor_expand, 8)
+        self._cursorexpand = CreateCursorFromXPMData(cursor_expand, 8)
 
     # -----------------------------------------------------------------------
 
@@ -568,3 +632,19 @@ class PointCtrl(wx.Window):
                 return "Point: " + str(self._point.get_midpoint())
 
         return "No point"
+
+# ----------------------------------------------------------------------------
+# Panels to test
+# ----------------------------------------------------------------------------
+
+
+class TestPanel(wx.Panel):
+
+    def __init__(self, parent):
+        super(TestPanel, self).__init__(
+            parent,
+            style=wx.BORDER_NONE | wx.WANTS_CHARS,
+            name="Test PointCtrl")
+
+        p1 = PointCtrl(self, pos=(50, 50), size=(10, 50),
+                       point=sppasPoint(2.3))
