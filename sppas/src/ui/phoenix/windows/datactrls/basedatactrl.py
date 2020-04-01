@@ -136,10 +136,31 @@ class sppasBaseDataWindow(sppasBaseWindow):
 
     # -----------------------------------------------------------------------
 
+    def GetData(self):
+        """Retrieve the data associated to the Ctrl.
+
+        :return: data instance.
+
+        """
+        return self._data
+
+    # -----------------------------------------------------------------------
+
     def SetData(self, data):
         """Set new data content."""
-        self._data = data
-        self.Refresh()
+        if data != self._data:
+            self._data = data
+            self.SetToolTip(wx.ToolTip(self._tooltip()))
+            self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def _tooltip(self):
+        """Set a tooltip string indicating data content."""
+        if self._data is not None:
+            return str(self._data)
+
+        return "No data"
 
     # -----------------------------------------------------------------------
 

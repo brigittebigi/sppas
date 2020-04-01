@@ -43,6 +43,8 @@ from sppas.src.ui.phoenix.main_settings import WxAppSettings
 # Tested files are the ones with a TestPanel class:
 import sppas.src.ui.phoenix.windows.datactrls.basedatactrl as basedatactrl
 import sppas.src.ui.phoenix.windows.datactrls.pointctrl as pointctrl
+import sppas.src.ui.phoenix.windows.datactrls.annctrl as annctrl
+import sppas.src.ui.phoenix.windows.datactrls.tierctrl as tierctrl
 import sppas.src.ui.phoenix.windows.datactrls.waveform as waveform
 
 # ----------------------------------------------------------------------------
@@ -61,11 +63,15 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
-        p = waveform.TestPanel(self)
+        p = tierctrl.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = annctrl.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = pointctrl.TestPanel(self)
         self.AddPage(p, p.GetName())
         p = basedatactrl.TestPanel(self)
         self.AddPage(p, p.GetName())
-        p = pointctrl.TestPanel(self)
+        p = waveform.TestPanel(self)
         self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)

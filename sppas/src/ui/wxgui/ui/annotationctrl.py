@@ -414,7 +414,7 @@ class AnnotationCtrl(wx.Window):
 
         # logging.debug('  Draw content for ann %s: x=%d,y=%d,  w=%d, h=%d' % (self._ann, x, y, w, h))
 
-        wpt1 = max(pointctrlMinWidth, self._calcW(self._pointctrl1.GetValue().duration().get_value()))
+        wpt1 = max(pointctrlMinWidth, self._calcW(self._pointctrl1.GetValue().duration().get_margin()))
         if wpt1 > w:
             wpt1 = w
 
@@ -425,7 +425,7 @@ class AnnotationCtrl(wx.Window):
             tw = max(0, tw)
             self._labelctrl.MoveWindow(wx.Point(wpt1, y), wx.Size(tw, h))
         else:
-            wpt2 = max(pointctrlMinWidth, self._calcW(self._pointctrl2.GetValue().duration().get_value()))
+            wpt2 = max(pointctrlMinWidth, self._calcW(self._pointctrl2.GetValue().duration().get_margin()))
             xpt2 = w-wpt2+1
             tx = x + wpt1
             tw = xpt2 - tx

@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.panels.tierctrl.py
+    src.ui.phoenix.panels.tierlist.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """

@@ -35,18 +35,16 @@
 """
 
 import wx
-import random
 import wx.lib.newevent
 
 from sppas.src.anndata import sppasPoint
-from sppas.src.utils import b
-
 from ..basedraw import sppasBaseWindow
+from .basedatactrl import sppasBaseDataWindow
 
 # ---------------------------------------------------------------------------
 
 
-class sppasPointWindow(sppasBaseWindow):
+class sppasPointWindow(sppasBaseDataWindow):
     """A window with a DC to draw a sppasPoint().
 
     :author:       Brigitte Bigi
@@ -62,7 +60,7 @@ class sppasPointWindow(sppasBaseWindow):
                  pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
                  name="pointctrl"):
-        """Initialize a new sppasBaseDataWindow instance.
+        """Initialize a new sppasPointWindow instance.
 
         :param parent: Parent window. Must not be None.
         :param id:     A value of -1 indicates a default value.
@@ -76,7 +74,7 @@ class sppasPointWindow(sppasBaseWindow):
         """
         style = wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE
         super(sppasPointWindow, self).__init__(
-            parent, id, pos, size, style, name)
+            parent, id, data, pos, size, style, name)
 
         self._data = None
         if data is not None:
@@ -101,18 +99,8 @@ class sppasPointWindow(sppasBaseWindow):
         """Set new data content."""
         if data != self._data:
             self._data = data
-            self.SetToolTip(wx.ToolTip(self.__tooltip()))
+            self.SetToolTip(wx.ToolTip(self._tooltip()))
             self.Refresh()
-
-    # -----------------------------------------------------------------------
-
-    def GetData(self):
-        """Retrieve the point associated to the PointCtrl.
-
-        :return: sppasPoint instance.
-
-        """
-        return self._data
 
     # -----------------------------------------------------------------------
 
@@ -128,56 +116,50 @@ class sppasPointWindow(sppasBaseWindow):
 
     def DrawBackground(self, dc, gc):
         """Draw the background with a gradient color from midpoint."""
+        if self._data is None:
+            return
         w, h = self.GetClientSize()
 
         brush = self.GetBackgroundBrush()
         if brush is not None:
             dc.SetBackground(brush)
             dc.Clear()
-
         dc.SetBrush(brush)
 
         # If highlighted
         if self.HasFocus() is True:
             c1 = self.GetHighlightedBackgroundColour()
-            c2 = self.GetForegroundColour()
+            c2 = self.GetPenForegroundColour()
         else:
             c2 = self.GetHighlightedBackgroundColour()
-            c1 = self.GetForegroundColour()
+            c1 = self.GetPenForegroundColour()
 
         if w > 5:
+            # Fill in the content
             mid = int(w / 2)
             box_rect = wx.Rect(0, 0, mid, h)
             dc.GradientFillLinear(box_rect, c1, c2, wx.EAST)
             box_rect = wx.Rect(mid, 0, mid, h)
             dc.GradientFillLinear(box_rect, c1, c2, wx.WEST)
-            pen = wx.Pen(self.GetForegroundColour(), 1, wx.SOLID)
-            pen.SetCap(wx.CAP_BUTT)
-            # dc.DrawLine(0, 0, 0, h)
-            # dc.DrawLine(w-1, 0, w-1, h)
-        else:
-            pen = wx.Pen(self.GetForegroundColour(), w, wx.SOLID)
+            # Draw two vertical lines at left-right borders
+            pen = wx.Pen(self.GetHighlightedBackgroundColour(), 1, wx.SOLID)
             pen.SetCap(wx.CAP_BUTT)
             dc.SetPen(pen)
-            dc.DrawLine(0, 0, w, h)
+            dc.DrawLine(0, 0, 0, h)
+            dc.DrawLine(w, 0, w, h)
+
+        else:
+            pen = wx.Pen(c1, 1, wx.SOLID)
+            pen.SetCap(wx.CAP_BUTT)
+            dc.SetPen(pen)
+            for i in range(w):
+                dc.DrawLine(i, 0, i, h)
 
     # -----------------------------------------------------------------------
 
     def DrawContent(self, dc, gc):
         """Override. """
         return
-
-    # -----------------------------------------------------------------------
-
-    def __tooltip(self):
-        """Set a tooltip string indicating midpoint and radius."""
-        if self._data is not None:
-            if self._data.get_radius() is not None:
-                return "Point: "+str(self._data.get_midpoint())+"\nRadius: "+str(self._data.get_radius())
-            else:
-                return "Point: " + str(self._data.get_midpoint())
-
-        return "No point"
 
 # ----------------------------------------------------------------------------
 # Panels to test
@@ -193,4 +175,6 @@ class TestPanel(wx.Panel):
             name="Test PointCtrl")
 
         p1 = sppasPointWindow(
-            self, pos=(50, 50), size=(20, 100), data=sppasPoint(2.3))
+            self, pos=(50, 50), size=(20, 100), data=sppasPoint(2.3, 0.01))
+        p2 = sppasPointWindow(
+            self, pos=(150, 50), size=(5, 100), data=sppasPoint(3))

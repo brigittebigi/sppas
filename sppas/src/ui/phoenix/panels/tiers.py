@@ -49,7 +49,7 @@ from ..windows.dialogs import Confirm, Error
 from ..main_events import ViewEvent, EVT_VIEW
 
 from .ann import sppasAnnEditPanel
-from .tierctrl import sppasTiersbook
+from .tierlist import sppasTiersbook
 
 # ---------------------------------------------------------------------------
 # Constants
