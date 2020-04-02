@@ -1045,6 +1045,7 @@ class sppasBaseWindow(sppasDrawWindow):
     # -----------------------------------------------------------------------
 
     def Notify(self):
+        logging.debug("Notify parent of command left click")
         evt = sppasWindowEvent(wx.wxEVT_COMMAND_LEFT_CLICK, self.GetId())
         evt.SetObj(self)
         evt.SetEventObject(self)

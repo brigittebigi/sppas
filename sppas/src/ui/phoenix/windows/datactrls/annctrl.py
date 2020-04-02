@@ -91,6 +91,7 @@ class sppasAnnotationWindow(sppasBaseDataWindow):
             self.SetData(data)
 
         # Override parent members
+        self._is_selectable = False
         self._min_width = 1
         self._min_height = 4
         self._vert_border_width = 0
@@ -318,6 +319,7 @@ class TestPanel(wx.Panel):
             self, pos=(50, 50), size=(200, 100), data=a1)
         # pxsec = width / a1.duration
         p11.SetPxSec(100)
+        p11.SetForegroundColour(wx.RED)
         p11.Refresh()
 
         p12 = sppasAnnotationWindow(

@@ -141,12 +141,6 @@ class sppasPointWindow(sppasBaseDataWindow):
             dc.GradientFillLinear(box_rect, c1, c2, wx.EAST)
             box_rect = wx.Rect(mid, 0, mid, h)
             dc.GradientFillLinear(box_rect, c1, c2, wx.WEST)
-            # Draw two vertical lines at left-right borders
-            pen = wx.Pen(self.GetHighlightedBackgroundColour(), 1, wx.SOLID)
-            pen.SetCap(wx.CAP_BUTT)
-            dc.SetPen(pen)
-            dc.DrawLine(0, 0, 0, h)
-            dc.DrawLine(w, 0, w, h)
 
         else:
             pen = wx.Pen(c1, 1, wx.SOLID)

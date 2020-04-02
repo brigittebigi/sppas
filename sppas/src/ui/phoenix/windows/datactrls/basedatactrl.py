@@ -235,7 +235,6 @@ class sppasBaseDataWindow(sppasBaseWindow):
 
         # If the button was down when the mouse was released...
         if self._state[1] == WindowState().selected:
-            self.Notify()
             # if we haven't been destroyed by this notify...
             if self:
                 if self._is_selectable is False:
@@ -245,7 +244,10 @@ class sppasBaseDataWindow(sppasBaseWindow):
                         self._set_state(WindowState().selected)
                     else:
                         self._set_state(WindowState().focused)
-                # event.Skip()
+                self.Notify()
+        else:
+            if self._is_selectable is False:
+                event.Skip()
 
     # -----------------------------------------------------------------------
 
@@ -275,6 +277,16 @@ class sppasBaseDataWindow(sppasBaseWindow):
                 event.Skip()
 
         self._selected = False
+
+    # -----------------------------------------------------------------------
+
+    def Notify(self):
+        logging.debug("Notify parent of selected with command left click event.")
+        evt = sppasWindowSelectedEvent(wx.wxEVT_COMMAND_LEFT_CLICK, self.GetId())
+        evt.SetObj(self._data)
+        evt.SetSelected(self._selected)
+        evt.SetEventObject(self)
+        self.GetEventHandler().ProcessEvent(evt)
 
 # ----------------------------------------------------------------------------
 # Panels to test

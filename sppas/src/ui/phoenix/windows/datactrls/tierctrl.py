@@ -91,6 +91,7 @@ class sppasTierWindow(sppasBaseDataWindow):
         self.__annctrls = dict()
 
         # Override parent members
+        self._is_selectable = True
         self._min_width = 256
         self._min_height = 4
         self._vert_border_width = 0
@@ -161,17 +162,6 @@ class sppasTierWindow(sppasBaseDataWindow):
 
     # -----------------------------------------------------------------------
 
-    def Notify(self):
-        """Sends a EVT_EVENT event to the listener (if any)."""
-        evt = sppasWindowSelectedEvent(event_type=wx.wxEVT_COMMAND_LEFT_CLICK, event_id=self.GetId())
-
-        evt.SetObj(self._data)
-        evt.SetSelected(True)
-        evt.SetEventObject(self)
-        wx.PostEvent(self.GetParent(), evt)
-
-    # -----------------------------------------------------------------------
-
     def DrawContent(self, dc, gc):
         x, y, w, h = self.GetContentRect()
         duration = float(self.__period[1]) - float(self.__period[0])
@@ -206,24 +196,18 @@ class sppasTierWindow(sppasBaseDataWindow):
         delay = b_a - p0  # delay between time of x and time of begin ann
 
         """
-        print("Draw ann %s" % str(ann))
         # estimate the displayed duration of the annotation
         ann_begin = ann.get_lowest_localization()
         ann_end = ann.get_highest_localization()
-        print(ann_begin, ann_end)
         b_a = ann_begin.get_midpoint() - ann_begin.get_radius()
         e_a = ann_end.get_midpoint() + ann_end.get_radius()
-        print(b_a, e_a)
         if b_a < self.__period[0]:
             b_a = self.__period[0]
         if e_a > self.__period[1]:
             e_a = self.__period[1]
-        print(b_a, e_a)
         d_a = e_a - b_a
-        print(d_a)
         # annotation width
         w_a = d_a * self._pxsec
-        print(w_a)
         # annotation x-axis
         if self.__period[0] == b_a:
             x_a = x
@@ -234,11 +218,13 @@ class sppasTierWindow(sppasBaseDataWindow):
         pos = wx.Point(x_a, y)
         size = wx.Size(int(w_a), h)
         if ann in self.__annctrls:
-            ctrl = self.__annctrls[ann]
-            ctrl.SetPosition(pos)
-            ctrl.SetSize(size)
+            annctrl = self.__annctrls[ann]
+            annctrl.SetPxSec(self._pxsec)
+            annctrl.SetPosition(pos)
+            annctrl.SetSize(size)
         else:
             annctrl = sppasAnnotationWindow(self, pos=pos, size=size, data=ann)
+            annctrl.SetPxSec(self._pxsec)
             self.__annctrls[ann] = annctrl
 
     # -----------------------------------------------------------------------
@@ -266,22 +252,55 @@ class TestPanel(wx.Panel):
         parser = sppasRW(filename)
         trs = parser.read()
 
-        p1 = sppasTierWindow(self, pos=(10, 10), size=(300, 24), data=trs[0])
-        p1.set_selected_period(3.0, 3.5)
-        p2 = sppasTierWindow(self, pos=(10, 100), size=(300, 48), data=trs[1])
-        p2.set_selected_period(3.0, 3.5)
+        self.p1 = sppasTierWindow(self, pos=(10, 10), size=(300, 24), data=trs[0])
+        self.p1.set_selected_period(3.0, 3.5)
+        self.p2 = sppasTierWindow(self, pos=(10, 100), size=(300, 48), data=trs[1])
+        self.p2.set_selected_period(3.0, 3.5)
 
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(p1, 0, wx.EXPAND)
-        s.Add(p2, 0, wx.EXPAND)
+        s.Add(self.p1, 0, wx.EXPAND)
+        s.Add(self.p2, 0, wx.EXPAND)
         self.SetSizer(s)
-        # self.Bind(wx.EVT_LEFT_CLICK, self._process_tier_selected)
+        self.p1.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_selected)
+        self.p2.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_selected)
 
     # -----------------------------------------------------------------------
 
     def _process_tier_selected(self, event):
-        tier = event.GetObj()
+        data = event.GetObj()
         value = event.GetSelected()
+        obj = event.GetEventObject()
+
+        if isinstance(data, sppasAnnotation):
+            tier = data.get_parent()
+            print("Selected event received. Annotation of tier {} is selected {}"
+                  "".format(tier.get_name(), value))
+
+            if self.p1.get_tiername() == tier.get_name():
+                if self.p1.IsSelected() is False:
+                    self.p1.SetSelected(True)
+                    self.p1.SetForegroundColour(wx.RED)
+                else:
+                    self.p1.SetSelected(False)
+                    self.p1.SetForegroundColour(self.GetForegroundColour())
+
+            if self.p2.get_tiername() == tier.get_name():
+                if self.p2.IsSelected() is False:
+                    self.p2.SetSelected(True)
+                    self.p2.SetForegroundColour(wx.RED)
+                else:
+                    self.p2.SetSelected(False)
+                    self.p2.SetForegroundColour(self.GetForegroundColour())
+
+        if isinstance(data, sppasTier):
+            print("Selected event received. Tier {} is selected {}"
+                  "".format(data.get_name(), value))
+            if obj.IsSelected() is False:
+                obj.SetSelected(True)
+                obj.SetForegroundColour(wx.RED)
+            else:
+                obj.SetSelected(False)
+                obj.SetForegroundColour(self.GetForegroundColour())
 
         event.Skip()
 
