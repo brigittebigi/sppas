@@ -168,23 +168,24 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
 
     def __select_first(self):
         """Select the first annotation of the first tier of the first file."""
+        logging.debug("Select the first ann of the first tier of the first file")
         for filename in self._files:
-            logging.debug(" - filename: {}".format(filename))
+            logging.debug(filename)
             panel = self._files[filename]
             if isinstance(panel, TrsTimeViewPanel):
+                logging.debug(" -> is a trs")
                 trs = panel.get_object()
-                logging.debug(" - panel is trs with {} tiers".format(len(trs.get_name())))
                 if len(trs) > 0:
-
                     # enable the tier into the panel of time tier views
                     tier_name = trs[0].get_name()
-                    self.__enable_tier_into_scrolled(filename, tier_name)
-                    logging.info("Tier {} of file {} selected.".format(tier_name, filename))
+                    logging.debug(tier_name)
 
                     # enable the tier into the notebook of list tier views
                     w = self.FindWindow("tiers_edit_splitter")
                     w.set_selected_tiername(filename, tier_name)
-                    # an event is sent by w to fix the selected period
+                    self.__enable_tier_into_scrolled(filename, tier_name)
+                    wx.LogMessage("Tier {:s} selected, from file {:s}"
+                                  "".format(tier_name, filename))
                     break
 
     # -----------------------------------------------------------------------
@@ -214,6 +215,23 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
     # Manage the files
     # -----------------------------------------------------------------------
 
+    def append_file(self, name):
+        super(TimeViewFilesPanel, self).append_file(name)
+        # Is there already a selected period?
+        period = False
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsTimeViewPanel):
+                start, end = panel.get_selected_period()
+                if start != 0 or end != 0:
+                    period = True
+                    break
+
+        if period is False:
+            self.__select_first()
+
+    # -----------------------------------------------------------------------
+
     def _show_file(self, name):
         """Override. Create a ViewPanel to display a file.
 
@@ -234,11 +252,11 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
                     w = self.FindWindow("tiers_edit_splitter")
                     w.add_tiers(name, trs.get_tier_list())
                     # This is the first trs of the panel.
-                    if len(self._files) == 0:
-                        tier_name = trs[0].get_name()
-                        selected = w.set_selected_tiername(name, tier_name)
-                        if selected is True:
-                            panel.set_selected_tiername(tier_name)
+                    # if len(self._files) == 0:
+                    #     tier_name = trs[0].get_name()
+                    #    selected = w.set_selected_tiername(name, tier_name)
+                    #     if selected is True:
+                    #         panel.set_selected_tiername(tier_name)
 
             elif tt.guess_type(name) == tt.unsupported:
                 raise IOError("File format not supported.")
@@ -406,7 +424,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
             else:
                 self.__enable_tier_into_scrolled(trs_filename, tier_name)
 
-        # not implemented yet: child panels don't allow to modify ann boundaries
+        # not implemented yet: child panels don't allow to select an ann
         elif action == "period_selected":
             period = event.value
             start = int(period[0] * 1000.)
@@ -595,7 +613,12 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         The change of offset period will stop all the media.
 
         """
+        # Set the period to the player. It will set to the media.
         self._player_controls_panel.set_range(start, end)
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsTimeViewPanel):
+                panel.set_draw_period(start, end)
 
     # -----------------------------------------------------------------------
 

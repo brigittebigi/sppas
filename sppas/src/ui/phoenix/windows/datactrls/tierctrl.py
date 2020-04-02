@@ -43,6 +43,7 @@ from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasAnnotation
 
+from ..panel import sppasPanel
 from .basedatactrl import sppasWindowSelectedEvent
 from .basedatactrl import sppasBaseDataWindow
 from .annctrl import sppasAnnotationWindow
@@ -105,9 +106,11 @@ class sppasTierWindow(sppasBaseDataWindow):
 
     # -----------------------------------------------------------------------
 
-    def set_selected_period(self, begin, end):
+    def SetDrawPeriod(self, begin, end):
         """Set the period to draw."""
-        self.__period = (begin, end)
+        if begin != self.__period[0] or end != self.__period[1]:
+            self.__period = (begin, end)
+            self.Refresh()
 
     # -----------------------------------------------------------------------
 
@@ -166,9 +169,12 @@ class sppasTierWindow(sppasBaseDataWindow):
         x, y, w, h = self.GetContentRect()
         duration = float(self.__period[1]) - float(self.__period[0])
 
-        if duration > 0.01:
+        if duration > 0.01 and self._data.is_interval() is True:
             self._pxsec = int(float(w) / duration)
             anns = self._data.find(self.__period[0], self.__period[1], overlaps=True)
+            for ann in self.__annctrls:
+                if ann not in anns:
+                    self.__annctrls[ann].Hide()
             for ann in anns:
                 self._DrawAnnotation(ann, x, y, w, h)
         else:
@@ -177,8 +183,8 @@ class sppasTierWindow(sppasBaseDataWindow):
             self.draw_label(dc, gc, tier_name, x, y + ((h - th) // 2))
             self.draw_label(dc, gc, str(len(self._data))+" annotations", x + 200, y + ((h - th) // 2))
             if self.__ann_idx > -1:
-                self.draw_label(dc, gc, x + 400, y + ((h - th) // 2),
-                                "(-- {:d} -- is selected)".format(self.__ann_idx+1))
+                self.draw_label(dc, gc, "(-- {:d} -- is selected)".format(self.__ann_idx+1),
+                                x + 400, y + ((h - th) // 2))
 
     # -----------------------------------------------------------------------
 
@@ -196,15 +202,16 @@ class sppasTierWindow(sppasBaseDataWindow):
         delay = b_a - p0  # delay between time of x and time of begin ann
 
         """
+        draw_points = [True, True]
         # estimate the displayed duration of the annotation
-        ann_begin = ann.get_lowest_localization()
-        ann_end = ann.get_highest_localization()
-        b_a = ann_begin.get_midpoint() - ann_begin.get_radius()
-        e_a = ann_end.get_midpoint() + ann_end.get_radius()
+        b_a = self.get_ann_begin(ann)
+        e_a = self.get_ann_end(ann)
         if b_a < self.__period[0]:
             b_a = self.__period[0]
+            draw_points[0] = False
         if e_a > self.__period[1]:
             e_a = self.__period[1]
+            draw_points[1] = False
         d_a = e_a - b_a
         # annotation width
         w_a = d_a * self._pxsec
@@ -222,10 +229,34 @@ class sppasTierWindow(sppasBaseDataWindow):
             annctrl.SetPxSec(self._pxsec)
             annctrl.SetPosition(pos)
             annctrl.SetSize(size)
+            annctrl.ShouldDrawPoints(draw_points)
+            annctrl.Show()
         else:
             annctrl = sppasAnnotationWindow(self, pos=pos, size=size, data=ann)
             annctrl.SetPxSec(self._pxsec)
+            annctrl.ShouldDrawPoints(draw_points)
+            annctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_ann_selected)
             self.__annctrls[ann] = annctrl
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def get_ann_begin(ann):
+        ann_begin = ann.get_lowest_localization()
+        value = ann_begin.get_midpoint()
+        r = ann_begin.get_radius()
+        if r is not None:
+            value -= r
+        return value
+
+    @staticmethod
+    def get_ann_end(ann):
+        ann_end = ann.get_highest_localization()
+        value = ann_end.get_midpoint()
+        r = ann_end.get_radius()
+        if r is not None:
+            value += r
+        return value
 
     # -----------------------------------------------------------------------
 
@@ -237,11 +268,17 @@ class sppasTierWindow(sppasBaseDataWindow):
             return msg
 
         return "No data"
+    # -----------------------------------------------------------------------
+
+    def _process_ann_selected(self, event):
+        logging.debug("Tier {} received annotation selected event."
+                      "".format(self._data.get_name()))
+        self.Notify()
 
 # ---------------------------------------------------------------------------
 
 
-class TestPanel(wx.Panel):
+class TestPanel(sppasPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(
             parent,
@@ -253,54 +290,29 @@ class TestPanel(wx.Panel):
         trs = parser.read()
 
         self.p1 = sppasTierWindow(self, pos=(10, 10), size=(300, 24), data=trs[0])
-        self.p1.set_selected_period(3.0, 3.5)
+        self.p1.SetDrawPeriod(3.0, 3.5)
         self.p2 = sppasTierWindow(self, pos=(10, 100), size=(300, 48), data=trs[1])
-        self.p2.set_selected_period(3.0, 3.5)
+        self.p2.SetDrawPeriod(3.0, 3.5)
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(self.p1, 0, wx.EXPAND)
         s.Add(self.p2, 0, wx.EXPAND)
         self.SetSizer(s)
-        self.p1.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_selected)
-        self.p2.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_selected)
+        self.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_selected)
 
     # -----------------------------------------------------------------------
 
     def _process_tier_selected(self, event):
-        data = event.GetObj()
+        tier = event.GetObj()
         value = event.GetSelected()
         obj = event.GetEventObject()
 
-        if isinstance(data, sppasAnnotation):
-            tier = data.get_parent()
-            print("Selected event received. Annotation of tier {} is selected {}"
-                  "".format(tier.get_name(), value))
-
-            if self.p1.get_tiername() == tier.get_name():
-                if self.p1.IsSelected() is False:
-                    self.p1.SetSelected(True)
-                    self.p1.SetForegroundColour(wx.RED)
-                else:
-                    self.p1.SetSelected(False)
-                    self.p1.SetForegroundColour(self.GetForegroundColour())
-
-            if self.p2.get_tiername() == tier.get_name():
-                if self.p2.IsSelected() is False:
-                    self.p2.SetSelected(True)
-                    self.p2.SetForegroundColour(wx.RED)
-                else:
-                    self.p2.SetSelected(False)
-                    self.p2.SetForegroundColour(self.GetForegroundColour())
-
-        if isinstance(data, sppasTier):
-            print("Selected event received. Tier {} is selected {}"
-                  "".format(data.get_name(), value))
-            if obj.IsSelected() is False:
-                obj.SetSelected(True)
-                obj.SetForegroundColour(wx.RED)
-            else:
-                obj.SetSelected(False)
-                obj.SetForegroundColour(self.GetForegroundColour())
-
-        event.Skip()
+        print("Selected event received. Tier {} is selected {}"
+              "".format(tier.get_name(), value))
+        if obj.IsSelected() is False:
+            obj.SetSelected(True)
+            obj.SetForegroundColour(wx.RED)
+        else:
+            obj.SetSelected(False)
+            obj.SetForegroundColour(self.GetForegroundColour())
 

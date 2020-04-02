@@ -430,10 +430,10 @@ class sppasDrawWindow(wx.Window):
         if self._bgcolor is not None:
             color = self._bgcolor
         else:
-            color = self.GetParent().GetBackgroundColour()
+            color = self.GetBackgroundColour()
         r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
 
-        delta = 15
+        delta = 20
         if (r + g + b) > 384:
             return wx.Colour(r, g, b, a).ChangeLightness(100 - delta)
         return wx.Colour(r, g, b, a).ChangeLightness(100 + delta)
@@ -693,6 +693,18 @@ class sppasDrawWindow(wx.Window):
             return wx.Brush(color, wx.BRUSHSTYLE_TRANSPARENT)
         else:
             return wx.Brush(self._bgcolor, wx.SOLID)
+
+    # -----------------------------------------------------------------------
+
+    def GetTransparentBrush(self):
+        """Get a transparent brush.
+
+        :returns: (wx.Brush)
+
+        """
+        if wx.Platform == '__WXMAC__':
+            return wx.TRANSPARENT_BRUSH
+        return wx.Brush(wx.Colour(0, 0, 0, wx.ALPHA_TRANSPARENT), wx.BRUSHSTYLE_TRANSPARENT)
 
     # -----------------------------------------------------------------------
     # Draw methods (private)
@@ -1142,7 +1154,7 @@ class sppasBaseWindow(sppasDrawWindow):
     # -----------------------------------------------------------------------
 
     def _set_state(self, state):
-        """Manually set the state of the button.
+        """Manually set the state of the window.
 
         :param state: (int) one of the state values
 

@@ -102,8 +102,16 @@ class sppasAnnotationWindow(sppasBaseDataWindow):
         self._pxsec = 0  # the number of pixels to represent 1 second of time
         self._pointctrl1 = None
         self._pointctrl2 = None
+        self.__should_draw_points = [True, True]
 
         self.SetInitialSize(size)
+
+        try:
+            settings = wx.GetApp().settings
+            self._bgcolor = settings.bg_color
+        except AttributeError:
+            self.InheritAttributes()
+            self._bgcolor = self.GetTopLevelParent().GetBackgroundColour()
 
     # ------------------------------------------------------------------------
 
@@ -143,16 +151,27 @@ class sppasAnnotationWindow(sppasBaseDataWindow):
         dc.SetPen(wx.TRANSPARENT_PEN)
 
         if self._data.is_labelled() is False:
+            # Draw a transparent rectangle...
             dc.DrawRectangle(0, 0, w, h)
         else:
-            # Fill in the content
-            c1 = self.GetHighlightedBackgroundColour()
-            c2 = self.GetBackgroundColour()
-            mid = h // 2
-            box_rect = wx.Rect(0, 0, w, mid)
-            dc.GradientFillLinear(box_rect, c1, c2, wx.NORTH)
-            box_rect = wx.Rect(0, mid, w, h)
-            dc.GradientFillLinear(box_rect, c1, c2, wx.SOUTH)
+            if self._bgcolor is not None:
+                # Fill in the content
+                c2 = self.GetHighlightedBackgroundColour()
+                c1 = self._bgcolor
+                mid = h // 2
+                box_rect = wx.Rect(0, 0, w, mid)
+                dc.GradientFillLinear(box_rect, c1, c2, wx.NORTH)
+                box_rect = wx.Rect(0, mid, w, h)
+                dc.GradientFillLinear(box_rect, c1, c2, wx.SOUTH)
+
+        dc.SetBrush(self.GetTransparentBrush())
+        gc.SetBrush(self.GetTransparentBrush())
+
+    # -----------------------------------------------------------------------
+
+    def ShouldDrawPoints(self, values):
+        """Should we draw the begin/end points?"""
+        self.__should_draw_points = values
 
     # -----------------------------------------------------------------------
 
@@ -178,14 +197,16 @@ class sppasAnnotationWindow(sppasBaseDataWindow):
                 self.set_pointctrl2(x + 1, y, 1, h)
             return
 
-        pt1 = self._data.get_lowest_localization()
-        pt2 = self._data.get_highest_localization()
-        wpt1 = max(1, self._calc_width(pt1.duration().get_value() + pt1.duration().get_margin()))
-        wpt2 = max(1, self._calc_width(pt2.duration().get_value() + pt2.duration().get_margin()))
-
-        # Draw location
-        self.set_pointctrl1(x, y, wpt1, h)
-        self.set_pointctrl2(x + w - wpt2, y, wpt2, h)
+        wpt1 = wpt2 = 0
+        # Draw locations
+        if self.__should_draw_points[0] is True:
+            pt1 = self._data.get_lowest_localization()
+            wpt1 = max(1, self._calc_width(pt1.duration().get_value() + pt1.duration().get_margin()))
+            self.set_pointctrl1(x, y, wpt1, h)
+        if self.__should_draw_points[1] is True:
+            pt2 = self._data.get_highest_localization()
+            wpt2 = max(1, self._calc_width(pt2.duration().get_value() + pt2.duration().get_margin()))
+            self.set_pointctrl2(x + w - wpt2, y, wpt2, h)
 
         # adjust remaining width: remove the points widths and a margin
         x = x + wpt1 + 2

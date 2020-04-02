@@ -68,10 +68,10 @@ class TestPanel(wx.Choicebook):
         # Make the bunch of test panels for the choice book
 
         # page analyze
-        self.AddPage(anztimeviews.TestPanel(self), "Analyze Timeline view")
-        self.AddPage(anzlistviews.TestPanel(self), "Analyze Summary view")
-        self.AddPage(anztextviews.TestPanel(self), "Analyze Text view")
-        self.AddPage(anzdefaultviews.TestPanel(self), "Analyze Default view")
+        # self.AddPage(anztimeviews.TestPanel(self), "Analyze Timeline view")
+        # self.AddPage(anzlistviews.TestPanel(self), "Analyze Summary view")
+        # self.AddPage(anztextviews.TestPanel(self), "Analyze Text view")
+        # self.AddPage(anzdefaultviews.TestPanel(self), "Analyze Default view")
         self.AddPage(timeview.TestPanel(self), "Time view")
         self.AddPage(listview.TestPanel(self), "Summary view")
         self.AddPage(textview.TestPanel(self), "Text view")

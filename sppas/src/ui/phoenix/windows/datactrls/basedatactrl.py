@@ -126,6 +126,7 @@ class sppasBaseDataWindow(sppasBaseWindow):
         :param name:      Window name.
 
         """
+
         super(sppasBaseDataWindow, self).__init__(
             parent, id, pos, size, style, name)
         self._selected = False
