@@ -323,6 +323,10 @@ class sppasMessageText(sppasTextCtrl):
         # in order to apply the appropriate colors
         self.SetValue(message)
 
+    def AcceptsFocus(self):
+        """Can this window be given focus by mouse click?"""
+        return False
+
 # ---------------------------------------------------------------------------
 
 

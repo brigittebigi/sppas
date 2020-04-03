@@ -45,7 +45,7 @@ from ..windows import sppasToolbar
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasStaticText
-from ..windows import BitmapTextButton, CheckButton
+from ..windows import BitmapTextButton, CheckButton, RadioButton
 
 from .annotevent import PageChangeEvent
 from .annotselect import LANG_NONE
@@ -78,6 +78,8 @@ class sppasActionAnnotatePanel(sppasPanel):
     :contact:      develop@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    TODO: Use a sppasSplitterWindow instead of a sppasPanel
 
     """
 
@@ -535,10 +537,9 @@ class ReportsPanel(sppasScrolledPanel):
                 return False
 
         # Create a new button and insert at the top of the list
-        btn = CheckButton(self, label=name, name="checkbox_"+name)
-        btn.SetSpacing(sppasPanel.fix_size(12))
-        btn.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
-        btn.SetSize(wx.Size(-1, sppasPanel.fix_size(32)))
+        btn = RadioButton(self, label=name, name="checkbox_"+name)
+        btn.SetSpacing(self.get_font_height())
+        btn.SetMinSize(wx.Size(-1, self.get_font_height()*2))
         self.__set_normal_btn_style(btn)
         btn.SetValue(False)
         btn.Enable(False)   # ================================

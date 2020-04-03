@@ -278,6 +278,7 @@ class sppasRadioBoxPanel(sppasPanel):
                     index = (c*rows)+r
                     if index < len(choices):
                         btn = RadioButton(self, label=choices[index], name="radiobutton_%d_%d" % (c, r))
+                        btn.SetMinSize(wx.Size(-1, self.get_font_height()*2))
                         grid.Add(btn, pos=(r, c), flag=wx.EXPAND)
                         self.__buttons.append(btn)
 
@@ -287,6 +288,7 @@ class sppasRadioBoxPanel(sppasPanel):
                     index = (r*cols)+c
                     if index < len(choices):
                         btn = RadioButton(self, label=choices[index], name="radiobutton_%d_%d" % (r, c))
+                        btn.SetMinSize(wx.Size(-1, self.get_font_height()*2))
                         grid.Add(btn, pos=(r, c), flag=wx.EXPAND)
                         self.__buttons.append(btn)
 

@@ -35,7 +35,9 @@
 """
 
 import wx
+import wx.lib.mixins.listctrl as listmix
 import logging
+import operator
 
 from ..tools import sppasSwissKnife
 from .image import ColorizeImage
@@ -662,6 +664,63 @@ class CheckListCtrl(sppasListCtrl):
         sppasListCtrl._add_to_selected(self, idx)
         icon_name = self.STATES_ICON_NAMES["True"]
         sppasListCtrl.SetItem(self, idx, 0, "", imageId=self._ils.index(icon_name))
+
+# ---------------------------------------------------------------------------
+
+
+class SortListCtrl(sppasListCtrl):
+    """ListCtrl with sortable columns.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
+                 size=wx.DefaultSize, style=wx.NO_BORDER | wx.LC_REPORT | wx.LC_SORT_ASCENDING,
+                 validator=wx.DefaultValidator, name="SortListCtrl"):
+        """Initialize a new ListCtrl instance.
+
+        :param parent: Parent window. Must not be None.
+        :param id:     ListCtrl identifier. A value of -1 indicates a default value.
+        :param pos:    ListCtrl position. If the position (-1, -1) is specified
+                       then a default position is chosen.
+        :param size:   ListCtrl size. If the default size (-1, -1) is specified
+                       then a default size is chosen.
+        :param style:  often LC_REPORT
+        :param validator: Window validator.
+        :param name:      Window name.
+
+        """
+        if not (style & wx.LC_SORT_ASCENDING or style & wx.LC_SORT_DESCENDING):
+            style |= wx.LC_SORT_ASCENDING
+        if style & wx.LC_NO_HEADER:
+            style &= ~wx.LC_NO_HEADER
+
+        super(SortListCtrl, self).__init__(parent, id, pos, size, style, validator, name)
+        self.Bind(wx.EVT_LIST_COL_CLICK, self.__col_clicked)
+
+    # ---------------------------------------------------------------------
+
+    def __col_clicked(self, event):
+        """Sort the data by the clicked column."""
+        col = event.GetColumn()
+        wx.LogMessage("Sort table alphabetically by column {}".format(col))
+        data = list()
+        for i in range(self.GetItemCount()):
+            data_col = list()
+            for c in range(self.GetColumnCount()):
+                data_col.append(self.GetItemText(i, c))
+            data.append(data_col)
+
+        data.sort(key=lambda tup: tup[col])
+
+        self.DeleteAllItems()
+        for data_item in data:
+            self.Append(data_item)
 
 # ---------------------------------------------------------------------------
 # Test panel (should be extended to test more functions)

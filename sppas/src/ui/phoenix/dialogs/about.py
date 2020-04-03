@@ -45,6 +45,7 @@ from sppas.src.utils import u
 from ..tools import sppasSwissKnife
 from ..windows import sppasScrolledPanel
 from ..windows import sppasDialog
+from ..windows import sppasStaticText
 from ..windows import sppasMessageText
 
 # ----------------------------------------------------------------------------
@@ -75,6 +76,7 @@ class sppasBaseAbout(sppasScrolledPanel):
         self.author = ""
         self.copyright = ""
         self.brief = ""
+        self.description = ""
         self.url = ""
         self.license = ""
         self.license_text = ""
@@ -96,7 +98,7 @@ class sppasBaseAbout(sppasScrolledPanel):
 
         # Program name
         if len(self.program) > 0:
-            text = wx.StaticText(self, -1, self.program + " " + sg.__version__)
+            text = sppasStaticText(self, -1, self.program + " " + sg.__version__)
             font = text.GetFont()
             font_size = font.GetPointSize()
             font.SetPointSize(font_size + 4)
@@ -104,14 +106,9 @@ class sppasBaseAbout(sppasScrolledPanel):
             text.SetFont(font)
             sizer.Add(text, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
 
-        # Description
-        if len(self.brief) > 0:
-            text = wx.StaticText(self, -1, self.brief)
-            sizer.Add(text, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
-
         # Copyright
         if len(self.copyright) > 0:
-            text = wx.StaticText(self, -1, self.copyright)
+            text = sppasStaticText(self, -1, self.copyright)
             font = text.GetFont()
             font.SetWeight(wx.FONTWEIGHT_BOLD)
             text.SetFont(font)
@@ -124,14 +121,20 @@ class sppasBaseAbout(sppasScrolledPanel):
             text.SetMinSize(wx.Size(200, sppasScrolledPanel.fix_size(20)))
             sizer.Add(text, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
 
+        # Description
+        if len(self.description) > 0:
+            text = sppasMessageText(self, self.description)
+            text.SetMinSize(wx.Size(500, sppasScrolledPanel.fix_size(50)))
+            sizer.Add(text, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
+
         # License
         if len(self.license) > 0:
-            text = wx.StaticText(self, -1, self.license)
+            text = sppasStaticText(self, -1, self.license)
             sizer.Add(text, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
 
         # License text content
         if len(self.license_text) > 0:
-            text = wx.StaticText(self, -1, self.license_text)
+            text = sppasStaticText(self, -1, self.license_text)
             sizer.Add(text, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
 
         self.SetSizerAndFit(sizer)
@@ -191,6 +194,7 @@ class AboutSPPASPanel(sppasBaseAbout):
         self.author = sg.__author__
         self.copyright = sg.__copyright__
         self.brief = sg.__summary__
+        self.description = sg.__description__
         self.url = sg.__url__
         self.logo = "sppas"
         self.license_text = """

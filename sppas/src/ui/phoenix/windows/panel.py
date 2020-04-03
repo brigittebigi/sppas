@@ -334,6 +334,12 @@ class sppasScrolledPanel(sc.ScrolledPanel):
             obj_size = int(value)
         return obj_size
 
+    # -----------------------------------------------------------------------
+
+    def get_font_height(self):
+        font = self.GetFont()
+        return int(float(font.GetPixelSize()[1]))
+
 # ---------------------------------------------------------------------------
 
 

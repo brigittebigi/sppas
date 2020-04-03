@@ -152,8 +152,12 @@ class sppasConvertPanel(sppasScrolledPanel):
 
         # Options to convert files
         opt_force = CheckButton(self, label=MSG_OPT_OVERRIDE, name="override")
+        opt_force.SetMinSize(wx.Size(-1, self.get_font_height()*2))
+        opt_force.SetFocusWidth(0)
         opt_force.SetValue(False)
         opt_heuristic = CheckButton(self, label=MSG_OPT_HEURISTIC, name="heuristic")
+        opt_heuristic.SetMinSize(wx.Size(-1, self.get_font_height()*2))
+        opt_heuristic.SetFocusWidth(0)
         opt_heuristic.SetValue(False)
 
         # Organize all objects into a sizer

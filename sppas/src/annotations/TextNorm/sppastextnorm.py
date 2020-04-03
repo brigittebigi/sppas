@@ -268,8 +268,8 @@ class sppasTextNorm(sppasBaseAnnotation):
         :param tier:
 
         """
-        occ = sppasTier('Occ-%s' % tier.get_name())
-        dur = sppasTier('Dur-%s' % tier.get_name())
+        occ = sppasTier('Occ%s' % tier.get_name())
+        dur = sppasTier('Dur%s' % tier.get_name())
         for ann in tier:
             labels = ann.get_labels()
             nb_occ = len(labels)

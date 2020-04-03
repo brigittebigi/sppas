@@ -86,6 +86,8 @@ from .splitter import sppasMultiSplitterPanel
 from .frame import sppasTopFrame
 from .frame import sppasFrame
 
+from .listctrl import CheckListCtrl
+from .listctrl import SortListCtrl
 from .listctrl import LineListCtrl
 from .listctrl import sppasListCtrl
 
@@ -137,6 +139,8 @@ __all__ = (
     "sppasToolbar",
     "sppasListCtrl",
     "LineListCtrl",
+    "CheckListCtrl",
+    "SortListCtrl",
     "sppasMetaData",
     "MetaDataEdit"
 )

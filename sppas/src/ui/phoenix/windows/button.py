@@ -935,7 +935,6 @@ class BaseCheckButton(BaseButton):
 
         """
         super(BaseCheckButton, self).__init__(parent, id, pos, size, name)
-
         self._pressed = False
 
     # -----------------------------------------------------------------------

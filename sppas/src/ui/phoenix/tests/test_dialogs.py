@@ -51,7 +51,8 @@ from sppas.src.ui.phoenix.dialogs.about import About
 from sppas.src.ui.phoenix.dialogs.about import AboutPlugin
 from sppas.src.ui.phoenix.dialogs.settings import Settings
 from sppas.src.ui.phoenix.dialogs.tiersview import TiersView
-from sppas.src.ui.phoenix.dialogs.statsview import StatsView
+import sppas.src.ui.phoenix.dialogs.statsview as statsview
+import sppas.src.ui.phoenix.dialogs.tiersfilters as tiersfilters
 from sppas.src.ui.phoenix.windows.dialogs.metaedit import MetaDataEdit
 
 # ----------------------------------------------------------------------------
@@ -82,13 +83,14 @@ class TestPanel(sppasPanel):
         btn6 = wx.Button(self,
                          pos=(200, 100), size=(180, 70),
                          label="Tier View", name="tierview_btn")
-        btn6 = wx.Button(self,
-                         pos=(390, 100), size=(180, 70),
-                         label="Stats View", name="statview_btn")
+
+        statsview.TestPanel(self, pos=(390, 100), size=(180, 70))
 
         btn7 = wx.Button(self,
                          pos=(10, 200), size=(180, 70),
                          label="Metadata Edit", name="metadata_btn")
+
+        tiersfilters.TestPanel(self, pos=(10, 300), size=(500, 70))
 
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
@@ -123,9 +125,8 @@ class TestPanel(sppasPanel):
             # TODO. Add a list of tiers to test TiersView
             TiersView(self, [])
 
-        elif event_name == "statview_btn":
-            # TODO. Add a list of tiers to test StatsView
-            StatsView(self, [])
+        # elif event_name == "statview_btn":
+        #    StatsView(self, [])
 
         elif event_name == "metadata_btn":
             m1 = sppasMetaData()

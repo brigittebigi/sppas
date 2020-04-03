@@ -126,6 +126,8 @@ class sppasOptionsPanel(sppasScrolledPanel):
 
         """
         cb = CheckButton(self, label=label, size=(300, -1))
+        cb.SetMinSize(wx.Size(-1, self.get_font_height()*2))
+        cb.SetFocusWidth(0)
         cb.SetValue(value)
         self.GetSizer().Add(cb, 0, wx.LEFT | wx.BOTTOM, 4)
         self._items.append(cb)
