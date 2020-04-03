@@ -37,6 +37,7 @@
 import os
 import logging
 import wx
+from math import ceil
 
 from sppas import paths
 from sppas.src.anndata import sppasRW
@@ -44,7 +45,6 @@ from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasAnnotation
 
 from ..panel import sppasPanel
-from .basedatactrl import sppasWindowSelectedEvent
 from .basedatactrl import sppasBaseDataWindow
 from .annctrl import sppasAnnotationWindow
 
@@ -125,11 +125,14 @@ class sppasTierWindow(sppasBaseDataWindow):
         r = start_point.get_radius()
         if r is not None:
             start -= r
+        start = float(ceil(start*1000.)) / 1000.
+
         end_point = ann.get_highest_localization()
         end = end_point.get_midpoint()
         r = end_point.get_radius()
         if r is not None:
             end += r
+        end = float(ceil(end*1000.)) / 1000.
 
         return start, end
 

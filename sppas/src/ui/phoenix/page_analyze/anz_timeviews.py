@@ -266,8 +266,6 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         border = sppasPanel.fix_size(8)
         self.GetScrolledSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.TOP | wx.BOTTOM, border)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
-
-        self.GetScrolledPanel().ScrollChildIntoView(panel)
         self.FindWindow("vert_splitter").Layout()
         self.FindWindow("vert_splitter").UpdateSize()
 
@@ -334,6 +332,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
                                 name="scrolled_views")
         sizer = wx.BoxSizer(wx.VERTICAL)
         p1.SetupScrolling(scroll_x=False, scroll_y=True)
+        p1.AlwaysShowScrollbars(False, True)
         p1.SetSizer(sizer)
         p1.Bind(MediaEvents.EVT_MEDIA_ACTION, self._process_media_action)
 
@@ -427,9 +426,9 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
         # not implemented yet: child panels don't allow to select an ann
         elif action == "period_selected":
             period = event.value
-            start = int(period[0] * 1000.)
-            end = int(period[1] * 1000.)
-            self.set_offset_period(start, end)
+            # start = int(period[0] * 1000.)
+            # end = int(period[1] * 1000.)
+            # self.set_offset_period(start, end)
 
     # -----------------------------------------------------------------------
 
@@ -610,15 +609,21 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
     def set_offset_period(self, start, end):
         """Fix the time range to play the media (milliseconds).
 
-        The change of offset period will stop all the media.
+        The change of offset period will:
+
+         - stop all the media,
+         - return the real start/end, i.e. the ones the player can deal with.
+
 
         """
         # Set the period to the player. It will set to the media.
-        self._player_controls_panel.set_range(start, end)
+        s, e = self._player_controls_panel.set_range(start, end)
         for filename in self._files:
             panel = self._files[filename]
             if isinstance(panel, TrsTimeViewPanel):
-                panel.set_draw_period(start, end)
+                panel.set_draw_period(s, e)
+
+        return s, e
 
     # -----------------------------------------------------------------------
 

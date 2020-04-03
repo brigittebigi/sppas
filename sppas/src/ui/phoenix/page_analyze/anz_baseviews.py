@@ -217,6 +217,7 @@ class BaseViewFilesPanel(sppasPanel):
         wx.EndBusyCursor()
         progress.set_fraction(1)
         progress.close()
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
