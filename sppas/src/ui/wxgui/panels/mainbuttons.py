@@ -70,6 +70,8 @@ from sppas.src.ui.wxgui.sp_consts import ID_FILES
 
 from sppas.src.ui.wxgui.views.feedback import ShowFeedbackDialog
 
+AVERTISSEMENT="Running SPPAS with Python 2.7 will not be maintained past 2020, May when SPPAS 3.0 will be released."
+
 # ----------------------------------------------------------------------------
 
 
@@ -419,7 +421,7 @@ class MainTooltips(wx.Panel):
 
     def _create_content(self):
         txt = wx.TextCtrl(self, wx.ID_ANY,
-                          value=self.tips.get_message(),
+                          value=AVERTISSEMENT,
                           style=wx.TE_READONLY | wx.TE_MULTILINE | wx.NO_BORDER | wx.TE_NO_VSCROLL | wx.TE_WORDWRAP)
         font = self._prefs.GetValue('M_FONT')
         txt.SetFont(font)

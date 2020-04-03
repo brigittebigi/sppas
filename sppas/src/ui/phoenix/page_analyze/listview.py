@@ -765,18 +765,16 @@ class TrsListViewPanel(sppasBaseViewPanel):
             if self._object.ctrl_vocab_support() is False:
                 vocab_ctrl.Hide()
 
-        # y_ctrl = self.__create_hyctrl()
+        # hy_ctrl = self.__create_hyctrl()
 
         s = wx.BoxSizer(wx.VERTICAL)
-        # s.Add(meta_ctrl, 0, wx.EXPAND)
         s.Add(tier_ctrl, 0, wx.EXPAND)
         s.Add(media_ctrl, 0, wx.EXPAND)
         s.Add(vocab_ctrl, 0, wx.EXPAND)
         # s.Add(hy_ctrl, 0, wx.EXPAND)
-        p = sppasPanel(child_panel)
-        p.SetMinSize(wx.Size(-1, 24))  # for the auto horiz scrollbar
-        s.Add(p, 0, wx.EXPAND)
-        child_panel.SetSizerAndFit(s)
+
+        child_panel.SetMinSize(wx.Size(-1, 24))
+        child_panel.SetSizer(s)
 
         # The user clicked an item
         child_panel.Bind(EVT_ITEM_CLICKED, self._process_item_clicked)

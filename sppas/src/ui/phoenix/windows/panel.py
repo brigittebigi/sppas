@@ -360,7 +360,6 @@ class sppasCollapsiblePanel(sppasPanel):
         The parent can Bind the wx.EVT_COLLAPSIBLEPANE_CHANGED.
 
         """
-        
         super(sppasCollapsiblePanel, self).__init__(
             parent, id, pos, size, style, name)
 

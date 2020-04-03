@@ -69,7 +69,7 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
             pos=wx.DefaultPosition,
             size=wx.DefaultSize,
             label=filename,
-            style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
+            style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.BORDER_NONE,
             name=name)
 
         # Create the GUI

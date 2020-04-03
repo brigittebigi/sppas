@@ -35,9 +35,7 @@
 """
 
 import wx
-import wx.lib.mixins.listctrl as listmix
 import logging
-import operator
 
 from ..tools import sppasSwissKnife
 from .image import ColorizeImage

@@ -366,7 +366,7 @@ class sppasPluginDescription(sppasPanel):
 
     def __create_enable_btn(self):
 
-        w = sppasPanel.fix_size(64)
+        w = sppasPanel.fix_size(128)
         h = sppasPanel.fix_size(48)
 
         btn_enable = BitmapTextButton(

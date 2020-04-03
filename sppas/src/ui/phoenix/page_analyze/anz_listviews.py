@@ -254,8 +254,12 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         """
         panel = sppasPanel(self, name="toolbar_views")
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self._create_toolbar_tiers(panel), 0, wx.ALIGN_LEFT | wx.EXPAND, 0)
-        sizer.Add(self._create_toolbar_anns(panel), 0, wx.ALIGN_LEFT | wx.EXPAND, 0)
+        tb1 = self._create_toolbar_tiers(panel)
+        tb1.SetMinSize(wx.Size(-1, panel.get_font_height()*4))
+        tb2 = self._create_toolbar_anns(panel)
+        tb2.SetMinSize(wx.Size(-1, panel.get_font_height()*4))
+        sizer.Add(tb1, 0, wx.ALIGN_LEFT | wx.EXPAND, 0)
+        sizer.Add(tb2, 0, wx.ALIGN_LEFT | wx.EXPAND, 0)
         panel.SetSizerAndFit(sizer)
         return panel
 
@@ -264,7 +268,6 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     def _create_toolbar_tiers(self, parent):
         """Create a toolbar for actions on tiers. """
         toolbar = sppasToolbar(parent, name="subtoolbar1")
-        toolbar.SetMinSize(wx.Size(toolbar.get_height()*5, -1))
 
         # focus color of buttons performing an action on tiers
         toolbar.set_focus_color(TIER_BG_COLOUR)
@@ -323,7 +326,6 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     def _create_toolbar_anns(self, parent):
         """Create a toolbar for actions on annotations of tiers. """
         toolbar = sppasToolbar(parent, name="subtoolbar2")
-        toolbar.SetMinSize(wx.Size(toolbar.get_height() * 5, -1))
 
         # focus color of buttons performing an action on tiers
         toolbar.set_focus_color(wx.Colour(255, 230, 180, 128))

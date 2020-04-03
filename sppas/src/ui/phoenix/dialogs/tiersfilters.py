@@ -570,6 +570,8 @@ class sppasTagStringPanel(sppasPanel):
         self.radiobox.SetSelection(1)
 
         self.checkbox = CheckButton(self, label=MSG_CASE)
+        self.checkbox.SetMinSize(wx.Size(-1, self.get_font_height()*2))
+        self.checkbox.SetFocusWidth(0)
         self.checkbox.SetValue(True)
 
         # Layout
@@ -1295,6 +1297,8 @@ class sppasTiersRelationFilterDialog(sppasDialog):
 
         # The annot_format option (replace label by the name of the relation)
         an_box = CheckButton(panel, label=MSG_ANNOT_FORMAT)
+        an_box.SetMinSize(wx.Size(-1, self.get_font_height()*2))
+        an_box.SetFocusWidth(0)
         an_box.SetValue(False)
         an_box.SetName("annotformat_checkbutton")
 

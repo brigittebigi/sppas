@@ -306,7 +306,7 @@ class sppasEnableAnnotation(sppasPanel):
     def __create_enable_panel(self):
         panel = sppasPanel(self, name="enable_panel")
         sizer = wx.BoxSizer(wx.VERTICAL)
-        w = sppasPanel.fix_size(156)
+        w = sppasPanel.fix_size(196)
         h = sppasPanel.fix_size(48)
 
         btn_enable = BitmapTextButton(
