@@ -262,9 +262,9 @@ class sppasToolbar(sppasPanel):
         :param name: (str)
 
         """
-        st = sppasStaticText(self, label="", name=name)
+        st = sppasStaticText(self, label=text, name=name)
         st.SetFont(self.__title_font())
-        st.SetLabel(text)
+        # st.SetLabel(text)
         self.__ft.append(st)
         if color is not None:
             st.SetForegroundColour(color)

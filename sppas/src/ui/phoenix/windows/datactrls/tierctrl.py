@@ -37,7 +37,7 @@
 import os
 import logging
 import wx
-from math import ceil
+from math import ceil, floor
 
 from sppas import paths
 from sppas.src.anndata import sppasRW
@@ -125,14 +125,14 @@ class sppasTierWindow(sppasBaseDataWindow):
         r = start_point.get_radius()
         if r is not None:
             start -= r
-        start = float(ceil(start*1000.)) / 1000.
+        start = float(floor(start*100.)) / 100.
 
         end_point = ann.get_highest_localization()
         end = end_point.get_midpoint()
         r = end_point.get_radius()
         if r is not None:
             end += r
-        end = float(ceil(end*1000.)) / 1000.
+        end = float(ceil(end*100.)) / 100.
 
         return start, end
 
@@ -293,9 +293,9 @@ class TestPanel(sppasPanel):
         trs = parser.read()
 
         self.p1 = sppasTierWindow(self, pos=(10, 10), size=(300, 24), data=trs[0])
-        self.p1.SetDrawPeriod(3.0, 3.5)
+        self.p1.SetDrawPeriod(2.49, 3.49)
         self.p2 = sppasTierWindow(self, pos=(10, 100), size=(300, 48), data=trs[1])
-        self.p2.SetDrawPeriod(3.0, 3.5)
+        self.p2.SetDrawPeriod(2.49, 3.49)
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(self.p1, 0, wx.EXPAND)

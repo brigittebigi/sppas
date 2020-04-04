@@ -46,7 +46,7 @@ class sppasAppConfig(sppasBaseSettings):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     Config is represented in the dictionary of the class.
     Inherited of sppasBaseSettings which allows to load and save settings.
@@ -62,7 +62,7 @@ class sppasAppConfig(sppasBaseSettings):
 
         self.__dict__ = dict(
             name=name,
-            log_level=0,
+            log_level=15,
             quiet_log_level=30,
             log_file=None,
             splash_delay=3

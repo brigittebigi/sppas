@@ -61,6 +61,21 @@ from ..windows.dialogs import MetaDataEdit
 
 # ---------------------------------------------------------------------------
 
+METADATA = "Edit metadata of the annotation"
+RESTORE = "Restore the label of the annotation"
+DELETE = "Delete the annotation"
+MERGE_PREVIOUS = "Merge with the previous annotation"
+MERGE_NEXT = "Merge with the next annotation"
+SPLIT_ONE = "Split annotation into 2 and put content to the first"
+SPLIT_TWO = "Split annotation into 2 and put content to the second"
+ADD_BEFORE = "Add an annotation in the hole before"
+ADD_AFTER = "Add an annotation in the hole after"
+LABEL_TEXT = "Edit label in text mode"
+LABEL_XML = "Edit label in xml mode"
+LABEL_JSON = "Edit label in json mode"
+
+# ---------------------------------------------------------------------------
+
 
 class sppasAnnEditPanel(sppasPanel):
     """Edit an annotation of a tier.
@@ -284,22 +299,34 @@ class sppasAnnEditPanel(sppasPanel):
         toolbar.AddButton("way_up_down")
         toolbar.AddSpacer(1)
 
-        toolbar.AddButton("cell_delete")
-        toolbar.AddButton("cell_merge_previous")
-        toolbar.AddButton("cell_merge_next")
-        toolbar.AddButton("cell_split")
-        toolbar.AddButton("cell_split_next")
-        toolbar.AddButton("cell_add_before")
-        toolbar.AddButton("cell_add_after")
+        bd = toolbar.AddButton("cell_delete")
+        bd.SetToolTip(DELETE)
+        bmp = toolbar.AddButton("cell_merge_previous")
+        bmp.SetToolTip(MERGE_PREVIOUS)
+        bmn = toolbar.AddButton("cell_merge_next")
+        bmn.SetToolTip(MERGE_NEXT)
+        bsp = toolbar.AddButton("cell_split")
+        bsp.SetToolTip(SPLIT_ONE)
+        bsn = toolbar.AddButton("cell_split_next")
+        bsn.SetToolTip(SPLIT_TWO)
+        bab = toolbar.AddButton("cell_add_before")
+        bab.SetToolTip(ADD_BEFORE)
+        baa = toolbar.AddButton("cell_add_after")
+        baa.SetToolTip(ADD_AFTER)
         toolbar.AddSpacer(1)
 
-        toolbar.AddToggleButton("code_review", value=True, group_name="view_mode")
-        toolbar.AddToggleButton("code_xml", group_name="view_mode")
-        toolbar.AddToggleButton("code_json", group_name="view_mode")
-        toolbar.AddButton("restore")
+        bcs = toolbar.AddToggleButton("code_review", value=True, group_name="view_mode")
+        bcs.SetToolTip(LABEL_TEXT)
+        bcx = toolbar.AddToggleButton("code_xml", group_name="view_mode")
+        bcx.SetToolTip(LABEL_XML)
+        bcj = toolbar.AddToggleButton("code_json", group_name="view_mode")
+        bcj.SetToolTip(LABEL_JSON)
+        br = toolbar.AddButton("restore")
+        br.SetToolTip(RESTORE)
         toolbar.AddSpacer(1)
 
         meta = toolbar.AddButton("tags")
+        meta.SetToolTip(METADATA)
         toolbar.AddSpacer(1)
 
         return toolbar
