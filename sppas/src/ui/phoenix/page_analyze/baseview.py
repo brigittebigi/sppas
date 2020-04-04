@@ -69,7 +69,7 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
             pos=wx.DefaultPosition,
             size=wx.DefaultSize,
             label=filename,
-            style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
+            style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.BORDER_NONE,
             name=name)
 
         # Create the GUI
@@ -78,9 +78,13 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
         self._setup_events()
 
         # Look&feel
-        self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        try:
+            settings = wx.GetApp().settings
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
         self.Layout()
 
@@ -105,6 +109,12 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
     def save(self):
         """Save the displayed text into a file."""
         return False
+
+    # ------------------------------------------------------------------------
+
+    def get_filename(self):
+        """Return the filename this panel is displaying."""
+        return self._filename
 
     # ------------------------------------------------------------------------
 

@@ -47,7 +47,7 @@ from sppas.src.files import FileData
 from sppas.src.files import States
 from sppas.src.files import sppasFileDataFilters
 
-from ..dialogs import Information, Error
+from ..windows import Information, Error
 from ..windows import sppasStaticText, sppasTextCtrl
 from ..windows import sppasPanel
 from ..windows import sppasDialog
@@ -145,13 +145,12 @@ class AssociatePanel(sppasPanel):
 
     def __create_button(self, icon, label=None):
         btn = BitmapTextButton(self, name=icon, label=label)
-        btn.FocusStyle = wx.PENSTYLE_SOLID
-        btn.FocusWidth = 3
-        btn.FocusColour = wx.Colour(128, 128, 196, 128)  # violet
-        btn.LabelPosition = wx.BOTTOM
-        btn.Spacing = 4
-        btn.BorderWidth = 0
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetFocusStyle(wx.PENSTYLE_SOLID)
+        btn.SetFocusWidth(3)
+        btn.SetFocusColour(wx.Colour(128, 128, 196, 128))   # violet
+        btn.SetLabelPosition(wx.BOTTOM)
+        btn.SetSpacing(sppasPanel.fix_size(4))
+        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(sppasPanel.fix_size(24),
                                sppasPanel.fix_size(24)))
         return btn
@@ -470,10 +469,8 @@ class sppasFilesFilterDialog(sppasDialog):
 
     def __create_action_button(self, parent, text, icon):
         btn = BitmapTextButton(parent, label=text, name=icon)
-        btn.LabelPosition = wx.RIGHT
-        btn.Spacing = sppasDialog.fix_size(12)
-        btn.BorderWidth = 0
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetLabelPosition(wx.RIGHT)
+        btn.SetSpacing(sppasDialog.fix_size(12))
         btn.SetMinSize(wx.Size(sppasDialog.fix_size(32),
                                sppasDialog.fix_size(32)))
 
@@ -641,6 +638,8 @@ class sppasStringFilterDialog(sppasDialog):
             style=wx.RA_SPECIFY_COLS)
         self.radiobox.SetSelection(1)
         self.checkbox = CheckButton(panel, label="Case sensitive")
+        self.checkbox.SetMinSize(wx.Size(-1, panel.get_font_height()*2))
+        self.checkbox.SetFocusWidth(0)
         self.checkbox.SetValue(False)
         if show_case_sensitive is False:
             self.checkbox.Hide()
@@ -762,6 +761,8 @@ class sppasAttributeFilterDialog(sppasDialog):
         self.radiobox.SetSelection(1)
         self.radiobox.Bind(wx.EVT_RADIOBOX, self._on_radiobox_checked)
         self.checkbox = CheckButton(panel, label="Case sensitive")
+        self.checkbox.SetMinSize(wx.Size(-1, panel.get_font_height()*2))
+        self.checkbox.SetFocusWidth(0)
         self.checkbox.SetValue(False)
 
         self.text_value = sppasTextCtrl(panel, value="")

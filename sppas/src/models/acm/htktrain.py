@@ -1454,8 +1454,8 @@ class sppasHTKModelTrainer(object):
             else:
                 logging.info("Aligner is set to Julius.")
             # aligner.set_clean(False)
-            aligner.set_activity_tier(False)
-            aligner.set_activity_duration_tier(False)
+            # aligner.set_activity_tier(False)
+            # aligner.set_activity_duration_tier(False)
             aligner.set_basic(False)
 
             alignerdir = os.path.join(self.corpus.datatrainer.workdir,

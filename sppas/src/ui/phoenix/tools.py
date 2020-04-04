@@ -65,7 +65,8 @@ class sppasSwissKnife:
         """
         try:
             img = sppasSwissKnife.get_image(name, default)
-            if height is not None:
+            w, h = img.GetSize()
+            if w >= 0 and h >= 0 and height is not None:
                 img.Rescale(height, height, wx.IMAGE_QUALITY_HIGH)
         except:
             img = sppasSwissKnife.get_image(default, default)
@@ -155,10 +156,18 @@ class sppasSwissKnife:
 
     @staticmethod
     def rescale_image(img, height):
-        """Rescale proportionally an image."""
+        """Rescale proportionally an image.
+
+        :return: (int) width or -1 if failed.
+
+        """
+        w, h = img.GetSize()
+        if w <= 0 or h <= 0:
+            return -1
         proportion = float(height) / float(img.GetHeight())
         w = int(float(img.GetWidth()) * proportion)
         img.Rescale(w, height, wx.IMAGE_QUALITY_HIGH)
+        return w
 
     # ------------------------------------------------------------------------
 

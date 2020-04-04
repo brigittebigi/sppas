@@ -53,7 +53,12 @@ class sppasStaticText(wx.StaticText):
 
     """
 
-    def __init__(self, *args, **kw):
+    def __init__(self, parent, id=wx.ID_ANY,
+                 label="",
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 style=wx.BORDER_NONE,
+                 name=wx.StaticTextNameStr):
         """Create a static text for a content panel.
 
         Possible constructors:
@@ -62,14 +67,78 @@ class sppasStaticText(wx.StaticText):
                 pos=DefaultPosition, size=DefaultSize, style=0,
                 name=StaticTextNameStr)
 
-        """
-        super(sppasStaticText, self).__init__(*args, **kw)
+        A StaticText that only updates the label if it has changed, to
+        help reduce potential flicker since its control would be
+        updated very frequently otherwise.
 
-        # Fix Look&Feel
-        settings = wx.GetApp().settings
-        self.SetFont(settings.text_font)
-        self.SetBackgroundColour(settings.bg_color)
-        self.SetForegroundColour(settings.fg_color)
+        """
+        # always turn off auto resize
+        style |= wx.ST_NO_AUTORESIZE
+
+        # and turn off any border styles
+        style &= ~wx.BORDER_MASK
+        style |= wx.BORDER_NONE
+
+        super(sppasStaticText, self).__init__(
+            parent, id, label, pos, size, style, name)
+
+        try:
+            settings = wx.GetApp().settings
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
+
+        # Set the label after we defined the font
+        self.SetLabel(label)
+
+    # -----------------------------------------------------------------------
+
+    def SetLabel(self, label):
+        """Update the label if it has changed.
+
+        Help reduce potential flicker since these controls would be updated
+        very frequently otherwise.
+
+        :param label: (str)
+
+        """
+        if label != self.GetLabel():
+            wx.StaticText.SetLabel(self, label)
+            self.__set_min_size()
+
+    # -----------------------------------------------------------------------
+
+    def SetFont(self, font):
+        """Override."""
+        wx.Window.SetFont(self, font)
+        self.__set_min_size()
+
+    # -----------------------------------------------------------------------
+
+    def GetWindowHeight(self):
+        """Return the height assigned to the text."""
+        return int(float(self.get_font_height()) * 1.6)
+
+    # -----------------------------------------------------------------------
+
+    def get_font_height(self):
+        font = self.GetFont()
+        return int(float(font.GetPixelSize()[1]))
+
+    # -----------------------------------------------------------------------
+
+    def __set_min_size(self):
+        """Estimate the min size in a proper way!"""
+        (w, h) = self.DoGetBestSize()
+        h = self.GetWindowHeight()
+        try:
+            c = wx.GetApp().settings.size_coeff
+        except AttributeError:
+            c = 1.
+
+        self.SetMinSize(wx.Size(int(float(w) * c), h))
 
 # ---------------------------------------------------------------------------
 
@@ -89,6 +158,17 @@ class sppasTextCtrl(wx.TextCtrl):
                  size=DefaultSize, style=0, validator=DefaultValidator,
                  name=TextCtrlNameStr)
 
+    Existing shortcuts in a textctrl (tested under Windows):
+        - Ctrl+a - select all
+        - Ctrl+c - copy
+        - Ctrl+h - del previous char or selection
+        - Ctrl+i - Insert tab
+        - Ctrl+j - Enter (which means to create a new label)
+        - Ctrl+m - like ctrl+j - Enter
+        - Ctrl+v - paste
+        - Ctrl+x - cut
+        - Ctrl+z - undo
+
     Font, foreground and background are taken from the application settings.
 
     """
@@ -107,8 +187,7 @@ class sppasTextCtrl(wx.TextCtrl):
             self.SetFont(settings.text_font)
             self.SetBackgroundColour(settings.bg_color)
         except:
-            wx.LogDebug("TextCtrl error. Settings not set.")
-            pass
+            self.InheritAttributes()
 
         # the message is not send to the base class when init but after
         # in order to apply the appropriate colors&font
@@ -271,6 +350,10 @@ class sppasMessageText(sppasTextCtrl):
         # the message is not send to the base class when init but after
         # in order to apply the appropriate colors
         self.SetValue(message)
+
+    def AcceptsFocus(self):
+        """Can this window be given focus by mouse click?"""
+        return False
 
 # ---------------------------------------------------------------------------
 

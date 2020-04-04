@@ -41,6 +41,7 @@
 import wx
 import wx.lib.scrolledpanel as sc
 
+from ..tools import sppasSwissKnife
 from .button import BitmapTextButton
 
 # ---------------------------------------------------------------------------
@@ -63,17 +64,29 @@ class sppasPanel(wx.Panel):
 
     """
 
-    def __init_(self, *args, **kw):
-        super(sppasPanel, self).__init__(*args, **kw)
+    def __init_(self, parent, id=-1,
+                 pos=wx.DefaultPosition, size=wx.DefaultSize,
+                 style=0, name="sppas_panel"):
+        # always turn on tab traversal
+        style |= wx.TAB_TRAVERSAL
+
+        # and turn off any border styles
+        style &= ~wx.BORDER_MASK
+        style |= wx.BORDER_NONE
+
+        super(sppasPanel, self).__init__(parent, id, pos, size, style, name)
+        self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
+
         try:
             s = wx.GetApp().settings
             self.SetBackgroundColour(s.bg_color)
             self.SetForegroundColour(s.fg_color)
             self.SetFont(s.text_font)
         except AttributeError:
-            pass
+            self.InheritAttributes()
         self.SetAutoLayout(True)
-        self.SetMinSize(wx.Size(320, 200))
+        self.SetMinSize(wx.Size(self.fix_size(320),
+                                self.fix_size(200)))
 
     # -----------------------------------------------------------------------
 
@@ -121,6 +134,134 @@ class sppasPanel(wx.Panel):
     def get_font_height(self):
         font = self.GetFont()
         return int(float(font.GetPixelSize()[1]))
+
+# ---------------------------------------------------------------------------
+
+
+class sppasTransparentPanel(sppasPanel):
+    """Create a panel with a transparent background.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, id=wx.ID_ANY,
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 style=0,
+                 name="transparent_panel"):
+        # always turn on transparency
+        style |= wx.TRANSPARENT_WINDOW
+
+        super(sppasTransparentPanel, self).__init__(parent, id, pos, size, style, name)
+
+        # Bind the events related to our window
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        return
+
+    # -----------------------------------------------------------------------
+
+    def OnEraseBackground(self, evt):
+        """Trap the erase event to be transparent even under windows.
+
+        :param evt: wx.EVT_ERASE_BACKGROUND
+
+        """
+        pass
+
+# ---------------------------------------------------------------------------
+
+
+DefaultImageName = "trbg1"
+
+
+class sppasImgBgPanel(sppasPanel):
+    """Create a panel with an optional image as background.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, id=wx.ID_ANY,
+                 img_name=DefaultImageName,
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 style=0,
+                 name="imgbg_panel"):
+
+        self._imgname = DefaultImageName
+        if img_name == "":
+            self._imgname = ""
+        else:
+            self.SetImageName(img_name)
+
+        super(sppasImgBgPanel, self).__init__(parent, id, pos, size, style, name)
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(384),
+                                sppasPanel.fix_size(128)))
+
+        # Bind the events related to our window
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+
+    # -----------------------------------------------------------------------
+
+    def GetImageName(self):
+        """Return the name of the background image."""
+        return self._imgname
+
+    # -----------------------------------------------------------------------
+
+    def SetImageName(self, name=""):
+        """Set the name of the image, must be one of the SPPAS images.
+
+        :param name: (str) Name of the background image or empty string to
+        disable the background image.
+
+        """
+        if name != "":
+            filename = sppasSwissKnife.get_image_filename(name)
+            if filename.endswith("default.png"):
+                wx.LogError("Image {:s} not found.".format(name))
+                return False
+        self._imgname = name
+        return True
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        return
+
+    # -----------------------------------------------------------------------
+
+    def OnEraseBackground(self, evt):
+        """Trap the erase event to draw the image as background.
+
+        :param evt: wx.EVT_ERASE_BACKGROUND
+
+        """
+        if self._imgname != "":
+            # yanked from ColourDB.py
+            dc = evt.GetDC()
+
+            if not dc:
+                dc = wx.ClientDC(self)
+            dc.Clear()
+
+            w, h = self.GetClientSize()
+            img = sppasSwissKnife.get_image(self._imgname)
+            img.Rescale(w, h)
+            dc.DrawBitmap(wx.Bitmap(img), 0, 0)
 
 # ---------------------------------------------------------------------------
 
@@ -193,6 +334,12 @@ class sppasScrolledPanel(sc.ScrolledPanel):
             obj_size = int(value)
         return obj_size
 
+    # -----------------------------------------------------------------------
+
+    def get_font_height(self):
+        font = self.GetFont()
+        return int(float(font.GetPixelSize()[1]))
+
 # ---------------------------------------------------------------------------
 
 
@@ -213,25 +360,17 @@ class sppasCollapsiblePanel(sppasPanel):
         The parent can Bind the wx.EVT_COLLAPSIBLEPANE_CHANGED.
 
         """
-        
-        sppasPanel.__init__(self, parent, id, pos, size, style, name)
+        super(sppasCollapsiblePanel, self).__init__(
+            parent, id, pos, size, style, name)
 
         self.__collapsed = True
         self.__btn = None
-        self.__tools_panel = self.create_toolbar(label)
-        self.__child_panel = sppasPanel(self, style=wx.TAB_TRAVERSAL | wx.NO_BORDER, name="content")
-        self.__child_panel.Hide()
-        self.__child_panel.SetAutoLayout(True)
-        self.__child_panel.SetSizer(wx.BoxSizer(wx.VERTICAL))
-        self.__border = sppasCollapsiblePanel.fix_size(2)
-
-        try:
-            s = wx.GetApp().settings
-            self.SetBackgroundColour(s.bg_color)
-            self.SetForegroundColour(s.fg_color)
-            self.SetFont(s.text_font)
-        except AttributeError:
-            pass
+        self._tools_panel = self.create_toolbar(label)
+        self._child_panel = sppasPanel(self, style=wx.TAB_TRAVERSAL | wx.NO_BORDER, name="content")
+        self._child_panel.Hide()
+        self._child_panel.SetAutoLayout(True)
+        self._child_panel.SetSizer(wx.BoxSizer(wx.VERTICAL))
+        self._border = sppasCollapsiblePanel.fix_size(2)
 
         self.Bind(wx.EVT_BUTTON, self.OnButton, self.__btn)
         self.Bind(wx.EVT_SIZE, self.OnSize)
@@ -240,40 +379,27 @@ class sppasCollapsiblePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def SetBackgroundColour(self, colour):
-        """Override."""
-        wx.Panel.SetBackgroundColour(self, colour)
-        for c in self.GetChildren():
-            c.SetBackgroundColour(colour)
-
-    # -----------------------------------------------------------------------
-
-    def SetForegroundColour(self, colour):
-        """Override."""
-        wx.Panel.SetForegroundColour(self, colour)
-        for c in self.GetChildren():
-            c.SetForegroundColour(colour)
-
-    # -----------------------------------------------------------------------
-
-    def SetFont(self, font):
-        """Override."""
-        wx.Panel.SetFont(self, font)
-        for c in self.GetChildren():
-            c.SetFont(font)
-        self.Layout()
-
-    # -----------------------------------------------------------------------
-
     def GetPane(self):
         """Return a reference to the embedded pane window."""
-        return self.__child_panel
+        return self._child_panel
 
     # -----------------------------------------------------------------------
 
     def GetToolsPane(self):
         """Return a reference to the embedded collapse tool window."""
-        return self.__tools_panel
+        return self._tools_panel
+
+    # -----------------------------------------------------------------------
+
+    def IsChild(self, obj):
+        """Return true if obj is one of the children."""
+        for c in self.GetChildren():
+            if c is obj:
+                return True
+            for cc in c.GetChildren():
+                if cc is obj:
+                    return True
+        return False
 
     # -----------------------------------------------------------------------
 
@@ -285,10 +411,11 @@ class sppasCollapsiblePanel(sppasPanel):
         """
         if pane.GetParent() != self:
             raise ValueError("Bad parent for pane {:s}.".format(pane.GetName()))
-        self.__child_panel.Destroy()
-        self.__child_panel = pane
+        if self._child_panel:
+            self._child_panel.Destroy()
+        self._child_panel = pane
         if self.__collapsed is True:
-            self.__child_panel.Hide()
+            self._child_panel.Hide()
         self.Layout()
 
     # -----------------------------------------------------------------------
@@ -310,10 +437,11 @@ class sppasCollapsiblePanel(sppasPanel):
         else:
             self.__btn.SetImage("arrow_expanded")
 
-        if collapse is True:
-            self.__child_panel.Hide()
-        else:
-            self.__child_panel.Show()
+        if self._child_panel:
+            if collapse is True:
+                self._child_panel.Hide()
+            else:
+                self._child_panel.Show()
         self.__collapsed = collapse
         self.InvalidateBestSize()
 
@@ -343,7 +471,7 @@ class sppasCollapsiblePanel(sppasPanel):
 
     def FindButton(self, icon):
         """Return the button with the given icon name or None."""
-        for child in self.__tools_panel.GetChildren():
+        for child in self._tools_panel.GetChildren():
             if child.GetName() == icon:
                 return child
         return None
@@ -356,19 +484,31 @@ class sppasCollapsiblePanel(sppasPanel):
         :param icon: (str) Name of the .png file of the icon or None
 
         """
-        btn = BitmapTextButton(self.__tools_panel, name=icon)
+        btn = BitmapTextButton(self._tools_panel, name=icon)
         btn.SetLabelPosition(wx.RIGHT)
         btn.SetFocusWidth(0)
         btn.SetSpacing(0)
         btn.SetBorderWidth(0)
         btn.SetBitmapColour(self.GetForegroundColour())
-        btn_h = self.GetButtonHeight()
+        btn_h = int(float(self.GetButtonHeight()) * 0.9)
         btn_w = btn_h
         btn.SetSize(wx.Size(btn_w, btn_h))
         btn.SetMinSize(wx.Size(btn_w, btn_h))
-        self.__tools_panel.GetSizer().Prepend(btn, 0, wx.LEFT | wx.RIGHT, 1)
+        self._tools_panel.GetSizer().Prepend(btn, 0, wx.LEFT | wx.RIGHT, 1)
 
         return btn
+
+    # -----------------------------------------------------------------------
+
+    def EnableButton(self, icon, value):
+        """Enable or disable a button.
+
+        :param icon: (str) Name of the .png file of the icon
+        :param value: (bool)
+
+        """
+        btn = self._tools_panel.FindWindow(icon)
+        btn.Enable(value)
 
     # ------------------------------------------------------------------------
 
@@ -391,7 +531,7 @@ class sppasCollapsiblePanel(sppasPanel):
 
     def GetButtonHeight(self):
         """Return the height assigned to the buttons in the toolbar."""
-        return self.get_font_height() * 2
+        return int(float(self.get_font_height()) * 1.6)
 
     # -----------------------------------------------------------------------
 
@@ -399,12 +539,12 @@ class sppasCollapsiblePanel(sppasPanel):
         """Get the size which best suits the window."""
         # size = self.__btn.GetMinSize()
         # size = self.__btn.GetSize()
-        size = self.__tools_panel.GetSize()
+        size = self._tools_panel.GetSize()
 
-        if self.IsExpanded():
-            pbs = self.__child_panel.GetBestSize()
-            size.width = max(size.GetWidth(), pbs.x)
-            size.height = size.y + self.__border + pbs.y
+        if self.IsExpanded() and self._child_panel:
+            pbs = self._child_panel.GetBestSize()
+            size.width = max(size.GetWidth() + self._border, pbs.x)
+            size.height = size.y + self._border + pbs.y
 
         return size
 
@@ -413,28 +553,27 @@ class sppasCollapsiblePanel(sppasPanel):
     def Layout(self):
         """Do the layout."""
         # we need to complete the creation first
-        if not self.__tools_panel or not self.__child_panel:
+        if not self._tools_panel or not self._child_panel:
             return False
 
         w, h = self.GetSize()
-        bw = w - self.__border
+        bw = w - self._border
         bh = self.GetButtonHeight()
         # fix pos and size of the top panel with tools
-        self.__tools_panel.SetPosition((self.__border, 0))
-        self.__tools_panel.SetSize(wx.Size(bw, bh))
+        self._tools_panel.SetPosition((self._border, 0))
+        self._tools_panel.SetSize(wx.Size(bw, bh))
 
         if self.IsExpanded():
             # fix pos and size of the child window
             pw, ph = self.GetSize()
-            x = self.__border + bh  # shift of the icon size (a square).
-            y = bh + self.__border
-            pw = pw - x - self.__border      # left-right borders
-            ph = ph - y - self.__border      # top-bottom borders
-            self.__child_panel.SetSize(wx.Size(pw, ph))
-            self.__child_panel.SetPosition((x, y))
-            self.__child_panel.Show(True)
-            self.__child_panel.Layout()
-            self.__child_panel.Refresh()
+            x = self._border + bh  # shift of the icon size (a square).
+            y = bh + self._border
+            pw = pw - x - self._border      # left-right borders
+            ph = ph - y - self._border      # top-bottom borders
+            self._child_panel.SetSize(wx.Size(pw, ph))
+            self._child_panel.SetPosition((x, y))
+            self._child_panel.Show(True)
+            self._child_panel.Layout()
 
         return True
 
@@ -450,9 +589,9 @@ class sppasCollapsiblePanel(sppasPanel):
         top = self.GetParent()
 
         if top.GetSizer():
-            if (wx.Platform == "__WXGTK__" and self.IsCollapsed()) or \
-                    wx.Platform != "__WXGTK__":
-                top.GetSizer().SetSizeHints(top)
+            # if (wx.Platform == "__WXGTK__" and self.IsCollapsed()) or \
+            #        wx.Platform != "__WXGTK__":
+            top.GetSizer().SetSizeHints(top)
 
         if self.IsCollapsed():
             # expanded -> collapsed transition
@@ -462,6 +601,7 @@ class sppasCollapsiblePanel(sppasPanel):
         else:
             # collapsed -> expanded transition
             top.Fit()
+            self.SetFocus()
 
         wx.GetTopLevelParent(self).Layout()
         self.Refresh()
@@ -474,8 +614,8 @@ class sppasCollapsiblePanel(sppasPanel):
         :param size: an instance of wx.Size.
 
         """
-        bw, bh = self.__tools_panel.GetMinSize()
-        self.SetMinSize(wx.Size(bw, bh + self.__border))
+        bw, bh = self._tools_panel.GetMinSize()
+        self.SetMinSize(wx.Size(bw, bh + self._border))
         if size is None:
             size = wx.DefaultSize
         wx.Window.SetInitialSize(self, size)
@@ -531,15 +671,14 @@ class sppasCollapsiblePanel(sppasPanel):
         else:
             icon = "arrow_expanded"
         btn = BitmapTextButton(parent, label=text, name=icon)
-        btn.LabelPosition = wx.RIGHT
-        btn.Align = wx.ALIGN_LEFT
+        btn.SetLabelPosition(wx.RIGHT)
+        btn.SetAlign(wx.ALIGN_LEFT)
 
-        btn.FocusStyle = wx.PENSTYLE_SOLID
-        btn.FocusWidth = 1
-        btn.FocusColour = self.GetForegroundColour()
-        btn.Spacing = sppasPanel.fix_size(4)
-        btn.BorderWidth = 0
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetFocusStyle(wx.PENSTYLE_SOLID)
+        btn.SetFocusWidth(1)
+        btn.SetFocusColour(self.GetForegroundColour())
+        btn.SetSpacing(sppasPanel.fix_size(4))
+        btn.SetBitmapColour(self.GetForegroundColour())
         h = self.GetButtonHeight()
         btn_w = sppasPanel.fix_size(h*10)
         btn_h = sppasPanel.fix_size(h)
@@ -574,7 +713,7 @@ class TestPanel(sc.ScrolledPanel):
             parent,
             style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.HSCROLL | wx.VSCROLL,
             name="Test Panels")
-        self.SetBackgroundColour(wx.WHITE)
+        self.SetBackgroundColour(wx.Colour(128, 128, 128))
 
         p1 = sppasPanel(self)
         self.MakePanelContent(p1)
@@ -603,11 +742,24 @@ class TestPanel(sc.ScrolledPanel):
         self.MakePanelContent(child_panel)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p4)
 
+        # No image defined. It's the default one.
+        p5 = sppasImgBgPanel(self, img_name="")
+        self.MakePanelContent(p5)
+        # bg image defined.
+        p6 = sppasImgBgPanel(self)
+        self.MakePanelContent(p6)
+        # A bg image defined.
+        p7 = sppasImgBgPanel(self, img_name="bg2")
+        self.MakePanelContent(p7)
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(p1, 0, wx.EXPAND)
         sizer.Add(p2, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, border=10)
         sizer.Add(p3, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, border=10)
         sizer.Add(p4, 0, wx.EXPAND | wx.ALL, border=10)
+        sizer.Add(p5, 0, wx.EXPAND | wx.ALL, border=10)
+        sizer.Add(p6, 0, wx.EXPAND | wx.ALL, border=10)
+        sizer.Add(p7, 0, wx.EXPAND | wx.ALL, border=10)
 
         self.SetSizerAndFit(sizer)
         self.Layout()
@@ -619,7 +771,6 @@ class TestPanel(sc.ScrolledPanel):
 
     def OnCollapseChanged(self, evt=None):
         panel = evt.GetEventObject()
-        panel.SetFocus()
         self.ScrollChildIntoView(panel)
 
     def OnCkeckedPanel(self, evt):

@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 from sppas.src.config import symbols
 from sppas.src.utils.makeunicode import sppasUnicode, b
 
@@ -86,7 +87,7 @@ class sppasTag(object):
 
         :param tag_content: (any) Data content
         :param tag_type: (str): The type of this content.\
-        One of: ('str', 'int', 'float', 'bool', 'list').
+        One of: ('str', 'int', 'float', 'bool').
 
         'str' is the default tag_type.
 

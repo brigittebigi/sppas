@@ -174,6 +174,7 @@ class sppasPoint(sppasBaseLocalization):
         if self.__midpoint < 0.:
             logging.warning('Midpoint is negative: {:f}'
                             ''.format(midpoint))
+
             #     self.__midpoint = 0.
         #     raise AnnDataNegValueError(midpoint)
 

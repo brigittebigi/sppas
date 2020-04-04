@@ -41,11 +41,16 @@ from sppas.src.ui.cfg import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
+import sppas.src.ui.phoenix.windows.basedraw as basedraw
 import sppas.src.ui.phoenix.windows.toolbar as toolbar
 import sppas.src.ui.phoenix.windows.line as line
 import sppas.src.ui.phoenix.windows.button as button
-import sppas.src.ui.phoenix.windows.panel as panel
 import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
+import sppas.src.ui.phoenix.windows.panel as panel
+import sppas.src.ui.phoenix.windows.listctrl as listctrl
+import sppas.src.ui.phoenix.windows.media.mediactrl as media
+import sppas.src.ui.phoenix.windows.media.playerctrl as player
+import sppas.src.ui.phoenix.windows.media.multiplayer as multiplayer
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -63,11 +68,16 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
+        self.AddPage(multiplayer.TestPanel(self), "Multi Media Player")
+        self.AddPage(player.TestPanel(self), "Player Control")
+        self.AddPage(media.TestPanel(self), "Media Control")
         self.AddPage(toolbar.TestPanel(self), "Toolbar")
+        self.AddPage(listctrl.TestPanel(self), "ListCtrl")
         self.AddPage(panel.TestPanel(self), "Panels")
         self.AddPage(buttonbox.TestPanel(self), "ButtonBox")
         self.AddPage(button.TestPanel(self), "Buttons")
         self.AddPage(line.TestPanel(self), "Lines")
+        self.AddPage(basedraw.TestPanel(self), "Base Window")
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
@@ -117,7 +127,7 @@ class TestApp(wx.App):
                         clearSigInt=True)
 
         # create the frame
-        frm = wx.Frame(None, title='Test frame', size=wx.Size(800, 600))
+        frm = wx.Frame(None, title='Test frame', size=wx.Size(900, 600))
         frm.SetMinSize(wx.Size(640, 480))
         self.SetTopWindow(frm)
 

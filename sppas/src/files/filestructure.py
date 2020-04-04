@@ -236,28 +236,6 @@ class FileName(FileBase):
                      self.get_state(),
                      self.id))
 
-    # -----------------------------------------------------------------------
-
-    def __eq__(self, other):
-        """Allows to compare self with other by using "==".
-
-        :param other: (FileName, str)
-
-        """
-        if other is not None:
-            if isinstance(other, FileName):
-                return self.id == other.id
-            else:
-                return self.id == other
-        return False
-
-    # -----------------------------------------------------------------------
-
-    def __ne__(self, other):
-        if other is not None:
-            return not self == other
-        return False
-
 # ---------------------------------------------------------------------------
 
 

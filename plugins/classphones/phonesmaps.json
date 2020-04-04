@@ -31,6 +31,13 @@
       "type": "bool",
       "value": false,
       "text": "Make the plugin quiet"
+    },
+
+    {
+      "id": "--symbols",
+      "type": "bool",
+      "value": false,
+      "text": "Map the non-speech symbols (silence, pause, laughter...)"
     }
 
   ]

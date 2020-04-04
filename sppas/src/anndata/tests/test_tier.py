@@ -40,10 +40,13 @@
     :summary:      Test the class sppasTier().
 
 """
+
 import unittest
 import random
 
 from ..anndataexc import AnnDataTypeError
+from ..anndataexc import AnnDataIndexError
+from ..anndataexc import IntervalBoundsError
 from ..anndataexc import CtrlVocabContainsError
 
 from ..anndataexc import TierAddError
@@ -63,7 +66,8 @@ from ..ctrlvocab import sppasCtrlVocab
 
 
 class TestTier(unittest.TestCase):
-    """
+    """Test a sppasTier.
+
     A Tier is made of:
 
         - a name (used to identify the tier),
@@ -396,6 +400,83 @@ class TestTier(unittest.TestCase):
         self.assertEqual(len(a), 0)
         a = tier.find(sppasPoint(2), sppasPoint(7))
         self.assertEqual(len(a), 1)
+
+    # -----------------------------------------------------------------------
+
+    def test_split(self):
+        # PointTier not supported
+        tier = sppasTier()
+        a = sppasAnnotation(sppasLocation(sppasPoint(1)))
+        tier.append(a)
+        self.assertTrue(tier.is_point())
+        with self.assertRaises(AnnDataTypeError):
+            tier.split(0)
+        del tier
+
+        # Bad index
+        tier = sppasTier("test")
+        a = sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(1), sppasPoint(2))))
+        tier.append(a)
+        self.assertTrue(tier.is_interval())
+        with self.assertRaises(AnnDataIndexError):
+            tier.split(6)
+
+        # Normal situation (everything is ok, it should work!)
+        a2 = sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(3), sppasPoint(9))))
+        tier.append(a2)
+        a3 = tier.split(1)
+        self.assertEqual(3, a2.get_lowest_localization())
+        self.assertEqual(6, a2.get_highest_localization())
+        self.assertEqual(6, a3.get_lowest_localization())
+        self.assertEqual(9, a3.get_highest_localization())
+
+        # Normal situation, but not enough location duration to be splitted
+        with self.assertRaises(IntervalBoundsError):
+            tier.split(0)
+
+    # -----------------------------------------------------------------------
+
+    def test_merge(self):
+        # PointTier not supported
+        tier = sppasTier()
+        a = sppasAnnotation(sppasLocation(sppasPoint(1)))
+        tier.append(a)
+        self.assertTrue(tier.is_point())
+        with self.assertRaises(AnnDataTypeError):
+            tier.split(0)
+        del tier
+
+        # Bad index
+        tier = sppasTier("test")
+        a = sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(1), sppasPoint(2))))
+        tier.append(a)
+        self.assertTrue(tier.is_interval())
+        with self.assertRaises(AnnDataIndexError):
+            tier.split(6)
+
+        # no next ann
+        self.assertFalse(tier.merge(0, direction=1))
+
+        a2 = sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(3), sppasPoint(9))))
+        tier.append(a2)
+
+        # bad direction
+        self.assertFalse(tier.merge(0, direction=0))
+        self.assertFalse(tier.merge(0, direction=-1))
+
+        # Normal situation (everything is ok, it should work!)
+        merged = tier.merge(0, direction=1)
+        self.assertTrue(merged)
+        self.assertEqual(1, tier[0].get_lowest_localization())
+        self.assertEqual(9, tier[0].get_highest_localization())
+
+        # Test merge in the other direction
+        a3 = sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(7), sppasPoint(10))))
+        tier.add(a3)
+        merged = tier.merge(1, direction=-1)
+        self.assertTrue(merged)
+        self.assertEqual(1, tier[0].get_lowest_localization())
+        self.assertEqual(10, tier[0].get_highest_localization())
 
     # -----------------------------------------------------------------------
 

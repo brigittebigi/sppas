@@ -148,6 +148,8 @@ class sppasBasePraat(sppasBaseIO):
         """
         try:
             line = line.strip()
+            if line.endswith(":") is True:
+                line = line[:-1]
             val = line[line.rfind(' ') + 1:]
             return int(val)
         except:
@@ -375,12 +377,16 @@ class sppasTextGrid(sppasBasePraat):
                 raise AioEncodingError(filename, "", sg.__encoding__+"/UTF-16")
 
         # parse the header of the file
+        if len(lines[2].strip()) == 0:
+            has_blank = 1
+        else:
+            has_blank = 0
 
         # if the size isn't named, it is a short TextGrid file
-        is_long = not lines[6].strip().isdigit()
+        is_long = not lines[5+has_blank].strip().isdigit()
 
         last_line = len(lines) - 1
-        cur_line = 7
+        cur_line = 6 + has_blank
         if is_long is True:
             # Ignore the line 'item []:'
             cur_line += 1

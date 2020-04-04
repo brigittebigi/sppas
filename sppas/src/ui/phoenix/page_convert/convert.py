@@ -44,7 +44,7 @@ from sppas.src.files import FileData, States
 from sppas.src.anndata import sppasRW
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
-from ..dialogs import Warn
+from ..windows import Warn
 from ..windows import sppasStaticText
 from ..windows import sppasScrolledPanel
 from ..windows import BitmapTextButton, CheckButton
@@ -152,8 +152,12 @@ class sppasConvertPanel(sppasScrolledPanel):
 
         # Options to convert files
         opt_force = CheckButton(self, label=MSG_OPT_OVERRIDE, name="override")
+        opt_force.SetMinSize(wx.Size(-1, self.get_font_height()*2))
+        opt_force.SetFocusWidth(0)
         opt_force.SetValue(False)
         opt_heuristic = CheckButton(self, label=MSG_OPT_HEURISTIC, name="heuristic")
+        opt_heuristic.SetMinSize(wx.Size(-1, self.get_font_height()*2))
+        opt_heuristic.SetFocusWidth(0)
         opt_heuristic.SetValue(False)
 
         # Organize all objects into a sizer
@@ -198,10 +202,10 @@ class sppasConvertPanel(sppasScrolledPanel):
         h = sppasScrolledPanel.fix_size(42)
 
         btn = BitmapTextButton(self, label=label)
-        btn.LabelPosition = wx.RIGHT
-        btn.Spacing = sppasScrolledPanel.fix_size(8)
-        btn.BorderWidth = 2
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetLabelPosition(wx.RIGHT)
+        btn.SetSpacing(sppasScrolledPanel.fix_size(8))
+        btn.SetBorderWidth(2)
+        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(w, h))
 
         btn.SetName("convert")

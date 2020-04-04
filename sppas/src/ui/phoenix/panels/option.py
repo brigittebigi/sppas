@@ -39,7 +39,7 @@ import wx.lib.agw.floatspin
 
 from sppas.src.structs.baseoption import sppasOption
 
-from ..dialogs import sppasFileDialog
+from ..windows import sppasFileDialog
 from ..windows import sppasScrolledPanel
 from ..windows import sppasStaticText
 from ..windows import sppasTextCtrl
@@ -126,6 +126,8 @@ class sppasOptionsPanel(sppasScrolledPanel):
 
         """
         cb = CheckButton(self, label=label, size=(300, -1))
+        cb.SetMinSize(wx.Size(-1, self.get_font_height()*2))
+        cb.SetFocusWidth(0)
         cb.SetValue(value)
         self.GetSizer().Add(cb, 0, wx.LEFT | wx.BOTTOM, 4)
         self._items.append(cb)
@@ -216,8 +218,7 @@ class sppasOptionsPanel(sppasScrolledPanel):
         filebtn = BitmapTextButton(self, name="folder-add")
         filebtn.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(24),
                                    sppasScrolledPanel.fix_size(24)))
-        filebtn.BorderWidth = 0
-        filebtn.Spacing = 0
+        filebtn.SetSpacing(0)
         filebtn.Bind(wx.EVT_BUTTON, self.__on_select_filename)
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)

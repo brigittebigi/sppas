@@ -54,7 +54,7 @@ from .page_analyze import sppasAnalyzePanel
 from .page_convert import sppasConvertPanel
 from .page_plugins import sppasPluginsPanel
 
-from .dialogs import YesNoQuestion
+from .windows import YesNoQuestion
 from .dialogs import About
 from .dialogs import Settings
 from .main_log import sppasLogWindow
@@ -135,7 +135,6 @@ class sppasMainWindow(sppasDialog):
 
         # Fix this frame properties
         self.Enable()
-        self.SetFocus()
         self.CenterOnScreen(wx.BOTH)
         self.FadeIn(deltaN=-4)
         self.Show(True)
@@ -313,17 +312,15 @@ class sppasMainWindow(sppasDialog):
             # ALT+F4 on Windows to exit with confirmation
             self.on_exit(event)
 
-        elif key_code == 87 and (event.CmdDown() or event.CtrlDown())\
-                and wx.Platform != "__WXMSW__":
+        elif key_code == 87 and event.ControlDown() and wx.Platform != "__WXMSW__":
             # CMD+w on MacOS / Ctrl+w on Linux to exit with confirmation
             self.on_exit(event)
 
-        elif key_code == 81 and (event.CmdDown() or event.CtrlDown) \
-                and wx.Platform != "__WXMSW__":
+        elif key_code == 81 and event.ControlDown() and wx.Platform != "__WXMSW__":
             # CMD+q on MacOS / Ctrl+q on Linux to force exit
             self.exit()
 
-        elif key_code == 70 and event.CmdDown():
+        elif key_code == 70 and event.ControlDown():
             # CMD+f
             self.FindWindow("header").enable("page_files")
             self.show_page("page_files")
@@ -520,13 +517,12 @@ class sppasMenuPanel(sppasPanel):
         # Get the font height for the header
         h = self.get_font_height()
 
-        btn.LabelPosition = wx.RIGHT
-        btn.FocusStyle = wx.PENSTYLE_SOLID
-        btn.FocusWidth = h//4
-        btn.FocusColour = wx.Colour(128, 128, 128, 128)
-        btn.Spacing = sppasPanel.fix_size(h//2)
-        btn.BorderWidth = 0
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetLabelPosition(wx.RIGHT)
+        btn.SetFocusStyle(wx.PENSTYLE_SOLID)
+        btn.SetFocusWidth(h//4)
+        btn.SetFocusColour(wx.Colour(128, 128, 128, 128))
+        btn.SetSpacing(sppasPanel.fix_size(h//2))
+        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(h*10, h*3))
 
         return btn
@@ -592,13 +588,12 @@ class sppasActionsPanel(sppasPanel):
         # Get the font height for the header
         h = self.get_font_height()
 
-        btn.LabelPosition = wx.RIGHT
-        btn.FocusStyle = wx.PENSTYLE_SOLID
-        btn.FocusWidth = h//4
-        btn.FocusColour = wx.Colour(128, 128, 128, 128)
-        btn.Spacing = sppasPanel.fix_size(h//2)
-        btn.BorderWidth = 0
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetLabelPosition(wx.RIGHT)
+        btn.SetFocusStyle(wx.PENSTYLE_SOLID)
+        btn.SetFocusWidth(h//4)
+        btn.SetFocusColour(wx.Colour(128, 128, 128, 128))
+        btn.SetSpacing(sppasPanel.fix_size(h//2))
+        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(h*10, h*2))
 
         return btn

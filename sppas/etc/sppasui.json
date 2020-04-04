@@ -75,6 +75,12 @@
     {
       "id": "stopwords",
       "config": "stopwords.json",
+      "cli": "stopwords.py"
+    },
+
+    {
+      "id": "lexmetric",
+      "config": "lexmetric.json",
       "cli": ""
     },
 
@@ -91,16 +97,23 @@
     }
   ],
 
-  "analyze":
-  {
-    "id": "datastats",
-    "cli": "stats.py"
-  },
+  "analyze": [
+    {
+      "id": "datastats",
+      "cli": "stats.py"
+    }
+  ],
 
-  "manage":
-  {
-    "id": "convert",
-    "cli": "trsconvert.py"
-  }
+  "manage": [
+    {
+      "id": "convert",
+      "cli": "trsconvert.py"
+    },
+
+    {
+      "id": "merge",
+      "cli": "trsmerge.py"
+    }
+  ]
 
 }

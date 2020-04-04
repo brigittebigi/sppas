@@ -257,7 +257,7 @@ class spControl(wx.Window):
 
         """
         if self.isselectable is False:
-            self.isselected = False
+            self._isselected = False
             return
 
         if self._isselected != value:

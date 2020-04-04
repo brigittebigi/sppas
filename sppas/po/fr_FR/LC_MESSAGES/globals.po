@@ -24,6 +24,9 @@ msgid ":ERROR 012: "
 msgstr "La valeur minimale donnée {min_value} est supérieur à la valeur maximale donnée {max_value}."
 
 msgid ":ERROR 014: "
+msgstr "L'index {value} est en dehors de l'intervalle [{min_value},{max_value}]."
+
+msgid ":ERROR 016: "
 msgstr "La valeur {value} est en dehors de l'intervalle [{min_value},{max_value}]."
 
 msgid ":ERROR 100: "

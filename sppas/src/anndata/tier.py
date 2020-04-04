@@ -34,7 +34,8 @@
 
 """
 
-from sppas.src.files import sppasGUID
+import logging
+
 from sppas.src.utils import sppasUnicode
 
 from .anndataexc import AnnDataTypeError
@@ -262,6 +263,61 @@ class sppasTier(sppasMetaData):
 
     # -----------------------------------------------------------------------
 
+    def create_annotation_before(self, idx):
+        """Create and add a new annotation in the hole before idx.
+
+        :param idx: (int)
+        :returns: sppasAnnotation
+
+        """
+        if self.is_point():
+            raise AnnDataTypeError(self.get_name(), "Interval, Disjoint")
+
+        try:
+            ann = self.__ann[idx]
+        except IndexError:
+            raise AnnDataIndexError(idx)
+
+        if idx == 0:
+            if self.is_int():
+                begin = sppasPoint(0)
+            else:
+                begin = sppasPoint(0.)
+        else:
+            prev_ann = self.__ann[idx-1]
+            begin = prev_ann.get_highest_localization()
+        end = ann.get_lowest_localization()
+
+        new_ann = self.create_annotation(sppasLocation(sppasInterval(begin, end)))
+        return new_ann
+
+    # -----------------------------------------------------------------------
+
+    def create_annotation_after(self, idx):
+        """Create and add a new annotation in the hole after idx.
+
+        :param idx: (int)
+        :returns: sppasAnnotation
+
+        """
+        if self.is_point():
+            raise AnnDataTypeError(self.get_name(), "Interval, Disjoint")
+        if idx+1 == len(self.__ann):
+            raise AnnDataIndexError(idx+1)
+        try:
+            ann = self.__ann[idx]
+            next_ann = self.__ann[idx+1]
+        except IndexError:
+            raise AnnDataIndexError(idx)
+
+        begin = ann.get_highest_localization()
+        end = next_ann.get_lowest_localization()
+
+        new_ann = self.create_annotation(sppasLocation(sppasInterval(begin, end)))
+        return new_ann
+
+    # -----------------------------------------------------------------------
+
     def is_empty(self):
         """Return True if the tier does not contain annotations."""
         return len(self.__ann) == 0
@@ -355,16 +411,27 @@ class sppasTier(sppasMetaData):
         :param end: (sppasPoint)
         :param overlaps: (bool)
         :returns: the number of removed annotations
+        :raises: HierarchyContainsError
 
         """
         if end < begin:
             raise IntervalBoundsError(begin, end)
 
         annotations = self.find(begin, end, overlaps)
+
+        copied_anns = list()
         for a in reversed(annotations):
+            copied_anns.append(a.copy())
             self.__ann.remove(a)
 
-        return len(annotations)
+        if self.__parent is not None:
+            try:
+                self.validate()
+            except:
+                for a in copied_anns:
+                    self.add(a)
+
+        return len(copied_anns)
 
     # -----------------------------------------------------------------------
 
@@ -375,17 +442,29 @@ class sppasTier(sppasMetaData):
         and returns the last annotation in the tier.
 
         :param index: (int) Index of the annotation to remove.
+        :raises: HierarchyContainsError
 
         """
         try:
-            self.__ann.pop(index)
+            ann = self.__ann[index]
+            copied_ann = ann.copy()
         except IndexError:
             raise AnnDataIndexError(index)
+
+        self.__ann.pop(index)
+        if self.__parent is not None:
+            try:
+                self.validate()
+            except:
+                self.__ann.insert(index, copied_ann)
+                raise
 
     # -----------------------------------------------------------------------
 
     def remove_unlabelled(self):
         """Remove annotations without labels.
+
+        Do not remove an annotation if it invalidates the hierarchy.
 
         :returns: the number of removed annotations
 
@@ -393,9 +472,115 @@ class sppasTier(sppasMetaData):
         nb = 0
         for a in reversed(self.__ann):
             if a.is_labelled() is False:
-                self.__ann.remove(a)
-                nb += 1
+                try:
+                    self.__ann.remove(a)
+                    nb += 1
+                except:
+                    # we should write a message to logging
+                    pass
         return nb
+
+    # -----------------------------------------------------------------------
+
+    def split(self, idx):
+        """Split annotation at the given index into 2 annotations.
+
+        :param idx: (int) Index of the annotation to split.
+        :return: newly created annotation (at index idx+1)
+
+        """
+        if self.is_point() is True:
+            raise AnnDataTypeError(self.get_name(), "Interval, Disjoint")
+
+        try:
+            ann = self.__ann[idx]
+        except IndexError:
+            raise AnnDataIndexError(idx)
+
+        localization = ann.get_location().get_best()
+        end = localization.get_end().copy()
+        middle = localization.middle()
+
+        try:
+            localization.set_end(middle)
+            self.validate()
+            new_ann = self.create_annotation(
+                sppasLocation(sppasInterval(middle.copy(), end)))
+        except:
+            localization.set_end(end)
+            raise
+
+        return new_ann
+
+    # -----------------------------------------------------------------------
+
+    def merge(self, idx, direction):
+        """Merge the annotation at given index with next or previous one.
+
+        if direction > 0:
+            ann_idx:  [begin_idx, end_idx, labels_idx]
+            next_ann: [begin_n, end_n, labels_n]
+            result:   [begin_idx, end_n, labels_idx + labels_n]
+
+        if direction < 0:
+            prev_ann: [begin_p, end_p, labels_p]
+            ann_idx:  [begin_idx, end_idx, labels_idx]
+            result:   [begin_p, end_idx, labels_p + labels_idx]
+
+        :param idx: (int) Index of the annotation in the list
+        :param direction: (int) Positive for next, Negative for previous
+        :return: (bool) False if direction does not match with index
+        :raise: Exception if merged annotation can't be deleted of the tier
+
+        """
+        if self.is_point() is True:
+            raise AnnDataTypeError(self.get_name(), "Interval, Disjoint")
+
+        try:
+            ann = self.__ann[idx]
+        except IndexError:
+            raise AnnDataIndexError(idx)
+
+        # Get the next or previous annotation
+        if direction > 0:
+            merge_idx = idx + 1
+            if merge_idx == len(self.__ann):
+                return False
+        else:
+            if idx == 0:
+                return False
+            merge_idx = idx - 1
+        merge_ann = self.__ann[merge_idx]
+
+        merge_labels = [l.copy() for l in merge_ann.get_labels()]
+        merge_loc = merge_ann.get_location().get_best()
+
+        # Create a copy of its labels and its localization
+        localization = ann.get_location().get_best()
+        copied_loc = localization.copy()
+        labels = self.__ann[idx].get_labels()
+
+        try:
+            # Modify the localization at idx
+            if direction > 0:
+                localization.set_end(merge_loc.get_end())
+                new_labels = labels + merge_labels
+            else:
+                localization.set_begin(merge_loc.get_begin())
+                new_labels = merge_labels + labels
+            # will raise an exception is modifs imply to brake hierarchy
+            self.validate()
+
+            # Update labels and delete next/previous ann
+            ann.set_labels(new_labels)
+            self.pop(merge_idx)
+        except:
+            # Restore modified ann
+            ann.set_best_localization(copied_loc)
+            ann.set_labels(labels)
+            raise
+
+        return True
 
     # -----------------------------------------------------------------------
     # Localizations
@@ -436,13 +621,30 @@ class sppasTier(sppasMetaData):
         """Return True if the tier contains a given point.
 
         :param point: (sppasPoint) The point to find in the tier.
-        :returns: Boolean
+        :returns: (bool)
 
         """
         if isinstance(point, sppasPoint) is False:
             raise AnnDataTypeError(point, "sppasPoint")
 
         return point in self.get_all_points()
+
+    # -----------------------------------------------------------------------
+
+    def has_location(self, location):
+        """Return True if the tier has the given location.
+
+        to be tested.
+
+        """
+        # Use 'find' for a faster search
+        begin = location.get_lowest_localization()
+        end = location.get_highest_localization()
+        anns = self.find(begin, end, overlaps=False)
+        for a in anns:
+            if a.get_location() == location:
+                return True
+        return False
 
     # -----------------------------------------------------------------------
 
@@ -891,6 +1093,12 @@ class sppasTier(sppasMetaData):
 
     # -----------------------------------------------------------------------
     # Annotation validation
+    # -----------------------------------------------------------------------
+
+    def validate(self):
+        if self.__parent is not None:
+            self.__parent.validate_hierarchy(self)
+
     # -----------------------------------------------------------------------
 
     def validate_annotation(self, annotation):

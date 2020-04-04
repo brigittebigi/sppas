@@ -48,7 +48,7 @@ from ..windows import sppasScrolledPanel
 from ..windows import sppasStaticLine
 from ..windows import sppasStaticText
 from ..windows import sppasTextCtrl
-from ..windows import BitmapTextButton, sppasTextButton
+from ..windows import BitmapTextButton, TextButton, sppasTextButton
 
 from .annotevent import PageChangeEvent
 
@@ -93,7 +93,15 @@ class sppasAnnotationsPanel(sppasPanel):
         # Construct the panel
         self._create_content()
         self._setup_events()
-        self.Layout()
+
+        # Look&feel
+        try:
+            settings = wx.GetApp().settings
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
     # -----------------------------------------------------------------------
     # Public methods to manage the data
@@ -134,9 +142,8 @@ class sppasAnnotationsPanel(sppasPanel):
 
         top_panel = sppasPanel(self, name="annotselect_top_panel")
         btn_back_top = BitmapTextButton(top_panel, name="arrow_up")
-        btn_back_top.FocusWidth = 0
-        btn_back_top.BorderWidth = 0
-        btn_back_top.BitmapColour = self.GetForegroundColour()
+        btn_back_top.SetFocusWidth(0)
+        btn_back_top.SetBitmapColour(self.GetForegroundColour())
         btn_back_top.SetMinSize(wx.Size(btn_size, btn_size))
 
         title = sppasStaticText(
@@ -284,7 +291,7 @@ class sppasEnableAnnotation(sppasPanel):
 
     def _create_content(self):
         """Create the main content."""
-        es = self.__create_enable_sizer()
+        es = self.__create_enable_panel()
         ls = self.__create_lang_sizer()
         ds = self.__create_description_sizer()
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -296,27 +303,26 @@ class sppasEnableAnnotation(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def __create_enable_sizer(self):
-        panel = sppasPanel(self)
+    def __create_enable_panel(self):
+        panel = sppasPanel(self, name="enable_panel")
         sizer = wx.BoxSizer(wx.VERTICAL)
-        w = sppasPanel.fix_size(156)
+        w = sppasPanel.fix_size(196)
         h = sppasPanel.fix_size(48)
 
         btn_enable = BitmapTextButton(
             panel, label=self.__annparam.get_name(), name="on-off-off")
         btn_enable.LabelPosition = wx.RIGHT
-        btn_enable.Spacing = 12
-        btn_enable.FocusWidth = 0
-        btn_enable.BorderWidth = 0
-        btn_enable.BitmapColour = self.GetForegroundColour()
+        btn_enable.SetSpacing(sppasPanel.fix_size(12))
+        btn_enable.SetFocusWidth(0)
+        btn_enable.SetBitmapColour(self.GetForegroundColour())
         btn_enable.SetMinSize(wx.Size(w-2, h-2))
         btn_enable.SetMaxSize(wx.Size(w-2, h))
 
-        btn_configure = sppasTextButton(
+        btn_configure = TextButton(
             panel, label=MSG_CONFIG + "...", name="configure")
+        btn_configure.SetBorderWidth(0)
         btn_configure.SetForegroundColour(wx.Colour(80, 100, 220))
         btn_configure.SetMinSize(wx.Size(w-2, h-2))
-        btn_configure.SetMaxSize(wx.Size(w-2, h))
 
         sizer.Add(btn_enable, 1, wx.EXPAND)
         sizer.Add(btn_configure, 1, wx.EXPAND)
@@ -427,8 +433,9 @@ class sppasEnableAnnotation(sppasPanel):
     def SetForegroundColour(self, colour):
         wx.Window.SetForegroundColour(self, colour)
         for c in self.GetChildren():
-            if c.GetName() != "configure":
-                c.SetForegroundColour(colour)
+            for cc in c.GetChildren():
+                if cc.GetName() != "configure":
+                    cc.SetForegroundColour(colour)
 
     # -----------------------------------------------------------------------
 

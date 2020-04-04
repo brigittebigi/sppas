@@ -116,7 +116,9 @@ class sppasLocation(object):
             raise AnnDataTypeError(localization, "sppasBaseLocalization")
 
         if len(self.__localizations) == 1:
-            self.__localizations = list()
+            raise IndexError("A location must contain at least one "
+                             "localization. The single one can't be removed.")
+            # self.__localizations = list()
         else:
             for l in self.__localizations:
                 if l[0] == localization:
@@ -209,6 +211,30 @@ class sppasLocation(object):
     def copy(self):
         """Return a deep copy of the location."""
         return copy.deepcopy(self)
+
+    # -----------------------------------------------------------------------
+
+    def get_lowest_localization(self):
+        """Return a copy of the sppasPoint with the lowest localization."""
+        if self.is_point():
+            min_localization = min([l[0] for l in self.__localizations])
+        else:
+            min_localization = min([l[0].get_begin() for l in self.__localizations])
+
+        # We return a copy to be sure the original loc won't be modified
+        return min_localization.copy()
+
+    # -----------------------------------------------------------------------
+
+    def get_highest_localization(self):
+        """Return a copy of the sppasPoint with the highest loc."""
+        if self.is_point():
+            max_localization = max([l[0] for l in self.__localizations])
+        else:
+            max_localization = max([l[0].get_end() for l in self.__localizations])
+
+        # We return a copy to ensure the original loc won't be modified
+        return max_localization.copy()
 
     # -----------------------------------------------------------------------
 

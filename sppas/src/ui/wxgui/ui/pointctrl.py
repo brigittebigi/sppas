@@ -32,7 +32,7 @@
 # along with SPPAS. If not, see <http://www.gnu.org/licenses/>.
 #
 # ---------------------------------------------------------------------------
-# File: pointctrl.py
+# File: pointctrlold.py
 # ---------------------------------------------------------------------------
 
 __docformat__ = """epytext"""

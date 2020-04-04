@@ -35,14 +35,18 @@
 """
 
 import wx
+import os
 
 from sppas import msg
 from sppas.src.utils import u
 
+from ..windows import sppasStaticLine
 from ..windows import sppasPanel
+from ..windows import sppasToolbar
 from ..windows import sppasScrolledPanel
+from ..windows.dialogs import Confirm
+from ..windows.dialogs import sppasProgressDialog
 from ..main_events import ViewEvent, EVT_VIEW
-from ..dialogs import Confirm
 from .errview import ErrorViewPanel
 
 # ---------------------------------------------------------------------------
@@ -77,7 +81,7 @@ class BaseViewFilesPanel(sppasPanel):
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
             size=wx.DefaultSize,
-            style=wx.BORDER_NONE | wx.VSCROLL | wx.HSCROLL | wx.NO_FULL_REPAINT_ON_RESIZE,
+            style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
         # The files of this panel (key=name, value=wx.SizerItem)
@@ -88,12 +92,15 @@ class BaseViewFilesPanel(sppasPanel):
         self._setup_events()
 
         # Look&feel
-        self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        try:
+            self.SetBackgroundColour(wx.GetApp().settings.bg_color)
+            self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            self.SetFont(wx.GetApp().settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
-        for f in files:
-            self.append_file(f)
+        if len(files) > 0:
+            self.append_files(files)
 
         self.Layout()
 
@@ -102,15 +109,23 @@ class BaseViewFilesPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def SetFont(self, font):
-        sppasPanel.SetFont(self, font)
-        f = wx.Font(int(font.GetPointSize() * 0.65),
-                    wx.FONTFAMILY_SWISS,   # family,
-                    wx.FONTSTYLE_NORMAL,   # style,
-                    wx.FONTWEIGHT_BOLD,    # weight,
-                    underline=False,
-                    faceName=font.GetFaceName(),
-                    encoding=wx.FONTENCODING_SYSTEM)
-        self.FindWindow("toolbar_views").SetFont(f)
+        wx.Panel.SetFont(self, font)
+        for c in self.GetChildren():
+            c.SetFont(font)
+
+        # a smaller font for the toolbar
+        tb = self.FindWindow("toolbar_views")
+        if tb is not None:
+            f = wx.Font(int(font.GetPointSize() * 0.65),
+                        wx.FONTFAMILY_SWISS,   # family,
+                        wx.FONTSTYLE_NORMAL,   # style,
+                        wx.FONTWEIGHT_BOLD,    # weight,
+                        underline=False,
+                        faceName=font.GetFaceName(),
+                        encoding=wx.FONTENCODING_SYSTEM)
+            tb.SetFont(f)
+
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
@@ -173,6 +188,36 @@ class BaseViewFilesPanel(sppasPanel):
                 pass
 
         return False
+
+    # -----------------------------------------------------------------------
+
+    def append_files(self, files):
+        """Add a list of files and display their content.
+
+        Do not refresh/layout the GUI.
+
+        :param files: (list of str)
+        :raise: ValueError
+
+        """
+        total = len(files)
+        progress = sppasProgressDialog()
+        progress.set_new()
+        progress.set_header("Open files...")
+        progress.set_fraction(0)
+        wx.BeginBusyCursor()
+        for i, f in enumerate(sorted(files)):
+            try:
+                fraction = float((i+1)) / float(total)
+                message = os.path.basename(f)
+                progress.update(fraction, message)
+                self.append_file(f)
+            except Exception as e:
+                wx.LogError(str(e))
+        wx.EndBusyCursor()
+        progress.set_fraction(1)
+        progress.close()
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
@@ -311,6 +356,7 @@ class BaseViewFilesPanel(sppasPanel):
 
         removed = self.remove_file(filename, force=True)
         if removed is True:
+            self.GetScrolledPanel().Layout()
             self.Layout()
             self.Refresh()
 
@@ -346,6 +392,7 @@ class BaseViewFilesPanel(sppasPanel):
         toolbar = self._create_toolbar()
         scrolled = self._create_scrolled_content()
         main_sizer.Add(toolbar, 0, wx.EXPAND, 0)
+        main_sizer.Add(self._create_hline(self), 0, wx.EXPAND, 0)
         main_sizer.Add(scrolled, 1, wx.EXPAND, 0)
         self.SetSizer(main_sizer)
 
@@ -357,12 +404,14 @@ class BaseViewFilesPanel(sppasPanel):
         :return: (sppasPanel, wx.Panel, sppasToolbar, ...)
 
         """
-        return sppasPanel(self, name="toolbar_views")
+        return sppasToolbar(self, name="toolbar_views")
 
     # -----------------------------------------------------------------------
 
     def _create_scrolled_content(self):
-        content_panel = sppasScrolledPanel(self, name="scrolled_views")
+        content_panel = sppasScrolledPanel(self,
+                                           style=wx.SHOW_SB_ALWAYS | wx.HSCROLL | wx.VSCROLL | wx.BORDER_NONE,
+                                           name="scrolled_views")
         content_sizer = wx.BoxSizer(wx.VERTICAL)
         content_panel.SetupScrolling(scroll_x=True, scroll_y=True)
         content_panel.SetSizer(content_sizer)
@@ -370,6 +419,16 @@ class BaseViewFilesPanel(sppasPanel):
         content_panel.SetMinSize(wx.Size(sppasPanel.fix_size(420), min_height))
 
         return content_panel
+
+    # -----------------------------------------------------------------------
+
+    def _create_hline(self, parent):
+        """Create an horizontal line, used to separate the panels."""
+        line = sppasStaticLine(parent, orient=wx.LI_HORIZONTAL)
+        line.SetMinSize(wx.Size(-1, 20))
+        line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
+        line.SetDepth(1)
+        return line
 
     # -----------------------------------------------------------------------
 
@@ -425,7 +484,6 @@ class BaseViewFilesPanel(sppasPanel):
         :param event: (wx.Event)
 
         """
-        wx.LogDebug("View Event received by {:s}".format(self.GetName()))
         try:
             panel = event.GetEventObject()
             panel_name = panel.GetName()
@@ -454,6 +512,5 @@ class BaseViewFilesPanel(sppasPanel):
 
     def OnCollapseChanged(self, evt=None):
         panel = evt.GetEventObject()
-        panel.SetFocus()
-        self.ScrollChildIntoView(panel)
         self.Layout()
+        self.GetScrolledPanel().ScrollChildIntoView(panel)

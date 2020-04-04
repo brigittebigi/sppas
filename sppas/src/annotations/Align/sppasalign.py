@@ -430,26 +430,22 @@ class sppasAlign(sppasBaseAnnotation):
             if tier_tok is not None:
                 tier_tok.set_media(media)
                 trs_output.append(tier_tok)
-                try:
-                    trs_output.add_hierarchy_link(
-                        "TimeAlignment", tier_phn, tier_tok)
-                except:
-                    logging.error('No hierarchy was created between'
-                                  'phonemes and tokens')
+                # try:
+                #     trs_output.add_hierarchy_link("TimeAlignment", tier_phn, tier_tok)
+                # except:
+                #     logging.error('No hierarchy was created between phonemes and tokens')
 
             if tier_pron is not None:
                 tier_pron.set_media(media)
                 trs_output.append(tier_pron)
-                try:
-                    if tier_tok is not None:
-                        trs_output.add_hierarchy_link(
-                            "TimeAssociation", tier_tok, tier_pron)
-                    else:
-                        trs_output.add_hierarchy_link(
-                            "TimeAlignment", tier_phn, tier_pron)
-                except:
-                    logging.error('No hierarchy was created between'
-                                  'phonemes and tokens')
+                # try:
+                #     if tier_tok is not None:
+                #         trs_output.add_hierarchy_link("TimeAssociation", tier_tok, tier_pron)
+                #     else:
+                #         trs_output.add_hierarchy_link("TimeAlignment", tier_phn, tier_pron)
+                # except:
+                #     logging.error('No hierarchy was created between'
+                #                   'phonemes and tokens')
 
         except Exception as e:
             self.logfile.print_message(str(e))

@@ -35,6 +35,9 @@
 """
 
 import wx
+import os
+
+from sppas import paths
 
 from .anz_baseviews import BaseViewFilesPanel
 from .baseview import sppasBaseViewPanel
@@ -68,3 +71,24 @@ class DefaultViewFilesPanel(BaseViewFilesPanel):
         panel = sppasBaseViewPanel(self, filename=name)
         self.GetSizer().Add(panel, 0, wx.EXPAND)
         return panel
+
+
+# ----------------------------------------------------------------------------
+# Panel tested by test_glob.py
+# ----------------------------------------------------------------------------
+
+
+class TestPanel(DefaultViewFilesPanel):
+    TEST_FILES = (
+        os.path.join(paths.samples, "COPYRIGHT.txt"),
+        os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.wav"),
+        os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"),
+        os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
+    )
+
+    def __init__(self, parent):
+        super(TestPanel, self).__init__(
+            parent,
+            name="TestPanel-anz_defaultviews",
+            files=TestPanel.TEST_FILES)
+

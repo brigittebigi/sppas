@@ -341,7 +341,7 @@ class sppasTGA(sppasBaseAnnotation):
         # Create the time segments
         timesegs = self.syllables_to_timesegments(syllables)
         trs_out.append(timesegs)
-        trs_out.add_hierarchy_link("TimeAssociation", timegroups, timesegs)
+        # trs_out.add_hierarchy_link("TimeAssociation", timegroups, timesegs)
 
         # Get the duration of each syllable, grouped into the timegroups
         tg_dur = self.timegroups_to_durations(syllables, timegroups)
@@ -354,27 +354,27 @@ class sppasTGA(sppasBaseAnnotation):
         # Put TGA non-optional results into tiers
         tier = sppasTGA.tga_to_tier(ts.len(), timegroups, "TGA-Occurrences", "int")
         trs_out.append(tier)
-        trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
+        # trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
 
         tier = sppasTGA.tga_to_tier(ts.total(), timegroups, "TGA-Total")
         trs_out.append(tier)
-        trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
+        # trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
 
         tier = sppasTGA.tga_to_tier(ts.mean(), timegroups, "TGA-Mean")
         trs_out.append(tier)
-        trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
+        # trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
 
         tier = sppasTGA.tga_to_tier(ts.median(), timegroups, "TGA-Median")
         trs_out.append(tier)
-        trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
+        # trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
 
         tier = sppasTGA.tga_to_tier(ts.stdev(), timegroups, "TGA-StdDev")
         trs_out.append(tier)
-        trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
+        # trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
 
         tier = sppasTGA.tga_to_tier(ts.nPVI(), timegroups, "TGA-nPVI")
         trs_out.append(tier)
-        trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
+        # trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
 
         # Put TGA Intercept/Slope results
         if self._options['original'] is True:
@@ -384,7 +384,7 @@ class sppasTGA(sppasBaseAnnotation):
                 True)
             tier.set_name('TGA-Intercept_original')
             trs_out.append(tier)
-            trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
+            # trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
 
             tier = sppasTGA.tga_to_tier_reglin(
                 ts.intercept_slope_original(),
@@ -392,7 +392,7 @@ class sppasTGA(sppasBaseAnnotation):
                 False)
             tier.set_name('TGA-slope_original')
             trs_out.append(tier)
-            trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
+            # trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
 
         if self._options['annotationpro'] is True:
             tier = sppasTGA.tga_to_tier_reglin(
@@ -401,7 +401,7 @@ class sppasTGA(sppasBaseAnnotation):
                 True)
             tier.set_name('TGA-Intercept_timestamps')
             trs_out.append(tier)
-            trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
+            # trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
 
             tier = sppasTGA.tga_to_tier_reglin(
                 ts.intercept_slope(),
@@ -409,7 +409,7 @@ class sppasTGA(sppasBaseAnnotation):
                 False)
             tier.set_name('TGA-slope_timestamps')
             trs_out.append(tier)
-            trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
+            # trs_out.add_hierarchy_link("TimeAssociation", timegroups, tier)
 
         return trs_out
 

@@ -268,8 +268,8 @@ class sppasTextNorm(sppasBaseAnnotation):
         :param tier:
 
         """
-        occ = sppasTier('Occ-%s' % tier.get_name())
-        dur = sppasTier('Dur-%s' % tier.get_name())
+        occ = sppasTier('Occ%s' % tier.get_name())
+        dur = sppasTier('Dur%s' % tier.get_name())
         for ann in tier:
             labels = ann.get_labels()
             nb_occ = len(labels)
@@ -320,10 +320,8 @@ class sppasTextNorm(sppasBaseAnnotation):
                 tier_occ, tier_dur = self.occ_dur(trs_output[0])
                 trs_output.append(tier_occ)
                 trs_output.append(tier_dur)
-                trs_output.add_hierarchy_link(
-                    "TimeAssociation", trs_output[0], tier_occ)
-                trs_output.add_hierarchy_link(
-                    "TimeAssociation", trs_output[0], tier_dur)
+                # trs_output.add_hierarchy_link("TimeAssociation", trs_output[0], tier_occ)
+                # trs_output.add_hierarchy_link("TimeAssociation", trs_output[0], tier_dur)
 
         trs_output.set_meta('text_normalization_result_of', input_file[0])
         trs_output.set_meta('text_normalization_vocab',

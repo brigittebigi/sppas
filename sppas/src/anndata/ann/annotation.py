@@ -34,8 +34,11 @@
 
 """
 
-from ..anndataexc import AnnDataTypeError
-from ..metadata import sppasMetaData
+import logging
+import warnings
+
+from sppas.src.anndata.anndataexc import AnnDataTypeError
+from sppas.src.anndata.metadata import sppasMetaData
 
 from .annlabel import sppasTag
 from .annlabel import sppasLabel
@@ -52,7 +55,7 @@ class sppasAnnotation(sppasMetaData):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     A sppasAnnotation() is defined as a container for:
 
@@ -90,6 +93,12 @@ class sppasAnnotation(sppasMetaData):
 
     # -----------------------------------------------------------------------
     # Member getters
+    # -----------------------------------------------------------------------
+
+    def get_parent(self):
+        """Return the parent tier or None."""
+        return self.__parent
+
     # -----------------------------------------------------------------------
 
     def get_score(self):
@@ -467,7 +476,9 @@ class sppasAnnotation(sppasMetaData):
     # -----------------------------------------------------------------------
 
     def serialize_labels(self, separator="\n", empty="", alt=True):
-        """Return labels serialized into a string.
+        """DEPRECATED. Return labels serialized into a string.
+
+        TODO: REMOVE THIS METHOD. Use aioutils.serialize_labels() instead.
 
         :param separator: (str) String to separate labels.
         :param empty: (str) The text to return if a tag is empty or not set.
@@ -475,6 +486,9 @@ class sppasAnnotation(sppasMetaData):
         :returns: (str)
 
         """
+        warnings.warn("Use aioutils.serialize_labels() instead",
+                      DeprecationWarning)
+
         if len(self.__labels) == 0:
             return empty
 
@@ -528,25 +542,13 @@ class sppasAnnotation(sppasMetaData):
 
     def get_highest_localization(self):
         """Return a copy of the sppasPoint with the highest loc."""
-        if self.__location.is_point():
-            max_localization = max([l[0] for l in self.__location])
-        else:
-            max_localization = max([l[0].get_end() for l in self.__location])
-
-        # We return a copy to ensure the original loc won't be modified
-        return max_localization.copy()
+        return self.__location.get_highest_localization()
 
     # -----------------------------------------------------------------------
 
     def get_lowest_localization(self):
         """Return a copy of the sppasPoint with the lowest localization."""
-        if self.__location.is_point():
-            min_localization = min([l[0] for l in self.__location])
-        else:
-            min_localization = min([l[0].get_begin() for l in self.__location])
-
-        # We return a copy to be sure the original loc won't be modified
-        return min_localization.copy()
+        return self.__location.get_lowest_localization()
 
     # -----------------------------------------------------------------------
 

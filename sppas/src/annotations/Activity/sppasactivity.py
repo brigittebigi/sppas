@@ -175,13 +175,12 @@ class sppasActivity(sppasBaseAnnotation):
 
         trs_output = sppasTranscription(self.name)
         trs_output.append(activity)
-        if duration is not None:
-            try:
-                trs_output.append(duration)
-                trs_output.add_hierarchy_link("TimeAssociation", activity, duration)
-            except:
-                logging.error('No hierarchy was created between'
-                              'activity and duration.')
+        # if duration is not None:
+        #     try:
+        #         trs_output.append(duration)
+        #         trs_output.add_hierarchy_link("TimeAssociation", activity, duration)
+        #     except:
+        #         logging.error('No hierarchy was created between activity and duration.')
 
         # Save results
         if output_file is not None:

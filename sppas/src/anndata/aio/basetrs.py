@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 from ..transcription import sppasTranscription
 from ..anndataexc import AnnDataTypeError
 

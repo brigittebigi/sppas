@@ -121,7 +121,6 @@ class sppasFilesPanel(sppasPanel):
         """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        wx.LogDebug('New data to set in the files page. Id={:s}'.format(data.id))
 
         # Set to all children.
         self.__send_data(self.GetParent(), data)

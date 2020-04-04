@@ -217,8 +217,9 @@ class FileTreeView(sppasScrolledPanel):
                 modified += len(m)
 
         if modified > 0:
-            self.Layout()
-            self.Refresh()
+            self.GetParent().SendSizeEvent()
+            # self.Layout()
+            # self.Refresh()
 
         return modified
 
@@ -258,17 +259,19 @@ class FileTreeView(sppasScrolledPanel):
                             wx.LogMessage('{:s} removed.'.format(fs_id))
                             # Update the state of the path.
                             fp = self.__data.get_object(fp_id)
-                            p.change_state(fp_id, fp.get_state())
-                            # Update the state of the root (fs was a FileName)
-                            if is_root is False:
-                                # (if the root was not removed)
-                                fr = self.__data.get_object(FileRoot.root(fs_id))
-                                if fr is not None:
-                                    p.change_state(fr.get_id(), fr.get_state())
+                            if fp is not None:
+                                p.change_state(fp_id, fp.get_state())
+                                # Update the state of the root (fs was a FileName)
+                                if is_root is False:
+                                    # (if the root was not removed)
+                                    fr = self.__data.get_object(FileRoot.root(fs_id))
+                                    if fr is not None:
+                                        p.change_state(fr.get_id(), fr.get_state())
 
         if len(removed) > 0:
-            self.Layout()
-            self.Refresh()
+            # self.Layout()
+            # self.Refresh()
+            self.GetParent().SendSizeEvent()
 
         return removed
 
@@ -523,7 +526,6 @@ class FileTreeView(sppasScrolledPanel):
         # The user clicked an item
         self.Bind(EVT_ITEM_CLICKED, self._process_item_clicked)
 
-
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged)
 
     # ------------------------------------------------------------------------
@@ -573,7 +575,6 @@ class FileTreeView(sppasScrolledPanel):
     def OnCollapseChanged(self, evt=None):
         """One of the paths was collapsed/expanded."""
         panel = evt.GetEventObject()
-        panel.SetFocus()
         fs_id = panel.get_id()
         fs = self.__data.get_object(fs_id)
         if fs.subjoined is None:
@@ -581,11 +582,15 @@ class FileTreeView(sppasScrolledPanel):
         fs.subjoined['expand'] = panel.IsExpanded()
 
         if isinstance(fs, FilePath):
-            self.Layout()
-            # self.GetParent().SendSizeEvent()
             evt = DataChangedEvent()
             evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)
+
+            # Required for the parent to do properly its layout:
+            # (i.e. estimate the height needed by each panel and refresh)
+            self.GetParent().SendSizeEvent()
+
+        self.ScrollChildIntoView(panel)
 
     # ------------------------------------------------------------------------
 
@@ -872,10 +877,11 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
     def OnCollapseChanged(self, evt):
         """One of the roots was collapsed/expanded."""
         panel = evt.GetEventObject()
-        panel.SetFocus()
         self.Layout()
         wx.PostEvent(self.GetParent(), evt)
-        # self.GetParent().SendSizeEvent()
+
+        # Required for the parent to do properly its layout:
+        self.GetParent().SendSizeEvent()
 
     # ------------------------------------------------------------------------
 

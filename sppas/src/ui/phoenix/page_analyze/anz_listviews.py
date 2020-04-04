@@ -36,25 +36,30 @@
 
 import os
 import wx
+import mimetypes
 
 from sppas import paths
+import sppas.src.audiodata.aio
+import sppas.src.anndata.aio
 from sppas.src.config import msg
 from sppas.src.utils import u
 
 from ..windows import sppasToolbar
 from ..windows import sppasPanel
-from ..windows import sppasProgressDialog
-from ..dialogs import sppasChoiceDialog
-from ..dialogs import sppasTextEntryDialog
-from ..dialogs import Confirm
+from ..windows.dialogs import sppasProgressDialog
+from ..windows.dialogs import sppasChoiceDialog
+from ..windows.dialogs import sppasTextEntryDialog
+from ..windows.dialogs import Confirm
+from ..windows.dialogs import MetaDataEdit
 from ..dialogs import TiersView
 from ..dialogs import StatsView
 from ..dialogs import sppasTiersSingleFilterDialog
 from ..dialogs import sppasTiersRelationFilterDialog
 
 from .anz_baseviews import BaseViewFilesPanel
+from .listview import AudioListViewPanel
 from .listview import TrsListViewPanel
-from .listview import TIER_BG_COLOUR
+TIER_BG_COLOUR = wx.Colour(180, 230, 250, 128)
 
 # ----------------------------------------------------------------------------
 
@@ -69,6 +74,7 @@ MSG_ANNS = u(msg("Annotations: "))
 TIER_MSG_ASK_NAME = u(msg("New name of the checked tiers: "))
 TIER_MSG_ASK_REGEXP = u(msg("Check tiers with name matching: "))
 TIER_MSG_ASK_RADIUS = u(msg("Radius value of the checked tiers: "))
+TIER_ACT_METADATA = u(msg("Metadata"))
 TIER_ACT_CHECK = u(msg("Check"))
 TIER_ACT_UNCHECK = u(msg("Uncheck"))
 TIER_ACT_RENAME = u(msg("Rename"))
@@ -88,6 +94,75 @@ TIER_MSG_CONFIRM_DEL = \
     u(msg("Are you sure to delete {:d} tiers of {:d} files? "
           "The process is irreversible."))
 TIER_REL_WITH = u(msg("Name of the tier to be in relation with: "))
+
+# ----------------------------------------------------------------------------
+
+
+class ListViewType(object):
+    """Enum of all types of supported data by the ListView.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
+
+    :Example:
+
+        >>>with ListViewType() as tt:
+        >>>    print(tt.transcription)
+
+    This class is a solution to mimic an 'Enum' but is compatible with both
+    Python 2.7 and Python 3+.
+
+    """
+
+    def __init__(self):
+        """Create the dictionary."""
+        self.__dict__ = dict(
+            unknown=-1,
+            unsupported=0,
+            audio=1,
+            transcription=3
+        )
+
+    # -----------------------------------------------------------------------
+
+    def __enter__(self):
+        return self
+
+    # -----------------------------------------------------------------------
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
+
+    # -----------------------------------------------------------------------
+
+    def GuessType(self, filename):
+        """Return the expected type of the given filename.
+
+        :return: (MediaType) Integer value of the type
+
+        """
+        mime_type = "unknown"
+        if filename is not None:
+            m = mimetypes.guess_type(filename)
+            if m[0] is not None:
+                mime_type = m[0]
+
+        if "video" in mime_type:
+            return self.unsupported
+
+        fn, fe = os.path.splitext(filename)
+        if "audio" in mime_type:
+            if fe.lower() in sppas.src.audiodata.aio.extensions:
+                return self.audio
+            return self.unsupported
+
+        if fe.lower() in sppas.src.anndata.aio.extensions:
+            return self.transcription
+
+        return self.unknown
 
 # ----------------------------------------------------------------------------
 
@@ -147,10 +222,24 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         :return: wx.Window
 
         """
-        wx.LogMessage("Displaying file {} in ListView mode.".format(name))
-        panel = TrsListViewPanel(self.GetScrolledPanel(), filename=name)
-        panel.SetHighLightColor(self._hicolor)
-        self.GetScrolledSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.TOP | wx.BOTTOM, 20)
+        if name is None:
+            # In case we created a new file, it'll be a transcription!
+            panel = TrsListViewPanel(self.GetScrolledPanel(), filename=None)
+            panel.SetHighLightColor(self._hicolor)
+        else:
+            with ListViewType() as tt:
+                if tt.GuessType(name) == tt.audio:
+                    panel = AudioListViewPanel(self.GetScrolledPanel(), filename=name)
+                elif tt.GuessType(name) == tt.transcription:
+                    panel = TrsListViewPanel(self.GetScrolledPanel(), filename=name)
+                    panel.SetHighLightColor(self._hicolor)
+                elif tt.GuessType(name) == tt.unsupported:
+                    raise IOError("File format not supported.")
+                elif tt.GuessType(name) == tt.unknown:
+                    raise TypeError("Unknown file format.")
+
+        border = sppasPanel.fix_size(10)
+        self.GetScrolledSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.TOP | wx.BOTTOM, border)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
 
         return panel
@@ -165,8 +254,12 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         """
         panel = sppasPanel(self, name="toolbar_views")
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self._create_toolbar_tiers(panel), 0, wx.ALIGN_LEFT | wx.EXPAND, 0)
-        sizer.Add(self._create_toolbar_anns(panel), 0, wx.ALIGN_LEFT | wx.EXPAND, 0)
+        tb1 = self._create_toolbar_tiers(panel)
+        tb1.SetMinSize(wx.Size(-1, panel.get_font_height()*4))
+        tb2 = self._create_toolbar_anns(panel)
+        tb2.SetMinSize(wx.Size(-1, panel.get_font_height()*4))
+        sizer.Add(tb1, 0, wx.ALIGN_LEFT | wx.EXPAND, 0)
+        sizer.Add(tb2, 0, wx.ALIGN_LEFT | wx.EXPAND, 0)
         panel.SetSizerAndFit(sizer)
         return panel
 
@@ -175,11 +268,14 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     def _create_toolbar_tiers(self, parent):
         """Create a toolbar for actions on tiers. """
         toolbar = sppasToolbar(parent, name="subtoolbar1")
-        toolbar.SetMinSize(wx.Size(toolbar.get_height()*5, -1))
 
         # focus color of buttons performing an action on tiers
         toolbar.set_focus_color(TIER_BG_COLOUR)
         toolbar.AddTitleText(MSG_TIERS, TIER_BG_COLOUR)
+
+        b = toolbar.AddButton("tags", TIER_ACT_METADATA)
+        b.LabelPosition = wx.BOTTOM
+        b.Spacing = 1
 
         b = toolbar.AddButton("tier_check", TIER_ACT_CHECK)
         b.LabelPosition = wx.BOTTOM
@@ -230,7 +326,6 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     def _create_toolbar_anns(self, parent):
         """Create a toolbar for actions on annotations of tiers. """
         toolbar = sppasToolbar(parent, name="subtoolbar2")
-        toolbar.SetMinSize(wx.Size(toolbar.get_height() * 5, -1))
 
         # focus color of buttons performing an action on tiers
         toolbar.set_focus_color(wx.Colour(255, 230, 180, 128))
@@ -273,7 +368,9 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         btn = event.GetEventObject()
         btn_name = btn.GetName()
 
-        if btn_name == "tier_check":
+        if btn_name == "tags":
+            self.metadata_tiers()
+        elif btn_name == "tier_check":
             self.check_tiers()
         elif btn_name == "tier_uncheck":
             self.uncheck_tiers()
@@ -323,6 +420,18 @@ class ListViewFilesPanel(BaseViewFilesPanel):
                     nbt += nb_checks
 
         return nbf, nbt
+
+    # -----------------------------------------------------------------------
+
+    def metadata_tiers(self):
+        """Edit metadata of selected tiers."""
+        tiers = list()
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsListViewPanel):
+                tiers.extend(panel.get_checked_tier())
+
+        MetaDataEdit(self, tiers)
 
     # -----------------------------------------------------------------------
 
@@ -584,7 +693,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
                 progress.set_text(filename)
                 if isinstance(panel, TrsListViewPanel):
                     filtered += panel.single_filter(filters, match_all, annot_format, tiername)
-                progress.set_fraction(float((i+1))/float(total))
+                progress.set_fraction(int(100. * float((i+1)) / float(total)))
 
             wx.EndBusyCursor()
             progress.set_fraction(100)
@@ -647,7 +756,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
                 if isinstance(panel, TrsListViewPanel):
                     filtered += panel.relation_filter(
                         filters, y_tiername, annot_format, out_tiername)
-                progress.set_fraction(float((i+1))/float(total))
+                progress.set_fraction(int(100. * float((i+1)) / float(total)))
 
             wx.EndBusyCursor()
             progress.set_fraction(100)
@@ -666,7 +775,8 @@ class TestPanel(ListViewFilesPanel):
     TEST_FILES = (
         os.path.join(paths.samples, "COPYRIGHT.txt"),
         os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.wav"),
-        os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra")
+        os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"),
+        os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
     )
 
     def __init__(self, parent):

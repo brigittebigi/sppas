@@ -44,16 +44,16 @@ from sppas import sppasTypeError
 from sppas.src.plugins import sppasPluginsManager
 from sppas.src.files import FileData, States
 
-from ..dialogs import Error, Information, AboutPlugin
+from ..windows import Error, Information
 from ..windows import sppasDialog
 from ..windows import sppasScrolledPanel
 from ..windows import sppasProgressDialog
 from ..windows import sppasPanel
 from ..windows import sppasMessageText, sppasTitleText
 from ..windows import sppasStaticLine
-from ..windows import BitmapTextButton, sppasTextButton
-
+from ..windows import BitmapTextButton, TextButton
 from ..panels import sppasOptionsPanel
+from ..dialogs import AboutPlugin
 from ..main_events import DataChangedEvent
 
 # ---------------------------------------------------------------------------
@@ -366,7 +366,7 @@ class sppasPluginDescription(sppasPanel):
 
     def __create_enable_btn(self):
 
-        w = sppasPanel.fix_size(64)
+        w = sppasPanel.fix_size(128)
         h = sppasPanel.fix_size(48)
 
         btn_enable = BitmapTextButton(
@@ -376,11 +376,10 @@ class sppasPluginDescription(sppasPanel):
         btn_enable.SetImage(
             os.path.join(self.__plugin.get_directory(),
                          self.__plugin.get_icon()))
-        btn_enable.LabelPosition = wx.BOTTOM
-        btn_enable.Spacing = 6
-        btn_enable.FocusWidth = 0
-        btn_enable.BorderWidth = 0
-        btn_enable.BitmapColour = self.GetForegroundColour()
+        btn_enable.SetLabelPosition(wx.BOTTOM)
+        btn_enable.SetSpacing(sppasPanel.fix_size(6))
+        btn_enable.SetFocusWidth(0)
+        btn_enable.SetBitmapColour(self.GetForegroundColour())
         btn_enable.SetMinSize(wx.Size(w, h))
 
         return btn_enable
@@ -391,8 +390,9 @@ class sppasPluginDescription(sppasPanel):
         w = sppasPanel.fix_size(96)
         h = sppasPanel.fix_size(32)
 
-        btn_about = sppasTextButton(
+        btn_about = TextButton(
             self, label=MSG_ABOUT + "...", name="about_plugin")
+        btn_about.SetBorderWidth(0)
         btn_about.SetForegroundColour(wx.Colour(80, 100, 220))
         btn_about.SetMinSize(wx.Size(w, h))
 

@@ -59,6 +59,7 @@ from ..windows import CheckButton
 from ..windows import sppasTextCtrl, sppasStaticText
 from ..windows import sppasRadioBoxPanel
 from ..windows.book import sppasNotebook
+from ..windows.listctrl import sppasListCtrl
 
 # --------------------------------------------------------------------------
 
@@ -273,12 +274,16 @@ class sppasTiersSingleFilterDialog(sppasDialog):
         panel = sppasPanel(self, name="content")
         tb = self.__create_toolbar(panel)
         lst = self.__create_list_filters(panel)
+
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        st = sppasStaticText(self, label="Name of the filtered tier:")
-        nt = sppasTextCtrl(self, value="Filtered", name="tiername_textctrl")
+        st = sppasStaticText(panel, label="Name of the filtered tier:")
+        nt = sppasTextCtrl(panel, value="Filtered", name="tiername_textctrl")
         hbox.Add(st, 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, b)
         hbox.Add(nt, 1, wx.EXPAND | wx.ALL, b)
-        an_box = CheckButton(self, label=MSG_ANNOT_FORMAT)
+
+        an_box = CheckButton(panel, label=MSG_ANNOT_FORMAT)
+        an_box.SetMinSize(wx.Size(-1, panel.get_font_height()*2))
+        an_box.SetFocusWidth(0)
         an_box.SetValue(False)
         an_box.SetName("annotformat_checkbutton")
 
@@ -308,8 +313,8 @@ class sppasTiersSingleFilterDialog(sppasDialog):
     # -----------------------------------------------------------------------
 
     def __create_list_filters(self, parent):
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES
-        lst = wx.ListCtrl(parent, style=style, name="filters_listctrl")
+        style = wx.BORDER_SIMPLE | wx.LC_REPORT | wx.LC_SINGLE_SEL
+        lst = sppasListCtrl(parent, style=style, name="filters_listctrl")
         lst.AppendColumn("filter name",
                          format=wx.LIST_FORMAT_LEFT,
                          width=sppasPanel.fix_size(80))
@@ -349,10 +354,9 @@ class sppasTiersSingleFilterDialog(sppasDialog):
 
     def __create_action_button(self, parent, text, icon):
         btn = BitmapTextButton(parent, label=text, name=icon)
-        btn.LabelPosition = wx.RIGHT
-        btn.Spacing = sppasDialog.fix_size(12)
-        btn.BorderWidth = 0
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetLabelPosition(wx.RIGHT)
+        btn.SetSpacing(sppasDialog.fix_size(12))
+        # btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(sppasDialog.fix_size(32),
                                sppasDialog.fix_size(32)))
 
@@ -566,6 +570,8 @@ class sppasTagStringPanel(sppasPanel):
         self.radiobox.SetSelection(1)
 
         self.checkbox = CheckButton(self, label=MSG_CASE)
+        self.checkbox.SetMinSize(wx.Size(-1, self.get_font_height()*2))
+        self.checkbox.SetFocusWidth(0)
         self.checkbox.SetValue(True)
 
         # Layout
@@ -1291,6 +1297,8 @@ class sppasTiersRelationFilterDialog(sppasDialog):
 
         # The annot_format option (replace label by the name of the relation)
         an_box = CheckButton(panel, label=MSG_ANNOT_FORMAT)
+        an_box.SetMinSize(wx.Size(-1, self.get_font_height()*2))
+        an_box.SetFocusWidth(0)
         an_box.SetValue(False)
         an_box.SetName("annotformat_checkbutton")
 
@@ -1426,34 +1434,33 @@ class AllensRelationsTable(ulc.UltimateListCtrl):
 
 class TestPanel(sppasPanel):
 
-    def __init__(self, parent):
-        super(TestPanel, self).__init__(parent, name="TestPanel-tiersfilter")
+    def __init__(self, parent, pos=wx.DefaultPosition, size=wx.DefaultSize):
+        super(TestPanel, self).__init__(parent, pos=pos, size=size,
+                                        name="TestPanel-tiersfilter")
 
         btn_tag = wx.Button(self,
-                            pos=(10, 10),
-                            size=(180, 70),
                             label="+ Tag filter",
                             name="tag_btn")
         btn_loc = wx.Button(self,
-                            pos=(200, 10),
-                            size=(180, 70),
                             label="+ Loc filter",
                             name="loc_btn")
         btn_dur = wx.Button(self,
-                            pos=(390, 10),
-                            size=(180, 70),
                             label="+ Dur filter",
                             name="dur_btn")
         btn_sgl = wx.Button(self,
-                            pos=(10, 100),
-                            size=(260, 70),
                             label="Single filter",
                             name="sgl_btn")
         btn_rel = wx.Button(self,
-                            pos=(310, 100),
-                            size=(260, 70),
                             label="Relation filter",
                             name="rel_btn")
+
+        s = wx.BoxSizer(wx.HORIZONTAL)
+        s.Add(btn_tag, 1, wx.EXPAND, 2)
+        s.Add(btn_loc, 1, wx.EXPAND, 2)
+        s.Add(btn_dur, 1, wx.EXPAND, 2)
+        s.Add(btn_sgl, 1, wx.EXPAND, 2)
+        s.Add(btn_rel, 1, wx.EXPAND, 2)
+        self.SetSizer(s)
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
     # -----------------------------------------------------------------------

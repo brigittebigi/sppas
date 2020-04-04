@@ -41,7 +41,6 @@ from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasCollapsiblePanel
 from ..windows import sppasSimpleText
-from ..tools import sppasSwissKnife
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when an item is clicked.
@@ -359,7 +358,6 @@ class RefsTreeView(sppasScrolledPanel):
     def OnCollapseChanged(self, evt=None):
         """One of the roots was collapsed/expanded."""
         panel = evt.GetEventObject()
-        panel.SetFocus()
         self.Layout()
         for ref_id in self.__refps:
             if self.__refps[ref_id] == panel:
@@ -369,6 +367,7 @@ class RefsTreeView(sppasScrolledPanel):
                 ref.subjoined['expand'] = panel.IsExpanded()
                 break
         self.GetParent().SendSizeEvent()
+        self.ScrollChildIntoView(panel)
 
     # ------------------------------------------------------------------------
 
@@ -584,8 +583,8 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
 
         n = listctrl.GetItemCount()
         h = int(self.GetFont().GetPixelSize()[1] * 2.)
-        listctrl.SetMinSize(wx.Size(-1, n * h))
-        listctrl.SetMaxSize(wx.Size(-1, (n * h) + bar))
+        listctrl.SetMinSize(wx.Size(-1, (n * h) + bar))
+        listctrl.SetMaxSize(wx.Size(-1, ((n * h) + bar) * 2))
 
     # ------------------------------------------------------------------------
     # Management the list of files

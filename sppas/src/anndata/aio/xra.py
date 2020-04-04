@@ -56,6 +56,70 @@ from .basetrs import sppasBaseIO
 # ---------------------------------------------------------------------------
 
 
+class sppasJRA(object):
+    """JRA is intended to be the next default format of annotated files."""
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def format_label(label_root, label):
+        """Add a 'Label' in the dict from a sppasLabel().
+
+        :param label_root: (list)
+        :param label: (sppasLabel)
+
+        """
+        tags = list()
+        for tag, score in label:
+            tag_node = dict()
+            tag_node['score'] = score
+            sppasJRA._format_tag(tag_node, tag)
+            tags.append(tag_node)
+        label_root.append(tags)
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def _format_tag(tag_node, tag):
+        """Add a 'Tag' element from a sppasTag().
+
+        :param tag_node: (dict)
+        :param tag: (sppasTag)
+
+        """
+        tag_node['type'] = tag.get_type()
+        tag_node['text'] = tag.get_content()
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def parse_label(tags_list):
+        """Create a sppasLabel from a list of tag dictionaries.
+
+        """
+        tags = list()
+        scores = list()
+        for tag_item in tags_list:
+            tags.append(sppasJRA._parse_tag(tag_item))
+            scores.append(tag_item['score'])
+
+        return sppasLabel(tags, scores)
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def _parse_tag(tag_dict):
+        """Create a 'sppasTag' from a 'Tag' dict.
+
+        :param tag_dict: (dict) 2 keys expected: text and type
+        :return: (sppasTag)
+
+        """
+        return sppasTag(tag_dict['text'], tag_dict['type'])
+
+# ---------------------------------------------------------------------------
+
+
 class sppasXRA(sppasBaseIO):
     """SPPAS XRA reader and writer.
 
@@ -229,7 +293,7 @@ class sppasXRA(sppasBaseIO):
 
         labels = list()
         for label_root in annotation_root.findall('Label'):
-            labels.append(sppasXRA._parse_label(label_root))
+            labels.append(sppasXRA.parse_label(label_root))
 
         ann = tier.create_annotation(location, labels)
         sppasXRA._parse_metadata(ann, annotation_root.find('Metadata'))
@@ -394,7 +458,7 @@ class sppasXRA(sppasBaseIO):
     # -----------------------------------------------------------------------
 
     @staticmethod
-    def _parse_label(label_root):
+    def parse_label(label_root):
         """Parse a 'Label' element and return it.
 
         :param label_root: (ET) XML Element tree root.

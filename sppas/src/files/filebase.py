@@ -159,6 +159,8 @@ class FileBase(object):
         """
         return str(self).__format__(fmt)
 
+    # -----------------------------------------------------------------------
+
     def __str__(self):
         """The string conversion of the object.
 
@@ -167,6 +169,8 @@ class FileBase(object):
         """
         return '{!s:s}'.format(self.__id)
 
+    # -----------------------------------------------------------------------
+
     def __repr__(self):
         """Function called by print.
 
@@ -174,6 +178,58 @@ class FileBase(object):
 
         """
         return 'File: {!s:s}'.format(self.__id)
+
+    # -----------------------------------------------------------------------
+
+    def __eq__(self, other):
+        """Allows to compare self with other by using "==".
+
+        :param other: (FileName, str)
+
+        """
+        if other is not None:
+            if isinstance(other, FileBase):
+                return self.id == other.id
+            else:
+                return self.id == other
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def __ne__(self, other):
+        if other is not None:
+            return not self == other
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def __gt__(self, other):
+        """Allows to compare self with other by using ">".
+
+        Can be used, for example, to sort a list of FileName() instances
+        alphabetically.
+
+        :param other: (FileName, str)
+
+        """
+        if other is not None:
+            return self.id > other.id
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def __lt__(self, other):
+        """Allows to compare self with other by using "<".
+
+        Can be used, for example, to sort a list of FileName() instances
+        alphabetically.
+
+        :param other: (FileName, str)
+
+        """
+        if other is not None:
+            return self.id < other.id
+        return False
 
 # ---------------------------------------------------------------------------
 

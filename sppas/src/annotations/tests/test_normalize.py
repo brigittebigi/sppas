@@ -40,8 +40,9 @@
     :summary:      Test the SPPAS Text Normalization.
 
 """
+
 import unittest
-import os.path
+import os
 
 from sppas.src.config import paths
 

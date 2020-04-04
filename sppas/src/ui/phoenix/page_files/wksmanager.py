@@ -44,9 +44,9 @@ from sppas.src.files.filedata import FileData
 from sppas.src.files.filebase import States
 from sppas.src.ui import sppasWorkspaces
 
-from ..dialogs import Confirm, Error
-from ..dialogs import sppasTextEntryDialog
-from ..dialogs import sppasFileDialog
+from ..windows import Confirm, Error
+from ..windows import sppasTextEntryDialog
+from ..windows import sppasFileDialog
 from ..windows import sppasStaticLine
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
@@ -78,6 +78,8 @@ WKP_ACT_RENAME = _("Rename")
 
 WKP_MSG_ASK_NAME = _("New name of the workspace: ")
 
+WKP_SWITCH_DISABLED = _("The current workspace contains locked files. Close files first.")
+WKP_ERROR = _("Error")
 WKP_MSG_CONFIRM_SWITCH = _("Confirm switch of workspace?")
 WKP_MSG_CONFIRM_DELETE = _("Confirm delete of workspace?")
 WKP_MSG_CONFIRM_OVERRIDE = _(
@@ -262,9 +264,15 @@ class WorkspacesManager(sppasPanel):
         wkpslist = event.GetEventObject()
         wkp_name = wkpslist.get_wkp_name(event.to_wkp)
 
+        # Can't switch if locked files. Files must be closed first.
+        if self.__data.has_locked_files():
+            Error(WKP_SWITCH_DISABLED, WKP_ERROR)
+            # the workspace panel has to switch back to the current
+            wkpslist.switch_to(event.from_wkp)
+            return
+
         # Save the currently displayed data (they correspond to the previous wkp)
-        if self.__data.has_locked_files() or \
-                (event.from_wkp == 0 and self.__data.is_empty() is False) or \
+        if (event.from_wkp == 0 and self.__data.is_empty() is False) or \
                 self.__data.get_state() != States().UNUSED:
 
             # User must confirm to really switch
@@ -367,7 +375,7 @@ class WorkspacesManager(sppasPanel):
 
         """
         # get the name of the file to be exported to
-        with sppasFileDialog(self, title=WKP_ACT_IMPORT,
+        with sppasFileDialog(self, title=WKP_ACT_EXPORT,
                              style=wx.FD_SAVE) as dlg:
             dlg.SetWildcard(WKP + " (*.wjson)|*.wjson")
             if dlg.ShowModal() == wx.ID_CANCEL:
@@ -671,6 +679,7 @@ class WorkspacesPanel(sppasPanel):
 
         """
         btn = RadioButton(self, label=name, name=name)
+        btn.SetBorderWidth(2)
         btn.SetSpacing(sppasPanel.fix_size(12))
         btn.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
         btn.SetSize(wx.Size(-1, sppasPanel.fix_size(32)))
@@ -688,19 +697,19 @@ class WorkspacesPanel(sppasPanel):
 
     def __set_normal_btn_style(self, button):
         """Set a normal style to a button."""
-        button.BorderWidth = 0
-        button.BorderColour = self.GetForegroundColour()
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = WorkspacesManager.HIGHLIGHT_COLOUR
+        button.SetBorderWidth(0)
+        button.SetBorderColour(self.GetForegroundColour())
+        button.SetBorderStyle(wx.PENSTYLE_SOLID)
+        button.SetFocusColour(WorkspacesManager.HIGHLIGHT_COLOUR)
 
     # -----------------------------------------------------------------------
 
     def __set_active_btn_style(self, button):
         """Set a special style to the button."""
-        button.BorderWidth = 1
-        button.BorderColour = WorkspacesManager.HIGHLIGHT_COLOUR
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = self.GetForegroundColour()
+        button.SetBorderWidth(1)
+        button.SetBorderColour(WorkspacesManager.HIGHLIGHT_COLOUR)
+        button.SetBorderStyle(wx.PENSTYLE_SOLID)
+        button.SetFocusColour(self.GetForegroundColour())
 
     # -----------------------------------------------------------------------
     # Events management

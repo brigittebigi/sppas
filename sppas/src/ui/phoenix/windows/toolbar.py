@@ -44,13 +44,13 @@ from .button import BitmapTextButton, TextButton, ToggleButton
 
 
 class sppasToolbar(sppasPanel):
-    """Panel imitating the behaviors of an horizontal toolbar.
+    """Panel imitating the behaviors of a toolbar.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -63,7 +63,7 @@ class sppasToolbar(sppasPanel):
             style=wx.NO_BORDER | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
-        # Size
+        # A proportional height
         self._h = sppasPanel.fix_size(32)
 
         # Focus Color&Style
@@ -86,6 +86,15 @@ class sppasToolbar(sppasPanel):
             self.SetMinSize(wx.Size(self._h, -1))
         self.Bind(wx.EVT_TOGGLEBUTTON, self.__on_tg_btn_event)
 
+    # -----------------------------------------------------------------------
+
+    def AcceptsFocusFromKeyboard(self):
+        """Can this window be given focus by tab key?"""
+        # return True
+        return False
+
+    # -----------------------------------------------------------------------
+    # Public methods to access the components and their properties
     # -----------------------------------------------------------------------
 
     def get_height(self):
@@ -159,7 +168,8 @@ class sppasToolbar(sppasPanel):
 
         The button can contain either:
             - an icon only;
-            - an icon with a text.
+            - an icon with a text;
+            - a text only.
 
         :param icon: (str) Name of the .png file of the icon or None
         :param text: (str) Label of the button
@@ -188,15 +198,17 @@ class sppasToolbar(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def AddButton(self, icon, text=""):
+    def AddButton(self, icon, text=None):
         """Append a button into the toolbar.
 
         The button can contain either:
             - an icon only;
-            - an icon with a text.
+            - a text only;
+            - an icon and a text.
 
-        :param icon: (str) Name of the .png file of the icon or None
-        :param text: (str) Label of the button
+        :param icon: (str) Name of the .png file of the icon or None to have a TextButton.
+        :param text: (str) Label of the button. None to have a BitmapButton.
+        :raise: (TypeError) if no icon nor text is given.
 
         """
         btn = self.create_button(text, icon)
@@ -252,6 +264,7 @@ class sppasToolbar(sppasPanel):
         """
         st = sppasStaticText(self, label=text, name=name)
         st.SetFont(self.__title_font())
+        # st.SetLabel(text)
         self.__ft.append(st)
         if color is not None:
             st.SetForegroundColour(color)
@@ -292,20 +305,27 @@ class sppasToolbar(sppasPanel):
     # -----------------------------------------------------------------------
 
     def create_button(self, text, icon):
+        if text is None and icon is None:
+            raise TypeError("At least an icon or a text is required to create a button")
         if icon is not None:
             btn = BitmapTextButton(self, label=text, name=icon)
-            btn.LabelPosition = wx.RIGHT
+            btn.SetLabelPosition(wx.RIGHT)
+            btn.SetBitmapColour(self.GetForegroundColour())
+            if text is None:
+                btn.SetSpacing(0)
+                btn.SetMaxSize(wx.Size(self._h*2, self._h*2))
+            else:
+                btn.SetSpacing(sppasPanel.fix_size(12))
+                btn.SetMaxSize(wx.Size(self._h*4, self._h*2))
 
         else:
             btn = TextButton(self, label=text)
-            btn.LabelPosition = wx.CENTRE
+            btn.SetLabelPosition(wx.CENTRE)
 
-        btn.FocusStyle = self._fs
-        btn.FocusWidth = self._fw
-        btn.FocusColour = self._fc
-        btn.Spacing = sppasPanel.fix_size(12)
-        btn.BorderWidth = 0
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetFocusStyle(self._fs)
+        btn.SetFocusWidth(self._fw)
+        btn.SetFocusColour(self._fc)
+        btn.SetBorderWidth(0)
         btn.SetMinSize(wx.Size(self._h, self._h))
 
         return btn
@@ -347,6 +367,8 @@ class sppasToolbar(sppasPanel):
         for c in self.GetChildren():
             if c not in self.__ft:
                 c.SetFont(font)
+        # because the new font can have a different size, we have to layout
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
@@ -362,7 +384,7 @@ class sppasToolbar(sppasPanel):
                              wx.FONTSTYLE_NORMAL,    # style,
                              wx.FONTWEIGHT_BOLD,     # weight,
                              underline=False,
-                             faceName="Calibri",
+                             faceName="Lucida sans",
                              encoding=wx.FONTENCODING_SYSTEM)
         return title_font
 

@@ -46,9 +46,9 @@ from sppas.src.files import States
 
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
-from ..dialogs import Error, Information
-from ..dialogs import sppasChoiceDialog
-from ..dialogs import sppasFileDialog
+from ..windows import Error, Information
+from ..windows import sppasChoiceDialog
+from ..windows import sppasFileDialog
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 

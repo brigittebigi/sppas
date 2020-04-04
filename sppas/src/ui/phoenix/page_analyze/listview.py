@@ -44,6 +44,7 @@ import wx.lib.newevent
 
 from sppas import paths
 
+import sppas.src.audiodata.aio
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 from sppas.src.anndata.aio.basetrs import sppasBaseIO
@@ -57,13 +58,14 @@ from sppas.src.anndata import sppasHierarchy
 from sppas.src.anndata import sppasCtrlVocab
 from sppas.src.anndata import sppasMetaData
 
-from ..tools import sppasSwissKnife
-from ..windows.image import ColorizeImage
-from ..windows import sppasPanel
-from ..windows import sppasCollapsiblePanel
-from .baseview import sppasBaseViewPanel
+from ..dialogs import AudioRoamer
+from ..windows.listctrl import CheckListCtrl, sppasListCtrl
+from ..windows.text import sppasStaticText, sppasTextCtrl
+from ..windows.panel import sppasPanel
+from ..windows.panel import sppasCollapsiblePanel
+from ..windows.dialogs import MetaDataEdit
 
-TIER_BG_COLOUR = wx.Colour(180, 230, 255, 128)
+from .baseview import sppasBaseViewPanel
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when an item is clicked.
@@ -73,10 +75,199 @@ ItemClickedCommandEvent, EVT_ITEM_CLICKED_COMMAND = wx.lib.newevent.NewCommandEv
 
 # ---------------------------------------------------------------------------
 
-STATES_ICON_NAMES = {
-    "False": "choice_checkbox",
-    "True": "choice_checked",
-}
+LABEL_LIST = {"duration": "Duration (seconds): ",
+              "framerate": "Frame rate (Hz): ",
+              "sampwidth": "Sample width (bits): ",
+              "channels": "Channels: "}
+
+NO_INFO_LABEL = " ... "
+
+ERROR_COLOUR = wx.Colour(220, 30, 10, 128)     # red
+WARNING_COLOUR = wx.Colour(240, 190, 45, 128)  # orange
+
+# ---------------------------------------------------------------------------
+
+
+class AudioListViewPanel(sppasBaseViewPanel):
+    """A panel to display the content of an audio as a list.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    The object this class is displaying is a sppasAudio.
+    Can not be constructed if the file is not supported and/or if an error
+    occurred when opening or reading.
+
+    """
+
+    def __init__(self, parent, filename, name="listview-panel"):
+        self._object = None
+        self._dirty = False
+        self._labels = dict()
+        self._values = dict()
+
+        super(AudioListViewPanel, self).__init__(parent, filename, name)
+        self.fix_values()
+        if self._object.get_duration() > 300.:
+            self.FindWindow("window-more").Enable(False)
+            wx.LogWarning("Audio Roamer is disabled: the audio file {} "
+                          "is too long.".format(filename))
+
+    # -----------------------------------------------------------------------
+    # Public methods
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        r, g, b = colour.Red(), colour.Green(), colour.Blue()
+        delta = 10
+        if (r + g + b) > 384:
+            cc = wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
+        else:
+            cc = wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
+
+        sppasCollapsiblePanel.SetBackgroundColour(self, colour)
+        self.GetPane().SetBackgroundColour(cc)
+
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        sppasCollapsiblePanel.SetForegroundColour(self, colour)
+        if self._object is not None and len(self._values) > 0:
+            self.fix_values()
+
+    # -----------------------------------------------------------------------
+
+    def fix_values(self):
+        """Display information of a sound file. """
+        self.__fix_duration()
+        self.__fix_framerate()
+        self.__fix_sampwidth()
+        self.__fix_nchannels()
+
+    # -----------------------------------------------------------------------
+
+    def cancel_values(self):
+        """Reset displayed information. """
+        for v in self._values:
+            v.ChangeValue(NO_INFO_LABEL)
+            v.SetForegroundColour(self.GetForegroundColour())
+
+    # -----------------------------------------------------------------------
+    # Override from the parent
+    # -----------------------------------------------------------------------
+
+    def Destroy(self):
+        self._object.close()
+        wx.Window.Destroy(self)
+
+    # -----------------------------------------------------------------------
+
+    def get_object(self):
+        """Return the object created from the opened file.
+
+        :return: (sppasTranscription)
+
+        """
+        return self._object
+
+    # -----------------------------------------------------------------------
+
+    def load_text(self):
+        """Override. Load audio filename in the object.
+
+        :raises: IOError
+
+        """
+        self._object = sppas.src.audiodata.aio.open(self._filename)
+
+    # -----------------------------------------------------------------------
+
+    def _create_content(self):
+        """Override. Create the content of the panel."""
+        self.AddButton("window-more")
+        self.AddButton("close")
+
+        self._create_child_panel()
+        self.Expand()
+
+    # -----------------------------------------------------------------------
+
+    def _create_child_panel(self):
+        child_panel = self.GetPane()
+        gbs = wx.GridBagSizer()
+
+        for i, label in enumerate(LABEL_LIST):
+            static_tx = sppasStaticText(child_panel, label=LABEL_LIST[label])
+            self._labels[label] = static_tx
+            gbs.Add(static_tx, (i, 0), flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=sppasPanel.fix_size(6))
+
+            # tx = sppasTextCtrl(child_panel, value=NO_INFO_LABEL, style=wx.TE_READONLY | wx.BORDER_NONE)
+            tx = sppasStaticText(child_panel, label=NO_INFO_LABEL)
+            tx.SetMinSize(wx.Size(sppasPanel.fix_size(200), -1))
+            self._values[label] = tx
+            gbs.Add(tx, (i, 1), flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=sppasPanel.fix_size(6))
+
+        gbs.AddGrowableCol(1)
+        child_panel.SetSizer(gbs)
+
+    # -----------------------------------------------------------------------
+
+    def __fix_duration(self):
+        duration = self._object.get_duration()
+        # self._values["duration"].ChangeValue(str(round(float(duration), 3)))
+        self._values["duration"].SetLabel(str(round(float(duration), 3)))
+        self._values["duration"].SetForegroundColour(self.GetForegroundColour())
+
+    def __fix_framerate(self):
+        framerate = self._object.get_framerate()
+        # self._values["framerate"].ChangeValue(str(framerate))
+        self._values["framerate"].SetLabel(str(framerate))
+        if framerate < 16000:
+            self._values["framerate"].SetForegroundColour(ERROR_COLOUR)
+        elif framerate in [16000, 32000, 48000]:
+            self._values["framerate"].SetForegroundColour(self.GetForegroundColour())
+        else:
+            self._values["framerate"].SetForegroundColour(WARNING_COLOUR)
+
+    def __fix_sampwidth(self):
+        sampwidth = self._object.get_sampwidth()
+        # self._values["sampwidth"].ChangeValue(str(sampwidth*8))
+        self._values["sampwidth"].SetLabel(str(sampwidth*8))
+        if sampwidth == 1:
+            self._values["sampwidth"].SetForegroundColour(ERROR_COLOUR)
+        elif sampwidth == 2:
+            self._values["sampwidth"].SetForegroundColour(self.GetForegroundColour())
+        else:
+            self._values["sampwidth"].SetForegroundColour(WARNING_COLOUR)
+
+    def __fix_nchannels(self):
+        nchannels = self._object.get_nchannels()
+        # self._values["channels"].ChangeValue(str(nchannels))
+        self._values["channels"].SetLabel(str(nchannels))
+        if nchannels == 1:
+            self._values["channels"].SetForegroundColour(self.GetForegroundColour())
+        else:
+            self._values["channels"].SetForegroundColour(ERROR_COLOUR)
+
+    # -----------------------------------------------------------------------
+
+    def _process_event(self, event):
+        """Process any kind of event.
+
+        :param event: (wx.Event)
+
+        """
+        event_obj = event.GetButtonObj()
+        event_name = event_obj.GetName()
+
+        if event_name == "window-more":
+            AudioRoamer(self, self._object)
+
+        else:
+            sppasBaseViewPanel._process_event(self, event)
 
 # ---------------------------------------------------------------------------
 
@@ -91,6 +282,8 @@ class TrsListViewPanel(sppasBaseViewPanel):
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     The object this class is displaying is a sppasTranscription.
+    Can not be constructed if the file is not supported and/or if an error
+    occurred when opening or reading.
 
     """
 
@@ -101,14 +294,14 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
         super(TrsListViewPanel, self).__init__(parent, filename, name)
         self.__set_metadata()
-        self.__set_selected(self._object.get_meta("selected"))
+        self.__set_selected(self._object.get_meta("private_selected"))
 
     # -----------------------------------------------------------------------
 
     def SetHighLightColor(self, color):
         """Set a color to highlight the filename if selected."""
         self._hicolor = color
-        if self._object.get_meta("selected", "False") == "True":
+        if self._object.get_meta("private_selected", "False") == "True":
             self.GetToolsPane().SetBackgroundColour(self._hicolor)
         else:
             self.GetToolsPane().SetBackgroundColour(self.GetBackgroundColour())
@@ -118,7 +311,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     def is_selected(self):
         """Return True is this file is selected."""
-        return self.str_to_bool(self._object.get_meta("selected", "False"))
+        return self.str_to_bool(self._object.get_meta("private_selected", "False"))
 
     # -----------------------------------------------------------------------
 
@@ -132,7 +325,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """Return the list of checked tiers."""
         checked = list()
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 checked.append(tier)
 
         return checked
@@ -143,7 +336,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """Return the number of checked tiers."""
         nb = 0
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 nb += 1
                 wx.LogDebug("Tier {:s} is checked.".format(tier.get_name()))
             else:
@@ -159,13 +352,13 @@ class TrsListViewPanel(sppasBaseViewPanel):
         for tier in self._object.get_tier_list():
             is_matching = re.match(name, tier.get_name())
             if is_matching is not None:
-                if tier.get_meta("checked") == "False":
-                    tier.set_meta("checked", "True")
+                if tier.get_meta("private_checked") == "False":
+                    tier.set_meta("private_checked", "True")
                     panel.change_state(tier.get_id(), "True")
                     self._dirty = True
             else:
-                if tier.get_meta("checked") == "True":
-                    tier.set_meta("checked", "False")
+                if tier.get_meta("private_checked") == "True":
+                    tier.set_meta("private_checked", "False")
                     panel.change_state(tier.get_id(), "False")
                     self._dirty = True
 
@@ -175,8 +368,8 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """Uncheck tiers."""
         panel = self.FindWindow("tiers-panel")
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
-                tier.set_meta("checked", "False")
+            if tier.get_meta("private_checked") == "True":
+                tier.set_meta("private_checked", "False")
                 panel.change_state(tier.get_id(), "False")
                 self._dirty = True
 
@@ -192,7 +385,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
             new_name = None
         panel = self.FindWindow("tiers-panel")
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 old_name = tier.get_name()
                 if old_name != new_name:
                     tier.set_name(new_name)
@@ -222,7 +415,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
             i = len(self._object)
             for tier in reversed(self._object.get_tier_list()):
                 i -= 1
-                if tier.get_meta("checked") == "True":
+                if tier.get_meta("private_checked") == "True":
                     panel.remove(tier.get_id())
                     self._object.pop(i)
 
@@ -238,7 +431,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """
         clipboard = list()
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 # Copy the tier to the clipboard
                 new_tier = tier.copy()
                 clipboard.append(new_tier)
@@ -259,7 +452,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """
         clipboard = list()
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 # Copy the tier to the clipboard
                 new_tier = tier.copy()
 
@@ -309,10 +502,10 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
         nb = 0
         for tier in reversed(self._object.get_tier_list()):
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 new_tier = tier.copy()
                 new_tier.gen_id()
-                new_tier.set_meta("checked", "False")
+                new_tier.set_meta("private_checked", "False")
                 new_tier.set_meta("tier_was_duplicated_from_id", tier.get_meta('id'))
                 new_tier.set_meta("tier_was_duplicated_from_name", tier.get_name())
                 self._object.append(new_tier)
@@ -329,7 +522,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         panel = self.FindWindow("tiers-panel")
 
         for i, tier in enumerate(self._object.get_tier_list()):
-            if tier.get_meta("checked") == "True" and i > 0:
+            if tier.get_meta("private_checked") == "True" and i > 0:
                 # move up into the transcription
                 self._object.set_tier_index_id(tier.get_id(), i - 1)
                 wx.LogDebug("Tier {:s} moved to index {:d}".format(tier.get_name(), i-1))
@@ -348,7 +541,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         i = len(self._object.get_tier_list())
         for tier in reversed(self._object.get_tier_list()):
             i = i - 1
-            if tier.get_meta("checked") == "True" and (i+1) < len(tier):
+            if tier.get_meta("private_checked") == "True" and (i+1) < len(tier):
                 # move down into the transcription
                 self._object.set_tier_index_id(tier.get_id(), i + 1)
                 wx.LogDebug("Tier {:s} moved to index {:d}".format(tier.get_name(), i+1))
@@ -376,7 +569,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
                 p = tier.get_first_point()
                 if p is None:
                     continue
-                if tier.get_meta("checked") == "True":
+                if tier.get_meta("private_checked") == "True":
                     try:
                         radius = r
                         if p.is_float() is True:
@@ -410,7 +603,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
         ft = SingleFilterTier(filters, annot_format, match_all)
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 new_tier = ft.filter_tier(tier, out_tiername)
                 if new_tier is not None:
                     self._object.append(new_tier)
@@ -446,7 +639,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         nb = 0
         ft = RelationFilterTier(filters, annot_format)
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked") == "True":
+            if tier.get_meta("private_checked") == "True":
                 new_tier = ft.filter_tier(tier, y_tier, out_tiername)
                 if new_tier is not None:
                     self._object.append(new_tier)
@@ -486,28 +679,28 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     def __set_metadata(self):
         """Set metadata to the object about checked or selected items."""
-        if self._object.get_meta("selected", None) is None:
-            self._object.set_meta("selected", "False")
+        if self._object.get_meta("private_selected", None) is None:
+            self._object.set_meta("private_selected", "False")
 
-        if self._object.get_meta("checked", None) is None:
-            self._object.set_meta("checked", "False")
-        if self._object.get_meta("collapsed", None) is None:
-            self._object.set_meta("collapsed", "False")
+        if self._object.get_meta("private_checked", None) is None:
+            self._object.set_meta("private_checked", "False")
+        if self._object.get_meta("private_collapsed", None) is None:
+            self._object.set_meta("private_collapsed", "False")
 
         for tier in self._object.get_tier_list():
-            if tier.get_meta("checked", None) is None:
-                tier.set_meta("checked", "False")
-        self._object.set_meta("tiers_collapsed", str(len(self._object.get_tier_list()) == 0))
+            if tier.get_meta("private_checked", None) is None:
+                tier.set_meta("private_checked", "False")
+        self._object.set_meta("private_tiers_collapsed", str(len(self._object.get_tier_list()) == 0))
 
         for media in self._object.get_media_list():
-            if media.get_meta("checked", None) is None:
-                media.set_meta("checked", "False")
-        self._object.set_meta("media_collapsed", str(len(self._object.get_media_list()) == 0))
+            if media.get_meta("private_checked", None) is None:
+                media.set_meta("private_checked", "False")
+        self._object.set_meta("private_media_collapsed", str(len(self._object.get_media_list()) == 0))
 
         for vocab in self._object.get_ctrl_vocab_list():
-            if vocab.get_meta("checked", None) is None:
-                vocab.set_meta("checked", "False")
-        self._object.set_meta("vocabs_collapsed", str(len(self._object.get_ctrl_vocab_list()) == 0))
+            if vocab.get_meta("private_checked", None) is None:
+                vocab.set_meta("private_checked", "False")
+        self._object.set_meta("private_vocabs_collapsed", str(len(self._object.get_ctrl_vocab_list()) == 0))
 
     # -----------------------------------------------------------------------
 
@@ -534,12 +727,13 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     def _create_content(self):
         """Override. Create the content of the panel."""
+        self.AddButton("tags")
         self.AddButton("select")
         self.AddButton("save")
         self.AddButton("close")
 
         self._create_child_panel()
-        self.Collapse(self.str_to_bool(self._object.get_meta("collapsed")))
+        self.Collapse(self.str_to_bool(self._object.get_meta("private_collapsed")))
 
     # ------------------------------------------------------------------------
 
@@ -547,15 +741,14 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """Override. Create the child panel."""
         child_panel = self.GetPane()
 
-        # todo: add metadata
         # todo: add hierarchy
 
         tier_ctrl = TiersCollapsiblePanel(child_panel, self._object.get_tier_list())
-        tier_ctrl.Collapse(self.str_to_bool(self._object.get_meta("tiers_collapsed")))
+        tier_ctrl.Collapse(self.str_to_bool(self._object.get_meta("private_tiers_collapsed")))
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, tier_ctrl)
 
         media_ctrl = MediaCollapsiblePanel(child_panel, self._object.get_media_list())
-        media_ctrl.Collapse(self.str_to_bool(self._object.get_meta("media_collapsed")))
+        media_ctrl.Collapse(self.str_to_bool(self._object.get_meta("private_media_collapsed")))
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, media_ctrl)
         if isinstance(self._object, sppasBaseIO) is False:
             media_ctrl.Hide()
@@ -564,7 +757,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
                 media_ctrl.Hide()
 
         vocab_ctrl = CtrlVocabCollapsiblePanel(child_panel, self._object.get_ctrl_vocab_list())
-        vocab_ctrl.Collapse(self.str_to_bool(self._object.get_meta("vocabs_collapsed")))
+        vocab_ctrl.Collapse(self.str_to_bool(self._object.get_meta("private_vocabs_collapsed")))
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, vocab_ctrl)
         if isinstance(self._object, sppasBaseIO) is False:
             vocab_ctrl.Hide()
@@ -572,15 +765,16 @@ class TrsListViewPanel(sppasBaseViewPanel):
             if self._object.ctrl_vocab_support() is False:
                 vocab_ctrl.Hide()
 
-        # y_ctrl = self.__create_hyctrl()
+        # hy_ctrl = self.__create_hyctrl()
 
         s = wx.BoxSizer(wx.VERTICAL)
-        # s.Add(meta_ctrl, 0, wx.EXPAND)
         s.Add(tier_ctrl, 0, wx.EXPAND)
         s.Add(media_ctrl, 0, wx.EXPAND)
         s.Add(vocab_ctrl, 0, wx.EXPAND)
         # s.Add(hy_ctrl, 0, wx.EXPAND)
-        child_panel.SetSizerAndFit(s)
+
+        child_panel.SetMinSize(wx.Size(-1, 24))
+        child_panel.SetSizer(s)
 
         # The user clicked an item
         child_panel.Bind(EVT_ITEM_CLICKED, self._process_item_clicked)
@@ -601,11 +795,11 @@ class TrsListViewPanel(sppasBaseViewPanel):
         obj = self.get_object_in_trs(object_id)
 
         # change state of the item
-        current_state = obj.get_meta("checked")
+        current_state = obj.get_meta("private_checked")
         new_state = "False"
         if current_state == "False":
             new_state = "True"
-        obj.set_meta("checked", new_state)
+        obj.set_meta("private_checked", new_state)
         self._dirty = True
 
         # update the corresponding panel(s)
@@ -624,8 +818,10 @@ class TrsListViewPanel(sppasBaseViewPanel):
         event_name = event_obj.GetName()
 
         if event_name == "select":
-            wx.LogDebug("* * * * * * * * * * * *  Select event received.")
             self.__set_selected()
+
+        elif event_name == "tags":
+            MetaDataEdit(self, [self._object])
 
         else:
             sppasBaseViewPanel._process_event(self, event)
@@ -634,35 +830,28 @@ class TrsListViewPanel(sppasBaseViewPanel):
 
     def __set_selected(self, value=None):
         """Force to set the given selected value or reverse the existing one."""
-        wx.LogDebug("Set Selected. Given value is {}".format(value))
         # Old value can be unknown (not already set)
-        old_value = self._object.get_meta("selected", None)
+        old_value = self._object.get_meta("private_selected", None)
         if old_value is None:
-            self._object.set_meta("selected", "False")
+            self._object.set_meta("private_selected", "False")
 
         # Given new value is None. We switch the old one.
         if value is None:
-            if self._object.get_meta("selected") == "False":
+            if self._object.get_meta("private_selected") == "False":
                 value = "True"
             else:
                 value = "False"
 
-        wx.LogDebug("Old value is {:s}".format(old_value))
-        wx.LogDebug("New value to set is {:s}".format(value))
-
-        if value != self._object.get_meta("selected", "x"):
-            self._object.set_meta("selected", value)
+        if value != self._object.get_meta("private_selected", "x"):
+            self._object.set_meta("private_selected", value)
             self._dirty = True
-            wx.LogDebug("File {:s} selected: {:s}".format(self._filename, value))
 
-            if self._object.get_meta("selected", "False") == "True":
+            if self._object.get_meta("private_selected", "False") == "True":
                 self.GetToolsPane().SetBackgroundColour(self._hicolor)
             else:
                 self.GetToolsPane().SetBackgroundColour(self.GetBackgroundColour())
 
             self.Refresh()
-        else:
-            wx.LogDebug("Old and new value are equals. Nothing to set.")
 
     # ------------------------------------------------------------------------
 
@@ -687,11 +876,11 @@ class TrsListViewPanel(sppasBaseViewPanel):
         """One of the list child panel was collapsed/expanded."""
         panel = evt.GetEventObject()
         if panel.GetName() == "tiers-panel":
-            self._object.set_meta("tiers_expanded", str(panel.IsExpanded()))
+            self._object.set_meta("private_tiers_expanded", str(panel.IsExpanded()))
         elif panel.GetName() == "media-panel":
-            self._object.set_meta("media_expanded", str(panel.IsExpanded()))
+            self._object.set_meta("private_media_expanded", str(panel.IsExpanded()))
         elif panel.GetName() == "vocabs-panel":
-            self._object.set_meta("vocab_expanded", str(panel.IsExpanded()))
+            self._object.set_meta("private_vocab_expanded", str(panel.IsExpanded()))
         else:
             return
 
@@ -730,14 +919,16 @@ class TrsListViewPanel(sppasBaseViewPanel):
             c.SetBackgroundColour(colour)
 
         # but the tools can have a different one
-        if self._object.get_meta("selected", "False") == "True":
+        if self._object.get_meta("private_selected", "False") == "True":
             self.GetToolsPane().SetBackgroundColour(self._hicolor)
 
+# ---------------------------------------------------------------------------
+# Content of a Trs
 # ---------------------------------------------------------------------------
 
 
 class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
-    """A panel to display a list of tiers.
+    """A panel to display a list of objects.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -751,7 +942,6 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
         super(BaseObjectCollapsiblePanel, self).__init__(
             parent, label=label, name=name)
 
-        self._ils = list()
         self._create_content()
         self._create_columns()
         # self._setup_events()
@@ -760,9 +950,9 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
         self._objects = list()
 
         # Look&feel
-        self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        # self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
+        # self.SetForegroundColour(wx.GetApp().settings.fg_color)
+        # self.SetFont(wx.GetApp().settings.text_font)
 
         # Fill in the controls with the data
         self.update(objects)
@@ -788,8 +978,6 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
         wx.Window.SetForegroundColour(self, color)
         for c in self.GetChildren():
             c.SetForegroundColour(color)
-        self.__il = self.__create_image_list()
-        self.FindWindow("listctrl").SetImageList(self.__il, wx.IMAGE_LIST_SMALL)
 
     # -----------------------------------------------------------------------
 
@@ -805,8 +993,6 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
         self.GetPane().SetFont(font)
 
         # The change of font implies to re-draw all proportional objects
-        self.__il = self.__create_image_list()
-        self.FindWindow("listctrl").SetImageList(self.__il, wx.IMAGE_LIST_SMALL)
         self.__set_pane_size()
         self.Layout()
 
@@ -849,11 +1035,11 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
         :param state: (str) True or False
 
         """
-        icon_name = STATES_ICON_NAMES[state]
-
-        listctrl = self.FindWindow("listctrl")
         idx = self._objects.index(identifier)
-        listctrl.SetItem(idx, 0, "", imageId=self._ils.index(icon_name))
+        if state == "True":
+            self._listctrl.Select(idx, on=1)
+        else:
+            self._listctrl.Select(idx, on=0)
 
     # ------------------------------------------------------------------------
 
@@ -865,7 +1051,7 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
         """
         for obj in lst_obj:
             if obj.get_id() not in self._objects:
-                self.__add_item(obj)
+                self.__add_item(obj, index=None)
             else:
                 #self.change_state(obj.get_id(), obj.get_state())
                 self.update_item(obj)
@@ -875,17 +1061,16 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def _create_content(self):
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL | wx.LC_HRULES
-        lst = wx.ListCtrl(self, style=style, name="listctrl")
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER  # | wx.LC_SINGLE_SEL
+        lst = CheckListCtrl(self, style=style, name="listctrl")
         lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
         self.SetPane(lst)
 
-        info = wx.ListItem()
-        info.Mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
-        info.Image = -1
-        info.Align = 0
-        lst.InsertColumn(0, info)
-        lst.SetColumnWidth(0, sppasPanel.fix_size(24))
+    # ------------------------------------------------------------------------
+
+    @property
+    def _listctrl(self):
+        return self.FindWindow("listctrl")
 
     # ------------------------------------------------------------------------
 
@@ -895,46 +1080,13 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
 
     # ------------------------------------------------------------------------
 
-    def __create_image_list(self):
-        """Create a list of images to be displayed in the listctrl.
-
-        :return: (wx.ImageList)
-
-        """
-        font = self.GetFont()
-        lh = int(float(font.GetPixelSize()[1]))
-        icon_size = int(float(lh * 1.4))
-
-        il = wx.ImageList(icon_size, icon_size)
-        self._ils = list()
-
-        icon_name = "choice_checkbox"
-        bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
-        img = bitmap.ConvertToImage()
-        ColorizeImage(img, wx.BLACK, self.GetForegroundColour())
-        il.Add(wx.Bitmap(img))
-        self._ils.append(icon_name)
-
-        icon_name = "choice_checked"
-        bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
-        img = bitmap.ConvertToImage()
-        ColorizeImage(img, wx.BLACK, self.GetForegroundColour())
-        il.Add(wx.Bitmap(img))
-        self._ils.append(icon_name)
-
-        return il
-
-    # ------------------------------------------------------------------------
-
     def __set_pane_size(self):
         """Fix the size of the child panel."""
-        listctrl = self.GetPane()  # self.FindWindow("listctrl")
-
         pxh = self.get_font_height()
-        n = listctrl.GetItemCount()
+        n = self._listctrl.GetItemCount()
         h = int(pxh * 2.)
-        listctrl.SetMinSize(wx.Size(-1, n * h))
-        listctrl.SetMaxSize(wx.Size(-1, (n * h) + pxh))
+        self._listctrl.SetMinSize(wx.Size(-1, n * h))
+        self._listctrl.SetMaxSize(wx.Size(-1, (n * h) + pxh))
 
     # ------------------------------------------------------------------------
     # Management the list of tiers
@@ -942,15 +1094,12 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
 
     def __add_item(self, obj, index=None):
         """Append an object."""
-        listctrl = self.FindWindow("listctrl")
-        icon_name = STATES_ICON_NAMES[obj.get_meta("checked", "False")]
-        img_index = self._ils.index(icon_name)
-
-        if index is None or index < 0 or index > listctrl.GetItemCount():
+        if index is None or index < 0 or index > self._listctrl.GetItemCount():
             # Append
-            index = listctrl.InsertItem(listctrl.GetItemCount(), img_index)
+            index = self._listctrl.InsertItem(self._listctrl.GetItemCount(), "")
         else:
-            index = listctrl.InsertItem(index, img_index)
+            # Insert
+            index = self._listctrl.InsertItem(index, "")
 
         self._objects.insert(index, obj.get_id())
         self.update_item(obj)
@@ -962,9 +1111,8 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
 
     def __remove_item(self, identifier):
         """Remove an object of the listctrl."""
-        listctrl = self.FindWindow("listctrl")
         idx = self._objects.index(identifier)
-        listctrl.DeleteItem(idx)
+        self._listctrl.DeleteItem(idx)
 
         self._objects.pop(idx)
         self.__set_pane_size()
@@ -989,12 +1137,131 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def __item_selected(self, event):
-        listctrl = self.FindWindow("listctrl")
-        index = listctrl.GetFirstSelected()
-        listctrl.Select(index, on=False)
+        index = event.GetIndex()  # self._listctrl.GetFirstSelected()
+        self._listctrl.Select(index, on=False)
 
         # notify parent to decide what has to be done
         self.notify(self._objects[index])
+
+# ---------------------------------------------------------------------------
+
+
+class CtrlVocabCollapsiblePanel(BaseObjectCollapsiblePanel):
+    """A panel to display a list of controlled vocabs.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, objects):
+        super(CtrlVocabCollapsiblePanel, self).__init__(
+            parent,
+            objects,
+            label="Controlled vocabularies",
+            name="vocabs-panel")
+
+    # ------------------------------------------------------------------------
+
+    def _create_content(self):
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER  # | wx.LC_SINGLE_SEL
+        lst = sppasListCtrl(self, style=style, name="listctrl")
+        lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
+        self.SetPane(lst)
+
+    # ------------------------------------------------------------------------
+
+    def _create_columns(self):
+        """Create a listctrl to display the objects."""
+        self._listctrl.AppendColumn("name",
+                                    format=wx.LIST_FORMAT_LEFT,
+                                    width=sppasPanel.fix_size(200))
+        self._listctrl.AppendColumn("description",
+                                    format=wx.LIST_FORMAT_LEFT,
+                                    width=sppasPanel.fix_size(80))
+        self._listctrl.AppendColumn("id",
+                                    format=wx.LIST_FORMAT_LEFT,
+                                    width=sppasPanel.fix_size(220))
+
+    # ------------------------------------------------------------------------
+
+    def update_item(self, obj):
+        """Update information of an object, except its state."""
+        if obj.get_id() in self._objects:
+            index = self._objects.index(obj.get_id())
+            self._listctrl.SetItem(index, 0, obj.get_name())
+            self._listctrl.SetItem(index, 1, obj.get_description())
+            self._listctrl.SetItem(index, 2, obj.get_id())
+            self._listctrl.RefreshItem(index)
+
+    # ------------------------------------------------------------------------
+
+    def __item_selected(self, event):
+        index = event.GetIndex()
+        self._listctrl.Select(index, on=False)
+
+# ---------------------------------------------------------------------------
+
+
+class MediaCollapsiblePanel(BaseObjectCollapsiblePanel):
+    """A panel to display a list of media.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, objects):
+        super(MediaCollapsiblePanel, self).__init__(
+            parent,
+            objects,
+            label="Media",
+            name="media-panel")
+
+    # ------------------------------------------------------------------------
+
+    def _create_content(self):
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER  # | wx.LC_SINGLE_SEL
+        lst = sppasListCtrl(self, style=style, name="listctrl")
+        lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
+        self.SetPane(lst)
+
+    # ------------------------------------------------------------------------
+
+    def _create_columns(self):
+        """Create a listctrl to display the objects."""
+        self._listctrl.AppendColumn("filename",
+                                    format=wx.LIST_FORMAT_LEFT,
+                                    width=sppasPanel.fix_size(300))
+        self._listctrl.AppendColumn("mimeheader",
+                                    format=wx.LIST_FORMAT_LEFT,
+                                    width=sppasPanel.fix_size(80))
+        self._listctrl.AppendColumn("id",
+                                    format=wx.LIST_FORMAT_LEFT,
+                                    width=sppasPanel.fix_size(220))
+
+    # ------------------------------------------------------------------------
+
+    def update_item(self, obj):
+        """Update information of an object, except its state."""
+        if obj.get_id() in self._objects:
+            index = self._objects.index(obj.get_id())
+            self._listctrl.SetItem(index, 0, obj.get_filename())
+            self._listctrl.SetItem(index, 1, obj.get_mime_type())
+            self._listctrl.SetItem(index, 2, obj.get_id())
+            self._listctrl.RefreshItem(index)
+
+    # ------------------------------------------------------------------------
+
+    def __item_selected(self, event):
+        index = event.GetIndex()
+        self._listctrl.Select(index, on=False)
 
 # ---------------------------------------------------------------------------
 
@@ -1012,37 +1279,39 @@ class TiersCollapsiblePanel(BaseObjectCollapsiblePanel):
 
     def __init__(self, parent, objects):
         super(TiersCollapsiblePanel, self).__init__(
-            parent, objects, label="Tiers", name="tiers-panel")
+            parent,
+            objects,
+            label="Tiers",
+            name="tiers-panel")
 
     # ------------------------------------------------------------------------
 
     def _create_columns(self):
         """Create a listctrl to display the objects."""
-        listctrl = self.FindWindow("listctrl")
-        listctrl.AppendColumn("name",
-                              format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(160))
-        listctrl.AppendColumn("len",
-                              format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(30))
-        listctrl.AppendColumn("loctype",
-                              format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(50))
-        listctrl.AppendColumn("begin",
-                              format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(40))
-        listctrl.AppendColumn("end",
-                              format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(40))
-        listctrl.AppendColumn("tagtype",
-                              format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(40))
-        listctrl.AppendColumn("tagged",
-                              format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(30))
-        listctrl.AppendColumn("id",
-                              format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(220))
+        self._listctrl.AppendColumn("name",
+                                    format=wx.LIST_FORMAT_LEFT,
+                                    width=sppasPanel.fix_size(160))
+        self._listctrl.AppendColumn("len",
+                                    format=wx.LIST_FORMAT_LEFT,
+                                    width=sppasPanel.fix_size(30))
+        self._listctrl.AppendColumn("loctype",
+                                    format=wx.LIST_FORMAT_LEFT,
+                                    width=sppasPanel.fix_size(50))
+        self._listctrl.AppendColumn("begin",
+                                    format=wx.LIST_FORMAT_LEFT,
+                                    width=sppasPanel.fix_size(40))
+        self._listctrl.AppendColumn("end",
+                                    format=wx.LIST_FORMAT_LEFT,
+                                    width=sppasPanel.fix_size(40))
+        self._listctrl.AppendColumn("tagtype",
+                                    format=wx.LIST_FORMAT_LEFT,
+                                    width=sppasPanel.fix_size(40))
+        self._listctrl.AppendColumn("tagged",
+                                    format=wx.LIST_FORMAT_LEFT,
+                                    width=sppasPanel.fix_size(30))
+        self._listctrl.AppendColumn("id",
+                                    format=wx.LIST_FORMAT_LEFT,
+                                    width=sppasPanel.fix_size(240))
 
     # ------------------------------------------------------------------------
 
@@ -1079,132 +1348,21 @@ class TiersCollapsiblePanel(BaseObjectCollapsiblePanel):
         else:
             tier_tag_type = "Unknown"
 
-        listctrl = self.FindWindow("listctrl")
         if obj.get_id() in self._objects:
             index = self._objects.index(obj.get_id())
-            listctrl.SetItem(index, 1, obj.get_name())
-            listctrl.SetItem(index, 2, str(len(obj)))
-            listctrl.SetItem(index, 3, tier_type)
-            listctrl.SetItem(index, 4, begin)
-            listctrl.SetItem(index, 5, end)
-            listctrl.SetItem(index, 6, tier_tag_type)
-            listctrl.SetItem(index, 7, str(obj.get_nb_filled_labels()))
-            listctrl.SetItem(index, 8, obj.get_id())
-            listctrl.RefreshItem(index)
+            self._listctrl.SetItem(index, 0, obj.get_name())
+            self._listctrl.SetItem(index, 1, str(len(obj)))
+            self._listctrl.SetItem(index, 2, tier_type)
+            self._listctrl.SetItem(index, 3, begin)
+            self._listctrl.SetItem(index, 4, end)
+            self._listctrl.SetItem(index, 5, tier_tag_type)
+            self._listctrl.SetItem(index, 6, str(obj.get_nb_filled_labels()))
+            self._listctrl.SetItem(index, 7, obj.get_id())
+            self._listctrl.RefreshItem(index)
 
-            state = obj.get_meta("checked", "False")
+            state = obj.get_meta("private_checked", "False")
             if state == "True":
-                listctrl.SetItemBackgroundColour(index, TIER_BG_COLOUR)
-
-    # ------------------------------------------------------------------------
-
-    def change_state(self, identifier, state):
-        """Update the state of the given identifier.
-
-        :param identifier: (str)
-        :param state: (str) True or False
-
-        """
-        icon_name = STATES_ICON_NAMES[state]
-
-        listctrl = self.FindWindow("listctrl")
-        idx = self._objects.index(identifier)
-        listctrl.SetItem(idx, 0, "", imageId=self._ils.index(icon_name))
-
-        if state == "True":
-            listctrl.SetItemBackgroundColour(idx, TIER_BG_COLOUR)
-        else:
-            listctrl.SetItemBackgroundColour(idx, self.GetBackgroundColour())
-
-# ---------------------------------------------------------------------------
-
-
-class CtrlVocabCollapsiblePanel(BaseObjectCollapsiblePanel):
-    """A panel to display a list of controlled vocabs.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    def __init__(self, parent, objects):
-        super(CtrlVocabCollapsiblePanel, self).__init__(
-            parent, objects, label="Controlled vocabularies", name="vocabs-panel")
-
-    # ------------------------------------------------------------------------
-
-    def _create_columns(self):
-        """Create a listctrl to display the objects."""
-        listctrl = self.FindWindow("listctrl")
-        listctrl.AppendColumn("name",
-                              format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(200))
-        listctrl.AppendColumn("description",
-                              format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(80))
-        listctrl.AppendColumn("id",
-                              format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(220))
-
-    # ------------------------------------------------------------------------
-
-    def update_item(self, obj):
-        """Update information of an object, except its state."""
-        listctrl = self.FindWindow("listctrl")
-        if obj.get_id() in self._objects:
-            index = self._objects.index(obj.get_id())
-            listctrl.SetItem(index, 1, obj.get_name())
-            listctrl.SetItem(index, 2, obj.get_description())
-            listctrl.SetItem(index, 3, obj.get_id())
-            listctrl.RefreshItem(index)
-
-# ---------------------------------------------------------------------------
-
-
-class MediaCollapsiblePanel(BaseObjectCollapsiblePanel):
-    """A panel to display a list of metadata.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    def __init__(self, parent, objects):
-        super(MediaCollapsiblePanel, self).__init__(
-            parent, objects, label="Media", name="media-panel")
-
-    # ------------------------------------------------------------------------
-
-    def _create_columns(self):
-        """Create a listctrl to display the objects."""
-        listctrl = self.FindWindow("listctrl")
-        listctrl.AppendColumn("filename",
-                              format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(300))
-        listctrl.AppendColumn("mimeheader",
-                              format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(80))
-        listctrl.AppendColumn("id",
-                              format=wx.LIST_FORMAT_LEFT,
-                              width=sppasPanel.fix_size(220))
-
-    # ------------------------------------------------------------------------
-
-    def update_item(self, obj):
-        """Update information of an object, except its state."""
-        listctrl = self.FindWindow("listctrl")
-        if obj.get_id() in self._objects:
-            index = self._objects.index(obj.get_id())
-            listctrl.SetItem(index, 1, obj.get_filename())
-            listctrl.SetItem(index, 2, obj.get_mime_type())
-            listctrl.SetItem(index, 3, obj.get_id())
-            listctrl.RefreshItem(index)
+                self._listctrl.Select(index, on=1)
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
@@ -1216,27 +1374,33 @@ class TestPanel(sppasPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="TestPanel-listview")
 
+        f0 = os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
         f1 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra")
         f2 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-salign.xra")
         f3 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-stats.csv")
+        p0 = AudioListViewPanel(self, f0)
         p1 = TrsListViewPanel(self, f1)
         p2 = TrsListViewPanel(self, f2)
         p3 = TrsListViewPanel(self, None)
         p3.set_filename(f3)
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p0)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p1)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p2)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p3)
+
+        parser = sppasRW(f1)
+        trs = parser.read()
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(p1, 0, wx.EXPAND)
         sizer.Add(p2, 0, wx.EXPAND)
         sizer.Add(p3, 0, wx.EXPAND)
+        sizer.Add(p0, 0, wx.EXPAND)
 
         self.SetBackgroundColour(wx.Colour(28, 28, 28))
         self.SetForegroundColour(wx.Colour(228, 228, 228))
 
         self.SetSizer(sizer)
-        # self.FitInside()
         self.SetAutoLayout(True)
         self.Layout()
 

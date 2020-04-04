@@ -49,8 +49,8 @@ from ..windows import sppasStaticText
 from ..windows import sppasTextCtrl
 from ..windows import RadioButton
 from ..windows import sppasToolbar
-from ..dialogs import Information
-from ..dialogs import Error
+from ..windows import Information
+from ..windows import Error
 from ..main_events import DataChangedEvent
 
 from .refsviewctrl import RefsTreeView
@@ -628,19 +628,19 @@ class sppasEditAttributes(sppasDialog):
 
     def __set_normal_radio_style(self, button):
         """Set a normal style to a button."""
-        button.BorderWidth = 1
-        button.BorderColour = self.GetForegroundColour()
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = ReferencesManager.HIGHLIGHT_COLOUR
+        button.SetBorderWidth(1)
+        button.SetBorderColour(self.GetForegroundColour())
+        button.SetBorderStyle(wx.PENSTYLE_SOLID)
+        button.SetFocusColour(ReferencesManager.HIGHLIGHT_COLOUR)
 
     # -----------------------------------------------------------------------
 
     def __set_active_radio_style(self, button):
         """Set a special style to a button."""
-        button.BorderWidth = 2
-        button.BorderColour = ReferencesManager.HIGHLIGHT_COLOUR
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = self.GetForegroundColour()
+        button.SetBorderWidth(2)
+        button.SetBorderColour(ReferencesManager.HIGHLIGHT_COLOUR)
+        button.SetBorderStyle(wx.PENSTYLE_SOLID)
+        button.SetFocusColour(self.GetForegroundColour())
 
     # -----------------------------------------------------------------------
 

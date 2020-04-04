@@ -99,8 +99,8 @@ class sppasHomePanel(sppasPanel):
         # Create the welcome message
         message = \
             "SPPAS is a scientific computer software package developed " \
-            "by Brigitte Bigi, CNRS researcher at Laboratoire Parole et " \
-            "Langage, Aix-en-Provence, France.\n\n" \
+            "by Brigitte Bigi, CNRS researcher at 'Laboratoire Parole et " \
+            "Langage', Aix-en-Provence, France.\n\n" \
             "By using SPPAS, you agree to cite one of its references in your " \
             "publications.\n\n" \
             "This is the new version of the Graphical User Interface. " \

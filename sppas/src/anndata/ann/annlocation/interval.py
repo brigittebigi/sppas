@@ -237,6 +237,25 @@ class sppasInterval(sppasBaseLocalization):
 
     # -----------------------------------------------------------------------
 
+    def middle(self):
+        """Return a sppasPoint() at the middle of the time interval.
+
+        To be tested.
+
+        :returns: (sppasPoint)
+
+        """
+        duration = self.duration()
+        m = float(self.__begin.get_midpoint()) + (float(duration.get_value()) / 2.)
+        r = float(duration.get_margin()) / 2.
+
+        if self.is_float():
+            return sppasPoint(m, r)
+
+        return sppasPoint(int(m), int(r))
+
+    # -----------------------------------------------------------------------
+
     def middle_value(self):
         """Return the middle value of the time interval.
 
@@ -279,6 +298,14 @@ class sppasInterval(sppasBaseLocalization):
         """
         self.__begin.shift(delay)
         self.__end.shift(delay)
+
+    # -----------------------------------------------------------------------
+
+    def is_int(self):
+        return self.__begin.is_int()
+
+    def is_float(self):
+        return self.__begin.is_float()
 
     # -----------------------------------------------------------------------
 

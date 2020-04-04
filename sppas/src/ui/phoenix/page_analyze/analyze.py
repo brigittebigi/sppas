@@ -61,8 +61,9 @@ from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 from ..main_events import EVT_TAB_CHANGE
 from ..main_events import EVT_VIEW
 
-from ..dialogs import Information, Confirm, Error
-from ..dialogs import sppasFileDialog
+from ..windows.dialogs import Information, Confirm, Error
+from ..windows.dialogs import sppasFileDialog
+from ..windows.dialogs import sppasProgressDialog
 from ..windows import sppasPanel
 from ..windows import sppasStaticLine
 from ..windows.book import sppasSimplebook
@@ -71,6 +72,7 @@ from ..windows import sppasToolbar
 from .anz_tabs import TabsManager
 from .anz_textviews import TextViewFilesPanel
 from .anz_listviews import ListViewFilesPanel
+from .anz_timeviews import TimeViewFilesPanel
 from .anz_defaultviews import DefaultViewFilesPanel
 
 # ---------------------------------------------------------------------------
@@ -82,11 +84,9 @@ def _(message):
 
 
 VIEW_TITLE = _("Views: ")
-VIEW_LIST = _("Detailed")
-VIEW_TEXT = _("Text edit")
-VIEW_TIME = _("Time line")
-# VIEW_GRID = _("Grid details")
-VIEW_SCRIBE = _("Scriber")
+VIEW_LIST = _("Detailed list")
+VIEW_TEXT = _("Text editor")
+VIEW_TIME = _("Multi-Player")
 CLOSE = _("Close")
 
 TAB_MSG_NO_SELECT = _("No tab is currently checked.")
@@ -140,7 +140,7 @@ class sppasAnalyzePanel(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     The panel is made of 3 areas:
 
@@ -159,8 +159,7 @@ class sppasAnalyzePanel(sppasPanel):
     VIEWS = {
         "data-view-list": VIEW_LIST,
         "data-view-timeline": VIEW_TIME,
-        "data-view-text": VIEW_TEXT,
-        "data-view-scribe": VIEW_SCRIBE
+        "data-view-text": VIEW_TEXT
     }
 
     # ------------------------------------------------------------------------
@@ -182,9 +181,12 @@ class sppasAnalyzePanel(sppasPanel):
         self._create_content()
         self._setup_events()
 
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        try:
+            self.SetBackgroundColour(wx.GetApp().settings.bg_color)
+            self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            self.SetFont(wx.GetApp().settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
         # Organize items and fix a size for each of them
         self.Layout()
@@ -239,22 +241,34 @@ class sppasAnalyzePanel(sppasPanel):
 
         # Add checked files to the page
         checked = self.__data.get_filename_from_state(States().CHECKED)
-        i = 0
-        for fn in checked:
+        success = 0
+        total = len(checked)
+        progress = sppasProgressDialog()
+        progress.set_new()
+        progress.set_header("Open files...")
+        progress.set_fraction(0)
+        wx.BeginBusyCursor()
+        for i, fn in enumerate(sorted(checked)):
             try:
+                fraction = float((i+1)) / float(total)
+                message = os.path.basename(fn.get_id())
+                progress.update(fraction, message)
                 page.append_file(fn.get_id())
                 page.Layout()
                 self.__data.set_object_state(States().LOCKED, fn)
-                i += 1
+                success += 1
             except Exception as e:
                 wx.LogError(str(e))
+        wx.EndBusyCursor()
+        progress.set_fraction(1)
+        progress.close()
 
         # send data to the parent
-        if i > 0:
+        if success > 0:
             self.Layout()
             self.Refresh()
             wx.LogMessage("{:d} files opened in page {:s}."
-                          "".format(i, page.GetName()))
+                          "".format(success, page.GetName()))
             self.notify()
         else:
             wx.LogMessage("No file opened in page {:s}.".format(page.GetName()))
@@ -479,6 +493,7 @@ class sppasAnalyzePanel(sppasPanel):
                 sppasAnalyzePanel.VIEWS[view_name],
                 value=False,
                 group_name="views")
+            btn.SetBorderWidth(2)
             # btn.Enable(False)
 
         tb.AddSpacer(1)
@@ -680,6 +695,9 @@ class sppasAnalyzePanel(sppasPanel):
 
         elif view_name == "data-view-list":
             new_page = ListViewFilesPanel(book, name="new_page", files=files)
+
+        elif view_name == "data-view-timeline":
+            new_page = TimeViewFilesPanel(book, name="new_page", files=files)
 
         else:
             wx.LogWarning("{:s} view is not currently supported."

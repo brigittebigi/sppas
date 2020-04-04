@@ -44,8 +44,6 @@ import wx
 
 from sppas import sppasTypeError
 from sppas import annots
-from sppas import msg
-from sppas import u
 
 from sppas.src.annotations import sppasParam
 from sppas.src.files import FileData, States
@@ -57,12 +55,6 @@ from .annotevent import EVT_PAGE_CHANGE
 from .annotselect import sppasAnnotationsPanel
 from .annotaction import sppasActionAnnotatePanel
 from .annotlog import sppasLogAnnotatePanel
-
-# -----------------------------------------------------------------------
-
-
-def _(message):
-    return u(msg(message, "ui"))
 
 # ---------------------------------------------------------------------------
 
@@ -104,9 +96,6 @@ class sppasAnnotatePanel(sppasSimplebook):
         self.AddPage(page, text="")
 
         self._setup_events()
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
 
     # ------------------------------------------------------------------------
     # Public methods to access the data

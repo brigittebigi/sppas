@@ -44,12 +44,13 @@ from sppas.src.utils import u
 from sppas.src.anndata import sppasRW
 from sppas.src.analysis.tierstats import sppasTierStats
 
-from ..dialogs import Confirm
-from ..dialogs import sppasFileDialog
+from ..windows import Confirm
+from ..windows import sppasFileDialog
 from ..windows import sppasDialog
 from ..windows import sppasPanel
 from ..windows import sppasRadioBoxPanel
 from ..windows.book import sppasNotebook
+from ..windows.listctrl import SortListCtrl
 
 # --------------------------------------------------------------------------
 
@@ -148,6 +149,8 @@ class sppasStatsViewDialog(sppasDialog):
         :param tiers: dictionary with key=filename, value=list of selected tiers
 
         """
+        if tiers is None or len(tiers) == 0:
+            return
         for k, v in tiers.items():
             # k = filename, v = list of tiers
             for tier in v:
@@ -360,7 +363,10 @@ class BaseStatPanel(sppasPanel):
 
         self.rowdata = []
         self.cols = ('',)
-        self.statctrl = SortListCtrl(self, size=(-1, sppasPanel.fix_size(400)))
+        self.statctrl = SortListCtrl(
+            self,
+            style=wx.NO_BORDER | wx.LC_REPORT | wx.LC_VRULES,
+            size=(-1, sppasPanel.fix_size(400)))
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         text = wx.StaticText(self, label=MSS_SELECTED.format(self.GetName()))
@@ -598,101 +604,6 @@ class DetailedPanel(BaseStatPanel):
 # -------------------------------------------------------------------------
 
 
-class SortListCtrl(wx.ListCtrl):
-    """ListCtrl with alternate colors and sortable columns.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-    def __init__(self, parent, id=-1,
-                 pos=wx.DefaultPosition, size=wx.DefaultSize,
-                 validator=wx.DefaultValidator, name="SortListCtrl",):
-        """Initialize a new ListCtrl instance.
-
-        :param parent: Parent window. Must not be None.
-        :param id:     CheckListCtrl identifier. A value of -1 indicates a default value.
-        :param pos:    CheckListCtrl position. If the position (-1, -1) is specified
-                       then a default position is chosen.
-        :param size:   CheckListCtrl size. If the default size (-1, -1) is specified
-                       then a default size is chosen.
-        :param style:  often LC_REPORT
-        :param validator: Window validator.
-        :param name:      Window name.
-
-        """
-        style = wx.LC_REPORT | wx.LC_VRULES | wx.LC_SORT_ASCENDING
-        wx.ListCtrl.__init__(self, parent, id, pos, size, style, validator, name)
-
-    # ---------------------------------------------------------------------
-
-    def RecolorizeBackground(self, index=-1):
-        bg = self.GetBackgroundColour()
-        r, g, b = bg.Red(), bg.Green(), bg.Blue()
-        delta = 10
-        if (r + g + b) > 384:
-            alt_bg = wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
-        else:
-            alt_bg = wx.Colour(r, g, b, 50).ChangeLightness(delta)
-
-        if index == -1:
-            for i in range(self.GetItemCount()):
-                if i % 2:
-                    self.SetItemBackgroundColour(i, bg)
-                else:
-                    self.SetItemBackgroundColour(i, alt_bg)
-        else:
-            if index % 2:
-                self.SetItemBackgroundColour(index, bg)
-            else:
-                self.SetItemBackgroundColour(index, alt_bg)
-
-    # ---------------------------------------------------------------------
-    # Override methods of wx.ListCtrl
-    # ---------------------------------------------------------------------
-
-    def ListCompareFunction(self, item1, item2):
-        if item1 == item2:
-            return 0
-        if item1 < item2:
-            return -1
-        return 1
-
-    # ---------------------------------------------------------------------
-
-    def InsertItem(self, index, label):
-        """ Override.
-
-        """
-        ret = wx.ListCtrl.InsertItem(self, index, label)
-        self.RecolorizeBackground()
-        return ret
-
-    # ---------------------------------------------------------------------
-
-    def SetItem(self, index, col, label):
-        """Override. Set the string of an item.
-
-        """
-        # we added a column the user does not know!
-        wx.ListCtrl.SetItem(self, index, col, label)
-        self.RecolorizeBackground(index)
-
-    # ---------------------------------------------------------------------
-
-    def DeleteItem(self, index):
-        """Override. Delete an item in the list.
-
-        """
-        wx.ListCtrl.DeleteItem(self, index)
-        self.RecolorizeBackground()
-
-# ---------------------------------------------------------------------------
-
-
 def StatsView(parent, tiers):
     """Display a dialog to display the stats of a list of tiers.
 
@@ -713,20 +624,19 @@ def StatsView(parent, tiers):
     return response
 
 # ----------------------------------------------------------------------------
-# Panel tested by test_glob.py
+# Panel that can be tested
 # ----------------------------------------------------------------------------
 
 
 class TestPanel(sppasPanel):
 
-    def __init__(self, parent):
-        super(TestPanel, self).__init__(parent, name="TestPanel-statsview")
-
-        btn = wx.Button(self,
-                        pos=(200, 10),
-                        size=(384, 128),
-                        label="Click here to open stats dialog",
-                        name="stats-btn")
+    def __init__(self, parent, pos=wx.DefaultPosition, size=wx.DefaultSize):
+        super(TestPanel, self).__init__(parent, pos=pos, size=size,
+                                        name="TestPanel StatsView")
+        s = wx.BoxSizer()
+        b = wx.Button(self, label="Stats View", name="stats-btn")
+        s.Add(b, 1, wx.EXPAND)
+        self.SetSizer(s)
         self.Bind(wx.EVT_BUTTON, self._open_stats)
 
     def _open_stats(self, evt):
@@ -742,4 +652,3 @@ class TestPanel(sppasPanel):
         tier2 = trs2.find("PhonAlign")
 
         StatsView(self, tiers={f1: [tier1], f2: [tier2]})
-

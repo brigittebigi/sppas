@@ -44,8 +44,8 @@ from ..windows import sppasStaticLine
 from ..windows import sppasToolbar
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
-from ..windows import sppasSimpleText
-from ..windows import BitmapTextButton, CheckButton
+from ..windows import sppasStaticText
+from ..windows import BitmapTextButton, CheckButton, RadioButton
 
 from .annotevent import PageChangeEvent
 from .annotselect import LANG_NONE
@@ -79,6 +79,8 @@ class sppasActionAnnotatePanel(sppasPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
+    TODO: Use a sppasSplitterWindow instead of a sppasPanel
+
     """
 
     def __init__(self, parent, param):
@@ -92,6 +94,25 @@ class sppasActionAnnotatePanel(sppasPanel):
         self._create_content()
         self._setup_events()
         self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        """Set the background of our panel to the given color."""
+        wx.Panel.SetBackgroundColour(self, colour)
+        hi_color = self.GetHighlightedBackgroundColour()
+
+        for name in ("format", "lang", "annselect", "annot", "report"):
+            w = self.FindWindow(name + "_panel")
+            w.SetBackgroundColour(hi_color)
+
+    # -----------------------------------------------------------------------
+
+    def GetHighlightedBackgroundColour(self):
+        """Return a color slightly different of the parent background one."""
+        color = self.GetParent().GetBackgroundColour()
+        r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
+        return wx.Colour(r, g, b, a).ChangeLightness(90)
 
     # ------------------------------------------------------------------------
 
@@ -112,7 +133,6 @@ class sppasActionAnnotatePanel(sppasPanel):
         for f in os.listdir(paths.logs):
             if os.path.isfile(os.path.join(paths.logs, f)) and f.endswith('.txt'):
                 reports.append(f)
-                wx.LogDebug('Found report: {:s}'.format(f))
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         action_sizer = self._create_action_content()
@@ -147,13 +167,13 @@ class sppasActionAnnotatePanel(sppasPanel):
         pnl_report = self.__create_action_report(panel)
 
         # Organize all the objects
-        border = sppasPanel.fix_size(20)
+        border = sppasPanel.fix_size(12)
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(pnl_fmt, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
-        sizer.Add(pnl_lang, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
-        sizer.Add(pnl_select, 3, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
-        sizer.Add(pnl_run, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
-        sizer.Add(pnl_report, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        sizer.Add(pnl_fmt, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border)
+        sizer.Add(pnl_lang, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border)
+        sizer.Add(pnl_select, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border)
+        sizer.Add(pnl_run, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border)
+        sizer.Add(pnl_report, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM, border)
         panel.SetSizerAndFit(sizer)
 
         panel.SetupScrolling(scroll_x=False, scroll_y=True)
@@ -163,9 +183,9 @@ class sppasActionAnnotatePanel(sppasPanel):
 
     def __create_action_format(self, parent):
         """The output file format (step 1)."""
-        p = sppasPanel(parent)
+        p = sppasPanel(parent, style=wx.BORDER_NONE, name="format_panel")
 
-        st = sppasSimpleText(p, MSG_STEP_FORMAT)
+        st = sppasStaticText(p, label=MSG_STEP_FORMAT)
         all_formats = ['.xra', '.TextGrid', '.eaf', '.antx', '.mrk', '.csv']
         default = self.__param.get_output_format()
         wx.LogMessage("Default output format is {:s}".format(default))
@@ -174,8 +194,9 @@ class sppasActionAnnotatePanel(sppasPanel):
         choice.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
 
         s = wx.BoxSizer(wx.HORIZONTAL)
-        s.Add(st, 1, wx.ALIGN_LEFT | wx.ALL, 10)
-        s.Add(choice, 0, wx.ALL, 10)
+        border = sppasPanel.fix_size(10)
+        s.Add(st, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.ALL, border)
+        s.Add(choice, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, border)
         p.SetSizer(s)
         return p
 
@@ -183,9 +204,9 @@ class sppasActionAnnotatePanel(sppasPanel):
 
     def __create_action_lang(self, parent):
         """The language (step 2)."""
-        p = sppasPanel(parent)
+        p = sppasPanel(parent, style=wx.BORDER_NONE, name="lang_panel")
 
-        st = sppasSimpleText(p, MSG_STEP_LANG)
+        st = sppasStaticText(p, label=MSG_STEP_LANG)
         all_langs = list()
         for i in range(self.__param.get_step_numbers()):
             a = self.__param.get_step(i)
@@ -198,8 +219,9 @@ class sppasActionAnnotatePanel(sppasPanel):
         choice.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
 
         s = wx.BoxSizer(wx.HORIZONTAL)
-        s.Add(st, 1, wx.ALIGN_LEFT | wx.ALL, 10)
-        s.Add(choice, 0, wx.ALL, 10)
+        border = sppasPanel.fix_size(10)
+        s.Add(st, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.ALL, border)
+        s.Add(choice, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, border)
         p.SetSizer(s)
         return p
 
@@ -207,21 +229,23 @@ class sppasActionAnnotatePanel(sppasPanel):
 
     def __create_action_annselect(self, parent):
         """The annotations to select (step 3)."""
-        p = sppasPanel(parent)
-        st = sppasSimpleText(p, MSG_STEP_ANNCHOICE)
+        p = sppasPanel(parent, style=wx.BORDER_NONE, name="annselect_panel")
+        st = sppasStaticText(p, label=MSG_STEP_ANNCHOICE)
 
         pbts = sppasPanel(p)
         sbts = wx.BoxSizer(wx.VERTICAL)
+        border = sppasPanel.fix_size(3)
         for ann_type in annots.types:
             btn = self.__create_select_annot_btn(pbts, "{:s} annotations".format(ann_type))
             btn.SetName("btn_annot_" + ann_type)
             btn.SetImage("on-off-off")
-            sbts.Add(btn, 1, wx.EXPAND | wx.LEFT, 4)
+            sbts.Add(btn, 1, wx.EXPAND | wx.LEFT | wx.TOP | wx.BOTTOM, border)
         pbts.SetSizer(sbts)
 
         s = wx.BoxSizer(wx.HORIZONTAL)
-        s.Add(st, 1, wx.ALIGN_LEFT | wx.ALL, 10)
-        s.Add(pbts, 0, wx.ALL, 10)
+        border = sppasPanel.fix_size(10)
+        s.Add(st, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.ALL, border)
+        s.Add(pbts, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, border)
         p.SetSizer(s)
         return p
 
@@ -229,8 +253,8 @@ class sppasActionAnnotatePanel(sppasPanel):
 
     def __create_action_annot(self, parent):
         """The button to run annotations (step 4)."""
-        p = sppasPanel(parent)
-        st = sppasSimpleText(p, MSG_STEP_RUN)
+        p = sppasPanel(parent, style=wx.BORDER_NONE, name="annot_panel")
+        st = sppasStaticText(p, label=MSG_STEP_RUN)
         self.btn_run = self.__create_select_annot_btn(p, MSG_BTN_RUN)
         self.btn_run.SetName("wizard")
         self.btn_run.SetImage("wizard")
@@ -238,8 +262,9 @@ class sppasActionAnnotatePanel(sppasPanel):
         self.btn_run.BorderColour = wx.Colour(228, 24, 24, 128)
 
         s = wx.BoxSizer(wx.HORIZONTAL)
-        s.Add(st, 1, wx.ALIGN_LEFT | wx.ALL, 10)
-        s.Add(self.btn_run, 0, wx.ALL, 10)
+        border = sppasPanel.fix_size(10)
+        s.Add(st, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.ALL, border)
+        s.Add(self.btn_run, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, border)
         p.SetSizer(s)
         return p
 
@@ -247,8 +272,8 @@ class sppasActionAnnotatePanel(sppasPanel):
 
     def __create_action_report(self, parent):
         """The button to show the report."""
-        p = sppasPanel(parent)
-        st = sppasSimpleText(p, MSG_STEP_REPORT)
+        p = sppasPanel(parent, style=wx.BORDER_NONE, name="report_panel")
+        st = sppasStaticText(p, label=MSG_STEP_REPORT)
         self.btn_por = self.__create_select_annot_btn(p, MSG_BTN_REPORT)
         self.btn_por.SetName("save_as")
         self.btn_por.SetImage("save_as")
@@ -256,8 +281,9 @@ class sppasActionAnnotatePanel(sppasPanel):
         self.btn_por.BorderColour = wx.Colour(228, 24, 24, 128)
 
         s = wx.BoxSizer(wx.HORIZONTAL)
-        s.Add(st, 1, wx.ALIGN_LEFT | wx.ALL, 10)
-        s.Add(self.btn_por, 0, wx.ALL, 10)
+        border = sppasPanel.fix_size(10)
+        s.Add(st, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.ALL, border)
+        s.Add(self.btn_por, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, border)
         p.SetSizer(s)
         return p
 
@@ -269,11 +295,11 @@ class sppasActionAnnotatePanel(sppasPanel):
         h = sppasPanel.fix_size(42)
 
         btn = BitmapTextButton(parent, label=label)
-        btn.LabelPosition = wx.RIGHT
-        btn.Spacing = 12
-        btn.BorderWidth = 2
-        btn.BorderColour = wx.Colour(128, 128, 128, 128)
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetBorderWidth(2)
+        btn.SetLabelPosition(wx.RIGHT)
+        btn.SetSpacing(12)
+        btn.SetBorderColour(wx.Colour(128, 128, 128, 128))
+        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(w, h))
         return btn
 
@@ -511,10 +537,9 @@ class ReportsPanel(sppasScrolledPanel):
                 return False
 
         # Create a new button and insert at the top of the list
-        btn = CheckButton(self, label=name, name="checkbox_"+name)
-        btn.SetSpacing(sppasPanel.fix_size(12))
-        btn.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
-        btn.SetSize(wx.Size(-1, sppasPanel.fix_size(32)))
+        btn = RadioButton(self, label=name, name="checkbox_"+name)
+        btn.SetSpacing(self.get_font_height())
+        btn.SetMinSize(wx.Size(-1, self.get_font_height()*2))
         self.__set_normal_btn_style(btn)
         btn.SetValue(False)
         btn.Enable(False)   # ================================
@@ -550,19 +575,19 @@ class ReportsPanel(sppasScrolledPanel):
 
     def __set_normal_btn_style(self, button):
         """Set a normal style to a button."""
-        button.BorderWidth = 0
-        button.BorderColour = self.GetForegroundColour()
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = wx.Colour(128, 128, 128, 128)
+        button.SetBorderWidth(0)
+        button.SetBorderColour(self.GetForegroundColour())
+        button.SetBorderStyle(wx.PENSTYLE_SOLID)
+        button.SetFocusColour(wx.Colour(128, 128, 128, 128))
 
     # -----------------------------------------------------------------------
 
     def __set_active_btn_style(self, button):
         """Set a highlight style to the button."""
-        button.BorderWidth = 1
-        button.BorderColour = ReportsPanel.HIGHLIGHT_COLOR
-        button.BorderStyle = wx.PENSTYLE_SOLID
-        button.FocusColour = self.GetForegroundColour()
+        button.SetBorderWidth(1)
+        button.SetBorderColour(ReportsPanel.HIGHLIGHT_COLOR)
+        button.SetBorderStyle(wx.PENSTYLE_SOLID)
+        button.SetFocusColour(self.GetForegroundColour())
 
     # -----------------------------------------------------------------------
     # Private methods
