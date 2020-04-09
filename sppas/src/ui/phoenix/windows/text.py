@@ -90,6 +90,9 @@ class sppasStaticText(wx.StaticText):
         except AttributeError:
             self.InheritAttributes()
 
+        # Set the label after we defined the font
+        self.SetLabel(label)
+
     # -----------------------------------------------------------------------
 
     def SetLabel(self, label):
@@ -103,13 +106,39 @@ class sppasStaticText(wx.StaticText):
         """
         if label != self.GetLabel():
             wx.StaticText.SetLabel(self, label)
-            (w, h) = self.DoGetBestSize()
-            try:
-                c = wx.GetApp().settings.size_coeff
-            except AttributeError:
-                c = 1.
+            self.__set_min_size()
 
-            self.SetMinSize(wx.Size(int(float(w)*c), h))
+    # -----------------------------------------------------------------------
+
+    def SetFont(self, font):
+        """Override."""
+        wx.Window.SetFont(self, font)
+        self.__set_min_size()
+
+    # -----------------------------------------------------------------------
+
+    def GetWindowHeight(self):
+        """Return the height assigned to the text."""
+        return int(float(self.get_font_height()) * 1.6)
+
+    # -----------------------------------------------------------------------
+
+    def get_font_height(self):
+        font = self.GetFont()
+        return int(float(font.GetPixelSize()[1]))
+
+    # -----------------------------------------------------------------------
+
+    def __set_min_size(self):
+        """Estimate the min size in a proper way!"""
+        (w, h) = self.DoGetBestSize()
+        h = self.GetWindowHeight()
+        try:
+            c = wx.GetApp().settings.size_coeff
+        except AttributeError:
+            c = 1.
+
+        self.SetMinSize(wx.Size(int(float(w) * c), h))
 
 # ---------------------------------------------------------------------------
 
@@ -158,8 +187,7 @@ class sppasTextCtrl(wx.TextCtrl):
             self.SetFont(settings.text_font)
             self.SetBackgroundColour(settings.bg_color)
         except:
-            wx.LogDebug("TextCtrl error. Settings not set.")
-            pass
+            self.InheritAttributes()
 
         # the message is not send to the base class when init but after
         # in order to apply the appropriate colors&font

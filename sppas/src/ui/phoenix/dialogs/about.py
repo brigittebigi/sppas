@@ -52,6 +52,34 @@ from ..windows import sppasMessageText
 
 MSG_HEADER_ABOUT = u(msg("About", "ui"))
 
+LICENSE = """
+------------------------------------------------------------
+
+By using SPPAS, you agree to cite the reference in your publications:
+
+Brigitte Bigi (2015),
+SPPAS - Multi-lingual Approaches to the Automatic Annotation of Speech,
+The Phonetician, International Society of Phonetic Sciences,
+vol. 111-112, ISBN: 0741-6164, pages 54-69.
+
+------------------------------------------------------------
+
+SPPAS is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of
+the License, or (at your option) any later version.
+
+SPPAS is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with File Hunter; if not, write to the Free Software Foundation,
+Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+------------------------------------------------------------
+"""
+
 # ----------------------------------------------------------------------------
 
 
@@ -62,7 +90,7 @@ class sppasBaseAbout(sppasScrolledPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
     def __init__(self, parent):
@@ -79,7 +107,7 @@ class sppasBaseAbout(sppasScrolledPanel):
         self.description = ""
         self.url = ""
         self.license = ""
-        self.license_text = ""
+        self.license_text = LICENSE
         self.icon = ""
         self.logo = 'sppas'
 
@@ -90,54 +118,54 @@ class sppasBaseAbout(sppasScrolledPanel):
     def create(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # Logo
-        if len(self.logo) > 0:
-            bitmap = sppasSwissKnife.get_bmp_image(self.logo, height=48)
-            sbmp = wx.StaticBitmap(self, wx.ID_ANY, bitmap)
-            sizer.Add(sbmp, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 8)
-
         # Program name
         if len(self.program) > 0:
-            text = sppasStaticText(self, -1, self.program + " " + sg.__version__)
+            text = sppasMessageText(self, self.program + " " + sg.__version__)
             font = text.GetFont()
             font_size = font.GetPointSize()
             font.SetPointSize(font_size + 4)
             font.SetWeight(wx.FONTWEIGHT_BOLD)
             text.SetFont(font)
+            text.SetMinSize(wx.Size(500, sppasScrolledPanel.fix_size(24)))
             sizer.Add(text, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
 
         # Copyright
         if len(self.copyright) > 0:
-            text = sppasStaticText(self, -1, self.copyright)
-            font = text.GetFont()
-            font.SetWeight(wx.FONTWEIGHT_BOLD)
-            text.SetFont(font)
+            text = sppasMessageText(self, self.copyright)
+            text.SetMinSize(wx.Size(500, sppasScrolledPanel.fix_size(24)))
             sizer.Add(text, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
 
         # URL
         if len(self.url) > 0:
             text = sppasMessageText(self, self.url, name="url")
             text.Bind(wx.EVT_LEFT_UP, self.on_link, text)
-            text.SetMinSize(wx.Size(200, sppasScrolledPanel.fix_size(20)))
+            text.SetMinSize(wx.Size(500, sppasScrolledPanel.fix_size(24)))
             sizer.Add(text, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
+
+        # Logo
+        if len(self.logo) > 0:
+            bitmap = sppasSwissKnife.get_bmp_image(self.logo, height=48)
+            sbmp = wx.StaticBitmap(self, wx.ID_ANY, bitmap)
+            sizer.Add(sbmp, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
 
         # Description
         if len(self.description) > 0:
             text = sppasMessageText(self, self.description)
-            text.SetMinSize(wx.Size(500, sppasScrolledPanel.fix_size(50)))
+            text.SetMinSize(wx.Size(500, sppasScrolledPanel.fix_size(64)))
             sizer.Add(text, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
 
         # License
         if len(self.license) > 0:
-            text = sppasStaticText(self, -1, self.license)
+            text = sppasStaticText(self, label=self.license)
+            text.SetMinSize(wx.Size(500, sppasScrolledPanel.fix_size(20)))
             sizer.Add(text, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
 
         # License text content
         if len(self.license_text) > 0:
-            text = sppasStaticText(self, -1, self.license_text)
-            sizer.Add(text, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
+            text = sppasMessageText(self, self.license_text)
+            sizer.Add(text, 1, wx.ALL | wx.EXPAND, 2)
 
-        self.SetSizerAndFit(sizer)
+        self.SetSizer(sizer)
         self.SetupScrolling(scroll_x=True, scroll_y=True)
 
         self.SetBackgroundColour(wx.GetApp().settings.bg_color)
@@ -196,34 +224,8 @@ class AboutSPPASPanel(sppasBaseAbout):
         self.brief = sg.__summary__
         self.description = sg.__description__
         self.url = sg.__url__
-        self.logo = "sppas"
-        self.license_text = """
-------------------------------------------------------------
+        self.logo = "sppas_colored"
 
-By using SPPAS, you agree to cite the reference in your publications:
-
-Brigitte Bigi (2015),
-SPPAS - Multi-lingual Approaches to the Automatic Annotation of Speech,
-The Phonetician, International Society of Phonetic Sciences,
-vol. 111-112, ISBN: 0741-6164, pages 54-69.
-
-------------------------------------------------------------
-
-SPPAS is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 3 of
-the License, or (at your option) any later version.
-
-SPPAS is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with File Hunter; if not, write to the Free Software Foundation,
-Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-------------------------------------------------------------
-"""
         # Create the panel
         self.create()
 
