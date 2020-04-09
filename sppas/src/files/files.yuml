@@ -3,48 +3,49 @@
 // {generate:true}
 
 // Nodes
-[FileBase|#id;match();]
-[FileData|-fp: list; -cat: list; associate(dict(fn,list(cat)); dissociate(dict(fn,list(cat));{bg:salmon}]
-[FilePath|-check: bool;+subjoined: dict;]
-[FileRoot|-check: bool;+subjoined: dict;]
-[FileName|-state: enum;-name: str;-extension: str;-date: str;-size: int;#categories: list]
-[Category|-attributs: dict; add(key, value); remove(key); overlaods()]
-[AttValue|-value: str;-valuetype: str;+description: str; get_value(); get_typed_value();]
+[FileBase|-id; #state; match()]
+[FileData|-data: list; -refs: list;add(); add_file();...]
+[FileReference|-attributs : list; -type; att();...]
+[FilePath|-roots : list; +subjoined: dict; identifier();...]
+[FileRoot|-files : list; -references : list; +subjoined: dict; update_state(),...]
+[FileName|-name: str; -extension: str; -date: str; -size: str; folder();...]
+
+[sppasAttribut|-id: str; -value: str; -valuetype: str; descr: str; serialize()]
 
 [sppasBaseCompare|+methods;get();get_function_names()]
 [sppasPathCompare|exact();iexact();startswith();...]
 [sppasRootCompare|exact();iexact();startswith();...]
-[sppasNameCompare|exact();iexact();startswith();...]
-[sppasExtensionCompare|exact();iexact();startswith();...]
-[sppasFileCompare|exact();iexact();startswith();...]
-[sppasRefCompare|exact();iexact();ge();equal();...]
-[sppasAttValueCompare|exact();iexact();ge();equal();...]
+[sppasFileNameCompare|exact();iexact();startswith();...]
+[sppasFileExtCompare|exact();iexact();startswith();...]
+[sppasFileBaseCompare|exact();iexact();startswith();...]
+[sppasFileRefCompare|exact();iexact();ge();equal();...]
+[sppasAttributeCompare|exact();iexact();ge();equal();...]
+[sppasFileStateCompare|state()]
 
-[sppasBaseFilters|#obj;test_args();fix_logic_bool();fix_function_values();fix_functions()]
+[sppasBaseFilters|+obj;test_args();fix_logic_bool();fix_function_values();fix_functions()]
 [sppasFileDataFilters|path();root();name();extension();file()]
 
-// Edges
+//Edges
 [FileData]++-0..*>[FilePath]
-[FileData]++-0..*>[Category]
-
+[FileData]++-0..*>[FileReference]
 [FilePath]++-1..*>[FileRoot]
 [FileRoot]++-1..*>[FileName]
-[FileName]++-0..*>[Category]
+[FileReference]++-1..*>[sppasAttribut]
 
 [FileBase]^[FilePath]
 [FileBase]^[FileRoot]
 [FileBase]^[FileName]
-[FileBase]^[Category]
+[FileBase]^[FileData]
+
 
 [sppasBaseCompare]^[sppasPathCompare]
 [sppasBaseCompare]^[sppasRootCompare]
-[sppasBaseCompare]^[sppasNameCompare]
-[sppasBaseCompare]^[sppasExtensionCompare]
-[sppasBaseCompare]^[sppasFileCompare]
-[sppasBaseCompare]^[sppasRefCompare]
-[sppasBaseCompare]^[sppasAttValueCompare]
-[sppasBaseCompare]^[sppasAttKeyCompare]
+[sppasBaseCompare]^[sppasFileNameCompare]
+[sppasBaseCompare]^[sppasFileExtCompare]
+[sppasBaseCompare]^[sppasFileBaseCompare]
+[sppasBaseCompare]^[sppasFileRefCompare]
+[sppasBaseCompare]^[sppasAttributeCompare]
+[sppasBaseCompare]^[sppasFileStateCompare]
+
 
 [sppasBaseFilters]^[sppasFileDataFilters]
-
-[Category]++-0..*[AttValue]
