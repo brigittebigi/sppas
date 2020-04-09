@@ -22,6 +22,8 @@ import logging
 import wx
 import wx.lib.newevent
 
+from sppas.src.anndata.aio.aioutils import serialize_labels
+
 from sppas.src.ui.wxgui.cutils.textutils import TextAsNumericValidator
 from sppas.src.ui.wxgui.cutils.colorutils import PickRandomColour, ContrastiveColour
 
@@ -497,7 +499,7 @@ class TierCtrl(spControl):
             self._pointsctrl.append(p2)
 
         logging.debug(" ... ... create the label control")
-        l = ann.serialize_labels(separator=" ", empty="", alt=True)
+        l = serialize_labels(ann.get_labels(), separator=" ", empty="", alt=True)
         label = LabelCtrl(self, id=-1, label=l)
         self._labelsctrl.append(label)
         logging.debug(" ... ... label control successfully created")
@@ -537,7 +539,7 @@ class TierCtrl(spControl):
             p = PointCtrl(self, id=-1, point=tp)
             self._pointsctrl.append(p)
 
-        l = ann.serialize_labels(separator=" ", empty="", alt=True)
+        l = serialize_labels(ann.get_labels(), separator=" ", empty="", alt=True)
         label = LabelCtrl(self, id=-1, label=l)
         self._labelsctrl.append(label)
 

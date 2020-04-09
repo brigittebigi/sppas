@@ -810,7 +810,8 @@ class sppasTrainingCorpus(object):
         self.phonemap.set_delimiters(d)
 
         for ann in tier:
-            label = ann.serialize_labels()
+            label = tierutils.serialize_labels(
+                ann.get_labels(), separator=" ", empty="", alt=False)
             new_content = sppasTrainingCorpus._format_phonetization(label)
             ann.set_labels(sppasLabel(sppasTag(new_content)))
 

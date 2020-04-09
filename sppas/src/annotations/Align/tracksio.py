@@ -42,6 +42,7 @@ from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasLocation
 from sppas.src.anndata import sppasInterval
 from sppas.src.anndata import sppasPoint
+from sppas.src.anndata.aio.aioutils import serialize_labels
 
 from sppas.src.config import sg
 from sppas.src.config import separators
@@ -164,7 +165,7 @@ class TracksReaderWriter(object):
 
         # Map phonetizations (even the alternatives)
         for ann in phon_tier:
-            text = ann.serialize_labels(separator="\n", empty="", alt=True)
+            text = serialize_labels(ann.get_labels(), separator="\n", empty="", alt=True)
             tab = text.split('\n')
             content = list()
             for item in tab:
@@ -465,7 +466,7 @@ class TracksWriter:
         for ann in tok_tier:
             tag = ann.get_best_tag()
             if tag.is_silence() is False:
-                phonemes = ann.serialize_labels(" ", "", alt=True)
+                phonemes = serialize_labels(ann.get_labels(), " ", "", alt=True)
                 nb_phonemes = len(phonemes.split(' '))
                 tokens = " ".join(
                     ["w_" + str(i + 1) for i in range(nb_phonemes)]

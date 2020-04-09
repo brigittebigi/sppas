@@ -42,6 +42,7 @@ from sppas.src.config import msg
 from sppas.src.config import paths
 from sppas.src.utils import u
 from sppas.src.anndata import sppasRW
+from sppas.src.anndata.aio.aioutils import serialize_labels
 
 from ..windows import sppasPanel
 from ..windows import LineListCtrl
@@ -433,7 +434,7 @@ class sppasTierListCtrl(LineListCtrl):
         col = self._cols.index(MSG_LABELS)
         ann = self._tier[row]
         if ann.is_labelled():
-            label_str = ann.serialize_labels(separator=" ")
+            label_str = serialize_labels(ann.get_labels(), separator=" ")
             self.SetItem(row, col, label_str)
 
             # customize label look

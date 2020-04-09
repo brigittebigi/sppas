@@ -67,6 +67,7 @@ from .basetrs import sppasBaseIO
 from .aioutils import merge_overlapping_annotations
 from .aioutils import point2interval
 from .aioutils import format_labels
+from .aioutils import serialize_labels
 
 # ---------------------------------------------------------------------------
 
@@ -564,9 +565,8 @@ class sppasANTX(sppasBaseIO):
         child_id_layer.text = tier.get_meta('id')
 
         child_id_label = ET.SubElement(segment_root, 'Label')    # Label
-        child_id_label.text = ann.serialize_labels(separator="\n",
-                                                   empty="",
-                                                   alt=True)
+        child_id_label.text = serialize_labels(
+            ann.get_labels(), separator="\n", empty="", alt=True)
 
         child_id_start = ET.SubElement(segment_root, 'Start')    # Start
         child_id_dur = ET.SubElement(segment_root, 'Duration')   # Duration

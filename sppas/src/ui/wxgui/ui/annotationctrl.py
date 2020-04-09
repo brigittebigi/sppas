@@ -43,6 +43,8 @@ import logging
 import wx
 import wx.lib.newevent
 
+from sppas.src.anndata.aio.aioutils import serialize_labels
+
 from pointctrl import PointCtrl
 from pointctrl import spEVT_MOVING
 from pointctrl import MIN_W as pointctrlMinWidth
@@ -216,7 +218,7 @@ class AnnotationCtrl(wx.Window):
         else:
             raise NotImplemented('Disjoint intervals are not supported yet!')
 
-        l = ann.serialize_labels(separator=" ", empty="", alt=True)
+        l = serialize_labels(ann.get_labels(), separator=" ", empty="", alt=True)
         self._labelctrl = LabelCtrl(self, id=-1, label=l)
         self._ann = ann
 

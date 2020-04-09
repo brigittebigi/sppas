@@ -32,6 +32,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 from sppas import symbols
 from sppas import sppasRW
 from sppas import sppasTranscription
@@ -40,7 +41,9 @@ from sppas import sppasInterval
 from sppas import sppasLocation
 from sppas import sppasLabel
 from sppas import sppasTag
+
 from sppas.src.anndata.anndataexc import TierAddError
+from sppas.src.anndata.aio.aioutils import serialize_labels
 
 from ..searchtier import sppasFindTier
 from ..annotationsexc import EmptyOutputError
@@ -135,7 +138,7 @@ class sppasOtherRepet(sppasBaseRepet):
 
                 for i in range(old_tok_start_echo, len(inputtier2)):
                     ann = inputtier2[i]
-                    label = ann.serialize_labels()
+                    label = serialize_labels(ann.get_labels())
                     if ann.get_lowest_localization().get_midpoint() >= src_begin:
                         if tok_start_echo == old_tok_start_echo:
                             tok_start_echo = i

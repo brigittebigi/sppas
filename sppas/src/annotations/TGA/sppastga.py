@@ -41,6 +41,7 @@ from sppas.src.anndata import sppasTranscription
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasTag
 from sppas.src.anndata import sppasLabel
+from sppas.src.anndata.aio.aioutils import serialize_labels
 
 from ..baseannot import sppasBaseAnnotation
 from ..searchtier import sppasFindTier
@@ -223,7 +224,7 @@ class sppasTGA(sppasBaseAnnotation):
                                        tg.get_highest_localization())
             tag_str = ""
             for ann in syll_anns:
-                tag_str += ann.serialize_labels(separator=" ")
+                tag_str += serialize_labels(ann.get_labels(), separator=" ")
                 tag_str += " "
             tg.append_label(sppasLabel(sppasTag(tag_str)))
 
@@ -241,7 +242,7 @@ class sppasTGA(sppasBaseAnnotation):
         """
         tg_dur = dict()
         for tg_ann in timegroups:
-            tg_label = tg_ann.serialize_labels()
+            tg_label = serialize_labels(tg_ann.get_labels())
             tg_dur[tg_label] = list()
             syll_anns = syllables.find(tg_ann.get_lowest_localization(),
                                        tg_ann.get_highest_localization())
@@ -278,7 +279,7 @@ class sppasTGA(sppasBaseAnnotation):
         tier = sppasTier(tier_name)
 
         for tg_ann in timegroups:
-            tg_label = tg_ann.serialize_labels()
+            tg_label = serialize_labels(tg_ann.get_labels())
             tag_value = tga_result[tg_label]
             if tag_type == "float":
                 tag_value = round(tag_value, 5)
@@ -309,7 +310,7 @@ class sppasTGA(sppasBaseAnnotation):
             tier = sppasTier('TGA-Slope')
 
         for tg_ann in timegroups:
-            tg_label = tg_ann.serialize_labels()
+            tg_label = serialize_labels(tg_ann.get_labels())
             loc = tg_ann.get_location().copy()
             if intercept is True:
                 tag_value = tga_result[tg_label][0]

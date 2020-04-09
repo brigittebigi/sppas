@@ -32,14 +32,16 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import os
 
 from sppas import IndexRangeException
 from sppas import symbols
-from sppas import sppasTier
-from sppas import sppasLabel
-from sppas import sppasTag
-from sppas import sppasWordStrain
+from sppas.src.anndata import sppasTier
+from sppas.src.anndata import sppasLabel
+from sppas.src.anndata import sppasTag
+from sppas.src.anndata.aio.aioutils import serialize_labels
+from sppas.src.resources import sppasWordStrain
 
 from ..baseannot import sppasBaseAnnotation
 from ..annotationsexc import AnnotationOptionError
@@ -212,7 +214,7 @@ class sppasBaseRepet(sppasBaseAnnotation):
         self.logfile.print_message("Words strain enabled.", indent=1, status=2)
         lems_tier = sppasTier('TokenStrain')
         for ann in tier:
-            token = ann.serialize_labels()
+            token = serialize_labels(ann.get_labels())
             lem = self._word_strain.get(token, token)
             lems_tier.create_annotation(
                 ann.get_location().copy(),
@@ -230,7 +232,7 @@ class sppasBaseRepet(sppasBaseAnnotation):
         """
         stp_tier = sppasTier('StopWord')
         for ann in tier:
-            token = ann.serialize_labels()
+            token = serialize_labels(ann.get_labels())
             if token not in symbols.all:
                 stp = self._stop_words.is_in(token)
                 stp_tier.create_annotation(

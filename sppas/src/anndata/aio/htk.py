@@ -40,6 +40,7 @@ the Speech Vision and Robotics Group of the Cambridge University Engineering
 Department (CUED) in 1989 by Steve Young.
 
 """
+
 import codecs
 
 from sppas.src.config import sg
@@ -54,6 +55,7 @@ from ..ann.annlabel import sppasTag
 
 from .basetrs import sppasBaseIO
 from .aioutils import load
+from .aioutils import serialize_labels
 
 # ---------------------------------------------------------------------------
 
@@ -126,15 +128,17 @@ class sppasBaseHTK(sppasBaseIO):
 
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def _serialize_annotation(ann):
+    def _serialize_annotation(self, ann):
         """Convert an annotation into a line for HTK lab of mlf files.
 
         :param ann: (sppasAnnotation)
         :returns: (str)
 
         """
-        text = ann.serialize_labels(separator=" ", empty="", alt=False)
+        text = serialize_labels(ann.get_labels(),
+                                separator=" ",
+                                empty="",
+                                alt=self._accept_alt_tag)
 
         # no label defined, or empty label
         if len(text) == 0:
@@ -305,7 +309,7 @@ class sppasLab(sppasBaseHTK):
 
             if self.is_empty() is False:
                 for ann in self[0]:
-                    content = sppasBaseHTK._serialize_annotation(ann)
+                    content = self._serialize_annotation(ann)
                     if len(content) > 0:
                         fp.write(content)
 
