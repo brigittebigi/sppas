@@ -37,8 +37,9 @@
 import os
 import sys
 import re
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, run
 from pip._vendor.distlib.compat import raw_input
+
 
 # ----------------------------------------------------------------------------
 
@@ -85,7 +86,7 @@ class Installer:
 
     # ---------------------------------------------------------------------------
 
-    def verify_wx(self):
+    def verify_wxpython(self):
         """blaaaaaaaaaaa"""
         p = Popen("pip show WxPython".split(), stdout=PIPE)
         p.wait()
@@ -122,9 +123,8 @@ class Installer:
         p = Popen("julius --version".split(), shell=True, stdout=PIPE, stderr=PIPE)
         p.wait()
         line = p.stderr.read().decode()
-        # print(line)
 
-        if "not found" not in line:
+        if "not found" in line:
             self.julius = False
             choice = ""
             while str(choice) != "o" or str(choice) != "O":
@@ -179,25 +179,37 @@ class Linux(Installer):
     # ---------------------------------------------------------------------------
 
     def install_wxpython(self):
-        if self.get_python_version() == "Python3":
-            command = "-f https://extras.wxpython.org/" + "wxPython4" + "/extras/linux/gtk3/" + \
-                       self.get_os_distributor() + "-" + self.get_os_release()
-            print("Installation de la librairie wxpython")
-            p = Popen(['pip',  'install', '-U', ' ', command, ' ', "wxPython"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-            p.wait()
-            p.communicate()
+            print("Installation de tout le bordel")
+            p0 = Popen("sudo apt-get install make gcc libgtk-3-dev libwebkitgtk-dev "
+                       "libwebkitgtk-3.0-dev libgstreamer-gl1.0-0 freeglut3 "
+                       "freeglut3-dev python-gst-1.0 python3-gst-1.0 libglib2.0-dev "
+                       "ubuntu-restricted-extras libgstreamer-plugins-base1.0-dev".split())
+            p0.wait()
+
+            if self.get_python_version() == "Python3":
+                command = "-f https://extras.wxpython.org/" + "wxPython4" + "/extras/linux/gtk3/" + \
+                          self.get_os_distributor() + "-" + self.get_os_release()
+                print("Installation de la librairie wxpython")
+                line = 'pip ' + 'install ' + '-U ' + command + ' wxPython'
+                p = Popen(line.split())
+                p.wait()
+
+            elif self.get_python_version() == "Python2":
+                p = Popen("sudo apt-get install python-wxgtk3.0".split())
+                p.wait()
+
             print("Installation de la librairie libsdl1.2-dev")
-            p1 = Popen("sudo apt-get install libsdl1.2-dev".split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            p1 = Popen("sudo apt-get install libsdl1.2-dev".split())
             p1.wait()
-            p1.communicate()
+
             print("Installation de la librairie sox")
-            p2 = Popen("sudo apt-get install -y sox".split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            p2 = Popen("sudo apt-get install -y sox".split())
             p2.wait()
-            p2.communicate()
+
     # ---------------------------------------------------------------------------
 
     def set_distributor_release(self):
-        p = Popen("lsb_release -a".split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        p = Popen("lsb_release -a".split(), stdout=PIPE, stderr=PIPE)
         line = p.communicate()
         linux_information = line[0].decode()
         tab2 = dict()
@@ -214,7 +226,7 @@ class Linux(Installer):
 
     def install_julius(self):
         """blaaaaaaaaaaa"""
-        p = Popen("sudo apt install julius".split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        p = Popen("sudo apt install julius".split())
         p.wait()
         p.communicate()
         print("Julius a bien été installé sur votre machine")
@@ -233,7 +245,7 @@ class Windows(Installer):
 
     def install_wxpython(self):
         """blaaaaaaaaaaa"""
-        Popen("pip install -U wxPython".split(), shell=True, stdout=PIPE, stderr=PIPE)
+        Popen("pip install -U wxPython".split())
         print("WxPython a bien été installé sur votre machine")
 
     # ---------------------------------------------------------------------------
@@ -272,6 +284,5 @@ elif sys.platform == "win32":
 else:
     my_installer = Linux()
 
-print(my_installer.verify_wx())
-print(my_installer.verify_julius())
-
+my_installer.verify_wxpython()
+my_installer.verify_julius()
