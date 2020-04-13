@@ -34,10 +34,9 @@
 
 """
 
-import os
 import sys
 import re
-from subprocess import Popen, PIPE, run
+from subprocess import Popen, PIPE
 from pip._vendor.distlib.compat import raw_input
 
 
