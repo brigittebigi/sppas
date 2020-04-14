@@ -45,17 +45,35 @@ Examples:
 Create or open a workspace :
 >>>  ./sppas/sppas/bin/workspaces.py -w myWorkspace
 
-
 Adding a file to the workspace :
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -a ./sppas/samples/samples-fra/BX_track_0451.wav
 
 Checking a file :
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -cf ./sppas/samples/samples-fra/BX_track_0451.wav
 
-if you want to check/uncheck all the files use the argument --check_all / --uncheck_all
+if you want to check/uncheck all the files use the argument --check_all /--uncheck_all
 
 An "all-in-one" solution :
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -a ./sppas/samples/samples-fra/BX_track_0451.wav -cf ./sppas/samples/samples-fra/BX_track_0451.wav
+
+Create a reference in a workspace :
+>>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -cr reference
+
+you can immediately check this reference with the option --check
+
+Check an existing reference
+>>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -Cr reference
+
+Associate each checked files with each checked references
+>>> ./sppas/sppas/bin/workspaces.py -w myWorkspace  --associate
+
+Create an attribute that is added to each checked reference
+>>> ./sppas/sppas/bin/workspaces.py -w myWorkspace  -att attribute
+
+You can set every parametres of an attribute in one line
+>>> ./sppas/sppas/bin/workspaces.py -w myWorkspace  -att attribute -val 123 -type int -desc description...
+
+    TODO : --quiet and change the names of the arguments
 
 """
 
@@ -70,8 +88,7 @@ sys.path.append(SPPAS)
 from sppas import paths
 from sppas.src.config import sg
 from sppas.src.ui.wkps import sppasWorkspaces
-from sppas.src.files import FileData, FilePath, FileReference, sppasAttribute
-from sppas.src.files import States
+from sppas.src.files import FileData, FilePath, FileReference, States, sppasAttribute
 from sppas.src.files.fileexc import FileOSError
 from sppas.src.exc import sppasTypeError
 
@@ -356,8 +373,8 @@ if __name__ == "__main__":
             fd.dissociate()
             ws.save_data(fd, ws.index(ws_name))
 
-        # sppasAttribut
-        # -------------
+        # sppasAttribute
+        # --------------
 
         refs = fd.get_refs()
 
@@ -380,6 +397,8 @@ if __name__ == "__main__":
         if args.val:
             att.set_value(args.val)
         if args.type:
+            if args.type not in sppasAttribute.VALUE_TYPES:
+                raise ValueError("ERROR : {} is not a supported type ('str', 'int', 'float', 'bool')".format(args.type))
             att.set_value_type(args.type)
         if args.desc:
             att.set_description(args.desc)
@@ -392,7 +411,7 @@ if __name__ == "__main__":
             for ref in refs:
                 if ref.get_state() == States().CHECKED:
                     ref.pop(args.ratt)
-        
+
         fd.update()
         ws.save_data(fd, ws.index(ws_name))
 
