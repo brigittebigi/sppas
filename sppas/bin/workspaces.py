@@ -69,8 +69,11 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 WORKSPACES = SPPAS + "/workspaces"
 sys.path.append(SPPAS)
 
+
+from sppas import paths
 from sppas.src.config import sg
-from sppas.src.files import FileData, FilePath
+from sppas.src.ui.wkps import sppasWorkspaces
+from sppas.src.files import FileData, FilePath, FileReference
 from sppas.src.files import States
 from sppas.src.files.fileexc import FileOSError
 
@@ -145,6 +148,37 @@ if __name__ == "__main__":
         help="uncheck a file of a workspace."
     )
 
+    # Arguments for references
+    # ------------------------
+
+    group_ref = parser.add_argument_group('References')
+
+    # create reference (set the id)
+    group_ref.add_argument(
+        "-cr",
+        metavar="create_reference",
+        help="create a references"
+    )
+
+    # set the type of the argument
+    group_ref.add_argument(
+        "-t",
+        metavar="type",
+        help="set the type of the created reference"
+    )
+
+    group_ref.add_argument(
+        "--state",
+        action="store_true",
+        help="set the state of a reference(CHECKED, UNCHECKED)"
+    )
+
+    group_ref.add_argument(
+        "-associate",
+        metavar="associate",
+        help="associate a references to checked files"
+    )
+
     # Force to print help if no argument is given then parse
     # ------------------------------------------------------
 
@@ -154,73 +188,84 @@ if __name__ == "__main__":
     args = parser.parse_args()
     arguments = vars(args)
 
-    # default workspace : blank
+    # Workspaces
     # -------------------------
 
-    ws = FileData("blank")
-    savefile = "{}/blank.wjson".format(WORKSPACES)
-
+    ws = sppasWorkspaces()
     try:
         # open workspace, create one if not exist
         if args.w:
-            savefile = "{}/{}.wjson".format(WORKSPACES, args.w)
-
+            ws_name = args.w
             # workspace exits, loading it
-            if os.path.isfile(savefile):
-                ws = ws.load(savefile)
-
+            fn = os.path.join(paths.wkps, ws_name) + sppasWorkspaces.ext
+            if os.path.exists(fn):
+                fd = ws.load_data(ws.index(ws_name))
             # else creating a new one
             else:
                 print("creating new workspace")
-                ws = FileData(args.w)
-                ws.save(savefile)
-            print("working on : {} in directory {}".format(args.w, WORKSPACES))
+                fd = FileData(ws.new(ws_name))
+
+            print("working on : {}".format(ws_name))
 
         # remove existing workspace
         if args.r:
-            os.remove("{}/{}.wjson".format(WORKSPACES, args.r))
-            print("remove existing workspace :  {}".format(args.r))
+            ws.delete(ws.index(args.r))
+            print("removing existing workspace :  {}".format(args.r))
 
         # adding a file to a workspace
         if args.a:
-            ws.add_file(args.a)
-            ws.save(savefile)
+            fd.add_file(args.a)
+            ws.save_data(fd, ws.index(ws_name))
             print("added the file : {} ".format(args.a))
 
         # removing a file of a workspace
         if args.rf:
-            ws.remove_file(args.rf)
-            ws.save(savefile)
-            print("removed the file : {} from the workspace : {}".format(args.rf, ws))
+            print(fd.remove_file(args.rf))
+            ws.save_data(fd, ws.index(ws_name))
+            print("removed the file : {} from the workspace : {}".format(args.rf, ws_name))
 
         # check a file
         if args.cf:
             if not os.path.isfile(args.cf):
                 raise FileNotFoundError("ERROR : {} not found".format(args.cf))
-            if args.all:
-                ws.set_object_state(States().CHECKED,)
-            else:
-                ws.set_object_state(States().CHECKED, ws.get_object(args.cf))
-            ws.save(savefile)
+            fd.set_object_state(States().CHECKED, fd.get_object(args.cf))
+            ws.save_data(fd, ws.index(ws_name))
             print("checked file : {}".format(args.cf))
 
         # uncheck a file
         if args.uf:
             if not os.path.isfile(args.uf):
-                raise FileNotFoundError("ERROR : {} not found".format(args.cf))
-            ws.set_object_state(States().UNUSED, ws.get_object(args.cf))
-            ws.save(savefile)
+                raise FileNotFoundError("ERROR : {} not found".format(args.uf))
+            fd.set_object_state(States().UNUSED, fd.get_object(args.uf))
+            ws.save_data(fd, ws.index(ws_name))
             print("unchecked file : {}".format(args.uf))
 
         if args.check_all:
             ws.set_object_state(States().CHECKED)
-            ws.save(savefile)
+            # ws.save(savefile)
             print("checked all files")
 
         if args.uncheck_all:
             ws.set_object_state(States().UNUSED)
-            ws.save(savefile)
+            # ws.save(savefile)
             print("unchecked all files")
+
+        # References
+        # ----------
+
+        # creating a new reference and set its type if specified otherwise set as STANDALONE by default
+        if args.cr:
+            ref = FileReference(args.cr)
+            if args.t:
+                ref.set_type(args.t)
+            if args.state:
+                ref.set_state(States().CHECKED)
+            # ws.save(savefile)
+            print("reference : {} [{}] created".format(args.cr, ref.get_type()))
+
+        if args.associate:
+            print(ws.associtate())
+            # ws.save(savefile)
 
     except FileNotFoundError as e:
         print(e)
