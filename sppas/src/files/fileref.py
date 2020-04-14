@@ -468,3 +468,8 @@ class FileReference(FileBase):
                 return True
 
         return False
+
+    def __hash__(self):
+        return hash((self.get_state(),
+                     self.get_id()))
+

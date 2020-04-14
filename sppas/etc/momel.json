@@ -21,42 +21,36 @@
       "value": 30,
       "text": "Target window length"
     },
-    
     {
       "id": "lo",
       "type": "int",
       "value": 50,
       "text": "F0 threshold"
     },
-    
     {
       "id": "hi",
       "type": "int",
       "value": 600,
       "text": "F0 ceiling"
     },
-    
     {
       "id": "maxerr",
       "type": "float",
       "value": 1.04,
       "text": "Maximum error"
     },
-    
     {
       "id": "win2",
       "type": "int",
       "value": 20,
       "text": "Reduce window length"
     },
-    
     {
       "id": "mind",
       "type": "int",
       "value": 5,
       "text": "Minimal distance"
     },
-    
     {
       "id": "minr",
       "type": "float",

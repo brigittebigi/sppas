@@ -41,6 +41,7 @@ from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasCollapsiblePanel
 from ..windows import sppasSimpleText
+from ..main_events import DataChangedEvent
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when an item is clicked.
@@ -309,6 +310,13 @@ class RefsTreeView(sppasScrolledPanel):
     # Events management
     # -----------------------------------------------------------------------
 
+    def Notify(self):
+        evt = DataChangedEvent()
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
+    # ------------------------------------------------------------------------
+
     def _setup_events(self):
         """Associate a handler function with the events.
 
@@ -337,7 +345,6 @@ class RefsTreeView(sppasScrolledPanel):
         # the object is a FileBase (path, root or file)
         object_id = event.id
         ref = self.__data.get_object(object_id)
-        wx.LogDebug("Process ItemClicked {:s}".format(object_id))
 
         # change state of the item
         current_state = ref.get_state()
@@ -347,11 +354,14 @@ class RefsTreeView(sppasScrolledPanel):
         modified = self.__data.set_object_state(new_state, ref)
 
         # update the corresponding panel(s)
-        for fs in modified:
-            wx.LogDebug("Modified: {:s}".format(fs.id))
-            panel = self.__refps[ref.get_id()]
-            if panel is not None:
-                panel.change_state(fs.get_state())
+        if len(modified) > 0:
+            for fs in modified:
+                wx.LogDebug("New state {} for reference {:s}"
+                            "".format(new_state, fs.get_id()))
+                panel = self.__refps[ref.get_id()]
+                if panel is not None:
+                    panel.change_state(fs.get_state())
+            self.Notify()
 
     # ------------------------------------------------------------------------
 

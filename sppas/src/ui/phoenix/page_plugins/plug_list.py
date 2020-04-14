@@ -127,8 +127,6 @@ class sppasPluginsList(sppasScrolledPanel):
         """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        wx.LogMessage('New data to set in the plugins page. '
-                      'Id={:s}'.format(data.id))
         self.__data = data
 
     # -----------------------------------------------------------------------

@@ -129,7 +129,7 @@ class sppasPluginsPanel(sppasPanel):
         :param data: (FileData)
 
         """
-        self.FindWindow("pluginslist").set_data(data)
+        self._pluginslist.set_data(data)
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -147,6 +147,12 @@ class sppasPluginsPanel(sppasPanel):
 
         self.SetMinSize(wx.Size(sppasPanel.fix_size(320), sppasPanel.fix_size(200)))
         self.SetAutoLayout(True)
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def _pluginslist(self):
+        return self.FindWindow("pluginslist")
 
     # -----------------------------------------------------------------------
 
@@ -232,10 +238,9 @@ class sppasPluginsPanel(sppasPanel):
                         "".format(emitted.GetName()))
             return
 
-        plg_panel = self.FindWindow("pluginslist")
-        if emitted != plg_panel:
+        if emitted != self._pluginslist:
             try:
-                plg_panel.set_data(wkp)
+                self._pluginslist.set_data(wkp)
             except:
                 pass
 
@@ -252,9 +257,8 @@ class sppasPluginsPanel(sppasPanel):
     def _delete(self):
         """Delete a plugin."""
         wx.LogMessage('User asked to delete a plugin')
-        p = self.FindWindow("pluginslist")
 
-        keys = p.get_plugins()
+        keys = self._pluginslist.get_plugins()
         wx.LogMessage('List of plugins: {:s}'.format(str(keys)))
         if len(keys) == 0:
             Information(PGS_NO_PLUGINS)
@@ -264,7 +268,7 @@ class sppasPluginsPanel(sppasPanel):
         if dlg.ShowModal() == wx.ID_OK:
             plugin_id = dlg.GetStringSelection()
             try:
-                p.delete(plugin_id)
+                self._pluginslist.delete(plugin_id)
                 Information(PGS_DELETED.format(plugin_id))
             except Exception as e:
                 message = PGS_ACT_DEL_ERROR.format(plugin_id, str(e))
@@ -277,7 +281,6 @@ class sppasPluginsPanel(sppasPanel):
     def _install(self):
         """Import a plugin from a zip file."""
         wx.LogMessage("User asked to install a plugin")
-        p = self.FindWindow("pluginslist")
 
         # Get the name of the file to be imported
         dlg = sppasFileDialog(self, title=PGS_ACT_ADD,
@@ -286,7 +289,7 @@ class sppasPluginsPanel(sppasPanel):
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
             try:
-                folder = p.install(filename)
+                folder = self._pluginslist.install(filename)
                 Information(PGS_INSTALLED.format(folder))
 
             except Exception as e:

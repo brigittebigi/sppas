@@ -511,6 +511,13 @@ class FileTreeView(sppasScrolledPanel):
     # Events management
     # -----------------------------------------------------------------------
 
+    def Notify(self):
+        evt = DataChangedEvent()
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
+    # ------------------------------------------------------------------------
+
     def _setup_events(self):
         """Associate a handler function with the events.
 
@@ -550,10 +557,12 @@ class FileTreeView(sppasScrolledPanel):
         modified = self.__data.set_object_state(new_state, filebase)
 
         # update the corresponding panel(s)
-        for fs in modified:
-            panel = self.__get_path_panel(fs)
-            if panel is not None:
-                panel.change_state(fs.get_id(), fs.get_state())
+        if len(modified) > 0:
+            self.Notify()
+            for fs in modified:
+                panel = self.__get_path_panel(fs)
+                if panel is not None:
+                    panel.change_state(fs.get_id(), fs.get_state())
 
     # ------------------------------------------------------------------------
 
@@ -582,9 +591,7 @@ class FileTreeView(sppasScrolledPanel):
         fs.subjoined['expand'] = panel.IsExpanded()
 
         if isinstance(fs, FilePath):
-            evt = DataChangedEvent()
-            evt.SetEventObject(self)
-            wx.PostEvent(self.GetParent(), evt)
+            self.Notify()
 
             # Required for the parent to do properly its layout:
             # (i.e. estimate the height needed by each panel and refresh)
@@ -1118,7 +1125,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
     def __create_refstext(self, parent):
         """Create a text control to display references of the root."""
         refs_text = sppasSimpleText(parent, "", name="textctrl_refs")
-        refs_text.SetSize(wx.Size(-1, self.GetButtonHeight()))
+        refs_text.SetMinSize(wx.Size(-1, self.get_font_height()*2))
         refs_text.Hide()
         return refs_text
 

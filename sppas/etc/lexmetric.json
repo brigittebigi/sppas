@@ -29,7 +29,7 @@
       "id": "tiername",
       "type": "str",
       "value": "TokensAlign",
-      "text": "Tier to estimate tags"
+      "text": "Input tier to estimate tags"
     },
     {
       "id": "alt",

@@ -33,21 +33,18 @@
       "value": true,
       "text": "Syllabify inside the IPU intervals"
     },
-
     {
       "id": "usesintervals",
       "type": "bool",
       "value": false,
       "text": "Syllabify inside an interval tier"
     },
-
     {
       "id": "tiername",
       "type": "string",
       "value": "TokensAlign",
       "text": "Tier name for such interval tier:"
     },
-
     {
       "id": "createclasses",
       "type": "bool",

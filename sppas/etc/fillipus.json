@@ -15,14 +15,12 @@
       "value": "",
       "text": "Output file pattern"
     },
-
     {
       "id": "min_ipu",
       "type": "float",
       "value": 0.300,
       "text": "Initial minimum duration of an IPU (in seconds)"
     },
-
     {
       "id": "min_sil",
       "type": "float",
