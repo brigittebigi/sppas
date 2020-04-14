@@ -310,8 +310,6 @@ class sppasActionAnnotatePanel(sppasPanel):
     def notify(self, destination, fct_name=""):
         """Send the EVT_PAGE_CHANGE to the parent."""
         if self.GetParent() is not None:
-            wx.LogDebug('NOTIFY from={:s} to={:s}, fct={:s}'
-                        ''.format(self.GetName(), destination, fct_name))
             evt = PageChangeEvent(from_page=self.GetName(),
                                   to_page=destination,
                                   fct=fct_name)

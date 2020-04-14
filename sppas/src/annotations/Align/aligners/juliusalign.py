@@ -305,25 +305,40 @@ class JuliusAligner(BaseAligner):
         p = Popen(command, shell=True, stdout=PIPE, stderr=STDOUT)
         p.wait()
         line = p.communicate()
-        logging.info('julius returns the following message:')
-        logging.info(line)
         try:
-            msg = u(" ").join([u(l) for l in line])
+            msg = u(" ").join([u(l.strip()) for l in line if l is not None])
+            msg = msg.replace("enter filename->", "")
+            msg = msg.replace("1 files processed", "")
+            msg = msg.replace("..", "")
+            msg = msg.replace("\\n", "")
+            if msg.endswith("."):
+                msg = msg[:-1]
         except UnicodeDecodeError:
-            msg = "An error occurred. See the logs."
+            logging.error("An error occurred. See the logs.")
+            raise UnicodeDecodeError("An error occurred.")
 
         # Julius not installed
         if u("not found") in msg:
+            logging.error('julius returned the following message:')
+            logging.error(line)
             raise OSError("julius command not found. "
                           "See installation instructions for details.")
 
         # Bad command
         if u("-help") in msg:
-            raise OSError("julius command failed: {:s}".format(msg))
+            logging.error('julius returned the following message:')
+            logging.error(line)
+            raise OSError("Run of the julius command failed: {:s}".format(msg))
 
         # Check output file
         if os.path.isfile(outputalign) is False:
+            logging.error('Run of the julius command returned the following message:')
+            logging.error(line)
             raise Exception("julius did not created an alignment file.")
+
+        if len(msg) > 0:
+            logging.info('Run of the julius command returned the following message:')
+            logging.info(msg)
 
     # -----------------------------------------------------------------------
 
