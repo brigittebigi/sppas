@@ -472,7 +472,11 @@ class FileData(FileBase):
                     if fr.get_references() is not None:
                         ref_extended = fr.get_references()
                         ref_extended.extend(ref_checked)
-                        fr.set_references(list(set(ref_extended)))
+                        #
+                        # oskur
+                        # fr.set_references(list(set(ref_extended)))
+                        #
+                        fr.set_references(list(ref_extended))
                     else:
                         fr.set_references(ref_checked)
 
@@ -715,7 +719,7 @@ class FileData(FileBase):
     def load(filename):
         """Load a saved FileData object from a save file.
 
-        :param filename: (str) the name of the save file.
+        :param filename: (str) the name of the save files.
         :returns: FileData
 
         """

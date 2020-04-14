@@ -31,7 +31,7 @@
         ---------------------------------------------------------------------
 
     bin.workspaces.py
-    ~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~
 
 :author:       Laurent Vouriot
 :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -45,7 +45,6 @@ Examples:
 Create or open a workspace :
 >>>  ./sppas/sppas/bin/workspaces.py -w myWorkspace
 
-if -w not specified the workspace will be 'blank' by default
 
 Adding a file to the workspace :
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -a ./sppas/samples/samples-fra/BX_track_0451.wav
@@ -53,7 +52,7 @@ Adding a file to the workspace :
 Checking a file :
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -cf ./sppas/samples/samples-fra/BX_track_0451.wav
 
-if you want to check/uncheck all the files use the argument --check_all / unscheck_all
+if you want to check/uncheck all the files use the argument --check_all / --uncheck_all
 
 An "all-in-one" solution :
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -a ./sppas/samples/samples-fra/BX_track_0451.wav -cf ./sppas/samples/samples-fra/BX_track_0451.wav
@@ -66,16 +65,15 @@ from argparse import ArgumentParser
 
 PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
-WORKSPACES = SPPAS + "/workspaces"
 sys.path.append(SPPAS)
-
 
 from sppas import paths
 from sppas.src.config import sg
 from sppas.src.ui.wkps import sppasWorkspaces
-from sppas.src.files import FileData, FilePath, FileReference
+from sppas.src.files import FileData, FilePath, FileReference, sppasAttribute
 from sppas.src.files import States
 from sppas.src.files.fileexc import FileOSError
+from sppas.src.exc import sppasTypeError
 
 if __name__ == "__main__":
 
@@ -153,14 +151,12 @@ if __name__ == "__main__":
 
     group_ref = parser.add_argument_group('References')
 
-    # create reference (set the id)
     group_ref.add_argument(
         "-cr",
         metavar="create_reference",
         help="create a references"
     )
 
-    # set the type of the argument
     group_ref.add_argument(
         "-t",
         metavar="type",
@@ -168,17 +164,81 @@ if __name__ == "__main__":
     )
 
     group_ref.add_argument(
-        "--state",
-        action="store_true",
-        help="set the state of a reference(CHECKED, UNCHECKED)"
+        "-Cr",
+        metavar="reference_state",
+        help="check a reference"
     )
 
     group_ref.add_argument(
-        "-associate",
-        metavar="associate",
-        help="associate a references to checked files"
+        "-ur",
+        metavar="reference_state",
+        help="uncheck a reference"
     )
 
+    group_ref.add_argument(
+        "--check",
+        action="store_true",
+        help="check a file when created"
+    )
+
+    group_ref.add_argument(
+        "--remove_refs",
+        action="store_true",
+        help="remove all checked reference(s)"
+    )
+
+    group_ref.add_argument(
+        "--associate",
+        action="store_true",
+        help="associate reference(s) to file(s)"
+    )
+
+    group_ref.add_argument(
+        "--dissociate",
+        action="store_true",
+        help="dissociate reference(s) to file(s)"
+    )
+
+    # sppasAttributs
+    # --------------
+
+    group_att = parser.add_argument_group('sppasAttributs')
+
+    group_ref.add_argument(
+        "-att",
+        metavar="create_attribut",
+        help="create a new sppasAttribut"
+    )
+
+    group_ref.add_argument(
+        "-val",
+        metavar="value",
+        help="set the value of the attribut"
+    )
+
+    group_ref.add_argument(
+        "-type",
+        metavar="type_attribut",
+        help="set the type of an attribut"
+    )
+    group_ref.add_argument(
+        "-desc",
+        metavar="description_attribut",
+        help="set the description of an attribut"
+    )
+
+    group_ref.add_argument(
+        "-ratt",
+        metavar="remove_attribut",
+        help="remove an attribute from a reference"
+    )
+
+    group_ref.add_argument(
+        "-setattr",
+        metavar="set_attribute",
+        help="set a an existing attribute"
+
+    )
     # Force to print help if no argument is given then parse
     # ------------------------------------------------------
 
@@ -189,7 +249,7 @@ if __name__ == "__main__":
     arguments = vars(args)
 
     # Workspaces
-    # -------------------------
+    # -----------
 
     ws = sppasWorkspaces()
     try:
@@ -220,13 +280,15 @@ if __name__ == "__main__":
 
         # removing a file of a workspace
         if args.rf:
-            print(fd.remove_file(args.rf))
+            fd.remove_file(args.rf)
             ws.save_data(fd, ws.index(ws_name))
             print("removed the file : {} from the workspace : {}".format(args.rf, ws_name))
 
         # check a file
         if args.cf:
-            if not os.path.isfile(args.cf):
+            # we do this test because if there is a mistake in the file name
+            # all the files will be checked
+            if not fd.get_object(args.cf):
                 raise FileNotFoundError("ERROR : {} not found".format(args.cf))
             fd.set_object_state(States().CHECKED, fd.get_object(args.cf))
             ws.save_data(fd, ws.index(ws_name))
@@ -234,44 +296,116 @@ if __name__ == "__main__":
 
         # uncheck a file
         if args.uf:
-            if not os.path.isfile(args.uf):
+            if not fd.get_object(args.uf):
                 raise FileNotFoundError("ERROR : {} not found".format(args.uf))
             fd.set_object_state(States().UNUSED, fd.get_object(args.uf))
             ws.save_data(fd, ws.index(ws_name))
             print("unchecked file : {}".format(args.uf))
 
         if args.check_all:
-            ws.set_object_state(States().CHECKED)
-            # ws.save(savefile)
+            fd.set_object_state(States().CHECKED)
+            ws.save_data(fd, ws.index(ws_name))
             print("checked all files")
 
         if args.uncheck_all:
-            ws.set_object_state(States().UNUSED)
-            # ws.save(savefile)
+            fd.set_object_state(States().UNUSED)
+            ws.save_data(fd, ws.index(ws_name))
             print("unchecked all files")
 
         # References
         # ----------
 
-        # creating a new reference and set its type if specified otherwise set as STANDALONE by default
+        # creating a new reference and setting its type if specified
+        # otherwise set as STANDALONE by default
         if args.cr:
             ref = FileReference(args.cr)
             if args.t:
                 ref.set_type(args.t)
-            if args.state:
+            if args.check:
                 ref.set_state(States().CHECKED)
-            # ws.save(savefile)
+
+            fd.add_ref(ref)
+            ws.save_data(fd, ws.index(ws_name))
             print("reference : {} [{}] created".format(args.cr, ref.get_type()))
 
+        # check a reference
+        if args.Cr:
+            fd.set_object_state(States().CHECKED, fd.get_object(args.Cr))
+            ws.save_data(fd, ws.index(ws_name))
+            print("{} checked".format(args.Cr))
+
+        # uncheck a reference
+        if args.ur:
+            fd.set_object_state(States().UNUSED, fd.get_object(args.ur))
+            ws.save_data(fd, ws.index(ws_name))
+            print("{} unchecked".format(args.ur))
+
+        # remove a reference
+        if args.remove_refs:
+            nb = fd.remove_refs()
+            ws.save_data(fd, ws.index(ws_name))
+            print("removed {} reference(s)".format(nb))
+
+        # associate file(s) and reference(s)
         if args.associate:
-            print(ws.associtate())
-            # ws.save(savefile)
+            fd.associate()
+            ws.save_data(fd, ws.index(ws_name))
+
+        # dissociate
+        if args.dissociate:
+            fd.dissociate()
+            ws.save_data(fd, ws.index(ws_name))
+
+        # sppasAttribut
+        # -------------
+
+        refs = fd.get_refs()
+
+        # create a new attribute that we add to every checked references
+        if args.att:
+            att = sppasAttribute(args.att)
+            for ref in refs:
+                if ref.get_state() == States().CHECKED:
+                    ref.append(att)
+
+        # if we want to modify an existing attribute
+        if args.setattr:
+            # check if the attribute exist in the references
+            for ref in refs:
+                if ref.att(args.setattr):
+                    att = ref.att(args.setattr)
+                else:
+                    raise FileNotFoundError("ERROR : {} not found".format(args.setattr))
+
+        if args.val:
+            att.set_value(args.val)
+        if args.type:
+            att.set_value_type(args.type)
+        if args.desc:
+            att.set_description(args.desc)
+
+        fd.update()
+        ws.save_data(fd, ws.index(ws_name))
+
+        # remove an attribute
+        if args.ratt:
+            for ref in refs:
+                if ref.get_state() == States().CHECKED:
+                    ref.pop(args.ratt)
+        
+        fd.update()
+        ws.save_data(fd, ws.index(ws_name))
 
     except FileNotFoundError as e:
         print(e)
     except FileOSError as e:
         print(e)
-
+    except ValueError as e:
+        print(e)
+    except sppasTypeError as e:
+        print(e)
+    except KeyError as e:
+        print(e)
 
 
 

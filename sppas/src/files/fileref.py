@@ -34,8 +34,8 @@
 from sppas import sppasTypeError, sppasIndexError
 from sppas import annots
 from sppas.src.utils.makeunicode import sppasUnicode
-
 from .filebase import FileBase, States
+
 
 # ---------------------------------------------------------------------------
 
