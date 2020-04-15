@@ -64,7 +64,7 @@ you can immediately check this reference with the option --check
 Associate each checked files with each checked references
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace  --associate
 
-Create an attribute that is added to each checked reference
+Create an attribute that is added to each checked references
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace  -att attribute
 
 You can set every parametres of an attribute in one line
@@ -265,8 +265,10 @@ if __name__ == "__main__":
     # Workspaces
     # ----------
 
-    ws = sppasWorkspaces()
     try:
+        ws = sppasWorkspaces()
+        fd = FileData()
+        ws_name = ""
         # open workspace, create one if not exist
         if args.w:
             ws_name = args.w
@@ -291,14 +293,14 @@ if __name__ == "__main__":
         # adding a file to a workspace
         if args.a:
             fd.add_file(args.a)
-            ws.save_data(fd, ws.index(ws_name))
+            # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 print("added the file : {} ".format(args.a))
 
         # removing a file of a workspace
         if args.rf:
             fd.remove_file(args.rf)
-            ws.save_data(fd, ws.index(ws_name))
+            # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 print("removed the file : {} from the workspace : {}".format(args.rf, ws_name))
 
@@ -310,7 +312,7 @@ if __name__ == "__main__":
             if fd.get_object(args.cf):
                 found = True
                 fd.set_object_state(States().CHECKED, fd.get_object(args.cf))
-                ws.save_data(fd, ws.index(ws_name))
+                # ws.save_data(fd, ws.index(ws_name))
             for ref in fd.get_refs():
                 if ref.id == args.cf:
                     found = True
@@ -326,7 +328,7 @@ if __name__ == "__main__":
             if fd.get_object(args.uf):
                 found = True
                 fd.set_object_state(States().UNUSED, fd.get_object(args.uf))
-                ws.save_data(fd, ws.index(ws_name))
+                # ws.save_data(fd, ws.index(ws_name))
             for ref in fd.get_refs():
                 if ref.id == args.uf:
                     found = True
@@ -339,14 +341,14 @@ if __name__ == "__main__":
         # check all the file(s) and reference(s)
         if args.check_all:
             fd.set_object_state(States().CHECKED)
-            ws.save_data(fd, ws.index(ws_name))
+            # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 print("checked all files")
 
         # uncheck
         if args.uncheck_all:
             fd.set_object_state(States().UNUSED)
-            ws.save_data(fd, ws.index(ws_name))
+            # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 print("unchecked all files")
 
@@ -362,21 +364,21 @@ if __name__ == "__main__":
             if args.check:
                 ref.set_state(States().CHECKED)
             fd.add_ref(ref)
-            ws.save_data(fd, ws.index(ws_name))
+            # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 print("reference : {} [{}] created".format(args.cr, ref.get_type()))
 
         # remove a reference
         if args.remove_refs:
             nb = fd.remove_refs()
-            ws.save_data(fd, ws.index(ws_name))
+            # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 print("removed {} reference(s)".format(nb))
 
         # associate file(s) and reference(s)
         if args.associate:
             fd.associate()
-            ws.save_data(fd, ws.index(ws_name))
+            # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 for file in fd.get_files():
                     for ref in fd.get_refs():
@@ -386,7 +388,7 @@ if __name__ == "__main__":
         # dissociate
         if args.dissociate:
             fd.dissociate()
-            ws.save_data(fd, ws.index(ws_name))
+            # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 for file in fd.get_files():
                     for ref in fd.get_refs():
@@ -395,7 +397,6 @@ if __name__ == "__main__":
 
         # sppasAttribute
         # --------------
-
         refs = fd.get_refs()
 
         # create a new attribute that we add to every checked references
@@ -440,7 +441,10 @@ if __name__ == "__main__":
                 print("removing : {}".format(args.ratt))
 
         fd.update()
-        ws.save_data(fd, ws.index(ws_name))
+        # checking if we work on a workspace
+        # TODO find a better way
+        if ws_name not in "":
+            ws.save_data(fd, ws.index(ws_name))
 
     except FileNotFoundError as e:
         print(e)
