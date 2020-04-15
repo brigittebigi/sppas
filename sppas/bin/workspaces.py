@@ -151,13 +151,13 @@ if __name__ == "__main__":
     group_state.add_argument(
         "-cf",
         metavar="check_file",
-        help="check a file of a workspace."
+        help="check a file (or a reference) of a workspace."
     )
 
     group_state.add_argument(
         "-uf",
         metavar="uncheck_file",
-        help="uncheck a file of a workspace."
+        help="uncheck a file (or a reference) of a workspace."
     )
 
     # Arguments for references
@@ -168,89 +168,77 @@ if __name__ == "__main__":
     group_ref.add_argument(
         "-cr",
         metavar="create_reference",
-        help="create a references"
+        help="create a reference."
     )
 
     group_ref.add_argument(
         "-t",
         metavar="type",
-        help="set the type of the created reference"
-    )
-
-    group_ref.add_argument(
-        "-Cr",
-        metavar="reference_state",
-        help="check a reference"
-    )
-
-    group_ref.add_argument(
-        "-ur",
-        metavar="reference_state",
-        help="uncheck a reference"
+        help="set the type of the created reference."
     )
 
     group_ref.add_argument(
         "--check",
         action="store_true",
-        help="check a file when created"
+        help="check a file when created."
     )
 
     group_ref.add_argument(
         "--remove_refs",
         action="store_true",
-        help="remove all checked reference(s)"
+        help="remove checked reference(s)."
     )
 
     group_ref.add_argument(
         "--associate",
         action="store_true",
-        help="associate reference(s) to file(s)"
+        help="associate reference(s) to file(s)."
     )
 
     group_ref.add_argument(
         "--dissociate",
         action="store_true",
-        help="dissociate reference(s) to file(s)"
+        help="dissociate reference(s) to file(s)."
     )
 
-    # Arguments for sppasAttributs
+    # Arguments for sppasAttributes
     # ----------------------------
 
-    group_att = parser.add_argument_group('sppasAttributs')
+    group_att = parser.add_argument_group('sppasAttributes')
 
     group_att.add_argument(
         "-att",
-        metavar="create_attribut",
-        help="create a new sppasAttribut"
+        metavar="create_attribute",
+        help="create a new sppasAttribute."
     )
 
     group_att.add_argument(
         "-val",
-        metavar="value",
-        help="set the value of the attribut"
+        metavar="value_attribute",
+        help="set the value of the attribute."
     )
 
     group_att.add_argument(
         "-type",
-        metavar="type_attribut",
-        help="set the type value of an attribut"
+        metavar="type_attribute",
+        help="set the type value of an attribute."
     )
     group_att.add_argument(
         "-desc",
-        metavar="description_attribut",
-        help="set the description of an attribut"
+        metavar="description_attribute",
+        help="set the description of an attribute."
     )
 
     group_att.add_argument(
         "-ratt",
-        metavar="remove_attribut",
-        help="remove an attribute from a reference"
+        metavar="remove_attribute",
+        help="remove an attribute from a reference."
     )
 
     group_att.add_argument(
         "-setattr",
         metavar="set_attribute",
-        help="set a an existing attribute"
+        help="set a an existing attribute."
 
     )
 
@@ -262,7 +250,7 @@ if __name__ == "__main__":
     group_verbose.add_argument(
         "--quiet",
         action="store_true",
-        help="verbose mode"
+        help="verbose mode."
     )
 
     # Force to print help if no argument is given then parse
