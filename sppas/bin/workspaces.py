@@ -293,6 +293,8 @@ if __name__ == "__main__":
         # adding a file to a workspace
         if args.a:
             fd.add_file(args.a)
+            if args.check:
+                fd.set_object_state(States().CHECKED, fd.get_object(args.a))
             # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 print("added the file : {} ".format(args.a))
