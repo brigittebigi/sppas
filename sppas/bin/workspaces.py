@@ -216,8 +216,8 @@ if __name__ == "__main__":
         help="dissociate reference(s) to file(s)"
     )
 
-    # sppasAttributs
-    # --------------
+    # Arguments for sppasAttributs
+    # ----------------------------
 
     group_att = parser.add_argument_group('sppasAttributs')
 
@@ -236,7 +236,7 @@ if __name__ == "__main__":
     group_ref.add_argument(
         "-type",
         metavar="type_attribut",
-        help="set the type of an attribut"
+        help="set the type value of an attribut"
     )
     group_ref.add_argument(
         "-desc",
@@ -256,6 +256,18 @@ if __name__ == "__main__":
         help="set a an existing attribute"
 
     )
+
+    # Argument verbose mode
+    # ---------------------
+
+    group_verbose = parser.add_argument_group('verbose')
+
+    group_verbose.add_argument(
+        "--quiet",
+        action="store_true",
+        help="verbose mode"
+    )
+
     # Force to print help if no argument is given then parse
     # ------------------------------------------------------
 
@@ -266,7 +278,7 @@ if __name__ == "__main__":
     arguments = vars(args)
 
     # Workspaces
-    # -----------
+    # ----------
 
     ws = sppasWorkspaces()
     try:
@@ -279,55 +291,79 @@ if __name__ == "__main__":
                 fd = ws.load_data(ws.index(ws_name))
             # else creating a new one
             else:
-                print("creating new workspace")
+                if not args.quiet:
+                    print("creating new workspace")
                 fd = FileData(ws.new(ws_name))
-
-            print("working on : {}".format(ws_name))
+            if not args.quiet:
+                print("working on : {}".format(ws_name))
 
         # remove existing workspace
         if args.r:
             ws.delete(ws.index(args.r))
-            print("removing existing workspace :  {}".format(args.r))
+            if not args.quiet:
+                print("removing existing workspace :  {}".format(args.r))
 
         # adding a file to a workspace
         if args.a:
             fd.add_file(args.a)
             ws.save_data(fd, ws.index(ws_name))
-            print("added the file : {} ".format(args.a))
+            if not args.quiet:
+                print("added the file : {} ".format(args.a))
 
         # removing a file of a workspace
         if args.rf:
             fd.remove_file(args.rf)
             ws.save_data(fd, ws.index(ws_name))
-            print("removed the file : {} from the workspace : {}".format(args.rf, ws_name))
+            if not args.quiet:
+                print("removed the file : {} from the workspace : {}".format(args.rf, ws_name))
 
         # check a file
         if args.cf:
-            # we do this test because if there is a mistake in the file name
-            # all the files will be checked
-            if not fd.get_object(args.cf):
+            # we need to test if the file exist because if not
+            # all the files would be checked (files and references)
+            found = False
+            if fd.get_object(args.cf):
+                found = True
+                fd.set_object_state(States().CHECKED, fd.get_object(args.cf))
+                ws.save_data(fd, ws.index(ws_name))
+            for ref in fd.get_refs():
+                if ref.id == args.cf:
+                    found = True
+                    fd.set_object_state(States().CHECKED, fd.get_object(args.cf))
+            if not found:
                 raise FileNotFoundError("ERROR : {} not found".format(args.cf))
-            fd.set_object_state(States().CHECKED, fd.get_object(args.cf))
-            ws.save_data(fd, ws.index(ws_name))
-            print("checked file : {}".format(args.cf))
+            if not args.quiet:
+                print("{} : checked".format(args.cf))
 
         # uncheck a file
         if args.uf:
-            if not fd.get_object(args.uf):
+            found = False
+            if fd.get_object(args.uf):
+                found = True
+                fd.set_object_state(States().UNUSED, fd.get_object(args.uf))
+                ws.save_data(fd, ws.index(ws_name))
+            for ref in fd.get_refs():
+                if ref.id == args.uf:
+                    found = True
+                    fd.set_object_state(States().UNUSED, fd.get_object(args.uf))
+            if not found:
                 raise FileNotFoundError("ERROR : {} not found".format(args.uf))
-            fd.set_object_state(States().UNUSED, fd.get_object(args.uf))
-            ws.save_data(fd, ws.index(ws_name))
-            print("unchecked file : {}".format(args.uf))
+            if not args.quiet:
+                print("{} : checked".format(args.uf))
 
+        # check all the file(s) and reference(s)
         if args.check_all:
             fd.set_object_state(States().CHECKED)
             ws.save_data(fd, ws.index(ws_name))
-            print("checked all files")
+            if not args.quiet:
+                print("checked all files")
 
+        # uncheck
         if args.uncheck_all:
             fd.set_object_state(States().UNUSED)
             ws.save_data(fd, ws.index(ws_name))
-            print("unchecked all files")
+            if not args.quiet:
+                print("unchecked all files")
 
         # References
         # ----------
@@ -340,38 +376,37 @@ if __name__ == "__main__":
                 ref.set_type(args.t)
             if args.check:
                 ref.set_state(States().CHECKED)
-
             fd.add_ref(ref)
             ws.save_data(fd, ws.index(ws_name))
-            print("reference : {} [{}] created".format(args.cr, ref.get_type()))
-
-        # check a reference
-        if args.Cr:
-            fd.set_object_state(States().CHECKED, fd.get_object(args.Cr))
-            ws.save_data(fd, ws.index(ws_name))
-            print("{} checked".format(args.Cr))
-
-        # uncheck a reference
-        if args.ur:
-            fd.set_object_state(States().UNUSED, fd.get_object(args.ur))
-            ws.save_data(fd, ws.index(ws_name))
-            print("{} unchecked".format(args.ur))
+            if not args.quiet:
+                print("reference : {} [{}] created".format(args.cr, ref.get_type()))
 
         # remove a reference
         if args.remove_refs:
             nb = fd.remove_refs()
             ws.save_data(fd, ws.index(ws_name))
-            print("removed {} reference(s)".format(nb))
+            if not args.quiet:
+                print("removed {} reference(s)".format(nb))
 
         # associate file(s) and reference(s)
         if args.associate:
             fd.associate()
             ws.save_data(fd, ws.index(ws_name))
+            if not args.quiet:
+                for file in fd.get_files():
+                    for ref in fd.get_refs():
+                        if ref.get_state() == States().CHECKED:
+                            print("{} associated with {} ".format(file, ref))
 
         # dissociate
         if args.dissociate:
             fd.dissociate()
             ws.save_data(fd, ws.index(ws_name))
+            if not args.quiet:
+                for file in fd.get_files():
+                    for ref in fd.get_refs():
+                        if ref.get_state() == States().CHECKED:
+                            print("{} dissociated with {} ".format(file, ref))
 
         # sppasAttribute
         # --------------
@@ -384,6 +419,8 @@ if __name__ == "__main__":
             for ref in refs:
                 if ref.get_state() == States().CHECKED:
                     ref.append(att)
+            if not args.quiet:
+                print("attribute : {} created".format(args.att))
 
         # if we want to modify an existing attribute
         if args.setattr:
@@ -394,23 +431,28 @@ if __name__ == "__main__":
                 else:
                     raise FileNotFoundError("ERROR : {} not found".format(args.setattr))
 
-        if args.val:
-            att.set_value(args.val)
+        # set the type value
         if args.type:
             if args.type not in sppasAttribute.VALUE_TYPES:
-                raise ValueError("ERROR : {} is not a supported type ('str', 'int', 'float', 'bool')".format(args.type))
+                raise ValueError("ERROR : {} is not a supported type ('str', 'int', 'float', 'bool')"
+                                 .format(args.type))
             att.set_value_type(args.type)
+
+        # set attribute value
+        if args.val:
+            att.set_value(args.val)
+
+        # set the description
         if args.desc:
             att.set_description(args.desc)
-
-        fd.update()
-        ws.save_data(fd, ws.index(ws_name))
 
         # remove an attribute
         if args.ratt:
             for ref in refs:
                 if ref.get_state() == States().CHECKED:
                     ref.pop(args.ratt)
+            if not args.quiet:
+                print("removing : {}".format(args.ratt))
 
         fd.update()
         ws.save_data(fd, ws.index(ws_name))
