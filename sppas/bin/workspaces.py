@@ -218,36 +218,36 @@ if __name__ == "__main__":
 
     group_att = parser.add_argument_group('sppasAttributs')
 
-    group_ref.add_argument(
+    group_att.add_argument(
         "-att",
         metavar="create_attribut",
         help="create a new sppasAttribut"
     )
 
-    group_ref.add_argument(
+    group_att.add_argument(
         "-val",
         metavar="value",
         help="set the value of the attribut"
     )
 
-    group_ref.add_argument(
+    group_att.add_argument(
         "-type",
         metavar="type_attribut",
         help="set the type value of an attribut"
     )
-    group_ref.add_argument(
+    group_att.add_argument(
         "-desc",
         metavar="description_attribut",
         help="set the description of an attribut"
     )
 
-    group_ref.add_argument(
+    group_att.add_argument(
         "-ratt",
         metavar="remove_attribut",
         help="remove an attribute from a reference"
     )
 
-    group_ref.add_argument(
+    group_att.add_argument(
         "-setattr",
         metavar="set_attribute",
         help="set a an existing attribute"
