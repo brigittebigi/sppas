@@ -1,0 +1,130 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0.0
+xmax = 21.3471
+tiers? <exists>
+size = 1
+item []:
+	item [1]:
+		class = "IntervalTier"
+		name = "Phones"
+		xmin = 0.0
+		xmax = 21.3471
+		intervals: size = 11
+		intervals [1]:
+			xmin = 0.0
+			xmax = 2.4971007546
+			text = "sil"
+		intervals [2]:
+			xmin = 2.4971007546
+			xmax = 5.6838880379
+			text = "{j-E-R|i-E-R}
+s-w-A/-R
+{Z|S}
+{e|E}
+{u-v-E-R|u-v-E-R-t}
+l-A/
+{p-O/-R-t-@|p-O/-R-t}
+{d-@|d}
+a~-t-R-e
+p-u-R
+{l-e-s-e|l-E-s-e|l-E-s-e-R}
+S-O/-R-t
+s-O/-R-t-i-R
+{l-@|l|l-e}
+S-A/"
+		intervals [3]:
+			xmin = 5.6838880379
+			xmax = 5.7436026532
+			text = "sil"
+		intervals [4]:
+			xmin = 5.7436026532
+			xmax = 8.4605955438
+			text = "l-A/
+{n-y-i|n-H-i|n-y-i-t|n-H-i-t}
+{t-E|t-e|e-t-E-t|e-t-e|e-t-E|E-t-E-t|e-t-e-t|E-t-E}
+{s|s-i}
+{b-E-l|b-E-l-@}
+{k|k-@}
+{Z-@|Z|S}
+{s-y-i-z|s-y-i}
+d-E-s-a~-d-y
+{d-a~|d-a~-z}
+l-A/
+R-y
+{p-R-a~-d-R-@|p-R-a~-d-R}
+{l-@|l|l-e}
+{f-R-E-z|f-R-e|f-R-E}"
+		intervals [5]:
+			xmin = 8.4605955438
+			xmax = 9.1450000312
+			text = ""
+		intervals [6]:
+			xmin = 9.1450000312
+			xmax = 11.9485310906
+			text = "{Z|S}
+{A/-v-e-z|A/-v-E-z|A/-v-E|A/-v-e}
+A/
+{p-E-n-@|p-E-n}
+{f-e-t|f-e|f-E|f-E-t|f-e-z|f-E-t-@}
+{k-E-l-k-@|k-E-l-k}
+{p-A/-z|p-A/}
+{k|k-@}
+{Z|S}
+{e|E}
+a~-t-a~-d-y
+l-A/
+{p-O/-R-t-@|p-O/-R-t}
+{k-l-A/-k-e-R|k-l-A/-k-e}
+{d-E-R-j-E-R-@|d-E-R-j-E-R}
+m-w-A/"
+		intervals [7]:
+			xmin = 11.9485310906
+			xmax = 12.494
+			text = "sil"
+		intervals [8]:
+			xmin = 12.494
+			xmax = 15.036
+			text = "{Z|S}
+{e|E}
+R-E-A/-l-i-z-e
+{t-u-t|t-u}
+{d-@|d}
+{U~/|U~/-n}
+k-u
+sil
+{k|k-@}
+{Z|S}
+{t-E|E-t-E-z|e-t-e|e-t-E|e-t-e-z|E-t-E}
+a~-f-E-R-m-e
+{d-2-O/-R|d-2-O/-R-z}"
+		intervals [9]:
+			xmin = 15.036
+			xmax = 16.602
+			text = "sil"
+		intervals [10]:
+			xmin = 16.602
+			xmax = 20.01
+			text = "{l-@|l|l-e}
+{k-O~-b-l|k-O~-b-l-@}
+s
+{t|e-t|E|e|E-s-t|E-s-t-@|E-t}
+{k|k-@}
+{Z-@|Z|S}
+{m-@|m}
+{s-y-i-z|s-y-i}
+{f-e-t|f-e|f-E|f-E-t|f-e-z|f-E-t-@}
+{A/-R-E-t-e|A/-R-E-t-e-R|A/-R-e-t-e}
+A/-l-O/-R-k-@
+{Z|S}
+{E-s-E-j-E|E-s-E-j-E-z}
+{d-@|d|t}
+{f-O/-R-s-e|f-O/-R-s-e-R}
+m-A/
+{p-R-O/-p-R|p-R-O/-p|p-R-O/-p-R-@}
+{p-O/-R-t-@|p-O/-R-t}"
+		intervals [11]:
+			xmin = 20.01
+			xmax = 21.3471
+			text = "sil"
