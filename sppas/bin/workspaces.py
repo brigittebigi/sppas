@@ -46,7 +46,7 @@ Create or open a workspace :
 >>>  ./sppas/sppas/bin/workspaces.py -w myWorkspace
 
 Adding a file to the workspace :
->>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -a ./sppas/samples/samples-fra/BX_track_0451.wav
+>>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -af ./sppas/samples/samples-fra/BX_track_0451.wav
 
 Checking a file (or a reference):
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -cf ./sppas/samples/samples-fra/BX_track_0451.wav
@@ -54,7 +54,7 @@ Checking a file (or a reference):
 if you want to check/uncheck all the files use the argument --check_all /--uncheck_all
 
 An "all-in-one" solution :
->>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -a ./sppas/samples/samples-fra/BX_track_0451.wav -cf ./sppas/samples/samples-fra/BX_track_0451.wav
+>>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -af ./sppas/samples/samples-fra/BX_track_0451.wav -cf ./sppas/samples/samples-fra/BX_track_0451.wav
 
 Create a reference in a workspace :
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -cr reference
@@ -69,8 +69,6 @@ Create an attribute that is added to each checked references
 
 You can set every parametres of an attribute in one line
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace  -att attribute -val 123 -type int -desc description...
-
-    TODO :  change the names of the arguments
 
 """
 
@@ -121,7 +119,7 @@ if __name__ == "__main__":
     )
 
     group_io.add_argument(
-        "-a",
+        "-af",
         metavar="add",
         help="add a file to a workspace."
     )
@@ -132,8 +130,8 @@ if __name__ == "__main__":
         help="remove a file of a workspace."
     )
 
-    # Arguments for setting the state of a file
-    # -----------------------------------------
+    # Arguments for setting the state of a file/reference
+    # ---------------------------------------------------
 
     group_state = parser.add_argument_group('State')
 
@@ -160,27 +158,27 @@ if __name__ == "__main__":
         help="uncheck a file (or a reference) of a workspace."
     )
 
+    group_state.add_argument(
+        "--check",
+        action="store_true",
+        help="check a file or a reference when created."
+    )
+
     # Arguments for references
     # ------------------------
 
     group_ref = parser.add_argument_group('References')
 
     group_ref.add_argument(
-        "-cr",
-        metavar="create_reference",
-        help="create a reference."
+        "-ar",
+        metavar="add_reference",
+        help="add a reference."
     )
 
     group_ref.add_argument(
-        "-t",
+        "-tr",
         metavar="type",
         help="set the type of the created reference."
-    )
-
-    group_ref.add_argument(
-        "--check",
-        action="store_true",
-        help="check a file when created."
     )
 
     group_ref.add_argument(
@@ -202,7 +200,7 @@ if __name__ == "__main__":
     )
 
     # Arguments for sppasAttributes
-    # ----------------------------
+    # ------------------------------
 
     group_att = parser.add_argument_group('sppasAttributes')
 
@@ -242,8 +240,8 @@ if __name__ == "__main__":
 
     )
 
-    # Argument verbose mode
-    # ---------------------
+    #  Verbose mode
+    # -------------
 
     group_verbose = parser.add_argument_group('verbose')
 
@@ -262,10 +260,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     arguments = vars(args)
 
-    # Workspaces
-    # ----------
-
     try:
+
+        # Workspaces
+        # ----------
+
         ws = sppasWorkspaces()
         fd = FileData()
         ws_name = ""
@@ -291,13 +290,13 @@ if __name__ == "__main__":
                 print("removing existing workspace :  {}".format(args.r))
 
         # adding a file to a workspace
-        if args.a:
-            fd.add_file(args.a)
+        if args.af:
+            fd.add_file(args.af)
             if args.check:
-                fd.set_object_state(States().CHECKED, fd.get_object(args.a))
+                fd.set_object_state(States().CHECKED, fd.get_object(args.af))
             # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
-                print("added the file : {} ".format(args.a))
+                print("added the file : {} ".format(args.af))
 
         # removing a file of a workspace
         if args.rf:
@@ -359,16 +358,16 @@ if __name__ == "__main__":
 
         # creating a new reference and setting its type if specified
         # otherwise set as STANDALONE by default
-        if args.cr:
-            ref = FileReference(args.cr)
-            if args.t:
-                ref.set_type(args.t)
+        if args.ar:
+            ref = FileReference(args.ar)
+            if args.tr:
+                ref.set_type(args.tr)
             if args.check:
                 ref.set_state(States().CHECKED)
             fd.add_ref(ref)
             # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
-                print("reference : {} [{}] created".format(args.cr, ref.get_type()))
+                print("reference : {} [{}] created".format(args.ar, ref.get_type()))
 
         # remove a reference
         if args.remove_refs:
@@ -444,7 +443,6 @@ if __name__ == "__main__":
 
         fd.update()
         # checking if we work on a workspace
-        # TODO find a better way
         if ws_name not in "":
             ws.save_data(fd, ws.index(ws_name))
 
