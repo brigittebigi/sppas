@@ -48,7 +48,7 @@ Create or open a workspace :
 Adding a file to the workspace :
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -a ./sppas/samples/samples-fra/BX_track_0451.wav
 
-Checking a file :
+Checking a file (or a reference):
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -cf ./sppas/samples/samples-fra/BX_track_0451.wav
 
 if you want to check/uncheck all the files use the argument --check_all /--uncheck_all
@@ -61,9 +61,6 @@ Create a reference in a workspace :
 
 you can immediately check this reference with the option --check
 
-Check an existing reference
->>> ./sppas/sppas/bin/workspaces.py -w myWorkspace -Cr reference
-
 Associate each checked files with each checked references
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace  --associate
 
@@ -73,7 +70,7 @@ Create an attribute that is added to each checked reference
 You can set every parametres of an attribute in one line
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace  -att attribute -val 123 -type int -desc description...
 
-    TODO : --quiet and change the names of the arguments
+    TODO :  change the names of the arguments
 
 """
 
