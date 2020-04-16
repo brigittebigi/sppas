@@ -369,14 +369,20 @@ class sppasFileDataFilters(sppasBaseFilters):
         data = sppasBaseSet()
 
         # search for the data to be returned:
-        for path in self.obj:
-            for fr in path:
-                matches = list()
-                for ref in fr.get_references():
+        for fp in self.obj:
+            # does this root have references with all/any attributes matching the given ones?
+            for fr in fp:
 
-                    for func, value, logical_not in att_functions:
-                        mm = False
+                # each given att is False until we really know!
+                matches = [False]*len(att_functions)
+
+                for ref in fr.get_references():
+                    # Find if one of the attributes of this reference is matching one
+                    # of the requested attributes
+                    for i, a in enumerate(att_functions):
+                        func, value, logical_not = a
                         for att in ref:
+                            mm = False
                             try:
                                 searched = sppasAttribute(value[0], value[1], att.get_value_type())
                                 if att.get_id() == searched.get_id():
@@ -385,19 +391,18 @@ class sppasFileDataFilters(sppasBaseFilters):
                                     else:
                                         mm = func(att, searched.get_typed_value())
                                 if mm is True:
+                                    matches[i] = True
                                     break
                             except ValueError:
                                 continue
 
-                        matches.append(mm)
+                if logic_bool == "and":
+                    is_matching = all(matches)
+                else:
+                    is_matching = any(matches)
 
-                    if logic_bool == "and":
-                        is_matching = all(matches)
-                    else:
-                        is_matching = any(matches)
-
-                    if is_matching is True:
-                        for fn in fr:
-                            data.append(fn, att_fct_values)
+                if is_matching is True:
+                    for fn in fr:
+                        data.append(fn, att_fct_values)
 
         return data

@@ -44,6 +44,9 @@ from ..filedatacompare import *
 from ..filedatafilters import sppasFileDataFilters
 from ..filestructure import FileRoot
 
+# ---------------------------------------------------------------------------
+
+
 class TestsFileDataFilter (unittest.TestCase):
 
     def setUp(self):
@@ -108,3 +111,67 @@ class TestsFileDataFilter (unittest.TestCase):
 
     def test_mixed_filter_argument_way(self):
         self.assertEqual(2, len(self.data_filter.extension(not_exact=u('.PY'), startswith=u('.TEXT'), logic_bool='and')))
+
+    def test_att_extended(self):
+        files = FileData()
+        files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P8.wav'))
+        files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P8.TextGrid'))
+        files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P9.wav'))
+        files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P9.TextGrid'))
+        files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_C006-P6.wav'))
+        files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_C006-P6.TextGrid'))
+        files.add_file(os.path.join(sppas.paths.samples, 'samples-eng', 'ENG_M15_ENG_T02.wav'))
+        files.add_file(os.path.join(sppas.paths.samples, 'samples-eng', 'ENG_M15_ENG_T02.PitchTier'))
+        files.add_file(os.path.join(sppas.paths.samples, 'samples-eng', 'ENG_M15_ENG_T33.wav'))
+        files.add_file(os.path.join(sppas.paths.samples, 'samples-eng', 'ENG_M15_ENG_T33.PitchTier'))
+
+        rf = FileReference('corpus-fra')
+        rf.set_type('STANDALONE')
+
+        re = FileReference('corpus-eng')
+        re.set_type('STANDALONE')
+
+        spk1 = FileReference('SPK-B003')
+        spk1.set_type('SPEAKER')
+        spk1.append(sppasAttribute('gender', 'male', "str"))
+        spk1.append(sppasAttribute('lang', 'fra', "str"))
+
+        spk2 = FileReference('SPK-C006')
+        spk2.set_type('SPEAKER')
+        spk2.append(sppasAttribute('gender', 'female', "str"))
+        spk2.append(sppasAttribute('lang', 'fra', "str"))
+
+        spk3 = FileReference('SPK-M15')
+        spk3.set_type('SPEAKER')
+        spk3.append(sppasAttribute('gender', 'male', "str"))
+        spk3.append(sppasAttribute('lang', 'eng', "str"))
+
+        fr1 = files.get_object(FileRoot.root(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P8.wav')))
+        fr1.add_ref(rf)
+        fr1.add_ref(spk1)
+
+        fr2 = files.get_object(FileRoot.root(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P9.wav')))
+        fr2.add_ref(rf)
+        fr2.add_ref(spk1)
+
+        fr3 = files.get_object(FileRoot.root(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_C006-P6.wav')))
+        fr3.add_ref(rf)
+        fr3.add_ref(spk2)
+
+        fr4 = files.get_object(FileRoot.root(os.path.join(sppas.paths.samples, 'samples-eng', 'ENG_M15_ENG_T02.wav')))
+        fr4.add_ref(spk3)
+        fr4.add_ref(re)
+
+        fr5 = files.get_object(FileRoot.root(os.path.join(sppas.paths.samples, 'samples-eng', 'ENG_M15_ENG_T33.wav')))
+        fr5.add_ref(spk3)
+        fr5.add_ref(re)
+
+        data_filter = sppasFileDataFilters(files)
+        self.assertEqual(8, len(data_filter.att(exact=('gender', 'male'))))
+        self.assertEqual(2, len(data_filter.att(exact=('gender', 'female'))))
+        self.assertEqual(8, len(data_filter.att(iexact=('gender', 'MALE'))))
+        self.assertEqual(2, len(data_filter.att(iexact=('gender', 'FEMALE'))))
+        self.assertEqual(10, len(data_filter.att(contains=('gender', 'male'))))
+        self.assertEqual(4, len(data_filter.att(exact=('gender', 'male'), iexact=("lang", "fra"), logic_bool="and")))
+        self.assertEqual(4, len(data_filter.att(exact=('gender', 'male')) & data_filter.att(exact=("lang", "fra"))))
+
