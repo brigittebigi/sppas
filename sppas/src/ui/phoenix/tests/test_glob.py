@@ -41,20 +41,14 @@ from sppas.src.ui.cfg import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
-import sppas.src.ui.phoenix.page_analyze.anz_textviews as anztextviews
-import sppas.src.ui.phoenix.page_analyze.anz_listviews as anzlistviews
-import sppas.src.ui.phoenix.page_analyze.anz_timeviews as anztimeviews
-import sppas.src.ui.phoenix.page_analyze.anz_defaultviews as anzdefaultviews
-import sppas.src.ui.phoenix.page_analyze.anz_tabs as anz_tabs
-import sppas.src.ui.phoenix.page_analyze.timeview as timeview
-import sppas.src.ui.phoenix.page_analyze.listview as listview
-import sppas.src.ui.phoenix.page_analyze.textview as textview
 
 import sppas.src.ui.phoenix.page_files.filesmanager as filesmanager
 import sppas.src.ui.phoenix.page_files.refsmanager as refsmanager
 import sppas.src.ui.phoenix.page_files.wksmanager as wksmanager
 import sppas.src.ui.phoenix.page_files.filesviewctrl as filesviewctrl
 import sppas.src.ui.phoenix.page_files.refsviewctrl as refsviewctrl
+
+import sppas.src.ui.phoenix.page_convert.finfos as finfos
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -86,7 +80,7 @@ class TestPanel(wx.Choicebook):
         # page plugins
 
         # page convert
-        # no tests
+        self.AddPage(finfos.TestPanel(self), "File formats info")
 
         # page home
         # no tests

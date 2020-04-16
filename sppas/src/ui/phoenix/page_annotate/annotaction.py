@@ -61,7 +61,7 @@ def _(message):
 
 MSG_STEP_FORMAT = _("STEP 1: choose an output file format")
 MSG_STEP_LANG = _("STEP 2: fix the language(s)")
-MSG_STEP_ANNCHOICE = _("STEP 3: select annotations")
+MSG_STEP_ANNCHOICE = _("STEP 3: select and configure annotations")
 MSG_STEP_RUN = _("STEP 4: perform the annotations")
 MSG_STEP_REPORT = _("STEP 5: read the procedure outcome report")
 MSG_BTN_RUN = _("Let's go!")

@@ -45,6 +45,7 @@ from ..windows import sppasScrolledPanel
 from ..windows import sppasCollapsiblePanel
 from ..windows import sppasSimpleText
 from ..windows.image import ColorizeImage
+from ..windows import sppasListCtrl
 from ..tools import sppasSwissKnife
 from ..main_events import DataChangedEvent
 
@@ -823,7 +824,7 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
         p = FileRootCollapsiblePanel(self.GetPane(), fr)
         p.SetFocus()
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p)
-        self.GetPane().GetSizer().Add(p, 0, wx.EXPAND | wx.ALL, border=4)
+        self.GetPane().GetSizer().Add(p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(4))
         self.__frs[fr.get_id()] = p
         return p
 
@@ -1107,6 +1108,10 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         self.AddButton("root")
         self.AddButton("choice_checkbox")
 
+    @property
+    def _listctrl(self):
+        return self.FindWindow("listctrl_files")
+
     # ------------------------------------------------------------------------
 
     def _update_expander(self, fr):
@@ -1134,9 +1139,8 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
     def __create_listctrl(self, parent):
         """Create a listctrl to display files."""
         style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL | wx.LC_HRULES
-        lst = wx.ListCtrl(parent, style=style, name="listctrl_files")
+        lst = sppasListCtrl(parent, style=style, name="listctrl_files")
 
-        lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
         info = wx.ListItem()
         info.Mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
         info.Image = -1
@@ -1205,15 +1209,13 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
 
     def __set_pane_size(self):
         """Fix the size of the child panel."""
-        listctrl = self.FindWindow("listctrl_files")
-
         # The listctrl can have an horizontal scrollbar
         bar = 14
 
-        n = listctrl.GetItemCount()
+        n = self._listctrl.GetItemCount()
         h = int(self.GetFont().GetPixelSize()[1] * 2.)
-        listctrl.SetMinSize(wx.Size(-1, (n * h) + bar))
-        listctrl.SetMaxSize(wx.Size(-1, (n * h) + bar + 2))
+        self._listctrl.SetMinSize(wx.Size(-1, (n * h) + bar))
+        self._listctrl.SetMaxSize(wx.Size(-1, (n * h) + bar + 2))
 
     # ------------------------------------------------------------------------
     # Management the list of files
@@ -1230,11 +1232,10 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         extension_icon_name = FileAnnotIcon().get_icon_name(fn.get_extension())
         extension_img_index = self.__ils.index(extension_icon_name)
 
-        listctrl = self.FindWindow("listctrl_files")
-        index = listctrl.InsertItem(listctrl.GetItemCount(), state_icon_index)
+        index = self._listctrl.InsertItem(self._listctrl.GetItemCount(), state_icon_index)
         self.__fns.append(fn.get_id())
 
-        listctrl.SetItemColumnImage(
+        self._listctrl.SetItemColumnImage(
             index,
             FileRootCollapsiblePanel.COLUMNS.index("icon"),
             extension_img_index)
@@ -1246,10 +1247,9 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
 
     def __remove_file(self, identifier):
         """Remove a filename."""
-        listctrl = self.FindWindow("listctrl_files")
         idx = self.__fns.index(identifier)
         # item = listctrl.GetItem(idx)
-        listctrl.DeleteItem(idx)
+        self._listctrl.DeleteItem(idx)
 
         self.__fns.pop(idx)
         self.__set_pane_size()
@@ -1259,14 +1259,13 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
 
     def __update_file(self, fn):
         """Update information of a file, except its icon and its state."""
-        listctrl = self.FindWindow("listctrl_files")
         if fn.get_id() in self.__fns:
             index = self.__fns.index(fn.get_id())
-            listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("file"), fn.get_name())
-            listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("type"), fn.get_extension())
-            listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("date"), fn.get_date())
-            listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("size"), fn.get_size())
-            listctrl.RefreshItem(index)
+            self._listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("file"), fn.get_name())
+            self._listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("type"), fn.get_extension())
+            self._listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("date"), fn.get_date())
+            self._listctrl.SetItem(index, FileRootCollapsiblePanel.COLUMNS.index("size"), fn.get_size())
+            self._listctrl.RefreshItem(index)
 
     # ------------------------------------------------------------------------
     # Management of the events
@@ -1280,6 +1279,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
 
         """
         self.FindButton("choice_checkbox").Bind(wx.EVT_BUTTON, self.OnCkeckedRoot)
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
 
     # ------------------------------------------------------------------------
 
@@ -1292,9 +1292,8 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def __item_selected(self, event):
-        listctrl = self.FindWindow("listctrl_files")
-        index = listctrl.GetFirstSelected()
-        listctrl.Select(index, on=False)
+        index = self._listctrl.GetFirstSelected()
+        self._listctrl.Select(index, on=False)
 
         # notify parent to decide what has to be done
         self.notify(self.__fns[index])
