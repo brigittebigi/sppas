@@ -445,10 +445,11 @@ class FileTreeView(sppasScrolledPanel):
 
     # ------------------------------------------------------------------------
 
-    def __add_folder_panel(self, fp):
+    def __add_folder_panel(self, fp, idx=-1):
         """Create a child panel to display the content of a FilePath.
 
         :param fp: (FilePath)
+        :param idx: Insert panel at given index. Use -1 to append the panel.
         :return: FilePathCollapsiblePanel
 
         """
@@ -457,7 +458,11 @@ class FileTreeView(sppasScrolledPanel):
         self.ScrollChildIntoView(p)
         p.GetPane().Bind(EVT_ITEM_CLICKED, self._process_item_clicked)
 
-        self.GetSizer().Add(p, 0, wx.EXPAND | wx.ALL, border=8)
+        if idx == -1:
+            self.GetSizer().Add(p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(4))
+        else:
+            self.GetSizer().Insert(idx, p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(4))
+
         self.__fps[fp.get_id()] = p
         return p
 
@@ -482,17 +487,17 @@ class FileTreeView(sppasScrolledPanel):
 
         """
         # Remove paths of the panel if not in the data
-        r = list()
+        rm_fpid = list()
         for fpid in self.__fps:
             if fpid not in self.__data:
-                r.append(fpid)
-        for fpid in r:
+                rm_fpid.append(fpid)
+        for fpid in reversed(rm_fpid):
             self.__remove_folder_panel(fpid)
 
         # Add or update
-        for fp in self.__data:
+        for i, fp in enumerate(self.__data):
             if fp.get_id() not in self.__fps:
-                p = self.__add_folder_panel(fp)
+                p = self.__add_folder_panel(fp, i)
                 p.update(fp)
             else:
                 self.__fps[fp.get_id()].update(fp)
@@ -728,13 +733,13 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
 
     # ----------------------------------------------------------------------
 
-    def add_root(self, fr):
+    def add_root(self, fr, idx=-1):
         """Add a new root panel.
 
         """
         added = False
         if fr.get_id() not in self.__frs:
-            p = self.__add_root_panel(fr)
+            p = self.__add_root_panel(fr, idx)
             added = True
             for fn in fr:
                 p.add(fn)
@@ -783,14 +788,17 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
                 # Update the state
                 self.change_state(self.__fpid, fs.get_state())
                 # Remove roots of the panel if not in the data
+                rm_frid = list()
                 for frid in self.__frs:
                     if frid not in fs:
-                        self.__remove_root(frid)
+                        rm_frid.append(frid)
+                for frid in reversed(rm_frid):
+                    self.__remove_root(frid)
 
                 # Add or update the roots
-                for fr in fs:
+                for i, fr in enumerate(fs):
                     if fr.get_id() not in self.__frs:
-                        self.add_root(fr)
+                        self.add_root(fr, i)
                     else:
                         self.__frs[fr.get_id()].update(fr)
 
@@ -814,7 +822,7 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
 
     # ------------------------------------------------------------------------
 
-    def __add_root_panel(self, fr):
+    def __add_root_panel(self, fr, idx=-1):
         """Create a child panel to display the content of a FileRoot.
 
         :param fr: (FileRoot)
@@ -824,7 +832,11 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
         p = FileRootCollapsiblePanel(self.GetPane(), fr)
         p.SetFocus()
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p)
-        self.GetPane().GetSizer().Add(p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(4))
+        sizer = self.GetPane().GetSizer()
+        if idx == -1:
+            sizer.Add(p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(4))
+        else:
+            sizer.Insert(idx, p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(4))
         self.__frs[fr.get_id()] = p
         return p
 
@@ -990,16 +1002,17 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
 
     # ----------------------------------------------------------------------
 
-    def add(self, fn):
+    def add(self, fn, idx=-1):
         """Add a file in the listctrl child panel.
 
         :param fn: (FileName)
+        :param idx: Index to insert the file. Use -1 to append.
 
         """
         if fn.get_id() in self.__fns:
             return False
 
-        self.__add_file(fn)
+        self.__add_file(fn, idx)
         return True
 
     # ----------------------------------------------------------------------
@@ -1068,14 +1081,17 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
                 return
 
             # Remove files of the panel if not in the data
+            rm_fnid = list()
             for fnid in self.__fns:
                 if fnid not in fs:
-                    self.__remove_file(fnid)
+                    rm_fnid.append(fnid)
+            for fnid in reversed(rm_fnid):
+                self.__remove_file(fnid)
 
             # Update existing files and add if missing
-            for fn in fs:
+            for i, fn in enumerate(fs):
                 if fn.get_id() not in self.__fns:
-                    self.add(fn)
+                    self.add(fn, i)
                 else:
                     self.change_state(fn.get_id(), fn.get_state())
                     self.__update_file(fn)
@@ -1221,7 +1237,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
     # Management the list of files
     # ------------------------------------------------------------------------
 
-    def __add_file(self, fn):
+    def __add_file(self, fn, idx=-1):
         """Append a file.
 
         :param fn: (FileName)
@@ -1232,7 +1248,9 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         extension_icon_name = FileAnnotIcon().get_icon_name(fn.get_extension())
         extension_img_index = self.__ils.index(extension_icon_name)
 
-        index = self._listctrl.InsertItem(self._listctrl.GetItemCount(), state_icon_index)
+        if idx == -1:
+            idx = self._listctrl.GetItemCount()
+        index = self._listctrl.InsertItem(idx, state_icon_index)
         self.__fns.append(fn.get_id())
 
         self._listctrl.SetItemColumnImage(
