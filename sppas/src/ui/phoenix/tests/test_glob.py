@@ -49,6 +49,7 @@ import sppas.src.ui.phoenix.page_files.filesviewctrl as filesviewctrl
 import sppas.src.ui.phoenix.page_files.refsviewctrl as refsviewctrl
 
 import sppas.src.ui.phoenix.page_convert.finfos as finfos
+import sppas.src.ui.phoenix.page_convert.convert as convert
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -81,6 +82,7 @@ class TestPanel(wx.Choicebook):
 
         # page convert
         self.AddPage(finfos.TestPanel(self), "File formats info")
+        self.AddPage(convert.TestPanel(self), "Page Convert")
 
         # page home
         # no tests

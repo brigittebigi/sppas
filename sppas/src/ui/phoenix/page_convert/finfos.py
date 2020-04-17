@@ -164,24 +164,23 @@ class FormatsViewCtrl(sppasPanel):
     def GetExtension(self):
         """Return the selected file extension or None."""
         selected = self._listctrl.GetFirstSelected()
-        if selected == -1 or selected == 0:
+        if selected == -1:
             return None
-        return "." + self.__extensions[selected-1]
+        return "." + self.__extensions[selected]
 
     # -----------------------------------------------------------------------
 
     def CancelSelected(self):
         """Un-check the selected item."""
         selected = self._listctrl.GetFirstSelected()
-        if selected != -1 and selected != 0:
-            # self._listctrl.Select(selected, on=False)
-            self._listctrl.Select(0, on=True)
+        if selected != -1:
+            self._listctrl.Select(selected, on=False)
 
     # -----------------------------------------------------------------------
     # -----------------------------------------------------------------------
 
     def _create_content(self):
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_NO_HEADER | wx.LC_HRULES
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES
         lst = CheckListCtrl(self, style=style, name="listctrl")
 
         lst.AppendColumn("Extension",
@@ -203,24 +202,14 @@ class FormatsViewCtrl(sppasPanel):
                              width=sppasPanel.fix_size(40))
 
         # Fill rows
-        lst.InsertItem(0, "Extension")
-        lst.SetItem(0, 1, "Software")
-        lst.SetItem(0, 2, "Reader")
-        lst.SetItem(0, 3, "Writer")
-        lst.SetItemTextColour(0, self.GetBackgroundColour())
-        lst.SetItemBackgroundColour(0, self.GetForegroundColour())
-
-        for j, c in enumerate(FileSupports.supports):
-            lst.SetItem(0, 4 + j, FileSupports.supports[c])
-
         for i, ext in enumerate(self.__extensions):
             ext_object = FileFormatPropertySupport(ext)
-            lst.InsertItem(i+1, ext)
-            lst.SetItem(i+1, 1, ext_object.get_software())
-            self.__set_bool_item(i+1, 2, ext_object.get_reader())
-            self.__set_bool_item(i+1, 3, ext_object.get_writer())
+            lst.InsertItem(i, ext)
+            lst.SetItem(i, 1, ext_object.get_software())
+            self.__set_bool_item(i, 2, ext_object.get_reader())
+            self.__set_bool_item(i, 3, ext_object.get_writer())
             for j, c in enumerate(FileSupports.supports):
-                self.__set_bool_item(i+1, 4 + j, ext_object.get_support(c))
+                self.__set_bool_item(i, 4 + j, ext_object.get_support(c))
 
         sizer = wx.BoxSizer()
         sizer.Add(lst, 1, wx.EXPAND, 0)
@@ -258,7 +247,6 @@ class FormatsViewCtrl(sppasPanel):
 
     def _on_selected_item(self, evt):
         ext = self.GetExtension()
-        wx.LogDebug("Extension: {}".format(str(ext)))
         evt = FormatChangedEvent(extension=ext)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)

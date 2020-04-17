@@ -469,6 +469,11 @@ class sppasTierListCtrl(LineListCtrl):
 
 
 class sppasTiersbook(sppasChoicebook):
+    """A book with a bunch of tiers displayed in a ListCtrl.
+
+    Any book is ok, except notebook for which there's a bug in wx.
+
+    """
 
     def __init__(self, parent):
         super(sppasTiersbook, self).__init__(parent,
@@ -519,6 +524,8 @@ class sppasTiersbook(sppasChoicebook):
 
 
 # ---------------------------------------------------------------------------
+# Panel tested
+# ---------------------------------------------------------------------------
 
 
 class TestPanel(sppasPanel):
@@ -555,6 +562,7 @@ class TestPanel(sppasPanel):
         # trs1.get_hierarchy().remove_tier(trs1[0])
         page = self.__book.GetPage(self.__book.GetSelection())
         page.Bind(wx.EVT_KEY_UP, self._on_char, page)
+        page.Select(0, on=1)
 
     # -----------------------------------------------------------------------
 
@@ -579,8 +587,8 @@ class TestPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _on_selected_item(self, evt):
-        logging.debug("Test panel received selected item event. Index {}"
-                      "".format(evt.GetIndex()))
+        logging.debug("Test panel received selected item event. Id={}. Index={}"
+                      "".format(evt.GetItem().GetId(), evt.GetIndex()))
 
     # -----------------------------------------------------------------------
 

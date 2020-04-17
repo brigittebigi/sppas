@@ -1061,7 +1061,7 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def _create_content(self):
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER  # | wx.LC_SINGLE_SEL
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_HRULES  # | wx.LC_SINGLE_SEL
         lst = CheckListCtrl(self, style=style, name="listctrl")
         lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
         self.SetPane(lst)
@@ -1167,7 +1167,7 @@ class CtrlVocabCollapsiblePanel(BaseObjectCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def _create_content(self):
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER  # | wx.LC_SINGLE_SEL
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_HRULES  # | wx.LC_SINGLE_SEL
         lst = sppasListCtrl(self, style=style, name="listctrl")
         lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
         self.SetPane(lst)
@@ -1227,7 +1227,7 @@ class MediaCollapsiblePanel(BaseObjectCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def _create_content(self):
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER  # | wx.LC_SINGLE_SEL
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_HRULES   # | wx.LC_SINGLE_SEL
         lst = sppasListCtrl(self, style=style, name="listctrl")
         lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
         self.SetPane(lst)

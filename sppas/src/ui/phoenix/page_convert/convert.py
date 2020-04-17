@@ -163,12 +163,13 @@ class sppasConvertPanel(sppasScrolledPanel):
 
         # Organize all objects into a sizer
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(txt_select, 0, wx.EXPAND | wx.ALL, 4)
-        sizer.Add(formats_listctrl, 1, wx.EXPAND | wx.ALL, 4)
-        sizer.Add(opt_force, 0, wx.EXPAND | wx.ALL, 4)
-        sizer.Add(opt_heuristic, 0, wx.EXPAND | wx.ALL, 4)
-        sizer.Add(self.btn_run, 0, wx.ALIGN_CENTRE | wx.ALL, 4)
-        sizer.Add(files_listctrl, 1, wx.EXPAND | wx.ALL, 4)
+        border = sppasScrolledPanel.fix_size(4)
+        sizer.Add(txt_select, 0, wx.EXPAND | wx.ALL, border)
+        sizer.Add(formats_listctrl, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border*4)
+        sizer.Add(opt_force, 0, wx.EXPAND | wx.ALL, border)
+        sizer.Add(opt_heuristic, 0, wx.EXPAND | wx.ALL, border)
+        sizer.Add(self.btn_run, 0, wx.ALIGN_CENTRE | wx.ALL, border)
+        sizer.Add(files_listctrl, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border*4)
 
         self.SetSizer(sizer)
 
@@ -343,8 +344,11 @@ class sppasConvertPanel(sppasScrolledPanel):
         if out_ext is None:
             # this should never occur because the run button is disabled
             # if no extension is selected.
-            wx.LogError("A file format must be selected before convert.")
+            wx.LogError("A file format must be selected before convert can process.")
             return
+        else:
+            wx.LogMessage("File extension to convert files: {}".format(out_ext))
+
         # Remove all rows currently displayed
         files_listctrl.DeleteAllItems()
         # Disable run button
@@ -435,3 +439,15 @@ class sppasConvertPanel(sppasScrolledPanel):
 
         # Convert the list of FileName() instances into a list of filenames
         return [f.get_id() for f in checked]
+
+# ----------------------------------------------------------------------------
+# Panel tested by test_glob.py
+# ----------------------------------------------------------------------------
+
+
+class TestPanel(sppasConvertPanel):
+
+    def __init__(self, parent):
+        super(TestPanel, self).__init__(parent)
+
+
