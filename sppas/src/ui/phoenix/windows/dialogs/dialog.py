@@ -113,6 +113,11 @@ class sppasDialog(wx.Dialog):
         """
         settings = wx.GetApp().settings
 
+        # colors & font
+        self.SetBackgroundColour(settings.bg_color)
+        self.SetForegroundColour(settings.fg_color)
+        self.SetFont(settings.text_font)
+
         # Fix minimum frame size
         self.SetMinSize(wx.Size(sppasDialog.fix_size(320),
                                 sppasDialog.fix_size(200)))
@@ -122,14 +127,9 @@ class sppasDialog(wx.Dialog):
 
         # icon
         _icon = wx.Icon()
-        bmp = sppasSwissKnife.get_bmp_icon("sppas_64", height=64)
+        bmp = sppasSwissKnife.get_bmp_icon("sppas_64", height=sppasDialog.fix_size(64))
         _icon.CopyFromBitmap(bmp)
         self.SetIcon(_icon)
-
-        # colors & font
-        self.SetBackgroundColour(settings.bg_color)
-        self.SetForegroundColour(settings.fg_color)
-        self.SetFont(settings.text_font)
 
     # -----------------------------------------------------------------------
     # Fade-in at start-up and Fade-out at close
@@ -204,7 +204,7 @@ class sppasDialog(wx.Dialog):
         """
         # Create the header panel and sizer
         panel = sppasPanel(self, name="header")
-        panel.SetMinSize((-1, wx.GetApp().settings.title_height))
+        panel.SetMinSize(wx.Size(-1, wx.GetApp().settings.title_height))
         sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # This header panel properties
@@ -221,9 +221,10 @@ class sppasDialog(wx.Dialog):
 
         """
         spacing = self.fix_size(10)
+        min_height = wx.GetApp().settings.title_height
         # Create the header panel and sizer
         panel = sppasPanel(self, name="header")
-        panel.SetMinSize(wx.Size(-1, wx.GetApp().settings.title_height))
+        panel.SetMinSize(wx.Size(-1, min_height))
         sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # Add the icon, at left, with its title
@@ -231,10 +232,11 @@ class sppasDialog(wx.Dialog):
             static_bmp = BitmapTextButton(panel, name=icon_name)
             static_bmp.SetBorderWidth(0)
             static_bmp.SetFocusWidth(0)
+            static_bmp.SetMinSize(wx.Size(min_height, min_height))
             sizer.Add(static_bmp, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, spacing)
 
         txt = sppasTitleText(panel, value=title)
-        sizer.Add(txt, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, spacing)
+        sizer.Add(txt, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, spacing)
 
         # This header panel properties
         panel.SetSizer(sizer)

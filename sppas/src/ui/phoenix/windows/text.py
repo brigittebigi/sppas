@@ -269,6 +269,9 @@ class sppasTitleText(wx.TextCtrl):
         # in order to apply the appropriate colors&font&size
         self.SetValue(value)
 
+    def AcceptsFocus(self):
+        return False
+
     def SetForegroundColour(self, colour):
         wx.Window.SetForegroundColour(self, colour)
         attr = wx.TextAttr()
