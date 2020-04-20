@@ -65,7 +65,7 @@ MSG_ACTION_SAVE = _("Save")
 
 
 class sppasDialog(wx.Dialog):
-    """Base class for dialogs in SPPAS.
+    """Base class for views in SPPAS.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -90,6 +90,8 @@ class sppasDialog(wx.Dialog):
             - at top: "header"
             - at middle: "content"
             - at bottom: "actions"
+
+        Keys can only captured by the content panel.
 
         """
         super(sppasDialog, self).__init__(*args, **kw)
@@ -149,7 +151,7 @@ class sppasDialog(wx.Dialog):
 
     # -----------------------------------------------------------------------
 
-    def DestroyFadeOut(self, deltaN=-10):
+    def DestroyFadeOut(self, deltaN=-5):
         """Destroy with a fade-out opacity.
 
         :param deltaN: (int)
@@ -220,7 +222,7 @@ class sppasDialog(wx.Dialog):
         :param icon_name: (str) Base name of the icon.
 
         """
-        spacing = self.fix_size(10)
+        spacing = self.get_font_height()
         min_height = wx.GetApp().settings.title_height
         # Create the header panel and sizer
         panel = sppasPanel(self, name="header")
@@ -236,6 +238,7 @@ class sppasDialog(wx.Dialog):
             sizer.Add(static_bmp, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, spacing)
 
         txt = sppasTitleText(panel, value=title)
+        txt.SetMinSize(wx.Size(sppasPanel.fix_size(200), min_height))
         sizer.Add(txt, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, spacing)
 
         # This header panel properties
@@ -273,7 +276,7 @@ class sppasDialog(wx.Dialog):
     def CreateActions(self, left_flags, right_flags=()):
         """Create the actions panel.
 
-        Flags is a bit list of the following flags:
+        Flags is a list of the following flags:
             - wx.ID_OK,
             - wx.ID_CANCEL,
             - wx.ID_YES,
@@ -287,7 +290,7 @@ class sppasDialog(wx.Dialog):
 
         """
         # Create the action panel and sizer
-        panel = sppasPanel(self, name="actions")
+        panel = sppasPanel(self, style=wx.NO_BORDER | wx.TAB_TRAVERSAL | wx.WANTS_CHARS, name="actions")
         panel.SetMinSize(wx.Size(-1, wx.GetApp().settings.action_height))
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -311,6 +314,7 @@ class sppasDialog(wx.Dialog):
         # This action panel properties
         panel.SetSizer(sizer)
         self.SetActions(panel)
+        return panel
 
     # -----------------------------------------------------------------------
 
@@ -506,5 +510,12 @@ class sppasDialog(wx.Dialog):
         except AttributeError:
             obj_size = int(value)
         return obj_size
+
+    # -----------------------------------------------------------------------
+
+    def get_font_height(self):
+        font = self.GetFont()
+        return int(float(font.GetPixelSize()[1]))
+
 
 

@@ -268,6 +268,7 @@ class sppasTitleText(wx.TextCtrl):
         # the message is not send to the base class when init but after
         # in order to apply the appropriate colors&font&size
         self.SetValue(value)
+        self.Layout()
 
     def AcceptsFocus(self):
         return False

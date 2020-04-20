@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.dialogs.settings.py
+    src.ui.phoenix.views.settings.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -88,7 +88,7 @@ def GetColour(parent):
 
 
 class sppasSettingsDialog(sppasDialog):
-    """Settings dialogs.
+    """Settings views.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France

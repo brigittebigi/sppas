@@ -50,7 +50,7 @@ from .windows import sppasStaticLine
 from .windows import sppasPanel
 from .windows import sppasStaticText
 from .windows import BitmapTextButton
-from .dialogs import Feedback
+from .views import Feedback
 
 # ----------------------------------------------------------------------------
 

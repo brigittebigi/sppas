@@ -53,7 +53,7 @@ from ..windows import sppasMessageText, sppasTitleText
 from ..windows import sppasStaticLine
 from ..windows import BitmapTextButton, TextButton
 from ..panels import sppasOptionsPanel
-from ..dialogs import AboutPlugin
+from ..views import AboutPlugin
 from ..main_events import DataChangedEvent
 
 # ---------------------------------------------------------------------------

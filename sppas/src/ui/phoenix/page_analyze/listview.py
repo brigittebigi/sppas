@@ -58,7 +58,7 @@ from sppas.src.anndata import sppasHierarchy
 from sppas.src.anndata import sppasCtrlVocab
 from sppas.src.anndata import sppasMetaData
 
-from ..dialogs import AudioRoamer
+from ..views import AudioRoamer
 from ..windows.listctrl import CheckListCtrl, sppasListCtrl
 from ..windows.text import sppasStaticText, sppasTextCtrl
 from ..windows.panel import sppasPanel
