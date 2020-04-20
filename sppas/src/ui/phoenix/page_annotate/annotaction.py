@@ -40,6 +40,7 @@ import os
 from sppas import msg, u
 from sppas import annots, paths
 
+from ..windows.dialogs import Error
 from ..windows import sppasStaticLine
 from ..windows import sppasToolbar
 from ..windows import sppasPanel
@@ -66,6 +67,9 @@ MSG_STEP_RUN = _("STEP 4: perform the annotations")
 MSG_STEP_REPORT = _("STEP 5: read the procedure outcome report")
 MSG_BTN_RUN = _("Let's go!")
 MSG_BTN_REPORT = _("Show report")
+MSG_TITLE_REPORTS = _("Reports:")
+MSG_BTN_DEL_CHECK = _("Del checked")
+MSG_BTN_DEL_ALL = _("Del all")
 
 # ---------------------------------------------------------------------------
 
@@ -77,9 +81,10 @@ class sppasActionAnnotatePanel(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    TODO: Use a sppasSplitterWindow instead of a sppasPanel
+    1st page of the "page_annotate". Displays the steps to perform
+    automatic annotations and the list of reports.
 
     """
 
@@ -93,6 +98,7 @@ class sppasActionAnnotatePanel(sppasPanel):
 
         self._create_content()
         self._setup_events()
+        self.UpdateUI()
         self.Layout()
 
     # -----------------------------------------------------------------------
@@ -102,9 +108,11 @@ class sppasActionAnnotatePanel(sppasPanel):
         wx.Panel.SetBackgroundColour(self, colour)
         hi_color = self.GetHighlightedBackgroundColour()
 
-        for name in ("format", "lang", "annselect", "annot", "report"):
+        for name in ("format", "lang", "annselect", "annot", "show_report"):
             w = self.FindWindow(name + "_panel")
             w.SetBackgroundColour(hi_color)
+
+        self._reports.SetBackgroundColour(colour)
 
     # -----------------------------------------------------------------------
 
@@ -121,6 +129,9 @@ class sppasActionAnnotatePanel(sppasPanel):
 
     def set_param(self, param):
         self.__param = param
+        report = self.__param.get_report_filename()
+        if report is not None:
+            self._reports.insert_report(os.path.basename(report))
         self.UpdateUI()
 
     # ------------------------------------------------------------------------
@@ -136,12 +147,19 @@ class sppasActionAnnotatePanel(sppasPanel):
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         action_sizer = self._create_action_content()
-        report_panel = ReportsPanel(self, reports, name="panel_reports")
+        reports_panel = ReportsPanel(self, reports, name="reports_panel")
 
         sizer.Add(action_sizer, 3, wx.EXPAND)
         sizer.Add(self.__create_vline(), 0, wx.EXPAND)
-        sizer.Add(report_panel, 1, wx.EXPAND)
+        sizer.Add(reports_panel, 1, wx.EXPAND)
+
         self.SetSizer(sizer)
+
+    # ------------------------------------------------------------------------
+
+    @property
+    def _reports(self):
+        return self.FindWindow("reports_panel")
 
     # ------------------------------------------------------------------------
 
@@ -182,7 +200,11 @@ class sppasActionAnnotatePanel(sppasPanel):
     # ------------------------------------------------------------------------
 
     def __create_action_format(self, parent):
-        """The output file format (step 1)."""
+        """The output file format (step 1).
+
+        TODO: Fix dynamically the list of output formats with sppasRW()
+
+        """
         p = sppasPanel(parent, style=wx.BORDER_NONE, name="format_panel")
 
         st = sppasStaticText(p, label=MSG_STEP_FORMAT)
@@ -255,37 +277,41 @@ class sppasActionAnnotatePanel(sppasPanel):
         """The button to run annotations (step 4)."""
         p = sppasPanel(parent, style=wx.BORDER_NONE, name="annot_panel")
         st = sppasStaticText(p, label=MSG_STEP_RUN)
-        self.btn_run = self.__create_select_annot_btn(p, MSG_BTN_RUN)
-        self.btn_run.SetName("wizard")
-        self.btn_run.SetImage("wizard")
-        self.btn_run.Enable(False)
-        self.btn_run.BorderColour = wx.Colour(228, 24, 24, 128)
+        btn_run = self.__create_select_annot_btn(p, MSG_BTN_RUN)
+        btn_run.SetName("run_btn")
+        btn_run.SetImage("wizard")
 
         s = wx.BoxSizer(wx.HORIZONTAL)
         border = sppasPanel.fix_size(10)
         s.Add(st, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.ALL, border)
-        s.Add(self.btn_run, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, border)
+        s.Add(btn_run, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, border)
         p.SetSizer(s)
         return p
+
+    @property
+    def btn_run(self):
+        return self.FindWindow("run_btn")
 
     # ------------------------------------------------------------------------
 
     def __create_action_report(self, parent):
         """The button to show the report."""
-        p = sppasPanel(parent, style=wx.BORDER_NONE, name="report_panel")
+        p = sppasPanel(parent, style=wx.BORDER_NONE, name="show_report_panel")
         st = sppasStaticText(p, label=MSG_STEP_REPORT)
-        self.btn_por = self.__create_select_annot_btn(p, MSG_BTN_REPORT)
-        self.btn_por.SetName("save_as")
-        self.btn_por.SetImage("save_as")
-        self.btn_por.Enable(False)
-        self.btn_por.BorderColour = wx.Colour(228, 24, 24, 128)
+        btn_por = self.__create_select_annot_btn(p, MSG_BTN_REPORT)
+        btn_por.SetName("report_btn")
+        btn_por.SetImage("report_clip")
 
         s = wx.BoxSizer(wx.HORIZONTAL)
         border = sppasPanel.fix_size(10)
         s.Add(st, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.ALL, border)
-        s.Add(self.btn_por, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, border)
+        s.Add(btn_por, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, border)
         p.SetSizer(s)
         return p
+
+    @property
+    def btn_por(self):
+        return self.FindWindow("report_btn")
 
     # ------------------------------------------------------------------------
 
@@ -327,6 +353,7 @@ class sppasActionAnnotatePanel(sppasPanel):
         """
         # Bind all events from our buttons
         self.Bind(wx.EVT_BUTTON, self._process_event)
+        self._reports.Bind(wx.EVT_RADIOBUTTON, self._process_radio_event)
 
         # Language choice changed
         self.FindWindow("lang_choice").Bind(wx.EVT_COMBOBOX, self._on_lang_changed)
@@ -349,15 +376,49 @@ class sppasActionAnnotatePanel(sppasPanel):
                 event.Skip()
                 return
 
-        if event_name == "wizard":
+        if event_name == "report_delete_checked":
+            self._reports.delete_checked()
+            self.__param.set_report_filename(None)
+            self.UpdateUI(update_log=True)
+
+        elif event_name == "report_delete_unchecked":
+            self._reports.delete_unchecked()
+
+        elif event_name == "run_btn":
             self.notify("page_annot_log", fct_name="run")
 
-        elif event_name == "save_as":
-            # we use the button save as but it only shows the text
-            self.notify("page_annot_log")
+        elif event_name == "report_btn":
+            # Get the name of the checked report
+            report = self._reports.get_checked_report()
+            if report is not None:
+                report = os.path.join(paths.logs, report)
+            # Set it to the param
+            self.__param.set_report_filename(report)
+            # Ask parent to show the report
+            self.notify("page_annot_log", fct_name="show")
 
         else:
             event.Skip()
+
+    # -----------------------------------------------------------------------
+
+    def _process_radio_event(self, event):
+        """Process a click on a report.
+
+        :param event: (wx.Event)
+
+        """
+        event_obj = event.GetEventObject()
+        # The button was selected
+        if event_obj.GetValue() is True:
+            name = event_obj.GetLabel()
+            self._reports.switch_to_report(name)
+            self.__param.set_report_filename(os.path.join(paths.logs, name))
+        else:
+            # The button was de-selected
+            self.__param.set_report_filename(None)
+
+        self.UpdateUI(update_log=True)
 
     # -----------------------------------------------------------------------
 
@@ -449,17 +510,18 @@ class sppasActionAnnotatePanel(sppasPanel):
                 self.btn_run.BorderColour = wx.Colour(24, 228, 24, 128)
 
         # update the button to read log report
-        report = self.__param.get_report_filename()
+        report = self._reports.get_checked_report()
+        if report is not None:
+            report = os.path.join(paths.logs, report)
         if update_log is True:
             if report is None or os.path.exists(report) is False:
                 self.btn_por.Enable(False)
-                self.btn_por.BorderColour = wx.Colour(228, 24, 24, 128)
+                self.btn_por.SetBorderColour(wx.Colour(228, 24, 24, 128))
             else:
                 name = os.path.basename(report)
-                self.FindWindow("panel_reports").insert_report(name)
-                self.FindWindow("panel_reports").switch_to_report(name)
+                self._reports.switch_to_report(name)
                 self.btn_por.Enable(True)
-                self.btn_por.BorderColour = ReportsPanel.HIGHLIGHT_COLOR
+                self.btn_por.SetBorderColour(ReportsPanel.HIGHLIGHT_COLOR)
 
 # ----------------------------------------------------------------------------
 # Panel to display the existing log reports
@@ -473,9 +535,7 @@ class ReportsPanel(sppasScrolledPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    todo: The parent has to handle EVT_REPORT_CHANGED event to be informed that a report changed.
+    :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
     """
     
@@ -492,13 +552,25 @@ class ReportsPanel(sppasScrolledPanel):
             style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
+        self._create_content(reports)
+        self.SetupScrolling(scroll_x=True, scroll_y=True)
+
         self.SetBackgroundColour(wx.GetApp().settings.bg_color)
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
 
-        self._create_content(reports)
-        self.SetupScrolling(scroll_x=True, scroll_y=True)
         self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def get_checked_report(self):
+        """Return the name of the currently checked report or None."""
+        for i, child in enumerate(self.GetChildren()):
+            if isinstance(child, RadioButton):
+                if child.GetValue() is True:
+                    return child.GetLabel()
+
+        return None
 
     # -----------------------------------------------------------------------
 
@@ -509,7 +581,7 @@ class ReportsPanel(sppasScrolledPanel):
 
         """
         for i, child in enumerate(self.GetChildren()):
-            if isinstance(child, CheckButton):
+            if isinstance(child, RadioButton):
                 if child.GetLabel() == name:
                     child.SetValue(True)
                     self.__set_active_btn_style(child)
@@ -521,9 +593,10 @@ class ReportsPanel(sppasScrolledPanel):
     # -----------------------------------------------------------------------
 
     def insert_report(self, name):
-        """Add a button corresponding to the name of a report.
+        """Add a button corresponding to the name of a report or select it.
 
-        Add the button at the top of the list.
+        Add the button at the top of the list and check it, or only check it
+        if it is already existing.
 
         :param name: (str)
         :returns: (bool) the button was inserted or not
@@ -532,28 +605,98 @@ class ReportsPanel(sppasScrolledPanel):
         # Do not insert the same report twice
         for i, child in enumerate(self.GetChildren()):
             if child.GetLabel() == name:
+                self.switch_to_report(name)
                 return False
 
         # Create a new button and insert at the top of the list
         btn = RadioButton(self, label=name, name="checkbox_"+name)
         btn.SetSpacing(self.get_font_height())
         btn.SetMinSize(wx.Size(-1, self.get_font_height()*2))
-        self.__set_normal_btn_style(btn)
-        btn.SetValue(False)
-        btn.Enable(False)   # ================================
+        self.switch_to_report(name)
 
         self.GetSizer().Insert(1, btn, 0, wx.EXPAND | wx.ALL, 2)
         return True
+
+    # -----------------------------------------------------------------------
+
+    def delete_report(self, name):
+        """Delete the report of the given name.
+
+        :param name: (str)
+
+        """
+        rm_child = None
+        for i, child in enumerate(self.GetChildren()):
+            if isinstance(child, RadioButton):
+                if child.GetLabel() == name:
+                    rm_child = child
+                    break
+
+        if rm_child is not None:
+            try:
+                self.__delete_report(name)
+            except Exception as e:
+                Error(str(e))
+            else:
+                self.GetSizer().Detach(rm_child)
+                rm_child.Destroy()
+                self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def delete_checked(self):
+        rm_child = None
+        for child in self.GetChildren():
+            if isinstance(child, RadioButton):
+                if child.GetValue() is True:
+                    child.SetValue(True)
+                    rm_child = child
+                    break
+        if rm_child is not None:
+            try:
+                self.__delete_report(rm_child.GetLabel())
+            except Exception as e:
+                Error(str(e))
+            else:
+                self.GetSizer().Detach(rm_child)
+                rm_child.Destroy()
+                self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def delete_unchecked(self):
+        rm_child = list()
+        for child in self.GetChildren():
+            if isinstance(child, RadioButton):
+                if child.GetValue() is False:
+                    rm_child.append(child)
+
+        for child in reversed(rm_child):
+            try:
+                self.__delete_report(child.GetLabel())
+            except Exception as e:
+                Error(str(e))
+            else:
+                self.GetSizer().Detach(child)
+                child.Destroy()
+
+        self.Layout()
 
     # -----------------------------------------------------------------------
     # Private methods to construct the panel.
     # -----------------------------------------------------------------------
 
     def __create_toolbar(self):
-        tb = sppasToolbar(self, orient=wx.VERTICAL)
+        tb = sppasToolbar(self, orient=wx.HORIZONTAL)
         tb.set_focus_color(wx.Colour(196, 196, 24, 128))
 
-        tb.AddTitleText("Reports: ", color=ReportsPanel.HIGHLIGHT_COLOR)
+        tb.AddTitleText(MSG_TITLE_REPORTS, color=ReportsPanel.HIGHLIGHT_COLOR)
+        del_checked = tb.AddButton("report_delete_checked", text=MSG_BTN_DEL_CHECK)
+        self.__set_normal_btn_style(del_checked)
+
+        del_unchecked = tb.AddButton("report_delete_unchecked", text=MSG_BTN_DEL_ALL)
+        self.__set_normal_btn_style(del_unchecked)
+
         return tb
 
     # -----------------------------------------------------------------------
@@ -599,5 +742,15 @@ class ReportsPanel(sppasScrolledPanel):
         btn.SetValue(state)
         btn.Refresh()
         wx.LogDebug('Report {:s} is checked: {:s}'
-                      ''.format(btn.GetLabel(), str(state)))
+                    ''.format(btn.GetLabel(), str(state)))
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def __delete_report(name):
+        if os.path.exists(name) is False:
+            fullname = os.path.join(paths.logs, name)
+        else:
+            fullname = name
+        os.remove(fullname)
 
