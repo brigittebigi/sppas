@@ -70,11 +70,15 @@ Create an attribute that is added to each checked references
 You can set every parametres of an attribute in one line
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace  -att attribute -val 123 -type int -desc description...
 
+Import workspace from a file
+>>> ./sppas/sppas/bin/workspaces.py -iw myImportedWorkspace
+
 """
 
 import sys
 import os
 from argparse import ArgumentParser
+import json
 
 PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
@@ -251,6 +255,17 @@ if __name__ == "__main__":
         help="verbose mode."
     )
 
+    # test of export files
+    # --------------------
+
+    group_io = parser.add_argument_group('io')
+
+    group_verbose.add_argument(
+        "-iw",
+        metavar="import_workspace",
+        help="import an external workspace"
+    )
+
     # Force to print help if no argument is given then parse
     # ------------------------------------------------------
 
@@ -267,7 +282,7 @@ if __name__ == "__main__":
 
         ws = sppasWorkspaces()
         fd = FileData()
-        ws_name = ""
+        ws_name = None
         # open workspace, create one if not exist
         if args.w:
             ws_name = args.w
@@ -443,8 +458,52 @@ if __name__ == "__main__":
 
         fd.update()
         # checking if we work on a workspace
-        if ws_name not in "":
+        if ws_name is not None:
             ws.save_data(fd, ws.index(ws_name))
+
+        # Import workspace
+        # ----------------
+
+        if args.iw:
+
+            # Modify corrupted path
+            # ----------------------
+            print("you may have imported this workspace from an other system \n"
+                  "if you don't modify the path the workspace will be deleted\n")
+            with open(args.iw, 'r') as file_read:
+                d = json.load(file_read)
+                deleted = False
+
+                # verifying if each path contained in the workspace exists on the system
+                for dict_path in d['paths']:
+                    if ws.verify_path_exist(dict_path) is False:
+                        print("path {} doesn't exist on your system \n".format(dict_path['id']))
+                        b = True
+                        while b:
+                            choice = input("modify path ? yes/no : ")
+                            if choice not in ("yes", "yes ", "y", "no", "no ", "n"):
+                                continue
+                            if choice in ("yes", "yes ", "y"):
+                                new = input("enter the new path : ")
+                                ws.modify_path(dict_path, new)
+                                b = False
+                            else:
+                                os.remove(args.iw)
+                                b = False
+                                deleted = True
+
+            # rewriting the workspace with the right path
+            with open(args.iw, 'w') as file:
+                json.dump(d, file, indent=4, separators=(',', ': '))
+
+            # importing the workspace
+            ws.import_from_file(args.iw)
+
+            if not args.quiet:
+                if not deleted:
+                    print("{} imported".format(args.iw))
+                else:
+                    print("file {} deleted".format(args.iw))
 
     except FileNotFoundError as e:
         print(e)
@@ -455,6 +514,8 @@ if __name__ == "__main__":
     except sppasTypeError as e:
         print(e)
     except KeyError as e:
+        print(e)
+    except OSError as e:
         print(e)
 
 
