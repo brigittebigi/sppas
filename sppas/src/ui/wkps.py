@@ -40,7 +40,10 @@ import os
 import logging
 import shutil
 
+import json
+
 from sppas.src.files.filedata import FileData
+from sppas.src.files.fileexc import FileOSError
 from sppas import paths
 from sppas import sppasIndexError
 from sppas import sppasUnicode
@@ -107,13 +110,55 @@ class sppasWorkspaces(object):
 
     # -----------------------------------------------------------------------
 
+    @staticmethod
+    def verify_path_exist(d):
+        """ Verify if a path contained in a dictionary exists on the system
+
+        :param d: (dict) dictionary obtained after reading a workspace
+        :returns: (bool) false if the path is not on the system
+        """
+        if os.path.exists(d['id']) is False:
+            return False
+        else:
+            return True
+    # ------------------------------------------------------------------------
+
+    @staticmethod
+    def modify_path(d, new_path):
+        """ Replace every the paths contained in the given dictionary by the new_path
+
+        :param d: (dict) dictionary obtained after reading a workspace
+        :param new_path: (str)
+
+        TODO MODIFY SERIALIZE/PARSE METHODS
+        """
+        if os.path.exists(new_path) is False:
+            raise FileOSError(new_path)
+
+        sep = "/"
+        d['id'] = new_path
+        if 'roots' in d:
+            for dict_root in d['roots']:
+                # retrieve only the root
+                name = dict_root['id'].split(sep)
+                dict_root['id'] = new_path + sep + name[-1]
+                if 'files' in dict_root:
+                    for dict_file in dict_root['files']:
+                        # retrieve only the filename
+                        name = dict_file['id'].split(sep)
+                        dict_file['id'] = new_path + sep + name[-1]
+
+    # ------------------------------------------------------------------------
+
     def import_from_file(self, filename):
         """Import and append an external workspace.
 
         :param filename: (str)
+        :param new_path: (str)  the new path if the workspace is imported from an other computer
         :returns: The real name used to save the workspace
 
         """
+
         if os.path.exists(filename) is False:
             raise IOError('Invalid filename {:s}'.format(filename))
 
@@ -133,11 +178,11 @@ class sppasWorkspaces(object):
         try:
             dest = os.path.join(paths.wkps, u_name + sppasWorkspaces.ext)
             shutil.copyfile(filename, dest)
+
             with open(dest, 'r'):
                 pass
         except:
             raise
-
         # append in the list
         self.__wkps.append(u_name)
         return u_name
@@ -265,6 +310,7 @@ class sppasWorkspaces(object):
         :param index: (int) Index of the workspace
         :returns: (str) name of the file
         :raises: IndexError, OSError
+
 
         """
         fn = os.path.join(paths.wkps, self[index]) + sppasWorkspaces.ext
