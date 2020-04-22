@@ -71,7 +71,7 @@ You can set every parametres of an attribute in one line
 >>> ./sppas/sppas/bin/workspaces.py -w myWorkspace  -att attribute -val 123 -type int -desc description...
 
 Import workspace from a file
->>> ./sppas/sppas/bin/workspaces.py -iw myImportedWorkspace
+>>> ./sppas/sppas/bin/workspaces.py -iw path/myImportedWorkspace
 
 """
 
@@ -255,15 +255,32 @@ if __name__ == "__main__":
         help="verbose mode."
     )
 
-    # test of export files
+    # import/export files
     # --------------------
 
     group_io = parser.add_argument_group('io')
 
-    group_verbose.add_argument(
+    group_io.add_argument(
         "-iw",
         metavar="import_workspace",
         help="import an external workspace"
+    )
+
+    group_io = parser.add_argument(
+        "-ew",
+        metavar="export_workspace",
+        help="export a workspace"
+    )
+
+    # TESTS
+    # -----
+
+    group_tests = parser.add_argument_group('tests')
+
+    group_tests.add_argument(
+        "-test",
+        metavar="tests",
+        help="tests"
     )
 
     # Force to print help if no argument is given then parse
@@ -469,7 +486,7 @@ if __name__ == "__main__":
             # Modify corrupted path
             # ----------------------
             print("you may have imported this workspace from an other system \n"
-                  "if you don't modify the path the workspace will be deleted\n")
+                  "if you don't modify the corrupted path the workspace will be deleted\n")
             with open(args.iw, 'r') as file_read:
                 d = json.load(file_read)
                 deleted = False
@@ -505,6 +522,21 @@ if __name__ == "__main__":
                 else:
                     print("file {} deleted".format(args.iw))
 
+        # Export workspace
+        # ----------------
+
+        if args.ew:
+            print("enter the path you want to save this workspace")
+            filename = input()
+            path = filename.split(os.sep)
+            path.remove(path[-1])
+            if os.path.exists(os.sep.join(path)) is False:
+                raise FileOSError(path)
+            ws.export_to_file(ws.index(args.ew), filename)
+
+            if not args.quiet:
+                print("{} exported to {}".format(args.ew, filename))
+
     except FileNotFoundError as e:
         print(e)
     except FileOSError as e:
@@ -517,6 +549,7 @@ if __name__ == "__main__":
         print(e)
     except OSError as e:
         print(e)
+
 
 
 
