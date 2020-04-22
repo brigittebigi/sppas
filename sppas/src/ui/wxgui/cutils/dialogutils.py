@@ -51,7 +51,7 @@ import wx
 
 def create_wildcard(text, extensions):
     """
-    Create wildcard for use in open/save dialogs.
+    Create wildcard for use in open/save views.
 
     """
     return "%s (%s)|%s" % (text,

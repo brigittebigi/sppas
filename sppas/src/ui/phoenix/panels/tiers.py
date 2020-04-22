@@ -394,6 +394,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         selected.
 
         """
+        wx.LogDebug("==> Received item selected with index {}".format(evt.GetIndex()))
         if self.__can_select is True:
             self.__annotation_selected(evt.GetIndex())
         else:

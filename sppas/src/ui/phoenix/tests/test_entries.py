@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.dialogs.test_dialogs.py
+    src.ui.phoenix.views.test_entries.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -38,59 +38,27 @@ import os
 import wx
 import logging
 
-from sppas import paths
-from sppas.src.plugins import sppasPluginsManager
-import sppas.src.audiodata.aio
-from sppas.src.anndata import sppasMetaData
 from sppas.src.ui.cfg import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 from sppas.src.ui.phoenix.windows import sppasPanel
+import sppas.src.ui.phoenix.windows.dialogs.entries as entries
 
-from sppas.src.ui.phoenix.dialogs.audioroamer import AudioRoamer
-from sppas.src.ui.phoenix.dialogs.about import About
-from sppas.src.ui.phoenix.dialogs.about import AboutPlugin
-from sppas.src.ui.phoenix.dialogs.settings import Settings
-from sppas.src.ui.phoenix.dialogs.tiersview import TiersView
-import sppas.src.ui.phoenix.dialogs.statsview as statsview
-import sppas.src.ui.phoenix.dialogs.tiersfilters as tiersfilters
-from sppas.src.ui.phoenix.windows.dialogs.metaedit import MetaDataEdit
-
-# ----------------------------------------------------------------------------
-# Panel tested by test_glob.py
+# ---------------------------------------------------------------------------
+# Tested Panels
 # ----------------------------------------------------------------------------
 
 
 class TestPanel(sppasPanel):
 
-    audio_test = os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
-
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent, name="TestPanel-dialogs")
+        super(TestPanel, self).__init__(parent, name="TestPanel-entries")
 
         btn1 = wx.Button(self,
                          pos=(10, 10), size=(180, 70),
-                         label="About", name="about_btn")
+                         label="Choices", name="choices_btn")
         btn2 = wx.Button(self,
                          pos=(200, 10), size=(180, 70),
-                         label="About plugin", name="about_plugin_btn")
-        btn3 = wx.Button(self,
-                         pos=(390, 10), size=(180, 70),
-                         label="Settings", name="settings_btn")
-
-        btn5 = wx.Button(self,
-                         pos=(10, 100), size=(180, 70),
-                         label="Audio Roamer", name="audio_btn")
-        btn6 = wx.Button(self,
-                         pos=(200, 100), size=(180, 70),
-                         label="Tier View", name="tierview_btn")
-
-        statsview.TestPanel(self, pos=(390, 100), size=(180, 70))
-
-        btn7 = wx.Button(self,
-                         pos=(10, 200), size=(180, 70),
-                         label="Metadata Edit", name="metadata_btn")
-
-        tiersfilters.TestPanel(self, pos=(10, 300), size=(500, 70))
+                         label="Text entry", name="text_btn")
 
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
@@ -105,40 +73,23 @@ class TestPanel(sppasPanel):
         event_obj = event.GetEventObject()
         event_name = event_obj.GetName()
 
-        if event_name == "about_btn":
-            About(self)
+        if event_name == "choices_btn":
+            dialog = entries.sppasChoiceDialog(
+                "A message is here:",
+                choices=["apples", "pears", "tomatoes"])
+            response = dialog.ShowModal()
+            selection = dialog.GetSelection()
+            dialog.DestroyFadeOut()
+            wx.LogMessage("Response was: {}. Selection was: {}".format(response, selection))
 
-        elif event_name == "about_plugin_btn":
-            _manager = sppasPluginsManager()
-            _plugin = _manager.get_plugin("cleanipus")
-            AboutPlugin(self, _plugin)
-
-        elif event_name == "settings_btn":
-            Settings(self)
-
-        elif event_name == "audio_btn":
-            _audio = sppas.src.audiodata.aio.open(TestPanel.audio_test)
-            AudioRoamer(self, _audio)
-            _audio.close()
-
-        elif event_name == "tierview_btn":
-            # TODO. Add a list of tiers to test TiersView
-            TiersView(self, [])
-
-        # elif event_name == "statview_btn":
-        #    StatsView(self, [])
-
-        elif event_name == "metadata_btn":
-            m1 = sppasMetaData()
-            m1.set_meta('id', 'meta_of_page_1')
-            m1.set_meta("language", "fra")
-            m1.set_meta("speaker", "Brigitte Bigi")
-            m2 = sppasMetaData()
-            m2.set_meta('id', 'meta_of_page_2')
-            m2.set_meta('private_selected', 'True')
-            m3 = sppasMetaData()
-            m3.set_meta('id', 'meta_of_page_3')
-            MetaDataEdit(self, [m1, m2, m3])
+        elif event_name == "text_btn":
+            dialog = entries.sppasTextEntryDialog(
+                "A message is here:",
+                value="default value")
+            response = dialog.ShowModal()
+            value = dialog.GetValue()
+            dialog.Destroy()
+            wx.LogMessage("Response was: {}. Text was: {}".format(response, value))
 
 # ----------------------------------------------------------------------------
 # App to test

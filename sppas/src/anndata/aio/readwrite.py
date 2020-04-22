@@ -271,7 +271,7 @@ class FileFormatProperty(object):
         self._extension = extension
         if extension.startswith(".") is False:
             self._extension = "." + extension
-        self._instance = sppasRW.TRANSCRIPTION_TYPES[extension]()
+        self._instance = sppasRW.TRANSCRIPTION_TYPES[extension.lower()]()
         self._software = self._instance.software
 
         try:

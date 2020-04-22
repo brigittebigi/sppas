@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.dialogs.tiersview.py
+    src.ui.phoenix.views.tiersview.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Each tier is displayed in a ListCtrl.

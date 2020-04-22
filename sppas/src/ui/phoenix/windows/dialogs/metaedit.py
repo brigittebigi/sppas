@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.dialogs.metaedit.py
+    src.ui.phoenix.views.metaedit.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Edit a sppasMetadata() of anndata package: add/remove/modify entries.

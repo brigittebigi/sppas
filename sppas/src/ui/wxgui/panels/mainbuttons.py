@@ -70,7 +70,10 @@ from sppas.src.ui.wxgui.sp_consts import ID_FILES
 
 from sppas.src.ui.wxgui.views.feedback import ShowFeedbackDialog
 
-AVERTISSEMENT="Running SPPAS with Python 2.7 will not be maintained past 2020, May when SPPAS 3.0 will be released."
+AVERTISSEMENT="DEPRECATION: Python 2.7 reached the end of its life. " \
+              "Please upgrade your Python to 3.x as Python 2.7 is no longer " \
+              "maintained. No new bug reports, fixes, or changes will be made " \
+              "to SPPAS based on Python 2, and Python 2 is no longer supported."
 
 # ----------------------------------------------------------------------------
 
@@ -427,7 +430,7 @@ class MainTooltips(wx.Panel):
         txt.SetFont(font)
         txt.SetForegroundColour(self._prefs.GetValue('M_FG_COLOUR'))
         txt.SetBackgroundColour(self._prefs.GetValue('M_BGD_COLOUR'))
-        txt.SetMinSize((300, 48))
+        txt.SetMinSize(wx.Size(360, 72))
         return txt
 
     def _create_button(self):

@@ -66,7 +66,10 @@ class sppasAnnotatePanel(sppasSimplebook):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    There's no event for the change of param: the params of the current page
+    are set to the other ones when "show_page()" is called.
 
     """
 

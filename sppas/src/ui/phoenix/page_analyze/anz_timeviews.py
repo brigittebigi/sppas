@@ -51,10 +51,6 @@ from ..windows import sppasSplitterWindow
 from ..windows import sppasMultiPlayerPanel
 from ..windows import MediaEvents
 from ..windows import BitmapTextButton
-from ..windows import sppasProgressDialog
-from ..windows import sppasChoiceDialog
-from ..windows import sppasTextEntryDialog
-from ..windows import Confirm
 from ..panels import sppasTiersEditWindow
 from ..main_events import EVT_VIEW
 

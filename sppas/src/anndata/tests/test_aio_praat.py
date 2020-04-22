@@ -41,8 +41,9 @@
 
 """
 import unittest
-import os.path
+import os
 
+from sppas import paths
 from sppas.src.utils.makeunicode import u
 
 from ..anndataexc import AioLineFormatError
@@ -602,6 +603,25 @@ class TestTextGrid(unittest.TestCase):
         self.assertEqual(len(txt), 1)
         self.assertEqual(txt[0].get_name(), "Tokens")
         self.assertEqual(len(txt[0]), 1)
+
+    # -----------------------------------------------------------------------
+
+    def test_read_annotated_samples(self):
+        phons = os.path.join(DATA, "F_F_B003-P8-phon.TextGrid")
+        tokens = os.path.join(DATA, "F_F_B003-P8-token.TextGrid")
+        txt_phon = sppasTextGrid()
+        txt_phon.read(phons)
+        txt_tok = sppasTextGrid()
+        txt_tok.read(tokens)
+        tier_phon = txt_phon.find("Phones")
+        tier_tok = txt_tok.find("Tokens")
+
+        self.assertEqual(len(tier_phon), len(tier_tok))
+        for ann_phon, ann_tok in zip(tier_phon, tier_tok):
+            print(ann_phon)
+            print(ann_tok)
+            self.assertEqual(len(ann_phon.get_labels()),
+                             len(ann_tok.get_labels()))
 
     # -----------------------------------------------------------------------
     # Writer

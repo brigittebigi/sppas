@@ -50,7 +50,7 @@ from .windows import sppasStaticLine
 from .windows import sppasPanel
 from .windows import sppasStaticText
 from .windows import BitmapTextButton
-from .dialogs import Feedback
+from .views import Feedback
 
 # ----------------------------------------------------------------------------
 
@@ -262,9 +262,12 @@ class sppasLogWindow(wx.TopLevelWindow):
         self.SetIcon(_icon)
 
         # colors & font
-        self.SetBackgroundColour(settings.bg_color)
-        self.SetForegroundColour(settings.fg_color)
-        self.SetFont(settings.text_font)
+        try:
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
     # -----------------------------------------------------------------------
 
@@ -607,18 +610,17 @@ class sppasLogTitlePanel(sppasPanel):
 
         # Fix Look&Feel
         settings = wx.GetApp().settings
-        self.SetMinSize((-1, settings.title_height))
-
-        # Create the title
-        st = sppasStaticText(self, label=MSG_HEADER_LOG)
-
-        # Put the title in a sizer
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(st, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=10)
-
+        self.SetMinSize(wx.Size(-1, settings.title_height))
         self.SetBackgroundColour(wx.GetApp().settings.header_bg_color)
         self.SetForegroundColour(wx.GetApp().settings.header_fg_color)
         self.SetFont(wx.GetApp().settings.header_text_font)
+
+        # Create the title
+        st = wx.StaticText(self, label=MSG_HEADER_LOG)
+
+        # Put the title in a sizer
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(st, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=10)
 
         self.SetSizer(sizer)
 

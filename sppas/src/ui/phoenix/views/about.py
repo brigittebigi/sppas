@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.dialogs.about.py
+    src.ui.phoenix.views.about.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -288,6 +288,7 @@ class sppasAboutDialog(sppasDialog):
 
         self.CreateHeader(MSG_HEADER_ABOUT, 'about')
         p = AboutSPPASPanel(self)
+        p.SetFocus()
         self.SetContent(p)
         self.CreateActions([wx.ID_OK])
         self.LayoutComponents()
@@ -317,6 +318,7 @@ class sppasAboutPluginDialog(sppasDialog):
 
         self.CreateHeader(MSG_HEADER_ABOUT + " " + plugin.get_key() + "...", 'about')
         p = AboutPluginPanel(self, plugin)
+        p.SetFocus()
         self.SetContent(p)
         self.CreateActions([wx.ID_OK])
         self.LayoutComponents()

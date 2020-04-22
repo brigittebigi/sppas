@@ -116,6 +116,7 @@ class AssociatePanel(sppasPanel):
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
         self.__data = data
+        wx.LogDebug("Data {} in Associate Panel.".format(data.get_id()))
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -342,6 +343,7 @@ class AssociatePanel(sppasPanel):
 
     def add_links(self):
         """Associate checked filenames with checked references."""
+        wx.LogDebug("Associate checked files with checked references.")
         associed = self.__data.associate()
         if associed > 0:
             self.notify()

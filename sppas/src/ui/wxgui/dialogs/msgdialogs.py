@@ -212,7 +212,7 @@ def ShowInformation(parent, preferences, contentmsg, style=wx.ICON_INFORMATION):
 
 
 def DemoBaseDialog(parent, preferences=None):
-    """A simple demonstration of SPPAS message dialogs."""
+    """A simple demonstration of SPPAS message views."""
 
     def _on_yesno(evt):
         dlg = YesNoQuestion(frame, preferences, "This is the message to show.")
@@ -245,7 +245,7 @@ def DemoBaseDialog(parent, preferences=None):
         ShowInformation(frame, preferences, "This is a warning message.", style=wx.ICON_WARNING)
 
     frame = spBaseDialog(parent, preferences)
-    title = frame.CreateTitle(MESSAGE_ICON, "Message dialogs demonstration")
+    title = frame.CreateTitle(MESSAGE_ICON, "Message views demonstration")
     btninfo   = frame.CreateButton(DLG_INFO_ICON,"Test info", "This is a tooltip!", btnid=wx.NewId())
     btnyesno  = frame.CreateButton(DLG_QUEST_ICON,"Test yes-no", "This is a tooltip!", btnid=wx.NewId())
     btnerror  = frame.CreateButton(DLG_ERR_ICON,"Test error", "This is a tooltip!", btnid=wx.NewId())

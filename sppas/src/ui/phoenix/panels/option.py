@@ -34,6 +34,7 @@
 
 """
 
+import logging
 import wx
 import wx.lib.agw.floatspin
 
@@ -56,20 +57,20 @@ class sppasOptionsPanel(sppasScrolledPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
-    def __init__(self, parent, options):
+    def __init__(self, parent, options, name="options_panel"):
         super(sppasOptionsPanel, self).__init__(
             parent=parent,
-            name="panel_options",
-            style=wx.BORDER_NONE
+            style=wx.BORDER_NONE,
+            name=name
         )
 
         # wx objects to fill option values
-        self._items = []
-        self.file_buttons = {}
+        self._items = list()
+        self.file_buttons = dict()
         self.__apply_settings(self)
 
         self._create_content(options)
@@ -125,8 +126,10 @@ class sppasOptionsPanel(sppasScrolledPanel):
         :param value: (bool) the current value
 
         """
-        cb = CheckButton(self, label=label, size=(300, -1))
-        cb.SetMinSize(wx.Size(-1, self.get_font_height()*2))
+        logging.debug("Add an option with a checkbox: {} {}".format(label, value))
+        cb = CheckButton(self, label=label)
+        cb.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(300),
+                              self.get_font_height()*2))
         cb.SetFocusWidth(0)
         cb.SetValue(value)
         self.GetSizer().Add(cb, 0, wx.LEFT | wx.BOTTOM, 4)
@@ -145,7 +148,8 @@ class sppasOptionsPanel(sppasScrolledPanel):
         """
         st = sppasStaticText(self, label=label)
 
-        sc = wx.SpinCtrl(self, -1, label, (30, 20), (width, -1))
+        sc = wx.SpinCtrl(self, -1, label,
+                         wx.Point(30, 20), wx.Size(width, -1))
         sc.SetRange(smin, smax)
         sc.SetValue(value)
         self.__apply_settings(sc)
@@ -190,7 +194,7 @@ class sppasOptionsPanel(sppasScrolledPanel):
         """
         st = sppasStaticText(self, label=label)
 
-        textctrl = sppasTextCtrl(self, -1, size=(300, -1))
+        textctrl = sppasTextCtrl(self, size=(sppasScrolledPanel.fix_size(300), -1))
         textctrl.SetValue(value)
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -212,7 +216,7 @@ class sppasOptionsPanel(sppasScrolledPanel):
         """
         st = sppasStaticText(self, label=label)
 
-        filetext = sppasTextCtrl(self, size=(300, -1))
+        filetext = sppasTextCtrl(self, size=(sppasScrolledPanel.fix_size(300), -1))
         filetext.SetValue(value)
 
         filebtn = BitmapTextButton(self, name="folder-add")
@@ -285,4 +289,5 @@ class TestPanel(sppasOptionsPanel):
         o6 = sppasOption("file_test", option_type="filename", option_value="")
         o6.set_text("Test a filename selection")
 
-        super(TestPanel, self).__init__(parent, [o1, o2, o3, o4, o5, o6])
+        super(TestPanel, self).__init__(parent, [o1, o2, o3, o4, o5, o6],
+                                        name="Test sppasOptionsPanel")

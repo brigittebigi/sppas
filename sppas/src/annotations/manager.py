@@ -437,10 +437,11 @@ class sppasAnnotationsManager(Thread):
                         trs.get_min_loc().get_midpoint(),
                         trs.get_max_loc().get_midpoint())
                     trs.append(tier)
-                    parser = sppasRW(basef + "-merge" + self._parameters.get_output_format())
+                    out_file = basef + "-merge" + self._parameters.get_output_format()
+                    parser = sppasRW(out_file)
                     parser.write(trs)
-                    self._logfile.print_message(
-                        basef + "-merge.xra", indent=1, status=0)
+                    self._logfile.print_message(out_file, indent=1, status=0)
+                    self._parameters.add_to_workspace([out_file])
 
                 except Exception as e:
                     self._logfile.print_message(str(e), indent=1, status=-1)

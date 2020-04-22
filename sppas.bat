@@ -29,14 +29,14 @@ GOTO EndHeader
 
         ---------------------------------------------------------------------
 
-    sppas.bat
-    ~~~~~~~~~
+    sppas-py3.bat
+    ~~~~~~~~~~~~~
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
     :summary:      SPPAS for Windows.
 
 """
@@ -46,18 +46,26 @@ GOTO EndHeader
 
 SET PYTHONIOENCODING=UTF-8
 
-if exist C:\Python27\pythonw.exe (
+if exist pythonw3.exe (
 
-    start "" C:\Python27\pythonw.exe .\sppas\bin\sppasgui.py
+        start "" pythonw3.exe .\sppas\bin\sppasgui.py
 
 ) else (
-    
-    if exist pythonw.exe (
-        start "" pythonw.exe .\sppas\bin\sppasgui.py
+
+    if exist python3.exe (
+        start "" python3.exe .\sppas\bin\sppasgui.py
 
     ) else (
 
-        start "" python.exe .\sppas\bin\sppasgui.py
+        if exist C:\Python27\pythonw.exe (
+            start "" C:\Python27\pythonw.exe .\sppas\bin\sppasgui.py
+        ) else (
+            if exist C:\Python27\python.exe (
+                start "" C:\Python27\python.exe .\sppas\bin\sppasgui.py
+            ) else (
+                start "" python.exe .\sppas\bin\sppasgui.py
+            )
+        )
     )
 )
 

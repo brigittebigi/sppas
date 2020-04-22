@@ -12,7 +12,7 @@
 #
 # ---------------------------------------------------------------------------
 #            Laboratoire Parole et Langage, Aix-en-Provence, France
-#                   Copyright (C) 2011-2019  Brigitte Bigi
+#                   Copyright (C) 2011-2020  Brigitte Bigi
 #
 #                   This banner notice must not be removed
 # ---------------------------------------------------------------------------
@@ -55,50 +55,18 @@ PROGRAM_DIR=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 export PYTHONIOENCODING=UTF-8
 
 PYTHON=""
+v="0"
 
-echo -n "Search for 'pythonw' command for Python 2: "
-for cmd in `which -a pythonw`;
+echo -n "Search for 'python3' command for Python: "
+for cmd in `which -a python3`;
 do
     v=$($cmd -c "import sys; print(sys.version_info[0])");
-    if [[ "$v" == "2" ]]; then
+    if [[ "$v" == "3" ]]; then
         PYTHON=$cmd;
         break;
     fi;
 done
 
-# Search for pythonw, v3
-if [ -z "$PYTHON" ]; then
-    echo "not found.";
-    echo -n "Search for 'pythonw' command for Python 3: ";
-    for cmd in `which -a pythonw`;
-    do
-        v=$($cmd -c "import sys; print(sys.version_info[0])");
-        if [[ "$v" == "3" ]]; then
-            PYTHON=$cmd;
-            break;
-        fi;
-    done
-else
-    echo "OK";
-fi
-
-# Search for python, v2
-if [ -z "$PYTHON" ]; then
-    echo "not found.";
-    echo -n "Search for 'python' command for Python 2: ";
-    for cmd in `which -a python`;
-    do
-        v=$($cmd -c "import sys; print(sys.version_info[0])");
-        if [[ "$v" == "2" ]]; then
-            PYTHON=$cmd;
-            break;
-        fi;
-    done
-else
-    echo "OK";
-fi
-
-# Search for python, v3
 if [ -z "$PYTHON" ]; then
     echo "not found."
     echo -n "Search for 'python' command for Python 3: "
@@ -115,17 +83,52 @@ else
 fi
 
 if [ -z "$PYTHON" ]; then
+  echo -n "Search for 'pythonw' command for Python 2: "
+  for cmd in `which -a pythonw`;
+  do
+      v=$($cmd -c "import sys; print(sys.version_info[0])");
+      if [[ "$v" == "2" ]]; then
+          PYTHON=$cmd;
+          break;
+      fi;
+  done
+fi
+
+# Search for python, v2
+if [ -z "$PYTHON" ]; then
+    echo "not found.";
+    echo -n "Search for 'python' command for Python 2: ";
+    for cmd in `which -a python`;
+    do
+        v=$($cmd -c "import sys; print(sys.version_info[0])");
+        if [[ "$v" == "2" ]]; then
+            PYTHON=$cmd;
+            break;
+        fi;
+    done
+fi
+
+echo;
+
+if [ -z "$PYTHON" ]; then
     echo "not found.";
     echo "Python is not an internal command of your operating system.";
-    echo "For any help, take a look at the SPPAS installation page: http://www.sppas.org.";
+    echo "Install it first http://www.python.org. Then try again with SPPAS.";
     exit -1;
+fi
+
+if [ "$v" == "2" ]; then
+    echo "DEPRECATION: Python 2.7 reached the end of its life.";
+    echo "Please upgrade your Python to 3.x as Python 2.7 is no longer maintained.";
+    echo -e "No new bug reports, fixes, or changes will be made to SPPAS based";
+    echo "on Python 2, and Python 2 is no longer supported."
 fi
 
 # Get the name of the system
 unamestr=`uname | cut -f1 -d'_'`;
 
 echo "SPPAS will start with: ";
-echo "  - Command: '$PYTHON' (Python version $v)";
+echo "  - Command: '$PYTHON' (version $v)";
 echo "  - System:  $unamestr";
 echo "  - Display:  $DISPLAY";
 echo "  - Location: $PROGRAM_DIR";
@@ -139,5 +142,5 @@ if [ "$unamestr" == "CYGWIN" ]; then
     fi
 fi
 
-echo "Graphical User Interface of SPPAS.";
+echo "Run the Graphical User Interface...";
 $PYTHON $PROGRAM_DIR/sppas/bin/sppasgui.py

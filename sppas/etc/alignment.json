@@ -39,18 +39,16 @@
     },
     {
       "id": "aligner",
-      "type": "string",
+      "type": "str",
       "value": "julius",
       "text": "Speech automatic aligner system (julius, hvite, basic)"
     },
-
     {
       "id": "basic",
       "type": "bool",
       "value": false,
       "text": "Perform basic alignment if the aligner fails"
     },
-
     {
       "id": "clean",
       "type": "bool",
