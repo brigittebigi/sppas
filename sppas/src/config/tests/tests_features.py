@@ -41,153 +41,184 @@ from sppas.src.config.features import Feature
 
 class TestFeatures(unittest.TestCase):
 
-    feature = Feature()
+    def setUp(self):
+        """Initialisation des tests.
+
+        """
+        self.__feature = Feature()
+
+    # ---------------------------------------------------------------------------
 
     def test_get_set_enable(self):
-        """Test if the methods get_enable and set_enable works well."""
-        self.feature.set_enable(True)
-        y = self.feature.get_enable()
+        """Test if the methods get_enable and set_enable from the class Feature works well.
+
+        """
+        self.__feature.set_enable(True)
+        y = self.__feature.get_enable()
         self.assertIsInstance(y, bool)
         self.assertEqual(y, True)
 
-        self.feature.set_enable(["a", "b", "c"])
-        y = self.feature.get_enable()
-        self.assertIsInstance(y, bool)
-        self.assertEqual(y, True)
-
-        self.feature.set_enable({"1": "a", "2": "b", "3": "c"})
-        y = self.feature.get_enable()
-        self.assertIsInstance(y, bool)
-        self.assertEqual(y, True)
-
-        self.feature.set_enable("")
-        y = self.feature.get_enable()
+        self.__feature.set_available(False)
+        self.__feature.set_enable(True)
+        y = self.__feature.get_enable()
         self.assertIsInstance(y, bool)
         self.assertEqual(y, False)
 
-        self.feature.set_enable(4)
-        y = self.feature.get_enable()
+        self.__feature.set_enable(["a", "b", "c"])
+        y = self.__feature.get_enable()
+        self.assertIsInstance(y, bool)
+        self.assertEqual(y, True)
+
+        self.__feature.set_enable({"1": "a", "2": "b", "3": "c"})
+        y = self.__feature.get_enable()
+        self.assertIsInstance(y, bool)
+        self.assertEqual(y, True)
+
+        self.__feature.set_enable("")
+        y = self.__feature.get_enable()
+        self.assertIsInstance(y, bool)
+        self.assertEqual(y, False)
+
+        self.__feature.set_enable(4)
+        y = self.__feature.get_enable()
         self.assertIsInstance(y, bool)
         self.assertEqual(y, True)
 
     # ---------------------------------------------------------------------------
 
     def test_get_set_available(self):
-        """Test if the methods get_available and set_available works well."""
-        self.feature.set_available(True)
-        y = self.feature.get_available()
+        """Test if the methods get_available and set_available from the class Feature works well.
+
+        """
+        self.__feature.set_available(True)
+        y = self.__feature.get_available()
         self.assertIsInstance(y, bool)
         self.assertEqual(y, True)
 
-        self.feature.set_available(["a", "b", "c"])
-        y = self.feature.get_available()
+        self.__feature.set_enable(True)
+        self.__feature.set_available(False)
+        y = self.__feature.get_available()
+        x = self.__feature.get_enable()
+        self.assertIsInstance(y, bool)
+        self.assertIsInstance(x, bool)
+        self.assertEqual(y, False)
+        self.assertEqual(x, False)
+
+        self.__feature.set_available(["a", "b", "c"])
+        y = self.__feature.get_available()
         self.assertIsInstance(y, bool)
         self.assertEqual(y, True)
 
-        self.feature.set_available({"1": "a", "2": "b", "3": "c"})
-        y = self.feature.get_available()
+        self.__feature.set_available({"1": "a", "2": "b", "3": "c"})
+        y = self.__feature.get_available()
         self.assertIsInstance(y, bool)
         self.assertEqual(y, True)
 
-        self.feature.set_available("")
-        y = self.feature.get_available()
+        self.__feature.set_available("")
+        y = self.__feature.get_available()
         self.assertIsInstance(y, bool)
         self.assertEqual(y, False)
 
-        self.feature.set_available(4)
-        y = self.feature.get_available()
+        self.__feature.set_available(4)
+        y = self.__feature.get_available()
         self.assertIsInstance(y, bool)
         self.assertEqual(y, True)
 
     # ---------------------------------------------------------------------------
 
     def test_get_set_id(self):
-        """Test if the methods get_id and set_id works well."""
-        self.feature.set_id("aaaa")
-        y = self.feature.get_id()
+        """Test if the methods get_id and set_id from the class Feature works well.
+
+        """
+        self.__feature.set_id("aaaa")
+        y = self.__feature.get_id()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "aaaa")
 
-        self.feature.set_id(True)
-        y = self.feature.get_id()
+        self.__feature.set_id(True)
+        y = self.__feature.get_id()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "True")
 
-        self.feature.set_id(["a", "b", "c"])
-        y = self.feature.get_id()
+        self.__feature.set_id(["a", "b", "c"])
+        y = self.__feature.get_id()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "['a', 'b', 'c']")
 
-        self.feature.set_id({"1": "a", "2": "b", "3": "c"})
-        y = self.feature.get_id()
+        self.__feature.set_id({"1": "a", "2": "b", "3": "c"})
+        y = self.__feature.get_id()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "{'1': 'a', '2': 'b', '3': 'c'}")
 
-        self.feature.set_id(4)
-        y = self.feature.get_id()
+        self.__feature.set_id(4)
+        y = self.__feature.get_id()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "4")
 
     # ---------------------------------------------------------------------------
 
-    def test_get_set_dict_packages(self):
-        """Test if the methods get_dict_packages and set_dict_packages works well."""
-        self.feature.set_dict_packages(dict())
-        y = self.feature.get_dict_packages()
+    def test_get_set_packages(self):
+        """Test if the methods get_packages and set_packages from the class Feature works well.
+
+        """
+        self.__feature.set_packages(dict())
+        y = self.__feature.get_packages()
         self.assertIsInstance(y, dict)
         self.assertEqual(y, {})
 
-        self.feature.set_dict_packages({'1': 'a', '2': 'b', '3': 'c'})
-        y = self.feature.get_dict_packages()
+        self.__feature.set_packages({'1': 'a', '2': 'b', '3': 'c'})
+        y = self.__feature.get_packages()
         self.assertIsInstance(y, dict)
         self.assertEqual(y, {'1': 'a', '2': 'b', '3': 'c'})
 
         with self.assertRaises(ValueError):
-            self.feature.set_dict_packages(["a", "b", "c"])
+            self.__feature.set_packages(["a", "b", "c"])
 
         with self.assertRaises(ValueError):
-            self.feature.set_dict_packages("a")
+            self.__feature.set_packages("a")
 
         with self.assertRaises(TypeError):
-            self.feature.set_dict_packages((1, 2, 3))
+            self.__feature.set_packages((1, 2, 3))
 
         with self.assertRaises(TypeError):
-            self.feature.set_dict_packages(4)
+            self.__feature.set_packages(4)
 
         with self.assertRaises(TypeError):
-            self.feature.set_dict_packages(True)
+            self.__feature.set_packages(True)
 
         with self.assertRaises(TypeError):
-            self.feature.set_dict_packages(4.0)
+            self.__feature.set_packages(4.0)
 
     # ---------------------------------------------------------------------------
 
-    def test_get_set_dict_pypi(self):
-        """Test if the methods get_dict_pypi and set_dict_pypi works well."""
-        self.feature.set_dict_pypi(dict())
-        y = self.feature.get_dict_pypi()
+    def test_get_set_pypi(self):
+        """Test if the methods get_pypi and set_pypi from the class Feature works well.
+
+        """
+        self.__feature.set_pypi(dict())
+        y = self.__feature.get_pypi()
         self.assertIsInstance(y, dict)
         self.assertEqual(y, {})
 
-        self.feature.set_dict_pypi({'1': 'a', '2': 'b', '3': 'c'})
-        y = self.feature.get_dict_pypi()
+        self.__feature.set_pypi({'1': 'a', '2': 'b', '3': 'c'})
+        y = self.__feature.get_pypi()
         self.assertIsInstance(y, dict)
         self.assertEqual(y, {'1': 'a', '2': 'b', '3': 'c'})
 
         with self.assertRaises(ValueError):
-            self.feature.set_dict_pypi(["a", "b", "c"])
+            self.__feature.set_pypi(["a", "b", "c"])
 
         with self.assertRaises(ValueError):
-            self.feature.set_dict_pypi("a")
+            self.__feature.set_pypi("a")
 
         with self.assertRaises(TypeError):
-            self.feature.set_dict_pypi((1, 2, 3))
+            self.__feature.set_pypi((1, 2, 3))
 
         with self.assertRaises(TypeError):
-            self.feature.set_dict_pypi(4)
+            self.__feature.set_pypi(4)
 
         with self.assertRaises(TypeError):
-            self.feature.set_dict_pypi(True)
+            self.__feature.set_pypi(True)
 
         with self.assertRaises(TypeError):
-            self.feature.set_dict_pypi(4.0)
+            self.__feature.set_pypi(4.0)

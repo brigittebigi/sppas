@@ -75,16 +75,18 @@ class Feature:
         >>> feature.set_enable(True)
         >>> feature.set_available(True)
         >>> feature.set_id("feature")
-        >>> feature.set_dict_packages({"1": "a"})
-        >>> feature.set_dict_pypi({"2": "b"})
+        >>> feature.set_packages({"1": "a"})
+        >>> feature.set_pypi({"2": "b"})
 
         You can set the values of your privates attributes with the setters by parsing
         a requirements.ini file.
+
     """
 
     def __init__(self):
-        """Create a new Feature instance."""
+        """Create a new Feature instance.
 
+        """
         # An identifier to represent if the feature is enable or no
         self.__enable = False
 
@@ -95,106 +97,125 @@ class Feature:
         self.__id = str()
 
         # An identifier to represent the required system packages
-        self.__dict_packages = dict()
+        self.__packages = dict()
 
         # An identifier to represent the required pip packages
-        self.__dict_pypi = dict()
+        self.__pypi = dict()
+
+    # ---------------------------------------------------------------------------
+
+    def __str__(self):
+        """Print the privates attributes of your Feature object.
+
+        """
+        return "enable : " + str(self.get_enable()) + "\n" \
+               "available : " + str(self.get_available()) + "\n" \
+               "id : " + str(self.get_id()) + "\n" \
+               "packages : " + str(self.get_packages()) + "\n" \
+               "pypi : " + str(self.get_pypi()) + "\n"
 
     # ---------------------------------------------------------------------------
 
     def get_enable(self):
-        """Return the value of the private attribute enable of the instantiate
-        Feature.
+        """Return the value of the private attribute enable of the instantiate Feature.
+
         """
         return self.__enable
 
     # ---------------------------------------------------------------------------
 
-    def set_enable(self, value):
-        """Fix the enable private attribute.
-
-        :param value: (boolean) The boolean that represent if the feature is
-        installed or no on your system.
-        """
-        value = bool(value)
-        self.__enable = value
-
-    # ---------------------------------------------------------------------------
-
     def get_available(self):
-        """Return the value of the private attribute available of the instantiate
-        Feature.
+        """Return the value of the private attribute available of the instantiate Feature.
+
         """
         return self.__available
+    # ---------------------------------------------------------------------------
+
+    def set_enable(self, value):
+        """Fix the value of the private attribute __enable.
+
+        :param value: (boolean) The boolean which represent if you want to install the
+        feature or if it's installed or no on your system.
+
+        """
+        if not self.get_available():
+            self.__enable = False
+        else:
+            value = bool(value)
+            self.__enable = value
 
     # ---------------------------------------------------------------------------
 
     def set_available(self, value):
-        """Fix the available private attribute.
+        """Fix the value of the private attribute __available.
 
-        :param value: (boolean) The boolean that represent if the feature is
-        available or no on your system.
+        :param value: (boolean) The boolean which represent if you want to install the
+        feature or if it is already installed or no on your system.
         """
         value = bool(value)
+        if not value:
+            self.set_enable(False)
         self.__available = value
 
     # ---------------------------------------------------------------------------
 
     def get_id(self):
-        """Return the value of the private attribute id of the instantiate
-        Feature.
+        """Return the value of the private attribute __id of the instantiate Feature.
+
         """
         return self.__id
 
     # ---------------------------------------------------------------------------
 
     def set_id(self, value):
-        """Fix the id private attribute.
+        """Fix the value of the private attribute __id.
 
-        :param value: (str) The id/name that represent the feature.
+        :param value: (str) The id/name which represent the feature.
+
         """
         value = str(value)
         self.__id = value
 
     # ---------------------------------------------------------------------------
 
-    def get_dict_packages(self):
-        """Return the packages_dictionary, of the required system packages,
-        of the instantiate Feature.
+    def get_packages(self):
+        """Return the packages_dictionary, of the required system packages, of the instantiate Feature.
+
         """
-        return self.__dict_packages
+        return self.__packages
 
     # ---------------------------------------------------------------------------
 
-    def set_dict_packages(self, dependencies):
-        """Fix the values of your dict_packages private attribute.
+    def set_packages(self, dependencies):
+        """Fix the values of the private attribute __packages.
 
         :param dependencies: (dict()) The dictionary with the one you will fill
-        your dict_packages, that represent some of the packages you will
+        your __packages, that represent some of the packages you will
         install later.
+
         """
         dependencies = dict(dependencies)
-        self.__dict_packages = dependencies
+        self.__packages = dependencies
 
     # ---------------------------------------------------------------------------
 
-    def get_dict_pypi(self):
-        """Return the pypi_dictionary, of the required pypi packages,
-        of the instantiate Feature.
+    def get_pypi(self):
+        """Return the pypi_dictionary, of the required pypi packages, of the instantiate Feature.
+
         """
-        return self.__dict_pypi
+        return self.__pypi
 
     # ---------------------------------------------------------------------------
 
-    def set_dict_pypi(self, dependencies):
-        """Fix the values of your dict_pypi private attribute.
+    def set_pypi(self, dependencies):
+        """Fix the values of the private attribute __pypi.
 
         :param dependencies: (dict()) The dictionary with the one you will fill
-        your dict_packages, that represent some of the packages you will
+        your __pypi, that represent some of the packages you will
         install later.
+
         """
         dependencies = dict(dependencies)
-        self.__dict_pypi = dependencies
+        self.__pypi = dependencies
 
     # ---------------------------------------------------------------------------
-

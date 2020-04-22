@@ -35,6 +35,7 @@
 
 import os
 import logging
+# import sys
 
 try:
     # For Python 3.0 and later
@@ -45,11 +46,13 @@ except ImportError:
 
 from sppas.src.config.sglobal import sppasPathSettings
 from sppas.src.config.sglobal import sppasGlobalSettings
-from sppas.src.config.installer import *
+# from sppas.src.config.installer import Installer, Deb, Rpm, Windows, CygWin, MacOs
 
 try:
+    # For Python 3.0 and later
     import configparser as cp
 except ImportError:
+    # Fall back to Python 2
     import ConfigParser as cp
 
 
@@ -134,134 +137,106 @@ class sppasUpdate:
 # ---------------------------------------------------------------------------
 
 
-class sppasInstallerDeps:
-    """Check directories, etc.
+# class sppasInstallerDeps:
+#     """Check directories, etc.
+#
+#     :author:       Florian Hocquet
+#     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+#     :contact:      develop@sppas.org
+#     :license:      GPL, v3
+#     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+#
+#     """
+#     __List_os = {
+#         "linux": {
+#             "ubuntu": Deb,
+#             "mint": Deb,
+#             "debian": Deb,
+#             "fedora": Rpm,
+#             "suse": Rpm
+#         },
+#         "win32": Windows,
+#         "cygwin": CygWin,
+#         "darwin": MacOs
+#     }
+#
+#     def __init__(self):
+#         self.__Exploit_syst = None
+#         self.set_os()
+#         self.__Instance_Install = None
+#
+#     # ---------------------------------------------------------------------------
+#
+#     def get_os(self):
+#         return self.__Exploit_syst
+#
+#     # ---------------------------------------------------------------------------
+#
+#     def set_os(self):
+#         system = sys.platform
+#         if system == "linux":
+#             linux_distrib = str(os.uname()).split(", ")[3].split("-")[1].split(" ")[0].lower()
+#             self.__Exploit_syst = self.__List_os["linux"][linux_distrib]
+#         else:
+#             if system not in list(self.__List_os.keys()):
+#                 raise OSError("A implémenter")
+#             else:
+#                 self.__List_os[sys]
+#
+#     # ---------------------------------------------------------------------------
+#
+#     def get_sections(self):
+#         list_options = (self.__config_file.sections())
+#         return list_options
+#
+#     # ---------------------------------------------------------------------------
+#
+#     def get_desc(self, section):
+#         try:
+#             return self.__config_file.get(section, 'desc')
+#         except cp.NoSectionError:
+#             return "Vous devez saisir une des sections disponibles"
+#
+#     # ---------------------------------------------------------------------------
+#
+#     def get_enable(self, section):
+#         try:
+#             enable = self.__config_file.getboolean(section, "enable")
+#             return enable
+#         except cp.NoSectionError:
+#             return "Vous devez saisir une des sections disponibles"
+#
+#     # ---------------------------------------------------------------------------
+#
+#     def set_enable(self, section, boolean):
+#         if type(boolean) is bool and boolean:
+#             self.__config_file.set(section, "enable", "true")
+#         elif type(boolean) is bool and boolean is False:
+#             self.__config_file.set(section, "enable", "false")
+#         with open('test.ini', 'w') as configfile:
+#             self.__config_file.write(configfile)
+#
+#     # ---------------------------------------------------------------------------
+#
+#     def get_dependencies(self, section):
+#         requirements = self.__List_require.get(self.get_os())
+#
+#         dependencies = self.__config_file.get(section, requirements).split(" ")
+#         depend_version = dict()
+#         for line in dependencies:
+#             tab = line.split("=", maxsplit=1)
+#             depend_version[tab[0]] = tab[1]
+#
+#         dependencies2 = self.__config_file.get(section, "req_pip").split(" ")
+#         depend_version2 = dict()
+#         for line2 in dependencies2:
+#             tab2 = line2.split("=", maxsplit=1)
+#             depend_version2[tab2[0]] = tab2[1]
+#         return depend_version, depend_version2
+#
+#     # ---------------------------------------------------------------------------
+#
+#     def install_all(self):
+#         raise NotImplementedError('Not implemented yet')
+#     # ---------------------------------------------------------------------------
 
-    :author:       Florian Hocquet
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
-    """
-
-    _list_os = {
-        "linux": {
-            "ubuntu": Deb,
-            "mint": Deb,
-            "debian": Deb,
-            "fedora": Rpm,
-            "suse": Rpm
-        },
-        "win32": Windows,
-        "cygwin": CygWin,
-        "darwin": MacOs
-    }
-
-    _list_require = {
-        Deb: "req_deb",
-        Rpm: "req_rpm",
-        MacOs: "req_ios",
-        Windows: "req_win",
-        CygWin: "req_cyg"
-    }
-
-    _exploit_syst = ""
-
-    def __init__(self):
-        self.set_os()
-        self.__config_file = self.init_features("features.ini")
-
-    # ---------------------------------------------------------------------------
-
-    @staticmethod
-    def init_features(filename):
-        global config
-        if filename.endswith('.ini'):
-            config = os.path.join(paths.etc, filename)
-
-            if os.path.exists(config) is False:
-                raise IOError('Installation error: the file to configure the '
-                              'list of features does not exist.')
-
-        config_file = cp.ConfigParser()
-        try:
-            config_file.read(config)
-        except cp.MissingSectionHeaderError:
-            print("Votre fichier ne contient pas de sections")
-        return config_file
-
-    # ---------------------------------------------------------------------------
-
-    def get_os(self):
-        return self._exploit_syst
-
-    # ---------------------------------------------------------------------------
-
-    def set_os(self):
-        system = sys.platform
-        if system != "linux":
-            self._exploit_syst = self._list_os[system]
-        else:
-            linux_distrib = str(os.uname()).split(", ")[3].split("-")[1].split(" ")[0].lower()
-            self._exploit_syst = self._list_os["linux"][linux_distrib]
-
-    # ---------------------------------------------------------------------------
-
-    def get_sections(self):
-        list_options = (self.__config_file.sections())
-        return list_options
-
-    # ---------------------------------------------------------------------------
-
-    def get_desc(self, section):
-        try:
-            return self.__config_file.get(section, 'desc')
-        except cp.NoSectionError:
-            return "Vous devez saisir une des sections disponibles"
-
-    # ---------------------------------------------------------------------------
-
-    def get_enable(self, section):
-        try:
-            enable = self.__config_file.getboolean(section, "enable")
-            return enable
-        except cp.NoSectionError:
-            return "Vous devez saisir une des sections disponibles"
-
-    # ---------------------------------------------------------------------------
-
-    def set_enable(self, section, boolean):
-        if type(boolean) is bool and boolean:
-            self.__config_file.set(section, "enable", "true")
-        elif type(boolean) is bool and boolean is False:
-            self.__config_file.set(section, "enable", "false")
-        with open('test.ini', 'w') as configfile:
-            self.__config_file.write(configfile)
-
-    # ---------------------------------------------------------------------------
-
-    def get_dependencies(self, section):
-        requirements = self._list_require.get(self.get_os())
-
-        dependencies = self.__config_file.get(section, requirements).split(" ")
-        depend_version = dict()
-        for line in dependencies:
-            tab = line.split("=", maxsplit=1)
-            depend_version[tab[0]] = tab[1]
-
-        dependencies2 = self.__config_file.get(section, "req_pip").split(" ")
-        depend_version2 = dict()
-        for line2 in dependencies2:
-            tab2 = line2.split("=", maxsplit=1)
-            depend_version2[tab2[0]] = tab2[1]
-        return depend_version, depend_version2
-
-    # ---------------------------------------------------------------------------
-
-    def install_all(self):
-        raise NotImplementedError('Not implemented yet')
-    # ---------------------------------------------------------------------------
-
-    def install(self, section):
-        raise NotImplementedError('Not implemented yet')
