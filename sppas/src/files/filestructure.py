@@ -197,7 +197,7 @@ class FileName(FileBase):
     # -----------------------------------------------------------------------
 
     @staticmethod
-    def parse(d):
+    def parse(d, path):
         """Return the FileName instance represented by the given dict.
 
         :raise: FileTypeError, FileOSError
@@ -205,7 +205,7 @@ class FileName(FileBase):
         """
         if 'id' not in d:
             raise KeyError("File 'id' is missing of the dictionary to parse.")
-        fn = FileName(d['id'])
+        fn = FileName(path + os.sep + d['id'])
 
         s = d.get('state', States().UNUSED)
         if s > 0:
@@ -618,7 +618,7 @@ class FileRoot(FileBase):
 
         """
         d = dict()
-        d['id'] = self.id
+        d['id'] = self.id.split(os.sep)[-1]
 
         # filenames are serialized
         d['files'] = list()
@@ -639,16 +639,16 @@ class FileRoot(FileBase):
     # -----------------------------------------------------------------------
 
     @staticmethod
-    def parse(d):
+    def parse(d, path):
         if 'id' not in d:
             raise KeyError("Root 'id' is missing of the dictionary to parse.")
-        fr = FileRoot(d['id'])
+        fr = FileRoot(path + "/" + d['id'])
 
         # append files
         if 'files' in d:
             for file in d['files']:
                 try:
-                    fn = FileName.parse(file)
+                    fn = FileName.parse(file, path)
                     fr.append(fn)
                 except Exception as e:
                     logging.error(
@@ -1031,7 +1031,7 @@ class FilePath(FileBase):
         if 'roots' in d:
             for root in d['roots']:
                 # append the root
-                fr = FileRoot.parse(root)
+                fr = FileRoot.parse(root, d['id'])
                 fp.append(fr)
 
         # append subjoined

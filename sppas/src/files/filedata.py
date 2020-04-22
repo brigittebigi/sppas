@@ -384,7 +384,7 @@ class FileData(FileBase):
         """Return the state of any FileBase within the FileData.
 
         :param file_obj: (FileBase) The object which one enquire the state
-        :returns: States
+        :returns: Sta
 
         """
         if not isinstance(file_obj, FilePath)\
@@ -662,7 +662,6 @@ class FileData(FileBase):
         d['catalogue'] = list()
         for ref in self.__refs:
             d['catalogue'].append(ref.serialize())
-
         return d
 
     # -----------------------------------------------------------------------

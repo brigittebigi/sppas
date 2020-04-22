@@ -30,7 +30,7 @@
     ~~~~~~~~~~~~~~~~~~~~~
 
 """
-
+import os
 from sppas.src.utils import sppasUnicode
 
 # ---------------------------------------------------------------------------
@@ -135,7 +135,7 @@ class FileBase(object):
     def serialize(self):
         """Return a dict representing this instance for json format."""
         d = dict()
-        d['id'] = self.id
+        d['id'] = self.id.split(os.sep)[-1]
         d['state'] = int(self.get_state())
         return d
 
