@@ -117,36 +117,22 @@ class sppasWorkspaces(object):
         :param d: (dict) dictionary obtained after reading a workspace
         :returns: (bool) false if the path is not on the system
         """
-        if os.path.exists(d['id']) is False:
-            return False
-        else:
-            return True
+        if 'id' not in d:
+            raise KeyError("Workspace 'id' is missing of the dictionary to parse.")
+        return os.path.exists(d['id'])
     # ------------------------------------------------------------------------
 
     @staticmethod
     def modify_path(d, new_path):
-        """ Replace every the paths contained in the given dictionary by the new_path
+        """ Replace the paths contained in the given dictionary by the new_path
 
         :param d: (dict) dictionary obtained after reading a workspace
         :param new_path: (str)
 
-        TODO MODIFY SERIALIZE/PARSE METHODS
         """
         if os.path.exists(new_path) is False:
             raise FileOSError(new_path)
-
-        sep = "/"
         d['id'] = new_path
-        if 'roots' in d:
-            for dict_root in d['roots']:
-                # retrieve only the root
-                name = dict_root['id'].split(sep)
-                dict_root['id'] = new_path + sep + name[-1]
-                if 'files' in dict_root:
-                    for dict_file in dict_root['files']:
-                        # retrieve only the filename
-                        name = dict_file['id'].split(sep)
-                        dict_file['id'] = new_path + sep + name[-1]
 
     # ------------------------------------------------------------------------
 
@@ -154,7 +140,6 @@ class sppasWorkspaces(object):
         """Import and append an external workspace.
 
         :param filename: (str)
-        :param new_path: (str)  the new path if the workspace is imported from an other computer
         :returns: The real name used to save the workspace
 
         """
