@@ -26,7 +26,7 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.files.filestructure.py
+    src.wkps.filestructure.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """

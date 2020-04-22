@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    files.filedatacompare.py
+    wkps.filedatacompare.py
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
     Classes:

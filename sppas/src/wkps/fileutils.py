@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    files.fileutils.py
+    wkps.fileutils.py
     ~~~~~~~~~~~~~~~~~~
 
     Utility classes to manage file names.

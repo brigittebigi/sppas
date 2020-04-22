@@ -43,7 +43,7 @@ from threading import Thread
 from sppas.src.config import paths
 from sppas.src.config import info
 from sppas.src.utils import u
-from sppas.src.files import sppasDirUtils
+from sppas.src.wkps import sppasDirUtils
 
 from .pluginsexc import PluginArchiveFileError
 from .pluginsexc import PluginArchiveIOError

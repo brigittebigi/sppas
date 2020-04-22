@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    ui.wkps.py
+    sppasWkps.py
     ~~~~~~~~~~
 
     Management of the workspaces of the software.
@@ -40,18 +40,17 @@ import os
 import logging
 import shutil
 
-import json
 
-from sppas.src.files.filedata import FileData
-from sppas.src.files.fileexc import FileOSError
+from sppas.src.wkps.sppasWorkspace import sppasWorkspace
+from sppas.src.wkps.fileexc import FileOSError
 from sppas import paths
 from sppas import sppasIndexError
-from sppas import sppasUnicode
+from sppas.src.utils.makeunicode import sppasUnicode
 
 # ---------------------------------------------------------------------------
 
 
-class sppasWorkspaces(object):
+class sppasWkps(object):
     """Manage the set of workspaces.
 
     :author:       Brigitte Bigi
@@ -76,7 +75,7 @@ class sppasWorkspaces(object):
     # -----------------------------------------------------------------------
 
     def __init__(self):
-        """Create a sppasWorkspaces instance.
+        """Create a sppasWkps instance.
 
         Load the list of existing wjson file names of the workspaces folder
         of the software.
@@ -101,7 +100,7 @@ class sppasWorkspaces(object):
         """
         for fn in os.listdir(paths.wkps):
             fn_observed, ext_observed = os.path.splitext(fn)
-            if ext_observed.lower() == sppasWorkspaces.ext:
+            if ext_observed.lower() == sppasWkps.ext:
                 # remove path and extension to set the name of the workspace
                 wkp_name = os.path.basename(fn_observed)
                 # append in the list
@@ -148,7 +147,7 @@ class sppasWorkspaces(object):
             raise IOError('Invalid filename {:s}'.format(filename))
 
         name, ext = os.path.splitext(os.path.basename(filename))
-        if ext.lower() != sppasWorkspaces.ext:
+        if ext.lower() != sppasWkps.ext:
             raise IOError('{:s} is not a valid extension for workspace files'
                           ''.format(ext))
 
@@ -161,7 +160,7 @@ class sppasWorkspaces(object):
 
         # Copy the file -- modify the filename if any
         try:
-            dest = os.path.join(paths.wkps, u_name + sppasWorkspaces.ext)
+            dest = os.path.join(paths.wkps, u_name + sppasWkps.ext)
             shutil.copyfile(filename, dest)
 
             with open(dest, 'r'):
@@ -190,8 +189,8 @@ class sppasWorkspaces(object):
                              ''.format(u_name))
 
         # create the empty workspace data & save
-        fn = os.path.join(paths.wkps, u_name) + sppasWorkspaces.ext
-        data = FileData()
+        fn = os.path.join(paths.wkps, u_name) + sppasWkps.ext
+        data = sppasWorkspace()
         data.save(fn)
 
         self.__wkps.append(u_name)
@@ -213,7 +212,7 @@ class sppasWorkspaces(object):
             raise IndexError('It is not allowed to export the Blank workspace.')
 
         u_name = self[index]
-        fn = os.path.join(paths.wkps, u_name) + sppasWorkspaces.ext
+        fn = os.path.join(paths.wkps, u_name) + sppasWkps.ext
         if fn == filename:
             raise IOError("'{!s:s}' and '{!s:s}' are the same file"
                           "".format(fn, filename))
@@ -281,7 +280,7 @@ class sppasWorkspaces(object):
             return
 
         src = self.check_filename(index)
-        dest = os.path.join(paths.wkps, u_name) + sppasWorkspaces.ext
+        dest = os.path.join(paths.wkps, u_name) + sppasWkps.ext
         shutil.move(src, dest)
         self.__wkps[index] = u_name
 
@@ -298,7 +297,7 @@ class sppasWorkspaces(object):
 
 
         """
-        fn = os.path.join(paths.wkps, self[index]) + sppasWorkspaces.ext
+        fn = os.path.join(paths.wkps, self[index]) + sppasWkps.ext
         if os.path.exists(fn) is False:
             raise OSError('The file matching the workspace {:s} is not '
                           'existing'.format(fn[:-4]))
@@ -311,19 +310,19 @@ class sppasWorkspaces(object):
         """Return the data of the workspace at the given index.
 
         :param index: (int) Index of the workspace
-        :returns: (str) FileData()
+        :returns: (str) sppasWorkspace()
         :raises: IndexError
 
         """
         if index == 0:
-            return FileData()
+            return sppasWorkspace()
 
         try:
             filename = self.check_filename(index)
         except OSError:
-            return FileData()
+            return sppasWorkspace()
 
-        return FileData().load(filename)
+        return sppasWorkspace().load(filename)
 
     # -----------------------------------------------------------------------
 
@@ -334,7 +333,7 @@ class sppasWorkspaces(object):
         is created. Raises indexerror if is attempted to save the 'Blank'
         workspace.
 
-        :param data: (FileData) Data of a workspace to save
+        :param data: (sppasWorkspace) Data of a workspace to save
         :param index: (int) Index of the workspace to save data in
         :returns: The real name used to save the workspace
         :raises: IOError, IndexError
@@ -348,7 +347,7 @@ class sppasWorkspaces(object):
         else:
             u_name = self[index]
 
-        filename = os.path.join(paths.wkps, u_name) + sppasWorkspaces.ext
+        filename = os.path.join(paths.wkps, u_name) + sppasWkps.ext
         data.save(filename)
         return u_name
 

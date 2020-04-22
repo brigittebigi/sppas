@@ -1,0 +1,39 @@
+{
+    "wjson": "1.0",
+    "software": "SPPAS",
+    "version": "3.0",
+    "id": "test",
+    "paths": [
+        {
+            "id": "/home/laurent/Documents/stage/sppas/samples/samples-kor",
+            "roots": [
+                {
+                    "id": "sample",
+                    "files": [
+                        {
+                            "id": "sample-korean.txt",
+                            "state": 0
+                        }
+                    ],
+                    "refids": []
+                }
+            ]
+        }
+    ],
+    "catalogue": [
+        {
+            "id": "ref1",
+            "state": 1,
+            "type": "STANDALONE",
+            "attributes": [
+                {
+                    "id": "azeaze",
+                    "value": null,
+                    "type": "str",
+                    "descr": null
+                }
+            ],
+            "subjoin": null
+        }
+    ]
+}

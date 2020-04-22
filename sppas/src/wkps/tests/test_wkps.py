@@ -28,49 +28,36 @@
         This banner notice must not be removed.
 
         ---------------------------------------------------------------------
-    
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-*****************************************************************************
-files: management of files into workspaces
-*****************************************************************************
+    src.ui.tests.test_wkps.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This package includes classes to manage a bunch of files organized into
-workspaces. A workspace is made of data related to the filenames and a
-list of references to make relations between files.
-
-Requires the following other packages:
-
-* config
-* utils
+    TODO IMPORTS ISSUES
 
 """
+import unittest
 
-from .fileutils import sppasGUID
-from .fileutils import sppasFileUtils
-from .fileutils import sppasDirUtils
-from .filebase import FileBase
-from .filebase import States
-from .filedata import FileData
-from .filestructure import FileName, FileRoot, FilePath
-from .fileref import FileReference, sppasAttribute
-from .filedatafilters import sppasFileDataFilters
+from sppas.sppas.src.wkps.sppasWkps import sppasWkps
 
-__all__ = (
-    "FileBase",
-    "States",
-    "FileData",
-    "FileName",
-    "FileRoot",
-    "FilePath",
-    "sppasAttribute",
-    "FileReference",
-    "sppasFileDataFilters",
-    "sppasFileUtils",
-    "sppasDirUtils",
-    "sppasGUID"
-)
+#
+# /!\ problème avec les imports
+#
+
+
+class TestSppasWorkspaces(unittest.TestCase):
+
+    def setUp(self):
+        self.ws = sppasWkps()
+        self.dic = {"paths": [{"id": "./", "roots": [{"id": "./", "files": [{"id": "./"}]}]}]}
+        self.dic2 = {"paths": [{"id": "", "roots": [{"id": "", "files": [{"id": ""}]}]}]}
+
+    def testVerify_path_exist(self):
+        self.assertTrue(self.ws.verify_path_exist(self.dic))
+        self.assertFalse(self.ws.verify_path_exist(self.dic2))
+
+    def testmodify_path(self):
+        self.ws.modify_path(self.dic, "new_path")
+        d = self.dic['path']
+        for elem in d['id']:
+            self.assertEqual(elem, "new_path")
+

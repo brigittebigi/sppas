@@ -41,7 +41,7 @@ import sppas.src.anndata.aio
 from sppas.src.config import annots
 from sppas.src.config import paths
 from sppas.src.config import info
-from sppas.src.files import sppasFileUtils
+from sppas.src.wkps import sppasFileUtils
 
 from .annotationsexc import AnnotationOptionError
 from .diagnosis import sppasDiagnosis

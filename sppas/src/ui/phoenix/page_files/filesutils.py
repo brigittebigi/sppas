@@ -33,7 +33,7 @@
 
 import wx
 
-from sppas.src.files import sppasAttribute
+from sppas.src.wkps import sppasAttribute
 
 # ----------------------------------------------------------------------------
 

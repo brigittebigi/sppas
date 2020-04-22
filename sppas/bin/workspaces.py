@@ -73,6 +73,8 @@ You can set every parametres of an attribute in one line
 Import workspace from a file
 >>> ./sppas/sppas/bin/workspaces.py -iw path/myImportedWorkspace
 
+Export workspace to a file
+>>> ./sppas/sppas/bin/workspaces.py -ew myWorkspace
 """
 
 import sys
@@ -86,9 +88,9 @@ sys.path.append(SPPAS)
 
 from sppas import paths
 from sppas.src.config import sg
-from sppas.src.ui.wkps import sppasWorkspaces
-from sppas.src.files import FileData, FilePath, FileReference, States, sppasAttribute
-from sppas.src.files.fileexc import FileOSError
+from sppas.src.wkps.sppasWkps import sppasWkps
+from sppas.src.wkps import sppasWorkspace, FilePath, FileReference, States, sppasAttribute
+from sppas.src.wkps.fileexc import FileOSError
 from sppas.src.exc import sppasTypeError
 
 if __name__ == "__main__":
@@ -297,21 +299,21 @@ if __name__ == "__main__":
         # Workspaces
         # ----------
 
-        ws = sppasWorkspaces()
-        fd = FileData()
+        ws = sppasWkps()
+        fd = sppasWorkspace()
         ws_name = None
         # open workspace, create one if not exist
         if args.w:
             ws_name = args.w
             # workspace exits, loading it
-            fn = os.path.join(paths.wkps, ws_name) + sppasWorkspaces.ext
+            fn = os.path.join(paths.wkps, ws_name) + sppasWkps.ext
             if os.path.exists(fn):
                 fd = ws.load_data(ws.index(ws_name))
             # else creating a new one
             else:
                 if not args.quiet:
                     print("creating new workspace")
-                fd = FileData(ws.new(ws_name))
+                fd = sppasWorkspace(ws.new(ws_name))
             if not args.quiet:
                 print("working on : {}".format(ws_name))
 

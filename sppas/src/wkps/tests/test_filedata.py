@@ -40,7 +40,7 @@ import json
 import sppas
 from sppas import sppasTypeError, u
 from ..fileref import sppasAttribute, FileReference
-from ..filedata import FileData
+from ..sppasWorkspace import sppasWorkspace
 from ..filestructure import FileName
 from ..filebase import States
 
@@ -119,7 +119,7 @@ class TestReferences(unittest.TestCase):
 class TestFileData(unittest.TestCase):
 
     def setUp(self):
-        self.data = FileData()
+        self.data = sppasWorkspace()
         self.data.add_file(__file__)
         self.data.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'AC track_0379.PitchTier'))
         self.data.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'AC track_0379.TextGrid'))
@@ -140,7 +140,7 @@ class TestFileData(unittest.TestCase):
         self.r3.append(sppasAttribute('where', 'Aix-en-Provence', descr='Place of recording'))
 
     def test_init(self):
-        data = FileData()
+        data = sppasWorkspace()
         self.assertEqual(36, len(data.id))
         self.assertEqual(0, len(data))
 
@@ -156,7 +156,7 @@ class TestFileData(unittest.TestCase):
                 for fn in fr:
                     current_file_list.append(fn)
 
-        data = FileData.load(os.path.join(sppas.paths.sppas, 'src', 'files', 'tests', 'save.json'))
+        data = sppasWorkspace.load(os.path.join(sppas.paths.sppas, 'src', 'files', 'tests', 'save.json'))
         for fp in data:
             for fr in fp:
                 for fn in fr:

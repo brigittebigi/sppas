@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.files.filedatafilters.py
+    src.wkps.filedatafilters.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     A comparator must be implemented to define comparison functions. Then
@@ -113,7 +113,7 @@ class sppasFileDataFilters(sppasBaseFilters):
     def __init__(self, obj):
         """Create a sppasFileDataFilters instance.
 
-        :param obj: (FileData) The object to be filtered.
+        :param obj: (sppasWorkspace) The object to be filtered.
 
         """
         super(sppasFileDataFilters, self).__init__(obj)

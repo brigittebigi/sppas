@@ -1,0 +1,24 @@
+{
+    "wjson": "1.0",
+    "software": "SPPAS",
+    "version": "2.9",
+    "id": "a981cc46-3672-4c9b-a85d-76cc895f77a1",
+    "paths": [
+        {
+            "id": "/home/laurent/Documents/stage/sppas/samples/samples-cmn",
+            "roots": [
+                {
+                    "id": "f1_P8",
+                    "files": [
+                        {
+                            "id": "f1_P8.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": []
+                }
+            ]
+        }
+    ],
+    "catalogue": []
+}

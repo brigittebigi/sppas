@@ -279,7 +279,7 @@ class sppasMainWindow(sppasDialog):
 
         Set the data of the event to the other panels.
 
-        :param event: (wx.Event) An event with a FileData()
+        :param event: (wx.Event) An event with a sppasWorkspace()
 
         """
         # The object the event comes from

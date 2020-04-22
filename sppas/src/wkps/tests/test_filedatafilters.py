@@ -39,7 +39,7 @@ import os
 
 import sppas
 from sppas import u
-from ..filedata import FileData
+from ..sppasWorkspace import sppasWorkspace
 from ..filedatacompare import *
 from ..filedatafilters import sppasFileDataFilters
 from ..filestructure import FileRoot
@@ -54,7 +54,7 @@ class TestsFileDataFilter (unittest.TestCase):
         f2 = os.path.join(sppas.paths.samples, 'samples-jpn', 'JPA_M16_JPA_T02.TextGrid')
         f3 = os.path.join(sppas.paths.samples, 'samples-cat', 'TB-FE1-H1_phrase1.TextGrid')
 
-        self.files = FileData()
+        self.files = sppasWorkspace()
         self.files.add_file(__file__)
         self.files.add_file(f1)
         self.files.add_file(f2)
@@ -113,7 +113,7 @@ class TestsFileDataFilter (unittest.TestCase):
         self.assertEqual(2, len(self.data_filter.extension(not_exact=u('.PY'), startswith=u('.TEXT'), logic_bool='and')))
 
     def test_att_extended(self):
-        files = FileData()
+        files = sppasWorkspace()
         files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P8.wav'))
         files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P8.TextGrid'))
         files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P9.wav'))

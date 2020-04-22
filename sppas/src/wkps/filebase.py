@@ -26,7 +26,7 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.files.filebase.py
+    src.wkps.filebase.py
     ~~~~~~~~~~~~~~~~~~~~~
 
 """

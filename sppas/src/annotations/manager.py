@@ -39,8 +39,8 @@ import sys
 import os
 from threading import Thread
 
-from sppas.src.files import sppasFileUtils
-from sppas.src.files import States
+from sppas.src.wkps import sppasFileUtils
+from sppas.src.wkps import States
 from sppas.src.anndata import sppasTranscription, sppasRW
 
 import sppas.src.audiodata.aio

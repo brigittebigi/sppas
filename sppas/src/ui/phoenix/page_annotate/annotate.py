@@ -46,7 +46,7 @@ from sppas import sppasTypeError
 from sppas import annots
 
 from sppas.src.annotations import sppasParam
-from sppas.src.files import FileData, States
+from sppas.src.wkps import sppasWorkspace, States
 
 from ..windows.book import sppasSimplebook
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
@@ -107,7 +107,7 @@ class sppasAnnotatePanel(sppasSimplebook):
     def get_data(self):
         """Return the data currently displayed.
 
-        :returns: (FileData) The workspace with files to annotate/annotated
+        :returns: (sppasWorkspace) The workspace with files to annotate/annotated
 
         """
         return self.__param.get_workspace()
@@ -117,11 +117,11 @@ class sppasAnnotatePanel(sppasSimplebook):
     def set_data(self, data):
         """Assign new data to this page.
 
-        :param data: (FileData) The workspace with files to annotate/annotated
+        :param data: (sppasWorkspace) The workspace with files to annotate/annotated
 
         """
         if isinstance(data, FileData) is False:
-            raise sppasTypeError("FileData", type(data))
+            raise sppasTypeError("sppasWorkspace", type(data))
 
         self.__param.set_workspace(data)
         self.__send_data(self.GetParent())

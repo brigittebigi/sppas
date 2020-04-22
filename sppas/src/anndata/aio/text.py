@@ -53,7 +53,7 @@ from ..ann.annlocation import sppasInterval
 from ..media import sppasMedia
 
 from .basetrs import sppasBaseIO
-from .aioutils import format_labels, is_ortho_tier, serialize_labels
+from .aioutils import format_labels, is_ortho_tier
 from .aioutils import load
 
 # ---------------------------------------------------------------------------
@@ -564,12 +564,11 @@ class sppasRawText(sppasBaseText):
 
             if tier.get_name() == "RawTranscription":
                 for ann in tier:
-                    t = serialize_labels(ann.get_labels(), " ", "", True)
+                    t = ann.serialize_labels(" ", "", True)
                     fp.write(t + '\n')
             else:
                 for ann in tier:
-                    t = serialize_labels(
-                        ann.get_labels(), separator=" ", empty="", alt=True)
+                    t = ann.serialize_labels(separator=" ", empty="", alt=True)
                     if point:
                         mp = ann.get_lowest_localization().get_midpoint()
                         fp.write("{}\t\t{}\n".format(mp, t))
@@ -738,8 +737,9 @@ class sppasCSV(sppasBaseText):
                 point = tier.is_point()
 
                 for ann in tier:
-                    content = serialize_labels(
-                        ann.get_labels(), separator=" ", empty="", alt=True)
+                    content = ann.serialize_labels(separator=" ",
+                                                   empty="",
+                                                   alt=True)
                     if point:
                         mp = ann.get_lowest_localization().get_midpoint()
                         fp.write('"{}",{},,"{}"\n'

@@ -37,7 +37,7 @@ import json
 import copy
 
 from sppas.src.resources.mapping import sppasMapping
-from sppas.src.files.fileutils import sppasGUID
+from sppas.src.wkps.fileutils import sppasGUID
 from sppas.src.utils.makeunicode import sppasUnicode
 
 from ..modelsexc import ModelsDataTypeError
