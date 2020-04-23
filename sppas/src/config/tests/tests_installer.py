@@ -53,6 +53,72 @@ class TestInstaller(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
+    def test_get_set_req(self):
+        """Test if the methods get_req and set_req from the class Installer works well.
+
+        """
+        self.setUp()
+
+        self.__installer.set_req("aaaa")
+        y = self.__installer.get_req()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "aaaa")
+
+        self.__installer.set_req(True)
+        y = self.__installer.get_req()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "True")
+
+        self.__installer.set_req(["a", "b", "c"])
+        y = self.__installer.get_req()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "['a', 'b', 'c']")
+
+        self.__installer.set_req({"1": "a", "2": "b", "3": "c"})
+        y = self.__installer.get_req()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "{'1': 'a', '2': 'b', '3': 'c'}")
+
+        self.__installer.set_req(4)
+        y = self.__installer.get_req()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "4")
+
+    # ---------------------------------------------------------------------------
+
+    def test_get_set_cmd(self):
+        """Test if the methods get_cmd and set_cmd from the class Installer works well.
+
+        """
+        self.setUp()
+
+        self.__installer.set_cmd("aaaa")
+        y = self.__installer.get_cmd()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "aaaa")
+
+        self.__installer.set_cmd(True)
+        y = self.__installer.get_cmd()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "True")
+
+        self.__installer.set_cmd(["a", "b", "c"])
+        y = self.__installer.get_cmd()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "['a', 'b', 'c']")
+
+        self.__installer.set_cmd({"1": "a", "2": "b", "3": "c"})
+        y = self.__installer.get_cmd()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "{'1': 'a', '2': 'b', '3': 'c'}")
+
+        self.__installer.set_cmd(4)
+        y = self.__installer.get_cmd()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "4")
+
+    # ---------------------------------------------------------------------------
+
     def test_get_set_cfg_exist(self):
         """Test if the methods get_cfg_exist and set_cfg_exist from the class Installer works well.
 
@@ -106,8 +172,8 @@ class TestInstaller(unittest.TestCase):
         y = self.__installer.get_config_parser()
         y.read(self.__installer.get_feature_file())
 
-        self.assertEqual(y.sections(), ["wxpython", "julius"])
-        self.assertEqual(len(y.sections()), 2)
+        self.assertEqual(y.sections(), ["wxpython", "julius", "homebrew"])
+        self.assertEqual(len(y.sections()), 3)
 
         self.assertEqual(y.get("wxpython", "desc"), "Graphic Interface")
         self.assertEqual(y.get("wxpython", "req_win"), "nil")
@@ -116,6 +182,10 @@ class TestInstaller(unittest.TestCase):
         self.assertEqual(y.get("julius", "desc"), "Automatic alignment")
         self.assertEqual(y.get("julius", "req_win"), "none")
         self.assertEqual(y.get("julius", "req_pip"), "nil")
+
+        self.assertEqual(y.get("homebrew", "desc"), "Package manager MacOs")
+        self.assertEqual(y.get("homebrew", "req_win"), "nil")
+        self.assertEqual(y.get("homebrew", "req_pip"), "nil")
 
     # ---------------------------------------------------------------------------
 
@@ -136,6 +206,10 @@ class TestInstaller(unittest.TestCase):
         self.assertEqual(y[1].get_id(), "julius")
         self.assertEqual(y[1].get_packages(), {'none': '0'})
         self.assertEqual(y[1].get_pypi(), {'nil': '1'})
+
+        self.assertEqual(y[2].get_id(), "homebrew")
+        self.assertEqual(y[2].get_packages(), {'nil': '1'})
+        self.assertEqual(y[2].get_pypi(), {'nil': '1'})
 
     # ---------------------------------------------------------------------------
 
@@ -474,58 +548,59 @@ class TestInstaller(unittest.TestCase):
         """
         self.setUp()
 
-        with self.assertRaises(NotImplementedError):
-            self.__installer.configurate_enable("aaaa", "aaaa")
-
-        with self.assertRaises(NotImplementedError):
-            self.__installer.configurate_enable(self.__installer.get_config_parser(), "aaaa")
-
-        with self.assertRaises(NotImplementedError):
-            self.__installer.configurate_enable("aaaa", self.__installer.get_features_parser())
-
-        with self.assertRaises(AssertionError):
+        if self.__installer.get_cfg_exist() is True:
             with self.assertRaises(NotImplementedError):
-                self.__installer.configurate_enable(self.__installer.get_config_parser(),
-                                                    self.__installer.get_features_parser())
+                self.__installer.configurate_enable("aaaa")
 
-        x = self.__installer.get_config_parser()
-        y = self.__installer.get_features_parser()
+            with self.assertRaises(NotImplementedError):
+                self.__installer.configurate_enable("aaaa")
 
-        x.read(self.__installer.get_config_file())
-        y.read(self.__installer.get_feature_file())
+            # with self.assertRaises(NotImplementedError):
+            #     self.__installer.configurate_enable("aaaa", self.__installer.get_features_parser())
+            #
+            # with self.assertRaises(AssertionError):
+            #     with self.assertRaises(NotImplementedError):
+            #         self.__installer.configurate_enable(self.__installer.get_config_parser(),
+            #                                             self.__installer.get_features_parser())
 
-        list_options = x.options("features")
-        i = 0
+            x = self.__installer.get_config_parser()
+            # y = self.__installer.get_features_parser()
 
-        for option in list_options:
-            x.set("features", option, "true")
-            x.write(open(self.__installer.get_config_file(), 'w'))
-            self.__installer.configurate_enable(x, y)
+            x.read(self.__installer.get_config_file())
+            # y.read(self.__installer.get_feature_file())
 
-            if self.__installer.get_features()[i].get_available() is True:
-                self.assertEqual(self.__installer.get_features()[i].get_enable(), True)
-                self.assertEqual(y.getboolean(option, "enable"), True)
-                self.assertEqual(x.getboolean("features", option), True)
-            else:
+            list_options = x.options("features")
+            i = 0
+
+            for option in list_options:
+                x.set("features", option, "true")
+                x.write(open(self.__installer.get_config_file(), 'w'))
+                self.__installer.configurate_enable(x)
+
+                if self.__installer.get_features()[i].get_available() is True:
+                    self.assertEqual(self.__installer.get_features()[i].get_enable(), True)
+                    # self.assertEqual(y.getboolean(option, "enable"), True)
+                    self.assertEqual(x.getboolean("features", option), True)
+                else:
+                    self.assertEqual(self.__installer.get_features()[i].get_enable(), False)
+                    # self.assertEqual(y.getboolean(option, "enable"), False)
+                    self.assertEqual(x.getboolean("features", option), False)
+
+                self.assertEqual(self.__installer.get_features()[i].get_enable(), x.getboolean("features", option))
+                # self.assertEqual(y.getboolean(option, "enable"), x.getboolean("features", option))
+
+                x.set("features", option, "false")
+                x.write(open(self.__installer.get_config_file(), 'w'))
+                self.__installer.configurate_enable(x)
+
                 self.assertEqual(self.__installer.get_features()[i].get_enable(), False)
-                self.assertEqual(y.getboolean(option, "enable"), False)
+                # self.assertEqual(y.getboolean(option, "enable"), False)
                 self.assertEqual(x.getboolean("features", option), False)
 
-            self.assertEqual(self.__installer.get_features()[i].get_enable(), x.getboolean("features", option))
-            self.assertEqual(y.getboolean(option, "enable"), x.getboolean("features", option))
+                self.assertEqual(self.__installer.get_features()[i].get_enable(), x.getboolean("features", option))
+                # self.assertEqual(y.getboolean(option, "enable"), x.getboolean("features", option))
 
-            x.set("features", option, "false")
-            x.write(open(self.__installer.get_config_file(), 'w'))
-            self.__installer.configurate_enable(x, y)
-
-            self.assertEqual(self.__installer.get_features()[i].get_enable(), False)
-            self.assertEqual(y.getboolean(option, "enable"), False)
-            self.assertEqual(x.getboolean("features", option), False)
-
-            self.assertEqual(self.__installer.get_features()[i].get_enable(), x.getboolean("features", option))
-            self.assertEqual(y.getboolean(option, "enable"), x.getboolean("features", option))
-
-            i += 1
+                i += 1
 
     # ---------------------------------------------------------------------------
 
@@ -584,6 +659,8 @@ class TestInstaller(unittest.TestCase):
 
 
 # test = TestInstaller()
+# test.test_get_set_req()
+# test.test_get_set_cmd()
 # test.test_get_set_cfg_exist()
 # test.test_get_config_parser()
 # test.test_init_features()

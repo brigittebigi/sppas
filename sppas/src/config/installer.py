@@ -86,17 +86,57 @@ class Installer:
         """
         logging.basicConfig(level=logging.DEBUG)
         self.__req = "req_win"
+        self.__cmd = "cmd_win"
         self.__cfg_exist = False
         self.__config_file = None
         self.__config_parser = cp.ConfigParser()
         self.__feature_file = self.set_features_file()
         self.__features_parser = cp.ConfigParser()
-        self.__pypi_errors = ""
+        self.__cmd_errors = ""
         self.__system_errors = ""
+        self.__pypi_errors = ""
         self.__features = list()
         self.init_config()
         self.__features_parser = self.init_features()
         self.set_features()
+
+    # ---------------------------------------------------------------------------
+
+    def get_req(self):
+        """Return the private attribute __req.
+
+        """
+        return self.__req
+
+    # ---------------------------------------------------------------------------
+
+    def set_req(self, value):
+        """Set the value of the private attribute __req.
+
+        :param value: (string) The requirements list for your OS.
+
+        """
+        value = str(value)
+        self.__req = value
+
+    # ---------------------------------------------------------------------------
+
+    def get_cmd(self):
+        """Return the private attribute __cmd.
+
+        """
+        return self.__cmd
+
+    # ---------------------------------------------------------------------------
+
+    def set_cmd(self, value):
+        """Set the value of the private attribute __cmd.
+
+        :param value: (string) The cmd command for your OS.
+
+        """
+        value = str(value)
+        self.__cmd = value
 
     # ---------------------------------------------------------------------------
 
@@ -109,13 +149,13 @@ class Installer:
 
         if os.path.exists(self.get_config_file()) is False:
 
-            feature_parser = self.get_features_parser()
-            feature_parser.read(self.get_feature_file())
-            list_feature = feature_parser.sections()
+            # feature_parser = self.get_features_parser()
+            # feature_parser.read(self.get_feature_file())
+            # list_feature = feature_parser.sections()
 
-            for f in list_feature:
-                feature_parser.set(f, "available", "true")
-            feature_parser.write(open(self.get_feature_file(), 'w'))
+            # for f in list_feature:
+            #     feature_parser.set(f, "available", "true")
+            # feature_parser.write(open(self.get_feature_file(), 'w'))
             self.set_cfg_exist(False)
 
         else:
@@ -210,14 +250,6 @@ class Installer:
             if d == "nil" or d == "":
                 feature.set_packages({"nil": "1"})
                 feature.set_available(True)
-            elif d == "none":
-                feature.set_packages({"none": "0"})
-                feature.set_available(False)
-                feature_parser = self.get_features_parser()
-                feature_parser.read(self.get_feature_file())
-                feature_parser.set(f, "available", "false")
-                feature_parser.set(f, "enable", "false")
-                feature_parser.write(open(self.get_feature_file(), 'w'))
             else:
                 feature.set_available(True)
                 depend_packages = self.parse_depend(d)
@@ -229,6 +261,16 @@ class Installer:
             else:
                 depend_pypi = self.parse_depend(d)
                 feature.set_pypi(depend_pypi)
+
+            cmd = self.__features_parser.get(f, self.__cmd)
+            if cmd == "none":
+                feature.set_available(False)
+                # feature_parser = self.get_features_parser()
+                # feature_parser.read(self.get_feature_file())
+                # feature_parser.set(f, "available", "false")
+                # feature_parser.set(f, "enable", "false")
+                # feature_parser.write(open(self.get_feature_file(), 'w'))
+            feature.set_cmd(cmd)
 
             self.__features.append(feature)
 
@@ -285,6 +327,26 @@ class Installer:
 
     # ---------------------------------------------------------------------------
 
+    def get_cmd_errors(self):
+        """Return the private attribute __cmd_errors.
+
+        """
+        return self.__cmd_errors
+
+    # ---------------------------------------------------------------------------
+
+    def set_cmd_errors(self, string):
+        """Fix the value of the private attribute __cmd_errors.
+
+        :param string: (str) This string is filled with the errors you will encounter during
+        the installation procedure of the method install_cmd.
+
+        """
+        string = str(string)
+        self.__cmd_errors += string
+
+    # ---------------------------------------------------------------------------
+
     def get_pypi_errors(self):
         """Return the private attribute __pypi_errors.
 
@@ -297,7 +359,7 @@ class Installer:
         """Fix the value of the private attribute __pypi_errors.
 
         :param string: (str) This string is filled with the errors you will encounter during
-        the procedure of installation the method install_pypi() and install_feature().
+        the procedure of installation the method install_pypi().
 
         """
         string = str(string)
@@ -320,7 +382,7 @@ class Installer:
         """Fix the value of the private attribute __system_errors.
 
         :param string: (str) This string is filled with the errors you will encounter during
-        the procedure of installation the method install_packages() and install_feature().
+        the procedure of installation the method install_packages().
 
         """
         string = str(string)
@@ -348,22 +410,61 @@ class Installer:
                     continue
 
                 try:
+                    self.install_cmd(f)
                     self.install_packages(f)
                     self.install_pypis(f)
                     f.set_enable(True)
                 except NotImplementedError:
+                    if len(self.get_cmd_errors()) != 0:
+                        logging.error(self.get_cmd_errors())
                     if len(self.get_system_errors()) != 0:
                         logging.error(self.get_system_errors())
                     if len(self.get_pypi_errors()) != 0:
                         logging.error(self.get_pypi_errors())
 
             for f in self.__features:
-                self.get_features_parser().set(f.get_id(), "enable", str(f.get_enable()).lower())
+                # self.get_features_parser().set(f.get_id(), "enable", str(f.get_enable()).lower())
                 self.get_config_parser().set("features", f.get_id(), str(f.get_enable()).lower())
-            self.get_features_parser().write(open(self.get_feature_file(), 'w'))
+            # self.get_features_parser().write(open(self.get_feature_file(), 'w'))
             self.get_config_parser().write(open(self.get_config_file(), 'w'))
         else:
-            self.configurate_enable(self.get_config_parser(), self.get_features_parser())
+            self.configurate_enable(self.get_config_parser())
+
+    # ---------------------------------------------------------------------------
+
+    def install_cmd(self, feature):
+        """Use the command which is in your feature.
+
+        :param feature: (string) The pip package you will try to install on your computer.
+
+        """
+        if not isinstance(feature, Feature):
+            raise NotImplementedError
+
+        feature_command = feature.get_cmd()
+
+        if feature_command == "none":
+            feature.set_available(False)
+            logging.info(" {name} can't be installed by using only command line on your computer "
+                         "because of your OS \n".format(name=feature.get_id()))
+        elif feature_command == "nil":
+            logging.info("You don't have command to use because of your OS")
+        else:
+            cmd = Popen(feature_command.split(" "), shell=True, stdout=PIPE, stderr=PIPE,
+                        text=True)
+            cmd.wait()
+            error = cmd.stderr.read()
+            error = str(error)
+            stdout = cmd.stdout.read()
+            print(stdout)
+            if len(error) != 0:
+                self.set_cmd_errors("An error has occurred during the progression of the command : {name} "
+                                    "\n {error} \n".format(name=feature_command, error=error))
+            if len(self.get_cmd_errors()) != 0:
+                feature.set_enable(False)
+                raise NotImplementedError()
+            else:
+                logging.info("The use of the command {name} was a success.".format(name=feature_command))
 
     # ---------------------------------------------------------------------------
 
@@ -546,11 +647,7 @@ class Installer:
 
         self.set_system_errors("")
         for package, version in feature.get_packages().items():
-            if package == "none":
-                feature.set_available(False)
-                logging.info(" {name} can't be installed by using only command line on your computer "
-                             "because of your OS \n".format(name=feature.get_id()))
-            elif package == "nil":
+            if package == "nil":
                 logging.info("For {name} you don't need to install system dependencies on your "
                              "computer because of your OS".format(name=feature.get_id()))
             else:
@@ -636,28 +733,28 @@ class Installer:
 
     # ---------------------------------------------------------------------------
 
-    def configurate_enable(self, config_parser, feature_parser):
+    def configurate_enable(self, config_parser):
 
         if isinstance(config_parser, cp.ConfigParser) is False:
             raise NotImplementedError
-        elif isinstance(feature_parser, cp.ConfigParser) is False:
-            raise NotImplementedError
+        # elif isinstance(feature_parser, cp.ConfigParser) is False:
+        #     raise NotImplementedError
 
         config_parser.read(self.get_config_file())
         options = config_parser.options("features")
 
-        feature_parser.read(self.get_feature_file())
+        # feature_parser.read(self.get_feature_file())
 
         for option in options:
             for f in self.get_features():
                 if f.get_id() == option and f.get_available() is True:
                     f.set_enable(config_parser.getboolean("features", option))
-                    feature_parser.set(option, "enable", str(config_parser.getboolean("features", option)).lower())
+                    # feature_parser.set(option, "enable", str(config_parser.getboolean("features", option)).lower())
                 elif f.get_id() == option and f.get_available() is False:
                     config_parser.set("features", f.get_id(), str(False).lower())
-                    feature_parser.set(option, "enable", str(False).lower())
+                    # feature_parser.set(option, "enable", str(False).lower())
         config_parser.write(open(self.get_config_file(), 'w'))
-        feature_parser.write(open(self.get_feature_file(), 'w'))
+        # feature_parser.write(open(self.get_feature_file(), 'w'))
 
     # ---------------------------------------------------------------------------
 
@@ -688,7 +785,9 @@ class Deb(Installer):
 
         """
         super(Deb, self).__init__()
-        self.req = "req_deb"
+        self.set_req("req_deb")
+        self.set_cmd("cmd_deb")
+        self.set_features()
 
     # ---------------------------------------------------------------------------
 
@@ -779,7 +878,9 @@ class Rpm(Installer):
 
         """
         super(Rpm, self).__init__()
-        self.req = "req_rpm"
+        self.set_req("req_rpm")
+        self.set_cmd("cmd_rpm")
+        self.set_features()
 
     # ---------------------------------------------------------------------------
 
@@ -865,7 +966,9 @@ class Dnf(Installer):
 
         """
         super(Dnf, self).__init__()
-        self.req = "req_rpm"
+        self.set_req("req_rpm")
+        self.set_cmd("cmd_rpm")
+        self.set_features()
 
     # ---------------------------------------------------------------------------
 
@@ -953,7 +1056,9 @@ class Windows(Installer):
 
         """
         super(Windows, self).__init__()
-        self.req = "req_win"
+        self.set_req("req_win")
+        self.set_cmd("cmd_win")
+        self.set_features()
 
     # ---------------------------------------------------------------------------
 
@@ -1038,7 +1143,9 @@ class CygWin(Installer):
 
         """
         super(CygWin, self).__init__()
-        self.req = "req_cyg"
+        self.set_req("req_cyg")
+        self.set_cmd("cmd_cyg")
+        self.set_features()
 
     # ---------------------------------------------------------------------------
 
@@ -1126,7 +1233,9 @@ class MacOs(Installer):
 
         """
         super(MacOs, self).__init__()
-        self.req = "req_ios"
+        self.set_req("req_ios")
+        self.set_cmd("cmd_ios")
+        self.set_features()
 
     # ---------------------------------------------------------------------------
 
@@ -1192,3 +1301,7 @@ class MacOs(Installer):
 
     # ---------------------------------------------------------------------------
 
+
+i = Windows()
+i.install()
+# i.show_features()

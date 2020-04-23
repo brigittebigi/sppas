@@ -77,6 +77,7 @@ class Feature:
         >>> feature.set_id("feature")
         >>> feature.set_packages({"1": "a"})
         >>> feature.set_pypi({"2": "b"})
+        >>> feature.set_cmd("pip freeze")
 
         You can set the values of your privates attributes with the setters by parsing
         a requirements.ini file.
@@ -102,6 +103,9 @@ class Feature:
         # An identifier to represent the required pip packages
         self.__pypi = dict()
 
+        # An identifier to represent a system command
+        self.__cmd = str()
+
     # ---------------------------------------------------------------------------
 
     def __str__(self):
@@ -112,7 +116,8 @@ class Feature:
                "available : " + str(self.get_available()) + "\n" \
                "id : " + str(self.get_id()) + "\n" \
                "packages : " + str(self.get_packages()) + "\n" \
-               "pypi : " + str(self.get_pypi()) + "\n"
+               "pypi : " + str(self.get_pypi()) + "\n" \
+               "cmd : " + str(self.get_cmd()) + "\n"
 
     # ---------------------------------------------------------------------------
 
@@ -219,3 +224,23 @@ class Feature:
         self.__pypi = dependencies
 
     # ---------------------------------------------------------------------------
+
+    def get_cmd(self):
+        """Return the value of the private attribute __cmd of the instantiate Feature.
+
+        """
+        return self.__cmd
+
+    # ---------------------------------------------------------------------------
+
+    def set_cmd(self, value):
+        """Fix the value of the private attribute __cmd.
+
+        :param value: (str) The unique command for the OS.
+
+        """
+        value = str(value)
+        self.__cmd = value
+
+    # ---------------------------------------------------------------------------
+
