@@ -172,7 +172,7 @@ class TestInstaller(unittest.TestCase):
         y = self.__installer.get_config_parser()
         y.read(self.__installer.get_feature_file())
 
-        self.assertEqual(y.sections(), ["wxpython", "homebrew", "julius"])
+        self.assertEqual(y.sections(), ["wxpython", "brew", "julius"])
         self.assertEqual(len(y.sections()), 3)
 
         self.assertEqual(y.get("wxpython", "desc"), "Graphic Interface")
@@ -180,10 +180,10 @@ class TestInstaller(unittest.TestCase):
         self.assertEqual(y.get("wxpython", "req_pip"), "wxpython:>;4.0")
         self.assertEqual(y.get("wxpython", "cmd_win"), "nil")
 
-        self.assertEqual(y.get("homebrew", "desc"), "Package manager MacOs")
-        self.assertEqual(y.get("homebrew", "req_win"), "nil")
-        self.assertEqual(y.get("homebrew", "req_pip"), "nil")
-        self.assertEqual(y.get("homebrew", "cmd_win"), "none")
+        self.assertEqual(y.get("brew", "desc"), "Package manager MacOs")
+        self.assertEqual(y.get("brew", "req_win"), "nil")
+        self.assertEqual(y.get("brew", "req_pip"), "nil")
+        self.assertEqual(y.get("brew", "cmd_win"), "none")
 
         self.assertEqual(y.get("julius", "desc"), "Automatic alignment")
         self.assertEqual(y.get("julius", "req_win"), "nil")
@@ -207,7 +207,7 @@ class TestInstaller(unittest.TestCase):
         self.assertEqual(y[0].get_pypi(), {'wxpython': '>;4.0'})
         self.assertEqual(y[0].get_cmd(), "nil")
 
-        self.assertEqual(y[1].get_id(), "homebrew")
+        self.assertEqual(y[1].get_id(), "brew")
         self.assertEqual(y[1].get_packages(), {'nil': '1'})
         self.assertEqual(y[1].get_pypi(), {'nil': '1'})
         self.assertEqual(y[1].get_cmd(), "none")
@@ -358,6 +358,28 @@ class TestInstaller(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
+    def test_install_cmds(self):
+        """Test if the method install_cmds from the class Installer works well.
+
+        """
+        self.setUp()
+
+        self.__installer.install_cmds("aaaaaaaaaa", self.__feature.get_id())
+        y = len(self.__installer.get_cmd_errors()) != 0
+        self.assertTrue(y)
+
+        self.__installer.set_cmd_errors("")
+
+        self.__installer.install_cmds("pip freeze", self.__feature.get_id())
+        y = len(self.__installer.get_cmd_errors()) != 0
+        self.assertFalse(y)
+
+        with self.assertRaises(AssertionError):
+            y = len(self.__installer.get_cmd_errors()) != 0
+            self.assertTrue(y)
+
+    # ---------------------------------------------------------------------------
+
     def test_install_cmd(self):
         """Test if the method install_cmd from the class Installer works well.
 
@@ -372,6 +394,19 @@ class TestInstaller(unittest.TestCase):
         self.__feature.set_cmd("azfegsdfgsdg")
         with self.assertRaises(NotImplementedError):
             self.__installer.install_cmd(4)
+
+    # ---------------------------------------------------------------------------
+
+    def test_search_cmds(self):
+        """Test if the method search_cmds from the class Installer works well.
+
+        """
+        self.setUp()
+
+        self.assertFalse(self.__installer.search_cmds("wxpythonnnnnn"))
+        self.assertFalse(self.__installer.search_cmds(4))
+
+        self.assertTrue(self.__installer.search_cmds("pip"))
 
     # ---------------------------------------------------------------------------
 
@@ -390,10 +425,7 @@ class TestInstaller(unittest.TestCase):
         self.__feature.set_pypi({"azfegsdfgsdg": ">;0.0"})
         with self.assertRaises(NotImplementedError):
             self.__installer.install_pypis(self.__feature)
-
-        self.__feature.set_pypi({"none": ">;0.0"})
-        y = self.__feature.get_available()
-        self.assertEqual(y, False)
+        self.assertEqual(self.__feature.get_enable(), False)
 
     # ---------------------------------------------------------------------------
 
@@ -406,7 +438,7 @@ class TestInstaller(unittest.TestCase):
         self.assertFalse(self.__installer.search_pypi("wxpythonnnnnn"))
         self.assertFalse(self.__installer.search_pypi(4))
 
-        self.assertTrue(self.__installer.search_pypi("wxpython"))
+        self.assertTrue(self.__installer.search_pypi("pip"))
 
     # ---------------------------------------------------------------------------
 
@@ -611,19 +643,8 @@ class TestInstaller(unittest.TestCase):
             with self.assertRaises(NotImplementedError):
                 self.__installer.configurate_enable("aaaa")
 
-            # with self.assertRaises(NotImplementedError):
-            #     self.__installer.configurate_enable("aaaa", self.__installer.get_features_parser())
-            #
-            # with self.assertRaises(AssertionError):
-            #     with self.assertRaises(NotImplementedError):
-            #         self.__installer.configurate_enable(self.__installer.get_config_parser(),
-            #                                             self.__installer.get_features_parser())
-
             x = self.__installer.get_config_parser()
-            # y = self.__installer.get_features_parser()
-
             x.read(self.__installer.get_config_file())
-            # y.read(self.__installer.get_feature_file())
 
             list_options = x.options("features")
             i = 0
@@ -635,15 +656,12 @@ class TestInstaller(unittest.TestCase):
 
                 if self.__installer.get_features()[i].get_available() is True:
                     self.assertEqual(self.__installer.get_features()[i].get_enable(), True)
-                    # self.assertEqual(y.getboolean(option, "enable"), True)
                     self.assertEqual(x.getboolean("features", option), True)
                 else:
                     self.assertEqual(self.__installer.get_features()[i].get_enable(), False)
-                    # self.assertEqual(y.getboolean(option, "enable"), False)
                     self.assertEqual(x.getboolean("features", option), False)
 
                 self.assertEqual(self.__installer.get_features()[i].get_enable(), x.getboolean("features", option))
-                # self.assertEqual(y.getboolean(option, "enable"), x.getboolean("features", option))
 
                 x.set("features", option, "false")
                 x.write(open(self.__installer.get_config_file(), 'w'))
@@ -728,6 +746,8 @@ class TestInstaller(unittest.TestCase):
 # test.test_get_set_pypi_errors()
 # test.test_get_set_system_errors()
 # test.test_install_cmd()
+# test.test_search_cmds()
+# test.test_install_cmds()
 # test.test_install_pypis()
 # test.test_search_pypi()
 # test.test_install_pypi()

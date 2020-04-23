@@ -41,8 +41,6 @@
 
 import os
 
-from sppas.src.config.features import Feature
-from sppas import paths
 from subprocess import Popen, PIPE
 import logging
 
@@ -51,6 +49,9 @@ try:
 except ImportError:
     import ConfigParser as cp
 
+from sppas.src.config.features import Feature
+from sppas import paths
+from sppas.src.config import sg
 
 # ---------------------------------------------------------------------------
 
@@ -148,14 +149,6 @@ class Installer:
         self.__config_file = config_file
 
         if os.path.exists(self.get_config_file()) is False:
-
-            # feature_parser = self.get_features_parser()
-            # feature_parser.read(self.get_feature_file())
-            # list_feature = feature_parser.sections()
-
-            # for f in list_feature:
-            #     feature_parser.set(f, "available", "true")
-            # feature_parser.write(open(self.get_feature_file(), 'w'))
             self.set_cfg_exist(False)
 
         else:
@@ -240,11 +233,7 @@ class Installer:
 
             feature.set_id(f)
 
-            available = self.__features_parser.getboolean(f, "available")
-            feature.set_available(available)
-
-            enable = self.__features_parser.getboolean(f, "enable")
-            feature.set_enable(enable)
+            feature.set_enable(self.__features_parser.getboolean(f, "enable"))
 
             d = self.__features_parser.get(f, self.__req)
             if d == "nil" or d == "":
@@ -265,11 +254,6 @@ class Installer:
             cmd = self.__features_parser.get(f, self.__cmdos)
             if cmd == "none":
                 feature.set_available(False)
-                # feature_parser = self.get_features_parser()
-                # feature_parser.read(self.get_feature_file())
-                # feature_parser.set(f, "available", "false")
-                # feature_parser.set(f, "enable", "false")
-                # feature_parser.write(open(self.get_feature_file(), 'w'))
             feature.set_cmd(cmd)
 
             self.__features.append(feature)
@@ -449,19 +433,57 @@ class Installer:
         elif feature_command == "nil":
             logging.info("You don't have any command to use because of your OS")
         else:
-            cmd = Popen(feature_command.split(" "), shell=True, stdout=PIPE, stderr=PIPE,
-                        text=True)
-            cmd.wait()
-            error = cmd.stderr.read()
-            error = str(error)
-            if len(error) != 0:
-                self.set_cmd_errors("An error has occurred during the progression of the command : {name} "
-                                    "\n {error} \n".format(name=feature_command, error=error))
-            if len(self.get_cmd_errors()) != 0:
-                feature.set_enable(False)
-                raise NotImplementedError()
+            if self.search_cmds(feature.get_id()) is False:
+                self.install_cmds(feature_command, feature.get_id())
             else:
-                logging.info("The use of the command {name} was a success.".format(name=feature_command))
+                logging.info("The command \"{name}\" is already installed on your "
+                             "computer ".format(name=feature.get_id()))
+
+        if len(self.get_cmd_errors()) != 0:
+            feature.set_enable(False)
+            raise NotImplementedError()
+        else:
+            logging.info("The installation of the command {name} was a success.".format(name=feature.get_id()))
+
+    # ---------------------------------------------------------------------------
+
+    def search_cmds(self, command):
+        """Return True if the command is installed on your PC.
+
+        :param command: (string) The command you will try to install on your computer.
+
+        """
+        command = str(command)
+        cmd = Popen(command, shell=True, stdout=PIPE, stderr=PIPE, text=True)
+        cmd.wait()
+        error = cmd.stderr.read()
+        error = str(error)
+        if len(error) != 0:
+            return False
+        else:
+            return True
+
+    # ---------------------------------------------------------------------------
+
+    def install_cmds(self, command, id):
+        """Install the pip package given as an argument on your computer.
+
+        :param command: (string) The command you will try to install on your computer.
+        :param id: (string) name of the command.
+
+        """
+        self.set_cmd_errors("")
+        id = str(id)
+        command = str(command)
+        cmd = Popen(command, shell=True, stdout=PIPE, stderr=PIPE, text=True)
+        cmd.wait()
+        error = cmd.stderr.read()
+        error = str(error)
+        if len(error) != 0:
+            self.set_cmd_errors("An error has occurred during the installation of : {name} "
+                                "\n {error} \n".format(name=id, error=error))
+        else:
+            logging.info("The installation of \"{name}\" is a success.".format(name=id))
 
     # ---------------------------------------------------------------------------
 
@@ -734,24 +756,18 @@ class Installer:
 
         if isinstance(config_parser, cp.ConfigParser) is False:
             raise NotImplementedError
-        # elif isinstance(feature_parser, cp.ConfigParser) is False:
-        #     raise NotImplementedError
 
         config_parser.read(self.get_config_file())
         options = config_parser.options("features")
-
-        # feature_parser.read(self.get_feature_file())
 
         for option in options:
             for f in self.get_features():
                 if f.get_id() == option and f.get_available() is True:
                     f.set_enable(config_parser.getboolean("features", option))
-                    # feature_parser.set(option, "enable", str(config_parser.getboolean("features", option)).lower())
                 elif f.get_id() == option and f.get_available() is False:
                     config_parser.set("features", f.get_id(), str(False).lower())
-                    # feature_parser.set(option, "enable", str(False).lower())
+
         config_parser.write(open(self.get_config_file(), 'w'))
-        # feature_parser.write(open(self.get_feature_file(), 'w'))
 
     # ---------------------------------------------------------------------------
 
@@ -795,9 +811,7 @@ class Deb(Installer):
         or not on your computer.
 
         """
-        raise NotImplementedError
-
-        # ---------------------------------------------------------------------------
+        return True
 
     # ---------------------------------------------------------------------------
 
@@ -821,7 +835,7 @@ class Deb(Installer):
         package.
 
         """
-        raise NotImplementedError
+        return True
 
     # ---------------------------------------------------------------------------
 
@@ -888,7 +902,7 @@ class Rpm(Installer):
         or not on your computer.
 
         """
-        raise NotImplementedError
+        return True
 
     # ---------------------------------------------------------------------------
 
@@ -912,7 +926,7 @@ class Rpm(Installer):
         package.
 
         """
-        raise NotImplementedError
+        return True
 
     # ---------------------------------------------------------------------------
 
@@ -976,9 +990,7 @@ class Dnf(Installer):
         or not on your computer.
 
         """
-        raise NotImplementedError
-
-        # ---------------------------------------------------------------------------
+        return True
 
     # ---------------------------------------------------------------------------
 
@@ -1002,7 +1014,7 @@ class Dnf(Installer):
         package.
 
         """
-        raise NotImplementedError
+        return True
 
     # ---------------------------------------------------------------------------
 
@@ -1153,9 +1165,7 @@ class CygWin(Installer):
         or not on your computer.
 
         """
-        raise NotImplementedError
-
-        # ---------------------------------------------------------------------------
+        return True
 
     # ---------------------------------------------------------------------------
 
@@ -1179,7 +1189,7 @@ class CygWin(Installer):
         package.
 
         """
-        raise NotImplementedError
+        return True
 
     # ---------------------------------------------------------------------------
 
@@ -1243,9 +1253,7 @@ class MacOs(Installer):
         or not on your computer.
 
         """
-        raise NotImplementedError
-
-        # ---------------------------------------------------------------------------
+        return True
 
     # ---------------------------------------------------------------------------
 
@@ -1269,7 +1277,7 @@ class MacOs(Installer):
         package.
 
         """
-        raise NotImplementedError
+        return True
 
     # ---------------------------------------------------------------------------
 
@@ -1297,4 +1305,8 @@ class MacOs(Installer):
         raise NotImplementedError
 
     # ---------------------------------------------------------------------------
+
+
+i = Windows()
+i.install()
 
