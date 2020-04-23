@@ -442,8 +442,6 @@ class Installer:
         if len(self.get_cmd_errors()) != 0:
             feature.set_enable(False)
             raise NotImplementedError()
-        else:
-            logging.info("The installation of the command {name} was a success.".format(name=feature.get_id()))
 
     # ---------------------------------------------------------------------------
 
@@ -454,14 +452,12 @@ class Installer:
 
         """
         command = str(command)
-        cmd = Popen(command, shell=True, stdout=PIPE, stderr=PIPE, text=True)
-        cmd.wait()
-        error = cmd.stderr.read()
-        error = str(error)
-        if len(error) != 0:
-            return False
-        else:
+        try:
+            cmd = Popen(command, stdout=PIPE, stderr=PIPE, text=True)
+            cmd.wait()
             return True
+        except FileNotFoundError:
+            return False
 
     # ---------------------------------------------------------------------------
 
@@ -475,15 +471,21 @@ class Installer:
         self.set_cmd_errors("")
         id = str(id)
         command = str(command)
-        cmd = Popen(command, shell=True, stdout=PIPE, stderr=PIPE, text=True)
-        cmd.wait()
-        error = cmd.stderr.read()
-        error = str(error)
-        if len(error) != 0:
+
+        try:
+            command = str(command)
+            cmd = Popen(command.split(" "), stdout=PIPE, stderr=PIPE, text=True)
+            cmd.wait()
+            error = cmd.stderr.read()
+            error = str(error)
+            if len(error) != 0:
+                self.set_cmd_errors("An error has occurred during the installation of : {name} "
+                                    "\n {error} \n".format(name=id, error=error))
+            else:
+                logging.info("The installation of \"{name}\" is a success.".format(name=id))
+        except FileNotFoundError:
             self.set_cmd_errors("An error has occurred during the installation of : {name} "
-                                "\n {error} \n".format(name=id, error=error))
-        else:
-            logging.info("The installation of \"{name}\" is a success.".format(name=id))
+                                "\n {error} \n".format(name=id, error=id + " is not a command"))
 
     # ---------------------------------------------------------------------------
 
@@ -527,7 +529,7 @@ class Installer:
 
         """
         package = str(package)
-        cmd = Popen(["pip", "show", package], shell=True, stdout=PIPE, stderr=PIPE, text=True)
+        cmd = Popen(["pip3", "show", package], stdout=PIPE, stderr=PIPE, text=True)
         cmd.wait()
         error = cmd.stderr.read()
         if "not found" in error:
@@ -544,7 +546,7 @@ class Installer:
 
         """
         package = str(package)
-        cmd = Popen(["pip", "install", package, "--no-warn-script-location"], shell=True, stdout=PIPE, stderr=PIPE,
+        cmd = Popen(["pip3", "install", package, "--no-warn-script-location"], stdout=PIPE, stderr=PIPE,
                     text=True)
         cmd.wait()
         error = cmd.stderr.read()
@@ -572,7 +574,7 @@ class Installer:
         """
         package = str(package)
         req_version = str(req_version)
-        cmd = Popen(["pip", "show", package], shell=True, stdout=PIPE, stderr=PIPE,
+        cmd = Popen(["pip3", "show", package], stdout=PIPE, stderr=PIPE,
                     text=True)
         cmd.wait()
         stdout = cmd.stdout.read()
@@ -637,7 +639,7 @@ class Installer:
 
         """
         package = str(package)
-        cmd = Popen(["pip", "install", "-U", package], shell=True, stdout=PIPE, stderr=PIPE,
+        cmd = Popen(["pip3", "install", "-U", package], stdout=PIPE, stderr=PIPE,
                     text=True)
         cmd.wait()
         error = cmd.stderr.read()
@@ -1309,4 +1311,3 @@ class MacOs(Installer):
 
 i = Windows()
 i.install()
-
