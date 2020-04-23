@@ -86,34 +86,34 @@ class TestInstaller(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
-    def test_get_set_cmd(self):
+    def test_get_set_cmdos(self):
         """Test if the methods get_cmd and set_cmd from the class Installer works well.
 
         """
         self.setUp()
 
-        self.__installer.set_cmd("aaaa")
-        y = self.__installer.get_cmd()
+        self.__installer.set_cmdos("aaaa")
+        y = self.__installer.get_cmdos()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "aaaa")
 
-        self.__installer.set_cmd(True)
-        y = self.__installer.get_cmd()
+        self.__installer.set_cmdos(True)
+        y = self.__installer.get_cmdos()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "True")
 
-        self.__installer.set_cmd(["a", "b", "c"])
-        y = self.__installer.get_cmd()
+        self.__installer.set_cmdos(["a", "b", "c"])
+        y = self.__installer.get_cmdos()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "['a', 'b', 'c']")
 
-        self.__installer.set_cmd({"1": "a", "2": "b", "3": "c"})
-        y = self.__installer.get_cmd()
+        self.__installer.set_cmdos({"1": "a", "2": "b", "3": "c"})
+        y = self.__installer.get_cmdos()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "{'1': 'a', '2': 'b', '3': 'c'}")
 
-        self.__installer.set_cmd(4)
-        y = self.__installer.get_cmd()
+        self.__installer.set_cmdos(4)
+        y = self.__installer.get_cmdos()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "4")
 
@@ -172,20 +172,23 @@ class TestInstaller(unittest.TestCase):
         y = self.__installer.get_config_parser()
         y.read(self.__installer.get_feature_file())
 
-        self.assertEqual(y.sections(), ["wxpython", "julius", "homebrew"])
+        self.assertEqual(y.sections(), ["wxpython", "homebrew", "julius"])
         self.assertEqual(len(y.sections()), 3)
 
         self.assertEqual(y.get("wxpython", "desc"), "Graphic Interface")
         self.assertEqual(y.get("wxpython", "req_win"), "nil")
         self.assertEqual(y.get("wxpython", "req_pip"), "wxpython:>;4.0")
-
-        self.assertEqual(y.get("julius", "desc"), "Automatic alignment")
-        self.assertEqual(y.get("julius", "req_win"), "none")
-        self.assertEqual(y.get("julius", "req_pip"), "nil")
+        self.assertEqual(y.get("wxpython", "cmd_win"), "nil")
 
         self.assertEqual(y.get("homebrew", "desc"), "Package manager MacOs")
         self.assertEqual(y.get("homebrew", "req_win"), "nil")
         self.assertEqual(y.get("homebrew", "req_pip"), "nil")
+        self.assertEqual(y.get("homebrew", "cmd_win"), "none")
+
+        self.assertEqual(y.get("julius", "desc"), "Automatic alignment")
+        self.assertEqual(y.get("julius", "req_win"), "nil")
+        self.assertEqual(y.get("julius", "req_pip"), "nil")
+        self.assertEqual(y.get("julius", "cmd_win"), "none")
 
     # ---------------------------------------------------------------------------
 
@@ -202,14 +205,17 @@ class TestInstaller(unittest.TestCase):
         self.assertEqual(y[0].get_id(), "wxpython")
         self.assertEqual(y[0].get_packages(), {'nil': '1'})
         self.assertEqual(y[0].get_pypi(), {'wxpython': '>;4.0'})
+        self.assertEqual(y[0].get_cmd(), "nil")
 
-        self.assertEqual(y[1].get_id(), "julius")
-        self.assertEqual(y[1].get_packages(), {'none': '0'})
+        self.assertEqual(y[1].get_id(), "homebrew")
+        self.assertEqual(y[1].get_packages(), {'nil': '1'})
         self.assertEqual(y[1].get_pypi(), {'nil': '1'})
+        self.assertEqual(y[1].get_cmd(), "none")
 
-        self.assertEqual(y[2].get_id(), "homebrew")
+        self.assertEqual(y[2].get_id(), "julius")
         self.assertEqual(y[2].get_packages(), {'nil': '1'})
         self.assertEqual(y[2].get_pypi(), {'nil': '1'})
+        self.assertEqual(y[2].get_cmd(), "none")
 
     # ---------------------------------------------------------------------------
 
@@ -260,6 +266,39 @@ class TestInstaller(unittest.TestCase):
 
         y = self.__installer.get_features_parser()
         self.assertIsInstance(y, cp.ConfigParser)
+
+    # ---------------------------------------------------------------------------
+
+    def test_get_set_cmd_errors(self):
+        """Test if the method get_cmd_errors and set_cmd_errors from the class Installer works well.
+
+        """
+        self.setUp()
+
+        self.__installer.set_cmd_errors("aaaa")
+        y = self.__installer.get_cmd_errors()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "aaaa")
+
+        self.__installer.set_cmd_errors(True)
+        y = self.__installer.get_cmd_errors()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "True")
+
+        self.__installer.set_cmd_errors(["a", "b", "c"])
+        y = self.__installer.get_cmd_errors()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "['a', 'b', 'c']")
+
+        self.__installer.set_cmd_errors({"1": "a", "2": "b", "3": "c"})
+        y = self.__installer.get_cmd_errors()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "{'1': 'a', '2': 'b', '3': 'c'}")
+
+        self.__installer.set_cmd_errors(4)
+        y = self.__installer.get_cmd_errors()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "4")
 
     # ---------------------------------------------------------------------------
 
@@ -316,6 +355,23 @@ class TestInstaller(unittest.TestCase):
         y = self.__installer.get_system_errors()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "nouveau msg")
+
+    # ---------------------------------------------------------------------------
+
+    def test_install_cmd(self):
+        """Test if the method install_cmd from the class Installer works well.
+
+        """
+        self.setUp()
+
+        self.__feature.set_cmd("cmd_windows")
+
+        with self.assertRaises(NotImplementedError):
+            self.__installer.install_cmd(4)
+
+        self.__feature.set_cmd("azfegsdfgsdg")
+        with self.assertRaises(NotImplementedError):
+            self.__installer.install_cmd(4)
 
     # ---------------------------------------------------------------------------
 
@@ -660,7 +716,7 @@ class TestInstaller(unittest.TestCase):
 
 # test = TestInstaller()
 # test.test_get_set_req()
-# test.test_get_set_cmd()
+# test.test_get_set_cmdos()
 # test.test_get_set_cfg_exist()
 # test.test_get_config_parser()
 # test.test_init_features()
@@ -668,8 +724,10 @@ class TestInstaller(unittest.TestCase):
 # test.test_parse_depend()
 # test.test_get_features()
 # test.test_get_features_parser()
+# test.test_get_set_cmd_errors()
 # test.test_get_set_pypi_errors()
 # test.test_get_set_system_errors()
+# test.test_install_cmd()
 # test.test_install_pypis()
 # test.test_search_pypi()
 # test.test_install_pypi()

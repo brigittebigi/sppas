@@ -92,7 +92,7 @@ class Feature:
         self.__enable = False
 
         # An identifier to represent if the feature is available on your system or no
-        self.__available = False
+        self.__available = True
 
         # An identifier that represent the id/name of the feature
         self.__id = str()

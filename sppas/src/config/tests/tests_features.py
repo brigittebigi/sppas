@@ -66,6 +66,7 @@ class TestFeatures(unittest.TestCase):
         self.assertIsInstance(y, bool)
         self.assertEqual(y, False)
 
+        self.__feature.set_available(True)
         self.__feature.set_enable(["a", "b", "c"])
         y = self.__feature.get_enable()
         self.assertIsInstance(y, bool)
@@ -246,32 +247,32 @@ class TestFeatures(unittest.TestCase):
         self.assertIsInstance(y, str)
         self.assertEqual(y, "aaaa")
 
-        self.__feature.set_id(True)
+        self.__feature.set_cmd(True)
         y = self.__feature.get_cmd()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "True")
 
-        self.__feature.set_id(["a", "b", "c"])
+        self.__feature.set_cmd(["a", "b", "c"])
         y = self.__feature.get_cmd()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "['a', 'b', 'c']")
 
-        self.__feature.set_id({"1": "a", "2": "b", "3": "c"})
+        self.__feature.set_cmd({"1": "a", "2": "b", "3": "c"})
         y = self.__feature.get_cmd()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "{'1': 'a', '2': 'b', '3': 'c'}")
 
-        self.__feature.set_id(4)
+        self.__feature.set_cmd(4)
         y = self.__feature.get_cmd()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "4")
 
 
-test = TestFeatures()
-test.test_get_set_enable()
-test.test_get_set_available()
-test.test_get_set_id()
-test.test_get_set_packages()
-test.test_get_set_pypi()
-test.test_get_set_cmd()
+# test = TestFeatures()
+# test.test_get_set_enable()
+# test.test_get_set_available()
+# test.test_get_set_id()
+# test.test_get_set_packages()
+# test.test_get_set_pypi()
+# test.test_get_set_cmd()
 

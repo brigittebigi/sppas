@@ -86,7 +86,7 @@ class Installer:
         """
         logging.basicConfig(level=logging.DEBUG)
         self.__req = "req_win"
-        self.__cmd = "cmd_win"
+        self.__cmdos = "cmd_win"
         self.__cfg_exist = False
         self.__config_file = None
         self.__config_parser = cp.ConfigParser()
@@ -121,22 +121,22 @@ class Installer:
 
     # ---------------------------------------------------------------------------
 
-    def get_cmd(self):
+    def get_cmdos(self):
         """Return the private attribute __cmd.
 
         """
-        return self.__cmd
+        return self.__cmdos
 
     # ---------------------------------------------------------------------------
 
-    def set_cmd(self, value):
+    def set_cmdos(self, value):
         """Set the value of the private attribute __cmd.
 
         :param value: (string) The cmd command for your OS.
 
         """
         value = str(value)
-        self.__cmd = value
+        self.__cmdos = value
 
     # ---------------------------------------------------------------------------
 
@@ -262,7 +262,7 @@ class Installer:
                 depend_pypi = self.parse_depend(d)
                 feature.set_pypi(depend_pypi)
 
-            cmd = self.__features_parser.get(f, self.__cmd)
+            cmd = self.__features_parser.get(f, self.__cmdos)
             if cmd == "none":
                 feature.set_available(False)
                 # feature_parser = self.get_features_parser()
@@ -343,7 +343,7 @@ class Installer:
 
         """
         string = str(string)
-        self.__cmd_errors += string
+        self.__cmd_errors = string
 
     # ---------------------------------------------------------------------------
 
@@ -445,18 +445,15 @@ class Installer:
 
         if feature_command == "none":
             feature.set_available(False)
-            logging.info(" {name} can't be installed by using only command line on your computer "
-                         "because of your OS \n".format(name=feature.get_id()))
+            logging.info(" {name} does not exist on your OS computer. \n".format(name=feature.get_id()))
         elif feature_command == "nil":
-            logging.info("You don't have command to use because of your OS")
+            logging.info("You don't have any command to use because of your OS")
         else:
             cmd = Popen(feature_command.split(" "), shell=True, stdout=PIPE, stderr=PIPE,
                         text=True)
             cmd.wait()
             error = cmd.stderr.read()
             error = str(error)
-            stdout = cmd.stdout.read()
-            print(stdout)
             if len(error) != 0:
                 self.set_cmd_errors("An error has occurred during the progression of the command : {name} "
                                     "\n {error} \n".format(name=feature_command, error=error))
@@ -786,7 +783,7 @@ class Deb(Installer):
         """
         super(Deb, self).__init__()
         self.set_req("req_deb")
-        self.set_cmd("cmd_deb")
+        self.set_cmdos("cmd_deb")
         self.set_features()
 
     # ---------------------------------------------------------------------------
@@ -879,7 +876,7 @@ class Rpm(Installer):
         """
         super(Rpm, self).__init__()
         self.set_req("req_rpm")
-        self.set_cmd("cmd_rpm")
+        self.set_cmdos("cmd_rpm")
         self.set_features()
 
     # ---------------------------------------------------------------------------
@@ -967,7 +964,7 @@ class Dnf(Installer):
         """
         super(Dnf, self).__init__()
         self.set_req("req_rpm")
-        self.set_cmd("cmd_rpm")
+        self.set_cmdos("cmd_rpm")
         self.set_features()
 
     # ---------------------------------------------------------------------------
@@ -1057,7 +1054,7 @@ class Windows(Installer):
         """
         super(Windows, self).__init__()
         self.set_req("req_win")
-        self.set_cmd("cmd_win")
+        self.set_cmdos("cmd_win")
         self.set_features()
 
     # ---------------------------------------------------------------------------
@@ -1144,7 +1141,7 @@ class CygWin(Installer):
         """
         super(CygWin, self).__init__()
         self.set_req("req_cyg")
-        self.set_cmd("cmd_cyg")
+        self.set_cmdos("cmd_cyg")
         self.set_features()
 
     # ---------------------------------------------------------------------------
@@ -1234,7 +1231,7 @@ class MacOs(Installer):
         """
         super(MacOs, self).__init__()
         self.set_req("req_ios")
-        self.set_cmd("cmd_ios")
+        self.set_cmdos("cmd_ios")
         self.set_features()
 
     # ---------------------------------------------------------------------------
@@ -1301,7 +1298,3 @@ class MacOs(Installer):
 
     # ---------------------------------------------------------------------------
 
-
-i = Windows()
-i.install()
-# i.show_features()
