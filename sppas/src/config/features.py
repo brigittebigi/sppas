@@ -35,7 +35,7 @@
 :contact:      contact@sppas.org
 :license:      GPL, v3
 :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-:summary:      a script to use workspaces from terminal
+:summary:      the class Feature of SPPAS
 
 """
 
