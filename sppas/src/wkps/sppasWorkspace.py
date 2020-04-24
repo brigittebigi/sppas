@@ -350,6 +350,15 @@ class sppasWorkspace(FileBase):
 
     # -----------------------------------------------------------------------
 
+    def get_all_files(self):
+        """Return all the files
+
+        :returns: (list)
+
+        """
+        return self.__files
+
+    # -----------------------------------------------------------------------
     def get_object(self, identifier):
         """Return the file object matching the given identifier.
 
@@ -724,6 +733,13 @@ class sppasWorkspace(FileBase):
         with open(filename, "r") as fd:
             d = json.load(fd)
             return sppasWorkspace.parse(d)
+
+    # -----------------------------------------------------------------------
+    # Proprieties
+    # -----------------------------------------------------------------------
+
+    files = property(get_all_files, None)
+    refs = property(get_refs, None)
 
     # -----------------------------------------------------------------------
     # Overloads
