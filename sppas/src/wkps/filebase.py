@@ -87,6 +87,14 @@ class FileBase(object):
 
     # -----------------------------------------------------------------------
 
+    def set_id(self, new_id):
+        """Set the identifier
+        :param new_id: (str)
+
+        """
+        self.__id = new_id
+    # -----------------------------------------------------------------------
+
     def get_state(self):
         """Return the state (States)."""
         return self._state
@@ -143,7 +151,7 @@ class FileBase(object):
     # Properties
     # -----------------------------------------------------------------------
 
-    id = property(get_id, None)
+    id = property(get_id, set_id)
     state = property(get_state, set_state)
 
     # -----------------------------------------------------------------------
