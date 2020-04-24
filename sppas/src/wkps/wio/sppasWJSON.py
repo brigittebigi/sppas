@@ -224,7 +224,7 @@ class sppasWJSON(sppasBaseWkpIO):
 
         """
         dict_root = dict()
-        dict_root["id"] = fr.get_id()
+        dict_root["id"] = fr.get_id().split(os.sep)[-1]
 
         # serialize files
         dict_root["files"] = list()
@@ -250,7 +250,7 @@ class sppasWJSON(sppasBaseWkpIO):
         """
 
         dict_files = dict()
-        dict_files["id"] = fn.get_id()
+        dict_files["id"] = fn.get_id().split(os.sep)[-1]
         dict_files["states"] = fn.get_state()
 
         return dict_files
@@ -320,7 +320,7 @@ class sppasWJSON(sppasBaseWkpIO):
         # parse roots
         if 'roots' in d:
             for dict_root in d["roots"]:
-                fr = self._parse_root(dict_root)
+                fr = self._parse_root(dict_root, d["id"])
                 fp.append(fr)
 
         fp.subjoined = d.get('subjoin', None)
@@ -329,21 +329,23 @@ class sppasWJSON(sppasBaseWkpIO):
 
     # -----------------------------------------------------------------------
 
-    def _parse_root(self, d):
+    def _parse_root(self, d, path):
         """Fill the root of a sppasWJSON reader with the given dictionary
 
         :param d: (dict)
+        :param path: (str) path of the file used to create the whole path of the file
+        as only the name of the file is kept in the wjson
         :returns: (FileRoot)
 
         """
         if "id" not in d:
             raise KeyError("root 'id' is missing of the dictionary to parse.")
 
-        fr = FileRoot(d["id"])
+        fr = FileRoot(path + os.sep + d["id"])
 
         if 'files' in d:
             for dict_file in d["files"]:
-                fr.append(self._parse_file(dict_file))
+                fr.append(self._parse_file(dict_file, path))
 
         for ref in d["refids"]:
             refe = FileReference(ref)
@@ -354,17 +356,19 @@ class sppasWJSON(sppasBaseWkpIO):
     # -----------------------------------------------------------------------
 
     @staticmethod
-    def _parse_file(d):
+    def _parse_file(d, path):
         """Fill the files of a sppasWJSON reader with the given dictionary
 
         :param d: (dict)
+        :param path: (str) path of the file used to create the whole path of the file
+        as only the name of the file is kept in the wjson
         :returns: (FileName)
 
         """
         if 'id' not in d:
             raise KeyError("file 'id' is missing of the dictionary to parse.")
 
-        fn = FileName(d["id"])
+        fn = FileName(path + os.sep + d["id"])
 
         # parse the state value
         s = d.get('state', States().UNUSED)
