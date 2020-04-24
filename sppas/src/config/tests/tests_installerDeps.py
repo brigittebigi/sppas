@@ -33,8 +33,9 @@
 
 """
 import unittest
+import sys
 
-from sppas.src.config.installer import sppasInstallerDeps, sys, Windows, Deb, Dnf, Rpm, CygWin, MacOs
+from sppas.src.config.support import sppasInstallerDeps, Deb, Windows, Dnf, Rpm, CygWin, MacOs
 
 # ---------------------------------------------------------------------------
 
@@ -145,54 +146,85 @@ class TestInstallerDeps(unittest.TestCase):
         if self.__installer_deps.get_os() == Windows:
             for feature in a:
                 self.__installer_deps.set_enable(feature)
-                a = self.__installer_deps.get_enable(feature)
-                self.assertIsInstance(a, bool)
+                c = self.__installer_deps.get_enable(feature)
+                self.assertIsInstance(c, bool)
+
             b = self.__installer_deps.get_enables()
-            self.assertEqual(b, {"Graphic Interface": True, "Package manager MacOs": False,
-                                 "Automatic alignment": False})
+            enables = "\n"
+            for f in self.__installer_deps.get_features():
+                enables += "(" + f.get_desc() + "," + f.get_id() + ") available = " + str(
+                    f.get_available()) + "/ enable " \
+                                         "= " + \
+                           str(f.get_enable()) + "\n "
+            self.assertEqual(b, enables)
+
+            for feature in a:
+                self.__installer_deps.unset_enable(feature)
+                c = self.__installer_deps.get_enable(feature)
+                self.assertIsInstance(c, bool)
+                
+            b = self.__installer_deps.get_enables()
+            enables = "\n"
+            for f in self.__installer_deps.get_features():
+                enables += "(" + f.get_desc() + "," + f.get_id() + ") available = " + str(
+                    f.get_available()) + "/ enable " \
+                                         "= " + \
+                           str(f.get_enable()) + "\n "
+            self.assertEqual(b, enables)
 
         if self.__installer_deps.get_os() == MacOs:
             for feature in a:
                 self.__installer_deps.set_enable(feature)
-                a = self.__installer_deps.get_enable(feature)
+                c = self.__installer_deps.get_enable(feature)
                 self.assertIsInstance(a, bool)
-                self.assertEqual(a, True)
+                self.assertEqual(c, True)
             b = self.__installer_deps.get_enables()
             self.assertEqual(b, {"Graphic Interface": True, "Package manager MacOs": True,
                                  "Automatic alignment": True})
 
+            for feature in a:
+                self.__installer_deps.unset_enable(feature)
+                c = self.__installer_deps.get_enable(feature)
+                self.assertIsInstance(a, bool)
+                self.assertEqual(a, True)
+            b = self.__installer_deps.get_enables()
+            self.assertEqual(c, {"Graphic Interface": False, "Package manager MacOs": False,
+                                 "Automatic alignment": False})
+
+    # # ---------------------------------------------------------------------------
+    #
+    # def test_get_cmd_errors(self):
+    #     """Test if the methods get_cmd_errors from the class sppasInstallerDeps works well.
+    #
+    #     """
+    #     self.setUp()
+    #
+    #     y = self.__installer_deps.get_cmd_errors()
+    #     self.assertIsInstance(y, str)
+    #
+    # # ---------------------------------------------------------------------------
+    #
+    # def test_get_system_errors(self):
+    #     """Test if the methods get_system_errors from the class sppasInstallerDeps works well.
+    #
+    #     """
+    #     self.setUp()
+    #
+    #     y = self.__installer_deps.get_system_errors()
+    #     self.assertIsInstance(y, str)
+    #
+    # # ---------------------------------------------------------------------------
+    #
+    # def test_get_pypi_errors(self):
+    #     """Test if the methods get_pypi_errors from the class sppasInstallerDeps works well.
+    #
+    #     """
+    #     self.setUp()
+    #
+    #     y = self.__installer_deps.get_pypi_errors()
+    #     self.assertIsInstance(y, str)
+
     # ---------------------------------------------------------------------------
-
-    def test_get_cmd_errors(self):
-        """Test if the methods get_cmd_errors from the class sppasInstallerDeps works well.
-
-        """
-        self.setUp()
-
-        y = self.__installer_deps.get_cmd_errors()
-        self.assertIsInstance(y, str)
-
-    # ---------------------------------------------------------------------------
-
-    def test_get_system_errors(self):
-        """Test if the methods get_system_errors from the class sppasInstallerDeps works well.
-
-        """
-        self.setUp()
-
-        y = self.__installer_deps.get_system_errors()
-        self.assertIsInstance(y, str)
-
-    # ---------------------------------------------------------------------------
-
-    def test_get_pypi_errors(self):
-        """Test if the methods get_pypi_errors from the class sppasInstallerDeps works well.
-
-        """
-        self.setUp()
-
-        y = self.__installer_deps.get_pypi_errors()
-        self.assertIsInstance(y, str)
 
 
 test = TestInstallerDeps()
@@ -200,9 +232,9 @@ test.test_get_set_os()
 test.test_get_set_features()
 test.test_get_feature_name()
 test.test_get_set_enable()
-test.test_get_cmd_errors()
-test.test_get_system_errors()
-test.test_get_pypi_errors()
+# test.test_get_cmd_errors()
+# test.test_get_system_errors()
+# test.test_get_pypi_errors()
 
 
 

@@ -37,8 +37,14 @@ import sys
 import os
 from argparse import ArgumentParser
 
-from sppas.src.config.installer import sppasInstallerDeps
+PROGRAM = os.path.abspath(__file__)
+SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
+sys.path.append(SPPAS)
+
 from sppas import sg
+from sppas.src.config.support import sppasInstallerDeps
+from sppas.src.ui.term.textprogress import ProcessProgressTerminal
+from sppas.src.ui.term.terminalcontroller import TerminalController
 
 if __name__ == "__main__":
 
@@ -48,9 +54,15 @@ if __name__ == "__main__":
 
     installer = sppasInstallerDeps()
     features = installer.get_features()
+    cmd_features = list()
+
+    def search_feature(string):
+        for feature in features:
+            if string == feature.get_id():
+                return feature
 
     parser = ArgumentParser(
-        usage="%(prog)s [action] [option]",
+        usage="%(prog)s [action]",
         description="PostInstall commmand interface.",
         epilog="This program is part of {:s} version {:s}. {:s}. Contact the "
                "author at: {:s}".format(sg.__name__, sg.__version__,
@@ -68,26 +80,28 @@ if __name__ == "__main__":
         help="Launch the installation procedure of the features for you OS")
 
     for feature in features:
+        cmd_features.append(feature.get_id())
+        cmd_features.append("no" + feature.get_id())
         group_act.add_argument(
             "--" + feature.get_id(),
-            #default=feature.set_enable(),
-            desc="a",
-            help="{id}: {desc}, set the value enable to True.".format(id=feature.get_id(), desc=feature.get_desc()))
+            action='store_true',
+            help="Enable the {desc} (Available={available})"
+            .format(desc=feature.get_desc(), available=feature.get_available()))
 
-    # Add arguments for options
-    # -------------------------
+        group_act.add_argument(
+            "--no" + feature.get_id(),
+            action='store_true',
+            help="Disable the {desc}"
+            .format(desc=feature.get_desc()))
 
-    group_opt = parser.add_argument_group('Option')
+    # Add arguments from the features of features.ini
+    # -----------------------------------------------
 
-    group_opt.add_argument(
+    parser.add_argument(
         "-e",
-        #default=installer.get_enables(),
-        help="Display the enable value associate with the id for each feature you have.")
-
-    group_opt.add_argument(
-        "-e",
-        #default=installer.get_enables(),
-        help="Display the enable value associate with the id for each feature you have.")
+        "--enable",
+        action='store_true',
+        help="Show for each feature if it is available on your OS and if the installation is enable.")
 
     # Force to print help if no argument is given then parse
     # ------------------------------------------------------
@@ -97,12 +111,35 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # -----------------------------------------------------------------------
+    # The installation process is here:
+    # -----------------------------------------------------------------------
 
+    if args.enable:
+        print("\nIf an feature has his available = False, even if you set enable to true it wont install the feature. "
+              "\nBecause \"available = false\" mean that the installer can't install the feature on your OS.")
+        print(installer.get_enables())
 
+    arguments = vars(args)
+    arguments_true = list()
+    for a in arguments:
+        if arguments[a] is True:
+            arguments_true.append(a)
+    for a in arguments_true:
+        if a in cmd_features:
+            if "no" not in a:
+                cmd = "no" + a
+                if cmd in arguments_true:
+                    installer.unset_enable(search_feature(a))
+                else:
+                    installer.set_enable(search_feature(a))
+            elif "no" in a:
+                a = a.replace("no", "")
+                installer.unset_enable(search_feature(a))
 
-
-
-
-
-
+    if args.install:
+        if installer.get_install() is True:
+            print("\nYou already installed the features.\n"
+                  "If you want to reinstalled it you have to remove the file \"config.ini\"\n")
+        installer.install()
 
