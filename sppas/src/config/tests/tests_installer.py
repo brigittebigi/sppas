@@ -203,16 +203,19 @@ class TestInstaller(unittest.TestCase):
         y = self.__installer.get_features()
 
         self.assertEqual(y[0].get_id(), "wxpython")
+        self.assertEqual(y[0].get_desc(), "Graphic Interface")
         self.assertEqual(y[0].get_packages(), {'nil': '1'})
         self.assertEqual(y[0].get_pypi(), {'wxpython': '>;4.0'})
         self.assertEqual(y[0].get_cmd(), "nil")
 
         self.assertEqual(y[1].get_id(), "brew")
+        self.assertEqual(y[1].get_desc(), "Package manager MacOs")
         self.assertEqual(y[1].get_packages(), {'nil': '1'})
         self.assertEqual(y[1].get_pypi(), {'nil': '1'})
         self.assertEqual(y[1].get_cmd(), "none")
 
         self.assertEqual(y[2].get_id(), "julius")
+        self.assertEqual(y[2].get_desc(), "Automatic alignment")
         self.assertEqual(y[2].get_packages(), {'nil': '1'})
         self.assertEqual(y[2].get_pypi(), {'nil': '1'})
         self.assertEqual(y[2].get_cmd(), "none")

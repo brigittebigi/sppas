@@ -92,6 +92,9 @@ class Feature:
         # An identifier that represent the id/name of the feature
         self.__id = str()
 
+        # An identifier that represent the description of the feature
+        self.__desc = str()
+
         # An identifier to represent the required system packages
         self.__packages = dict()
 
@@ -110,6 +113,7 @@ class Feature:
         return "enable : " + str(self.get_enable()) + "\n" \
                "available : " + str(self.get_available()) + "\n" \
                "id : " + str(self.get_id()) + "\n" \
+               "desc : " + str(self.get_desc()) + "\n" \
                "packages : " + str(self.get_packages()) + "\n" \
                "pypi : " + str(self.get_pypi()) + "\n" \
                "cmd : " + str(self.get_cmd()) + "\n"
@@ -135,7 +139,7 @@ class Feature:
         """Fix the value of the private attribute __enable.
 
         :param value: (boolean) The boolean which represent if you want to install the
-        feature or if it's installed or no on your system.
+        feature or if it's installed or not on your system.
 
         """
         if not self.get_available():
@@ -150,7 +154,7 @@ class Feature:
         """Fix the value of the private attribute __available.
 
         :param value: (boolean) The boolean which represent if you want to install the
-        feature or if it is already installed or no on your system.
+        feature or if it is already installed or not on your system.
         """
         value = bool(value)
         if not value:
@@ -175,6 +179,25 @@ class Feature:
         """
         value = str(value)
         self.__id = value
+
+    # ---------------------------------------------------------------------------
+
+    def get_desc(self):
+        """Return the value of the private attribute __desc of the instantiate Feature.
+
+        """
+        return self.__desc
+
+    # ---------------------------------------------------------------------------
+
+    def set_desc(self, value):
+        """Fix the value of the private attribute __desc.
+
+        :param value: (str) The description which represent the feature.
+
+        """
+        value = str(value)
+        self.__desc = value
 
     # ---------------------------------------------------------------------------
 

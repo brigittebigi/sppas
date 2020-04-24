@@ -40,7 +40,7 @@
 """
 
 import os
-
+import sys
 from subprocess import Popen, PIPE
 import logging
 
@@ -50,8 +50,7 @@ except ImportError:
     import ConfigParser as cp
 
 from sppas.src.config.features import Feature
-from sppas import paths
-from sppas.src.config import sg
+from sppas.src.config import paths
 
 # ---------------------------------------------------------------------------
 
@@ -232,6 +231,9 @@ class Installer:
             feature = Feature()
 
             feature.set_id(f)
+
+            desc = self.__features_parser.get(f, "desc")
+            feature.set_desc(desc)
 
             feature.set_enable(self.__features_parser.getboolean(f, "enable"))
 
@@ -1309,5 +1311,162 @@ class MacOs(Installer):
     # ---------------------------------------------------------------------------
 
 
-i = Windows()
-i.install()
+class sppasInstallerDeps:
+    """Check directories, etc.
+
+    :author:       Florian Hocquet
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+    __List_os = {
+        "linux": {
+            "ubuntu": Deb,
+            "mint": Deb,
+            "debian": Deb,
+            "fedora": Dnf,
+            "suse": Rpm
+        },
+        "win32": Windows,
+        "cygwin": CygWin,
+        "darwin": MacOs
+    }
+
+    def __init__(self):
+        self.__Exploit_syst = None
+        self.set_os()
+        self.__installer = self.get_os()()
+        self.__features = list()
+        self.set_features()
+
+    # ---------------------------------------------------------------------------
+
+    def get_os(self):
+        """Return the value of the private attribute __Exploit_syst.
+
+        """
+        return self.__Exploit_syst
+
+    # ---------------------------------------------------------------------------
+
+    def set_os(self):
+        """Set the value of __Exploit_syst according to the exploitation system of the user.
+
+        """
+        system = sys.platform
+        if system == "linux":
+            linux_distrib = str(os.uname()).split(", ")[3].split("-")[1].split(" ")[0].lower()
+            self.__Exploit_syst = self.__List_os["linux"][linux_distrib]
+        else:
+            if system not in list(self.__List_os.keys()):
+                raise OSError("A implémenter")
+            else:
+                self.__Exploit_syst = self.__List_os[system]
+
+    # ---------------------------------------------------------------------------
+
+    def get_features(self):
+        """Return the list of features __features.
+
+        """
+        return self.__features
+
+    # ---------------------------------------------------------------------------
+
+    def set_features(self):
+        """Set features in __features with the one in __installer.
+
+        """
+        self.__features = self.__installer.get_features()
+
+    # ---------------------------------------------------------------------------
+
+    def get_features_name(self):
+        """Return the features names in __features.
+
+        """
+        features = self.get_features()
+        list_name = list()
+        for f in features:
+            list_name.append(f.get_id())
+        return list_name
+
+    # ---------------------------------------------------------------------------
+
+    def get_enables(self):
+        """Return the features enables in __features.
+
+        """
+        features = self.get_features()
+        dict_enable = dict()
+        for f in features:
+            dict_enable[f.get_desc()] = f.get_enable()
+        return dict_enable
+
+    # ---------------------------------------------------------------------------
+
+    def get_enable(self, feature_name):
+        """Return the private attribute __enable value of the feature used as an argument.
+
+        :param feature_name: (string) The name of the feature.
+
+        """
+        return feature_name.get_enable()
+
+    # ---------------------------------------------------------------------------
+
+    def set_enable(self, feature_name):
+        """Set the private attribute __enable value of the feature used as an argument.
+
+        :param feature_name: (string) The name of the feature.
+
+        """
+        feature_name.set_enable(True)
+
+    # ---------------------------------------------------------------------------
+
+    def get_states(self):
+        """Return the state of the features.
+
+        """
+        features = self.get_features()
+        dict_enable = dict()
+        for f in features:
+            dict_enable[f.get_desc()] = f.get_enable()
+        return dict_enable
+
+    # ---------------------------------------------------------------------------
+
+    def get_cmd_errors(self):
+        """Return the error which appends during the command installation.
+
+        """
+        return self.__installer.get_cmd_errors()
+
+    # ---------------------------------------------------------------------------
+
+    def get_system_errors(self):
+        """Return the error which appends during the system dependencies installation.
+
+        """
+        return self.__installer.get_system_errors()
+
+    # ---------------------------------------------------------------------------
+
+    def get_pypi_errors(self):
+        """Return the error which appends during the pypi dependencies installation.
+
+        """
+        return self.__installer.get_pypi_errors()
+
+    # ---------------------------------------------------------------------------
+
+    def install(self):
+        """Launch the installation procedure of the __installer.
+
+        """
+        self.__installer.install()
+
+    # ---------------------------------------------------------------------------

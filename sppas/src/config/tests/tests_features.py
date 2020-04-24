@@ -164,6 +164,39 @@ class TestFeatures(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
+    def test_get_set_desc(self):
+        """Test if the methods get_desc and set_desc from the class Feature works well.
+
+        """
+        self.setUp()
+
+        self.__feature.set_desc("aaaa")
+        y = self.__feature.get_desc()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "aaaa")
+
+        self.__feature.set_desc(True)
+        y = self.__feature.get_desc()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "True")
+
+        self.__feature.set_desc(["a", "b", "c"])
+        y = self.__feature.get_desc()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "['a', 'b', 'c']")
+
+        self.__feature.set_desc({"1": "a", "2": "b", "3": "c"})
+        y = self.__feature.get_desc()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "{'1': 'a', '2': 'b', '3': 'c'}")
+
+        self.__feature.set_desc(4)
+        y = self.__feature.get_desc()
+        self.assertIsInstance(y, str)
+        self.assertEqual(y, "4")
+
+    # ---------------------------------------------------------------------------
+
     def test_get_set_packages(self):
         """Test if the methods get_packages and set_packages from the class Feature works well.
 
@@ -268,11 +301,12 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(y, "4")
 
 
-# test = TestFeatures()
-# test.test_get_set_enable()
-# test.test_get_set_available()
-# test.test_get_set_id()
-# test.test_get_set_packages()
-# test.test_get_set_pypi()
-# test.test_get_set_cmd()
+test = TestFeatures()
+test.test_get_set_enable()
+test.test_get_set_available()
+test.test_get_set_id()
+test.test_get_set_desc()
+test.test_get_set_packages()
+test.test_get_set_pypi()
+test.test_get_set_cmd()
 

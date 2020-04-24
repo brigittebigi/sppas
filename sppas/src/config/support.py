@@ -35,7 +35,7 @@
 
 import os
 import logging
-# import sys
+import sys
 
 try:
     # For Python 3.0 and later
@@ -46,15 +46,7 @@ except ImportError:
 
 from sppas.src.config.sglobal import sppasPathSettings
 from sppas.src.config.sglobal import sppasGlobalSettings
-# from sppas.src.config.installer import Installer, Deb, Rpm, Windows, CygWin, MacOs
-
-try:
-    # For Python 3.0 and later
-    import configparser as cp
-except ImportError:
-    # Fall back to Python 2
-    import ConfigParser as cp
-
+# from sppas.src.config.installer import Deb, Dnf, Rpm, Windows, CygWin, MacOs
 
 # ---------------------------------------------------------------------------
 
@@ -152,7 +144,7 @@ class sppasUpdate:
 #             "ubuntu": Deb,
 #             "mint": Deb,
 #             "debian": Deb,
-#             "fedora": Rpm,
+#             "fedora": Dnf,
 #             "suse": Rpm
 #         },
 #         "win32": Windows,
@@ -163,7 +155,8 @@ class sppasUpdate:
 #     def __init__(self):
 #         self.__Exploit_syst = None
 #         self.set_os()
-#         self.__Instance_Install = None
+#         self.__installer = self.get_os()()
+#         self.__features = list()
 #
 #     # ---------------------------------------------------------------------------
 #
@@ -181,62 +174,38 @@ class sppasUpdate:
 #             if system not in list(self.__List_os.keys()):
 #                 raise OSError("A implémenter")
 #             else:
-#                 self.__List_os[sys]
+#                 self.Exploit_syst = self.__List_os[system]
 #
 #     # ---------------------------------------------------------------------------
 #
-#     def get_sections(self):
-#         list_options = (self.__config_file.sections())
-#         return list_options
+#     def set_features(self):
+#         list = self.__installer.get_features()
+#         list_features = list()
+#         for f in list:
+#             list_features.append(f.get_id())
+#         self.__features = list_features
 #
 #     # ---------------------------------------------------------------------------
 #
-#     def get_desc(self, section):
-#         try:
-#             return self.__config_file.get(section, 'desc')
-#         except cp.NoSectionError:
-#             return "Vous devez saisir une des sections disponibles"
+#     def get_features(self):
+#         return self.__features
+#
+#     # ---------------------------------------------------------------------------
+#
+#     def get_desc(self):
+#         print("a")
 #
 #     # ---------------------------------------------------------------------------
 #
 #     def get_enable(self, section):
-#         try:
-#             enable = self.__config_file.getboolean(section, "enable")
-#             return enable
-#         except cp.NoSectionError:
-#             return "Vous devez saisir une des sections disponibles"
-#
-#     # ---------------------------------------------------------------------------
-#
-#     def set_enable(self, section, boolean):
-#         if type(boolean) is bool and boolean:
-#             self.__config_file.set(section, "enable", "true")
-#         elif type(boolean) is bool and boolean is False:
-#             self.__config_file.set(section, "enable", "false")
-#         with open('test.ini', 'w') as configfile:
-#             self.__config_file.write(configfile)
-#
-#     # ---------------------------------------------------------------------------
-#
-#     def get_dependencies(self, section):
-#         requirements = self.__List_require.get(self.get_os())
-#
-#         dependencies = self.__config_file.get(section, requirements).split(" ")
-#         depend_version = dict()
-#         for line in dependencies:
-#             tab = line.split("=", maxsplit=1)
-#             depend_version[tab[0]] = tab[1]
-#
-#         dependencies2 = self.__config_file.get(section, "req_pip").split(" ")
-#         depend_version2 = dict()
-#         for line2 in dependencies2:
-#             tab2 = line2.split("=", maxsplit=1)
-#             depend_version2[tab2[0]] = tab2[1]
-#         return depend_version, depend_version2
+#         print("a")
 #
 #     # ---------------------------------------------------------------------------
 #
 #     def install_all(self):
 #         raise NotImplementedError('Not implemented yet')
+#
 #     # ---------------------------------------------------------------------------
-
+#
+#
+# postInstall = sppasInstallerDeps()
