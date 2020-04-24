@@ -33,3 +33,18 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
+
+class sppasAnnProRW():
+    """
+
+        :author:       Laurent Vouriot
+        :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+        :contact:      contact@sppas.org
+        :license:      GPL, v3
+        :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+        :summary:      Reader/writer for annotation pro workspaces
+
+    """
+
+    raise NotImplementedError
