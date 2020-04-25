@@ -41,7 +41,7 @@
 
 import os
 import sys
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, call, STDOUT
 import logging
 
 try:
@@ -51,6 +51,7 @@ except ImportError:
 
 from sppas.src.config.features import Feature
 from sppas.src.config.support import sppasPathSettings
+
 
 # ---------------------------------------------------------------------------
 
@@ -80,11 +81,13 @@ class Installer:
 
     """
 
-    def __init__(self):
+    def __init__(self, p):
         """Create a new Installer instance.
 
         """
         logging.basicConfig(level=logging.DEBUG)
+        self.__pbar = p
+        self.__progression = 0
         self.__req = "req_win"
         self.__cmdos = "cmd_win"
         self.__cfg_exist = False
@@ -99,6 +102,17 @@ class Installer:
         self.init_config()
         self.__features_parser = self.init_features()
         self.set_features()
+
+    # ---------------------------------------------------------------------------
+
+    def get_set_progress(self, value):
+        """Return and Set the private attribute __progression.
+
+        :param value: (int) The value you want to add.
+
+        """
+        self.__progression += value
+        return self.__progression
 
     # ---------------------------------------------------------------------------
 
@@ -290,6 +304,28 @@ class Installer:
 
     # ---------------------------------------------------------------------------
 
+    def get_nbpf(self, feature):
+        """Return the number of packages you will install for a feature.
+
+        :param feature: (Feature) The feature you want to calcul the number of package you will install.
+
+        """
+        nb_packages = 1 + len(feature.get_packages()) + len(feature.get_pypi())
+        return nb_packages
+
+    # ---------------------------------------------------------------------------
+
+    def calcul_pourc(self):
+        """Return pourcentage of progression.
+
+        :param feature: (Feature) The feature you use.
+
+        """
+        pourc = round((100 / len(self.get_features()) / 3), 2)
+        return pourc
+
+    # ---------------------------------------------------------------------------
+
     def get_feature_file(self):
         """Return the private file __feature_file.
 
@@ -388,13 +424,21 @@ class Installer:
         if self.get_cfg_exist() is False:
             self.get_config_parser().add_section("features")
 
+            if self.__pbar is not None:
+                self.__pbar.set_header("Begining of the installation")
+
             for f in self.__features:
+                self.__pbar.set_header("Begining of the installation for the feature \"" + f.get_desc() + "\"")
                 if f.get_available() is False:
-                    logging.info("{name} can't be installed by using only command line on your computer because "
-                                 "of your OS. \n".format(name=f.get_id()))
+                    self.__pbar.update(
+                        self.get_set_progress(round(100 / len(self.get_features()), 2)),
+                        "{name} can't be installed by using only command line on your computer because "
+                        "of your OS. \n".format(name=f.get_id()))
                     continue
                 if f.get_enable() is False:
-                    logging.info("You choose to don't install the feature \"{name}\" \n".format(name=f.get_id()))
+                    self.__pbar.update(
+                        self.get_set_progress(round(100 / len(self.get_features()), 2)),
+                        "You choose to don't install the feature \"{name}\" \n".format(name=f.get_id()))
                     continue
 
                 try:
@@ -410,10 +454,10 @@ class Installer:
                     if len(self.get_pypi_errors()) != 0:
                         logging.error(self.get_pypi_errors())
 
+            self.__pbar.set_header("The installation process is finished")
+
             for f in self.__features:
-                # self.get_features_parser().set(f.get_id(), "enable", str(f.get_enable()).lower())
                 self.get_config_parser().set("features", f.get_id(), str(f.get_enable()).lower())
-            # self.get_features_parser().write(open(self.get_feature_file(), 'w'))
             self.get_config_parser().write(open(self.get_config_file(), 'w'))
         else:
             self.configurate_enable(self.get_config_parser())
@@ -433,15 +477,20 @@ class Installer:
 
         if feature_command == "none":
             feature.set_available(False)
-            logging.info(" {name} does not exist on your OS computer. \n".format(name=feature.get_id()))
+            self.__pbar.update(
+                self.get_set_progress(self.calcul_pourc()),
+                "{name} does not exist on your OS computer. \n".format(name=feature.get_id()))
         elif feature_command == "nil":
-            logging.info("You don't have any command to use because of your OS")
+            self.__pbar.update(
+                    self.get_set_progress(self.calcul_pourc()),
+                    "You don't have any command to use because of your OS")
         else:
             if self.search_cmds(feature.get_id()) is False:
-                self.install_cmds(feature_command, feature.get_id())
+                self.install_cmds(feature_command, feature)
             else:
-                logging.info("The command \"{name}\" is already installed on your "
-                             "computer ".format(name=feature.get_id()))
+                self.__pbar.update(
+                    self.get_set_progress(self.calcul_pourc()),
+                    "The command \"{name}\" is already installed on your computer ".format(name=feature.get_id()))
 
         if len(self.get_cmd_errors()) != 0:
             feature.set_enable(False)
@@ -456,24 +505,38 @@ class Installer:
 
         """
         command = str(command)
+        command = command.strip()
+        NULL = open(os.path.devnull, "w")
         try:
-            cmd = Popen(command, stdout=PIPE, stderr=PIPE, text=True)
-            cmd.wait()
-            return True
-        except FileNotFoundError:
+            call(command, stdout=NULL, stderr=STDOUT)
+        except OSError:
+            NULL.close()
             return False
+
+        NULL.close()
+        return True
+
+        # command = str(command)
+        # try:
+        #     cmd = Popen(command, stdout=PIPE, stderr=PIPE, text=True)
+        #     cmd.wait()
+        #     return True
+        # except FileNotFoundError:
+        #     return False
 
     # ---------------------------------------------------------------------------
 
-    def install_cmds(self, command, id):
+    def install_cmds(self, command, feature):
         """Install the pip package given as an argument on your computer.
 
         :param command: (string) The command you will try to install on your computer.
         :param id: (string) name of the command.
 
         """
+        if not isinstance(feature, Feature):
+            raise NotImplementedError
+
         self.set_cmd_errors("")
-        id = str(id)
         command = str(command)
 
         try:
@@ -486,10 +549,12 @@ class Installer:
                 self.set_cmd_errors("An error has occurred during the installation of : {name} "
                                     "\n {error} \n".format(name=id, error=error))
             else:
-                logging.info("The installation of \"{name}\" is a success.".format(name=id))
+                self.__pbar.update(
+                    self.get_set_progress(self.calcul_pourc()),
+                    "The installation of \"{name}\" is a success.".format(name=feature.get_id()))
         except FileNotFoundError:
             self.set_cmd_errors("An error has occurred during the installation of : {name} "
-                                "\n {error} \n".format(name=id, error=id + " is not a command"))
+                                "\n {error} \n".format(name=id, error=feature.get_id() + " is not a command"))
 
     # ---------------------------------------------------------------------------
 
@@ -506,8 +571,8 @@ class Installer:
         self.set_pypi_errors("")
         for package, version in feature.get_pypi().items():
             if package == "nil":
-                logging.info("You don't need to install pip dependencies to install \"{name}\" "
-                             "on your computer".format(name=feature.get_id()))
+                logging.info("You don't need to install pip dependencies to install \"{name}\" on your computer"
+                             .format(name=feature.get_id()))
             else:
                 if self.search_pypi(package) is False:
                     self.install_pypi(package)
@@ -516,11 +581,17 @@ class Installer:
                 else:
                     logging.info("The package pip \"{name}\" is already installed and up to date on your "
                                  "computer ".format(name=package))
+
         if len(self.get_pypi_errors()) != 0:
             feature.set_enable(False)
+            self.__pbar.update(
+                self.get_set_progress(self.calcul_pourc()),
+                "The pip installation procedure have failed. Here is the errors :")
             raise NotImplementedError()
         else:
-            logging.info("The pip dependencies installation procedure is a success. \n")
+            self.__pbar.update(
+                self.get_set_progress(self.calcul_pourc()),
+                "The pip dependencies installation procedure is a success. \n")
 
     # ---------------------------------------------------------------------------
 
@@ -685,9 +756,14 @@ class Installer:
                                  "computer".format(name=package))
         if len(self.get_system_errors()) != 0:
             feature.set_enable(False)
-            raise NotImplementedError(self.get_system_errors())
+            self.__pbar.update(
+                self.get_set_progress(self.calcul_pourc()),
+                "The pip dependencies installation procedure is a success. \n")
+            raise NotImplementedError()
         else:
-            logging.info("The system dependencies installation procedure is a success.")
+            self.__pbar.update(
+                self.get_set_progress(self.calcul_pourc()),
+                "The system dependencies installation procedure is a success.")
 
     # ---------------------------------------------------------------------------
 
@@ -799,11 +875,11 @@ class Deb(Installer):
 
     """
 
-    def __init__(self):
+    def __init__(self, p):
         """Create a new Deb(Installer) instance.
 
         """
-        super(Deb, self).__init__()
+        super(Deb, self).__init__(p)
         self.set_req("req_deb")
         self.set_cmdos("cmd_deb")
         self.set_features()
@@ -890,11 +966,11 @@ class Rpm(Installer):
 
     """
 
-    def __init__(self):
+    def __init__(self, p):
         """Create a new Rpm(Installer) instance.
 
         """
-        super(Rpm, self).__init__()
+        super(Rpm, self).__init__(p)
         self.set_req("req_rpm")
         self.set_cmdos("cmd_rpm")
         self.set_features()
@@ -978,11 +1054,11 @@ class Dnf(Installer):
 
     """
 
-    def __init__(self):
+    def __init__(self, p):
         """Create a new Dnf(Installer) instance.
 
         """
-        super(Dnf, self).__init__()
+        super(Dnf, self).__init__(p)
         self.set_req("req_rpm")
         self.set_cmdos("cmd_rpm")
         self.set_features()
@@ -1066,11 +1142,11 @@ class Windows(Installer):
 
     """
 
-    def __init__(self):
+    def __init__(self, p):
         """Create a new Windows(Installer) instance.
 
         """
-        super(Windows, self).__init__()
+        super(Windows, self).__init__(p)
         self.set_req("req_win")
         self.set_cmdos("cmd_win")
         self.set_features()
@@ -1153,11 +1229,11 @@ class CygWin(Installer):
 
     """
 
-    def __init__(self):
+    def __init__(self, p):
         """Create a new CygWin(Installer) instance.
 
         """
-        super(CygWin, self).__init__()
+        super(CygWin, self).__init__(p)
         self.set_req("req_cyg")
         self.set_cmdos("cmd_cyg")
         self.set_features()
@@ -1241,11 +1317,11 @@ class MacOs(Installer):
 
     """
 
-    def __init__(self):
+    def __init__(self, p):
         """Create a new MacOs(Installer) instance.
 
         """
-        super(MacOs, self).__init__()
+        super(MacOs, self).__init__(p)
         self.set_req("req_ios")
         self.set_cmdos("cmd_ios")
         self.set_features()

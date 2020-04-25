@@ -149,10 +149,11 @@ class sppasInstallerDeps:
         "darwin": MacOs
     }
 
-    def __init__(self):
+    def __init__(self, p):
+        self.__pbar = p
         self.__Exploit_syst = None
         self.set_os()
-        self.__installer = self.get_os()()
+        self.__installer = self.get_os()(p)
         self.__features = list()
         self.set_features()
 
@@ -225,9 +226,8 @@ class sppasInstallerDeps:
         features = self.get_features()
         enables = "\n"
         for f in features:
-            enables += "(" + f.get_desc() + "," + f.get_id() + ") available = " + str(f.get_available()) + "/ enable " \
-                                                                                                           "= " + \
-                       str(f.get_enable()) + "\n "
+            enables += "(" + f.get_desc() + "," + f.get_id() + ") available = "\
+                       + str(f.get_available()) + "/ enable = " + str(f.get_enable()) + "\n"
         return enables
 
     # ---------------------------------------------------------------------------

@@ -43,6 +43,9 @@ sys.path.append(SPPAS)
 
 from sppas import sg
 from sppas.src.config.support import sppasInstallerDeps
+
+from sppas.src.anndata.aio import extensions_out
+from sppas import sppasLogSetup
 from sppas.src.ui.term.textprogress import ProcessProgressTerminal
 from sppas.src.ui.term.terminalcontroller import TerminalController
 
@@ -52,7 +55,8 @@ if __name__ == "__main__":
     # Verify and extract args:
     # -----------------------------------------------------------------------
 
-    installer = sppasInstallerDeps()
+    p = ProcessProgressTerminal()
+    installer = sppasInstallerDeps(p)
     features = installer.get_features()
     cmd_features = list()
 
@@ -111,14 +115,50 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # Fix user communication way
+    # -------------------------------
+
+    sep = "-" * 72
+    try:
+        term = TerminalController()
+        print(term.render('${GREEN}{:s}${NORMAL}').format(sep))
+        print(term.render('${RED} {} - Version {}${NORMAL}'
+                          '').format(sg.__name__, sg.__version__))
+        print(term.render('${BLUE} {} ${NORMAL}').format(sg.__copyright__))
+        print(term.render('${BLUE} {} ${NORMAL}').format(sg.__url__))
+        print(term.render('${GREEN}{:s}${NORMAL}\n').format(sep))
+
+        # Redirect all messages to a quiet logging
+        # ----------------------------------------
+        lgs = sppasLogSetup()
+        lgs.null_handler()
+
+    except:
+        print('{:s}\n'.format(sep))
+        print('{}   -  Version {}'.format(sg.__name__, sg.__version__))
+        print(sg.__copyright__)
+        print(sg.__url__+'\n')
+        print('{:s}\n'.format(sep))
+
+        # Redirect all messages to a quiet logging
+        # ----------------------------------------
+        lgs = sppasLogSetup(50)
+        lgs.stream_handler()
+
     # -----------------------------------------------------------------------
     # The installation process is here:
     # -----------------------------------------------------------------------
 
+    # Get the values of available and enable attributes for each feature
+    # ------------------------------------------------------------------
+
     if args.enable:
-        print("\nIf an feature has his available = False, even if you set enable to true it wont install the feature. "
+        print("If an feature has his available = False, even if you set enable to true it wont install the feature. "
               "\nBecause \"available = false\" mean that the installer can't install the feature on your OS.")
         print(installer.get_enables())
+
+    # Set the values of enable attribute for each feature
+    # ---------------------------------------------------
 
     arguments = vars(args)
     arguments_true = list()
@@ -137,9 +177,27 @@ if __name__ == "__main__":
                 a = a.replace("no", "")
                 installer.unset_enable(search_feature(a))
 
+    # Lauch the installation procedure
+    # -------------------------------
+
     if args.install:
         if installer.get_install() is True:
-            print("\nYou already installed the features.\n"
-                  "If you want to reinstalled it you have to remove the file \"config.ini\"\n")
+            print("You already installed the features.\n"
+                  "If you want to reinstalled it you have to remove the file \"config.ini\"")
         installer.install()
+
+    try:
+        term = TerminalController()
+        print(term.render('\n${GREEN}{:s}${NORMAL}').format(sep))
+        print(term.render('${RED}See {}.').format("..."))
+        print(term.render('${GREEN}Thank you for using {}.').format(sg.__name__))
+        print(term.render('${GREEN}{:s}${NORMAL}').format(sep))
+    except:
+        print('\n{:s}\n'.format(sep))
+        print("See {} for details.\nThank you for using {}."
+              "".format("...", sg.__name__))
+        print('{:s}\n'.format(sep))
+
+    p.close()
+
 

@@ -34,7 +34,7 @@
 """
 
 import unittest
-
+from sppas.src.ui.term.textprogress import ProcessProgressTerminal
 from sppas.src.config.installer import Installer, Deb, Dnf, Rpm, Windows, CygWin, MacOs, Feature, cp
 
 
@@ -47,9 +47,61 @@ class TestInstaller(unittest.TestCase):
         """Initialisation des tests.
 
         """
-        self.__installer = Installer()
-        self.__windows = Windows()
+        p = ProcessProgressTerminal()
+        self.__installer = Installer(p)
+        self.__windows = Windows(p)
         self.__feature = Feature()
+
+    # ---------------------------------------------------------------------------
+
+    def test_get_set_progress(self):
+        """Test if the methods get_set_progress from the class Installer works well.
+
+        """
+        self.setUp()
+
+        y = self.__installer.get_set_progress(10)
+        self.assertEqual(y, 10)
+
+        y = self.__installer.get_set_progress(10)
+        self.assertEqual(y, 20)
+
+        with self.assertRaises(TypeError):
+            self.__installer.get_set_progress("10")
+
+        with self.assertRaises(AssertionError):
+            with self.assertRaises(AssertionError):
+                self.__installer.get_set_progress(False)
+
+    # ---------------------------------------------------------------------------
+
+    def test_get_nbpf(self):
+        """Test if the methods get_set_progress from the class Installer works well.
+
+        """
+        self.setUp()
+
+        y = self.__windows.get_nbpf(self.__installer.get_features()[0])
+        self.assertEqual(y, 3)
+
+        y = self.__windows.get_nbpf(self.__installer.get_features()[0])
+        self.assertEqual(y, 3)
+
+        y = self.__windows.get_nbpf(self.__installer.get_features()[0])
+        self.assertEqual(y, 3)
+
+    # ---------------------------------------------------------------------------
+
+    def test_calcul_pourc(self):
+        """Test if the methods get_set_progress from the class Installer works well.
+
+        """
+        self.setUp()
+
+        y = self.__installer.calcul_pourc()
+        x = round((100 / len(self.__installer.get_features()) / 3), 2)
+        self.assertEqual(y, 11.11)
+        self.assertEqual(y, x)
 
     # ---------------------------------------------------------------------------
 
@@ -367,13 +419,13 @@ class TestInstaller(unittest.TestCase):
         """
         self.setUp()
 
-        self.__installer.install_cmds("aaaaaaaaaa", self.__feature.get_id())
+        self.__installer.install_cmds("aaaaaaaaaa", self.__feature)
         y = len(self.__installer.get_cmd_errors()) != 0
         self.assertTrue(y)
 
         self.__installer.set_cmd_errors("")
 
-        self.__installer.install_cmds("pip freeze", self.__feature.get_id())
+        self.__installer.install_cmds("pip freeze", self.__feature)
         y = len(self.__installer.get_cmd_errors()) != 0
         self.assertFalse(y)
 
@@ -736,6 +788,9 @@ class TestInstaller(unittest.TestCase):
 
 
 test = TestInstaller()
+test.test_get_set_progress()
+test.test_get_nbpf()
+test.test_calcul_pourc()
 test.test_get_set_req()
 test.test_get_set_cmdos()
 test.test_get_set_cfg_exist()

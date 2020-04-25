@@ -36,6 +36,7 @@ import unittest
 import sys
 
 from sppas.src.config.support import sppasInstallerDeps, Deb, Windows, Dnf, Rpm, CygWin, MacOs
+from sppas.src.ui.term.textprogress import ProcessProgressTerminal
 
 # ---------------------------------------------------------------------------
 
@@ -46,7 +47,8 @@ class TestInstallerDeps(unittest.TestCase):
         """Initialisation des tests.
 
         """
-        self.__installer_deps = sppasInstallerDeps()
+        p = ProcessProgressTerminal()
+        self.__installer_deps = sppasInstallerDeps(p)
 
     # ---------------------------------------------------------------------------
 
@@ -155,7 +157,7 @@ class TestInstallerDeps(unittest.TestCase):
                 enables += "(" + f.get_desc() + "," + f.get_id() + ") available = " + str(
                     f.get_available()) + "/ enable " \
                                          "= " + \
-                           str(f.get_enable()) + "\n "
+                           str(f.get_enable()) + "\n"
             self.assertEqual(b, enables)
 
             for feature in a:
@@ -169,7 +171,7 @@ class TestInstallerDeps(unittest.TestCase):
                 enables += "(" + f.get_desc() + "," + f.get_id() + ") available = " + str(
                     f.get_available()) + "/ enable " \
                                          "= " + \
-                           str(f.get_enable()) + "\n "
+                           str(f.get_enable()) + "\n"
             self.assertEqual(b, enables)
 
         if self.__installer_deps.get_os() == MacOs:
