@@ -321,7 +321,7 @@ class Installer:
         :param feature: (Feature) The feature you use.
 
         """
-        pourc = round((len(self.get_features()) / 3), 2)
+        pourc = round((1 / len(self.get_features()) / 3), 3)
         return pourc
 
     # ---------------------------------------------------------------------------
@@ -541,9 +541,7 @@ class Installer:
         command = command.strip()
 
         try:
-            print(command)
             command = str(command)
-            print(command)
             cmd = Popen(command.split(" "), stdout=PIPE, stderr=PIPE, text=True)
             cmd.wait()
             error = cmd.stderr.read()
@@ -1460,7 +1458,6 @@ class MacOs(Installer):
         :param package: (string) The system package will try to update on your computer.
 
         """
-        print("a")
         package = str(package)
         cmd = Popen(["brew", "upgrade", package], stdout=PIPE, stderr=PIPE,
                     text=True)

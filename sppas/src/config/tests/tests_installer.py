@@ -99,8 +99,8 @@ class TestInstaller(unittest.TestCase):
         self.setUp()
 
         y = self.__installer.calcul_pourc()
-        x = round((100 / len(self.__installer.get_features()) / 3), 2)
-        self.assertEqual(y, 11.11)
+        x = round((1 / len(self.__installer.get_features()) / 3), 3)
+        self.assertEqual(y, 0.111)
         self.assertEqual(y, x)
 
     # ---------------------------------------------------------------------------
