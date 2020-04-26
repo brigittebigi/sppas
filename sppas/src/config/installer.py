@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# !/usr/bin/env python
 # -*- coding : UTF-8 -*-
 """
     ..
@@ -321,7 +321,7 @@ class Installer:
         :param feature: (Feature) The feature you use.
 
         """
-        pourc = round((100 / len(self.get_features()) / 3), 2)
+        pourc = round((len(self.get_features()) / 3), 2)
         return pourc
 
     # ---------------------------------------------------------------------------
@@ -482,8 +482,8 @@ class Installer:
                 "{name} does not exist on your OS computer. \n".format(name=feature.get_id()))
         elif feature_command == "nil":
             self.__pbar.update(
-                    self.get_set_progress(self.calcul_pourc()),
-                    "You don't have any command to use because of your OS")
+                self.get_set_progress(self.calcul_pourc()),
+                "You don't have any command to use because of your OS")
         else:
             if self.search_cmds(feature.get_id()) is False:
                 self.install_cmds(feature_command, feature)
@@ -538,9 +538,12 @@ class Installer:
 
         self.set_cmd_errors("")
         command = str(command)
+        command = command.strip()
 
         try:
+            print(command)
             command = str(command)
+            print(command)
             cmd = Popen(command.split(" "), stdout=PIPE, stderr=PIPE, text=True)
             cmd.wait()
             error = cmd.stderr.read()
@@ -655,6 +658,7 @@ class Installer:
         stdout = cmd.stdout.read()
         error = cmd.stderr.read()
         if "not found" in error:
+            logging.info("\"{name}\" is not installed yet.".format(name=package))
             return True
         else:
             if self.need_update_pypi(stdout, req_version):
@@ -680,10 +684,10 @@ class Installer:
         v = ""
         i = 0
         for letter in version:
-            if not letter.isalpha():
+            if letter.isalpha() is False:
                 if letter == ".":
                     i += 1
-                if i == 2:
+                if i == 2 or letter == " ":
                     break
                 v += letter
             else:
@@ -694,6 +698,7 @@ class Installer:
         comparator = req_version[0]
         comparator += "="
 
+        v = v.strip()
         v = float(v)
         version = float(req_version[1])
 
@@ -1335,7 +1340,14 @@ class MacOs(Installer):
         or not on your computer.
 
         """
-        return True
+        package = str(package)
+        cmd = Popen(["brew", "list", package], stdout=PIPE, stderr=PIPE, text=True)
+        cmd.wait()
+        error = cmd.stderr.read()
+        if len(error) != 0:
+            return False
+        else:
+            return True
 
     # ---------------------------------------------------------------------------
 
@@ -1345,21 +1357,55 @@ class MacOs(Installer):
         :param package: (string) The system package will try to install on your computer.
 
         """
-        raise NotImplementedError
+        package = str(package)
+        cmd = Popen(["brew", "install", package], stdout=PIPE, stderr=PIPE,
+                    text=True)
+        cmd.wait()
+        error = cmd.stderr.read()
+        error = str(error)
+        if len(error) != 0:
+            if "Warning: You are using macOS" in error:
+                if self.search_package(package) is False:
+                    self.set_system_errors("An error has occurred during the installation of the package : {name} "
+                                           "\n {error} \n".format(name=package, error=error))
+                else:
+                    logging.info("The installation of \"{name}\" is a success.".format(name=package))
+            elif "No available" in error:
+                self.set_system_errors("\n The package \"{name}\" isn't a package of brew : "
+                                       "\n {error} \n".format(name=package, error=error))
+            else:
+                self.set_system_errors("An error has occurred during the installation of the package : {name} "
+                                       "\n {error} \n".format(name=package, error=error))
+        else:
+            logging.info("The installation of \"{name}\" is a success.".format(name=package))
 
     # ---------------------------------------------------------------------------
 
     def version_package(self, package, req_version):
         """Update the system package given as an argument on your computer.
 
-        :param package: (string) The system package you are searching if his version is enough
+        :param package: (string) The brew package you are searching if his version is enough
         recent or not.
 
-        :param req_version: (string) The minimum version you need to have for this system
+        :param req_version: (string) The minimum version you need to have for this brew
         package.
 
         """
-        return True
+        package = str(package)
+        req_version = str(req_version)
+        cmd = Popen(["brew", "info", package], stdout=PIPE, stderr=PIPE,
+                    text=True)
+        cmd.wait()
+        stdout = cmd.stdout.read()
+        error = cmd.stderr.read()
+        if len(error) != 0:
+            self.set_system_errors("\"{name}\" is not installed yet.".format(name=package))
+            return True
+        else:
+            if self.need_update_package(stdout, req_version):
+                return False
+            else:
+                return True
 
     # ---------------------------------------------------------------------------
 
@@ -1374,7 +1420,37 @@ class MacOs(Installer):
         package you used has an argument in the "version_package" method.
 
         """
-        raise NotImplementedError
+        stdout_show = str(stdout_show)
+        req_version = str(req_version)
+        version = stdout_show.split("\n")[0].split("stable")[1].strip()
+        v = ""
+        i = 0
+        for letter in version:
+            if letter.isalpha() is False:
+                if letter == ".":
+                    i += 1
+                if i == 2 or letter == " ":
+                    break
+                v += letter
+            else:
+                break
+
+        req_version = req_version.split(";", maxsplit=1)
+
+        comparator = req_version[0]
+        comparator += "="
+
+        v = v.strip()
+        v = float(v)
+        version = float(req_version[1])
+
+        if comparator == ">=":
+            if v < version:
+                return True
+            else:
+                return False
+        else:
+            raise ValueError("Your comparator : " + comparator + " does not refer to a valid comparator")
 
     # ---------------------------------------------------------------------------
 
@@ -1384,7 +1460,22 @@ class MacOs(Installer):
         :param package: (string) The system package will try to update on your computer.
 
         """
-        raise NotImplementedError
+        print("a")
+        package = str(package)
+        cmd = Popen(["brew", "upgrade", package], stdout=PIPE, stderr=PIPE,
+                    text=True)
+        cmd.wait()
+        error = cmd.stderr.read()
+        error = str(error)
+        if len(error) != 0:
+            if "Could not find" in error:
+                self.set_pypi_errors("\n The package \"{name}\" isn't a package of brew : "
+                                     "\n {error} \n".format(name=package, error=error))
+            else:
+                self.set_pypi_errors("An error has occurred during the updating of the package : {name} "
+                                     "\n {error} \n".format(name=package, error=error))
+        else:
+            logging.info("The update of {name} is a success.".format(name=package))
 
     # ---------------------------------------------------------------------------
 
