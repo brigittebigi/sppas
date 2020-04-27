@@ -171,7 +171,7 @@ class sppasInstallerDeps:
         """Return the value of the private attribute __Exploit_syst.
 
         """
-        return self.__installer.get_cfg_exist()
+        return self.__installer.get_features().get_cfg_exist()
 
     # ---------------------------------------------------------------------------
 
@@ -203,7 +203,7 @@ class sppasInstallerDeps:
         """Set features in __features with the one in __installer.
 
         """
-        self.__features = self.__installer.get_features()
+        self.__features = self.__installer.get_features().get_features()
 
     # ---------------------------------------------------------------------------
 

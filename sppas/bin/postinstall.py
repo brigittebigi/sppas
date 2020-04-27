@@ -44,7 +44,6 @@ sys.path.append(SPPAS)
 from sppas import sg
 from sppas.src.config.support import sppasInstallerDeps
 
-from sppas.src.anndata.aio import extensions_out
 from sppas import sppasLogSetup
 from sppas.src.ui.term.textprogress import ProcessProgressTerminal
 from sppas.src.ui.term.terminalcontroller import TerminalController
@@ -59,29 +58,27 @@ if __name__ == "__main__":
     installer = sppasInstallerDeps(p)
     features = installer.get_features()
     cmd_features = list()
+    i = 0
 
     def search_feature(string):
         for feature in features:
             if string == feature.get_id():
                 return feature
 
+
     parser = ArgumentParser(
         usage="%(prog)s [action]",
-        description="PostInstall commmand interface.",
+        description="PostInstall commmand interface.\n" +
+        installer.get_enables(),
         epilog="This program is part of {:s} version {:s}. {:s}. Contact the "
                "author at: {:s}".format(sg.__name__, sg.__version__,
-                                        sg.__copyright__, sg.__contact__)
+                                        sg.__copyright__, sg.__contact__),
     )
 
     # Add arguments from the features of features.ini
     # -----------------------------------------------
 
     group_act = parser.add_argument_group('Action')
-
-    group_act.add_argument(
-        "--install",
-        action='store_true',
-        help="Launch the installation procedure of the features for you OS")
 
     for feature in features:
         cmd_features.append(feature.get_id())
@@ -97,15 +94,6 @@ if __name__ == "__main__":
             action='store_true',
             help="Disable the {desc}"
             .format(desc=feature.get_desc()))
-
-    # Add arguments from the features of features.ini
-    # -----------------------------------------------
-
-    parser.add_argument(
-        "-e",
-        "--enable",
-        action='store_true',
-        help="Show for each feature if it is available on your OS and if the installation is enable.")
 
     # Force to print help if no argument is given then parse
     # ------------------------------------------------------
@@ -128,34 +116,26 @@ if __name__ == "__main__":
         print(term.render('${BLUE} {} ${NORMAL}').format(sg.__url__))
         print(term.render('${GREEN}{:s}${NORMAL}\n').format(sep))
 
-        # Redirect all messages to a quiet logging
+        # Redirect all messages to a logging
         # ----------------------------------------
-        lgs = sppasLogSetup(50)
+        lgs = sppasLogSetup(0)
         lgs.null_handler()
 
     except:
         print('{:s}\n'.format(sep))
         print('{}   -  Version {}'.format(sg.__name__, sg.__version__))
         print(sg.__copyright__)
-        print(sg.__url__+'\n')
+        print(sg.__url__ + '\n')
         print('{:s}\n'.format(sep))
 
-        # Redirect all messages to a quiet logging
+        # Redirect all messages to a logging
         # ----------------------------------------
-        lgs = sppasLogSetup(50)
-        lgs.stream_handler()
+        lgs = sppasLogSetup(0)
+        lgs.null_handler()
 
     # -----------------------------------------------------------------------
     # The installation process is here:
     # -----------------------------------------------------------------------
-
-    # Get the values of available and enable attributes for each feature
-    # ------------------------------------------------------------------
-
-    if args.enable:
-        print("If an feature has his available = False, even if you set enable to true it wont install the feature. "
-              "\nBecause \"available = false\" mean that the installer can't install the feature on your OS.")
-        print(installer.get_enables())
 
     # Set the values of enable attribute for each feature
     # ---------------------------------------------------
@@ -181,11 +161,10 @@ if __name__ == "__main__":
     # Lauch the installation procedure
     # --------------------------------
 
-    if args.install:
-        if installer.get_install() is True:
-            print("You already installed the features.\n"
-                  "If you want to reinstalled it you have to remove the file \"config.ini\"")
-        installer.install()
+    if installer.get_install() is True:
+        print("You already installed the features.\n"
+              "If you want to reinstalled it you have to remove the file \"config.ini\"")
+    installer.install()
 
     try:
         term = TerminalController()
@@ -200,5 +179,3 @@ if __name__ == "__main__":
         print('{:s}\n'.format(sep))
 
     p.close()
-
-

@@ -28,74 +28,79 @@
 
         ---------------------------------------------------------------------
 
-    src.config.tests.test_installer_macos.py
+    src.config.tests.test_windows.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
 import unittest
 from sppas.src.ui.term.textprogress import ProcessProgressTerminal
-from sppas.src.config.installer import MacOs, Feature, cp
+from sppas.src.config.installer import Windows, Feature
 
 # ---------------------------------------------------------------------------
 
 
-class TestInstallerMacOs(unittest.TestCase):
+class TestInstallerWin(unittest.TestCase):
 
     def setUp(self):
         """Initialisation des tests.
 
         """
         p = ProcessProgressTerminal()
-        self.__macos = MacOs(p)
+        self.__windows = Windows(p)
         self.__feature = Feature()
 
     # ---------------------------------------------------------------------------
 
     def test_search_package(self):
-        """Test if the method search_package from the class MacOs works well.
+        """Test if the method search_package from the class Windows works well.
 
         """
-        self.assertTrue(self.__macos.search_package("aaaa"))
+        self.assertTrue(self.__windows.search_package("aaaa"))
 
     # ---------------------------------------------------------------------------
 
     def test_install_package(self):
-        """Test if the method install_package from the class MacOs works well.
+        """Test if the method install_package from the class Windows works well.
 
         """
         with self.assertRaises(NotImplementedError):
-            self.__macos.install_package("aaaa")
+            self.__windows.install_package("aaaa")
 
     # ---------------------------------------------------------------------------
 
     def test_version_package(self):
-        """Test if the method version_package from the class MacOs works well.
+        """Test if the method version_package from the class Windows works well.
 
         """
-        self.assertTrue(self.__macos.version_package("aaaa", "aaaa"))
+        self.assertTrue(self.__windows.version_package("aaaa", "aaaa"))
 
     # ---------------------------------------------------------------------------
 
     def test_need_update_package(self):
-        """Test if the method need_update_package from the class MacOs works well.
+        """Test if the method need_update_package from the class Windows works well.
 
         """
         with self.assertRaises(NotImplementedError):
-            self.__macos.need_update_package("aaaa", "aaaa")
+            self.__windows.need_update_package("aaaa", "aaaa")
 
     # ---------------------------------------------------------------------------
 
     def test_update_package(self):
-        """Test if the method update_package from the class MacOs works well.
+        """Test if the method update_package from the class Windows works well.
 
         """
         with self.assertRaises(NotImplementedError):
-            self.__macos.update_package("aaaa")
+            self.__windows.update_package("aaaa")
 
     # ---------------------------------------------------------------------------
 
 
-test = TestInstallerMacOs()
+test = TestInstallerWin()
 test.setUp()
+test.test_search_package()
+test.test_install_package()
+test.test_version_package()
+test.test_need_update_package()
+test.test_update_package()
 

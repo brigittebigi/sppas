@@ -28,18 +28,18 @@
 
         ---------------------------------------------------------------------
 
-    src.config.tests.tests_features.py
+    src.config.tests.test_feature.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 import unittest
 
-from sppas.src.config.features import Feature
+from sppas.src.config.feature import Feature
 
 # ---------------------------------------------------------------------------
 
 
-class TestFeatures(unittest.TestCase):
+class TestFeature(unittest.TestCase):
 
     def setUp(self):
         """Initialisation des tests.
@@ -301,7 +301,7 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(y, "4")
 
 
-test = TestFeatures()
+test = TestFeature()
 test.test_get_set_enable()
 test.test_get_set_available()
 test.test_get_set_id()

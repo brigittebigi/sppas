@@ -39,8 +39,18 @@
 
 """
 
+import os
 
-class Feature:
+try:
+    import configparser as cp
+except ImportError:
+    import ConfigParser as cp
+
+from sppas.src.config.support import sppasPathSettings
+from sppas.src.config.feature import Feature
+
+
+class Features:
     """Creation features.
 
         :author:       Florian Hocquet
@@ -50,215 +60,216 @@ class Feature:
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
         :summary:      a script to use workspaces from terminal
 
-        This class allows you to represent, by creating an object, one of the
-        different features you have in your software.
-        To use an object Feature you have to intantiate it without arguments,
-        an then you can fix the values of privates attributes of your Feature
-        object, there are 5 privates attributes :
-
-        - enable
-        - available
-        - id
-        - dict_packages
-        - dict_pypi
-
-        To fix their values you have to use the getters and the setters
-        of the Feature.
-        For example :
-
-        >>> feature = Feature()
-        >>> feature.set_enable(True)
-        >>> feature.set_available(True)
-        >>> feature.set_id("feature")
-        >>> feature.set_packages({"1": "a"})
-        >>> feature.set_pypi({"2": "b"})
-        >>> feature.set_cmd("pip freeze")
-
-        You can set the values of your privates attributes with the setters by parsing
-        a requirements.ini file.
-
     """
 
-    def __init__(self):
+    def __init__(self, req, cmdos):
         """Create a new Feature instance.
 
         """
-        # An identifier to represent if the feature is enable or no
-        self.__enable = False
-
-        # An identifier to represent if the feature is available on your system or no
-        self.__available = True
-
-        # An identifier that represent the id/name of the feature
-        self.__id = str()
-
-        # An identifier that represent the description of the feature
-        self.__desc = str()
-
-        # An identifier to represent the required system packages
-        self.__packages = dict()
-
-        # An identifier to represent the required pip packages
-        self.__pypi = dict()
-
-        # An identifier to represent a system command
-        self.__cmd = str()
+        self.__req = req
+        self.__cmdos = cmdos
+        self.__cfg_exist = False
+        self.__config_file = None
+        self.__config_parser = cp.ConfigParser()
+        self.__feature_file = self.set_features_file()
+        self.__features_parser = cp.ConfigParser()
+        self.__features = list()
+        self.init_config()
+        self.__features_parser = self.init_features()
+        self.set_features()
 
     # ---------------------------------------------------------------------------
 
-    def __str__(self):
-        """Print the privates attributes of your Feature object.
+    def init_config(self):
+        """Check if the config already exist or not.
 
         """
-        return "enable : " + str(self.get_enable()) + "\n" \
-               "available : " + str(self.get_available()) + "\n" \
-               "id : " + str(self.get_id()) + "\n" \
-               "desc : " + str(self.get_desc()) + "\n" \
-               "packages : " + str(self.get_packages()) + "\n" \
-               "pypi : " + str(self.get_pypi()) + "\n" \
-               "cmd : " + str(self.get_cmd()) + "\n"
+        paths = sppasPathSettings()
+        config_file = os.path.join(paths.basedir, "config.ini")
+        self.__config_file = config_file
 
-    # ---------------------------------------------------------------------------
-
-    def get_enable(self):
-        """Return the value of the private attribute enable of the instantiate Feature.
-
-        """
-        return self.__enable
-
-    # ---------------------------------------------------------------------------
-
-    def get_available(self):
-        """Return the value of the private attribute available of the instantiate Feature.
-
-        """
-        return self.__available
-    # ---------------------------------------------------------------------------
-
-    def set_enable(self, value):
-        """Fix the value of the private attribute __enable.
-
-        :param value: (boolean) The boolean which represent if you want to install the
-        feature or if it's installed or not on your system.
-
-        """
-        if not self.get_available():
-            self.__enable = False
+        if os.path.exists(config_file) is False:
+            self.set_cfg_exist(False)
         else:
-            value = bool(value)
-            self.__enable = value
+            self.set_cfg_exist(True)
 
     # ---------------------------------------------------------------------------
 
-    def set_available(self, value):
-        """Fix the value of the private attribute __available.
+    def get_cfg_exist(self):
+        """Return the private attribute __cfg_exist.
 
-        :param value: (boolean) The boolean which represent if you want to install the
-        feature or if it is already installed or not on your system.
+        """
+        return self.__cfg_exist
+
+    # ---------------------------------------------------------------------------
+
+    def set_cfg_exist(self, value):
+        """Set the value of the private attribute __cfg_exist.
+
+        :param value: (boolean) The boolean which represent if the file config_file
+        already exist or not in your sppas directory.
+
         """
         value = bool(value)
-        if not value:
-            self.set_enable(False)
-        self.__available = value
+        self.__cfg_exist = value
 
     # ---------------------------------------------------------------------------
 
-    def get_id(self):
-        """Return the value of the private attribute __id of the instantiate Feature.
+    def get_config_file(self):
+        """Return the private file __config_file.
 
         """
-        return self.__id
+        return self.__config_file
 
     # ---------------------------------------------------------------------------
 
-    def set_id(self, value):
-        """Fix the value of the private attribute __id.
-
-        :param value: (str) The id/name which represent the feature.
+    def get_config_parser(self):
+        """Return the private parser __config_parser.
 
         """
-        value = str(value)
-        self.__id = value
+        return self.__config_parser
 
     # ---------------------------------------------------------------------------
 
-    def get_desc(self):
-        """Return the value of the private attribute __desc of the instantiate Feature.
+    def set_features_file(self):
+        """Return a the your features.ini file.
 
         """
-        return self.__desc
+        paths = sppasPathSettings()
+        feature_file = os.path.join(paths.etc, "features.ini")
+        self.__feature_file = feature_file
+
+        if os.path.exists(feature_file) is False:
+            raise IOError('Installation error: the file to configure the '
+                          'list of features does not exist.')
+        return feature_file
 
     # ---------------------------------------------------------------------------
 
-    def set_desc(self, value):
-        """Fix the value of the private attribute __desc.
-
-        :param value: (str) The description which represent the feature.
+    def init_features(self):
+        """Return a parsed version of your features.ini file.
 
         """
-        value = str(value)
-        self.__desc = value
+        features_parser = cp.ConfigParser()
+        try:
+            features_parser.read(self.get_feature_file())
+        except cp.MissingSectionHeaderError:
+            raise IOError("Votre fichier ne contient pas de sections")
+        return features_parser
 
     # ---------------------------------------------------------------------------
 
-    def get_packages(self):
-        """Return the packages_dictionary, of the required system packages, of the instantiate Feature.
+    def set_features(self):
+        """Create and initialize each Feature object which compose your private list __feature.
+
+        This method browse your feature.ini file and for each section in it, it
+        create a Feature object in your private list __feature with the same content.
 
         """
-        return self.__packages
+        list_features = (self.__features_parser.sections())
+        self.__features = list()
+        for f in list_features:
+            feature = Feature()
+
+            feature.set_id(f)
+
+            desc = self.__features_parser.get(f, "desc")
+            feature.set_desc(desc)
+
+            feature.set_enable(self.__features_parser.getboolean(f, "enable"))
+
+            d = self.__features_parser.get(f, self.__req)
+            if d == "nil" or d == "":
+                feature.set_packages({"nil": "1"})
+                feature.set_available(True)
+            else:
+                feature.set_available(True)
+                depend_packages = self.parse_depend(d)
+                feature.set_packages(depend_packages)
+
+            d = self.__features_parser.get(f, "req_pip")
+            if d == "nil" or d == "":
+                feature.set_pypi({"nil": "1"})
+            else:
+                depend_pypi = self.parse_depend(d)
+                feature.set_pypi(depend_pypi)
+
+            cmd = self.__features_parser.get(f, self.__cmdos)
+            if cmd == "none":
+                feature.set_available(False)
+            feature.set_cmd(cmd)
+
+            self.__features.append(feature)
 
     # ---------------------------------------------------------------------------
 
-    def set_packages(self, dependencies):
-        """Fix the values of the private attribute __packages.
+    @staticmethod
+    def parse_depend(string_require):
+        """Create a dictionary from the string given as an argument.
 
-        :param dependencies: (dict()) The dictionary with the one you will fill
-        your __packages, that represent some of the packages you will
-        install later.
+        :param string_require: (string) The value of one
+        of your req_*** key in one of the section of your feature.ini file.
 
         """
-        dependencies = dict(dependencies)
-        self.__packages = dependencies
+        string_require = str(string_require)
+        dependencies = string_require.split(" ")
+        depend = dict()
+        for line in dependencies:
+            tab = line.split(":")
+            depend[tab[0]] = tab[1]
+        return depend
 
     # ---------------------------------------------------------------------------
 
-    def get_pypi(self):
-        """Return the pypi_dictionary, of the required pypi packages, of the instantiate Feature.
+    def get_features(self):
+        """Return the private attribute list __features.
 
         """
-        return self.__pypi
+        return self.__features
 
     # ---------------------------------------------------------------------------
 
-    def set_pypi(self, dependencies):
-        """Fix the values of the private attribute __pypi.
-
-        :param dependencies: (dict()) The dictionary with the one you will fill
-        your __pypi, that represent some of the packages you will
-        install later.
+    def get_feature_file(self):
+        """Return the private file __feature_file.
 
         """
-        dependencies = dict(dependencies)
-        self.__pypi = dependencies
+        return self.__feature_file
 
     # ---------------------------------------------------------------------------
 
-    def get_cmd(self):
-        """Return the value of the private attribute __cmd of the instantiate Feature.
+    def get_features_parser(self):
+        """Return the private parser __features_parser.
 
         """
-        return self.__cmd
+        return self.__features_parser
 
     # ---------------------------------------------------------------------------
 
-    def set_cmd(self, value):
-        """Fix the value of the private attribute __cmd.
-
-        :param value: (str) The unique command for the OS.
+    def show_features(self):
+        """Print for each Feature object, in your private list __feature, his privates attributes.
 
         """
-        value = str(value)
-        self.__cmd = value
+        for f in self.__features:
+            print(f.__str__())
+
+    # ---------------------------------------------------------------------------
+
+    def configurate_enable(self, config_parser):
+
+        if isinstance(config_parser, cp.ConfigParser) is False:
+            raise NotImplementedError
+
+        config_parser.read(self.get_config_file())
+        options = config_parser.options("features")
+
+        for option in options:
+            for f in self.get_features():
+                if f.get_id() == option and f.get_available() is True:
+                    f.set_enable(config_parser.getboolean("features", option))
+                elif f.get_id() == option and f.get_available() is False:
+                    config_parser.set("features", f.get_id(), str(False).lower())
+
+        config_parser.write(open(self.get_config_file(), 'w'))
 
     # ---------------------------------------------------------------------------
 
