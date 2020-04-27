@@ -274,30 +274,6 @@ class sppasInstallerDeps:
 
     # ---------------------------------------------------------------------------
 
-    # def get_cmd_errors(self):
-    #     """Return the error which appends during the command installation.
-    #
-    #     """
-    #     return self.__installer.get_cmd_errors()
-    #
-    # # ---------------------------------------------------------------------------
-    #
-    # def get_system_errors(self):
-    #     """Return the error which appends during the system dependencies installation.
-    #
-    #     """
-    #     return self.__installer.get_system_errors()
-    #
-    # # ---------------------------------------------------------------------------
-    #
-    # def get_pypi_errors(self):
-    #     """Return the error which appends during the pypi dependencies installation.
-    #
-    #     """
-    #     return self.__installer.get_pypi_errors()
-    #
-    # # ---------------------------------------------------------------------------
-
     def install(self):
         """Launch the installation procedure of the __installer.
 

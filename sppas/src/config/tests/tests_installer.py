@@ -35,7 +35,7 @@
 
 import unittest
 from sppas.src.ui.term.textprogress import ProcessProgressTerminal
-from sppas.src.config.installer import Installer, Deb, Dnf, Rpm, Windows, CygWin, MacOs, Feature, cp
+from sppas.src.config.installer import Installer, Feature, cp
 
 
 # ---------------------------------------------------------------------------
@@ -49,7 +49,6 @@ class TestInstaller(unittest.TestCase):
         """
         p = ProcessProgressTerminal()
         self.__installer = Installer(p)
-        self.__windows = Windows(p)
         self.__feature = Feature()
 
     # ---------------------------------------------------------------------------
@@ -58,13 +57,14 @@ class TestInstaller(unittest.TestCase):
         """Test if the methods get_set_progress from the class Installer works well.
 
         """
-        self.setUp()
+        y = self.__installer.get_set_progress(0.5)
+        self.assertEqual(y, 0.5)
 
         y = self.__installer.get_set_progress(10)
-        self.assertEqual(y, 10)
+        self.assertEqual(y, 1)
 
         y = self.__installer.get_set_progress(10)
-        self.assertEqual(y, 20)
+        self.assertEqual(y, 1)
 
         with self.assertRaises(TypeError):
             self.__installer.get_set_progress("10")
@@ -75,29 +75,10 @@ class TestInstaller(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
-    def test_get_nbpf(self):
-        """Test if the methods get_set_progress from the class Installer works well.
-
-        """
-        self.setUp()
-
-        y = self.__windows.get_nbpf(self.__installer.get_features()[0])
-        self.assertEqual(y, 3)
-
-        y = self.__windows.get_nbpf(self.__installer.get_features()[0])
-        self.assertEqual(y, 3)
-
-        y = self.__windows.get_nbpf(self.__installer.get_features()[0])
-        self.assertEqual(y, 3)
-
-    # ---------------------------------------------------------------------------
-
     def test_calcul_pourc(self):
         """Test if the methods get_set_progress from the class Installer works well.
 
         """
-        self.setUp()
-
         y = self.__installer.calcul_pourc()
         x = round((1 / len(self.__installer.get_features()) / 3), 3)
         self.assertEqual(y, 0.111)
@@ -109,8 +90,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the methods get_req and set_req from the class Installer works well.
 
         """
-        self.setUp()
-
         self.__installer.set_req("aaaa")
         y = self.__installer.get_req()
         self.assertIsInstance(y, str)
@@ -142,8 +121,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the methods get_cmd and set_cmd from the class Installer works well.
 
         """
-        self.setUp()
-
         self.__installer.set_cmdos("aaaa")
         y = self.__installer.get_cmdos()
         self.assertIsInstance(y, str)
@@ -175,8 +152,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the methods get_cfg_exist and set_cfg_exist from the class Installer works well.
 
         """
-        self.setUp()
-
         self.__installer.set_cfg_exist(True)
         y = self.__installer.get_cfg_exist()
         self.assertIsInstance(y, bool)
@@ -208,8 +183,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the methods get_config_file from the class Installer works well.
 
         """
-        self.setUp()
-
         y = self.__installer.get_config_parser()
         self.assertIsInstance(y, cp.ConfigParser)
 
@@ -219,8 +192,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method init_features from the class Installer works well.
 
         """
-        self.setUp()
-
         y = self.__installer.get_config_parser()
         y.read(self.__installer.get_feature_file())
 
@@ -278,8 +249,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method parse_depend from the class Installer works well.
 
         """
-        self.setUp()
-
         y = self.__installer.parse_depend("aa:aa aa:aa aa:aa aa:aa")
         self.assertEqual(y, {'aa': 'aa'})
 
@@ -307,8 +276,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method get_features from the class Installer works well.
 
         """
-        self.setUp()
-
         self.assertIsInstance(self.__installer.get_features(), list)
 
     # ---------------------------------------------------------------------------
@@ -317,8 +284,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method get_features_parser from the class Installer works well.
 
         """
-        self.setUp()
-
         y = self.__installer.get_features_parser()
         self.assertIsInstance(y, cp.ConfigParser)
 
@@ -328,8 +293,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method get_cmd_errors and set_cmd_errors from the class Installer works well.
 
         """
-        self.setUp()
-
         self.__installer.set_cmd_errors("aaaa")
         y = self.__installer.get_cmd_errors()
         self.assertIsInstance(y, str)
@@ -361,8 +324,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method get_pypi_errors and set_pypi_errors from the class Installer works well.
 
         """
-        self.setUp()
-
         self.__installer.set_pypi_errors("msg1")
         y = self.__installer.get_pypi_errors()
         self.assertIsInstance(y, str)
@@ -389,8 +350,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method get_system_errors and Set_system_errors from the class Installer works well.
 
         """
-        self.setUp()
-
         self.__installer.set_system_errors("msg1")
         y = self.__installer.get_system_errors()
         self.assertIsInstance(y, str)
@@ -417,8 +376,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method install_cmds from the class Installer works well.
 
         """
-        self.setUp()
-
         self.__installer.install_cmds("aaaaaaaaaa", self.__feature)
         y = len(self.__installer.get_cmd_errors()) != 0
         self.assertTrue(y)
@@ -439,8 +396,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method install_cmd from the class Installer works well.
 
         """
-        self.setUp()
-
         self.__feature.set_cmd("cmd_windows")
 
         with self.assertRaises(NotImplementedError):
@@ -456,8 +411,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method search_cmds from the class Installer works well.
 
         """
-        self.setUp()
-
         self.assertFalse(self.__installer.search_cmds("wxpythonnnnnn"))
         self.assertFalse(self.__installer.search_cmds(4))
 
@@ -469,8 +422,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method install_pypis from the class Installer works well.
 
         """
-        self.setUp()
-
         with self.assertRaises(NotImplementedError):
             self.__installer.install_pypis(4)
 
@@ -488,8 +439,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method search_pypi from the class Installer works well.
 
         """
-        self.setUp()
-
         self.assertFalse(self.__installer.search_pypi("wxpythonnnnnn"))
         self.assertFalse(self.__installer.search_pypi(4))
 
@@ -501,8 +450,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method install_pypi from the class Installer works well.
 
         """
-        self.setUp()
-
         self.__installer.install_pypi("wxpythonnnn")
         y = len(self.__installer.get_pypi_errors()) != 0
         self.assertTrue(y)
@@ -527,8 +474,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method version_pypi from the class Installer works well.
 
         """
-        self.setUp()
-
         self.assertTrue(self.__installer.version_pypi("pip", ">;0.0"))
         self.assertTrue(self.__installer.version_pypi("wxpythonnnnnn", ">;4.0"))
         self.assertFalse(self.__installer.version_pypi("numpy", ">;8.0"))
@@ -548,8 +493,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method need_update_pypi from the class Installer works well.
 
         """
-        self.setUp()
-
         x = "Name: wxPython \n" \
             "Version: 4.0.7.post2 \n" \
             "Summary: Cross platform GUI toolkit \n" \
@@ -586,8 +529,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method update_pypi from the class Installer works well.
 
         """
-        self.setUp()
-
         self.__installer.update_pypi("wxpythonnnn")
         y = len(self.__installer.get_pypi_errors()) != 0
         self.assertTrue(y)
@@ -612,8 +553,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method install_packages from the class Installer works well.
 
         """
-        self.setUp()
-
         self.__feature.set_packages({"azfegsdfgsdg": ">;0.0"})
         with self.assertRaises(NotImplementedError):
             self.__installer.install_packages(self.__feature)
@@ -634,8 +573,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method search_package from the class Installer works well.
 
         """
-        self.setUp()
-
         with self.assertRaises(NotImplementedError):
             self.__installer.search_package("aaaa")
 
@@ -645,8 +582,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method install_package from the class Installer works well.
 
         """
-        self.setUp()
-
         with self.assertRaises(NotImplementedError):
             self.__installer.install_package("aaaa")
 
@@ -656,8 +591,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method version_package from the class Installer works well.
 
         """
-        self.setUp()
-
         with self.assertRaises(NotImplementedError):
             self.__installer.version_package("aaaa", "aaaa")
 
@@ -667,8 +600,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method need_update_package from the class Installer works well.
 
         """
-        self.setUp()
-
         with self.assertRaises(NotImplementedError):
             self.__installer.need_update_package("aaaa", "aaaa")
 
@@ -678,8 +609,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method update_package from the class Installer works well.
 
         """
-        self.setUp()
-
         with self.assertRaises(NotImplementedError):
             self.__installer.update_package("aaaa")
 
@@ -689,8 +618,6 @@ class TestInstaller(unittest.TestCase):
         """Test if the method configurate_enable from the class Installer works well.
 
         """
-        self.setUp()
-
         if self.__installer.get_cfg_exist() is True:
             with self.assertRaises(NotImplementedError):
                 self.__installer.configurate_enable("aaaa")
@@ -733,63 +660,10 @@ class TestInstaller(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
-    def Win_test_search_package(self):
-        """Test if the method search_package from the class Installer works well.
-
-        """
-        self.setUp()
-
-        self.assertTrue(self.__windows.search_package("aaaa"))
-
-    # ---------------------------------------------------------------------------
-
-    def Win_test_install_package(self):
-        """Test if the method install_package from the class Installer works well.
-
-        """
-        self.setUp()
-
-        with self.assertRaises(NotImplementedError):
-            self.__windows.install_package("aaaa")
-
-    # ---------------------------------------------------------------------------
-
-    def Win_test_version_package(self):
-        """Test if the method version_package from the class Installer works well.
-
-        """
-        self.setUp()
-
-        self.assertTrue(self.__windows.version_package("aaaa", "aaaa"))
-
-    # ---------------------------------------------------------------------------
-
-    def Win_test_need_update_package(self):
-        """Test if the method need_update_package from the class Installer works well.
-
-        """
-        self.setUp()
-
-        with self.assertRaises(NotImplementedError):
-            self.__windows.need_update_package("aaaa", "aaaa")
-
-    # ---------------------------------------------------------------------------
-
-    def Win_test_update_package(self):
-        """Test if the method update_package from the class Installer works well.
-
-        """
-        self.setUp()
-
-        with self.assertRaises(NotImplementedError):
-            self.__windows.update_package("aaaa")
-
-    # ---------------------------------------------------------------------------
-
 
 test = TestInstaller()
+test.setUp()
 test.test_get_set_progress()
-test.test_get_nbpf()
 test.test_calcul_pourc()
 test.test_get_set_req()
 test.test_get_set_cmdos()
@@ -818,9 +692,4 @@ test.test_version_package()
 test.test_need_update_package()
 test.test_update_package()
 test.test_configurate_enable()
-test.Win_test_search_package()
-test.Win_test_install_package()
-test.Win_test_version_package()
-test.Win_test_need_update_package()
-test.Win_test_update_package()
 

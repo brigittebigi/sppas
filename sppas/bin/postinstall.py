@@ -130,7 +130,7 @@ if __name__ == "__main__":
 
         # Redirect all messages to a quiet logging
         # ----------------------------------------
-        lgs = sppasLogSetup()
+        lgs = sppasLogSetup(50)
         lgs.null_handler()
 
     except:
@@ -177,8 +177,9 @@ if __name__ == "__main__":
                 a = a.replace("no", "")
                 installer.unset_enable(search_feature(a))
 
+    # --------------------------------
     # Lauch the installation procedure
-    # -------------------------------
+    # --------------------------------
 
     if args.install:
         if installer.get_install() is True:

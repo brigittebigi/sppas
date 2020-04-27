@@ -112,6 +112,8 @@ class Installer:
 
         """
         self.__progression += value
+        if self.__progression >= 0.99:
+            self.__progression = 1
         return self.__progression
 
     # ---------------------------------------------------------------------------
@@ -304,17 +306,6 @@ class Installer:
 
     # ---------------------------------------------------------------------------
 
-    def get_nbpf(self, feature):
-        """Return the number of packages you will install for a feature.
-
-        :param feature: (Feature) The feature you want to calcul the number of package you will install.
-
-        """
-        nb_packages = 1 + len(feature.get_packages()) + len(feature.get_pypi())
-        return nb_packages
-
-    # ---------------------------------------------------------------------------
-
     def calcul_pourc(self):
         """Return pourcentage of progression.
 
@@ -431,13 +422,13 @@ class Installer:
                 self.__pbar.set_header("Begining of the installation for the feature \"" + f.get_desc() + "\"")
                 if f.get_available() is False:
                     self.__pbar.update(
-                        self.get_set_progress(round(100 / len(self.get_features()), 2)),
+                        self.get_set_progress(round(1 / len(self.get_features()), 2)),
                         "{name} can't be installed by using only command line on your computer because "
                         "of your OS. \n".format(name=f.get_id()))
                     continue
                 if f.get_enable() is False:
                     self.__pbar.update(
-                        self.get_set_progress(round(100 / len(self.get_features()), 2)),
+                        self.get_set_progress(round(1 / len(self.get_features()), 2)),
                         "You choose to don't install the feature \"{name}\" \n".format(name=f.get_id()))
                     continue
 
