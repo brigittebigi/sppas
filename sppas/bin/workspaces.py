@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding : UTF-8 -*-
+# -*- coding : utf-8 -*-
 """
     ..
         ---------------------------------------------------------------------
@@ -89,9 +89,10 @@ sys.path.append(SPPAS)
 from sppas import paths
 from sppas.src.config import sg
 from sppas.src.wkps.sppasWkps import sppasWkps
-from sppas.src.wkps import sppasWorkspace, FilePath, FileReference, States, sppasAttribute
+from sppas.src.wkps import sppasWorkspace, FileReference, States, sppasAttribute
 from sppas.src.wkps.fileexc import FileOSError
 from sppas.src.exc import sppasTypeError
+from sppas.src.wkps.wio.sppasWkpRW import sppasWkpRW
 
 if __name__ == "__main__":
 
@@ -313,7 +314,7 @@ if __name__ == "__main__":
             else:
                 if not args.quiet:
                     print("creating new workspace")
-                fd = sppasWorkspace(ws.new(ws_name))
+                fd = ws.new(ws_name)
             if not args.quiet:
                 print("working on : {}".format(ws_name))
 
@@ -328,14 +329,12 @@ if __name__ == "__main__":
             fd.add_file(args.af)
             if args.check:
                 fd.set_object_state(States().CHECKED, fd.get_object(args.af))
-            # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 print("added the file : {} ".format(args.af))
 
         # removing a file of a workspace
         if args.rf:
             fd.remove_file(args.rf)
-            # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 print("removed the file : {} from the workspace : {}".format(args.rf, ws_name))
 
@@ -347,7 +346,6 @@ if __name__ == "__main__":
             if fd.get_object(args.cf):
                 found = True
                 fd.set_object_state(States().CHECKED, fd.get_object(args.cf))
-                # ws.save_data(fd, ws.index(ws_name))
             for ref in fd.get_refs():
                 if ref.id == args.cf:
                     found = True
@@ -371,7 +369,7 @@ if __name__ == "__main__":
             if not found:
                 raise FileNotFoundError("ERROR : {} not found".format(args.uf))
             if not args.quiet:
-                print("{} : checked".format(args.uf))
+                print("{} : unchecked".format(args.uf))
 
         # check all the file(s) and reference(s)
         if args.check_all:
@@ -399,7 +397,6 @@ if __name__ == "__main__":
             if args.check:
                 ref.set_state(States().CHECKED)
             fd.add_ref(ref)
-            # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 print("reference : {} [{}] created".format(args.ar, ref.get_type()))
 
@@ -413,9 +410,9 @@ if __name__ == "__main__":
         # associate file(s) and reference(s)
         if args.associate:
             fd.associate()
-            # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 for file in fd.get_files():
+                    print(file)
                     for ref in fd.get_refs():
                         if ref.get_state() == States().CHECKED:
                             print("{} associated with {} ".format(file, ref))
@@ -432,6 +429,7 @@ if __name__ == "__main__":
 
         # sppasAttribute
         # --------------
+
         refs = fd.get_refs()
 
         # create a new attribute that we add to every checked references
@@ -476,6 +474,7 @@ if __name__ == "__main__":
                 print("removing : {}".format(args.ratt))
 
         fd.update()
+
         # checking if we work on a workspace
         if ws_name is not None:
             ws.save_data(fd, ws.index(ws_name))
@@ -496,7 +495,6 @@ if __name__ == "__main__":
                 # verifying if each path contained in the workspace exists on the system
                 for dict_path in d['paths']:
                     if ws.verify_path_exist(dict_path) is False:
-                        print("path {} doesn't exist on your system \n".format(dict_path['id']))
                         b = True
                         while b:
                             choice = input("modify path ? yes/no : ")
@@ -539,18 +537,27 @@ if __name__ == "__main__":
             if not args.quiet:
                 print("{} exported to {}".format(args.ew, filename))
 
-    except FileNotFoundError as e:
-        print(e)
-    except FileOSError as e:
-        print(e)
-    except ValueError as e:
-        print(e)
+        # TESTS
+        # -----
+
+        if args.test:
+            parser = sppasWkpRW("./test.wjson")
+            a = parser.read()
+            a.add_file("/home/laurent/Documents/stage/sppas/samples/samples-pol/0001.txt")
+            # parser.write()
+
+    # except FileNotFoundError as e:
+    #     print(e)
+    # except FileOSError as e:
+    #     print(e)
+    # except ValueError as e:
+    #     print(e)
     except sppasTypeError as e:
         print(e)
-    except KeyError as e:
-        print(e)
-    except OSError as e:
-        print(e)
+    # except KeyError as e:
+    #     print(e)
+    # except OSError as e:
+    #     print(e)
 
 
 
