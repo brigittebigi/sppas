@@ -33,12 +33,13 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+import os
 from collections import OrderedDict
 from .sppasWJSON import sppasWJSON
 from sppas.src.utils.makeunicode import u
 
-# ----------------------------------------------------------------------------
 
+# ----------------------------------------------------------------------------
 
 class sppasWkpRW():
     """
@@ -55,6 +56,11 @@ class sppasWkpRW():
     WORKSPACE_TYPES = OrderedDict()
     WORKSPACE_TYPES[sppasWJSON().default_extension.lower()] = sppasWJSON
 
+    @staticmethod
+    def extensions():
+        """Return the list of supported extensions in lower case."""
+        return list(sppasWkpRW.WORKSPACE_TYPES.keys())
+
     def __init__(self, filename):
         """Create a workspace reader/writer
 
@@ -64,17 +70,17 @@ class sppasWkpRW():
 
     # ------------------------------------------------------------------------
 
-    def read(self, filename):
+    def read(self):
         """Read a workspace from a file
 
-        :param filename: (str)
         :returns: sppasWkpRW reader-writer
         """
 
         try:
             wkp = sppasWkpRW.create_wkp_from_extension(self.__filename)
-        except FileNotFoundError as e:
-            print(e)
+            wkp.read(self.__filename)
+        except Exception:
+            raise
 
         return wkp
 
@@ -88,19 +94,26 @@ class sppasWkpRW():
         :returns: sppasBaseWkpIO()
 
         """
-        for filereader in sppasWkpRW.WORKSPACE_TYPES.values():
-            try:
-                if filereader.detect(filename):
-                    return filereader()
-            except:
-                continue
-        return
+        extension = os.path.splitext(filename)[1][1:]
+        extension = extension.lower()
+
+        if extension in sppasWkpRW.extensions():
+            return sppasWkpRW.WORKSPACE_TYPES[extension]()
+        raise Exception
 
     # ------------------------------------------------------------------------
 
-    def write(self, workspace):
+    def write(self):
         """Write a workspace into a file
 
         :param workspace: (workspace)
 
         """
+        wkp_rw = sppasWkpRW.create_wkp_from_extension(self.__filename)
+
+        try:
+            wkp_rw.write(self.__filename)
+        except Exception:
+            raise
+
+
