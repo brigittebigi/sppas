@@ -116,7 +116,7 @@ class sppasWJSON(sppasBaseWkpIO):
         """
 
         if os.path.exists(filename) is False:
-            raise FileNotFoundError("ERROR {} not found on your system".format(filename))
+            raise FileNotFoundError("ERROR: {} not found on your system".format(filename))
 
         with open(filename, 'w') as f:
             json.dump(self._serialize(), f, indent=4, separators=(',', ': '))
