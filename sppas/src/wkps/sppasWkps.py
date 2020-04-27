@@ -46,6 +46,7 @@ from sppas.src.wkps.fileexc import FileOSError
 from sppas import paths
 from sppas import sppasIndexError
 from sppas.src.utils.makeunicode import sppasUnicode
+from sppas.src.wkps.wio.sppasWkpRW import sppasWkpRW
 
 # ---------------------------------------------------------------------------
 
@@ -190,11 +191,9 @@ class sppasWkps(object):
 
         # create the empty workspace data & save
         fn = os.path.join(paths.wkps, u_name) + sppasWkps.ext
-        data = sppasWorkspace()
-        data.save(fn)
 
         self.__wkps.append(u_name)
-        return u_name
+        return sppasWkpRW(fn).write()
 
     # -----------------------------------------------------------------------
 
@@ -322,7 +321,7 @@ class sppasWkps(object):
         except OSError:
             return sppasWorkspace()
 
-        return sppasWorkspace().load(filename)
+        return sppasWkpRW(filename).read()
 
     # -----------------------------------------------------------------------
 
@@ -348,7 +347,7 @@ class sppasWkps(object):
             u_name = self[index]
 
         filename = os.path.join(paths.wkps, u_name) + sppasWkps.ext
-        data.save(filename)
+        data.write(filename)
         return u_name
 
     # -----------------------------------------------------------------------
