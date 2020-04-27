@@ -99,21 +99,21 @@ class sppasWkpRW():
 
         if extension in sppasWkpRW.extensions():
             return sppasWkpRW.WORKSPACE_TYPES[extension]()
-        raise Exception
 
     # ------------------------------------------------------------------------
 
     def write(self):
         """Write a workspace into a file
 
-        :param workspace: (workspace)
-
         """
-        wkp_rw = sppasWkpRW.create_wkp_from_extension(self.__filename)
+        wkp = sppasWkpRW.create_wkp_from_extension(self.__filename)
 
         try:
-            wkp_rw.write(self.__filename)
+            wkp.write(self.__filename)
         except Exception:
             raise
+
+        return wkp
+
 
 
