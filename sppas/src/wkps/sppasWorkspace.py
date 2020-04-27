@@ -81,12 +81,12 @@
 
 """
 
-import json
+
 import os
 import logging
 
 from sppas import sppasTypeError
-from sppas.src.config import sg
+
 
 from .fileutils import sppasGUID
 from .filebase import FileBase, States
@@ -481,10 +481,9 @@ class sppasWorkspace(FileBase):
                         ref_extended = fr.get_references()
                         ref_extended.extend(ref_checked)
                         #
-                        # oskur
                         # fr.set_references(list(set(ref_extended)))
                         #
-                        fr.set_references(list(ref_extended))
+                        fr.set_references(list(set(ref_extended)))
                     else:
                         fr.set_references(ref_checked)
 
@@ -642,97 +641,6 @@ class sppasWorkspace(FileBase):
                     fp.update_state()
 
         return i
-
-    # -----------------------------------------------------------------------
-    # Read/Write the data into/from a file
-    # -----------------------------------------------------------------------
-
-    def serialize(self):
-        """Convert this sppasWorkspace() into a serializable data structure.
-
-        :returns: (dict) a dictionary that can be serialized (without classes).
-
-        """
-        d = dict()
-
-        # Factual information about this file and this sppasWorkspace()
-        d['wjson'] = "1.0"
-        d['software'] = sg.__name__
-        d['version'] = sg.__version__
-        d['id'] = self.id
-
-        # The list of paths/roots/files stored in this sppasWorkspace()
-        d['paths'] = list()
-        for fp in self.__files:
-            d['paths'].append(fp.serialize())
-
-        # The list of references/attributes stored in this sppasWorkspace()
-        d['catalogue'] = list()
-        for ref in self.__refs:
-            d['catalogue'].append(ref.serialize())
-        return d
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def parse(d):
-        wjson_version = d.get("wjson", "1.0")
-        soft_name = d.get("software", None)
-        soft_version = d.get("version", None)
-
-        if 'id' not in d:
-            raise KeyError("Workspace 'id' is missing of the dictionary to parse.")
-        data = sppasWorkspace(d['id'])
-
-        # The list of references/attributes stored in the given dict
-        if 'catalogue' in d:
-            for dictref in d['catalogue']:
-                r = FileReference.parse(dictref)
-                data.add_ref(r)
-
-        # The list of paths/roots/files stored in the given dict
-        if 'paths' in d:
-            for dict_path in d['paths']:
-                fp = FilePath.parse(dict_path)
-                data.add(fp)
-
-                # append references in roots from the 'refsids" of the dict
-                for dict_root in dict_path['roots']:
-                    fr = data.get_object(dict_root['id'])
-                    if fr is not None and 'refids' in dict_root:
-                        for ref_id in dict_root['refids']:
-                            ref = data.get_object(ref_id)
-                            if ref is not None:
-                                fr.add_ref(ref)
-
-        # Fix the state to roots and paths (from the ones of files)
-        data.update()
-        return data
-
-    # -----------------------------------------------------------------------
-
-    def save(self, filename):
-        """Save the current sppasWorkspace in a serialized file.
-
-        :param filename: (str) the name of the save file.
-
-        """
-        with open(filename, 'w') as fd:
-            json.dump(self.serialize(), fd, indent=4, separators=(',', ': '))
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def load(filename):
-        """Load a saved sppasWorkspace object from a save file.
-
-        :param filename: (str) the name of the save files.
-        :returns: sppasWorkspace
-
-        """
-        with open(filename, "r") as fd:
-            d = json.load(fd)
-            return sppasWorkspace.parse(d)
 
     # -----------------------------------------------------------------------
     # Proprieties
