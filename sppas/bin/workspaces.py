@@ -479,85 +479,84 @@ if __name__ == "__main__":
         if ws_name is not None:
             ws.save_data(fd, ws.index(ws_name))
 
-        # Import workspace
-        # ----------------
-
-        if args.iw:
-
-            # Modify corrupted path
-            # ----------------------
-            print("you may have imported this workspace from an other system \n"
-                  "if you don't modify the corrupted path the workspace will be deleted\n")
-            with open(args.iw, 'r') as file_read:
-                d = json.load(file_read)
-                deleted = False
-
-                # verifying if each path contained in the workspace exists on the system
-                for dict_path in d['paths']:
-                    if ws.verify_path_exist(dict_path) is False:
-                        b = True
-                        while b:
-                            choice = input("modify path ? yes/no : ")
-                            if choice not in ("yes", "yes ", "y", "no", "no ", "n"):
-                                continue
-                            if choice in ("yes", "yes ", "y"):
-                                new = input("enter the new path : ")
-                                ws.modify_path(dict_path, new)
-                                b = False
-                            else:
-                                os.remove(args.iw)
-                                b = False
-                                deleted = True
-
-            # rewriting the workspace with the right path
-            with open(args.iw, 'w') as file:
-                json.dump(d, file, indent=4, separators=(',', ': '))
-
-            # importing the workspace
-            ws.import_from_file(args.iw)
-
-            if not args.quiet:
-                if not deleted:
-                    print("{} imported".format(args.iw))
-                else:
-                    print("file {} deleted".format(args.iw))
-
-        # Export workspace
-        # ----------------
-
-        if args.ew:
-            print("enter the path you want to save this workspace")
-            filename = input()
-            path = filename.split(os.sep)
-            path.remove(path[-1])
-            if os.path.exists(os.sep.join(path)) is False:
-                raise FileOSError(path)
-            ws.export_to_file(ws.index(args.ew), filename)
-
-            if not args.quiet:
-                print("{} exported to {}".format(args.ew, filename))
+        #
+        #
+        # # Import workspace
+        # # ----------------
+        #
+        # if args.iw:
+        #
+        #     # Modify corrupted path
+        #     # ----------------------
+        #     print("you may have imported this workspace from an other system \n"
+        #           "if you don't modify the corrupted path the workspace will be deleted\n")
+        #     with open(args.iw, 'r') as file_read:
+        #         d = json.load(file_read)
+        #         deleted = False
+        #
+        #         # verifying if each path contained in the workspace exists on the system
+        #         for dict_path in d['paths']:
+        #             if ws.verify_path_exist(dict_path) is False:
+        #                 b = True
+        #                 while b:
+        #                     choice = input("modify path ? yes/no : ")
+        #                     if choice not in ("yes", "yes ", "y", "no", "no ", "n"):
+        #                         continue
+        #                     if choice in ("yes", "yes ", "y"):
+        #                         new = input("enter the new path : ")
+        #                         ws.modify_path(dict_path, new)
+        #                         b = False
+        #                     else:
+        #                         os.remove(args.iw)
+        #                         b = False
+        #                         deleted = True
+        #
+        #     # rewriting the workspace with the right path
+        #     with open(args.iw, 'w') as file:
+        #         json.dump(d, file, indent=4, separators=(',', ': '))
+        #
+        #     # importing the workspace
+        #     ws.import_from_file(args.iw)
+        #
+        #     if not args.quiet:
+        #         if not deleted:
+        #             print("{} imported".format(args.iw))
+        #         else:
+        #             print("file {} deleted".format(args.iw))
+        #
+        # # Export workspace
+        # # ----------------
+        #
+        # if args.ew:
+        #     print("enter the path you want to save this workspace")
+        #     filename = input()
+        #     path = filename.split(os.sep)
+        #     path.remove(path[-1])
+        #     if os.path.exists(os.sep.join(path)) is False:
+        #         raise FileOSError(path)
+        #     ws.export_to_file(ws.index(args.ew), filename)
+        #
+        #     if not args.quiet:
+        #         print("{} exported to {}".format(args.ew, filename))
 
         # TESTS
         # -----
 
         if args.test:
-            parser = sppasWkpRW("./test.wjson")
-            a = parser.read()
-            a.add_file("/home/laurent/Documents/stage/sppas/samples/samples-pol/0001.txt")
-            # parser.write()
+            print("debug")
 
-    # except FileNotFoundError as e:
-    #     print(e)
-    # except FileOSError as e:
-    #     print(e)
-    # except ValueError as e:
-    #     print(e)
+    except FileNotFoundError as e:
+        print(e)
+    except FileOSError as e:
+        print(e)
+    except ValueError as e:
+        print(e)
     except sppasTypeError as e:
         print(e)
-    # except KeyError as e:
-    #     print(e)
-    # except OSError as e:
-    #     print(e)
+    except KeyError as e:
+        print(e)
+    except OSError as e:
+        print(e)
 
 
 
