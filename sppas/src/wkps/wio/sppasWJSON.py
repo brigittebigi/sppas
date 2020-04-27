@@ -42,7 +42,6 @@ from .sppasBaseWkpIO import sppasBaseWkpIO
 from ..filebase import States
 from ..filestructure import FilePath, FileRoot, FileName
 from ..fileref import FileReference, sppasAttribute
-
 # ---------------------------------------------------------------------------
 
 
@@ -102,7 +101,7 @@ class sppasWJSON(sppasBaseWkpIO):
         :returns: (sppasWJSON)
         """
         if os.path.exists(filename) is False:
-            raise FileNotFoundError("ERROR {} not found on your system".format(filename))
+            raise Exception("ERROR {} not found on your system".format(filename))
         with open(filename, 'r') as f:
             d = json.load(f)
             self._parse(d)
@@ -115,8 +114,6 @@ class sppasWJSON(sppasBaseWkpIO):
         :param filename: (str)
         """
 
-        if os.path.exists(filename) is False:
-            raise FileNotFoundError("ERROR: {} not found on your system".format(filename))
 
         with open(filename, 'w') as f:
             json.dump(self._serialize(), f, indent=4, separators=(',', ': '))
@@ -251,7 +248,7 @@ class sppasWJSON(sppasBaseWkpIO):
 
         dict_files = dict()
         dict_files["id"] = fn.get_id().split(os.sep)[-1]
-        dict_files["states"] = fn.get_state()
+        dict_files["state"] = fn.get_state()
 
         return dict_files
 
