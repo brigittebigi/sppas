@@ -88,6 +88,114 @@ class TestInstaller(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
+    def test_get_set_actual_feature(self):
+        """Test if the methods get_actual_feature and set_actual_feature from the class Installer works well.
+
+        """
+        feature = Feature()
+        feature.set_id("Hello")
+        feature.set_desc("Goodbye")
+        feature.set_enable(False)
+        feature.set_available(True)
+
+        self.__installer.set_actual_feature(feature)
+        y = self.__installer.get_actual_feature()
+        self.assertEqual(y, feature)
+        self.assertEqual(y.get_id(), feature.get_id())
+        self.assertEqual(y.get_desc(), feature.get_desc())
+        self.assertEqual(y.get_enable(), feature.get_enable())
+        self.assertEqual(y.get_available(), feature.get_available())
+
+    # ---------------------------------------------------------------------------
+
+    def test_get_set_save_errors(self):
+        """Test if the methods get_total_errors, set_total_errors and save_errors from the class Installer works well.
+
+        """
+        self.__installer.save_errors("")
+        y = self.__installer.get_total_errors()
+        self.assertEqual(y, "")
+
+        self.__installer.set_total_errors("aaa")
+        y = self.__installer.get_total_errors()
+        self.assertEqual(y, "aaa")
+
+        self.__installer.save_errors("")
+        y = self.__installer.get_total_errors()
+        self.assertEqual(y, "aaa")
+
+        self.__installer.save_errors("bbbb")
+        y = self.__installer.get_total_errors()
+        self.assertEqual(y, "aaabbbb")
+
+    # ---------------------------------------------------------------------------
+
+    def test_show_save_cmd(self):
+        """Test if the methods show_save_cmd from the class Installer works well.
+
+        """
+        self.__installer.show_save_cmd("cmd1", "bbb")
+        y = self.__installer.get_cmd_errors()
+        self.assertEqual(y, "bbb")
+
+        self.__installer.show_save_cmd("cmd2", "ccc")
+        y = self.__installer.get_cmd_errors()
+        self.assertEqual(y, "ccc")
+
+        self.__installer.show_save_cmd("cmd3", "")
+        y = self.__installer.get_cmd_errors()
+        self.assertEqual(y, "")
+
+        self.__installer.show_save_cmd("cmd4", "bbb")
+        y = self.__installer.get_cmd_errors()
+        self.assertEqual(y, "bbb")
+
+    # ---------------------------------------------------------------------------
+
+    def test_show_save_system(self):
+        """Test if the methods show_save_system from the class Installer works well.
+
+        """
+        self.__installer.show_save_system("system1", "bbb")
+        y = self.__installer.get_system_errors()
+        self.assertEqual(y, "bbb")
+
+        self.__installer.show_save_system("system2", "ccc")
+        y = self.__installer.get_system_errors()
+        self.assertEqual(y, "bbbccc")
+
+        self.__installer.show_save_system("system3", "")
+        y = self.__installer.get_system_errors()
+        self.assertEqual(y, "")
+
+        self.__installer.show_save_system("system4", "bbb")
+        y = self.__installer.get_system_errors()
+        self.assertEqual(y, "bbb")
+
+    # ---------------------------------------------------------------------------
+
+    def test_show_save_pypi(self):
+        """Test if the methods show_save_pypi from the class Installer works well.
+
+        """
+        self.__installer.show_save_pypi("pypi1", "bbb")
+        y = self.__installer.get_cmd_errors()
+        self.assertEqual(y, "bbb")
+
+        self.__installer.show_save_pypi("pypi2", "ccc")
+        y = self.__installer.get_pypi_errors()
+        self.assertEqual(y, "bbbccc")
+
+        self.__installer.show_save_pypi("pypi3", "")
+        y = self.__installer.get_pypi_errors()
+        self.assertEqual(y, "")
+
+        self.__installer.show_save_pypi("pypi4", "bbb")
+        y = self.__installer.get_pypi_errors()
+        self.assertEqual(y, "bbb")
+
+    # ---------------------------------------------------------------------------
+
     def test_calcul_pourc(self):
         """Test if the methods get_set_progress from the class Installer works well.
 
@@ -134,6 +242,7 @@ class TestInstaller(unittest.TestCase):
         """Test if the method get_pypi_errors and set_pypi_errors from the class Installer works well.
 
         """
+        self.__installer.set_pypi_errors("")
         self.__installer.set_pypi_errors("msg1")
         y = self.__installer.get_pypi_errors()
         self.assertIsInstance(y, str)
@@ -160,6 +269,7 @@ class TestInstaller(unittest.TestCase):
         """Test if the method get_system_errors and Set_system_errors from the class Installer works well.
 
         """
+        self.__installer.set_system_errors("")
         self.__installer.set_system_errors("msg1")
         y = self.__installer.get_system_errors()
         self.assertIsInstance(y, str)
@@ -222,7 +332,6 @@ class TestInstaller(unittest.TestCase):
 
         """
         self.assertFalse(self.__installer.search_cmds("wxpythonnnnnn"))
-        self.assertFalse(self.__installer.search_cmds(4))
 
         self.assertTrue(self.__installer.search_cmds("pip"))
 
@@ -276,7 +385,7 @@ class TestInstaller(unittest.TestCase):
 
         self.__installer.install_pypi("wxpython")
         y = len(self.__installer.get_pypi_errors()) != 0
-        self.assertFalse(y)
+        self.assertTrue(y)
 
     # ---------------------------------------------------------------------------
 
@@ -355,7 +464,7 @@ class TestInstaller(unittest.TestCase):
 
         self.__installer.update_pypi("wxpython")
         y = len(self.__installer.get_pypi_errors()) != 0
-        self.assertFalse(y)
+        self.assertTrue(y)
 
     # ---------------------------------------------------------------------------
 
@@ -428,6 +537,11 @@ class TestInstaller(unittest.TestCase):
 test = TestInstaller()
 test.setUp()
 test.test_get_set_progress()
+test.test_get_set_actual_feature()
+test.test_get_set_save_errors()
+test.test_show_save_cmd()
+test.test_show_save_system()
+test.test_show_save_pypi()
 test.test_calcul_pourc()
 test.test_get_set_cmd_errors()
 test.test_get_set_pypi_errors()

@@ -39,8 +39,18 @@
 
 """
 
+import os
+import json
 
-class Configuration:
+from sppas.src.config.sglobal import sppasBaseSettings
+from sppas.src.config.sglobal import sppasGlobalSettings
+from sppas.src.config.support import sppasPathSettings
+
+
+# ---------------------------------------------------------------------------
+
+
+class Configuration(sppasBaseSettings):
     """Creation features.
 
         :author:       Florian Hocquet
@@ -56,38 +66,121 @@ class Configuration:
         """Create a new Configuration instance.
 
         """
-        # An identifier to represent the config params.
-        self.__features_enable = dict()
+        super(Configuration, self).__init__()
+
+        with sppasGlobalSettings() as sg:
+            name = sg.__name__ + " " + sg.__version__
+
+        self.__dict__ = dict(
+            cfg_exist=False,
+            file=None,
+            file_dict={"deps": {}}
+        )
+        self.load()
+
+    # -----------------------------------------------------------------------
+
+    def load(self):
+        """Load the dictionary of features from a file."""
+        with sppasPathSettings() as sp:
+            config = os.path.join(sp.basedir, ".deps~")
+            self.__dict__["file"] = config
+
+            if os.path.exists(config) is False:
+                self.set_cfg_exist(False)
+            else:
+                self.set_cfg_exist(True)
+                with open(config) as cfg:
+                    file = json.load(cfg)
+                    self.__dict__["file_dict"] = file
 
     # ---------------------------------------------------------------------------
 
-    def get_features_enable(self):
-        """Return the packages_dictionary, of the required system packages, of the instantiate Feature.
+    def save(self):
+        """Save the dictionary of settings in a file.
+
+        To be overridden.
 
         """
-        return self.__features_enable
+        with open(self.get_file(), "w") as f:
+            f.write(json.dumps(self.get_file_dict(), indent=2))
 
     # ---------------------------------------------------------------------------
 
-    def add_feature(self, key, value):
-        """add a feature in the private dictionary __features_enable.
+    def get_file(self):
+        """Return the dictionnary self.__dict__["file_dict"].
+
+        """
+        return self.__dict__["file"]
+
+    # ---------------------------------------------------------------------------
+
+    def get_file_dict(self):
+        """Return the dictionnary self.__dict__["file_dict"].
+
+        """
+        return self.__dict__["file_dict"]
+
+    # ---------------------------------------------------------------------------
+
+    def get_deps(self):
+        """Return the dictionnary self.__dict__["file_dict"].
+
+        """
+        return self.__dict__["file_dict"]["deps"]
+
+    # ---------------------------------------------------------------------------
+
+    def add_deps(self, key, value):
+        """Add a feature in self.__dict__["file_dict"].
 
         :param key: (str()) The key
         :param value: (str()) The value
 
         """
-        self.__features_enable[key] = value
+        self.__dict__["file_dict"]["deps"][key] = value
 
     # ---------------------------------------------------------------------------
 
-    def modify_feature(self, key, value):
-        """add a feature in the private dictionary __features_enable.
+    def modify_deps(self, key, value):
+        """Modify the value of a feature in self.__dict__["file_dict"].
 
         :param key: (str()) The key
         :param value: (str()) The value
 
         """
-        self.__features_enable[key] = value
+        self.__dict__["file_dict"]["deps"][key] = value
 
     # ---------------------------------------------------------------------------
+
+    def set_deps(self, dependencies):
+        """Set self.__dict__["file_dict"] with another dictionary.
+
+        :param dependencies: (str()) The dictionary you want to replace self.__dict__["deps"].
+
+
+        """
+        if isinstance(dependencies, dict) is False:
+            raise NotImplementedError
+        else:
+            self.__dict__["file_dict"]["deps"] = dependencies
+
+    # ---------------------------------------------------------------------------
+
+    def get_cfg_exist(self):
+        """Return if the file exist or not.
+
+        """
+        return self.__dict__["cfg_exist"]
+
+    # ---------------------------------------------------------------------------
+
+    def set_cfg_exist(self, value):
+        """Set the value of self.__dict__["cfg_exist"]
+
+        :param value: (bool()) The value you want to affect to self.__dict__["cfg_exist"].
+
+        """
+        value = bool(value)
+        self.__dict__["cfg_exist"] = value
 

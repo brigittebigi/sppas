@@ -156,7 +156,6 @@ class sppasInstallerDeps:
         self.__installer = self.get_os()(p)
         self.__features = list()
         self.set_features()
-
     # ---------------------------------------------------------------------------
 
     def get_os(self):
@@ -171,7 +170,7 @@ class sppasInstallerDeps:
         """Return the value of the private attribute __Exploit_syst.
 
         """
-        return self.__installer.get_features().get_cfg_exist()
+        return self.__installer.get_cfg_exist()
 
     # ---------------------------------------------------------------------------
 

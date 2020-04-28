@@ -36,7 +36,7 @@
 
 import os
 import shlex
-from subprocess import Popen, PIPE, call, STDOUT
+from subprocess import Popen, PIPE
 
 
 # ----------------------------------------------------------------------------
@@ -62,29 +62,6 @@ class Process:
 
     # ------------------------------------------------------------------------
 
-    def run_call(self, command):
-        """Execute the command used as an argument.
-
-        :param command: (str) The command you want to execute
-        :returns: Process error message
-        :returns: Process output message
-
-        """
-        # Does not work
-        command = str(command)
-        command = command.strip()
-        NULL = open(os.path.devnull, "w")
-        try:
-            call(command, stdout=NULL, stderr=STDOUT)
-        except OSError:
-            NULL.close()
-            return False
-
-        NULL.close()
-        return True
-
-    # ------------------------------------------------------------------------
-
     def run_popen(self, command):
         """Execute the command used as an argument.
 
@@ -93,7 +70,6 @@ class Process:
         :returns: Process output message
 
         """
-        command = str(command)
         command = command.strip()
         command_args = shlex.split(command)
         self.__process = Popen(command_args, stdout=PIPE, stderr=PIPE, text=True)

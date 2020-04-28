@@ -44,9 +44,50 @@ import sys
 from subprocess import Popen, PIPE, call, STDOUT
 import logging
 
-from sppas.src.config.features import Features, Feature
+from sppas.src.config.features import Features, Feature, sppasPathSettings
 from sppas.src.config.process import Process
 
+# ---------------------Sentences for the method install-----------------------
+message_install = {
+    "begining": "Begining of the installation",
+    "begining_feature": "Begining of the installation for the feature \" {desc} \"",
+    "available_false": "{name} can't be installed by using only command line on your computer because of your OS.",
+    "enable_false": "You choose to don't install the feature \"{name}\"",
+    "installation_success": "The installation of \" {desc} \" is a success",
+    "installation_failed": "The installation of \" {desc} \" failed",
+    "installation_process_finished": "The installation process is finished"
+}
+
+# --------------------Sentences for the method install_cmd---------------------
+message_install_global = {
+    "does_not_exist": "{name} does not exist on your OS computer.\n",
+    "dont_need": "You don't have any command to use because of your OS",
+    "already_installed": "\"{name}\" is already installed on your computer"
+}
+
+# --------------------Sentences for the method install_cmds---------------------
+message_install_sub = {
+    "error_find_progress": "The package \"{name}\" isn't valid",
+    "error_find_error": "The package \"{name}\" isn't valid :\n {error} \n",
+    "error_occured_progress": "An error has occurred during the installation of : {name}",
+    "error_occured_error": "An error has occurred during the installation of : {name}\n {error} \n",
+    "installation_success": "The installation of \"{name}\" is a success."
+}
+
+# --------------------Sentences for the method version_pypi---------------------
+message_version_sub = {
+    "not_installed_progress": "\"{name}\" is not installed yet.",
+    "not_installed_error": "\"{name}\" is not installed yet.\n {error} \n",
+}
+
+# --------------------Sentences for the method update_pypi---------------------
+message_update_sub = {
+    "error_find_progress": "The package \"{name}\" isn't valid",
+    "error_find_error": "The package \"{name}\" isn't valid :\n {error} \n",
+    "error_occured_progress": "An error has occurred during the update of : {name}",
+    "error_occured_error": "An error has occurred during the update of : {name}\n {error} \n",
+    "update_success": "The update of \"{name}\" is a success."
+}
 
 # ---------------------------------------------------------------------------
 
@@ -87,7 +128,9 @@ class Installer:
         self.__cmd_errors = ""
         self.__system_errors = ""
         self.__pypi_errors = ""
+        self.__total_errors = ""
         self.__features = Features("req_win", "cmd_win")
+        self.get_features().read_config()
 
     # ---------------------------------------------------------------------------
 
@@ -142,6 +185,91 @@ class Installer:
         """
         pourc = round((1 / (1 + len(feature.get_packages()) + len(feature.get_pypi()))), 2)
         return pourc
+
+    # ---------------------------------------------------------------------------
+
+    def get_cfg_exist(self):
+        """Return True if the config file exist.
+
+        """
+        return self.get_features().get_cfg_exist()
+
+    # ---------------------------------------------------------------------------
+
+    def get_total_errors(self):
+        """Return the private attribute __total_errors.
+
+        """
+        return self.__total_errors
+
+    # ---------------------------------------------------------------------------
+
+    def set_total_errors(self, string):
+        """Fix the value of the private attribute __total_errors.
+
+        :param string: (str) This string is filled with the errors you will encounter during
+        all the installation procedure.
+
+        """
+        string = str(string)
+        self.__total_errors += string
+
+    # ---------------------------------------------------------------------------
+
+    def save_errors(self, string):
+        """Save the all the errors in the private attribute __total_errors.
+
+        """
+        if len(string) != 0:
+            self.set_total_errors(string)
+
+    # ---------------------------------------------------------------------------
+
+    def show_save_cmd(self, progress, file_error=None):
+        """Save in the cmd errors container the errors which happened during the installation.
+
+        """
+        self.__pbar.update(
+            self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
+            progress)
+        self.set_cmd_errors(file_error)
+
+    # ---------------------------------------------------------------------------
+
+    def show_save_system(self, progress, file_error=None):
+        """Save in the system errors the errors which happened during the installation.
+
+        """
+        self.__pbar.update(
+            self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
+            progress)
+        self.set_system_errors(file_error)
+
+    # ---------------------------------------------------------------------------
+
+    def show_save_pypi(self, progress, file_error=None):
+        """Save in the pypi errors container the errors which happened during the installation.
+
+        """
+        self.__pbar.update(
+            self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
+            progress)
+        self.set_pypi_errors(file_error)
+
+    # ---------------------------------------------------------------------------
+
+    def create_file_errors(self):
+        """Create the file with all the errors.
+
+        """
+        self.save_errors(self.get_cmd_errors())
+        self.save_errors(self.get_system_errors())
+        self.save_errors(self.get_pypi_errors())
+
+        paths = sppasPathSettings()
+        errors_file = os.path.join(paths.basedir, "errors.txt")
+        with open(errors_file, "w") as my_errors:
+            my_errors.write(self.get_total_errors())
 
     # ---------------------------------------------------------------------------
 
@@ -215,27 +343,21 @@ class Installer:
         """Manage the procedure of installation of your features.
 
         """
-        if self.get_features().get_cfg_exist() is False:
-            self.get_features().get_config_parser().add_section("features")
+        if self.get_cfg_exist() is False:
             if self.__pbar is not None:
-                self.__pbar.set_header("Begining of the installation")
+                self.__pbar.set_header(message_install["begining"])
 
             for f in self.get_features().get_features():
                 self.set_actual_feature(f)
                 self.get_set_progress(0)
-                self.__pbar.set_header("Begining of the installation for the feature \"" + f.get_desc() + "\"")
+                self.__pbar.set_header(message_install["begining_feature"].format(desc=f.get_desc()))
                 if f.get_available() is False:
-                    self.__pbar.update(
-                        self.get_set_progress(1),
-                        "{name} can't be installed by using only command line on your computer because "
-                        "of your OS. \n".format(name=f.get_id()))
-
+                    self.__pbar.update(self.get_set_progress(1),
+                                       message_install["available_false"].format(name=f.get_id()))
                     continue
                 if f.get_enable() is False:
-                    self.__pbar.update(
-                        self.get_set_progress(1),
-                        "You choose to don't install the feature \"{name}\" \n".format(name=f.get_id()))
-
+                    self.__pbar.update(self.get_set_progress(1),
+                                       message_install["enable_false"].format(name=f.get_id()))
                     continue
 
                 try:
@@ -243,22 +365,17 @@ class Installer:
                     self.install_packages(f)
                     self.install_pypis(f)
                     f.set_enable(True)
+                    self.__pbar.set_header(message_install["installation_success"].format(desc=f.get_desc()))
                 except NotImplementedError:
-                    self.__pbar.set_header("The installation of \"" + f.get_desc() + "\" failed")
-                    if len(self.get_cmd_errors()) != 0:
-                        logging.error(self.get_cmd_errors())
-                    if len(self.get_system_errors()) != 0:
-                        logging.error(self.get_system_errors())
-                    if len(self.get_pypi_errors()) != 0:
-                        logging.error(self.get_pypi_errors())
+                    self.__pbar.set_header(message_install["installation_failed"].format(desc=f.get_desc()))
+                    self.create_file_errors()
 
-            self.__pbar.set_header("The installation process is finished")
+            self.__pbar.set_header(message_install["installation_process_finished"])
 
-            for f in self.get_features().get_features():
-                self.get_features().get_config_parser().set("features", f.get_id(), str(f.get_enable()).lower())
-            self.get_features().get_config_parser().write(open(self.get_features().get_config_file(), 'w'))
+            self.get_features().write_config()
+
         else:
-            self.get_features().configurate_enable(self.get_features().get_config_parser())
+            self.get_features().write_config()
 
     # ---------------------------------------------------------------------------
 
@@ -277,18 +394,18 @@ class Installer:
             feature.set_available(False)
             self.__pbar.update(
                 self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
-                "{name} does not exist on your OS computer. \n".format(name=feature.get_id()))
+                message_install_global["does_not_exist"].format(name=feature.get_id()))
         elif feature_command == "nil":
             self.__pbar.update(
                 self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
-                "You don't have any command to use because of your OS")
+                message_install_global["dont_need"])
         else:
             if self.search_cmds(feature.get_id()) is False:
                 self.install_cmds(feature_command, feature)
             else:
                 self.__pbar.update(
                     self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
-                    "The command \"{name}\" is already installed on your computer ".format(name=feature.get_id()))
+                    message_install_global["already_installed"].format(name=feature.get_id()))
 
         if len(self.get_cmd_errors()) != 0:
             feature.set_enable(False)
@@ -302,7 +419,6 @@ class Installer:
         :param command: (string) The command you will try to install on your computer.
 
         """
-        command = str(command)
         command = command.strip()
         NULL = open(os.path.devnull, "w")
         try:
@@ -332,18 +448,18 @@ class Installer:
             process = Process()
             process.run_popen(command)
             error = process.error()
-            error = str(error)
             if len(error) != 0:
-                self.set_cmd_errors("An error has occurred during the installation of : {name} "
-                                    "\n {error} \n".format(name=id, error=error))
+                self.show_save_cmd(message_install_sub["occured_progress"].format(name=feature.get_id()),
+                                   message_install_sub["occured_error"].format(name=feature.get_id(), error=error))
             else:
                 self.__pbar.update(
                     self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
-                    "The installation of \"{name}\" is a success.".format(name=feature.get_id()))
+                    message_install_sub["installation_success"].format(name=feature.get_id()))
 
         except FileNotFoundError:
-            self.set_cmd_errors("An error has occurred during the installation of : {name} "
-                                "\n {error} \n".format(name=id, error=feature.get_id() + " is not a command"))
+            self.show_save_cmd(message_install_sub["error_occured_progress"].format(name=feature.get_id()),
+                               message_install_sub["error_occured_error"]
+                               .format(name=feature.get_id(), error=FileNotFoundError))
 
     # ---------------------------------------------------------------------------
 
@@ -362,8 +478,7 @@ class Installer:
             if package == "nil":
                 self.__pbar.update(
                     self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
-                    "You don't need to install pip dependencies to install \"{name}\" on your computer"
-                    .format(name=feature.get_id()))
+                    message_install_global["dont_need"].format(name=feature.get_id()))
             else:
                 if self.search_pypi(package) is False:
                     self.install_pypi(package)
@@ -372,15 +487,11 @@ class Installer:
                 else:
                     self.__pbar.update(
                         self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
-                        "The package pip \"{name}\" is already installed and up to date on your "
-                        "computer ".format(name=package))
+                        message_install_global["already_installed"].format(name=package))
 
         if len(self.get_pypi_errors()) != 0:
             feature.set_enable(False)
-            logging.info("The pip installation procedure have failed. Here is the errors :")
             raise NotImplementedError()
-        else:
-            logging.info("The pip dependencies installation procedure is a success. \n")
 
     # ---------------------------------------------------------------------------
 
@@ -417,15 +528,15 @@ class Installer:
         error = process.error()
         if len(error) != 0:
             if "Could not find" in error:
-                self.set_pypi_errors("\n The package \"{name}\" isn't a package of pip : "
-                                     "\n {error} \n".format(name=package, error=error))
+                self.show_save_pypi(message_install_sub["error_find_progress"].format(name=package),
+                                    message_install_sub["error_find_error"].format(name=package, error=error))
             else:
-                self.set_pypi_errors("An error has occurred during the installation of the package : {name} "
-                                     "\n {error} \n".format(name=package, error=error))
+                self.show_save_pypi(message_install_sub["error_occured_progress"].format(name=package),
+                                    message_install_sub["error_occured_error"].format(name=package, error=error))
         else:
             self.__pbar.update(
                 self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
-                "The installation of \"{name}\" is a success.".format(name=package))
+                message_install_sub["installation_success"].format(name=package))
 
     # ---------------------------------------------------------------------------
 
@@ -445,7 +556,8 @@ class Installer:
         error = process.error()
         stdout = process.out()
         if "not found" in error:
-            print("\"{name}\" is not installed yet.".format(name=package))
+            self.show_save_pypi(message_version_sub["not_installed_progress"].format(name=package),
+                                message_version_sub["not_installed_error"].format(name=package, error=error))
             return True
         else:
             if self.need_update_pypi(stdout, req_version):
@@ -512,15 +624,15 @@ class Installer:
         error = process.error()
         if len(error) != 0:
             if "Could not find" in error:
-                self.set_pypi_errors("\n The package \"{name}\" isn't a package of pip : "
-                                     "\n {error} \n".format(name=package, error=error))
+                self.show_save_pypi(message_update_sub["error_find_progress"].format(name=package),
+                                    message_update_sub["error_find_progress"].format(name=package, error=error))
             else:
-                self.set_pypi_errors("An error has occurred during the updating of the package : {name} "
-                                     "\n {error} \n".format(name=package, error=error))
+                self.show_save_pypi(message_update_sub["error_occured_progress"].format(name=package),
+                                    message_update_sub["error_occured_error"].format(name=package, error=error))
         else:
             self.__pbar.update(
                 self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
-                "The update of {name} is a success.".format(name=package))
+                message_update_sub["update_success"].format(name=package))
 
     # ---------------------------------------------------------------------------
 
@@ -539,8 +651,7 @@ class Installer:
             if package == "nil":
                 self.__pbar.update(
                     self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
-                    "For {name} you don't need to install system dependencies on your "
-                    "computer because of your OS".format(name=feature.get_id()))
+                    message_install_global["dont_need"].format(name=feature.get_id()))
 
             else:
                 if self.search_package(package) is False:
@@ -550,15 +661,11 @@ class Installer:
                 else:
                     self.__pbar.update(
                         self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
-                        "The package system \"{name}\" is already installed and up to date on your "
-                        "computer".format(name=package))
+                        message_install_global["already_installed"].format(name=package))
 
         if len(self.get_system_errors()) != 0:
             feature.set_enable(False)
-            logging.info("The pip dependencies installation procedure is a success. \n")
             raise NotImplementedError()
-        else:
-            logging.info("The system dependencies installation procedure is a success.")
 
     # ---------------------------------------------------------------------------
 
@@ -996,6 +1103,7 @@ class CygWin(Installer):
         This CygWin(Installer) is made for CygWin.
 
     """
+
     def __init__(self, p):
         """Create a new CygWin(Installer) instance.
 
@@ -1124,23 +1232,23 @@ class MacOs(Installer):
         if len(error) != 0:
             if "Warning: You are using macOS" in error:
                 if self.search_package(package) is False:
-                    self.set_system_errors("An error has occurred during the installation of the package : {name} "
-                                           "\n {error} \n".format(name=package, error=error))
+                    self.show_save_system(message_install_sub["error_occured_progress"].format(name=package),
+                                          message_install_sub["error_occured_error"].format(name=package, error=error))
                 else:
                     self.__pbar.update(
                         self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
                         "The installation of \"{name}\" is a success.".format(name=package))
 
             elif "No available" in error:
-                self.set_system_errors("\n The package \"{name}\" isn't a package of brew : "
-                                       "\n {error} \n".format(name=package, error=error))
+                self.show_save_system(message_install_sub["error_find_progress"].format(name=package),
+                                      message_install_sub["error_find_error"].format(name=package, error=error))
             else:
-                self.set_system_errors("An error has occurred during the installation of the package : {name} "
-                                       "\n {error} \n".format(name=package, error=error))
+                self.show_save_system(message_install_sub["error_occured_progress"].format(name=package),
+                                      message_install_sub["error_occured_error"].format(name=package, error=error))
         else:
             self.__pbar.update(
                 self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
-                "The installation of \"{name}\" is a success.".format(name=package))
+                message_install_sub["installation_success"].format(name=package))
 
     # ---------------------------------------------------------------------------
 
@@ -1162,7 +1270,8 @@ class MacOs(Installer):
         error = process.error()
         stdout = process.out()
         if len(error) != 0:
-            self.set_system_errors("\"{name}\" is not installed yet.".format(name=package))
+            self.show_save_system(message_version_sub["not_installed_progress"].format(name=package),
+                                  message_version_sub["not_installed_error"].format(name=package, error=error))
             return True
         else:
             if self.need_update_package(stdout, req_version):
@@ -1230,15 +1339,14 @@ class MacOs(Installer):
         error = process.error()
         if len(error) != 0:
             if "Could not find" in error:
-                self.set_pypi_errors("\n The package \"{name}\" isn't a package of brew : "
-                                     "\n {error} \n".format(name=package, error=error))
+                self.show_save_system(message_update_sub["error_find_progress"].format(name=package),
+                                      message_update_sub["error_find_error"].format(name=package, error=error))
             else:
-                self.set_pypi_errors("An error has occurred during the updating of the package : {name} "
-                                     "\n {error} \n".format(name=package, error=error))
+                self.show_save_system(message_update_sub["error_occured_progress"].format(name=package),
+                                      message_update_sub["error_occured_error"].format(name=package, error=error))
         else:
             self.__pbar.update(
                 self.get_set_progress(self.calcul_pourc(self.get_actual_feature())),
-                "The update of {name} is a success.".format(name=package))
+                message_update_sub["update_success"].format(name=package))
 
     # ---------------------------------------------------------------------------
-

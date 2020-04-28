@@ -48,6 +48,7 @@ except ImportError:
 
 from sppas.src.config.support import sppasPathSettings
 from sppas.src.config.feature import Feature
+from sppas.src.config.configuration import Configuration
 
 
 class Features:
@@ -70,28 +71,43 @@ class Features:
         self.__cmdos = cmdos
         self.__cfg_exist = False
         self.__config_file = None
+        self.__config = Configuration()
         self.__config_parser = cp.ConfigParser()
         self.__feature_file = self.set_features_file()
         self.__features_parser = cp.ConfigParser()
         self.__features = list()
-        self.init_config()
         self.__features_parser = self.init_features()
         self.set_features()
+        self.read_config()
 
     # ---------------------------------------------------------------------------
 
-    def init_config(self):
+    def read_config(self):
+        """Read the file config.deps~.
+
+        """
+        if self.get_cfg_exist() is True:
+            self.get_configuration().load()
+            configuration = self.get_configuration().get_deps()
+            for key, value in configuration.items():
+                for f in self.get_features():
+                    if f.get_id() == key:
+                        if f.get_available() is False:
+                            configuration[key] = False
+                        f.set_enable(value)
+
+    # ---------------------------------------------------------------------------
+
+    def write_config(self):
         """Check if the config already exist or not.
 
         """
-        paths = sppasPathSettings()
-        config_file = os.path.join(paths.basedir, "config.ini")
-        self.__config_file = config_file
-
-        if os.path.exists(config_file) is False:
-            self.set_cfg_exist(False)
+        if self.get_cfg_exist() is True:
+            self.get_configuration().save()
         else:
-            self.set_cfg_exist(True)
+            for f in self.get_features():
+                self.get_configuration().add_deps(f.get_id(), f.get_enable())
+            self.get_configuration().save()
 
     # ---------------------------------------------------------------------------
 
@@ -99,7 +115,7 @@ class Features:
         """Return the private attribute __cfg_exist.
 
         """
-        return self.__cfg_exist
+        return self.get_configuration().get_cfg_exist()
 
     # ---------------------------------------------------------------------------
 
@@ -110,24 +126,15 @@ class Features:
         already exist or not in your sppas directory.
 
         """
-        value = bool(value)
-        self.__cfg_exist = value
+        self.get_configuration().set_cfg_exist(value)
 
     # ---------------------------------------------------------------------------
 
-    def get_config_file(self):
-        """Return the private file __config_file.
-
-        """
-        return self.__config_file
-
-    # ---------------------------------------------------------------------------
-
-    def get_config_parser(self):
+    def get_configuration(self):
         """Return the private parser __config_parser.
 
         """
-        return self.__config_parser
+        return self.__config
 
     # ---------------------------------------------------------------------------
 
@@ -251,25 +258,6 @@ class Features:
         """
         for f in self.__features:
             print(f.__str__())
-
-    # ---------------------------------------------------------------------------
-
-    def configurate_enable(self, config_parser):
-
-        if isinstance(config_parser, cp.ConfigParser) is False:
-            raise NotImplementedError
-
-        config_parser.read(self.get_config_file())
-        options = config_parser.options("features")
-
-        for option in options:
-            for f in self.get_features():
-                if f.get_id() == option and f.get_available() is True:
-                    f.set_enable(config_parser.getboolean("features", option))
-                elif f.get_id() == option and f.get_available() is False:
-                    config_parser.set("features", f.get_id(), str(False).lower())
-
-        config_parser.write(open(self.get_config_file(), 'w'))
 
     # ---------------------------------------------------------------------------
 

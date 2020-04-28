@@ -51,6 +51,44 @@ class TestFeatures(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
+    def test_read_config(self):
+        """Test if the methods read_config from the class Features works well.
+
+        """
+        if self.__features.get_configuration().get_cfg_exist() is True:
+            self.__features.get_configuration().set_deps({})
+            self.__features.get_configuration().set_deps({"wxpython": True, "brew": True, "julius": True})
+            self.__features.get_configuration().set_cfg_exist(True)
+            self.__features.read_config()
+            enables = list()
+            for f in self.__features.get_features():
+                enables.append(f.get_enable())
+            self.assertEqual(enables, [True, False, False])
+
+            self.__features.get_configuration().set_deps({"wxpython": False, "brew": False, "julius": False})
+            self.__features.get_configuration().set_cfg_exist(True)
+            self.__features.read_config()
+            enables = list()
+            for f in self.__features.get_features():
+                enables.append(f.get_enable())
+            self.assertEqual(enables, [False, False, False])
+
+    # ---------------------------------------------------------------------------
+
+    def test_write_config(self):
+        """Test if the methods write_config from the class Features works well.
+
+        """
+        self.__features.set_cfg_exist(False)
+        if self.__features.get_cfg_exist() is False:
+            self.__features.get_configuration().set_deps({})
+            for f in self.__features.get_features():
+                self.__features.get_configuration().add_deps(f.get_id(), f.get_enable())
+            y = self.__features.get_configuration().get_deps()
+            self.assertEqual(y, {"wxpython": False, "brew": False, "julius": False})
+
+    # ---------------------------------------------------------------------------
+
     def test_get_set_cfg_exist(self):
         """Test if the methods get_cfg_exist and set_cfg_exist from the class Features works well.
 
@@ -82,12 +120,12 @@ class TestFeatures(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
-    def test_get_config_parser(self):
+    def test_get_config_file(self):
         """Test if the methods get_config_file from the class Features works well.
 
         """
-        y = self.__features.get_config_parser()
-        self.assertIsInstance(y, cp.ConfigParser)
+        y = self.__features.get_configuration().get_deps()
+        self.assertIsInstance(y, dict)
 
     # ---------------------------------------------------------------------------
 
@@ -95,7 +133,7 @@ class TestFeatures(unittest.TestCase):
         """Test if the method init_features from the class Features works well.
 
         """
-        y = self.__features.get_config_parser()
+        y = self.__features.get_features_parser()
         y.read(self.__features.get_feature_file())
 
         self.assertEqual(y.sections(), ["wxpython", "brew", "julius"])
@@ -192,57 +230,16 @@ class TestFeatures(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
-    def test_configurate_enable(self):
-        """Test if the method configurate_enable from the class Features works well.
-
-        """
-        if self.__features.get_cfg_exist() is True:
-            with self.assertRaises(NotImplementedError):
-                self.__features.configurate_enable("aaaa")
-
-            with self.assertRaises(NotImplementedError):
-                self.__features.configurate_enable("aaaa")
-
-            x = self.__features.get_config_parser()
-            x.read(self.__features.get_config_file())
-
-            list_options = x.options("features")
-            i = 0
-
-            for option in list_options:
-                x.set("features", option, "true")
-                x.write(open(self.__features.get_config_file(), 'w'))
-                self.__features.configurate_enable(x)
-
-                if self.__features.get_features()[i].get_available() is True:
-                    self.assertEqual(self.__features.get_features()[i].get_enable(), True)
-                    self.assertEqual(x.getboolean("features", option), True)
-                else:
-                    self.assertEqual(self.__features.get_features()[i].get_enable(), False)
-                    self.assertEqual(x.getboolean("features", option), False)
-
-                self.assertEqual(self.__features.get_features()[i].get_enable(), x.getboolean("features", option))
-
-                x.set("features", option, "false")
-                x.write(open(self.__features.get_config_file(), 'w'))
-                self.__features.configurate_enable(x)
-
-                self.assertEqual(self.__features.get_features()[i].get_enable(), False)
-                self.assertEqual(x.getboolean("features", option), False)
-
-                self.assertEqual(self.__features.get_features()[i].get_enable(), x.getboolean("features", option))
-
-                i += 1
-
 
 test = TestFeatures()
 test.setUp()
+test.test_read_config()
+test.test_write_config()
 test.test_get_set_cfg_exist()
-test.test_get_config_parser()
+test.test_get_config_file()
 test.test_init_features()
 test.test_set_features()
 test.test_parse_depend()
 test.test_get_features()
 test.test_get_features_parser()
-test.test_configurate_enable()
 

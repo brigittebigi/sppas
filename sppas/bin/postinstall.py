@@ -95,6 +95,18 @@ if __name__ == "__main__":
             help="Disable the {desc}"
             .format(desc=feature.get_desc()))
 
+    group_act.add_argument(
+        "-a",
+        "--all",
+        action='store_true',
+        help="Install with all the features enabled")
+
+    group_act.add_argument(
+        "-d",
+        "--default",
+        action='store_true',
+        help="Install with all the features with their default enable")
+
     # Force to print help if no argument is given then parse
     # ------------------------------------------------------
 
@@ -140,22 +152,31 @@ if __name__ == "__main__":
     # Set the values of enable attribute for each feature
     # ---------------------------------------------------
 
-    arguments = vars(args)
-    arguments_true = list()
-    for a in arguments:
-        if arguments[a] is True:
-            arguments_true.append(a)
-    for a in arguments_true:
-        if a in cmd_features:
-            if "no" not in a:
-                cmd = "no" + a
-                if cmd in arguments_true:
+    if args.all:
+        for f in features:
+            installer.set_enable(f)
+        installer.install()
+
+    elif args.default:
+        installer.install()
+    else:
+        arguments = vars(args)
+        arguments_true = list()
+        for a in arguments:
+            if arguments[a] is True:
+                arguments_true.append(a)
+        for a in arguments_true:
+            if a in cmd_features:
+                if "no" not in a:
+                    cmd = "no" + a
+                    if cmd in arguments_true:
+                        installer.unset_enable(search_feature(a))
+                    else:
+                        installer.set_enable(search_feature(a))
+                elif "no" in a:
+                    a = a.replace("no", "")
                     installer.unset_enable(search_feature(a))
-                else:
-                    installer.set_enable(search_feature(a))
-            elif "no" in a:
-                a = a.replace("no", "")
-                installer.unset_enable(search_feature(a))
+        installer.install()
 
     # --------------------------------
     # Lauch the installation procedure
@@ -163,8 +184,7 @@ if __name__ == "__main__":
 
     if installer.get_install() is True:
         print("You already installed the features.\n"
-              "If you want to reinstalled it you have to remove the file \"config.ini\"")
-    installer.install()
+              "If you want to reinstalled it you have to remove the file \".deps~\"")
 
     try:
         term = TerminalController()
