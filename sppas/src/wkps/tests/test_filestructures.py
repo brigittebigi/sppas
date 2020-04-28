@@ -43,7 +43,7 @@ from sppas.src.wkps.filestructure import FileName
 from sppas.src.wkps.filestructure import FileRoot
 from sppas.src.wkps.filestructure import FilePath
 
-from sppas.src.files.fileexc import FileOSError, FileTypeError, PathTypeError, FileLockedError
+from sppas.src.wkps.fileexc import FileOSError, FileTypeError, PathTypeError, FileLockedError
 
 # ---------------------------------------------------------------------------
 
