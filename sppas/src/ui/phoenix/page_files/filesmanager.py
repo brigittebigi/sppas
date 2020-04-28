@@ -40,7 +40,7 @@ from sppas import paths
 
 from sppas.src.config import msg
 from sppas.src.utils import u
-from sppas.src.sppasWorkspace import States
+from sppas.src.wkps.sppasWorkspace import States
 
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
