@@ -144,7 +144,7 @@ class TestsppasWorkspace(unittest.TestCase):
         self.assertEqual(36, len(data.id))
         self.assertEqual(0, len(data))
 
-    # outdated 
+    # outdated
     def test_save(self):
         self.data.add_ref(self.r1)
         self.data.add_ref(self.r2)
