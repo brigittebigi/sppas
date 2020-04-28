@@ -26,7 +26,7 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.files.fileexc.py
+    src.wkps.fileexc.py
     ~~~~~~~~~~~~~~~~~~~~~~
 
     Exceptions for file management.

@@ -38,7 +38,7 @@ import os
 
 from sppas.src.config import paths
 from sppas.src.config import annots
-from sppas.src.files import sppasDirUtils
+from sppas.src.wkps import sppasDirUtils
 
 from .structsexc import LangTypeError
 from .structsexc import LangPathError

@@ -26,7 +26,7 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.files.filestructure.py
+    src.wkps.filestructure.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -193,27 +193,6 @@ class FileName(FileBase):
         except ValueError:
             self.__date = None
         self.__filesize = os.path.getsize(self.get_id())
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def parse(d):
-        """Return the FileName instance represented by the given dict.
-
-        :raise: FileTypeError, FileOSError
-
-        """
-        if 'id' not in d:
-            raise KeyError("File 'id' is missing of the dictionary to parse.")
-        fn = FileName(d['id'])
-
-        s = d.get('state', States().UNUSED)
-        if s > 0:
-            fn.set_state(States().CHECKED)
-        else:
-            # it does not make sense to set state to LOCKED
-            fn.set_state(States().UNUSED)
-        return fn
 
     # -----------------------------------------------------------------------
     # Properties
@@ -608,60 +587,6 @@ class FileRoot(FileBase):
         return identifier
 
     # -----------------------------------------------------------------------
-
-    def serialize(self):
-        """Override.
-
-        Return a dict representing this instance for json format.
-        There's no need to save the 'id' nor the 'state' because they
-        result of the filenames.
-
-        """
-        d = dict()
-        d['id'] = self.id
-
-        # filenames are serialized
-        d['files'] = list()
-        for fn in self.__files:
-            d['files'].append(fn.serialize())
-
-        # references identifiers are stored into a list
-        d['refids'] = list()
-        for r in self.get_references():
-            d['refids'].append(r.id)
-
-        # subjoined data are simply added as-it (it's risky)
-        if self.subjoined is not None:
-            d['subjoin'] = self.subjoined
-
-        return d
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def parse(d):
-        if 'id' not in d:
-            raise KeyError("Root 'id' is missing of the dictionary to parse.")
-        fr = FileRoot(d['id'])
-
-        # append files
-        if 'files' in d:
-            for file in d['files']:
-                try:
-                    fn = FileName.parse(file)
-                    fr.append(fn)
-                except Exception as e:
-                    logging.error(
-                        "The file {:s} can't be included in the workspace"
-                        "due to the following error: {:s}"
-                        "".format(file['id'], str(e)))
-
-        # append subjoined "as it"
-        fr.subjoined = d.get('subjoin', None)
-
-        return fr
-
-    # -----------------------------------------------------------------------
     # Overloads
     # -----------------------------------------------------------------------
 
@@ -836,7 +761,6 @@ class FilePath(FileBase):
 
         """
         f = os.path.abspath(filename)
-
         if os.path.isfile(f) is False:
             f = os.path.join(self.id, filename)
 
@@ -999,45 +923,6 @@ class FilePath(FileBase):
             self._state = new_state
             return True
         return False
-
-    # -----------------------------------------------------------------------
-
-    def serialize(self):
-        """Return a dict representing this instance for json format."""
-        d = dict()
-        d['id'] = self.id
-        d['roots'] = list()
-        for r in self.__roots:
-            d['roots'].append(r.serialize())
-
-        if self.subjoined is not None:
-            d['subjoin'] = self.subjoined
-
-        return d
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def parse(d):
-        """Return the FilePath represented by the given dict.
-
-        Remark: the references of the root are not assigned.
-
-        """
-        if 'id' not in d:
-            raise KeyError("Path 'id' is missing of the dictionary to parse.")
-        fp = FilePath(d['id'])
-
-        if 'roots' in d:
-            for root in d['roots']:
-                # append the root
-                fr = FileRoot.parse(root)
-                fp.append(fr)
-
-        # append subjoined
-        fp.subjoined = d.get('subjoin', None)
-
-        return fp
 
     # -----------------------------------------------------------------------
     # Overloads

@@ -40,7 +40,7 @@ import wx
 from sppas import msg
 from sppas.src.exc import sppasTypeError
 from sppas.src.utils import u
-from sppas.src.files import FileData, States
+from sppas.src.wkps import sppasWorkspace, States
 from sppas.src.anndata import sppasRW
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
@@ -116,7 +116,7 @@ class sppasConvertPanel(sppasScrolledPanel):
     def get_data(self):
         """Return the data currently displayed in the list of files.
 
-        :returns: (FileData) data of the files-viewer model.
+        :returns: (sppasWorkspace) data of the files-viewer model.
 
         """
         return self.__data
@@ -126,11 +126,11 @@ class sppasConvertPanel(sppasScrolledPanel):
     def set_data(self, data):
         """Assign new data to this page.
 
-        :param data: (FileData)
+        :param data: (sppasWorkspace)
 
         """
         if isinstance(data, FileData) is False:
-            raise sppasTypeError("FileData", type(data))
+            raise sppasTypeError("sppasWorkspace", type(data))
         self.__data = data
 
     # ------------------------------------------------------------------------

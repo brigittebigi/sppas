@@ -26,11 +26,11 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.files.filebase.py
+    src.wkps.filebase.py
     ~~~~~~~~~~~~~~~~~~~~~
 
 """
-
+import os
 from sppas.src.utils import sppasUnicode
 
 # ---------------------------------------------------------------------------
@@ -87,6 +87,14 @@ class FileBase(object):
 
     # -----------------------------------------------------------------------
 
+    def set_id(self, new_id):
+        """Set the identifier
+        :param new_id: (str)
+
+        """
+        self.__id = new_id
+    # -----------------------------------------------------------------------
+
     def get_state(self):
         """Return the state (States)."""
         return self._state
@@ -135,7 +143,7 @@ class FileBase(object):
     def serialize(self):
         """Return a dict representing this instance for json format."""
         d = dict()
-        d['id'] = self.id
+        d['id'] = self.id.split(os.sep)[-1]
         d['state'] = int(self.get_state())
         return d
 
@@ -143,7 +151,7 @@ class FileBase(object):
     # Properties
     # -----------------------------------------------------------------------
 
-    id = property(get_id, None)
+    id = property(get_id, set_id)
     state = property(get_state, set_state)
 
     # -----------------------------------------------------------------------

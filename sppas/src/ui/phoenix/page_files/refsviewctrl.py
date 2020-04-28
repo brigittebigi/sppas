@@ -34,8 +34,8 @@
 import wx
 import wx.lib.newevent
 
-from sppas.src.files import States, FileData
-from sppas.src.files import sppasAttribute, FileReference
+from sppas.src.wkps import States, sppasWorkspace
+from sppas.src.wkps import sppasAttribute, FileReference
 
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
@@ -73,7 +73,7 @@ class RefsTreeView(sppasScrolledPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-    This class manages a FileData() instance to add/delete/edit references and
+    This class manages a sppasWorkspace() instance to add/delete/edit references and
     the wx objects to display it.
 
     """
@@ -88,7 +88,7 @@ class RefsTreeView(sppasScrolledPanel):
         super(RefsTreeView, self).__init__(parent, name=name)
 
         # The workspace to display
-        self.__data = FileData()
+        self.__data = sppasWorkspace()
 
         # Each FilePath has its own CollapsiblePanel in the sizer
         self.__refps = dict()  # key=ref.id, value=FileRefCollapsiblePanel
@@ -693,7 +693,7 @@ class TestPanel(RefsTreeView):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
-        data = FileData()
+        data = sppasWorkspace()
         micros = FileReference('microphone')
         att1 = sppasAttribute('mic1', 'Bird UM1', None, '最初のインタビューで使えていましたマイク')
         micros.append(att1)

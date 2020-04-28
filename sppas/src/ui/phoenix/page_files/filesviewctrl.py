@@ -37,7 +37,7 @@ import wx.lib.newevent
 
 from sppas import paths
 from sppas.src.anndata import sppasRW
-from sppas.src.files import States, FileName, FileRoot, FilePath, FileData
+from sppas.src.wkps import States, FileName, FileRoot, FilePath, sppasWorkspace
 from sppas.src.ui import sppasTrash
 
 from ..windows import sppasPanel
@@ -153,7 +153,7 @@ class FileTreeView(sppasScrolledPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-    This class manages a FileData() instance to add/remove/delete files and
+    This class manages a sppasWorkspace() instance to add/remove/delete files and
     the wx objects to display it.
 
     """
@@ -168,7 +168,7 @@ class FileTreeView(sppasScrolledPanel):
         super(FileTreeView, self).__init__(parent, name=name)
 
         # The workspace to display
-        self.__data = FileData()
+        self.__data = sppasWorkspace()
 
         # Each FilePath has its own CollapsiblePanel in the sizer
         self.__fps = dict()  # key=fp.id, value=FilePathCollapsiblePanel

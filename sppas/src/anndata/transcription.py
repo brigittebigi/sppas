@@ -36,7 +36,7 @@
 
 import logging
 
-from sppas.src.files import sppasGUID
+from sppas.src.wkps import sppasGUID
 from sppas.src.utils import sppasUnicode
 
 from .anndataexc import AnnDataTypeError

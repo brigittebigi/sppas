@@ -61,6 +61,7 @@ EXIT_STATUS = 1
 # ----------------------------------------------------------------------------
 
 
+
 def exit_error(msg="Unknown."):
     """Exit the program with status 1 and an error message.
 

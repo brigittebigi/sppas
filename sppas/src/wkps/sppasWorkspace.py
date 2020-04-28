@@ -26,7 +26,7 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.files.filedata.py
+    src.wkps.sppasWorkspace.py
     ~~~~~~~~~~~~~~~~~~~~~
 
     Description:
@@ -36,13 +36,13 @@
     references.
     
     Files are structured in a fixed tree-like structure:
-        - a FileData contains a list of FilePath,
+        - a sppasWorkspace contains a list of FilePath,
         - a FilePath contains a list of FileRoot,
         - a FileRoot contains a list of FileName,
         - a FileName is limited to regular file names (no links, etc).
 
     References are structured as:
-        - a FileData contains a list of FileReference,
+        - a sppasWorkspace contains a list of FileReference,
         - a FileReference contains a list of sppasAttribute.
 
     Example:
@@ -51,7 +51,7 @@
     The file 'C:\\Users\\MyName\\Desktop\\myfile.pdf' and the file
     'C:\\Users\\MyName\\Desktop\\myfile.txt' will be in the following tree:
 
-        + FileData:
+        + sppasWorkspace:
             + FilePath: id='C:\\Users\\MyName\\Desktop'
                 + FileRoot: id='C:\\Users\\MyName\\Desktop\\myfile'
                     + FileName: 
@@ -81,12 +81,12 @@
 
 """
 
-import json
+
 import os
 import logging
 
 from sppas import sppasTypeError
-from sppas.src.config import sg
+
 
 from .fileutils import sppasGUID
 from .filebase import FileBase, States
@@ -96,7 +96,7 @@ from .filestructure import FileName, FileRoot, FilePath
 # ---------------------------------------------------------------------------
 
 
-class FileData(FileBase):
+class sppasWorkspace(FileBase):
     """Represent the data linked to a list of files.
 
     :author:       Brigitte Bigi
@@ -105,9 +105,8 @@ class FileData(FileBase):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-    TODO: Rename FileData to sppasWorkspace
 
-    FileData is the container for a  list of files and a catalog.
+    sppasWorkspace is the container for a  list of files and a catalog.
     It organizes files hierarchically as a collection of FilePath instances,
     each of which is a collection of FileRoot instances, each of which is a 
     collection of FileName. The catalog is a list of FileReference instances
@@ -116,9 +115,9 @@ class FileData(FileBase):
     """
 
     def __init__(self, identifier=sppasGUID().get()):
-        """Constructor of a FileData."""
-        super(FileData, self).__init__(identifier)
-        self.__data = list()
+        """Constructor of a sppasWorkspace."""
+        super(sppasWorkspace, self).__init__(identifier)
+        self.__files = list()
         self.__refs = list()
 
     # -----------------------------------------------------------------------
@@ -142,7 +141,7 @@ class FileData(FileBase):
             raise Exception('Object {:s} is already in the data.'.format(file_object.id))
 
         if isinstance(file_object, FilePath):
-            self.__data.append(file_object)
+            self.__files.append(file_object)
 
         elif isinstance(file_object, FileReference):
             self.add_ref(file_object)
@@ -164,7 +163,7 @@ class FileData(FileBase):
         """
         # get or create the corresponding FilePath()
         new_fp = FilePath(os.path.dirname(filename))
-        for fp in self.__data:
+        for fp in self.__files:
             if fp.id == new_fp.id:
                 new_fp = fp
 
@@ -174,8 +173,8 @@ class FileData(FileBase):
         # this is a new path to add into the workspace
         if added is None:
             added = list()
-        elif added is not None and new_fp not in self.__data:
-            self.__data.append(new_fp)
+        elif added is not None and new_fp not in self.__files:
+            self.__files.append(new_fp)
 
         return added
 
@@ -201,7 +200,7 @@ class FileData(FileBase):
         path = None
         root = None
         removed = list()
-        for fp in self.__data:
+        for fp in self.__files:
             if fp.get_id() == given_fp.get_id():
                 for fr in fp:
                     rem_id = fr.remove(fn_id)
@@ -222,7 +221,7 @@ class FileData(FileBase):
 
             if len(path) == 0:
                 removed.append(path.get_id())
-                self.__data.remove(path)
+                self.__files.remove(path)
             else:
                 path.update_state()
 
@@ -263,7 +262,7 @@ class FileData(FileBase):
                 removes.append(ref)
 
         # Remove these references of the roots
-        for fp in self.__data:
+        for fp in self.__files:
             for fr in fp:
                 for fc in removes:
                     fr.remove_ref(fc)
@@ -289,7 +288,7 @@ class FileData(FileBase):
         Empty FileRoot and FilePath are removed.
 
         """
-        for fp in self.__data:
+        for fp in self.__files:
             for fr in reversed(fp):
                 for fn in reversed(fr):
                     if os.path.exists(fn.id):
@@ -300,11 +299,11 @@ class FileData(FileBase):
                     fp.remove(fr)
 
         # Remove empty FilePath
-        for fp in reversed(self.__data):
+        for fp in reversed(self.__files):
             if len(fp) == 0:
-                self.__data.remove(fp)
+                self.__files.remove(fp)
 
-        for fp in self.__data:
+        for fp in self.__files:
             for fr in reversed(fp):
                 fr.update_state()
             fp.update_state()
@@ -321,7 +320,7 @@ class FileData(FileBase):
 
         """
         nb = 0
-        for fp in self.__data:
+        for fp in self.__files:
             for fr in reversed(fp):
                 for fn in reversed(fr):
                     if fn.get_state() == state:
@@ -342,7 +341,7 @@ class FileData(FileBase):
 
         """
         checked = list()
-        for fp in self.__data:
+        for fp in self.__files:
             for fr in fp:
                 for fn in fr:
                     if fn.get_state() == value:
@@ -351,11 +350,20 @@ class FileData(FileBase):
 
     # -----------------------------------------------------------------------
 
+    def get_all_files(self):
+        """Return all the files
+
+        :returns: (list)
+
+        """
+        return self.__files
+
+    # -----------------------------------------------------------------------
     def get_object(self, identifier):
         """Return the file object matching the given identifier.
 
         :param identifier: (str)
-        :returns: (FileData, FilePath, FileRoot, FileName, FileReference)
+        :returns: (sppasWorkspace, FilePath, FileRoot, FileName, FileReference)
 
         """
         if self.id == identifier:
@@ -365,7 +373,7 @@ class FileData(FileBase):
             if ref.id == identifier:
                 return ref
 
-        for fp in self.__data:
+        for fp in self.__files:
             if fp.id == identifier:
                 return fp
             for fr in fp:
@@ -381,10 +389,10 @@ class FileData(FileBase):
 
     @staticmethod
     def get_object_state(file_obj):
-        """Return the state of any FileBase within the FileData.
+        """Return the state of any FileBase within the sppasWorkspace.
 
         :param file_obj: (FileBase) The object which one enquire the state
-        :returns: States
+        :returns: Sta
 
         """
         if not isinstance(file_obj, FilePath)\
@@ -397,7 +405,7 @@ class FileData(FileBase):
     # -----------------------------------------------------------------------
 
     def set_object_state(self, state, file_obj=None):
-        """Set the state of any FileBase within FileData.
+        """Set the state of any FileBase within sppasWorkspace.
 
         The default case is to set the state to all FilePath and FileRefence.
 
@@ -412,7 +420,7 @@ class FileData(FileBase):
         """
         modified = list()
         if file_obj is None:
-            for fp in self.__data:
+            for fp in self.__files:
                 m = fp.set_state(state)
                 if m is True:
                     modified.append(fp)
@@ -431,7 +439,7 @@ class FileData(FileBase):
 
             elif isinstance(file_obj, (FileRoot, FileName)):
                 # search for the FilePath matching with the file_obj
-                for fp in self.__data:
+                for fp in self.__files:
                     # test if file_obj is a root or name in this fp
                     cur_obj = fp.get_object(file_obj.id)
                     if cur_obj is not None:
@@ -450,7 +458,7 @@ class FileData(FileBase):
     # -----------------------------------------------------------------------
 
     def set_state(self, value):
-        """Set the state of this FileData instance.
+        """Set the state of this sppasWorkspace instance.
 
         :param value: (States)
 
@@ -465,13 +473,16 @@ class FileData(FileBase):
             return 0
 
         associed = 0
-        for fp in self.__data:
+        for fp in self.__files:
             for fr in fp:
                 if fr.get_state() in (States().AT_LEAST_ONE_CHECKED, States().CHECKED):
                     associed += 1
                     if fr.get_references() is not None:
                         ref_extended = fr.get_references()
                         ref_extended.extend(ref_checked)
+                        #
+                        # fr.set_references(list(set(ref_extended)))
+                        #
                         fr.set_references(list(set(ref_extended)))
                     else:
                         fr.set_references(ref_checked)
@@ -486,7 +497,7 @@ class FileData(FileBase):
             return 0
 
         dissocied = 0
-        for fp in self.__data:
+        for fp in self.__files:
             for fr in fp:
                 if fr.get_state() in (States().AT_LEAST_ONE_CHECKED, States().CHECKED):
                     for ref in ref_checked:
@@ -499,7 +510,7 @@ class FileData(FileBase):
 
     def is_empty(self):
         """Return if the instance contains information."""
-        return len(self.__data) + len(self.__refs) == 0
+        return len(self.__files) + len(self.__refs) == 0
 
     # -----------------------------------------------------------------------
 
@@ -508,7 +519,7 @@ class FileData(FileBase):
 
         """
         paths = list()
-        for fp in self.__data:
+        for fp in self.__files:
             if fp.get_state() == state:
                 paths.append(fp)
         return paths
@@ -518,7 +529,7 @@ class FileData(FileBase):
     def get_fileroot_from_state(self, state):
         """Return every FileRoot in the given state."""
         roots = list()
-        for fp in self.__data:
+        for fp in self.__files:
             for fr in fp:
                 if fr.get_state() == state:
                     roots.append(fr)
@@ -529,7 +540,7 @@ class FileData(FileBase):
     def get_fileroot_with_ref(self, ref):
         """Return every FileRoot with the given reference."""
         roots = list()
-        for fp in self.__data:
+        for fp in self.__files:
             for fr in fp:
                 if fr.has_ref(ref) is True:
                     roots.append(fr)
@@ -541,11 +552,11 @@ class FileData(FileBase):
         """Return every FileName in the given state.
 
         """
-        if len(self.__data) == 0:
+        if len(self.__files) == 0:
             return list()
 
         files = list()
-        for fp in self.__data:
+        for fp in self.__files:
             for fr in fp:
                 for fn in fr:
                     if fn.get_state() == state:
@@ -570,7 +581,7 @@ class FileData(FileBase):
     # -----------------------------------------------------------------------
 
     def has_locked_files(self):
-        for fp in self.__data:
+        for fp in self.__files:
             if fp.get_state() in (States().AT_LEAST_ONE_LOCKED, States().LOCKED):
                 return True
         return False
@@ -606,7 +617,7 @@ class FileData(FileBase):
         """
         i = 0
         if entries is None:
-            for fp in self.__data:
+            for fp in self.__files:
                 for fr in fp:
                     for fn in fr:
                         if fn.get_state() == States().LOCKED:
@@ -618,7 +629,7 @@ class FileData(FileBase):
                     fp.update_state()
 
         elif isinstance(entries, list):
-            for fp in self.__data:
+            for fp in self.__files:
                 for fr in fp:
                     for fn in fr:
                         if fn in entries and fn.get_state() == States().LOCKED:
@@ -632,107 +643,22 @@ class FileData(FileBase):
         return i
 
     # -----------------------------------------------------------------------
-    # Read/Write the data into/from a file
+    # Proprieties
     # -----------------------------------------------------------------------
 
-    def serialize(self):
-        """Convert this FileData() into a serializable data structure.
-
-        :returns: (dict) a dictionary that can be serialized (without classes).
-
-        """
-        d = dict()
-
-        # Factual information about this file and this FileData()
-        d['wjson'] = "1.0"
-        d['software'] = sg.__name__
-        d['version'] = sg.__version__
-        d['id'] = self.id
-
-        # The list of paths/roots/files stored in this FileData()
-        d['paths'] = list()
-        for fp in self.__data:
-            d['paths'].append(fp.serialize())
-
-        # The list of references/attributes stored in this FileData()
-        d['catalogue'] = list()
-        for ref in self.__refs:
-            d['catalogue'].append(ref.serialize())
-
-        return d
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def parse(d):
-        wjson_version = d.get("wjson", "1.0")
-        soft_name = d.get("software", None)
-        soft_version = d.get("version", None)
-
-        if 'id' not in d:
-            raise KeyError("Workspace 'id' is missing of the dictionary to parse.")
-        data = FileData(d['id'])
-
-        # The list of references/attributes stored in the given dict
-        if 'catalogue' in d:
-            for dictref in d['catalogue']:
-                r = FileReference.parse(dictref)
-                data.add_ref(r)
-
-        # The list of paths/roots/files stored in the given dict
-        if 'paths' in d:
-            for dict_path in d['paths']:
-                fp = FilePath.parse(dict_path)
-                data.add(fp)
-
-                # append references in roots from the 'refsids" of the dict
-                for dict_root in dict_path['roots']:
-                    fr = data.get_object(dict_root['id'])
-                    if fr is not None and 'refids' in dict_root:
-                        for ref_id in dict_root['refids']:
-                            ref = data.get_object(ref_id)
-                            if ref is not None:
-                                fr.add_ref(ref)
-
-        # Fix the state to roots and paths (from the ones of files)
-        data.update()
-        return data
-
-    # -----------------------------------------------------------------------
-
-    def save(self, filename):
-        """Save the current FileData in a serialized file.
-
-        :param filename: (str) the name of the save file.
-
-        """
-        with open(filename, 'w') as fd:
-            json.dump(self.serialize(), fd, indent=4, separators=(',', ': '))
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def load(filename):
-        """Load a saved FileData object from a save file.
-
-        :param filename: (str) the name of the save file.
-        :returns: FileData
-
-        """
-        with open(filename, "r") as fd:
-            d = json.load(fd)
-            return FileData.parse(d)
+    files = property(get_all_files, None)
+    refs = property(get_refs, None)
 
     # -----------------------------------------------------------------------
     # Overloads
     # -----------------------------------------------------------------------
 
     def __iter__(self):
-        for a in self.__data:
+        for a in self.__files:
             yield a
 
     def __getitem__(self, i):
-        return self.__data[i]
+        return self.__files[i]
 
     def __len__(self):
-        return len(self.__data)
+        return len(self.__files)

@@ -49,7 +49,7 @@ from sppas.src.anndata import sppasMedia
 import sppas.src.audiodata.aio as audioaio
 from sppas.src.resources.mapping import sppasMapping
 from sppas.src.models.acm.modelmixer import sppasModelMixer
-from sppas.src.files.fileutils import sppasFileUtils
+from sppas.src.wkps.fileutils import sppasFileUtils
 
 from ..baseannot import sppasBaseAnnotation
 from ..searchtier import sppasFindTier

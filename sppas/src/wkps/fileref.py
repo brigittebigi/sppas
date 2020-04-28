@@ -26,7 +26,7 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.files.fileref.py
+    src.wkps.fileref.py
     ~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -34,8 +34,8 @@
 from sppas import sppasTypeError, sppasIndexError
 from sppas import annots
 from sppas.src.utils.makeunicode import sppasUnicode
-
 from .filebase import FileBase, States
+
 
 # ---------------------------------------------------------------------------
 
@@ -428,6 +428,23 @@ class FileReference(FileBase):
         ref.subjoined = d['subjoin']
 
         return ref
+
+    # ------------------------------------------------------------------------
+    # Getter
+    # ------------------------------------------------------------------------
+
+    def get_attributes(self):
+        """Return the attributes
+
+        :returns: (list)
+        """
+        return self.__attributs
+
+    # ------------------------------------------------------------------------
+    # Property
+    # ------------------------------------------------------------------------
+
+    attributes = property(get_attributes, None)
 
     # ------------------------------------------------------------------------
     # Overloads
