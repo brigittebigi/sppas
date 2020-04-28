@@ -92,7 +92,7 @@ class sppasPluginsList(sppasScrolledPanel):
         )
 
         # The workspace to work with
-        self.__data = FileData()
+        self.__data = sppasWorkspace()
 
         # The manager for the plugins
         try:
