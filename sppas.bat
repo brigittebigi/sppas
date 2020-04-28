@@ -29,7 +29,7 @@ GOTO EndHeader
 
         ---------------------------------------------------------------------
 
-    sppas-py3.bat
+    sppas.bat
     ~~~~~~~~~~~~~
 
     :author:       Brigitte Bigi
