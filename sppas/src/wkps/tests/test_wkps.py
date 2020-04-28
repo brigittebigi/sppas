@@ -32,32 +32,15 @@
     src.ui.tests.test_wkps.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    TODO IMPORTS ISSUES
 
 """
 import unittest
 
-from sppas.sppas.src.wkps.sppasWkps import sppasWkps
-
-#
-# /!\ problème avec les imports
-#
+from sppas.src.wkps.sppasWkps import sppasWkps
 
 
 class TestSppasWorkspaces(unittest.TestCase):
 
     def setUp(self):
-        self.ws = sppasWkps()
-        self.dic = {"paths": [{"id": "./", "roots": [{"id": "./", "files": [{"id": "./"}]}]}]}
-        self.dic2 = {"paths": [{"id": "", "roots": [{"id": "", "files": [{"id": ""}]}]}]}
-
-    def testVerify_path_exist(self):
-        self.assertTrue(self.ws.verify_path_exist(self.dic))
-        self.assertFalse(self.ws.verify_path_exist(self.dic2))
-
-    def testmodify_path(self):
-        self.ws.modify_path(self.dic, "new_path")
-        d = self.dic['path']
-        for elem in d['id']:
-            self.assertEqual(elem, "new_path")
+        return
 
