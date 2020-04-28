@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.files.tests.test_filedata.py
+    src.files.tests.test_sppasWorkspace.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -116,7 +116,7 @@ class TestReferences(unittest.TestCase):
 # ----------------------------------------------------------------------------
 
 
-class TestFileData(unittest.TestCase):
+class TestsppasWorkspace(unittest.TestCase):
 
     def setUp(self):
         self.data = sppasWorkspace()
@@ -144,19 +144,20 @@ class TestFileData(unittest.TestCase):
         self.assertEqual(36, len(data.id))
         self.assertEqual(0, len(data))
 
+    # outdated 
     def test_save(self):
         self.data.add_ref(self.r1)
         self.data.add_ref(self.r2)
         self.data.add_ref(self.r3)
         current_file_list = list()
         saved_file_list = list()
-        self.data.save(os.path.join(sppas.paths.sppas, 'src', 'files', 'tests', 'save.json'))
+        self.data.save(os.path.join(sppas.paths.sppas, 'src', 'wkps', 'tests', 'save.json'))
         for fp in self.data:
             for fr in fp:
                 for fn in fr:
                     current_file_list.append(fn)
 
-        data = sppasWorkspace.load(os.path.join(sppas.paths.sppas, 'src', 'files', 'tests', 'save.json'))
+        data = sppasWorkspace.load(os.path.join(sppas.paths.sppas, 'src', 'wkps', 'tests', 'save.json'))
         for fp in data:
             for fr in fp:
                 for fn in fr:
