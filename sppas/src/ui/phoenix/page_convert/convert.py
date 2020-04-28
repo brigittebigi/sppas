@@ -94,7 +94,7 @@ class sppasConvertPanel(sppasScrolledPanel):
         )
 
         # The data we are working on
-        self.__data = FileData()
+        self.__data = sppasWorkspace()
 
         # Construct the GUI
         self._create_content()
