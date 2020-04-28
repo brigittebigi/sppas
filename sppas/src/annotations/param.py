@@ -305,7 +305,7 @@ class sppasParam(object):
         self._output_ext = annots.extension
 
         # Input files to annotate
-        self._workspace = FileData()
+        self._workspace = sppasWorkspace()
 
         # The parameters of all the annotations
         self.annotations = []
