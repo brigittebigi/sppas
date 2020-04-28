@@ -53,8 +53,6 @@ class TestFeature(unittest.TestCase):
         """Test if the methods get_enable and set_enable from the class Feature works well.
 
         """
-        self.setUp()
-
         self.__feature.set_enable(True)
         y = self.__feature.get_enable()
         self.assertIsInstance(y, bool)
@@ -93,8 +91,6 @@ class TestFeature(unittest.TestCase):
         """Test if the methods get_available and set_available from the class Feature works well.
 
         """
-        self.setUp()
-
         self.__feature.set_available(True)
         y = self.__feature.get_available()
         self.assertIsInstance(y, bool)
@@ -135,8 +131,6 @@ class TestFeature(unittest.TestCase):
         """Test if the methods get_id and set_id from the class Feature works well.
 
         """
-        self.setUp()
-
         self.__feature.set_id("aaaa")
         y = self.__feature.get_id()
         self.assertIsInstance(y, str)
@@ -168,8 +162,6 @@ class TestFeature(unittest.TestCase):
         """Test if the methods get_desc and set_desc from the class Feature works well.
 
         """
-        self.setUp()
-
         self.__feature.set_desc("aaaa")
         y = self.__feature.get_desc()
         self.assertIsInstance(y, str)
@@ -201,8 +193,6 @@ class TestFeature(unittest.TestCase):
         """Test if the methods get_packages and set_packages from the class Feature works well.
 
         """
-        self.setUp()
-
         self.__feature.set_packages(dict())
         y = self.__feature.get_packages()
         self.assertIsInstance(y, dict)
@@ -237,8 +227,6 @@ class TestFeature(unittest.TestCase):
         """Test if the methods get_pypi and set_pypi from the class Feature works well.
 
         """
-        self.setUp()
-
         self.__feature.set_pypi(dict())
         y = self.__feature.get_pypi()
         self.assertIsInstance(y, dict)
@@ -273,8 +261,6 @@ class TestFeature(unittest.TestCase):
         """Test if the methods get_cmd and set_cmd from the class Feature works well.
 
         """
-        self.setUp()
-
         self.__feature.set_cmd("aaaa")
         y = self.__feature.get_cmd()
         self.assertIsInstance(y, str)
@@ -302,6 +288,7 @@ class TestFeature(unittest.TestCase):
 
 
 test = TestFeature()
+test.setUp()
 test.test_get_set_enable()
 test.test_get_set_available()
 test.test_get_set_id()
