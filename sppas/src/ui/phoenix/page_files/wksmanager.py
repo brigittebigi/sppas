@@ -42,7 +42,7 @@ from sppas.src.config import msg
 from sppas.src.utils import u
 from sppas.src.wkps.sppasWorkspace import sppasWorkspace
 from sppas.src.wkps.filebase import States
-from sppas.src.ui import sppasWorkspaces
+from sppas.src.wkps.sppasWkps import sppasWkps
 
 from ..windows import Confirm, Error
 from ..windows import sppasTextEntryDialog
@@ -479,7 +479,7 @@ class WorkspacesPanel(sppasPanel):
             style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
-        self.__wkps = sppasWorkspaces()
+        self.__wkps = sppasWorkspace()
         self.__current = 0
 
         self._create_content()
