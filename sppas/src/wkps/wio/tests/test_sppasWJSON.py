@@ -42,7 +42,6 @@ import json
 from ..sppasWJSON import sppasWJSON
 from sppas.src.wkps.sppasWorkspace import sppasWorkspace
 from sppas.src.wkps.fileref import FileReference, sppasAttribute
-from sppas.src.wkps.filestructure import FilePath
 
 # ---------------------------------------------------------------------------
 
