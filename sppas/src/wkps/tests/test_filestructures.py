@@ -38,10 +38,10 @@ import unittest
 import os
 
 from sppas import paths
-from sppas.src.files.filebase import FileBase, States
-from sppas.src.files.filestructure import FileName
-from sppas.src.files.filestructure import FileRoot
-from sppas.src.files.filestructure import FilePath
+from sppas.src.wkps.filebase import FileBase, States
+from sppas.src.wkps.filestructure import FileName
+from sppas.src.wkps.filestructure import FileRoot
+from sppas.src.wkps.filestructure import FilePath
 
 from sppas.src.files.fileexc import FileOSError, FileTypeError, PathTypeError, FileLockedError
 
