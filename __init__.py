@@ -39,7 +39,7 @@ from sppas.src.models import *
 from sppas.src.plugins import *
 from sppas.src.resources import *
 from sppas.src.utils import *
-from sppas.src.files import *
+from sppas.src.wkps import *
 from sppas.src.annotations import *
 from sppas.src.ui import sppasLogSetup, sppasAppConfig
 
