@@ -120,7 +120,7 @@ class sppasAnnotatePanel(sppasSimplebook):
         :param data: (sppasWorkspace) The workspace with files to annotate/annotated
 
         """
-        if isinstance(data, FileData) is False:
+        if isinstance(data, sppasWorkspace) is False:
             raise sppasTypeError("sppasWorkspace", type(data))
 
         self.__param.set_workspace(data)
