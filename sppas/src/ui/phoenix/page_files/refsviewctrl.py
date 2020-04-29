@@ -36,8 +36,6 @@ import wx.lib.newevent
 
 from sppas.src.wkps import States, sppasWorkspace
 from sppas.src.wkps import sppasAttribute, FileReference
-from sppas.src.wkps.wio.sppasWJSON import sppasWJSON
-
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasCollapsiblePanel
@@ -89,7 +87,7 @@ class RefsTreeView(sppasScrolledPanel):
         super(RefsTreeView, self).__init__(parent, name=name)
 
         # The workspace to display
-        self.__data = sppasWJSON()
+        self.__data = sppasWorkspace()
 
         # Each FilePath has its own CollapsiblePanel in the sizer
         self.__refps = dict()  # key=ref.id, value=FileRefCollapsiblePanel
