@@ -93,7 +93,7 @@ class AssociatePanel(sppasPanel):
             name=name)
 
         # The data this page is working on
-        self.__data = sppasWJSON()
+        self.__data = sppasWorkspace()
 
         # State of the button to check all or none of the filenames
         self._checkall = False
