@@ -41,6 +41,7 @@ from sppas import msg
 from sppas.src.exc import sppasTypeError
 from sppas.src.utils import u
 from sppas.src.wkps import sppasWorkspace, States
+from sppas.src.wkps.wio.sppasWJSON import sppasWJSON
 from sppas.src.anndata import sppasRW
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
@@ -94,7 +95,7 @@ class sppasConvertPanel(sppasScrolledPanel):
         )
 
         # The data we are working on
-        self.__data = sppasWorkspace()
+        self.__data = sppasWJSON()
 
         # Construct the GUI
         self._create_content()
