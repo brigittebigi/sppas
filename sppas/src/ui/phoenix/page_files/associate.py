@@ -46,6 +46,7 @@ from sppas.src.utils import u
 from sppas.src.wkps import sppasWorkspace
 from sppas.src.wkps import States
 from sppas.src.wkps import sppasFileDataFilters
+from sppas.src.wkps.wio.sppasWJSON import sppasWJSON
 
 from ..windows import Information, Error
 from ..windows import sppasStaticText, sppasTextCtrl
@@ -92,7 +93,7 @@ class AssociatePanel(sppasPanel):
             name=name)
 
         # The data this page is working on
-        self.__data = sppasWorkspace()
+        self.__data = sppasWJSON()
 
         # State of the button to check all or none of the filenames
         self._checkall = False
