@@ -42,6 +42,7 @@ import json
 from ..sppasWJSON import sppasWJSON
 from sppas.src.wkps.sppasWorkspace import sppasWorkspace
 from sppas.src.wkps.fileref import FileReference, sppasAttribute
+from sppas.src.wkps.filestructure import FilePath
 
 # ---------------------------------------------------------------------------
 
@@ -110,9 +111,13 @@ class TestsppasWJSON(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test__serialize_path(self):
-        for fp in self.data:
-            d = self.parser._serialize_path(fp)
-            self.assertEqual(self.parser._parse_path(d), fp)
+        fp = FilePath(os.path.dirname(__file__))
+        d = self.parser._serialize_path(fp)
+        self.assertEqual(self.parser._parse_path(d), fp)
+
+        # test the absolute path and the relative path
+        self.assertEqual(d["id"], fp.get_id())
+        self.assertEqual(d["rel"], os.path.relpath(fp.get_id()))
 
     # -----------------------------------------------------------------------
 
@@ -124,7 +129,7 @@ class TestsppasWJSON(unittest.TestCase):
 
     # -----------------------------------------------------------------------
 
-    def test_serialize_file(self):
+    def test__serialize_file(self):
         for fp in self.data:
             for fr in fp:
                 for fn in fr:
@@ -147,9 +152,12 @@ class TestsppasWJSON(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test__parse_path(self):
-        for fp in self.data:
-            d = self.parser._serialize_path(fp)
-            self.assertEqual(self.parser._parse_path(d), fp)
+        fp = FilePath(os.path.dirname(__file__))
+        d = self.parser._serialize_path(fp)
+        new_fp = self.parser._parse_path(d)
+        self.assertEqual(new_fp, fp)
+        self.assertEqual(d["id"], new_fp.get_id())
+        self.assertEqual(d["rel"], os.path.relpath(new_fp.get_id()))
 
     # -----------------------------------------------------------------------
 
@@ -165,7 +173,6 @@ class TestsppasWJSON(unittest.TestCase):
         for fp in self.data:
             for fr in fp:
                 for fn in fr:
-                    print(fn)
                     d = self.parser._serialize_files(fn)
                     self.assertEqual(self.parser._parse_file(d, fp.get_id()), fn)
 
