@@ -25,17 +25,11 @@
         along with SPPAS. If not, see <http://www.gnu.org/licenses/>.
 
         This banner notice must not be removed.
+
         ---------------------------------------------------------------------
 
         src.config.feature.py
     ~~~~~~~~~~~~~~~~
-
-:author:       Florian Hocquet
-:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-:contact:      contact@sppas.org
-:license:      GPL, v3
-:copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-:summary:      the class Feature of SPPAS
 
 """
 
@@ -48,98 +42,82 @@ class Feature:
         :contact:      contact@sppas.org
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-        :summary:      a script to use workspaces from terminal
 
-        This class allows you to represent, by creating an object, one of the
-        different features you have in your software.
-        To use an object Feature you have to intantiate it without arguments,
-        an then you can fix the values of privates attributes of your Feature
-        object, there are 5 privates attributes :
+        A Feature is set and instantiate to its default values and updated when
+        its setters are used.
+        A Feature has 7 privates attributes :
 
+        - id
         - enable
         - available
-        - id
+        - desc
         - dict_packages
         - dict_pypi
+        - cmd
 
-        To fix their values you have to use the getters and the setters
-        of the Feature.
         For example :
 
-        >>> feature = Feature()
+        >>> feature = Feature("feature")
+        >>> feature.get_id()
+        >>> "feature"
         >>> feature.set_enable(True)
         >>> feature.set_available(True)
-        >>> feature.set_id("feature")
-        >>> feature.set_packages({"1": "a"})
-        >>> feature.set_pypi({"2": "b"})
+        >>> feature.set_desc("An example of feature")
+        >>> feature.set_packages({"wxpython": ">;4.0"})
+        >>> feature.set_pypi({"numpy": ">;0.0"})
         >>> feature.set_cmd("pip freeze")
 
         You can set the values of your privates attributes with the setters by parsing
-        a requirements.ini file.
+        a requirements.ini file for example.
 
     """
 
-    def __init__(self):
-        """Create a new Feature instance.
+    def __init__(self, identifier):
+        """Create a new Feature instance."""
+        # Represent the identifier of the feature
+        self.__id = identifier
 
-        """
-        # An identifier to represent if the feature is enable or no
+        # Represent if the feature is enable
         self.__enable = False
 
-        # An identifier to represent if the feature is available on your system or no
+        # Represent if the feature is available
         self.__available = True
 
-        # An identifier that represent the id/name of the feature
-        self.__id = str()
-
-        # An identifier that represent the description of the feature
+        # Represent a description of the feature
         self.__desc = str()
 
-        # An identifier to represent the required system packages
+        # Represent the required system packages
         self.__packages = dict()
 
-        # An identifier to represent the required pip packages
+        # Represent the required pip packages
         self.__pypi = dict()
 
-        # An identifier to represent a system command
+        # Represent the command to enable the feature
         self.__cmd = str()
 
     # ---------------------------------------------------------------------------
 
-    def __str__(self):
-        """Print the privates attributes of your Feature object.
-
-        """
-        return "enable : " + str(self.get_enable()) + "\n" \
-               "available : " + str(self.get_available()) + "\n" \
-               "id : " + str(self.get_id()) + "\n" \
-               "desc : " + str(self.get_desc()) + "\n" \
-               "packages : " + str(self.get_packages()) + "\n" \
-               "pypi : " + str(self.get_pypi()) + "\n" \
-               "cmd : " + str(self.get_cmd()) + "\n"
+    def get_id(self):
+        """Return the feature identifier."""
+        return self.__id
 
     # ---------------------------------------------------------------------------
 
     def get_enable(self):
-        """Return the value of the private attribute enable of the instantiate Feature.
-
-        """
+        """Return True if the feature is enabled."""
         return self.__enable
 
     # ---------------------------------------------------------------------------
 
     def get_available(self):
-        """Return the value of the private attribute available of the instantiate Feature.
-
-        """
+        """Return True if the feature is availabled."""
         return self.__available
     # ---------------------------------------------------------------------------
 
     def set_enable(self, value):
-        """Fix the value of the private attribute __enable.
+        """Set the value of enable.
 
-        :param value: (boolean) The boolean which represent if you want to install the
-        feature or if it's installed or not on your system.
+        :param value: (bool) Enable or disable the feature.
 
         """
         if not self.get_available():
@@ -151,10 +129,10 @@ class Feature:
     # ---------------------------------------------------------------------------
 
     def set_available(self, value):
-        """Fix the value of the private attribute __available.
+        """Set the value of available.
 
-        :param value: (boolean) The boolean which represent if you want to install the
-        feature or if it is already installed or not on your system.
+        :param value: (bool) Make the feature available or not.
+
         """
         value = bool(value)
         if not value:
@@ -163,37 +141,16 @@ class Feature:
 
     # ---------------------------------------------------------------------------
 
-    def get_id(self):
-        """Return the value of the private attribute __id of the instantiate Feature.
-
-        """
-        return self.__id
-
-    # ---------------------------------------------------------------------------
-
-    def set_id(self, value):
-        """Fix the value of the private attribute __id.
-
-        :param value: (str) The id/name which represent the feature.
-
-        """
-        value = str(value)
-        self.__id = value
-
-    # ---------------------------------------------------------------------------
-
     def get_desc(self):
-        """Return the value of the private attribute __desc of the instantiate Feature.
-
-        """
+        """Return the description of the feature."""
         return self.__desc
 
     # ---------------------------------------------------------------------------
 
     def set_desc(self, value):
-        """Fix the value of the private attribute __desc.
+        """Set the description of the feature.
 
-        :param value: (str) The description which represent the feature.
+        :param value: (str) The description to describe the feature.
 
         """
         value = str(value)
@@ -202,19 +159,15 @@ class Feature:
     # ---------------------------------------------------------------------------
 
     def get_packages(self):
-        """Return the packages_dictionary, of the required system packages, of the instantiate Feature.
-
-        """
+        """Return the dictionary of system dependencies."""
         return self.__packages
 
     # ---------------------------------------------------------------------------
 
     def set_packages(self, dependencies):
-        """Fix the values of the private attribute __packages.
+        """Set the dictionary of system dependencies.
 
-        :param dependencies: (dict()) The dictionary with the one you will fill
-        your __packages, that represent some of the packages you will
-        install later.
+        :param dependencies: (dict)
 
         """
         dependencies = dict(dependencies)
@@ -223,19 +176,15 @@ class Feature:
     # ---------------------------------------------------------------------------
 
     def get_pypi(self):
-        """Return the pypi_dictionary, of the required pypi packages, of the instantiate Feature.
-
-        """
+        """Return the dictionary of pip dependencies."""
         return self.__pypi
 
     # ---------------------------------------------------------------------------
 
     def set_pypi(self, dependencies):
-        """Fix the values of the private attribute __pypi.
+        """Set the dictionary of pip dependencies.
 
-        :param dependencies: (dict()) The dictionary with the one you will fill
-        your __pypi, that represent some of the packages you will
-        install later.
+        :param dependencies: (dict)
 
         """
         dependencies = dict(dependencies)
@@ -244,15 +193,13 @@ class Feature:
     # ---------------------------------------------------------------------------
 
     def get_cmd(self):
-        """Return the value of the private attribute __cmd of the instantiate Feature.
-
-        """
+        """Return the command to execute."""
         return self.__cmd
 
     # ---------------------------------------------------------------------------
 
     def set_cmd(self, value):
-        """Fix the value of the private attribute __cmd.
+        """Set the command to execute.
 
         :param value: (str) The unique command for the OS.
 
@@ -261,4 +208,13 @@ class Feature:
         self.__cmd = value
 
     # ---------------------------------------------------------------------------
+
+    def __str__(self):
+        return "id : " + str(self.get_id()) + "\n" \
+               "enable : " + str(self.get_enable()) + "\n" \
+               "available : " + str(self.get_available()) + "\n" \
+               "desc : " + str(self.get_desc()) + "\n" \
+               "packages : " + str(self.get_packages()) + "\n" \
+               "pypi : " + str(self.get_pypi()) + "\n" \
+               "cmd : " + str(self.get_cmd()) + "\n"
 

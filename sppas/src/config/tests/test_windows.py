@@ -29,7 +29,7 @@
         ---------------------------------------------------------------------
 
     src.config.tests.test_windows.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -48,7 +48,7 @@ class TestInstallerWin(unittest.TestCase):
         """
         p = ProcessProgressTerminal()
         self.__windows = Windows(p)
-        self.__feature = Feature()
+        self.__feature = Feature("feature")
 
     # ---------------------------------------------------------------------------
 

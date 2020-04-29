@@ -29,7 +29,7 @@
         ---------------------------------------------------------------------
 
     src.config.tests.test_configuration.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 import unittest
@@ -49,95 +49,84 @@ class TestConfiguration(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
+    def test_cfg_filename(self):
+        """Return the name of the config file."""
+        y = self.__configuration.cfg_filename()
+        self.assertIn(".deps~", y)
+
+    # ---------------------------------------------------------------------------
+
+    def test_cfg_exist(self):
+        """Return if the config file exists or not."""
+        y = os.path.exists(self.__configuration.cfg_filename())
+        self.assertEqual(y, self.__configuration.get_cfg_exist())
+
+    # ---------------------------------------------------------------------------
+
     def test_load(self):
-        """Test if the method load from the class Configuration works well.
-
-        """
-        with sppasPathSettings() as sp:
-            config = os.path.join(sp.basedir, ".deps~")
-            self.__dict__["file"] = config
-
-            if os.path.exists(config) is False:
-                self.assertEqual(self.__configuration.get_cfg_exist(), False)
-            else:
-                self.assertEqual(self.__configuration.get_cfg_exist(), True)
+        """Override. Load the configuration from a file."""
+        self.__configuration.load()
+        if self.__configuration.get_cfg_exist() is True:
+            y = self.__configuration.get_deps()
+            self.assertEqual(y, ["wxpython", "brew", "julius"])
+        else:
+            y = self.__configuration.get_deps()
+            self.assertEqual(y, [])
 
     # ---------------------------------------------------------------------------
 
     def test_save(self):
-        """Test if the method save from the class Configuration works well.
-
-        """
-        self.__configuration.set_deps({"4": "1", "3": "2", "5": "6"})
+        """Override. Save the dictionary in a file."""
+        self.__configuration.set_dep("wxpython", True)
+        self.__configuration.set_dep("brew", True)
+        self.__configuration.set_dep("julius", True)
         self.__configuration.save()
-        y = self.__configuration.get_file_dict()
-        self.assertEqual(y, {"deps": {"4": "1", "3": "2", "5": "6"}})
+        y = self.__configuration.get_deps()
+        self.assertEqual(y, ["wxpython", "brew", "julius"])
 
     # ---------------------------------------------------------------------------
 
-    def test_get_add_modify_deps(self):
-        """Test if the methods get_deps, add_deps and modify_deps from the class Configuration works well.
+    def test_hide_unhide(self):
+        """Hide or unhide a file"""
+        y = self.__configuration.hide_unhide("deps", "-")
+        self.assertEqual(y, ".deps~")
 
-        """
-        self.__configuration.set_deps({})
-        self.__configuration.add_deps("wxpython", False)
-        self.__configuration.add_deps("brew", False)
-        self.__configuration.add_deps("julius", False)
-
-        y = self.__configuration.get_deps()
-        self.assertEqual(y, {"wxpython": False, "brew": False, "julius": False})
-
-        self.__configuration.modify_deps("wxpython", True)
-
-        y = self.__configuration.get_deps()
-        self.assertEqual(y, {"wxpython": True, "brew": False, "julius": False})
+        y = self.__configuration.hide_unhide(".deps~", "-")
+        self.assertEqual(y, ".deps~")
 
     # ---------------------------------------------------------------------------
 
-    def test_set_deps(self):
-        """Test if the method set_deps from the class Configuration works well.
-
-        """
-        self.__configuration.set_deps({"4": "1"})
+    def test_get_set_deps(self):
+        """Return(get_deps), add or modify(set_dep) the dictionnary self.__dict__["file_dict"]."""
+        self.__configuration.set_dep("first", True)
         y = self.__configuration.get_deps()
-        self.assertEqual(y, {"4": "1"})
+        self.assertEqual(y, ["wxpython", "brew", "julius", "first"])
 
-        self.__configuration.set_deps({"4": "2"})
+        self.__configuration.set_dep("second", True)
         y = self.__configuration.get_deps()
-        self.assertEqual(y, {"4": "2"})
-
-        with self.assertRaises(NotImplementedError):
-            self.__configuration.set_deps("Hello")
+        self.assertEqual(y, ["wxpython", "brew", "julius", "first", "second"])
 
     # ---------------------------------------------------------------------------
 
-    def test_get_set_cfg_exist(self):
-        """Test if the methods get_cfg_exist and set_cfg_exist from the class Configuration works well.
+    def test_dep_enabled(self):
+        """Return True if a dependency is enabled"""
+        self.assertFalse(self.__configuration.dep_enabled("aaaa"))
 
-        """
-        self.__configuration.set_cfg_exist({"4": "1"})
-        y = self.__configuration.get_cfg_exist()
-        self.assertEqual(y, True)
-
-        self.__configuration.set_cfg_exist(True)
-        y = self.__configuration.get_cfg_exist()
-        self.assertEqual(y, True)
-
-        self.__configuration.set_cfg_exist(0)
-        y = self.__configuration.get_cfg_exist()
-        self.assertEqual(y, False)
-
-        self.__configuration.set_cfg_exist(False)
-        y = self.__configuration.get_cfg_exist()
-        self.assertEqual(y, False)
+        self.assertEqual(self.__configuration.dep_enabled("wxpython"), True)
+        self.assertEqual(self.__configuration.dep_enabled("brew"), True)
+        self.assertEqual(self.__configuration.dep_enabled("julius"), True)
+        self.assertEqual(self.__configuration.dep_enabled("first"), True)
+        self.assertEqual(self.__configuration.dep_enabled("second"), True)
 
     # ---------------------------------------------------------------------------
 
 
 test = TestConfiguration()
 test.setUp()
+test.test_cfg_filename()
+test.test_cfg_exist()
 test.test_load()
-test.test_get_add_modify_deps()
-test.test_set_deps()
-test.test_get_set_cfg_exist()
 test.test_save()
+test.test_hide_unhide()
+test.test_get_set_deps()
+test.test_dep_enabled()

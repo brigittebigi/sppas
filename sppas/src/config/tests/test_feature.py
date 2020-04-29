@@ -29,7 +29,7 @@
         ---------------------------------------------------------------------
 
     src.config.tests.test_feature.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 import unittest
@@ -45,14 +45,19 @@ class TestFeature(unittest.TestCase):
         """Initialisation des tests.
 
         """
-        self.__feature = Feature()
+        self.__feature = Feature("feature")
+
+    # ---------------------------------------------------------------------------
+
+    def test_get_id(self):
+        """Return the id of feature."""
+        y = self.__feature.get_id()
+        self.assertEqual(y, "feature")
 
     # ---------------------------------------------------------------------------
 
     def test_get_set_enable(self):
-        """Test if the methods get_enable and set_enable from the class Feature works well.
-
-        """
+        """Return(get_enable) or set(set_enable) enable of feature."""
         self.__feature.set_enable(True)
         y = self.__feature.get_enable()
         self.assertIsInstance(y, bool)
@@ -88,9 +93,7 @@ class TestFeature(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_get_set_available(self):
-        """Test if the methods get_available and set_available from the class Feature works well.
-
-        """
+        """Return(get_available) or set(set_available) available of feature."""
         self.__feature.set_available(True)
         y = self.__feature.get_available()
         self.assertIsInstance(y, bool)
@@ -127,41 +130,8 @@ class TestFeature(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
-    def test_get_set_id(self):
-        """Test if the methods get_id and set_id from the class Feature works well.
-
-        """
-        self.__feature.set_id("aaaa")
-        y = self.__feature.get_id()
-        self.assertIsInstance(y, str)
-        self.assertEqual(y, "aaaa")
-
-        self.__feature.set_id(True)
-        y = self.__feature.get_id()
-        self.assertIsInstance(y, str)
-        self.assertEqual(y, "True")
-
-        self.__feature.set_id(["a", "b", "c"])
-        y = self.__feature.get_id()
-        self.assertIsInstance(y, str)
-        self.assertEqual(y, "['a', 'b', 'c']")
-
-        self.__feature.set_id({"1": "a", "2": "b", "3": "c"})
-        y = self.__feature.get_id()
-        self.assertIsInstance(y, str)
-        self.assertEqual(y, "{'1': 'a', '2': 'b', '3': 'c'}")
-
-        self.__feature.set_id(4)
-        y = self.__feature.get_id()
-        self.assertIsInstance(y, str)
-        self.assertEqual(y, "4")
-
-    # ---------------------------------------------------------------------------
-
     def test_get_set_desc(self):
-        """Test if the methods get_desc and set_desc from the class Feature works well.
-
-        """
+        """Return(get_desc) or set(set_desc) the description of feature."""
         self.__feature.set_desc("aaaa")
         y = self.__feature.get_desc()
         self.assertIsInstance(y, str)
@@ -190,9 +160,7 @@ class TestFeature(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_get_set_packages(self):
-        """Test if the methods get_packages and set_packages from the class Feature works well.
-
-        """
+        """Return(get_packages) or set(set_packages) the dictionary of system dependencies."""
         self.__feature.set_packages(dict())
         y = self.__feature.get_packages()
         self.assertIsInstance(y, dict)
@@ -224,9 +192,7 @@ class TestFeature(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_get_set_pypi(self):
-        """Test if the methods get_pypi and set_pypi from the class Feature works well.
-
-        """
+        """Return(get_pypi) or set(set_pypi) the dictionary of pip dependencies."""
         self.__feature.set_pypi(dict())
         y = self.__feature.get_pypi()
         self.assertIsInstance(y, dict)
@@ -258,9 +224,7 @@ class TestFeature(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_get_set_cmd(self):
-        """Test if the methods get_cmd and set_cmd from the class Feature works well.
-
-        """
+        """Return(get_cmd) or set(set_cmd) the command to execute"""
         self.__feature.set_cmd("aaaa")
         y = self.__feature.get_cmd()
         self.assertIsInstance(y, str)
@@ -289,9 +253,9 @@ class TestFeature(unittest.TestCase):
 
 test = TestFeature()
 test.setUp()
+test.test_get_id()
 test.test_get_set_enable()
 test.test_get_set_available()
-test.test_get_set_id()
 test.test_get_set_desc()
 test.test_get_set_packages()
 test.test_get_set_pypi()

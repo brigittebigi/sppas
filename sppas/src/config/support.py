@@ -127,13 +127,33 @@ class sppasUpdate:
 
 
 class sppasInstallerDeps:
-    """Check directories, etc.
+    """Manage the installation of features.
 
     :author:       Florian Hocquet
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    sppasInstallerDeps is a wrapper of Installer Object.
+    It only allows :
+    - to launch the installation process,
+    - to get informations, which are important for the users,
+    about the pre-installation.
+    - to configure parameters to get a personalized installation.
+
+    For example:
+
+    >>> install = sppasInstallerDeps()
+
+    See what is enabled or not :
+    >>> install.get_enables()
+
+    Personnalize what is enabled or not :
+    >>> install.set_enable("feature_id")
+
+    Launch the installation process :
+    >>> install.set_enable("feature_id")
 
     """
     __List_os = {
@@ -150,34 +170,43 @@ class sppasInstallerDeps:
     }
 
     def __init__(self, p):
+        """Create a new sppasInstallerDeps instance.
+
+        :param p: (ProcessProgressTerminal) The installation progress.
+
+        """
         self.__pbar = p
         self.__Exploit_syst = None
         self.set_os()
         self.__installer = self.get_os()(p)
-        self.__features = list()
-        self.set_features()
-    # ---------------------------------------------------------------------------
+        self.__feat_ids = self.__installer.get_feat_ids()
 
-    def get_os(self):
-        """Return the value of the private attribute __Exploit_syst.
+    # ---------------------------------------------------------
+
+    def get_feat_ids(self):
+        """Return the list of feature identifiers."""
+        return self.__feat_ids
+
+    # ---------------------------------------------------------
+
+    def get_feat_desc(self, feat_id):
+        """Return the description of the feature.
+
+        :param feat_id: (str) Identifier of a feature
 
         """
+        return self.__installer.description(feat_id)
+
+    # ---------------------------------------------------------
+
+    def get_os(self):
+        """Return the OS of the computer."""
         return self.__Exploit_syst
 
     # ---------------------------------------------------------------------------
 
-    def get_install(self):
-        """Return the value of the private attribute __Exploit_syst.
-
-        """
-        return self.__installer.get_cfg_exist()
-
-    # ---------------------------------------------------------------------------
-
     def set_os(self):
-        """Set the value of __Exploit_syst according to the exploitation system of the user.
-
-        """
+        """Set the OS of the computer."""
         system = sys.platform
         if system == "linux":
             linux_distrib = str(os.uname()).split(", ")[3].split("-")[1].split(" ")[0].lower()
@@ -190,93 +219,59 @@ class sppasInstallerDeps:
 
     # ---------------------------------------------------------------------------
 
-    def get_features(self):
-        """Return the list of features __features.
-
-        """
-        return self.__features
-
-    # ---------------------------------------------------------------------------
-
-    def set_features(self):
-        """Set features in __features with the one in __installer.
-
-        """
-        self.__features = self.__installer.get_features().get_features()
-
-    # ---------------------------------------------------------------------------
-
-    def get_features_name(self):
-        """Return the features names in __features.
-
-        """
-        features = self.get_features()
-        list_name = list()
-        for f in features:
-            list_name.append(f.get_id())
-        return list_name
-
-    # ---------------------------------------------------------------------------
-
     def get_enables(self):
-        """Return the features enables in __features.
+        """Return informations about each feature.
+
+        :return enables: (str)
 
         """
-        features = self.get_features()
+        features = self.__feat_ids
         enables = "\n"
         for f in features:
-            enables += "(" + f.get_desc() + "," + f.get_id() + ") available = "\
-                       + str(f.get_available()) + "/ enable = " + str(f.get_enable()) + "\n"
+            enables += "(" + str(self.__installer.description(f)) + "," + f + ") available = "\
+                       + str(self.__installer.available(f)) + "/ enable = " + str(self.__installer.enable(f)) + "\n"
         return enables
 
     # ---------------------------------------------------------------------------
 
-    def get_enable(self, feature_name):
-        """Return the private attribute __enable value of the feature used as an argument.
+    def get_enable(self, feat_id):
+        """Return True if the feature is enabled.
 
-        :param feature_name: (string) The name of the feature.
+        :param feat_id: (str) Identifier of a feature
 
         """
-        return feature_name.get_enable()
+        return self.__installer.enable(feat_id)
 
     # ---------------------------------------------------------------------------
 
-    def set_enable(self, feature_name):
-        """Set the private attribute __enable value of the feature to True.
+    def set_enable(self, feat_id):
+        """Make a feature enabled.
 
-        :param feature_name: (string) The name of the feature.
+        :param feat_id: (str) Identifier of a feature
 
         """
-        feature_name.set_enable(True)
+        self.__installer.enable(feat_id, True)
 
     # ---------------------------------------------------------------------------
 
-    def unset_enable(self, feature_name):
-        """Set the private attribute __enable value of the feature to False.
+    def unset_enable(self, feat_id):
+        """Make a feature disabled.
 
-        :param feature_name: (string) The name of the feature.
-
-        """
-        feature_name.set_enable(False)
-
-    # ---------------------------------------------------------------------------
-
-    def get_states(self):
-        """Return the state of the features.
+        :param feat_id: (str) Identifier of a feature
 
         """
-        features = self.get_features()
-        dict_enable = dict()
-        for f in features:
-            dict_enable[f.get_desc()] = f.get_enable()
-        return dict_enable
+        self.__installer.enable(feat_id, False)
 
     # ---------------------------------------------------------------------------
 
     def install(self):
-        """Launch the installation procedure of the __installer.
+        """Launch the installation process.
+
+        :return errors: (str) errors which happend during installation.
 
         """
-        self.__installer.install()
+        errors = self.__installer.install()
+        return errors
 
     # ---------------------------------------------------------------------------
+

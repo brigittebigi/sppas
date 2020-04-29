@@ -34,7 +34,6 @@
 
 """
 
-import os
 import shlex
 from subprocess import Popen, PIPE
 
@@ -52,18 +51,38 @@ class Process:
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
     :summary:      the class Process of SPPAS
 
+    A Process is a wrapper of subprocess.Popen command.
+    It can launch a command :
+
+    >>> p = Process()
+    >>> p.run_popen("ls -l")
+
+    Return the stdout of a command :
+
+    >>> p.out()
+
+    Return the stderr of a command :
+
+    >>> p.error()
+
+    Stop a command :
+
+    >>> p.stop()
+
+    Return the state of a command :
+
+    >>> p.is_running()
+
     """
 
     def __init__(self):
-        """Create a new Process instance.
-
-        """
+        """Create a new Process instance."""
         self.__process = None
 
     # ------------------------------------------------------------------------
 
     def run_popen(self, command):
-        """Execute the command used as an argument.
+        """Execute command with subprocess.Popen.
 
         :param command: (str) The command you want to execute
         :returns: Process error message

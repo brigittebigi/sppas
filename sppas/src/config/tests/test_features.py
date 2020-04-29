@@ -29,13 +29,12 @@
         ---------------------------------------------------------------------
 
     src.config.tests.test_features.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
 import unittest
 from sppas.src.config.features import Features, Feature, cp
-
 
 # ---------------------------------------------------------------------------
 
@@ -47,94 +46,95 @@ class TestFeatures(unittest.TestCase):
 
         """
         self.__features = Features("req_win", "cmd_win")
-        self.__feature = Feature()
+        self.__feature = Feature("feature")
 
     # ---------------------------------------------------------------------------
 
-    def test_read_config(self):
-        """Test if the methods read_config from the class Features works well.
-
-        """
-        if self.__features.get_configuration().get_cfg_exist() is True:
-            self.__features.get_configuration().set_deps({})
-            self.__features.get_configuration().set_deps({"wxpython": True, "brew": True, "julius": True})
-            self.__features.get_configuration().set_cfg_exist(True)
-            self.__features.read_config()
-            enables = list()
-            for f in self.__features.get_features():
-                enables.append(f.get_enable())
-            self.assertEqual(enables, [True, False, False])
-
-            self.__features.get_configuration().set_deps({"wxpython": False, "brew": False, "julius": False})
-            self.__features.get_configuration().set_cfg_exist(True)
-            self.__features.read_config()
-            enables = list()
-            for f in self.__features.get_features():
-                enables.append(f.get_enable())
-            self.assertEqual(enables, [False, False, False])
+    def test_get_features_filename(self):
+        """Return the name of the file with the features descriptions."""
+        y = self.__features.get_features_filename()
+        self.assertIn("features.ini", y)
 
     # ---------------------------------------------------------------------------
 
-    def test_write_config(self):
-        """Test if the methods write_config from the class Features works well.
-
-        """
-        self.__features.set_cfg_exist(False)
-        if self.__features.get_cfg_exist() is False:
-            self.__features.get_configuration().set_deps({})
-            for f in self.__features.get_features():
-                self.__features.get_configuration().add_deps(f.get_id(), f.get_enable())
-            y = self.__features.get_configuration().get_deps()
-            self.assertEqual(y, {"wxpython": False, "brew": False, "julius": False})
+    def test_get_ids(self):
+        """Return the list of feature identifiers."""
+        y = self.__features.get_ids()
+        self.assertEqual(y, ["wxpython", "brew", "julius"])
 
     # ---------------------------------------------------------------------------
 
-    def test_get_set_cfg_exist(self):
-        """Test if the methods get_cfg_exist and set_cfg_exist from the class Features works well.
-
-        """
-        self.__features.set_cfg_exist(True)
-        y = self.__features.get_cfg_exist()
-        self.assertIsInstance(y, bool)
-        self.assertEqual(y, True)
-
-        self.__features.set_cfg_exist(["a", "b", "c"])
-        y = self.__features.get_cfg_exist()
-        self.assertIsInstance(y, bool)
-        self.assertEqual(y, True)
-
-        self.__features.set_cfg_exist({"1": "a", "2": "b", "3": "c"})
-        y = self.__features.get_cfg_exist()
-        self.assertIsInstance(y, bool)
-        self.assertEqual(y, True)
-
-        self.__features.set_cfg_exist("")
-        y = self.__features.get_cfg_exist()
-        self.assertIsInstance(y, bool)
+    def test_enable(self):
+        """Return True if the feature is enabled and/or set it."""
+        y = self.__features.enable("wxpython")
         self.assertEqual(y, False)
 
-        self.__features.set_cfg_exist(4)
-        y = self.__features.get_cfg_exist()
-        self.assertIsInstance(y, bool)
+        self.__features.enable("wxpython", True)
+        y = self.__features.enable("wxpython")
         self.assertEqual(y, True)
 
     # ---------------------------------------------------------------------------
 
-    def test_get_config_file(self):
-        """Test if the methods get_config_file from the class Features works well.
+    def test_available(self):
+        """Return True if the feature is available and/or set it."""
+        y = self.__features.available("wxpython")
+        self.assertEqual(y, True)
 
-        """
-        y = self.__features.get_configuration().get_deps()
-        self.assertIsInstance(y, dict)
+        self.__features.available("wxpython", False)
+        y = self.__features.available("wxpython")
+        self.assertEqual(y, False)
+
+    # ---------------------------------------------------------------------------
+
+    def test_description(self):
+        """Return the description of the feature"""
+        y = self.__features.description("wxpython")
+        self.assertEqual(y, "Graphic Interface")
+
+        y = self.__features.description("brew")
+        self.assertEqual(y, "Package manager MacOs")
+
+        y = self.__features.description("julius")
+        self.assertEqual(y, "Automatic alignment")
+
+    # ---------------------------------------------------------------------------
+
+    def test_packages(self):
+        """Return the dictionary of system dependencies of the feature."""
+        # For Windows
+        y = self.__features.packages("wxpython")
+        self.assertEqual(y, {'nil': '1'})
+
+        y = self.__features.packages("brew")
+        self.assertEqual(y, {'nil': '1'})
+
+    # ---------------------------------------------------------------------------
+
+    def test_pypi(self):
+        # For Windows
+        """Return the dictionary of pip dependencies of the feature."""
+        y = self.__features.pypi("wxpython")
+        self.assertEqual(y, {'wxpython': '>;4.0'})
+
+        y = self.__features.pypi("brew")
+        self.assertEqual(y, {'nil': '1'})
+
+    # ---------------------------------------------------------------------------
+
+    def test_cmd(self):
+        # For Windows
+        """Return the command to execute for the feature."""
+        y = self.__features.cmd("wxpython")
+        self.assertEqual(y, "nil")
+
+        y = self.__features.cmd("brew")
+        self.assertEqual(y, "none")
 
     # ---------------------------------------------------------------------------
 
     def test_init_features(self):
-        """Test if the method init_features from the class Features works well.
-
-        """
-        y = self.__features.get_features_parser()
-        y.read(self.__features.get_feature_file())
+        """Return a parsed version of your features.ini file."""
+        y = self.__features.init_features()
 
         self.assertEqual(y.sections(), ["wxpython", "brew", "julius"])
         self.assertEqual(len(y.sections()), 3)
@@ -157,89 +157,100 @@ class TestFeatures(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_set_features(self):
-        """Test if the method set_features from the class Features works well.
-
-        """
+        """Browses the features.ini file and instantiate a Feature()."""
         self.setUp()
 
         self.__features.set_features()
 
-        y = self.__features.get_features()
+        y = self.__features.get_ids()
 
-        self.assertEqual(y[0].get_id(), "wxpython")
-        self.assertEqual(y[0].get_desc(), "Graphic Interface")
-        self.assertEqual(y[0].get_packages(), {'nil': '1'})
-        self.assertEqual(y[0].get_pypi(), {'wxpython': '>;4.0'})
-        self.assertEqual(y[0].get_cmd(), "nil")
+        self.assertEqual(y[0], "wxpython")
+        self.assertEqual(self.__features.description(y[0]), "Graphic Interface")
+        self.assertEqual(self.__features.packages(y[0]), {'nil': '1'})
+        self.assertEqual(self.__features.pypi(y[0]), {'wxpython': '>;4.0'})
+        self.assertEqual(self.__features.cmd(y[0]), "nil")
 
-        self.assertEqual(y[1].get_id(), "brew")
-        self.assertEqual(y[1].get_desc(), "Package manager MacOs")
-        self.assertEqual(y[1].get_packages(), {'nil': '1'})
-        self.assertEqual(y[1].get_pypi(), {'nil': '1'})
-        self.assertEqual(y[1].get_cmd(), "none")
+        self.assertEqual(y[1], "brew")
+        self.assertEqual(self.__features.description(y[1]), "Package manager MacOs")
+        self.assertEqual(self.__features.packages(y[1]), {'nil': '1'})
+        self.assertEqual(self.__features.pypi(y[1]), {'nil': '1'})
+        self.assertEqual(self.__features.cmd(y[1]), "none")
 
-        self.assertEqual(y[2].get_id(), "julius")
-        self.assertEqual(y[2].get_desc(), "Automatic alignment")
-        self.assertEqual(y[2].get_packages(), {'nil': '1'})
-        self.assertEqual(y[2].get_pypi(), {'nil': '1'})
-        self.assertEqual(y[2].get_cmd(), "none")
+        self.assertEqual(y[2], "julius")
+        self.assertEqual(self.__features.description(y[2]), "Automatic alignment")
+        self.assertEqual(self.__features.packages(y[2]), {'nil': '1'})
+        self.assertEqual(self.__features.pypi(y[2]), {'nil': '1'})
+        self.assertEqual(self.__features.cmd(y[2]), "none")
 
     # ---------------------------------------------------------------------------
 
     def test_parse_depend(self):
-        """Test if the method parse_depend from the class Features works well.
+        """Create a dictionary from the string given as an argument."""
+        def parse(string_require):
+            string_require = str(string_require)
+            dependencies = string_require.split(" ")
+            depend = dict()
+            for line in dependencies:
+                tab = line.split(":")
+                depend[tab[0]] = tab[1]
+            return depend
 
-        """
-        y = self.__features.parse_depend("aa:aa aa:aa aa:aa aa:aa")
+        y = parse("aa:aa aa:aa aa:aa aa:aa")
         self.assertEqual(y, {'aa': 'aa'})
-
-        y = self.__features.parse_depend("aa:aa bb:bb cc:cc dd:dd")
+        y = parse("aa:aa bb:bb cc:cc dd:dd")
         self.assertEqual(y, {'aa': 'aa', 'bb': 'bb', 'cc': 'cc', 'dd': 'dd'})
 
         with self.assertRaises(IndexError):
-            self.__features.parse_depend(4)
+            parse(4)
 
         with self.assertRaises(IndexError):
-            self.__features.parse_depend("Bonjour")
+            parse("Bonjour")
 
         with self.assertRaises(IndexError):
-            self.__features.parse_depend(4.0)
+            parse(4.0)
 
         with self.assertRaises(IndexError):
-            self.__features.parse_depend("aaaa aaaa aaaa aaaa")
+            parse("aaaa aaaa aaaa aaaa")
 
         with self.assertRaises(IndexError):
-            self.__features.parse_depend(["aa", ":aa", "bb", ":bb", "cc", ":cc", "dd", ":dd"])
+            parse(["aa", ":aa", "bb", ":bb", "cc", ":cc", "dd", ":dd"])
 
     # ---------------------------------------------------------------------------
 
-    def test_get_features(self):
-        """Test if the method get_features from the class Features works well.
-
-        """
-        self.assertIsInstance(self.__features.get_features(), list)
+    def test__len__(self):
+        """Return the number of features."""
+        y = self.__features.__len__()
+        self.assertEqual(y, 3)
 
     # ---------------------------------------------------------------------------
 
-    def test_get_features_parser(self):
-        """Test if the method get_features_parser from the class Features works well.
+    def test__contains__(self):
+        """Return the number of features."""
+        y = self.__features.__contains__("wxpython")
+        self.assertTrue(y)
 
-        """
-        y = self.__features.get_features_parser()
-        self.assertIsInstance(y, cp.ConfigParser)
+        y = self.__features.__contains__("brew")
+        self.assertTrue(y)
+
+        y = self.__features.__contains__("julius")
+        self.assertTrue(y)
 
     # ---------------------------------------------------------------------------
 
 
 test = TestFeatures()
 test.setUp()
-test.test_read_config()
-test.test_write_config()
-test.test_get_set_cfg_exist()
-test.test_get_config_file()
+test.test_get_features_filename()
+test.test_get_ids()
+test.test_enable()
+test.test_available()
+test.test_description()
+test.test_packages()
+test.test_pypi()
+test.test_cmd()
 test.test_init_features()
 test.test_set_features()
 test.test_parse_depend()
-test.test_get_features()
-test.test_get_features_parser()
+test.test__len__()
+test.test__contains__()
 

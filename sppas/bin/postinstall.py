@@ -21,15 +21,18 @@
         You should have received a copy of the GNU General Public License
         along with SPPAS. If not, see <http://www.gnu.org/licenses/>.
         This banner notice must not be removed.
+
         ---------------------------------------------------------------------
-    bin.workspaces.py
+
+    bin.postinstall.py
     ~~~~~~~~~~~~~~~~
-:author:       Laurent Vouriot
+
+:author:       Florian Hocquet
 :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
 :contact:      contact@sppas.org
 :license:      GPL, v3
 :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-:summary:      a script to use postInstall from terminal
+:summary:      Launch the installation of features
 
 """
 
@@ -51,20 +54,23 @@ from sppas.src.ui.term.terminalcontroller import TerminalController
 if __name__ == "__main__":
 
     # -----------------------------------------------------------------------
-    # Verify and extract args:
+    # Fix initial sppasInstallerDeps parameters
     # -----------------------------------------------------------------------
 
     p = ProcessProgressTerminal()
     installer = sppasInstallerDeps(p)
-    features = installer.get_features()
+    feats_ids = installer.get_feat_ids()
     cmd_features = list()
     i = 0
 
     def search_feature(string):
-        for feature in features:
-            if string == feature.get_id():
-                return feature
+        for feat_id in feats_ids:
+            if string == feat_id:
+                return feat_id
 
+    # ----------------------------------------------------------------------------
+    # Verify and extract args:
+    # ----------------------------------------------------------------------------
 
     parser = ArgumentParser(
         usage="%(prog)s [action]",
@@ -80,20 +86,20 @@ if __name__ == "__main__":
 
     group_act = parser.add_argument_group('Action')
 
-    for feature in features:
-        cmd_features.append(feature.get_id())
-        cmd_features.append("no" + feature.get_id())
+    for feature_id in feats_ids:
+        cmd_features.append(feature_id)
+        cmd_features.append("no" + feature_id)
         group_act.add_argument(
-            "--" + feature.get_id(),
+            "--" + feature_id,
             action='store_true',
-            help="Enable the {desc} (Available={available})"
-            .format(desc=feature.get_desc(), available=feature.get_available()))
+            help="Enable the {desc}"
+            .format(desc=installer.get_feat_desc(feature_id)))
 
         group_act.add_argument(
-            "--no" + feature.get_id(),
+            "--no" + feature_id,
             action='store_true',
             help="Disable the {desc}"
-            .format(desc=feature.get_desc()))
+            .format(desc=installer.get_feat_desc(feature_id)))
 
     group_act.add_argument(
         "-a",
@@ -141,24 +147,24 @@ if __name__ == "__main__":
         print('{:s}\n'.format(sep))
 
         # Redirect all messages to a logging
-        # ----------------------------------------
+        # ----------------------------------
         lgs = sppasLogSetup(0)
         lgs.null_handler()
 
-    # -----------------------------------------------------------------------
-    # The installation process is here:
-    # -----------------------------------------------------------------------
-
-    # Set the values of enable attribute for each feature
-    # ---------------------------------------------------
+    # ------------------------------
+    # Installation is running here :
+    # ------------------------------
 
     if args.all:
-        for f in features:
-            installer.set_enable(f)
+        for feat_id in feats_ids:
+            installer.set_enable(feat_id)
         installer.install()
 
     elif args.default:
         installer.install()
+
+    # Set the values of enable for each feature
+    # -----------------------------------------
     else:
         arguments = vars(args)
         arguments_true = list()
@@ -177,14 +183,6 @@ if __name__ == "__main__":
                     a = a.replace("no", "")
                     installer.unset_enable(search_feature(a))
         installer.install()
-
-    # --------------------------------
-    # Lauch the installation procedure
-    # --------------------------------
-
-    if installer.get_install() is True:
-        print("You already installed the features.\n"
-              "If you want to reinstalled it you have to remove the file \".deps~\"")
 
     try:
         term = TerminalController()

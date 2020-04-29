@@ -28,8 +28,8 @@
 
         ---------------------------------------------------------------------
 
-    src.config.tests.test_installer_macos.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.config.tests.test_macos.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -43,52 +43,31 @@ from sppas.src.config.installer import MacOs, Feature
 class TestInstallerMacOs(unittest.TestCase):
 
     def setUp(self):
-        """Initialisation des tests.
-
-        """
+        """Initialisation."""
         p = ProcessProgressTerminal()
         self.__macos = MacOs(p)
-        self.__feature = Feature()
+        self.__feature = Feature("feature")
 
     # ---------------------------------------------------------------------------
 
     def test_search_package(self):
-        """Test if the method search_package from the class MacOs works well.
+        """Returns True if package is already installed."""
+        self.assertFalse(self.__macos.search_package("juliuussssss"))
+        self.assertFalse(self.__macos.search_package(4))
 
-        """
-        self.assertFalse(self.__macos.search_package("aaaa"))
-        self.assertTrue(self.__macos.search_package("julius"))
+        self.assertTrue(self.__macos.search_package("brew"))
 
     # ---------------------------------------------------------------------------
 
     def test_install_package(self):
-        """Test if the method install_package from the class MacOs works well.
-
-        """
-        self.__macos.install_package("aaaa")
-        y = len(self.__macos.get_system_errors()) != 0
-        self.assertTrue(y)
-
-        self.__macos.install_package("julius")
-        y = len(self.__macos.get_system_errors()) != 0
-        self.assertTrue(y)
-
-        with self.assertRaises(AssertionError):
-            y = len(self.__macos.get_system_errors()) != 0
-            self.assertFalse(y)
-
-        self.__macos.set_system_errors("")
-
-        self.__macos.install_package("julius")
-        y = len(self.__macos.get_system_errors()) != 0
-        self.assertTrue(y)
+        """Install package."""
+        self.assertFalse(self.__macos.install_package("juliuussssss"))
+        self.assertFalse(self.__macos.install_package(4))
 
     # ---------------------------------------------------------------------------
 
     def test_version_package(self):
-        """Test if the method version_package from the class MacOs works well.
-
-        """
+        """Returns True if package is up to date."""
         self.assertTrue(self.__macos.version_package("julius", ">;0.0"))
         self.assertTrue(self.__macos.version_package("flac", ">;0.0"))
 
@@ -104,9 +83,7 @@ class TestInstallerMacOs(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_need_update_package(self):
-        """Test if the method need_update_package from the class MacOs works well.
-
-        """
+        """Return True if the package need to be update."""
         x = "julius: stable 4.5 (bottled) \n" \
             "Two-pass large vocabulary continuous speech recognition engine \n" \
             "https://github.com/julius-speech/julius \n" \
@@ -138,26 +115,9 @@ class TestInstallerMacOs(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_update_package(self):
-        """Test if the method update_package from the class MacOs works well.
-
-        """
-        self.__macos.update_package("aaaa")
-        y = len(self.__macos.get_system_errors()) != 0
-        self.assertTrue(y)
-
-        self.__macos.update_package("julius")
-        y = len(self.__macos.get_system_errors()) != 0
-        self.assertTrue(y)
-
-        with self.assertRaises(AssertionError):
-            y = len(self.__macos.get_system_errors()) != 0
-            self.assertFalse(y)
-
-        self.__macos.set_system_errors("")
-
-        self.__macos.update_package("julius")
-        y = len(self.__macos.get_system_errors()) != 0
-        self.assertFalse(y)
+        """Update package."""
+        self.assertFalse(self.__macos.update_package("wxpythonnnn"))
+        self.assertFalse(self.__macos.update_package(4))
 
     # ---------------------------------------------------------------------------
 
