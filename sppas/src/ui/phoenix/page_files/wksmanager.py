@@ -563,7 +563,8 @@ class WorkspacesPanel(sppasPanel):
         :param new_name: (str) Name of the new workspace.
 
         """
-        wkp_name = self.__wkps.new(new_name)
+        self.__wkps.new(new_name)
+        wkp_name = new_name
         index = self.__append_wkp(wkp_name)
         self.switch_to(index)
         self.Layout()
@@ -631,6 +632,7 @@ class WorkspacesPanel(sppasPanel):
         """
         if index is None:
             index = self.__current
+
         self.__wkps.save_data(data, index)
 
     # -----------------------------------------------------------------------
