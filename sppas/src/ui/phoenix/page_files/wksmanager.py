@@ -43,7 +43,6 @@ from sppas.src.utils import u
 from sppas.src.wkps.sppasWorkspace import sppasWorkspace
 from sppas.src.wkps.filebase import States
 from sppas.src.wkps.sppasWkps import sppasWkps
-from sppas.src.wkps.wio.sppasWJSON import sppasWJSON
 
 
 from ..windows import Confirm, Error
@@ -135,7 +134,7 @@ class WorkspacesManager(sppasPanel):
             name=name)
 
         # The data this page is working on
-        self.__data = sppasWkps()
+        self.__data = sppasWorkspace()
 
         # Construct the panel
         self._create_content()
