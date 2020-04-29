@@ -254,3 +254,22 @@ class TestsppasWorkspace(unittest.TestCase):
         self.assertEqual(len(data.get_refs()), len(self.data.get_refs()))
         dd = data.serialize()
         self.assertEqual(d, dd)
+
+    def test_set(self):
+        # workspace to set
+        wkp = sppasWorkspace()
+
+        # adding refrences to the workspace
+        self.data.add_ref(self.r1)
+        self.data.add_ref(self.r2)
+
+        wkp.set(self.data)
+        self.assertEqual(wkp, self.data)
+
+        # test with wrong parameter
+        with self.assertRaises(sppasTypeError):
+            wkp.set("toto")
+
+
+
+
