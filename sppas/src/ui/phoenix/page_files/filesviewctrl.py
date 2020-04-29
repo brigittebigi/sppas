@@ -38,6 +38,7 @@ import wx.lib.newevent
 from sppas import paths
 from sppas.src.anndata import sppasRW
 from sppas.src.wkps import States, FileName, FileRoot, FilePath, sppasWorkspace
+from sppas.src.wkps.wio.sppasWJSON import sppasWJSON
 from sppas.src.ui import sppasTrash
 
 from ..windows import sppasPanel
@@ -168,7 +169,7 @@ class FileTreeView(sppasScrolledPanel):
         super(FileTreeView, self).__init__(parent, name=name)
 
         # The workspace to display
-        self.__data = sppasWorkspace()
+        self.__data = sppasWJSON()
 
         # Each FilePath has its own CollapsiblePanel in the sizer
         self.__fps = dict()  # key=fp.id, value=FilePathCollapsiblePanel
