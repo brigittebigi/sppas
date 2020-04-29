@@ -45,7 +45,8 @@
 
 import wx
 
-from sppas.src.wkps import sppasWorkspace, States
+from sppas.src.wkps import States, sppasWorkspace
+
 from sppas import sppasTypeError
 
 from ..windows import sppasPanel
