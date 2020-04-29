@@ -46,7 +46,7 @@ from sppas import sppasTypeError
 from sppas import annots
 
 from sppas.src.annotations import sppasParam
-from sppas.src.wkps import sppasWorkspace, States
+from sppas.src.wkps import States, sppasWorkspace
 
 from ..windows.book import sppasSimplebook
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
