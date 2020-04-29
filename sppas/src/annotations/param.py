@@ -375,7 +375,7 @@ class sppasParam(object):
     # -----------------------------------------------------------------------
 
     def set_workspace(self, wkp):
-        if isinstance(wkp, FileData) is False:
+        if isinstance(wkp, sppasWorkspace) is False:
             raise sppasTypeError("sppasWorkspace", type(wkp))
         logging.debug('New data to set in sppasParam. '
                       'Id={:s}'.format(wkp.id))
