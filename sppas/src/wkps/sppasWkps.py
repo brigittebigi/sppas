@@ -194,7 +194,9 @@ class sppasWkps(object):
         fn = os.path.join(paths.wkps, u_name) + sppasWkps.ext
 
         self.__wkps.append(u_name)
-        return sppasWkpRW(fn).write()
+        wkp = sppasWorkspace(u_name)
+
+        return sppasWkpRW(fn).write(wkp)
 
     # -----------------------------------------------------------------------
 
@@ -320,7 +322,7 @@ class sppasWkps(object):
         try:
             filename = self.check_filename(index)
         except OSError:
-            return sppasWorkspace()
+            return sppasWkpRW(filename).read()
 
         return sppasWkpRW(filename).read()
 
@@ -348,7 +350,9 @@ class sppasWkps(object):
             u_name = self[index]
 
         filename = os.path.join(paths.wkps, u_name) + sppasWkps.ext
-        data.write(filename)
+        parser = sppasWkpRW(filename)
+        parser.write(data)
+
         return u_name
 
     # -----------------------------------------------------------------------
