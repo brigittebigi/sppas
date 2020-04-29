@@ -120,6 +120,7 @@ class sppasWkps(object):
         if 'id' not in d:
             raise KeyError("Workspace 'id' is missing of the dictionary to parse.")
         return os.path.exists(d['id'])
+
     # ------------------------------------------------------------------------
 
     @staticmethod
@@ -347,6 +348,7 @@ class sppasWkps(object):
             u_name = self[index]
 
         filename = os.path.join(paths.wkps, u_name) + sppasWkps.ext
+        data = sppasWkpRW(u_name).create_wkp_from_extension(filename)
         data.write(filename)
         return u_name
 
