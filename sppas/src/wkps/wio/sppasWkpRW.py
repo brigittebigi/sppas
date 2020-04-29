@@ -35,11 +35,14 @@
 """
 import os
 from collections import OrderedDict
-from .sppasWJSON import sppasWJSON
-from sppas.src.utils.makeunicode import u
 
+from sppas.src.utils.makeunicode import u
+from sppas.src.anndata.anndataexc import AioEncodingError
+
+from .sppasWJSON import sppasWJSON
 
 # ----------------------------------------------------------------------------
+
 
 class sppasWkpRW():
     """
@@ -49,8 +52,7 @@ class sppasWkpRW():
         :contact:      contact@sppas.org
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-        :summary:      Object used to create the instance of reader/writer depending on the workspace
-        (sppas or annotationPro)
+
         """
 
     WORKSPACE_TYPES = OrderedDict()
@@ -71,9 +73,9 @@ class sppasWkpRW():
     # ------------------------------------------------------------------------
 
     def read(self):
-        """Read a workspace from a file
+        """Read a workspace from a file.
 
-        :returns: sppasWkpRW reader-writer
+        :returns: (sppasWkpRW)
         """
 
         try:
@@ -88,11 +90,10 @@ class sppasWkpRW():
 
     @staticmethod
     def create_wkp_from_extension(filename):
-        """ Return a workspace according to a filename
+        """Return a workspace according to a filename.
 
         :param filename: (str)
         :returns: sppasBaseWkpIO()
-
         """
         extension = os.path.splitext(filename)[1][1:]
         extension = extension.lower()
@@ -102,18 +103,22 @@ class sppasWkpRW():
 
     # ------------------------------------------------------------------------
 
-    def write(self):
-        """Write a workspace into a file
+    def write(self, wkp):
+        """Write a workspace into a file.
 
+        :param wkp: (sppasWorkspace) Data to be saved
         """
-        wkp = sppasWkpRW.create_wkp_from_extension(self.__filename)
+        wkp_rw = sppasWkpRW.create_wkp_from_extension(self.__filename)
+        wkp_rw.set(wkp)
 
         try:
-            wkp.write(self.__filename)
+            wkp_rw.write(self.__filename)
+        except UnicodeDecodeError as e:
+            raise AioEncodingError(self.__filename, str(e))
         except Exception:
             raise
 
-        return wkp
+        return wkp_rw
 
 
 
