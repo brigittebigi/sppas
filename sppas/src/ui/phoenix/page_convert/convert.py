@@ -129,7 +129,7 @@ class sppasConvertPanel(sppasScrolledPanel):
         :param data: (sppasWorkspace)
 
         """
-        if isinstance(data, FileData) is False:
+        if isinstance(data, sppasWorkspace) is False:
             raise sppasTypeError("sppasWorkspace", type(data))
         self.__data = data
 
