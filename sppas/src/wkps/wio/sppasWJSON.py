@@ -107,8 +107,8 @@ class sppasWJSON(sppasBaseWkpIO):
             raise FileOSError(filename)
         with open(filename, 'r') as f:
             d = json.load(f)
-            self._parse(d)
-        return self._parse(d)
+            return self._parse(d)
+
     # -----------------------------------------------------------------------
 
     def write(self, filename):
@@ -133,12 +133,13 @@ class sppasWJSON(sppasBaseWkpIO):
         d = dict()
 
         # Factual information about this file and this sppasWJSON
-        d['wjson'] = "1.0"
+        d['wjson'] = "2.0"
         d['software'] = self.software
         d['version'] = sg.__version__
         d['id'] = self.id
 
         # The list of paths/roots/files stored in this sppasWorkspace()
+
         d['paths'] = list()
         for fp in self.files:
             d['paths'].append(self._serialize_path(fp))
@@ -203,6 +204,7 @@ class sppasWJSON(sppasBaseWkpIO):
 
         dict_path = dict()
         dict_path["id"] = fp.get_id()
+        dict_path["rel"] = os.path.relpath(fp.get_id())
         dict_path["roots"] = list()
 
         # serialize the roots
@@ -251,7 +253,6 @@ class sppasWJSON(sppasBaseWkpIO):
         dict_files["state"] = fn.get_state()
 
         return dict_files
-
     # -----------------------------------------------------------------------
 
     def _parse(self, d):
@@ -317,6 +318,7 @@ class sppasWJSON(sppasBaseWkpIO):
         """
         if 'id' not in d:
             raise KeyError("path 'id' is missing of the dictionary to parse.")
+
         fp = FilePath(d["id"])
 
         # parse roots
@@ -346,7 +348,7 @@ class sppasWJSON(sppasBaseWkpIO):
 
         fr = FileRoot(path + os.sep + d["id"])
 
-        if 'files' in d:
+        if "files" in d:
             for dict_file in d["files"]:
                 fr.append(self._parse_file(dict_file, path))
 
