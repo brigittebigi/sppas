@@ -298,15 +298,15 @@ class sppasWorkspace(FileBase):
                 if len(fr) == 0:
                     fp.remove(fr)
 
-        # Remove empty FilePath
-        for fp in reversed(self.__files):
-            if len(fp) == 0:
-                self.__files.remove(fp)
-
-        for fp in self.__files:
-            for fr in reversed(fp):
-                fr.update_state()
-            fp.update_state()
+        # # Remove empty FilePath
+        # for fp in reversed(self.__files):
+        #     if len(fp) == 0:
+        #         self.__files.remove(fp)
+        #
+        # for fp in self.__files:
+        #     for fr in reversed(fp):
+        #         fr.update_state()
+        #     fp.update_state()
 
     # -----------------------------------------------------------------------
 
@@ -641,6 +641,20 @@ class sppasWorkspace(FileBase):
                     fp.update_state()
 
         return i
+
+    # -----------------------------------------------------------------------
+
+    def set(self, wkp):
+        """Set the current workspace with the files of an other one
+
+        :param wkp: (sppasWorkspace)
+        """
+
+        if isinstance(wkp, sppasWorkspace) is False:
+            raise sppasTypeError(type(wkp), "sppasWorkspace")
+
+        self.__files = wkp.get_all_files()
+        self.__refs = wkp.get_refs()
 
     # -----------------------------------------------------------------------
     # Proprieties
