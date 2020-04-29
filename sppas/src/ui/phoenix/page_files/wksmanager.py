@@ -44,6 +44,7 @@ from sppas.src.wkps.sppasWorkspace import sppasWorkspace
 from sppas.src.wkps.filebase import States
 from sppas.src.wkps.sppasWkps import sppasWkps
 
+
 from ..windows import Confirm, Error
 from ..windows import sppasTextEntryDialog
 from ..windows import sppasFileDialog
@@ -479,7 +480,7 @@ class WorkspacesPanel(sppasPanel):
             style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
-        self.__wkps = sppasWorkspace()
+        self.__wkps = sppasWkps()
         self.__current = 0
 
         self._create_content()
