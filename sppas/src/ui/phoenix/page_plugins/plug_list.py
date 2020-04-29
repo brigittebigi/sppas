@@ -43,7 +43,6 @@ from sppas import u
 from sppas import sppasTypeError
 from sppas.src.plugins import sppasPluginsManager
 from sppas.src.wkps import sppasWorkspace, States
-from sppas.src.wkps.wio.sppasWJSON import sppasWJSON
 
 from ..windows import Error, Information
 from ..windows import sppasDialog
@@ -93,7 +92,7 @@ class sppasPluginsList(sppasScrolledPanel):
         )
 
         # The workspace to work with
-        self.__data = sppasWJSON()
+        self.__data = sppasWorkspace()
 
         # The manager for the plugins
         try:
