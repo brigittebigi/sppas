@@ -135,7 +135,7 @@ class WorkspacesManager(sppasPanel):
             name=name)
 
         # The data this page is working on
-        self.__data = sppasWJSON()  
+        self.__data = sppasWkps()
 
         # Construct the panel
         self._create_content()
