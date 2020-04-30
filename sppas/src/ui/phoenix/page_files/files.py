@@ -45,7 +45,8 @@
 
 import wx
 
-from sppas.src.files import FileData, States
+from sppas.src.wkps import States, sppasWorkspace
+
 from sppas import sppasTypeError
 
 from ..windows import sppasPanel
@@ -106,7 +107,7 @@ class sppasFilesPanel(sppasPanel):
     def get_data(self):
         """Return the data currently displayed in the list of files.
 
-        :returns: (FileData) data of the files-viewer model.
+        :returns: (sppasWorkspace) data of the files-viewer model.
 
         """
         return self.FindWindow("filesview").get_data()
@@ -116,11 +117,11 @@ class sppasFilesPanel(sppasPanel):
     def set_data(self, data):
         """Assign new data to display to this page.
 
-        :param data: (FileData)
+        :param data: (sppasWorkspace)
 
         """
-        if isinstance(data, FileData) is False:
-            raise sppasTypeError("FileData", type(data))
+        if isinstance(data, sppasWorkspace) is False:
+            raise sppasTypeError("sppasWorkspace", type(data))
 
         # Set to all children.
         self.__send_data(self.GetParent(), data)
@@ -226,7 +227,7 @@ class sppasFilesPanel(sppasPanel):
         """Set a change of data to the children, send to the parent.
 
         :param emitted: (wx.Window) The panel the data are coming from
-        :param data: (FileData)
+        :param data: (sppasWorkspace)
 
         """
         # Set the data to appropriate children panels

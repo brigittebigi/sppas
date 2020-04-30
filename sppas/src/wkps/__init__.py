@@ -1,4 +1,4 @@
-GOTO EndHeader
+# -*- coding: UTF-8 -*-
 """
     ..
         ---------------------------------------------------------------------
@@ -28,45 +28,52 @@ GOTO EndHeader
         This banner notice must not be removed.
 
         ---------------------------------------------------------------------
-
-    sppas.bat
-    ~~~~~~~~~~~~~
-
+    
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
+    :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-    :summary:      SPPAS for Windows.
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+*****************************************************************************
+files: management of files into workspaces
+*****************************************************************************
+
+This package includes classes to manage a bunch of files organized into
+workspaces. A workspace is made of data related to the filenames and a
+list of references to make relations between files.
+
+Requires the following other packages:
+
+* config
+* utils
 
 """
-:EndHeader
 
-@echo off
+from .fileutils import sppasGUID
+from .fileutils import sppasFileUtils
+from .fileutils import sppasDirUtils
+from .filebase import FileBase
+from .filebase import States
+from .sppasWorkspace import sppasWorkspace
+from .filestructure import FileName, FileRoot, FilePath
+from .fileref import FileReference, sppasAttribute
+from .filedatafilters import sppasFileDataFilters
 
-SET PYTHONIOENCODING=UTF-8
+from .sppasWkps import sppasWkps
 
-if exist pythonw3.exe (
-
-        start "" pythonw3.exe .\sppas\bin\sppasgui.py
-
-) else (
-
-    if exist python3.exe (
-        start "" python3.exe .\sppas\bin\sppasgui.py
-
-    ) else (
-
-        if exist C:\Python27\pythonw.exe (
-            start "" C:\Python27\pythonw.exe .\sppas\bin\sppasgui.py
-        ) else (
-            if exist C:\Python27\python.exe (
-                start "" C:\Python27\python.exe .\sppas\bin\sppasgui.py
-            ) else (
-                start "" python.exe .\sppas\bin\sppasgui.py
-            )
-        )
-    )
+__all__ = (
+    "FileBase",
+    "States",
+    "sppasWorkspace",
+    "FileName",
+    "FileRoot",
+    "FilePath",
+    "sppasAttribute",
+    "FileReference",
+    "sppasFileDataFilters",
+    "sppasFileUtils",
+    "sppasDirUtils",
+    "sppasGUID",
+    "sppasWkps"
 )
-
-exit

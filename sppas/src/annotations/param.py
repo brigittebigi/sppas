@@ -46,7 +46,7 @@ from sppas.src.structs import sppasOption
 from sppas.src.structs import sppasLangResource
 from sppas.src.anndata.aio import extensions_out as annots_ext
 
-from sppas.src.files import FileData, States
+from sppas.src.wkps import sppasWorkspace, States
 
 # ----------------------------------------------------------------------------
 
@@ -305,7 +305,7 @@ class sppasParam(object):
         self._output_ext = annots.extension
 
         # Input files to annotate
-        self._workspace = FileData()
+        self._workspace = sppasWorkspace()
 
         # The parameters of all the annotations
         self.annotations = []
@@ -375,8 +375,8 @@ class sppasParam(object):
     # -----------------------------------------------------------------------
 
     def set_workspace(self, wkp):
-        if isinstance(wkp, FileData) is False:
-            raise sppasTypeError("FileData", type(wkp))
+        if isinstance(wkp, sppasWorkspace) is False:
+            raise sppasTypeError("sppasWorkspace", type(wkp))
         logging.debug('New data to set in sppasParam. '
                       'Id={:s}'.format(wkp.id))
         self._workspace = wkp

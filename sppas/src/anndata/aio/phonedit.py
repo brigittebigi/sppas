@@ -64,7 +64,7 @@ from ..ann.annlabel import sppasLabel
 from ..ann.annlabel import sppasTag
 
 from .basetrs import sppasBaseIO
-from .aioutils import format_labels, is_ortho_tier, serialize_labels
+from .aioutils import format_labels, is_ortho_tier
 from .aioutils import load
 
 # ---------------------------------------------------------------------------
@@ -376,8 +376,9 @@ class sppasMRK(sppasBasePhonedit):
                 fp.write("[LBL_{:s}]\n".format(level))
                 for index_ann, ann in enumerate(tier):
 
-                    text = serialize_labels(
-                        ann.get_labels(), separator=" ", empty="", alt=True)
+                    text = ann.serialize_labels(separator=" ",
+                                                empty="",
+                                                alt=True)
                     fp.write("LBL_{:s}_{:06d}=\"{:s}\""
                              "".format(level, index_ann, text))
 

@@ -38,7 +38,7 @@ from collections import OrderedDict
 
 from sppas.src.config import sg
 from sppas.src.utils import sppasUnicode
-from sppas.src.files import sppasGUID
+from sppas.src.wkps import sppasGUID
 
 # ---------------------------------------------------------------------------
 

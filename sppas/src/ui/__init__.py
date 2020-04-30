@@ -48,7 +48,7 @@ from .logs import sppasLogSetup
 from .term import TerminalController
 from .term import ProcessProgressTerminal
 
-from .wkps import sppasWorkspaces
+# from sppas.src.files.wkps import sppasWkps
 
 from .trash import sppasTrash
 
@@ -58,7 +58,7 @@ __all__ = (
     "sppasTips",
     "sppasLogFile",
     "sppasLogSetup",
-    "sppasWorkspaces",
+    # "sppasWkps",
     "TerminalController",
     "ProcessProgressTerminal"
 )

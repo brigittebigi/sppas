@@ -38,11 +38,11 @@ import os
 from random import randint
 
 from sppas import u
-from sppas.src.files import FileName, FileRoot, FilePath, FileReference, sppasAttribute
-from sppas.src.files.filedatacompare import sppasFileBaseCompare
-from sppas.src.files.filedatacompare import sppasFileNameCompare
-from sppas.src.files.filedatacompare import sppasFileExtCompare
-from sppas.src.files.filedatacompare import sppasFileRefCompare
+from sppas.src.wkps import FileName, FileRoot, FilePath, FileReference, sppasAttribute
+from sppas.src.wkps.filedatacompare import sppasFileBaseCompare
+from sppas.src.wkps.filedatacompare import sppasFileNameCompare
+from sppas.src.wkps.filedatacompare import sppasFileExtCompare
+from sppas.src.wkps.filedatacompare import sppasFileRefCompare
 
 
 class TestFileDataCompare(unittest.TestCase):

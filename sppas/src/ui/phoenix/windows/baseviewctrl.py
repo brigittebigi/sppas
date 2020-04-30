@@ -36,8 +36,8 @@
 import wx
 import wx.dataview
 
-from sppas.src.files.filebase import States
-from sppas.src.files.fileexc import FileAttributeError
+from sppas.src.wkps.filebase import States
+from sppas.src.wkps.fileexc import FileAttributeError
 
 from sppas.src.ui.phoenix.tools import sppasSwissKnife
 from sppas.src.ui.phoenix.windows.image import ColorizeImage

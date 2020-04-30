@@ -40,7 +40,7 @@ from sppas import paths
 
 from sppas.src.config import msg
 from sppas.src.utils import u
-from sppas.src.files import States
+from sppas.src.wkps.sppasWorkspace import States
 
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
@@ -108,7 +108,7 @@ class FilesManager(sppasPanel):
     def set_data(self, data):
         """Assign a new data instance to display to this panel.
 
-        :param data: (FileData)
+        :param data: (sppasWorkspace)
 
         """
         self._filestree.set_data(data)

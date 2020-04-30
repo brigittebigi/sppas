@@ -37,8 +37,8 @@ import wx
 
 from sppas import sg
 from sppas import annots
-from sppas.src.files.fileref import FileReference, sppasAttribute
-from sppas.src.files.filebase import States
+from sppas.src.wkps.fileref import FileReference, sppasAttribute
+from sppas.src.wkps.filebase import States
 from sppas.src.config import msg
 from sppas.src.utils import u
 
@@ -116,7 +116,7 @@ class ReferencesManager(sppasPanel):
     def set_data(self, data):
         """Assign new data to display to this panel.
 
-        :param data: (FileData)
+        :param data: (sppasWorkspace)
 
         """
         self._refsview.set_data(data)

@@ -5,6 +5,7 @@
 .trash
 .trash/*
 .settings
+.uisettings
 .project
 .pydevproject
 *.pyc
