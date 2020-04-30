@@ -380,17 +380,21 @@ class Installer:
         :returns: False or None
 
         """
-        package = str(package)
-        command = "pip3 install " + package + " --no-warn-script-location"
-        process = Process()
-        process.run_popen(command)
-        error = process.error()
-        if len(error) != 0:
-            if "Could not find" in error:
-                self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
-            else:
-                self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
-            return False
+        try:
+            package = str(package)
+            command = "pip3 install " + package + " --no-warn-script-location"
+            process = Process()
+            process.run_popen(command)
+            error = process.error()
+            if len(error) != 0:
+                if "Could not find" in error:
+                    self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
+                else:
+                    self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
+                return False
+        except FileNotFoundError:
+            self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
+                             .format(name=package, error=FileNotFoundError))
 
     # ---------------------------------------------------------------------------
 
@@ -463,17 +467,21 @@ class Installer:
         :returns: False or None
 
         """
-        package = str(package)
-        command = "pip3 install -U " + package
-        process = Process()
-        process.run_popen(command)
-        error = process.error()
-        if len(error) != 0:
-            if "Could not find" in error:
-                self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
-            else:
-                self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
-            return False
+        try:
+            package = str(package)
+            command = "pip3 install -U " + package
+            process = Process()
+            process.run_popen(command)
+            error = process.error()
+            if len(error) != 0:
+                if "Could not find" in error:
+                    self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
+                else:
+                    self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
+                return False
+        except FileNotFoundError:
+            self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
+                             .format(name=package, error=FileNotFoundError))
 
     # ---------------------------------------------------------------------------
 
@@ -1023,23 +1031,27 @@ class MacOs(Installer):
         :returns: False or None
 
         """
-        package = str(package)
-        command = "brew install " + package
-        process = Process()
-        process.run_popen(command)
-        error = process.error()
-        if len(error) != 0:
-            if "Warning: You are using macOS" in error:
-                if self.search_package(package) is False:
+        try:
+            package = str(package)
+            command = "brew install " + package
+            process = Process()
+            process.run_popen(command)
+            error = process.error()
+            if len(error) != 0:
+                if "Warning: You are using macOS" in error:
+                    if self.search_package(package) is False:
+                        self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
+                        return False
+
+                elif "No available" in error:
                     self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
                     return False
-
-            elif "No available" in error:
-                self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
-                return False
-            else:
-                self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
-                return False
+                else:
+                    self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
+                    return False
+        except FileNotFoundError:
+            self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
+                             .format(name=package, error=FileNotFoundError))
 
     # ---------------------------------------------------------------------------
 
@@ -1113,17 +1125,21 @@ class MacOs(Installer):
         :returns: False or None
 
         """
-        package = str(package)
-        command = "brew upgrade " + package
-        process = Process()
-        process.run_popen(command)
-        error = process.error()
-        if len(error) != 0:
-            if "Could not find" in error:
-                self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
-            else:
-                self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
-            return False
+        try:
+            package = str(package)
+            command = "brew upgrade " + package
+            process = Process()
+            process.run_popen(command)
+            error = process.error()
+            if len(error) != 0:
+                if "Could not find" in error:
+                    self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
+                else:
+                    self.fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
+                return False
+        except FileNotFoundError:
+            self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
+                             .format(name=package, error=FileNotFoundError))
 
     # ---------------------------------------------------------------------------
 
