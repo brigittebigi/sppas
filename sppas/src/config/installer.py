@@ -354,22 +354,25 @@ class Installer:
 
     # ---------------------------------------------------------------------------
 
-    @staticmethod
-    def search_pypi(package):
+    def search_pypi(self, package):
         """Returns True if package is already installed.
 
         :param package: (string) The pip package to search.
 
         """
-        package = str(package)
-        command = "pip3 show " + package
-        process = Process()
-        process.run_popen(command)
-        error = process.error()
-        if "not found" in error:
-            return False
-        else:
-            return True
+        try:
+            package = str(package)
+            command = "pip3 show " + package
+            process = Process()
+            process.run_popen(command)
+            error = process.error()
+            if "not found" in error:
+                return False
+            else:
+                return True
+        except FileNotFoundError:
+            self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
+                             .format(name=package, error=FileNotFoundError))
 
     # ---------------------------------------------------------------------------
 
@@ -405,16 +408,20 @@ class Installer:
         :param req_version: (string) The minimum version required.
 
         """
-        package = str(package)
-        command = "pip3 show " + package
-        process = Process()
-        process.run_popen(command)
-        error = process.error()
-        stdout = process.out()
-        if self.need_update_pypi(stdout, req_version):
-            return False
-        else:
-            return True
+        try:
+            package = str(package)
+            command = "pip3 show " + package
+            process = Process()
+            process.run_popen(command)
+            error = process.error()
+            stdout = process.out()
+            if self.need_update_pypi(stdout, req_version):
+                return False
+            else:
+                return True
+        except FileNotFoundError:
+            self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
+                             .format(name=package, error=FileNotFoundError))
 
     # ---------------------------------------------------------------------------
 
@@ -1012,15 +1019,20 @@ class MacOs(Installer):
         :param package: (string) The system package to search.
 
         """
-        package = str(package)
-        command = "brew list " + package
-        process = Process()
-        process.run_popen(command)
-        error = process.error()
-        if len(error) != 0:
+        try:
+            package = str(package)
+            command = "brew list " + package
+            process = Process()
+            process.run_popen(command)
+            error = process.error()
+            if len(error) != 0:
+                return False
+            else:
+                return True
+        except FileNotFoundError:
+            self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
+                             .format(name=package, error=FileNotFoundError))
             return False
-        else:
-            return True
 
     # ---------------------------------------------------------------------------
 
@@ -1062,17 +1074,21 @@ class MacOs(Installer):
         :param req_version: (string) The minimum version required.
 
         """
-        req_version = str(req_version)
-        package = str(package)
-        command = "brew info " + package
-        process = Process()
-        process.run_popen(command)
-        error = process.error()
-        stdout = process.out()
-        if self.need_update_package(stdout, req_version):
-            return False
-        else:
-            return True
+        try:
+            req_version = str(req_version)
+            package = str(package)
+            command = "brew info " + package
+            process = Process()
+            process.run_popen(command)
+            error = process.error()
+            stdout = process.out()
+            if self.need_update_package(stdout, req_version):
+                return False
+            else:
+                return True
+        except FileNotFoundError:
+            self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
+                             .format(name=package, error=FileNotFoundError))
 
     # ---------------------------------------------------------------------------
 
