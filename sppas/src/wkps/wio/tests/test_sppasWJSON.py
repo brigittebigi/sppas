@@ -42,7 +42,8 @@ import json
 from ..sppasWJSON import sppasWJSON
 from sppas.src.wkps.sppasWorkspace import sppasWorkspace
 from sppas.src.wkps.fileref import FileReference, sppasAttribute
-from sppas.src.wkps.filestructure import FilePath
+from sppas.src.wkps.filestructure import FilePath, FileName
+from sppas.src.wkps.filebase import States
 
 # ---------------------------------------------------------------------------
 
@@ -154,12 +155,39 @@ class TestsppasWJSON(unittest.TestCase):
     def test__parse_path(self):
         fp = FilePath(os.path.dirname(__file__))
         d = self.parser._serialize_path(fp)
-        new_fp = self.parser._parse_path(d)
-        self.assertEqual(new_fp, fp)
-        self.assertEqual(d["id"], new_fp.get_id())
-        self.assertEqual(d["rel"], os.path.relpath(new_fp.get_id()))
+        new_path = self.parser._parse_path(d)
+        fn = FileName(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        new_path.append(fn)
+        self.assertEqual(new_path, fp)
+        self.assertEqual(d["id"], new_path.get_id())
+        self.assertEqual(d["rel"], os.path.relpath(new_path.get_id()))
+        self.assertEqual(new_path.get_state(), States().UNUSED)
 
-    # -----------------------------------------------------------------------
+        # wrong absolute and right relative path
+        fp = FilePath("/toto/samples-pol")
+        d = self.parser._serialize_path(fp)
+        # setting the relative path to an existing one
+        d["rel"] = os.path.relpath(__file__)
+        new_path = self.parser._parse_path(d)
+        fn = FileName(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        new_path.append(fn)
+        self.assertEqual(new_path.get_id(), os.path.abspath(d["rel"]))
+        self.assertNotEqual(new_path.get_state(), States().MISSING)
+        self.assertNotEqual(new_path.get_state(), States().CHECKED)
+        self.assertEqual(new_path.get_state(), States().UNUSED)
+
+        # wrong abspath, relpath
+        fp = FilePath("/toto/samples-pol")
+        d = self.parser._serialize_path(fp)
+        new_path = self.parser._parse_path(d)
+        fn = FileName(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        new_path.append(fn)
+        self.assertEqual(fp, new_path)
+        self.assertEqual(new_path.get_id(), d["id"])
+        # MISSING doesn't work yet
+        # self.assertEqual(new_path.get_id(), States().MISSING)
+
+    # ---------------------------------------------------------------------
 
     def test__parse_root(self):
         for fp in self.data:
