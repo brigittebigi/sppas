@@ -161,6 +161,7 @@ class sppasWorkspace(FileBase):
         :raises: OSError
 
         """
+
         # get or create the corresponding FilePath()
         new_fp = FilePath(os.path.dirname(filename))
         for fp in self.__files:
@@ -298,15 +299,15 @@ class sppasWorkspace(FileBase):
                 if len(fr) == 0:
                     fp.remove(fr)
 
-        # # Remove empty FilePath
-        # for fp in reversed(self.__files):
-        #     if len(fp) == 0:
-        #         self.__files.remove(fp)
-        #
-        # for fp in self.__files:
-        #     for fr in reversed(fp):
-        #         fr.update_state()
-        #     fp.update_state()
+        # Remove empty FilePath
+        for fp in reversed(self.__files):
+            if len(fp) == 0:
+                self.__files.remove(fp)
+
+        for fp in self.__files:
+            for fr in reversed(fp):
+                fr.update_state()
+            fp.update_state()
 
     # -----------------------------------------------------------------------
 
@@ -351,7 +352,7 @@ class sppasWorkspace(FileBase):
     # -----------------------------------------------------------------------
 
     def get_all_files(self):
-        """Return all the files
+        """Return all the files.
 
         :returns: (list)
 
@@ -480,9 +481,6 @@ class sppasWorkspace(FileBase):
                     if fr.get_references() is not None:
                         ref_extended = fr.get_references()
                         ref_extended.extend(ref_checked)
-                        #
-                        # fr.set_references(list(set(ref_extended)))
-                        #
                         fr.set_references(list(set(ref_extended)))
                     else:
                         fr.set_references(ref_checked)
@@ -645,11 +643,11 @@ class sppasWorkspace(FileBase):
     # -----------------------------------------------------------------------
 
     def set(self, wkp):
-        """Set the current workspace with the files of an other one
+        """Set the current workspace with the files of an other one.
 
         :param wkp: (sppasWorkspace)
-        """
 
+        """
         if isinstance(wkp, sppasWorkspace) is False:
             raise sppasTypeError(type(wkp), "sppasWorkspace")
 
