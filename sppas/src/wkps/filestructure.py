@@ -41,8 +41,7 @@ from sppas import sppasTypeError
 from sppas import sppasValueError
 
 from .fileref import FileReference
-from .fileexc import FileOSError, FileTypeError, PathTypeError
-from .fileexc import FileRootValueError
+from .fileexc import FileRootValueError, FileOSError, FileTypeError
 from .filebase import FileBase, States
 
 # ---------------------------------------------------------------------------
@@ -61,7 +60,7 @@ class FileName(FileBase):
 
     """
 
-    FILENAME_STATES = (States().UNUSED, States().CHECKED, States().LOCKED)
+    FILENAME_STATES = (States().UNUSED, States().CHECKED, States().LOCKED, States().MISSING)
 
     def __init__(self, identifier):
         """Constructor of a FileName.
@@ -185,7 +184,6 @@ class FileName(FileBase):
         # test if the file is still existing
         if os.path.isfile(self.get_id()) is False:
             raise FileTypeError(self.get_id())
-
         # get time and size
         try:
             self.__date = datetime.fromtimestamp(
@@ -231,7 +229,6 @@ class FileRoot(FileBase):
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     """
-
     def __init__(self, name):
         """Constructor of a FileRoot.
 
@@ -371,11 +368,14 @@ class FileRoot(FileBase):
         else:
             checked = 0
             locked = 0
+            missing = 0
             for fn in self.__files:
                 if fn.get_state() == States().CHECKED:
                     checked += 1
                 elif fn.get_state() == States().LOCKED:
                     locked += 1
+                elif fn.get_state() == States().MISSING:
+                    missing += 1
 
             if locked == len(self.__files):
                 new_state = States().LOCKED
@@ -385,6 +385,8 @@ class FileRoot(FileBase):
                 new_state = States().CHECKED
             elif checked > 0:
                 new_state = States().AT_LEAST_ONE_CHECKED
+            elif missing > 0:
+                new_state = States().MISSING
             else:
                 new_state = States().UNUSED
 
@@ -517,22 +519,21 @@ class FileRoot(FileBase):
 
         """
         fns = list()
-
         # Get or create the FileName instance
         if filename is not None:
             fn = filename
             if isinstance(filename, FileName) is False:
                 fn = FileName(filename)
 
-            # Check if root is ok
-            if self.id != FileRoot.root(fn.id):
-                raise FileRootValueError(fn.id, self.id)
+        # Check if root is ok
+        if self.id != FileRoot.root(fn.id):
+            raise FileRootValueError(fn.id, self.id)
 
-            # Check if this filename is not already in the list
-            if all_root is False and fn not in self:
-                if os.path.getmtime(fn.get_id()) > ctime:
-                    self.__files.append(fn)
-                    fns.append(fn)
+        # Check if this filename is not already in the list
+        if all_root is False and fn not in self:
+            if os.path.getmtime(fn.get_id()) > ctime:
+                self.__files.append(fn)
+                fns.append(fn)
 
         if all_root is True:
             # add all files sharing this root on the disk,
@@ -544,10 +545,8 @@ class FileRoot(FileBase):
                         if os.path.getmtime(fn.get_id()) > ctime:
                             self.__files.append(fn)
                             fns.append(fn)
-
         if len(fns) > 0:
             self.update_state()
-
         return fns
 
     # -----------------------------------------------------------------------
@@ -634,7 +633,6 @@ class FilePath(FileBase):
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     """
-
     def __init__(self, filepath):
         """Constructor of a FilePath.
 
@@ -643,10 +641,6 @@ class FilePath(FileBase):
 
         """
         super(FilePath, self).__init__(os.path.abspath(filepath))
-        if os.path.exists(filepath) is False:
-            raise FileOSError(filepath)
-        if os.path.isdir(self.get_id()) is False:
-            raise PathTypeError(filepath)
 
         # A list of FileRoot instances
         self.__roots = list()
@@ -710,6 +704,9 @@ class FilePath(FileBase):
             raise sppasTypeError(value, str(FileName.FILENAME_STATES))
 
         modified = list()
+
+        self._state = value
+
         for fr in self.__roots:
             m = fr.set_state(value)
             modified.extend(m)
@@ -742,7 +739,6 @@ class FilePath(FileBase):
                 fn = fr.get_object(idt)
                 if fn is not None:
                     return fn
-
         else:
             for fr in self.__roots:
                 if fr.id == abs_name:
@@ -763,7 +759,6 @@ class FilePath(FileBase):
         f = os.path.abspath(filename)
         if os.path.isfile(f) is False:
             f = os.path.join(self.id, filename)
-
         if os.path.isfile(f) is False:
             raise FileOSError(filename)
 
@@ -898,6 +893,7 @@ class FilePath(FileBase):
             at_least_locked = 0
             checked = 0
             locked = 0
+            missing = 0
             for fr in self.__roots:
                 if fr.get_state() == States().CHECKED:
                     checked += 1
@@ -905,6 +901,8 @@ class FilePath(FileBase):
                     at_least_checked += 1
                 elif fr.get_state() == States().LOCKED:
                     locked += 1
+                elif fr.get_state() == States().MISSING:
+                    missing += 1
                 elif fr.get_state() == States().AT_LEAST_ONE_LOCKED:
                     at_least_locked += 1
 
@@ -916,6 +914,8 @@ class FilePath(FileBase):
                 new_state = States().CHECKED
             elif (at_least_checked+checked) > 0:
                 new_state = States().AT_LEAST_ONE_CHECKED
+            elif missing > 0:
+                new_state = States().MISSING
             else:
                 new_state = States().UNUSED
 
