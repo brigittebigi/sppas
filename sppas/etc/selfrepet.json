@@ -33,14 +33,12 @@
       "value": 3,
       "text": "Span window length in number of IPUs"
     },
-
     {
       "id": "stopwords",
       "type": "bool",
       "value": true,
       "text": "Add stop-words estimated from the given data"
     },
-
     {
       "id": "alpha",
       "type": "float",

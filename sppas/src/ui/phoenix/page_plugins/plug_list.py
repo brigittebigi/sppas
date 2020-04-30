@@ -53,7 +53,7 @@ from ..windows import sppasMessageText, sppasTitleText
 from ..windows import sppasStaticLine
 from ..windows import BitmapTextButton, TextButton
 from ..panels import sppasOptionsPanel
-from ..dialogs import AboutPlugin
+from ..views import AboutPlugin
 from ..main_events import DataChangedEvent
 
 # ---------------------------------------------------------------------------
@@ -127,8 +127,6 @@ class sppasPluginsList(sppasScrolledPanel):
         """
         if isinstance(data, FileData) is False:
             raise sppasTypeError("FileData", type(data))
-        wx.LogMessage('New data to set in the plugins page. '
-                      'Id={:s}'.format(data.id))
         self.__data = data
 
     # -----------------------------------------------------------------------

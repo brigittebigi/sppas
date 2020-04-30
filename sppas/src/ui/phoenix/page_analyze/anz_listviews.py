@@ -51,10 +51,10 @@ from ..windows.dialogs import sppasChoiceDialog
 from ..windows.dialogs import sppasTextEntryDialog
 from ..windows.dialogs import Confirm
 from ..windows.dialogs import MetaDataEdit
-from ..dialogs import TiersView
-from ..dialogs import StatsView
-from ..dialogs import sppasTiersSingleFilterDialog
-from ..dialogs import sppasTiersRelationFilterDialog
+from ..views import TiersView
+from ..views import StatsView
+from ..views import sppasTiersSingleFilterDialog
+from ..views import sppasTiersRelationFilterDialog
 
 from .anz_baseviews import BaseViewFilesPanel
 from .listview import AudioListViewPanel
@@ -438,7 +438,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     def check_tiers(self):
         """Ask for a name and check tiers."""
         dlg = sppasTextEntryDialog(
-            self, TIER_MSG_ASK_REGEXP, caption=TIER_ACT_CHECK, value="")
+            TIER_MSG_ASK_REGEXP, caption=TIER_ACT_CHECK, value="")
         if dlg.ShowModal() == wx.ID_CANCEL:
             wx.LogMessage("Check: cancelled.")
             return
@@ -473,7 +473,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
             return
 
         dlg = sppasTextEntryDialog(
-            self, TIER_MSG_ASK_NAME, caption=TIER_ACT_RENAME, value="")
+            TIER_MSG_ASK_NAME, caption=TIER_ACT_RENAME, value="")
         if dlg.ShowModal() == wx.ID_CANCEL:
             wx.LogMessage("Rename: cancelled.")
             return
@@ -608,7 +608,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
             return
 
         dlg = sppasTextEntryDialog(
-            self, TIER_MSG_ASK_RADIUS, caption=TIER_ACT_RADIUS, value="")
+            TIER_MSG_ASK_RADIUS, caption=TIER_ACT_RADIUS, value="")
         if dlg.ShowModal() == wx.ID_CANCEL:
             wx.LogMessage("Radius: cancelled.")
             return

@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.dialogs.tiersfilters.py
+    src.ui.phoenix.views.tiersfilters.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     A dialog to fix a list of filters and any parameter needed. DO NOT APPLY

@@ -55,8 +55,8 @@ from .page_convert import sppasConvertPanel
 from .page_plugins import sppasPluginsPanel
 
 from .windows import YesNoQuestion
-from .dialogs import About
-from .dialogs import Settings
+from .views import About
+from .views import Settings
 from .main_log import sppasLogWindow
 from .main_events import DataChangedEvent, EVT_DATA_CHANGED
 

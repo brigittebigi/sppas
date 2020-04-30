@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.dialogs.statsview.py
+    src.ui.phoenix.views.statsview.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """

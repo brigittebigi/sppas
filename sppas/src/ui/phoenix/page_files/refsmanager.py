@@ -51,7 +51,7 @@ from ..windows import RadioButton
 from ..windows import sppasToolbar
 from ..windows import Information
 from ..windows import Error
-from ..main_events import DataChangedEvent
+from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 
 from .refsviewctrl import RefsTreeView
 from .filesutils import IdentifierTextValidator
@@ -119,7 +119,7 @@ class ReferencesManager(sppasPanel):
         :param data: (FileData)
 
         """
-        self.FindWindow('refsview').set_data(data)
+        self._refsview.set_data(data)
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -135,6 +135,12 @@ class ReferencesManager(sppasPanel):
         sizer.Add(self.__create_hline(), 0, wx.EXPAND, 0)
         sizer.Add(cv, proportion=1, flag=wx.EXPAND, border=0)
         self.SetSizer(sizer)
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def _refsview(self):
+        return self.FindWindow("refsview")
 
     # -----------------------------------------------------------------------
 
@@ -175,12 +181,15 @@ class ReferencesManager(sppasPanel):
         # The user clicked (LeftDown - LeftUp) an action button of the toolbar
         self.Bind(wx.EVT_BUTTON, self._process_action)
 
+        # Changes occurred in the child refs tree
+        self.Bind(EVT_DATA_CHANGED, self._process_data_changed)
+
     # ------------------------------------------------------------------------
 
     def notify(self):
         """Send the EVT_DATA_CHANGED to the parent."""
         if self.GetParent() is not None:
-            data = self.FindWindow("refsview").get_data()
+            data = self._refsview.get_data()
             data.set_state(States().CHECKED)
             evt = DataChangedEvent(data=data)
             evt.SetEventObject(self)
@@ -188,6 +197,13 @@ class ReferencesManager(sppasPanel):
 
     # ------------------------------------------------------------------------
     # Callbacks to events
+    # ------------------------------------------------------------------------
+
+    def _process_data_changed(self, event):
+        sender = event.GetEventObject()
+        if sender is self._refsview:
+            self.notify()
+
     # ------------------------------------------------------------------------
 
     def _process_key_event(self, event):
@@ -237,7 +253,7 @@ class ReferencesManager(sppasPanel):
             rname = dlg.get_name()
             rtype = dlg.get_rtype()
             try:
-                self.FindWindow('refsview').CreateRef(rname, rtype)
+                self._refsview.CreateRef(rname, rtype)
                 self.notify()
             except Exception as e:
                 wx.LogError("Add reference. {:s}".format(str(e)))
@@ -249,12 +265,11 @@ class ReferencesManager(sppasPanel):
 
     def _delete(self):
         """Delete the selected references."""
-        view = self.FindWindow('refsview')
-        if view.HasCheckedRefs() is False:
+        if self._refsview.HasCheckedRefs() is False:
             Error(REF_MSG_NB_CHECKED)
         else:
             try:
-                nb = view.RemoveCheckedRefs()
+                nb = self._refsview.RemoveCheckedRefs()
                 if nb > 0:
                     Information(REF_MSG_DEL_INFO.format(nb))
                     self.notify()
@@ -265,8 +280,7 @@ class ReferencesManager(sppasPanel):
 
     def _edit(self):
         # add/remove/modify attributes of the selected references
-        view = self.FindWindow('refsview')
-        refs = view.GetCheckedRefs()
+        refs = self._refsview.GetCheckedRefs()
         if len(refs) == 0:
             Error(REF_MSG_NB_CHECKED)
         else:
@@ -275,11 +289,11 @@ class ReferencesManager(sppasPanel):
             if response == wx.ID_OK:
                 if dlg.get_action() == 0:
                     # The user choose to delete an attribute
-                    view.RemoveAttribute(dlg.get_id())
+                    self._refsview.RemoveAttribute(dlg.get_id())
                 else:
                     # The user choose to add/edit an attribute
                     try:
-                        view.EditAttribute(
+                        self._refsview.EditAttribute(
                             dlg.get_id(),
                             dlg.get_value_type()[0],
                             dlg.get_value_type()[1],

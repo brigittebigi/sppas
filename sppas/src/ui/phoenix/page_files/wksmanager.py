@@ -406,7 +406,7 @@ class WorkspacesManager(sppasPanel):
         wkps = self.FindWindow("wkpslist")
         if wkps.get_wkp_current_index() == 0:
             dlg = sppasTextEntryDialog(
-                self, WKP_MSG_ASK_NAME, caption=WKP_ACT_SAVE, value="Corpus")
+                WKP_MSG_ASK_NAME, caption=WKP_ACT_SAVE, value="Corpus")
             if dlg.ShowModal() == wx.ID_CANCEL:
                 return
             wkp_name = dlg.GetValue()
@@ -437,7 +437,7 @@ class WorkspacesManager(sppasPanel):
         """
         current_name = self.FindWindow("wkpslist").get_wkp_name()
         dlg = sppasTextEntryDialog(
-            self, WKP_MSG_ASK_NAME, caption=WKP_ACT_RENAME, value=current_name)
+            WKP_MSG_ASK_NAME, caption=WKP_ACT_RENAME, value=current_name)
         if dlg.ShowModal() == wx.ID_CANCEL:
             return
         new_name = dlg.GetValue()

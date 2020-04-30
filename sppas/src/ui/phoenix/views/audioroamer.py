@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.dialogs.audioroamer.py
+    src.ui.phoenix.views.audioroamer.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """

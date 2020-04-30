@@ -27,21 +27,18 @@
       "value": false,
       "text": "Use the original estimation of intercept and slope"
     },
-
     {
       "id": "annotationpro",
       "type": "bool",
       "value": true,
       "text": "Use the estimation of intercept and slope proposed in Annotation Pro (annotationpro.org)"
     },
-
     {
       "id": "tg_prefix_label",
       "type": "string",
       "value": "tg_",
       "text": "Prefix of each time group label:"
     },
-
     {
       "id": "with_radius",
       "type": "int",
