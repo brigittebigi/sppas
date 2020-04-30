@@ -36,14 +36,16 @@
 
 import unittest
 import os
+import sppas
 
 from sppas import paths
 from sppas.src.wkps.filebase import FileBase, States
 from sppas.src.wkps.filestructure import FileName
 from sppas.src.wkps.filestructure import FileRoot
 from sppas.src.wkps.filestructure import FilePath
+from sppas.src.wkps.sppasWorkspace import sppasWorkspace
 
-from sppas.src.wkps.fileexc import FileOSError, FileTypeError, PathTypeError, FileLockedError
+from sppas.src.wkps.fileexc import FileOSError, FileTypeError, PathTypeError
 
 # ---------------------------------------------------------------------------
 
@@ -61,19 +63,6 @@ class TestFileBase(unittest.TestCase):
         self.assertEqual(__file__, str(f))
         self.assertEqual(__file__, "{!s:s}".format(f))
 
-    def test_serialize(self):
-        fn = FileName(__file__)
-        d = fn.serialize()
-        self.assertEqual(d['id'], fn.id)
-        self.assertEqual(0, d['state'])
-
-        fn.set_state(States().CHECKED)
-        d = fn.serialize()
-        self.assertEqual(1, d['state'])
-
-        fn.set_state(States().LOCKED)
-        d = fn.serialize()
-        self.assertEqual(2, d['state'])
 
 # ---------------------------------------------------------------------------
 
@@ -102,21 +91,14 @@ class TestFileName(unittest.TestCase):
         fn = FileName(__file__)
         self.assertIn(fn.get_mime(), ["text/x-python", "text/plain"])
 
-    def test_parse(self):
-        d = {'id': __file__, 'state': 0}
-        fn = FileName.parse(d)
-        self.assertEqual(d['id'], fn.id)
-        self.assertEqual(0, int(fn.get_state()))
-
-        d = {'id': __file__, 'state': 1}
-        fn = FileName.parse(d)
-        self.assertEqual(d['id'], fn.id)
-        self.assertEqual(1, int(fn.get_state()))
-
-        d = {'id': __file__, 'state': 2}
-        fn = FileName.parse(d)
-        self.assertEqual(d['id'], fn.id)
-        self.assertEqual(1, int(fn.get_state()))
+    def test_set_state(self):
+        fn = FileName("toto")
+        fn.set_state(States().CHECKED)
+        self.assertTrue(fn.get_state() is States().CHECKED)
+        fn.set_state(States().UNUSED)
+        self.assertTrue(fn.get_state() is States().UNUSED)
+        fn.set_state(States().MISSING)
+        self.assertTrue(fn.get_state() is States().MISSING)
 
 # ---------------------------------------------------------------------------
 
@@ -156,17 +138,36 @@ class TestFileRoot(unittest.TestCase):
             'e:\\bigi\\__pycache__\\filedata.cpython-37',
             FileRoot.root('e:\\bigi\\__pycache__\\filedata.cpython-37.pyc'))
 
-    def test_serialize(self):
-        fr = FileRoot(__file__)
-        d = fr.serialize()
-        self.assertEqual(d['id'], fr.id)
-        self.assertEqual(list(), d['files'])
-        self.assertEqual(list(), d['refids'])
+    def test_set_state(self):
+        root = __file__.replace('.py', '')
+        fr = FileRoot(root)
+        modified = fr.set_state(States().CHECKED)
+        self.assertEqual(len(modified), 0)
 
-        fr.append(__file__)
-        d = fr.serialize()
-        self.assertEqual([FileName(__file__).serialize()], d['files'])
+        # testing with a FileRoot with files
+        wkp = sppasWorkspace()
+        wkp.add_file(__file__)
 
+        for fp in wkp:
+            for fr in fp:
+                modified = fr.set_state(States().CHECKED)
+                for fn in fp:
+                    self.assertTrue(fn.get_state() is States().CHECKED)
+        self.assertTrue(len(modified) > 0)
+
+        for fp in wkp:
+            for fr in fp:
+                modified = fr.set_state(States().UNUSED)
+                for fn in fp:
+                    self.assertTrue(fn.get_state() is States().UNUSED)
+        self.assertTrue(len(modified) > 0)
+
+        for fp in wkp:
+            for fr in fp:
+                modified = fr.set_state(States().MISSING)
+                for fn in fr:
+                    self.assertTrue(fn.get_state() is States().MISSING)
+        self.assertTrue(len(modified) > 0)
 
 # ---------------------------------------------------------------------------
 
@@ -178,6 +179,9 @@ class TestFilePath(unittest.TestCase):
         with self.assertRaises(FileOSError):
             FilePath("toto")
 
+        fp = FilePath("/toto")
+        self.assertTrue(fp.state is States().MISSING)
+
         # Attempt to instantiate with a file
         with self.assertRaises(PathTypeError):
             FilePath(__file__)
@@ -188,10 +192,6 @@ class TestFilePath(unittest.TestCase):
         self.assertEqual(d, fp.id)
         self.assertFalse(fp.state is States().CHECKED)
         self.assertEqual(fp.id, fp.get_id())
-
-        # Property is only defined for 'get' (set is not implemented).
-        with self.assertRaises(AttributeError):
-            fp.id = "toto"
 
     def test_append_remove(self):
         d = os.path.dirname(__file__)
@@ -288,7 +288,34 @@ class TestFilePath(unittest.TestCase):
         self.assertIsInstance(fns[1], FileName)
         self.assertIsInstance(fns[2], FileName)
 
-    def test_serialize(self):
-        #print(json.dumps(d, indent=4, separators=(',', ': '), sort_keys=True))
-        pass
+    def test_set_state(self):
+        fp = FilePath(os.path.abspath(__file__))
+        fp.append(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+
+        modified = fp.set_state(States().CHECKED)
+        self.assertTrue(len(modified) > 0)
+        self.assertTrue(fp.get_state() is States().CHECKED)
+        for fr in fp:
+            self.assertTrue(fr.get_state() is States().CHECKED)
+            self.assertFalse(fr.get_state() is States().UNUSED)
+            for fn in fr:
+                self.assertTrue(fn.get_state() is States().CHECKED)
+
+        fp.set_state(States().UNUSED)
+        self.assertTrue(fp.get_state() is States().UNUSED)
+        for fr in fp:
+            self.assertTrue(fr.get_state() is States().UNUSED)
+            for fn in fr:
+                self.assertTrue(fn.get_state() is States().UNUSED)
+
+        fp.set_state(States().MISSING)
+        self.assertTrue(fp.get_state() is States().MISSING)
+        for fr in fp:
+            self.assertTrue(fr.get_state() is States().MISSING)
+            for fn in fr:
+                self.assertTrue(fn.get_state() is States().MISSING)
+
+
+
+
 
