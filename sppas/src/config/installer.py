@@ -92,13 +92,13 @@ class Installer:
         self.__progression = 0
         self.__total__errors = ""
         self.__errors = ""
-        self.__features = Features("req_win", "cmd_win")
+        self._features = None
 
     # ---------------------------------------------------------------------------
 
     def get_feat_ids(self):
         """Return the list of feature identifiers."""
-        return self.__features.get_ids()
+        return self._features.get_ids()
 
     # ---------------------------------------------------------------------------
 
@@ -109,7 +109,7 @@ class Installer:
         :param value: (bool or None) Enable of disable the feature.
 
         """
-        return self.__features.enable(fid, value)
+        return self._features.enable(fid, value)
 
     # ---------------------------------------------------------------------------
 
@@ -120,7 +120,7 @@ class Installer:
         :param value: (bool or None) Make the feature available or not.
 
         """
-        return self.__features.available(fid, value)
+        return self._features.available(fid, value)
 
     # ---------------------------------------------------------------------------
 
@@ -131,7 +131,7 @@ class Installer:
         :return: (str)
 
         """
-        return self.__features.description(fid)
+        return self._features.description(fid)
 
     # ---------------------------------------------------------------------------
 
@@ -159,8 +159,8 @@ class Installer:
         :return: (float)
 
         """
-        nb_packages = len(self.__features.packages(fid))
-        nb_pypi = len(self.__features.pypi(fid))
+        nb_packages = len(self._features.packages(fid))
+        nb_pypi = len(self._features.pypi(fid))
         pourc = round((1 / (1 + nb_packages + nb_pypi)), 2)
         return pourc
 
@@ -168,7 +168,7 @@ class Installer:
 
     def get_cfg_exist(self):
         """Return True if the config file exist."""
-        return self.__features.get_cfg_exist()
+        return self._features.get_cfg_exist()
 
     # ---------------------------------------------------------------------------
 
@@ -219,33 +219,33 @@ class Installer:
                 self._set_errors("")
                 self.get_set_progress(0)
                 self.__pbar.set_header(MSG_INSTALL["begining_feature"]
-                                       .format(desc=self.__features.description(feat_id)))
-                if self.__features.available(feat_id) is False:
+                                       .format(desc=self._features.description(feat_id)))
+                if self._features.available(feat_id) is False:
                     self.__pbar.update(self.get_set_progress(1),
-                                       MSG_INSTALL["available_false"].format(desc=self.__features.description(feat_id)))
+                                       MSG_INSTALL["available_false"].format(desc=self._features.description(feat_id)))
                     continue
-                if self.__features.enable(feat_id) is False:
+                if self._features.enable(feat_id) is False:
                     self.__pbar.update(self.get_set_progress(1),
-                                       MSG_INSTALL["enable_false"].format(desc=self.__features.description(feat_id)))
+                                       MSG_INSTALL["enable_false"].format(desc=self._features.description(feat_id)))
                     continue
 
                 try:
                     self.install_cmd(feat_id)
                     self.install_packages(feat_id)
                     self.install_pypis(feat_id)
-                    self.__features.enable(feat_id, True)
+                    self._features.enable(feat_id, True)
                     self.__pbar.set_header(MSG_INSTALL["installation_success"]
-                                           .format(desc=self.__features.description(feat_id)))
+                                           .format(desc=self._features.description(feat_id)))
                 except NotImplementedError:
                     self.__pbar.set_header(MSG_INSTALL["installation_failed"]
-                                           .format(desc=self.__features.description(feat_id)))
+                                           .format(desc=self._features.description(feat_id)))
 
             self.__pbar.set_header(MSG_INSTALL["installation_process_finished"])
 
-            self.__features.update_config()
+            self._features.update_config()
 
         else:
-            self.__features.update_config()
+            self._features.update_config()
         return self.__total__errors
 
     # ---------------------------------------------------------------------------
@@ -258,10 +258,10 @@ class Installer:
         """
         feat_id = str(feat_id)
 
-        feature_command = self.__features.cmd(feat_id)
+        feature_command = self._features.cmd(feat_id)
 
         if feature_command == "none":
-            self.__features.available(feat_id, False)
+            self._features.available(feat_id, False)
             self.__pbar.update(
                 self.get_set_progress(self.calcul_pourc(feat_id)),
                 MSG_INSTALL_GLOBAL["does_not_exist"].format(name=feat_id))
@@ -274,11 +274,11 @@ class Installer:
                 self.install_cmds(feature_command, feat_id)
             else:
                 self.__pbar.update(
-                    self.get_set_progress(self.calcul_pourc(feat_id)),
-                    MSG_INSTALL_GLOBAL["installation_successful"].format(name=feat_id))
+                    self.get_set_progress(self.calcul_pourc(feat_id)), feat_id)
+                logging.info(MSG_INSTALL_GLOBAL["installation_successful"].format(name=feat_id))
 
         if len(self.__errors) != 0:
-            self.__features.enable(feat_id, False)
+            self._features.enable(feat_id, False)
             raise NotImplementedError()
 
     # ---------------------------------------------------------------------------
@@ -332,7 +332,7 @@ class Installer:
         """
         feat_id = str(feat_id)
 
-        for package, version in self.__features.pypi(feat_id).items():
+        for package, version in self._features.pypi(feat_id).items():
             if package == "nil":
                 self.__pbar.update(
                     self.get_set_progress(self.calcul_pourc(feat_id)),
@@ -345,11 +345,11 @@ class Installer:
                     if self.update_pypi(package) is False:
                         break
                 self.__pbar.update(
-                    self.get_set_progress(self.calcul_pourc(feat_id)),
-                    MSG_INSTALL_GLOBAL["installation_successful"].format(name=package))
+                    self.get_set_progress(self.calcul_pourc(feat_id)), package)
+                logging.info(MSG_INSTALL_GLOBAL["installation_successful"].format(name=package))
 
         if len(self.__errors) != 0:
-            self.__features.enable(feat_id, False)
+            self._features.enable(feat_id, False)
             raise NotImplementedError()
 
     # ---------------------------------------------------------------------------
@@ -485,7 +485,7 @@ class Installer:
         """
         feat_id = str(feat_id)
 
-        for package, version in self.__features.packages(feat_id).items():
+        for package, version in self._features.packages(feat_id).items():
             if package == "nil":
                 self.__pbar.update(
                     self.get_set_progress(self.calcul_pourc(feat_id)),
@@ -501,9 +501,10 @@ class Installer:
                 self.__pbar.update(
                     self.get_set_progress(self.calcul_pourc(feat_id)),
                     MSG_INSTALL_GLOBAL["installation_successful"].format(name=package))
+                logging.info(MSG_INSTALL_GLOBAL["installation_successful"].format(name=package))
 
         if len(self.__errors) != 0:
-            self.__features.enable(feat_id, False)
+            self._features.enable(feat_id, False)
             raise NotImplementedError()
 
     # ---------------------------------------------------------------------------
@@ -595,7 +596,7 @@ class Deb(Installer):
     def __init__(self, p):
         """Create a new Deb(Installer) instance."""
         super(Deb, self).__init__(p)
-        self.__features = Features("req_deb", "cmd_deb")
+        self._features = Features("req_deb", "cmd_deb")
 
     # ---------------------------------------------------------------------------
 
@@ -677,7 +678,7 @@ class Rpm(Installer):
     def __init__(self, p):
         """Create a new Rpm(Installer) instance."""
         super(Rpm, self).__init__(p)
-        self.__features = Features("req_rpm", "cmd_rpm")
+        self._features = Features("req_rpm", "cmd_rpm")
 
     # ---------------------------------------------------------------------------
 
@@ -756,7 +757,7 @@ class Dnf(Installer):
     def __init__(self, p):
         """Create a new Dnf(Installer) instance."""
         super(Dnf, self).__init__(p)
-        self.__features = Features("req_rpm", "cmd_rpm")
+        self._features = Features("req_dnf", "cmd_dnf")
 
     # ---------------------------------------------------------------------------
 
@@ -835,7 +836,7 @@ class Windows(Installer):
     def __init__(self, p):
         """Create a new Windows(Installer) instance."""
         super(Windows, self).__init__(p)
-        self.__features = Features("req_win", "cmd_win")
+        self._features = Features("req_win", "cmd_win")
 
     # ---------------------------------------------------------------------------
 
@@ -914,7 +915,7 @@ class CygWin(Installer):
     def __init__(self, p):
         """Create a new CygWin(Installer) instance."""
         super(CygWin, self).__init__(p)
-        self.__features = Features("req_cyg", "cmd_win")
+        self._features = Features("req_cyg", "cmd_cyg")
 
     # ---------------------------------------------------------------------------
 
@@ -993,7 +994,7 @@ class MacOs(Installer):
     def __init__(self, p):
         """Create a new MacOs(Installer) instance."""
         super(MacOs, self).__init__(p)
-        self.__features = Features("req_ios", "cmd_ios")
+        self._features = Features("req_ios", "cmd_ios")
 
     # ---------------------------------------------------------------------------
 
@@ -1125,3 +1126,4 @@ class MacOs(Installer):
             return False
 
     # ---------------------------------------------------------------------------
+

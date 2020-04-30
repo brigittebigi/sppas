@@ -114,6 +114,9 @@ class Configuration(sppasBaseSettings):
 
     def save(self):
         """Override. Save the dictionary in a file."""
+        # Admin rights are needed to right in a hidden file.
+        # So it's needed to get the file in a normal mode
+        # to modify it and then hide the file.
         self.hide_unhide(".deps~", "-")
         with open(self.cfg_filename(), "w") as f:
             f.write(json.dumps(self.__dict__["deps"], indent=2))

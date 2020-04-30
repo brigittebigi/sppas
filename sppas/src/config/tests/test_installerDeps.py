@@ -72,63 +72,47 @@ class TestInstallerDeps(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
-    def test_get_set_os(self):
+    def test_get__set_os(self):
         """Return(get_os) and set(set_os) the OS of the computer."""
         if sys.platform == "win32":
-            self.__installer_deps.set_os()
             y = self.__installer_deps.get_os()
             self.assertEqual(y, Windows)
 
         elif sys.platform == "linux":
-            self.__installer_deps.set_os()
             y = self.__installer_deps.get_os()
             self.assertIn(y, [Deb, Dnf, Rpm])
 
         elif sys.platform == "darwin":
-            self.__installer_deps.set_os()
             y = self.__installer_deps.get_os()
             self.assertEqual(y, MacOs)
 
         elif sys.platform == "cygwin":
-            self.__installer_deps.set_os()
             y = self.__installer_deps.get_os()
             self.assertEqual(y, CygWin)
-
-        else:
-            with self.assertRaises(OSError):
-                self.__installer_deps.set_os()
-
-    # ---------------------------------------------------------------------------
-
-    def test_get_enables(self):
-        """Return informations about each feature."""
-        enables = self.__installer_deps.get_enables()
-        enables = enables.strip().split("\n")
-
-        y = enables[0]
-        x = "(Graphic Interface,wxpython) available = True/ enable = False"
-        self.assertEqual(y, x)
-
-        y = enables[1]
-        x = "(Package manager MacOs,brew) available = False/ enable = False"
-        self.assertEqual(y, x)
-
-        y = enables[2]
-        x = "(Automatic alignment,julius) available = False/ enable = False"
-        self.assertEqual(y, x)
 
     # ---------------------------------------------------------------------------
 
     def test_get_enable(self):
         """Return True if the feature is enabled."""
-        y = self.__installer_deps.get_feat_ids()
-        self.assertEqual(self.__installer_deps.get_enable(y[0]), False)
+        if self.__installer_deps.get_cfg_exist() is False:
+            y = self.__installer_deps.get_feat_ids()
+            self.assertEqual(self.__installer_deps.get_enable(y[0]), False)
 
-        y = self.__installer_deps.get_feat_ids()
-        self.assertEqual(self.__installer_deps.get_enable(y[1]), False)
+            y = self.__installer_deps.get_feat_ids()
+            self.assertEqual(self.__installer_deps.get_enable(y[1]), False)
 
+            y = self.__installer_deps.get_feat_ids()
+            self.assertEqual(self.__installer_deps.get_enable(y[2]), False)
+
+    # ---------------------------------------------------------------------------
+
+    def test_get_available(self):
+        """Return True if the feature is availabled."""
         y = self.__installer_deps.get_feat_ids()
-        self.assertEqual(self.__installer_deps.get_enable(y[2]), False)
+        if sys.platform == "win32":
+            self.assertEqual(self.__installer_deps.get_available(y[0]), True)
+            self.assertEqual(self.__installer_deps.get_available(y[1]), False)
+            self.assertEqual(self.__installer_deps.get_available(y[2]), False)
 
     # ---------------------------------------------------------------------------
 
@@ -169,8 +153,8 @@ test = TestInstallerDeps()
 test.setUp()
 test.test_get_feat_ids()
 test.test_get_feat_desc()
-test.test_get_set_os()
-test.test_get_enables()
+test.test_get__set_os()
+test.test_get_available()
 test.test_get_enable()
 test.test_set_enable()
 test.test_unset_enable()

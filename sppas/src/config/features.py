@@ -68,7 +68,6 @@ class Features:
         self.__req = req
         self.__cmdos = cmdos
         self.__config = Configuration()
-        self.__feature_file = self.get_features_filename()
         self.__features = list()
         self.__features_parser = self.init_features()
         self.set_features()
@@ -190,7 +189,7 @@ class Features:
 
         features_parser = cp.ConfigParser()
         try:
-            features_parser.read(self.__feature_file)
+            features_parser.read(self.get_features_filename())
         except cp.MissingSectionHeaderError:
             raise IOError("Votre fichier ne contient pas de sections")
         return features_parser
@@ -235,6 +234,9 @@ class Features:
                 feature.set_available(False)
             feature.set_cmd(cmd)
             self.__features.append(feature)
+
+        for f in self.__config.get_deps():
+            self.enable(f, self.__config.dep_enabled(f))
 
     # ---------------------------------------------------------------------------
 

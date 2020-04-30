@@ -146,8 +146,8 @@ class sppasInstallerDeps:
 
     >>> install = sppasInstallerDeps()
 
-    See what is enabled or not :
-    >>> install.get_enables()
+    See what is availabled or not :
+    >>> install.get_available("feature_id")
 
     Personnalize what is enabled or not :
     >>> install.set_enable("feature_id")
@@ -156,7 +156,7 @@ class sppasInstallerDeps:
     >>> install.set_enable("feature_id")
 
     """
-    __List_os = {
+    LIST_OS = {
         "linux": {
             "ubuntu": Deb,
             "mint": Deb,
@@ -176,8 +176,8 @@ class sppasInstallerDeps:
 
         """
         self.__pbar = p
-        self.__Exploit_syst = None
-        self.set_os()
+        self.__os = None
+        self.__set_os()
         self.__installer = self.get_os()(p)
         self.__feat_ids = self.__installer.get_feat_ids()
 
@@ -199,38 +199,39 @@ class sppasInstallerDeps:
 
     # ---------------------------------------------------------
 
+    def get_available(self, feat_id):
+        """Return True if the feature is availabled.
+
+        :param feat_id: (str) Identifier of a feature
+
+        """
+        return self.__installer.available(feat_id)
+
+    # ---------------------------------------------------------
+
     def get_os(self):
         """Return the OS of the computer."""
-        return self.__Exploit_syst
+        return self.__os
 
     # ---------------------------------------------------------------------------
 
-    def set_os(self):
+    def __set_os(self):
         """Set the OS of the computer."""
         system = sys.platform
         if system == "linux":
             linux_distrib = str(os.uname()).split(", ")[3].split("-")[1].split(" ")[0].lower()
-            self.__Exploit_syst = self.__List_os["linux"][linux_distrib]
+            self.__os = self.LIST_OS["linux"][linux_distrib]
         else:
-            if system not in list(self.__List_os.keys()):
+            if system not in list(self.LIST_OS.keys()):
                 raise OSError("A implémenter")
             else:
-                self.__Exploit_syst = self.__List_os[system]
+                self.__os = self.LIST_OS[system]
 
     # ---------------------------------------------------------------------------
 
-    def get_enables(self):
-        """Return informations about each feature.
-
-        :return enables: (str)
-
-        """
-        features = self.__feat_ids
-        enables = "\n"
-        for f in features:
-            enables += "(" + str(self.__installer.description(f)) + "," + f + ") available = "\
-                       + str(self.__installer.available(f)) + "/ enable = " + str(self.__installer.enable(f)) + "\n"
-        return enables
+    def get_cfg_exist(self):
+        """Return True if the config_file exist."""
+        return self.__installer.get_cfg_exist()
 
     # ---------------------------------------------------------------------------
 

@@ -66,8 +66,13 @@ class TestFeatures(unittest.TestCase):
 
     def test_enable(self):
         """Return True if the feature is enabled and/or set it."""
-        y = self.__features.enable("wxpython")
-        self.assertEqual(y, False)
+        if self.__features.get_cfg_exist() is False:
+            y = self.__features.enable("wxpython")
+            self.assertEqual(y, False)
+        else:
+            self.__features.enable("wxpython", False)
+            y = self.__features.enable("wxpython")
+            self.assertEqual(y, False)
 
         self.__features.enable("wxpython", True)
         y = self.__features.enable("wxpython")

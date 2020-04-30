@@ -35,7 +35,7 @@
 
 import unittest
 from sppas.src.ui.term.textprogress import ProcessProgressTerminal
-from sppas.src.config.installer import Installer, Feature
+from sppas.src.config.installer import Installer, Windows, Feature
 
 # ---------------------------------------------------------------------------
 
@@ -45,7 +45,10 @@ class TestInstaller(unittest.TestCase):
     def setUp(self):
         """Initialisation."""
         p = ProcessProgressTerminal()
-        self.__installer = Installer(p)
+        # Two installers because the Installer do not have
+        # its self._features instantiate.
+        self.__installer = Windows(p)
+        self.__installer2 = Installer(p)
         self.__feature = Feature("feature")
         self.__feature.set_available(True)
         self.__feature.set_enable(True)
@@ -67,14 +70,15 @@ class TestInstaller(unittest.TestCase):
 
     def test_enable(self):
         """Return True if the feature is enabled and/or set it."""
-        y = self.__installer.get_feat_ids()
-        self.assertEqual(self.__installer.enable(y[0]), False)
+        if self.__installer.get_cfg_exist() is False:
+            y = self.__installer.get_feat_ids()
+            self.assertEqual(self.__installer.enable(y[0]), False)
 
-        y = self.__installer.get_feat_ids()
-        self.assertEqual(self.__installer.enable(y[1]), False)
+            y = self.__installer.get_feat_ids()
+            self.assertEqual(self.__installer.enable(y[1]), False)
 
-        y = self.__installer.get_feat_ids()
-        self.assertEqual(self.__installer.enable(y[2]), False)
+            y = self.__installer.get_feat_ids()
+            self.assertEqual(self.__installer.enable(y[2]), False)
 
     # ---------------------------------------------------------------------------
 
@@ -289,7 +293,7 @@ class TestInstaller(unittest.TestCase):
 
         """
         with self.assertRaises(NotImplementedError):
-            self.__installer.search_package("aaaa")
+            self.__installer2.search_package("aaaa")
 
     # ---------------------------------------------------------------------------
 
@@ -298,7 +302,7 @@ class TestInstaller(unittest.TestCase):
 
         """
         with self.assertRaises(NotImplementedError):
-            self.__installer.install_package("aaaa")
+            self.__installer2.install_package("aaaa")
 
     # ---------------------------------------------------------------------------
 
@@ -307,7 +311,7 @@ class TestInstaller(unittest.TestCase):
 
         """
         with self.assertRaises(NotImplementedError):
-            self.__installer.version_package("aaaa", "aaaa")
+            self.__installer2.version_package("aaaa", "aaaa")
 
     # ---------------------------------------------------------------------------
 
@@ -316,7 +320,7 @@ class TestInstaller(unittest.TestCase):
 
         """
         with self.assertRaises(NotImplementedError):
-            self.__installer.need_update_package("aaaa", "aaaa")
+            self.__installer2.need_update_package("aaaa", "aaaa")
 
     # ---------------------------------------------------------------------------
 
@@ -325,7 +329,7 @@ class TestInstaller(unittest.TestCase):
 
         """
         with self.assertRaises(NotImplementedError):
-            self.__installer.update_package("aaaa")
+            self.__installer2.update_package("aaaa")
 
     # ---------------------------------------------------------------------------
 
