@@ -373,6 +373,7 @@ class Installer:
         except FileNotFoundError:
             self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
                              .format(name=package, error=FileNotFoundError))
+            return False
 
     # ---------------------------------------------------------------------------
 
@@ -398,6 +399,7 @@ class Installer:
         except FileNotFoundError:
             self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
                              .format(name=package, error=FileNotFoundError))
+            return False
 
     # ---------------------------------------------------------------------------
 
@@ -422,6 +424,7 @@ class Installer:
         except FileNotFoundError:
             self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
                              .format(name=package, error=FileNotFoundError))
+            return False
 
     # ---------------------------------------------------------------------------
 
@@ -489,6 +492,7 @@ class Installer:
         except FileNotFoundError:
             self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
                              .format(name=package, error=FileNotFoundError))
+            return False
 
     # ---------------------------------------------------------------------------
 
@@ -1064,6 +1068,7 @@ class MacOs(Installer):
         except FileNotFoundError:
             self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
                              .format(name=package, error=FileNotFoundError))
+            return False
 
     # ---------------------------------------------------------------------------
 
@@ -1089,6 +1094,7 @@ class MacOs(Installer):
         except FileNotFoundError:
             self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
                              .format(name=package, error=FileNotFoundError))
+            return False
 
     # ---------------------------------------------------------------------------
 
@@ -1156,6 +1162,7 @@ class MacOs(Installer):
         except FileNotFoundError:
             self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
                              .format(name=package, error=FileNotFoundError))
+            return False
 
     # ---------------------------------------------------------------------------
 
