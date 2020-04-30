@@ -301,7 +301,7 @@ if __name__ == "__main__":
         # ----------
 
         ws = sppasWkps()
-        fd = sppasWorkspace()
+        # fd = sppasWorkspace()
         ws_name = None
         # open workspace, create one if not exist
         if args.w:
@@ -315,6 +315,9 @@ if __name__ == "__main__":
                 if not args.quiet:
                     print("creating new workspace")
                 fd = ws.new(ws_name)
+
+            refs = fd.get_refs()
+
             if not args.quiet:
                 print("working on : {}".format(ws_name))
 
@@ -403,7 +406,6 @@ if __name__ == "__main__":
         # remove a reference
         if args.remove_refs:
             nb = fd.remove_refs()
-            # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 print("removed {} reference(s)".format(nb))
 
@@ -420,7 +422,6 @@ if __name__ == "__main__":
         # dissociate
         if args.dissociate:
             fd.dissociate()
-            # ws.save_data(fd, ws.index(ws_name))
             if not args.quiet:
                 for file in fd.get_files():
                     for ref in fd.get_refs():
@@ -429,8 +430,6 @@ if __name__ == "__main__":
 
         # sppasAttribute
         # --------------
-
-        refs = fd.get_refs()
 
         # create a new attribute that we add to every checked references
         if args.att:
@@ -473,10 +472,9 @@ if __name__ == "__main__":
             if not args.quiet:
                 print("removing : {}".format(args.ratt))
 
-        fd.update()
-
         # checking if we work on a workspace
         if ws_name is not None:
+            fd.update()
             ws.save_data(fd, ws.index(ws_name))
 
         #
@@ -543,20 +541,28 @@ if __name__ == "__main__":
         # -----
 
         if args.test:
-            print("debug")
+            # importing the workspace
+            ws.import_from_file(args.test)
 
-    except FileNotFoundError as e:
-        print(e)
-    except FileOSError as e:
-        print(e)
+            if not args.quiet:
+                print("{} imported".format(args.iw))
+            else:
+                print("file {} deleted".format(args.iw))
+
+    # except FileNotFoundError as e:
+    #     print(e)
+    # except FileOSError as e:
+    #     print(e)
     except ValueError as e:
         print(e)
-    except sppasTypeError as e:
-        print(e)
-    except KeyError as e:
-        print(e)
-    except OSError as e:
-        print(e)
+    # except sppasTypeError as e:
+    #     print(e)
+    # except KeyError as e:
+    #     print(e)
+    # except OSError as e:
+    #     print(e)
+    # except Exception:
+    #     raise
 
 
 
