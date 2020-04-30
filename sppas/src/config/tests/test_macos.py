@@ -55,7 +55,8 @@ class TestInstallerMacOs(unittest.TestCase):
         self.assertFalse(self.__macos.search_package("juliuussssss"))
         self.assertFalse(self.__macos.search_package(4))
 
-        self.assertTrue(self.__macos.search_package("brew"))
+        # Only if brew is already install on the computer
+        # self.assertTrue(self.__macos.search_package("brew"))
 
     # ---------------------------------------------------------------------------
 
