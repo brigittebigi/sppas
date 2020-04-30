@@ -139,15 +139,6 @@ class FileBase(object):
         return is_matching
 
     # -----------------------------------------------------------------------
-
-    def serialize(self):
-        """Return a dict representing this instance for json format."""
-        d = dict()
-        d['id'] = self.id.split(os.sep)[-1]
-        d['state'] = int(self.get_state())
-        return d
-
-    # -----------------------------------------------------------------------
     # Properties
     # -----------------------------------------------------------------------
 
@@ -268,7 +259,8 @@ class States(object):
             CHECKED=1,
             LOCKED=2,
             AT_LEAST_ONE_CHECKED=3,
-            AT_LEAST_ONE_LOCKED=4
+            AT_LEAST_ONE_LOCKED=4,
+            MISSING=5
         )
 
     # -----------------------------------------------------------------------
