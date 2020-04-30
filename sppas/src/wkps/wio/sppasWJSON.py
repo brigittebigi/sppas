@@ -36,6 +36,7 @@
 
 import os
 import json
+import sppas
 
 from sppas.src.config import sg
 from .sppasBaseWkpIO import sppasBaseWkpIO
@@ -116,7 +117,6 @@ class sppasWJSON(sppasBaseWkpIO):
 
         :param filename: (str)
         :returns: json file
-
         """
 
         with open(filename, 'w') as f:
@@ -319,12 +319,27 @@ class sppasWJSON(sppasBaseWkpIO):
         if 'id' not in d:
             raise KeyError("path 'id' is missing of the dictionary to parse.")
 
-        fp = FilePath(d["id"])
+        path = d["id"]
+        # checking the entry path exists
+        if os.path.exists(d["id"]) is False:
+            # if not, checking if the relative path exists
+            if os.path.exists(d["rel"]) is False:
+                # if not setting the state of the file to missing
+                fp = FilePath(path)
+                #
+                # state missing doesn't work yet
+                #
+                fp.set_state(States().MISSING)
+            else:
+                path = os.path.abspath(d["rel"])
+                fp = FilePath(path)
+        else:
+            fp = FilePath(d["id"])
 
         # parse roots
         if 'roots' in d:
             for dict_root in d["roots"]:
-                fr = self._parse_root(dict_root, d["id"])
+                fr = self._parse_root(dict_root, path)
                 fp.append(fr)
 
         fp.subjoined = d.get('subjoin', None)
