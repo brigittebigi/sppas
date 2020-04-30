@@ -158,7 +158,6 @@ class FileTreeView(sppasScrolledPanel):
     the wx objects to display it.
 
     """
-
     def __init__(self, parent, name=wx.PanelNameStr):
         """Constructor of the FileTreeView.
 
@@ -169,7 +168,7 @@ class FileTreeView(sppasScrolledPanel):
         super(FileTreeView, self).__init__(parent, name=name)
 
         # The workspace to display
-        self.__data = sppasWJSON()
+        self.__data = sppasWorkspace()
 
         # Each FilePath has its own CollapsiblePanel in the sizer
         self.__fps = dict()  # key=fp.id, value=FilePathCollapsiblePanel
