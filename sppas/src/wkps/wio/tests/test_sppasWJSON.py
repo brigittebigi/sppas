@@ -181,11 +181,11 @@ class TestsppasWJSON(unittest.TestCase):
         d = self.parser._serialize_path(fp)
         new_path = self.parser._parse_path(d)
         fn = FileName(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        self.assertEqual(new_path.get_state(), States().MISSING)
         new_path.append(fn)
         self.assertEqual(fp, new_path)
         self.assertEqual(new_path.get_id(), d["id"])
-        # MISSING doesn't work yet
-        # self.assertEqual(new_path.get_id(), States().MISSING)
+        self.assertEqual(new_path.get_state(), States().MISSING)
 
     # ---------------------------------------------------------------------
 
