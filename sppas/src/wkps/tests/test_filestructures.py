@@ -44,7 +44,6 @@ from sppas.src.wkps.filestructure import FileName
 from sppas.src.wkps.filestructure import FileRoot
 from sppas.src.wkps.filestructure import FilePath
 from sppas.src.wkps.sppasWorkspace import sppasWorkspace
-
 from sppas.src.wkps.fileexc import FileOSError, FileTypeError, PathTypeError
 
 # ---------------------------------------------------------------------------
@@ -57,6 +56,8 @@ class TestFileBase(unittest.TestCase):
         self.assertEqual(__file__, f.get_id())
         self.assertEqual(__file__, f.id)
         self.assertEqual(States().UNUSED, f.get_state())
+
+    # ----------------------------------------------------------------------------
 
     def test_overloads(self):
         f = FileBase(__file__)
@@ -83,24 +84,42 @@ class TestFileName(unittest.TestCase):
         self.assertEqual(__file__, fn.get_id())
         self.assertFalse(fn.state == States().CHECKED)
 
+    # ----------------------------------------------------------------------------
+
     def test_extension(self):
         fn = FileName(__file__)
         self.assertEqual(".PY", fn.get_extension())
+
+    # ----------------------------------------------------------------------------
 
     def test_mime(self):
         fn = FileName(__file__)
         self.assertIn(fn.get_mime(), ["text/x-python", "text/plain"])
 
-    def test_set_state(self):
-        fn = FileName("toto")
-        fn.set_state(States().CHECKED)
-        self.assertTrue(fn.get_state() is States().CHECKED)
-        fn.set_state(States().UNUSED)
-        self.assertTrue(fn.get_state() is States().UNUSED)
-        fn.set_state(States().MISSING)
-        self.assertTrue(fn.get_state() is States().MISSING)
+    # ----------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
+    def test_set_state(self):
+        wkp = sppasWorkspace()
+        wkp.add_file(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        for fp in wkp:
+            for fr in fp:
+                for fn in fr:
+                    fn.set_state(States().CHECKED)
+                    self.assertTrue(fn.get_state() is States().CHECKED)
+                    fn.set_state(States().UNUSED)
+                    self.assertTrue(fn.get_state() is States().UNUSED)
+                    fn.set_state(States().MISSING)
+                    self.assertTrue(fn.get_state() is States().MISSING)
+
+    # ----------------------------------------------------------------------------
+
+    def test_update_proprieties(self):
+        fn = FileName(os.path.join(sppas.paths.samples, "samples-pol", "0001.txt"))
+        self.assertTrue(fn.update_properties())
+        fn = FileName("toto")
+        self.assertFalse(fn.update_properties())
+
+# --------------------------------------------------------------------------------
 
 
 class TestFileRoot(unittest.TestCase):
@@ -111,6 +130,8 @@ class TestFileRoot(unittest.TestCase):
         self.assertEqual(root, fr.id)
         fr = FileRoot("toto")
         self.assertEqual("toto", fr.id)
+
+    # ----------------------------------------------------------------------------
 
     def test_pattern(self):
         # Primary file
@@ -126,6 +147,8 @@ class TestFileRoot(unittest.TestCase):
         # pattern is too long
         self.assertEqual("", FileRoot.pattern('F_F_B003-P1234567890123.xra'))
 
+    # ----------------------------------------------------------------------------
+
     def test_root(self):
         self.assertEqual('filename', FileRoot.root('filename.wav'))
         self.assertEqual('filename', FileRoot.root('filename-phon.xra'))
@@ -137,6 +160,8 @@ class TestFileRoot(unittest.TestCase):
         self.assertEqual(
             'e:\\bigi\\__pycache__\\filedata.cpython-37',
             FileRoot.root('e:\\bigi\\__pycache__\\filedata.cpython-37.pyc'))
+
+    # ----------------------------------------------------------------------------
 
     def test_set_state(self):
         root = __file__.replace('.py', '')
@@ -169,6 +194,55 @@ class TestFileRoot(unittest.TestCase):
                     self.assertTrue(fn.get_state() is States().MISSING)
         self.assertTrue(len(modified) > 0)
 
+    # ----------------------------------------------------------------------------
+
+    def test_update_state(self):
+
+        fr = FileRoot(os.path.join(sppas.paths.samples, "samples-pol", "0001"))
+        fr.append(os.path.join(sppas.paths.samples, "samples-pol", "0001.txt"))
+
+        self.assertTrue(fr.get_state() is States().UNUSED)
+        self.assertFalse(fr.update_state())
+
+        self.assertEqual(fr.get_state(), States().UNUSED)
+        fr.set_state(States().CHECKED)
+        self.assertEqual(fr.get_state(), States().CHECKED)
+        self.assertFalse(fr.update_state())
+        self.assertEqual(fr.get_state(), States().CHECKED)
+
+        for fn in fr:
+            fn.set_state(States().UNUSED)
+            self.assertTrue(fr.update_state())
+            self.assertEqual(fr.get_state(), States().UNUSED)
+            fn.set_state(States().MISSING)
+            self.assertTrue(fr.update_state())
+            self.assertEqual(fr.get_state(), States().MISSING)
+
+    # -----------------------------------------------------------------------
+
+    def test_append(self):
+        fr = FileRoot(os.path.join(sppas.paths.samples, "samples-pol", "0001"))
+        fn = FileName(os.path.join(sppas.paths.samples, "samples-pol", "0001.txt"))
+
+        # adding existing file
+        fns = fr.append(fn)
+        self.assertEqual(len(fns), 1)
+        for f in fr:
+            self.assertEqual(f, fn)
+
+        # if file already in the list
+        fns = fr.append(fn)
+        self.assertEqual(len(fns), 0)
+
+        fr.remove(fn)
+
+        # unexisting file
+        fn = FileName("toto")
+        fns = fr.append(fn)
+        self.assertEqual(len(fns), 1)
+        for f in fr:
+            self.assertEqual(f, fn)
+
 # ---------------------------------------------------------------------------
 
 
@@ -192,6 +266,8 @@ class TestFilePath(unittest.TestCase):
         self.assertEqual(d, fp.id)
         self.assertFalse(fp.state is States().CHECKED)
         self.assertEqual(fp.id, fp.get_id())
+
+    # ----------------------------------------------------------------------------
 
     def test_append_remove(self):
         d = os.path.dirname(__file__)
@@ -257,6 +333,8 @@ class TestFilePath(unittest.TestCase):
         i = fp.remove(FileName(__file__))
         self.assertEqual(-1, i)
 
+    # ----------------------------------------------------------------------------
+
     def test_append_with_brothers(self):
         d = os.path.dirname(__file__)
 
@@ -288,6 +366,8 @@ class TestFilePath(unittest.TestCase):
         self.assertIsInstance(fns[1], FileName)
         self.assertIsInstance(fns[2], FileName)
 
+    # ----------------------------------------------------------------------------
+
     def test_set_state(self):
         fp = FilePath(os.path.abspath(__file__))
         fp.append(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
@@ -314,6 +394,48 @@ class TestFilePath(unittest.TestCase):
             self.assertTrue(fr.get_state() is States().MISSING)
             for fn in fr:
                 self.assertTrue(fn.get_state() is States().MISSING)
+
+    # ----------------------------------------------------------------------------
+
+    def test_update_state(self):
+        fp = FilePath(os.path.join(sppas.paths.samples, "samples-pol"))
+        fn = FileName(os.path.join(sppas.paths.samples, "samples-pol", "0001.txt"))
+        self.assertTrue(fp.get_state() is States().UNUSED)
+        self.assertTrue(fn.get_state() is States().UNUSED)
+
+        # append calls update_state()
+        fp.append(fn)
+        self.assertTrue(fp.get_state() is States().UNUSED)
+
+        # if the state of its roots is  changed
+        for fr in fp:
+            fr.set_state(States().CHECKED)
+
+        self.assertTrue(fp.update_state())
+        self.assertTrue(fp.get_state() is States().CHECKED)
+
+        fp.set_state(States().UNUSED)
+        self.assertTrue(fp.get_state() is States().UNUSED)
+
+        # nothing has changed
+        self.assertFalse(fp.update_state())
+
+        fp.set_state(States().CHECKED)
+        self.assertEqual(fp.get_state(), States().CHECKED)
+
+        for fr in fp:
+            fr.set_state(States().UNUSED)
+            self.assertTrue(fp.update_state())
+            self.assertEqual(fr.get_state(), States().UNUSED)
+
+        # if the filepath is missing updating has no effect
+        fp.set_state(States().MISSING)
+        self.assertFalse(fp.update_state())
+        for fr in fp:
+            fr.set_state(States().UNUSED)
+        self.assertFalse(fp.update_state())
+
+
 
 
 
