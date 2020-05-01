@@ -38,6 +38,7 @@ import os
 import json
 
 from sppas.src.config import sg
+
 from .sppasBaseWkpIO import sppasBaseWkpIO
 from ..filebase import States
 from ..filestructure import FilePath, FileRoot, FileName
@@ -197,7 +198,6 @@ class sppasWJSON(sppasBaseWkpIO):
         :returns: (dict) a dictionary that can be serialize
 
         """
-
         dict_path = dict()
         dict_path["id"] = fp.get_id()
         dict_path["rel"] = os.path.relpath(fp.get_id())
@@ -243,7 +243,6 @@ class sppasWJSON(sppasBaseWkpIO):
         :returns: (dict) a dictionary that can be serialized
 
         """
-
         dict_files = dict()
         dict_files["id"] = fn.get_id().split(os.sep)[-1]
         dict_files["state"] = fn.get_state()
@@ -258,7 +257,6 @@ class sppasWJSON(sppasBaseWkpIO):
         :returns: the id of the workspace
 
         """
-
         if 'id' not in d:
             raise KeyError("Workspace 'id' is missing of the dictionnary to parse. ")
         self.id = self.validate_id(d["id"])

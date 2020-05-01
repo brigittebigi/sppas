@@ -54,7 +54,6 @@ class sppasWkpRW():
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
         """
-
     WORKSPACE_TYPES = OrderedDict()
     WORKSPACE_TYPES[sppasWJSON().default_extension.lower()] = sppasWJSON
 
@@ -64,9 +63,10 @@ class sppasWkpRW():
         return list(sppasWkpRW.WORKSPACE_TYPES.keys())
 
     def __init__(self, filename):
-        """Create a workspace reader/writer
+        """Create a workspace reader/writer.
 
         :param filename: (str)
+
         """
         self.__filename = u(filename)
 
@@ -76,8 +76,8 @@ class sppasWkpRW():
         """Read a workspace from a file.
 
         :returns: (sppasWkpRW)
-        """
 
+        """
         try:
             wkp = sppasWkpRW.create_wkp_from_extension(self.__filename)
             wkp.read(self.__filename)
@@ -94,6 +94,7 @@ class sppasWkpRW():
 
         :param filename: (str)
         :returns: sppasBaseWkpIO()
+
         """
         extension = os.path.splitext(filename)[1][1:]
         extension = extension.lower()
@@ -107,6 +108,7 @@ class sppasWkpRW():
         """Write a workspace into a file.
 
         :param wkp: (sppasWorkspace) Data to be saved
+
         """
         wkp_rw = sppasWkpRW.create_wkp_from_extension(self.__filename)
         wkp_rw.set(wkp)

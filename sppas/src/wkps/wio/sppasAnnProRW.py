@@ -46,5 +46,4 @@ class sppasAnnProRW():
         :summary:      Reader/writer for annotation pro workspaces
 
     """
-
     raise NotImplementedError

@@ -47,10 +47,10 @@ class sppasBaseWkpIO(sppasWorkspace):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
     :summary:      Base object for readers and writers of workspaces
-    """
 
+    """
     def __init__(self, name=None):
-        """Initialize a new workspace reader-writer instance
+        """Initialize a new workspace reader-writer instance.
 
         :param: (str) A workspace name
 
@@ -72,7 +72,7 @@ class sppasBaseWkpIO(sppasWorkspace):
     # -----------------------------------------------------------------------
 
     def read(self, filename):
-        """Read a file and fill the workspace
+        """Read a file and fill the workspace.
 
         :param filename: (str)
 
@@ -82,11 +82,10 @@ class sppasBaseWkpIO(sppasWorkspace):
     # -----------------------------------------------------------------------
 
     def write(self, filename):
-        """Write a workspace into a file
+        """Write a workspace into a file.
 
         :param filename: (str)
 
         """
-
         raise NotImplementedError
 
