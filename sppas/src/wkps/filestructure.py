@@ -79,10 +79,6 @@ class FileName(FileBase):
 
         """
         super(FileName, self).__init__(identifier)
-        if os.path.exists(self.id) is False:
-            raise FileOSError(self.id)
-        if os.path.isfile(self.id) is False:
-            raise FileTypeError(self.id)
 
         # Properties of the file (protected)
         # ----------------------------------
@@ -179,11 +175,14 @@ class FileName(FileBase):
         """Update properties of the file (modified date and filesize).
 
         :raise: FileTypeError if the file is not existing
+        :returns: (bool) true if the file exists else False
 
         """
         # test if the file is still existing
         if os.path.isfile(self.get_id()) is False:
-            raise FileTypeError(self.get_id())
+            self.__date = None
+            self.__filesize = None
+            return False
         # get time and size
         try:
             self.__date = datetime.fromtimestamp(
@@ -191,6 +190,7 @@ class FileName(FileBase):
         except ValueError:
             self.__date = None
         self.__filesize = os.path.getsize(self.get_id())
+        return True
 
     # -----------------------------------------------------------------------
     # Properties
@@ -363,19 +363,19 @@ class FileRoot(FileBase):
         :return: (bool) State is changed or not
 
         """
+        missing = False
         if len(self.__files) == 0:
             new_state = States().UNUSED
         else:
             checked = 0
             locked = 0
-            missing = 0
             for fn in self.__files:
                 if fn.get_state() == States().CHECKED:
                     checked += 1
                 elif fn.get_state() == States().LOCKED:
                     locked += 1
                 elif fn.get_state() == States().MISSING:
-                    missing += 1
+                    missing = True
 
             if locked == len(self.__files):
                 new_state = States().LOCKED
@@ -385,12 +385,12 @@ class FileRoot(FileBase):
                 new_state = States().CHECKED
             elif checked > 0:
                 new_state = States().AT_LEAST_ONE_CHECKED
-            elif missing > 0:
+            elif missing is True:
                 new_state = States().MISSING
             else:
                 new_state = States().UNUSED
 
-        if self._state != new_state:
+        if self._state != new_state or missing is True:
             self._state = new_state
             return True
 
@@ -509,7 +509,7 @@ class FileRoot(FileBase):
     def append(self, filename, all_root=False, ctime=0.):
         """Append a filename in the list of files.
 
-        Given filename must be the absolute name of a file or an instance
+         filename must be the absolute name of a file or an instance
         of FileName.
 
         :param filename: (str, FileName) Absolute name of a file
@@ -519,32 +519,45 @@ class FileRoot(FileBase):
 
         """
         fns = list()
+        missing = False
+
         # Get or create the FileName instance
         if filename is not None:
             fn = filename
             if isinstance(filename, FileName) is False:
                 fn = FileName(filename)
+            # if file is missing
+            if os.path.exists(fn.get_id()) is False:
+                missing = True
 
-        # Check if root is ok
-        if self.id != FileRoot.root(fn.id):
-            raise FileRootValueError(fn.id, self.id)
+        if missing is False:
+            # Check if root is ok
+            if self.id != FileRoot.root(fn.id):
+                raise FileRootValueError(fn.id, self.id)
 
-        # Check if this filename is not already in the list
-        if all_root is False and fn not in self:
-            if os.path.getmtime(fn.get_id()) > ctime:
-                self.__files.append(fn)
-                fns.append(fn)
+            # Check if this filename is not already in the list
+            if all_root is False and fn not in self:
+                if os.path.getmtime(fn.get_id()) > ctime:
+                    self.__files.append(fn)
+                    fns.append(fn)
 
-        if all_root is True:
-            # add all files sharing this root on the disk,
-            # except if a ctime value is given and file is too old.
-            for new_filename in sorted(glob.glob(self.id+"*")):
-                if os.path.isfile(new_filename) is True:
-                    fn = FileName(new_filename)
-                    if fn.get_id() not in self:
-                        if os.path.getmtime(fn.get_id()) > ctime:
-                            self.__files.append(fn)
-                            fns.append(fn)
+            if all_root is True:
+                # add all files sharing this root on the disk,
+                # except if a ctime value is given and file is too old.
+                for new_filename in sorted(glob.glob(self.id+"*")):
+                    if os.path.isfile(new_filename) is True:
+                        fn = FileName(new_filename)
+                        if fn.get_id() not in self:
+                            if os.path.getmtime(fn.get_id()) > ctime and missing is False:
+                                self.__files.append(fn)
+                                fns.append(fn)
+                            else:
+                                self.__files.append(fn)
+                                fns.append(fn)
+        else:
+            self.__files.append(fn)
+            fns.append(fn)
+
         if len(fns) > 0:
             self.update_state()
         return fns
@@ -885,39 +898,37 @@ class FilePath(FileBase):
 
     def update_state(self):
         """Modify state depending on the checked root names."""
-        if len(self.__roots) == 0:
-            new_state = States().UNUSED
 
-        else:
-            at_least_checked = 0
-            at_least_locked = 0
-            checked = 0
-            locked = 0
-            missing = 0
-            for fr in self.__roots:
-                if fr.get_state() == States().CHECKED:
-                    checked += 1
-                elif fr.get_state() == States().AT_LEAST_ONE_CHECKED:
-                    at_least_checked += 1
-                elif fr.get_state() == States().LOCKED:
-                    locked += 1
-                elif fr.get_state() == States().MISSING:
-                    missing += 1
-                elif fr.get_state() == States().AT_LEAST_ONE_LOCKED:
-                    at_least_locked += 1
+        new_state = self.get_state()
+        if self.get_state() is not States().MISSING:
 
-            if locked == len(self.__roots):
-                new_state = States().LOCKED
-            elif (locked+at_least_locked) > 0:
-                new_state = States().AT_LEAST_ONE_LOCKED
-            elif checked == len(self.__roots):
-                new_state = States().CHECKED
-            elif (at_least_checked+checked) > 0:
-                new_state = States().AT_LEAST_ONE_CHECKED
-            elif missing > 0:
-                new_state = States().MISSING
-            else:
+            if len(self.__roots) == 0:
                 new_state = States().UNUSED
+            else:
+                at_least_checked = 0
+                at_least_locked = 0
+                checked = 0
+                locked = 0
+                for fr in self.__roots:
+                    if fr.get_state() == States().CHECKED:
+                        checked += 1
+                    elif fr.get_state() == States().AT_LEAST_ONE_CHECKED:
+                        at_least_checked += 1
+                    elif fr.get_state() == States().LOCKED:
+                        locked += 1
+                    elif fr.get_state() == States().AT_LEAST_ONE_LOCKED:
+                        at_least_locked += 1
+
+                if locked == len(self.__roots):
+                    new_state = States().LOCKED
+                elif (locked+at_least_locked) > 0:
+                    new_state = States().AT_LEAST_ONE_LOCKED
+                elif checked == len(self.__roots):
+                    new_state = States().CHECKED
+                elif (at_least_checked+checked) > 0:
+                    new_state = States().AT_LEAST_ONE_CHECKED
+                else:
+                    new_state = States().UNUSED
 
         if self._state != new_state:
             self._state = new_state
