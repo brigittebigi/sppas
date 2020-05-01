@@ -292,22 +292,7 @@ class sppasWorkspace(FileBase):
         for fp in self.__files:
             for fr in reversed(fp):
                 for fn in reversed(fr):
-                    if os.path.exists(fn.id):
-                        fn.update_properties()
-                    else:
-                        fr.remove(fn)
-                if len(fr) == 0:
-                    fp.remove(fr)
-
-        # Remove empty FilePath
-        for fp in reversed(self.__files):
-            if len(fp) == 0:
-                self.__files.remove(fp)
-
-        for fp in self.__files:
-            for fr in reversed(fp):
-                fr.update_state()
-            fp.update_state()
+                    fn.update_properties()
 
     # -----------------------------------------------------------------------
 
