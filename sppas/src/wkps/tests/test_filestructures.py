@@ -44,7 +44,7 @@ from sppas.src.wkps.filestructure import FileName
 from sppas.src.wkps.filestructure import FileRoot
 from sppas.src.wkps.filestructure import FilePath
 from sppas.src.wkps.sppasWorkspace import sppasWorkspace
-from sppas.src.wkps.fileexc import FileOSError, FileTypeError, PathTypeError
+from sppas.src.wkps.wkpexc import FileOSError, FileTypeError, PathTypeError
 
 # ---------------------------------------------------------------------------
 
@@ -71,13 +71,10 @@ class TestFileBase(unittest.TestCase):
 class TestFileName(unittest.TestCase):
 
     def test_init(self):
-        # Attempt to instantiate with an unexisting file
-        with self.assertRaises(FileOSError):
-            FileName("toto")
-
-        # Attempt to instantiate with a directory
-        with self.assertRaises(FileTypeError):
-            FileName(os.path.dirname(__file__))
+        # Attempt to instantiate with an unexisting file. Since SPPAS 2.9 it
+        # was raising an exception. From SPPAS 3.0 its state is missing.
+        fn = FileName("toto")
+        self.assertEqual(fn.get_state(), States().MISSING)
 
         # Normal situation
         fn = FileName(__file__)
@@ -249,14 +246,15 @@ class TestFileRoot(unittest.TestCase):
 class TestFilePath(unittest.TestCase):
 
     def test_init(self):
-        # Attempt to instantiate with an unexisting file
-        with self.assertRaises(FileOSError):
-            FilePath("toto")
+        # Attempt to instantiate with an unexisting file. Since SPPAS 2.9
+        # it was raising FileOSError. Since SPPAS 3.0 its state is Missing.
+        fp = FilePath("toto")
+        self.assertEqual(fp.get_state(), States().MISSING)
 
         fp = FilePath("/toto")
-        self.assertTrue(fp.state is States().MISSING)
+        self.assertEqual(fp.state, States().MISSING)
 
-        # Attempt to instantiate with a file
+        # Attempt to instantiate with a file.
         with self.assertRaises(PathTypeError):
             FilePath(__file__)
 
@@ -321,17 +319,20 @@ class TestFilePath(unittest.TestCase):
         fp.append(FileName(__file__))
         self.assertEqual(1, len(fp))
 
-        # Remove the file from its instance
-        i = fp.remove(fp.get_root(fn.id))
+        # Tests of remove (return an id or None)
+
+        # Remove the whole root from a file
+        root_to_remove = fp.get_root(fn.id).get_id()
+        idr = fp.remove(fp.get_root(fn.id))
         self.assertEqual(0, len(fp))
-        self.assertEqual(i, 0)
+        self.assertEqual(idr, root_to_remove)
 
         # Remove an un-existing file
-        self.assertEqual(-1, fp.remove("toto"))
+        self.assertEqual(None, fp.remove("toto"))
 
         # Remove a file not in the list!
         i = fp.remove(FileName(__file__))
-        self.assertEqual(-1, i)
+        self.assertEqual(None, i)
 
     # ----------------------------------------------------------------------------
 
@@ -357,11 +358,12 @@ class TestFilePath(unittest.TestCase):
         self.assertIsInstance(fns[1], FileName)
 
         # with brothers
+        d = os.path.join(paths.samples, "samples-eng")
         fp = FilePath(d)
-        fns = fp.append(os.path.join(paths.samples, "samples-eng", "ENG_M15_ENG_T02.PitchTier"), all_root=True)
+        fns = fp.append(os.path.join(d, "ENG_M15_ENG_T02.PitchTier"), all_root=True)
         self.assertIsNotNone(fns)
         self.assertEqual(1, len(fp))   # 1 root
-        self.assertEqual(3, len(fns))   # root + .wav + .pitchter
+        self.assertEqual(3, len(fns))   # root + .wav + .pitchtier
         self.assertIsInstance(fns[0], FileRoot)
         self.assertIsInstance(fns[1], FileName)
         self.assertIsInstance(fns[2], FileName)
@@ -369,8 +371,9 @@ class TestFilePath(unittest.TestCase):
     # ----------------------------------------------------------------------------
 
     def test_set_state(self):
-        fp = FilePath(os.path.abspath(__file__))
-        fp.append(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        d = os.path.join(sppas.paths.samples, 'samples-pol')
+        fp = FilePath(d)
+        fp.append(os.path.join(d, '0001.txt'))
 
         modified = fp.set_state(States().CHECKED)
         self.assertTrue(len(modified) > 0)
@@ -388,12 +391,38 @@ class TestFilePath(unittest.TestCase):
             for fn in fr:
                 self.assertTrue(fn.get_state() is States().UNUSED)
 
+        # Attempt to set to MISSING state but path is existing
         fp.set_state(States().MISSING)
-        self.assertTrue(fp.get_state() is States().MISSING)
+        self.assertEqual(States().UNUSED, fp.get_state())
+
+    # ----------------------------------------------------------------------------
+
+    def test_missing(self):
+        missing_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), "missing_dir")
+        os.mkdir(missing_directory)
+        fp = FilePath(missing_directory)
+        self.assertEqual(States().UNUSED, fp.state)
+        os.rmdir(missing_directory)
+        fp.update_state()
+        self.assertEqual(States().MISSING, fp.state)
+
+        # Add files in the missing_dir...
+
+        # Can't add an un-existing file name
+        with self.assertRaises(FileOSError):
+            fp.append("toto.wav")
+
+        # Can add any FileName instance. It's state is MISSING.
+        fn = FileName(os.path.join(missing_directory, "toto.wav"))
+        fp.append(fn)
+
+        print(fn.id)
+        print(fp.id)
+
         for fr in fp:
-            self.assertTrue(fr.get_state() is States().MISSING)
+            self.assertEqual(States().MISSING, fr.get_state())
             for fn in fr:
-                self.assertTrue(fn.get_state() is States().MISSING)
+                self.assertEqual(States().MISSING, fn.get_state())
 
     # ----------------------------------------------------------------------------
 
