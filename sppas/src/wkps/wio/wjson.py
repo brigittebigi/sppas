@@ -119,8 +119,9 @@ class sppasWJSON(sppasBaseWkpIO):
         :returns: json file
 
         """
+        serialized_dict = self._serialize()
         with open(filename, 'w') as f:
-            return json.dump(self._serialize(), f, indent=4, separators=(',', ': '))
+            return json.dump(serialized_dict, f, indent=4, separators=(',', ': '))
 
     # -----------------------------------------------------------------------
 
@@ -140,7 +141,7 @@ class sppasWJSON(sppasBaseWkpIO):
 
         # The list of paths/roots/files stored in this sppasWorkspace()
         d['paths'] = list()
-        for fp in self.files:
+        for fp in self.get_all_files():
             d['paths'].append(self._serialize_path(fp))
 
         # The list of references/attributes stored in this sppasWorkspace()
@@ -166,7 +167,7 @@ class sppasWJSON(sppasBaseWkpIO):
         dict_ref["subjoin"] = fref.subjoined
 
         dict_ref["attributes"] = list()
-        # serialize the attribtutes in a reference
+        # serialize the attributes in a reference
         for att in fref.get_attributes():
             dict_ref["attributes"].append(self._serialize_attributes(att))
 
@@ -184,7 +185,7 @@ class sppasWJSON(sppasBaseWkpIO):
         """
         dict_att = dict()
         dict_att["id"] = att.get_id()
-        dict_att["value"] = att.get_value()
+        dict_att["value"] = att.get_typed_value()
         dict_att["type"] = att.get_value_type()
         dict_att["descr"] = att.get_description()
 
@@ -325,9 +326,7 @@ class sppasWJSON(sppasBaseWkpIO):
         # check if the entry path exists
         if os.path.exists(d["id"]) is False:
             # check if the relative path exists
-            if os.path.exists(d["rel"]) is False:
-                missing = True
-            else:
+            if os.path.exists(d["rel"]) is True:
                 path = os.path.abspath(d["rel"])
         # in any case, create the corresponding object
         fp = FilePath(path)
@@ -335,7 +334,7 @@ class sppasWJSON(sppasBaseWkpIO):
         # parse its roots
         if 'roots' in d:
             for dict_root in d["roots"]:
-                fr = self._parse_root(dict_root, path, missing)
+                fr = self._parse_root(dict_root, path)
                 fp.append(fr)
 
         fp.subjoined = d.get('subjoin', None)
@@ -345,13 +344,12 @@ class sppasWJSON(sppasBaseWkpIO):
 
     # -----------------------------------------------------------------------
 
-    def _parse_root(self, d, path, missing):
+    def _parse_root(self, d, path):
         """Fill the root of a sppasWJSON reader with the given dictionary.
 
         :param d: (dict)
         :param path: (str) path of the file used to create the whole path of the file
         as only the name of the file is kept in the wjson file
-        :param missing: (bool) Force state of files to MISSING without testing
         :returns: (FileRoot)
 
         """
@@ -362,7 +360,7 @@ class sppasWJSON(sppasBaseWkpIO):
 
         if "files" in d:
             for dict_file in d["files"]:
-                fr.append(self._parse_file(dict_file, path, missing))
+                fr.append(self._parse_file(dict_file, path))
 
         for ref in d["refids"]:
             refe = FileReference(ref)
@@ -373,13 +371,12 @@ class sppasWJSON(sppasBaseWkpIO):
     # -----------------------------------------------------------------------
 
     @staticmethod
-    def _parse_file(d, path, missing):
+    def _parse_file(d, path):
         """Fill the files of a sppasWJSON reader with the given dictionary.
 
         :param d: (dict)
         :param path: (str) path of the file used to create the whole path of the file
         as only the name of the file is kept in the wjson file
-        :param missing: (bool) Force state to MISSING without testing
         :returns: (FileName)
 
         """
@@ -388,15 +385,12 @@ class sppasWJSON(sppasBaseWkpIO):
 
         fn = FileName(path + os.sep + d["id"])
 
-        if missing is True:
-            fn.set_state(States().MISSING)
+        # parse the state value
+        s = d.get('state', States().UNUSED)
+        if s > 0:
+            fn.set_state(States().CHECKED)
         else:
-            # parse the state value
-            s = d.get('state', States().UNUSED)
-            if s > 0:
-                fn.set_state(States().CHECKED)
-            else:
-                fn.set_state(States().UNUSED)
+            fn.set_state(States().UNUSED)
 
         return fn
 

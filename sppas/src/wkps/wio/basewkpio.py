@@ -81,8 +81,10 @@ class sppasBaseWkpIO(sppasWorkspace):
             raise sppasTypeError(type(wkp), "sppasWorkspace")
 
         self._id = wkp.get_id()
-        self.__refs = wkp.get_refs()
-        self.__files = wkp.get_all_files()
+        for reference in wkp.get_refs():
+            self.add_ref(reference)
+        for filepath in wkp.get_all_files():
+            self.add(filepath)
 
     # -----------------------------------------------------------------------
     # Read/Write
