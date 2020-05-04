@@ -18,19 +18,25 @@ msgstr ""
 "X-Generator: Poedit 2.0.6\n"
 
 msgid ":ERROR 9010: "
-msgstr "Name {!s:s} does not match a file or a directory."
+msgstr "Le nom {!s:s} ne correspond à aucun fichier ou dossier."
 
 msgid ":ERROR 9012: "
-msgstr "Name {!s:s} does not match a valid file."
+msgstr "Le nom {!s:s} ne correspond à aucun fichier valide."
 
 msgid ":ERROR 9014: "
-msgstr "Name {!s:s} does not match a valid directory."
+msgstr "Le nom {!s:s} ne correspond à aucun dossier valide."
 
 msgid ":ERROR 9020: "
-msgstr "{:s} has no attribute '{:s}'."
+msgstr "{:s} n'a pas d'attribut '{:s}'."
 
 msgid ":ERROR 9030: "
-msgstr "'{:s}' does not match root '{:s}'."
+msgstr "'{:s}' ne correspond pas au root '{:s}'."
+
+msgid ":ERROR 9032: "
+msgstr "'{:s}' ne correspond pas avec '{:s}'"
+
+msgid ":ERROR 9034: "
+msgstr "'{:s}' ne peut pas être ajouté car il est déjà présent."
 
 msgid ":ERROR 9040: "
-msgstr "{!s:s} is locked."
+msgstr "{!s:s} est verrouillé."

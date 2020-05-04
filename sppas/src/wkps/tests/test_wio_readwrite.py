@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    wkps.wio.tests.test_sppasWkpRW.py
+    wkps.wio.tests.test_wio_readwrite.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -38,8 +38,8 @@ import os
 import sppas
 
 import unittest
-from sppas.src.wkps.wio.sppasWkpRW import sppasWkpRW
-from sppas.src.wkps.wio.sppasWJSON import sppasWJSON
+from sppas.src.wkps.wio.wkpreadwrite import sppasWkpRW
+from sppas.src.wkps.wio.wjson import sppasWJSON
 from sppas.src.wkps.fileref import FileReference, sppasAttribute
 
 # ---------------------------------------------------------------------------

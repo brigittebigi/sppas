@@ -70,7 +70,7 @@ from .aioutils import fill_gaps
 from .aioutils import merge_overlapping_annotations
 from .aioutils import load
 from .aioutils import format_labels
-from .basetrs import sppasBaseIO
+from .basetrsio import sppasBaseIO
 
 # ---------------------------------------------------------------------------
 

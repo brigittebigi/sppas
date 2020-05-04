@@ -29,21 +29,20 @@
 
         ---------------------------------------------------------------------
 
-    wkps.wio.sppasAnnProRW.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~
+    wkps.wio.wkpannpro.py
+    ~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
 
-class sppasAnnProRW():
-    """
+class sppasWANT():
+    """Reader and writer to import/export a workspace from/to annotationpro.
 
         :author:       Laurent Vouriot
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
         :contact:      contact@sppas.org
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-        :summary:      Reader/writer for annotation pro workspaces
 
     """
     raise NotImplementedError

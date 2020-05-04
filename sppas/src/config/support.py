@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """
     ..
         ---------------------------------------------------------------------
@@ -125,6 +126,8 @@ class sppasUpdate:
 
         return False
 
+# ---------------------------------------------------------------------------
+
 
 class sppasInstallerDeps:
     """Manage the installation of features.
@@ -223,7 +226,7 @@ class sppasInstallerDeps:
             self.__os = self.LIST_OS["linux"][linux_distrib]
         else:
             if system not in list(self.LIST_OS.keys()):
-                raise OSError("A implémenter")
+                raise OSError("The OS {} is not supported yet.".format(system))
             else:
                 self.__os = self.LIST_OS[system]
 

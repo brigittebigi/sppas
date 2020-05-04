@@ -29,8 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    wkps.wio.sppasWJSON.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~
+    wkps.wio.wjson.py
+    ~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -39,29 +39,31 @@ import json
 
 from sppas.src.config import sg
 
-from .sppasBaseWkpIO import sppasBaseWkpIO
-from ..filebase import States
+from ..filebase import FileBase, States
 from ..filestructure import FilePath, FileRoot, FileName
 from ..fileref import FileReference, sppasAttribute
 from ..wkpexc import FileOSError
+
+from .basewkpio import sppasBaseWkpIO
 
 # ---------------------------------------------------------------------------
 
 
 class sppasWJSON(sppasBaseWkpIO):
-    """
+    """Reader and writer of a workspace in wjson format.
+
     :author:       Laurent Vouriot
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
-    :summary:      Reader/Writer for sppasWorkspace.
 
     """
+
     def __init__(self, name=None):
         """Initialize a sppasWJSON instance.
 
-        :param name: (str) The workspace name
+        :param name: (str) The name of the workspace
 
         """
         if name is None:
@@ -71,11 +73,11 @@ class sppasWJSON(sppasBaseWkpIO):
         self.default_extension = "wjson"
         self.software = sg.__name__
 
-        # -----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     @staticmethod
     def detect(filename):
-        """ Check wether a file is of wjson format or not.
+        """Check whether a file is of wjson format or not.
 
         :param filename: (str) Name of the file to detect
         :returns: (bool)
@@ -96,7 +98,7 @@ class sppasWJSON(sppasBaseWkpIO):
     # -----------------------------------------------------------------------
 
     def read(self, filename):
-        """ Read a wjson file and fill the the sppasWSJON.
+        """Read a wjson file and fill the the sppasWSJON.
 
         :param filename: (str)
         :returns: (sppasWJSON)
@@ -117,8 +119,9 @@ class sppasWJSON(sppasBaseWkpIO):
         :returns: json file
 
         """
+        serialized_dict = self._serialize()
         with open(filename, 'w') as f:
-            return json.dump(self._serialize(), f, indent=4, separators=(',', ': '))
+            return json.dump(serialized_dict, f, indent=4, separators=(',', ': '))
 
     # -----------------------------------------------------------------------
 
@@ -137,9 +140,8 @@ class sppasWJSON(sppasBaseWkpIO):
         d['id'] = self.id
 
         # The list of paths/roots/files stored in this sppasWorkspace()
-
         d['paths'] = list()
-        for fp in self.files:
+        for fp in self.get_all_files():
             d['paths'].append(self._serialize_path(fp))
 
         # The list of references/attributes stored in this sppasWorkspace()
@@ -165,7 +167,7 @@ class sppasWJSON(sppasBaseWkpIO):
         dict_ref["subjoin"] = fref.subjoined
 
         dict_ref["attributes"] = list()
-        # serialize the attribtutes in a reference
+        # serialize the attributes in a reference
         for att in fref.get_attributes():
             dict_ref["attributes"].append(self._serialize_attributes(att))
 
@@ -183,7 +185,7 @@ class sppasWJSON(sppasBaseWkpIO):
         """
         dict_att = dict()
         dict_att["id"] = att.get_id()
-        dict_att["value"] = att.get_value()
+        dict_att["value"] = att.get_typed_value()
         dict_att["type"] = att.get_value_type()
         dict_att["descr"] = att.get_description()
 
@@ -248,18 +250,24 @@ class sppasWJSON(sppasBaseWkpIO):
         dict_files["state"] = fn.get_state()
 
         return dict_files
+
     # -----------------------------------------------------------------------
 
     def _parse(self, d):
-        """ fill the data of a sppasWJSON reader with the given dictionary.
+        """Fill the data of a sppasWJSON reader with the given dictionary.
 
         :param d: (dict)
         :returns: the id of the workspace
 
         """
         if 'id' not in d:
-            raise KeyError("Workspace 'id' is missing of the dictionnary to parse. ")
-        self.id = self.validate_id(d["id"])
+            raise KeyError("Workspace 'id' is missing of the dictionary to parse. ")
+        try:
+            idw = FileBase.validate_id(d['id'])
+            self._id = idw
+        except ValueError:
+            # We keep our current 'id'
+            pass
 
         if 'paths' in d:
             for dict_path in d['paths']:
@@ -315,24 +323,18 @@ class sppasWJSON(sppasBaseWkpIO):
 
         missing = False
         path = d["id"]
-        # checking the entry path exists
+        # check if the entry path exists
         if os.path.exists(d["id"]) is False:
-            # if not, checking if the relative path exists
-            if os.path.exists(d["rel"]) is False:
-                # if not setting the state of the file to missing
-                fp = FilePath(path)
-                fp.set_state(States().MISSING)
-                missing = True
-            else:
+            # check if the relative path exists
+            if os.path.exists(d["rel"]) is True:
                 path = os.path.abspath(d["rel"])
-                fp = FilePath(path)
-        else:
-            fp = FilePath(d["id"])
+        # in any case, create the corresponding object
+        fp = FilePath(path)
 
-        # parse roots
+        # parse its roots
         if 'roots' in d:
             for dict_root in d["roots"]:
-                fr = self._parse_root(dict_root, path, missing)
+                fr = self._parse_root(dict_root, path)
                 fp.append(fr)
 
         fp.subjoined = d.get('subjoin', None)
@@ -342,13 +344,12 @@ class sppasWJSON(sppasBaseWkpIO):
 
     # -----------------------------------------------------------------------
 
-    def _parse_root(self, d, path, missing):
+    def _parse_root(self, d, path):
         """Fill the root of a sppasWJSON reader with the given dictionary.
 
         :param d: (dict)
         :param path: (str) path of the file used to create the whole path of the file
         as only the name of the file is kept in the wjson file
-        :missing: (bool) if true it means that the FilePath is missing on the computer
         :returns: (FileRoot)
 
         """
@@ -359,7 +360,7 @@ class sppasWJSON(sppasBaseWkpIO):
 
         if "files" in d:
             for dict_file in d["files"]:
-                fr.append(self._parse_file(dict_file, path, missing))
+                fr.append(self._parse_file(dict_file, path))
 
         for ref in d["refids"]:
             refe = FileReference(ref)
@@ -370,13 +371,12 @@ class sppasWJSON(sppasBaseWkpIO):
     # -----------------------------------------------------------------------
 
     @staticmethod
-    def _parse_file(d, path, missing):
+    def _parse_file(d, path):
         """Fill the files of a sppasWJSON reader with the given dictionary.
 
         :param d: (dict)
         :param path: (str) path of the file used to create the whole path of the file
         as only the name of the file is kept in the wjson file
-        :missing: (bool) if true it means that the filepath is missing on the computer
         :returns: (FileName)
 
         """
@@ -391,8 +391,6 @@ class sppasWJSON(sppasBaseWkpIO):
             fn.set_state(States().CHECKED)
         else:
             fn.set_state(States().UNUSED)
-        if missing is True:
-            fn.set_state(States().MISSING)
 
         return fn
 

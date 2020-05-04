@@ -29,43 +29,62 @@
 
         ---------------------------------------------------------------------
 
-    wkps.wio.sppasBaseWkpIO.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~
+    wkps.wio.basewkpio.py
+    ~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
+from sppas import sppasTypeError
 from ..sppasWorkspace import sppasWorkspace
 
 # ---------------------------------------------------------------------------
 
 
 class sppasBaseWkpIO(sppasWorkspace):
-    """
+    """Base class for any reader-writer of a workspace.
 
     :author:       Laurent Vouriot
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-    :summary:      Base object for readers and writers of workspaces
 
     """
+
     def __init__(self, name=None):
         """Initialize a new workspace reader-writer instance.
 
-        :param: (str) A workspace name
+        :param name: (str) A workspace name
 
         """
         super(sppasBaseWkpIO, self).__init__(name)
 
         self.default_extension = None
-        self.software = "Und"
+        self.software = "und"
 
     # -----------------------------------------------------------------------
 
     @staticmethod
     def detect(filename):
-        """Check wether a file is the appropriate format or not."""
+        """Check whether a file is of an appropriate format or not."""
         return False
+
+    # -----------------------------------------------------------------------
+
+    def set(self, wkp):
+        """Set the current workspace with the content of another one.
+
+        :param wkp: (sppasWorkspace)
+
+        """
+        if isinstance(wkp, sppasWorkspace) is False:
+            raise sppasTypeError(type(wkp), "sppasWorkspace")
+
+        self._id = wkp.get_id()
+        for reference in wkp.get_refs():
+            self.add_ref(reference)
+        for filepath in wkp.get_all_files():
+            self.add(filepath)
 
     # -----------------------------------------------------------------------
     # Read/Write

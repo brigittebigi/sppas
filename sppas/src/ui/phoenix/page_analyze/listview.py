@@ -47,7 +47,7 @@ from sppas import paths
 import sppas.src.audiodata.aio
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
-from sppas.src.anndata.aio.basetrs import sppasBaseIO
+from sppas.src.anndata.aio.basetrsio import sppasBaseIO
 from sppas.src.anndata.anndataexc import TrsAddError
 from sppas.src.analysis.tierfilters import SingleFilterTier
 from sppas.src.analysis.tierfilters import RelationFilterTier

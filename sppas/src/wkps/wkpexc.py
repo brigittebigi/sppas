@@ -55,7 +55,7 @@ class FileOSError(OSError):
     """
 
     def __init__(self, name):
-        self.parameter = error(9010) + (error(9010, "files")).format(name)
+        self.parameter = error(9010) + (error(9010, "wkps")).format(name)
 
     def __str__(self):
         return repr(self.parameter)
@@ -71,7 +71,7 @@ class FileTypeError(TypeError):
     """
 
     def __init__(self, name):
-        self.parameter = error(9012) + (error(9012, "files")).format(name)
+        self.parameter = error(9012) + (error(9012, "wkps")).format(name)
 
     def __str__(self):
         return repr(self.parameter)
@@ -87,7 +87,7 @@ class PathTypeError(TypeError):
     """
 
     def __init__(self, name):
-        self.parameter = error(9014) + (error(9014, "files")).format(name)
+        self.parameter = error(9014) + (error(9014, "wkps")).format(name)
 
     def __str__(self):
         return repr(self.parameter)
@@ -103,7 +103,7 @@ class FileAttributeError(AttributeError):
     """
 
     def __init__(self, classname, method):
-        self.parameter = error(9020) + (error(9020, "files")).format(classname, method)
+        self.parameter = error(9020) + (error(9020, "wkps")).format(classname, method)
 
     def __str__(self):
         return repr(self.parameter)
@@ -119,7 +119,7 @@ class FileRootValueError(ValueError):
     """
 
     def __init__(self, filename, rootname):
-        self.parameter = error(9030) + (error(9030, "files")).format(filename, rootname)
+        self.parameter = error(9030) + (error(9030, "wkps")).format(filename, rootname)
 
     def __str__(self):
         return repr(self.parameter)
@@ -135,7 +135,39 @@ class FileLockedError(IOError):
     """
 
     def __init__(self, filename):
-        self.parameter = error(9040) + (error(9040, "files")).format(filename)
+        self.parameter = error(9040) + (error(9040, "wkps")).format(filename)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class FilesMatchingValueError(ValueError):
+    """:ERROR 9032:.
+
+    '{:s}' does not match with '{:s}'
+
+    """
+
+    def __init__(self, name1, name2):
+        self.parameter = error(9032) + (error(9032, "wkps")).format(name1, name2)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class FileAddValueError(ValueError):
+    """:ERROR 9034:.
+
+    '{:s}' cant be added because it already exists.
+
+    """
+
+    def __init__(self, name):
+        self.parameter = error(9034) + (error(9034, "wkps")).format(name)
 
     def __str__(self):
         return repr(self.parameter)

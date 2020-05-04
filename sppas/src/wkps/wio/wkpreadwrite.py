@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    wkps.wio.sppasWkpRW.py
+    wkps.wio.wkpreadwrite.py
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -39,13 +39,13 @@ from collections import OrderedDict
 from sppas.src.utils.makeunicode import u
 from sppas.src.anndata.anndataexc import AioEncodingError
 
-from .sppasWJSON import sppasWJSON
+from .wjson import sppasWJSON
 
 # ----------------------------------------------------------------------------
 
 
-class sppasWkpRW():
-    """
+class sppasWkpRW(object):
+    """A reader/writer of any supported workspaces.
 
         :author:       Laurent Vouriot
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -53,14 +53,12 @@ class sppasWkpRW():
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-        """
+    """
+
     WORKSPACE_TYPES = OrderedDict()
     WORKSPACE_TYPES[sppasWJSON().default_extension.lower()] = sppasWJSON
 
-    @staticmethod
-    def extensions():
-        """Return the list of supported extensions in lower case."""
-        return list(sppasWkpRW.WORKSPACE_TYPES.keys())
+    # ------------------------------------------------------------------------
 
     def __init__(self, filename):
         """Create a workspace reader/writer.
@@ -69,6 +67,20 @@ class sppasWkpRW():
 
         """
         self.__filename = u(filename)
+
+    # ------------------------------------------------------------------------
+
+    @staticmethod
+    def default_extension():
+        """Return the default extension to read/write workspaces."""
+        return sppasWJSON().default_extension
+
+    # ------------------------------------------------------------------------
+
+    @staticmethod
+    def extensions():
+        """Return the list of supported extensions in lower case."""
+        return list(sppasWkpRW.WORKSPACE_TYPES.keys())
 
     # ------------------------------------------------------------------------
 
@@ -101,6 +113,8 @@ class sppasWkpRW():
 
         if extension in sppasWkpRW.extensions():
             return sppasWkpRW.WORKSPACE_TYPES[extension]()
+
+        raise Exception("Unknown extension {}".format(extension))
 
     # ------------------------------------------------------------------------
 

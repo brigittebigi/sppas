@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    wkps.wio.tests.test_sppasWJSON.py
+    wkps.wio.tests.test_wioWJSON.py
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -39,11 +39,12 @@ import sppas
 import os
 import json
 
-from ..sppasWJSON import sppasWJSON
+from sppas.src.wkps.wio.wjson import sppasWJSON
 from sppas.src.wkps.sppasWorkspace import sppasWorkspace
 from sppas.src.wkps.fileref import FileReference, sppasAttribute
 from sppas.src.wkps.filestructure import FilePath, FileName
 from sppas.src.wkps.filebase import States
+from sppas.src.wkps.wkpexc import FilesMatchingValueError
 
 # ---------------------------------------------------------------------------
 
@@ -59,40 +60,59 @@ class TestsppasWJSON(unittest.TestCase):
         self.r1.append(sppasAttribute('sex', 'F'))
         self.att = sppasAttribute("att")
 
-        self.parser = sppasWJSON()
-        self.file = os.path.join(sppas.paths.sppas, 'src', 'wkps', 'wio', 'tests', 'file.wjson')
+        self.wkpjson = sppasWJSON()
+        self.file = os.path.join(sppas.paths.sppas, 'src', 'wkps', 'tests', "data", 'file.wjson')
 
     # -----------------------------------------------------------------------
 
     def test_init(self):
-        self.assertEqual(self.parser.software, "SPPAS")
-        self.assertEqual(self.parser.default_extension, "wjson")
+        self.assertEqual(self.wkpjson.software, "SPPAS")
+        self.assertEqual(self.wkpjson.default_extension, "wjson")
 
     # -----------------------------------------------------------------------
 
     def test_detect(self):
-        self.assertFalse(self.parser.detect(""))
-        self.assertTrue(self.parser.detect(self.file))
+        self.assertFalse(self.wkpjson.detect(""))
+        self.assertTrue(self.wkpjson.detect(self.file))
 
     # -----------------------------------------------------------------------
 
     def test_read(self):
         with open(self.file, 'r') as f:
             d = json.load(f)
-        self.assertEqual(self.parser.read(self.file), self.parser._parse(d))
+        self.assertEqual(self.wkpjson.read(self.file), self.wkpjson._parse(d))
+
+    # -----------------------------------------------------------------------
+
+    def test_set(self):
+        data = sppasWorkspace()
+        data.add_file(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        r1 = FileReference('SpeakerAB')
+        r1.set_type('SPEAKER')
+        r1.append(sppasAttribute('initials', 'AB'))
+        r1.append(sppasAttribute('sex', 'F'))
+        data.add_ref(r1)
+
+        wkpjson = sppasWJSON()
+        wkpjson.set(data)
+
+        self.assertEqual(data.get_id(), wkpjson.get_id())
+        self.assertEqual(data.get_refs(), wkpjson.get_refs())
+        self.assertEqual(data.get_all_files(), wkpjson.get_all_files())
 
     # -----------------------------------------------------------------------
 
     def test_write(self):
+        self.wkpjson.set(self.data)
         with open(self.file, 'w') as f:
-            d = json.dump(self.parser._serialize(), f, indent=4, separators=(',', ': '))
+            d = json.dump(self.wkpjson._serialize(), f, indent=4, separators=(',', ': '))
 
-        self.assertEqual(self.parser.write(self.file), d)
+        self.assertEqual(self.wkpjson.write(self.file), d)
 
     # -----------------------------------------------------------------------
 
     def test__serialize(self):
-        d = self.parser._serialize()
+        d = self.wkpjson._serialize()
         jsondata = json.dumps(d, indent=4, separators=(',', ': '))
         jsondict = json.loads(jsondata)
         self.assertEqual(d, jsondict)
@@ -100,21 +120,21 @@ class TestsppasWJSON(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test__serialize_ref(self):
-        d = self.parser._serialize_ref(self.r1)
-        self.assertEqual(self.parser._parse_ref(d), self.r1)
+        d = self.wkpjson._serialize_ref(self.r1)
+        self.assertEqual(self.wkpjson._parse_ref(d), self.r1)
 
     # -----------------------------------------------------------------------
 
     def test__serialize_attributes(self):
-        d = self.parser._serialize_attributes(self.att)
-        self.assertEqual(self.parser._parse_attribute(d), self.att)
+        d = self.wkpjson._serialize_attributes(self.att)
+        self.assertEqual(self.wkpjson._parse_attribute(d), self.att)
 
     # -----------------------------------------------------------------------
 
     def test__serialize_path(self):
         fp = FilePath(os.path.dirname(__file__))
-        d = self.parser._serialize_path(fp)
-        self.assertEqual(self.parser._parse_path(d), fp)
+        d = self.wkpjson._serialize_path(fp)
+        self.assertEqual(self.wkpjson._parse_path(d), fp)
 
         # test the absolute path and the relative path
         self.assertEqual(d["id"], fp.get_id())
@@ -125,8 +145,8 @@ class TestsppasWJSON(unittest.TestCase):
     def test__serialize_root(self):
         for fp in self.data:
             for fr in fp:
-                d = self.parser._serialize_root(fr)
-                self.assertEqual(self.parser._parse_root(d, fp.get_id()), fr)
+                d = self.wkpjson._serialize_root(fr)
+                self.assertEqual(self.wkpjson._parse_root(d, fp.get_id()), fr)
 
     # -----------------------------------------------------------------------
 
@@ -134,29 +154,24 @@ class TestsppasWJSON(unittest.TestCase):
         for fp in self.data:
             for fr in fp:
                 for fn in fr:
-                    d = self.parser._serialize_files(fn)
-                    self.assertEqual(self.parser._parse_file(d, fp.get_id()), fn)
+                    d = self.wkpjson._serialize_files(fn)
+                    self.assertEqual(self.wkpjson._parse_file(d, fp.get_id()), fn)
 
     # -----------------------------------------------------------------------
 
     def test__parse(self):
-        d = self.parser._serialize()
-        identifier = self.parser._parse(d)
-        self.assertEqual(identifier, self.parser.get_id())
-
-    # -----------------------------------------------------------------------
-
-    def test__parse_ref(self):
-        d = self.parser._serialize_ref(self.r1)
-        self.assertEqual(self.parser._parse_ref(d), self.r1)
+        d = self.wkpjson._serialize()
+        identifier = self.wkpjson._parse(d)
+        self.assertEqual(identifier, self.wkpjson.get_id())
 
     # -----------------------------------------------------------------------
 
     def test__parse_path(self):
-        fp = FilePath(os.path.dirname(__file__))
-        d = self.parser._serialize_path(fp)
-        new_path = self.parser._parse_path(d)
-        fn = FileName(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        p = os.path.join(sppas.paths.samples, 'samples-pol')
+        fp = FilePath(p)
+        d = self.wkpjson._serialize_path(fp)
+        new_path = self.wkpjson._parse_path(d)
+        fn = FileName(os.path.join(p, '0001.txt'))
         new_path.append(fn)
         self.assertEqual(new_path, fp)
         self.assertEqual(d["id"], new_path.get_id())
@@ -165,24 +180,32 @@ class TestsppasWJSON(unittest.TestCase):
 
         # wrong absolute and right relative path
         fp = FilePath("/toto/samples-pol")
-        d = self.parser._serialize_path(fp)
+        d = self.wkpjson._serialize_path(fp)
         # setting the relative path to an existing one
-        d["rel"] = os.path.relpath(__file__)
-        new_path = self.parser._parse_path(d)
-        fn = FileName(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
-        new_path.append(fn)
+        d["rel"] = os.path.relpath(os.path.dirname(__file__))
+
+        new_path = self.wkpjson._parse_path(d)
         self.assertEqual(new_path.get_id(), os.path.abspath(d["rel"]))
+
+        # path changed so we can't add with the old path name
+        fn = FileName(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        with self.assertRaises(FilesMatchingValueError):
+            new_path.append(fn)
+
         self.assertNotEqual(new_path.get_state(), States().MISSING)
         self.assertNotEqual(new_path.get_state(), States().CHECKED)
         self.assertEqual(new_path.get_state(), States().UNUSED)
 
         # wrong abspath, relpath
         fp = FilePath("/toto/samples-pol")
-        d = self.parser._serialize_path(fp)
-        new_path = self.parser._parse_path(d)
-        fn = FileName(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        d = self.wkpjson._serialize_path(fp)
+        new_path = self.wkpjson._parse_path(d)
         self.assertEqual(new_path.get_state(), States().MISSING)
-        new_path.append(fn)
+
+        with self.assertRaises(FilesMatchingValueError):
+            fn = FileName(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+            new_path.append(fn)
+
         self.assertEqual(fp, new_path)
         self.assertEqual(new_path.get_id(), d["id"])
         self.assertEqual(new_path.get_state(), States().MISSING)
@@ -192,8 +215,8 @@ class TestsppasWJSON(unittest.TestCase):
     def test__parse_root(self):
         for fp in self.data:
             for fr in fp:
-                d = self.parser._serialize_root(fr)
-                self.assertEqual(self.parser._parse_root(d, fp.get_id()), fr)
+                d = self.wkpjson._serialize_root(fr)
+                self.assertEqual(self.wkpjson._parse_root(d, fp.get_id()), fr)
 
     # -----------------------------------------------------------------------
 
@@ -201,13 +224,26 @@ class TestsppasWJSON(unittest.TestCase):
         for fp in self.data:
             for fr in fp:
                 for fn in fr:
-                    d = self.parser._serialize_files(fn)
-                    self.assertEqual(self.parser._parse_file(d, fp.get_id()), fn)
+                    d = self.wkpjson._serialize_files(fn)
+                    self.assertEqual(self.wkpjson._parse_file(d, fp.get_id()), fn)
+
+    # -----------------------------------------------------------------------
+
+    def test__parse_ref(self):
+        d = self.wkpjson._serialize_ref(self.r1)
+        dd = self.wkpjson._parse_ref(d)
+        for att1, att2 in zip(self.r1, dd):
+            self.assertEqual(att1, att2)
+        self.assertEqual(dd, self.r1)
 
     # -----------------------------------------------------------------------
 
     def test__parse_attributes(self):
-        d = self.parser._serialize_attributes(self.att)
-        self.assertEqual(self.parser._parse_attribute(d), self.att)
+        d = self.wkpjson._serialize_attributes(self.att)
+        dd = self.wkpjson._parse_attribute(d)
+        self.assertEqual(self.att.get_id(), dd.get_id())
+        self.assertEqual(self.att.get_typed_value(), dd.get_typed_value())
+        self.assertEqual(self.att.get_description(), dd.get_description())
+        self.assertEqual(dd, self.att)
 
 

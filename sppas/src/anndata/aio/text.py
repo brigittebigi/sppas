@@ -52,7 +52,7 @@ from ..ann.annlocation import sppasPoint
 from ..ann.annlocation import sppasInterval
 from ..media import sppasMedia
 
-from .basetrs import sppasBaseIO
+from .basetrsio import sppasBaseIO
 from .aioutils import format_labels, is_ortho_tier
 from .aioutils import load
 
