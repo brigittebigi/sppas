@@ -47,7 +47,7 @@ import codecs
 from datetime import datetime
 
 from sppas.src.config import sg
-from .basetrs import sppasBaseIO
+from .basetrsio import sppasBaseIO
 from ..anndataexc import AioNoTiersError
 from ..anndataexc import TagValueError
 from ..anndataexc import AioEmptyTierError

@@ -48,7 +48,7 @@ import datetime
 
 from sppas import sg
 from sppas.src.utils import b
-from .basetrs import sppasBaseIO
+from .basetrsio import sppasBaseIO
 from ..anndataexc import AnnDataTypeError
 from ..anndataexc import AioMultiTiersError
 from ..ann.annotation import sppasAnnotation

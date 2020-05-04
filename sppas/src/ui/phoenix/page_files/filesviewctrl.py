@@ -38,7 +38,7 @@ import wx.lib.newevent
 from sppas import paths
 from sppas.src.anndata import sppasRW
 from sppas.src.wkps import States, FileName, FileRoot, FilePath, sppasWorkspace
-from sppas.src.wkps.wio.sppasWJSON import sppasWJSON
+from sppas.src.wkps.wio.wjson import sppasWJSON
 from sppas.src.ui import sppasTrash
 
 from ..windows import sppasPanel
@@ -60,6 +60,7 @@ ItemClickedCommandEvent, EVT_ITEM_CLICKED_COMMAND = wx.lib.newevent.NewCommandEv
 
 
 STATES_ICON_NAMES = {
+    States().MISSING: "choice_checkbox_dashed",
     States().UNUSED: "choice_checkbox",
     States().CHECKED: "choice_checked",
     States().LOCKED: "locked",

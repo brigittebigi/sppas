@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    anndata.aio.basetrs.py
+    anndata.aio.basetrsio.py
     ~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -92,7 +92,7 @@ class sppasBaseIO(sppasTranscription):
         super(sppasBaseIO, self).__init__(name)
 
         self.default_extension = None
-        self.software = "Und"
+        self.software = "und"
 
         self._accept_multi_tiers = False
         self._accept_no_tiers = False

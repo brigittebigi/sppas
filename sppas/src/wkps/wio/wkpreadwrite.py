@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    wkps.wio.sppasWkpRW.py
+    wkps.wio.wkpreadwrite.py
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -39,7 +39,7 @@ from collections import OrderedDict
 from sppas.src.utils.makeunicode import u
 from sppas.src.anndata.anndataexc import AioEncodingError
 
-from .sppasWJSON import sppasWJSON
+from .wjson import sppasWJSON
 
 # ----------------------------------------------------------------------------
 

@@ -47,7 +47,7 @@ from sppas.src.utils.makeunicode import sppasUnicode
 
 from .wkpexc import FileOSError
 from .sppasWorkspace import sppasWorkspace
-from .wio.sppasWkpRW import sppasWkpRW
+from .wio.wkpreadwrite import sppasWkpRW
 
 # ---------------------------------------------------------------------------
 

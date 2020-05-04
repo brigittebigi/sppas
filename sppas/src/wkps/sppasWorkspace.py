@@ -82,6 +82,7 @@
 """
 
 import os
+import warnings
 import logging
 
 from sppas import sppasTypeError
@@ -95,7 +96,7 @@ from .wkpexc import FileAddValueError
 # ---------------------------------------------------------------------------
 
 
-class sppasWorkspace(FileBase):
+class sppasWorkspace(object):
     """Represent the data linked to a list of files and a list of references.
 
     :author:       Brigitte Bigi
@@ -118,9 +119,19 @@ class sppasWorkspace(FileBase):
         :param identifier: (str)
 
         """
-        super(sppasWorkspace, self).__init__(identifier)
+        self._id = identifier
         self.__files = list()
         self.__refs = list()
+
+    # -----------------------------------------------------------------------
+
+    def get_id(self):
+        """Return the identifier (str)."""
+        return self._id
+
+    # -----------------------------------------------------------------------
+
+    id = property(get_id, None)
 
     # -----------------------------------------------------------------------
     # Methods to add data
@@ -378,7 +389,7 @@ class sppasWorkspace(FileBase):
     # -----------------------------------------------------------------------
 
     def set_object_state(self, state, file_obj=None):
-        """Set the state of any FileBase within sppasWorkspace.
+        """Set the state of any or all FileBase within sppasWorkspace.
 
         The default case is to set the state to all FilePath and FileRefence.
 
@@ -386,7 +397,7 @@ class sppasWorkspace(FileBase):
         They are automatically fixed depending on the paths states.
 
         :param state: (States) state to set the file to
-        :param file_obj: (FileBase) the specific file to set the state to
+        :param file_obj: (FileBase) the specific file to set the state to. None to set all files
         :raises: sppasTypeError, sppasValueError
         :return: list of modified objects
 
@@ -436,7 +447,8 @@ class sppasWorkspace(FileBase):
         :param value: (States)
 
         """
-        self._state = int(value)
+        warnings.warn("Do not set a state: A workspace has no state anymore."
+                      "", DeprecationWarning)
 
     # -----------------------------------------------------------------------
 
@@ -588,15 +600,7 @@ class sppasWorkspace(FileBase):
         i = 0
         if entries is None:
             for fp in self.__files:
-                for fr in fp:
-                    for fn in fr:
-                        if fn.get_state() == States().LOCKED:
-                            fn.set_state(States().CHECKED)
-                            i += 1
-                    if i > 0:
-                        fr.update_state()
-                if i > 0:
-                    fp.update_state()
+                i += fp.unlock()
 
         elif isinstance(entries, list):
             for fp in self.__files:
@@ -611,20 +615,6 @@ class sppasWorkspace(FileBase):
                     fp.update_state()
 
         return i
-
-    # -----------------------------------------------------------------------
-
-    def set(self, wkp):
-        """Set the current workspace with the files of an other one.
-
-        :param wkp: (sppasWorkspace)
-
-        """
-        if isinstance(wkp, sppasWorkspace) is False:
-            raise sppasTypeError(type(wkp), "sppasWorkspace")
-
-        self.__files = wkp.get_all_files()
-        self.__refs = wkp.get_refs()
 
     # -----------------------------------------------------------------------
     # Proprieties
@@ -646,3 +636,12 @@ class sppasWorkspace(FileBase):
 
     def __len__(self):
         return len(self.__files)
+
+    # -----------------------------------------------------------------------
+
+    def __hash__(self):
+        # use the hashcode of self identifier since that is used
+        # for equality checks as well, like "fp in wkp".
+        # not required by Python 2.7 but necessary for Python 3.4+
+        return hash((self.get_id(), self.__files, self.__refs))
+

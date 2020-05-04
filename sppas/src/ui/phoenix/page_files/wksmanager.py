@@ -273,9 +273,7 @@ class WorkspacesManager(sppasPanel):
             return
 
         # Save the currently displayed data (they correspond to the previous wkp)
-        if (event.from_wkp == 0 and self.__data.is_empty() is False) or \
-                self.__data.get_state() != States().UNUSED:
-
+        if event.from_wkp == 0 and self.__data.is_empty() is False:
             # User must confirm to really switch
             response = Confirm(WKP_MSG_CONFIRM, WKP_MSG_CONFIRM_SWITCH)
             if response == wx.ID_CANCEL:
