@@ -26,8 +26,8 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.wkps.fileexc.py
-    ~~~~~~~~~~~~~~~~~~~~~~
+    src.wkps.wkpexc.py
+    ~~~~~~~~~~~~~~~~~~~
 
     Exceptions for file management.
 
@@ -36,39 +36,13 @@
         - PathTypeError (error 9014)
         - FileAttributeError (error 9020)
         - FileRootValueError (error 9030)
+        - FilesMatchingValueError (error 9032)
+        - FileAddValueError (error 9034)
+        - FileLockedError (error 9040)
 
 """
-try:
-    from sppas.src.config import error
-except ImportError:
-    def error(index, domain=None):
-        """Return the string matching the error index.
 
-        Replace the original function which returns the error message 
-        translated in the given domain.
-
-        A generic error message is returned if no domain is given.
-
-        :param index: (int) Index of the error.
-        :param domain: (str) Translation domain [not used]
-        :returns: (str) Error message. 
-
-        """          
-        if domain is not None:
-            if index == 9010:
-                return 'Name {!s:s} does not match a file or a directory.'
-            if index == 9102:
-                return 'Name {!s:s} does not match a valid file.'
-            if index == 9014:
-                return 'Name {!s:s} does not match a valid directory.'
-            if index == 9020:
-                return "{:s} has no attribute '{:s}'"
-            if index == 9030:
-                return "'{:s}' does not match root '{:s}'"
-            if index == 9040:
-                return "{!s:s} is locked."
-
-        return ":ERROR " + str(index) + ": "
+from sppas.src.config import error
 
 # ---------------------------------------------------------------------------
 
@@ -133,7 +107,7 @@ class FileAttributeError(AttributeError):
 
     def __str__(self):
         return repr(self.parameter)
-    
+
 # ---------------------------------------------------------------------------
 
 
@@ -162,6 +136,38 @@ class FileLockedError(IOError):
 
     def __init__(self, filename):
         self.parameter = error(9040) + (error(9040, "files")).format(filename)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class FilesMatchingValueError(ValueError):
+    """:ERROR 9032:.
+
+    '{:s}' does not match with '{:s}'
+
+    """
+
+    def __init__(self, name1, name2):
+        self.parameter = error(9050) + (error(9050, "files")).format(name1, name2)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class FileAddValueError(ValueError):
+    """:ERROR 9034:.
+
+    '{:s}' cant be added because it already exists.
+
+    """
+
+    def __init__(self, name1, name2):
+        self.parameter = error(9034) + (error(9034, "files")).format(name1, name2)
 
     def __str__(self):
         return repr(self.parameter)
