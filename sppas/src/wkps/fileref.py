@@ -261,6 +261,25 @@ class sppasAttribute(object):
     def __format__(self, fmt):
         return str(self).__format__(fmt)
 
+    def __hash__(self):
+        return hash((self.__id, self.get_typed_value(), self.__descr))
+
+    # -----------------------------------------------------------------------
+
+    def __eq__(self, other):
+        if other is None:
+            return False
+
+        if isinstance(other, sppasAttribute) is False:
+            return False
+        if self.__id != other.get_id():
+            return False
+        if self.get_typed_value() != other.get_typed_value():
+            return False
+        if self.get_description() != other.get_description():
+            return False
+        return True
+
 # ---------------------------------------------------------------------------
 
 
