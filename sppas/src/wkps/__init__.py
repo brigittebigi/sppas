@@ -62,6 +62,7 @@ from .fileref import FileReference, sppasAttribute
 from .filedatafilters import sppasFileDataFilters
 from .sppasWorkspace import sppasWorkspace
 from .sppasWkps import sppasWkps
+from .wio import sppasWkpRW
 
 __all__ = (
     "FileBase",
@@ -76,5 +77,6 @@ __all__ = (
     "sppasFileUtils",
     "sppasDirUtils",
     "sppasGUID",
-    "sppasWkps"
+    "sppasWkps",
+    "sppasWkpRW"
 )

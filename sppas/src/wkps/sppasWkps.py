@@ -66,15 +66,9 @@ class sppasWkps(object):
         - a file in which data are saved and loaded when needed;
         - a name, matching the filename without path nor extension.
 
-    The extension of a workspace JSON files is: wjson
-
     TODO: Use SPPAS exceptions and/or define new ones. Use PO for messages.
 
     """
-
-    ext = ".wjson"
-
-    # -----------------------------------------------------------------------
 
     def __init__(self):
         """Create a sppasWkps instance.
@@ -89,6 +83,7 @@ class sppasWkps(object):
 
         self.__wkps = list()
         self.__wkps.append("Blank")
+        self.ext = "." + sppasWkpRW.default_extension()
 
         self.set_workspaces()
 
@@ -102,7 +97,7 @@ class sppasWkps(object):
         """
         for fn in os.listdir(paths.wkps):
             fn_observed, ext_observed = os.path.splitext(fn)
-            if ext_observed.lower() == sppasWkps.ext:
+            if ext_observed.lower() == self.ext:
                 # remove path and extension to set the name of the workspace
                 wkp_name = os.path.basename(fn_observed)
                 # append in the list
@@ -150,7 +145,7 @@ class sppasWkps(object):
             raise IOError('Invalid filename {:s}'.format(filename))
 
         name, ext = os.path.splitext(os.path.basename(filename))
-        if ext.lower() != sppasWkps.ext:
+        if ext.lower() != self.ext.lower():
             raise IOError('{:s} is not a valid extension for workspace files'
                           ''.format(ext))
 
@@ -163,7 +158,7 @@ class sppasWkps(object):
 
         # Copy the file -- modify the filename if any
         try:
-            dest = os.path.join(paths.wkps, u_name + sppasWkps.ext)
+            dest = os.path.join(paths.wkps, u_name + self.ext)
             shutil.copyfile(filename, dest)
 
             with open(dest, 'r'):
@@ -192,7 +187,7 @@ class sppasWkps(object):
                              ''.format(u_name))
 
         # create the empty workspace data & save
-        fn = os.path.join(paths.wkps, u_name) + sppasWkps.ext
+        fn = os.path.join(paths.wkps, u_name) + self.ext
 
         self.__wkps.append(u_name)
         wkp = sppasWorkspace(u_name)
@@ -215,7 +210,7 @@ class sppasWkps(object):
             raise IndexError('It is not allowed to export the Blank workspace.')
 
         u_name = self[index]
-        fn = os.path.join(paths.wkps, u_name) + sppasWkps.ext
+        fn = os.path.join(paths.wkps, u_name) + self.ext
         if fn == filename:
             raise IOError("'{!s:s}' and '{!s:s}' are the same file"
                           "".format(fn, filename))
@@ -283,7 +278,7 @@ class sppasWkps(object):
             return
 
         src = self.check_filename(index)
-        dest = os.path.join(paths.wkps, u_name) + sppasWkps.ext
+        dest = os.path.join(paths.wkps, u_name) + self.ext
         shutil.move(src, dest)
         self.__wkps[index] = u_name
 
@@ -300,7 +295,7 @@ class sppasWkps(object):
 
 
         """
-        fn = os.path.join(paths.wkps, self[index]) + sppasWkps.ext
+        fn = os.path.join(paths.wkps, self[index]) + self.ext
         if os.path.exists(fn) is False:
             raise OSError('The file matching the workspace {:s} is not '
                           'existing'.format(fn[:-4]))
@@ -322,8 +317,9 @@ class sppasWkps(object):
 
         try:
             filename = self.check_filename(index)
-        except OSError:
-            return sppasWkpRW(filename).read()
+        except OSError as e:
+            logging.error("Workspace can't be loaded: {}".format(str(e)))
+            return sppasWorkspace()
 
         return sppasWkpRW(filename).read()
 
@@ -350,7 +346,7 @@ class sppasWkps(object):
         else:
             u_name = self[index]
 
-        filename = os.path.join(paths.wkps, u_name) + sppasWkps.ext
+        filename = os.path.join(paths.wkps, u_name) + self.ext
         parser = sppasWkpRW(filename)
         parser.write(data)
 

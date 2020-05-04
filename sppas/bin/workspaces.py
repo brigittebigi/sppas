@@ -80,7 +80,6 @@ Export workspace to a file
 import sys
 import os
 from argparse import ArgumentParser
-import json
 
 PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
@@ -88,7 +87,7 @@ sys.path.append(SPPAS)
 
 from sppas import paths
 from sppas.src.config import sg
-from sppas.src.wkps import sppasWkps
+from sppas.src.wkps import sppasWkps, sppasWkpRW
 from sppas.src.wkps import FileReference, States, sppasAttribute
 from sppas.src.wkps.wkpexc import FileOSError
 from sppas.src.exc import sppasTypeError
@@ -306,7 +305,7 @@ if __name__ == "__main__":
         if args.w:
             ws_name = args.w
             # workspace exits, loading it
-            fn = os.path.join(paths.wkps, ws_name) + sppasWkps.ext
+            fn = os.path.join(paths.wkps, ws_name) + ws.ext
             if os.path.exists(fn):
                 fd = ws.load_data(ws.index(ws_name))
             # else creating a new one
