@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    wkps.wio.tests.test_sppasWkpRW.py
+    wkps.wio.tests.test_wio_readwrite.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
