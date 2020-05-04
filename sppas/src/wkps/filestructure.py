@@ -148,8 +148,8 @@ class FileName(FileBase):
     def set_state(self, value):
         """Override. Set a state value to this filename.
 
-        Notice that a locked file can only be unlocked by assigning the
-        CHECKED state.
+        A LOCKED file can only be unlocked by assigning the CHECKED state.
+        No other state than MISSING can be assigned if the file does not exists.
 
         :param value: (States)
         :returns: (bool) this filename state has changed or not
@@ -159,11 +159,25 @@ class FileName(FileBase):
         if value not in FileName.FILENAME_STATES:
             raise sppasTypeError(value, str(FileName.FILENAME_STATES))
 
+        # Attempt to set to some state but file is not existing
+        if self.__file_exists() is False:
+            prev = self._state
+            self._state = States().MISSING
+            return self._state == prev
+
+        # Attempt to set to MISSING but file is existing
+        if value == States().MISSING:
+            return False
+
+        # Attempt to set to another state than checked but file is locked
         if self._state == States().LOCKED and value != States().CHECKED:
             return False
+
+        # Attempt to set to the same state
         if self._state == value:
             return False
 
+        # do something regular!
         self._state = value
         return True
 
@@ -176,7 +190,7 @@ class FileName(FileBase):
 
         """
         # test if the file is still existing
-        if os.path.isfile(self.get_id()) is False:
+        if self.__file_exists() is False:
             self.__date = None
             self.__filesize = 0
             self._state = States().MISSING
@@ -190,6 +204,10 @@ class FileName(FileBase):
         self.__filesize = os.path.getsize(self.get_id())
         return True
 
+    # -----------------------------------------------------------------------
+
+    def __file_exists(self):
+        return os.path.isfile(self.get_id())
     # -----------------------------------------------------------------------
     # Properties
     # -----------------------------------------------------------------------
@@ -322,13 +340,14 @@ class FileRoot(FileBase):
     # -----------------------------------------------------------------------
 
     def set_state(self, value):
-        """Set a value to represent the state of the root.
+        """Set a value to represent the state of this root.
 
         It is not allowed to manually assign one of the "AT_LEAST" states
         (they are automatically fixed by setting the state of a FileName
         with set_object_state method).
 
-        The state of LOCKED files is not changed.
+        The state of LOCKED files can't be changed with this method.
+        Use set_object_state() instead.
 
         :param value: (State) A state of FileName.
         :return: (list) Modified instances
@@ -364,12 +383,13 @@ class FileRoot(FileBase):
             - checked if all filenames are checked,
             - at_least_one_checked if at least one of its filenames is checked and none of the others are locked,
             - missing if at least one of its filenames is missing and none of the others are locked nor checked,
-            - unused if none of its filenames are neither locked, checked nor missing.
+            - missing if all its filenames are missing,
+            - unused if none of its filenames are neither locked nor checked.
 
         :return: (bool) State is changed or not
 
         """
-        missing = False
+        missing = 0
         if len(self.__files) == 0:
             new_state = States().UNUSED
         else:
@@ -381,7 +401,7 @@ class FileRoot(FileBase):
                 elif fn.get_state() == States().LOCKED:
                     locked += 1
                 elif fn.get_state() == States().MISSING:
-                    missing = True
+                    missing += 1
 
             if locked == len(self.__files):
                 new_state = States().LOCKED
@@ -391,12 +411,12 @@ class FileRoot(FileBase):
                 new_state = States().CHECKED
             elif checked > 0:
                 new_state = States().AT_LEAST_ONE_CHECKED
-            elif missing is True:
+            elif missing == len(self.__files):
                 new_state = States().MISSING
             else:
                 new_state = States().UNUSED
 
-        if self._state != new_state or missing is True:
+        if self._state != new_state:
             self._state = new_state
             return True
 
@@ -742,7 +762,6 @@ class FilePath(FileBase):
             raise sppasTypeError(value, str(FileName.FILENAME_STATES))
 
         modified = list()
-        self._state = value
 
         for fr in self.__roots:
             m = fr.set_state(value)
@@ -927,6 +946,27 @@ class FilePath(FileBase):
 
         self.update_state()
         return identifier
+
+    # -----------------------------------------------------------------------
+
+    def unlock(self):
+        """Unlock all.
+
+        :returns: number of unlocked filenames
+
+        """
+        i = 0
+        for fr in self.__roots:
+            for fn in fr:
+                if fn.get_state() == States().LOCKED:
+                    fn.set_state(States().CHECKED)
+                    i += 1
+            if i > 0:
+                fr.update_state()
+        if i > 0:
+            self.update_state()
+
+        return i
 
     # -----------------------------------------------------------------------
 

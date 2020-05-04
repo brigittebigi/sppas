@@ -51,7 +51,7 @@ from ..ann.annlocation import sppasDisjoint
 from ..ann.annlabel import sppasLabel
 from ..ann.annlabel import sppasTag
 
-from .basetrs import sppasBaseIO
+from .basetrsio import sppasBaseIO
 
 # ---------------------------------------------------------------------------
 
@@ -166,7 +166,7 @@ class sppasXRA(sppasBaseIO):
         super(sppasXRA, self).__init__(name)
 
         self.default_extension = "xra"
-        self.software = "SPPAS"
+        self.software = sg.__name__
 
         self._accept_multi_tiers = True
         self._accept_no_tiers = True

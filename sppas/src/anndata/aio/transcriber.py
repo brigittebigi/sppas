@@ -45,7 +45,7 @@ http://trans.sourceforge.net
 import codecs
 import xml.etree.cElementTree as ET
 
-from .basetrs import sppasBaseIO
+from .basetrsio import sppasBaseIO
 from ..anndataexc import AnnDataTypeError
 from ..media import sppasMedia
 from ..ctrlvocab import sppasCtrlVocab

@@ -46,7 +46,7 @@ from sppas.src.utils import u
 from sppas.src.wkps import sppasWorkspace
 from sppas.src.wkps import States
 from sppas.src.wkps import sppasFileDataFilters
-from sppas.src.wkps.wio.sppasWJSON import sppasWJSON
+from sppas.src.wkps.wio.wjson import sppasWJSON
 
 from ..windows import Information, Error
 from ..windows import sppasStaticText, sppasTextCtrl

@@ -52,7 +52,7 @@ from ..ann.annlocation import sppasInterval
 from ..ann.annlabel import sppasLabel
 from ..ann.annlabel import sppasTag
 
-from .basetrs import sppasBaseIO
+from .basetrsio import sppasBaseIO
 from .aioutils import load
 
 # ---------------------------------------------------------------------------

@@ -33,9 +33,9 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import unittest
 import os
-import json
 
 import sppas
 from sppas import sppasTypeError, u
@@ -49,7 +49,7 @@ from ..filebase import States
 # ---------------------------------------------------------------------------
 
 
-class TestsppasAttribute(unittest.TestCase):
+class TestAttribute(unittest.TestCase):
 
     def setUp(self):
         self.valint = sppasAttribute('age', '12', 'int', 'speaker\'s age')
@@ -140,7 +140,7 @@ class TestReferences(unittest.TestCase):
 # ----------------------------------------------------------------------------
 
 
-class TestsppasWorkspace(unittest.TestCase):
+class TestWorkspace(unittest.TestCase):
 
     def setUp(self):
         self.data = sppasWorkspace()
@@ -202,7 +202,6 @@ class TestsppasWorkspace(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_lock_filename(self):
-
         # Lock a single file
         filename = os.path.join(sppas.paths.samples, 'samples-fra', 'AC track_0379.PitchTier')
         fn = self.data.get_object(filename)
@@ -251,24 +250,3 @@ class TestsppasWorkspace(unittest.TestCase):
         for fp in self.data:
             for fr in fp:
                 self.assertEqual(0, len(fr.get_references()))
-
-    # ---------------------------------------------------------------------------
-
-    def test_set(self):
-        # workspace to set
-        wkp = sppasWorkspace()
-
-        # adding refrences to the workspace
-        self.data.add_ref(self.r1)
-        self.data.add_ref(self.r2)
-
-        wkp.set(self.data)
-        self.assertEqual(wkp, self.data)
-
-        # test with wrong parameter
-        with self.assertRaises(sppasTypeError):
-            wkp.set("toto")
-
-
-
-
