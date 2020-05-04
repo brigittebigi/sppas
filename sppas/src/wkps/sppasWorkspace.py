@@ -81,32 +81,30 @@
 
 """
 
-
 import os
 import logging
 
 from sppas import sppasTypeError
 
-
 from .fileutils import sppasGUID
 from .filebase import FileBase, States
 from .fileref import FileReference
 from .filestructure import FileName, FileRoot, FilePath
+from .wkpexc import FileAddValueError
 
 # ---------------------------------------------------------------------------
 
 
 class sppasWorkspace(FileBase):
-    """Represent the data linked to a list of files.
+    """Represent the data linked to a list of files and a list of references.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-
-    sppasWorkspace is the container for a  list of files and a catalog.
+    sppasWorkspace is the container for a list of files and a catalog.
     It organizes files hierarchically as a collection of FilePath instances,
     each of which is a collection of FileRoot instances, each of which is a 
     collection of FileName. The catalog is a list of FileReference instances
@@ -115,7 +113,11 @@ class sppasWorkspace(FileBase):
     """
 
     def __init__(self, identifier=sppasGUID().get()):
-        """Constructor of a sppasWorkspace."""
+        """Constructor of a sppasWorkspace.
+
+        :param identifier: (str)
+
+        """
         super(sppasWorkspace, self).__init__(identifier)
         self.__files = list()
         self.__refs = list()
@@ -125,12 +127,12 @@ class sppasWorkspace(FileBase):
     # -----------------------------------------------------------------------
 
     def add(self, file_object):
-        """Add a file object into the data.
+        """Add an object into the data.
 
         IMPLEMENTED ONLY FOR FilePath and FileReference.
 
         :param file_object: (FileBase)
-        :raise: sppasTypeError,
+        :raises: sppasTypeError, FileAddValueError, NotImplementedError
 
         """
         if isinstance(file_object, (FileName, FileRoot, FilePath, FileReference)) is False:
@@ -138,7 +140,7 @@ class sppasWorkspace(FileBase):
 
         test_obj = self.get_object(file_object.id)
         if test_obj is not None:
-            raise Exception('Object {:s} is already in the data.'.format(file_object.id))
+            raise FileAddValueError(file_object.id)
 
         if isinstance(file_object, FilePath):
             self.__files.append(file_object)
@@ -147,7 +149,8 @@ class sppasWorkspace(FileBase):
             self.add_ref(file_object)
 
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Adding an object of type {} in a workspace is not implemented."
+                                      "".format(type(file_object)))
 
     # -----------------------------------------------------------------------
 
@@ -161,7 +164,6 @@ class sppasWorkspace(FileBase):
         :raises: OSError
 
         """
-
         # get or create the corresponding FilePath()
         new_fp = FilePath(os.path.dirname(filename))
         for fp in self.__files:
@@ -234,6 +236,7 @@ class sppasWorkspace(FileBase):
         """Add a reference in the list from its file name.
 
         :param ref: (FileReference) Reference to add
+        :raises: sppasTypeError, FileAddValueError
 
         """
         if isinstance(ref, FileReference) is False:
@@ -241,9 +244,7 @@ class sppasWorkspace(FileBase):
 
         for refe in self.__refs:
             if refe.id == ref.id:
-                raise ValueError(
-                    "A reference with the identifier '{:s}' is "
-                    "already in the data.".format(refe.id))
+                raise FileAddValueError(refe.id)
 
         self.__refs.append(ref)
 
@@ -293,6 +294,8 @@ class sppasWorkspace(FileBase):
             for fr in reversed(fp):
                 for fn in reversed(fr):
                     fn.update_properties()
+                fr.update_state()
+            fp.update_state()
 
     # -----------------------------------------------------------------------
 
@@ -345,6 +348,7 @@ class sppasWorkspace(FileBase):
         return self.__files
 
     # -----------------------------------------------------------------------
+
     def get_object(self, identifier):
         """Return the file object matching the given identifier.
 
@@ -370,23 +374,6 @@ class sppasWorkspace(FileBase):
                         return fn
 
         return None
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def get_object_state(file_obj):
-        """Return the state of any FileBase within the sppasWorkspace.
-
-        :param file_obj: (FileBase) The object which one enquire the state
-        :returns: Sta
-
-        """
-        if not isinstance(file_obj, FilePath)\
-            and not isinstance(file_obj, FileRoot)\
-                and not isinstance(file_obj, FileName):
-            raise sppasTypeError(file_obj, 'FilePath or FileRoot or FileName')
-        else:
-            return file_obj.get_state()
 
     # -----------------------------------------------------------------------
 

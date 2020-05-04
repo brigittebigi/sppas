@@ -36,7 +36,7 @@
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
 *****************************************************************************
-files: management of files into workspaces
+wkps: management of files into workspaces
 *****************************************************************************
 
 This package includes classes to manage a bunch of files organized into
@@ -48,6 +48,8 @@ Requires the following other packages:
 * config
 * utils
 
+and globals: paths, sppasIndexError.
+
 """
 
 from .fileutils import sppasGUID
@@ -55,11 +57,10 @@ from .fileutils import sppasFileUtils
 from .fileutils import sppasDirUtils
 from .filebase import FileBase
 from .filebase import States
-from .sppasWorkspace import sppasWorkspace
 from .filestructure import FileName, FileRoot, FilePath
 from .fileref import FileReference, sppasAttribute
 from .filedatafilters import sppasFileDataFilters
-
+from .sppasWorkspace import sppasWorkspace
 from .sppasWkps import sppasWkps
 
 __all__ = (

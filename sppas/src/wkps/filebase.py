@@ -30,20 +30,20 @@
     ~~~~~~~~~~~~~~~~~~~~~
 
 """
-import os
+
 from sppas.src.utils import sppasUnicode
 
 # ---------------------------------------------------------------------------
 
 
 class FileBase(object):
-    """Represent any type of data linked to a filename.
+    """Represent any type of data with an identifier and a state.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -53,6 +53,7 @@ class FileBase(object):
         Data structure to store an identifier (str) and a state (States).
 
         :param identifier: (str) Any un-modifiable string.
+        :raises: ValueError if the identifier is not valid.
 
         """
         self.__id = FileBase.validate_id(identifier)
@@ -64,10 +65,10 @@ class FileBase(object):
     def validate_id(identifier):
         """Return the given identifier if it matches the requirements.
 
-        An identifier should contain between 3 and 36 characters.
+        An identifier should contain at least 2 characters.
 
         :param identifier: (str) Key to be validated
-        :raise: ValueError
+        :raises: ValueError
         :returns: (unicode)
 
         """
@@ -85,14 +86,6 @@ class FileBase(object):
         """Return the identifier (str)."""
         return self.__id
 
-    # -----------------------------------------------------------------------
-
-    def set_id(self, new_id):
-        """Set the identifier
-        :param new_id: (str)
-
-        """
-        self.__id = new_id
     # -----------------------------------------------------------------------
 
     def get_state(self):
@@ -113,7 +106,7 @@ class FileBase(object):
     # -----------------------------------------------------------------------
 
     def match(self, functions, logic_bool="and"):
-        """Return True if the file matches all or any of the functions.
+        """Return True if the filebase matches all or any of the functions.
 
         Functions are defined in a comparator. They return a boolean.
         The type of the value depends on the function.
@@ -142,7 +135,7 @@ class FileBase(object):
     # Properties
     # -----------------------------------------------------------------------
 
-    id = property(get_id, set_id)
+    id = property(get_id, None)
     state = property(get_state, set_state)
 
     # -----------------------------------------------------------------------
@@ -240,7 +233,7 @@ class States(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     :Example:
 
@@ -255,12 +248,12 @@ class States(object):
     def __init__(self):
         """Create the dictionary."""
         self.__dict__ = dict(
+            MISSING=-1,
             UNUSED=0,
             CHECKED=1,
             LOCKED=2,
             AT_LEAST_ONE_CHECKED=3,
-            AT_LEAST_ONE_LOCKED=4,
-            MISSING=5
+            AT_LEAST_ONE_LOCKED=4
         )
 
     # -----------------------------------------------------------------------

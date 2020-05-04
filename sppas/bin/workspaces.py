@@ -88,9 +88,9 @@ sys.path.append(SPPAS)
 
 from sppas import paths
 from sppas.src.config import sg
-from sppas.src.wkps.sppasWkps import sppasWkps
+from sppas.src.wkps import sppasWkps
 from sppas.src.wkps import FileReference, States, sppasAttribute
-from sppas.src.wkps.fileexc import FileOSError
+from sppas.src.wkps.wkpexc import FileOSError
 from sppas.src.exc import sppasTypeError
 
 if __name__ == "__main__":

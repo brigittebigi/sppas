@@ -40,13 +40,14 @@ import os
 import logging
 import shutil
 
-
-from sppas.src.wkps.sppasWorkspace import sppasWorkspace
-from sppas.src.wkps.fileexc import FileOSError
 from sppas import paths
 from sppas import sppasIndexError
+
 from sppas.src.utils.makeunicode import sppasUnicode
-from sppas.src.wkps.wio.sppasWkpRW import sppasWkpRW
+
+from .wkpexc import FileOSError
+from .sppasWorkspace import sppasWorkspace
+from .wio.sppasWkpRW import sppasWkpRW
 
 # ---------------------------------------------------------------------------
 

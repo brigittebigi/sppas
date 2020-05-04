@@ -174,27 +174,27 @@ class TestsppasWorkspace(unittest.TestCase):
 
     def test_state(self):
         self.data.set_object_state(States().CHECKED)
-        self.assertEqual(States().CHECKED, self.data.get_object_state(self.data[0]))
-        self.assertEqual(States().CHECKED, self.data.get_object_state(self.data[1]))
-        self.assertEqual(States().CHECKED, self.data.get_object_state(self.data[2]))
-        self.assertEqual(States().CHECKED, self.data.get_object_state(self.data[3]))
+        self.assertEqual(States().CHECKED, self.data[0].state)
+        self.assertEqual(States().CHECKED, self.data[1].state)
+        self.assertEqual(States().CHECKED, self.data[2].state)
+        self.assertEqual(States().CHECKED, self.data[3].state)
 
     # ---------------------------------------------------------------------------
 
     def test_lock_all(self):
         # Lock all files
         self.data.set_object_state(States().LOCKED)
-        self.assertEqual(States().LOCKED, self.data.get_object_state(self.data[0]))
-        self.assertEqual(States().LOCKED, self.data.get_object_state(self.data[1]))
-        self.assertEqual(States().LOCKED, self.data.get_object_state(self.data[2]))
-        self.assertEqual(States().LOCKED, self.data.get_object_state(self.data[3]))
+        self.assertEqual(States().LOCKED, self.data[0].state)
+        self.assertEqual(States().LOCKED, self.data[1].state)
+        self.assertEqual(States().LOCKED, self.data[2].state)
+        self.assertEqual(States().LOCKED, self.data[3].state)
 
         # as soon as a file is locked, the "set_object_state()" does not work anymore
         self.data.set_object_state(States().CHECKED)
-        self.assertEqual(States().LOCKED, self.data.get_object_state(self.data[0]))
-        self.assertEqual(States().LOCKED, self.data.get_object_state(self.data[1]))
-        self.assertEqual(States().LOCKED, self.data.get_object_state(self.data[2]))
-        self.assertEqual(States().LOCKED, self.data.get_object_state(self.data[3]))
+        self.assertEqual(States().LOCKED, self.data[0].state)
+        self.assertEqual(States().LOCKED, self.data[1].state)
+        self.assertEqual(States().LOCKED, self.data[2].state)
+        self.assertEqual(States().LOCKED, self.data[3].state)
 
         # only the unlock method has to be used to unlock files
         self.data.unlock()
@@ -208,16 +208,16 @@ class TestsppasWorkspace(unittest.TestCase):
         fn = self.data.get_object(filename)
         self.assertIsInstance(fn, FileName)
         self.data.set_object_state(States().LOCKED, fn)
-        self.assertEqual(States().LOCKED, self.data.get_object_state(fn))
+        self.assertEqual(States().LOCKED, fn.state)
 
-        self.assertEqual(States().UNUSED, self.data.get_object_state(self.data[0]))
-        self.assertEqual(States().AT_LEAST_ONE_LOCKED, self.data.get_object_state(self.data[1]))
+        self.assertEqual(States().UNUSED, self.data[0].state)
+        self.assertEqual(States().AT_LEAST_ONE_LOCKED, self.data[1].state)
 
         # unlock a single file
         n = self.data.unlock([fn])
         self.assertEqual(1, n)
-        self.assertEqual(States().CHECKED, self.data.get_object_state(fn))
-        self.assertEqual(States().AT_LEAST_ONE_CHECKED, self.data.get_object_state(self.data[1]))
+        self.assertEqual(States().CHECKED, fn.state)
+        self.assertEqual(States().AT_LEAST_ONE_CHECKED, self.data[1].state)
 
     # ---------------------------------------------------------------------------
 

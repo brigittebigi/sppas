@@ -43,7 +43,7 @@ from .sppasBaseWkpIO import sppasBaseWkpIO
 from ..filebase import States
 from ..filestructure import FilePath, FileRoot, FileName
 from ..fileref import FileReference, sppasAttribute
-from ..fileexc import FileOSError
+from ..wkpexc import FileOSError
 
 # ---------------------------------------------------------------------------
 

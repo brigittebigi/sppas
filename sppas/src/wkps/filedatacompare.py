@@ -341,6 +341,7 @@ class sppasFileStateCompare(sppasBaseCompare):
     >>> tc.state(FileName("oriana1"), States().UNUSED)
     >>> tc.methods['state'](FileName("oriana1"), States().UNUSED)
     >>> tc.get('state')(FileName("oriana1"), States().UNUSED)
+
     """
 
     def __init__(self):
@@ -586,6 +587,7 @@ class sppasFileExtCompare(sppasBaseCompare):
     >>> tc.exact(FileName("oriana1"), u("oriana1"))
     >>> tc.methods['exact'](FileName("oriana1"), u("oriana1"))
     >>> tc.get('exact')(FileName("oriana1"), u("oriana1"))
+
     """
 
     def __init__(self):
