@@ -206,7 +206,6 @@ class FileRemoveValueError(ValueError):
 
 # ---------------------------------------------------------------------------
 
-
 class AttributeIdValueError(ValueError):
     """:ERROR 9062:.
 

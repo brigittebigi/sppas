@@ -389,6 +389,7 @@ class FileRoot(FileBase):
             - at_least_one_locked if at least one of its filenames is locked,
             - checked if all filenames are checked,
             - at_least_one_checked if at least one of its filenames is checked and none of the others are locked,
+            - missing if at least one of its filenames is missing and none of the others are locked nor checked,
             - missing if all its filenames are missing,
             - unused if none of its filenames are neither locked nor checked.
 
