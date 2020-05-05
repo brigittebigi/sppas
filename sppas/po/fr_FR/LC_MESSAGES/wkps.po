@@ -36,7 +36,19 @@ msgid ":ERROR 9032: "
 msgstr "'{:s}' ne correspond pas avec '{:s}'"
 
 msgid ":ERROR 9034: "
-msgstr "'{:s}' ne peut pas être ajouté car il est déjà présent."
+msgstr "'{:s}' ne peut pas être ajouté car il est déjà présent dans la liste."
+
+msgid ":ERROR 9036: "
+msgstr "'{:s}' ne peut pas être supprimé car il n'est pas dans la liste."
 
 msgid ":ERROR 9040: "
 msgstr "{!s:s} est verrouillé."
+
+msgid ":ERROR 9060: "
+msgstr "Un identifiant doit être constitué d'au moins 2 caractères."
+
+msgid ":ERROR 9062: "
+msgstr "L'identifiant '{ident}' n'est pas conforme: il doit contenir entre 2 et 12 caractères ASCII uniquement."
+
+msgid ":ERROR 9064: "
+msgstr "La valeur '{value}' de l'attribut ne peut pas être convertie en type '{type}'."

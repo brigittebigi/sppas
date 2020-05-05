@@ -168,7 +168,7 @@ class sppasWJSON(sppasBaseWkpIO):
 
         dict_ref["attributes"] = list()
         # serialize the attributes in a reference
-        for att in fref.get_attributes():
+        for att in fref:
             dict_ref["attributes"].append(self._serialize_attributes(att))
 
         return dict_ref

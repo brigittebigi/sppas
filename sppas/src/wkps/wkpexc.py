@@ -127,6 +127,22 @@ class FileRootValueError(ValueError):
 # ---------------------------------------------------------------------------
 
 
+class FileIdValueError(ValueError):
+    """:ERROR 9060:.
+
+    An identifier must contain at least 2 characters.
+
+    """
+
+    def __init__(self):
+        self.parameter = error(9060) + (error(9060, "wkps"))
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
 class FileLockedError(IOError):
     """:ERROR 9040:.
 
@@ -162,12 +178,60 @@ class FilesMatchingValueError(ValueError):
 class FileAddValueError(ValueError):
     """:ERROR 9034:.
 
-    '{:s}' cant be added because it already exists.
+    '{:s}' cant be added because it already exists in the list.
 
     """
 
     def __init__(self, name):
         self.parameter = error(9034) + (error(9034, "wkps")).format(name)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class FileRemoveValueError(ValueError):
+    """:ERROR 9036:.
+
+    '{:s}' cant be removed because it is not existing in the list.
+
+    """
+
+    def __init__(self, name):
+        self.parameter = error(9036) + (error(9036, "wkps")).format(name)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class AttributeIdValueError(ValueError):
+    """:ERROR 9062:.
+
+    Identifier '{ident}' is not valid. It should be between 2 and 12 ASCII-characters.
+
+    """
+
+    def __init__(self, ident):
+        self.parameter = error(9062) + (error(9062, "wkps")).format(ident=ident)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class AttributeTypeValueError(ValueError):
+    """:ERROR 9064:.
+
+    Attribute value '{value}' can't be converted into type '{type}'.
+
+    """
+
+    def __init__(self, value, vtype):
+        self.parameter = error(9064) + (error(9064, "wkps")).format(value=value, type=vtype)
 
     def __str__(self):
         return repr(self.parameter)
