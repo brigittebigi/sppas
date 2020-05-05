@@ -133,12 +133,6 @@ class TestExceptions(unittest.TestCase):
             self.assertTrue("1500" in str(e))
 
         try:
-            raise AioFileExtensionError("filename")
-        except Exception as e:
-            self.assertTrue(isinstance(e, AioFileExtensionError))
-            self.assertTrue("1505" in str(e))
-
-        try:
             raise AioMultiTiersError("file_format")
         except Exception as e:
             self.assertTrue(isinstance(e, AioMultiTiersError))

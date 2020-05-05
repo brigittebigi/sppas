@@ -92,9 +92,6 @@ msgstr "No such file: '{!s:s}'."
 msgid ":ERROR 1500: "
 msgstr "The file {filename} contains non {encoding} characters: {error}."
 
-msgid ":ERROR 1505: "
-msgstr "Fail formats: unrecognized extension for file {!s:s}."
-
 msgid ":ERROR 1510: "
 msgstr "The file format {!s:s} does not support multi-tiers."
 

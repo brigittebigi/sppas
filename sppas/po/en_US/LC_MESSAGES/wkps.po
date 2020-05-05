@@ -36,7 +36,19 @@ msgid ":ERROR 9032: "
 msgstr "'{:s}' does not match with '{:s}'."
 
 msgid ":ERROR 9034: "
-msgstr "'{:s}' cant be added because it already exists."
+msgstr "'{:s}' cant be added because it already exists in the list."
+
+msgid ":ERROR 9036: "
+msgstr "'{:s}' cant be removed because it doesn't exist in the list."
 
 msgid ":ERROR 9040: "
 msgstr "{!s:s} is locked."
+
+msgid ":ERROR 9060: "
+msgstr "An identifier must contain at least 2 characters."
+
+msgid ":ERROR 9062: "
+msgstr "Identifier '{ident}' is not valid. It should be between 2 and 12 ASCII-characters."
+
+msgid ":ERROR 9064: "
+msgstr "Attribute value '{value}' can't be converted into type '{type}'."

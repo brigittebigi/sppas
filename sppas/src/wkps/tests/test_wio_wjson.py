@@ -59,6 +59,7 @@ class TestsppasWJSON(unittest.TestCase):
         self.r1.append(sppasAttribute('initials', 'AB'))
         self.r1.append(sppasAttribute('sex', 'F'))
         self.att = sppasAttribute("att")
+        self.data.add_ref(self.r1)
 
         self.wkpjson = sppasWJSON()
         self.file = os.path.join(sppas.paths.sppas, 'src', 'wkps', 'tests', "data", 'file.wjson')
@@ -73,14 +74,6 @@ class TestsppasWJSON(unittest.TestCase):
 
     def test_detect(self):
         self.assertFalse(self.wkpjson.detect(""))
-        self.assertTrue(self.wkpjson.detect(self.file))
-
-    # -----------------------------------------------------------------------
-
-    def test_read(self):
-        with open(self.file, 'r') as f:
-            d = json.load(f)
-        self.assertEqual(self.wkpjson.read(self.file), self.wkpjson._parse(d))
 
     # -----------------------------------------------------------------------
 
@@ -102,20 +95,44 @@ class TestsppasWJSON(unittest.TestCase):
 
     # -----------------------------------------------------------------------
 
-    def test_write(self):
-        self.wkpjson.set(self.data)
-        with open(self.file, 'w') as f:
-            d = json.dump(self.wkpjson._serialize(), f, indent=4, separators=(',', ': '))
+    def test_serialize(self):
+        data = sppasWJSON()
+        data.add_file(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        r1 = FileReference('SpeakerAB')
+        r1.set_type('SPEAKER')
+        r1.append(sppasAttribute('initials', 'AB'))
+        r1.append(sppasAttribute('sex', 'F'))
+        data.add_ref(r1)
 
-        self.assertEqual(self.wkpjson.write(self.file), d)
-
-    # -----------------------------------------------------------------------
-
-    def test__serialize(self):
-        d = self.wkpjson._serialize()
+        d = data._serialize()
         jsondata = json.dumps(d, indent=4, separators=(',', ': '))
         jsondict = json.loads(jsondata)
         self.assertEqual(d, jsondict)
+
+    # -----------------------------------------------------------------------
+
+    def test_read_write(self):
+        data = sppasWJSON()
+        data.add_file(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        r1 = FileReference('SpeakerAB')
+        r1.set_type('SPEAKER')
+        r1.append(sppasAttribute('initials', 'AB'))
+        r1.append(sppasAttribute('sex', 'F'))
+        data.add_ref(r1)
+
+        if os.path.exists(self.file):
+            os.remove(self.file)
+        data.write(self.file)
+        self.assertTrue(os.path.exists(self.file))
+        self.assertTrue(data.detect(self.file))
+
+        read_data = sppasWJSON()
+        read_data.read(self.file)
+        os.remove(self.file)
+
+        self.assertEqual(data.id, read_data.id)
+        self.assertEqual(data.get_all_files(), read_data.get_all_files())
+        self.assertEqual(data.get_refs(), read_data.get_refs())
 
     # -----------------------------------------------------------------------
 

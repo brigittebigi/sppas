@@ -32,6 +32,7 @@
 """
 
 from sppas.src.utils import sppasUnicode
+from .wkpexc import FileIdValueError
 
 # ---------------------------------------------------------------------------
 
@@ -76,7 +77,7 @@ class FileBase(object):
         ide = su.unicode().strip()
 
         if len(ide) < 1:
-            raise ValueError('An identifier must contain at least 2 characters.')
+            raise FileIdValueError
 
         return ide
 
@@ -222,6 +223,12 @@ class FileBase(object):
         if other is not None:
             return self.id < other.id
         return False
+
+    # -----------------------------------------------------------------------
+
+    def __hash__(self):
+        return hash((self.get_state(),
+                     self.get_id()))
 
 # ---------------------------------------------------------------------------
 

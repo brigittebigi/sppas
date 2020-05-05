@@ -95,9 +95,6 @@ msgstr "Le fichier {!s:s} n'existe pas."
 msgid ":ERROR 1500: "
 msgstr "Le fichier {filename} contient des caractères invalides pour l'encodage {encoding}: {error}."
 
-msgid ":ERROR 1505: "
-msgstr "L'extension du fichier {!s:s} n'est pas une extension connue."
-
 msgid ":ERROR 1510: "
 msgstr "Le format du fichier {!s:s} ne supporte pas le multi-tiers."
 
