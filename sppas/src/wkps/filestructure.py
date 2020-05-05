@@ -156,15 +156,15 @@ class FileName(FileBase):
         :raise: sppasTypeError
 
         """
+        # The file is not existing
+        if self.__file_exists() is False:
+            return self.update_properties()
+
+        # The file is existing:
+
+        # Check given value
         if value not in FileName.FILENAME_STATES:
             raise sppasTypeError(value, str(FileName.FILENAME_STATES))
-
-        # Attempt to set to some state but file is not existing
-        if self.__file_exists() is False:
-            prev = self._state
-            self._state = States().MISSING
-            return self._state == prev
-
         # Attempt to set to MISSING but file is existing
         if value == States().MISSING:
             return False
@@ -177,7 +177,11 @@ class FileName(FileBase):
         if self._state == value:
             return False
 
-        # do something regular!
+        # The file was previously missing and it exists now...
+        if self._state == States().MISSING:
+            self.update_properties()
+
+        # Set the requested state.
         self._state = value
         return True
 
@@ -333,18 +337,18 @@ class FileRoot(FileBase):
         :raises: sppasTypeError
 
         """
-        changed = list()
         for fn in self.__files:
             if fn == filename:
                 m = fn.set_state(value)
                 if m is True:
+                    changed = list()
                     changed.append(fn)
                     m = self.update_state()
                     if m is True:
                         changed.append(self)
                     return changed
 
-        return changed
+        return list()
 
     # -----------------------------------------------------------------------
 
@@ -403,7 +407,7 @@ class FileRoot(FileBase):
             checked = 0
             locked = 0
             for fn in self.__files:
-                fn.update_properties()
+                # fn.update_properties()
                 if fn.get_state() == States().CHECKED:
                     checked += 1
                 elif fn.get_state() == States().LOCKED:
@@ -533,6 +537,7 @@ class FileRoot(FileBase):
 
         """
         fr = FileRoot.root(filename)
+        fn = FileName(filename)
 
         # Does this filename matches this root
         if fr != self.id:
@@ -545,9 +550,9 @@ class FileRoot(FileBase):
             return self
 
         # Check if this file is in the list of known files
-        for fn in self.__files:
-            if fn.id == filename:
-                return fn
+        for frn in self.__files:
+            if frn.id == fn.id:
+                return frn
 
         return None
 
@@ -727,8 +732,7 @@ class FilePath(FileBase):
         modified = list()
         # In case (not normal) filename is a string, create a FileName
         if isinstance(entry, (FileName, FileRoot)) is False:
-            file_id = self.identifier(entry)
-            entry = FileName(file_id)
+            entry = FileName(entry)
 
         if isinstance(entry, FileName):
             # Search for the FileRoot matching the given FileName
@@ -794,23 +798,19 @@ class FilePath(FileBase):
         if os.path.isdir(abs_name) and abs_name == self.id:
             return self
 
-        elif os.path.isfile(filename):
-            idt = self.identifier(filename)
-            for fr in self.__roots:
-                fn = fr.get_object(idt)
-                if fn is not None:
-                    return fn
-        else:
-            for fr in self.__roots:
-                if fr.id == abs_name:
-                    return fr
+        for fr in self.__roots:
+            if fr.id == abs_name:
+                return fr
+            fn = fr.get_object(filename)
+            if fn is not None:
+                return fn
 
         return None
 
     # -----------------------------------------------------------------------
 
     def identifier(self, filename):
-        """Return the identifier, i.e. the full name of the file.
+        """Return the identifier, i.e. the full name of an existing file.
 
         :param filename: (str) Absolute or relative name of a file
         :returns: (str) Identifier for this filename
@@ -858,6 +858,10 @@ class FilePath(FileBase):
 
         Given filename can be either an absolute or relative name of a file
         or an instance of FileName. It can also be an instance of FileRoot.
+
+        Only an existing file can be added if the given entry is the name of the file.
+        But any FileName() instance can be added, even if the file does not exists
+        (of course, its path must match with this fp).
 
         :param entry: (str, FileName, FileRoot) Absolute or relative name of a file
         :param all_root: (bool) Add also all files sharing the same root as the given one, or all files of the given root

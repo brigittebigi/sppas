@@ -410,7 +410,7 @@ class sppasWorkspace(object):
                     # test if file_obj is a root or name in this fp
                     cur_obj = fp.get_object(file_obj.id)
                     if cur_obj is not None:
-                        # this object is one of this fp
+                        # this object is a child of this fp
                         m = fp.set_object_state(state, file_obj)
                         if len(m) > 0:
                             modified.extend(m)
