@@ -209,6 +209,9 @@ class sppasWJSON(sppasBaseWkpIO):
         for fr in fp:
             dict_path["roots"].append(self._serialize_root(fr))
 
+        if fp.subjoined is not None:
+            dict_path['subjoin'] = fp.subjoined
+
         return dict_path
 
     # -----------------------------------------------------------------------
@@ -228,10 +231,15 @@ class sppasWJSON(sppasBaseWkpIO):
         for fn in fr:
             dict_root["files"].append(self._serialize_files(fn))
 
-        # serialize refids
+        # references identifiers are stored into a list
         dict_root["refids"] = list()
         for ref in fr.get_references():
             dict_root["refids"].append(ref.get_id())
+
+        # subjoined data are simply added as-it
+        # (it's risky, the embedded data could be un-serializable by json...)
+        if fr.subjoined is not None:
+            dict_root['subjoin'] = fr.subjoined
 
         return dict_root
 
@@ -337,6 +345,7 @@ class sppasWJSON(sppasBaseWkpIO):
                 fr = self._parse_root(dict_root, path)
                 fp.append(fr)
 
+        # append subjoined
         fp.subjoined = d.get('subjoin', None)
 
         self.add(fp)
@@ -365,6 +374,9 @@ class sppasWJSON(sppasBaseWkpIO):
         for ref in d["refids"]:
             refe = FileReference(ref)
             fr.add_ref(refe)
+
+        # append subjoined dict "as it"
+        fr.subjoined = d.get('subjoin', None)
 
         return fr
 

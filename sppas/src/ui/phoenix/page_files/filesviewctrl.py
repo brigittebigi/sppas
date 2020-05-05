@@ -583,6 +583,11 @@ class FileTreeView(sppasScrolledPanel):
             fp = self.__data.get_parent(fr)
         else:
             return None
+
+        if fp.get_id() not in self.__fps:
+            wx.LogError("The entry {} of type {} has no parent panel.".format(fs, type(fs)))
+            return None
+
         return self.__fps[fp.get_id()]
 
     # ------------------------------------------------------------------------

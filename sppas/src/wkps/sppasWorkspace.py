@@ -358,14 +358,9 @@ class sppasWorkspace(object):
                 return ref
 
         for fp in self.__files:
-            if fp.id == identifier:
-                return fp
-            for fr in fp:
-                if fr.id == identifier:
-                    return fr
-                for fn in fr:
-                    if fn.id == identifier:
-                        return fn
+            obj = fp.get_object(identifier)
+            if obj is not None:
+                return obj
 
         return None
 
@@ -563,7 +558,8 @@ class sppasWorkspace(object):
         """
         if isinstance(filebase, FileName):
             fr = FileRoot(filebase.id)
-            return self.get_object(fr.id)
+            root = self.get_object(fr.id)
+            return root
 
         if isinstance(filebase, FileRoot):
             fp = FilePath(os.path.dirname(filebase.id))

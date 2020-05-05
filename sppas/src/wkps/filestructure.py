@@ -537,7 +537,6 @@ class FileRoot(FileBase):
 
         """
         fr = FileRoot.root(filename)
-        fn = FileName(filename)
 
         # Does this filename matches this root
         if fr != self.id:
@@ -550,6 +549,7 @@ class FileRoot(FileBase):
             return self
 
         # Check if this file is in the list of known files
+        fn = FileName(filename)
         for frn in self.__files:
             if frn.id == fn.id:
                 return frn
@@ -795,7 +795,8 @@ class FilePath(FileBase):
 
         """
         abs_name = os.path.abspath(filename)
-        if os.path.isdir(abs_name) and abs_name == self.id:
+        # if os.path.isdir(abs_name) and abs_name == self.id:
+        if abs_name == self.id:
             return self
 
         for fr in self.__roots:
