@@ -190,7 +190,6 @@ class ReferencesManager(sppasPanel):
         """Send the EVT_DATA_CHANGED to the parent."""
         if self.GetParent() is not None:
             data = self._refsview.get_data()
-            data.set_state(States().CHECKED)
             evt = DataChangedEvent(data=data)
             evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)

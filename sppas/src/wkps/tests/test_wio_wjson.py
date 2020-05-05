@@ -48,6 +48,10 @@ from sppas.src.wkps.wkpexc import FilesMatchingValueError
 
 # ---------------------------------------------------------------------------
 
+DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+
+# ---------------------------------------------------------------------------
+
 
 class TestsppasWJSON(unittest.TestCase):
 
@@ -62,7 +66,7 @@ class TestsppasWJSON(unittest.TestCase):
         self.data.add_ref(self.r1)
 
         self.wkpjson = sppasWJSON()
-        self.file = os.path.join(sppas.paths.sppas, 'src', 'wkps', 'tests', "data", 'file.wjson')
+        self.file = os.path.join(DATA, 'file.wjson')
 
     # -----------------------------------------------------------------------
 

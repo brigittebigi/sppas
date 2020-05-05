@@ -48,6 +48,10 @@ from sppas.src.wkps.wkpexc import FileOSError, PathTypeError
 
 # ---------------------------------------------------------------------------
 
+DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+
+# ---------------------------------------------------------------------------
+
 
 class TestFileBase(unittest.TestCase):
 
@@ -111,11 +115,30 @@ class TestFileName(unittest.TestCase):
 
     # ----------------------------------------------------------------------------
 
-    def test_update_proprieties(self):
+    def test_update_properties(self):
+        # Properties were not changed
         fn = FileName(os.path.join(sppas.paths.samples, "samples-pol", "0001.txt"))
-        self.assertTrue(fn.update_properties())
+        self.assertFalse(fn.update_properties())
         fn = FileName("toto")
         self.assertFalse(fn.update_properties())
+
+        # Create a filename of a missing file, then create the file
+        test_file = os.path.join(DATA, "testfile.txt")
+        if os.path.exists(test_file):
+            os.remove(test_file)
+        fn = FileName(test_file)
+        self.assertEqual(fn.state, States().MISSING)
+        with open(test_file, "w") as f:
+            f.write("this is a file to test filename update properties.")
+
+        # File is not missing anymore: it exists
+        self.assertTrue(fn.update_properties())
+        self.assertEqual(fn.state, States().UNUSED)
+        os.remove(test_file)
+
+        # File is now missing (again)
+        self.assertTrue(fn.update_properties())
+        self.assertEqual(fn.state, States().MISSING)
 
 # --------------------------------------------------------------------------------
 

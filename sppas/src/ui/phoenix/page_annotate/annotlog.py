@@ -140,7 +140,7 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
         self.Refresh()
         progress.close()
 
-        # send to parent
+        # Send to parent
         evt = DataChangedEvent(data=self.__param.get_workspace())
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)

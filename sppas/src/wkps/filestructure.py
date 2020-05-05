@@ -186,28 +186,37 @@ class FileName(FileBase):
     def update_properties(self):
         """Update properties of the file (modified date and file size).
 
-        :returns: (bool) true if the file exists else False
+        :returns: (bool) true if properties were changed
 
         """
+        cur_state = self._state
+        cur_date = self.__date
+        cur_size = self.__filesize
+
         # test if the file is still existing
         if self.__file_exists() is False:
             self.__date = None
             self.__filesize = 0
             self._state = States().MISSING
-            return False
 
-        # get time and size
-        try:
-            self.__date = datetime.fromtimestamp(os.path.getmtime(self.get_id()))
-        except ValueError:
-            self.__date = None
-        self.__filesize = os.path.getsize(self.get_id())
-        return True
+        else:
+            # get time and size
+            try:
+                self.__date = datetime.fromtimestamp(os.path.getmtime(self.get_id()))
+            except ValueError:
+                self.__date = None
+            self.__filesize = os.path.getsize(self.get_id())
+            if self._state == States().MISSING:
+                # the file is not missing anymore
+                self._state = States().UNUSED
+
+        return cur_state != self._state or cur_date != self.__date or cur_size != self.__filesize
 
     # -----------------------------------------------------------------------
 
     def __file_exists(self):
         return os.path.isfile(self.get_id())
+
     # -----------------------------------------------------------------------
     # Properties
     # -----------------------------------------------------------------------
@@ -370,8 +379,6 @@ class FileRoot(FileBase):
 
         return modified
 
-    statefr = property(FileBase.get_state, set_state)
-
     # -----------------------------------------------------------------------
 
     def update_state(self):
@@ -395,6 +402,7 @@ class FileRoot(FileBase):
             checked = 0
             locked = 0
             for fn in self.__files:
+                fn.update_properties()
                 if fn.get_state() == States().CHECKED:
                     checked += 1
                 elif fn.get_state() == States().LOCKED:
@@ -547,7 +555,7 @@ class FileRoot(FileBase):
     def append(self, filename, all_root=False, ctime=0.):
         """Append a filename in the list of files.
 
-        filename must be the absolute name of a file or an instance
+        'filename' must be the absolute name of a file or an instance
         of FileName.
 
         :param filename: (str, FileName) Absolute name of a file
@@ -556,24 +564,23 @@ class FileRoot(FileBase):
         :returns: (list of FileName) the appended FileName() instances or None
 
         """
+        if filename is None:
+            self.update_state()
+            return list()
+
         fns = list()
-        missing = False
-
         # Get or create the FileName instance
-        if filename is not None:
-            fn = filename
-            if isinstance(filename, FileName) is False:
-                fn = FileName(filename)
-            # if file is missing
-            if os.path.exists(fn.get_id()) is False:
-                missing = True
+        fn = filename
+        if isinstance(filename, FileName) is False:
+            fn = FileName(filename)
 
-        if missing is False:
+        # file is not missing
+        if fn.get_state() != States().MISSING:
             # Check if root is ok
             if self.id != FileRoot.root(fn.id):
                 raise FileRootValueError(fn.id, self.id)
 
-            # Check if this filename is not already in the list
+            # This file is not already in the list.
             if all_root is False and fn not in self:
                 if os.path.getmtime(fn.get_id()) > ctime:
                     self.__files.append(fn)
@@ -584,20 +591,18 @@ class FileRoot(FileBase):
                 # except if a ctime value is given and file is too old.
                 for new_filename in sorted(glob.glob(self.id+"*")):
                     if os.path.isfile(new_filename) is True:
-                        fn = FileName(new_filename)
-                        if fn.get_id() not in self:
-                            if os.path.getmtime(fn.get_id()) > ctime and missing is False:
-                                self.__files.append(fn)
-                                fns.append(fn)
-                            else:
-                                self.__files.append(fn)
-                                fns.append(fn)
+                        fnx = FileName(new_filename)
+                        if fnx.get_id() not in self:
+                            if os.path.getmtime(fnx.get_id()) > ctime:
+                                self.__files.append(fnx)
+                                fns.append(fnx)
+
+        # file does not exist. Add it with its 'MISSING' state.
         else:
             self.__files.append(fn)
             fns.append(fn)
 
-        if len(fns) > 0:
-            self.update_state()
+        self.update_state()
         return fns
 
     # -----------------------------------------------------------------------

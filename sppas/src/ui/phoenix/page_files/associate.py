@@ -179,7 +179,6 @@ class AssociatePanel(sppasPanel):
     def notify(self):
         """Send the EVT_DATA_CHANGED to the parent."""
         if self.GetParent() is not None:
-            self.__data.set_state(States().CHECKED)
             evt = DataChangedEvent(data=self.__data)
             evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)

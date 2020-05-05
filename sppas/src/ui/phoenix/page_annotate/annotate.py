@@ -206,7 +206,6 @@ class sppasAnnotatePanel(sppasSimplebook):
         pm = self.GetParent()
         if pm is not None and emitted != pm:
             data = self.__param.get_workspace()
-            data.set_state(States().CHECKED)
             evt = DataChangedEvent(data=data)
             evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)

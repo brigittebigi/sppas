@@ -333,23 +333,6 @@ class sppasWorkspace(object):
 
     # -----------------------------------------------------------------------
 
-    def get_files(self, value=States().CHECKED):
-        """Return the list of file names of the given state.
-
-        :param value: (bool) Toggle state
-        :returns: (list of str)
-
-        """
-        checked = list()
-        for fp in self.__files:
-            for fr in fp:
-                for fn in fr:
-                    if fn.get_state() == value:
-                        checked.append(fn.id)
-        return checked
-
-    # -----------------------------------------------------------------------
-
     def get_all_files(self):
         """Return all the files.
 

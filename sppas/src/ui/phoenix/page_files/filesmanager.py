@@ -39,7 +39,6 @@ import wx
 from sppas import paths
 
 from sppas.src.config import msg
-from sppas.src.utils import u
 from sppas.src.wkps.sppasWorkspace import States
 
 from ..windows import sppasPanel
@@ -54,12 +53,13 @@ from .filesviewctrl import FileTreeView
 # ---------------------------------------------------------------------------
 # List of displayed messages:
 
-FLS_TITLE = u(msg("Files: ", "ui"))
-FLS_ACT_ADD = u(msg("Add", "ui"))
-FLS_ACT_REM = u(msg("Remove checked", "ui"))
-FLS_ACT_DEL = u(msg("Delete checked", "ui"))
+FLS_TITLE = msg("Files: ", "ui")
+FLS_ACT_ADD = msg("Add", "ui")
+FLS_ACT_REM = msg("Remove checked", "ui")
+FLS_ACT_DEL = msg("Delete checked", "ui")
+FLS_ACT_MISS = msg("Edit missing", "ui")
 
-FLS_MSG_CONFIRM_DEL = u(msg("Are you sure you want to delete {:d} files?"))
+FLS_MSG_CONFIRM_DEL = msg("Are you sure you want to delete {:d} files?")
 
 # ----------------------------------------------------------------------------
 
@@ -100,8 +100,7 @@ class FilesManager(sppasPanel):
 
     def get_data(self):
         """Return the data like they are currently stored into the model."""
-        fv = self.FindWindow("filestree")
-        return fv.get_data()
+        return self._filestree.get_data()
 
     # ------------------------------------------------------------------------
 
@@ -144,6 +143,8 @@ class FilesManager(sppasPanel):
         tb.AddButton("files-add", FLS_ACT_ADD)
         tb.AddButton("files-remove", FLS_ACT_REM)
         tb.AddButton("files-delete", FLS_ACT_DEL)
+        btn = tb.AddButton("files-missing", FLS_ACT_MISS)
+        btn.Enable(False)
         return tb
 
     # -----------------------------------------------------------------------
@@ -185,7 +186,6 @@ class FilesManager(sppasPanel):
         """Send the EVT_DATA_CHANGED to the parent."""
         if self.GetParent() is not None:
             data = self._filestree.get_data()
-            data.set_state(States().CHECKED)
             evt = DataChangedEvent(data=data)
             evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)
@@ -236,6 +236,9 @@ class FilesManager(sppasPanel):
 
         elif name == "files-delete":
             self._delete()
+
+        elif name == "files-missing":
+            self._edit_missing()
 
         event.Skip()
 
@@ -295,6 +298,13 @@ class FilesManager(sppasPanel):
                 self.notify()
         elif response == wx.ID_NO:
             wx.LogMessage('Response is no. No file deleted.')
+
+    # ------------------------------------------------------------------------
+
+    def _edit_missing(self):
+        """Open a dialog to take decisions about missing files of the data."""
+        Information("In a future version, you'll be able to remove or rename "
+                    "unknown paths and filenames of the list.")
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
