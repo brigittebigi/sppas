@@ -36,6 +36,7 @@
 
 import os
 import json
+from collections import OrderedDict
 
 from sppas.src.config import sg
 
@@ -101,14 +102,13 @@ class sppasWJSON(sppasBaseWkpIO):
         """Read a wjson file and fill the the sppasWSJON.
 
         :param filename: (str)
-        :returns: (sppasWJSON)
 
         """
         if os.path.exists(filename) is False:
             raise FileOSError(filename)
         with open(filename, 'r') as f:
             d = json.load(f)
-            return self._parse(d)
+            self._parse(d)
 
     # -----------------------------------------------------------------------
 
@@ -131,7 +131,7 @@ class sppasWJSON(sppasBaseWkpIO):
         :returns: (dict) a dictionary that can be serialized
 
         """
-        d = dict()
+        d = OrderedDict()
 
         # Factual information about this file and this sppasWJSON
         d['wjson'] = "2.0"
@@ -146,7 +146,7 @@ class sppasWJSON(sppasBaseWkpIO):
 
         # The list of references/attributes stored in this sppasWorkspace()
         d['catalogue'] = list()
-        for fref in self.refs:
+        for fref in self.get_refs():
             d['catalogue'].append(self._serialize_ref(fref))
 
         return d
