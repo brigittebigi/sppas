@@ -34,8 +34,10 @@
 from sppas import sppasTypeError, sppasIndexError
 from sppas import annots
 from sppas.src.utils.makeunicode import sppasUnicode
-from .filebase import FileBase, States
 
+from .filebase import FileBase, States
+from .wkpexc import AttributeIdValueError, AttributeTypeValueError
+from .wkpexc import FileAddValueError, FileRemoveValueError
 
 # ---------------------------------------------------------------------------
 
@@ -47,9 +49,7 @@ class sppasAttribute(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    This class embeds an id, a value, its type and a description.
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -62,6 +62,7 @@ class sppasAttribute(object):
         :param value: (str) String representing the value of the attribute
         :param att_type: (str) One of the VALUE_TYPES
         :param descr: (str) A string to describe what the attribute is
+        :raises: AttributeIdValueError
 
         """
         self.__id = ""
@@ -80,7 +81,7 @@ class sppasAttribute(object):
 
     @staticmethod
     def validate(identifier):
-        """Return True the given identifier matches the requirements.
+        """Return True if the given identifier matches the requirements.
 
         An id should contain between 3 and 12 ASCII-characters only, i.e.
         letters a-z, letters A-Z and numbers 0-9.
@@ -100,9 +101,7 @@ class sppasAttribute(object):
         identifier = su.unicode()
 
         if sppasAttribute.validate(identifier) is False:
-            raise ValueError(
-                "Identifier '{:s}' is not valid. It should be between 2 "
-                "and 12 ASCII-characters.".format(identifier))
+            raise AttributeIdValueError(identifier)
 
         self.__id = identifier
 
@@ -158,6 +157,7 @@ class sppasAttribute(object):
         """Set a new type for the current value.
 
         :param type_name: (str) the new type name
+        :raises: sppasTypeError
 
         """
         if type_name in sppasAttribute.VALUE_TYPES:
@@ -184,15 +184,14 @@ class sppasAttribute(object):
                 elif self.__valuetype == 'bool':
                     return self.__value.lower() == 'true'
             except ValueError:
-                raise
-                # TODO: raise sppas Exception with appropriate msg
+                raise AttributeTypeValueError(self.__value, self.__valuetype)
 
         return self.__value
 
     # -----------------------------------------------------------------------
 
     def get_description(self):
-        """Return current description.
+        """Return current description of the attribute.
 
         :returns: (str)
 
@@ -215,35 +214,8 @@ class sppasAttribute(object):
             su = sppasUnicode(description)
             self.__descr = su.to_strip()
 
-    # -----------------------------------------------------------------------
-
-    def serialize(self):
-        """Return a dict representing this instance for json format."""
-        d = dict()
-        d['id'] = self.__id
-        d['value'] = self.__value
-        d['type'] = self.__valuetype
-        d['descr'] = self.__descr
-        return d
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def parse(d):
-        """Return the sppasAttribute from the given dict.
-
-        :param d: (dict) 'id' required. optional: 'value', 'type', 'descr'
-
-        """
-        k = d['id']
-        v = d.get('value', None)
-        t = d.get('type', sppasAttribute.VALUE_TYPES[0])
-        descr = d.get('descr', None)
-
-        return sppasAttribute(k, v, t, descr)
-
     # ---------------------------------------------------------
-    # overloads
+    # Overloads
     # ----------------------------------------------------------
 
     def __str__(self):
@@ -260,6 +232,8 @@ class sppasAttribute(object):
 
     def __format__(self, fmt):
         return str(self).__format__(fmt)
+
+    # -----------------------------------------------------------------------
 
     def __hash__(self):
         return hash((self.__id, self.get_typed_value(), self.__descr))
@@ -284,16 +258,17 @@ class sppasAttribute(object):
 
 
 class FileReference(FileBase):
-    """Represent a reference of a catalog about files.
+    """Represent a reference of a catalog of a workspace.
 
     :author:       Barthélémy Drabczuk, Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    Reference is a dictionary with a name. Its keys are only alphanumerics characters
-    spaced with underscores and its values are all sppasAttribute objects.
+    Reference is a dictionary with a name. Its keys are only alphanumerics
+    characters spaced with underscores and its values are all sppasAttribute
+    objects.
 
     """
 
@@ -316,6 +291,10 @@ class FileReference(FileBase):
     def att(self, identifier):
         """Return the attribute matching the given identifier or None.
 
+        :param identifier: (str) Id of a sppasAttribute
+        :return: sppasAttribute or None if the identifier does not match
+        any attribute of this reference.
+
         """
         su = sppasUnicode(identifier)
         identifier = su.unicode()
@@ -330,13 +309,19 @@ class FileReference(FileBase):
     def add(self, identifier, value=None, att_type=None, descr=None):
         """Append an attribute into the reference.
 
+        :param identifier: (str) Id of a sppasAttribute
+        :param value: (any type)
+        :param att_type: (str) One of 'str', 'bool', 'int', 'float'. Default is 'str'.
+        :param descr: (str) A text to describe the attribute
+        :raise: AttributeIdValueError
+
         """
         self.append(sppasAttribute(identifier, value, att_type, descr))
 
     # ------------------------------------------------------------------------
 
     def append(self, att):
-        """Add an attribute.
+        """Append an attribute into a reference.
 
         :param att: (sppasAttribute)
 
@@ -345,8 +330,7 @@ class FileReference(FileBase):
             raise sppasTypeError(att, "sppasAttribute")
 
         if att in self:
-            raise KeyError("The identifier '{:s}' is already existing in the "
-                           "reference '{:s}'.".format(att.get_id(), self.id))
+            raise FileAddValueError(att.get_id())
 
         self.__attributs.append(att)
 
@@ -355,7 +339,7 @@ class FileReference(FileBase):
     def pop(self, identifier):
         """Delete an attribute of this reference.
 
-        :param identifier: (str, sppasAttribute) the id of the attribute to delete
+        :param identifier: (str, sppasAttribute) the attribute or its id to delete
 
         """
         if identifier in self:
@@ -363,15 +347,14 @@ class FileReference(FileBase):
                 identifier = self.att(identifier)
             self.__attributs.remove(identifier)
         else:
-            raise ValueError('{:s} is not a valid identifier for {:s}'
-                             ''.format(identifier, self.id))
+            raise FileRemoveValueError(identifier)
 
     # ------------------------------------------------------------------------
 
     def set_state(self, state):
         """Set the current state to a new one.
 
-        :param state: (Reference.States)
+        :param state: (State)
         :raises (sppasTypeError)
 
         """
@@ -389,7 +372,12 @@ class FileReference(FileBase):
     # ------------------------------------------------------------------------
 
     def set_type(self, ann_type):
-        """Set the type of the Reference within the authorized ones."""
+        """Set the type of the Reference within the authorized ones.
+
+        :param ann_type: (int) One of the annots.types
+        :raise: sppasIndexError, sppasTypeError
+
+        """
         if ann_type in annots.types:
             self.__type = ann_type
         else:
@@ -401,69 +389,6 @@ class FileReference(FileBase):
                     raise sppasIndexError(ref_index)
             except:
                 raise sppasTypeError(ann_type, annots.types)
-
-    # -----------------------------------------------------------------------
-
-    def serialize(self):
-        """Return a dict representing this instance for json format."""
-        d = FileBase.serialize(self)
-        d['type'] = self.__type
-        d['attributes'] = list()
-        for att in self.__attributs:
-            a = att.serialize()
-            d['attributes'].append(a)
-        d['subjoin'] = self.subjoined
-        return d
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def parse(d):
-        """Return the FileReference instance represented by the given dict.
-
-        """
-        if 'id' not in d:
-            raise KeyError("Reference 'id' is missing of the dictionary to parse.")
-
-        ref = FileReference(d['id'])
-
-        # Parse the type of reference
-        if 'type' in d:
-            ref.set_type(d['type'])
-
-        # Parse the list of attributes
-        if 'attributes' in d:
-            for att_dict in d['attributes']:
-                ref.append(sppasAttribute.parse(att_dict))
-
-        # Parse the state value
-        s = d.get('state', States().UNUSED)
-        if s > 0:
-            ref.set_state(States().CHECKED)
-        else:
-            ref.set_state(States().UNUSED)
-
-        # Parse the subjoined member, "as it"!
-        ref.subjoined = d['subjoin']
-
-        return ref
-
-    # ------------------------------------------------------------------------
-    # Getter
-    # ------------------------------------------------------------------------
-
-    def get_attributes(self):
-        """Return the attributes
-
-        :returns: (list)
-        """
-        return self.__attributs
-
-    # ------------------------------------------------------------------------
-    # Property
-    # ------------------------------------------------------------------------
-
-    attributes = property(get_attributes, None)
 
     # ------------------------------------------------------------------------
     # Overloads
@@ -504,8 +429,3 @@ class FileReference(FileBase):
                 return True
 
         return False
-
-    def __hash__(self):
-        return hash((self.get_state(),
-                     self.get_id()))
-

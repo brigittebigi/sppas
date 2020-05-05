@@ -495,23 +495,6 @@ class AioEncodingError(UnicodeDecodeError):
 # -----------------------------------------------------------------------
 
 
-class AioFileExtensionError(IOError):
-    """:ERROR 1505:.
-
-    Fail formats: unrecognized extension for file {:s}.
-
-    """
-
-    def __init__(self, filename):
-        self.parameter = error(1505) + \
-                         (error(1505, "anndata")).format(filename)
-
-    def __str__(self):
-        return repr(self.parameter)
-
-# -----------------------------------------------------------------------
-
-
 class AioMultiTiersError(IOError):
     """:ERROR 1510:.
 

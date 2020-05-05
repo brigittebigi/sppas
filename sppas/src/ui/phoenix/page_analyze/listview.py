@@ -669,7 +669,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         Add the appropriate metadata.
         The tiers, medias and controlled vocab lists are collapsed if empty.
 
-        :raises: AioFileExtensionError
+        :raises: IOExtensionException
 
         """
         parser = sppasRW(self._filename)

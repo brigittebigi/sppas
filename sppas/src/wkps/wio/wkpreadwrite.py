@@ -33,9 +33,11 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import os
 from collections import OrderedDict
 
+from sppas import IOExtensionException
 from sppas.src.utils.makeunicode import u
 from sppas.src.anndata.anndataexc import AioEncodingError
 
@@ -114,7 +116,7 @@ class sppasWkpRW(object):
         if extension in sppasWkpRW.extensions():
             return sppasWkpRW.WORKSPACE_TYPES[extension]()
 
-        raise Exception("Unknown extension {}".format(extension))
+        raise IOExtensionException(filename)
 
     # ------------------------------------------------------------------------
 

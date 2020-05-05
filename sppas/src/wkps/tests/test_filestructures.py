@@ -63,7 +63,7 @@ class TestFileBase(unittest.TestCase):
         f = FileBase(__file__)
         self.assertEqual(__file__, str(f))
         self.assertEqual(__file__, "{!s:s}".format(f))
-
+        # TODO: Add real tests of FileBase
 
 # ---------------------------------------------------------------------------
 

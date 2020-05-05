@@ -37,11 +37,11 @@
 import os
 from collections import OrderedDict
 
+from sppas import IOExtensionException
 from sppas.src.utils.makeunicode import u
 from sppas.src.utils.datatype import sppasTime
 
 from ..anndataexc import AioEncodingError
-from ..anndataexc import AioFileExtensionError
 from ..anndataexc import AioError
 
 from .text import sppasRawText
@@ -152,7 +152,7 @@ class sppasRW(object):
         """
         try:
             trs = sppasRW.create_trs_from_extension(self.__filename)
-        except AioFileExtensionError:
+        except IOExtensionException:
             if heuristic is True:
                 trs = sppasRW.create_trs_from_heuristic(self.__filename)
             else:
@@ -199,7 +199,7 @@ class sppasRW(object):
         if extension in sppasRW.extensions():
             return sppasRW.TRANSCRIPTION_TYPES[extension]()
 
-        raise AioFileExtensionError(filename)
+        raise IOExtensionException(filename)
 
     # -----------------------------------------------------------------------
 
