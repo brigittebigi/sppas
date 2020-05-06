@@ -33,6 +33,7 @@
 """
 
 import os
+import logging
 
 try:
     import configparser as cp
@@ -66,10 +67,9 @@ class Features(object):
         """
         self.__req = req
         self.__cmdos = cmdos
-        self.__config = sppasAppConfig()
         self.__features = list()
-        self.__features_parser = self.init_features()
         self.set_features()
+        self.update_features()
 
     # ------------------------------------------------------------------------
 
@@ -85,10 +85,24 @@ class Features(object):
     # ------------------------------------------------------------------------
 
     def update_config(self):
-        """Update the config file."""
-        for f in self.__features:
-            self.__config.set_dep(f.get_id(), f.get_enable())
-        self.__config.save()
+        """Update the config file with the features."""
+        with sppasAppConfig() as cfg:
+            for f in self.__features:
+                cfg.set_dep(f.get_id(), f.get_enable())
+            cfg.save()
+
+    # ------------------------------------------------------------------------
+
+    def update_features(self):
+        """Update the features with the config file."""
+        ids = self.get_ids()
+        with sppasAppConfig() as cfg:
+            for f in cfg.get_deps():
+                if f in ids:
+                    self.enable(f, cfg.dep_enabled(f))
+                else:
+                    logging.error("The config file contains an unknown "
+                                  "feature identifier {}".format(f))
 
     # ------------------------------------------------------------------------
 
@@ -110,6 +124,7 @@ class Features(object):
                 if value is None:
                     return feat.get_enable()
                 return feat.set_enable(value)
+
         return False
 
     # ------------------------------------------------------------------------
@@ -126,6 +141,7 @@ class Features(object):
                 if value is None:
                     return feat.get_available()
                 return feat.set_available(value)
+
         return False
 
     # ------------------------------------------------------------------------
@@ -139,6 +155,7 @@ class Features(object):
         for feat in self.__features:
             if feat.get_id() == fid:
                 return feat.get_desc()
+
         return None
 
     # ------------------------------------------------------------------------
@@ -152,6 +169,7 @@ class Features(object):
         for feat in self.__features:
             if feat.get_id() == fid:
                 return feat.get_packages()
+
         return dict()
 
     # ------------------------------------------------------------------------
@@ -180,18 +198,63 @@ class Features(object):
                 return feat.get_cmd()
         return str()
 
-    # ------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
 
-    def get_cfg_exist(self):
-        """Return the private attribute __cfg_exist."""
-        return self.__config.cfg_file_exists()
+    def set_features(self):
+        """Browses the features.ini file and instantiate a Feature()."""
+        self.__features = list()
+        features_parser = self.__init_features()
+
+        for fid in (features_parser.sections()):
+            feature = Feature(fid)
+
+            # Description of the feature
+            desc = features_parser.get(fid, "desc")
+            feature.set_desc(desc)
+
+            # Feature is enabled or not
+            feature.set_enable(features_parser.getboolean(fid, "enable"))
+
+            # Package dependencies
+            try:
+                d = features_parser.get(fid, self.__req)
+                if d == "nil" or d == "":
+                    feature.set_packages({"nil": "1"})
+                    feature.set_available(True)
+                else:
+                    feature.set_available(True)
+                    depend_packages = self.__parse_depend(d)
+                    feature.set_packages(depend_packages)
+            except cp.NoOptionError:
+                logging.info("Feature {} has no defined section {}.")
+
+            # Pypi dependencies
+            try:
+                d = features_parser.get(fid, "req_pip")
+                if d == "nil" or d == "":
+                    feature.set_pypi({"nil": "1"})
+                else:
+                    depend_pypi = self.__parse_depend(d)
+                    feature.set_pypi(depend_pypi)
+            except cp.NoOptionError:
+                logging.info("Feature {} has no defined section {}.")
+
+            # Command to be executed
+            try:
+                cmd = features_parser.get(fid, self.__cmdos)
+                if cmd == "none":
+                    feature.set_available(False)
+                feature.set_cmd(cmd)
+                self.__features.append(feature)
+            except cp.NoOptionError:
+                logging.info("Feature {} has no defined section {}.")
 
     # ------------------------------------------------------------------------
     # Private: Internal use only.
     # ------------------------------------------------------------------------
 
-    def init_features(self):
-        """Return a parsed version of your features.ini file."""
+    def __init_features(self):
+        """Return a parsed version of the features.ini file."""
         cfg = self.get_features_filename()
         if cfg is None:
             raise IOError("Installation error: the file {filename} to "
@@ -205,50 +268,6 @@ class Features(object):
             raise IOError("Malformed features configuration file {}: "
                           "missing section header.".format(cfg))
         return features_parser
-
-    # ---------------------------------------------------------------------------
-
-    def set_features(self):
-        """Browses the features.ini file and instantiate a Feature()."""
-        self.__features = list()
-        features_parser = self.__features_parser
-        for fid in (features_parser.sections()):
-            feature = Feature(fid)
-
-            # Description of the feature
-            desc = features_parser.get(fid, "desc")
-            feature.set_desc(desc)
-
-            # Feature is enabled or not
-            feature.set_enable(features_parser.getboolean(fid, "enable"))
-
-            # Package dependencies
-            d = features_parser.get(fid, self.__req)
-            if d == "nil" or d == "":
-                feature.set_packages({"nil": "1"})
-                feature.set_available(True)
-            else:
-                feature.set_available(True)
-                depend_packages = self.__parse_depend(d)
-                feature.set_packages(depend_packages)
-
-            # Pypi dependencies
-            d = features_parser.get(fid, "req_pip")
-            if d == "nil" or d == "":
-                feature.set_pypi({"nil": "1"})
-            else:
-                depend_pypi = self.__parse_depend(d)
-                feature.set_pypi(depend_pypi)
-
-            # Command to be executed
-            cmd = features_parser.get(fid, self.__cmdos)
-            if cmd == "none":
-                feature.set_available(False)
-            feature.set_cmd(cmd)
-            self.__features.append(feature)
-
-        for f in self.__config.get_deps():
-            self.enable(f, self.__config.dep_enabled(f))
 
     # ---------------------------------------------------------------------------
 

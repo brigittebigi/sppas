@@ -112,7 +112,7 @@ class Process(object):
         """
         command = command.strip()
         command_args = shlex.split(command)
-        self.__process = Popen(command_args, stdout=PIPE, stderr=PIPE, text=True)
+        self.__process = Popen(command_args, stdout=PIPE, stderr=PIPE)  #, text=True)
         self.__process.wait()
 
     # ------------------------------------------------------------------------

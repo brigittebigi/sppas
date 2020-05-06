@@ -36,7 +36,6 @@
 
 import os
 import logging
-import sys
 
 try:
     # For Python 3.0 and later

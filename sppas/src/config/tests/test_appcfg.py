@@ -28,7 +28,7 @@
 
         ---------------------------------------------------------------------
 
-    src.config.tests.test_configuration.py
+    src.config.tests.test_appcfg.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """

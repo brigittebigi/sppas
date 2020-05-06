@@ -62,24 +62,24 @@ class TestInstallerMacOs(unittest.TestCase):
 
     def test_install_package(self):
         """Install package."""
-        self.assertFalse(self.__macos.install_package("juliuussssss"))
-        self.assertFalse(self.__macos.install_package(4))
+        self.assertFalse(self.__macos._install_package("juliuussssss"))
+        self.assertFalse(self.__macos._install_package(4))
 
     # ---------------------------------------------------------------------------
 
     def test_version_package(self):
         """Returns True if package is up to date."""
-        self.assertTrue(self.__macos.version_package("julius", ">;0.0"))
-        self.assertTrue(self.__macos.version_package("flac", ">;0.0"))
+        self.assertTrue(self.__macos._version_package("julius", ">;0.0"))
+        self.assertTrue(self.__macos._version_package("flac", ">;0.0"))
 
         with self.assertRaises(IndexError):
-            self.assertTrue(self.__macos.version_package("julius", "aaaa"))
+            self.assertTrue(self.__macos._version_package("julius", "aaaa"))
 
         with self.assertRaises(ValueError):
-            self.assertTrue(self.__macos.version_package("julius", "<;4.2"))
+            self.assertTrue(self.__macos._version_package("julius", "<;4.2"))
 
         with self.assertRaises(ValueError):
-            self.assertTrue(self.__macos.version_package("julius", "=;4.2"))
+            self.assertTrue(self.__macos._version_package("julius", "=;4.2"))
 
     # ---------------------------------------------------------------------------
 
@@ -96,29 +96,29 @@ class TestInstallerMacOs(unittest.TestCase):
             "/usr/local/Cellar/flac/1.3.3 (53 files, 2.4MB) * \n" \
 
         with self.assertRaises(IndexError):
-            self.__macos.need_update_package("Bonjour", "aaaa")
+            self.__macos._need_update_package("Bonjour", "aaaa")
 
         with self.assertRaises(IndexError):
-            self.__macos.need_update_package(y, "aaaa")
+            self.__macos._need_update_package(y, "aaaa")
 
-        self.assertTrue(self.__macos.need_update_package(x, ">;4.6"))
-        self.assertFalse(self.__macos.need_update_package(x, ">;4.0"))
+        self.assertTrue(self.__macos._need_update_package(x, ">;4.6"))
+        self.assertFalse(self.__macos._need_update_package(x, ">;4.0"))
 
-        self.assertTrue(self.__macos.need_update_package(y, ">;1.4"))
-        self.assertFalse(self.__macos.need_update_package(y, ">;1.0"))
-
-        with self.assertRaises(ValueError):
-            self.assertTrue(self.__macos.need_update_package(x, "<;4.2"))
+        self.assertTrue(self.__macos._need_update_package(y, ">;1.4"))
+        self.assertFalse(self.__macos._need_update_package(y, ">;1.0"))
 
         with self.assertRaises(ValueError):
-            self.assertTrue(self.__macos.need_update_package(y, "=;1.2"))
+            self.assertTrue(self.__macos._need_update_package(x, "<;4.2"))
+
+        with self.assertRaises(ValueError):
+            self.assertTrue(self.__macos._need_update_package(y, "=;1.2"))
 
     # ---------------------------------------------------------------------------
 
     def test_update_package(self):
         """Update package."""
-        self.assertFalse(self.__macos.update_package("wxpythonnnn"))
-        self.assertFalse(self.__macos.update_package(4))
+        self.assertFalse(self.__macos._update_package("wxpythonnnn"))
+        self.assertFalse(self.__macos._update_package(4))
 
     # ---------------------------------------------------------------------------
 

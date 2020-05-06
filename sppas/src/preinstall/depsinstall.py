@@ -147,12 +147,6 @@ class sppasInstallerDeps(object):
 
     # ------------------------------------------------------------------------
 
-    def get_cfg_exist(self):
-        """Return True if the config_file exist."""
-        return self.__installer.cfg_file_exists()
-
-    # ------------------------------------------------------------------------
-
     def get_enable(self, feat_id):
         """Return True if the feature is enabled.
 
