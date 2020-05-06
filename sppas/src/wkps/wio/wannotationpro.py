@@ -151,9 +151,9 @@ class sppasWANT(sppasBaseWkpIO):
         root.set("xmlns", "http://tempuri.org/WorkspaceDataSet.xsd")
         uri = "{http://tempuri.org/WorkspaceDataSet.xsd}"
 
-        tree = ET.SubElement(root, "workspaceItem")
+        child = ET.SubElement(root, "workspaceItem")
 
-        self._serialize(tree, uri)
+        self._serialize(child, uri)
 
         sppasWANT.indent(root)
         tree = ET.ElementTree(root)
@@ -175,24 +175,31 @@ class sppasWANT(sppasBaseWkpIO):
         for fp in self.get_all_files():
             sub = fp.subjoined
 
+        # Id
         child_id = ET.SubElement(root, "Id")
         child_id.text = self._id
 
+        # IdGroup
         child_id_group = ET.SubElement(root, "IdGroup")
         child_id_group.text = sub[uri + "IdGroup"]
 
+        # Name
         child_name = ET.SubElement(root, "Name")
         child_name.text = sub[uri + "Name"]
 
+        # OpenCount
         child_open_count = ET.SubElement(root, "OpenCount")
         child_open_count.text = sub[uri + "OpenCount"]
 
+        # EditCount
         child_edit_count = ET.SubElement(root, "EditCount")
         child_edit_count.text = sub[uri + "EditCount"]
 
+        # ListenCount
         child_listen_count = ET.SubElement(root, "ListenCount")
         child_listen_count.text = sub[uri + "ListenCount"]
 
+        # Accepted
         child_accepted = ET.SubElement(root, "Accepted")
         child_accepted.text = sub[uri + "Accepted"]
 
@@ -205,13 +212,14 @@ class sppasWANT(sppasBaseWkpIO):
 
         :param tree: (ElementTree) tree to parse
         :param uri: (str)
-        :returns: the id of the workspace
+        :returns: (FilePath)
 
         """
         identifier = tree.find(uri + "Id")
         if identifier is None:
             raise KeyError("Workspace id is missing of the tree to parse")
         try:
+            # the id contained in the tree is the id of the workspace
             idw = FileBase.validate_id(identifier.text)
             self._id = idw
         except ValueError:
@@ -220,15 +228,18 @@ class sppasWANT(sppasBaseWkpIO):
 
         sub = dict()
 
+        # the name of the .ant file is used for the filepath
         name = tree.find(uri + "Name")
         fp = FilePath(os.path.dirname(name.text))
 
+        # parsing the tree
         id_group = tree.find(uri + "IdGroup")
         open_count = tree.find(uri + "OpenCount")
         edit_count = tree.find(uri + "EditCount")
         listen_count = tree.find(uri + "ListenCount")
         accepted = tree.find(uri + "Accepted")
 
+        # adding the information contained in the tree in a dictionary
         sub[name.tag] = name.text
         sub[id_group.tag] = id_group.text
         sub[open_count.tag] = open_count.text
@@ -238,4 +249,6 @@ class sppasWANT(sppasBaseWkpIO):
 
         fp.subjoined = sub
         self.add(fp)
+
+        return fp
 
