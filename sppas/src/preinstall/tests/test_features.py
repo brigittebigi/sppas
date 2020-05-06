@@ -36,7 +36,6 @@
 import unittest
 from sppas.src.preinstall.features import Features, Feature
 
-
 # ---------------------------------------------------------------------------
 
 
@@ -59,21 +58,17 @@ class TestFeatures(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_get_ids(self):
-        """Return the list of feature identifiers."""
+        # Return the list of feature identifiers.
         y = self.__features.get_ids()
         self.assertEqual(y, ["wxpython", "brew", "julius"])
 
     # ---------------------------------------------------------------------------
 
     def test_enable(self):
-        """Return True if the feature is enabled and/or set it."""
-        if self.__features.get_cfg_exist() is False:
-            y = self.__features.enable("wxpython")
-            self.assertEqual(y, False)
-        else:
-            self.__features.enable("wxpython", False)
-            y = self.__features.enable("wxpython")
-            self.assertEqual(y, False)
+        # Return True if the feature is enabled and/or set it.
+        self.__features.enable("wxpython", False)
+        y = self.__features.enable("wxpython")
+        self.assertEqual(y, False)
 
         self.__features.enable("wxpython", True)
         y = self.__features.enable("wxpython")
@@ -95,13 +90,13 @@ class TestFeatures(unittest.TestCase):
     def test_description(self):
         """Return the description of the feature"""
         y = self.__features.description("wxpython")
-        self.assertEqual(y, "Graphic Interface")
+        self.assertGreater(len(y), 0)
 
         y = self.__features.description("brew")
-        self.assertEqual(y, "Package manager MacOs")
+        self.assertGreater(len(y), 0)
 
         y = self.__features.description("julius")
-        self.assertEqual(y, "Automatic alignment")
+        self.assertGreater(len(y), 0)
 
     # ---------------------------------------------------------------------------
 
@@ -140,22 +135,19 @@ class TestFeatures(unittest.TestCase):
 
     def test_init_features(self):
         """Return a parsed version of your features.ini file."""
-        y = self.__features.init_features()
+        y = self.__features._Features__init_features()
 
         self.assertEqual(y.sections(), ["wxpython", "brew", "julius"])
         self.assertEqual(len(y.sections()), 3)
 
-        self.assertEqual(y.get("wxpython", "desc"), "Graphic Interface")
         self.assertEqual(y.get("wxpython", "req_win"), "nil")
         self.assertEqual(y.get("wxpython", "req_pip"), "wxpython:>;4.0")
         self.assertEqual(y.get("wxpython", "cmd_win"), "nil")
 
-        self.assertEqual(y.get("brew", "desc"), "Package manager MacOs")
         self.assertEqual(y.get("brew", "req_win"), "nil")
         self.assertEqual(y.get("brew", "req_pip"), "nil")
         self.assertEqual(y.get("brew", "cmd_win"), "none")
 
-        self.assertEqual(y.get("julius", "desc"), "Automatic alignment")
         self.assertEqual(y.get("julius", "req_win"), "nil")
         self.assertEqual(y.get("julius", "req_pip"), "nil")
         self.assertEqual(y.get("julius", "cmd_win"), "none")
@@ -171,19 +163,16 @@ class TestFeatures(unittest.TestCase):
         y = self.__features.get_ids()
 
         self.assertEqual(y[0], "wxpython")
-        self.assertEqual(self.__features.description(y[0]), "Graphic Interface")
         self.assertEqual(self.__features.packages(y[0]), {'nil': '1'})
         self.assertEqual(self.__features.pypi(y[0]), {'wxpython': '>;4.0'})
         self.assertEqual(self.__features.cmd(y[0]), "nil")
 
         self.assertEqual(y[1], "brew")
-        self.assertEqual(self.__features.description(y[1]), "Package manager MacOs")
         self.assertEqual(self.__features.packages(y[1]), {'nil': '1'})
         self.assertEqual(self.__features.pypi(y[1]), {'nil': '1'})
         self.assertEqual(self.__features.cmd(y[1]), "none")
 
         self.assertEqual(y[2], "julius")
-        self.assertEqual(self.__features.description(y[2]), "Automatic alignment")
         self.assertEqual(self.__features.packages(y[2]), {'nil': '1'})
         self.assertEqual(self.__features.pypi(y[2]), {'nil': '1'})
         self.assertEqual(self.__features.cmd(y[2]), "none")
@@ -240,23 +229,4 @@ class TestFeatures(unittest.TestCase):
 
         y = self.__features.__contains__("julius")
         self.assertTrue(y)
-
-    # ---------------------------------------------------------------------------
-
-
-test = TestFeatures()
-test.setUp()
-test.test_get_features_filename()
-test.test_get_ids()
-test.test_enable()
-test.test_available()
-test.test_description()
-test.test_packages()
-test.test_pypi()
-test.test_cmd()
-test.test_init_features()
-test.test_set_features()
-test.test_parse_depend()
-test.test__len__()
-test.test__contains__()
 

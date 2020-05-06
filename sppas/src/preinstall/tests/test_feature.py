@@ -32,6 +32,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import unittest
 
 from sppas.src.preinstall.feature import Feature
@@ -42,9 +43,6 @@ from sppas.src.preinstall.feature import Feature
 class TestFeature(unittest.TestCase):
 
     def setUp(self):
-        """Initialisation des tests.
-
-        """
         self.__feature = Feature("feature")
 
     # ---------------------------------------------------------------------------
@@ -249,15 +247,4 @@ class TestFeature(unittest.TestCase):
         y = self.__feature.get_cmd()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "4")
-
-
-test = TestFeature()
-test.setUp()
-test.test_get_id()
-test.test_get_set_enable()
-test.test_get_set_available()
-test.test_get_set_desc()
-test.test_get_set_packages()
-test.test_get_set_pypi()
-test.test_get_set_cmd()
 

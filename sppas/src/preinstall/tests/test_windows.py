@@ -65,7 +65,7 @@ class TestInstallerWin(unittest.TestCase):
 
         """
         with self.assertRaises(NotImplementedError):
-            self.__windows.install_package("aaaa")
+            self.__windows._install_package("aaaa")
 
     # ---------------------------------------------------------------------------
 
@@ -73,7 +73,7 @@ class TestInstallerWin(unittest.TestCase):
         """Test if the method version_package from the class Windows works well.
 
         """
-        self.assertTrue(self.__windows.version_package("aaaa", "aaaa"))
+        self.assertTrue(self.__windows._version_package("aaaa", "aaaa"))
 
     # ---------------------------------------------------------------------------
 
@@ -82,7 +82,7 @@ class TestInstallerWin(unittest.TestCase):
 
         """
         with self.assertRaises(NotImplementedError):
-            self.__windows.need_update_package("aaaa", "aaaa")
+            self.__windows._need_update_package("aaaa", "aaaa")
 
     # ---------------------------------------------------------------------------
 
@@ -91,7 +91,7 @@ class TestInstallerWin(unittest.TestCase):
 
         """
         with self.assertRaises(NotImplementedError):
-            self.__windows.update_package("aaaa")
+            self.__windows._update_package("aaaa")
 
     # ---------------------------------------------------------------------------
 

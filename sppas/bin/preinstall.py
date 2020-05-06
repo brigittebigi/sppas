@@ -210,7 +210,7 @@ if __name__ == "__main__":
         # of the Installer so the modification of the enable
         # with -a etc... will modify the Features object
         # and then the config file.
-        if installer.get_cfg_exist() is False:
+        if cfg.cfg_file_exist() is False:
             for feat_id in feats_ids:
                 installer.set_enable(feat_id)
         installer.install()
