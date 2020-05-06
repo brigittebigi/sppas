@@ -149,8 +149,11 @@ class sppasWANT(sppasBaseWkpIO):
         """
         root = ET.Element("WorkspaceDataSet")
         root.set("xmlns", "http://tempuri.org/WorkspaceDataSet.xsd")
+        uri = "{http://tempuri.org/WorkspaceDataSet.xsd}"
 
-        self._serialize(root)
+        tree = ET.SubElement(root, "workspaceItem")
+
+        self._serialize(tree, uri)
 
         sppasWANT.indent(root)
         tree = ET.ElementTree(root)
@@ -161,25 +164,47 @@ class sppasWANT(sppasBaseWkpIO):
 
     # -------------------------------------------------------------------------
 
-    def _serialize(self, root):
+    def _serialize(self, root, uri=""):
         """Convert this sppasWANT instance into a serializable structure.
 
         :param root: (ET.Element) root of the tree in which we want to serialize
+        :param uri: (str)
         :returns: (tree) a tree that can be serialized
 
         """
-        tree = ET.SubElement(root, "workspaceItem")
         for fp in self.get_all_files():
-            for elem in fp.subjoined:
-                ET.SubElement(tree, ET.Element())
-        return tree
+            sub = fp.subjoined
+
+        child_id = ET.SubElement(root, "Id")
+        child_id.text = self._id
+
+        child_id_group = ET.SubElement(root, "IdGroup")
+        child_id_group.text = sub[uri + "IdGroup"]
+
+        child_name = ET.SubElement(root, "Name")
+        child_name.text = sub[uri + "Name"]
+
+        child_open_count = ET.SubElement(root, "OpenCount")
+        child_open_count.text = sub[uri + "OpenCount"]
+
+        child_edit_count = ET.SubElement(root, "EditCount")
+        child_edit_count.text = sub[uri + "EditCount"]
+
+        child_listen_count = ET.SubElement(root, "ListenCount")
+        child_listen_count.text = sub[uri + "ListenCount"]
+
+        child_accepted = ET.SubElement(root, "Accepted")
+        child_accepted.text = sub[uri + "Accepted"]
+
+        return root
 
     # -------------------------------------------------------------------------
 
     def _parse(self, tree, uri=""):
-        """Fill the data of a sppasWANT reader with a dictionary.
+        """Fill the data of a sppasWANT reader with a tree.
 
-        :param tree: (tree)
+        :param tree: (ElementTree) tree to parse
+        :param uri: (str)
         :returns: the id of the workspace
 
         """
@@ -193,9 +218,10 @@ class sppasWANT(sppasBaseWkpIO):
             # we keep our current 'id'
             pass
 
+        sub = dict()
+
         name = tree.find(uri + "Name")
         fp = FilePath(os.path.dirname(name.text))
-        sub = dict()
 
         id_group = tree.find(uri + "IdGroup")
         open_count = tree.find(uri + "OpenCount")
@@ -203,9 +229,11 @@ class sppasWANT(sppasBaseWkpIO):
         listen_count = tree.find(uri + "ListenCount")
         accepted = tree.find(uri + "Accepted")
 
+        sub[name.tag] = name.text
         sub[id_group.tag] = id_group.text
         sub[open_count.tag] = open_count.text
-        sub[edit_count.tag] = listen_count.text
+        sub[edit_count.tag] = edit_count.text
+        sub[listen_count.tag] = listen_count.text
         sub[accepted.tag] = accepted.text
 
         fp.subjoined = sub
