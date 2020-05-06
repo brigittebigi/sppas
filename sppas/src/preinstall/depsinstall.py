@@ -38,7 +38,7 @@ import sys
 import os
 import logging
 
-from .installer import Deb, Dnf, Rpm, Windows, MacOs
+from .installer import Deb, Dnf, Rpm, WindowsInstaller, MacOs
 
 # ---------------------------------------------------------------------------
 
@@ -55,7 +55,7 @@ class sppasInstallerDeps(object):
     sppasInstallerDeps is a wrapper of Installer Object.
     It only allows :
     - to launch the installation process,
-    - to get informations, which are important for the users,
+    - to get information, which are important for the users,
     about the pre-installation.
     - to configure parameters to get a personalized installation.
 
@@ -82,7 +82,7 @@ class sppasInstallerDeps(object):
             "fedora": Dnf,
             "suse": Rpm
         },
-        "win32": Windows,
+        "win32": WindowsInstaller,
         "darwin": MacOs
     }
 

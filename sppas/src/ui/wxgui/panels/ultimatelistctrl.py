@@ -14,7 +14,7 @@
 # 4)  Scrolling items as headers and footers;
 # 5)  Alpha channel for text/background of items;
 # 6)  Custom renderers for headers/footers (done);
-# 7)  Fading in and out on mouse motion (a la Windows Vista Aero);
+# 7)  Fading in and out on mouse motion (a la WindowsInstaller Vista Aero);
 # 8)  Sub-text for headers/footers (grey text below the header/footer text);
 # 9)  Fixing the columns to the left or right side of the control layout;
 # 10) Skins for header and scrollbars (implemented for headers/footers).
@@ -71,7 +71,7 @@ Appearance
 * Column footers are fully customizable in terms of icons, colour, font, alignment etc...;
 * Column footers can have their own checkbox/radiobutton;
 * Ability to hide/show columns;
-* Default selection style, gradient (horizontal/vertical) selection style and Windows
+* Default selection style, gradient (horizontal/vertical) selection style and WindowsInstaller
   Vista selection style.
 
 
@@ -163,7 +163,7 @@ Window Styles                    Hex Value   Description
 ``ULC_SHOW_TOOLTIPS``              0x2000000 Show tooltips for ellipsized items/subitems (text too long to be shown in the available space) containing the full item/subitem text.
 ``ULC_HOT_TRACKING``               0x4000000 Enable hot tracking of items on mouse motion.
 ``ULC_BORDER_SELECT``              0x8000000 Changes border colour whan an item is selected, instead of highlighting the item.
-``ULC_TRACK_SELECT``              0x10000000 Enables hot-track selection in a list control. Hot track selection means that an item is automatically selected when the cursor remains over the item for a certain period of time. The delay is retrieved on Windows using the `win32api` call `win32gui.SystemParametersInfo(win32con.SPI_GETMOUSEHOVERTIME)`, and is defaulted to 400ms on other platforms. This style applies to all views of `UltimateListCtrl`.
+``ULC_TRACK_SELECT``              0x10000000 Enables hot-track selection in a list control. Hot track selection means that an item is automatically selected when the cursor remains over the item for a certain period of time. The delay is retrieved on WindowsInstaller using the `win32api` call `win32gui.SystemParametersInfo(win32con.SPI_GETMOUSEHOVERTIME)`, and is defaulted to 400ms on other platforms. This style applies to all views of `UltimateListCtrl`.
 ``ULC_HEADER_IN_ALL_VIEWS``       0x20000000 Show column headers in all view modes.
 ``ULC_NO_FULL_ROW_SELECT``        0x40000000 When an item is selected, the only the item in the first column is highlighted.
 ``ULC_FOOTER``                    0x80000000 Show a footer too (only when header is present).
@@ -217,7 +217,7 @@ Supported Platforms
 ===================
 
 UltimateListCtrl has been tested on the following platforms:
-  * Windows (Windows XP);
+  * WindowsInstaller (WindowsInstaller XP);
 
 
 License And Version
@@ -286,7 +286,7 @@ ULC_HOT_TRACKING        = 0x4000000    # enable hot tracking on mouse motion
 ULC_BORDER_SELECT       = 0x8000000    # changes border colour whan an item is selected, instead of highlighting the item
 ULC_TRACK_SELECT        = 0x10000000   # Enables hot-track selection in a list control. Hot track selection means that an item
                                        # is automatically selected when the cursor remains over the item for a certain period
-                                       # of time. The delay is retrieved on Windows using the win32api call
+                                       # of time. The delay is retrieved on WindowsInstaller using the win32api call
                                        # win32gui.SystemParametersInfo(win32con.SPI_GETMOUSEHOVERTIME), and is defaulted to 400ms
                                        # on other platforms. This style applies to all styles of UltimateListCtrl. 
 ULC_HEADER_IN_ALL_VIEWS = 0x20000000   # Show column headers in all view modes
@@ -527,7 +527,7 @@ MARGIN_BETWEEN_TEXT_AND_ICON = 2
 _StyleTile = 0
 _StyleStretch = 1
 
-# Windows Vista Colours
+# WindowsInstaller Vista Colours
 _rgbSelectOuter = wx.Colour(170, 200, 245)
 _rgbSelectInner = wx.Colour(230, 250, 250)
 _rgbSelectTop = wx.Colour(210, 240, 250)
@@ -729,7 +729,7 @@ class PyImageList(object):
 
         index = len(self._images)
         
-        # Mimic behavior of Windows ImageList_Add that automatically breaks up the added
+        # Mimic behavior of WindowsInstaller ImageList_Add that automatically breaks up the added
         # bitmap into sub-images of the correct size
 
         if self._style & IL_FIXED_SIZE:
@@ -4837,7 +4837,7 @@ class UltimateListLineData(object):
 
     def DrawVistaRectangle(self, dc, rect, hasfocus):
         """
-        Draws the selected item(s) with the Windows Vista style.
+        Draws the selected item(s) with the WindowsInstaller Vista style.
 
         :param `dc`: an instance of :class:`DC`;
         :param `rect`: the rectangle to be filled with the gradient shading;
@@ -5986,7 +5986,7 @@ class UltimateListMainWindow(wx.PyScrolledWindow):
          ``ULC_SHOW_TOOLTIPS``              0x2000000 Show tooltips for ellipsized items/subitems (text too long to be shown in the available space) containing the full item/subitem text.
          ``ULC_HOT_TRACKING``               0x4000000 Enable hot tracking of items on mouse motion.
          ``ULC_BORDER_SELECT``              0x8000000 Changes border colour whan an item is selected, instead of highlighting the item.
-         ``ULC_TRACK_SELECT``              0x10000000 Enables hot-track selection in a list control. Hot track selection means that an item is automatically selected when the cursor remains over the item for a certain period of time. The delay is retrieved on Windows using the `win32api` call `win32gui.SystemParametersInfo(win32con.SPI_GETMOUSEHOVERTIME)`, and is defaulted to 400ms on other platforms. This style applies to all views of `UltimateListCtrl`.
+         ``ULC_TRACK_SELECT``              0x10000000 Enables hot-track selection in a list control. Hot track selection means that an item is automatically selected when the cursor remains over the item for a certain period of time. The delay is retrieved on WindowsInstaller using the `win32api` call `win32gui.SystemParametersInfo(win32con.SPI_GETMOUSEHOVERTIME)`, and is defaulted to 400ms on other platforms. This style applies to all views of `UltimateListCtrl`.
          ``ULC_HEADER_IN_ALL_VIEWS``       0x20000000 Show column headers in all view modes.
          ``ULC_NO_FULL_ROW_SELECT``        0x40000000 When an item is selected, the only the item in the first column is highlighted.
          ``ULC_FOOTER``                    0x80000000 Show a footer too (only when header is present).
@@ -6468,7 +6468,7 @@ class UltimateListMainWindow(wx.PyScrolledWindow):
 
         # We're showing the vertical scrollbar -> allow for scrollbar width
         # NOTE: on GTK, the scrollbar is included in the client size, but on
-        # Windows it is not included
+        # WindowsInstaller it is not included
         listWidth = self.GetClientSize().width
         if wx.Platform != '__WXMSW__':
             if self.GetItemCount() > self.GetCountPerPage():
@@ -7053,7 +7053,7 @@ class UltimateListMainWindow(wx.PyScrolledWindow):
         """
 
         # Note: a wxPaintDC must be constructed even if no drawing is
-        # done (a Windows requirement).
+        # done (a WindowsInstaller requirement).
         dc = wx.BufferedPaintDC(self)
         
         dc.SetBackgroundMode(wx.TRANSPARENT)
@@ -10676,7 +10676,7 @@ class UltimateListMainWindow(wx.PyScrolledWindow):
 
     def EnableSelectionVista(self, enable=True):
         """
-        Globally enables/disables drawing of Windows Vista selections.
+        Globally enables/disables drawing of WindowsInstaller Vista selections.
 
         :param `enable`: ``True`` to enable Vista-style selections, ``False`` to
          disable it.
@@ -10850,7 +10850,7 @@ class UltimateListCtrl(wx.PyControl):
          ``ULC_SHOW_TOOLTIPS``              0x2000000 Show tooltips for ellipsized items/subitems (text too long to be shown in the available space) containing the full item/subitem text.
          ``ULC_HOT_TRACKING``               0x4000000 Enable hot tracking of items on mouse motion.
          ``ULC_BORDER_SELECT``              0x8000000 Changes border colour whan an item is selected, instead of highlighting the item.
-         ``ULC_TRACK_SELECT``              0x10000000 Enables hot-track selection in a list control. Hot track selection means that an item is automatically selected when the cursor remains over the item for a certain period of time. The delay is retrieved on Windows using the `win32api` call `win32gui.SystemParametersInfo(win32con.SPI_GETMOUSEHOVERTIME)`, and is defaulted to 400ms on other platforms. This style applies to all views of `UltimateListCtrl`.
+         ``ULC_TRACK_SELECT``              0x10000000 Enables hot-track selection in a list control. Hot track selection means that an item is automatically selected when the cursor remains over the item for a certain period of time. The delay is retrieved on WindowsInstaller using the `win32api` call `win32gui.SystemParametersInfo(win32con.SPI_GETMOUSEHOVERTIME)`, and is defaulted to 400ms on other platforms. This style applies to all views of `UltimateListCtrl`.
          ``ULC_HEADER_IN_ALL_VIEWS``       0x20000000 Show column headers in all view modes.
          ``ULC_NO_FULL_ROW_SELECT``        0x40000000 When an item is selected, the only the item in the first column is highlighted.
          ``ULC_FOOTER``                    0x80000000 Show a footer too (only when header is present).
@@ -11047,7 +11047,7 @@ class UltimateListCtrl(wx.PyControl):
          ``ULC_SHOW_TOOLTIPS``              0x2000000 Show tooltips for ellipsized items/subitems (text too long to be shown in the available space) containing the full item/subitem text.
          ``ULC_HOT_TRACKING``               0x4000000 Enable hot tracking of items on mouse motion.
          ``ULC_BORDER_SELECT``              0x8000000 Changes border colour whan an item is selected, instead of highlighting the item.
-         ``ULC_TRACK_SELECT``              0x10000000 Enables hot-track selection in a list control. Hot track selection means that an item is automatically selected when the cursor remains over the item for a certain period of time. The delay is retrieved on Windows using the `win32api` call `win32gui.SystemParametersInfo(win32con.SPI_GETMOUSEHOVERTIME)`, and is defaulted to 400ms on other platforms. This style applies to all views of `UltimateListCtrl`.
+         ``ULC_TRACK_SELECT``              0x10000000 Enables hot-track selection in a list control. Hot track selection means that an item is automatically selected when the cursor remains over the item for a certain period of time. The delay is retrieved on WindowsInstaller using the `win32api` call `win32gui.SystemParametersInfo(win32con.SPI_GETMOUSEHOVERTIME)`, and is defaulted to 400ms on other platforms. This style applies to all views of `UltimateListCtrl`.
          ``ULC_HEADER_IN_ALL_VIEWS``       0x20000000 Show column headers in all view modes.
          ``ULC_NO_FULL_ROW_SELECT``        0x40000000 When an item is selected, the only the item in the first column is highlighted.
          ``ULC_FOOTER``                    0x80000000 Show a footer too (only when header is present).
@@ -11134,7 +11134,7 @@ class UltimateListCtrl(wx.PyControl):
          ``ULC_SHOW_TOOLTIPS``              0x2000000 Show tooltips for ellipsized items/subitems (text too long to be shown in the available space) containing the full item/subitem text.
          ``ULC_HOT_TRACKING``               0x4000000 Enable hot tracking of items on mouse motion.
          ``ULC_BORDER_SELECT``              0x8000000 Changes border colour whan an item is selected, instead of highlighting the item.
-         ``ULC_TRACK_SELECT``              0x10000000 Enables hot-track selection in a list control. Hot track selection means that an item is automatically selected when the cursor remains over the item for a certain period of time. The delay is retrieved on Windows using the `win32api` call `win32gui.SystemParametersInfo(win32con.SPI_GETMOUSEHOVERTIME)`, and is defaulted to 400ms on other platforms. This style applies to all views of `UltimateListCtrl`.
+         ``ULC_TRACK_SELECT``              0x10000000 Enables hot-track selection in a list control. Hot track selection means that an item is automatically selected when the cursor remains over the item for a certain period of time. The delay is retrieved on WindowsInstaller using the `win32api` call `win32gui.SystemParametersInfo(win32con.SPI_GETMOUSEHOVERTIME)`, and is defaulted to 400ms on other platforms. This style applies to all views of `UltimateListCtrl`.
          ``ULC_HEADER_IN_ALL_VIEWS``       0x20000000 Show column headers in all view modes.
          ``ULC_NO_FULL_ROW_SELECT``        0x40000000 When an item is selected, the only the item in the first column is highlighted.
          ``ULC_FOOTER``                    0x80000000 Show a footer too (only when header is present).
@@ -11264,7 +11264,7 @@ class UltimateListCtrl(wx.PyControl):
         items in the list control (icon or small icon view).
         """
 
-        return self._mainWin.GetCountPerPage()  # different from Windows ?
+        return self._mainWin.GetCountPerPage()  # different from WindowsInstaller ?
 
 
     def GetItem(self, itemOrId, col=0):
@@ -12320,7 +12320,7 @@ class UltimateListCtrl(wx.PyControl):
          :class:`NullColour` to reset to the default colour.
 
         :note: The background colour is usually painted by the default :class:`EraseEvent`
-         event handler function under Windows and automatically under GTK.
+         event handler function under WindowsInstaller and automatically under GTK.
 
         :note: Setting the background colour does not cause an immediate refresh, so
          you may wish to call :meth:`Window.ClearBackground` or :meth:`Window.Refresh` after
@@ -13195,7 +13195,7 @@ class UltimateListCtrl(wx.PyControl):
 
     def EnableSelectionVista(self, enable=True):
         """
-        Globally enables/disables drawing of Windows Vista selections.
+        Globally enables/disables drawing of WindowsInstaller Vista selections.
 
         :param `enable`: ``True`` to enable Vista-style selections, ``False`` to
          disable it.

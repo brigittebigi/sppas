@@ -48,7 +48,7 @@ Supported Platforms
 ===================
 
 KnobCtrl has been tested on the following platforms:
-  * Windows (Windows XP);
+  * WindowsInstaller (WindowsInstaller XP);
   * Linux Ubuntu (Dapper 6.06)
 
 

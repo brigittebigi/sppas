@@ -42,16 +42,13 @@ from sppas.src.preinstall.features import Features, Feature
 class TestFeatures(unittest.TestCase):
 
     def setUp(self):
-        """Initialisation des tests.
-
-        """
         self.__features = Features("req_win", "cmd_win")
         self.__feature = Feature("feature")
 
     # ---------------------------------------------------------------------------
 
     def test_get_features_filename(self):
-        """Return the name of the file with the features descriptions."""
+        # Return the name of the file with the features descriptions.
         y = self.__features.get_features_filename()
         self.assertIn("features.ini", y)
 
@@ -77,7 +74,7 @@ class TestFeatures(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_available(self):
-        """Return True if the feature is available and/or set it."""
+        # Return True if the feature is available and/or set it.
         y = self.__features.available("wxpython")
         self.assertEqual(y, True)
 
@@ -88,7 +85,7 @@ class TestFeatures(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_description(self):
-        """Return the description of the feature"""
+        # Return the description of the feature
         y = self.__features.description("wxpython")
         self.assertGreater(len(y), 0)
 
@@ -102,7 +99,7 @@ class TestFeatures(unittest.TestCase):
 
     def test_packages(self):
         """Return the dictionary of system dependencies of the feature."""
-        # For Windows
+        # For WindowsInstaller
         y = self.__features.packages("wxpython")
         self.assertEqual(y, {'nil': '1'})
 
@@ -112,7 +109,7 @@ class TestFeatures(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_pypi(self):
-        # For Windows
+        # For WindowsInstaller
         """Return the dictionary of pip dependencies of the feature."""
         y = self.__features.pypi("wxpython")
         self.assertEqual(y, {'wxpython': '>;4.0'})
@@ -123,7 +120,7 @@ class TestFeatures(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_cmd(self):
-        # For Windows
+        # For WindowsInstaller
         """Return the command to execute for the feature."""
         y = self.__features.cmd("wxpython")
         self.assertEqual(y, "nil")
@@ -134,7 +131,7 @@ class TestFeatures(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_init_features(self):
-        """Return a parsed version of your features.ini file."""
+        # Return a parsed version of the features.ini file.
         y = self.__features._Features__init_features()
 
         self.assertEqual(y.sections(), ["wxpython", "brew", "julius"])
@@ -155,7 +152,7 @@ class TestFeatures(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_set_features(self):
-        """Browses the features.ini file and instantiate a Feature()."""
+        # Browses the features.ini file and instantiate a Feature().
         self.setUp()
 
         self.__features.set_features()
@@ -180,7 +177,7 @@ class TestFeatures(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_parse_depend(self):
-        """Create a dictionary from the string given as an argument."""
+        # Create a dictionary from the string given as an argument.
         def parse(string_require):
             string_require = str(string_require)
             dependencies = string_require.split(" ")
@@ -213,14 +210,14 @@ class TestFeatures(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test__len__(self):
-        """Return the number of features."""
+        # Return the number of features.
         y = self.__features.__len__()
         self.assertEqual(y, 3)
 
     # ---------------------------------------------------------------------------
 
     def test__contains__(self):
-        """Return the number of features."""
+        # Return the number of features.
         y = self.__features.__contains__("wxpython")
         self.assertTrue(y)
 

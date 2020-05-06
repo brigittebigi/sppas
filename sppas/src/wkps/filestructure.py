@@ -93,6 +93,9 @@ class FileName(FileBase):
         self.__filesize = 0
         self.update_properties()
 
+        # a free to use member to expend the class
+        self.subjoined = None
+
     # -----------------------------------------------------------------------
 
     def folder(self):

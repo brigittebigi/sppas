@@ -36,7 +36,7 @@
 import unittest
 
 from sppas.src.ui.term.textprogress import ProcessProgressTerminal
-from sppas.src.preinstall.installer import Installer, Windows
+from sppas.src.preinstall.installer import Installer
 from sppas.src.preinstall.feature import Feature
 
 # ---------------------------------------------------------------------------
@@ -255,8 +255,8 @@ class TestInstaller(unittest.TestCase):
 
     def test_install_packages(self):
         """Manage installation of system packages."""
-        self.__installer._Installer____set_errors("")
-        self.__installer._Installer____set_errors("An error")
+        self.__installer._Installer__set_errors("")
+        self.__installer._Installer__set_errors("An error")
 
         with self.assertRaises(NotImplementedError):
             self.__installer._Installer__install_packages(4)

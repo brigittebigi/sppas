@@ -50,7 +50,7 @@ class TestProcess(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_run_popen_out_error(self):
-        """Test if the method run_popen, out and error from the class Windows works well.
+        """Test if the method run_popen, out and error from the class WindowsInstaller works well.
 
         """
         self.__process.run_popen("pip show wxpython")

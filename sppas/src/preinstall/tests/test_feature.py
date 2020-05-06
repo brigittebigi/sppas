@@ -47,6 +47,19 @@ class TestFeature(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
+    def test_init(self):
+        f = Feature("identifier")
+        self.assertEqual(f.get_id(), "identifier")
+
+        # Invalid identifiers: a GUID is set instead
+        f = Feature("x")
+        self.assertNotEqual(f.get_id(), "x")
+        self.assertEqual(len(f.get_id()), 36)
+        f = Feature("è bè...")
+        self.assertEqual(len(f.get_id()), 36)
+
+    # ---------------------------------------------------------------------------
+
     def test_get_id(self):
         """Return the id of feature."""
         y = self.__feature.get_id()
