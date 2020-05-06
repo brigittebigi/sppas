@@ -171,7 +171,7 @@ class sppasWANT(sppasBaseWkpIO):
         tree = ET.SubElement(root, "workspaceItem")
         for fp in self.get_all_files():
             for elem in fp.subjoined:
-                ET.SubElement(tree, elem)
+                ET.SubElement(tree, ET.Element())
         return tree
 
     # -------------------------------------------------------------------------
@@ -179,11 +179,10 @@ class sppasWANT(sppasBaseWkpIO):
     def _parse(self, tree, uri=""):
         """Fill the data of a sppasWANT reader with a dictionary.
 
-        :param tree: (dict)
+        :param tree: (tree)
         :returns: the id of the workspace
 
         """
-
         identifier = tree.find(uri + "Id")
         if identifier is None:
             raise KeyError("Workspace id is missing of the tree to parse")
@@ -195,7 +194,7 @@ class sppasWANT(sppasBaseWkpIO):
             pass
 
         name = tree.find(uri + "Name")
-        fp = FilePath(name.text)
+        fp = FilePath(os.path.dirname(name.text))
         sub = dict()
 
         id_group = tree.find(uri + "IdGroup")
@@ -211,14 +210,4 @@ class sppasWANT(sppasBaseWkpIO):
 
         fp.subjoined = sub
         self.add(fp)
-        return fp
-
-    # -------------------------------------------------------------------------
-
-
-
-
-
-
-
 
