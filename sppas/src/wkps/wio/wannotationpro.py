@@ -34,8 +34,20 @@
 
 """
 
+import os
+import xml.etree.cElementTree as ET
 
-class sppasWANT():
+from sppas.src.config import sg
+
+from sppas.src.wkps.filebase import FileBase
+from sppas.src.wkps.filestructure import FilePath, FileRoot
+from sppas.src.wkps.wio.basewkpio import sppasBaseWkpIO
+from sppas.src.wkps.wkpexc import FileOSError
+
+# ----------------------------------------------------------------------------
+
+
+class sppasWANT(sppasBaseWkpIO):
     """Reader and writer to import/export a workspace from/to annotationpro.
 
         :author:       Laurent Vouriot
@@ -45,4 +57,168 @@ class sppasWANT():
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
-    raise NotImplementedError
+    def __init__(self, name=None):
+        """Initialize aa sppasWANT instance.
+
+        :param name: (str) The name of the workspace
+
+        """
+        if name is None:
+            name = self.__class__.__name__
+        super(sppasWANT, self).__init__(name)
+
+        self.default_extension = "antw"
+        self.software = "Annotation Pro"
+
+    # -------------------------------------------------------------------------
+
+    @staticmethod
+    def detect(filename):
+        """Check whether a file is of wjson format or not.
+
+        :param filename: (str) Name of the file to detect
+        :returns: (bool)
+
+        """
+        try:
+            with open(filename, 'r') as f:
+                f.readline()
+                doctype_line = f.readline().strip()
+                f.close()
+        except IOError:
+            return False
+        except UnicodeDecodeError:
+            return False
+
+        return "WorkspaceDataSet" in doctype_line
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def indent(elem, level=0):
+        """Pretty indent of an ElementTree.
+
+        http://effbot.org/zone/element-lib.htm#prettyprint
+
+        """
+        i = "\n" + level * "\t"
+        if len(elem) > 0:
+            if not elem.text or not elem.text.strip():
+                elem.text = i + "\t"
+            if not elem.tail or not elem.tail.strip():
+                if level < 2:
+                    elem.tail = "\n" + i
+                else:
+                    elem.tail = i
+            for elem in elem:
+                sppasWANT.indent(elem, level + 1)
+            if not elem.tail or not elem.tail.strip():
+                elem.tail = i
+        else:
+            if level and (not elem.tail or not elem.tail.strip()):
+                elem.tail = i
+
+    # -------------------------------------------------------------------------
+
+    def read(self, filename):
+        """Read a antw file and fill the sppasWANT.
+
+        :param filename: (str)
+
+        """
+        if os.path.exists(filename) is False:
+            raise FileOSError(filename)
+        try:
+            tree = ET.parse(filename)
+            root = tree.getroot()
+            uri = root.tag[:root.tag.index('}')+1]
+
+            for child in tree.iter(tag=uri + "WorkspaceItem"):
+                return self._parse(child, uri)
+        except Exception:
+            raise
+
+    # -------------------------------------------------------------------------
+
+    def write(self, filename):
+        """Write in the filename.
+
+        :param filename: (str)
+        :returns: xml file
+
+        """
+        root = ET.Element("WorkspaceDataSet")
+        root.set("xmlns", "http://tempuri.org/WorkspaceDataSet.xsd")
+
+        self._serialize(root)
+
+        sppasWANT.indent(root)
+        tree = ET.ElementTree(root)
+        tree.write(filename,
+                   encoding=sg.__encoding__,
+                   xml_declaration=True,
+                   method="xml")
+
+    # -------------------------------------------------------------------------
+
+    def _serialize(self, root):
+        """Convert this sppasWANT instance into a serializable structure.
+
+        :param root: (ET.Element) root of the tree in which we want to serialize
+        :returns: (tree) a tree that can be serialized
+
+        """
+        tree = ET.SubElement(root, "workspaceItem")
+        for fp in self.get_all_files():
+            for elem in fp.subjoined:
+                ET.SubElement(tree, elem)
+        return tree
+
+    # -------------------------------------------------------------------------
+
+    def _parse(self, tree, uri=""):
+        """Fill the data of a sppasWANT reader with a dictionary.
+
+        :param tree: (dict)
+        :returns: the id of the workspace
+
+        """
+
+        identifier = tree.find(uri + "Id")
+        if identifier is None:
+            raise KeyError("Workspace id is missing of the tree to parse")
+        try:
+            idw = FileBase.validate_id(identifier.text)
+            self._id = idw
+        except ValueError:
+            # we keep our current 'id'
+            pass
+
+        name = tree.find(uri + "Name")
+        fp = FilePath(name.text)
+        sub = dict()
+
+        id_group = tree.find(uri + "IdGroup")
+        open_count = tree.find(uri + "OpenCount")
+        edit_count = tree.find(uri + "EditCount")
+        listen_count = tree.find(uri + "ListenCount")
+        accepted = tree.find(uri + "Accepted")
+
+        sub[id_group.tag] = id_group.text
+        sub[open_count.tag] = open_count.text
+        sub[edit_count.tag] = listen_count.text
+        sub[accepted.tag] = accepted.text
+
+        fp.subjoined = sub
+        self.add(fp)
+        return fp
+
+    # -------------------------------------------------------------------------
+
+
+
+
+
+
+
+
