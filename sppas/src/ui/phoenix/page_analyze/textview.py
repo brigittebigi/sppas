@@ -139,7 +139,7 @@ class TextViewPanel(sppasBaseViewPanel):
         content = "".join(self._object)
         txtview.SetValue(content)
 
-        # required under Windows
+        # required under WindowsInstaller
         txtview.SetStyle(0, len(content), txtview.GetDefaultStyle())
 
         # Search for the height of the text

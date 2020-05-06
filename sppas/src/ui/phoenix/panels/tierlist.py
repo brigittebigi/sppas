@@ -105,7 +105,7 @@ class sppasTierListCtrl(LineListCtrl):
      - Metadata are serialized.
 
     Known bug of wx:
-    If the ListCtrl is embedded in a page of a notebook, under Windows only,
+    If the ListCtrl is embedded in a page of a notebook, under WindowsInstaller only,
     DeleteItem() returns the following error message:
     listctrl.cpp(2614) in wxListCtrl::MSWOnNotify(): invalid internal data pointer?
     A solution is to use a simplebook, a choicebook, a listbook or a

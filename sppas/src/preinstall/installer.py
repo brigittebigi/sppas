@@ -1,4 +1,3 @@
-# !/usr/bin/env python
 # -*- coding : UTF-8 -*-
 """
     ..
@@ -142,17 +141,20 @@ class Installer(object):
             self.__set_errors("")
             self.__get_set_progress(0)
             self.__pbar.set_header(
-                MESSAGES["beginning_feature"].format(name=self._features.description(feat_id)))
+                MESSAGES["beginning_feature"].format(
+                    name=self._features.description(feat_id)))
 
             if self._features.available(feat_id) is False:
                 self.__pbar.update(
                     self.__get_set_progress(1),
-                    MESSAGES["available_false"].format(name=self._features.description(feat_id)))
+                    MESSAGES["available_false"].format(
+                        name=self._features.description(feat_id)))
 
             elif self._features.enable(feat_id) is False:
                 self.__pbar.update(
                     self.__get_set_progress(1),
-                    MESSAGES["enable_false"].format(name=self._features.description(feat_id)))
+                    MESSAGES["enable_false"].format(
+                        name=self._features.description(feat_id)))
 
             else:
 
@@ -162,18 +164,21 @@ class Installer(object):
                     self.__install_pypis(feat_id)
                     self._features.enable(feat_id, True)
                     self.__pbar.set_header(
-                        MESSAGES["install_success"].format(name=self._features.description(feat_id)))
+                        MESSAGES["install_success"].format(
+                            name=self._features.description(feat_id)))
 
                 except NotImplementedError:
                     self._features.enable(feat_id, False)
                     self.__pbar.set_header(
-                        MESSAGES["install_failed"].format(name=self._features.description(feat_id)))
+                        MESSAGES["install_failed"].format(
+                            name=self._features.description(feat_id)))
 
         self._features.update_config()
         self.__pbar.set_header(MESSAGES["install_finished"])
 
         return self.__total__errors
 
+    # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------
 
     def __install_cmd(self, feat_id):
@@ -462,10 +467,8 @@ class Installer(object):
             process.run_popen(command)
             error = process.error()
             if len(error) != 0:
-                if "Could not find" in error:
-                    self.__fill_errors("Package: \"{name}\"\nError: {error}".format(name=package, error=error))
-                else:
-                    self.__fill_errors("Package: \"{name}\"\nError: {error}".format(name=package, error=error))
+                self.__fill_errors("Package: \"{name}\"\nError: {error}"
+                                   "".format(name=package, error=error))
                 return False
         except FileNotFoundError:
             self.__fill_errors("Installation \"{name}\" failed.\nError : {error}"
@@ -552,10 +555,8 @@ class Installer(object):
             process.run_popen(command)
             error = process.error()
             if len(error) != 0:
-                if "Could not find" in error:
-                    self.__fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
-                else:
-                    self.__fill_errors("package : \"{name}\"\nError: {error}".format(name=package, error=error))
+                self.__fill_errors("Package: \"{name}\"\nError: {error}"
+                                   "".format(name=package, error=error))
                 return False
         except FileNotFoundError:
             self.__fill_errors("Installation \"{name}\" failed.\nError : {error}"
@@ -795,8 +796,8 @@ class Dnf(Installer):
 # ---------------------------------------------------------------------------
 
 
-class Windows(Installer):
-    """An installer for Microsoft Windows system.
+class WindowsInstaller(Installer):
+    """An installer for Microsoft WindowsInstaller system.
 
         :author:       Florian Hocquet
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -804,13 +805,13 @@ class Windows(Installer):
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-        This Windows installer was tested with Windows 10.
+        This WindowsInstaller installer was tested with WindowsInstaller 10.
 
     """
 
     def __init__(self, p):
-        """Create a new Windows instance."""
-        super(Windows, self).__init__(p)
+        """Create a new WindowsInstaller instance."""
+        super(WindowsInstaller, self).__init__(p)
         self._features = Features("req_win", "cmd_win")
 
     # ------------------------------------------------------------------------
@@ -964,7 +965,9 @@ class MacOs(Installer):
             else:
                 return False
         else:
-            raise ValueError("Your comparator : " + comparator + " does not refer to a valid comparator")
+            raise ValueError("Your comparator : " +
+                             comparator +
+                             " does not refer to a valid comparator")
 
     # ------------------------------------------------------------------------
 

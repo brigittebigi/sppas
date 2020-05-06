@@ -47,7 +47,7 @@ states, or phones. Standard formats are adopted to cope with other free
 modeling toolkit such as HTK, CMU-Cam SLM toolkit, etc.
 
 The main platform is Linux and other Unix workstations, and also works on
-Windows. Most recent version is developed on Linux and Windows (cygwin /
+WindowsInstaller. Most recent version is developed on Linux and WindowsInstaller (cygwin /
 mingw), and also has Microsoft SAPI version. Julius is distributed with
 open license together with source codes.
 

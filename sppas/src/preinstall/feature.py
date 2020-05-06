@@ -81,7 +81,7 @@ class Feature(object):
 
         """
         # Represent the identifier of the feature
-        self.__id = uuid.uuid4()
+        self.__id = str(uuid.uuid4())
         self.__set_id(identifier)
 
         # Represent if the feature is enable

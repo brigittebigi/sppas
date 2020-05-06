@@ -228,7 +228,7 @@ class MyTreeListModel(dv.PyDataViewModel):
 
         # apply this large amount of changes
         if wx.Platform != '__WXGTK__':
-            # MacOS and Windows: the expanded items are all collapsed.
+            # MacOS and WindowsInstaller: the expanded items are all collapsed.
             self.Cleared()
         return self.data
 
