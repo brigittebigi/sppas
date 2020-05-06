@@ -68,6 +68,8 @@ from sppas import sg
 from sppas.src.ui import TerminalController
 from sppas.src.plugins import sppasPluginsManager
 
+# ---------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
 

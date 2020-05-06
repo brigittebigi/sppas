@@ -52,12 +52,16 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas import sg, annots
-from sppas.src.anndata.aio import extensions_out
-from sppas import sppasSyll
-from sppas import sppasParam
-from sppas import sppasAnnotationsManager
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
+
+from sppas.src.anndata.aio import extensions_out
+from sppas.src.annotations import sppasSyll
+from sppas.src.annotations import sppasParam
+from sppas.src.annotations import sppasAnnotationsManager
+
+# ---------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
 
@@ -117,7 +121,7 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-r",
         metavar="rules",
-        help='Configuration file with syllabification rules')
+        help='sppasAppConfig file with syllabification rules')
 
     group_io.add_argument(
         "-l",

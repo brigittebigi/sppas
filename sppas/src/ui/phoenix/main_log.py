@@ -43,12 +43,11 @@ from sppas.src.config import msg
 from sppas.src.utils import u
 from sppas.src.utils import sppasTime
 
-from ..logs import sppasLogFile
+from sppas.src.config.logs import sppasLogFile
 
 from .tools import sppasSwissKnife
 from .windows import sppasStaticLine
 from .windows import sppasPanel
-from .windows import sppasStaticText
 from .windows import BitmapTextButton
 from .views import Feedback
 
@@ -225,7 +224,7 @@ class sppasLogWindow(wx.TopLevelWindow):
         # Members
         self.handler = sppasHandlerToWx(self)
         self.txt = None
-        self.log_file = sppasLogFile()
+        self.log_file = sppasLogFile(pattern="log")
         self._init_infos()
 
         # Fix frame content and actions

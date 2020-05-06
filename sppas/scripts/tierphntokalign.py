@@ -41,6 +41,7 @@
 :summary:      a script to append the tier PhnTokAlign in a time-aligned file.
 
 """
+
 import sys
 import os.path
 from argparse import ArgumentParser
@@ -49,8 +50,8 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas import sppasRW
-from sppas import sppasLabel, sppasTag
+from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasLabel, sppasTag
 
 # ----------------------------------------------------------------------------
 # 0. Verify and extract args:

@@ -36,6 +36,7 @@
     ... a script to extract a channel from an audio file.
 
 """
+
 from argparse import ArgumentParser
 import os
 import sys
@@ -46,6 +47,7 @@ sys.path.append(SPPAS)
 
 import sppas.src.audiodata.aio
 from sppas.src.audiodata.audio import sppasAudioPCM
+
 
 # ----------------------------------------------------------------------------
 # Parse command-line

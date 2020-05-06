@@ -82,7 +82,7 @@ class spAnnotationConfig(spBaseDialog):
     # ------------------------------------------------------------------------
 
     def _create_title(self):
-        text = self.GetParent().parameters.get_step_name(self.stepid)+" Configuration"
+        text = self.GetParent().parameters.get_step_name(self.stepid)+" sppasAppConfig"
         return self.CreateTitle(ANNOTATE_CONFIG_ICON, text)
 
     def _create_content(self):

@@ -43,23 +43,31 @@ requires any other package but all other packages of SPPAS are requiring it!
 
 """
 
-import sys
-try:
-    reload  # Python 2.7
-except NameError:
-    try:
-        from importlib import reload  # Python 3.4+
-    except ImportError:
-        from imp import reload  # Python 3.0 - 3.3
+# Utility class to execute and read a subprocess. No external requirement.
+from .process import Process
 
+# The global settings. They need to be imported first: others need them.
 from .settings import sppasBaseSettings
-from .sglobal import sppasGlobalSettings
-from .sglobal import sppasPathSettings
-from .sglobal import sppasSymbolSettings
-from .sglobal import sppasSeparatorSettings
-from .sglobal import sppasAnnotationsSettings
+from .settings import sppasGlobalSettings
+from .settings import sppasPathSettings
+from .settings import sppasSymbolSettings
+from .settings import sppasSeparatorSettings
+from .settings import sppasAnnotationsSettings
+
+# Initialize the translation system.
+# Requires settings to find .po files.
 from .po import sppasTranslate
 from .po import error, info, msg
+
+# Utility classes to initialize logs with logging (stream or file).
+# Requires settings to print the appropriate headers.
+from .logs import sppasLogFile
+from .logs import sppasLogSetup
+
+# SPPAS Application configuration. Requires settings for paths, globals...
+from .appcfg import sppasAppConfig
+
+# Requires the settings, appcfg and process
 from .support import sppasPostInstall
 
 # ---------------------------------------------------------------------------
@@ -77,20 +85,21 @@ separators = sppasSeparatorSettings()
 annots = sppasAnnotationsSettings()
 
 # ---------------------------------------------------------------------------
-
-# Default input/output encoding
-reload(sys)
-try:
-    sys.setdefaultencoding(sg.__encoding__)
-except AttributeError:  # Python 2.7
-    pass
-
-# ---------------------------------------------------------------------------
 # Fix the translation of each package
 # ---------------------------------------------------------------------------
 
 __all__ = (
+    "Process",
     "sppasBaseSettings",
+    "sppasGlobalSettings",
+    "sppasPathSettings",
+    "sppasAnnotationsSettings",
+    "sppasSymbolSettings",
+    "sppasSeparatorSettings",
+    "sppasLogFile",
+    "sppasLogSetup",
+    "sppasAppConfig",
+    "sppasPostInstall",
     "sg",
     "paths",
     "symbols",

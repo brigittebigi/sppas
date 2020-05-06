@@ -38,8 +38,8 @@ import sys
 import gettext
 import locale
 
-from .sglobal import sppasPathSettings
-from .sglobal import sppasGlobalSettings
+from .settings import sppasPathSettings
+from .settings import sppasGlobalSettings
 
 # ----------------------------------------------------------------------------
 

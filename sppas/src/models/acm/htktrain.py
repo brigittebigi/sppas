@@ -45,13 +45,13 @@ from sppas.src.config import sg
 from sppas.src.config import symbols
 from sppas.src.config import separators
 
-from sppas.src.files.fileutils import sppasFileUtils
-from sppas.src.files.fileutils import sppasDirUtils
+from sppas.src.wkps import sppasFileUtils
+from sppas.src.wkps import sppasDirUtils
 
-from sppas.src.annotations.searchtier import sppasFindTier
-from sppas.src.annotations.Phon.sppasphon import sppasPhon
-from sppas.src.annotations.TextNorm.sppastextnorm import sppasTextNorm
-from sppas.src.annotations.Align.sppasalign import sppasAlign
+from sppas.src.annotations import sppasFindTier
+from sppas.src.annotations import sppasPhon
+from sppas.src.annotations import sppasTextNorm
+from sppas.src.annotations import sppasAlign
 from sppas.src.annotations.annotationsexc import NoInputError
 
 import sppas.src.anndata as anndata
@@ -59,13 +59,13 @@ from sppas.src.anndata import sppasTranscription, sppasRW, sppasLabel, sppasTag
 import sppas.src.anndata.aio.aioutils as tierutils
 import sppas.src.audiodata.aio as audiodataio
 
-from sppas.src.audiodata.audio import sppasAudioPCM
+from sppas.src.audiodata import sppasAudioPCM
 from sppas.src.audiodata.channelformatter import sppasChannelFormatter
 from sppas.src.audiodata.channelmfcc import sppasChannelMFCC
 
-from sppas.src.resources.dictpron import sppasDictPron
-from sppas.src.resources.vocab import sppasVocabulary
-from sppas.src.presenters.tiermapping import sppasMappingTier
+from sppas.src.resources import sppasDictPron
+from sppas.src.resources import sppasVocabulary
+from sppas.src.presenters import sppasMappingTier
 
 from .hmm import sppasHMM
 from .htkscripts import sppasHtkScripts

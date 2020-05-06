@@ -360,7 +360,7 @@ class sppasParam(object):
             self.annotations.append(a)
         except:
             a = None
-            logging.error('Configuration file {:s} not loaded.'
+            logging.error('sppasAppConfig file {:s} not loaded.'
                           ''.format(cfg_file))
         return a
 

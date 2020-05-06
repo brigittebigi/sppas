@@ -39,6 +39,7 @@
     R script to draw a boxplot of the evaluation.
 
 """
+
 import sys
 import os
 import codecs
@@ -50,9 +51,8 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas import ubpa
-from sppas import sppasRW
-from sppas import sppasTranscription
+from sppas.src.anndata import sppasRW
+from sppas.src.calculus import ubpa
 import sppas.src.anndata.aio
 
 # ---------------------------------------------------------------------------

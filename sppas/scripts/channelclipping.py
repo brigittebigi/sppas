@@ -46,9 +46,6 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 import sppas.src.audiodata.aio
-from sppas.src.audiodata.audiovolume import sppasAudioVolume
-from sppas.src.audiodata.channelvolume import sppasChannelVolume
-from sppas.src.audiodata.audioframes import sppasAudioFrames
 
 # ---------------------------------------------------------------------------
 # Verify and extract args:

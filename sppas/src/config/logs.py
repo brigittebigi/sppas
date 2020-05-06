@@ -29,8 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    ui.logs.py
-    ~~~~~~~~~~
+    sppas.src.config.logs.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -38,6 +38,7 @@ import os
 import platform
 import logging
 from datetime import date
+from datetime import datetime
 
 try:
     import wx
@@ -45,9 +46,8 @@ try:
 except:
     IMPORT_WX = False
 
-from sppas.src.utils.datatype import sppasTime
-from sppas.src.config import paths
-from sppas.src.config import sg
+from .settings import sppasPathSettings
+from .settings import sppasGlobalSettings
 
 # ---------------------------------------------------------------------------
 
@@ -59,22 +59,22 @@ class sppasLogFile(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
-    def __init__(self):
+    def __init__(self, pattern="log"):
         """Create a sppasLogFile instance.
 
-        Create the log directory if not already existing then fix the
+        Create the log directory if it is not already existing then fix the
         log filename with increment=0.
 
         """
-        log_dir = paths.logs
+        log_dir = sppasPathSettings().logs
         if os.path.exists(log_dir) is False:
             os.mkdir(log_dir)
 
-        self.__filename = "{:s}_log_".format(sg.__name__)
+        self.__filename = "{:s}_{:s}_".format(sppasGlobalSettings().__name__, pattern)
         self.__filename += str(date.today()) + "_"
         self.__filename += str(os.getpid()) + "_"
 
@@ -86,7 +86,7 @@ class sppasLogFile(object):
 
     def get_filename(self):
         """Return the current log filename."""
-        fn = os.path.join(paths.logs, self.__filename)
+        fn = os.path.join(sppasPathSettings().logs, self.__filename)
         fn += "{0:04d}".format(self.__current)
         return fn + ".txt"
 
@@ -101,11 +101,12 @@ class sppasLogFile(object):
     @staticmethod
     def get_header():
         """Return a string with an header for logs."""
+        sg = sppasGlobalSettings()
         header = "-"*78
         header += "\n\n"
         header += " {:s} {:s}".format(sg.__name__, sg.__version__)
         header += "\n"
-        header += " {:s}".format(sppasTime().now)
+        header += " {:s}".format(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
         header += "\n"
         header += " {:s}".format(platform.platform())
         header += "\n"
@@ -128,7 +129,7 @@ class sppasLogSetup(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -137,7 +138,7 @@ class sppasLogSetup(object):
 
         By default, the NullHandler is assigned.
 
-        The numeric values of logging levels are given in the following:
+        The numeric values of logging levels are given as follow:
 
             - CRITICAL 	50
             - ERROR 	40
@@ -223,8 +224,9 @@ class sppasLogSetup(object):
         self._handler.setLevel(self._log_level)
         logging.getLogger().addHandler(self._handler)
 
-        logging.info("Logging redirected to FileHandler (level={:d})."
-                     "".format(self._log_level))
+        logging.info("Logging redirected to FileHandler (level={:d}) "
+                     "in file {:s}."
+                     "".format(self._log_level, filename))
 
     # -----------------------------------------------------------------------
 

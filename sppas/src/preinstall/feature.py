@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding : UTF-8 -*-
 """
     ..
@@ -28,14 +27,17 @@
 
         ---------------------------------------------------------------------
 
-        src.config.feature.py
-    ~~~~~~~~~~~~~~~~
+    src.preinstall.feature.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
+import uuid
+import re
 
-class Feature:
-    """Creation features.
+
+class Feature(object):
+    """Store information of one feature required by the application.
 
         :author:       Florian Hocquet
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -67,15 +69,20 @@ class Feature:
         >>> feature.set_pypi({"numpy": ">;0.0"})
         >>> feature.set_cmd("pip freeze")
 
-        You can set the values of your privates attributes with the setters by parsing
-        a requirements.ini file for example.
-
     """
 
     def __init__(self, identifier):
-        """Create a new Feature instance."""
+        """Create a new Feature instance.
+
+        :param identifier: (str) An identifier string.
+
+        The identifier must contain at least 2 characters and US-ASCII only.
+        If these requirements are not satisfied, a GUID is used instead.
+
+        """
         # Represent the identifier of the feature
-        self.__id = identifier
+        self.__id = uuid.uuid4()
+        self.__set_id(identifier)
 
         # Represent if the feature is enable
         self.__enable = False
@@ -95,24 +102,37 @@ class Feature:
         # Represent the command to enable the feature
         self.__cmd = str()
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
+
+    def __set_id(self, identifier):
+        """Private. Set the id if valid."""
+        identifier = identifier.strip()
+        # Check length
+        if len(identifier) > 1:
+            # Check if US-ASCII only characters
+            ra = re.sub(r'[^a-zA-Z0-9_]', '', identifier)
+            if identifier == ra:
+                self.__id = identifier
+
+    # ------------------------------------------------------------------------
 
     def get_id(self):
         """Return the feature identifier."""
         return self.__id
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def get_enable(self):
         """Return True if the feature is enabled."""
         return self.__enable
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def get_available(self):
-        """Return True if the feature is availabled."""
+        """Return True if the feature is available."""
         return self.__available
-    # ---------------------------------------------------------------------------
+
+    # ------------------------------------------------------------------------
 
     def set_enable(self, value):
         """Set the value of enable.
@@ -126,7 +146,7 @@ class Feature:
             value = bool(value)
             self.__enable = value
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def set_available(self, value):
         """Set the value of available.
@@ -139,13 +159,13 @@ class Feature:
             self.set_enable(False)
         self.__available = value
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def get_desc(self):
         """Return the description of the feature."""
         return self.__desc
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def set_desc(self, value):
         """Set the description of the feature.
@@ -156,13 +176,13 @@ class Feature:
         value = str(value)
         self.__desc = value
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def get_packages(self):
         """Return the dictionary of system dependencies."""
         return self.__packages
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def set_packages(self, dependencies):
         """Set the dictionary of system dependencies.
@@ -173,13 +193,13 @@ class Feature:
         dependencies = dict(dependencies)
         self.__packages = dependencies
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def get_pypi(self):
         """Return the dictionary of pip dependencies."""
         return self.__pypi
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def set_pypi(self, dependencies):
         """Set the dictionary of pip dependencies.
@@ -190,13 +210,13 @@ class Feature:
         dependencies = dict(dependencies)
         self.__pypi = dependencies
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def get_cmd(self):
         """Return the command to execute."""
         return self.__cmd
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def set_cmd(self, value):
         """Set the command to execute.
@@ -207,7 +227,7 @@ class Feature:
         value = str(value)
         self.__cmd = value
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def __str__(self):
         return "id : " + str(self.get_id()) + "\n" \

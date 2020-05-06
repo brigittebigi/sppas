@@ -39,25 +39,14 @@ ui: User Interface makes SPPAS available for all users.
 
 """
 
-from .cfg import sppasAppConfig
-
 from .tips import sppasTips
-from .logs import sppasLogFile
-from .logs import sppasLogSetup
-
 from .term import TerminalController
 from .term import ProcessProgressTerminal
-
-# from sppas.src.files.wkps import sppasWkps
-
 from .trash import sppasTrash
 
 __all__ = (
-    "sppasAppConfig",
     "sppasTrash",
     "sppasTips",
-    "sppasLogFile",
-    "sppasLogSetup",
     # "sppasWkps",
     "TerminalController",
     "ProcessProgressTerminal"

@@ -142,8 +142,9 @@ class sppasActionAnnotatePanel(sppasPanel):
         """Create the main content."""
         reports = list()
         for f in os.listdir(paths.logs):
-            if os.path.isfile(os.path.join(paths.logs, f)) and f.endswith('.txt'):
-                reports.append(f)
+            if os.path.isfile(os.path.join(paths.logs, f)):
+                if f.endswith('.txt') and "report" in f:
+                    reports.append(f)
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         action_sizer = self._create_action_content()

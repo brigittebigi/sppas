@@ -36,6 +36,7 @@
     ... a script to fill in empty labels of a tier of an annotated file.
 
 """
+
 import sys
 import os.path
 from argparse import ArgumentParser
@@ -45,8 +46,8 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas.src.anndata.aio.aioutils import fill_gaps
-from sppas import sppasRW
-from sppas import sppasLabel, sppasTag
+from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasLabel, sppasTag
 
 # ----------------------------------------------------------------------------
 # Verify and extract args:

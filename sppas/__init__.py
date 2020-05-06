@@ -39,6 +39,15 @@ sppas: Global imports and some settings for external use.
 
 """
 
+import sys
+try:
+    reload  # Python 2.7
+except NameError:
+    try:
+        from importlib import reload  # Python 3.4+
+    except ImportError:
+        from imp import reload  # Python 3.0 - 3.3
+
 from sppas.src.config import *
 from sppas.src.exc import *
 from sppas.src.structs import *
@@ -51,7 +60,15 @@ from sppas.src.resources import *
 from sppas.src.utils import *
 from sppas.src.wkps import *
 from sppas.src.annotations import *
-from sppas.src.ui import sppasLogSetup, sppasAppConfig
+
+# ---------------------------------------------------------------------------
+
+# Default input/output encoding
+reload(sys)
+try:
+    sys.setdefaultencoding(sg.__encoding__)
+except AttributeError:  # Python 2.7
+    pass
 
 __version__ = sg.__version__
 __name__ = sg.__name__

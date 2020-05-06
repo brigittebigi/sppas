@@ -208,7 +208,7 @@ class sppasANTX(sppasBaseIO):
         uri = root.tag[:root.tag.index('}')+1]
 
         # Create metadata
-        for child in tree.iter(tag=uri+'Configuration'):
+        for child in tree.iter(tag=uri+'sppasAppConfig'):
             self._parse_configuration(child, uri)
 
         # Create media
@@ -226,11 +226,11 @@ class sppasANTX(sppasBaseIO):
     # -----------------------------------------------------------------------
 
     def _parse_configuration(self, configuration_root, uri=""):
-        """Get the elements 'Configuration'.
+        """Get the elements 'sppasAppConfig'.
 
         Fill metadata of the sppasANTX instance.
 
-        :param configuration_root: (ET) Configuration root.
+        :param configuration_root: (ET) sppasAppConfig root.
         :param uri: (str)
 
         """
@@ -442,7 +442,7 @@ class sppasANTX(sppasBaseIO):
     # -----------------------------------------------------------------------
 
     def _format_configuration(self, root):
-        """Add 'Configuration' into the ElementTree."""
+        """Add 'sppasAppConfig' into the ElementTree."""
         now = datetime.now().strftime("%Y-%M-%d %H:%M")
 
         # File format version
@@ -480,8 +480,8 @@ class sppasANTX(sppasBaseIO):
 
     @staticmethod
     def _add_configuration(root, key, value):
-        """Add a new 'Configuration' key/value element in root."""
-        conf_root = ET.SubElement(root, 'Configuration')
+        """Add a new 'sppasAppConfig' key/value element in root."""
+        conf_root = ET.SubElement(root, 'sppasAppConfig')
         child_key = ET.SubElement(conf_root, 'Key')
         child_key.text = key
         child_value = ET.SubElement(conf_root, 'Value')

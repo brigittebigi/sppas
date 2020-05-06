@@ -39,10 +39,12 @@ import wx
 import logging
 
 from sppas import paths
+from sppas import sppasAppConfig
+
 from sppas.src.plugins import sppasPluginsManager
 import sppas.src.audiodata.aio
 from sppas.src.anndata import sppasMetaData
-from sppas.src.ui.cfg import sppasAppConfig
+
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 from sppas.src.ui.phoenix.windows import sppasPanel
 

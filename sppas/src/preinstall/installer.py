@@ -28,8 +28,8 @@
 
         ---------------------------------------------------------------------
 
-        src.config.installer.py
-    ~~~~~~~~~~~~~~~~
+    src.preinstall.installer.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -37,8 +37,9 @@ import os
 from subprocess import call, STDOUT
 import logging
 
-from sppas.src.config.features import Features, Feature
-from sppas.src.config.process import Process
+from sppas.src.config.process import Process, search_cmd
+from .features import Features
+
 
 # ---------------------Sentences for the method install-----------------------
 MSG_INSTALL = {
@@ -61,27 +62,23 @@ MSG_INSTALL_GLOBAL = {
 # ---------------------------------------------------------------------------
 
 
-class Installer:
-    """Creation Installer.
+class Installer(object):
+    """Manage the installation of external required or optional features.
 
         :author:       Florian Hocquet
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
         :contact:      contact@sppas.org
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-        :summary:      a script to use workspaces from terminal
 
-        Installer is a Class which allows to install dependencies from a
-        Features Object.
-        It will browse your Features Object to install, according to the
-        OS of the computer, the dependencies inform in your Features Objects.
-        The installation is launched with the method :
+        It will browse the Features() to install, according to the OS of
+        the computer. The installation is launched with the method:
 
         >>> Installer.install()
 
     """
 
-    def __init__(self, p):
+    def __init__(self, p=None):
         """Create a new Installer instance.
 
         :param p: (ProcessProgressTerminal) The installation progress.
@@ -94,13 +91,13 @@ class Installer:
         self.__errors = ""
         self._features = None
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def get_feat_ids(self):
         """Return the list of feature identifiers."""
         return self._features.get_ids()
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def enable(self, fid, value=None):
         """Return True if the feature is enabled and/or set it.
@@ -111,7 +108,7 @@ class Installer:
         """
         return self._features.enable(fid, value)
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def available(self, fid, value=None):
         """Return True if the feature is available and/or set it.
@@ -122,7 +119,7 @@ class Installer:
         """
         return self._features.available(fid, value)
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def description(self, fid):
         """Return the description of the feature.
@@ -133,7 +130,7 @@ class Installer:
         """
         return self._features.description(fid)
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def get_set_progress(self, value):
         """Return the progression and/or set it.
@@ -150,7 +147,7 @@ class Installer:
             self.__progression = 1.0
         return self.__progression
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def calcul_pourc(self, fid):
         """Calcul and return a percentage of progression.
@@ -164,13 +161,13 @@ class Installer:
         pourc = round((1 / (1 + nb_packages + nb_pypi)), 2)
         return pourc
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def get_cfg_exist(self):
         """Return True if the config file exist."""
-        return self._features.get_cfg_exist()
+        return self._features.cfg_file_exists()
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def _set_total_errors(self, msg):
         """Add an error message in total errors.
@@ -182,7 +179,7 @@ class Installer:
             string = str(msg)
             self.__total__errors += string
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def _set_errors(self, msg):
         """Append an error message.
@@ -196,7 +193,7 @@ class Installer:
         else:
             self.__errors += msg
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def fill_errors(self, error_msg):
         """Fill errors and total_errors.
@@ -207,7 +204,7 @@ class Installer:
         self._set_errors(error_msg)
         self._set_total_errors(error_msg)
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def install(self):
         """Manage the installation procedure."""
@@ -248,7 +245,7 @@ class Installer:
             self._features.update_config()
         return self.__total__errors
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def install_cmd(self, feat_id):
         """Manage the installation of the command of a feature.
@@ -270,7 +267,7 @@ class Installer:
                 self.get_set_progress(self.calcul_pourc(feat_id)),
                 MSG_INSTALL_GLOBAL["dont_need"])
         else:
-            if self.search_cmds(feat_id) is False:
+            if search_cmd(feat_id) is False:
                 self.install_cmds(feature_command, feat_id)
             else:
                 self.__pbar.update(
@@ -281,31 +278,12 @@ class Installer:
             self._features.enable(feat_id, False)
             raise NotImplementedError()
 
-    # ---------------------------------------------------------------------------
-
-    def search_cmds(self, command):
-        """Return True if the command is installed on a PC.
-
-        :param command: (string) The command to search.
-
-        """
-        command = command.strip()
-        NULL = open(os.path.devnull, "w")
-        try:
-            call(command, stdout=NULL, stderr=STDOUT)
-        except OSError:
-            NULL.close()
-            return False
-
-        NULL.close()
-        return True
-
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def install_cmds(self, command, feat_id):
         """Install feat_id.
 
-        :param command: (string) The command to execute.
+        :param command: (str) The command to execute.
         :param feat_id: (str) Identifier of a feature
 
         """
@@ -322,7 +300,7 @@ class Installer:
             self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
                              .format(name=feat_id, error=FileNotFoundError))
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def install_pypis(self, feat_id):
         """Manage the installation of pip packages.
@@ -352,12 +330,12 @@ class Installer:
             self._features.enable(feat_id, False)
             raise NotImplementedError()
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def search_pypi(self, package):
         """Returns True if package is already installed.
 
-        :param package: (string) The pip package to search.
+        :param package: (str) The pip package to search.
 
         """
         try:
@@ -375,12 +353,12 @@ class Installer:
                              .format(name=package, error=FileNotFoundError))
             return False
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def install_pypi(self, package):
         """Install package.
 
-        :param package: (string) The pip package to install
+        :param package: (str) The pip package to install
         :returns: False or None
 
         """
@@ -401,13 +379,13 @@ class Installer:
                              .format(name=package, error=FileNotFoundError))
             return False
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def version_pypi(self, package, req_version):
         """Returns True if package is up to date.
 
-        :param package: (string) The pip package to search.
-        :param req_version: (string) The minimum version required.
+        :param package: (str) The pip package to search.
+        :param req_version: (str) The minimum version required.
 
         """
         try:
@@ -426,14 +404,14 @@ class Installer:
                              .format(name=package, error=FileNotFoundError))
             return False
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     @staticmethod
     def need_update_pypi(stdout_show, req_version):
         """Return True if the package need to be update.
 
-        :param stdout_show: (string) The stdout of the command.
-        :param req_version: (string) The minimum version required.
+        :param stdout_show: (str) The stdout of the command.
+        :param req_version: (str) The minimum version required.
 
         """
         stdout_show = str(stdout_show)
@@ -468,12 +446,12 @@ class Installer:
         else:
             raise ValueError("Your comparator : " + comparator + " does not refer to a valid comparator")
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def update_pypi(self, package):
         """Update package.
 
-        :param package: (string) The pip package to update.
+        :param package: (str) The pip package to update.
         :returns: False or None
 
         """
@@ -494,7 +472,7 @@ class Installer:
                              .format(name=package, error=FileNotFoundError))
             return False
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def install_packages(self, feat_id):
         """Manage installation of system packages.
@@ -526,171 +504,158 @@ class Installer:
             self._features.enable(feat_id, False)
             raise NotImplementedError()
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def search_package(self, package):
         """Returns True if package is already installed.
 
-        :param package: (string) The system package to search.
+        :param package: (str) The system package to search.
 
         """
         package = str(package)
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def install_package(self, package):
         """Install package.
 
-        :param package: (string) The system package to install.
+        :param package: (str) The system package to install.
         :returns: False or None
 
         """
         package = str(package)
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def version_package(self, package, req_version):
         """Return True if the package is up to date.
 
-        :param package: (string) The system package to search.
-        :param req_version: (string) The minimum version required.
+        :param package: (str) The system package to search.
+        :param req_version: (str) The minimum version required.
 
         """
         package = str(package)
         req_version = str(req_version)
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     @staticmethod
     def need_update_package(stdout_show, req_version):
         """Return True if the package need to be update.
 
-        :param stdout_show: (string) The stdout of the command.
-        :param req_version: (string) The minimum version required.
+        :param stdout_show: (str) The stdout of the command.
+        :param req_version: (str) The minimum version required.
 
         """
         stdout_show = str(stdout_show)
         req_version = str(req_version)
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def update_package(self, package):
         """Update package.
 
-        :param package: (string) The system package to update.
+        :param package: (str) The system package to update.
         :returns: False or None
 
         """
         package = str(package)
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 
 class Deb(Installer):
-    """Creation Deb(Installer).
+    """An installer for Debian-based package manager systems.
 
         :author:       Florian Hocquet
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
         :contact:      contact@sppas.org
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-        :summary:      a script to use workspaces from terminal
 
-        This class allows you to create an object Deb which inherit from the
-        super class Installer.
-        This Deb(Installer) is made for the Debians distributions of Linux.
-        For example :
-
-        - Linux
-        - Debian
-        - Mint
+        This Deb(Installer) is made for the Debians distributions of Linux,
+        like Debian, Ubuntu or Mint.
 
     """
 
     def __init__(self, p):
-        """Create a new Deb(Installer) instance."""
+        """Create a new Deb instance."""
         super(Deb, self).__init__(p)
         self._features = Features("req_deb", "cmd_deb")
 
-    # ---------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def search_package(self, package):
         """Returns True if package is already installed.
 
-        :param package: (string) The system package to search.
+        :param package: (str) The system package to search.
 
         """
         return True
 
-    # ---------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def install_package(self, package):
-        """Install package.
+        """Install the given package.
 
-        :param package: (string) The system package to install.
+        :param package: (str) The system package to install.
         :returns: False or None
 
         """
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def version_package(self, package, req_version):
         """Return True if the package is up to date.
 
-        :param package: (string) The system package to search.
-        :param req_version: (string) The minimum version required.
+        :param package: (str) The system package to search.
+        :param req_version: (str) The minimum version required.
 
         """
         return True
 
-    # ---------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     @staticmethod
     def need_update_package(stdout_show, req_version):
         """Return True if the package need to be update.
 
-        :param stdout_show: (string) The stdout of the command.
-        :param req_version: (string) The minimum version required.
+        :param stdout_show: (str) The stdout of the command.
+        :param req_version: (str) The minimum version required.
 
         """
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def update_package(self, package):
         """Update package.
 
-        :param package: (string) The system package to update.
+        :param package: (str) The system package to update.
         :returns: False or None
 
         """
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 
 class Rpm(Installer):
-    """Creation Rpm(Installer).
+    """An installer for RPM-based package manager system.
 
         :author:       Florian Hocquet
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
         :contact:      contact@sppas.org
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-        :summary:      a script to use workspaces from terminal
 
-        This class allows you to create an object Rpm which inherit from the
-        super class Installer.
-        This Rpm(Installer) is made for the Rpm distributions of Linux.
-        For example :
-
-        - Suse
+        This RPM is made for the linux distributions like RedHat, or Suse.
 
     """
 
@@ -699,66 +664,66 @@ class Rpm(Installer):
         super(Rpm, self).__init__(p)
         self._features = Features("req_rpm", "cmd_rpm")
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def search_package(self, package):
         """Returns True if package is already installed.
 
-        :param package: (string) The system package to search.
+        :param package: (str) The system package to search.
 
         """
         return True
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def install_package(self, package):
-        """Install package.
+        """Install the given package.
 
-        :param package: (string) The system package to install.
+        :param package: (str) The system package to install.
         :returns: False or None
 
         """
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def version_package(self, package, req_version):
         """Return True if the package is up to date.
 
-        :param package: (string) The system package to search.
-        :param req_version: (string) The minimum version required.
+        :param package: (str) The system package to search.
+        :param req_version: (str) The minimum version required.
 
         """
         return True
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     @staticmethod
     def need_update_package(stdout_show, req_version):
         """Return True if the package need to be update.
 
-        :param stdout_show: (string) The stdout of the command.
-        :param req_version: (string) The minimum version required.
+        :param stdout_show: (str) The stdout of the command.
+        :param req_version: (str) The minimum version required.
 
         """
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def update_package(self, package):
         """Update package.
 
-        :param package: (string) The system package to update.
+        :param package: (str) The system package to update.
         :returns: False or None
 
         """
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 
 class Dnf(Installer):
-    """Creation Dnf(Installer).
+    """An installer for DNF-based package manager systems.
 
         :author:       Florian Hocquet
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -767,9 +732,7 @@ class Dnf(Installer):
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
         :summary:      a script to use workspaces from terminal
 
-        This class allows you to create an object Dnf which inherit from the
-        super class Installer.
-        This Dnf(Installer) is made for Fedora one of the distributions of Linux.
+        This DNF is made for linux distributions like Fedora.
 
     """
 
@@ -778,235 +741,148 @@ class Dnf(Installer):
         super(Dnf, self).__init__(p)
         self._features = Features("req_dnf", "cmd_dnf")
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def search_package(self, package):
         """Returns True if package is already installed.
 
-        :param package: (string) The system package to search.
+        :param package: (str) The system package to search.
 
         """
         return True
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def install_package(self, package):
-        """Install package.
+        """Install the given package.
 
-        :param package: (string) The system package to install.
+        :param package: (str) The system package to install.
         :returns: False or None
 
         """
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def version_package(self, package, req_version):
         """Return True if the package is up to date.
 
-        :param package: (string) The system package to search.
-        :param req_version: (string) The minimum version required.
+        :param package: (str) The system package to search.
+        :param req_version: (str) The minimum version required.
 
         """
         return True
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     @staticmethod
     def need_update_package(stdout_show, req_version):
         """Return True if the package need to be update.
 
-        :param stdout_show: (string) The stdout of the command.
-        :param req_version: (string) The minimum version required.
+        :param stdout_show: (str) The stdout of the command.
+        :param req_version: (str) The minimum version required.
 
         """
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def update_package(self, package):
         """Update package.
 
-        :param package: (string) The system package to update.
+        :param package: (str) The system package to update.
         :returns: False or None
 
         """
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 
 class Windows(Installer):
-    """Creation Windows(Installer).
+    """An installer for Microsoft Windows system.
 
         :author:       Florian Hocquet
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
         :contact:      contact@sppas.org
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-        :summary:      a script to use workspaces from terminal
 
-        This class allows you to create an object Windows which inherit from the
-        super class Installer.
-        This Windows(Installer) is made for Windows 10.
+        This Windows installer was tested with Windows 10.
 
     """
 
     def __init__(self, p):
-        """Create a new Windows(Installer) instance."""
+        """Create a new Windows instance."""
         super(Windows, self).__init__(p)
         self._features = Features("req_win", "cmd_win")
 
-    # ---------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def search_package(self, package):
         """Returns True if package is already installed.
 
-        :param package: (string) The system package to search.
+        :param package: (str) The system package to search.
 
         """
         return True
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def install_package(self, package):
         """Install package.
 
-        :param package: (string) The system package to install.
+        :param package: (str) The system package to install.
         :returns: False or None
 
         """
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def version_package(self, package, req_version):
         """Return True if the package is up to date.
 
-        :param package: (string) The system package to search.
-        :param req_version: (string) The minimum version required.
+        :param package: (str) The system package to search.
+        :param req_version: (str) The minimum version required.
 
         """
         return True
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     @staticmethod
     def need_update_package(stdout_show, req_version):
         """Return True if the package need to be update.
 
-        :param stdout_show: (string) The stdout of the command.
-        :param req_version: (string) The minimum version required.
+        :param stdout_show: (str) The stdout of the command.
+        :param req_version: (str) The minimum version required.
 
         """
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def update_package(self, package):
         """Update package.
 
-        :param package: (string) The system package to update.
+        :param package: (str) The system package to update.
         :returns: False or None
 
         """
         raise NotImplementedError
 
-    # ---------------------------------------------------------------------------
-
-
-class CygWin(Installer):
-    """Creation CygWin(Installer).
-
-        :author:       Florian Hocquet
-        :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-        :contact:      contact@sppas.org
-        :license:      GPL, v3
-        :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-        :summary:      a script to use workspaces from terminal
-
-        This class allows you to create an object CygWin which inherit from the
-        super class Installer.
-        This CygWin(Installer) is made for CygWin.
-
-    """
-
-    def __init__(self, p):
-        """Create a new CygWin(Installer) instance."""
-        super(CygWin, self).__init__(p)
-        self._features = Features("req_cyg", "cmd_cyg")
-
-    # ---------------------------------------------------------------------------
-
-    def search_package(self, package):
-        """Returns True if package is already installed.
-
-        :param package: (string) The system package to search.
-
-        """
-        return True
-
-    # ---------------------------------------------------------------------------
-
-    def install_package(self, package):
-        """Install package.
-
-        :param package: (string) The system package to install.
-        :returns: False or None
-
-        """
-        raise NotImplementedError
-
-    # ---------------------------------------------------------------------------
-
-    def version_package(self, package, req_version):
-        """Return True if the package is up to date.
-
-        :param package: (string) The system package to search.
-        :param req_version: (string) The minimum version required.
-
-        """
-        return True
-
-    # ---------------------------------------------------------------------------
-
-    @staticmethod
-    def need_update_package(stdout_show, req_version):
-        """Return True if the package need to be update.
-
-        :param stdout_show: (string) The stdout of the command.
-        :param req_version: (string) The minimum version required.
-
-        """
-        raise NotImplementedError
-
-    # ---------------------------------------------------------------------------
-
-    def update_package(self, package):
-        """Update package.
-
-        :param package: (string) The system package to update.
-        :returns: False or None
-
-        """
-        raise NotImplementedError
-
-    # ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 
 class MacOs(Installer):
-    """Creation MacOs(Installer).
+    """An installer for MacOS systems.
 
         :author:       Florian Hocquet
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
         :contact:      contact@sppas.org
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-        :summary:      a script to use workspaces from terminal
-
-        This class allows you to create an object MacOs which inherit from the
-        super class Installer.
-        This MacOs(Installer) is made for IOS computers.
 
     """
 
@@ -1015,12 +891,12 @@ class MacOs(Installer):
         super(MacOs, self).__init__(p)
         self._features = Features("req_ios", "cmd_ios")
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def search_package(self, package):
         """Returns True if package is already installed.
 
-        :param package: (string) The system package to search.
+        :param package: (str) The system package to search.
 
         """
         try:
@@ -1038,12 +914,12 @@ class MacOs(Installer):
                              .format(name=package, error=FileNotFoundError))
             return False
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def install_package(self, package):
         """Install package.
 
-        :param package: (string) The system package to install.
+        :param package: (str) The system package to install.
         :returns: False or None
 
         """
@@ -1070,13 +946,13 @@ class MacOs(Installer):
                              .format(name=package, error=FileNotFoundError))
             return False
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def version_package(self, package, req_version):
         """Return True if the package is up to date.
 
-        :param package: (string) The system package to search.
-        :param req_version: (string) The minimum version required.
+        :param package: (str) The system package to search.
+        :param req_version: (str) The minimum version required.
 
         """
         try:
@@ -1096,14 +972,14 @@ class MacOs(Installer):
                              .format(name=package, error=FileNotFoundError))
             return False
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     @staticmethod
     def need_update_package(stdout_show, req_version):
         """Return True if the package need to be update.
 
-        :param stdout_show: (string) The stdout of the command.
-        :param req_version: (string) The minimum version required.
+        :param stdout_show: (str) The stdout of the command.
+        :param req_version: (str) The minimum version required.
 
         """
         stdout_show = str(stdout_show)
@@ -1138,12 +1014,12 @@ class MacOs(Installer):
         else:
             raise ValueError("Your comparator : " + comparator + " does not refer to a valid comparator")
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def update_package(self, package):
         """Update package.
 
-        :param package: (string) The system package to update.
+        :param package: (str) The system package to update.
         :returns: False or None
 
         """
@@ -1163,6 +1039,4 @@ class MacOs(Installer):
             self.fill_errors("Installation \"{name}\" failed.\nError : {error}"
                              .format(name=package, error=FileNotFoundError))
             return False
-
-    # ---------------------------------------------------------------------------
 

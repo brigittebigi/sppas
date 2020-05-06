@@ -36,6 +36,7 @@
     ... a script to mix all channels from multi audio files in one channel.
 
 """
+
 from argparse import ArgumentParser
 import os
 import sys

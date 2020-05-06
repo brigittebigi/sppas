@@ -34,7 +34,7 @@
 """
 import unittest
 
-from sppas.src.config.configuration import Configuration, os, sppasPathSettings
+from sppas.src.config.appcfg import sppasAppConfig, os, sppasPathSettings
 
 # ---------------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ class TestConfiguration(unittest.TestCase):
         """Initialisation des tests.
 
         """
-        self.__configuration = Configuration()
+        self.__configuration = sppasAppConfig()
 
     # ---------------------------------------------------------------------------
 
@@ -59,14 +59,14 @@ class TestConfiguration(unittest.TestCase):
     def test_cfg_exist(self):
         """Return if the config file exists or not."""
         y = os.path.exists(self.__configuration.cfg_filename())
-        self.assertEqual(y, self.__configuration.get_cfg_exist())
+        self.assertEqual(y, self.__configuration.cfg_file_exists())
 
     # ---------------------------------------------------------------------------
 
     def test_load(self):
         """Override. Load the configuration from a file."""
         self.__configuration.load()
-        if self.__configuration.get_cfg_exist() is True:
+        if self.__configuration.cfg_file_exists() is True:
             y = self.__configuration.get_deps()
             self.assertEqual(y, ["wxpython", "brew", "julius"])
         else:

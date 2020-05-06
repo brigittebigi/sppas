@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding : UTF-8 -*-
 """
     ..
@@ -28,8 +27,8 @@
 
         ---------------------------------------------------------------------
 
-        src.config.features.py
-    ~~~~~~~~~~~~~~~~
+    src.preinstall.features.py
+    ~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -40,13 +39,15 @@ try:
 except ImportError:
     import ConfigParser as cp
 
-from sppas.src.config.support import sppasPathSettings
-from sppas.src.config.feature import Feature
-from sppas.src.config.configuration import Configuration
+from sppas.src.config.settings import sppasPathSettings
+from sppas.src.config.appcfg import sppasAppConfig
+from .feature import Feature
+
+# ---------------------------------------------------------------------------
 
 
-class Features:
-    """Creation features.
+class Features(object):
+    """Manage the list of required external features of the software.
 
         :author:       Florian Hocquet
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -59,20 +60,18 @@ class Features:
     def __init__(self, req, cmdos):
         """Create a new Feature instance.
 
-            A Features is a container for a list of features.
-            It organizes features as a collection of Features instances.
-            It allows to parse a requirements.ini file to create a
-            modular gestion of requirements.
+            A Features instance is a container for a list of features.
+            It parses a '.ini' file to get each feature config.
 
         """
         self.__req = req
         self.__cmdos = cmdos
-        self.__config = Configuration()
+        self.__config = sppasAppConfig()
         self.__features = list()
         self.__features_parser = self.init_features()
         self.set_features()
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     @staticmethod
     def get_features_filename():
@@ -83,19 +82,21 @@ class Features:
 
         return feat_filename
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def update_config(self):
-        """Update the config file"""
+        """Update the config file."""
         for f in self.__features:
             self.__config.set_dep(f.get_id(), f.get_enable())
         self.__config.save()
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def get_ids(self):
         """Return the list of feature identifiers."""
         return [f.get_id() for f in self.__features]
+
+    # ------------------------------------------------------------------------
 
     def enable(self, fid, value=None):
         """Return True if the feature is enabled and/or set it.
@@ -111,6 +112,8 @@ class Features:
                 return feat.set_enable(value)
         return False
 
+    # ------------------------------------------------------------------------
+
     def available(self, fid, value=None):
         """Return True if the feature is available and/or set it.
 
@@ -125,6 +128,8 @@ class Features:
                 return feat.set_available(value)
         return False
 
+    # ------------------------------------------------------------------------
+
     def description(self, fid):
         """Return the description of the feature
 
@@ -135,6 +140,8 @@ class Features:
             if feat.get_id() == fid:
                 return feat.get_desc()
         return None
+
+    # ------------------------------------------------------------------------
 
     def packages(self, fid):
         """Return the dictionary of system dependencies of the feature.
@@ -147,6 +154,8 @@ class Features:
                 return feat.get_packages()
         return dict()
 
+    # ------------------------------------------------------------------------
+
     def pypi(self, fid):
         """Return the dictionary of pip dependencies of the feature.
 
@@ -157,6 +166,8 @@ class Features:
             if feat.get_id() == fid:
                 return feat.get_pypi()
         return dict()
+
+    # ------------------------------------------------------------------------
 
     def cmd(self, fid):
         """Return the command to execute for the feature.
@@ -169,29 +180,30 @@ class Features:
                 return feat.get_cmd()
         return str()
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def get_cfg_exist(self):
         """Return the private attribute __cfg_exist."""
-        return self.__config.get_cfg_exist()
+        return self.__config.cfg_file_exists()
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
     # Private: Internal use only.
-    #
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def init_features(self):
         """Return a parsed version of your features.ini file."""
         cfg = self.get_features_filename()
         if cfg is None:
-            raise IOError("Installation error: the file {filename} to configure the software is missing."
+            raise IOError("Installation error: the file {filename} to "
+                          "configure the software is missing."
                           .format(filename=cfg))
 
         features_parser = cp.ConfigParser()
         try:
             features_parser.read(self.get_features_filename())
         except cp.MissingSectionHeaderError:
-            raise IOError("Votre fichier ne contient pas de sections")
+            raise IOError("Malformed features configuration file {}: "
+                          "missing section header.".format(cfg))
         return features_parser
 
     # ---------------------------------------------------------------------------
@@ -257,10 +269,9 @@ class Features:
             depend[tab[0]] = tab[1]
         return depend
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
     # Overloads
-    #
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def __str__(self):
         """Print each Feature of the list. """

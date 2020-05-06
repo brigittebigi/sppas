@@ -29,20 +29,41 @@
 
         ---------------------------------------------------------------------
 
-    src.plugins.process.py
+    src.config.process.py
     ~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
+import os
 import shlex
-from subprocess import Popen, PIPE
+from subprocess import call, Popen, PIPE, STDOUT
+
+
+# ------------------------------------------------------------------------
+
+def search_cmd(command):
+    """Return True if the command is installed on a PC.
+
+    :param command: (str) The command to search.
+
+    """
+    command = command.strip()
+    NULL = open(os.path.devnull, "w")
+    try:
+        call(command, stdout=NULL, stderr=STDOUT)
+    except OSError:
+        NULL.close()
+        return False
+
+    NULL.close()
+    return True
 
 
 # ----------------------------------------------------------------------------
 
 
-class Process:
-    """Execute and read a subProcess
+class Process(object):
+    """Execute and read a subprocess.
 
     :author:       Florian Hocquet
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France

@@ -36,6 +36,7 @@
     ... a script to apply high-pass filter (development version).
 
 """
+
 import sys
 import os.path
 from argparse import ArgumentParser

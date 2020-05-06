@@ -36,6 +36,7 @@
     ... a script to merge dictionaries.
 
 """
+
 import sys
 import os
 from argparse import ArgumentParser
@@ -44,10 +45,12 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas.src.config import separators
+from sppas import separators
+from sppas import sppasLogSetup
+from sppas import sppasAppConfig
+
 from sppas.src.resources.dictpron import sppasDictPron
-from sppas.src.ui import sppasLogSetup
-from sppas.src.ui.cfg import sppasAppConfig
+
 
 # ----------------------------------------------------------------------------
 # Verify and extract args:
