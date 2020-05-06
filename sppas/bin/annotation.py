@@ -42,7 +42,6 @@
 
 """
 
-import logging
 import sys
 import os
 from argparse import ArgumentParser
@@ -52,13 +51,16 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas import sg, annots
-from sppas import sppasParam
-from sppas import sppasAnnotationsManager
 from sppas import sppasLogSetup
 
+from sppas.src.annotations import sppasParam
+from sppas.src.annotations import sppasAnnotationsManager
 from sppas.src.anndata.aio import extensions_out
 from sppas.src.ui.term.textprogress import ProcessProgressTerminal
 from sppas.src.ui.term.terminalcontroller import TerminalController
+
+# ---------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
 

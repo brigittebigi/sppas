@@ -55,12 +55,14 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas import sg
-from sppas import sppasRW
-from sppas.src.analysis.tierstats import sppasTierStats
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 
+from sppas.src.anndata import sppasRW
+from sppas.src.analysis.tierstats import sppasTierStats
+
 # ----------------------------------------------------------------------------
+
 
 modes_help = "Stat to estimate, in:\n"
 modes_help += "  0 = Summary of all files (default),\n"
@@ -69,6 +71,9 @@ modes_help += '  2 = Total duration in each file,\n'
 modes_help += '  3 = Average duration in each file,\n'
 modes_help += '  4 = Median duration in each file,\n'
 modes_help += '  5 = Standard deviation duration in each file.'
+
+# ----------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
 

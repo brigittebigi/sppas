@@ -58,9 +58,11 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas import sg
-from sppas import sppasDirUtils
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
+from sppas.src.wkps import sppasDirUtils
+
+# ---------------------------------------------------------------------------
 
 
 if __name__ == "__main__":

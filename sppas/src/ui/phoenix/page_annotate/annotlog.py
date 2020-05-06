@@ -42,7 +42,7 @@ from sppas import msg
 from sppas import u
 from sppas.src.annotations import sppasAnnotationsManager
 
-from sppas.src.ui.logs import sppasLogFile
+from sppas.src.config.logs import sppasLogFile
 
 from ..windows import sppasScrolledPanel
 from ..windows import BitmapTextButton
@@ -91,7 +91,7 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
             style=wx.BORDER_NONE
         )
         # Manage the report file name of each run
-        self.__log_report = sppasLogFile()
+        self.__log_report = sppasLogFile(pattern="report")
         # The annotation parameters (including the displayed report filename)
         self.__param = param
         # internal use: the currently displayed file name

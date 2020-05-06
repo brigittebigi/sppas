@@ -35,7 +35,7 @@
 
 import unittest
 from sppas.src.ui.term.textprogress import ProcessProgressTerminal
-from sppas.src.config.installer import MacOs, Feature
+from sppas.src.preinstall.installer import MacOs, Feature
 
 # ---------------------------------------------------------------------------
 

@@ -24,7 +24,7 @@
 
         ---------------------------------------------------------------------
 
-    bin.postinstall.py
+    bin.preinstall.py
     ~~~~~~~~~~~~~~~~
 
 :author:       Florian Hocquet
@@ -32,7 +32,9 @@
 :contact:      contact@sppas.org
 :license:      GPL, v3
 :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-:summary:      Launch the installation of features
+:summary:      Launch the installation of external features.
+
+Install these features before launching the SPPAS application to enable them.
 
 """
 
@@ -45,21 +47,26 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas import sg
-from sppas.src.config.support import sppasInstallerDeps
-
 from sppas import sppasLogSetup
-from sppas.src.ui.term.textprogress import ProcessProgressTerminal
-from sppas.src.ui.term.terminalcontroller import TerminalController
-from sppas.src.config.configuration import Configuration
+from sppas import sppasAppConfig
+from sppas.src.preinstall import sppasInstallerDeps
+
+from sppas.src.ui.term import ProcessProgressTerminal
+from sppas.src.ui.term import TerminalController
+
+# ---------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
+    lgs = sppasLogSetup(0)
+    lgs.stream_handler()
 
     # -----------------------------------------------------------------------
     # Fix initial sppasInstallerDeps parameters
     # -----------------------------------------------------------------------
 
     p = ProcessProgressTerminal()
-    cfg = Configuration()
+    cfg = sppasAppConfig()
     installer = sppasInstallerDeps(p)
     feats_ids = installer.get_feat_ids()
     cmd_features = list()
@@ -190,10 +197,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if not args.quiet:
-        log_level = cfg.log_level
+        lgs.set_log_level(cfg.log_level)
     else:
-        log_level = cfg.quiet_log_level
-    lgs = sppasLogSetup(log_level)
+        lgs.set_log_level(cfg.quiet_log_level)
     lgs.stream_handler()
 
     if args.all:

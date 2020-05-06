@@ -42,7 +42,7 @@ from sppas import msg
 from sppas import u
 
 from sppas.src.annotations.param import sppasParam
-from sppas.src.ui.logs import sppasLogFile
+from sppas.src.config.logs import sppasLogFile
 
 from sppas.src.ui.wxgui.cutils.imageutils import spBitmap
 from sppas.src.ui.wxgui.cutils.ctrlutils import CreateGenButton
@@ -293,7 +293,7 @@ class AnnotationsPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.SetupScrolling(scroll_x=True, scroll_y=True)
         self.SetMinSize(wx.Size(MIN_PANEL_W, MIN_PANEL_H))
 
-        self.log_report = sppasLogFile()
+        self.log_report = sppasLogFile(pattern="report")
 
     # -----------------------------------------------------------------------
 

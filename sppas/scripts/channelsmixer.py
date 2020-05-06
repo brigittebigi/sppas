@@ -36,6 +36,7 @@
     ... a script to mix channels from mono audio files in one channel
 
 """
+
 from argparse import ArgumentParser
 import os
 import sys
@@ -46,7 +47,7 @@ sys.path.append(SPPAS)
 
 import sppas.src.audiodata.aio
 from sppas.src.audiodata.channelsmixer import sppasChannelMixer
-from sppas import sppasAudioPCM
+from sppas.src.audiodata import sppasAudioPCM
 
 # ----------------------------------------------------------------------------
 

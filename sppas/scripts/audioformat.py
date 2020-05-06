@@ -36,6 +36,7 @@
     ... a script to reformat audio files.
 
 """
+
 import sys
 import os.path
 from argparse import ArgumentParser

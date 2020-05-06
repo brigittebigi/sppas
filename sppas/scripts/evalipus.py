@@ -126,6 +126,7 @@
             * for end: increase the duration of the ipu
 
 """
+
 import sys
 import codecs
 import os
@@ -137,14 +138,14 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas import sg
-from sppas import sppasRW
-from sppas import sppasTranscription, sppasTier
-from sppas import sppasLocation, sppasInterval
-from sppas import sppasLabel, sppasTag
-import sppas.src.anndata.aio
+from sppas import sppasLogSetup
+from sppas import sppasAppConfig
 
-from sppas.src.ui import sppasLogSetup
-from sppas.src.ui.cfg import sppasAppConfig
+from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasTranscription, sppasTier
+from sppas.src.anndata import sppasLocation, sppasInterval
+from sppas.src.anndata import sppasLabel, sppasTag
+import sppas.src.anndata.aio
 
 
 # ---------------------------------------------------------------------------

@@ -96,6 +96,7 @@ __all__ = (
     'StopWords',
     'sppasStopWords',
     'sppasLexMetric',
+    'sppasReOcc',
     'sppasFindTier',
     'sppasParam',
     'sppasAnnotationsManager'

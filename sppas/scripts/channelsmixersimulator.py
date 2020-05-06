@@ -36,6 +36,7 @@
     ... a script to get the maximum value of a mix between mono audio files.
 
 """
+
 from argparse import ArgumentParser
 import os
 import sys

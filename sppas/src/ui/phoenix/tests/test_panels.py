@@ -37,7 +37,7 @@
 import wx
 import logging
 
-from sppas.src.ui.cfg import sppasAppConfig
+from sppas import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 import sppas.src.ui.phoenix.panels.option as option

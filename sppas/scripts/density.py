@@ -36,6 +36,7 @@
     ... a script to search for phoneme reduction density areas.
 
 """
+
 import sys
 import os
 from argparse import ArgumentParser

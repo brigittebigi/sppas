@@ -36,6 +36,7 @@
     ... a script to detect pronunciation anomalies into a dictionary.
 
 """
+
 import sys
 import os.path
 from argparse import ArgumentParser
@@ -45,7 +46,7 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas.src.config import separators
-from sppas.src.resources.dictpron import sppasDictPron
+from sppas.src.resources import sppasDictPron
 
 # ----------------------------------------------------------------------------
 # Verify and extract args:

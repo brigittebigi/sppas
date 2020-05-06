@@ -38,7 +38,7 @@
 :contact:      contact@sppas.org
 :license:      GPL, v3
 :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
-:summary:      TGA automatic annotation.
+:summary:      TGA automatic annotation, originally by Daffyd Gibbon.
 
 """
 
@@ -52,12 +52,16 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas import sg, annots
-from sppas.src.anndata.aio import extensions_out
-from sppas import sppasTGA
-from sppas import sppasParam
-from sppas import sppasAnnotationsManager
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
+
+from sppas.src.anndata.aio import extensions_out
+from sppas.src.annotations import sppasTGA
+from sppas.src.annotations import sppasParam
+from sppas.src.annotations import sppasAnnotationsManager
+
+# ---------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
 

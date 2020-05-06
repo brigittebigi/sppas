@@ -51,7 +51,6 @@ from sppas.src.resources import *
 from sppas.src.utils import *
 from sppas.src.wkps import *
 from sppas.src.annotations import *
-from sppas.src.ui import sppasLogSetup, sppasAppConfig
 
 __version__ = sg.__version__
 __name__ = sg.__name__

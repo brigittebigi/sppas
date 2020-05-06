@@ -52,14 +52,13 @@ try:
 except ImportError:
     adv_import = False
 
-from sppas.src.config import sg
-
-from sppas.src.ui.cfg import sppasAppConfig
+from sppas import sg
+from sppas import sppasAppConfig
 from .main_settings import WxAppSettings
 from .main_window import sppasMainWindow
 from .tools import sppasSwissKnife
 
-from ..logs import sppasLogSetup
+from sppas.src.config.logs import sppasLogSetup
 
 # ---------------------------------------------------------------------------
 

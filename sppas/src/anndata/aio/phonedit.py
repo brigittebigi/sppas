@@ -114,7 +114,7 @@ class sppasBasePhonedit(sppasBaseIO):
     def _parse(filename):
         """Parse a configuration file.
 
-        :param filename: (string) Configuration file name.
+        :param filename: (string) sppasAppConfig file name.
 
         """
         parser = SafeConfigParser()

@@ -42,6 +42,7 @@
 phonetization tier.
 
 """
+
 import sys
 import os.path
 import logging
@@ -52,15 +53,17 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas import sppasRW
-from sppas import sppasTranscription
-from sppas.src.ui import sppasLogSetup
-from sppas.src.ui.cfg import sppasAppConfig
+from sppas import sppasLogSetup
+from sppas import sppasAppConfig
+
+from sppas.src.anndata import sppasTranscription
 from sppas.src.anndata.aio.aioutils import unalign
-from sppas.src.annotations.searchtier import sppasFindTier
+from sppas.src.annotations import sppasFindTier
 
 # ----------------------------------------------------------------------------
 # Verify and extract args:
 # ----------------------------------------------------------------------------
+
 
 parser = ArgumentParser(usage="{:s} -i file -o file [options]"
                               "".format(os.path.basename(PROGRAM)),

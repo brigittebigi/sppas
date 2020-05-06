@@ -34,7 +34,7 @@
 """
 import unittest
 
-from sppas.src.config.feature import Feature
+from sppas.src.preinstall.feature import Feature
 
 # ---------------------------------------------------------------------------
 

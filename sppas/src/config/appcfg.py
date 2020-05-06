@@ -28,8 +28,8 @@
 
         ---------------------------------------------------------------------
 
-        src.config.configuration.py
-    ~~~~~~~~~~~~~~~~
+    src.config.appcfg.py
+    ~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -37,18 +37,17 @@ import os
 import sys
 import json
 
-from sppas.src.config.sglobal import sppasBaseSettings
-from sppas.src.config.sglobal import sppasGlobalSettings
-from sppas.src.config.support import sppasPathSettings
-
+from .settings import sppasBaseSettings
+from .settings import sppasGlobalSettings
+from .settings import sppasPathSettings
 
 # ---------------------------------------------------------------------------
 
 
-class Configuration(sppasBaseSettings):
-    """Creation Configuration.
+class sppasAppConfig(sppasBaseSettings):
+    """Configuration for any SPPAS Application.
 
-        :author:       Florian Hocquet
+        :author:       Florian Hocquet, Brigitte Bigi
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
         :contact:      contact@sppas.org
         :license:      GPL, v3
@@ -57,14 +56,14 @@ class Configuration(sppasBaseSettings):
     """
 
     def __init__(self):
-        """Create a new Configuration instance.
+        """Create a new sppasAppConfig instance.
 
             The configuration is set to its default values and updated
             with the content of a configuration file (if existing).
             The configuration is saved when this instance is deleted.
 
         """
-        super(Configuration, self).__init__()
+        super(sppasAppConfig, self).__init__()
 
         with sppasGlobalSettings() as sg:
             name = sg.__name__ + " " + sg.__version__
@@ -84,17 +83,27 @@ class Configuration(sppasBaseSettings):
 
     # -----------------------------------------------------------------------
 
+    def set(self, key, value):
+        """Set any member of this config.
+
+        :param key: (str)
+        :param value: (any type)
+
+        """
+        setattr(self, key, value)
+
+    # -----------------------------------------------------------------------
+
     @staticmethod
     def cfg_filename():
         """Return the name of the config file."""
-        cfg_filename = None
         with sppasPathSettings() as paths:
             cfg_filename = os.path.join(paths.basedir, ".deps~")
         return cfg_filename
 
-    # ---------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
-    def get_cfg_exist(self):
+    def cfg_file_exists(self):
         """Return if the config file exists or not."""
         cfg = self.cfg_filename()
         if cfg is None:
@@ -102,30 +111,35 @@ class Configuration(sppasBaseSettings):
 
         return os.path.exists(cfg)
 
-    # -----------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def load(self):
         """Override. Load the configuration from a file."""
-        if self.get_cfg_exist() is True:
+        if self.cfg_file_exists() is True:
             with open(self.cfg_filename()) as cfg:
                 self.__dict__["deps"] = json.load(cfg)
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def save(self):
         """Override. Save the dictionary in a file."""
-        # Admin rights are needed to right in a hidden file.
-        # So it's needed to get the file in a normal mode
-        # to modify it and then hide the file.
+        # Admin rights are needed to write in an hidden file.
+        # So it's needed to switch the file in a normal mode
+        # to modify it and then to hide back the file.
         self.hide_unhide(".deps~", "-")
         with open(self.cfg_filename(), "w") as f:
             f.write(json.dumps(self.__dict__["deps"], indent=2))
         self.hide_unhide(".deps~", "+")
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def hide_unhide(self, filename, operator):
-        """Hide or unhide a file"""
+        """Hide or un-hide a file.
+
+        :param filename: (str)
+        :param operator: ()
+
+        """
         if filename.startswith(".") is False:
             filename = "." + filename
 
@@ -140,15 +154,15 @@ class Configuration(sppasBaseSettings):
             p.close()
         return filename
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
     # Methods related to the list of dependencies for the features.
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def get_deps(self):
         """Return the list of dependency features."""
         return list(self.__dict__["deps"].keys())
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def dep_enabled(self, key):
         """Return True if a dependency is enabled.
@@ -160,12 +174,13 @@ class Configuration(sppasBaseSettings):
             return False
         return self.__dict__["deps"][key]
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def set_dep(self, key, value):
         """Add or update a dependency feature.
 
-        This change is not saved in the configuration file.
+        This change is set to the current dict but is not saved in the
+        configuration file.
 
         :param key: (str) Identifier of a feature
         :param value: (bool) Enabled or disabled
@@ -173,4 +188,3 @@ class Configuration(sppasBaseSettings):
         """
         self.__dict__["deps"][key] = value
 
-    # ---------------------------------------------------------------------------
