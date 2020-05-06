@@ -58,7 +58,7 @@ class sppasListCtrl(wx.ListCtrl):
 
     Known bug of wx.ListCtrl:
 
-    - If the list is defined as a page of a wx.Notebook, under Windows only,
+    - If the list is defined as a page of a wx.Notebook, under WindowsInstaller only,
       DeleteItem() returns the following error message:
       listctrl.cpp(2614) in wxListCtrl::MSWOnNotify(): invalid internal data pointer?
       It does not occur with the use of a simplebook, a choicebook, a listbook or a

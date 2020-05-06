@@ -165,7 +165,7 @@ class sppasTextEntryDialog(sppasDialog):
         """Create a dialog with a text entry.
 
         The dialog has a small title bar which does not appear in the taskbar
-        under Windows or GTK+.
+        under WindowsInstaller or GTK+.
 
         :param parent: (wx.Window)
 

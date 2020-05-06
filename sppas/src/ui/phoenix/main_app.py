@@ -251,7 +251,7 @@ class sppasApp(wx.App):
         This method is invoked when the user:
 
             - clicks on the [X] button of the frame manager
-            - does "ALT-F4" (Windows) or CTRL+X (Unix)
+            - does "ALT-F4" (WindowsInstaller) or CTRL+X (Unix)
             - click on a custom 'exit' button
 
         In case of crash or SIGKILL (or bug!) this method is not invoked.

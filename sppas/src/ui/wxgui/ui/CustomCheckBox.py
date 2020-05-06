@@ -462,7 +462,7 @@ class CustomCheckBox( wx.PyControl ):
         dc.DrawText(label, textXpos, textYpos)
 
         # Let's see if we have keyboard focus and, if this is the case,
-        # we draw a dotted rectangle around the text (Windows behavior,
+        # we draw a dotted rectangle around the text (WindowsInstaller behavior,
         # I don't know on other platforms...)
         if self.HasFocus():
             # Yes, we are focused! So, now, use a transparent brush with

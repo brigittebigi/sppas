@@ -35,7 +35,7 @@
 
 import unittest
 from sppas.src.ui.term.textprogress import ProcessProgressTerminal
-from sppas.src.preinstall.installer import Windows, Feature
+from sppas.src.preinstall.installer import WindowsInstaller, Feature
 
 # ---------------------------------------------------------------------------
 
@@ -47,13 +47,13 @@ class TestInstallerWin(unittest.TestCase):
 
         """
         p = ProcessProgressTerminal()
-        self.__windows = Windows(p)
+        self.__windows = WindowsInstaller(p)
         self.__feature = Feature("feature")
 
     # ---------------------------------------------------------------------------
 
     def test_search_package(self):
-        """Test if the method search_package from the class Windows works well.
+        """Test if the method search_package from the class WindowsInstaller works well.
 
         """
         self.assertTrue(self.__windows.search_package("aaaa"))
@@ -61,7 +61,7 @@ class TestInstallerWin(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_install_package(self):
-        """Test if the method install_package from the class Windows works well.
+        """Test if the method install_package from the class WindowsInstaller works well.
 
         """
         with self.assertRaises(NotImplementedError):
@@ -70,7 +70,7 @@ class TestInstallerWin(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_version_package(self):
-        """Test if the method version_package from the class Windows works well.
+        """Test if the method version_package from the class WindowsInstaller works well.
 
         """
         self.assertTrue(self.__windows._version_package("aaaa", "aaaa"))
@@ -78,7 +78,7 @@ class TestInstallerWin(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_need_update_package(self):
-        """Test if the method need_update_package from the class Windows works well.
+        """Test if the method need_update_package from the class WindowsInstaller works well.
 
         """
         with self.assertRaises(NotImplementedError):
@@ -87,7 +87,7 @@ class TestInstallerWin(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_update_package(self):
-        """Test if the method update_package from the class Windows works well.
+        """Test if the method update_package from the class WindowsInstaller works well.
 
         """
         with self.assertRaises(NotImplementedError):

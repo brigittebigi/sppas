@@ -65,14 +65,14 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     Observed differences:
         - Linux (Gstreamer): about 2-3 ms
         - MacOS (AvPlayer): about 11-13 ms
-        - Windows (Wmp10): to do
+        - WindowsInstaller (Wmp10): to do
 
     Notice that media are not displayed by this panel and it is supposed that
     all the given media are already loaded.
 
     Known problems while playing a media during a given period of time:
 
-     - Under Windows, if a period is given to be played, the sound is played
+     - Under WindowsInstaller, if a period is given to be played, the sound is played
        after the end is reached (about 400ms).
 
     """
@@ -155,7 +155,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         In theory, this range would be as wanted, but some backends have
         serious limitations:
-        - Under Windows, the end offset is not respected. It's continuing to
+        - Under WindowsInstaller, the end offset is not respected. It's continuing to
         play about 400ms after the end offset.
         - Under MacOS, a period less than 1 sec is not played at all and it
         must start at X*1000 ms.
@@ -479,7 +479,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         There's a delay (about 450-500ms) between the moment the timer
         started and the moment the media really starts to play.
 
-        Under Windows:
+        Under WindowsInstaller:
         The media is continuing to play after we requested it to stop
         (about 200ms-300ms).
 
