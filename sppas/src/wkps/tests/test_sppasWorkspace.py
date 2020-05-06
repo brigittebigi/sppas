@@ -38,104 +38,12 @@ import unittest
 import os
 
 import sppas
-from sppas import sppasTypeError, u
 
 
 from ..fileref import sppasAttribute, FileReference
 from ..sppasWorkspace import sppasWorkspace
-from ..filestructure import FileName, FilePath
+from ..filestructure import FileName, FileRoot
 from ..filebase import States
-
-# ---------------------------------------------------------------------------
-
-
-class TestAttribute(unittest.TestCase):
-
-    def setUp(self):
-        self.valint = sppasAttribute('age', '12', 'int', 'speaker\'s age')
-        self.valfloat = sppasAttribute('freq', '0.002', 'float', 'word appearance frequency')
-        self.valbool = sppasAttribute('adult', 'false', 'bool', 'speaker is minor')
-        self.valstr = sppasAttribute('utf', 'Hi everyone !', None, u('первый токен'))
-
-    # ---------------------------------------------------------------------------
-
-    def testInt(self):
-        self.assertTrue(isinstance(self.valint.get_typed_value(), int))
-        self.assertEqual('12', self.valint.get_value())
-
-    # ---------------------------------------------------------------------------
-
-    def testFloat(self):
-        self.assertTrue(isinstance(self.valfloat.get_typed_value(), float))
-        self.assertNotEqual(0.002, self.valfloat.get_value())
-
-    # ---------------------------------------------------------------------------
-
-    def testBool(self):
-        self.assertFalse(self.valbool.get_typed_value())
-
-    # ---------------------------------------------------------------------------
-
-    def testStr(self):
-        self.assertEqual('Hi everyone !', self.valstr.get_typed_value())
-        self.assertEqual('Hi everyone !', self.valstr.get_value())
-
-    # ---------------------------------------------------------------------------
-
-    def testRepr(self):
-        self.assertEqual(u('age, 12, speaker\'s age'), str(self.valint))
-
-    # ---------------------------------------------------------------------------
-
-    def testSetTypeValue(self):
-        with self.assertRaises(sppasTypeError) as error:
-            self.valbool.set_value_type('sppasAttribute')
-
-        self.assertTrue(isinstance(error.exception, sppasTypeError))
-
-    # ---------------------------------------------------------------------------
-
-    def testGetValuetype(self):
-        self.assertEqual('str', self.valstr.get_value_type())
-
-# ---------------------------------------------------------------------------
-
-
-class TestReferences(unittest.TestCase):
-
-    def setUp(self):
-        self.micros = FileReference('microphone')
-        self.att = sppasAttribute('mic1', 'Bird UM1', None, '最初のインタビューで使えていましたマイク')
-        self.micros.append(self.att)
-        self.micros.add('mic2', 'AKG D5')
-
-    # ---------------------------------------------------------------------------
-
-    def testGetItem(self):
-        self.assertEqual(u('最初のインタビューで使えていましたマイク'),
-                         self.micros.att('mic1').get_description())
-
-    # ---------------------------------------------------------------------------
-
-    def testsppasAttribute(self):
-        self.assertFalse(isinstance(self.micros.att('mic2').get_typed_value(), int))
-
-    # ---------------------------------------------------------------------------
-
-    def testAddKey(self):
-        with self.assertRaises(ValueError) as AsciiError:
-            self.micros.add('i', 'Blue Yeti')
-
-        self.assertTrue(isinstance(AsciiError.exception, ValueError))
-
-    # ---------------------------------------------------------------------------
-
-    def testPopKey(self):
-        self.micros.pop('mic1')
-        self.assertEqual(1, len(self.micros))
-        self.micros.append(self.att)
-        self.micros.pop(self.att)
-        self.assertEqual(1, len(self.micros))
 
 # ----------------------------------------------------------------------------
 
@@ -178,6 +86,44 @@ class TestWorkspace(unittest.TestCase):
         self.assertEqual(States().CHECKED, self.data[1].state)
         self.assertEqual(States().CHECKED, self.data[2].state)
         self.assertEqual(States().CHECKED, self.data[3].state)
+
+    # ---------------------------------------------------------------------------
+
+    def test_wrong_way_to_set_state(self):
+        """This is exactly what We WILL NEVER DO."""
+        wkp = sppasWorkspace()
+        wkp.add_file(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        for fp in wkp:
+            for fr in fp:
+                for fn in fr:
+                    fn.set_state(States().CHECKED)
+                    self.assertEqual(fn.state, States().CHECKED)
+                    fn.set_state(States().UNUSED)
+                    self.assertEqual(fn.state, States().UNUSED)
+                    # but... file is existing
+                    fn.set_state(States().MISSING)
+                    self.assertNotEqual(fn.state, States().MISSING)
+                    fn.set_state(States().CHECKED)
+                    self.assertEqual(fn.state, States().CHECKED)
+        # ... BUT fp and fr were not updated! So our workspace is CORRUPTED.
+        # WE EXPECT STATE OF FR AND FN TO BE **checked** AND THEY ARE NOT:
+        for fp in wkp:
+            self.assertEqual(fp.state, States().UNUSED)
+            for fr in fp:
+                self.assertEqual(fr.state, States().UNUSED)
+
+    # ---------------------------------------------------------------------------
+
+    def test_right_way_to_set_state(self):
+        # USE THIS INSTEAD:
+        wkp = sppasWorkspace()
+        wkp.add_file(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        fn = wkp.get_object(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
+        wkp.set_object_state(States().CHECKED, fn)
+        for fp in wkp:
+            self.assertEqual(fp.state, States().CHECKED)
+            for fr in fp:
+                self.assertEqual(fr.state, States().CHECKED)
 
     # ---------------------------------------------------------------------------
 
@@ -250,3 +196,13 @@ class TestWorkspace(unittest.TestCase):
         for fp in self.data:
             for fr in fp:
                 self.assertEqual(0, len(fr.get_references()))
+
+    # ---------------------------------------------------------------------------
+
+    def test_get_parent(self):
+        filename = os.path.join(sppas.paths.samples, 'samples-fra', 'AC track_0379.PitchTier')
+        fr = self.data.get_object(FileRoot.root(filename))
+        self.assertIsNotNone(fr)
+        fn = self.data.get_object(filename)
+        self.assertIsNotNone(fn)
+        self.assertEqual(fr, self.data.get_parent(fn))

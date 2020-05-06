@@ -333,23 +333,6 @@ class sppasWorkspace(object):
 
     # -----------------------------------------------------------------------
 
-    def get_files(self, value=States().CHECKED):
-        """Return the list of file names of the given state.
-
-        :param value: (bool) Toggle state
-        :returns: (list of str)
-
-        """
-        checked = list()
-        for fp in self.__files:
-            for fr in fp:
-                for fn in fr:
-                    if fn.get_state() == value:
-                        checked.append(fn.id)
-        return checked
-
-    # -----------------------------------------------------------------------
-
     def get_all_files(self):
         """Return all the files.
 
@@ -375,14 +358,9 @@ class sppasWorkspace(object):
                 return ref
 
         for fp in self.__files:
-            if fp.id == identifier:
-                return fp
-            for fr in fp:
-                if fr.id == identifier:
-                    return fr
-                for fn in fr:
-                    if fn.id == identifier:
-                        return fn
+            obj = fp.get_object(identifier)
+            if obj is not None:
+                return obj
 
         return None
 
@@ -427,7 +405,7 @@ class sppasWorkspace(object):
                     # test if file_obj is a root or name in this fp
                     cur_obj = fp.get_object(file_obj.id)
                     if cur_obj is not None:
-                        # this object is one of this fp
+                        # this object is a child of this fp
                         m = fp.set_object_state(state, file_obj)
                         if len(m) > 0:
                             modified.extend(m)
@@ -580,7 +558,8 @@ class sppasWorkspace(object):
         """
         if isinstance(filebase, FileName):
             fr = FileRoot(filebase.id)
-            return self.get_object(fr.id)
+            root = self.get_object(fr.id)
+            return root
 
         if isinstance(filebase, FileRoot):
             fp = FilePath(os.path.dirname(filebase.id))

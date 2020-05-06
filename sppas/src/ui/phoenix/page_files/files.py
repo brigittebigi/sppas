@@ -239,7 +239,6 @@ class sppasFilesPanel(sppasPanel):
         # Send the data to the parent
         pm = self.GetParent()
         if pm is not None and emitted is not pm:
-            data.set_state(States().CHECKED)
             evt = DataChangedEvent(data=data)
             evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)

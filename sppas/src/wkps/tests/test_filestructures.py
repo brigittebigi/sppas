@@ -48,6 +48,10 @@ from sppas.src.wkps.wkpexc import FileOSError, PathTypeError
 
 # ---------------------------------------------------------------------------
 
+DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+
+# ---------------------------------------------------------------------------
+
 
 class TestFileBase(unittest.TestCase):
 
@@ -95,27 +99,30 @@ class TestFileName(unittest.TestCase):
 
     # ----------------------------------------------------------------------------
 
-    def test_set_state(self):
-        wkp = sppasWorkspace()
-        wkp.add_file(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
-        for fp in wkp:
-            for fr in fp:
-                for fn in fr:
-                    fn.set_state(States().CHECKED)
-                    self.assertEqual(fn.state, States().CHECKED)
-                    fn.set_state(States().UNUSED)
-                    self.assertEqual(fn.state, States().UNUSED)
-                    # but... file is existing
-                    fn.set_state(States().MISSING)
-                    self.assertNotEqual(fn.state, States().MISSING)
-
-    # ----------------------------------------------------------------------------
-
-    def test_update_proprieties(self):
+    def test_update_properties(self):
+        # Properties were not changed
         fn = FileName(os.path.join(sppas.paths.samples, "samples-pol", "0001.txt"))
-        self.assertTrue(fn.update_properties())
+        self.assertFalse(fn.update_properties())
         fn = FileName("toto")
         self.assertFalse(fn.update_properties())
+
+        # Create a filename of a missing file, then create the file
+        test_file = os.path.join(DATA, "testfile.txt")
+        if os.path.exists(test_file):
+            os.remove(test_file)
+        fn = FileName(test_file)
+        self.assertEqual(fn.state, States().MISSING)
+        with open(test_file, "w") as f:
+            f.write("this is a file to test filename update properties.")
+
+        # File is not missing anymore: it exists
+        self.assertTrue(fn.update_properties())
+        self.assertEqual(fn.state, States().UNUSED)
+        os.remove(test_file)
+
+        # File is now missing (again)
+        self.assertTrue(fn.update_properties())
+        self.assertEqual(fn.state, States().MISSING)
 
 # --------------------------------------------------------------------------------
 
@@ -252,6 +259,31 @@ class TestFileRoot(unittest.TestCase):
         self.assertEqual(len(fns), 1)
         for f in fr:
             self.assertEqual(f, fn)
+
+    # -----------------------------------------------------------------------
+
+    def test_get_object(self):
+        # create our data structure to prepare our tests
+        s = States()
+        fr = FileRoot(os.path.join(sppas.paths.samples, "samples-pol", "0001"))
+        fn1 = FileName(os.path.join(sppas.paths.samples, "samples-pol", "0001.txt"))
+        self.assertEqual(fn1.state, s.UNUSED)
+        fn2 = FileName(os.path.join(sppas.paths.samples, "samples-pol", "0001.wav"))
+        self.assertEqual(fn2.state, s.UNUSED)
+        fn3 = FileName(os.path.join(sppas.paths.samples, "samples-pol", "0001.missing"))
+        self.assertEqual(fn3.state, s.MISSING)
+        fns = fr.append(fn1)
+        self.assertEqual(len(fns), 1)
+        fns = fr.append(fn2)
+        self.assertEqual(len(fns), 1)
+        fns = fr.append(fn3)
+        self.assertEqual(len(fns), 1)
+        self.assertEqual(len(fr), 3)
+
+        # get object
+        self.assertEqual(fr.get_object(os.path.join(sppas.paths.samples, "samples-pol", "0001.txt")), fn1)
+        self.assertEqual(fr.get_object(os.path.join(sppas.paths.samples, "samples-pol", "0001.wav")), fn2)
+        self.assertEqual(fr.get_object(os.path.join(sppas.paths.samples, "samples-pol", "0001.missing")), fn3)
 
 # ---------------------------------------------------------------------------
 
@@ -445,10 +477,6 @@ class TestFilePath(unittest.TestCase):
         # Can add any FileName instance. It's state is MISSING.
         fn = FileName(os.path.join(missing_directory, "toto.wav"))
         fp.append(fn)
-
-        print(fn.id)
-        print(fp.id)
-
         for fr in fp:
             self.assertEqual(States().MISSING, fr.get_state())
             for fn in fr:
@@ -494,9 +522,37 @@ class TestFilePath(unittest.TestCase):
             fr.set_state(States().UNUSED)
         self.assertFalse(fp.update_state())
 
+    # -----------------------------------------------------------------------
 
+    def test_get_object(self):
+        # create our data structure to prepare our tests
+        fp = FilePath(os.path.join(sppas.paths.samples, "samples-pol"))
+        fp.append(os.path.join(sppas.paths.samples, "samples-pol", "0001.txt"))
+        fp.append(os.path.join(sppas.paths.samples, "samples-pol", "0001.wav"))
+        fn = FileName(os.path.join(sppas.paths.samples, "samples-pol", "0001.missing"))
+        fp.append(fn)
+        self.assertEqual(len(fp), 1)
 
+        fr = fp[0]
 
+        # get object
+        self.assertEqual(fp.get_object(os.path.join(sppas.paths.samples, "samples-pol", "0001.txt")), fr[0])
+        self.assertEqual(fp.get_object(os.path.join(sppas.paths.samples, "samples-pol", "0001.wav")), fr[1])
+        self.assertEqual(fp.get_object(os.path.join(sppas.paths.samples, "samples-pol", "0001.missing")), fn)
 
+        # create the file that was missing
+        with open(os.path.join(sppas.paths.samples, "samples-pol", "0001.missing"), "w") as f:
+            f.write('this file is used to test SPPAS workspaces.')
 
+        fp.set_object_state(States().CHECKED, fn)
+        self.assertEqual(fn.state, States().CHECKED)
+        self.assertEqual(fp.get_object(os.path.join(sppas.paths.samples, "samples-pol", "0001.missing")), fn)
+
+        # delete the file of the disk
+        os.remove(os.path.join(sppas.paths.samples, "samples-pol", "0001.missing"))
+        self.assertEqual(fp.get_object(os.path.join(sppas.paths.samples, "samples-pol", "0001.missing")), fn)
+
+        fp.set_object_state(States().CHECKED, fn)
+        self.assertEqual(fn.state, States().MISSING)
+        self.assertEqual(fp.get_object(os.path.join(sppas.paths.samples, "samples-pol", "0001.missing")), fn)
 

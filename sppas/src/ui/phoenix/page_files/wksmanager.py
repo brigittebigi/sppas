@@ -301,7 +301,6 @@ class WorkspacesManager(sppasPanel):
             # Load the data of the workspace from its file
             d = wkpslist.load_data()
             self.__data = d
-            self.__data.set_state(States().UNUSED)
             # the parent has to be informed of this change of content
             self.notify()
 
@@ -421,7 +420,6 @@ class WorkspacesManager(sppasPanel):
             wkp_name = wkps.get_wkp_name()
 
         try:
-            self.__data.set_state(States().UNUSED)
             wkps.save(self.__data)
             self.notify()
         except Exception as e:

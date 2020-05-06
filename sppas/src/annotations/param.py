@@ -398,6 +398,10 @@ class sppasParam(object):
                     if objs is not None:
                         for obj in objs:
                             self._workspace.set_object_state(States().CHECKED, obj)
+                    # if the file was already in the list, it was not "added",
+                    # so it was not in the returned list of objs.
+                    obj = self._workspace.get_object(files)
+                    self._workspace.set_object_state(States().CHECKED, obj)
 
                 elif os.path.isdir(files):
                     for f in os.listdir(files):
