@@ -253,11 +253,15 @@ class sppasWJSON(sppasBaseWkpIO):
         :returns: (dict) a dictionary that can be serialized
 
         """
-        dict_files = dict()
-        dict_files["id"] = fn.get_id().split(os.sep)[-1]
-        dict_files["state"] = fn.get_state()
+        dict_file = dict()
+        dict_file["id"] = fn.get_id().split(os.sep)[-1]
+        dict_file["state"] = fn.get_state()
 
-        return dict_files
+        # subjoined data are simply added as-it
+        if fn.subjoined is not None:
+            dict_file['subjoin'] = fn.subjoined
+
+        return dict_file
 
     # -----------------------------------------------------------------------
 
@@ -282,8 +286,8 @@ class sppasWJSON(sppasBaseWkpIO):
                 self._parse_path(dict_path)
 
         if 'catalogue' in d:
-            for dictref in d['catalogue']:
-                self._parse_ref(dictref)
+            for dict_ref in d['catalogue']:
+                self._parse_ref(dict_ref)
 
         return self.id
 
@@ -329,7 +333,6 @@ class sppasWJSON(sppasBaseWkpIO):
         if 'id' not in d:
             raise KeyError("path 'id' is missing of the dictionary to parse.")
 
-        missing = False
         path = d["id"]
         # check if the entry path exists
         if os.path.exists(d["id"]) is False:
@@ -403,6 +406,9 @@ class sppasWJSON(sppasBaseWkpIO):
             fn.set_state(States().CHECKED)
         else:
             fn.set_state(States().UNUSED)
+
+        # append subjoined dict "as it"
+        fn.subjoined = d.get('subjoin', None)
 
         return fn
 
