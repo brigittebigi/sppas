@@ -35,6 +35,7 @@
 import logging
 
 from sppas import error
+from sppas.src.utils.makeunicode import u
 from sppas.src.config.process import Process, search_cmd
 from sppas.src.config import info
 from .features import Features
@@ -86,9 +87,14 @@ class Installer(object):
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
         It will browse the Features() to install, according to the OS of
-        the computer. The installation is launched with:
+        the computer. Must be sub-classed to create the appropriate Features().
+        Then, the installation is launched with:
 
-        >>> Installer().install()
+        >>> class SubInstaller(Installer):
+        >>>     def __init__(self):
+        >>>         super(SubInstaller, self).__init__()
+        >>>         self._features = Features(req="", cmdos="")
+        >>> SubInstaller().install()
 
     """
 
@@ -96,7 +102,10 @@ class Installer(object):
         """Create a new Installer instance. """
         self.__pbar = None
         self.__progression = 0
-        self._features = Features(req="", cmdos="")
+        self._features = None
+        self.__python = "python3"
+        if search_cmd(self.__python + " --version") is False:
+            self.__python = "python"
 
     # ------------------------------------------------------------------------
     # Public methods
@@ -175,6 +184,12 @@ class Installer(object):
                     self._features.enable(fid, False)
                     self.__pupdate(self.__eval_percent(fid), self.__message("install_failed", fid))
                     errors.append(str(e))
+                    logging.error(str(e))
+                except NotImplementedError:
+                    self._features.enable(fid, False)
+                    self.__pupdate(self.__eval_percent(fid), self.__message("install_failed", fid))
+                    errors.append(str(e))
+                    logging.error(str(e))
 
         self._features.update_config()
         return errors
@@ -245,11 +260,11 @@ class Installer(object):
         """
         for package, version in self._features.pypi(fid).items():
             if package != "nil":
-                if Installer.__search_pypi(package) is False:
-                    Installer.__install_pypi(package)
+                if self.__search_pypi(package) is False:
+                    self.__install_pypi(package)
 
-                elif Installer.__version_pypi(package, version) is False:
-                    Installer.__update_pypi(package)
+                elif self.__version_pypi(package, version) is False:
+                    self.__update_pypi(package)
 
                 if self.__pbar:
                     self.__pbar.update(self.__get_set_progress(self.__eval_percent(fid)), package)
@@ -264,7 +279,6 @@ class Installer(object):
         :param package: (str) The system package to search.
 
         """
-        package = str(package)
         raise NotImplementedError
 
     # ------------------------------------------------------------------------
@@ -276,7 +290,6 @@ class Installer(object):
         :returns: False or None
 
         """
-        package = str(package)
         raise NotImplementedError
 
     # ------------------------------------------------------------------------
@@ -288,8 +301,6 @@ class Installer(object):
         :param req_version: (str) The minimum version required.
 
         """
-        package = str(package)
-        req_version = str(req_version)
         raise NotImplementedError
 
     # ------------------------------------------------------------------------
@@ -302,8 +313,6 @@ class Installer(object):
         :param req_version: (str) The minimum version required.
 
         """
-        stdout_show = str(stdout_show)
-        req_version = str(req_version)
         raise NotImplementedError
 
     # ------------------------------------------------------------------------
@@ -315,7 +324,6 @@ class Installer(object):
         :returns: False or None
 
         """
-        package = str(package)
         raise NotImplementedError
 
     # ------------------------------------------------------------------------
@@ -331,10 +339,10 @@ class Installer(object):
     def __pupdate(self, value, text):
         if self.__pbar is not None:
             self.__pbar.update(value, text)
-        logging.info("  ==> {text} ({percent}%)".format(text=text, percent=value))
+        logging.info("  ==> {text} ({percent}%)".format(text=text, percent=(int(value*100.))))
 
     def __message(self, mid, fid):
-        (MESSAGES[mid]).format(name=self._features.description(fid))
+        return MESSAGES[mid].format(name=fid)
 
     # ------------------------------------------------------------------------
 
@@ -371,15 +379,14 @@ class Installer(object):
 
     # ------------------------------------------------------------------------
 
-    @staticmethod
-    def __search_pypi(package):
+    def __search_pypi(self, package):
         """Return True if given Pypi package is already installed.
 
         :param package: (str) The pip package to search.
 
         """
         try:
-            command = "pip3 show " + package
+            command = self.__python + " -m pip show " + package
             process = Process()
             process.run_popen(command)
             err = process.error()
@@ -399,8 +406,7 @@ class Installer(object):
 
     # ------------------------------------------------------------------------
 
-    @staticmethod
-    def __install_pypi(package):
+    def __install_pypi(self, package):
         """Install a Python Pypi package.
 
         :param package: (str) The pip package to install
@@ -408,7 +414,7 @@ class Installer(object):
 
         """
         try:
-            command = "pip3 install " + package + " --no-warn-script-location"
+            command = self.__python + " -m pip install " + package + " --no-warn-script-location"
             process = Process()
             process.run_popen(command)
             err = process.error()
@@ -418,13 +424,12 @@ class Installer(object):
         except Exception as e:
             raise InstallationError(str(e))
 
-        if len(err) > 0:
+        if len(err) > 3:
             raise InstallationError(err)
 
     # ------------------------------------------------------------------------
 
-    @staticmethod
-    def __version_pypi(package, req_version):
+    def __version_pypi(self, package, req_version):
         """Returns True if package is up to date.
 
         :param package: (str) The pip package to search.
@@ -432,11 +437,11 @@ class Installer(object):
 
         """
         try:
-            command = "pip3 show " + package
+            command = self.__python + " -m pip show " + package
             process = Process()
             process.run_popen(command)
             err = process.error()
-            if len(err) > 0:
+            if len(err) > 3:
                 return False
             stdout = process.out()
             return not Installer.__need_update_pypi(stdout, req_version)
@@ -486,8 +491,7 @@ class Installer(object):
 
     # ------------------------------------------------------------------------
 
-    @staticmethod
-    def __update_pypi(package):
+    def __update_pypi(self, package):
         """Update package.
 
         :param package: (str) The pip package to update.
@@ -495,20 +499,29 @@ class Installer(object):
 
         """
         try:
-            command = "pip3 install -U " + package
+            command = self.__python + " -m " + package
             process = Process()
             process.run_popen(command)
-            err = process.error()
-        except Exception as e:
-            raise InstallationError(str(e))
+        except Exception as e1:
+            try:
+                # Deprecated:
+                command = "pip3 install -U " + package
+                process = Process()
+                process.run_popen(command)
+            except Exception as e2:
+                raise InstallationError(str(e2))
 
-        if len(err) > 0:
+        err = u(process.error().strip())
+        stdout = u(process.out())
+        if len(stdout) > 3:
+            logging.info(stdout)
+        if len(err) > 3:
             raise InstallationError(err)
 
 # ----------------------------------------------------------------------------
 
 
-class DebInstaller(Installer):
+class DebianInstaller(Installer):
     """An installer for Debian-based package manager systems.
 
         :author:       Florian Hocquet
@@ -517,15 +530,15 @@ class DebInstaller(Installer):
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-        This DebInstaller(Installer) is made for the Debians distributions of Linux,
+        This DebianInstaller(Installer) is made for the apt package installer,
         like Debian, Ubuntu or Mint.
 
     """
 
     def __init__(self):
-        """Create a new DebInstaller instance."""
-        super(DebInstaller, self).__init__()
-        self._features = Features("req_deb", "cmd_deb")
+        """Create a new DebianInstaller instance."""
+        super(DebianInstaller, self).__init__()
+        self._features = Features(req="req_deb", cmdos="cmd_deb")
 
     # -----------------------------------------------------------------------
 
@@ -535,6 +548,17 @@ class DebInstaller(Installer):
         :param package: (str) The system package to search.
 
         """
+        try:
+            command = "dpkg -s " + package
+            process = Process()
+            process.run_popen(command)
+        except Exception as e:
+            raise InstallationError(str(e))
+
+        err = process.error()
+        if len(err) > 3:
+            return False
+
         return True
 
     # -----------------------------------------------------------------------
@@ -546,7 +570,20 @@ class DebInstaller(Installer):
         :returns: False or None
 
         """
-        raise NotImplementedError
+        try:
+            command = "apt install " + package
+            process = Process()
+            process.run_popen(command)
+        except Exception as e:
+            raise InstallationError(str(e))
+
+        stdout = process.out()
+        if len(stdout) > 3:
+            logging.info(stdout)
+
+        err = process.error()
+        if len(err) > 3 and "WARNING" not in err:
+            raise InstallationError(err)
 
     # -----------------------------------------------------------------------
 
@@ -688,7 +725,7 @@ class DnfInstaller(Installer):
         :param package: (str) The system package to search.
 
         """
-        return True
+        raise NotImplementedError
 
     # ------------------------------------------------------------------------
 

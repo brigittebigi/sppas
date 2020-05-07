@@ -36,10 +36,11 @@
 
 import os
 import shlex
+import logging
 from subprocess import call, Popen, PIPE, STDOUT
 
-
 # ------------------------------------------------------------------------
+
 
 def search_cmd(command):
     """Return True if the command is installed on a PC.
@@ -110,6 +111,7 @@ class Process(object):
         :returns: Process output message
 
         """
+        logging.info("Process command: {}".format(command))
         command = command.strip()
         command_args = shlex.split(command)
         self.__process = Popen(command_args, stdout=PIPE, stderr=PIPE)  #, text=True)

@@ -60,7 +60,7 @@ msgid ":INFO 530: "
 msgstr "Install of '{name}' is disabled."
 
 msgid ":INFO 540: "
-msgstr "'{name}' installation successful"
+msgstr "'{name}' is installed."
 
 msgid ":INFO 550: "
 msgstr "Installation of '{name}' failed"

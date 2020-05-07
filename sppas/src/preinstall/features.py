@@ -58,11 +58,14 @@ class Features(object):
 
     """
 
-    def __init__(self, req, cmdos):
+    def __init__(self, req="", cmdos=""):
         """Create a new Feature instance.
 
             A Features instance is a container for a list of features.
             It parses a '.ini' file to get each feature config.
+
+        :param req: (str)
+        :param cmdos: (str)
 
         """
         self.__req = req

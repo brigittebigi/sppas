@@ -59,7 +59,7 @@ from sppas.src.ui.term import TerminalController
 # ---------------------------------------------------------------------------
 
 EXIT_DELAY = 2
-EXIT_STATUS = 1
+EXIT_STATUS = 1   # Status for an exit with errors.
 
 
 def exit_error(msg="Unknown."):
@@ -188,6 +188,21 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    arguments = vars(args)
+    arguments_true = list()
+    for a in arguments:
+        if arguments[a] is True:
+            arguments_true.append(a)
+
+    if args.quiet and len(arguments_true) == 1:
+        parser.print_usage()
+        exit_error("{:s}: error: argument --quiet: not allowed alone."
+                   "".format(os.path.basename(PROGRAM)))
+
+    if not args.quiet:
+        p = ProcessProgressTerminal()
+        installer.set_progress(p)
+
     # Fix user communication way
     # -------------------------------
 
@@ -209,53 +224,23 @@ if __name__ == "__main__":
             print(sg.__url__ + '\n')
             print('{:s}\n'.format(sep))
 
-    # ------------------------------
-    # Installation is running here:
-    # ------------------------------
-
-    arguments = vars(args)
-    arguments_true = list()
-    for a in arguments:
-        if arguments[a] is True:
-            arguments_true.append(a)
-
-    if args.quiet and len(arguments_true) == 1:
-        parser.print_usage()
-        exit_error("{:s}: error: argument --quiet: not allowed alone."
-                   "".format(os.path.basename(PROGRAM)))
-
-    # Redirect all messages to a logging
-    # ----------------------------------
-    if not args.quiet:
-        p = ProcessProgressTerminal()
-        installer.set_progress(p)
-
     # enable all available features
     if args.all:
-        # Because when the verification of the config file
-        # is done during the instantiation of the Installer
-        # but the modification by the user and the update
-        # of the config file is done after the instantiation
-        # of the Installer so the modification of the enable
-        # with -a etc... will modify the Features object
-        # and then the config file.
-        if cfg.cfg_file_exists() is False:
-            for fid in installer.features_ids():
-                installer.enable(fid, True)
+        for fid in installer.features_ids():
+            installer.enable(fid, True)
 
-    else:
-        # Set the values of enable individually for each feature
-        for a in arguments_true:
-            if a in cmd_features:
-                if a.startswith("no") is False:
-                    fid = search_feature(a)
-                    if installer.available(fid) is True:
-                        installer.enable(fid, True)
-                else:
-                    a = a.replace("no", "")
-                    fid = search_feature(a)
-                    if installer.available(fid) is False:
-                        installer.enable(fid, False)
+    # Set the values of enable individually for each feature
+    for a in arguments_true:
+        if a in cmd_features:
+            if a.startswith("no") is False:
+                fid = search_feature(a)
+                if installer.available(fid) is True:
+                    installer.enable(fid, True)
+            else:
+                a = a.replace("no", "")
+                fid = search_feature(a)
+                if installer.available(fid) is False:
+                    installer.enable(fid, False)
 
     # process the installation
     errors = installer.install()
@@ -279,3 +264,5 @@ if __name__ == "__main__":
         msg += "\nThe installation process terminated with errors:"
         msg += "\n".join(errors)
         exit_error(msg)
+
+sys.exit(0)

@@ -36,7 +36,7 @@ import unittest
 import sys
 
 from sppas.src.preinstall.depsinstall import sppasInstallerDeps
-from sppas.src.preinstall.installer import DebInstaller, WindowsInstaller, DnfInstaller, RpmInstaller, MacOsInstaller
+from sppas.src.preinstall.installer import DebianInstaller, WindowsInstaller, DnfInstaller, RpmInstaller, MacOsInstaller
 
 # ---------------------------------------------------------------------------
 
@@ -76,7 +76,7 @@ class TestInstallerDeps(unittest.TestCase):
 
         elif sys.platform == "linux":
             y = self.__installer_deps.os()
-            self.assertIn(y, [DebInstaller, DnfInstaller, RpmInstaller])
+            self.assertIn(y, [DebianInstaller, DnfInstaller, RpmInstaller])
 
         elif sys.platform == "darwin":
             y = self.__installer_deps.os()

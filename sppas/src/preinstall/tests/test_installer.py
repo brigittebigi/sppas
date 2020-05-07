@@ -35,8 +35,19 @@
 
 import unittest
 
+from sppas import sppasLogSetup
+from sppas.src.preinstall.features import Features
 from sppas.src.preinstall.installer import Installer
 from sppas.src.preinstall.installer import InstallationError
+
+# ---------------------------------------------------------------------------
+
+
+class InstallerTest(Installer):
+    """Manage the installation of external required or optional features. """
+    def __init__(self):
+        super(InstallerTest, self).__init__()
+        self._features = Features(req="", cmdos="")
 
 # ---------------------------------------------------------------------------
 
@@ -44,13 +55,14 @@ from sppas.src.preinstall.installer import InstallationError
 class TestInstaller(unittest.TestCase):
 
     def setUp(self):
-        """Initialisation."""
-        self.__installer = Installer(progress=None)
+        lgs = sppasLogSetup(0)
+        lgs.stream_handler()
+        self.__installer = InstallerTest()
 
     # ---------------------------------------------------------------------------
 
     def test_get_feat_ids(self):
-        """Return the list of feature identifiers."""
+        # Return the list of feature identifiers.
         y = self.__installer.get_fids()
         self.assertEqual(len(y), 3)
         self.assertTrue("wxpython" in y)
@@ -116,7 +128,10 @@ class TestInstaller(unittest.TestCase):
     def test_install_pypis(self):
         # Manage the installation of pip packages.
         with self.assertRaises(InstallationError):
-            self.__installer._Installer__install_pypis(4)
+            self.__installer._Installer__install_pypi("wxpythonnnn")
+
+        # Wont raise exception and wont return error message
+        self.__installer._Installer__install_pypi("pip")
 
     # ---------------------------------------------------------------------------
 
@@ -125,14 +140,6 @@ class TestInstaller(unittest.TestCase):
         self.assertFalse(self.__installer._Installer__search_pypi("wxpythonnnnnn"))
         with self.assertRaises(InstallationError):
             self.assertFalse(self.__installer._Installer__search_pypi(4))
-
-    # ---------------------------------------------------------------------------
-
-    def test_install_pypi(self):
-        with self.assertRaises(InstallationError):
-            self.__installer._Installer__install_pypi("wxpythonnnn")
-        with self.assertRaises(InstallationError):
-            self.__installer._Installer__install_pypi(4)
 
     # ---------------------------------------------------------------------------
 
@@ -190,7 +197,7 @@ class TestInstaller(unittest.TestCase):
         with self.assertRaises(InstallationError):
             self.assertFalse(self.__installer._Installer__update_pypi(4))
 
-        self.__installer._Installer__update_pypi("wxpython")
+        self.__installer._Installer__update_pypi("pip")
 
     # ---------------------------------------------------------------------------
 

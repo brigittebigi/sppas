@@ -38,7 +38,7 @@ import sys
 import os
 import logging
 
-from .installer import DebInstaller, DnfInstaller, RpmInstaller, WindowsInstaller, MacOsInstaller
+from .installer import DebianInstaller, DnfInstaller, RpmInstaller, WindowsInstaller, MacOsInstaller
 
 # ---------------------------------------------------------------------------
 
@@ -82,9 +82,9 @@ class sppasInstallerDeps(object):
 
     LIST_OS = {
         "linux": {
-            "ubuntu": DebInstaller,
-            "mint": DebInstaller,
-            "debian": DebInstaller,
+            "ubuntu": DebianInstaller,
+            "mint": DebianInstaller,
+            "debian": DebianInstaller,
             "fedora": DnfInstaller,
             "suse": RpmInstaller
         },
@@ -103,6 +103,7 @@ class sppasInstallerDeps(object):
         self.__os = None
         self.__set_os()
         self.__installer = self.os()()
+        logging.info("System installer: {}".format(self.__installer.__class__.__name__))
         if progress is not None:
             self.__installer.set_progress(progress)
 
