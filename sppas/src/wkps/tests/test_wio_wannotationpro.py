@@ -38,7 +38,7 @@ import unittest
 import xml.etree.cElementTree as ET
 
 from sppas.src.wkps.wio.wannotationpro import sppasWANT
-from sppas.src.wkps.filestructure import FilePath
+from sppas.src.wkps.filestructure import FileName
 
 # ---------------------------------------------------------------------------
 
@@ -63,38 +63,102 @@ class TestsppasWANT(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_read(self):
-        fp = FilePath(os.path.dirname("AnnotProWkp.antw"))
-        self.antw.read("./AnnotProWkp.antw")
+        self.antw.read("./apWkp.antw")
 
-        # AnnotProWkp contains theses informations
-        sub = {"{http://tempuri.org/WorkspaceDataSet.xsd}IdGroup": "00000000-0000-0000-0000-000000000000",
-               "{http://tempuri.org/WorkspaceDataSet.xsd}Name": "annprowkp.ant",
-               "{http://tempuri.org/WorkspaceDataSet.xsd}OpenCount": "0",
-               "{http://tempuri.org/WorkspaceDataSet.xsd}EditCount": "4",
-               "{http://tempuri.org/WorkspaceDataSet.xsd}ListenCount": "5",
-               "{http://tempuri.org/WorkspaceDataSet.xsd}Accepted": "false"}
+        # apWkp.antw contains two files
+        fname1 = FileName(os.path.abspath("annprowkp.ant"))
+        fname2 = FileName(os.path.abspath("annprowkp1.ant"))
 
-        identifier = "b1b36c56-652c-4390-81ce-8eabd4b0260f"
-
-        # read fill the sppasWANT instance with the filepath
-        self.assertTrue(fp in self.antw.get_all_files())
-
-        # verify the id of the workspace
-        self.assertEqual(self.antw.get_id(), identifier)
-
-        # fp.subjoined contains the right files
         for fp in self.antw.get_all_files():
-            self.assertEqual(fp.subjoined, sub)
+            for fr in fp:
+                for fn in fr:
+                    self.assertTrue(fn in [fname1, fname2])
+                    # subjoined must contain the 7 nodes of a annotation pro workspace
+                    self.assertEqual(len(fn.subjoined), 7)
 
     # -----------------------------------------------------------------------
 
     def test_write(self):
-        fp = self.antw.read("./apWkp.antw")
+        fn = self.antw.read("./apWkp.antw")
         self.antw.write("./testapro.antw")
-        fpath = self.antw.read("./testapro.antw")
-        self.assertEqual(fp, fpath)
+        fname = self.antw.read("./testapro.antw")
+        self.assertEqual(fn, fname)
 
     # -----------------------------------------------------------------------
+
+    def test_serialize(self):
+        fn = FileName(os.path.abspath("annprowkp.ant"))
+
+        # dictionary with information that an annotation pro workspace could contain
+        sub = {
+            "{http://tempuri.org/WorkspaceDataSet.xsd}Id": "b1b36c56-652c-4390-81ce-8eabd4b0260f",
+            "{http://tempuri.org/WorkspaceDataSet.xsd}IdGroup": "00000000-0000-0000-0000-000000000000",
+            "{http://tempuri.org/WorkspaceDataSet.xsd}Name": "annprowkp.ant",
+            "{http://tempuri.org/WorkspaceDataSet.xsd}OpenCount": "0",
+            "{http://tempuri.org/WorkspaceDataSet.xsd}EditCount": "4",
+            "{http://tempuri.org/WorkspaceDataSet.xsd}ListenCount": "5",
+            "{http://tempuri.org/WorkspaceDataSet.xsd}Accepted": "false"
+        }
+
+        fn.subjoined = sub
+
+        workspace_item = ET.Element("WorkspaceItem")
+        child = self.antw._serialize(fn, workspace_item, "{http://tempuri.org/WorkspaceDataSet.xsd}")
+        self.assertEqual(self.antw._parse(child), fn)
+
+        # verifying if the tree contains all the wkp information
+        for elem in child:
+            self.assertTrue(elem.text in sub.values())
+
+    # -----------------------------------------------------------------------
+
+    def test_parse(self):
+
+        # Creating a tree that could be in a antw file
+        root = ET.Element("WorkspaceItem")
+
+        child_id = ET.SubElement(root, "Id")
+        child_id.text = "1"
+
+        child_group = ET.SubElement(root, "IdGroup")
+        child_group.text = "2"
+
+        # Name
+        child_name = ET.SubElement(root, "Name")
+        child_name.text = "apWkp.antw"
+
+        # OpenCount
+        child_open_count = ET.SubElement(root, "OpenCount")
+        child_open_count.text = "35"
+
+        # EditCount
+        child_edit_count = ET.SubElement(root, "EditCount")
+        child_edit_count.text = "97"
+
+        # ListenCount
+        child_listen_count = ET.SubElement(root, "ListenCount")
+        child_listen_count.text = "66"
+
+        # Accepted
+        child_accepted = ET.SubElement(root, "Accepted")
+        child_accepted.text = "false"
+
+        fn = FileName(os.path.abspath("apWkp.antw"))
+
+        fname = self.antw._parse(root)
+        self.assertEqual(fn, fname)
+
+        # verifying if the parsed filename contains all the information
+        self.assertEqual(fname.subjoined.get("Id"), child_id.text)
+        self.assertEqual(fname.subjoined.get("IdGroup"), child_group.text)
+        self.assertEqual(fname.subjoined.get("Name"), child_name.text)
+        self.assertEqual(fname.subjoined.get("OpenCount"), child_open_count.text)
+        self.assertEqual(fname.subjoined.get("EditCount"), child_edit_count.text)
+        self.assertEqual(fname.subjoined.get("ListenCount"), child_listen_count.text)
+        self.assertEqual(fname.subjoined.get("Accepted"), child_accepted.text)
+
+
+
 
 
 
