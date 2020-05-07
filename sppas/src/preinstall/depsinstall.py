@@ -38,7 +38,7 @@ import sys
 import os
 import logging
 
-from .installer import Deb, Dnf, Rpm, WindowsInstaller, MacOs
+from .installer import DebInstaller, DnfInstaller, RpmInstaller, WindowsInstaller, MacOsInstaller
 
 # ---------------------------------------------------------------------------
 
@@ -61,52 +61,65 @@ class sppasInstallerDeps(object):
 
     For example:
 
-    >>> install = sppasInstallerDeps()
+    >>> installer = sppasInstallerDeps()
 
-    See what is availabled or not :
-    >>> install.get_available("feature_id")
+    See if a feature is available or not:
+    >>> installer.available("feature_id")
+    >>> True
 
-    Personnalize what is enabled or not :
-    >>> install.set_enable("feature_id")
+    Customize what is enabled or not:
+    >>> installer.enable("feature_id")
+    >>> False
+    >>> installer.enable("feature_id", True)
+    >>> True
 
-    Launch the installation process :
-    >>> install.set_enable("feature_id")
+    Launch the installation process:
+    >>> errors = installer.install("feature_id")
+    >>> assert len(errors) == 0
+    >>> assert installer.available("feature_id") is True
 
     """
 
     LIST_OS = {
         "linux": {
-            "ubuntu": Deb,
-            "mint": Deb,
-            "debian": Deb,
-            "fedora": Dnf,
-            "suse": Rpm
+            "ubuntu": DebInstaller,
+            "mint": DebInstaller,
+            "debian": DebInstaller,
+            "fedora": DnfInstaller,
+            "suse": RpmInstaller
         },
         "win32": WindowsInstaller,
-        "darwin": MacOs
+        "darwin": MacOsInstaller
     }
 
-    def __init__(self, p=None):
+    def __init__(self, progress=None):
         """Create a new sppasInstallerDeps instance.
 
-        :param p: (ProcessProgressTerminal) The installation progress.
+        Instantiate the appropriate installer depending on the OS.
+
+        :param progress: (ProcessProgressTerminal) The installation progress.
 
         """
-        self.__pbar = p
         self.__os = None
         self.__set_os()
-        self.__installer = self.get_os()(p)
-        self.__feat_ids = self.__installer.get_feat_ids()
+        self.__installer = self.os()()
+        if progress is not None:
+            self.__installer.set_progress(progress)
 
     # ------------------------------------------------------------------------
 
-    def get_feat_ids(self):
+    def set_progress(self, progress=None):
+        self.__installer.set_progress(progress)
+
+    # ------------------------------------------------------------------------
+
+    def features_ids(self):
         """Return the list of feature identifiers."""
-        return self.__feat_ids
+        return self.__installer.get_fids()
 
     # ------------------------------------------------------------------------
 
-    def get_feat_desc(self, feat_id):
+    def description(self, feat_id):
         """Return the description of the feature.
 
         :param feat_id: (str) Identifier of a feature
@@ -116,7 +129,7 @@ class sppasInstallerDeps(object):
 
     # ------------------------------------------------------------------------
 
-    def get_available(self, feat_id):
+    def available(self, feat_id):
         """Return True if the feature is available.
 
         :param feat_id: (str) Identifier of a feature
@@ -126,7 +139,7 @@ class sppasInstallerDeps(object):
 
     # ------------------------------------------------------------------------
 
-    def get_os(self):
+    def os(self):
         """Return the OS of the computer."""
         return self.__os
 
@@ -147,33 +160,17 @@ class sppasInstallerDeps(object):
 
     # ------------------------------------------------------------------------
 
-    def get_enable(self, feat_id):
-        """Return True if the feature is enabled.
+    def enable(self, fid, value=None):
+        """Return True if the feature is enabled and/or set it.
 
-        :param feat_id: (str) Identifier of a feature
-
-        """
-        return self.__installer.enable(feat_id)
-
-    # ------------------------------------------------------------------------
-
-    def set_enable(self, feat_id):
-        """Make a feature enabled.
-
-        :param feat_id: (str) Identifier of a feature
+        :param fid: (str) Identifier of a feature
+        :param value: (bool or None) Enable of disable the feature.
 
         """
-        self.__installer.enable(feat_id, True)
+        if value is None:
+            return self.__installer.enable(fid)
 
-    # ------------------------------------------------------------------------
-
-    def unset_enable(self, feat_id):
-        """Make a feature disabled.
-
-        :param feat_id: (str) Identifier of a feature
-
-        """
-        self.__installer.enable(feat_id, False)
+        return self.__installer.enable(fid, value)
 
     # ------------------------------------------------------------------------
 

@@ -47,8 +47,8 @@ msgstr "Invalid key '{!s:s}' for data '{!s:s}'"
 msgid ":ERROR 300: "
 msgstr "Invalid value '{!s:s}' for '{!s:s}'."
 
-msgid ":INFO 500: "
-msgstr "Installation processes"
+msgid ":ERROR 500: "
+msgstr "Installation failed with error: {error}"
 
 msgid ":INFO 510: "
 msgstr "Installation of '{name}'"
@@ -72,4 +72,4 @@ msgid ":INFO 570: "
 msgstr "'{name}' does not match any valid package."
 
 msgid ":INFO 580: "
-msgstr "Command not needed"
+msgstr "No system command is processed."

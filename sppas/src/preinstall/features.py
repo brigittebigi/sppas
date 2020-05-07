@@ -207,6 +207,7 @@ class Features(object):
 
         for fid in (features_parser.sections()):
             feature = Feature(fid)
+            self.__features.append(feature)
 
             # Description of the feature
             desc = features_parser.get(fid, "desc")
@@ -226,7 +227,8 @@ class Features(object):
                     depend_packages = self.__parse_depend(d)
                     feature.set_packages(depend_packages)
             except cp.NoOptionError:
-                logging.info("Feature {} has no defined section {}.")
+                logging.debug("Feature {} has no defined section name '{}'."
+                              "".format(feature.get_id(), self.__req))
 
             # Pypi dependencies
             try:
@@ -237,7 +239,8 @@ class Features(object):
                     depend_pypi = self.__parse_depend(d)
                     feature.set_pypi(depend_pypi)
             except cp.NoOptionError:
-                logging.info("Feature {} has no defined section {}.")
+                logging.debug("Feature {} has no defined section name '{}'."
+                              "".format(feature.get_id(), self.__req))
 
             # Command to be executed
             try:
@@ -245,9 +248,9 @@ class Features(object):
                 if cmd == "none":
                     feature.set_available(False)
                 feature.set_cmd(cmd)
-                self.__features.append(feature)
             except cp.NoOptionError:
-                logging.info("Feature {} has no defined section {}.")
+                logging.debug("Feature {} has no defined section name '{}'."
+                              "".format(feature.get_id(), self.__req))
 
     # ------------------------------------------------------------------------
     # Private: Internal use only.
@@ -267,6 +270,7 @@ class Features(object):
         except cp.MissingSectionHeaderError:
             raise IOError("Malformed features configuration file {}: "
                           "missing section header.".format(cfg))
+
         return features_parser
 
     # ---------------------------------------------------------------------------
