@@ -32,15 +32,41 @@
     wkps.wio.wkpannpro.py
     ~~~~~~~~~~~~~~~~~~~~~~
 
-"""
+    An AnnotationPro workspace (antw) is an xml file
 
+    Here is an example of a very simple antw file
+
+    <?xml version="1.0" standalone="yes"?>
+    <WorkspaceDataSet xmlns="http://tempuri.org/WorkspaceDataSet.xsd">
+      <WorkspaceItem>
+        <Id>b1b36c56-652c-4390-81ce-8eabd4b0260f</Id>
+        <IdGroup>00000000-0000-0000-0000-000000000000</IdGroup>
+        <Name>annprows.ant</Name>
+        <OpenCount>0</OpenCount>
+        <EditCount>4</EditCount>
+        <ListenCount>5</ListenCount>
+        <Accepted>false</Accepted>
+      </WorkspaceItem>
+    </WorkspaceDataSet>
+
+    <WorkspaceItem /> correspond to a file
+    <Name /> is the name of the said file
+
+    each filename of the workspace got an id <Id />
+    a group id <idGroup />
+    and some information about the edition of the file
+    how many times it has been opened <OpenCount />,
+    how many editions (adding segment, layer, meta...
+    each char typed count as an edition) <EditCount />
+    how many times it has been listened (played) <ListenCount />
+    <Accepted/> ?
+
+"""
 import os
 import xml.etree.cElementTree as ET
 
 from sppas.src.config import sg
 
-from sppas.src.wkps.filebase import FileBase
-from sppas.src.wkps.filestructure import FilePath, FileRoot
 from sppas.src.wkps.wio.basewkpio import sppasBaseWkpIO
 from sppas.src.wkps.wkpexc import FileOSError
 
@@ -74,7 +100,7 @@ class sppasWANT(sppasBaseWkpIO):
 
     @staticmethod
     def detect(filename):
-        """Check whether a file is of wjson format or not.
+        """Check whether a file is of antw format or not.
 
         :param filename: (str) Name of the file to detect
         :returns: (bool)
@@ -121,7 +147,7 @@ class sppasWANT(sppasBaseWkpIO):
     # -------------------------------------------------------------------------
 
     def read(self, filename):
-        """Read a antw file and fill the sppasWANT.
+        """Read a antw file and fill the sppasWANT instance.
 
         :param filename: (str)
 
@@ -131,10 +157,13 @@ class sppasWANT(sppasBaseWkpIO):
         try:
             tree = ET.parse(filename)
             root = tree.getroot()
+            # uri looks like this "http://tempuri.org/WorkspaceDataSet.xsd"
             uri = root.tag[:root.tag.index('}')+1]
 
-            for child in tree.iter(tag=uri + "WorkspaceItem"):
-                return self._parse(child, uri)
+            # parsing each file contained in the antw
+            for workspaceItem in tree.iter(tag=uri + "WorkspaceItem"):
+                self._parse(workspaceItem, uri)
+        # TODO RAISE PROPER EXCEPTIONS
         except Exception:
             raise
 
@@ -151,9 +180,12 @@ class sppasWANT(sppasBaseWkpIO):
         root.set("xmlns", "http://tempuri.org/WorkspaceDataSet.xsd")
         uri = "{http://tempuri.org/WorkspaceDataSet.xsd}"
 
-        child = ET.SubElement(root, "workspaceItem")
-
-        self._serialize(child, uri)
+        # serializing the elements saved in subjoined in the FileName instance
+        for fp in self.get_all_files():
+            for fr in fp:
+                for fn in fr:
+                    workspace_item = ET.SubElement(root, "WorkspaceItem")
+                    self._serialize(fn, workspace_item, uri)
 
         sppasWANT.indent(root)
         tree = ET.ElementTree(root)
@@ -164,46 +196,50 @@ class sppasWANT(sppasBaseWkpIO):
 
     # -------------------------------------------------------------------------
 
-    def _serialize(self, root, uri=""):
-        """Convert this sppasWANT instance into a serializable structure.
+    @staticmethod
+    def _serialize(fn, workspace_item, uri=""):
+        """Convert a FileName into a serializable structure.
 
-        :param root: (ET.Element) root of the tree in which we want to serialize
+        :param fn: (FileName) FileName we want to serialize
+        :workspace_item: (ElementTree.Element) Element in which we are going
+        to serialize the data
         :param uri: (str)
-        :returns: (tree) a tree that can be serialized
+        :returns: (Element) a tree element that can be serialized
 
         """
-        for fp in self.get_all_files():
-            sub = fp.subjoined
+        sub = fn.subjoined
 
+        # we create a sub element in  workspace_item and we add the data
+        # kept in subjoined
         # Id
-        child_id = ET.SubElement(root, "Id")
-        child_id.text = self._id
+        child_id = ET.SubElement(workspace_item, "Id")
+        child_id.text = sub[uri + "Id"]
 
         # IdGroup
-        child_id_group = ET.SubElement(root, "IdGroup")
+        child_id_group = ET.SubElement(workspace_item, "IdGroup")
         child_id_group.text = sub[uri + "IdGroup"]
 
         # Name
-        child_name = ET.SubElement(root, "Name")
+        child_name = ET.SubElement(workspace_item, "Name")
         child_name.text = sub[uri + "Name"]
 
         # OpenCount
-        child_open_count = ET.SubElement(root, "OpenCount")
+        child_open_count = ET.SubElement(workspace_item, "OpenCount")
         child_open_count.text = sub[uri + "OpenCount"]
 
         # EditCount
-        child_edit_count = ET.SubElement(root, "EditCount")
+        child_edit_count = ET.SubElement(workspace_item, "EditCount")
         child_edit_count.text = sub[uri + "EditCount"]
 
         # ListenCount
-        child_listen_count = ET.SubElement(root, "ListenCount")
+        child_listen_count = ET.SubElement(workspace_item, "ListenCount")
         child_listen_count.text = sub[uri + "ListenCount"]
 
         # Accepted
-        child_accepted = ET.SubElement(root, "Accepted")
+        child_accepted = ET.SubElement(workspace_item, "Accepted")
         child_accepted.text = sub[uri + "Accepted"]
 
-        return root
+        return workspace_item
 
     # -------------------------------------------------------------------------
 
@@ -212,34 +248,31 @@ class sppasWANT(sppasBaseWkpIO):
 
         :param tree: (ElementTree) tree to parse
         :param uri: (str)
-        :returns: (FilePath)
+        :returns: (FileName)
 
         """
-        identifier = tree.find(uri + "Id")
-        if identifier is None:
-            raise KeyError("Workspace id is missing of the tree to parse")
-        try:
-            # the id contained in the tree is the id of the workspace
-            idw = FileBase.validate_id(identifier.text)
-            self._id = idw
-        except ValueError:
-            # we keep our current 'id'
-            pass
-
-        sub = dict()
-
-        # the name of the .ant file is used for the filepath
+        # the name contained in the .want file is the the filename
         name = tree.find(uri + "Name")
-        fp = FilePath(os.path.dirname(name.text))
+        self.add_file(name.text)
+
+        # getting the filename object that we added
+        fn = self.get_object(os.path.abspath(name.text))
 
         # parsing the tree
+        # ----------------
+
+        identifier = tree.find(uri + "Id")
         id_group = tree.find(uri + "IdGroup")
         open_count = tree.find(uri + "OpenCount")
         edit_count = tree.find(uri + "EditCount")
         listen_count = tree.find(uri + "ListenCount")
         accepted = tree.find(uri + "Accepted")
 
+        sub = dict()
         # adding the information contained in the tree in a dictionary
+        # using their tag as the key
+        # a tag looks like this : {http://tempuri.org/WorkspaceDataSet.xsd}Id
+        sub[identifier.tag] = identifier.text
         sub[name.tag] = name.text
         sub[id_group.tag] = id_group.text
         sub[open_count.tag] = open_count.text
@@ -247,8 +280,8 @@ class sppasWANT(sppasBaseWkpIO):
         sub[listen_count.tag] = listen_count.text
         sub[accepted.tag] = accepted.text
 
-        fp.subjoined = sub
-        self.add(fp)
+        # we add the information of the filename in the subjoined member
+        fn.subjoined = sub
 
-        return fp
+        return fn
 
