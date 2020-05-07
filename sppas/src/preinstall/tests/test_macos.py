@@ -35,7 +35,7 @@
 
 import unittest
 from sppas.src.ui.term.textprogress import ProcessProgressTerminal
-from sppas.src.preinstall.installer import MacOs, Feature
+from sppas.src.preinstall.installer import MacOsInstaller, Feature
 
 # ---------------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ class TestInstallerMacOs(unittest.TestCase):
     def setUp(self):
         """Initialisation."""
         p = ProcessProgressTerminal()
-        self.__macos = MacOs(p)
+        self.__macos = MacOsInstaller(p)
         self.__feature = Feature("feature")
 
     # ---------------------------------------------------------------------------

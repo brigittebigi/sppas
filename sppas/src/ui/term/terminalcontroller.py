@@ -1,4 +1,3 @@
-# -*- coding: UTF-8 -*-
 """
     ..
         ---------------------------------------------------------------------
@@ -36,6 +35,8 @@
 
 import sys
 import re
+
+from sppas.src.utils.makeunicode import u, b
 
 # Curses isn't available on all platforms
 try:
@@ -179,8 +180,9 @@ class TerminalController(object):
         # String capabilities can include "delays" of the form "$<2>".
         # For any modern terminal, we should be able to just ignore
         # these, so strip them out.
-        cap = curses.tigetstr(cap_name) or ''
-        return re.sub(r'\$<\d+>[/*]?', '', cap)
+        cap = u(curses.tigetstr(cap_name) or '')
+        cap = re.sub(r'\$<\d+>[/*]?', '', cap)
+        return b(cap)
 
     # -----------------------------------------------------------------------
 
@@ -191,12 +193,14 @@ class TerminalController(object):
         (if it's defined) or '' (if it's not).
 
         """
-        return re.sub(r'\$\$|\${\w+}', self._render_sub, template)
+        template = u(template)
+        t = re.sub(r'\$\$|\${\w+}', self._render_sub, template)
+        return b(t)
 
     # -----------------------------------------------------------------------
 
     def _render_sub(self, match):
         s = match.group()
-        if s == '$$':
-            return s
-        return getattr(self, s[2:-1])
+        if s != '$$':
+            s = getattr(self, s[2:-1])
+        return u(s)
