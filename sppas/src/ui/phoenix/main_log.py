@@ -235,6 +235,12 @@ class sppasLogWindow(wx.TopLevelWindow):
         self._fade_in()
         self.Show(True)
 
+    # -----------------------------------------------------------------------
+
+    def EnableClear(self, value):
+        """Enable of disable the clear button."""
+        self.FindWindow("actions").EnableClear(value)
+
     # ------------------------------------------------------------------------
     # Private methods to create the GUI and initialize members
     # ------------------------------------------------------------------------
@@ -756,7 +762,7 @@ class sppasLogActionPanel(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -788,6 +794,12 @@ class sppasLogActionPanel(sppasPanel):
         self.SetFont(wx.GetApp().settings.action_text_font)
 
         self.SetSizer(action_sizer)
+
+    # -----------------------------------------------------------------------
+
+    def EnableClear(self, value):
+        """Enable of disable the clear button."""
+        self.FindWindow("broom").Enable(value)
 
     # -----------------------------------------------------------------------
 
