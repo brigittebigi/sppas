@@ -34,17 +34,18 @@
 
 """
 
+import os
 import wx
+import logging
 import webbrowser
 
-from sppas.src.config import sg
+from sppas.src.config import sg, paths
 from sppas.src.config import msg
-from sppas.src.utils import u
 
 from .windows import sppasStaticLine
 from .windows import BitmapTextButton, TextButton
 from .windows import ToggleButton
-from .windows import sppasPanel, sppasImgBgPanel
+from .windows import sppasPanel, sppasScrolledPanel, sppasImgBgPanel
 from .windows import sppasDialog
 from .windows import sppasTitleText, sppasStaticText, sppasMessageText
 from .windows.book import sppasSimplebook
@@ -57,7 +58,7 @@ from .main_log import sppasLogWindow
 
 
 def _(message):
-    return u(msg(message, "ui"))
+    return msg(message, "ui")
 
 
 MSG_HEADER_INSTALL_WIZARD = _("InstallWizard of SPPAS")
@@ -72,9 +73,32 @@ MSG_CONFIRM = _("Confirm exit?")
 
 MSG_WELCOME = _("SPPAS is a scientific computer software package developed "
                 "by Brigitte Bigi, CNRS researcher at 'Laboratoire Parole et "
-                "Langage', Aix-en-Provence, France.\n"
+                "Langage', Aix-en-Provence, France.\n\n"
                 "The InstallWizard will install on your computer other programs "
-                "SPPAS is requiring. To continue, click Next.")
+                "SPPAS is requiring.\nTo continue, click Next.")
+MSG_LICENSE = _("Please read the following license agreement. Click Next to accept.")
+MSG_FEATURES = _("Check the boxes in the list below to enable a feature installation:")
+MSG_READY = _("Click Install button to begin the installation.\n\n"
+              "If you want to review or change any of your installation settings, "
+              "click Back. Click Cancel to exit the wizard without installing.")
+
+# A short license text in case the file of the GPL can't be read.
+LICENSE = """
+SPPAS is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of
+the License, or (at your option) any later version.
+
+SPPAS is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with SPPAS; if not, write to the Free Software Foundation,
+Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+------------------------------------------------------------
+"""
 
 # -----------------------------------------------------------------------
 
@@ -148,9 +172,11 @@ class sppasInstallWindow(sppasDialog):
         sppasDialog._init_infos(self)
 
         # Fix some frame properties
-        min_width = sppasPanel.fix_size(620)
-        self.SetMinSize(wx.Size(min_width, 480))
-        self.SetSize(wx.GetApp().settings.frame_size)
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(320), sppasPanel.fix_size(200)))
+        w = int(wx.GetApp().settings.frame_size[0] * 0.8)
+        h = int(wx.GetApp().settings.frame_size[1] * 0.8)
+        self.SetSize(wx.Size(w, h))
+
         self.SetName('{:s}'.format(sg.__name__))
 
     # -----------------------------------------------------------------------
@@ -242,10 +268,10 @@ class sppasInstallWindow(sppasDialog):
         if event_name == "cancel":
             self.exit()
 
-        elif event_name == "next":
+        elif event_name == "arrow_right":
             self.show_next_page(1)
 
-        elif event_name == "prev":
+        elif event_name == "arrow_left":
             self.show_next_page(-1)
 
         elif event_name == "view_log":
@@ -404,10 +430,6 @@ class sppasInstallWindow(sppasDialog):
             self.FindWindow("actions").EnableNext(True)
             self.FindWindow("actions").EnableInstall(False)
 
-        # fix header of the next page
-        self.FindWindow("header").SetTitle(page_name)
-        self.FindWindow("header").SetSubTitle("this page is doing this or that")
-
         # then change to the page
         book.ChangeSelection(p)
         w.SetFocus()
@@ -435,51 +457,48 @@ class sppasHeaderInstallPanel(sppasPanel):
             name="header")
 
         settings = wx.GetApp().settings
-        self.SetMinSize(wx.Size(-1, settings.action_height))
+        self.SetMinSize(wx.Size(-1, (settings.title_height*2)))
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        top_panel = sppasImgBgPanel(self,
-                                    img_name="splash_transparent",
-                                    name="splash_header")
-        title_panel = self.__title_header()
-        sizer.Add(top_panel, 1, wx.EXPAND, border=0)
-        sizer.Add(title_panel, 1, wx.EXPAND, border=0)
+        min_height = int(float(wx.GetApp().settings.title_height)*0.8)
 
+        img_panel = sppasImgBgPanel(self, img_name="splash_transparent", name="splash_header")
+        img_panel.SetMinSize(wx.Size(-1, min_height))
+
+        title_panel = self.__title_header()
+        title_panel.SetMinSize(wx.Size(-1, min_height))
+
+        sizer.Add(title_panel, 1, wx.EXPAND, border=0)
+        sizer.Add(img_panel, 1, wx.EXPAND, border=0)
         self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
 
-    def SetTitle(self, text):
-        self.FindWindow("title").SetValue(text)
-        self.Refresh()
-
-    def SetSubTitle(self, text):
-        self.FindWindow("subtitle").SetLabel(text)
-        self.Refresh()
+    def SetFont(self, font):
+        sppasPanel.SetFont(self, font)
+        self.FindWindow("title_txt").SetFont(wx.GetApp().settings.header_text_font)
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
     def __title_header(self):
-        min_height = wx.GetApp().settings.title_height
-        # Create the header panel and sizer
+        min_height = int(float(wx.GetApp().settings.title_height)*0.8)
+        # Create the title header panel and sizer
         panel = sppasPanel(self, name="title_header")
-        panel.SetMinSize(wx.Size(-1, min_height))
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # Add the icon, at left, with its title
         static_bmp = BitmapTextButton(panel, name="sppas_64")
         static_bmp.SetBorderWidth(0)
         static_bmp.SetFocusWidth(0)
         static_bmp.SetMinSize(wx.Size(min_height, min_height))
-        sizer.Add(static_bmp, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, 8)
 
-        title = sppasTitleText(panel, value="InstallWizard of SPPAS", name="title")
-        title.SetMinSize(wx.Size(sppasPanel.fix_size(200), min_height))
-        sizer.Add(title, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, 8)
+        title = sppasTitleText(panel, value="InstallWizard of SPPAS...", name="title_txt")
+        title.SetMinSize(wx.Size(sppasPanel.fix_size(280), min_height))
 
-        subtitle = sppasStaticText(panel, label="", name="subtitle")
-        subtitle.SetMinSize(wx.Size(sppasPanel.fix_size(200), min_height))
-        sizer.Add(subtitle, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, 16)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(static_bmp, 0, wx.ALIGN_CENTER)
+        sizer.Add(title, 1, wx.ALIGN_CENTER | wx.LEFT, 8)
+        panel.SetSizer(sizer)
 
         return panel
 
@@ -512,10 +531,8 @@ class sppasActionsInstallPanel(sppasPanel):
 
         log_btn = self._create_button(MSG_ACTION_VIEWLOGS, "view_log")
         back_btn = self._create_button(MSG_ACTION_BACK, "arrow_left")
-        back_btn.SetName("prev")
         back_btn.Enable(False)
         next_btn = self._create_button(MSG_ACTION_NEXT, "arrow_right")
-        next_btn.SetName("next")
         install_btn = self._create_button(MSG_ACTION_INSTALL, "install")
         install_btn.Enable(False)
         cancel_btn = self._create_button(MSG_ACTION_CANCEL, "cancel")
@@ -525,18 +542,18 @@ class sppasActionsInstallPanel(sppasPanel):
         sizer.Add(back_btn, 1, wx.ALL | wx.EXPAND, 0)
         sizer.Add(next_btn, 1, wx.ALL | wx.EXPAND, 0)
         sizer.Add(self._vert_line(), 0, wx.ALL | wx.EXPAND, 0)
-        sizer.Add(install_btn, 4, wx.ALL | wx.EXPAND, 0)
-        sizer.Add(cancel_btn, 4, wx.ALL | wx.EXPAND, 0)
+        sizer.Add(install_btn, 1, wx.ALL | wx.EXPAND, 0)
+        sizer.Add(cancel_btn, 1, wx.ALL | wx.EXPAND, 0)
 
         self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
 
     def EnableBack(self, value):
-        self.FindWindow("prev").Enable(value)
+        self.FindWindow("arrow_left").Enable(value)
 
     def EnableNext(self, value):
-        self.FindWindow("next").Enable(value)
+        self.FindWindow("arrow_right").Enable(value)
 
     def EnableInstall(self, value):
         self.FindWindow("install").Enable(value)
@@ -688,7 +705,27 @@ class sppasLicenseInstallPanel(sppasPanel):
 
     def _create_content(self):
         """Create the main content."""
-        pass
+        msg = sppasStaticText(self, label=MSG_LICENSE)
+        scp = sppasScrolledPanel(self)
+
+        s = wx.BoxSizer()
+        license_text = list()
+        try:
+            with open(os.path.join(paths.etc, "gpl-3.0.txt"), "r") as fp:
+                license_text = fp.readlines()
+        except Exception as e:
+            logging.error(e)
+            license_text.append(LICENSE)
+        text = sppasMessageText(scp, "\n".join(license_text))
+        s.Add(text, 1, wx.EXPAND)
+        scp.SetSizer(s)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(msg, 0, wx.ALL | wx.EXPAND, sppasPanel.fix_size(12))
+        sizer.Add(scp, 1, wx.LEFT | wx.TOP | wx.EXPAND, sppasPanel.fix_size(12))
+        scp.SetupScrolling(scroll_x=True, scroll_y=True)
+
+        self.SetSizer(sizer)
 
 # ---------------------------------------------------------------------------
 
@@ -704,12 +741,13 @@ class sppasFeaturesInstallPanel(sppasPanel):
 
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, installer=None):
         super(sppasFeaturesInstallPanel, self).__init__(
             parent=parent,
             name="page_features",
             style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.TAB_TRAVERSAL
         )
+        self.__installer = installer
         self._create_content()
 
         self.SetBackgroundColour(wx.GetApp().settings.bg_color)
@@ -722,7 +760,31 @@ class sppasFeaturesInstallPanel(sppasPanel):
 
     def _create_content(self):
         """Create the main content."""
-        pass
+        if self.__installer is None:
+            sppasStaticText(self, label="Error: no installer is defined")
+            return
+
+        feats_panel = sppasPanel(self, name="feats_panel")
+        feats_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        left = self.__create_feats_list(feats_panel)
+        right = self.__create_descr_panel(feats_panel)
+        feats_sizer.Add(left, 1, wx.EXPAND)
+        feats_sizer.Add(right, 1, wx.EXPAND)
+        feats_panel.SetSizer(feats_sizer)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        msg = sppasStaticText(self, label=MSG_FEATURES)
+        sizer.Add(msg, 0, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
+        sizer.Add(feats_panel, 1, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
+        self.SetSizer(sizer)
+
+    def __create_feats_list(self, parent):
+        panel = sppasPanel(parent)
+        return panel
+
+    def __create_descr_panel(self, parent):
+        panel = sppasPanel(parent)
+        return panel
 
 # ---------------------------------------------------------------------------
 
@@ -756,4 +818,8 @@ class sppasReadyInstallPanel(sppasPanel):
 
     def _create_content(self):
         """Create the main content."""
-        pass
+        msg = sppasMessageText(self, MSG_READY)
+        sizer = wx.BoxSizer()
+        sizer.Add(msg, 1, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
+        self.SetSizer(sizer)
+
