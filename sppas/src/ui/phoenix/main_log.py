@@ -254,7 +254,7 @@ class sppasLogWindow(wx.TopLevelWindow):
         settings = wx.GetApp().settings
 
         # Fix frame properties
-        self.SetMinSize(wx.Size(320, 200))
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(320), sppasPanel.fix_size(200)))
         w = int(settings.frame_size[0] * 0.7)
         h = int(settings.frame_size[1] * 0.7)
         self.SetSize(wx.Size(w, h))
