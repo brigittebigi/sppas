@@ -54,16 +54,17 @@ class TestProcess(unittest.TestCase):
 
         """
         self.__process.run_popen("pip show wxpython")
-        y = self.__process.out().split("\n")[0]
-        x = self.__process.error()
-        self.assertEqual(y, "Name: wxPython")
-        self.assertEqual(x, "")
+        y = str(self.__process.out())
+        y = y.split("\\r\\n")[0]
+        x = str(self.__process.error())
+        self.assertEqual(y, "b'Name: wxPython")
+        self.assertEqual(x, "b''")
 
         self.__process.run_popen("pip show wxpythonnnn")
         y = self.__process.out()
         x = self.__process.error()
-        self.assertEqual(y, "")
-        self.assertEqual(x, "WARNING: Package(s) not found: wxpythonnnn\n")
+        self.assertEqual(y, "b''")
+        self.assertEqual(x, "b'WARNING: Package(s) not found: wxpythonnnn\\r\\n'")
 
     # ---------------------------------------------------------------------------
 

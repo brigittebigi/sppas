@@ -147,7 +147,7 @@ class TestFeatures(unittest.TestCase):
 
         self.assertEqual(y.get("julius", "req_win"), "nil")
         self.assertEqual(y.get("julius", "req_pip"), "nil")
-        self.assertEqual(y.get("julius", "cmd_win"), "none")
+        self.assertEqual(y.get("julius", "cmd_win"), "python3 ./juliusdownload.py")
 
     # ---------------------------------------------------------------------------
 
@@ -172,7 +172,7 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(y[2], "julius")
         self.assertEqual(self.__features.packages(y[2]), {'nil': '1'})
         self.assertEqual(self.__features.pypi(y[2]), {'nil': '1'})
-        self.assertEqual(self.__features.cmd(y[2]), "none")
+        self.assertEqual(self.__features.cmd(y[2]), "python3 ./juliusdownload.py")
 
     # ---------------------------------------------------------------------------
 

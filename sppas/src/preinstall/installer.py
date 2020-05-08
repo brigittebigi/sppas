@@ -224,7 +224,7 @@ class Installer(object):
                 except Exception as e:
                     raise InstallationError(str(e))
 
-        if len(err) > 0:
+        if len(err) > 3:
             raise InstallationError(err)
         if self.__pbar:
             self.__pbar.update(self.__get_set_progress(self.__eval_percent(fid)), fid)
@@ -247,7 +247,8 @@ class Installer(object):
                     self._update_package(package)
 
                 if self.__pbar:
-                    self.__pbar.update(self.__get_set_progress(self.__eval_percent(fid)), MESSAGES["install_success"].format(name=package))
+                    self.__pbar.update(self.__get_set_progress(self.__eval_percent(fid)),
+                                       MESSAGES["install_success"].format(name=package))
 
     # ------------------------------------------------------------------------
 
@@ -461,7 +462,7 @@ class Installer(object):
         """
         stdout_show = str(stdout_show)
         req_version = str(req_version)
-        version = stdout_show.split("\n")[1].split(":")[1].replace(" ", "")
+        version = stdout_show.split("\\r\\n")[1].split(":")[1].replace(" ", "")
         v = ""
         i = 0
         for letter in version:
@@ -498,18 +499,19 @@ class Installer(object):
         :raises: InstallationError()
 
         """
+        # try:
+        #     command = self.__python + " -m " + package
+        #     process = Process()
+        #     process.run_popen(command)
+        # except Exception as e1:
         try:
-            command = self.__python + " -m " + package
+            # Deprecated:
+            # command = "pip3 install -U " + package
+            command = self.__python + " -m pip install -U " + package + " --no-warn-script-location"
             process = Process()
             process.run_popen(command)
-        except Exception as e1:
-            try:
-                # Deprecated:
-                command = "pip3 install -U " + package
-                process = Process()
-                process.run_popen(command)
-            except Exception as e2:
-                raise InstallationError(str(e2))
+        except Exception as e2:
+            raise InstallationError(str(e2))
 
         err = u(process.error().strip())
         stdout = u(process.out())
@@ -864,7 +866,7 @@ class MacOsInstaller(Installer):
         except Exception as e:
             raise InstallationError(str(e))
 
-        if len(err) > 0:
+        if len(err) > 3:
             raise InstallationError(err)
 
     # ------------------------------------------------------------------------
@@ -886,7 +888,7 @@ class MacOsInstaller(Installer):
         except Exception as e:
             raise InstallationError(str(e))
 
-        if len(err) > 0:
+        if len(err) > 3:
             raise InstallationError(err)
         stdout = process.out()
         return not self._need_update_package(stdout, req_version)
@@ -926,14 +928,10 @@ class MacOsInstaller(Installer):
         version = float(req_version[1])
 
         if comparator == ">=":
-            if v < version:
-                return True
-            else:
-                return False
-        else:
-            raise ValueError("Your comparator : " +
-                             comparator +
-                             " does not refer to a valid comparator")
+            return v < version
+
+        raise ValueError("The comparator: " + comparator +
+                         " does not refer to a valid comparator")
 
     # ------------------------------------------------------------------------
 

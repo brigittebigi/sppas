@@ -239,7 +239,7 @@ if __name__ == "__main__":
             else:
                 a = a.replace("no", "")
                 fid = search_feature(a)
-                if installer.available(fid) is False:
+                if installer.available(fid) is True:
                     installer.enable(fid, False)
 
     # process the installation

@@ -35,7 +35,7 @@
 
 import unittest
 from sppas.src.ui.term.textprogress import ProcessProgressTerminal
-from sppas.src.preinstall.installer import WindowsInstaller, Feature
+from sppas.src.preinstall.installer import WindowsInstaller
 
 # ---------------------------------------------------------------------------
 
@@ -47,8 +47,7 @@ class TestInstallerWin(unittest.TestCase):
 
         """
         p = ProcessProgressTerminal()
-        self.__windows = WindowsInstaller(p)
-        self.__feature = Feature("feature")
+        self.__windows = WindowsInstaller()
 
     # ---------------------------------------------------------------------------
 
@@ -56,7 +55,8 @@ class TestInstallerWin(unittest.TestCase):
         """Test if the method search_package from the class WindowsInstaller works well.
 
         """
-        self.assertTrue(self.__windows.search_package("aaaa"))
+        with self.assertRaises(NotImplementedError):
+            self.__windows._search_package("aaaa")
 
     # ---------------------------------------------------------------------------
 
@@ -94,13 +94,4 @@ class TestInstallerWin(unittest.TestCase):
             self.__windows._update_package("aaaa")
 
     # ---------------------------------------------------------------------------
-
-
-test = TestInstallerWin()
-test.setUp()
-test.test_search_package()
-test.test_install_package()
-test.test_version_package()
-test.test_need_update_package()
-test.test_update_package()
 
