@@ -138,20 +138,3 @@ class TestInstallerDeps(unittest.TestCase):
         y = self.__installer_deps.features_ids()
         self.assertEqual(self.__installer_deps.enable(y[2]), False)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -244,7 +244,7 @@ class Installer(object):
                     self._install_package(package)
 
                 elif self._version_package(package, version) is False:
-                    self._update_package(package)
+                    self._update_package(package, version)
 
                 if self.__pbar:
                     self.__pbar.update(self.__get_set_progress(self.__eval_percent(fid)),
@@ -318,7 +318,7 @@ class Installer(object):
 
     # ------------------------------------------------------------------------
 
-    def _update_package(self, package):
+    def _update_package(self, package, req_version):
         """To be overridden. Update package.
 
         :param package: (str) The system package to update.
@@ -612,7 +612,7 @@ class DebianInstaller(Installer):
 
     # -----------------------------------------------------------------------
 
-    def _update_package(self, package):
+    def _update_package(self, package, req_version):
         """Update package.
 
         :param package: (str) The system package to update.
@@ -688,7 +688,7 @@ class RpmInstaller(Installer):
 
     # ------------------------------------------------------------------------
 
-    def _update_package(self, package):
+    def _update_package(self, package, req_version):
         """Update package.
 
         :param package: (str) The system package to update.
@@ -765,7 +765,7 @@ class DnfInstaller(Installer):
 
     # ------------------------------------------------------------------------
 
-    def _update_package(self, package):
+    def _update_package(self, package, req_version):
         """Update package.
 
         :param package: (str) The system package to update.
@@ -835,12 +835,12 @@ class MacOsInstaller(Installer):
 
         """
         try:
+            package = str(package)
             command = "brew list " + package
             process = Process()
             process.run_popen(command)
             err = process.error()
-            return len(err) == 0
-
+            return len(err) == 3
         except Exception as e:
             raise InstallationError(str(e))
 
@@ -867,7 +867,11 @@ class MacOsInstaller(Installer):
             raise InstallationError(str(e))
 
         if len(err) > 3:
-            raise InstallationError(err)
+            if "Warning: You are using macOS" in err:
+                if self._search_package(package) is False:
+                    raise InstallationError(err)
+            else:
+                raise InstallationError(err)
 
     # ------------------------------------------------------------------------
 
@@ -935,7 +939,7 @@ class MacOsInstaller(Installer):
 
     # ------------------------------------------------------------------------
 
-    def _update_package(self, package):
+    def _update_package(self, package, req_version):
         """Update package.
 
         :param package: (str) The system package to update.
@@ -954,5 +958,9 @@ class MacOsInstaller(Installer):
         except Exception as e:
             raise InstallationError(str(e))
 
-        if len(err) > 0:
-            raise InstallationError(err)
+        if len(err) > 3:
+            if "Warning: You are using macOS" or "already installed" in err:
+                if self._version_package(package, req_version) is False:
+                    raise InstallationError(err)
+            else:
+                raise InstallationError(err)

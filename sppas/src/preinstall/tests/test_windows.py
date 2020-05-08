@@ -91,7 +91,7 @@ class TestInstallerWin(unittest.TestCase):
 
         """
         with self.assertRaises(NotImplementedError):
-            self.__windows._update_package("aaaa")
+            self.__windows._update_package("aaaa", "4.0")
 
     # ---------------------------------------------------------------------------
 
