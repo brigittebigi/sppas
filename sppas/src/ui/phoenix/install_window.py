@@ -747,12 +747,12 @@ class sppasLicenseInstallPanel(sppasPanel):
         s = wx.BoxSizer()
         license_text = list()
         try:
-            with open(os.path.join(paths.etc, "gpl-3.0.txt"), "r") as fp:
+            with open(os.path.join(paths.sppas, "COPYRIGHT.txt"), "r") as fp:
                 license_text = fp.readlines()
         except Exception as e:
             logging.error(e)
             license_text.append(LICENSE)
-        text = sppasMessageText(scp, "\n".join(license_text))
+        text = sppasMessageText(scp, "".join(license_text))
         s.Add(text, 1, wx.EXPAND)
         scp.SetSizer(s)
 
