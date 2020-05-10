@@ -768,8 +768,8 @@ class CheckListCtrl(sppasListCtrl):
 
     def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
                  size=wx.DefaultSize, style=wx.NO_BORDER | wx.LC_REPORT,
-                 validator=wx.DefaultValidator, name="LineListCtrl"):
-        """Initialize a new ListCtrl instance.
+                 validator=wx.DefaultValidator, name="CheckListCtrl"):
+        """Initialize a new CheckListCtrl instance.
 
         :param parent: (wx.Window) Parent window, must not be None.
         :param id: (int) A value of -1 indicates a default value.

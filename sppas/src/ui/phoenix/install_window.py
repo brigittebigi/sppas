@@ -47,6 +47,7 @@ from .windows import sppasStaticLine
 from .windows import BitmapTextButton, TextButton
 from .windows import sppasPanel, sppasScrolledPanel, sppasImgBgPanel
 from .windows import sppasTitleText, sppasStaticText, sppasMessageText
+from .windows import CheckListCtrl
 from .windows.book import sppasSimplebook
 from .windows.dialogs import sppasDialog
 
@@ -226,7 +227,7 @@ class sppasInstallWindow(sppasDialog):
         book.AddPage(sppasLicenseInstallPanel(book), text="")
 
         # 3rd: select the features to be installed
-        book.AddPage(sppasFeaturesInstallPanel(book), text="")
+        book.AddPage(sppasFeaturesInstallPanel(book, installer=self.__installer), text="")
 
         # 4th: ready to process install
         book.AddPage(sppasReadyInstallPanel(book), text="")
@@ -421,6 +422,10 @@ class sppasInstallWindow(sppasDialog):
             book.SetEffects(showEffect=wx.SHOW_EFFECT_NONE,
                             hideEffect=wx.SHOW_EFFECT_NONE)
 
+        # then change to the page
+        book.ChangeSelection(p)
+        w.SetFocus()
+
         # fix actions of the new page
         if page_name == "page_home":
             self.actions.EnableBack(False)
@@ -436,11 +441,6 @@ class sppasInstallWindow(sppasDialog):
 
         self.header.SetPageNumber(sppasInstallWindow.pages.index(page_name)+1)
 
-        # then change to the page
-        # Action buttons should be disabled during the change of selection:
-        # because they can be clicked during the effect...
-        book.ChangeSelection(p)
-        w.SetFocus()
         self.Layout()
         self.Refresh()
 
@@ -815,8 +815,23 @@ class sppasFeaturesInstallPanel(sppasPanel):
         self.SetSizer(sizer)
 
     def __create_feats_list(self, parent):
-        panel = sppasPanel(parent)
-        return panel
+        lst = CheckListCtrl(parent,
+                            style=wx.LC_REPORT | wx.LC_HRULES,
+                            name="features_list")
+        lst.AppendColumn("Name of the feature:", wx.LIST_FORMAT_LEFT)
+        lst.AppendColumn("Status", wx.LIST_FORMAT_LEFT)
+        for fid in self.__installer.features_ids():
+            idx = lst.InsertItem(lst.GetItemCount(), fid)
+            lst.SetItem(idx, 1, "")
+            if self.__installer.enable(fid) is True:
+                lst.Select(idx, on=True)
+            #if self.__installer.available(fid) is False:
+            #    lst.SetItemTextColour()
+
+        # Adjust columns width
+        lst.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+        lst.SetColumnWidth(1, wx.LIST_AUTOSIZE)
+        return lst
 
     def __create_descr_panel(self, parent):
         panel = sppasPanel(parent)
