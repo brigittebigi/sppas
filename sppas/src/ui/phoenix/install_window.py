@@ -39,19 +39,18 @@ import wx
 import logging
 import webbrowser
 
-from sppas.src.config import sg, paths
+from sppas.src.config import sg, paths, cfg
 from sppas.src.config import msg
+from sppas.src.preinstall import sppasInstallerDeps
 
 from .windows import sppasStaticLine
 from .windows import BitmapTextButton, TextButton
-from .windows import ToggleButton
 from .windows import sppasPanel, sppasScrolledPanel, sppasImgBgPanel
-from .windows import sppasDialog
 from .windows import sppasTitleText, sppasStaticText, sppasMessageText
 from .windows.book import sppasSimplebook
+from .windows.dialogs import sppasDialog
 
 from .windows import YesNoQuestion
-from .views import About
 from .main_log import sppasLogWindow
 
 # ---------------------------------------------------------------------------
@@ -61,7 +60,8 @@ def _(message):
     return msg(message, "ui")
 
 
-MSG_HEADER_INSTALL_WIZARD = _("InstallWizard of SPPAS")
+HEADER = _("InstallWizard of {:s} {:s}.").format(sg.__name__, sg.__version__)
+WIZARD_PAGE = _("Page ({page}/{total})")
 
 MSG_ACTION_BACK = _('Back')
 MSG_ACTION_NEXT = _('Next')
@@ -143,9 +143,10 @@ class sppasInstallWindow(sppasDialog):
 
         # Members
         self._init_infos()
+        self.__installer = sppasInstallerDeps()
 
         # Create the log window of the application and show it.
-        self.log_window = sppasLogWindow(self, wx.GetApp().get_log_level())
+        self.log_window = sppasLogWindow(self, cfg.log_level)
         self.log_window.EnableClear(False)
 
         # Fix this frame content
@@ -216,7 +217,7 @@ class sppasInstallWindow(sppasDialog):
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS,
             name="content"
         )
-        book.SetEffectsTimeouts(150, 200)
+        book.SetEffectsTimeouts(100, 150)
 
         # 1st page: a panel with a welcome message
         book.ShowNewPage(sppasHomeInstallPanel(book))
@@ -277,6 +278,9 @@ class sppasInstallWindow(sppasDialog):
         elif event_name == "view_log":
             self.log_window.focus()
 
+        elif event_name == "install":
+            self.process_install()
+
         elif event_name in sppasInstallWindow.pages:
             self.show_page(event_name)
 
@@ -305,10 +309,10 @@ class sppasInstallWindow(sppasDialog):
             # CMD+q on MacOS / Ctrl+q on Linux to force exit
             self.exit()
 
-        elif key_code == 70 and event.ControlDown():
-            # CMD+f
-            self.FindWindow("header").enable("page_files")
-            self.show_page("page_files")
+        elif key_code == 72 and event.ControlDown():
+            # CMD+h
+            self.header.enable("page_home")
+            self.show_page("page_home")
 
         elif key_code == wx.WXK_LEFT and event.CmdDown():
             self.show_next_page(direction=-1)
@@ -318,12 +322,12 @@ class sppasInstallWindow(sppasDialog):
 
         elif key_code == wx.WXK_UP and event.CmdDown():
             page_name = sppasInstallWindow.pages[0]
-            self.FindWindow("header").enable(page_name)
+            self.header.enable(page_name)
             self.show_page(page_name)
 
         elif key_code == wx.WXK_DOWN and event.CmdDown():
             page_name = sppasInstallWindow.pages[-1]
-            self.FindWindow("header").enable(page_name)
+            self.header.enable(page_name)
             self.show_page(page_name)
 
         else:
@@ -419,22 +423,31 @@ class sppasInstallWindow(sppasDialog):
 
         # fix actions of the new page
         if page_name == "page_home":
-            self.FindWindow("actions").EnableBack(False)
+            self.actions.EnableBack(False)
         else:
-            self.FindWindow("actions").EnableBack(True)
+            self.actions.EnableBack(True)
 
         if page_name == "page_ready":
-            self.FindWindow("actions").EnableNext(False)
-            self.FindWindow("actions").EnableInstall(True)
+            self.actions.EnableNext(False)
+            self.actions.EnableInstall(True)
         else:
-            self.FindWindow("actions").EnableNext(True)
-            self.FindWindow("actions").EnableInstall(False)
+            self.actions.EnableNext(True)
+            self.actions.EnableInstall(False)
+
+        self.header.SetPageNumber(sppasInstallWindow.pages.index(page_name)+1)
 
         # then change to the page
+        # Action buttons should be disabled during the change of selection:
+        # because they can be clicked during the effect...
         book.ChangeSelection(p)
         w.SetFocus()
         self.Layout()
         self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def process_install(self):
+        pass
 
 # ---------------------------------------------------------------------------
 
@@ -471,13 +484,32 @@ class sppasHeaderInstallPanel(sppasPanel):
         sizer.Add(title_panel, 1, wx.EXPAND, border=0)
         sizer.Add(img_panel, 1, wx.EXPAND, border=0)
         self.SetSizer(sizer)
+        self.SetPageNumber(1)
+        self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def _page(self):
+        return self.FindWindow("page_txt")
+
+    @property
+    def _title(self):
+        return self.FindWindow("title_txt")
 
     # -----------------------------------------------------------------------
 
     def SetFont(self, font):
         sppasPanel.SetFont(self, font)
-        self.FindWindow("title_txt").SetFont(wx.GetApp().settings.header_text_font)
+        self._title.SetFont(wx.GetApp().settings.header_text_font)
+        self._page.SetFont(wx.GetApp().settings.header_text_font)
         self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def SetPageNumber(self, nb):
+        text = WIZARD_PAGE.format(page=nb, total=len(sppasInstallWindow.pages))
+        self._page.SetValue(text)
 
     # -----------------------------------------------------------------------
 
@@ -492,12 +524,16 @@ class sppasHeaderInstallPanel(sppasPanel):
         static_bmp.SetFocusWidth(0)
         static_bmp.SetMinSize(wx.Size(min_height, min_height))
 
-        title = sppasTitleText(panel, value="InstallWizard of SPPAS...", name="title_txt")
-        title.SetMinSize(wx.Size(sppasPanel.fix_size(280), min_height))
+        title = sppasTitleText(panel, value=HEADER, name="title_txt")
+        title.SetMinSize(wx.Size(sppasPanel.fix_size(220), min_height))
+
+        page = sppasTitleText(panel, value=HEADER, name="page_txt")
+        page.SetMinSize(wx.Size(sppasPanel.fix_size(100), min_height))
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(static_bmp, 0, wx.ALIGN_CENTER)
-        sizer.Add(title, 1, wx.ALIGN_CENTER | wx.LEFT, 8)
+        sizer.Add(static_bmp, 0, wx.ALIGN_CENTER | wx.LEFT, 8)
+        sizer.Add(title, 1, wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT, 8)
+        sizer.Add(page, 0, wx.ALIGN_CENTER | wx.RIGHT, 8)
         panel.SetSizer(sizer)
 
         return panel
@@ -636,9 +672,9 @@ class sppasHomeInstallPanel(sppasPanel):
         txt = sppasMessageText(self, MSG_WELCOME)
 
         sppas_logo = TextButton(self, label="http://www.sppas.org/", name="sppas_web")
-        sppas_logo.SetMinSize(wx.Size(sppasPanel.fix_size(64), -1))
-        sppas_logo.SetBorderWidth(0)
-        sppas_logo.SetLabelPosition(wx.TOP)
+        sppas_logo.SetMinSize(wx.Size(sppasPanel.fix_size(200), -1))
+        sppas_logo.SetBorderWidth(1)
+        sppas_logo.SetLabelPosition(wx.CENTER)
 
         # Organize the title and message
         sizer = wx.BoxSizer(wx.VERTICAL)

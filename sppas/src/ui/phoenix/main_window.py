@@ -36,7 +36,7 @@
 
 import wx
 
-from sppas.src.config import sg
+from sppas.src.config import sg, sppasAppConfig
 from sppas.src.config import msg
 from sppas.src.utils import u
 
@@ -126,7 +126,7 @@ class sppasMainWindow(sppasDialog):
         self._init_infos()
 
         # Create the log window of the application and show it.
-        self.log_window = sppasLogWindow(self, wx.GetApp().get_log_level())
+        self.log_window = sppasLogWindow(self, sppasAppConfig().log_level)
 
         # Fix this frame content
         self._create_content()

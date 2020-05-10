@@ -84,6 +84,9 @@ symbols = sppasSymbolSettings()
 separators = sppasSeparatorSettings()
 annots = sppasAnnotationsSettings()
 
+# create the global application configuration
+cfg = sppasAppConfig()
+
 # ---------------------------------------------------------------------------
 # Fix the translation of each package
 # ---------------------------------------------------------------------------
@@ -101,6 +104,7 @@ __all__ = (
     "sppasAppConfig",
     "sppasPostInstall",
     "sg",
+    "cfg",
     "paths",
     "symbols",
     "separators",

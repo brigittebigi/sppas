@@ -46,8 +46,7 @@ import traceback
 import wx
 import logging
 
-from sppas import sg
-from sppas import sppasAppConfig
+from sppas import sg, cfg
 from sppas import sppasLogSetup
 from sppas import sppasLogFile
 from .main_settings import WxAppSettings
@@ -80,10 +79,9 @@ class sppasInstallApp(wx.App):
                         clearSigInt=True)
 
         # Fix application configuration and settings for look&feel
-        self.__cfg = sppasAppConfig()
         self.settings = WxAppSettings()
         self.SetAppName(sg.__name__)
-        self.SetAppDisplayName(self.__cfg.name)
+        self.SetAppDisplayName(sg.__name__ + " " + sg.__version__)
         wx.SystemOptions.SetOption("mac.window-plain-transition", 1)
         wx.SystemOptions.SetOption("msw.font.no-proof-quality", 0)
 
@@ -92,18 +90,12 @@ class sppasInstallApp(wx.App):
         self.locale = wx.Locale(lang)
 
         # Fix logging
-        self._logging = sppasLogSetup(self.__cfg.log_level)
+        self._logging = sppasLogSetup(cfg.log_level)
         log_report = sppasLogFile(pattern="install")
         self._logging.file_handler(log_report.get_filename())
 
     # -----------------------------------------------------------------------
     # Public methods
-    # -----------------------------------------------------------------------
-
-    def get_log_level(self):
-        """Return the current level of the logging."""
-        return self.__cfg.log_level
-
     # -----------------------------------------------------------------------
 
     def run(self):
@@ -160,6 +152,7 @@ class sppasInstallApp(wx.App):
 
         # Save settings
         self.settings.save()
+        cfg.save()
 
         # then it will exit. Nothing special to do. Return the exit status.
         return 0

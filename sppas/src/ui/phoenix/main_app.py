@@ -52,8 +52,7 @@ try:
 except ImportError:
     adv_import = False
 
-from sppas import sg
-from sppas import sppasAppConfig
+from sppas import sg, cfg
 from .main_settings import WxAppSettings
 from .main_window import sppasMainWindow
 from .tools import sppasSwissKnife
@@ -80,15 +79,14 @@ class sppasApp(wx.App):
         Create the application for the GUI of SPPAS based on Phoenix.
 
         """
-        self.__cfg = sppasAppConfig()
         wx.App.__init__(self,
                         redirect=False,
-                        filename=self.__cfg.log_file,
+                        filename=None,
                         useBestVisual=True,
                         clearSigInt=True)
 
         self.SetAppName(sg.__name__)
-        self.SetAppDisplayName(self.__cfg.name)
+        self.SetAppDisplayName(sg.__name__ + " " + sg.__version__)
         wx.SystemOptions.SetOption("mac.window-plain-transition", 1)
         wx.SystemOptions.SetOption("msw.font.no-proof-quality", 0)
 
@@ -101,14 +99,6 @@ class sppasApp(wx.App):
         self._logging = None
         self.process_command_line_args()
         self.setup_python_logging()
-
-    # -----------------------------------------------------------------------
-    # Public methods
-    # -----------------------------------------------------------------------
-
-    def get_log_level(self):
-        """Return the current level of the logging."""
-        return self.__cfg.log_level
 
     # -----------------------------------------------------------------------
     # Methods to configure and starts the app
@@ -129,30 +119,30 @@ class sppasApp(wx.App):
         parser.add_argument("-l", "--log_level",
                             required=False,
                             type=int,
-                            default=self.__cfg.log_level,
+                            default=cfg.log_level,
                             help='Log level (default={:d}).'
-                                 ''.format(self.__cfg.log_level))
+                                 ''.format(cfg.log_level))
 
         # add arguments here
         parser.add_argument("-s", "--splash_delay",
                             required=False,
                             type=int,
-                            default=self.__cfg.splash_delay,
+                            default=cfg.splash_delay,
                             help='Splash delay (default={:d}).'
-                                 ''.format(self.__cfg.splash_delay))
+                                 ''.format(cfg.splash_delay))
 
         # then parse
         args = parser.parse_args()
 
         # and do things with arguments
-        self.__cfg.set('log_level', args.log_level)
-        self.__cfg.set('splash_delay', args.splash_delay)
+        cfg.set('log_level', args.log_level)
+        cfg.set('splash_delay', args.splash_delay)
 
     # -----------------------------------------------------------------------
 
     def setup_python_logging(self):
         """Setup python logging to the standard stream handler."""
-        self._logging = sppasLogSetup(self.__cfg.log_level)
+        self._logging = sppasLogSetup(cfg.log_level)
         self._logging.stream_handler()
 
     # -----------------------------------------------------------------------
@@ -163,7 +153,7 @@ class sppasApp(wx.App):
         It is supposed that wx.adv is available (test it first!).
 
         """
-        delay = self.__cfg.splash_delay
+        delay = cfg.splash_delay
         if delay <= 0:
             return
 
@@ -262,8 +252,9 @@ class sppasApp(wx.App):
         if self.HasPendingEvents() is True:
             logging.warning('The application has pending events.')
 
-        # Save settings
+        # Save settings and configuration
         self.settings.save()
+        cfg.save()
 
         # then it will exit. Nothing special to do. Return the exit status.
         return 0

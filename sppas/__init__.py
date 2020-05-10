@@ -35,10 +35,11 @@ sppas: Global imports and some settings for external use.
 :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
 :contact:      contact@sppas.org
 :license:      GPL, v3
-:copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+:copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
 """
 
+import os
 import sys
 try:
     reload  # Python 2.7
@@ -47,6 +48,9 @@ except NameError:
         from importlib import reload  # Python 3.4+
     except ImportError:
         from imp import reload  # Python 3.0 - 3.3
+
+sppasDir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, sppasDir)
 
 from sppas.src.config import *
 from sppas.src.exc import *

@@ -47,9 +47,8 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas import sg, paths
+from sppas import sg, cfg
 from sppas import sppasLogSetup
-from sppas import sppasAppConfig
 from sppas import sppasLogFile
 from sppas.src.preinstall import sppasInstallerDeps
 
@@ -88,7 +87,6 @@ def check_python():
 
 if __name__ == "__main__":
 
-    cfg = sppasAppConfig()
     lgs = sppasLogSetup(cfg.log_level)
     log_report = sppasLogFile(pattern="install")
     lgs.file_handler(log_report.get_filename())
@@ -265,4 +263,5 @@ if __name__ == "__main__":
         msg += "\n".join(errors)
         exit_error(msg)
 
+cfg.save()
 sys.exit(0)

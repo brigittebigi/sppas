@@ -40,8 +40,8 @@ try:
 except ImportError:
     import ConfigParser as cp
 
-from sppas.src.config.settings import sppasPathSettings
-from sppas.src.config.appcfg import sppasAppConfig
+from sppas.src.config import paths
+from sppas.src.config import cfg
 from .feature import Feature
 
 # ---------------------------------------------------------------------------
@@ -79,33 +79,27 @@ class Features(object):
     @staticmethod
     def get_features_filename():
         """Return the name of the file with the features descriptions."""
-        feat_filename = None
-        with sppasPathSettings() as paths:
-            feat_filename = os.path.join(paths.etc, "features.ini")
-
-        return feat_filename
+        return os.path.join(paths.etc, "features.ini")
 
     # ------------------------------------------------------------------------
 
     def update_config(self):
-        """Update the config file with the features."""
-        with sppasAppConfig() as cfg:
-            for f in self.__features:
-                cfg.set_dep(f.get_id(), f.get_enable())
-            cfg.save()
+        """Update the active configuration instance with the features."""
+        for f in self.__features:
+            cfg.set_dep(f.get_id(), f.get_enable())
+        # The running application will do it (if desired): cfg.save()
 
     # ------------------------------------------------------------------------
 
     def update_features(self):
         """Update the features with the config file."""
         ids = self.get_ids()
-        with sppasAppConfig() as cfg:
-            for f in cfg.get_deps():
-                if f in ids:
-                    self.enable(f, cfg.dep_enabled(f))
-                else:
-                    logging.error("The config file contains an unknown "
-                                  "feature identifier {}".format(f))
+        for f in cfg.get_deps():
+            if f in ids:
+                self.enable(f, cfg.dep_enabled(f))
+            else:
+                logging.error("The config file contains an unknown "
+                              "feature identifier {}".format(f))
 
     # ------------------------------------------------------------------------
 
