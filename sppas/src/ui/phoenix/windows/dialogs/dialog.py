@@ -188,13 +188,17 @@ class sppasDialog(wx.Dialog):
 
     # -----------------------------------------------------------------------
 
-    def GetContentWindow(self):
-        """Overridden.
-
-        Return a window containing the main content of the dialog.
-
-        """
+    @property
+    def content(self):
         return self.FindWindow("content")
+
+    @property
+    def actions(self):
+        return self.FindWindow("actions")
+
+    @property
+    def header(self):
+        return self.FindWindow("header")
 
     # -----------------------------------------------------------------------
     # Methods to add/set the header, content, actions

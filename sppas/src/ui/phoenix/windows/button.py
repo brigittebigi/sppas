@@ -61,6 +61,7 @@
 
 """
 
+import logging
 import random
 import wx
 import wx.lib.scrolledpanel as sc
@@ -384,6 +385,17 @@ class BitmapTextButton(BaseButton):
         if name != wx.ButtonNameStr:
             self.SetImage(name)
 
+    # ----------------------------------------------------------------------
+
+    def Enable(self, enable=True):
+        """Enable or disable the window.
+
+        :param enable: (bool) True to enable the window.
+
+        """
+        sppasBaseWindow.Enable(self, enable)
+        self.SetForegroundColour(self.GetForegroundColour())
+
     # -----------------------------------------------------------------------
 
     def SetImage(self, image_name):
@@ -403,9 +415,9 @@ class BitmapTextButton(BaseButton):
 
         """
         BaseButton.SetForegroundColour(self, colour)
+
         if self._bitmapcolor == self._default_bitmapcolor:
             self._bitmapcolor = self.GetPenForegroundColour()
-
         self._default_bitmapcolor = self.GetPenForegroundColour()
 
     # -----------------------------------------------------------------------
@@ -493,15 +505,17 @@ class BitmapTextButton(BaseButton):
     def DrawContent(self, dc, gc):
         x, y, w, h = self.GetContentRect()
         if w >= 4 and h >= 4:
+            color = self.GetPenForegroundColour()
+            pen = wx.Pen(color, 1, self._border_style)
+            dc.SetPen(pen)
+
             # No label is defined.
             # Draw the square bitmap icon at the center with a 5% margin all around
             if self._label is None:
                 x_pos, y_pos, bmp_size = self.__get_bitmap_properties(x, y, w, h)
                 designed = self.__draw_bitmap(dc, gc, x_pos, y_pos, bmp_size)
                 if designed is False:
-                    pen = wx.Pen(self.GetPenForegroundColour(), 1, self._border_style)
                     pen.SetCap(wx.CAP_BUTT)
-                    dc.SetPen(pen)
                     dc.DrawRectangle(self._vert_border_width,
                                      self._horiz_border_width,
                                      w - (2 * self._vert_border_width),
@@ -623,7 +637,12 @@ class BitmapTextButton(BaseButton):
     # -----------------------------------------------------------------------
 
     def __draw_label(self, dc, gc, x, y):
-        self.DrawLabel(self._label, dc, gc, x, y)
+        # self.DrawLabel(self._label, dc, gc, x, y)
+        print("Draw {} with color {}. enabled={}".format(self._label, self.GetPenForegroundColour(), self.IsEnabled()))
+        font = self.GetFont()
+        gc.SetFont(font)
+        gc.SetTextForeground(self.GetPenForegroundColour())
+        gc.DrawText(self._label, x, y)
 
 # ---------------------------------------------------------------------------
 

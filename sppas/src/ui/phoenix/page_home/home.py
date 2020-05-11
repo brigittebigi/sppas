@@ -104,8 +104,7 @@ class sppasHomePanel(sppasPanel):
             "By using SPPAS, you agree to cite one of its references in your " \
             "publications.\n\n" \
             "This is the new version of the Graphical User Interface. " \
-            "It includes very interesting new features but is still under " \
-            "development and un-documented. You are invited to report bugs " \
+            "You are invited to report problems or suggestions " \
             "with the feedback form of the 'Log Window'.\n\n" \
             "For any help when using SPPAS, see the tutorials on the web and " \
             "the documentation included in the package."

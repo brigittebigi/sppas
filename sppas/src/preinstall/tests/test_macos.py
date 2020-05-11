@@ -35,7 +35,7 @@
 
 import unittest
 from sppas.src.ui.term.textprogress import ProcessProgressTerminal
-from sppas.src.preinstall.installer import MacOsInstaller, Feature
+from sppas.src.preinstall.installer import MacOsInstaller, InstallationError
 
 # ---------------------------------------------------------------------------
 
@@ -44,16 +44,14 @@ class TestInstallerMacOs(unittest.TestCase):
 
     def setUp(self):
         """Initialisation."""
-        p = ProcessProgressTerminal()
-        self.__macos = MacOsInstaller(p)
-        self.__feature = Feature("feature")
+        self.__macos = MacOsInstaller()
 
     # ---------------------------------------------------------------------------
 
     def test_search_package(self):
         """Returns True if package is already installed."""
-        self.assertFalse(self.__macos.search_package("juliuussssss"))
-        self.assertFalse(self.__macos.search_package(4))
+        self.assertFalse(self.__macos._search_package("juliuussssss"))
+        self.assertFalse(self.__macos._search_package(4))
 
         # Only if brew is already install on the computer
         # self.assertTrue(self.__macos.search_package("brew"))
@@ -62,8 +60,10 @@ class TestInstallerMacOs(unittest.TestCase):
 
     def test_install_package(self):
         """Install package."""
-        self.assertFalse(self.__macos._install_package("juliuussssss"))
-        self.assertFalse(self.__macos._install_package(4))
+        with self.assertRaises(InstallationError):
+            self.assertFalse(self.__macos._install_package("juliuussssss"))
+        with self.assertRaises(InstallationError):
+            self.assertFalse(self.__macos._install_package(4))
 
     # ---------------------------------------------------------------------------
 
@@ -85,14 +85,14 @@ class TestInstallerMacOs(unittest.TestCase):
 
     def test_need_update_package(self):
         """Return True if the package need to be update."""
-        x = "julius: stable 4.5 (bottled) \n" \
-            "Two-pass large vocabulary continuous speech recognition engine \n" \
-            "https://github.com/julius-speech/julius \n" \
-            "/usr/local/Cellar/julius/4.5 (76 files, 3.6MB) * \n"
+        x = "julius: stable 4.5 (bottled) \\r\\n" \
+            "Two-pass large vocabulary continuous speech recognition engine \\r\\n" \
+            "https://github.com/julius-speech/julius \\r\\n" \
+            "/usr/local/Cellar/julius/4.5 (76 files, 3.6MB) * \\r\\n"
 
-        y = "flac: stable 1.3.3 (bottled), HEAD \n" \
-            "Free lossless audio codec \n" \
-            "https://xiph.org/flac/ \n" \
+        y = "flac: stable 1.3.3 (bottled), HEAD \\r\\n" \
+            "Free lossless audio codec \\r\\n" \
+            "https://xiph.org/flac/ \\r\\n" \
             "/usr/local/Cellar/flac/1.3.3 (53 files, 2.4MB) * \n" \
 
         with self.assertRaises(IndexError):
@@ -117,17 +117,10 @@ class TestInstallerMacOs(unittest.TestCase):
 
     def test_update_package(self):
         """Update package."""
-        self.assertFalse(self.__macos._update_package("wxpythonnnn"))
-        self.assertFalse(self.__macos._update_package(4))
+        with self.assertRaises(InstallationError):
+            self.assertFalse(self.__macos._update_package("wxpythonnnn", "4.0"))
+        with self.assertRaises(InstallationError):
+            self.assertFalse(self.__macos._update_package(4, "4.0"))
 
     # ---------------------------------------------------------------------------
-
-
-test = TestInstallerMacOs()
-test.setUp()
-test.test_search_package()
-test.test_install_package()
-test.test_version_package()
-test.test_need_update_package()
-test.test_update_package()
 
