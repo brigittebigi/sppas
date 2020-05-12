@@ -19,5 +19,15 @@
 		<ListenCount>9</ListenCount>
 		<Accepted>false</Accepted>
 	</WorkspaceItem>
+
+	<WorkspaceItem>
+		<Id>0</Id>
+		<IdGroup>0</IdGroup>
+		<Name>/home/laurent/Documents/stage/sppas/samples/samples-pol/0001.txt</Name>
+		<OpenCount>0</OpenCount>
+		<EditCount>0</EditCount>
+		<ListenCount>0</ListenCount>
+		<Accepted>false</Accepted>
+	</WorkspaceItem>
 </WorkspaceDataSet>
 
