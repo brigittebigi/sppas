@@ -135,8 +135,8 @@ class sppasApp(wx.App):
         args = parser.parse_args()
 
         # and do things with arguments
-        cfg.set('log_level', args.log_level)
-        cfg.set('splash_delay', args.splash_delay)
+        # cfg.log_level = args.log_level
+        # cfg.splash_delay = args.splash_delay
 
     # -----------------------------------------------------------------------
 
@@ -155,13 +155,13 @@ class sppasApp(wx.App):
         """
         delay = cfg.splash_delay
         if delay <= 0:
-            return
+            return None
 
         bitmap = sppasSwissKnife.get_bmp_image('splash')
         splash = wx.adv.SplashScreen(
             bitmap,
             wx.adv.SPLASH_CENTRE_ON_SCREEN | wx.adv.SPLASH_TIMEOUT,
-            delay*100,
+            delay*1000,
             None,
             -1,
             wx.DefaultPosition,
@@ -179,9 +179,7 @@ class sppasApp(wx.App):
 
         """
         self.settings = WxAppSettings()
-
-        # here, we only sleep some time to simulate we're doing something.
-        time.sleep(1)
+        # here, we could be doing something... in future versions.
 
     # -----------------------------------------------------------------------
 
