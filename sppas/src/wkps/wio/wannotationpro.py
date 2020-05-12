@@ -63,6 +63,7 @@
 
 """
 import os
+import sppas
 import xml.etree.cElementTree as ET
 
 from sppas.src.config import sg
@@ -152,7 +153,7 @@ class sppasWANT(sppasBaseWkpIO):
         :param filename: (str)
 
         """
-        if os.path.exists(filename) is False:
+        if os.path.isfile(filename) is False:
             raise FileOSError(filename)
         try:
             tree = ET.parse(filename)
@@ -211,33 +212,42 @@ class sppasWANT(sppasBaseWkpIO):
 
         # we create a sub element in  workspace_item and we add the data
         # kept in subjoined
+
         # Id
         child_id = ET.SubElement(workspace_item, "Id")
-        child_id.text = sub[uri + "Id"]
-
         # IdGroup
         child_id_group = ET.SubElement(workspace_item, "IdGroup")
-        child_id_group.text = sub[uri + "IdGroup"]
-
         # Name
         child_name = ET.SubElement(workspace_item, "Name")
-        child_name.text = sub[uri + "Name"]
-
         # OpenCount
         child_open_count = ET.SubElement(workspace_item, "OpenCount")
-        child_open_count.text = sub[uri + "OpenCount"]
-
         # EditCount
         child_edit_count = ET.SubElement(workspace_item, "EditCount")
-        child_edit_count.text = sub[uri + "EditCount"]
-
         # ListenCount
         child_listen_count = ET.SubElement(workspace_item, "ListenCount")
-        child_listen_count.text = sub[uri + "ListenCount"]
-
         # Accepted
         child_accepted = ET.SubElement(workspace_item, "Accepted")
-        child_accepted.text = sub[uri + "Accepted"]
+
+        # if sub is not none it means that the file has been edited in
+        # AnnotationPro already
+        if sub is not None:
+            child_id.text = sub[uri + "Id"]
+            child_id_group.text = sub[uri + "IdGroup"]
+            child_name.text = sub[uri + "Name"]
+            child_open_count.text = sub[uri + "OpenCount"]
+            child_edit_count.text = sub[uri + "EditCount"]
+            child_listen_count.text = sub[uri + "ListenCount"]
+            child_accepted.text = sub[uri + "Accepted"]
+        else:
+            # if we added the file from sppas subjoined will be empty
+            # so we add manually the information
+            child_id.text = "0"
+            child_id_group.text = "0"
+            child_name.text = os.path.basename(fn.get_id())
+            child_open_count.text = "0"
+            child_edit_count.text = "0"
+            child_listen_count.text = "0"
+            child_accepted.text = "false"
 
         return workspace_item
 
@@ -251,12 +261,17 @@ class sppasWANT(sppasBaseWkpIO):
         :returns: (FileName)
 
         """
-        # the name contained in the .want file is the the filename
+
+        # as the antw file contains only the filename + ext and not the path
+        # all the files that are going to be parsed must be contained in  the
+        # workspace folder otherwise we can't locate it on the computer
+
+        # the name contained in the .want file is the the filename + ext
         name = tree.find(uri + "Name")
-        self.add_file(name.text)
+        self.add_file(os.path.abspath(os.path.join(sppas.paths.wkps, name.text)))
 
         # getting the filename object that we added
-        fn = self.get_object(os.path.abspath(name.text))
+        fn = self.get_object(os.path.abspath(os.path.join(sppas.paths.wkps, name.text)))
 
         # parsing the tree
         # ----------------
