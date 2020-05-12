@@ -1,0 +1,17 @@
+{
+  "id": "lexvar",
+  "name": "LexVar",
+  "descr": "lex var",
+  "required": "",
+  "api": "sppasLexVar",
+
+  "resources": [
+  ],
+
+  "anntype": [
+    "SPEAKER"
+  ],
+
+  "options": [
+  ]
+}
