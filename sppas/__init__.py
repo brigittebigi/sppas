@@ -49,7 +49,7 @@ except NameError:
     except ImportError:
         from imp import reload  # Python 3.0 - 3.3
 
-sppasDir = os.path.dirname(os.path.abspath(__file__))
+sppasDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, sppasDir)
 
 from sppas.src.config import *

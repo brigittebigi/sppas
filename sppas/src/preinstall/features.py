@@ -72,7 +72,6 @@ class Features(object):
         self.__cmdos = cmdos
         self.__features = list()
         self.set_features()
-        self.update_features()
 
     # ------------------------------------------------------------------------
 
@@ -92,11 +91,15 @@ class Features(object):
     # ------------------------------------------------------------------------
 
     def update_features(self):
-        """Update the features with the config file."""
+        """Update the features with the config file.
+
+        Disable a feature if it was already installed.
+
+        """
         ids = self.get_ids()
         for f in cfg.get_deps():
             if f in ids:
-                self.enable(f, cfg.dep_enabled(f))
+                self.enable(f, not cfg.dep_installed(f))
             else:
                 logging.error("The config file contains an unknown "
                               "feature identifier {}".format(f))
@@ -122,6 +125,7 @@ class Features(object):
                     return feat.get_enable()
                 return feat.set_enable(value)
 
+        logging.error("Unknown feature {}".format(fid))
         return False
 
     # ------------------------------------------------------------------------
@@ -139,6 +143,7 @@ class Features(object):
                     return feat.get_available()
                 return feat.set_available(value)
 
+        logging.error("Unknown feature {}".format(fid))
         return False
 
     # ------------------------------------------------------------------------
@@ -153,6 +158,7 @@ class Features(object):
             if feat.get_id() == fid:
                 return feat.get_desc()
 
+        logging.error("Unknown feature {}".format(fid))
         return None
 
     # ------------------------------------------------------------------------
@@ -167,6 +173,7 @@ class Features(object):
             if feat.get_id() == fid:
                 return feat.get_packages()
 
+        logging.error("Unknown feature {}".format(fid))
         return dict()
 
     # ------------------------------------------------------------------------
@@ -180,6 +187,8 @@ class Features(object):
         for feat in self.__features:
             if feat.get_id() == fid:
                 return feat.get_pypi()
+
+        logging.error("Unknown feature {}".format(fid))
         return dict()
 
     # ------------------------------------------------------------------------
@@ -193,6 +202,8 @@ class Features(object):
         for feat in self.__features:
             if feat.get_id() == fid:
                 return feat.get_cmd()
+
+        logging.error("Unknown feature {}".format(fid))
         return str()
 
     # ---------------------------------------------------------------------------

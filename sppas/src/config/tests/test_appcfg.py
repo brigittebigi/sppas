@@ -29,12 +29,14 @@
         ---------------------------------------------------------------------
 
     src.config.tests.test_appcfg.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
+import os
 import unittest
 
-from sppas.src.config.appcfg import sppasAppConfig, os, sppasPathSettings
+from sppas.src.config.appcfg import sppasAppConfig
 
 # ---------------------------------------------------------------------------
 
@@ -42,29 +44,26 @@ from sppas.src.config.appcfg import sppasAppConfig, os, sppasPathSettings
 class TestConfiguration(unittest.TestCase):
 
     def setUp(self):
-        """Initialisation des tests.
-
-        """
         self.__configuration = sppasAppConfig()
 
     # ---------------------------------------------------------------------------
 
     def test_cfg_filename(self):
-        """Return the name of the config file."""
+        # Return the name of the config file.
         y = self.__configuration.cfg_filename()
         self.assertIn(".deps~", y)
 
     # ---------------------------------------------------------------------------
 
     def test_cfg_exist(self):
-        """Return if the config file exists or not."""
+        # Return if the config file exists or not.
         y = os.path.exists(self.__configuration.cfg_filename())
         self.assertEqual(y, self.__configuration.cfg_file_exists())
 
     # ---------------------------------------------------------------------------
 
     def test_load(self):
-        """Override. Load the configuration from a file."""
+        # Override. Load the configuration from a file.
         self.__configuration.load()
         if self.__configuration.cfg_file_exists() is True:
             y = self.__configuration.get_deps()
@@ -72,17 +71,6 @@ class TestConfiguration(unittest.TestCase):
         else:
             y = self.__configuration.get_deps()
             self.assertEqual(y, [])
-
-    # ---------------------------------------------------------------------------
-
-    def test_save(self):
-        """Override. Save the dictionary in a file."""
-        self.__configuration.set_dep("wxpython", True)
-        self.__configuration.set_dep("brew", True)
-        self.__configuration.set_dep("julius", True)
-        self.__configuration.save()
-        y = self.__configuration.get_deps()
-        self.assertEqual(y, ["wxpython", "brew", "julius"])
 
     # ---------------------------------------------------------------------------
 
@@ -97,36 +85,24 @@ class TestConfiguration(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_get_set_deps(self):
-        """Return(get_deps), add or modify(set_dep) the dictionnary self.__dict__["file_dict"]."""
+        # Return(get_deps),
+        # add or modify(set_dep)
         self.__configuration.set_dep("first", True)
         y = self.__configuration.get_deps()
-        self.assertEqual(y, ["wxpython", "brew", "julius", "first"])
+        self.assertTrue("first" in y)
 
         self.__configuration.set_dep("second", True)
         y = self.__configuration.get_deps()
-        self.assertEqual(y, ["wxpython", "brew", "julius", "first", "second"])
+        self.assertTrue("second" in y)
 
     # ---------------------------------------------------------------------------
 
-    def test_dep_enabled(self):
-        """Return True if a dependency is enabled"""
-        self.assertFalse(self.__configuration.dep_enabled("aaaa"))
+    def test_dep_installed(self):
+        """Return True if a dependency is installed"""
+        self.assertFalse(self.__configuration.dep_installed("aaaa"))
 
-        self.assertEqual(self.__configuration.dep_enabled("wxpython"), True)
-        self.assertEqual(self.__configuration.dep_enabled("brew"), True)
-        self.assertEqual(self.__configuration.dep_enabled("julius"), True)
-        self.assertEqual(self.__configuration.dep_enabled("first"), True)
-        self.assertEqual(self.__configuration.dep_enabled("second"), True)
-
-    # ---------------------------------------------------------------------------
-
-
-test = TestConfiguration()
-test.setUp()
-test.test_cfg_filename()
-test.test_cfg_exist()
-test.test_load()
-test.test_save()
-test.test_hide_unhide()
-test.test_get_set_deps()
-test.test_dep_enabled()
+        if self.__configuration.cfg_file_exists() is True:
+            self.assertTrue(self.__configuration.dep_installed("wxpython"))
+            self.assertTrue(self.__configuration.dep_installed("julius"))
+        self.assertFalse(self.__configuration.dep_installed("first"))
+        self.assertFalse(self.__configuration.dep_installed("second"))

@@ -43,6 +43,7 @@ from sppas.src.utils import u
 from sppas.src.wkps.sppasWorkspace import sppasWorkspace
 from sppas.src.wkps.filebase import States
 from sppas.src.wkps.sppasWkps import sppasWkps
+from sppas.src.wkps.wio import WkpFormatProperty, sppasWkpRW
 
 
 from ..windows import Confirm, Error
@@ -349,7 +350,16 @@ class WorkspacesManager(sppasPanel):
         # get the name of the file to be imported
         dlg = sppasFileDialog(self, title=WKP_ACT_IMPORT,
                               style=wx.FC_OPEN | wx.FC_NOSHOWHIDDEN)
-        dlg.SetWildcard(WKP + " (*.wjson)|*.wjson")
+        wildcard = list()
+        extensions = list()
+        for e in sppasWkpRW.extensions():
+            f = WkpFormatProperty(e)
+            if f.get_reader() is True:
+                wildcard.append(f.get_software() + " " + WKP + " (" + e + ")|*." + e)
+                extensions.append(e)
+        dlg.SetWildcard("|".join(wildcard))
+        # dlg.SetWildcard(WKP + " (*.wjson)|*.wjson")
+
         if dlg.ShowModal() == wx.ID_OK:
             # Get the selected file name
             pathname = dlg.GetPath()
@@ -375,7 +385,16 @@ class WorkspacesManager(sppasPanel):
         # get the name of the file to be exported to
         with sppasFileDialog(self, title=WKP_ACT_EXPORT,
                              style=wx.FD_SAVE) as dlg:
-            dlg.SetWildcard(WKP + " (*.wjson)|*.wjson")
+            wildcard = list()
+            extensions = list()
+            for e in sppasWkpRW.extensions():
+                f = WkpFormatProperty(e)
+                if f.get_writer() is True:
+                    wildcard.append(f.get_software() + " " + WKP + " (" + e + ")|*." + e)
+                    extensions.append(e)
+            dlg.SetWildcard("|".join(wildcard))
+            # dlg.SetWildcard(WKP + " (*.wjson)|*.wjson")
+
             if dlg.ShowModal() == wx.ID_CANCEL:
                 return
             pathname = dlg.GetPath()
