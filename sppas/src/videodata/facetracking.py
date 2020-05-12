@@ -70,7 +70,7 @@ class faceTracking(object):
         self.__coordinates = list()
         self.video_process(video)
         self.clean_parasite(self.nb_detection())
-        # for l in self.__positions:
+        # for l in self.__coordinates:
         #     print("Detection")
         #     for c in l:
         #         print(c.__str__())
@@ -104,7 +104,7 @@ class faceTracking(object):
 
             frame = imutils.resize(frame, width=400)
 
-            self.__coordinates.append(self.__facedetection.position_size(frame, net))
+            self.__coordinates.append(self.__facedetection.detect_faces(frame, net))
 
             cv2.imshow("Frame", frame)
             key = cv2.waitKey(1) & 0xFF

@@ -28,7 +28,7 @@
 
         ---------------------------------------------------------------------
 
-    src.config.tests.test_coordinates.py
+    src.structs.tests.test_coordinates.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -79,88 +79,99 @@ class TestFeature(unittest.TestCase):
 
     def test_get_set_x(self):
         self.__coordinates._set_x(18)
-        confidence = self.__coordinates.get_x()
-        self.assertEqual(confidence, 18)
+        x = self.__coordinates.get_x()
+        self.assertEqual(x, 18)
 
         with self.assertRaises(ValueError):
             self.__coordinates._set_x("Bonjour")
-        confidence = self.__coordinates.get_x()
-        self.assertEqual(confidence, 18)
+        x = self.__coordinates.get_x()
+        self.assertEqual(x, 18)
 
-        with self.assertRaises(ValueError):
-            self.__coordinates._set_x(-5)
-        confidence = self.__coordinates.get_x()
-        self.assertEqual(confidence, 18)
+        self.__coordinates._set_x(-5)
+        x = self.__coordinates.get_x()
+        self.assertEqual(x, 0)
 
         with self.assertRaises(ValueError):
             self.__coordinates._set_x(15361)
-        confidence = self.__coordinates.get_x()
-        self.assertEqual(confidence, 18)
+        x = self.__coordinates.get_x()
+        self.assertEqual(x, 0)
 
     # ---------------------------------------------------------------------------
 
     def test_get_set_y(self):
         self.__coordinates._set_y(18)
-        confidence = self.__coordinates.get_y()
-        self.assertEqual(confidence, 18)
+        y = self.__coordinates.get_y()
+        self.assertEqual(y, 18)
 
         with self.assertRaises(ValueError):
             self.__coordinates._set_y("Bonjour")
-        confidence = self.__coordinates.get_y()
-        self.assertEqual(confidence, 18)
+        y = self.__coordinates.get_y()
+        self.assertEqual(y, 18)
 
-        with self.assertRaises(ValueError):
-            self.__coordinates._set_y(-5)
-        confidence = self.__coordinates.get_y()
-        self.assertEqual(confidence, 18)
+        self.__coordinates._set_y(-5)
+        y = self.__coordinates.get_y()
+        self.assertEqual(y, 0)
 
         with self.assertRaises(ValueError):
             self.__coordinates._set_y(8641)
-        confidence = self.__coordinates.get_y()
-        self.assertEqual(confidence, 18)
+        y = self.__coordinates.get_y()
+        self.assertEqual(y, 0)
 
     # ---------------------------------------------------------------------------
 
     def test_get_set_w(self):
         self.__coordinates._set_w(18)
-        confidence = self.__coordinates.get_w()
-        self.assertEqual(confidence, 18)
+        w = self.__coordinates.get_w()
+        self.assertEqual(w, 18)
 
         with self.assertRaises(ValueError):
             self.__coordinates._set_w("Bonjour")
-        confidence = self.__coordinates.get_w()
-        self.assertEqual(confidence, 18)
+        w = self.__coordinates.get_w()
+        self.assertEqual(w, 18)
 
         with self.assertRaises(ValueError):
             self.__coordinates._set_w(-5)
-        confidence = self.__coordinates.get_w()
-        self.assertEqual(confidence, 18)
+        w = self.__coordinates.get_w()
+        self.assertEqual(w, 18)
 
         with self.assertRaises(ValueError):
             self.__coordinates._set_w(15361)
-        confidence = self.__coordinates.get_w()
-        self.assertEqual(confidence, 18)
+        w = self.__coordinates.get_w()
+        self.assertEqual(w, 18)
 
     # ---------------------------------------------------------------------------
 
     def test_get_set_h(self):
         self.__coordinates._set_h(18)
-        confidence = self.__coordinates.get_h()
-        self.assertEqual(confidence, 18)
+        h = self.__coordinates.get_h()
+        self.assertEqual(h, 18)
 
         with self.assertRaises(ValueError):
             self.__coordinates._set_h("Bonjour")
-        confidence = self.__coordinates.get_h()
-        self.assertEqual(confidence, 18)
+        h = self.__coordinates.get_h()
+        self.assertEqual(h, 18)
 
         with self.assertRaises(ValueError):
             self.__coordinates._set_h(-5)
-        confidence = self.__coordinates.get_h()
-        self.assertEqual(confidence, 18)
+        h = self.__coordinates.get_h()
+        self.assertEqual(h, 18)
 
         with self.assertRaises(ValueError):
             self.__coordinates._set_h(8641)
-        confidence = self.__coordinates.get_h()
-        self.assertEqual(confidence, 18)
+        h = self.__coordinates.get_h()
+        self.assertEqual(h, 18)
+
+    # ---------------------------------------------------------------------------
+
+    def test_guess_portrait(self):
+        new_coordinates = self.__coordinates.guess_portrait()
+        x = new_coordinates.get_x()
+        self.assertEqual(x, 68)
+        y = new_coordinates.get_y()
+        self.assertEqual(y, 17)
+        w = new_coordinates.get_w()
+        self.assertEqual(w, 300)
+        h = new_coordinates.get_h()
+        self.assertEqual(h, 196)
 
     # ---------------------------------------------------------------------------

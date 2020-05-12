@@ -93,19 +93,19 @@ class sppasCoordinates(object):
         self._set_confidence(confidence)
 
         # Represent where the image start on the x axis
-        self.__x = int
+        self.__x = 0
         self._set_x(x)
 
         # Represent where the image start on the y axis
-        self.__y = int
+        self.__y = 0
         self._set_y(y)
 
         # Represent the width of the image.
-        self.__w = int
+        self.__w = 0
         self._set_w(w)
 
         # Represent the height of the image.
-        self.__h = int
+        self.__h = 0
         self._set_h(h)
 
     # -----------------------------------------------------------------------
@@ -144,9 +144,12 @@ class sppasCoordinates(object):
         """
         # Because value type is numpy.int32 is that case
         value = int(value)
-        if type(value) != int or value < 0 or value > self.MAX_W:
+        if type(value) != int or value > self.MAX_W:
             raise ValueError
-        self.__x = value
+        if value < 0:
+            self.__x = 0
+        else:
+            self.__x = value
 
     # -----------------------------------------------------------------------
 
@@ -164,9 +167,12 @@ class sppasCoordinates(object):
         """
         # Because value type is numpy.int32 is that case
         value = int(value)
-        if type(value) != int or value < 0 or value > self.MAX_H:
+        if type(value) != int or value > self.MAX_H:
             raise ValueError
-        self.__y = value
+        if value < 0:
+            self.__y = 0
+        else:
+            self.__y = value
 
     # -----------------------------------------------------------------------
 
@@ -207,6 +213,17 @@ class sppasCoordinates(object):
         if type(value) != int or value < 0 or value > self.MAX_H:
             raise ValueError
         self.__h = value
+
+    # -----------------------------------------------------------------------
+
+    def guess_portrait(self):
+        """Return a new sppasCoordinates based on the face coordinates."""
+        width = self.get_w() * 2
+        height = self.get_h() * 2
+        x = self.get_x() - self.get_w()/2
+        y = self.get_y()
+        coordinates = sppasCoordinates(self.get_confidence(), x, y, width, height)
+        return coordinates
 
     # -----------------------------------------------------------------------
 

@@ -49,20 +49,32 @@ class faceDetection(object):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
+    A faceDetection object allows to analyze an image, detect visage in it
+    and then returns a list of sppasCoordinates for each visage you detected.
+
+    For example :
+    >>> net = cv2.dnn.readNetFromCaffe(proto_file, caffeModel)
+    >>> f = faceDetection()
+    >>> f.detect_visage("image.png", net)
+
+
     """
 
     def __init__(self):
         """Create a new faceDetection instance."""
+        self.__proto = None
+        self.__model = None
 
     # -----------------------------------------------------------------------
 
     @staticmethod
-    def position_size(img, net):
+    def detect_faces(img, net, nb=None):
         """Determine the coordinates of faces and returns a list of coordinates objects.
 
         :param img: (image) The image to process.
         :param net: (cv2.dnn_Net) Net instance which allows to create
         and manipulate comprehensive artificial neural networks.
+        :param nb: (int) The number of person you want to detect.
 
         """
         (h, w) = img.shape[:2]
@@ -70,10 +82,13 @@ class faceDetection(object):
                                      (300, 300), (104.0, 177.0, 123.0))
         net.setInput(blob)
         detections = net.forward()
-
+        if nb is None:
+            max_range = detections.shape[2]
+        else:
+            max_range = nb
         positions = list()
 
-        for i in range(0, detections.shape[2]):
+        for i in range(0, max_range):
             confidence = detections[0, 0, i, 2]
 
             if confidence > 0.5:
@@ -88,5 +103,12 @@ class faceDetection(object):
                             cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
 
                 positions.append(sppasCoordinates(confidence, startX, startY, endX - startX, endY - startY))
+        if len(positions) == 0:
+            # If nothing has been detected slice the image
+            # in 4 parts and then retry to analyze it
+            pass
         return positions
+
+    # -----------------------------------------------------------------------
+
 
