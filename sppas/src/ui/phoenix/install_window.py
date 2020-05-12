@@ -40,7 +40,7 @@ import logging
 import webbrowser
 
 from sppas.src.config import sg, paths, cfg
-from sppas.src.config import msg
+from sppas.src.config import msg, info
 from sppas.src.preinstall import sppasInstallerDeps
 
 from .windows import sppasStaticLine
@@ -50,6 +50,7 @@ from .windows import sppasTitleText, sppasStaticText, sppasMessageText
 from .windows import CheckListCtrl
 from .windows.book import sppasSimplebook
 from .windows.dialogs import sppasDialog
+from .windows.dialogs import sppasProgressDialog
 
 from .windows import YesNoQuestion
 from .main_log import sppasLogWindow
@@ -68,6 +69,7 @@ MSG_ACTION_BACK = _('Back')
 MSG_ACTION_NEXT = _('Next')
 MSG_ACTION_INSTALL = _('Install')
 MSG_ACTION_CANCEL = _('Cancel')
+MSG_ACTION_EXIT = _('Exit')
 MSG_ACTION_VIEWLOGS = _('View logs')
 
 MSG_CONFIRM = _("Confirm exit?")
@@ -77,11 +79,18 @@ MSG_WELCOME = _("SPPAS is a scientific computer software package developed "
                 "Langage', Aix-en-Provence, France.\n\n"
                 "The InstallWizard will install on your computer other programs "
                 "SPPAS is requiring.\nTo continue, click Next.")
-MSG_LICENSE = _("Please read the following license agreement. Click Next to accept.")
+MSG_LICENSE = _("Please read the following license agreement. Click 'Next' to accept.")
 MSG_FEATURES = _("Check the boxes in the list below to enable a feature installation:")
 MSG_READY = _("Click Install button to begin the installation.\n\n"
               "If you want to review or change any of your installation settings, "
-              "click Back. Click Cancel to exit the wizard without installing.")
+              "click 'Back'. Click 'Cancel' to exit the wizard without installing.")
+FEAT = _("Feature:")
+DESCR = _("Description:")
+SHARE = _("Before clicking 'Exit' button, share your experience of "
+          "this installer with the author:\n"
+          "Click on the 'Send feedback' button of the 'Log window'.")
+MSG_INSTALL_FINISHED = info(560, "globals")
+MSG_SEE_LOGS = _("See the 'Log Window' for details.")
 
 # A short license text in case the file of the GPL can't be read.
 LICENSE = """
@@ -131,7 +140,7 @@ class sppasInstallWindow(sppasDialog):
     """
 
     # List of the page names of the main notebook
-    pages = ("page_home", "page_license", "page_features", "page_ready")
+    pages = ("page_home", "page_license", "page_features", "page_ready", "page_terminate")
 
     def __init__(self):
         super(sppasInstallWindow, self).__init__(
@@ -231,6 +240,9 @@ class sppasInstallWindow(sppasDialog):
 
         # 4th: ready to process install
         book.AddPage(sppasReadyInstallPanel(book), text="")
+
+        # 5th: ready to process install
+        book.AddPage(sppasTerminatedInstallPanel(book), text="")
 
         return book
 
@@ -447,7 +459,35 @@ class sppasInstallWindow(sppasDialog):
     # -----------------------------------------------------------------------
 
     def process_install(self):
-        pass
+        """Installation process is here."""
+        progress = sppasProgressDialog()
+        progress.set_new()
+        wx.BeginBusyCursor()
+        self.__installer.set_progress(progress)
+        errors = self.__installer.install()
+        wx.EndBusyCursor()
+        progress.close()
+
+        msg = MSG_INSTALL_FINISHED
+        if len(errors) > 0:
+            msg += "\nThe installation process terminated with errors:"
+            msg += "\n".join(errors)
+            msg += "\n"
+        msg += MSG_SEE_LOGS
+
+        # then change to the page
+        book = self.FindWindow("content")
+        w = book.FindWindow("page_terminate")
+        w.SetMessage(msg)
+        p = book.FindPage(w)
+        book.ChangeSelection(p)
+        w.SetFocus()
+
+        self.header.SetPageNumber(sppasInstallWindow.pages.index("page_terminate")+1)
+        self.actions.EnableBack(False)
+        self.actions.EnableNext(False)
+        self.actions.EnableInstall(False)
+        self.actions.CancelToExit()
 
 # ---------------------------------------------------------------------------
 
@@ -593,6 +633,10 @@ class sppasActionsInstallPanel(sppasPanel):
 
     def EnableInstall(self, value):
         self.FindWindow("install").Enable(value)
+
+    def CancelToExit(self):
+        btn = self.FindWindow("cancel")
+        btn.SetLabel(MSG_ACTION_EXIT)
 
     # -----------------------------------------------------------------------
 
@@ -790,6 +834,9 @@ class sppasFeaturesInstallPanel(sppasPanel):
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
 
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_selected_item)
+        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_deselected_item)
+
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
     # ------------------------------------------------------------------------
@@ -800,42 +847,47 @@ class sppasFeaturesInstallPanel(sppasPanel):
             sppasStaticText(self, label="Error: no installer is defined")
             return
 
-        feats_panel = sppasPanel(self, name="feats_panel")
-        feats_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        left = self.__create_feats_list(feats_panel)
-        right = self.__create_descr_panel(feats_panel)
-        feats_sizer.Add(left, 1, wx.EXPAND)
-        feats_sizer.Add(right, 1, wx.EXPAND)
-        feats_panel.SetSizer(feats_sizer)
+        msg = sppasStaticText(self, label=MSG_FEATURES)
+        lst = self.__create_feats_list(self)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        msg = sppasStaticText(self, label=MSG_FEATURES)
         sizer.Add(msg, 0, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
-        sizer.Add(feats_panel, 1, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
+        sizer.Add(lst, 1, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
         self.SetSizer(sizer)
 
     def __create_feats_list(self, parent):
         lst = CheckListCtrl(parent,
                             style=wx.LC_REPORT | wx.LC_HRULES,
                             name="features_list")
-        lst.AppendColumn("Name of the feature:", wx.LIST_FORMAT_LEFT)
-        lst.AppendColumn("Status", wx.LIST_FORMAT_LEFT)
+        lst.AppendColumn(FEAT, wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(80))
+        lst.AppendColumn(DESCR, wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(380))
         for fid in self.__installer.features_ids():
             idx = lst.InsertItem(lst.GetItemCount(), fid)
-            lst.SetItem(idx, 1, "")
+            lst.SetItem(idx, 1, self.__installer.description(fid))
             if self.__installer.enable(fid) is True:
                 lst.Select(idx, on=True)
-            #if self.__installer.available(fid) is False:
-            #    lst.SetItemTextColour()
 
-        # Adjust columns width
-        lst.SetColumnWidth(0, wx.LIST_AUTOSIZE)
-        lst.SetColumnWidth(1, wx.LIST_AUTOSIZE)
         return lst
 
-    def __create_descr_panel(self, parent):
-        panel = sppasPanel(parent)
-        return panel
+    # ------------------------------------------------------------------------
+
+    @property
+    def features_list(self):
+        return self.FindWindow("features_list")
+
+    # ------------------------------------------------------------------------
+
+    def _on_selected_item(self, evt):
+        index = evt.GetIndex()
+        fid = self.features_list.GetItemText(index, 1)
+        self.__installer.enable(fid, True)
+        logging.info("Installation of feature {} enabled".format(fid))
+
+    def _on_deselected_item(self, evt):
+        index = evt.GetIndex()
+        fid = self.features_list.GetItemText(index, 1)
+        self.__installer.enable(fid, False)
+        logging.info("Installation of feature {} disabled".format(fid))
 
 # ---------------------------------------------------------------------------
 
@@ -869,8 +921,55 @@ class sppasReadyInstallPanel(sppasPanel):
 
     def _create_content(self):
         """Create the main content."""
+
         msg = sppasMessageText(self, MSG_READY)
         sizer = wx.BoxSizer()
         sizer.Add(msg, 1, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
         self.SetSizer(sizer)
+
+# ---------------------------------------------------------------------------
+
+
+class sppasTerminatedInstallPanel(sppasPanel):
+    """Create a panel to display a welcome message when installing.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, message=MSG_INSTALL_FINISHED):
+        super(sppasTerminatedInstallPanel, self).__init__(
+            parent=parent,
+            name="page_terminate",
+            style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.TAB_TRAVERSAL
+        )
+        self.__message = message
+        self._create_content()
+
+        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
+        self.SetForegroundColour(wx.GetApp().settings.fg_color)
+        self.SetFont(wx.GetApp().settings.text_font)
+
+    # ------------------------------------------------------------------------
+
+    def SetMessage(self, text):
+        self.__message = text
+
+    # ------------------------------------------------------------------------
+    # Private methods to construct the panel.
+    # ------------------------------------------------------------------------
+
+    def _create_content(self):
+        """Create the main content."""
+        msg1 = sppasMessageText(self, self.__message)
+        msg2 = sppasMessageText(self, SHARE)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(msg1, 1, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
+        sizer.Add(msg2, 1, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
+        self.SetSizer(sizer)
+
 

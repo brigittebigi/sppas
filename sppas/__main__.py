@@ -21,8 +21,8 @@ except ImportError:
     sys.exit(-1)
 
 v = wx.version().split()[0][0]
-if v == '4':
-    print("The version of wxPython is too old."
+if v != '4':
+    print("The version of wxPython is too old. "
           "This program requires at least version 4.x.")
     time.sleep(5)
     sys.exit(-1)

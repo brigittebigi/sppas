@@ -135,8 +135,8 @@ class sppasApp(wx.App):
         args = parser.parse_args()
 
         # and do things with arguments
-        # cfg.log_level = args.log_level
-        # cfg.splash_delay = args.splash_delay
+        cfg.log_level = args.log_level
+        cfg.splash_delay = args.splash_delay
 
     # -----------------------------------------------------------------------
 
