@@ -41,6 +41,7 @@ import unittest
 from sppas.src.wkps.wio.wkpreadwrite import sppasWkpRW
 from sppas.src.wkps.wio.wjson import sppasWJSON
 from sppas.src.wkps.fileref import FileReference, sppasAttribute
+from sppas.src.wkps.wio.wannotationpro import sppasWANT
 
 # ---------------------------------------------------------------------------
 
@@ -55,6 +56,9 @@ class testSppasWkpRW(unittest.TestCase):
         self.r1.append(sppasAttribute('initials', 'AB'))
         self.r1.append(sppasAttribute('sex', 'F'))
         self.att = sppasAttribute("att")
+
+        self.rw2 = sppasWkpRW(os.path.join(sppas.paths.wkps, 'AnnotProWkp.antw'))
+        self.want = sppasWANT()
     # -------------------------------------------------------------------------
 
     def test_extensions(self):
@@ -64,17 +68,23 @@ class testSppasWkpRW(unittest.TestCase):
     # -------------------------------------------------------------------------
 
     def test_read(self):
+        # WJSON
         self.assertEqual(type(self.rw.read()), type(self.wkp))
         ws = self.rw.read()
         ws.add_ref(self.r1)
         self.wkp.add_ref(self.r1)
         self.assertEqual(ws.get_all_files(), self.wkp.get_all_files())
+        self.assertEqual(type(ws), sppasWJSON)
+
+        # WANT
+        want = self.rw2.read()
+        self.assertEqual(type(want), sppasWANT)
 
     # -------------------------------------------------------------------------
 
     def test_create_wkp_from_extension(self):
         self.assertEqual(type(self.rw.create_wkp_from_extension("test.wjson")), sppasWJSON)
-        self.assertNotEqual(type(self.rw.create_wkp_from_extension("test")), sppasWJSON)
+        self.assertEqual(type(self.rw.create_wkp_from_extension("test.antw")), sppasWANT)
 
     # -------------------------------------------------------------------------
 
