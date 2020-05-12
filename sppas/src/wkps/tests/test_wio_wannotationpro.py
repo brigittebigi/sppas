@@ -36,10 +36,17 @@
 import os
 import unittest
 import xml.etree.cElementTree as ET
+import sppas
 
 from sppas.src.wkps.wio.wannotationpro import sppasWANT
 from sppas.src.wkps.filestructure import FileName
 
+# ---------------------------------------------------------------------------
+
+DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+
+# All the files contained in data folder must be moved in the workspace folder
+# in order to run the tests
 # ---------------------------------------------------------------------------
 
 
@@ -57,17 +64,17 @@ class TestsppasWANT(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_detect(self):
-        self.assertFalse(self.antw.detect("./save.json"))
-        self.assertTrue(self.antw.detect("./AnnotProWkp.antw"))
+        self.assertFalse(self.antw.detect(os.path.join(DATA, "save.json")))
+        self.assertTrue(self.antw.detect(os.path.join(DATA, "AnnotProWkp.antw")))
 
     # -----------------------------------------------------------------------
 
     def test_read(self):
-        self.antw.read("./apWkp.antw")
+        self.antw.read(os.path.join(sppas.paths.wkps, "apWkp.antw"))
 
         # apWkp.antw contains two files
-        fname1 = FileName(os.path.abspath("annprowkp.ant"))
-        fname2 = FileName(os.path.abspath("annprowkp1.ant"))
+        fname1 = FileName(os.path.join(sppas.paths.wkps, "annprowkp.ant"))
+        fname2 = FileName(os.path.join(sppas.paths.wkps, "annprowkp1.ant"))
 
         for fp in self.antw.get_all_files():
             for fr in fp:
@@ -79,15 +86,20 @@ class TestsppasWANT(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_write(self):
-        fn = self.antw.read("./apWkp.antw")
-        self.antw.write("./testapro.antw")
-        fname = self.antw.read("./testapro.antw")
+        fn = self.antw.read(os.path.join(sppas.paths.wkps, "apWkp.antw"))
+
+        self.antw.add_file(os.path.join(sppas.paths.samples, "samples-pol", "0001.txt"))
+        self.antw.add_file(os.path.join(sppas.paths.samples, "samples-pol", "0001.wav"))
+
+        self.antw.write(os.path.join(sppas.paths.wkps, "testapro.antw"))
+
+        fname = self.antw.read(os.path.join(sppas.paths.wkps, "testapro.antw"))
         self.assertEqual(fn, fname)
 
     # -----------------------------------------------------------------------
 
     def test_serialize(self):
-        fn = FileName(os.path.abspath("annprowkp.ant"))
+        fn = FileName(os.path.join(sppas.paths.wkps, "annprowkp.ant"))
 
         # dictionary with information that an annotation pro workspace could contain
         sub = {
@@ -143,7 +155,7 @@ class TestsppasWANT(unittest.TestCase):
         child_accepted = ET.SubElement(root, "Accepted")
         child_accepted.text = "false"
 
-        fn = FileName(os.path.abspath("apWkp.antw"))
+        fn = FileName(os.path.join(sppas.paths.wkps, "apWkp.antw"))
 
         fname = self.antw._parse(root)
         self.assertEqual(fn, fname)
