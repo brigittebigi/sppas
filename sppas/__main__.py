@@ -2,6 +2,7 @@
 
 import sys
 import time
+import os
 
 try:
     import wx
@@ -13,6 +14,8 @@ except ImportError:
     time.sleep(5)
     sys.exit(-1)
 
+sppasDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, sppasDir)
 from sppas.src.ui.phoenix.main_app import sppasApp
 
 # Create and run the wx application

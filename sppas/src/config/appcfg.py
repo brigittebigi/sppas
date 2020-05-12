@@ -164,7 +164,7 @@ class sppasAppConfig(sppasBaseSettings):
 
     # ------------------------------------------------------------------------
 
-    def dep_enabled(self, key):
+    def dep_installed(self, key):
         """Return True if a dependency is enabled.
 
         :param key: (str) Identifier of a feature.

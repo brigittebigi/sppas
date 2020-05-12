@@ -638,7 +638,6 @@ class BitmapTextButton(BaseButton):
 
     def __draw_label(self, dc, gc, x, y):
         # self.DrawLabel(self._label, dc, gc, x, y)
-        print("Draw {} with color {}. enabled={}".format(self._label, self.GetPenForegroundColour(), self.IsEnabled()))
         font = self.GetFont()
         gc.SetFont(font)
         gc.SetTextForeground(self.GetPenForegroundColour())
