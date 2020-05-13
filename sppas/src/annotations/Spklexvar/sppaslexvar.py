@@ -37,9 +37,12 @@ import logging
 
 from sppas import sppasUnicode
 from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasTranscription
 
 from ..baseannot import sppasBaseAnnotation
-from ..annotationsexc import AnnotationOptionError, NoInputError
+from ..annotationsexc import AnnotationOptionError
+from ..annotationsexc import NoInputError
+from ..annotationsexc import EmptyOutputError
 
 # -----------------------------------------------------------------------------
 
@@ -86,16 +89,6 @@ class sppasLexVar(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    def set_alt(self, alt):
-        """Fix the alt option, used to estimate occ and rank.
-
-        :param alt: (bool)
-
-        """
-        self._options['alt'] = bool(alt)
-
-    # -----------------------------------------------------------------------
-
     def set_tiername(self, tier_name):
         """Fix the tiername option.
 
@@ -123,6 +116,23 @@ class sppasLexVar(sppasBaseAnnotation):
 
         return tier_spk
 
+    # ----------------------------------------------------------------------
+
+    def detection(self, tier1, tier2):
+        raise NotImplementedError
+
+    # ----------------------------------------------------------------------
+    # Patterns
+    # ----------------------------------------------------------------------
+
+    def get_pattern(self):
+        """Pattern this annotation uses in an output filename."""
+        return self._options.get("outputpattern", "-rms")
+
+    def get_input_pattern(self):
+        """Pattern this annotation expects for its input filename."""
+        return self._options.get("inputpattern", "")
+
     # -----------------------------------------------------------------------
     # Apply the annotation on one given file
     # -----------------------------------------------------------------------
@@ -136,8 +146,43 @@ class sppasLexVar(sppasBaseAnnotation):
         :returns: (sppasTranscription)
 
         """
+        self.print_options()
+        self.print_diagnosis(input_file[0])
+        self.print_diagnosis(input_file[1])
 
-        return input_file
+        # Get the tier to be used
+        parser1 = sppasRW(input_file[0])
+        trs_input1 = parser1.read()
+        parser2 = sppasRW(input_file[1])
+        trs_input2 = parser2.read()
+
+        tier_spk1 = trs_input1.find(self._options['tiername'], case_sensitive=False)
+        tier_spk2 = trs_input2.find(self._options['tiername'], case_sensitive=False)
+
+        if tier_spk1 is None or tier_spk2 is None:
+            raise Exception("Tier with name '{:s}' not found in input files."
+                            "".format(self._options['tiername']))
+
+        new_tiers = self.detection(tier_spk1, tier_spk2)
+
+        # Create the transcription result
+        trs_output = sppasTranscription(self.name)
+        trs_output.set_meta('lexvar_result_of_src', input_file[0])
+        trs_output.set_meta('lexvar_result_of_echo', input_file[1])
+
+        for tier in new_tiers:
+            trs_output.append(tier)
+
+        # Save in a file
+        if output_file is not None:
+            if len(trs_output) > 0:
+                parser = sppasRW(output_file)
+                parser.write(trs_output)
+                self.print_filename(output_file)
+            else:
+                raise EmptyOutputError
+
+        return trs_output
 
 
 
