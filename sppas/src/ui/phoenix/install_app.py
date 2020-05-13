@@ -148,7 +148,7 @@ class sppasInstallApp(wx.App):
         logging.info('Exit the wx.App() of {:s}.'.format(sg.__name__))
 
         if self.HasPendingEvents() is True:
-            logging.warning('The application had pending events.')
+            self.DeletePendingEvents()
 
         # Save settings
         self.settings.save()

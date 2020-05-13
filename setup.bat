@@ -29,7 +29,7 @@ GOTO EndHeader
 
         ---------------------------------------------------------------------
 
-    sppas.bat
+    setup.bat
     ~~~~~~~~~~~~~
 
     :author:       Brigitte Bigi
@@ -43,14 +43,16 @@ GOTO EndHeader
 :EndHeader
 
 @echo off
+color 0F
 
 SET PYTHONIOENCODING=UTF-8
 
 WHERE pythonw3.exe >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
 
-    start "" pythonw3.exe .\sppas\bin\sppasgui.py
-    exit
+        color 1E
+        start "" pythonw3.exe .\sppas\bin\preinstallgui.py
+        REM exit
 
 ) else (
 
@@ -58,34 +60,29 @@ if %ERRORLEVEL% EQU 0 (
     if %ERRORLEVEL% EQU 0 (
 
         color 1E
-        start "" python3.exe .\sppas\bin\sppasgui.py
-        exit
+        start "" python3.exe .\sppas\bin\preinstall.py --wxpython
+        if %ERRORLEVEL% EQU 0 (
+            start "" python3.exe .\sppas\bin\preinstallgui.py
+            exit
+
+        ) else (
+
+            color 04
+            echo This setup failed to install wxpython automatically.
+            start "" python3.exe .\sppas\bin\preinstall.py --nowxpython -a
+
+            if %ERRORLEVEL% NEQ 0 (
+                echo This setup failed to install automatically the required packages.
+                echo See http://www.sppas.org/installation.html to do it manually.
+            )
+        )
 
     ) else (
 
-        color 04
+        color 4E
+        echo Python version 3 is not an internal command of your operating system.
+        echo Install it first with the Windows Store or from http://www.python.org.
 
-        if exist C:\Python27\pythonw.exe (
-            start "" C:\Python27\pythonw.exe .\sppas\bin\sppasgui.py
-            exit
-        ) else (
-            if exist C:\Python27\python.exe (
-                start "" C:\Python27\python.exe .\sppas\bin\sppasgui.py
-                exit
-            ) else (
-
-
-                WHERE python.exe >nul 2>nul
-                if %ERRORLEVEL% EQU 0 (
-                    start "" python.exe .\sppas\bin\sppasgui.py
-                    exit
-                ) else (
-                        color 4E
-                        echo Python is not an internal command of your operating system.
-                        echo Install it first with the Windows Store or from http://www.python.org.
-                )
-            )
-        )
     )
 )
 

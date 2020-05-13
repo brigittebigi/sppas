@@ -33,8 +33,9 @@
 """
 
 import logging
+import shutil
 
-from sppas import error
+from sppas.src.exc import InstallationError
 from sppas.src.utils.makeunicode import u
 from sppas.src.config.process import Process, search_cmd
 from sppas.src.config import info
@@ -58,23 +59,6 @@ MESSAGES = {
 }
 
 # -----------------------------------------------------------------------
-
-
-class InstallationError(OSError):
-    """:ERROR 500:.
-
-    Installation failed with error: {error}.
-
-    """
-
-    def __init__(self, error_msg):
-        self.parameter = error(500) + \
-                         (error(500, "globals")).format(error=error_msg)
-
-    def __str__(self):
-        return repr(self.parameter)
-
-# ---------------------------------------------------------------------------
 
 
 class Installer(object):
@@ -104,8 +88,9 @@ class Installer(object):
         self.__progression = 0
         self._features = None
         self.__python = "python3"
-        if search_cmd(self.__python + " --version") is False:
+        if shutil.which("python3") is None:
             self.__python = "python"
+        logging.info("Python installer command: {}".format(self.__python))
 
     # ------------------------------------------------------------------------
     # Public methods
@@ -162,39 +147,49 @@ class Installer(object):
     # ------------------------------------------------------------------------
 
     def install(self):
-        """Process to the installation procedure."""
+        """Process the installation."""
         errors = list()
         for fid in self._features.get_ids():
             self.__pheader(self.__message("beginning_feature", fid))
 
             if self._features.available(fid) is False:
-                self.__pupdate(self.__get_set_progress(1), self.__message("available_false", fid))
+                self.__pmessage(self.__message("available_false", fid))
 
             elif self._features.enable(fid) is False:
-                self.__pupdate(self.__get_set_progress(1), self.__message("enable_false", fid))
+                self.__pmessage(self.__message("enable_false", fid))
 
             else:
                 try:
-                    self.__install_cmd(fid)
-                    self.__install_packages(fid)
-                    self.__install_pypis(fid)
-                    self._features.enable(fid, True)
-                    self.__pupdate(self.__eval_percent(fid), self.__message("install_success", fid))
+                    if len(self._features.cmd(fid)) > 0:
+                        self.__install_cmd(fid)
+                    if len(self._features.packages(fid)) > 0:
+                        self.__install_packages(fid)
+                    if len(self._features.pypi(fid)) > 0:
+                        self.__install_pypis(fid)
+
                 except InstallationError as e:
                     self._features.enable(fid, False)
-                    self.__pupdate(self.__eval_percent(fid), self.__message("install_failed", fid))
+                    self.__pmessage(self.__message("install_failed", fid))
                     errors.append(str(e))
                     logging.error(str(e))
+
                 except NotImplementedError:
                     self._features.enable(fid, False)
-                    self.__pupdate(self.__eval_percent(fid), self.__message("install_failed", fid))
-                    errors.append(str(e))
-                    logging.error(str(e))
+                    self.__pmessage(self.__message("install_failed", fid))
+                    msg = "Installation of feature {} is not implemented yet " \
+                          "for this os.".format(fid)
+                    errors.append(msg)
+                    logging.error(msg)
+
+                else:
+                    self._features.enable(fid, True)
+                    self.__pmessage(self.__message("install_success", fid))
 
         self._features.update_config()
         return errors
 
     # ------------------------------------------------------------------------
+    # Private methods to install
     # ------------------------------------------------------------------------
 
     def __install_cmd(self, fid):
@@ -206,28 +201,21 @@ class Installer(object):
         """
         err = ""
 
-        if self._features.cmd(fid) == "none":
-            self._features.available(fid, False)
-
-        elif self._features.cmd(fid) == "nil":
-            self._features.enable(fid, False)
-
-        else:
-            if search_cmd(fid) is False:
-                try:
-                    process = Process()
-                    process.run_popen(self._features.cmd(fid))
-                    err = process.error()
-                    stdout = process.out()
-                    if len(stdout) > 3:
-                        logging.info(stdout)
-                except Exception as e:
-                    raise InstallationError(str(e))
+        if search_cmd(fid) is False:
+            try:
+                process = Process()
+                process.run_popen(self._features.cmd(fid))
+                err = process.error()
+                stdout = process.out()
+                if len(stdout) > 3:
+                    logging.info(stdout)
+            except Exception as e:
+                raise InstallationError(str(e))
 
         if len(err) > 3:
             raise InstallationError(err)
-        if self.__pbar:
-            self.__pbar.update(self.__get_set_progress(self.__eval_percent(fid)), fid)
+
+        self.__pupdate(fid, MESSAGES["install_success"].format(name=fid))
 
     # ------------------------------------------------------------------------
 
@@ -239,16 +227,13 @@ class Installer(object):
 
         """
         for package, version in self._features.packages(fid).items():
-            if package != "nil":
-                if self._search_package(package) is False:
-                    self._install_package(package)
+            if self._search_package(package) is False:
+                self._install_package(package)
 
-                elif self._version_package(package, version) is False:
-                    self._update_package(package, version)
+            elif self._version_package(package, version) is False:
+                self._update_package(package, version)
 
-                if self.__pbar:
-                    self.__pbar.update(self.__get_set_progress(self.__eval_percent(fid)),
-                                       MESSAGES["install_success"].format(name=package))
+            self.__pupdate(fid, MESSAGES["install_success"].format(name=package))
 
     # ------------------------------------------------------------------------
 
@@ -260,15 +245,13 @@ class Installer(object):
 
         """
         for package, version in self._features.pypi(fid).items():
-            if package != "nil":
-                if self.__search_pypi(package) is False:
-                    self.__install_pypi(package)
+            if self.__search_pypi(package) is False:
+                self.__install_pypi(package)
 
-                elif self.__version_pypi(package, version) is False:
-                    self.__update_pypi(package)
+            elif self.__version_pypi(package, version) is False:
+                self.__update_pypi(package)
 
-                if self.__pbar:
-                    self.__pbar.update(self.__get_set_progress(self.__eval_percent(fid)), package)
+            self.__pupdate(fid, MESSAGES["install_success"].format(name=package))
 
     # ------------------------------------------------------------------------
     # Management of package dependencies. OS dependent: must be overridden.
@@ -333,50 +316,46 @@ class Installer(object):
 
     def __pheader(self, text):
         if self.__pbar is not None:
-            self.__get_set_progress(0)
+            self.__progression = 0.
             self.__pbar.set_header(text)
         logging.info("    * * * * *   {}   * * * * * ".format(text))
 
-    def __pupdate(self, value, text):
+    def __pmessage(self, text):
         if self.__pbar is not None:
-            self.__pbar.update(value, text)
-        logging.info("  ==> {text} ({percent}%)".format(text=text, percent=(int(value*100.))))
+            self.__pbar.set_text(text)
+        logging.info("  ==> {text}".format(text=text))
+
+    def __pupdate(self, fid, text):
+        self.__progression += self.__eval_step(fid)
+        if self.__progression > 0.98:
+            self.__progression = 1.
+        if self.__pbar is not None:
+            self.__pbar.update(self.__progression, text)
+        logging.info("  ==> {text} ({percent}%)".format(text=text, percent=self.__progression))
 
     def __message(self, mid, fid):
-        return MESSAGES[mid].format(name=fid)
+        if mid in MESSAGES:
+            return MESSAGES[mid].format(name=fid)
+        else:
+            return mid
 
     # ------------------------------------------------------------------------
 
-    def __eval_percent(self, fid):
-        """Estimate and return a percentage of progression.
+    def __eval_step(self, fid):
+        """Return the percentage of 1 step in progression for a given feature.
 
         :param fid: (str) Identifier of a feature
         :return: (float)
 
         """
-        nb_packages = float(len(self._features.packages(fid)))
-        nb_pypi = float(len(self._features.pypi(fid)))
-        return round((1. / (1. + nb_packages + nb_pypi)), 2)
+        nb_cmd = 0
+        if len(self._features.cmd(fid)) > 0:
+            nb_cmd = 1
+        nb_packages = len(self._features.packages(fid))
+        nb_pypi = len(self._features.pypi(fid))
+        nb_total = nb_cmd + nb_packages + nb_pypi
 
-    # ------------------------------------------------------------------------
-
-    def __get_set_progress(self, value):
-        """Return the progression, and it to the current value.
-
-        :param value: (int) The progress value to add.
-        :return: (float) The current value of the progress.
-
-        """
-        if value == 0:
-            self.__progression = 0.
-            return self.__progression
-
-        self.__progression += value
-
-        if self.__progression >= 0.99:
-            self.__progression = 1.0
-
-        return self.__progression
+        return round((1. / float(nb_total)), 2)
 
     # ------------------------------------------------------------------------
 
@@ -573,7 +552,8 @@ class DebianInstaller(Installer):
 
         """
         try:
-            command = "apt install " + package
+            # -y option is to answer yes to confirmation questions
+            command = "apt install " + package + " -y"
             process = Process()
             process.run_popen(command)
         except Exception as e:

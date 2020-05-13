@@ -151,13 +151,13 @@ class sppasInstallWindow(sppasDialog):
                   wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT,
             name="sppas_install_dlg")
 
-        # Members
-        self._init_infos()
-        self.__installer = sppasInstallerDeps()
-
         # Create the log window of the application and show it.
         self.log_window = sppasLogWindow(self, cfg.log_level)
         self.log_window.EnableClear(False)
+
+        # Members
+        self._init_infos()
+        self.__installer = sppasInstallerDeps()
 
         # Fix this frame content
         self._create_content()
@@ -378,7 +378,7 @@ class sppasInstallWindow(sppasDialog):
     # -----------------------------------------------------------------------
 
     def show_next_page(self, direction=1):
-        """Show a page of the content panel, the next one.
+        """Show the next page of the content panel, except the last one.
 
         :param direction: (int) Positive=Next; Negative=Prev
 
@@ -388,7 +388,7 @@ class sppasInstallWindow(sppasDialog):
         wx.LogDebug("Current page index = {:d}".format(c))
         if direction > 0:
             nextc = (c+1)
-            if nextc == len(sppasInstallWindow.pages):
+            if nextc == (len(sppasInstallWindow.pages)-1):  # cant access to the last page
                 return
         elif direction < 0:
             nextc = (c-1)
@@ -475,6 +475,12 @@ class sppasInstallWindow(sppasDialog):
             msg += "\n"
         msg += MSG_SEE_LOGS
 
+        self.actions.CancelToExit()
+        self.header.SetPageNumber(sppasInstallWindow.pages.index("page_terminate")+1)
+        self.actions.EnableBack(False)
+        self.actions.EnableNext(False)
+        self.actions.EnableInstall(False)
+
         # then change to the page
         book = self.FindWindow("content")
         w = book.FindWindow("page_terminate")
@@ -482,12 +488,6 @@ class sppasInstallWindow(sppasDialog):
         p = book.FindPage(w)
         book.ChangeSelection(p)
         w.SetFocus()
-
-        self.header.SetPageNumber(sppasInstallWindow.pages.index("page_terminate")+1)
-        self.actions.EnableBack(False)
-        self.actions.EnableNext(False)
-        self.actions.EnableInstall(False)
-        self.actions.CancelToExit()
 
 # ---------------------------------------------------------------------------
 

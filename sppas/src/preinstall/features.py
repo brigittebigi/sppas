@@ -167,6 +167,7 @@ class Features(object):
         """Return the dictionary of system dependencies of the feature.
 
         :param fid: (str) Identifier of a feature
+        :return: (dict) key=package; value=version
 
         """
         for feat in self.__features:
@@ -182,6 +183,7 @@ class Features(object):
         """Return the dictionary of pip dependencies of the feature.
 
         :param fid: (str) Identifier of a feature
+        :return: (dict) key=package; value=version
 
         """
         for feat in self.__features:
@@ -197,6 +199,7 @@ class Features(object):
         """Return the command to execute for the feature.
 
         :param fid: (str) Identifier of a feature
+        :return: (str)
 
         """
         for feat in self.__features:
@@ -209,13 +212,22 @@ class Features(object):
     # ---------------------------------------------------------------------------
 
     def set_features(self):
-        """Browses the features.ini file and instantiate a Feature()."""
+        """Browses the features.ini file and instantiate a Feature().
+
+        Only unix-based systems can have package requirements. If they don't,
+        the corresponding req_ attribute is missing or empty or with "nil".
+
+        A feature is not available for a system, if none of the corresponding "cmd_"
+        and "req_" and the "pip" attributes are defined.
+
+        """
         self.__features = list()
         features_parser = self.__init_features()
 
         for fid in (features_parser.sections()):
             feature = Feature(fid)
             self.__features.append(feature)
+            feature.set_available(False)
 
             # Description of the feature
             desc = features_parser.get(fid, "desc")
@@ -224,41 +236,35 @@ class Features(object):
             # Feature is enabled or not
             feature.set_enable(features_parser.getboolean(fid, "enable"))
 
-            # Package dependencies
+            # System package dependencies
             try:
                 d = features_parser.get(fid, self.__req)
-                if d == "nil" or d == "":
-                    feature.set_packages({"nil": "1"})
-                    feature.set_available(True)
-                else:
-                    feature.set_available(True)
+                if len(d) > 0 and d.lower() != "nil":
                     depend_packages = self.__parse_depend(d)
                     feature.set_packages(depend_packages)
             except cp.NoOptionError:
-                logging.debug("Feature {} has no defined section name '{}'."
-                              "".format(feature.get_id(), self.__req))
+                pass
 
             # Pypi dependencies
             try:
-                d = features_parser.get(fid, "req_pip")
-                if d == "nil" or d == "":
-                    feature.set_pypi({"nil": "1"})
-                else:
+                d = features_parser.get(fid, "pip")
+                if len(d) > 0 and d.lower() != "nil":
                     depend_pypi = self.__parse_depend(d)
                     feature.set_pypi(depend_pypi)
             except cp.NoOptionError:
-                logging.debug("Feature {} has no defined section name '{}'."
-                              "".format(feature.get_id(), self.__req))
+                pass
 
             # Command to be executed
             try:
                 cmd = features_parser.get(fid, self.__cmdos)
-                if cmd == "none":
-                    feature.set_available(False)
-                feature.set_cmd(cmd)
+                if len(cmd) > 0 and cmd != "none" and cmd != "nil":
+                    feature.set_cmd(cmd)
             except cp.NoOptionError:
-                logging.debug("Feature {} has no defined section name '{}'."
-                              "".format(feature.get_id(), self.__req))
+                pass
+
+            # Is available?
+            if len(feature.get_cmd()) > 0 or len(feature.get_pypi()) > 0 or len(feature.get_packages()) > 0:
+                feature.set_available(True)
 
     # ------------------------------------------------------------------------
     # Private: Internal use only.

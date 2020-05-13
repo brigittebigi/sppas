@@ -34,8 +34,9 @@
 """
 
 import unittest
-from sppas.src.ui.term.textprogress import ProcessProgressTerminal
-from sppas.src.preinstall.installer import MacOsInstaller, InstallationError
+
+from sppas.src.exc import InstallationError
+from sppas.src.preinstall.installer import MacOsInstaller
 
 # ---------------------------------------------------------------------------
 

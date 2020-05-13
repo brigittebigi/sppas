@@ -68,6 +68,30 @@ PROGRAM_DIR=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 
 # ===========================================================================
+# FUNCTIONS
+# ===========================================================================
+
+# Print an error message with a GUI or on stdout if no GUI found
+# Parameters:
+#   $1: message to print
+function fct_error_message()
+{
+  TITLE_MSG="Cannot start SPPAS"
+  if [ -n "$(command -v zenity)" ]; then
+    zenity --error --title="$TITLE_MSG" --text="$1" --no-wrap
+  elif [ -n "$(command -v kdialog)" ]; then
+    kdialog --error "$1" --title "$TITLE_MSG"
+  elif [ -n "$(command -v notify-send)" ]; then
+    notify-send "ERROR: $TITLE_MSG" "$1"
+  elif [ -n "$(command -v xmessage)" ]; then
+    xmessage -center "ERROR: $TITLE_MSG: $1"
+  else
+    printf "ERROR: %s\n%s\n" "$TITLE_MSG" "$1"
+  fi
+}
+
+
+# ===========================================================================
 # MAIN
 # ===========================================================================
 export PYTHONIOENCODING=UTF-8
@@ -104,8 +128,7 @@ echo;
 
 if [ -z "$PYTHON" ]; then
     echo "not found.";
-    echo "Python version 3 is not an internal command of your operating system.";
-    echo "Install it first http://www.python.org.";
+    fct_error_message "Python version 3 is not an internal command of your operating system. Install it first http://www.python.org.";
     exit -1;
 fi
 
@@ -129,20 +152,15 @@ if [ $? -eq 1 ] ; then
     # Install of wxpython failed. Continue with the CLI for other requirements.
     $PYTHON $PROGRAM_DIR/sppas/bin/preinstall.py --nowxpython -a
     if [ $? -eq 1 ] ; then
-        echo -e "${RED}This setup failed to install automatically the required packages."
-        echo -e "See http://www.sppas.org/installation.html to do it manually.${NC}"
-        echo
+        fct_error_message "This setup failed to install automatically the required packages. See http://www.sppas.org/installation.html to do it manually."
         exit -1
     fi
 
 else
     # Install of wxpython success. Continue with the GUI for other requirements.
-    # TO BE IMPLEMENTED!!!!!!!!
-    $PYTHON $PROGRAM_DIR/sppas/bin/preinstall.py --nowxpython -a
+    $PYTHON $PROGRAM_DIR/sppas/bin/preinstallgui.py
     if [ $? -eq 1 ] ; then
-        echo -e "${RED}This setup failed to install automatically the required packages."
-        echo -e "See http://www.sppas.org/installation.html to do it manually.${NC}"
-        echo
+        fct_error_message "This setup failed to install automatically the required packages. See http://www.sppas.org/installation.html to do it manually."
         exit -1
     fi
 fi

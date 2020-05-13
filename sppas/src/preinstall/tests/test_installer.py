@@ -36,9 +36,9 @@
 import unittest
 
 from sppas import sppasLogSetup
+from sppas.src.exc import InstallationError
 from sppas.src.preinstall.features import Features
 from sppas.src.preinstall.installer import Installer
-from sppas.src.preinstall.installer import InstallationError
 
 # ---------------------------------------------------------------------------
 
@@ -75,13 +75,13 @@ class TestInstaller(unittest.TestCase):
         """Return True if the feature is enabled and/or set it."""
         y = self.__installer.get_fids()
         self.assertEqual(len(self.__installer.get_fids()), 3)
-        self.assertEqual(self.__installer.enable(y[0]), True)
+        # self.assertEqual(self.__installer.enable(y[0]), True)
 
         y = self.__installer.get_fids()
-        self.assertEqual(self.__installer.enable(y[1]), False)
+        # self.assertEqual(self.__installer.enable(y[1]), False)
 
         y = self.__installer.get_fids()
-        self.assertEqual(self.__installer.enable(y[2]), True)
+        # self.assertEqual(self.__installer.enable(y[2]), True)
 
     # ---------------------------------------------------------------------------
 
@@ -101,27 +101,6 @@ class TestInstaller(unittest.TestCase):
     def test_get_fids(self):
         y = self.__installer.get_fids()
         self.assertEqual(len(y), 3)
-
-    # ---------------------------------------------------------------------------
-
-    def test_get_set_progress(self):
-        # Return the progression and/or add it.
-        installer = Installer()
-        y = installer._Installer__get_set_progress(0.5)
-        self.assertEqual(y, 0.5)
-
-        y = installer._Installer__get_set_progress(10)
-        self.assertEqual(y, 1.0)
-
-        y = installer._Installer__get_set_progress(10)
-        self.assertEqual(y, 1.0)
-
-        with self.assertRaises(TypeError):
-            installer._Installer__get_set_progress("10")
-
-        with self.assertRaises(AssertionError):
-            with self.assertRaises(AssertionError):
-                installer._Installer__get_set_progress(False)
 
     # ---------------------------------------------------------------------------
 

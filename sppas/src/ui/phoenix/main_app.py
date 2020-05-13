@@ -249,6 +249,7 @@ class sppasApp(wx.App):
 
         if self.HasPendingEvents() is True:
             logging.warning('The application has pending events.')
+            self.DeletePendingEvents()
 
         # Save settings and configuration
         self.settings.save()
