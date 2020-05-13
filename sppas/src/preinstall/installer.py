@@ -33,6 +33,7 @@
 """
 
 import logging
+import shutil
 
 from sppas.src.exc import InstallationError
 from sppas.src.utils.makeunicode import u
@@ -87,8 +88,9 @@ class Installer(object):
         self.__progression = 0
         self._features = None
         self.__python = "python3"
-        if search_cmd(self.__python + " --version") is False:
+        if shutil.which("python3") is None:
             self.__python = "python"
+        logging.info("Python installer command: {}".format(self.__python))
 
     # ------------------------------------------------------------------------
     # Public methods
@@ -550,7 +552,8 @@ class DebianInstaller(Installer):
 
         """
         try:
-            command = "apt install " + package
+            # -y option is to answer yes to confirmation questions
+            command = "apt install " + package + " -y"
             process = Process()
             process.run_popen(command)
         except Exception as e:

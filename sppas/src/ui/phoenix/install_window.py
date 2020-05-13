@@ -151,13 +151,13 @@ class sppasInstallWindow(sppasDialog):
                   wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT,
             name="sppas_install_dlg")
 
-        # Members
-        self._init_infos()
-        self.__installer = sppasInstallerDeps()
-
         # Create the log window of the application and show it.
         self.log_window = sppasLogWindow(self, cfg.log_level)
         self.log_window.EnableClear(False)
+
+        # Members
+        self._init_infos()
+        self.__installer = sppasInstallerDeps()
 
         # Fix this frame content
         self._create_content()

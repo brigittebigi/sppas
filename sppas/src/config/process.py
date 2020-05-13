@@ -43,7 +43,7 @@ from subprocess import call, Popen, PIPE, STDOUT
 
 
 def search_cmd(command):
-    """Return True if the given command exist on the system.
+    """Return True if the given command exists on the system.
 
     :param command: (str) The command to test.
     :return: (bool)
@@ -60,7 +60,6 @@ def search_cmd(command):
     NULL.close()
     logging.info("Command {} already exists.".format(command))
     return True
-
 
 # ----------------------------------------------------------------------------
 
