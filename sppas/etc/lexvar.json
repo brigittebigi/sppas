@@ -1,17 +1,32 @@
 {
-  "id": "lexvar",
-  "name": "LexVar",
+  "id": "spklexvar",
+  "name": "speaker lexical vcariatiopn",
   "descr": "lex var",
   "required": "",
   "api": "sppasLexVar",
-
-  "resources": [
-  ],
 
   "anntype": [
     "SPEAKER"
   ],
 
   "options": [
+    {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-palign",
+      "text": "Input file pattern"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-rms",
+      "text": "Output file pattern"
+    },
+    {
+      "id": "tiername",
+      "type": "str",
+      "value": "",
+      "text": ""
+    }
   ]
 }
