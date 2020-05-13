@@ -110,6 +110,23 @@ class sppasValueError(ValueError):
 # -----------------------------------------------------------------------
 
 
+class InstallationError(OSError):
+    """:ERROR 500:.
+
+    Installation failed with error: {error}.
+
+    """
+
+    def __init__(self, error_msg):
+        self.parameter = error(500) + \
+                         (error(500, "globals")).format(error=error_msg)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# -----------------------------------------------------------------------
+
+
 class NegativeValueError(ValueError):
     """:ERROR 010:.
 

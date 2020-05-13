@@ -43,20 +43,22 @@ from subprocess import call, Popen, PIPE, STDOUT
 
 
 def search_cmd(command):
-    """Return True if the command is installed on a PC.
+    """Return True if the given command exist on the system.
 
-    :param command: (str) The command to search.
+    :param command: (str) The command to test.
+    :return: (bool)
 
     """
     command = command.strip()
     NULL = open(os.path.devnull, "w")
     try:
-        call(command, stdout=NULL, stderr=STDOUT)
+        call([command], stdout=NULL, stderr=STDOUT)
     except OSError:
         NULL.close()
         return False
 
     NULL.close()
+    logging.info("Command {} already exists.".format(command))
     return True
 
 
@@ -74,24 +76,24 @@ class Process(object):
     :summary:      the class Process of SPPAS
 
     A Process is a wrapper of subprocess.Popen command.
-    It can launch a command :
+    It can launch a command:
 
     >>> p = Process()
     >>> p.run_popen("ls -l")
 
-    Return the stdout of a command :
+    Return the stdout of a command:
 
     >>> p.out()
 
-    Return the stderr of a command :
+    Return the stderr of a command:
 
     >>> p.error()
 
-    Stop a command :
+    Stop a command:
 
     >>> p.stop()
 
-    Return the state of a command :
+    Return the state of a command:
 
     >>> p.is_running()
 
@@ -107,8 +109,6 @@ class Process(object):
         """Execute command with subprocess.Popen.
 
         :param command: (str) The command you want to execute
-        :returns: Process error message
-        :returns: Process output message
 
         """
         logging.info("Process command: {}".format(command))
@@ -122,7 +122,7 @@ class Process(object):
     def out(self):
         """Return the stdout of your process.
 
-        :returns: output message
+        :return: (str) output message
 
         """
         out = self.__process.stdout.read()
@@ -134,7 +134,7 @@ class Process(object):
     def error(self):
         """Return the stderr of your process.
 
-        :returns: error message
+        :return: (str) error message
 
         """
         error = self.__process.stderr.read()
@@ -151,7 +151,11 @@ class Process(object):
     # ------------------------------------------------------------------------
 
     def is_running(self):
-        """Return True if the process is running."""
+        """Return True if the process is running.
+
+        :return: (bool)
+
+        """
         if self.__process is None:
             return False
         return self.__process.poll() is None

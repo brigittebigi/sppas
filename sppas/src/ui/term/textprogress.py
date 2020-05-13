@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import sys
 
 from sppas.src.utils.makeunicode import u, b
@@ -67,21 +68,25 @@ class ProcessProgressTerminal(sppasBaseProgress):
     The progress self._bar is colored, if the terminal supports color
     output; and adjusts to the width of the terminal.
 
+    The use of a colored terminal controller is temporarily disabled:
+    problems with bytes/unicode in Python3 must be solved.
+
     """
 
     def __init__(self):
         """Create a ProcessProgressTerminal instance."""
         super(ProcessProgressTerminal, self).__init__()
         try:
+            raise NotImplementedError
             self._term = TerminalController()
             if not (self._term.CLEAR_EOL and self._term.UP and self._term.BOL):
                 self._term = None
             self._bar = self._term.render(BAR)
         except Exception as e:
-            import traceback
-            print('[WARNING] The progress bar is disabled because this terminal'
-                  ' does not support colors, EOL, UP, etc. Returned error: {}'
-                  ''.format(traceback.format_exc()))
+            # import traceback
+            # print('[WARNING] The progress bar is disabled because this terminal'
+            #       ' does not support colors, EOL, UP, etc. Returned error: {}'
+            #       ''.format(traceback.format_exc()))
             self._term = None
             self._bar = ""
 

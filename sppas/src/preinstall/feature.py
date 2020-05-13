@@ -88,7 +88,7 @@ class Feature(object):
         self.__enable = False
 
         # Represent if the feature is available
-        self.__available = True
+        self.__available = False
 
         # Represent a description of the feature
         self.__desc = str()
@@ -99,7 +99,7 @@ class Feature(object):
         # Represent the required pip packages
         self.__pypi = dict()
 
-        # Represent the command to enable the feature
+        # Represent a command to be executed
         self.__cmd = str()
 
     # ------------------------------------------------------------------------
