@@ -29,15 +29,17 @@
 
         ---------------------------------------------------------------------
 
-    structs.coordinates.py
+    src.imagedata.coordinates.py
     ~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
+from pympler.asizeof import asizeof
+
 # ---------------------------------------------------------------------------
 
 
-class sppasCoordinates(object):
+class Coordinates(object):
     """Class to illustrate coordinates.
 
     :author:       Florian Hocquet
@@ -57,7 +59,7 @@ class sppasCoordinates(object):
 
     For example:
 
-    >>> c = sppasCoordinates(0.7, 143, 17, 150, 98)
+    >>> c = Coordinates(0.7, 143, 17, 150, 98)
     >>> c.get_confidence()
     >>> 0.7
     >>> c.get_x()
@@ -77,18 +79,18 @@ class sppasCoordinates(object):
     # 4K height multiply by 4
     MAX_H = 8640
 
-    def __init__(self, confidence, x, y, w, h):
+    def __init__(self, x, y, w, h, confidence=0):
         """Create a new sppasCoordinates instance.
 
-        :param confidence: (float) The detection confidence of a visage from an image.
-        :param x: (int) Where the image start on the x axis.
-        :param y: (int) Where the image start on the y axis.
+        :param confidence: (float) The detection confidence of an object from an image.
+        :param x: (int) Where the image starts on the x axis.
+        :param y: (int) Where the image starts on the y axis.
         :param w: (int) The width of the image.
         :param h: (int) The height of the image.
 
         """
 
-        # Represent the detection confidence of a visage from an image.
+        # Represent the detection confidence of an object from an image.
         self.__confidence = float
         self._set_confidence(confidence)
 
@@ -111,15 +113,15 @@ class sppasCoordinates(object):
     # -----------------------------------------------------------------------
 
     def get_confidence(self):
-        """Return the confidence parameter."""
+        """Return the confidence value."""
         return self.__confidence
 
     # -----------------------------------------------------------------------
 
     def _set_confidence(self, value):
-        """Set the value of confidence.
+        """Set confidence value.
 
-        :param value: (float) The value of confidence.
+        :param value: (float) The new confidence value.
 
         """
         # Because value type is numpy.int32 is that case
@@ -131,107 +133,128 @@ class sppasCoordinates(object):
     # -----------------------------------------------------------------------
 
     def get_x(self):
-        """Return the x parameter."""
+        """Return x axis value."""
         return self.__x
 
     # -----------------------------------------------------------------------
 
     def _set_x(self, value):
-        """Set the value of x.
+        """Set x-axis value.
 
-        :param value: (int) The value of x.
+        :param value: (int) The new x-axis value.
 
         """
         # Because value type is numpy.int32 is that case
         value = int(value)
-        if type(value) != int or value > self.MAX_W:
+        if type(value) != int or value < 0 or value > Coordinates.MAX_W:
             raise ValueError
-        if value < 0:
-            self.__x = 0
         else:
             self.__x = value
 
     # -----------------------------------------------------------------------
 
     def get_y(self):
-        """Return the y parameter."""
+        """Return y axis value."""
         return self.__y
 
     # -----------------------------------------------------------------------
 
     def _set_y(self, value):
-        """Set the value of y.
+        """Set y-axis value.
 
-        :param value: (int) The value of y.
+        :param value: (int) The new y-axis value.
 
         """
         # Because value type is numpy.int32 is that case
         value = int(value)
-        if type(value) != int or value > self.MAX_H:
+        if type(value) != int or value < 0 or value > Coordinates.MAX_H:
             raise ValueError
-        if value < 0:
-            self.__y = 0
         else:
             self.__y = value
 
     # -----------------------------------------------------------------------
 
     def get_w(self):
-        """Return the w parameter."""
+        """Return width value."""
         return self.__w
 
     # -----------------------------------------------------------------------
 
     def _set_w(self, value):
-        """Set the value of w.
+        """Set width value.
 
-        :param value: (int) The value of w.
+        :param value: (int) The new width value.
 
         """
         # Because value type is numpy.int32 is that case
         value = int(value)
-        if type(value) != int or value < 0 or value > self.MAX_W:
+        if type(value) != int or value < 0 or value > Coordinates.MAX_W:
             raise ValueError
         self.__w = value
 
     # -----------------------------------------------------------------------
 
     def get_h(self):
-        """Return the h parameter."""
+        """Return height value."""
         return self.__h
 
     # -----------------------------------------------------------------------
 
     def _set_h(self, value):
-        """Set the value of h.
+        """Set height value.
 
-        :param value: (int) The value of h.
+        :param value: (int) The new height value.
 
         """
         # Because value type is numpy.int32 is that case
         value = int(value)
-        if type(value) != int or value < 0 or value > self.MAX_H:
+        if type(value) != int or value < 0 or value > Coordinates.MAX_H:
             raise ValueError
         self.__h = value
 
     # -----------------------------------------------------------------------
 
-    def guess_portrait(self):
-        """Return a new sppasCoordinates based on the face coordinates."""
-        width = self.get_w() * 2
-        height = self.get_h() * 2
-        x = self.get_x() - self.get_w()/2
-        y = self.get_y()
-        coordinates = sppasCoordinates(self.get_confidence(), x, y, width, height)
-        return coordinates
+    def scale(self, coeff):
+        """Multiply width and height value with coeff value."""
+        if isinstance(coeff, float) is False:
+            raise ValueError
+        self._set_w(int(self.get_w() * coeff))
+        self._set_h(int(self.get_h() * coeff))
 
     # -----------------------------------------------------------------------
 
     def __str__(self):
-        return "confidence : " + str(self.get_confidence()) + "\n" \
-               "x : " + str(self.get_x()) + "\n" \
-               "y : " + str(self.get_y()) + "\n" \
-               "w : " + str(self.get_w()) + "\n" \
-               "h : " + str(self.get_h()) + "\n"
+        return "confidence :" + str(self.get_confidence()) + "\n" \
+               "x: " + str(self.get_x()) + "\n" \
+               "y: " + str(self.get_y()) + "\n" \
+               "w: " + str(self.get_w()) + "\n" \
+               "h: " + str(self.get_h()) + "\n"
 
     # -----------------------------------------------------------------------
+
+    def __repr__(self):
+        return self.__class__.__name__
+
+    # -----------------------------------------------------------------------
+
+    def __format__(self, fmt):
+        return str(self).__format__(fmt)
+
+    # -----------------------------------------------------------------------
+
+    def __eq__(self, other):
+        """Return true if self equal other."""
+        if isinstance(other, Coordinates) is False:
+            raise TypeError
+        if self.get_x() != other.get_x():
+            return False
+        if self.get_y() != other.get_y():
+            return False
+        if self.get_w() != other.get_w():
+            return False
+        if self.get_h() != other.get_h():
+            return False
+        return True
+
+    # -----------------------------------------------------------------------
+

@@ -32,7 +32,7 @@
 
 """
 
-from sppas.src.videodata.personprocess import personProcess
+from sppas.src.videodata.facetracking import faceTracking
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
@@ -52,7 +52,8 @@ class faceExtractor(object):
 
     def __init__(self):
         """Create a new faceExtractor instance."""
-        self.__p = personProcess()
+        # self.__f = faceTracking("../../../../../LFPC_test_1.mp4")
+        self.__f = faceTracking("../../../../corpus/Test-05/merged_lossy.mp4")
         self.extractor()
         self.__portraits = list()
 
@@ -60,9 +61,9 @@ class faceExtractor(object):
 
     def extractor(self):
         """extract a portrait from a video."""
-        for person in self.__p.get_persons():
-            for image in person:
-                pass
+        # for person in self.__f.get_persons():
+        #     for image in person:
+        #         pass
 
     # -----------------------------------------------------------------------
 

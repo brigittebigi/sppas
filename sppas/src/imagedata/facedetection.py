@@ -32,15 +32,18 @@
 
 """
 
+import os
 import numpy as np
 import cv2
 
-from sppas.src.structs.coordinates import sppasCoordinates
+from sppas.src.config import sppasPathSettings
+from sppas.src.imagedata.coordinates import Coordinates
+
 
 # ---------------------------------------------------------------------------
 
 
-class faceDetection(object):
+class FaceDetection(object):
     """Class to detect faces.
 
     :author:       Florian Hocquet
@@ -50,65 +53,249 @@ class faceDetection(object):
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
     A faceDetection object allows to analyze an image, detect visage in it
-    and then returns a list of sppasCoordinates for each visage you detected.
+    and then returns a list of sppasCoordinates for each object you detected.
 
     For example :
-    >>> net = cv2.dnn.readNetFromCaffe(proto_file, caffeModel)
-    >>> f = faceDetection()
-    >>> f.detect_visage("image.png", net)
 
+    Create a FaceDetection object
+    >>> f = FaceDetection(image)
+
+    Detect all the objects in image
+    >>> f.detect_all()
+
+    Detect all the objects with a score > 0.2 in the image
+    >>> f.detect_confidence(0.2)
+
+    Detect 2 objects in the image
+    >>> f.detect_number(2)
+
+    Get all the detected objects
+    >>> f.get_all()
+
+    Get the detected object with the highest score
+    >>> f.get_best()
+
+    Get the 2 objects with the highest score
+    >>> f.get_number(2)
 
     """
 
-    def __init__(self):
-        """Create a new faceDetection instance."""
-        self.__proto = None
-        self.__model = None
+    def __init__(self, image):
+        """Create a new faceDetection instance.
 
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def detect_faces(img, net, nb=None):
-        """Determine the coordinates of faces and returns a list of coordinates objects.
-
-        :param img: (image) The image to process.
-        :param net: (cv2.dnn_Net) Net instance which allows to create
-        and manipulate comprehensive artificial neural networks.
-        :param nb: (int) The number of person you want to detect.
+        :param image: (numpy.ndarray) The image to be processed.
 
         """
-        (h, w) = img.shape[:2]
-        blob = cv2.dnn.blobFromImage(cv2.resize(img, (300, 300)), 1.0,
-                                     (300, 300), (104.0, 177.0, 123.0))
-        net.setInput(blob)
-        detections = net.forward()
-        if nb is None:
-            max_range = detections.shape[2]
-        else:
-            max_range = nb
-        positions = list()
+        # The image to be processed.
+        self.__image = image
 
-        for i in range(0, max_range):
-            confidence = detections[0, 0, i, 2]
+        # The Artificial Neural Network, it's composed of several
+        # artificial neurons.
+        self.__model = None
 
-            if confidence > 0.5:
-                box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-                (startX, startY, endX, endY) = box.astype("int")
+        # The Caffe prototxt file, it's the solver of the model.
+        self.__proto = None
 
-                text = "{:.2f}%".format(confidence * 100)
-                y = startY - 10 if startY - 10 > 10 else startY + 10
-                cv2.rectangle(img, (startX, startY), (endX, endY),
-                              (0, 0, 255), 2)
-                cv2.putText(img, text, (startX, y),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+        # Represent the coordinates of objects from an image.
+        self.__coordinates = list()
 
-                positions.append(sppasCoordinates(confidence, startX, startY, endX - startX, endY - startY))
-        if len(positions) == 0:
-            # If nothing has been detected slice the image
-            # in 4 parts and then retry to analyze it
-            pass
-        return positions
+        self.__init_files()
 
     # -----------------------------------------------------------------------
 
+    def __init_files(self):
+        """Initialize proto file and model file."""
+        try:
+            # Load the prototxt file from resources.video.
+            self.__proto = os.path.join(sppasPathSettings().resources, "video", "deploy.prototxt.txt")
+            # Load the model file from resources.video.
+            self.__model = os.path.join(sppasPathSettings().resources, "video",
+                                        "res10_300x300_ssd_iter_140000.caffemodel")
+            raise OSError
+        except OSError:
+            return "File does not exist"
+
+    # -----------------------------------------------------------------------
+
+    def __init_process(self):
+        """Initialize net and blob for the processing.
+
+        :returns: The width, the height of an image and detections.
+
+        """
+        # Create and load the serialized model, type: "cv2.dnn_Net"
+        net = cv2.dnn.readNetFromCaffe(self.__proto, self.__model)
+
+        # Extract the dimensions of self.__image which are
+        # the width and the height of self.__image
+        (h, w) = self.__image.shape[:2]
+
+        # Load self.__image and construct an input blob for the image
+        # by resizing to a fixed 300x300 pixels and then normalizing
+        # it type: "numpy.ndarray"
+        blob = cv2.dnn.blobFromImage(cv2.resize(self.__image, (300, 300)), 1.0,
+                                     (300, 300), (104.0, 177.0, 123.0))
+
+        # To detect faces, pass the blob throught the net
+        # which will analyze it
+        net.setInput(blob)
+
+        # Then create detections which contains predictions about
+        # what the image contains, type: "numpy.ndarray"
+        detections = net.forward()
+        return w, h, detections
+
+    # -----------------------------------------------------------------------
+
+    def detect_all(self):
+        """Determine the coordinates of all the objects.
+
+        :returns: A list of coordinates objects.
+
+        """
+        w, h, detections = self.__init_process()
+
+        # Loops over the detections
+        for i in range(0, 10):
+
+            # Sets the confidence score of the current object
+            conf = detections[0, 0, i, 2]
+
+            # Determines the hitbox of the current object
+            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+
+            # Sets the values of the corners of the box
+            (startX, startY, endX, endY) = box.astype("int")
+
+            # Then creates an Coordinates object with these values
+            self.__coordinates.append(Coordinates(startX, startY, endX - startX, endY - startY, conf))
+
+    # -----------------------------------------------------------------------
+
+    def detect_confidence(self, confidence):
+        """Determine the coordinates of all the objects with a score > confidence.
+
+        :returns: A list of coordinates objects.
+
+        """
+        if isinstance(confidence, float) is False:
+            raise ValueError
+        w, h, detections = self.__init_process()
+
+        # Loops over the detections
+        for i in range(0, detections.shape[2]):
+
+            # Sets the confidence score of the current object
+            conf = detections[0, 0, i, 2]
+
+            # Filter out weak detections by ensuring the `confidence` is
+            # greater than the minimum confidence
+            if conf > confidence:
+
+                # Determines the hitbox of the current object
+                box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+
+                # Sets the values of the corners of the box
+                (startX, startY, endX, endY) = box.astype("int")
+
+                # Then creates an Coordinates object with these values
+                self.__coordinates.append(Coordinates(startX, startY, endX - startX, endY - startY, conf))
+
+    # -----------------------------------------------------------------------
+
+    def detect_number(self, number):
+        """Determine the coordinates of "number" objects.
+
+        :returns: A list of coordinates objects.
+
+        """
+        number = int(number)
+        if isinstance(number, int) is False:
+            raise ValueError
+        w, h, detections = self.__init_process()
+
+        # Loops over the detections a certain "number" of times
+        for i in range(0, number):
+
+            # Sets the confidence score of the current object
+            conf = detections[0, 0, i, 2]
+
+            # Determines the hitbox of the current object
+            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+
+            # Sets the values of the corners of the box
+            (startX, startY, endX, endY) = box.astype("int")
+
+            # Then creates an Coordinates object with these values
+            self.__coordinates.append(Coordinates(startX, startY, endX - startX, endY - startY, conf))
+
+    # -----------------------------------------------------------------------
+
+    def get_all(self):
+        """Return a list of coordinates objects."""
+        return self.__coordinates
+
+    # -----------------------------------------------------------------------
+
+    def get_best(self):
+        """Return the coordinate object with the best score."""
+        best = None
+        best_score = float()
+        for c in self.__coordinates:
+            if c.get_confidence() > best_score:
+                best_score = c.get_confidence()
+                best = c
+        return best
+
+    # -----------------------------------------------------------------------
+
+    def get_number(self, number):
+        """Return a list with the "number" first coordinates."""
+        number = int(number)
+        if isinstance(number, int) is False:
+            raise ValueError
+        liste = list()
+        for c in range(0, number):
+            liste.append(self.__coordinates[c])
+        return liste
+
+    # -----------------------------------------------------------------------
+
+    def __len__(self):
+        """Return the number of coordinates."""
+        return len(self.__coordinates)
+
+    # -----------------------------------------------------------------------
+
+    def __iter__(self):
+        for coordinates in list(self.__coordinates):
+            yield coordinates
+
+    # ----------------------------------------------------------------------
+
+    def __contains__(self, value):
+        """Return true if value in self.__coordinates."""
+        if isinstance(value, Coordinates) is False:
+            raise ValueError
+        else:
+            for c in self.__coordinates:
+                if c.__eq__(value):
+                    return True
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def __str__(self):
+        for c in self.__coordinates:
+            print(c.__str__())
+
+    # -----------------------------------------------------------------------
+
+    def __repr__(self):
+        return self.__class__.__name__
+
+    # -----------------------------------------------------------------------
+
+    def __format__(self, fmt):
+        return str(self).__format__(fmt)
 

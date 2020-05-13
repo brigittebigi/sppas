@@ -40,7 +40,7 @@ import cv2
 import os
 
 from sppas.src.config import sppasPathSettings
-from sppas.src.imagedata.facedetection import faceDetection
+from sppas.src.imagedata.facedetection import FaceDetection
 
 
 # ---------------------------------------------------------------------------
@@ -63,17 +63,21 @@ class faceTracking(object):
         :param video: (video) The video to process.
 
         """
-        self.__facedetection = faceDetection()
+        self.__facedetection = FaceDetection()
+        self.__coordinates = list()
+        self.__persons = list()
         self.__proto = None
         self.__model = None
+
         self.__init_files()
-        self.__coordinates = list()
         self.video_process(video)
-        self.clean_parasite(self.nb_detection())
-        # for l in self.__coordinates:
-        #     print("Detection")
-        #     for c in l:
-        #         print(c.__str__())
+        self.sort()
+        self.fill_blanks()
+        # self.clean_parasite(self.nb_detection())
+        for l in self.__coordinates:
+            print("Detection")
+            for c in l:
+                print(c.__str__())
 
     # -----------------------------------------------------------------------
 
@@ -99,16 +103,21 @@ class faceTracking(object):
         time.sleep(2.0)
         while True:
             frame = vs.read()
+            print(type(frame))
             if frame is None:
                 break
 
-            frame = imutils.resize(frame, width=400)
+            # frame = imutils.resize(frame, width=640)
 
-            self.__coordinates.append(self.__facedetection.detect_faces(frame, net))
+            a = self.__facedetection.detect_faces(frame, net)
+            self.__coordinates.append(a)
+
+            # for c in a:
+            #     cropped = frame[c.get_y():c.get_y() + c.get_h(), c.get_x():c.get_x() + c.get_w()]
+            #     cv2.imshow("Cropped", cropped)
 
             cv2.imshow("Frame", frame)
             key = cv2.waitKey(1) & 0xFF
-
             if key == ord("q"):
                 break
 
@@ -123,20 +132,10 @@ class faceTracking(object):
 
     # -----------------------------------------------------------------------
 
-    def nb_detection(self):
-        detections = dict()
-        for f in self.__coordinates:
-            if len(f) not in detections.keys():
-                detections[len(f)] = 1
-            else:
-                detections[len(f)] += 1
-        nb_person = 0
-        nb_detections = 0
-        for keys, attr in detections.items():
-            if detections[keys] > nb_detections:
-                nb_detections = detections[keys]
-                nb_person = keys
-        return nb_person
+    def sort(self):
+        """Sort coordinates objects."""
+        for l in self.__coordinates:
+            l.sort()
 
     # -----------------------------------------------------------------------
 
@@ -151,3 +150,65 @@ class faceTracking(object):
                 self.__coordinates[index].pop()
             parasites.clear()
 
+    # -----------------------------------------------------------------------
+
+    def fill_blanks(self):
+        """Fill the blanks of self.__coordinates."""
+        for l in self.__coordinates:
+            if len(l) == 0 and len(self.__coordinates) - 2 > self.__coordinates.index(l) > 2:
+                index = self.__coordinates.index(l)
+                previous = self.__coordinates[index - 1]
+                # next = self.__coordinates[index + 1]
+                for i in range(index, len(self.__coordinates) - 1):
+                    next = self.__coordinates[i + 1]
+                    if len(next) == 0:
+                        continue
+                    else:
+                        break
+                for f in previous:
+                    i = self.__coordinates[index - 1].index(f)
+                    l.append(previous[i].average_both(next[i]))
+
+    # # -----------------------------------------------------------------------
+    #
+    # def nb_detection(self):
+    #     detections = dict()
+    #     for f in self.__coordinates:
+    #         if len(f) not in detections.keys():
+    #             detections[len(f)] = 1
+    #         else:
+    #             detections[len(f)] += 1
+    #     nb_person = 0
+    #     nb_detections = 0
+    #     for keys, attr in detections.items():
+    #         if detections[keys] > nb_detections:
+    #             nb_detections = detections[keys]
+    #             nb_person = keys
+    #     return nb_person
+    #
+    # # -----------------------------------------------------------------------
+    #
+    # def nb_persons(self):
+    #     """return the maximum number of person."""
+    #     detections = dict()
+    #     for f in self.get_coordinates():
+    #         if len(f) not in detections.keys():
+    #             detections[len(f)] = 1
+    #         else:
+    #             detections[len(f)] += 1
+    #     nb_person = 0
+    #     for keys in detections.keys():
+    #         if keys > nb_person:
+    #             nb_person = keys
+    #     return nb_person
+    #
+    # # -----------------------------------------------------------------------
+    #
+    # def __coord_to_person(self):
+    #     """Create a list of coordinates for each person."""
+    #     nb_persons = self.nb_persons()
+    #     for i in range(0, nb_persons):
+    #         self.__persons.append(list())
+    #     for f in self.get_coordinates():
+    #         for i in f:
+    #             self.__persons[f.index(i)].append(i)

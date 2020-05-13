@@ -28,14 +28,14 @@
 
         ---------------------------------------------------------------------
 
-    src.structs.tests.test_coordinates.py
+    src.imagedata.tests.test_coordinates.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
 import unittest
 
-from sppas.src.structs.coordinates import sppasCoordinates
+from sppas.src.imagedata.coordinates import Coordinates
 
 # ---------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ from sppas.src.structs.coordinates import sppasCoordinates
 class TestFeature(unittest.TestCase):
 
     def setUp(self):
-        self.__coordinates = sppasCoordinates(0.7, 143, 17, 150, 98)
+        self.__coordinates = Coordinates(143, 17, 150, 98, 0.7)
 
     # ---------------------------------------------------------------------------
 
@@ -87,14 +87,15 @@ class TestFeature(unittest.TestCase):
         x = self.__coordinates.get_x()
         self.assertEqual(x, 18)
 
-        self.__coordinates._set_x(-5)
+        with self.assertRaises(ValueError):
+            self.__coordinates._set_x(-5)
         x = self.__coordinates.get_x()
-        self.assertEqual(x, 0)
+        self.assertEqual(x, 18)
 
         with self.assertRaises(ValueError):
             self.__coordinates._set_x(15361)
         x = self.__coordinates.get_x()
-        self.assertEqual(x, 0)
+        self.assertEqual(x, 18)
 
     # ---------------------------------------------------------------------------
 
@@ -108,14 +109,15 @@ class TestFeature(unittest.TestCase):
         y = self.__coordinates.get_y()
         self.assertEqual(y, 18)
 
-        self.__coordinates._set_y(-5)
-        y = self.__coordinates.get_y()
-        self.assertEqual(y, 0)
+        with self.assertRaises(ValueError):
+            self.__coordinates._set_y(-5)
+            y = self.__coordinates.get_y()
+            self.assertEqual(y, 18)
 
         with self.assertRaises(ValueError):
             self.__coordinates._set_y(8641)
         y = self.__coordinates.get_y()
-        self.assertEqual(y, 0)
+        self.assertEqual(y, 18)
 
     # ---------------------------------------------------------------------------
 
@@ -163,15 +165,25 @@ class TestFeature(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
-    def test_guess_portrait(self):
-        new_coordinates = self.__coordinates.guess_portrait()
-        x = new_coordinates.get_x()
-        self.assertEqual(x, 68)
-        y = new_coordinates.get_y()
-        self.assertEqual(y, 17)
-        w = new_coordinates.get_w()
+    def test_scale(self):
+        self.__coordinates.scale(2.0)
+        w = self.__coordinates.get_w()
         self.assertEqual(w, 300)
-        h = new_coordinates.get_h()
+        h = self.__coordinates.get_h()
         self.assertEqual(h, 196)
 
+        with self.assertRaises(ValueError):
+            self.__coordinates.scale(2)
+
     # ---------------------------------------------------------------------------
+
+    def test_equal(self):
+        print(self.__coordinates.__str__())
+        c = Coordinates(143, 17, 150, 98)
+        self.assertTrue(self.__coordinates.__eq__(c))
+
+        c = Coordinates(143, 17, 150, 200)
+        self.assertFalse(self.__coordinates.__eq__(c))
+
+    # ---------------------------------------------------------------------------
+
