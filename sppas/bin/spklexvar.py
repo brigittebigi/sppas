@@ -51,6 +51,8 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas import sg
+from sppas import sppasAppConfig
+from sppas import sppasLogSetup
 
 from sppas.src.annotations import sppasParam
 from sppas.src.annotations import sppasLexVar
@@ -59,7 +61,13 @@ from sppas.src.annotations import sppasLexVar
 
 if __name__ == "__main__":
 
-    parameters = sppasParam(["rms.json"])
+    # -----------------------------------------------------------------------
+    # Fix initial annotation parameters
+    # -----------------------------------------------------------------------
+
+    parameters = sppasParam(["lexvar.json"])
+    ann_step_idx = parameters.activate_annotation("spklexvar")
+    ann_options = parameters.get_options(ann_step_idx)
 
     # -----------------------------------------------------------------------
     # Verify and extract args:
@@ -90,18 +98,30 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-i",
         metavar="file",
-        help='Input wav file name.')
+        help='Input file name ywith time-aligned annotations of the main speaker.')
 
     group_io.add_argument(
-        "-t",
+        "-s",
         metavar="file",
-        help='Input annotated file name.')
+        help='Input file name with time-aligned annotations of the echoing speaker')
 
     group_io.add_argument(
         "-o",
         metavar="file",
-        help='Annotated file with RMS values '
-             '(default: None)')
+        help='Output file.')
+
+    # Add arguments from the options of the annotation
+    # ------------------------------------------------
+
+    group_opt = parser.add_argument_group('Options')
+
+    for opt in ann_options:
+        group_opt.add_argument(
+            "--" + opt.get_key(),
+            type=opt.type_mappings[opt.get_type()],
+            default=opt.get_value(),
+            help=opt.get_text() + " (default: {:s})"
+                                  "".format(opt.get_untypedvalue()))
 
     # Force to print help if no argument is given then parse
     # ------------------------------------------------------
@@ -111,44 +131,53 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # Redirect all messages to logging
+    # --------------------------------
+
+    with sppasAppConfig() as cg:
+        parameters.set_report_filename(cg.log_file)
+        if not args.quiet:
+            log_level = cg.log_level
+        else:
+            log_level = cg.quiet_log_level
+        lgs = sppasLogSetup(log_level)
+        lgs.stream_handler()
+
+    # Get options from arguments
+    # --------------------------
+
+    arguments = vars(args)
+    for a in arguments:
+        if a not in ('i', 'o', 's', 'quiet'):
+            parameters.set_option_value(ann_step_idx, a, str(arguments[a]))
+            o = parameters.get_step(ann_step_idx).get_option_by_key(a)
+
     if args.i:
 
-        # Perform the annotation on a single file
-        # ---------------------------------------
+        if args.i:
 
-        ann = sppasLexVar(log=None)
-        # ann.fix_options(parameters.get_options(...))
-        if args.o:
-            print(ann.run(args.i, output_file=args.o))
+            if not args.s:
+                print("argparse.py: error: option -s is required with option -i")
+                sys.exit(1)
 
+            # Perform the annotation on a single file
+            # ---------------------------------------
 
+            ann = sppasLexVar(log=None)
+            ann.fix_options(parameters.get_options(ann_step_idx))
+            if args.o:
+                ann.run([args.i, args.s], output_file=args.o)
+            else:
+                trs = ann.run([args.i, args.s])
+                for tier in trs:
+                    for a in tier:
+                        print("{} {} {:s}".format(
+                            a.get_location().get_best().get_begin().get_midpoint(),
+                            a.get_location().get_best().get_end().get_midpoint(),
+                            a.serialize_labels(separator=" ")))
 
+        else:
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            if not args.quiet:
+                print("No file was given to be annotated. Nothing to do!")
 
