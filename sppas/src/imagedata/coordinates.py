@@ -34,8 +34,6 @@
 
 """
 
-from pympler.asizeof import asizeof
-
 # ---------------------------------------------------------------------------
 
 
@@ -46,7 +44,7 @@ class Coordinates(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     A sppasCoordinates object represent the coordinate of a face from an image.
     It has 5 parameters:
@@ -79,7 +77,7 @@ class Coordinates(object):
     # 4K height multiply by 4
     MAX_H = 8640
 
-    def __init__(self, x, y, w, h, confidence=0):
+    def __init__(self, x, y, w, h, confidence=0.0):
         """Create a new sppasCoordinates instance.
 
         :param confidence: (float) The detection confidence of an object from an image.
@@ -96,19 +94,19 @@ class Coordinates(object):
 
         # Represent where the image start on the x axis
         self.__x = 0
-        self._set_x(x)
+        self.x = x
 
         # Represent where the image start on the y axis
         self.__y = 0
-        self._set_y(y)
+        self.y = y
 
         # Represent the width of the image.
         self.__w = 0
-        self._set_w(w)
+        self.w = w
 
         # Represent the height of the image.
         self.__h = 0
-        self._set_h(h)
+        self.h = h
 
     # -----------------------------------------------------------------------
 
@@ -153,6 +151,11 @@ class Coordinates(object):
 
     # -----------------------------------------------------------------------
 
+    # Allows to use simplified versions of guetter and setter
+    x = property(get_x, _set_x)
+
+    # -----------------------------------------------------------------------
+
     def get_y(self):
         """Return y axis value."""
         return self.__y
@@ -171,6 +174,11 @@ class Coordinates(object):
             raise ValueError
         else:
             self.__y = value
+
+    # -----------------------------------------------------------------------
+
+    # Allows to use simplified versions of guetter and setter
+    y = property(get_y, _set_y)
 
     # -----------------------------------------------------------------------
 
@@ -194,6 +202,11 @@ class Coordinates(object):
 
     # -----------------------------------------------------------------------
 
+    # Allows to use simplified versions of guetter and setter
+    w = property(get_w, _set_w)
+
+    # -----------------------------------------------------------------------
+
     def get_h(self):
         """Return height value."""
         return self.__h
@@ -214,12 +227,17 @@ class Coordinates(object):
 
     # -----------------------------------------------------------------------
 
+    # Allows to use simplified versions of guetter and setter
+    h = property(get_h, _set_h)
+
+    # -----------------------------------------------------------------------
+
     def scale(self, coeff):
         """Multiply width and height value with coeff value."""
         if isinstance(coeff, float) is False:
             raise ValueError
-        self._set_w(int(self.get_w() * coeff))
-        self._set_h(int(self.get_h() * coeff))
+        self.w = int(self.w * coeff)
+        self.h = int(self.h * coeff)
 
     # -----------------------------------------------------------------------
 
@@ -244,6 +262,11 @@ class Coordinates(object):
 
     def __eq__(self, other):
         """Return true if self equal other."""
+        if isinstance(other, list):
+            if len(other) == 4:
+                other = Coordinates(other[0], other[1], other[2], other[3])
+            else:
+                raise TypeError
         if isinstance(other, Coordinates) is False:
             raise TypeError
         if self.get_x() != other.get_x():

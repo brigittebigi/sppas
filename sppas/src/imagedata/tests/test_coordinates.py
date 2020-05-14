@@ -40,7 +40,7 @@ from sppas.src.imagedata.coordinates import Coordinates
 # ---------------------------------------------------------------------------
 
 
-class TestFeature(unittest.TestCase):
+class TestCoordinates(unittest.TestCase):
 
     def setUp(self):
         self.__coordinates = Coordinates(143, 17, 150, 98, 0.7)
@@ -50,13 +50,13 @@ class TestFeature(unittest.TestCase):
     def test_init(self):
         confidence = self.__coordinates.get_confidence()
         self.assertEqual(confidence, 0.7)
-        x = self.__coordinates.get_x()
+        x = self.__coordinates.x
         self.assertEqual(x, 143)
-        y = self.__coordinates.get_y()
+        y = self.__coordinates.y
         self.assertEqual(y, 17)
-        w = self.__coordinates.get_w()
+        w = self.__coordinates.w
         self.assertEqual(w, 150)
-        h = self.__coordinates.get_h()
+        h = self.__coordinates.h
         self.assertEqual(h, 98)
 
     # ---------------------------------------------------------------------------
@@ -78,98 +78,98 @@ class TestFeature(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_get_set_x(self):
-        self.__coordinates._set_x(18)
-        x = self.__coordinates.get_x()
+        self.__coordinates.x = 18
+        x = self.__coordinates.x
         self.assertEqual(x, 18)
 
         with self.assertRaises(ValueError):
-            self.__coordinates._set_x("Bonjour")
-        x = self.__coordinates.get_x()
+            self.__coordinates.x = "Bonjour"
+        x = self.__coordinates.x
         self.assertEqual(x, 18)
 
         with self.assertRaises(ValueError):
-            self.__coordinates._set_x(-5)
-        x = self.__coordinates.get_x()
+            self.__coordinates.x = -5
+        x = self.__coordinates.x
         self.assertEqual(x, 18)
 
         with self.assertRaises(ValueError):
-            self.__coordinates._set_x(15361)
-        x = self.__coordinates.get_x()
+            self.__coordinates.x = 15361
+        x = self.__coordinates.x
         self.assertEqual(x, 18)
 
     # ---------------------------------------------------------------------------
 
     def test_get_set_y(self):
-        self.__coordinates._set_y(18)
-        y = self.__coordinates.get_y()
+        self.__coordinates.y = 18
+        y = self.__coordinates.y
         self.assertEqual(y, 18)
 
         with self.assertRaises(ValueError):
-            self.__coordinates._set_y("Bonjour")
-        y = self.__coordinates.get_y()
+            self.__coordinates.y = "Bonjour"
+        y = self.__coordinates.y
         self.assertEqual(y, 18)
 
         with self.assertRaises(ValueError):
-            self.__coordinates._set_y(-5)
-            y = self.__coordinates.get_y()
+            self.__coordinates.y = -5
+            y = self.__coordinates.y
             self.assertEqual(y, 18)
 
         with self.assertRaises(ValueError):
-            self.__coordinates._set_y(8641)
-        y = self.__coordinates.get_y()
+            self.__coordinates.y = 8641
+        y = self.__coordinates.y
         self.assertEqual(y, 18)
 
     # ---------------------------------------------------------------------------
 
     def test_get_set_w(self):
-        self.__coordinates._set_w(18)
-        w = self.__coordinates.get_w()
+        self.__coordinates.w = 18
+        w = self.__coordinates.w
         self.assertEqual(w, 18)
 
         with self.assertRaises(ValueError):
-            self.__coordinates._set_w("Bonjour")
-        w = self.__coordinates.get_w()
+            self.__coordinates.w = "Bonjour"
+        w = self.__coordinates.w
         self.assertEqual(w, 18)
 
         with self.assertRaises(ValueError):
-            self.__coordinates._set_w(-5)
-        w = self.__coordinates.get_w()
+            self.__coordinates.w = -5
+        w = self.__coordinates.w
         self.assertEqual(w, 18)
 
         with self.assertRaises(ValueError):
-            self.__coordinates._set_w(15361)
-        w = self.__coordinates.get_w()
+            self.__coordinates.w = 15361
+        w = self.__coordinates.w
         self.assertEqual(w, 18)
 
     # ---------------------------------------------------------------------------
 
     def test_get_set_h(self):
-        self.__coordinates._set_h(18)
-        h = self.__coordinates.get_h()
+        self.__coordinates.h = 18
+        h = self.__coordinates.h
         self.assertEqual(h, 18)
 
         with self.assertRaises(ValueError):
-            self.__coordinates._set_h("Bonjour")
-        h = self.__coordinates.get_h()
+            self.__coordinates.h = "Bonjour"
+        h = self.__coordinates.h
         self.assertEqual(h, 18)
 
         with self.assertRaises(ValueError):
-            self.__coordinates._set_h(-5)
-        h = self.__coordinates.get_h()
+            self.__coordinates.h = -5
+        h = self.__coordinates.h
         self.assertEqual(h, 18)
 
         with self.assertRaises(ValueError):
-            self.__coordinates._set_h(8641)
-        h = self.__coordinates.get_h()
+            self.__coordinates.h = 8641
+        h = self.__coordinates.h
         self.assertEqual(h, 18)
 
     # ---------------------------------------------------------------------------
 
     def test_scale(self):
         self.__coordinates.scale(2.0)
-        w = self.__coordinates.get_w()
+        w = self.__coordinates.w
         self.assertEqual(w, 300)
-        h = self.__coordinates.get_h()
+        h = self.__coordinates.h
         self.assertEqual(h, 196)
 
         with self.assertRaises(ValueError):

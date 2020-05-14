@@ -50,17 +50,21 @@ class FaceDetection(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     A faceDetection object allows to analyze an image, detect visage in it
     and then returns a list of sppasCoordinates for each object you detected.
 
-    For example :
+    This class uses a model in 300x300 because it's more accurate, for example
+    with a HD image the deep learning neural network will automaticaly split
+    the image and then analyze each part to obtain a better accuracy.
+
+    For example:
 
     Create a FaceDetection object
     >>> f = FaceDetection(image)
 
-    Detect all the objects in image
+    Detect all the objects in the image
     >>> f.detect_all()
 
     Detect all the objects with a score > 0.2 in the image
@@ -89,12 +93,9 @@ class FaceDetection(object):
         # The image to be processed.
         self.__image = image
 
-        # The Artificial Neural Network, it's composed of several
-        # artificial neurons.
-        self.__model = None
-
-        # The Caffe prototxt file, it's the solver of the model.
-        self.__proto = None
+        # The future serialized model, type: "cv2.dnn_Net"
+        # it allows to create and manipulate comprehensive artificial neural networks.
+        self.__net = cv2.dnn_Net
 
         # Represent the coordinates of objects from an image.
         self.__coordinates = list()
@@ -106,11 +107,17 @@ class FaceDetection(object):
     def __init_files(self):
         """Initialize proto file and model file."""
         try:
-            # Load the prototxt file from resources.video.
-            self.__proto = os.path.join(sppasPathSettings().resources, "video", "deploy.prototxt.txt")
             # Load the model file from resources.video.
-            self.__model = os.path.join(sppasPathSettings().resources, "video",
-                                        "res10_300x300_ssd_iter_140000.caffemodel")
+            # The Artificial Neural Network, it's composed of several artificial neurons.
+            model = os.path.join(sppasPathSettings().resources, "video",
+                                 "res10_300x300_ssd_iter_140000.caffemodel")
+
+            # Load the prototxt file from resources.video.
+            # The Caffe prototxt file, it's the solver of the model.
+            proto = os.path.join(sppasPathSettings().resources, "video", "deploy.prototxt.txt")
+
+            # Create and load the serialized model, type: "cv2.dnn_Net"
+            self.__net = cv2.dnn.readNetFromCaffe(proto, model)
             raise OSError
         except OSError:
             return "File does not exist"
@@ -123,9 +130,6 @@ class FaceDetection(object):
         :returns: The width, the height of an image and detections.
 
         """
-        # Create and load the serialized model, type: "cv2.dnn_Net"
-        net = cv2.dnn.readNetFromCaffe(self.__proto, self.__model)
-
         # Extract the dimensions of self.__image which are
         # the width and the height of self.__image
         (h, w) = self.__image.shape[:2]
@@ -138,11 +142,11 @@ class FaceDetection(object):
 
         # To detect faces, pass the blob throught the net
         # which will analyze it
-        net.setInput(blob)
+        self.__net.setInput(blob)
 
         # Then create detections which contains predictions about
         # what the image contains, type: "numpy.ndarray"
-        detections = net.forward()
+        detections = self.__net.forward()
         return w, h, detections
 
     # -----------------------------------------------------------------------
@@ -155,20 +159,16 @@ class FaceDetection(object):
         """
         w, h, detections = self.__init_process()
 
-        # Loops over the detections
-        for i in range(0, 10):
-
+        # Loops over the detections and for each object in detection
+        # get the confidence
+        for i in range(0, detections.shape[2]):
             # Sets the confidence score of the current object
             conf = detections[0, 0, i, 2]
 
-            # Determines the hitbox of the current object
-            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-
-            # Sets the values of the corners of the box
-            (startX, startY, endX, endY) = box.astype("int")
-
-            # Then creates an Coordinates object with these values
-            self.__coordinates.append(Coordinates(startX, startY, endX - startX, endY - startY, conf))
+            # Filter out weak detections by ensuring the `confidence` is
+            # greater than the minimum confidence
+            if conf > 0.2:
+                self.__detect(detections, i, w, h, conf)
 
     # -----------------------------------------------------------------------
 
@@ -182,7 +182,8 @@ class FaceDetection(object):
             raise ValueError
         w, h, detections = self.__init_process()
 
-        # Loops over the detections
+        # Loops over the detections and for each object in detection
+        # get the confidence
         for i in range(0, detections.shape[2]):
 
             # Sets the confidence score of the current object
@@ -191,15 +192,7 @@ class FaceDetection(object):
             # Filter out weak detections by ensuring the `confidence` is
             # greater than the minimum confidence
             if conf > confidence:
-
-                # Determines the hitbox of the current object
-                box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-
-                # Sets the values of the corners of the box
-                (startX, startY, endX, endY) = box.astype("int")
-
-                # Then creates an Coordinates object with these values
-                self.__coordinates.append(Coordinates(startX, startY, endX - startX, endY - startY, conf))
+                self.__detect(detections, i, w, h, conf)
 
     # -----------------------------------------------------------------------
 
@@ -215,19 +208,29 @@ class FaceDetection(object):
         w, h, detections = self.__init_process()
 
         # Loops over the detections a certain "number" of times
+        # and for each object in detection get the confidence
         for i in range(0, number):
-
             # Sets the confidence score of the current object
             conf = detections[0, 0, i, 2]
 
-            # Determines the hitbox of the current object
-            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+            self.__detect(detections, i, w, h, conf)
 
-            # Sets the values of the corners of the box
-            (startX, startY, endX, endY) = box.astype("int")
+    # -----------------------------------------------------------------------
 
-            # Then creates an Coordinates object with these values
-            self.__coordinates.append(Coordinates(startX, startY, endX - startX, endY - startY, conf))
+    def __detect(self, detections, index, width, height, confidence):
+        """Determine the coordinates of "number" objects.
+
+        :returns: A list of coordinates objects.
+
+        """
+        # Determines the hitbox of the current object
+        box = detections[0, 0, index, 3:7] * np.array([width, height, width, height])
+
+        # Sets the values of the corners of the box
+        (startX, startY, endX, endY) = box.astype("int")
+
+        # Then creates an Coordinates object with these values
+        self.__coordinates.append(Coordinates(startX, startY, endX - startX, endY - startY, confidence))
 
     # -----------------------------------------------------------------------
 
@@ -249,8 +252,8 @@ class FaceDetection(object):
 
     # -----------------------------------------------------------------------
 
-    def get_number(self, number):
-        """Return a list with the "number" first coordinates."""
+    def get_nbest(self, number):
+        """Return a list with the n best coordinates."""
         number = int(number)
         if isinstance(number, int) is False:
             raise ValueError
@@ -298,4 +301,6 @@ class FaceDetection(object):
 
     def __format__(self, fmt):
         return str(self).__format__(fmt)
+
+    # -----------------------------------------------------------------------
 

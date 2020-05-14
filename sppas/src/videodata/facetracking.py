@@ -31,22 +31,53 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+import _testbuffer as tb
 
-from imutils.video import FileVideoStream
 import numpy as np
 import imutils
-import time
 import cv2
 import os
+import wx
+from pympler.asizeof import asizeof
 
 from sppas.src.config import sppasPathSettings
 from sppas.src.imagedata.facedetection import FaceDetection
 
+# ---------------------------------------------------------------------------
+
+
+class RingBuffer:
+    def __init__(self, size):
+        self.data = [None for i in range(size)]
+
+    # -----------------------------------------------------------------------
+
+    def append(self, x):
+        self.data.pop(0)
+        self.data.append(x)
+
+    # -----------------------------------------------------------------------
+
+    def get_data(self):
+        return self.data
+
+    # -----------------------------------------------------------------------
+
+    def __str__(self):
+        string = str()
+        for i in self.get_data():
+            string += str(i) + "\n"
+        return string
+
+    # -----------------------------------------------------------------------
+
+    def __repr__(self):
+        return self.__class__.__name__
 
 # ---------------------------------------------------------------------------
 
 
-class faceTracking(object):
+class FaceTracking(object):
     """Class to detect faces.
 
     :author:       Florian Hocquet
@@ -57,158 +88,38 @@ class faceTracking(object):
 
     """
 
-    def __init__(self, video):
-        """Create a new faceTracking instance.
-
-        :param video: (video) The video to process.
-
-        """
-        self.__facedetection = FaceDetection()
+    def __init__(self):
+        """Create a new faceTracking instance."""
         self.__coordinates = list()
         self.__persons = list()
-        self.__proto = None
-        self.__model = None
 
-        self.__init_files()
-        self.video_process(video)
-        self.sort()
-        self.fill_blanks()
-        # self.clean_parasite(self.nb_detection())
-        for l in self.__coordinates:
-            print("Detection")
-            for c in l:
-                print(c.__str__())
+        self.__buffer = RingBuffer(4)
+
+        liste = list()
+        img = cv2.imread("../../../../../../trump.jpg")
+        # for i in range(0, 6):
+        #     liste.append(img)
+        #
+        # self.init_images(liste)
+
+        print(self.__buffer)
+        print(asizeof(self.__buffer))
 
     # -----------------------------------------------------------------------
 
-    def __init_files(self):
-        """Initialise files for detection."""
-        try:
-            self.__proto = os.path.join(sppasPathSettings().resources, "video", "deploy.prototxt.txt")
-            self.__model = os.path.join(sppasPathSettings().resources, "video",
-                                        "res10_300x300_ssd_iter_140000.caffemodel")
-            raise OSError
-        except OSError:
-            return "File does not exist"
+    def init_images(self, liste):
+        """Returns all the faces coordinates in a list"""
+        if isinstance(liste, list) is False:
+            raise TypeError
+        for image in liste:
+            self.__buffer.append(image)
 
     # -----------------------------------------------------------------------
 
     def video_process(self, video):
         """Returns all the faces coordinates in a list"""
-        print("[INFO] loading model...")
-        net = cv2.dnn.readNetFromCaffe(self.__proto, self.__model)
-
-        print("[INFO] starting video stream...")
-        vs = FileVideoStream(video).start()
-        time.sleep(2.0)
-        while True:
-            frame = vs.read()
-            print(type(frame))
-            if frame is None:
-                break
-
-            # frame = imutils.resize(frame, width=640)
-
-            a = self.__facedetection.detect_faces(frame, net)
-            self.__coordinates.append(a)
-
-            # for c in a:
-            #     cropped = frame[c.get_y():c.get_y() + c.get_h(), c.get_x():c.get_x() + c.get_w()]
-            #     cv2.imshow("Cropped", cropped)
-
-            cv2.imshow("Frame", frame)
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("q"):
-                break
-
-        cv2.destroyAllWindows()
-        vs.stop()
 
     # -----------------------------------------------------------------------
 
-    def get_coordinates(self):
-        """Returns list with coordinates of faces for each frame."""
-        return self.__coordinates
 
-    # -----------------------------------------------------------------------
-
-    def sort(self):
-        """Sort coordinates objects."""
-        for l in self.__coordinates:
-            l.sort()
-
-    # -----------------------------------------------------------------------
-
-    def clean_parasite(self, nb_person):
-        parasites = list()
-        for f in self.__coordinates:
-            if len(f) > nb_person:
-                parasites.append(f)
-        if len(parasites) / len(self.__coordinates) < 0.0005:
-            for p in parasites:
-                index = self.__coordinates.index(p)
-                self.__coordinates[index].pop()
-            parasites.clear()
-
-    # -----------------------------------------------------------------------
-
-    def fill_blanks(self):
-        """Fill the blanks of self.__coordinates."""
-        for l in self.__coordinates:
-            if len(l) == 0 and len(self.__coordinates) - 2 > self.__coordinates.index(l) > 2:
-                index = self.__coordinates.index(l)
-                previous = self.__coordinates[index - 1]
-                # next = self.__coordinates[index + 1]
-                for i in range(index, len(self.__coordinates) - 1):
-                    next = self.__coordinates[i + 1]
-                    if len(next) == 0:
-                        continue
-                    else:
-                        break
-                for f in previous:
-                    i = self.__coordinates[index - 1].index(f)
-                    l.append(previous[i].average_both(next[i]))
-
-    # # -----------------------------------------------------------------------
-    #
-    # def nb_detection(self):
-    #     detections = dict()
-    #     for f in self.__coordinates:
-    #         if len(f) not in detections.keys():
-    #             detections[len(f)] = 1
-    #         else:
-    #             detections[len(f)] += 1
-    #     nb_person = 0
-    #     nb_detections = 0
-    #     for keys, attr in detections.items():
-    #         if detections[keys] > nb_detections:
-    #             nb_detections = detections[keys]
-    #             nb_person = keys
-    #     return nb_person
-    #
-    # # -----------------------------------------------------------------------
-    #
-    # def nb_persons(self):
-    #     """return the maximum number of person."""
-    #     detections = dict()
-    #     for f in self.get_coordinates():
-    #         if len(f) not in detections.keys():
-    #             detections[len(f)] = 1
-    #         else:
-    #             detections[len(f)] += 1
-    #     nb_person = 0
-    #     for keys in detections.keys():
-    #         if keys > nb_person:
-    #             nb_person = keys
-    #     return nb_person
-    #
-    # # -----------------------------------------------------------------------
-    #
-    # def __coord_to_person(self):
-    #     """Create a list of coordinates for each person."""
-    #     nb_persons = self.nb_persons()
-    #     for i in range(0, nb_persons):
-    #         self.__persons.append(list())
-    #     for f in self.get_coordinates():
-    #         for i in f:
-    #             self.__persons[f.index(i)].append(i)
+f = FaceTracking()

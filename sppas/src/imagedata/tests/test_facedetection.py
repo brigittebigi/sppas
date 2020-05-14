@@ -34,7 +34,6 @@
 """
 
 import unittest
-import os
 
 from sppas.src.imagedata.facedetection import FaceDetection, Coordinates, cv2
 
@@ -42,7 +41,7 @@ from sppas.src.imagedata.facedetection import FaceDetection, Coordinates, cv2
 # ---------------------------------------------------------------------------
 
 
-class TestFeature(unittest.TestCase):
+class TestFaceDetection(unittest.TestCase):
 
     def setUp(self):
         img = cv2.imread("../../../../../../trump.jpg")
@@ -272,9 +271,9 @@ class TestFeature(unittest.TestCase):
 
     def test_get_number(self):
         self.__faceDetection1.detect_all()
-        coordinates = self.__faceDetection1.get_number(2)
+        coordinates = self.__faceDetection1.get_nbest(2)
         self.assertEqual(len(coordinates), 2)
-        self.assertEqual(self.__faceDetection1.__len__(), 10)
+        self.assertEqual(self.__faceDetection1.__len__(), 2)
 
         x = coordinates[0].get_x()
         self.assertEqual(x, 219)

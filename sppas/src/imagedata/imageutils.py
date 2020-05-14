@@ -57,7 +57,7 @@ class ImageError(IndexError):
 # ----------------------------------------------------------------------------
 
 
-def croppe(image, coordinates):
+def crop(image, coordinates):
     """Return a list of cropped images(numpy.ndarray objects).
 
     :param image: (numpy.ndarray) The image to be cropped.
@@ -83,10 +83,14 @@ def surrond_square(image, coordinates):
     :returns: An image(numpy.ndarray object).
 
     """
+    index = 0
     for c in coordinates:
         if isinstance(c, Coordinates) is False:
             raise TypeError
+        if index > 240:
+            index = 0
         cv2.rectangle(image, (c.get_x(), c.get_y()), (c.get_x() + c.get_w(), c.get_y() + c.get_h()),
-                      (0, 0, 255), 2)
+                      (index, index, 255), 2)
+        index += 20
     return image
 
