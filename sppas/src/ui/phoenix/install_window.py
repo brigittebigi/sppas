@@ -458,7 +458,7 @@ class sppasInstallWindow(sppasDialog):
         msg = INFO_INSTALL_FINISHED
         if len(errors) > 0:
             msg += "\n"
-            msg += error(500, "install").format("\n".join(errors))
+            # msg += error(500, "install").format("\n".join(errors))
             msg += "\n"
         msg += INFO_SEE_LOGS
 

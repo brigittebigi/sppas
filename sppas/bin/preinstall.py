@@ -262,7 +262,6 @@ if __name__ == "__main__":
             print('{:s}\n'.format(sep))
 
     if len(errors) > 0:
-        msg += "\nThe installation process terminated with errors:"
         msg += "\n".join(errors)
         exit_error(msg)
 

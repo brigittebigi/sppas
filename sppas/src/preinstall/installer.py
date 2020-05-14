@@ -34,10 +34,11 @@
 
 import logging
 import shutil
+import shlex
+import subprocess
 
 from sppas.src.exc import InstallationError
 from sppas.src.utils.makeunicode import u
-from sppas.src.config.process import Process, search_cmd
 from sppas.src.config import info
 from .features import Features
 
@@ -57,6 +58,98 @@ MESSAGES = {
     "install_finished": _(560),
     "does_not_exist": _(570),
 }
+
+# -----------------------------------------------------------------------
+
+
+class Process(object):
+    """Execute and read a subprocess.
+
+    :author:       Florian Hocquet
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+    :summary:      the class Process of SPPAS
+
+    A Process is a wrapper of subprocess.run command.
+    After 30 sec. of waiting, it will stops and raise TimoutExpired.
+    
+    Launch a command:
+    >>> p = Process()
+    >>> p.run("ls -l")
+
+    Return stdout of a command:
+    >>> p.out()
+
+    Return stderr of a command:
+    >>> p.error()
+    
+    Return the status of the command:
+    >>> p.status()
+
+    """
+
+    def __init__(self):
+        """Create a new Process instance."""
+        self.__process = None  # subprocess.CompletedProcess()
+
+    # ------------------------------------------------------------------------
+
+    def run(self, command):
+        """Execute command with subprocess.Popen.
+
+        :param command: (str) The command you want to execute
+
+        """
+        logging.info("Process command: {}".format(command))
+        command = command.strip()
+        command_args = shlex.split(command)
+        self.__process = subprocess.run(
+            command_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=False,
+            cwd=None,
+            timeout=30,   # will raise TimeoutExpired() after 30 seconds
+            check=False,
+            encoding=None,
+            errors=None,
+            text=None,
+            env=None,
+            universal_newlines=True)
+
+    # ------------------------------------------------------------------------
+
+    def out(self):
+        """Return the stdout of the process.
+
+        :return: (str) output message
+
+        """
+        if self.__process is None:
+            return ""
+        return self.__process.stdout
+
+    # ------------------------------------------------------------------------
+
+    def error(self):
+        """Return the stderr of the process.
+
+        :return: (str) error message
+
+        """
+        if self.__process is None:
+            return ""
+        return self.__process.stderr
+
+    # ------------------------------------------------------------------------
+
+    def status(self):
+        """Return value of the process."""
+        if self.__process is None:
+            return 0
+        return self.__process.returncode
 
 # -----------------------------------------------------------------------
 
@@ -85,7 +178,7 @@ class Installer(object):
     def __init__(self):
         """Create a new Installer instance. """
         self.__pbar = None
-        self.__progression = 0
+        self.__pvalue = 0
         self._features = None
         self.__python = "python3"
         if shutil.which("python3") is None:
@@ -159,6 +252,7 @@ class Installer(object):
                 self.__pmessage(self.__message("enable_false", fid))
 
             else:
+
                 try:
                     if len(self._features.cmd(fid)) > 0:
                         self.__install_cmd(fid)
@@ -166,7 +260,6 @@ class Installer(object):
                         self.__install_packages(fid)
                     if len(self._features.pypi(fid)) > 0:
                         self.__install_pypis(fid)
-
                 except InstallationError as e:
                     self._features.enable(fid, False)
                     self.__pmessage(self.__message("install_failed", fid))
@@ -192,6 +285,19 @@ class Installer(object):
     # Private methods to install
     # ------------------------------------------------------------------------
 
+    @staticmethod
+    def test_command(command):
+        command = command.strip()
+        command_args = shlex.split(command)
+        if len(command_args) == 0:
+            return True
+
+        if shutil.which(command_args[0]):
+            return False
+        return True
+
+    # ------------------------------------------------------------------------
+
     def __install_cmd(self, fid):
         """Execute a system command for a feature.
 
@@ -200,13 +306,15 @@ class Installer(object):
 
         """
         err = ""
-
-        if search_cmd(fid) is False:
+        command = self._features.cmd(fid)
+        cmd_exists = Installer.test_command(command)
+        if cmd_exists is False:
             try:
                 process = Process()
-                process.run_popen(self._features.cmd(fid))
+                process.run(self._features.cmd(fid))
                 err = process.error()
                 stdout = process.out()
+                logging.info("Return code: {}".format(process.status()))
                 if len(stdout) > 3:
                     logging.info(stdout)
             except Exception as e:
@@ -247,7 +355,6 @@ class Installer(object):
         for package, version in self._features.pypi(fid).items():
             if self.__search_pypi(package) is False:
                 self.__install_pypi(package)
-
             elif self.__version_pypi(package, version) is False:
                 self.__update_pypi(package)
 
@@ -316,7 +423,7 @@ class Installer(object):
 
     def __pheader(self, text):
         if self.__pbar is not None:
-            self.__progression = 0.
+            self.__pvalue = 0
             self.__pbar.set_header(text)
         logging.info("    * * * * *   {}   * * * * * ".format(text))
 
@@ -326,12 +433,13 @@ class Installer(object):
         logging.info("  ==> {text}".format(text=text))
 
     def __pupdate(self, fid, text):
-        self.__progression += self.__eval_step(fid)
-        if self.__progression > 0.98:
-            self.__progression = 1.
+        self.__pvalue += self.__eval_step(fid)
         if self.__pbar is not None:
-            self.__pbar.update(self.__progression, text)
-        logging.info("  ==> {text} ({percent}%)".format(text=text, percent=self.__progression))
+            self.__pbar.update(self.__pvalue, text)
+        if self.__pvalue > 90:
+            self.__pvalue = 100
+        logging.info("  ==> {}".format(text))
+        # Makes GUI crashing: logging.info("({}%)".format(text, self.__pvalue))
 
     def __message(self, mid, fid):
         if mid in MESSAGES:
@@ -355,7 +463,7 @@ class Installer(object):
         nb_pypi = len(self._features.pypi(fid))
         nb_total = nb_cmd + nb_packages + nb_pypi
 
-        return round((1. / float(nb_total)), 2)
+        return int(round((1. / float(nb_total)), 2) * 100.)
 
     # ------------------------------------------------------------------------
 
@@ -368,7 +476,8 @@ class Installer(object):
         try:
             command = self.__python + " -m pip show " + package
             process = Process()
-            process.run_popen(command)
+            process.run(command)
+            logging.info("Return code: {}".format(process.status()))
             err = process.error()
             stdout = process.out()
             stdout = stdout.replace("b''", "")
@@ -396,9 +505,11 @@ class Installer(object):
         try:
             command = self.__python + " -m pip install " + package + " --no-warn-script-location"
             process = Process()
-            process.run_popen(command)
+            process.run(command)
+            logging.info("Return code: {}".format(process.status()))
             err = process.error()
             stdout = process.out()
+
             if len(stdout) > 3:
                 logging.info(stdout)
         except Exception as e:
@@ -419,7 +530,8 @@ class Installer(object):
         try:
             command = self.__python + " -m pip show " + package
             process = Process()
-            process.run_popen(command)
+            process.run(command)
+            logging.info("Return code: {}".format(process.status()))
             err = process.error()
             if len(err) > 3:
                 return False
@@ -478,19 +590,15 @@ class Installer(object):
         :raises: InstallationError()
 
         """
-        # try:
-        #     command = self.__python + " -m " + package
-        #     process = Process()
-        #     process.run_popen(command)
-        # except Exception as e1:
         try:
             # Deprecated:
             # command = "pip3 install -U " + package
             command = self.__python + " -m pip install -U " + package + " --no-warn-script-location"
             process = Process()
-            process.run_popen(command)
-        except Exception as e2:
-            raise InstallationError(str(e2))
+            process.run(command)
+            logging.info("Return code: {}".format(process.status()))
+        except Exception as e:
+            raise InstallationError(str(e))
 
         err = u(process.error().strip())
         stdout = u(process.out())
@@ -532,7 +640,7 @@ class DebianInstaller(Installer):
         try:
             command = "dpkg -s " + package
             process = Process()
-            process.run_popen(command)
+            process.run(command)
         except Exception as e:
             raise InstallationError(str(e))
 
@@ -555,7 +663,7 @@ class DebianInstaller(Installer):
             # -y option is to answer yes to confirmation questions
             command = "apt install " + package + " -y"
             process = Process()
-            process.run_popen(command)
+            process.run(command)
         except Exception as e:
             raise InstallationError(str(e))
 
@@ -818,7 +926,7 @@ class MacOsInstaller(Installer):
             package = str(package)
             command = "brew list " + package
             process = Process()
-            process.run_popen(command)
+            process.run(command)
             err = process.error()
             return len(err) == 3
         except Exception as e:
@@ -837,7 +945,7 @@ class MacOsInstaller(Installer):
             package = str(package)
             command = "brew install " + package
             process = Process()
-            process.run_popen(command)
+            process.run(command)
             err = process.error()
             stdout = process.out()
             if len(stdout) > 3:
@@ -867,7 +975,7 @@ class MacOsInstaller(Installer):
             package = str(package)
             command = "brew info " + package
             process = Process()
-            process.run_popen(command)
+            process.run(command)
             err = process.error()
         except Exception as e:
             raise InstallationError(str(e))
@@ -930,7 +1038,7 @@ class MacOsInstaller(Installer):
             package = str(package)
             command = "brew upgrade " + package
             process = Process()
-            process.run_popen(command)
+            process.run(command)
             err = process.error()
             stdout = process.out()
             if len(stdout) > 3:
