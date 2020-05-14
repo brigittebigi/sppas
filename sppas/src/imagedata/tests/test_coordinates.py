@@ -35,7 +35,7 @@
 
 import unittest
 
-from sppas.src.imagedata.coordinates import Coordinates
+from sppas.src.imagedata.coordinates import Coordinates, ImageError
 
 # ---------------------------------------------------------------------------
 
@@ -166,7 +166,8 @@ class TestCoordinates(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_scale(self):
-        self.__coordinates.scale(2.0)
+        shift_x = self.__coordinates.scale(2.0)
+        self.assertEqual(shift_x, 75)
         w = self.__coordinates.w
         self.assertEqual(w, 300)
         h = self.__coordinates.h
@@ -174,6 +175,38 @@ class TestCoordinates(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.__coordinates.scale(2)
+
+    # ---------------------------------------------------------------------------
+
+    def test_shift(self):
+        self.__coordinates.shift(20)
+        x = self.__coordinates.x
+        self.assertEqual(x, 163)
+
+        self.__coordinates.shift(-20)
+        x = self.__coordinates.x
+        self.assertEqual(x, 143)
+
+        self.__coordinates.shift(20, 10)
+        x = self.__coordinates.x
+        y = self.__coordinates.y
+        self.assertEqual(x, 163)
+        self.assertEqual(y, 27)
+
+        self.__coordinates.shift(-20, -10)
+        x = self.__coordinates.x
+        y = self.__coordinates.y
+        self.assertEqual(x, 143)
+        self.assertEqual(y, 17)
+
+        with self.assertRaises(ValueError):
+            self.__coordinates.shift("a", "a")
+
+        with self.assertRaises(ImageError):
+            self.__coordinates.shift(20, -20)
+
+        with self.assertRaises(ImageError):
+            self.__coordinates.shift(-200, 20)
 
     # ---------------------------------------------------------------------------
 

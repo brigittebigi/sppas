@@ -34,25 +34,7 @@
 
 import cv2
 
-from sppas import error
 from sppas.src.imagedata.coordinates import Coordinates
-
-# ----------------------------------------------------------------------------
-
-
-class ImageError(IndexError):
-    """:ERROR 600:.
-
-    Installation failed with error: {error}.
-
-    """
-
-    def __init__(self, error_msg):
-        self.parameter = error(600) + \
-                         (error(600, "globals")).format(error=error_msg)
-
-    def __str__(self):
-        return repr(self.parameter)
 
 # ----------------------------------------------------------------------------
 

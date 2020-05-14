@@ -34,6 +34,25 @@
 
 """
 
+from sppas import error
+
+# ----------------------------------------------------------------------------
+
+
+class ImageError(IndexError):
+    """:ERROR 600:.
+
+    Shift failed with error: {error}.
+
+    """
+
+    def __init__(self, error_msg):
+        self.parameter = error(600) + \
+                         (error(600, "globals")).format(error=error_msg)
+
+    def __str__(self):
+        return repr(self.parameter)
+
 # ---------------------------------------------------------------------------
 
 
@@ -233,11 +252,55 @@ class Coordinates(object):
     # -----------------------------------------------------------------------
 
     def scale(self, coeff):
-        """Multiply width and height value with coeff value."""
+        """Multiply width and height value with coeff value.
+
+        :param coeff: (int) The value to multiply with width and height.
+        :returns: Returns the value of the shift to use on the x-axis,
+        according to the value of the scale.
+
+        """
         if isinstance(coeff, float) is False:
             raise ValueError
+        shift_x = int((int(self.w * coeff) - self.w)/2)
         self.w = int(self.w * coeff)
         self.h = int(self.h * coeff)
+        return shift_x
+
+    # -----------------------------------------------------------------------
+
+    def shift(self, x, y=0, image=None):
+        """Multiply width and height value with coeff value.
+
+        :param x: (int) The value to add to x-axis value.
+        :param y: (int) The value to add to y-axis value.
+        :param image: (numpy.ndarray) An image.
+
+        """
+        x = int(x)
+        if type(x) != int:
+            raise ValueError
+        y = int(y)
+        if type(y) != int:
+            raise ValueError
+
+        new_x = self.x + x
+        new_y = self.y + y
+
+        if new_x < 0:
+            raise ImageError("The x-axis value have to be superior to 0.")
+        elif new_y < 0:
+            raise ImageError("The y-axis value have to be superior to 0.")
+
+        if image is not None:
+            # Get the width and height of image
+            (max_w, max_h) = image.shape[:2]
+            if new_x > max_w:
+                raise ImageError("The x-axis value can't be superior to the width of the image.")
+            if new_y > max_h:
+                raise ImageError("The y-axis value can't be superior to the height of the image.")
+
+        self.x = new_x
+        self.y = new_y
 
     # -----------------------------------------------------------------------
 
