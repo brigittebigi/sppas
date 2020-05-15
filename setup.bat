@@ -44,9 +44,14 @@ GOTO EndHeader
 
 @echo off
 color 0F
-
 SET PYTHONIOENCODING=UTF-8
 
+REM Make sure we have admin right
+set "params=%*"
+cd /d "%~dp0" && ( if exist "%temp%\getadmin.vbs" del "%temp%\getadmin.vbs" ) && fsutil dirty query %systemdrive% 1>nul 2>nul || (  echo Set UAC = CreateObject^("Shell.Application"^) : UAC.ShellExecute "cmd.exe", "/k cd ""%~sdp0"" && %~s0 %params%", "", "runas", 1 >> "%temp%\getadmin.vbs" && "%temp%\getadmin.vbs" && exit /B )
+
+
+REM Search for pythonw command, ie Python & WxPython are both installed
 WHERE pythonw3.exe >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
 
@@ -56,6 +61,7 @@ if %ERRORLEVEL% EQU 0 (
 
 ) else (
 
+    REM Search for python command, ie Python is installed but not WxPython
     WHERE python3.exe >nul 2>nul
     if %ERRORLEVEL% EQU 0 (
 

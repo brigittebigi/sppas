@@ -228,9 +228,11 @@ class Feature(object):
         """
         value = str(value)
         if "$SPPAS" in value:
-            value = value.replace("$SPPAS", paths.basedir)
-        if "/" in value:
-            value = value.replace("/", os.sep)
+            base_dir = paths.basedir
+            if "\\" in base_dir:
+                base_dir = base_dir.replace("\\", "\\\\")
+            value = value.replace("$SPPAS", base_dir)
+
         self.__cmd = value
 
     # ------------------------------------------------------------------------

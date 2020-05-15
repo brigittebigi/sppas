@@ -61,7 +61,7 @@ shutil.rmtree(os.path.join(SPPAS, "julius"))
 
 # Move Julius executable to c:\\Windows
 # -------------------------------------------------
-julius_destination = os.path.join("C:", "Windows")
+julius_destination = "C:\\Windows"
 try:
     shutil.move(os.path.join(SPPAS, "julius.exe"), julius_destination)
 except Exception as e:
