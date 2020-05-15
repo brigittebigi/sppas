@@ -271,7 +271,7 @@ class FaceDetection(object):
     # -----------------------------------------------------------------------
 
     def __iter__(self):
-        for coordinates in list(self.__coordinates):
+        for coordinates in self.__coordinates:
             yield coordinates
 
     # ----------------------------------------------------------------------

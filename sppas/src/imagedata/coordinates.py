@@ -251,19 +251,32 @@ class Coordinates(object):
 
     # -----------------------------------------------------------------------
 
-    def scale(self, coeff):
+    def scale(self, coeff, image=None):
         """Multiply width and height value with coeff value.
 
         :param coeff: (int) The value to multiply with width and height.
+        :param image: (numpy.ndarray) An image.
         :returns: Returns the value of the shift to use on the x-axis,
         according to the value of the scale.
 
         """
         if isinstance(coeff, float) is False:
             raise ValueError
+
+        new_w = int(self.w * coeff)
+        new_h = int(self.h * coeff)
+
+        if image is not None:
+            # Get the width and height of image
+            (width, height) = image.shape[:2]
+            if new_w > width:
+                raise ImageError("The width value can't be superior to the width of the image.")
+            if new_h > height:
+                raise ImageError("The height value can't be superior to the height of the image.")
+
         shift_x = int((int(self.w * coeff) - self.w)/2)
-        self.w = int(self.w * coeff)
-        self.h = int(self.h * coeff)
+        self.w = new_w
+        self.h = new_h
         return shift_x
 
     # -----------------------------------------------------------------------
@@ -296,8 +309,12 @@ class Coordinates(object):
             (max_w, max_h) = image.shape[:2]
             if new_x > max_w:
                 raise ImageError("The x-axis value can't be superior to the width of the image.")
-            if new_y > max_h:
+            elif new_x + self.w > max_w:
+                raise ImageError("The end of the zone can't be superior to the width of the image.")
+            elif new_y > max_h:
                 raise ImageError("The y-axis value can't be superior to the height of the image.")
+            elif new_y + self.h > max_h:
+                raise ImageError("The end of the zone value can't be superior to the height of the image.")
 
         self.x = new_x
         self.y = new_y
