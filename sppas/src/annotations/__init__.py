@@ -99,5 +99,5 @@ __all__ = (
     'sppasReOcc',
     'sppasFindTier',
     'sppasParam',
-    'sppasAnnotationsManager',
+    'sppasAnnotationsManager'
 )
