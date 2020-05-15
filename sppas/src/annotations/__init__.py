@@ -72,7 +72,6 @@ from .ReOccurrences import sppasReOcc
 from .StopWords import StopWords
 from .StopWords import sppasStopWords
 from .LexMetric import sppasLexMetric
-from .Spklexvar.sppaslexvar import sppasLexVar
 
 from .searchtier import sppasFindTier
 from .param import sppasParam
@@ -101,5 +100,4 @@ __all__ = (
     'sppasFindTier',
     'sppasParam',
     'sppasAnnotationsManager',
-    'sppasLexVar'
 )
