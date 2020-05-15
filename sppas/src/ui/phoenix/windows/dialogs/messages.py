@@ -126,7 +126,7 @@ class sppasBaseMessageDialog(sppasDialog):
         h = p.get_font_height()
         s = wx.BoxSizer(wx.HORIZONTAL)
         txt = sppasMessageText(p, message)
-        s.Add(txt, 1, wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 10)
+        s.Add(txt, 1, wx.ALL | wx.EXPAND, sppasPanel.fix_size(8))
         p.SetSizer(s)
         # p.SetName("content")
         p.SetMinSize(wx.Size(-1, h*4))

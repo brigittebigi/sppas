@@ -176,7 +176,7 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
 
         sizer_top = wx.BoxSizer(wx.HORIZONTAL)
         sizer_top.Add(btn_back_top, 0, wx.RIGHT, btn_size // 4)
-        sizer_top.Add(title, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_CENTER_HORIZONTAL)
+        sizer_top.Add(title, 1, wx.ALIGN_CENTER)
         sizer.Add(sizer_top, 0, wx.EXPAND)
 
         log_txt = self.__create_log_text()

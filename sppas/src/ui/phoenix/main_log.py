@@ -617,7 +617,7 @@ class sppasLogTitlePanel(sppasPanel):
 
         # Put the title in a sizer
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(st, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=10)
+        sizer.Add(st, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=sppasPanel.fix_size(8))
 
         self.SetSizer(sizer)
 

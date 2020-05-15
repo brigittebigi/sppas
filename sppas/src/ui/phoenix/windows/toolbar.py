@@ -252,7 +252,6 @@ class sppasToolbar(sppasPanel):
     # -----------------------------------------------------------------------
 
     def AddTitleText(self, text="", color=None,
-                     align=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL,
                      name=wx.StaticTextNameStr):
         """Append a colored static text with an higher font into the toolbar.
 
@@ -269,7 +268,12 @@ class sppasToolbar(sppasPanel):
         if color is not None:
             st.SetForegroundColour(color)
             self.__fg.append(st)
-        self.GetSizer().Add(st, 0, align | wx.ALL, 6)
+
+        if self.GetSizer().GetOrientation() == wx.HORIZONTAL:
+            align = wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL
+        else:
+            align = wx.ALIGN_LEFT | wx.ALIGN_CENTER_HORIZONTAL | wx.ALL
+        self.GetSizer().Add(st, 0, align, 6)
 
         return st
 
