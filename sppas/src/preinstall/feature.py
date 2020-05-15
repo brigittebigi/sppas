@@ -34,6 +34,8 @@
 
 import uuid
 import re
+import os
+from sppas.src.config import paths
 
 
 class Feature(object):
@@ -221,10 +223,14 @@ class Feature(object):
     def set_cmd(self, value):
         """Set the command to execute.
 
-        :param value: (str) The unique command for the OS.
+        :param value: (str) The system command for the OS.
 
         """
         value = str(value)
+        if "$SPPAS" in value:
+            value = value.replace("$SPPAS", paths.basedir)
+        if "/" in value:
+            value = value.replace("/", os.sep)
         self.__cmd = value
 
     # ------------------------------------------------------------------------

@@ -78,15 +78,15 @@ function fct_error_message()
 {
   TITLE_MSG="Cannot start SPPAS"
   if [ -n "$(command -v zenity)" ]; then
-    zenity --error --title="$TITLE_MSG" --text="$1" --no-wrap
+      zenity --error --title="$TITLE_MSG" --text="$1" --no-wrap
   elif [ -n "$(command -v kdialog)" ]; then
-    kdialog --error "$1" --title "$TITLE_MSG"
+      kdialog --error "$1" --title "$TITLE_MSG"
   elif [ -n "$(command -v notify-send)" ]; then
-    notify-send "ERROR: $TITLE_MSG" "$1"
+      notify-send "ERROR: $TITLE_MSG" "$1"
   elif [ -n "$(command -v xmessage)" ]; then
-    xmessage -center "ERROR: $TITLE_MSG: $1"
+      xmessage -center "ERROR: $TITLE_MSG: $1"
   else
-    printf "ERROR: %s\n%s\n" "$TITLE_MSG" "$1"
+      printf "ERROR: %s\n%s\n" "$TITLE_MSG" "$1"
   fi
 }
 
@@ -143,26 +143,30 @@ echo "  - Location: $PROGRAM_DIR";
 
 if [ -e .deps~ ];  then rm .deps~;  fi
 
-echo "Run the installer program to install wxpython...";
-$PYTHON $PROGRAM_DIR/sppas/bin/preinstall.py --wxpython
-if [ $? -eq 1 ] ; then
+$PYTHON $PROGRAM_DIR/sppas/bin/checkwx.py
+if [ $? -ne 0 ] ; then
+    echo "Run the installer program to install wxpython...";
+    sudo $PYTHON $PROGRAM_DIR/sppas/bin/preinstall.py --wxpython
+fi
 
-    echo -e "${RED}This setup failed to install wxpython automatically."
+$PYTHON $PROGRAM_DIR/sppas/bin/checkwx.py
+if [ $? -ne 0 ] ; then
 
-    # Install of wxpython failed. Continue with the CLI for other requirements.
-    $PYTHON $PROGRAM_DIR/sppas/bin/preinstall.py --nowxpython -a
-    if [ $? -eq 1 ] ; then
-        fct_error_message "This setup failed to install automatically the required packages. See http://www.sppas.org/installation.html to do it manually."
+    # Install of wxpython failed.
+    if [ $? -ne 0 ] ; then
+        fct_error_message "This setup failed to install automatically wxpython. See http://www.sppas.org/installation.html to do it manually."
         exit -1
     fi
 
 else
-    # Install of wxpython success. Continue with the GUI for other requirements.
+
+    # WxPython is installed. Continue with the GUI for other requirements.
     $PYTHON $PROGRAM_DIR/sppas/bin/preinstallgui.py
-    if [ $? -eq 1 ] ; then
+    if [ $? -ne 0 ] ; then
         fct_error_message "This setup failed to install automatically the required packages. See http://www.sppas.org/installation.html to do it manually."
         exit -1
     fi
+
 fi
 
-
+exit 0

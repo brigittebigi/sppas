@@ -40,6 +40,8 @@ import subprocess
 from sppas.src.exc import InstallationError
 from sppas.src.utils.makeunicode import u
 from sppas.src.config import info
+# from sppas.src.config.process import Process
+
 from .features import Features
 
 # ---------------------------------------------------------------------------
@@ -62,21 +64,20 @@ MESSAGES = {
 # -----------------------------------------------------------------------
 
 
-class Process(object):
-    """Execute and read a subprocess.
+class ProcessRunner(object):
+    """Convenient class to execute a subprocess.
 
-    :author:       Florian Hocquet
+    :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-    :summary:      the class Process of SPPAS
 
     A Process is a wrapper of subprocess.run command.
     After 30 sec. of waiting, it will stops and raise TimoutExpired.
     
     Launch a command:
-    >>> p = Process()
+    >>> p = ProcessRunner()
     >>> p.run("ls -l")
 
     Return stdout of a command:
@@ -97,7 +98,7 @@ class Process(object):
     # ------------------------------------------------------------------------
 
     def run(self, command):
-        """Execute command with subprocess.Popen.
+        """Execute command with subprocess.run.
 
         :param command: (str) The command you want to execute
 
@@ -111,7 +112,7 @@ class Process(object):
             stderr=subprocess.PIPE,
             shell=False,
             cwd=None,
-            timeout=30,   # will raise TimeoutExpired() after 30 seconds
+            timeout=120,   # will raise TimeoutExpired() after 120 seconds
             check=False,
             encoding=None,
             errors=None,
@@ -310,7 +311,7 @@ class Installer(object):
         cmd_exists = Installer.test_command(command)
         if cmd_exists is False:
             try:
-                process = Process()
+                process = ProcessRunner()
                 process.run(self._features.cmd(fid))
                 err = process.error()
                 stdout = process.out()
@@ -475,7 +476,7 @@ class Installer(object):
         """
         try:
             command = self.__python + " -m pip show " + package
-            process = Process()
+            process = ProcessRunner()
             process.run(command)
             logging.info("Return code: {}".format(process.status()))
             err = process.error()
@@ -504,7 +505,7 @@ class Installer(object):
         """
         try:
             command = self.__python + " -m pip install " + package + " --no-warn-script-location"
-            process = Process()
+            process = ProcessRunner()
             process.run(command)
             logging.info("Return code: {}".format(process.status()))
             err = process.error()
@@ -529,7 +530,7 @@ class Installer(object):
         """
         try:
             command = self.__python + " -m pip show " + package
-            process = Process()
+            process = ProcessRunner()
             process.run(command)
             logging.info("Return code: {}".format(process.status()))
             err = process.error()
@@ -594,7 +595,7 @@ class Installer(object):
             # Deprecated:
             # command = "pip3 install -U " + package
             command = self.__python + " -m pip install -U " + package + " --no-warn-script-location"
-            process = Process()
+            process = ProcessRunner()
             process.run(command)
             logging.info("Return code: {}".format(process.status()))
         except Exception as e:
@@ -639,7 +640,7 @@ class DebianInstaller(Installer):
         """
         try:
             command = "dpkg -s " + package
-            process = Process()
+            process = ProcessRunner()
             process.run(command)
         except Exception as e:
             raise InstallationError(str(e))
@@ -662,7 +663,7 @@ class DebianInstaller(Installer):
         try:
             # -y option is to answer yes to confirmation questions
             command = "apt install " + package + " -y"
-            process = Process()
+            process = ProcessRunner()
             process.run(command)
         except Exception as e:
             raise InstallationError(str(e))
@@ -925,10 +926,11 @@ class MacOsInstaller(Installer):
         try:
             package = str(package)
             command = "brew list " + package
-            process = Process()
+            process = ProcessRunner()
             process.run(command)
-            err = process.error()
-            return len(err) == 3
+            if len(process.out()) > 3:
+                return True
+            return False
         except Exception as e:
             raise InstallationError(str(e))
 
@@ -944,7 +946,7 @@ class MacOsInstaller(Installer):
         try:
             package = str(package)
             command = "brew install " + package
-            process = Process()
+            process = ProcessRunner()
             process.run(command)
             err = process.error()
             stdout = process.out()
@@ -974,7 +976,7 @@ class MacOsInstaller(Installer):
             req_version = str(req_version)
             package = str(package)
             command = "brew info " + package
-            process = Process()
+            process = ProcessRunner()
             process.run(command)
             err = process.error()
         except Exception as e:
@@ -1037,7 +1039,7 @@ class MacOsInstaller(Installer):
         try:
             package = str(package)
             command = "brew upgrade " + package
-            process = Process()
+            process = ProcessRunner()
             process.run(command)
             err = process.error()
             stdout = process.out()

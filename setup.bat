@@ -69,12 +69,8 @@ if %ERRORLEVEL% EQU 0 (
 
             color 04
             echo This setup failed to install wxpython automatically.
-            start "" python3.exe .\sppas\bin\preinstall.py --nowxpython -a
+            echo See http://www.sppas.org/installation.html to do it manually.
 
-            if %ERRORLEVEL% NEQ 0 (
-                echo This setup failed to install automatically the required packages.
-                echo See http://www.sppas.org/installation.html to do it manually.
-            )
         )
 
     ) else (

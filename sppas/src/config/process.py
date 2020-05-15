@@ -148,6 +148,18 @@ class Process(object):
 
     # ------------------------------------------------------------------------
 
+    def status(self):
+        """Return the status of the command.
+
+        You should first make sure that the process has completed running.
+
+        :return: (int)
+
+        """
+        return self.__process.returncode
+
+    # ------------------------------------------------------------------------
+
     def is_running(self):
         """Return True if the process is running.
 
