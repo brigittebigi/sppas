@@ -27,57 +27,17 @@
 
         ---------------------------------------------------------------------
 
-    src.videodata.facetracking.py
+    src.videodata.manager.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
-import _testbuffer as tb
 
-import numpy as np
-import imutils
-import cv2
-import os
-import wx
-from pympler.asizeof import asizeof
-
-from sppas.src.config import sppasPathSettings
-from sppas.src.imagedata.facedetection import FaceDetection
+from sppas.src.videodata.videobuffer import VideoBuffer
 
 # ---------------------------------------------------------------------------
 
 
-class RingBuffer:
-    def __init__(self, size):
-        self.data = [None for i in range(size)]
-
-    # -----------------------------------------------------------------------
-
-    def append(self, x):
-        self.data.pop(0)
-        self.data.append(x)
-
-    # -----------------------------------------------------------------------
-
-    def get_data(self):
-        return self.data
-
-    # -----------------------------------------------------------------------
-
-    def __str__(self):
-        string = str()
-        for i in self.get_data():
-            string += str(i) + "\n"
-        return string
-
-    # -----------------------------------------------------------------------
-
-    def __repr__(self):
-        return self.__class__.__name__
-
-# ---------------------------------------------------------------------------
-
-
-class FaceTracking(object):
+class Manager(object):
     """Class to detect faces.
 
     :author:       Florian Hocquet
@@ -92,34 +52,21 @@ class FaceTracking(object):
         """Create a new faceTracking instance."""
         self.__coordinates = list()
         self.__persons = list()
-
-        self.__buffer = RingBuffer(4)
-
-        liste = list()
-        img = cv2.imread("../../../../../../trump.jpg")
-        # for i in range(0, 6):
-        #     liste.append(img)
-        #
-        # self.init_images(liste)
-
-        print(self.__buffer)
-        print(asizeof(self.__buffer))
+        self.__vBuffer = VideoBuffer(100, 10, "../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4")
 
     # -----------------------------------------------------------------------
 
-    def init_images(self, liste):
+    def video_process(self):
         """Returns all the faces coordinates in a list"""
-        if isinstance(liste, list) is False:
-            raise TypeError
-        for image in liste:
-            self.__buffer.append(image)
-
-    # -----------------------------------------------------------------------
-
-    def video_process(self, video):
-        """Returns all the faces coordinates in a list"""
+        print("[INFO] starting video stream...")
+        while True:
+            result = self.__vBuffer.next()
+            if result is False:
+                return False
 
     # -----------------------------------------------------------------------
 
 
-f = FaceTracking()
+m = Manager()
+m.video_process()
+

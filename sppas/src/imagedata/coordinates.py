@@ -46,7 +46,7 @@ class ImageError(IndexError):
 
     """
 
-    def __init__(self, error_msg):
+    def __init__(self, error_msg="error"):
         self.parameter = error(600) + \
                          (error(600, "globals")).format(error=error_msg)
 

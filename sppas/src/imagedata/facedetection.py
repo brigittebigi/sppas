@@ -229,8 +229,57 @@ class FaceDetection(object):
         # Sets the values of the corners of the box
         (startX, startY, endX, endY) = box.astype("int")
 
+        x, y, w, h = self.make_square(startX, startY, endX - startX, endY - startY)
+
         # Then creates an Coordinates object with these values
-        self.__coordinates.append(Coordinates(startX, startY, endX - startX, endY - startY, confidence))
+        self.__coordinates.append(Coordinates(x, y, w, h, confidence))
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def make_square(x, y, w, h):
+        """Make square from coordinates."""
+        x = int(x)
+        if isinstance(x, int) is False:
+            raise ValueError
+        y = int(y)
+        if isinstance(y, int) is False:
+            raise ValueError
+        w = int(w)
+        if isinstance(w, int) is False:
+            raise ValueError
+        h = int(h)
+        if isinstance(h, int) is False:
+            raise ValueError
+        new_w = 0
+        new_h = 0
+        new_x = 0
+        new_y = 0
+        if w > h:
+            max = w
+        else:
+            max = h
+        coeff_w = max / w
+        coeff_h = max / h
+        if coeff_w != 1.0 or coeff_w != 1:
+            new_w = w * coeff_w
+            new_x = x - int((int(new_w) - w) / 2)
+            if new_x < 0:
+                new_x = 0
+            new_h = h
+            new_y = y
+        elif coeff_h != 1.0 or coeff_h != 1:
+            new_h = h * coeff_h
+            new_w = w
+            new_x = x
+            new_y = y - int((int(new_h) - h) / 2)
+            if new_y < 0:
+                new_y = 0
+        new_x = int(new_x)
+        new_y = int(new_y)
+        new_w = int(new_w)
+        new_h = int(new_h)
+        return new_x, new_y, new_w, new_h
 
     # -----------------------------------------------------------------------
 
