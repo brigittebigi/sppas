@@ -69,7 +69,6 @@ if %ERRORLEVEL% EQU 0 (
         start "" python3.exe .\sppas\bin\preinstall.py --wxpython
         if %ERRORLEVEL% EQU 0 (
             start "" python3.exe .\sppas\bin\preinstallgui.py
-            exit
 
         ) else (
 
@@ -87,4 +86,7 @@ if %ERRORLEVEL% EQU 0 (
 
     )
 )
+
+REM Close the windows whiwh was opened to get admin rights
+exit
 
