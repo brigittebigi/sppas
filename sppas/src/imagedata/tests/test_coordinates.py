@@ -167,7 +167,7 @@ class TestCoordinates(unittest.TestCase):
 
     def test_scale(self):
         shift_x = self.__coordinates.scale(2.0)
-        self.assertEqual(shift_x, 75)
+        self.assertEqual(shift_x, -75)
         w = self.__coordinates.w
         self.assertEqual(w, 300)
         h = self.__coordinates.h
@@ -202,8 +202,9 @@ class TestCoordinates(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.__coordinates.shift("a", "a")
 
-        with self.assertRaises(ImageError):
-            self.__coordinates.shift(20, -20)
+        self.__coordinates.shift(20, -20)
+        y = self.__coordinates.y
+        self.assertEqual(y, 0)
 
         with self.assertRaises(ImageError):
             self.__coordinates.shift(-200, 20)

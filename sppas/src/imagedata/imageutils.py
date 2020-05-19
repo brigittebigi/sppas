@@ -27,7 +27,7 @@
 
         ---------------------------------------------------------------------
 
-    src.imagedata.facedetection.py
+    src.imagedata.imageutils.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -36,14 +36,15 @@ import cv2
 
 from sppas.src.imagedata.coordinates import Coordinates
 
+
 # ----------------------------------------------------------------------------
 
 
-def crop(image, coordinates):
+def crops(image, coordinates):
     """Return a list of cropped images(numpy.ndarray objects).
 
     :param image: (numpy.ndarray) The image to be cropped.
-    :param coordinates: (list) List of sppasCoordinates object.
+    :param coordinates: (list) List of Coordinates object.
 
     """
     list_cropped = list()
@@ -54,25 +55,59 @@ def crop(image, coordinates):
         list_cropped.append(cropped)
     return list_cropped
 
+
 # ----------------------------------------------------------------------------
 
 
-def surrond_square(image, coordinates):
+def crop(image, coordinate):
+    """Return a list of cropped images(numpy.ndarray objects).
+
+    :param image: (numpy.ndarray) The image to be cropped.
+    :param coordinate: (Coordinates) Coordinates object.
+
+    """
+    if isinstance(coordinate, Coordinates) is False:
+        raise TypeError
+    cropped = image[coordinate.get_y():coordinate.get_y() + coordinate.get_h(),
+                    coordinate.get_x():coordinate.get_x() + coordinate.get_w()]
+    return cropped
+
+
+# ----------------------------------------------------------------------------
+
+
+def surrond_square(image, coordinate):
     """Surround the elements of "image" with squares.
 
     :param image: (numpy.ndarray) The image to be processed.
-    :param coordinates: (list) List of sppasCoordinates object.
+    :param coordinate: (list) Coordinates object.
     :returns: An image(numpy.ndarray object).
 
     """
-    index = 0
-    for c in coordinates:
-        if isinstance(c, Coordinates) is False:
-            raise TypeError
-        if index > 240:
-            index = 0
-        cv2.rectangle(image, (c.get_x(), c.get_y()), (c.get_x() + c.get_w(), c.get_y() + c.get_h()),
-                      (index, index, 255), 2)
-        index += 20
+    if isinstance(coordinate, Coordinates) is False:
+        raise TypeError
+    cv2.rectangle(image, (coordinate.get_x(), coordinate.get_y()), (coordinate.get_x() +
+                          coordinate.get_w(), coordinate.get_y() + coordinate.get_h()),
+                         (0, 0, 255), 2)
     return image
 
+
+# ----------------------------------------------------------------------------
+
+
+def resize(image, width, height):
+    """Return a list of cropped images(numpy.ndarray objects).
+
+    :param image: (numpy.ndarray) The image to be resized.
+    :param width: (int) The width you want to resize to.
+    :param height: (int) The width you want to resize to.
+
+    """
+    if len(image) == 0:
+        return
+    if width < 0:
+        raise ValueError
+    if height < 0:
+        raise ValueError
+    image = cv2.resize(image, (width, height), interpolation=cv2.INTER_AREA)
+    return image

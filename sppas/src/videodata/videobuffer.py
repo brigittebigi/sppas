@@ -27,7 +27,7 @@
 
         ---------------------------------------------------------------------
 
-    src.videodata.facedetection.py
+    src.videodata.videobuffer.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -201,7 +201,7 @@ class VideoBuffer(object):
         self.__last_frame = self.__video.get(CAP_PROP_POS_FRAMES)
 
         # Destroy the showing window
-        # cv2.destroyAllWindows()
+        cv2.destroyAllWindows()
 
         # Return the list of images
         return images

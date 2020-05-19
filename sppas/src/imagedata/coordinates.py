@@ -274,7 +274,7 @@ class Coordinates(object):
             if new_h > height:
                 raise ImageError("The height value can't be superior to the height of the image.")
 
-        shift_x = int((int(self.w * coeff) - self.w)/2)
+        shift_x = int((self.w - int(self.w * coeff))/2)
         self.w = new_w
         self.h = new_h
         return shift_x
@@ -302,7 +302,7 @@ class Coordinates(object):
         if new_x < 0:
             raise ImageError("The x-axis value have to be superior to 0.")
         elif new_y < 0:
-            raise ImageError("The y-axis value have to be superior to 0.")
+            new_y = 0
 
         if image is not None:
             # Get the width and height of image

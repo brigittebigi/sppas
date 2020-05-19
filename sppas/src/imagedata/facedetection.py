@@ -39,7 +39,6 @@ import cv2
 from sppas.src.config import sppasPathSettings
 from sppas.src.imagedata.coordinates import Coordinates
 
-
 # ---------------------------------------------------------------------------
 
 
@@ -212,7 +211,6 @@ class FaceDetection(object):
         for i in range(0, number):
             # Sets the confidence score of the current object
             conf = detections[0, 0, i, 2]
-
             self.__detect(detections, i, w, h, conf)
 
     # -----------------------------------------------------------------------
@@ -229,7 +227,10 @@ class FaceDetection(object):
         # Sets the values of the corners of the box
         (startX, startY, endX, endY) = box.astype("int")
 
-        x, y, w, h = self.make_square(startX, startY, endX - startX, endY - startY)
+        x, y, w, h = startX, startY, endX - startX, endY - startY
+
+        if endX - startX != endY - startY:
+            x, y, w, h = self.make_square(startX, startY, endX - startX, endY - startY)
 
         # Then creates an Coordinates object with these values
         self.__coordinates.append(Coordinates(x, y, w, h, confidence))
@@ -293,6 +294,7 @@ class FaceDetection(object):
         """Return the coordinate object with the best score."""
         best = None
         best_score = float()
+        liste = list()
         for c in self.__coordinates:
             if c.get_confidence() > best_score:
                 best_score = c.get_confidence()
@@ -302,14 +304,27 @@ class FaceDetection(object):
     # -----------------------------------------------------------------------
 
     def get_nbest(self, number):
-        """Return a list with the n best coordinates."""
+        """Return a list with the n best coordinates.
+
+        :param number: (int) The number of faces to get.
+
+        """
         number = int(number)
         if isinstance(number, int) is False:
             raise ValueError
         liste = list()
         for c in range(0, number):
-            liste.append(self.__coordinates[c])
+            try:
+                liste.append(self.__coordinates[c])
+            except IndexError:
+                pass
         return liste
+
+    # -----------------------------------------------------------------------
+
+    def get_image(self):
+        """Return the image."""
+        return self.__image
 
     # -----------------------------------------------------------------------
 
