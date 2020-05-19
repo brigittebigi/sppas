@@ -41,18 +41,17 @@ from sppas.src.videodata.videobuffer import VideoBuffer, ImageError
 # ---------------------------------------------------------------------------
 
 
-class TestFaceDetection(unittest.TestCase):
+class TestVideoBuffer(unittest.TestCase):
 
     def setUp(self):
 
-        self.__vBuffer = VideoBuffer(100, 10, "../../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4")
+        self.__vBuffer = VideoBuffer("../../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4", 100, 10)
 
     # ---------------------------------------------------------------------------
 
     def test_next_append(self):
         with self.assertRaises(ImageError):
-            self.__vBuffer.next_append(["4", "3", "2", "1"])
-
+            self.__vBuffer._VideoBuffer__next_append(["4", "3", "2", "1"])
         self.assertEqual(self.__vBuffer.__len__(), 0)
 
         self.__vBuffer.next()
@@ -62,7 +61,7 @@ class TestFaceDetection(unittest.TestCase):
 
     def test_prev_append(self):
         with self.assertRaises(ImageError):
-            self.__vBuffer.prev_append(["4", "3", "2", "1"])
+            self.__vBuffer._VideoBuffer__prev_append(["4", "3", "2", "1"])
 
         self.assertEqual(self.__vBuffer.__len__(), 0)
 
@@ -76,22 +75,44 @@ class TestFaceDetection(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
-    def test_get_data(self):
-        self.__vBuffer.next()
-        for image in self.__vBuffer.get_data():
-            self.assertIsInstance(image, np.ndarray)
-
-    # ---------------------------------------------------------------------------
-
     def test_previous(self):
         with self.assertRaises(ImageError):
             self.__vBuffer.previous()
 
     # ---------------------------------------------------------------------------
 
+    def test_read(self):
+        with self.assertRaises(TypeError):
+            self.__vBuffer.read([1, 2, 3, 4])
+
+        with self.assertRaises(ValueError):
+            self.__vBuffer.read("aaaaa")
+
+        with self.assertRaises(ValueError):
+            self.__vBuffer.read(begining=-3)
+
+        with self.assertRaises(ValueError):
+            self.__vBuffer.read(begining=-3.0)
+
+        with self.assertRaises(ValueError):
+            self.__vBuffer.read(end=-3)
+
+        with self.assertRaises(ValueError):
+            self.__vBuffer.read(end=-3.0)
+
+    # ---------------------------------------------------------------------------
+
     def test_len(self):
         self.__vBuffer.next()
         self.assertEqual(self.__vBuffer.__len__(), 100)
+
+    # ---------------------------------------------------------------------------
+
+    def test_str(self):
+        self.__vBuffer.next()
+        y = self.__vBuffer.__str__()
+        print(y)
+        self.assertEqual(len(y), 100)
 
     # ---------------------------------------------------------------------------
 

@@ -111,3 +111,4 @@ def resize(image, width, height):
         raise ValueError
     image = cv2.resize(image, (width, height), interpolation=cv2.INTER_AREA)
     return image
+

@@ -57,7 +57,7 @@ class VideoBuffer(object):
 
     Initialize a Buffer, with a size of 100, an overlap of 10,
     and a video
-    >>> v = VideoBuffer(100, 10, video)
+    >>> v = VideoBuffer(video, 100, 10)
 
     Go to the next sequence of the video
     >>> v.next()
@@ -66,11 +66,11 @@ class VideoBuffer(object):
     >>> v.previous()
 
     Release the flow taken by the reading of the video.
-    >>> v.release()
+    >>> v.close()
 
     """
 
-    def __init__(self, size, overlap, video):
+    def __init__(self, video, size=200, overlap=0):
         """Create a new ImageBuffer instance.
 
         :param size: (int) The size of the buffer.
@@ -83,9 +83,8 @@ class VideoBuffer(object):
         self.__size = size
         self.__overlap = overlap
 
-        # Initialization of the video
+        # The video capture to use
         self.__video = None
-        self.init_video(video)
 
         # List of images
         self.__data = list()
@@ -93,23 +92,68 @@ class VideoBuffer(object):
         # Last read frame
         self.__last_frame = 0
 
+        # Initialization of the video
+        self.init_video(video)
+
+    # -----------------------------------------------------------------------
+
+    def get_size(self):
+        """Return a list of coordinates objects."""
+        return self.__size
+
+    # -----------------------------------------------------------------------
+
+    def set_size(self, value):
+        """Return a list of coordinates objects.
+
+        :param value: (int) The new size of the buffer.
+
+        """
+        value = int(value)
+        if isinstance(value, int) is False:
+            raise TypeError
+        if value > 1000:
+            raise ValueError
+        self.__size = value
+
     # -----------------------------------------------------------------------
 
     def init_video(self, video):
-        """Initialize the video."""
+        """Initialize the video.
+
+        :param video: (name of video file, image sequence, url or video stream,
+        GStreamer pipeline, IP camera) The video to browse.
+
+        """
+        if self.__video is not None:
+            self.close()
+
+        # List of images
+        self.__data = list()
+
+        # Last read frame
+        self.__last_frame = 0
+
         # Create a videoCapture object
         self.__video = cv2.VideoCapture()
 
         # Open the video to browse
-        self.__video.open(video)
+        try:
+            self.__video.open(video)
+        except TypeError:
+            raise ImageError
 
         # Set the begining of the video to the frame 0
         self.__video.set(CAP_PROP_POS_FRAMES, 0)
 
     # -----------------------------------------------------------------------
 
-    def next_append(self, images):
-        """Replace the n"size - overlap" last values."""
+    def __next_append(self, images):
+        """Replace the n"size - overlap" last values.
+
+        :param images: (list) The list of images to add.
+
+        """
         for image in images:
             if isinstance(image, np.ndarray) is False:
                 raise ImageError
@@ -121,12 +165,15 @@ class VideoBuffer(object):
 
         # Add the images in the Buffer
         self.__data.extend(images)
-        return True
 
     # -----------------------------------------------------------------------
 
-    def prev_append(self, images):
-        """Replace the n"size - overlap" first values."""
+    def __prev_append(self, images):
+        """Replace the n"size - overlap" first values.
+
+        :param images: (list) The list of images to add.
+
+        """
         for image in images:
             if isinstance(image, np.ndarray) is False:
                 raise ImageError
@@ -154,29 +201,30 @@ class VideoBuffer(object):
 
     # -----------------------------------------------------------------------
 
-    def get_data(self):
-        """Return a list of images."""
-        return self.__data
-
-    # -----------------------------------------------------------------------
-
-    def read(self, end):
+    def __load_frames(self, nb_time):
         """Browse a sequence of a video.
 
+        :param nb_time: (int) The number of time to loop over the video.
         :returns: False if it's the end of the video or
         a list of images(numpy.ndarray).
 
         """
+        nb_time = int(nb_time)
+        if isinstance(nb_time, int) is False:
+            raise TypeError
+        # if nb_time < 0 or nb_time > 50000:
+        #     raise ValueError
+
         # Create the list to store the images
         images = list()
 
         # If it's the first frame loop n"self.size" time
         # to initialize the buffer with n"self.size" values
         if self.__last_frame == 0:
-            end = self.__size
+            nb_time = self.__size
 
         # Browse the video
-        for i in range(0, end):
+        for i in range(0, nb_time):
 
             # Grab the next frame
             frame = self.__video.read()
@@ -199,12 +247,68 @@ class VideoBuffer(object):
 
         # Set the last frameID to the last frameID the loop goes to
         self.__last_frame = self.__video.get(CAP_PROP_POS_FRAMES)
-
         # Destroy the showing window
         cv2.destroyAllWindows()
 
         # Return the list of images
         return images
+
+    # -----------------------------------------------------------------------
+
+    def read(self, begining=0, end=0):
+        """Browse a sequence of a video.
+
+        :param begining: (int) From which frameID the loop will start.
+        :param end: (int) At which frameID the loop will end.
+        :returns: False if it's the end of the video or
+        a list of images(numpy.ndarray).
+
+        """
+        begining = int(begining)
+        if isinstance(begining, int) is False:
+            raise TypeError
+        if begining < 0 or begining > 50000:
+            raise ValueError
+
+        end = int(end)
+        if isinstance(end, int) is False:
+            raise TypeError
+        if end < 0 or end > 50000:
+            raise ValueError
+
+        if begining != 0 and end == 0:
+            end = begining + self.__size
+
+        if end != 0 and begining == 0:
+            begining = end - self.__size
+
+        if begining == 0 and end == 0:
+            begining = self.__last_frame
+            end = self.__last_frame + self.__size
+
+        if begining != 0 and end != 0:
+            self.set_size(end - begining)
+
+        self.__video.set(CAP_PROP_POS_FRAMES, begining)
+
+        # Create the list to store the images
+        images = list()
+
+        for i in range(begining, end):
+
+            frame = self.__video.read()
+            frame = frame[1]
+            if frame is None:
+                return False
+            images.append(frame)
+        self.__last_frame = self.__video.get(CAP_PROP_POS_FRAMES)
+        cv2.destroyAllWindows()
+
+        # Update the Buffer
+        self.__next_append(images)
+
+        # Clear the list
+        images.clear()
 
     # -----------------------------------------------------------------------
 
@@ -214,19 +318,26 @@ class VideoBuffer(object):
         :returns: False if it's the end of the video.
 
         """
+        if self.__video is None:
+            raise IOError
+
         # Set the begining of the video to the last frameID the Buffer
         # goes to
         self.__video.set(CAP_PROP_POS_FRAMES, self.__last_frame)
 
         # Launch and store the result of the reading
-        result = self.read(self.__size - self.__overlap)
+        result = self.__load_frames(self.__size - self.__overlap)
+
+        # If the video is invald
+        if result is False and self.__video.get(CAP_PROP_POS_FRAMES) == 0:
+            raise IOError("The input video is not a valid one")
 
         # If it's the end of the video return False
         if result is False:
             return False
 
         # Update the Buffer
-        self.next_append(result)
+        self.__next_append(result)
 
         # Clear the list
         result.clear()
@@ -239,6 +350,9 @@ class VideoBuffer(object):
         :returns: False if it's the end of the video.
 
         """
+        if self.__video is None:
+            raise IOError
+
         # If the frameID to go to is less than 0 raise an error
         if self.__last_frame - (self.__size + self.__size - self.__overlap) < 0:
             raise ImageError("You can't reach a frameID inferior to 0")
@@ -247,23 +361,34 @@ class VideoBuffer(object):
         self.__video.set(CAP_PROP_POS_FRAMES, self.__last_frame - (self.__size + self.__size - self.__overlap))
 
         # Launch and store the result of the reading
-        result = self.read(self.__size - self.__overlap)
+        result = self.__load_frames(self.__size - self.__overlap)
+
+        # If the video is invald
+        if result is False and self.__video.get(CAP_PROP_POS_FRAMES) == 0:
+            raise IOError("The input video is not a valid one")
 
         # If it's the end of the video return False
         if result is False:
             return False
 
         # Update the Buffer
-        self.prev_append(result)
+        self.__prev_append(result)
 
         # Clear the list
         result.clear()
 
     # -----------------------------------------------------------------------
 
-    def release(self):
+    def close(self):
         """Release the flow taken by the reading of the video."""
+        # Release the video
         self.__video.release()
+
+        # List of images
+        self.__data = list()
+
+        # Last read frame
+        self.__last_frame = 0
 
     # -----------------------------------------------------------------------
 
@@ -280,10 +405,11 @@ class VideoBuffer(object):
     # -----------------------------------------------------------------------
 
     def __str__(self):
-        string = str()
-        for i in self.get_data():
-            string += str(i) + "\n"
-        return string
+        liste = list()
+        iterator = self.__iter__()
+        for i in range(0, self.__len__()):
+            liste.append(str(next(iterator)) + "\n")
+        return liste
 
     # -----------------------------------------------------------------------
 
