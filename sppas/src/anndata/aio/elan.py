@@ -66,7 +66,7 @@ from ..ann.annotation import sppasAnnotation
 
 from ..ctrlvocab import sppasCtrlVocab
 
-from .basetrs import sppasBaseIO
+from .basetrsio import sppasBaseIO
 from .aioutils import format_labels
 from .aioutils import point2interval
 from .aioutils import merge_overlapping_annotations

@@ -40,6 +40,7 @@
 :summary:      Re-occurrences automatic annotation.
 
 """
+
 import sys
 import os
 from argparse import ArgumentParser
@@ -54,6 +55,9 @@ from sppas import sppasAppConfig
 
 from sppas.src.annotations import sppasReOcc
 from sppas.src.annotations import sppasParam
+
+# ---------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
 

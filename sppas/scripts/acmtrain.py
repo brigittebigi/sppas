@@ -36,6 +36,7 @@
     ... a script to train an acoustic model.
 
 """
+
 import sys
 import os.path
 import logging
@@ -45,9 +46,9 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
+from sppas import sppasLogSetup
+from sppas import sppasAppConfig
 from sppas.src.models.acm.htktrain import sppasHTKModelTrainer, sppasTrainingCorpus, sppasDataTrainer
-from sppas.src.ui import sppasLogSetup
-from sppas.src.ui.cfg import sppasAppConfig
 
 
 # ----------------------------------------------------------------------------

@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """
     ..
         ---------------------------------------------------------------------
@@ -35,6 +36,7 @@
 
 import os
 import logging
+
 try:
     # For Python 3.0 and later
     from urllib.request import urlopen
@@ -42,8 +44,8 @@ except ImportError:
     # Fall back to Python 2's urllib2
     from urllib2 import urlopen
 
-from .sglobal import sppasPathSettings
-from .sglobal import sppasGlobalSettings
+from .settings import sppasPathSettings
+from .settings import sppasGlobalSettings
 
 # ---------------------------------------------------------------------------
 
@@ -89,6 +91,7 @@ class sppasPostInstall:
         """Enable or disable features depending on dependencies."""
         pass
 
+
 # ---------------------------------------------------------------------------
 
 
@@ -120,4 +123,3 @@ class sppasUpdate:
             # Compare to current version
 
         return False
-

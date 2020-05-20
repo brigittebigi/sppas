@@ -39,27 +39,27 @@ import wx
 from sppas import paths
 
 from sppas.src.config import msg
-from sppas.src.utils import u
-from sppas.src.files import States
+from sppas.src.wkps.sppasWorkspace import States
 
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
 from ..windows import sppasStaticLine
 from ..windows import YesNoQuestion, Information
 from ..windows import sppasFileDialog
-from ..main_events import DataChangedEvent
+from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 
 from .filesviewctrl import FileTreeView
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
 
-FLS_TITLE = u(msg("Files: ", "ui"))
-FLS_ACT_ADD = u(msg("Add", "ui"))
-FLS_ACT_REM = u(msg("Remove checked", "ui"))
-FLS_ACT_DEL = u(msg("Delete checked", "ui"))
+FLS_TITLE = msg("Files: ", "ui")
+FLS_ACT_ADD = msg("Add", "ui")
+FLS_ACT_REM = msg("Remove checked", "ui")
+FLS_ACT_DEL = msg("Delete checked", "ui")
+FLS_ACT_MISS = msg("Edit missing", "ui")
 
-FLS_MSG_CONFIRM_DEL = u(msg("Are you sure you want to delete {:d} files?"))
+FLS_MSG_CONFIRM_DEL = msg("Are you sure you want to delete {:d} files?")
 
 # ----------------------------------------------------------------------------
 
@@ -100,18 +100,17 @@ class FilesManager(sppasPanel):
 
     def get_data(self):
         """Return the data like they are currently stored into the model."""
-        fv = self.FindWindow("filestree")
-        return fv.get_data()
+        return self._filestree.get_data()
 
     # ------------------------------------------------------------------------
 
     def set_data(self, data):
         """Assign a new data instance to display to this panel.
 
-        :param data: (FileData)
+        :param data: (sppasWorkspace)
 
         """
-        self.FindWindow("filestree").set_data(data)
+        self._filestree.set_data(data)
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -130,6 +129,12 @@ class FilesManager(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    @property
+    def _filestree(self):
+        return self.FindWindow("filestree")
+
+    # -----------------------------------------------------------------------
+
     def __create_toolbar(self):
         """Create the toolbar."""
         tb = sppasToolbar(self)
@@ -138,6 +143,8 @@ class FilesManager(sppasPanel):
         tb.AddButton("files-add", FLS_ACT_ADD)
         tb.AddButton("files-remove", FLS_ACT_REM)
         tb.AddButton("files-delete", FLS_ACT_DEL)
+        btn = tb.AddButton("files-missing", FLS_ACT_MISS)
+        btn.Enable(False)
         return tb
 
     # -----------------------------------------------------------------------
@@ -170,19 +177,28 @@ class FilesManager(sppasPanel):
         # Capture keys
         self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
 
+        # Changes occurred in the child files tree
+        self.Bind(EVT_DATA_CHANGED, self._process_data_changed)
+
     # ------------------------------------------------------------------------
 
     def notify(self):
         """Send the EVT_DATA_CHANGED to the parent."""
         if self.GetParent() is not None:
-            data = self.FindWindow("filestree").get_data()
-            data.set_state(States().CHECKED)
+            data = self._filestree.get_data()
             evt = DataChangedEvent(data=data)
             evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)
 
     # ------------------------------------------------------------------------
     # Callbacks to events
+    # ------------------------------------------------------------------------
+
+    def _process_data_changed(self, event):
+        sender = event.GetEventObject()
+        if sender is self._filestree:
+            self.notify()
+
     # ------------------------------------------------------------------------
 
     def _process_key_event(self, event):
@@ -221,6 +237,9 @@ class FilesManager(sppasPanel):
         elif name == "files-delete":
             self._delete()
 
+        elif name == "files-missing":
+            self._edit_missing()
+
         event.Skip()
 
     # ------------------------------------------------------------------------
@@ -238,7 +257,7 @@ class FilesManager(sppasPanel):
         dlg.Destroy()
 
         if len(filenames) > 0:
-            added = self.FindWindow("filestree").AddFiles(filenames)
+            added = self._filestree.AddFiles(filenames)
             if added > 0:
                 self.__current_dir = os.path.dirname(filenames[0])
                 self.notify()
@@ -252,7 +271,7 @@ class FilesManager(sppasPanel):
             wx.LogMessage('No files in data. Nothing to remove.')
             return
 
-        removed = self.FindWindow("filestree").RemoveCheckedFiles()
+        removed = self._filestree.RemoveCheckedFiles()
         if removed:
             self.notify()
 
@@ -265,7 +284,7 @@ class FilesManager(sppasPanel):
             wx.LogMessage('No files in data. Nothing to delete.')
             return
 
-        checked_files = self.FindWindow("filestree").GetCheckedFiles()
+        checked_files = self._filestree.GetCheckedFiles()
         if len(checked_files) == 0:
             Information('None of the files are selected to be deleted.')
             return
@@ -274,11 +293,18 @@ class FilesManager(sppasPanel):
         message = FLS_MSG_CONFIRM_DEL.format(len(checked_files))
         response = YesNoQuestion(message)
         if response == wx.ID_YES:
-            deleted = self.FindWindow("filestree").DeleteCheckedFiles()
+            deleted = self._filestree.DeleteCheckedFiles()
             if deleted:
                 self.notify()
         elif response == wx.ID_NO:
             wx.LogMessage('Response is no. No file deleted.')
+
+    # ------------------------------------------------------------------------
+
+    def _edit_missing(self):
+        """Open a dialog to take decisions about missing files of the data."""
+        Information("In a future version, you'll be able to remove or rename "
+                    "unknown paths and filenames of the list.")
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
@@ -296,18 +322,18 @@ class TestPanel(FilesManager):
     # ------------------------------------------------------------------------
 
     def add_one_test_data(self):
-        self.FindWindow("filestree").AddFiles([os.path.abspath(__file__)])
+        self._filestree.AddFiles([os.path.abspath(__file__)])
 
     # ------------------------------------------------------------------------
 
     def add_test_data(self):
         here = os.path.abspath(os.path.dirname(__file__))
-        self.FindWindow("filestree").AddFiles([os.path.abspath(__file__)])
-        self.FindWindow("filestree").LockFiles([os.path.abspath(__file__)])
+        self._filestree.AddFiles([os.path.abspath(__file__)])
+        self._filestree.LockFiles([os.path.abspath(__file__)])
 
         for f in os.listdir(here):
             fullname = os.path.join(here, f)
             if os.path.isfile(fullname):
                 wx.LogMessage('Add {:s}'.format(fullname))
-                nb = self.FindWindow("filestree").AddFiles([fullname])
+                nb = self._filestree.AddFiles([fullname])
                 wx.LogMessage(" --> {:d} files added.".format(nb))

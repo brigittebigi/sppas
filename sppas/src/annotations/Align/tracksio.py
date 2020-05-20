@@ -42,6 +42,7 @@ from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasLocation
 from sppas.src.anndata import sppasInterval
 from sppas.src.anndata import sppasPoint
+from sppas.src.anndata.aio.aioutils import serialize_labels
 
 from sppas.src.config import sg
 from sppas.src.config import separators
@@ -147,12 +148,13 @@ class TracksReaderWriter(object):
     # Write files
     # ------------------------------------------------------------------------
 
-    def split_into_tracks(self, input_audio, phon_tier, tok_tier, dir_align):
+    def split_into_tracks(self, input_audio, phon_tier, tok_tier, tok_rescue_tier, dir_align):
         """Write tracks from the given data.
 
         :param input_audio: (str) Audio file name. Or None if no needed (basic alignment).
         :param phon_tier: (sppasTier) The phonetization tier.
-        :param tok_tier: (sppasTier) The tokenization tier, or None.
+        :param tok_tier: (sppasTier) The tokens tier, or None.
+        :param tok_rescue_tier: (sppasTier) The tokens rescue tier, or None.
         :param dir_align: (str) Output directory to store files.
 
         :returns: PhonAlign, TokensAlign
@@ -164,7 +166,7 @@ class TracksReaderWriter(object):
 
         # Map phonetizations (even the alternatives)
         for ann in phon_tier:
-            text = ann.serialize_labels(separator="\n", empty="", alt=True)
+            text = serialize_labels(ann.get_labels(), separator="\n", empty="", alt=True)
             tab = text.split('\n')
             content = list()
             for item in tab:
@@ -179,14 +181,13 @@ class TracksReaderWriter(object):
             ann.set_labels(sppasLabel(sppasTag(mapped)))
 
         try:
-            TracksWriter.write_tracks(input_audio, phon_tier, tok_tier,
-                                      dir_align)
+            TracksWriter.write_tracks(input_audio, phon_tier, tok_tier, tok_rescue_tier, dir_align)
         except SizeInputsError:
             # number of intervals are not matching
-            TracksWriter.write_tracks(input_audio, phon_tier, None, dir_align)
+            TracksWriter.write_tracks(input_audio, phon_tier, None, None, dir_align)
         except BadInputError:
             # either phonemes or tokens is wrong... re-try with phonemes only
-            TracksWriter.write_tracks(input_audio, phon_tier, None, dir_align)
+            TracksWriter.write_tracks(input_audio, phon_tier, None, None, dir_align)
 
     # ------------------------------------------------------------------------
 
@@ -369,19 +370,20 @@ class TracksWriter:
     """
 
     @staticmethod
-    def write_tracks(input_audio, phon_tier, tok_tier, dir_align):
+    def write_tracks(input_audio, phon_tier, tok_tier, tok_rescue_tier, dir_align):
         """Main method to write tracks from the given data.
 
         :param input_audio: (src) File name of the audio file.
         :param phon_tier: (Tier) Tier with phonetization to split.
         :param tok_tier: (Tier) Tier with tokenization to split.
+        :param tok_rescue_tier: (Tier) Tier with tokens to split.
         :param dir_align: (str) Directory to put units.
 
         :returns: List of tracks with (start-time end-time)
 
         """
         # In any case, the phonetization is written
-        TracksWriter._write_text_tracks(phon_tier, tok_tier, dir_align)
+        TracksWriter._write_text_tracks(phon_tier, tok_tier, tok_rescue_tier, dir_align)
 
         # No need of an audio if basic alignment
         if input_audio is not None:
@@ -390,7 +392,8 @@ class TracksWriter:
 
             if tok_tier is not None:
                 if tok_tier.is_interval() is False:
-                    raise BadInputError
+                    if tok_rescue_tier.is_interval() is False:
+                        raise BadInputError
 
             tracks = phon_tier.get_midpoint_intervals()
             TracksWriter._write_audio_tracks(input_audio, tracks, dir_align)
@@ -433,23 +436,39 @@ class TracksWriter:
     # ------------------------------------------------------------------------
 
     @staticmethod
-    def _write_text_tracks(phon_tier, tok_tier, dir_align):
+    def _write_text_tracks(phon_tier, tok_tier, tok_rescue_tier, dir_align):
         """Write tokenization and phonetization into separated track files.
 
         :param phon_tier: (sppasTier) time-aligned tier with phonetization
         :param tok_tier: (sppasTier) time-aligned tier with tokenization
+        :param tok_rescue_tier: (sppasTier) time-aligned tier with tokenization
         :param dir_align: (str) the directory to write tracks.
 
         """
+        last_chance_tier = TracksWriter._create_tok_tier(phon_tier)
+        if tok_rescue_tier is None:
+            tok_rescue_tier = last_chance_tier
         if tok_tier is None:
-            tok_tier = TracksWriter._create_tok_tier(phon_tier)
+            tok_tier = tok_rescue_tier
 
         if len(phon_tier) != len(tok_tier):
-            raise SizeInputsError(len(phon_tier), len(tok_tier))
+            if len(phon_tier) != len(tok_rescue_tier):
+                raise SizeInputsError(len(phon_tier), len(tok_tier))
 
         for i in range(len(phon_tier)):
-            TracksWriter._write_phonemes(phon_tier[i], dir_align, i + 1)
-            TracksWriter._write_tokens(tok_tier[i], dir_align, i + 1)
+            phon_ann = phon_tier[i]
+            phon_ann_labels = serialize_labels(phon_ann.get_labels())
+            TracksWriter._write_phonemes(phon_ann, dir_align, i + 1)
+
+            tok_ann = tok_tier[i]
+            tok_ann_labels = serialize_labels(tok_ann.get_labels())
+            if len(phon_ann_labels.split()) != len(tok_ann_labels.split()):
+                tok_ann = tok_rescue_tier[i]
+                tok_ann_labels = serialize_labels(tok_ann.get_labels())
+                logging.warning("Alignment of tokens rescued at interval {}".format(i))
+                if len(phon_ann_labels.split()) != len(tok_ann_labels.split()):
+                    tok_ann = last_chance_tier[i]
+            TracksWriter._write_tokens(tok_ann, dir_align, i + 1)
 
     # ------------------------------------------------------------------------
 
@@ -465,7 +484,7 @@ class TracksWriter:
         for ann in tok_tier:
             tag = ann.get_best_tag()
             if tag.is_silence() is False:
-                phonemes = ann.serialize_labels(" ", "", alt=True)
+                phonemes = serialize_labels(ann.get_labels(), " ", "", alt=True)
                 nb_phonemes = len(phonemes.split(' '))
                 tokens = " ".join(
                     ["w_" + str(i + 1) for i in range(nb_phonemes)]

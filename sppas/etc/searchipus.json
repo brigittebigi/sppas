@@ -15,42 +15,36 @@
       "value": "",
       "text": "Output file pattern"
     },
-
     {
       "id": "win_length",
       "type": "float",
       "value": 0.020,
       "text": "Window size to estimate rms (in seconds)"
     },
-
     {
       "id": "threshold",
       "type": "int",
       "value": 0,
       "text": "Threshold of the volume value (rms) for the detection of silences, 0=automatic"
     },
-
     {
       "id": "min_ipu",
       "type": "float",
       "value": 0.300,
       "text": "Minimum duration of an IPU (in seconds)"
     },
-
     {
       "id": "min_sil",
       "type": "float",
       "value": 0.200,
       "text": "Minimum duration of a silence (in seconds)"
     },
-
     {
       "id": "shift_start",
       "type": "float",
       "value": 0.020,
       "text": "Systematically move at left the boundary of the beginning of an IPU (in seconds)"
     },
-
     {
       "id": "shift_end",
       "type": "float",

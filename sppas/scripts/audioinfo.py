@@ -36,6 +36,7 @@
     ... a script to get information about an audio file.
 
 """
+
 import sys
 import os
 from argparse import ArgumentParser

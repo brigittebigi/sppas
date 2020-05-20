@@ -75,6 +75,7 @@ class sppasOrthoTranscription(object):
     j' ai on a j' ai p-   fin j' ai trouvé l  meilleur moyen c' était d  loche  chez  des amis
 
     """
+
     def __init__(self):
         pass
 

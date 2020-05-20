@@ -63,7 +63,7 @@ from ..ann.annlocation import sppasInterval
 from ..ann.annlabel import sppasLabel
 from ..ann.annlabel import sppasTag
 
-from .basetrs import sppasBaseIO
+from .basetrsio import sppasBaseIO
 from .aioutils import format_labels, is_ortho_tier
 from .aioutils import load
 
@@ -114,7 +114,7 @@ class sppasBasePhonedit(sppasBaseIO):
     def _parse(filename):
         """Parse a configuration file.
 
-        :param filename: (string) Configuration file name.
+        :param filename: (string) sppasAppConfig file name.
 
         """
         parser = SafeConfigParser()

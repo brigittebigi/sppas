@@ -57,7 +57,7 @@ if os.path.exists(SPPAS) is False:
 sys.path.append(SPPAS)
 
 from sppas.src.ui import sppasTrash
-from sppas.src.files import FileRoot, FileName
+from sppas.src.wkps import FileRoot, FileName
 
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription

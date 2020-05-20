@@ -40,6 +40,7 @@
     :summary:      Test the reader/writer of SPPAS for TXT files.
 
 """
+
 import unittest
 import os.path
 

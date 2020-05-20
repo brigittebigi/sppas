@@ -42,7 +42,7 @@ from sppas import msg
 from sppas import u
 from sppas import sppasTypeError
 from sppas.src.plugins import sppasPluginsManager
-from sppas.src.files import FileData, States
+from sppas.src.wkps import sppasWorkspace, States
 
 from ..windows import Error, Information
 from ..windows import sppasDialog
@@ -53,7 +53,7 @@ from ..windows import sppasMessageText, sppasTitleText
 from ..windows import sppasStaticLine
 from ..windows import BitmapTextButton, TextButton
 from ..panels import sppasOptionsPanel
-from ..dialogs import AboutPlugin
+from ..views import AboutPlugin
 from ..main_events import DataChangedEvent
 
 # ---------------------------------------------------------------------------
@@ -92,7 +92,7 @@ class sppasPluginsList(sppasScrolledPanel):
         )
 
         # The workspace to work with
-        self.__data = FileData()
+        self.__data = sppasWorkspace()
 
         # The manager for the plugins
         try:
@@ -112,7 +112,7 @@ class sppasPluginsList(sppasScrolledPanel):
     def get_data(self):
         """Return the data currently displayed in the list of files.
 
-        :returns: (FileData) data of the files-viewer model.
+        :returns: (sppasWorkspace) data of the files-viewer model.
 
         """
         return self.__data
@@ -122,13 +122,11 @@ class sppasPluginsList(sppasScrolledPanel):
     def set_data(self, data):
         """Assign new data to this page.
 
-        :param data: (FileData)
+        :param data: (sppasWorkspace)
 
         """
-        if isinstance(data, FileData) is False:
-            raise sppasTypeError("FileData", type(data))
-        wx.LogMessage('New data to set in the plugins page. '
-                      'Id={:s}'.format(data.id))
+        if isinstance(data, sppasWorkspace) is False:
+            raise sppasTypeError("sppasWorkspace", type(data))
         self.__data = data
 
     # -----------------------------------------------------------------------

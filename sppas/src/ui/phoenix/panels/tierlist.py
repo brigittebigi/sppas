@@ -42,6 +42,7 @@ from sppas.src.config import msg
 from sppas.src.config import paths
 from sppas.src.utils import u
 from sppas.src.anndata import sppasRW
+from sppas.src.anndata.aio.aioutils import serialize_labels
 
 from ..windows import sppasPanel
 from ..windows import LineListCtrl
@@ -104,7 +105,7 @@ class sppasTierListCtrl(LineListCtrl):
      - Metadata are serialized.
 
     Known bug of wx:
-    If the ListCtrl is embedded in a page of a notebook, under Windows only,
+    If the ListCtrl is embedded in a page of a notebook, under WindowsInstaller only,
     DeleteItem() returns the following error message:
     listctrl.cpp(2614) in wxListCtrl::MSWOnNotify(): invalid internal data pointer?
     A solution is to use a simplebook, a choicebook, a listbook or a
@@ -433,7 +434,7 @@ class sppasTierListCtrl(LineListCtrl):
         col = self._cols.index(MSG_LABELS)
         ann = self._tier[row]
         if ann.is_labelled():
-            label_str = ann.serialize_labels(separator=" ")
+            label_str = serialize_labels(ann.get_labels(), separator=" ")
             self.SetItem(row, col, label_str)
 
             # customize label look
@@ -468,6 +469,11 @@ class sppasTierListCtrl(LineListCtrl):
 
 
 class sppasTiersbook(sppasChoicebook):
+    """A book with a bunch of tiers displayed in a ListCtrl.
+
+    Any book is ok, except notebook for which there's a bug in wx.
+
+    """
 
     def __init__(self, parent):
         super(sppasTiersbook, self).__init__(parent,
@@ -518,6 +524,8 @@ class sppasTiersbook(sppasChoicebook):
 
 
 # ---------------------------------------------------------------------------
+# Panel tested
+# ---------------------------------------------------------------------------
 
 
 class TestPanel(sppasPanel):
@@ -554,6 +562,7 @@ class TestPanel(sppasPanel):
         # trs1.get_hierarchy().remove_tier(trs1[0])
         page = self.__book.GetPage(self.__book.GetSelection())
         page.Bind(wx.EVT_KEY_UP, self._on_char, page)
+        page.Select(0, on=1)
 
     # -----------------------------------------------------------------------
 
@@ -578,8 +587,8 @@ class TestPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _on_selected_item(self, evt):
-        logging.debug("Test panel received selected item event. Index {}"
-                      "".format(evt.GetIndex()))
+        logging.debug("Test panel received selected item event. Id={}. Index={}"
+                      "".format(evt.GetItem().GetId(), evt.GetIndex()))
 
     # -----------------------------------------------------------------------
 

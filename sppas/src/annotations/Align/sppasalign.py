@@ -49,7 +49,7 @@ from sppas.src.anndata import sppasMedia
 import sppas.src.audiodata.aio as audioaio
 from sppas.src.resources.mapping import sppasMapping
 from sppas.src.models.acm.modelmixer import sppasModelMixer
-from sppas.src.files.fileutils import sppasFileUtils
+from sppas.src.wkps.fileutils import sppasFileUtils
 
 from ..baseannot import sppasBaseAnnotation
 from ..searchtier import sppasFindTier
@@ -292,11 +292,12 @@ class sppasAlign(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    def convert(self, phon_tier, tok_tier, input_audio, workdir):
+    def convert(self, phon_tier, tok_tier, tok_faked_tier, input_audio, workdir):
         """Perform speech segmentation of data.
 
         :param phon_tier: (Tier) phonetization.
         :param tok_tier: (Tier) tokenization, or None.
+        :param tok_faked_tier: (Tier) rescue tokenization, or None.
         :param input_audio: (str) Audio file name.
         :param workdir: (str) The working directory
 
@@ -315,7 +316,7 @@ class sppasAlign(sppasBaseAnnotation):
         if os.path.exists(workdir) is False:
             os.mkdir(workdir)
         self._tracksrw.split_into_tracks(
-            input_audio, phon_tier, tok_tier, workdir)
+            input_audio, phon_tier, tok_tier, tok_faked_tier, workdir)
 
         # Align each track
         self._segment_tracks(workdir)
@@ -376,8 +377,10 @@ class sppasAlign(sppasBaseAnnotation):
             parser = sppasRW(opt_input_file[1])
             trs_input_tok = parser.read()
             tok_tier = sppasFindTier.tokenization(trs_input_tok, "std")
+            tok_faked_tier = sppasFindTier.tokenization(trs_input_tok)
         except:   # IOError, AttributeError:
             tok_tier = None
+            tok_faked_tier = None
             self.logfile.print_message(
                 MSG_TOKENS_DISABLED, indent=2, status=annots.warning)
 
@@ -419,6 +422,7 @@ class sppasAlign(sppasBaseAnnotation):
             tier_phn, tier_tok, tier_pron = self.convert(
                 phon_tier,
                 tok_tier,
+                tok_faked_tier,
                 input_audio_filename,
                 workdir
             )

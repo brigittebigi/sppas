@@ -67,6 +67,7 @@ from sppas.src.ui.wxgui.dialogs.msgdialogs import ShowInformation
 from sppas.src.ui.wxgui.dialogs.msgdialogs import ShowYesNoQuestion
 
 import sppas.src.anndata as anndata
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.annotations.searchtier import sppasFindTier
 
 # ----------------------------------------------------------------------------
@@ -1123,7 +1124,8 @@ class IPUData:
         Return the IPU label(string).
         """
         ann = self.trs[self.tier_idx][self.ann_idx]
-        return ann.serialize_labels(separator=" ", empty="", alt=True)
+        return serialize_labels(
+            ann.get_labels(), separator=" ", empty="", alt=True)
 
     # -------------------------------------------------------------------------
 

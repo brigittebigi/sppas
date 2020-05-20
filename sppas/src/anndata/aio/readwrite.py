@@ -37,11 +37,11 @@
 import os
 from collections import OrderedDict
 
+from sppas import IOExtensionException
 from sppas.src.utils.makeunicode import u
 from sppas.src.utils.datatype import sppasTime
 
 from ..anndataexc import AioEncodingError
-from ..anndataexc import AioFileExtensionError
 from ..anndataexc import AioError
 
 from .text import sppasRawText
@@ -57,6 +57,7 @@ from .phonedit import sppasSignaix
 from .htk import sppasLab
 from .subtitle import sppasSubRip
 from .subtitle import sppasSubViewer
+from .subtitle import sppasWebVTT
 from .weka import sppasARFF
 from .weka import sppasXRFF
 from .transcriber import sppasTRS
@@ -98,6 +99,7 @@ class sppasRW(object):
     TRANSCRIPTION_TYPES[sppasLab().default_extension.lower()] = sppasLab
     TRANSCRIPTION_TYPES[sppasSubRip().default_extension.lower()] = sppasSubRip
     TRANSCRIPTION_TYPES[sppasSubViewer().default_extension.lower()] = sppasSubViewer
+    TRANSCRIPTION_TYPES[sppasWebVTT().default_extension.lower()] = sppasWebVTT
     TRANSCRIPTION_TYPES[sppasCTM().default_extension.lower()] = sppasCTM
     TRANSCRIPTION_TYPES[sppasSTM().default_extension.lower()] = sppasSTM
     TRANSCRIPTION_TYPES[sppasIntensityTier().default_extension.lower()] = sppasIntensityTier
@@ -152,7 +154,7 @@ class sppasRW(object):
         """
         try:
             trs = sppasRW.create_trs_from_extension(self.__filename)
-        except AioFileExtensionError:
+        except IOExtensionException:
             if heuristic is True:
                 trs = sppasRW.create_trs_from_heuristic(self.__filename)
             else:
@@ -199,7 +201,7 @@ class sppasRW(object):
         if extension in sppasRW.extensions():
             return sppasRW.TRANSCRIPTION_TYPES[extension]()
 
-        raise AioFileExtensionError(filename)
+        raise IOExtensionException(filename)
 
     # -----------------------------------------------------------------------
 
@@ -271,7 +273,7 @@ class FileFormatProperty(object):
         self._extension = extension
         if extension.startswith(".") is False:
             self._extension = "." + extension
-        self._instance = sppasRW.TRANSCRIPTION_TYPES[extension]()
+        self._instance = sppasRW.TRANSCRIPTION_TYPES[extension.lower()]()
         self._software = self._instance.software
 
         try:

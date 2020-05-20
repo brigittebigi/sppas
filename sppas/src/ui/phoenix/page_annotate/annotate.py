@@ -46,7 +46,7 @@ from sppas import sppasTypeError
 from sppas import annots
 
 from sppas.src.annotations import sppasParam
-from sppas.src.files import FileData, States
+from sppas.src.wkps import States, sppasWorkspace
 
 from ..windows.book import sppasSimplebook
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
@@ -66,7 +66,10 @@ class sppasAnnotatePanel(sppasSimplebook):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    There's no event for the change of param: the params of the current page
+    are set to the other ones when "show_page()" is called.
 
     """
 
@@ -104,7 +107,7 @@ class sppasAnnotatePanel(sppasSimplebook):
     def get_data(self):
         """Return the data currently displayed.
 
-        :returns: (FileData) The workspace with files to annotate/annotated
+        :returns: (sppasWorkspace) The workspace with files to annotate/annotated
 
         """
         return self.__param.get_workspace()
@@ -114,11 +117,11 @@ class sppasAnnotatePanel(sppasSimplebook):
     def set_data(self, data):
         """Assign new data to this page.
 
-        :param data: (FileData) The workspace with files to annotate/annotated
+        :param data: (sppasWorkspace) The workspace with files to annotate/annotated
 
         """
-        if isinstance(data, FileData) is False:
-            raise sppasTypeError("FileData", type(data))
+        if isinstance(data, sppasWorkspace) is False:
+            raise sppasTypeError("sppasWorkspace", type(data))
 
         self.__param.set_workspace(data)
         self.__send_data(self.GetParent())
@@ -203,7 +206,6 @@ class sppasAnnotatePanel(sppasSimplebook):
         pm = self.GetParent()
         if pm is not None and emitted != pm:
             data = self.__param.get_workspace()
-            data.set_state(States().CHECKED)
             evt = DataChangedEvent(data=data)
             evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)

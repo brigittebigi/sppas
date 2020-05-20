@@ -242,7 +242,7 @@ class sppasTextNorm(sppasBaseAnnotation):
 
         tokens_std = None
         if self._options['std'] is True:
-            actions = ['std']
+            actions = ['std', 'replace', "tokenize", "numbers", "lower", "punct"]
             tokens_std = self.__convert(tier, actions)
             tokens_std.set_name("Tokens-Std")
             sppasTextNorm.__add_meta_in_token_tier(tokens_std, actions)

@@ -54,7 +54,7 @@ from sppas import sppasTypeError
 from sppas import paths
 from sppas import msg
 from sppas.src.utils import u
-from sppas.src.files import FileData, States
+from sppas.src.wkps import sppasWorkspace, States
 from sppas.src.anndata import sppasRW, FileFormatProperty
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
@@ -175,7 +175,7 @@ class sppasAnalyzePanel(sppasPanel):
         self._params = list()
 
         # The data all tabs are working on
-        self.__data = FileData()
+        self.__data = sppasWorkspace()
 
         # Construct the GUI
         self._create_content()
@@ -201,7 +201,7 @@ class sppasAnalyzePanel(sppasPanel):
     def get_data(self):
         """Return the data currently displayed in the list of files.
 
-        :returns: (FileData) data of the files-viewer model.
+        :returns: (sppasWorkspace) data of the files-viewer model.
 
         """
         return self.__data
@@ -211,11 +211,11 @@ class sppasAnalyzePanel(sppasPanel):
     def set_data(self, data):
         """Assign new data to this page.
 
-        :param data: (FileData)
+        :param data: (sppasWorkspace)
 
         """
-        if isinstance(data, FileData) is False:
-            raise sppasTypeError("FileData", type(data))
+        if isinstance(data, sppasWorkspace) is False:
+            raise sppasTypeError("sppasWorkspace", type(data))
 
         self.__data = data
 
@@ -262,6 +262,9 @@ class sppasAnalyzePanel(sppasPanel):
         wx.EndBusyCursor()
         progress.set_fraction(1)
         progress.close()
+
+        if page is None:
+            return
 
         # send data to the parent
         if success > 0:

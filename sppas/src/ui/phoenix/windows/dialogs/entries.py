@@ -1,3 +1,39 @@
+# -*- coding: UTF-8 -*-
+"""
+    ..
+        ---------------------------------------------------------------------
+         ___   __    __    __    ___
+        /     |  \  |  \  |  \  /              the automatic
+        \__   |__/  |__/  |___| \__             annotation and
+           \  |     |     |   |    \             analysis
+        ___/  |     |     |   | ___/              of speech
+
+        http://www.sppas.org/
+
+        Use of this software is governed by the GNU Public License, version 3.
+
+        SPPAS is free software: you can redistribute it and/or modify
+        it under the terms of the GNU General Public License as published by
+        the Free Software Foundation, either version 3 of the License, or
+        (at your option) any later version.
+
+        SPPAS is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU General Public License for more details.
+
+        You should have received a copy of the GNU General Public License
+        along with SPPAS. If not, see <http://www.gnu.org/licenses/>.
+
+        This banner notice must not be removed.
+
+        ---------------------------------------------------------------------
+
+    src.ui.phoenix.windows.entries.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
+
 import wx
 
 from ..panel import sppasPanel
@@ -24,15 +60,19 @@ class sppasChoiceDialog(sppasBaseMessageDialog):
     >>> dialog.ShowModal()
     >>> dialog.Destroy()
 
+    Bug: Keys are never captured.
+
     """
 
-    def __init__(self, message, title=None, **kwargs):
+    def __init__(self, message="", title=None, **kwargs):
         super(sppasChoiceDialog, self).__init__(
             parent=None,
             message=message,
             title=title,
-            style=wx.ICON_QUESTION,
+            style=wx.WANTS_CHARS | wx.TAB_TRAVERSAL | wx.ICON_QUESTION | wx.CAPTION | wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.STAY_ON_TOP,
             **kwargs)
+
+        self.Bind(wx.EVT_KEY_DOWN, self._on_key_down)
 
     # -----------------------------------------------------------------------
 
@@ -58,8 +98,8 @@ class sppasChoiceDialog(sppasBaseMessageDialog):
         choice.SetSelection(0)
 
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(txt, 0, wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 10)
-        s.Add(choice, 1, wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 10)
+        s.Add(txt, 0, wx.ALL | wx.EXPAND, sppasPanel.fix_size(8))
+        s.Add(choice, 1, wx.ALL | wx.EXPAND, sppasPanel.fix_size(8))
 
         h = p.get_font_height()
         p.SetSizer(s)
@@ -69,9 +109,23 @@ class sppasChoiceDialog(sppasBaseMessageDialog):
     # -----------------------------------------------------------------------
 
     def _create_buttons(self):
-        self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
-        self.Bind(wx.EVT_BUTTON, self._process_event)
+        panel = self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
+        panel.Bind(wx.EVT_BUTTON, self._process_event)
         self.SetAffirmativeId(wx.ID_OK)
+
+    # -----------------------------------------------------------------------
+
+    def _on_key_down(self, event):
+        """Process a key envent.
+
+        """
+        wx.LogDebug("Key event received.")
+        if event.GetKeyCode() == 13:  # ENTER
+            self.EndModal(wx.ID_CANCEL)
+        elif event.GetKeyCode() == 8:  # ESC
+            self.EndModal(wx.ID_OK)
+        else:
+            event.Skip()
 
     # -----------------------------------------------------------------------
 
@@ -100,19 +154,24 @@ class sppasTextEntryDialog(sppasDialog):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
+    >>> dlg = sppasTextEntryDialog(parent, "The message", value="The default entry")
+    >>> resp = dlg.ShowModal()
+    >>> value = dlg.GetValue()
+    >>>> dlg.DestroyFadeOut()
+
     """
 
-    def __init__(self, parent, message, caption=wx.GetTextFromUserPromptStr, value=""):
+    def __init__(self, message="", caption=wx.GetTextFromUserPromptStr, value=""):
         """Create a dialog with a text entry.
 
         The dialog has a small title bar which does not appear in the taskbar
-        under Windows or GTK+.
+        under WindowsInstaller or GTK+.
 
         :param parent: (wx.Window)
 
         """
         super(sppasTextEntryDialog, self).__init__(
-            parent=parent,
+            parent=None,
             title=caption,
             style=wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.STAY_ON_TOP)
 
@@ -153,10 +212,10 @@ class sppasTextEntryDialog(sppasDialog):
         s = wx.BoxSizer(wx.VERTICAL)
 
         txt = sppasStaticText(p, label=message)
-        s.Add(txt, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL, sppasDialog.fix_size(10))
+        s.Add(txt, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT, sppasDialog.fix_size(10))
 
         entry = sppasTextCtrl(p, value=value, validator=self.__validator, name="text_value")
-        s.Add(entry, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL, sppasDialog.fix_size(10))
+        s.Add(entry, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT, sppasDialog.fix_size(10))
 
         p.SetSizer(s)
         p.SetName("content")

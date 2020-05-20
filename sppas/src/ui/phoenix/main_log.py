@@ -40,17 +40,15 @@ import logging
 
 from sppas.src.config import sg
 from sppas.src.config import msg
-from sppas.src.utils import u
 from sppas.src.utils import sppasTime
 
-from ..logs import sppasLogFile
+from sppas.src.config.logs import sppasLogFile
 
 from .tools import sppasSwissKnife
 from .windows import sppasStaticLine
 from .windows import sppasPanel
-from .windows import sppasStaticText
 from .windows import BitmapTextButton
-from .dialogs import Feedback
+from .views import Feedback
 
 # ----------------------------------------------------------------------------
 
@@ -71,15 +69,11 @@ match_levels = {
 # ----------------------------------------------------------------------------
 
 
-def _(message):
-    return u(msg(message, "ui"))
-
-
-MSG_HEADER_LOG = _("Log Window")
-MSG_ACTION_CLEAR = _("Clear")
-MSG_ACTION_SAVE = _("Save")
-MSG_ACTION_SEND = _("Send feedback")
-MSG_ADD_COMMENT = _("Add comments here")
+MSG_HEADER_LOG = msg("Log Window", "ui")
+MSG_ACTION_CLEAR = msg("Clear", "ui")
+MSG_ACTION_SAVE = msg("Save", "ui")
+MSG_ACTION_SEND = msg("Send feedback", "ui")
+MSG_ADD_COMMENT = msg("Add comments here", "ui")
 
 # ----------------------------------------------------------------------------
 
@@ -225,7 +219,7 @@ class sppasLogWindow(wx.TopLevelWindow):
         # Members
         self.handler = sppasHandlerToWx(self)
         self.txt = None
-        self.log_file = sppasLogFile()
+        self.log_file = sppasLogFile(pattern="log")
         self._init_infos()
 
         # Fix frame content and actions
@@ -235,6 +229,12 @@ class sppasLogWindow(wx.TopLevelWindow):
         self.SetAutoLayout(True)
         self._fade_in()
         self.Show(True)
+
+    # -----------------------------------------------------------------------
+
+    def EnableClear(self, value):
+        """Enable of disable the clear button."""
+        self.FindWindow("actions").EnableClear(value)
 
     # ------------------------------------------------------------------------
     # Private methods to create the GUI and initialize members
@@ -249,7 +249,7 @@ class sppasLogWindow(wx.TopLevelWindow):
         settings = wx.GetApp().settings
 
         # Fix frame properties
-        self.SetMinSize(wx.Size(320, 200))
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(320), sppasPanel.fix_size(200)))
         w = int(settings.frame_size[0] * 0.7)
         h = int(settings.frame_size[1] * 0.7)
         self.SetSize(wx.Size(w, h))
@@ -262,9 +262,12 @@ class sppasLogWindow(wx.TopLevelWindow):
         self.SetIcon(_icon)
 
         # colors & font
-        self.SetBackgroundColour(settings.bg_color)
-        self.SetForegroundColour(settings.fg_color)
-        self.SetFont(settings.text_font)
+        try:
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
     # -----------------------------------------------------------------------
 
@@ -398,9 +401,6 @@ class sppasLogWindow(wx.TopLevelWindow):
         event_name = event_obj.GetName()
         event_id = event_obj.GetId()
 
-        wx.LogMessage("Log frame received event id {:d} of {:s}"
-                      "".format(event_id, event_name))
-
         if event_name == "save_log":
             self.save()
 
@@ -423,7 +423,7 @@ class sppasLogWindow(wx.TopLevelWindow):
         :param event: (wxEvent) unused
 
         """
-        wx.LogMessage("Attempt to close {:s}.".format(self.GetName()))
+        wx.LogDebug("Attempt to close {:s}.".format(self.GetName()))
         self.Iconize(True)
         event.StopPropagation()
 
@@ -481,7 +481,7 @@ class sppasLogWindow(wx.TopLevelWindow):
         """Save the messages in the current log file."""
         self.txt.SaveFile(self.log_file.get_filename())
         self.clear()
-        self.txt.AppendText('Previous messages were saved in : {:s}\n'
+        self.txt.AppendText('Previous messages were saved in: {:s}\n'
                             ''.format(self.log_file.get_filename()))
         self.log_file.increment()
 
@@ -607,18 +607,17 @@ class sppasLogTitlePanel(sppasPanel):
 
         # Fix Look&Feel
         settings = wx.GetApp().settings
-        self.SetMinSize((-1, settings.title_height))
-
-        # Create the title
-        st = sppasStaticText(self, label=MSG_HEADER_LOG)
-
-        # Put the title in a sizer
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(st, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=10)
-
+        self.SetMinSize(wx.Size(-1, settings.title_height))
         self.SetBackgroundColour(wx.GetApp().settings.header_bg_color)
         self.SetForegroundColour(wx.GetApp().settings.header_fg_color)
         self.SetFont(wx.GetApp().settings.header_text_font)
+
+        # Create the title
+        st = wx.StaticText(self, label=MSG_HEADER_LOG)
+
+        # Put the title in a sizer
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(st, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=sppasPanel.fix_size(8))
 
         self.SetSizer(sizer)
 
@@ -755,7 +754,7 @@ class sppasLogActionPanel(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -787,6 +786,12 @@ class sppasLogActionPanel(sppasPanel):
         self.SetFont(wx.GetApp().settings.action_text_font)
 
         self.SetSizer(action_sizer)
+
+    # -----------------------------------------------------------------------
+
+    def EnableClear(self, value):
+        """Enable of disable the clear button."""
+        self.FindWindow("broom").Enable(value)
 
     # -----------------------------------------------------------------------
 

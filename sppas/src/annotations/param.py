@@ -46,7 +46,7 @@ from sppas.src.structs import sppasOption
 from sppas.src.structs import sppasLangResource
 from sppas.src.anndata.aio import extensions_out as annots_ext
 
-from sppas.src.files import FileData, States
+from sppas.src.wkps import sppasWorkspace, States
 
 # ----------------------------------------------------------------------------
 
@@ -305,7 +305,7 @@ class sppasParam(object):
         self._output_ext = annots.extension
 
         # Input files to annotate
-        self._workspace = FileData()
+        self._workspace = sppasWorkspace()
 
         # The parameters of all the annotations
         self.annotations = []
@@ -360,7 +360,7 @@ class sppasParam(object):
             self.annotations.append(a)
         except:
             a = None
-            logging.error('Configuration file {:s} not loaded.'
+            logging.error('sppasAppConfig file {:s} not loaded.'
                           ''.format(cfg_file))
         return a
 
@@ -375,8 +375,8 @@ class sppasParam(object):
     # -----------------------------------------------------------------------
 
     def set_workspace(self, wkp):
-        if isinstance(wkp, FileData) is False:
-            raise sppasTypeError("FileData", type(wkp))
+        if isinstance(wkp, sppasWorkspace) is False:
+            raise sppasTypeError("sppasWorkspace", type(wkp))
         logging.debug('New data to set in sppasParam. '
                       'Id={:s}'.format(wkp.id))
         self._workspace = wkp
@@ -398,6 +398,10 @@ class sppasParam(object):
                     if objs is not None:
                         for obj in objs:
                             self._workspace.set_object_state(States().CHECKED, obj)
+                    # if the file was already in the list, it was not "added",
+                    # so it was not in the returned list of objs.
+                    obj = self._workspace.get_object(files)
+                    self._workspace.set_object_state(States().CHECKED, obj)
 
                 elif os.path.isdir(files):
                     for f in os.listdir(files):

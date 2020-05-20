@@ -42,7 +42,7 @@ from sppas import msg
 from sppas import u
 from sppas.src.annotations import sppasAnnotationsManager
 
-from sppas.src.ui.logs import sppasLogFile
+from sppas.src.config.logs import sppasLogFile
 
 from ..windows import sppasScrolledPanel
 from ..windows import BitmapTextButton
@@ -78,6 +78,10 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
+    Notice that the log_report() filename can be different of the param()
+    report filename. It happens if show() is called and param() report
+    filename was changed.
+
     """
 
     def __init__(self, parent, param):
@@ -86,8 +90,13 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
             name="page_annot_log",
             style=wx.BORDER_NONE
         )
-        self.__log_report = sppasLogFile()
+        # Manage the report file name of each run
+        self.__log_report = sppasLogFile(pattern="report")
+        # The annotation parameters (including the displayed report filename)
         self.__param = param
+        # internal use: the currently displayed file name
+        self.__report = ""
+        # The annotations manager
         self.__manager = sppasAnnotationsManager()
         self.__manager.set_do_merge(True)
 
@@ -110,13 +119,19 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
     def run(self):
         """Perform the automatic annotations of param on data."""
         wx.LogMessage('Perform automatic annotations')
+
+        # The procedure outcome report file.
+        self.__report = self.__log_report.get_filename()
+        self.__param.set_report_filename(self.__report)
+        self.__name_log_text()
+        self.Refresh()
+
+        # Prepare the report filename for a next run
+        self.__log_report.increment()
+
         progress = sppasProgressDialog()
         progress.Show(True)
         progress.set_new()
-
-        # The procedure outcome report file.
-        self.__param.set_report_filename(self.__log_report.get_filename())
-        self.__log_report.increment()
 
         # Create the progress bar then run the annotations
         self.__manager.annotate(self.__param, progress)
@@ -125,10 +140,22 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
         self.Refresh()
         progress.close()
 
-        # send to parent
+        # Send to parent
         evt = DataChangedEvent(data=self.__param.get_workspace())
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
+
+    # ------------------------------------------------------------------------
+
+    def show(self):
+        """Show the active report."""
+        if self.__param.get_report_filename() != self.__report:
+            self.__report = self.__param.get_report_filename()
+            if self.__report is None:
+                self.__clear_log_text()
+            else:
+                self.__name_log_text()
+                self.__update_log_text()
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -149,7 +176,7 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
 
         sizer_top = wx.BoxSizer(wx.HORIZONTAL)
         sizer_top.Add(btn_back_top, 0, wx.RIGHT, btn_size // 4)
-        sizer_top.Add(title, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_CENTER_HORIZONTAL)
+        sizer_top.Add(title, 1, wx.ALIGN_CENTER)
         sizer.Add(sizer_top, 0, wx.EXPAND)
 
         log_txt = self.__create_log_text()
@@ -157,6 +184,10 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
 
         self.SetSizer(sizer)
         self.SetupScrolling(scroll_x=True, scroll_y=True)
+
+    @property
+    def _txtctrl(self):
+        return self.FindWindow("log_textctrl")
 
     # -----------------------------------------------------------------------
 
@@ -167,41 +198,53 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
 
     # -----------------------------------------------------------------------
 
+    def __clear_log_text(self):
+        self._txtctrl.SetValue("")
+
+    # -----------------------------------------------------------------------
+
+    def __name_log_text(self):
+        logcontent = "\n" + "Report file is " + self.__report + "\n\n"
+        self._txtctrl.SetValue(logcontent)
+        self._txtctrl.SetStyle(0, len(logcontent), wx.TextAttr(wx.Colour(245, 25, 25, 128)))
+
+    # -----------------------------------------------------------------------
+
     def __update_log_text(self):
         """ """
-        logcontent = "This file is " + self.__param.get_report_filename() + "\n\n"
+        logcontent = self._txtctrl.GetValue()
+        oldi = len(self._txtctrl.GetValue())
         try:
-            with codecs.open(self.__param.get_report_filename(), 'r', sg.__encoding__) as fp:
+            with codecs.open(self.__report, 'r', sg.__encoding__) as fp:
                 logcontent += fp.read()
         except Exception as e:
             logcontent += "The report is not available...\n" \
                           "Error is: %s" % str(e)
 
-        txtctrl = self.FindWindow("log_textctrl")
-        txtctrl.SetValue(logcontent)
-        txtctrl.SetStyle(0, len(logcontent), txtctrl.GetDefaultStyle())
+        self._txtctrl.SetValue(logcontent)
+        self._txtctrl.SetStyle(oldi+1, len(logcontent), self._txtctrl.GetDefaultStyle())
 
         # Highlight the name of the file.
-        i = logcontent.find("\n", 0)
-        oldi = i
-        txtctrl.SetStyle(0, i, wx.TextAttr(wx.Colour(245, 25, 25, 128)))
+        # i = logcontent.find("\n", 0)
+        # self._txtctrl.SetStyle(0, i, wx.TextAttr(wx.Colour(245, 25, 25, 128)))
 
+        i = oldi
         while i >= 0:
             i = logcontent.find("[ ", oldi)
             if logcontent.find(_("OK"), i, i + 14) > -1:
-                txtctrl.SetStyle(i, i + 12, wx.TextAttr(OK_COLOUR))
+                self._txtctrl.SetStyle(i, i + 12, wx.TextAttr(OK_COLOUR))
 
             elif logcontent.find(_("ERROR"), i, i + 14) > -1:
-                txtctrl.SetStyle(i, i + 12, wx.TextAttr(ERROR_COLOUR))
+                self._txtctrl.SetStyle(i, i + 12, wx.TextAttr(ERROR_COLOUR))
 
             elif logcontent.find(_("WARNING"), i, i + 14) > -1:
-                txtctrl.SetStyle(i, i + 12, wx.TextAttr(WARNING_COLOUR))
+                self._txtctrl.SetStyle(i, i + 12, wx.TextAttr(WARNING_COLOUR))
 
             elif logcontent.find(_("INFO"), i, i + 14) > -1:
-                txtctrl.SetStyle(i, i + 12, wx.TextAttr(INFO_COLOUR))
+                self._txtctrl.SetStyle(i, i + 12, wx.TextAttr(INFO_COLOUR))
 
             elif logcontent.find(_("IGNORED"), i, i + 14) > - 1:
-                txtctrl.SetStyle(i, i + 12, wx.TextAttr(IGNORE_COLOUR))
+                self._txtctrl.SetStyle(i, i + 12, wx.TextAttr(IGNORE_COLOUR))
 
             oldi = i + 13
 
@@ -255,7 +298,7 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
                     child.SetFont(settings.header_text_font)
                 except:
                     pass
-            elif child.GetName() == "log_textctrl":
+            elif child is self._txtctrl:
                 try:
                     settings = wx.GetApp().settings
                     child.SetFont(settings.mono_text_font)

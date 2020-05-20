@@ -36,6 +36,7 @@
     ... a script to train a statistical language model.
 
 """
+
 import sys
 import os.path
 from argparse import ArgumentParser
@@ -44,8 +45,9 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas import sppasNgramsModel
-from sppas import sppasArpaIO
+from sppas.src.models import sppasNgramsModel
+from sppas.src.models import sppasArpaIO
+
 
 # ----------------------------------------------------------------------------
 # Verify and extract args:

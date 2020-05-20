@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.dialogs.messages.py
+    src.ui.phoenix.views.messages.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -55,7 +55,7 @@ MSG_MESSAGE = u(msg("Message", "ui"))
 
 
 class sppasBaseMessageDialog(sppasDialog):
-    """Base class to create message dialogs.
+    """Base class to create message views.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -122,11 +122,11 @@ class sppasBaseMessageDialog(sppasDialog):
 
     def _create_content(self, message, **kwargs):
         """Create the content of the message dialog."""
-        p = sppasPanel(self)
+        p = sppasPanel(self, style=wx.NO_BORDER | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
         h = p.get_font_height()
         s = wx.BoxSizer(wx.HORIZONTAL)
         txt = sppasMessageText(p, message)
-        s.Add(txt, 1, wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 10)
+        s.Add(txt, 1, wx.ALL | wx.EXPAND, sppasPanel.fix_size(8))
         p.SetSizer(s)
         # p.SetName("content")
         p.SetMinSize(wx.Size(-1, h*4))
@@ -139,7 +139,7 @@ class sppasBaseMessageDialog(sppasDialog):
         raise NotImplementedError
 
 # ---------------------------------------------------------------------------
-# Message dialogs
+# Message views
 # ---------------------------------------------------------------------------
 
 

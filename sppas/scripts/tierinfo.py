@@ -41,6 +41,7 @@
 :summary:      a script to get information about a tier of an annotated file.
 
 """
+
 import sys
 import os
 from argparse import ArgumentParser
@@ -49,7 +50,7 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas import sppasRW
+from sppas.src.anndata import sppasRW
 
 # ----------------------------------------------------------------------------
 # Verify and extract args:

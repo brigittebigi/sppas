@@ -105,17 +105,17 @@ class TestANTX(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_configuration(self):
-        """'Configuration' <-> metadata."""
+        """'sppasAppConfig' <-> metadata."""
 
         root = ET.Element('AnnotationSystemDataSet')
         root.set('xmlns', 'http://tempuri.org/AnnotationSystemDataSet.xsd')
         antx = sppasANTX()
 
-        # Format antx: from antx.metadata (or default value) to 'Configuration
+        # Format antx: from antx.metadata (or default value) to 'sppasAppConfig
         antx._format_configuration(root)
 
-        # Parse the tree: from 'Configuration' to antx.metadata
-        for child in root.iter('Configuration'):
+        # Parse the tree: from 'sppasAppConfig' to antx.metadata
+        for child in root.iter('sppasAppConfig'):
             antx._parse_configuration(child)
 
         # so, test the result!

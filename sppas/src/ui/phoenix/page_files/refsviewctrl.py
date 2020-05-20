@@ -34,13 +34,14 @@
 import wx
 import wx.lib.newevent
 
-from sppas.src.files import States, FileData
-from sppas.src.files import sppasAttribute, FileReference
-
+from sppas.src.wkps import States, sppasWorkspace
+from sppas.src.wkps import sppasAttribute, FileReference
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasCollapsiblePanel
 from ..windows import sppasSimpleText
+from ..windows import sppasListCtrl
+from ..main_events import DataChangedEvent
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when an item is clicked.
@@ -71,7 +72,7 @@ class RefsTreeView(sppasScrolledPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-    This class manages a FileData() instance to add/delete/edit references and
+    This class manages a sppasWorkspace() instance to add/delete/edit references and
     the wx objects to display it.
 
     """
@@ -86,7 +87,7 @@ class RefsTreeView(sppasScrolledPanel):
         super(RefsTreeView, self).__init__(parent, name=name)
 
         # The workspace to display
-        self.__data = FileData()
+        self.__data = sppasWorkspace()
 
         # Each FilePath has its own CollapsiblePanel in the sizer
         self.__refps = dict()  # key=ref.id, value=FileRefCollapsiblePanel
@@ -256,7 +257,7 @@ class RefsTreeView(sppasScrolledPanel):
         self.ScrollChildIntoView(p)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p)
 
-        self.GetSizer().Add(p, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border=8)
+        self.GetSizer().Add(p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(4))
         self.__refps[ref.get_id()] = p
         return p
 
@@ -309,6 +310,13 @@ class RefsTreeView(sppasScrolledPanel):
     # Events management
     # -----------------------------------------------------------------------
 
+    def Notify(self):
+        evt = DataChangedEvent()
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
+    # ------------------------------------------------------------------------
+
     def _setup_events(self):
         """Associate a handler function with the events.
 
@@ -337,7 +345,6 @@ class RefsTreeView(sppasScrolledPanel):
         # the object is a FileBase (path, root or file)
         object_id = event.id
         ref = self.__data.get_object(object_id)
-        wx.LogDebug("Process ItemClicked {:s}".format(object_id))
 
         # change state of the item
         current_state = ref.get_state()
@@ -347,11 +354,14 @@ class RefsTreeView(sppasScrolledPanel):
         modified = self.__data.set_object_state(new_state, ref)
 
         # update the corresponding panel(s)
-        for fs in modified:
-            wx.LogDebug("Modified: {:s}".format(fs.id))
-            panel = self.__refps[ref.get_id()]
-            if panel is not None:
-                panel.change_state(fs.get_state())
+        if len(modified) > 0:
+            for fs in modified:
+                wx.LogDebug("New state {} for reference {:s}"
+                            "".format(new_state, fs.get_id()))
+                panel = self.__refps[ref.get_id()]
+                if panel is not None:
+                    panel.change_state(fs.get_state())
+            self.Notify()
 
     # ------------------------------------------------------------------------
 
@@ -520,6 +530,21 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
 
         self.Layout()
 
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, color):
+        """Calculate a lightness or darkness background color."""
+        r, g, b = color.Red(), color.Green(), color.Blue()
+        delta = 10
+        if (r + g + b) > 384:
+            color = wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
+        else:
+            color = wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
+
+        wx.Window.SetBackgroundColour(self, color)
+        for c in self.GetChildren():
+            c.SetBackgroundColour(color)
+
     # ------------------------------------------------------------------------
     # Construct the GUI
     # ------------------------------------------------------------------------
@@ -542,6 +567,10 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
         self.Collapse(collapse)
         self.AddButton("choice_checkbox")
 
+    @property
+    def _attlist(self):
+        return self.FindWindow("atts_listctrl")
+
     # ------------------------------------------------------------------------
 
     def __create_reftypetext(self, parent):
@@ -555,7 +584,7 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
     def __create_listctrl(self, parent):
         """Create a listctrl to display attributes."""
         style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL | wx.LC_HRULES
-        lst = wx.ListCtrl(parent, style=style, name="listctrl_atts")
+        lst = sppasListCtrl(parent, style=style, name="atts_listctrl")
 
         lst.AppendColumn("identifier",
                          format=wx.LIST_FORMAT_LEFT,
@@ -576,15 +605,13 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
 
     def __set_pane_size(self):
         """Fix the size of the child panel."""
-        listctrl = self.FindWindow("listctrl_atts")
-
         # The listctrl can have an horizontal scrollbar
         bar = 14
 
-        n = listctrl.GetItemCount()
+        n = self._attlist.GetItemCount()
         h = int(self.GetFont().GetPixelSize()[1] * 2.)
-        listctrl.SetMinSize(wx.Size(-1, (n * h) + bar))
-        listctrl.SetMaxSize(wx.Size(-1, ((n * h) + bar) * 2))
+        self._attlist.SetMinSize(wx.Size(-1, (n * h) + bar))
+        self._attlist.SetMaxSize(wx.Size(-1, ((n * h) + bar) * 2))
 
     # ------------------------------------------------------------------------
     # Management the list of files
@@ -592,8 +619,7 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
 
     def __add_att(self, att):
         """Append an attribute into the listctrl."""
-        listctrl = self.FindWindow("listctrl_atts")
-        index = listctrl.InsertItem(listctrl.GetItemCount(), 0)
+        index = self._attlist.InsertItem(self._attlist.GetItemCount(), 0)
         self.__atts.append(att.get_id())
 
         self.__update_att(att)
@@ -604,9 +630,8 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
 
     def __remove_att(self, identifier):
         """Remove an attribute of the listctrl."""
-        listctrl = self.FindWindow("listctrl_atts")
         idx = self.__atts.index(identifier)
-        listctrl.DeleteItem(idx)
+        self._attlist.DeleteItem(idx)
 
         self.__atts.pop(idx)
         self.__set_pane_size()
@@ -616,13 +641,12 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
 
     def __update_att(self, att):
         """Update information of an attribute."""
-        listctrl = self.FindWindow("listctrl_atts")
         if att.get_id() in self.__atts:
             index = self.__atts.index(att.get_id())
-            listctrl.SetItem(index, FileRefCollapsiblePanel.COLUMNS.index("idt"), att.get_id())
-            listctrl.SetItem(index, FileRefCollapsiblePanel.COLUMNS.index("type"), att.get_value_type())
-            listctrl.SetItem(index, FileRefCollapsiblePanel.COLUMNS.index("value"), att.get_value())
-            listctrl.SetItem(index, FileRefCollapsiblePanel.COLUMNS.index("descr"), att.get_description())
+            self._attlist.SetItem(index, FileRefCollapsiblePanel.COLUMNS.index("idt"), att.get_id())
+            self._attlist.SetItem(index, FileRefCollapsiblePanel.COLUMNS.index("type"), att.get_value_type())
+            self._attlist.SetItem(index, FileRefCollapsiblePanel.COLUMNS.index("value"), att.get_value())
+            self._attlist.SetItem(index, FileRefCollapsiblePanel.COLUMNS.index("descr"), att.get_description())
 
     # ------------------------------------------------------------------------
     # Management of the events
@@ -636,6 +660,7 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
 
         """
         self.FindButton("choice_checkbox").Bind(wx.EVT_BUTTON, self.OnCkeckedRef)
+        self._attlist.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_att_selected)
 
     # ------------------------------------------------------------------------
 
@@ -650,6 +675,14 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
     def OnCkeckedRef(self, evt):
         self.notify(self.__refid)
 
+    # ------------------------------------------------------------------------
+
+    def _on_att_selected(self, evt):
+        """Disable selection."""
+        item = evt.GetItem()
+        item_index = item.GetId()
+        self._attlist.Select(item_index, on=False)
+
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
 # ----------------------------------------------------------------------------
@@ -659,7 +692,7 @@ class TestPanel(RefsTreeView):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
-        data = FileData()
+        data = sppasWorkspace()
         micros = FileReference('microphone')
         att1 = sppasAttribute('mic1', 'Bird UM1', None, '最初のインタビューで使えていましたマイク')
         micros.append(att1)

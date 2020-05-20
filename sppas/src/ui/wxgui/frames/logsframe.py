@@ -39,7 +39,7 @@ import wx.lib.newevent
 import logging
 
 from sppas.src.utils.datatype import sppasTime
-from sppas.src.ui.logs import sppasLogFile
+from sppas.src.config.logs import sppasLogFile
 
 # ---------------------------------------------------------------------------
 

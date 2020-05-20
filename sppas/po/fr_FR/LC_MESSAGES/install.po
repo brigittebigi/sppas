@@ -1,0 +1,99 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en_US\n"
+"X-Generator: Poedit 2.2.1\n"
+
+msgid ":ERROR 500: "
+msgstr "Le processus d’installation s’est terminé avec les erreurs suivantes : {error}"
+
+msgid ":INFO 510: "
+msgstr "Installation de '{name}'"
+
+msgid ":INFO 520: "
+msgstr "'{name}' n’est pas disponible pour votre OS."
+
+msgid ":INFO 530: "
+msgstr "L’installation de '{name}' est désactivée."
+
+msgid ":INFO 540: "
+msgstr "'{name}' est installé."
+
+msgid ":INFO 550: "
+msgstr "L’installation de '{name}' a échouée."
+
+msgid ":INFO 560: "
+msgstr "Installation terminée"
+
+msgid ":INFO 570: "
+msgstr "'{name}' ne correspond à aucun nom connu de package."
+
+msgid ":INFO 580: "
+msgstr "Aucune commande système ne doit être exécutée."
+
+msgid "InstallWizard of {soft} {version}."
+msgstr "InstallWizard de {soft} {version}."
+
+msgid "Page ({page}/{total})"
+msgstr "Page ({page}/{total})"
+
+msgid "Back"
+msgstr "Retour"
+
+msgid "Next"
+msgstr "Suivant"
+
+msgid "Install"
+msgstr "Installer"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Exit"
+msgstr "Quitter"
+
+msgid "View logs"
+msgstr "Voir les logs"
+
+msgid "Confirm exit?"
+msgstr "Confirmer la sortie ?"
+
+msgid "Feature:"
+msgstr "Fonctionnalité :"
+
+msgid "Description:"
+msgstr "Description :"
+
+msgid ":INFO 500: "
+msgstr ""
+"SPPAS est un logiciel à des fins scientifiques developpé par Brigitte Bigi, chargée de recherche CNRS au ’Laboratoire Parole et Langage', à Aix-en-Provence, France.\n"
+"\n"
+"Cet InstallWizard installera sur votre ordinateur les autres programmes dont SPPAS a besoin pour activer certaines fonctionnalités.\n"
+"Pour continuer, cliquez sur ‘Suivant’."
+
+msgid ":INFO 502: "
+msgstr "En cliquant sur ‘Suivant’, vous acceptez les termes de la licence ci-dessous."
+
+msgid ":INFO 504: "
+msgstr "Cochez les cases pour activer les fonctionnalités:"
+
+msgid ":INFO 506: "
+msgstr ""
+"Cliquez sur le bouton ‘Installer’ pour lancer la procédure d’installation.\n"
+"\n"
+"Si vous souhaitez vérifier ou changer va configuration de l’installation, vous pouvez revenir en arrière en cliquant sur ‘Retour’. Cliquer sur ‘Annulerl' pour quitter l’InstallWizard sans installer les programmes."
+
+msgid ":INFO 508: "
+msgstr ""
+"Avant de cliquer sur le bouton ‘Quitter’, partagez votre expérience de cet InstallWizard avec l’auteur :\n"
+"cliquez sur le bouton d’envoie dans la fenêtre de logs."
+
+msgid ":INFO 512: "
+msgstr "Consultez la fenêtre de logs pour plus d’information."

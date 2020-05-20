@@ -264,7 +264,7 @@ class TestEAF(unittest.TestCase):
         for child in root.iter('MEDIA_DESCRIPTOR'):
             parsed_media.append(sppasEAF._parse_media_descriptor(child, header_root))
 
-        self.assertEquals(1, len(parsed_media))
+        self.assertEqual(1, len(parsed_media))
         self.assertEqual(media.get_filename(), parsed_media[0].get_filename())
         self.assertEqual(media.get_mime_type(), parsed_media[0].get_mime_type())
         self.assertEqual(media.get_id(), parsed_media[0].get_id())
@@ -361,8 +361,8 @@ class TestEAF(unittest.TestCase):
 
         self.assertTrue(eaf2.is_meta_key('key1'))
         self.assertTrue(eaf2.is_meta_key('key2'))
-        self.assertEquals(eaf.get_meta('key1'), eaf2.get_meta('key1'))
-        self.assertEquals(eaf.get_meta('key2'), eaf2.get_meta('key2'))
+        self.assertEqual(eaf.get_meta('key1'), eaf2.get_meta('key1'))
+        self.assertEqual(eaf.get_meta('key2'), eaf2.get_meta('key2'))
 
     # -----------------------------------------------------------------------
 
@@ -378,8 +378,8 @@ class TestEAF(unittest.TestCase):
         c = list()
         for c_node in root.findall('CONTROLLED_VOCABULARY'):
             c.append(sppasEAF._parse_ctrl_vocab(c_node))
-        self.assertEquals(1, len(c))
-        self.assertEquals(0, len(c[0]))
+        self.assertEqual(1, len(c))
+        self.assertEqual(0, len(c[0]))
 
     # -----------------------------------------------------------------------
 

@@ -47,6 +47,7 @@ from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasMedia
 from sppas.src.anndata import sppasTranscription
+from sppas.src.anndata.aio.aioutils import serialize_labels
 
 from ..annotationsexc import AnnotationOptionError
 from ..annotationsexc import AudioChannelError
@@ -134,7 +135,7 @@ class sppasRMS(sppasBaseAnnotation):
 
         for ann in tier:
 
-            content = ann.serialize_labels()
+            content = serialize_labels(ann.get_labels())
             if len(content) == 0:
                 continue
 

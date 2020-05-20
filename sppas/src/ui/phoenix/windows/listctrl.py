@@ -54,38 +54,50 @@ class sppasListCtrl(wx.ListCtrl):
 
     The default is a multiple selection of items. Use wx.LC_SINGLE_SEL style
     for single selection with wx.LC_REPORT style.
+    The default is to add an header. Use wx.LC_NO_HEADER to disable header.
 
     Known bug of wx.ListCtrl:
 
-    - If the list is defined as a page of a wx.Notebook, under Windows only,
+    - If the list is defined as a page of a wx.Notebook, under WindowsInstaller only,
       DeleteItem() returns the following error message:
       listctrl.cpp(2614) in wxListCtrl::MSWOnNotify(): invalid internal data pointer?
-      A solution is to use a simplebook, a choicebook, a listbook or a
+      It does not occur with the use of a simplebook, a choicebook, a listbook or a
       toolbook instead!
     - Items can't be edited. The events (begin/end edit label) are never sent.
       The wxDemo "ListCtrl_edit" does not work, clicking or double clicking
       on items does.... nothing.
+
+    Limitations:
+
+    - with our customized header, the click on a column header will emit the
+      EVT_LIST_COL_CLICK but *** WITHOUT *** the index of the column.
+      Use _ForceSystemHeader() to disable this custom header. No other event
+      is emitted (right click, etc).
 
     """
 
     def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
                  size=wx.DefaultSize, style=wx.NO_BORDER | wx.LC_REPORT,
                  validator=wx.DefaultValidator, name="listctrl"):
-        """Initialize a new ListCtrl instance.
+        """Initialize a new sppasListCtrl instance.
 
-        :param parent: Parent window. Must not be None.
-        :param id:     A value of -1 indicates a default value.
-        :param pos:    If the position (-1, -1) is specified
-                       then a default position is chosen.
-        :param size:   If the default size (-1, -1) is specified
-                       then a default size is chosen.
-        :param style:  often LC_REPORT
+        :param parent: (wx.Window) Parent window, must not be None.
+        :param id: (int) A value of -1 indicates a default value.
+        :param pos: (wx.Point) or (-1, -1) for the default position.
+        :param size: (wx.Size) or (-1, -1) for the default size.
+        :param style: (int) often LC_REPORT
         :param validator: Window validator.
-        :param name:      Window name.
+        :param name: (str) Window name.
 
         """
         if style & wx.LC_EDIT_LABELS:
             style &= ~wx.LC_EDIT_LABELS
+        if style & wx.LC_NO_HEADER:
+            self._header = 0
+        else:
+            self._header = 1
+            style |= wx.LC_NO_HEADER
+        self._colnames = dict()
 
         super(sppasListCtrl, self).__init__(
             parent, id, pos, size, style, validator, name)
@@ -97,7 +109,8 @@ class sppasListCtrl(wx.ListCtrl):
             self.SetTextColour(settings.fg_color)
             self.SetFont(settings.text_font)
             self._bg_color = settings.bg_color
-            # Attributes of the header are not set: Not implemented by wx.ListCtrl.
+            # Attributes of the header are not set: because it's not
+            # implemented by wx.ListCtrl.
         except AttributeError:
             self.InheritAttributes()
             self._bg_color = self.GetParent().GetBackgroundColour()
@@ -108,6 +121,17 @@ class sppasListCtrl(wx.ListCtrl):
         # Bind some events to manage properly the list of selected items
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self)
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemDeselected, self)
+
+    # -----------------------------------------------------------------------
+    # Added methods
+    # -----------------------------------------------------------------------
+
+    def ForceSystemHeader(self):
+        """Force to use the header of wx instead of our customized one."""
+        self._header = 0
+        style = self.GetWindowStyleFlag()
+        style &= ~wx.LC_NO_HEADER
+        self.SetWindowStyle(style)
 
     # -----------------------------------------------------------------------
 
@@ -128,21 +152,14 @@ class sppasListCtrl(wx.ListCtrl):
     # -----------------------------------------------------------------------
 
     def get_font_height(self):
+        """Return the height of the current font."""
         font = self.GetFont()
         return int(float(font.GetPixelSize()[1]))
 
     # ---------------------------------------------------------------------
 
-    def SetBackgroundColour(self, colour):
-        wx.Window.SetBackgroundColour(self, colour)
-        self._bg_color = colour
-        if not self.GetWindowStyleFlag() & wx.LC_HRULES:
-            self.RecolorizeBackground(-1)
-
-    # ---------------------------------------------------------------------
-
     def RecolorizeBackground(self, index=-1):
-        """Set background color of items.
+        """Set background color of given item or from given index.
 
         :param index: (int) Item to set the bg color. -1 to set all items.
 
@@ -155,29 +172,240 @@ class sppasListCtrl(wx.ListCtrl):
             alt_bg = wx.Colour(r, g, b, a).ChangeLightness(108)
 
         if index == -1:
-            for i in range(self.GetItemCount()):
+            for i in range(self._header, self.GetItemCount()):
                 if i % 2:
-                    self.SetItemBackgroundColour(i, bg)
+                    wx.ListCtrl.SetItemBackgroundColour(self, i, bg)
                 else:
-                    self.SetItemBackgroundColour(i, alt_bg)
+                    wx.ListCtrl.SetItemBackgroundColour(self, i, alt_bg)
         else:
+            index += self._header
             if index % 2:
-                self.SetItemBackgroundColour(index, bg)
+                wx.ListCtrl.SetItemBackgroundColour(self, index, bg)
             else:
-                self.SetItemBackgroundColour(index, alt_bg)
+                wx.ListCtrl.SetItemBackgroundColour(self, index, alt_bg)
+
+    # -----------------------------------------------------------------------
+    # Overridden methods to enable our customized header
+    # -----------------------------------------------------------------------
+
+    def IsEmpty(self):
+        """Return True if list is empty, i.e. does not contain rows."""
+        return self.GetItemCount() == 0
+
+    def GetItemCount(self):
+        """Return the number of rows."""
+        return max(wx.ListCtrl.GetItemCount(self) - self._header, 0)
+
+    def EditLabel(self, item):
+        wx.ListCtrl.EditLabel(self, item+self._header)
+
+    def EnsureVisible(self, item):
+        wx.ListCtrl.EnsureVisible(self, item+self._header)
+
+    def FindItem(self, *args, **kw):
+        idx = wx.ListCtrl.FindItem(self, *args, **kw)
+        if idx == -1:
+            return -1
+        return idx - self._header
+
+    def Focus(self, idx):
+        idx += self._header
+        wx.ListCtrl.Focus(self, idx)
+
+    def GetFocusedItem(self):
+        return wx.ListCtrl.GetFocusedItem(self) - self._header
+
+    def GetItem(self, item, col=0):
+        return wx.ListCtrl.GetItem(self, item+self._header, col)
+
+    def GetItemBackgroundColour(self, item):
+        return wx.ListCtrl.GetItemBackgroundColour(self, item+self._header)
+
+    def GetItemData(self, item):
+        return wx.ListCtrl.GetItemData(self, item+self._header)
+
+    def GetItemFont(self, item):
+        return wx.ListCtrl.GetItemFont(self, item+self._header)
+
+    def GetItemPosition(self, item):
+        return wx.ListCtrl.GetItemPosition(self, item+self._header)
+
+    def GetItemRect(self, item, code=wx.LIST_RECT_BOUNDS):
+        return wx.ListCtrl.GetItemRect(self, item, code)
+
+    def GetItemState(self, item, stateMask):
+        return wx.ListCtrl.GetItemState(self, item+self._header, stateMask)
+
+    def GetItemText(self, item, col=0):
+        return wx.ListCtrl.GetItemText(self, item+self._header, col)
+
+    def GetNextItem(self, item, geometry=wx.LIST_NEXT_ALL, state=wx.LIST_STATE_DONTCARE):
+        item += self._header
+        wx.ListCtrl.GetNextItem(self, item, geometry, state)
+
+    def GetTopItem(self):
+        return wx.ListCtrl.GetTopItem(self) - self._header
+
+    def GetSubItemRect(self, item, subItem, rect, code=wx.LIST_RECT_BOUNDS):
+        return wx.ListCtrl.GetSubItemRect(self, item+self._header, subItem, rect, code)
+
+    def RefreshItem(self, item):
+        item += self._header
+        wx.ListCtrl.RefreshItem(self, item)
+
+    def RefreshItems(self, itemFrom, itemTo):
+        itemFrom += self._header
+        itemTo += self._header
+        wx.ListCtrl.RefreshItems(self, itemFrom, itemTo)
+
+    def SetItemBackgroundColour(self, item, color):
+        item += self._header
+        wx.ListCtrl.SetItemBackgroundColour(self, item, color)
+
+    def SetItemColumnImage(self, item, column, image):
+        item += self._header
+        wx.ListCtrl.SetItemColumnImage(self, item, column, image)
+
+    def SetItemCount(self, count):
+        count += self._header
+        wx.ListCtrl.SetItemCount(self, count)
+
+    def SetItemData(self, item, data):
+        item += self._header
+        wx.ListCtrl.SetItemData(self, item, data)
+
+    def SetItemFont(self, item, font):
+        """Override.
+
+        Bug of wx.ListCtrl under MacOS:
+        Python[7425:2394291] CoreText note: Client requested name
+        ".SFNS-Regular", it will get Times-Roman rather than the intended
+        font. All system UI font access should be through proper APIs such
+        as CTFontCreateUIFontForLanguage() or +[NSFont systemFontOfSize:].
+
+        """
+        item += self._header
+        wx.ListCtrl.SetItemFont(self, item, font)
+
+    def SetItemImage(self, item, image, selImage=-1):
+        item += self._header
+        wx.ListCtrl.SetItemImage(self, item, image, selImage)
+
+    def SetItemPosition(self, item, pos):
+        item += self._header
+        wx.ListCtrl.SetItemPosition(self, item, pos)
+
+    def SetItemState(self, item, state, stateMask):
+        """Change state of the item in the list.
+
+        DO NOT USE this method if our custom header is enabled.
+        The problem here is that this method send an event.
+
+        :param item: THE REAL INDEX of the ITEM IN THE LIST = index+header.
+
+        """
+        wx.ListCtrl.SetItemState(self, item, state, stateMask)
+
+    def SetItemText(self, item, text):
+        item += self._header
+        wx.ListCtrl.SetItemText(self, item, text)
+
+    def SetItemTextColour(self, item, col):
+        item += self._header
+        wx.ListCtrl.SetItemTextColour(self, item, col)
+
+    def SetHeaderAttr(self, attr):
+        pass
+
+    # -----------------------------------------------------------------------
+    # Overridden methods for our various customizations
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        """Override.
+
+        """
+        wx.Window.SetBackgroundColour(self, colour)
+        self._bg_color = colour
+        if not self.GetWindowStyleFlag() & wx.LC_HRULES:
+            self.RecolorizeBackground(-1)
+
+        if self.GetItemCount() > 0:
+            for i in range(self._header):
+                wx.ListCtrl.SetItemTextColour(self, i, colour)
+
+    # ---------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        """Override.
+
+        """
+        wx.Window.SetForegroundColour(self, colour)
+        if self.GetItemCount() > 0:
+            for i in range(self._header):
+                wx.ListCtrl.SetItemBackgroundColour(self, i, colour)
 
     # -----------------------------------------------------------------------
 
+    def AppendColumn(self, heading, format=wx.LIST_FORMAT_LEFT, width=-1):
+        """Override. Insert a new column at end. """
+        self.InsertColumn(self.GetColumnCount(), heading, format, width)
+
+    # -----------------------------------------------------------------------
+
+    def InsertColumn(self, *args, **kwargs):
+        """Override. Insert a new column.
+
+        1. create a column with its header (if enabled and if colnum==0)
+        2. create the expected column
+
+        Future work:
+        We could split the heading string with "\n" to add a multi-line header.
+
+        """
+        wx.ListCtrl.InsertColumn(self, *args, **kwargs)
+        colnum = args[0]
+        shift_colnames = dict()
+        for col_idx in self._colnames:
+            if col_idx >= colnum:
+                shift_colnames[col_idx+1] = self._colnames[col_idx]
+            else:
+                shift_colnames[col_idx] = self._colnames[col_idx]
+        self._colnames = shift_colnames
+
+        if "heading" in kwargs:
+            self._colnames[colnum] = kwargs["heading"]
+        else:
+            if isinstance(args[1], wx.ListItem) is False:
+                self._colnames[colnum] = args[1]
+            else:
+                self._colnames[colnum] = ""
+
+    # ---------------------------------------------------------------------
+
     def InsertItem(self, index, label):
         """Override. Create a row and insert label.
+
+        :param label: string or image index.
 
         Create a row.
         Shift the selection of items if necessary.
 
         """
         sel = False
-        if self.GetItemCount() == 0:
+        # it is the 1st line inserted.
+        if wx.ListCtrl.GetItemCount(self) == 0:
+            if self._header > 0:
+                col_idx = sorted(list(self._colnames.keys()))
+                wx.ListCtrl.InsertItem(self, 0, self._colnames[col_idx[0]])
+                col_idx.pop(0)
+                for idx in col_idx:
+                    wx.ListCtrl.SetItem(self, 0, idx, self._colnames[idx])
+                wx.ListCtrl.SetItemBackgroundColour(self, 0, self.GetForegroundColour())
+                wx.ListCtrl.SetItemTextColour(self, 0, self.GetBackgroundColour())
             sel = True
+
+        index += self._header
         idx = wx.ListCtrl.InsertItem(self, index, label)
 
         if sel is False:
@@ -188,13 +416,13 @@ class sppasListCtrl(wx.ListCtrl):
         else:
             # de-select the first item. Under MacOS, the first item
             # is systematically selected but not under the other platforms.
-            self.Select(0, on=0)
+            wx.ListCtrl.Select(self, 0, on=0)
 
         if not self.GetWindowStyleFlag() & wx.LC_HRULES:
             for i in range(index, self.GetItemCount()):
                 self.RecolorizeBackground(i)
 
-        return idx
+        return idx - self._header
 
     # -----------------------------------------------------------------------
 
@@ -205,19 +433,23 @@ class sppasListCtrl(wx.ListCtrl):
         background colors (just for the list to be easier to read).
 
         """
+        index += self._header
         wx.ListCtrl.SetItem(self, index, col, label, imageId)
         if not self.GetWindowStyleFlag() & wx.LC_HRULES:
-            self.RecolorizeBackground(index)
+            self.RecolorizeBackground(index-self._header)
 
     # ---------------------------------------------------------------------
 
     def DeleteItem(self, index):
         """Override.
 
-        Delete an item in the list. Must be overridden to also remove it of the
+        Delete an item in the list. It is overridden to also remove it of the
         selected list (if appropriate) and update selected item indexes.
 
+        :param index: (int) Index of an item in the data
+
         """
+        index += self._header
         if index in self._selected:
             self._selected.remove(index)
 
@@ -249,12 +481,13 @@ class sppasListCtrl(wx.ListCtrl):
         """Override.
 
         """
+        item += self._header
         s = sorted(self._selected)
-        i = self.GetNextItem(item)
+        i = wx.ListCtrl.GetNextItem(self, item)
         while i != -1:
             if i in s:
                 return i
-            i = self.GetNextItem(i)
+            i = wx.ListCtrl.GetNextItem(self, i)
         return -1
 
     # ---------------------------------------------------------------------
@@ -269,6 +502,7 @@ class sppasListCtrl(wx.ListCtrl):
 
     def IsSelected(self, index):
         """Override. Return True if the item is checked."""
+        index += self._header
         return index in self._selected
 
     # ---------------------------------------------------------------------
@@ -279,7 +513,7 @@ class sppasListCtrl(wx.ListCtrl):
         Highlight the selected item with a Bigger & Bold font (the native
         system can't be disabled and is different on each system).
 
-        :param idx: (int) Index of an annotation/item in the tier/list
+        :param idx: (int) Index of an item in the data
         :param on: (int/bool) 0 to deselect, 1 to select
 
         """
@@ -302,6 +536,7 @@ class sppasListCtrl(wx.ListCtrl):
     # ---------------------------------------------------------------------
 
     def _remove_of_selected(self, idx):
+        """idx is the item index in the data."""
         if idx in self._selected:
             self._selected.remove(idx)
             font = self.GetFont()
@@ -310,6 +545,7 @@ class sppasListCtrl(wx.ListCtrl):
     # ---------------------------------------------------------------------
 
     def _add_to_selected(self, idx):
+        """idx is the item index in the data."""
         if idx not in self._selected:
             self._selected.append(idx)
         font = self.GetFont()
@@ -332,13 +568,24 @@ class sppasListCtrl(wx.ListCtrl):
         """
         item = evt.GetItem()
         item_index = item.GetId()
+        if self._header > 0 and item_index == 0:
+            wx.ListCtrl.Select(self, 0, on=0)
+            nex_evt = wx.ListEvent(wx.wxEVT_COMMAND_LIST_COL_CLICK, self.GetId())
+            nex_evt.SetEventObject(self)
+            nex_evt.SetColumn(evt.GetColumn())
+            wx.PostEvent(self, nex_evt)
+            return
 
         # cancel the selection managed by wx.ListCtrl
         wx.ListCtrl.Select(self, item_index, on=0)
 
+        item_index -= self._header
+
         # manage our own selection
+
         if self.HasFlag(wx.LC_SINGLE_SEL):
             self.Select(item_index, on=1)
+            evt.SetIndex(item_index)
             evt.Skip()
         else:
             if item_index in self._selected:
@@ -351,6 +598,7 @@ class sppasListCtrl(wx.ListCtrl):
                 wx.PostEvent(self.GetParent(), nex_evt)
             else:
                 self.Select(item_index, on=1)
+                evt.SetIndex(item_index)
                 evt.Skip()
 
     # ---------------------------------------------------------------------
@@ -363,6 +611,14 @@ class sppasListCtrl(wx.ListCtrl):
         item_index = item.GetId()
         wx.ListCtrl.Select(self, item_index, on=0)
 
+        if self._header > 0 and item_index == 0:
+            nex_evt = wx.ListEvent(wx.wxEVT_COMMAND_LIST_COL_CLICK, self.GetId())
+            nex_evt.SetEventObject(self)
+            nex_evt.SetColumn(evt.GetColumn())
+            wx.PostEvent(self, nex_evt)
+            return
+
+        # manage our own selection
         if self.HasFlag(wx.LC_SINGLE_SEL):
             if item_index in self._selected:
                 self.Select(item_index, on=0)
@@ -395,25 +651,32 @@ class LineListCtrl(sppasListCtrl):
                  validator=wx.DefaultValidator, name="LineListCtrl"):
         """Initialize a new ListCtrl instance.
 
-        :param parent: Parent window. Must not be None.
-        :param id:     A value of -1 indicates a default value.
-        :param pos:    If the position (-1, -1) is specified
-                       then a default position is chosen.
-        :param size:   If the default size (-1, -1) is specified
-                       then a default size is chosen.
-        :param style:  often LC_REPORT
+        :param parent: (wx.Window) Parent window, must not be None.
+        :param id: (int) A value of -1 indicates a default value.
+        :param pos: (wx.Point) or (-1, -1) for the default position.
+        :param size: (wx.Size) or (-1, -1) for the default size.
+        :param style: (int) often LC_REPORT
         :param validator: Window validator.
-        :param name:      Window name.
+        :param name: (str) Window name.
 
         """
         super(LineListCtrl, self).__init__(
             parent, id, pos, size, style, validator, name)
 
     # -----------------------------------------------------------------------
-    # Override methods of wx.ListCtrl
+    # Override methods of sppasListCtrl
     # -----------------------------------------------------------------------
 
-    def InsertColumn(self, colnum, colname, format=wx.LIST_FORMAT_LEFT, width=wx.LIST_AUTOSIZE):
+    def SetFont(self, font):
+        """Override."""
+        sppasListCtrl.SetFont(self, font)
+        if self.GetColumnCount() > 0:
+            sppasListCtrl.SetColumnWidth(self, 0, self.get_font_height() * 4)
+        self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def InsertColumn(self, colnum, heading, format=wx.LIST_FORMAT_LEFT, width=wx.LIST_AUTOSIZE):
         """Override. Insert a new column.
 
         1. create a column with the line number if we create a column
@@ -422,13 +685,14 @@ class LineListCtrl(sppasListCtrl):
 
         """
         if colnum == 0:
+            w = self.get_font_height() * 4
             # insert a first column, with whitespace
             sppasListCtrl.InsertColumn(self, 0,
                                        heading=" "*16,
                                        format=wx.LIST_FORMAT_CENTRE,
-                                       width=sppasListCtrl.fix_size(80))
+                                       width=w)
 
-        sppasListCtrl.InsertColumn(self, colnum+1, colname, format, width)
+        sppasListCtrl.InsertColumn(self, colnum+1, heading, format, width)
 
     # -----------------------------------------------------------------------
 
@@ -440,7 +704,7 @@ class LineListCtrl(sppasListCtrl):
 
         """
         idx = sppasListCtrl.InsertItem(self, index, self._num_to_str(index+1))
-        item = self.GetItem(index, 0)
+        item = sppasListCtrl.GetItem(self, index, 0)
         item.SetAlign(wx.LIST_FORMAT_CENTER)
         #item.SetMask(item.GetMask() | wx.LIST_MASK_FORMAT)
 
@@ -480,7 +744,7 @@ class LineListCtrl(sppasListCtrl):
         """
         sppasListCtrl.DeleteItem(self, index)
         for idx in range(index, self.GetItemCount()):
-            wx.ListCtrl.SetItem(self, idx, 0, self._num_to_str(idx + 1))
+            sppasListCtrl.SetItem(self, idx, 0, self._num_to_str(idx+1))
 
     # -----------------------------------------------------------------------
 
@@ -504,18 +768,16 @@ class CheckListCtrl(sppasListCtrl):
 
     def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
                  size=wx.DefaultSize, style=wx.NO_BORDER | wx.LC_REPORT,
-                 validator=wx.DefaultValidator, name="LineListCtrl"):
-        """Initialize a new ListCtrl instance.
+                 validator=wx.DefaultValidator, name="CheckListCtrl"):
+        """Initialize a new CheckListCtrl instance.
 
-        :param parent: Parent window. Must not be None.
-        :param id:     A value of -1 indicates a default value.
-        :param pos:    If the position (-1, -1) is specified
-                       then a default position is chosen.
-        :param size:   If the default size (-1, -1) is specified
-                       then a default size is chosen.
-        :param style:  often LC_REPORT
+        :param parent: (wx.Window) Parent window, must not be None.
+        :param id: (int) A value of -1 indicates a default value.
+        :param pos: (wx.Point) or (-1, -1) for the default position.
+        :param size: (wx.Size) or (-1, -1) for the default size.
+        :param style: (int) often LC_REPORT
         :param validator: Window validator.
-        :param name:      Window name.
+        :param name: (str) Window name.
 
         """
         super(CheckListCtrl, self).__init__(
@@ -535,11 +797,14 @@ class CheckListCtrl(sppasListCtrl):
         self.__il = self.__create_image_list()
         self.SetImageList(self.__il, wx.IMAGE_LIST_SMALL)
 
+        # Checkboxes are systematically in the 1st column
+        self.__insert_checkboxes()
+
     # -----------------------------------------------------------------------
 
     def SetForegroundColour(self, color):
         """Override."""
-        wx.ListCtrl.SetForegroundColour(self, color)
+        sppasListCtrl.SetForegroundColour(self, color)
         for c in self.GetChildren():
             c.SetForegroundColour(color)
         self.__il = self.__create_image_list()
@@ -549,11 +814,13 @@ class CheckListCtrl(sppasListCtrl):
 
     def SetFont(self, font):
         """Override."""
-        wx.ListCtrl.SetFont(self, font)
-
         # The change of font implies to re-draw all proportional objects
         self.__il = self.__create_image_list()
         self.SetImageList(self.__il, wx.IMAGE_LIST_SMALL)
+        if self.GetColumnCount() > 0:
+            sppasListCtrl.SetColumnWidth(self, 0, self.get_font_height() * 2)
+
+        sppasListCtrl.SetFont(self, font)
         self.Layout()
 
     # ------------------------------------------------------------------------
@@ -589,12 +856,23 @@ class CheckListCtrl(sppasListCtrl):
     # -----------------------------------------------------------------------
     # Override methods of wx.ListCtrl
     # -----------------------------------------------------------------------
-    def AppendColumn(self, heading, format=wx.LIST_FORMAT_LEFT, width=-1):
-        self.InsertColumn(self.GetColumnCount(), heading, format, width)
+
+    def __insert_checkboxes(self):
+        info = wx.ListItem()
+        info.Mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
+        info.Image = -1
+        info.Align = wx.LIST_FORMAT_CENTRE
+        sppasListCtrl.InsertColumn(self, 0, info)
+        sppasListCtrl.SetColumnWidth(self, 0, sppasListCtrl.fix_size(self.get_font_height()*2))
 
     # -----------------------------------------------------------------------
 
-    def InsertColumn(self, colnum, colname, format=wx.LIST_FORMAT_LEFT, width=wx.LIST_AUTOSIZE):
+    def AppendColumn(self, heading, format=wx.LIST_FORMAT_LEFT, width=-1):
+        sppasListCtrl.InsertColumn(self, self.GetColumnCount(), heading, format, width)
+
+    # -----------------------------------------------------------------------
+
+    def InsertColumn(self, colnum, heading, format=wx.LIST_FORMAT_LEFT, width=wx.LIST_AUTOSIZE):
         """Override. Insert a new column.
 
         1. create a column with the line number if we create a column
@@ -602,15 +880,7 @@ class CheckListCtrl(sppasListCtrl):
         2. create the expected column
 
         """
-        if colnum == 0:
-            info = wx.ListItem()
-            info.Mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
-            info.Image = -1
-            info.Align = 0
-            wx.ListCtrl.InsertColumn(self, 0, info)
-            wx.ListCtrl.SetColumnWidth(self, 0, sppasListCtrl.fix_size(24))
-
-        sppasListCtrl.InsertColumn(self, colnum+1, colname, format, width)
+        sppasListCtrl.InsertColumn(self, colnum+1, heading, format, width)
 
     # -----------------------------------------------------------------------
 
@@ -675,6 +945,8 @@ class SortListCtrl(sppasListCtrl):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
+    The default header of wx must be used in order to get the events.
+
     """
 
     def __init__(self, parent, id=-1, pos=wx.DefaultPosition,
@@ -682,23 +954,21 @@ class SortListCtrl(sppasListCtrl):
                  validator=wx.DefaultValidator, name="SortListCtrl"):
         """Initialize a new ListCtrl instance.
 
-        :param parent: Parent window. Must not be None.
-        :param id:     ListCtrl identifier. A value of -1 indicates a default value.
-        :param pos:    ListCtrl position. If the position (-1, -1) is specified
-                       then a default position is chosen.
-        :param size:   ListCtrl size. If the default size (-1, -1) is specified
-                       then a default size is chosen.
-        :param style:  often LC_REPORT
+        :param parent: (wx.Window) Parent window, must not be None.
+        :param id: (int) A value of -1 indicates a default value.
+        :param pos: (wx.Point) or (-1, -1) for the default position.
+        :param size: (wx.Size) or (-1, -1) for the default size.
+        :param style: (int) often LC_REPORT
         :param validator: Window validator.
-        :param name:      Window name.
+        :param name: (str) Window name.
 
         """
         if not (style & wx.LC_SORT_ASCENDING or style & wx.LC_SORT_DESCENDING):
             style |= wx.LC_SORT_ASCENDING
-        if style & wx.LC_NO_HEADER:
-            style &= ~wx.LC_NO_HEADER
-
+        #if style & wx.LC_NO_HEADER:
+        #    style &= ~wx.LC_NO_HEADER
         super(SortListCtrl, self).__init__(parent, id, pos, size, style, validator, name)
+        self.ForceSystemHeader()
         self.Bind(wx.EVT_LIST_COL_CLICK, self.__col_clicked)
 
     # ---------------------------------------------------------------------
@@ -721,7 +991,7 @@ class SortListCtrl(sppasListCtrl):
             self.Append(data_item)
 
 # ---------------------------------------------------------------------------
-# Test panel (should be extended to test more functions)
+# Test panel (should be extended to test more features)
 # ---------------------------------------------------------------------------
 
 
@@ -813,7 +1083,10 @@ class TestPanel(wx.Panel):
         listctrl.SetColumnWidth(2, 100)
 
         # show how to select an item with events (like if we clicked on it)
-        listctrl.SetItemState(5, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+        wx.LogDebug("Test. Select Linda Ronstadt - Don't Know Much at index=4")
+        listctrl.Select(4, on=1)
+        wx.LogDebug("Test. Delete Spyro Gyra - End of Romanticism at index=21")
+        listctrl.DeleteItem(21)
 
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_selected_item)
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_deselected_item)
@@ -826,16 +1099,16 @@ class TestPanel(wx.Panel):
                                   name="checklist")
 
         # The simplest way to create columns
-        checklist.InsertColumn(0, "Artist")
-        checklist.InsertColumn(1, "Title")
-        checklist.InsertColumn(2, "Genre")
+        checklist.AppendColumn("Artist")
+        checklist.AppendColumn("Title")
+        checklist.InsertColumn(0, "Genre")
 
         # Fill rows
         items = musicdata.items()
         for key, data in items:
-            idx = checklist.InsertItem(checklist.GetItemCount(), data[0])
-            checklist.SetItem(idx, 1, data[1])
-            checklist.SetItem(idx, 2, data[2])
+            idx = checklist.InsertItem(checklist.GetItemCount(), data[2])
+            checklist.SetItem(idx, 1, data[0])
+            checklist.SetItem(idx, 2, data[1])
             # self.SetItemData(idx, key)
 
         # Adjust columns width

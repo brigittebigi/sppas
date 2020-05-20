@@ -158,7 +158,7 @@ class sppasTextCtrl(wx.TextCtrl):
                  size=DefaultSize, style=0, validator=DefaultValidator,
                  name=TextCtrlNameStr)
 
-    Existing shortcuts in a textctrl (tested under Windows):
+    Existing shortcuts in a textctrl (tested under WindowsInstaller):
         - Ctrl+a - select all
         - Ctrl+c - copy
         - Ctrl+h - del previous char or selection
@@ -268,6 +268,10 @@ class sppasTitleText(wx.TextCtrl):
         # the message is not send to the base class when init but after
         # in order to apply the appropriate colors&font&size
         self.SetValue(value)
+        self.Layout()
+
+    def AcceptsFocus(self):
+        return False
 
     def SetForegroundColour(self, colour):
         wx.Window.SetForegroundColour(self, colour)

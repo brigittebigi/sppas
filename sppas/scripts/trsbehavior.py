@@ -42,6 +42,7 @@
                of an annotated file.
 
 """
+
 import sys
 import os.path
 from argparse import ArgumentParser
@@ -50,9 +51,9 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas import sppasTag, sppasLabel, \
-    sppasLocation, sppasInterval, sppasPoint, \
-    sppasRW
+from sppas.src.anndata import sppasTag, sppasLabel
+from sppas.src.anndata import sppasLocation, sppasInterval, sppasPoint
+from sppas.src.anndata import sppasRW
 
 # ----------------------------------------------------------------------------
 # Verify and extract args:

@@ -36,19 +36,35 @@ SubViewer is a utility for adding and synchronizing subtitles to video
 content. It was created by David Dolinski in 1999.
 Precision in time is 10ms.
 
-SubRip is a free software program for Windows which "rips" (extracts)
+SubRip is a free software program for WindowsInstaller which "rips" (extracts)
 subtitles and their timings from video. It is free software, released
 under the GNU GPL. SubRip is also the name of the widely used and broadly
 compatible subtitle text file format created by this software.
 Precision in time is 1ms.
 
+WebVTT (Web Video Text Tracks) is a World Wide Web Consortium (W3C) standard
+for displaying timed text in connection with the HTML5 <track> element.
+Main differences from SubRip are:
+ - WebVTT's first line starts with WEBVTT after the optional UTF-8 byte order mark
+ - There is space for optional header data between the first line and the first cue
+ - Timecode fractional values are separated by a full stop instead of a comma
+ - Timecode hours are optional
+ - The frame numbering/identification preceding the timecode is optional
+ - Comments identified by the word NOTE can be added
+ - Metadata information can be added in a JSON-style format
+ - Chapter information can be optionally specified
+ - Only supports extended characters as UTF-8
+ - CSS in a separate file defined in the companion HTML document for C tags is used instead of the FONT tag
+ - Cue settings allow the customization of cue positioning on the video
+
 """
+
 import codecs
 import datetime
 
 from sppas import sg
 from sppas.src.utils import b
-from .basetrs import sppasBaseIO
+from .basetrsio import sppasBaseIO
 from ..anndataexc import AnnDataTypeError
 from ..anndataexc import AioMultiTiersError
 from ..ann.annotation import sppasAnnotation
@@ -369,6 +385,88 @@ class sppasSubRip(sppasBaseSubtitles):
                         text += "X1:{:s} Y1:{:s} X2:{:s} Y2:{:s}\n" \
                                 "".format(x1, y1, x2, y2)
         return text
+
+# ---------------------------------------------------------------------------
+
+
+class sppasWebVTT(sppasBaseSubtitles):
+    """SPPAS reader/writer for VTT format.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+
+    ONLY THE WRITER IS IMPLEMENTED YET.
+
+    """
+
+    def __init__(self, name=None):
+        """Initialize a new sppasWebVTT instance.
+
+        :param name: (str) This transcription name.
+
+        """
+        if name is None:
+            name = self.__class__.__name__
+        super(sppasWebVTT, self).__init__(name)
+
+        self.default_extension = "vtt"
+        self.software = "HTML5"
+
+    # -----------------------------------------------------------------------
+
+    def write(self, filename):
+        """Write a transcription into a file.
+
+        Not fully implemented.
+
+        :param filename: (str)
+
+        """
+        if len(self) != 1:
+            raise AioMultiTiersError("WebVTT")
+
+        with codecs.open(filename, 'w', sg.__encoding__, buffering=8096) as fp:
+
+            if self.is_empty() is False:
+                # Header
+                fp.write("WEBVTT\n\n")
+                # fp.write("WEBVTT Kind: captions; Language: en\n\n")
+
+                number = 1
+                last = len(self[0])
+                for ann in self[0]:
+
+                    text = ann.serialize_labels(separator="\n",
+                                                empty="",
+                                                alt=True)
+
+                    # no label defined, or empty label -> no subtitle!
+                    if len(text) == 0:
+                        continue
+
+                    subtitle = ""
+                    # first line: the number of the annotation
+                    subtitle += str(number) + "\n"
+                    # 2nd line: the timestamps
+                    subtitle += sppasBaseSubtitles._serialize_location(
+                        ann,
+                        precision=3)
+                    # 3rd line: optionally the position on screen
+                    # subtitle += sppasSubRip._serialize_metadata(ann)
+                    # the text
+                    subtitle += text + "\n"
+                    if number < last:
+                        # a blank line
+                        subtitle += "\n"
+
+                    # next!
+                    fp.write(subtitle)
+                    number += 1
+
+            fp.close()
 
 # ---------------------------------------------------------------------------
 

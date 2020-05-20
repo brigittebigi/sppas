@@ -36,6 +36,7 @@
     ... a script to extract a fragment of an audio file.
 
 """
+
 from argparse import ArgumentParser
 import os
 import sys

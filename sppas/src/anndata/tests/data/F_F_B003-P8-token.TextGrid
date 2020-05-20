@@ -1,0 +1,352 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0.0
+xmax = 21.3471
+tiers? <exists>
+size = 4
+item []:
+	item [1]:
+		class = "IntervalTier"
+		name = "Tokens"
+		xmin = 0.0
+		xmax = 21.3471
+		intervals: size = 11
+		intervals [1]:
+			xmin = 0.0
+			xmax = 2.4971007546
+			text = "#"
+		intervals [2]:
+			xmin = 2.4971007546
+			xmax = 5.6838880379
+			text = "hier
+soir
+j'
+ai
+ouvert
+la
+porte
+d'
+entrée
+pour
+laisser
+chort-
+sortir
+le
+chat"
+		intervals [3]:
+			xmin = 5.6838880379
+			xmax = 5.7436026532
+			text = "#"
+		intervals [4]:
+			xmin = 5.7436026532
+			xmax = 8.4605955438
+			text = "la
+nuit
+était
+si
+belle
+que
+je
+suis
+descendu
+dans
+la
+rue
+prendre
+le
+frais"
+		intervals [5]:
+			xmin = 8.4605955438
+			xmax = 9.1450000312
+			text = ""
+		intervals [6]:
+			xmin = 9.1450000312
+			xmax = 11.9485310906
+			text = "j'
+avais
+à
+peine
+fait
+quelque
+pas
+que
+j'
+ai
+entendu
+la
+porte
+claquer
+derrière
+moi"
+		intervals [7]:
+			xmin = 11.9485310906
+			xmax = 12.494
+			text = "#"
+		intervals [8]:
+			xmin = 12.494
+			xmax = 15.036
+			text = "j'
+ai
+réalisé
+tout
+d'
+un
+coup
++
+que
+j'
+étais
+enfermé
+dehors"
+		intervals [9]:
+			xmin = 15.036
+			xmax = 16.602
+			text = "#"
+		intervals [10]:
+			xmin = 16.602
+			xmax = 20.01
+			text = "le
+comble
+c'
+est
+que
+je
+me
+suis
+fait
+arrêter
+alors_que
+j'
+essayais
+de
+forcer
+ma
+propre
+porte"
+		intervals [11]:
+			xmin = 20.01
+			xmax = 21.3471
+			text = "#"
+	item [2]:
+		class = "IntervalTier"
+		name = "Tokens-Std"
+		xmin = 0.0
+		xmax = 21.3471
+		intervals: size = 11
+		intervals [1]:
+			xmin = 0.0
+			xmax = 2.4971007546
+			text = "#"
+		intervals [2]:
+			xmin = 2.4971007546
+			xmax = 5.6838880379
+			text = "hier
+soir
+j'
+ai
+ouvert
+la
+porte
+d'
+entrée
+pour
+laisser
+chort-
+sortir
+le
+chat"
+		intervals [3]:
+			xmin = 5.6838880379
+			xmax = 5.7436026532
+			text = "#"
+		intervals [4]:
+			xmin = 5.7436026532
+			xmax = 8.4605955438
+			text = "la
+nuit
+était
+si
+belle
+que
+je
+suis
+descendu
+dans
+la
+rue
+prendre
+le
+frais"
+		intervals [5]:
+			xmin = 8.4605955438
+			xmax = 9.1450000312
+			text = ""
+		intervals [6]:
+			xmin = 9.1450000312
+			xmax = 11.9485310906
+			text = "j'
+avais
+à
+peine
+fait
+quelque
+pas
+que
+j'
+ai
+entendu
+la
+porte
+claquer
+derrière
+moi"
+		intervals [7]:
+			xmin = 11.9485310906
+			xmax = 12.494
+			text = "#"
+		intervals [8]:
+			xmin = 12.494
+			xmax = 15.036
+			text = "j'
+ai
+réalisé
+tout
+d'
+un
+coup
++
+que
+j'
+étais
+enfermé
+dehors"
+		intervals [9]:
+			xmin = 15.036
+			xmax = 16.602
+			text = "#"
+		intervals [10]:
+			xmin = 16.602
+			xmax = 20.01
+			text = "le
+comble
+c'
+est
+que
+je
+me
+suis
+fait
+arrêter
+alors_que
+j'
+essayais
+de
+forcer
+ma
+propre
+porte"
+		intervals [11]:
+			xmin = 20.01
+			xmax = 21.3471
+			text = "#"
+	item [3]:
+		class = "IntervalTier"
+		name = "OccTokens"
+		xmin = 0.0
+		xmax = 21.3471
+		intervals: size = 11
+		intervals [1]:
+			xmin = 0.0
+			xmax = 2.4971007546
+			text = "1"
+		intervals [2]:
+			xmin = 2.4971007546
+			xmax = 5.6838880379
+			text = "15"
+		intervals [3]:
+			xmin = 5.6838880379
+			xmax = 5.7436026532
+			text = "1"
+		intervals [4]:
+			xmin = 5.7436026532
+			xmax = 8.4605955438
+			text = "15"
+		intervals [5]:
+			xmin = 8.4605955438
+			xmax = 9.1450000312
+			text = "0"
+		intervals [6]:
+			xmin = 9.1450000312
+			xmax = 11.9485310906
+			text = "16"
+		intervals [7]:
+			xmin = 11.9485310906
+			xmax = 12.494
+			text = "1"
+		intervals [8]:
+			xmin = 12.494
+			xmax = 15.036
+			text = "13"
+		intervals [9]:
+			xmin = 15.036
+			xmax = 16.602
+			text = "1"
+		intervals [10]:
+			xmin = 16.602
+			xmax = 20.01
+			text = "18"
+		intervals [11]:
+			xmin = 20.01
+			xmax = 21.3471
+			text = "1"
+	item [4]:
+		class = "IntervalTier"
+		name = "DurTokens"
+		xmin = 0.0
+		xmax = 21.3471
+		intervals: size = 11
+		intervals [1]:
+			xmin = 0.0
+			xmax = 2.4971007546
+			text = "2.4971"
+		intervals [2]:
+			xmin = 2.4971007546
+			xmax = 5.6838880379
+			text = "3.1868"
+		intervals [3]:
+			xmin = 5.6838880379
+			xmax = 5.7436026532
+			text = "0.0597"
+		intervals [4]:
+			xmin = 5.7436026532
+			xmax = 8.4605955438
+			text = "2.717"
+		intervals [5]:
+			xmin = 8.4605955438
+			xmax = 9.1450000312
+			text = "0.6844"
+		intervals [6]:
+			xmin = 9.1450000312
+			xmax = 11.9485310906
+			text = "2.8035"
+		intervals [7]:
+			xmin = 11.9485310906
+			xmax = 12.494
+			text = "0.5455"
+		intervals [8]:
+			xmin = 12.494
+			xmax = 15.036
+			text = "2.542"
+		intervals [9]:
+			xmin = 15.036
+			xmax = 16.602
+			text = "1.566"
+		intervals [10]:
+			xmin = 16.602
+			xmax = 20.01
+			text = "3.408"
+		intervals [11]:
+			xmin = 20.01
+			xmax = 21.3471
+			text = "1.3371"

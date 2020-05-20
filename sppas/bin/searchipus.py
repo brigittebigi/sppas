@@ -50,12 +50,16 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas import sg, annots
-from sppas import sppasSearchIPUs
-from sppas.src.anndata.aio import extensions_out
-from sppas import sppasParam
-from sppas import sppasAnnotationsManager
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
+
+from sppas.src.annotations import sppasSearchIPUs
+from sppas.src.anndata.aio import extensions_out
+from sppas.src.annotations import sppasParam
+from sppas.src.annotations import sppasAnnotationsManager
+
+# ---------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
 

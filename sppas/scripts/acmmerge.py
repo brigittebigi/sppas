@@ -36,6 +36,7 @@
     ... a script to merge 2 hmmdefs files.
 
 """
+
 import sys
 import os.path
 from argparse import ArgumentParser
@@ -45,6 +46,7 @@ SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas.src.models.acm.acmodelhtkio import sppasHtkIO
+
 
 # ----------------------------------------------------------------------------
 # Verify and extract args:

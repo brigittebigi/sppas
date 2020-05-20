@@ -257,9 +257,9 @@ class sppasDrawWindow(wx.Window):
 
         """
         wx.Window.SetForegroundColour(self, colour)
-        pc = self.GetPenForegroundColour()
 
         # If the border color wasn't changed by the user
+        pc = self.GetPenForegroundColour()
         if self._border_color == self._default_border_color:
             self._border_color = pc
 
@@ -840,12 +840,13 @@ class sppasDrawWindow(wx.Window):
         font = self.GetFont()
         gc.SetFont(font)
         dc.SetFont(font)
-        if wx.Platform == '__WXGTK__':
-            dc.SetTextForeground(self.GetPenForegroundColour())
-            dc.DrawText(label, x, y)
-        else:
-            gc.SetTextForeground(self.GetPenForegroundColour())
-            gc.DrawText(label, x, y)
+        color = self.GetPenForegroundColour()
+        #if wx.Platform == '__WXGTK__':
+        dc.SetTextForeground(color)
+        dc.DrawText(label, x, y)
+        #else:
+        #    gc.SetTextForeground(color)
+        #    gc.DrawText(label, x, y)
 
 # ----------------------------------------------------------------------------
 
@@ -913,9 +914,9 @@ class sppasBaseWindow(sppasDrawWindow):
 
         """
         super(sppasBaseWindow, self).SetForegroundColour(colour)
-        pc = self.GetPenForegroundColour()
 
         # If the focus color wasn't changed by the user
+        pc = self.GetPenForegroundColour()
         if self._focus_color == self._default_focus_color:
             self._focus_color = pc
 
@@ -946,7 +947,7 @@ class sppasBaseWindow(sppasDrawWindow):
     # ----------------------------------------------------------------------
 
     def Enable(self, enable=True):
-        """Enable or disable the window.
+        """Overridden. Enable or disable the window.
 
         :param enable: (bool) True to enable the window.
 

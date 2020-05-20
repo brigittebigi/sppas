@@ -37,7 +37,7 @@
 import wx
 import logging
 
-from sppas.src.ui.cfg import sppasAppConfig
+from sppas import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 import sppas.src.ui.phoenix.panels.option as option
@@ -64,7 +64,9 @@ class TestPanel(wx.Choicebook):
         self.AddPage(tiers.TestPanel(self), "Tiers edit window")
         self.AddPage(tierlist.TestPanel(self), "Tierctrl list")
         self.AddPage(ann.TestPanel(self), "Annotation edit panel")
-        self.AddPage(option.TestPanel(self), "Configure options panel")
+
+        op = option.TestPanel(self)
+        self.AddPage(op, op.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)

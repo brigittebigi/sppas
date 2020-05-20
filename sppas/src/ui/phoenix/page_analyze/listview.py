@@ -47,7 +47,7 @@ from sppas import paths
 import sppas.src.audiodata.aio
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
-from sppas.src.anndata.aio.basetrs import sppasBaseIO
+from sppas.src.anndata.aio.basetrsio import sppasBaseIO
 from sppas.src.anndata.anndataexc import TrsAddError
 from sppas.src.analysis.tierfilters import SingleFilterTier
 from sppas.src.analysis.tierfilters import RelationFilterTier
@@ -58,7 +58,7 @@ from sppas.src.anndata import sppasHierarchy
 from sppas.src.anndata import sppasCtrlVocab
 from sppas.src.anndata import sppasMetaData
 
-from ..dialogs import AudioRoamer
+from ..views import AudioRoamer
 from ..windows.listctrl import CheckListCtrl, sppasListCtrl
 from ..windows.text import sppasStaticText, sppasTextCtrl
 from ..windows.panel import sppasPanel
@@ -669,7 +669,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         Add the appropriate metadata.
         The tiers, medias and controlled vocab lists are collapsed if empty.
 
-        :raises: AioFileExtensionError
+        :raises: IOExtensionException
 
         """
         parser = sppasRW(self._filename)
@@ -1061,7 +1061,7 @@ class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def _create_content(self):
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER  # | wx.LC_SINGLE_SEL
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_HRULES  # | wx.LC_SINGLE_SEL
         lst = CheckListCtrl(self, style=style, name="listctrl")
         lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
         self.SetPane(lst)
@@ -1167,7 +1167,7 @@ class CtrlVocabCollapsiblePanel(BaseObjectCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def _create_content(self):
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER  # | wx.LC_SINGLE_SEL
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_HRULES  # | wx.LC_SINGLE_SEL
         lst = sppasListCtrl(self, style=style, name="listctrl")
         lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
         self.SetPane(lst)
@@ -1227,7 +1227,7 @@ class MediaCollapsiblePanel(BaseObjectCollapsiblePanel):
     # ------------------------------------------------------------------------
 
     def _create_content(self):
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER  # | wx.LC_SINGLE_SEL
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_HRULES   # | wx.LC_SINGLE_SEL
         lst = sppasListCtrl(self, style=style, name="listctrl")
         lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
         self.SetPane(lst)

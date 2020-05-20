@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.wxgui.dialogs.basedialogs.py
+    src.wxgui.views.basedialogs.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     :author:       Brigitte Bigi
@@ -37,7 +37,7 @@
     :contact:      develop@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2017  Brigitte Bigi
-    :summary:      This is a base class for dialogs.
+    :summary:      This is a base class for views.
 
 """
 import wx
@@ -60,7 +60,7 @@ class spBaseDialog(wx.Dialog):
     :contact:      develop@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2016  Brigitte Bigi
-    :summary:      Base class for dialogs in SPPAS.
+    :summary:      Base class for views in SPPAS.
 
     """
     def __init__(self, parent, preferences=None, title=""):

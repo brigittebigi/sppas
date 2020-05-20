@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='utf-8'?>
+<WorkspaceDataSet xmlns="http://tempuri.org/WorkspaceDataSet.xsd">
+	<WorkspaceItem>
+		<Id>cf691167-5a25-41f7-9a59-7582b5cc4ab8</Id>
+		<IdGroup>00000000-0000-0000-0000-000000000000</IdGroup>
+		<Name>annprowkp.ant</Name>
+		<OpenCount>1</OpenCount>
+		<EditCount>7</EditCount>
+		<ListenCount>0</ListenCount>
+		<Accepted>false</Accepted>
+	</WorkspaceItem>
+
+	<WorkspaceItem>
+		<Id>b8146ac1-bd98-41d2-872f-cf2e85c8d538</Id>
+		<IdGroup>00000000-0000-0000-0000-000000000000</IdGroup>
+		<Name>annprowkp1.ant</Name>
+		<OpenCount>2</OpenCount>
+		<EditCount>86</EditCount>
+		<ListenCount>9</ListenCount>
+		<Accepted>false</Accepted>
+	</WorkspaceItem>
+
+	<WorkspaceItem>
+		<Id>0</Id>
+		<IdGroup>0</IdGroup>
+		<Name>/home/laurent/Documents/stage/sppas/samples/samples-pol/0001.txt</Name>
+		<OpenCount>0</OpenCount>
+		<EditCount>0</EditCount>
+		<ListenCount>0</ListenCount>
+		<Accepted>false</Accepted>
+	</WorkspaceItem>
+</WorkspaceDataSet>
+

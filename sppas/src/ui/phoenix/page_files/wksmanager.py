@@ -40,9 +40,11 @@ import wx.lib.newevent
 from sppas import sppasTypeError
 from sppas.src.config import msg
 from sppas.src.utils import u
-from sppas.src.files.filedata import FileData
-from sppas.src.files.filebase import States
-from sppas.src.ui import sppasWorkspaces
+from sppas.src.wkps.sppasWorkspace import sppasWorkspace
+from sppas.src.wkps.filebase import States
+from sppas.src.wkps.sppasWkps import sppasWkps
+from sppas.src.wkps.wio import WkpFormatProperty, sppasWkpRW
+
 
 from ..windows import Confirm, Error
 from ..windows import sppasTextEntryDialog
@@ -133,7 +135,7 @@ class WorkspacesManager(sppasPanel):
             name=name)
 
         # The data this page is working on
-        self.__data = FileData()
+        self.__data = sppasWorkspace()
 
         # Construct the panel
         self._create_content()
@@ -155,11 +157,11 @@ class WorkspacesManager(sppasPanel):
     def set_data(self, data):
         """Assign new data to this panel.
 
-        :param data: (FileData)
+        :param data: (sppasWorkspace)
 
         """
-        if isinstance(data, FileData) is False:
-            raise sppasTypeError("FileData", type(data))
+        if isinstance(data, sppasWorkspace) is False:
+            raise sppasTypeError("sppasWorkspace", type(data))
 
         self.__data = data
 
@@ -272,9 +274,7 @@ class WorkspacesManager(sppasPanel):
             return
 
         # Save the currently displayed data (they correspond to the previous wkp)
-        if (event.from_wkp == 0 and self.__data.is_empty() is False) or \
-                self.__data.get_state() != States().UNUSED:
-
+        if event.from_wkp == 0 and self.__data.is_empty() is False:
             # User must confirm to really switch
             response = Confirm(WKP_MSG_CONFIRM, WKP_MSG_CONFIRM_SWITCH)
             if response == wx.ID_CANCEL:
@@ -302,7 +302,6 @@ class WorkspacesManager(sppasPanel):
             # Load the data of the workspace from its file
             d = wkpslist.load_data()
             self.__data = d
-            self.__data.set_state(States().UNUSED)
             # the parent has to be informed of this change of content
             self.notify()
 
@@ -351,7 +350,16 @@ class WorkspacesManager(sppasPanel):
         # get the name of the file to be imported
         dlg = sppasFileDialog(self, title=WKP_ACT_IMPORT,
                               style=wx.FC_OPEN | wx.FC_NOSHOWHIDDEN)
-        dlg.SetWildcard(WKP + " (*.wjson)|*.wjson")
+        wildcard = list()
+        extensions = list()
+        for e in sppasWkpRW.extensions():
+            f = WkpFormatProperty(e)
+            if f.get_reader() is True:
+                wildcard.append(f.get_software() + " " + WKP + " (" + e + ")|*." + e)
+                extensions.append(e)
+        dlg.SetWildcard("|".join(wildcard))
+        # dlg.SetWildcard(WKP + " (*.wjson)|*.wjson")
+
         if dlg.ShowModal() == wx.ID_OK:
             # Get the selected file name
             pathname = dlg.GetPath()
@@ -377,7 +385,16 @@ class WorkspacesManager(sppasPanel):
         # get the name of the file to be exported to
         with sppasFileDialog(self, title=WKP_ACT_EXPORT,
                              style=wx.FD_SAVE) as dlg:
-            dlg.SetWildcard(WKP + " (*.wjson)|*.wjson")
+            wildcard = list()
+            extensions = list()
+            for e in sppasWkpRW.extensions():
+                f = WkpFormatProperty(e)
+                if f.get_writer() is True:
+                    wildcard.append(f.get_software() + " " + WKP + " (" + e + ")|*." + e)
+                    extensions.append(e)
+            dlg.SetWildcard("|".join(wildcard))
+            # dlg.SetWildcard(WKP + " (*.wjson)|*.wjson")
+
             if dlg.ShowModal() == wx.ID_CANCEL:
                 return
             pathname = dlg.GetPath()
@@ -406,7 +423,7 @@ class WorkspacesManager(sppasPanel):
         wkps = self.FindWindow("wkpslist")
         if wkps.get_wkp_current_index() == 0:
             dlg = sppasTextEntryDialog(
-                self, WKP_MSG_ASK_NAME, caption=WKP_ACT_SAVE, value="Corpus")
+                WKP_MSG_ASK_NAME, caption=WKP_ACT_SAVE, value="Corpus")
             if dlg.ShowModal() == wx.ID_CANCEL:
                 return
             wkp_name = dlg.GetValue()
@@ -422,7 +439,6 @@ class WorkspacesManager(sppasPanel):
             wkp_name = wkps.get_wkp_name()
 
         try:
-            self.__data.set_state(States().UNUSED)
             wkps.save(self.__data)
             self.notify()
         except Exception as e:
@@ -437,7 +453,7 @@ class WorkspacesManager(sppasPanel):
         """
         current_name = self.FindWindow("wkpslist").get_wkp_name()
         dlg = sppasTextEntryDialog(
-            self, WKP_MSG_ASK_NAME, caption=WKP_ACT_RENAME, value=current_name)
+            WKP_MSG_ASK_NAME, caption=WKP_ACT_RENAME, value=current_name)
         if dlg.ShowModal() == wx.ID_CANCEL:
             return
         new_name = dlg.GetValue()
@@ -479,7 +495,7 @@ class WorkspacesPanel(sppasPanel):
             style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
-        self.__wkps = sppasWorkspaces()
+        self.__wkps = sppasWkps()
         self.__current = 0
 
         self._create_content()
@@ -494,10 +510,10 @@ class WorkspacesPanel(sppasPanel):
         """Return the data saved in the current workspace.
 
         If the file of the workspace does not exists, return an empty
-        instance of FileData.
+        instance of sppasWorkspace.
 
         :param index: (int) Index of the workspace to get data
-        :returns: (FileData)
+        :returns: (sppasWorkspace)
         :raises: IndexError
 
         """
@@ -562,7 +578,8 @@ class WorkspacesPanel(sppasPanel):
         :param new_name: (str) Name of the new workspace.
 
         """
-        wkp_name = self.__wkps.new(new_name)
+        self.__wkps.new(new_name)
+        wkp_name = new_name
         index = self.__append_wkp(wkp_name)
         self.switch_to(index)
         self.Layout()
@@ -623,13 +640,14 @@ class WorkspacesPanel(sppasPanel):
     def save(self, data, index=None):
         """Save the given data to the active workspace or to the given one.
 
-        :param data: (FileData)
+        :param data: (sppasWorkspace)
         :param index: (int) Save data to the workspace with this index
         :raises: IndexError, IOError
 
         """
         if index is None:
             index = self.__current
+
         self.__wkps.save_data(data, index)
 
     # -----------------------------------------------------------------------

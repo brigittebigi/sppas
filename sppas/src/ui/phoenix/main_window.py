@@ -36,7 +36,7 @@
 
 import wx
 
-from sppas.src.config import sg
+from sppas.src.config import sg, sppasAppConfig
 from sppas.src.config import msg
 from sppas.src.utils import u
 
@@ -55,8 +55,8 @@ from .page_convert import sppasConvertPanel
 from .page_plugins import sppasPluginsPanel
 
 from .windows import YesNoQuestion
-from .dialogs import About
-from .dialogs import Settings
+from .views import About
+from .views import Settings
 from .main_log import sppasLogWindow
 from .main_events import DataChangedEvent, EVT_DATA_CHANGED
 
@@ -126,7 +126,7 @@ class sppasMainWindow(sppasDialog):
         self._init_infos()
 
         # Create the log window of the application and show it.
-        self.log_window = sppasLogWindow(self, wx.GetApp().get_log_level())
+        self.log_window = sppasLogWindow(self, sppasAppConfig().log_level)
 
         # Fix this frame content
         self._create_content()
@@ -252,7 +252,6 @@ class sppasMainWindow(sppasDialog):
         """
         event_obj = event.GetEventObject()
         event_name = event_obj.GetName()
-        event_id = event_obj.GetId()
 
         if event_name == "exit":
             self.exit()
@@ -279,7 +278,7 @@ class sppasMainWindow(sppasDialog):
 
         Set the data of the event to the other panels.
 
-        :param event: (wx.Event) An event with a FileData()
+        :param event: (wx.Event) An event with a sppasWorkspace()
 
         """
         # The object the event comes from
@@ -309,7 +308,7 @@ class sppasMainWindow(sppasDialog):
         key_code = event.GetKeyCode()
 
         if key_code == wx.WXK_F4 and event.AltDown() and wx.Platform == "__WXMSW__":
-            # ALT+F4 on Windows to exit with confirmation
+            # ALT+F4 on WindowsInstaller to exit with confirmation
             self.on_exit(event)
 
         elif key_code == 87 and event.ControlDown() and wx.Platform != "__WXMSW__":
@@ -377,12 +376,19 @@ class sppasMainWindow(sppasDialog):
 
     def exit(self):
         """Destroy the frame, terminating the application."""
-        # Stop redirecting logging to this application
+        # Stop redirecting logging to this application log window
         self.log_window.redirect_logging(False)
+
         # Terminate all frames
         if wx.Platform == "__WXMSW__":
             self.DestroyChildren()
+
         self.DestroyFadeOut(deltaN=-6)
+
+        # Under Windows, for an unknown reason (?!), the wxapp.OnExit() is not
+        # invoked if exit() is called directly after clicking the Exit button.
+        if wx.Platform == "__WXMSW__":
+            wx.GetApp().OnExit()
 
     # -----------------------------------------------------------------------
 

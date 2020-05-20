@@ -15,7 +15,7 @@ msgstr ""
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Language: en_US\n"
-"X-Generator: Poedit 1.8.11\n"
+"X-Generator: Poedit 2.0.6\n"
 
 msgid ":ERROR 010: "
 msgstr "Expected a positive value. Got {value}."
@@ -46,3 +46,30 @@ msgstr "Invalid key '{!s:s}' for data '{!s:s}'"
 
 msgid ":ERROR 300: "
 msgstr "Invalid value '{!s:s}' for '{!s:s}'."
+
+msgid ":ERROR 500: "
+msgstr "Installation failed with error: {error}"
+
+msgid ":INFO 510: "
+msgstr "Installation of '{name}'"
+
+msgid ":INFO 520: "
+msgstr "'{name}' not available on your OS."
+
+msgid ":INFO 530: "
+msgstr "Install of '{name}' is disabled."
+
+msgid ":INFO 540: "
+msgstr "'{name}' is installed."
+
+msgid ":INFO 550: "
+msgstr "Installation of '{name}' failed"
+
+msgid ":INFO 560: "
+msgstr "Installation finished"
+
+msgid ":INFO 570: "
+msgstr "'{name}' does not match any valid package."
+
+msgid ":INFO 580: "
+msgstr "No system command is processed."

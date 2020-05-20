@@ -43,9 +43,10 @@ from sppas import sppasTypeError
 from sppas import sg
 from sppas.src.config import msg
 from sppas.src.utils import u
-from sppas.src.files import FileData
-from sppas.src.files import States
-from sppas.src.files import sppasFileDataFilters
+from sppas.src.wkps import sppasWorkspace
+from sppas.src.wkps import States
+from sppas.src.wkps import sppasFileDataFilters
+from sppas.src.wkps.wio.wjson import sppasWJSON
 
 from ..windows import Information, Error
 from ..windows import sppasStaticText, sppasTextCtrl
@@ -92,7 +93,7 @@ class AssociatePanel(sppasPanel):
             name=name)
 
         # The data this page is working on
-        self.__data = FileData()
+        self.__data = sppasWorkspace()
 
         # State of the button to check all or none of the filenames
         self._checkall = False
@@ -110,12 +111,13 @@ class AssociatePanel(sppasPanel):
     def set_data(self, data):
         """Assign new data to this panel.
 
-        :param data: (FileData)
+        :param data: (sppasWorkspace)
 
         """
-        if isinstance(data, FileData) is False:
-            raise sppasTypeError("FileData", type(data))
+        if isinstance(data, sppasWorkspace) is False:
+            raise sppasTypeError("sppasWorkspace", type(data))
         self.__data = data
+        wx.LogDebug("Data {} in Associate Panel.".format(data.get_id()))
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -177,7 +179,6 @@ class AssociatePanel(sppasPanel):
     def notify(self):
         """Send the EVT_DATA_CHANGED to the parent."""
         if self.GetParent() is not None:
-            self.__data.set_state(States().CHECKED)
             evt = DataChangedEvent(data=self.__data)
             evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)
@@ -342,6 +343,7 @@ class AssociatePanel(sppasPanel):
 
     def add_links(self):
         """Associate checked filenames with checked references."""
+        wx.LogDebug("Associate checked files with checked references.")
         associed = self.__data.associate()
         if associed > 0:
             self.notify()
