@@ -83,10 +83,16 @@ class Features(object):
     # ------------------------------------------------------------------------
 
     def update_config(self):
-        """Update the active configuration instance with the features."""
+        """Update the active configuration instance with the features.
+
+        Newly enabled features are enabled in the config file, but if a feature
+        was already enabled in the config, it is not changed.
+
+        """
         for f in self.__features:
-            cfg.set_dep(f.get_id(), f.get_enable())
-        # The running application will do it (if desired): cfg.save()
+            enabled = f.get_enable()
+            if enabled is True:
+                cfg.set_dep(f.get_id(), enabled)
 
     # ------------------------------------------------------------------------
 

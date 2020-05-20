@@ -163,7 +163,7 @@ class TestNum2Text(unittest.TestCase):
     def test_spa(self):
         """... number to letter in Spanish  """
         ret = [self.num_spa.convert(i) for i in range(41)]
-        self.assertEquals(ref_spa, ret)
+        self.assertEqual(ref_spa, ret)
 
         self.assertEqual(u("mil-doscientos-cuarenta-y-uno"),
                          self.num_spa.convert(1241))

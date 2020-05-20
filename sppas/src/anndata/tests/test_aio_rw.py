@@ -45,7 +45,7 @@ import unittest
 import os.path
 import shutil
 
-from sppas.src.files.fileutils import sppasFileUtils
+from sppas.src.wkps.fileutils import sppasFileUtils
 from ..aio.readwrite import sppasRW
 
 # ---------------------------------------------------------------------------
