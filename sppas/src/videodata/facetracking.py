@@ -64,6 +64,12 @@ class FaceTraking(object):
 
     # -----------------------------------------------------------------------
 
+    def apply(self):
+        for face in self.__faces:
+            face.detect_all()
+
+    # -----------------------------------------------------------------------
+
     def get_faces(self):
         """Return a list of FaceDetection objects."""
         return self.__faces

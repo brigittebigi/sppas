@@ -76,19 +76,23 @@ def crop(image, coordinate):
 # ----------------------------------------------------------------------------
 
 
-def surrond_square(image, coordinate):
+def surrond_square(image, coordinate, number):
     """Surround the elements of "image" with squares.
 
     :param image: (numpy.ndarray) The image to be processed.
     :param coordinate: (list) Coordinates object.
+    :param number: (int) value of R and G (the color of the square).
     :returns: An image(numpy.ndarray object).
 
     """
+    number = int(number)
+    if isinstance(number, int) is False:
+        raise TypeError
     if isinstance(coordinate, Coordinates) is False:
         raise TypeError
     cv2.rectangle(image, (coordinate.get_x(), coordinate.get_y()), (coordinate.get_x() +
                           coordinate.get_w(), coordinate.get_y() + coordinate.get_h()),
-                         (0, 0, 255), 2)
+                         (number, number*2, 200), 2)
     return image
 
 

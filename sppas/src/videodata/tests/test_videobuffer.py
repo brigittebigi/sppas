@@ -49,6 +49,35 @@ class TestVideoBuffer(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
+    def test_get_overalp(self):
+        y = self.__vBuffer.get_overlap()
+        self.assertEqual(y, 10)
+
+    # ---------------------------------------------------------------------------
+
+    def test_get_set_size(self):
+        y = self.__vBuffer.get_size()
+        self.assertEqual(y, 100)
+
+        self.__vBuffer.set_size(1000)
+        y = self.__vBuffer.get_size()
+        self.assertEqual(y, 1000)
+
+        self.__vBuffer.set_size(50)
+        y = self.__vBuffer.get_size()
+        self.assertEqual(y, 50)
+
+        with self.assertRaises(TypeError):
+            self.__vBuffer.set_size(["a"])
+
+        with self.assertRaises(ValueError):
+            self.__vBuffer.set_size("a")
+
+        with self.assertRaises(ValueError):
+            self.__vBuffer.set_size(1100)
+
+    # ---------------------------------------------------------------------------
+
     def test_next_append(self):
         with self.assertRaises(ImageError):
             self.__vBuffer._VideoBuffer__next_append(["4", "3", "2", "1"])
@@ -81,18 +110,33 @@ class TestVideoBuffer(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
-    def test_read(self):
+    def test_load_frames(self):
         with self.assertRaises(TypeError):
-            self.__vBuffer.read([1, 2, 3, 4])
+            self.__vBuffer._VideoBuffer__load_frames(["a"])
 
         with self.assertRaises(ValueError):
-            self.__vBuffer.read("aaaaa")
+            self.__vBuffer._VideoBuffer__load_frames("a")
+
+    # ---------------------------------------------------------------------------
+
+    def test_read(self):
+        with self.assertRaises(TypeError):
+            self.__vBuffer.read(begining=[1, 2, 3, 4])
+
+        with self.assertRaises(ValueError):
+            self.__vBuffer.read(begining="aaaaa")
 
         with self.assertRaises(ValueError):
             self.__vBuffer.read(begining=-3)
 
         with self.assertRaises(ValueError):
             self.__vBuffer.read(begining=-3.0)
+
+        with self.assertRaises(TypeError):
+            self.__vBuffer.read(end=[1, 2, 3, 4])
+
+        with self.assertRaises(ValueError):
+            self.__vBuffer.read(end="aaaaa")
 
         with self.assertRaises(ValueError):
             self.__vBuffer.read(end=-3)

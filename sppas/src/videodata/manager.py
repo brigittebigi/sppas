@@ -32,9 +32,9 @@
 
 """
 
-from sppas.src.videodata.videobuffer import VideoBuffer, cv2
+from sppas.src.videodata.videobuffer import VideoBuffer
 from sppas.src.videodata.facetracking import FaceTraking
-from sppas.src.imagedata.coordswriter import sppasImgCoordsWriter
+from sppas.src.videodata.coordswriter import sppasImgCoordsWriter
 
 # ---------------------------------------------------------------------------
 
@@ -50,16 +50,27 @@ class Manager(object):
 
     """
 
-    def __init__(self, csv_value=False, v_value=False, f_value=False,
+    def __init__(self, video, buffer_size, buffer_overlap, csv_value=False, v_value=False, f_value=False,
                  portrait=False, full_square=False, crop=False, crop_resize=False):
         """Create a new Manager instance.
 
+        :param video: (name of video file, image sequence, url or video stream,
+        GStreamer pipeline, IP camera) The video to browse.
+        :param buffer_size: (int) The size of the buffer.
+        :param buffer_overlap: (overlap) The number of values to keep
+        from the previous buffer.
         :param csv_value: (boolean) If is True extract images in csv_files.
         :param v_value: (boolean) If is True extract images in videos.
         :param f_value: (boolean) If is True extract images in folders.
+        :param portrait: (boolean) If is True scale the coordinate
+        to get the portraits from faces.
+        :param full_square: (boolean) If is True draw square around faces.
+        :param crop: (boolean) If is True crop the image with the coordinates.
+        :param crop_resize: (boolean) If is True crop the image with
+        the coordinates and resize the image.
 
         """
-        self.__vBuffer = VideoBuffer("../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4", 20, 0)
+        self.__vBuffer = VideoBuffer(video, buffer_size, buffer_overlap)
         self.__coords_writer = sppasImgCoordsWriter(csv=csv_value, video=v_value, folder=f_value)
         self.__coords_writer.set_portrait(portrait)
         self.__coords_writer.set_square(full_square)
@@ -95,15 +106,13 @@ class Manager(object):
         iterator = self.__vBuffer.__iter__()
         for i in range(0, self.__vBuffer.__len__()):
             self.__fTracker.append(next(iterator))
+        self.__fTracker.apply()
 
     # -----------------------------------------------------------------------
 
     def write(self):
         """Write images in a video writer."""
-        self.__coords_writer.browse_faces(self.__fTracker.get_faces())
+        self.__coords_writer.browse_faces(self.__vBuffer.get_overlap(), self.__fTracker.get_faces())
 
     # -----------------------------------------------------------------------
 
-
-m = Manager(v_value=True, f_value=True, portrait=True, crop_resize=False)
-m.launch_process()

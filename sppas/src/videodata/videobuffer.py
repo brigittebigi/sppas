@@ -79,8 +79,16 @@ class VideoBuffer(object):
         :param video: (mp4, etc...) The video to browse
 
         """
-        # Initialization of size and overlap of the buffer
-        self.__size = size
+        # Initialization of the size
+        self.__size = None
+        self.set_size(size)
+
+        # Initialization of the overlap
+        overlap = int(overlap)
+        if isinstance(overlap, int) is False:
+            raise TypeError
+        if overlap > 200:
+            raise ValueError
         self.__overlap = overlap
 
         # The video capture to use
@@ -98,13 +106,13 @@ class VideoBuffer(object):
     # -----------------------------------------------------------------------
 
     def get_size(self):
-        """Return a list of coordinates objects."""
+        """Return the size of the buffer."""
         return self.__size
 
     # -----------------------------------------------------------------------
 
     def set_size(self, value):
-        """Return a list of coordinates objects.
+        """Set the size of the buffer.
 
         :param value: (int) The new size of the buffer.
 
@@ -115,6 +123,12 @@ class VideoBuffer(object):
         if value > 1000:
             raise ValueError
         self.__size = value
+
+    # -----------------------------------------------------------------------
+
+    def get_overlap(self):
+        """Return the overlap of the buffer."""
+        return self.__overlap
 
     # -----------------------------------------------------------------------
 
@@ -301,6 +315,7 @@ class VideoBuffer(object):
             if frame is None:
                 return False
             images.append(frame)
+
         self.__last_frame = self.__video.get(CAP_PROP_POS_FRAMES)
         cv2.destroyAllWindows()
 
