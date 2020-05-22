@@ -45,7 +45,7 @@ from sppas.src.imagedata.coordinates import Coordinates
 # ---------------------------------------------------------------------------
 
 
-class sppasImgCoordsWriter(object):
+class sppasVideoCoordsWriter(object):
     """Class to write images.
 
     :author:       Florian Hocquet
@@ -55,6 +55,9 @@ class sppasImgCoordsWriter(object):
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
+
+    FRAMING = ["face", "portrait"]
+    MODE = ["full", "crop"]
 
     def __init__(self, csv=False, video=False, folder=False):
         """Create a new sppasImgCoordsWriter instance.
@@ -72,23 +75,25 @@ class sppasImgCoordsWriter(object):
         self.__folder_output = list()
 
         # The dictionary of options
-        self.options = {
-            "output": {"csv": False, "video": False, "folder": False},
-            "framing": {"portrait": False},
-            "mode": {"full_square": False, "crop": False, "crop_resize": False}
-        }
+        self.output = {"csv": False, "video": False, "folder": False}
+
+        self.framing = None
+        self.mode = None
+
+        self.width = None
+        self.height = None
 
         # If csv is True create csv files
         if csv is True:
-            self.options["output"]["csv"] = True
+            self.output["csv"] = True
 
         # If video is True create video writers
         if video is True:
-            self.options["output"]["video"] = True
+            self.output["video"] = True
 
         # If folder is True create folders
         if folder is True:
-            self.options["output"]["folder"] = True
+            self.output["folder"] = True
 
         self.__number = 0
 
@@ -96,145 +101,229 @@ class sppasImgCoordsWriter(object):
 
     def get_csv(self):
         """Return True if the option csv is activate."""
-        return self.options["output"]["csv"]
+        return self.output["csv"]
+
+    # -----------------------------------------------------------------------
+
+    def set_csv(self, value):
+        """Set the value of csv."""
+        value = bool(value)
+        if isinstance(value, bool) is False:
+            raise TypeError
+        self.output["csv"] = value
 
     # -----------------------------------------------------------------------
 
     def get_video(self):
         """Return True if the option video is activate."""
-        return self.options["output"]["video"]
+        return self.output["video"]
+
+    # -----------------------------------------------------------------------
+
+    def set_video(self, value):
+        """Set the value of video."""
+        value = bool(value)
+        if isinstance(value, bool) is False:
+            raise TypeError
+        self.output["video"] = value
 
     # -----------------------------------------------------------------------
 
     def get_folder(self):
         """Return True if the option folder is activate."""
-        return self.options["output"]["folder"]
+        return self.output["folder"]
 
     # -----------------------------------------------------------------------
 
-    def get_portrait(self):
-        """Return True if the option portrait is activate."""
-        return self.options["framing"]["portrait"]
-
-    # -----------------------------------------------------------------------
-
-    def set_portrait(self, value):
-        """Set the value of the option portrait."""
+    def set_folder(self, value):
+        """Set the value of folder."""
         value = bool(value)
         if isinstance(value, bool) is False:
             raise TypeError
-        self.options["framing"]["portrait"] = value
+        self.output["folder"] = value
 
     # -----------------------------------------------------------------------
 
-    def get_square(self):
-        """Return True if the option full_square is activate."""
-        return self.options["mode"]["full_square"]
+    def get_framing(self):
+        """Return the framing."""
+        return self.framing
 
     # -----------------------------------------------------------------------
 
-    def set_square(self, value):
-        """Set the value of the option full_square."""
-        value = bool(value)
-        if isinstance(value, bool) is False:
+    def set_framing(self, value):
+        """Set the framing."""
+        if isinstance(value, str) is False:
             raise TypeError
-        self.options["mode"]["full_square"] = value
-        if value is True:
-            self.set_crop(False)
-            self.set_crop_resize(False)
+        if value not in self.FRAMING:
+            raise IndexError
+        self.framing = value
 
     # -----------------------------------------------------------------------
 
-    def get_crop(self):
-        """Return True if the option crop is activate."""
-        return self.options["mode"]["crop"]
+    def get_mode(self):
+        """Return the mode."""
+        return self.mode
 
     # -----------------------------------------------------------------------
 
-    def set_crop(self, value):
-        """Set the value of the option crop."""
-        value = bool(value)
-        if isinstance(value, bool) is False:
+    def set_mode(self, value):
+        """Set the mode."""
+        if isinstance(value, str) is False:
             raise TypeError
-        self.options["mode"]["crop"] = value
-        if value is True:
-            self.set_square(False)
-            self.set_crop_resize(False)
-            self.options["output"]["video"] = False
+        if value not in self.MODE:
+            raise IndexError
+        self.mode = value
 
     # -----------------------------------------------------------------------
 
-    def get_crop_resize(self):
-        """Return True if the option crop_resize is activate."""
-        return self.options["mode"]["crop_resize"]
+    def get_width(self):
+        """Return the width."""
+        return self.width
 
     # -----------------------------------------------------------------------
 
-    def set_crop_resize(self, value):
-        """Set the value of the option crop_resize."""
-        value = bool(value)
-        if isinstance(value, bool) is False:
+    def set_width(self, value):
+        """Set the width."""
+        if isinstance(value, int) is False:
             raise TypeError
-        self.options["mode"]["crop_resize"] = value
-        if value is True:
-            self.set_crop(False)
-            self.set_square(False)
+        if value < -1 or value > 15360:
+            raise ValueError
+        self.width = value
 
     # -----------------------------------------------------------------------
 
-    def browse_faces(self, overlap, liste):
+    def get_height(self):
+        """Return the width."""
+        return self.height
+
+    # -----------------------------------------------------------------------
+
+    def set_height(self, value):
+        """Set the width."""
+        if isinstance(value, int) is False:
+            raise TypeError
+        if value < -1 or value > 8640:
+            raise ValueError
+        self.height = value
+
+    # -----------------------------------------------------------------------
+
+    def browse_faces(self, overlap, buffer, tracker):
         """Browse the detected faces.
 
         :param overlap: (overlap) The number of values to delete.
-        :param liste: (list) The list of the faces.
+        :param buffer: (VideoBuffer) The buffer which contains images.
+        :param tracker: (FaceTracking) The FaceTracker object.
 
         """
-        # Loop over the detected faces.
-        for faceDetection in liste:
-            if liste.index(faceDetection) < overlap:
+        iterator = buffer.__iter__()
+
+        # Loop over the buffer
+        for i in range(0, buffer.__len__()):
+
+            # Go to the next frame
+            img = next(iterator)
+
+            # If overlap continue
+            if i < overlap:
                 continue
 
-            # Get the Faces
-            coordinates = faceDetection.get_all()
+            # Show the image
+            # cv2.imshow("Image", img)
+            # cv2.waitKey(1) & 0xFF
 
-            # Browse the coordinates which or the result of the FaceDetection
-            self.__browse_coordinates(coordinates, faceDetection)
+            # Loop over the persons
+            for person in tracker.get_persons():
+                index = tracker.get_persons().index(person)
+                image = img
+                if i > len(person) - 1:
+                    continue
+                self.__portrait(person[i])
+                # Use one of the option of extraction
+                image = self.__mode(image, person[i], index)
+                image = self.__resize(image, person[i], index)
+                # Store the width and the height of the image
+                (h, w) = image.shape[:2]
+                # Create the output files
+                self.__create_out(tracker.get_persons(), w, h)
+                # Write the image in csv file, video, folder
+                self.__write(image, index, person[i])
 
-            # Increment the number of images by one
+            # Increment the number of image by 1
             self.__number += 1
 
     # -----------------------------------------------------------------------
 
-    def __browse_coordinates(self, coordinates, face):
-        """Browse the coordinates from the analysis of an image.
+    def __portrait(self, coords):
+        """Transform face coordinates to a portrait coordinates.
 
-        :param coordinates: (list) The list of coordinates.
-        :param face: (numpy.ndarray) The image to be processed.
+        :param coords: (Coordinates) The coordinates of the face.
 
         """
-        # Loop over the coordinates
-        for c in coordinates:
-            # The index of the Coordinate in the list of Coordinates objects.
-            index = coordinates.index(c)
+        if isinstance(coords, Coordinates) is False:
+            raise TypeError
 
-            # Try to transform face coordinate into portrait coordinate
-            self.__portrait(c)
+        if self.framing == "portrait":
+            # Extend the image with a coeff equal to 2.4
+            result = coords.scale(2.4)
 
-            # Use one of the option of extraction
-            image = self.__mode(face.get_image(), c, index)
+            # Reframe the image on the face
+            coords.shift(result, -30)
 
-            # Store the width and the height of the image
-            (h, w) = image.shape[:2]
+    # -----------------------------------------------------------------------
 
-            # Create the output files
-            self.__create_out(coordinates, w, h)
+    def __mode(self, img_buffer, coords, index):
+        """Draw squares, crop, crop and resize.
 
-            # Write the image in csv file, video, folder
-            self.__write(image, index, c)
+        :param img_buffer: (numpy.ndarray) The image to be processed.
+        :param coords: (Coordinates) The coordinates of the face.
+        :param index: (int) The index of the Coordinates object in the list.
 
-            # Show the image
-            # cv2.imshow("Image", image)
-            # cv2.waitKey(1) & 0xFF
+        """
+        index = int(index)
+        if isinstance(index, int) is False:
+            raise TypeError
+        if isinstance(img_buffer, np.ndarray) is False:
+            raise TypeError
+        if isinstance(coords, Coordinates) is False:
+            raise TypeError
+
+        # If full_square option is True, draw a square around the face.
+        if self.mode == "full":
+            number = (index * 80) % 120
+            return surrond_square(img_buffer, coords, number)
+
+        # If crop option is True, crop the face.
+        elif self.mode == "crop":
+            self.set_video(False)
+            return crop(img_buffer, coords)
+
+        # If crop_resize option is True, crop the face and resize the image.
+        # elif self.get_crop_resize() is True:
+        #     new_image = crop(img_buffer, coords)
+        #     new_image = resize(new_image, 640, 480)
+        #     return new_image
+
+    # -----------------------------------------------------------------------
+
+    def __resize(self, img_buffer, coords, index):
+        """Draw squares, crop, crop and resize.
+
+        :param img_buffer: (numpy.ndarray) The image to be processed.
+        :param coords: (Coordinates) The coordinates of the face.
+        :param index: (int) The index of the Coordinates object in the list.
+
+        """
+        index = int(index)
+        if isinstance(index, int) is False:
+            raise TypeError
+        if isinstance(img_buffer, np.ndarray) is False:
+            raise TypeError
+        if isinstance(coords, Coordinates) is False:
+            raise TypeError
+
+        if self.width == -1 and self.height == -1:
+            return img_buffer
 
     # -----------------------------------------------------------------------
 
@@ -257,64 +346,6 @@ class sppasImgCoordsWriter(object):
         # if the option is True create the folder
         if self.get_folder() is True:
             self.__out_folder(len(coords))
-
-    # -----------------------------------------------------------------------
-
-    def __portrait(self, coords):
-        """Transform face coordinates to a portrait coordinates.
-
-        :param coords: (Coordinates) The coordinates of the face.
-
-        """
-        if isinstance(coords, Coordinates) is False:
-            raise TypeError
-
-        if self.get_portrait() is True:
-            # Extend the image with a coeff equal to 2.4
-            result = coords.scale(2.4)
-
-            # Reframe the image on the face
-            coords.shift(result, -30)
-
-    # -----------------------------------------------------------------------
-
-    def __mode(self, img_buffer, coords, index):
-        """Draw squares, crop, crop and resize.
-
-        :param img_buffer: (numpy.ndarray) The image to be processed.
-        :param coords: (Coordinates) The coordinates of the face.
-        :param index: (int) The index of the Coordinates object in the list.
-
-
-        """
-        index = int(index)
-        if isinstance(index, int) is False:
-            raise TypeError
-        if isinstance(img_buffer, np.ndarray) is False:
-            raise TypeError
-        if isinstance(coords, Coordinates) is False:
-            raise TypeError
-
-        # If any option is True, crop the face and resize the image.
-        if self.get_square() is False and self.get_crop() is False and self.get_crop_resize() is False:
-            new_image = crop(img_buffer, coords)
-            new_image = resize(new_image, 640, 480)
-            return new_image
-
-        # If full_square option is True, draw a square around the face.
-        if self.get_square() is True:
-            number = (index * 80) % 120
-            return surrond_square(img_buffer, coords, number)
-
-        # If crop option is True, crop the face.
-        elif self.get_crop() is True:
-            return crop(img_buffer, coords)
-
-        # If crop_resize option is True, crop the face and resize the image.
-        elif self.get_crop_resize() is True:
-            new_image = crop(img_buffer, coords)
-            new_image = resize(new_image, 640, 480)
-            return new_image
 
     # -----------------------------------------------------------------------
 
@@ -384,16 +415,16 @@ class sppasImgCoordsWriter(object):
 
         """
         # If self.__video is True write the image in the good csv file.
-        if self.options["output"]["csv"] is True:
+        if self.output["csv"] is True:
             self.__csv_output[index].writerow(
                 [self.__number, image, coordinate.x, coordinate.y, coordinate.w, coordinate.h])
 
         # If self.__video is True write the image in the good video writer.
-        if self.options["output"]["video"] is True:
+        if self.output["video"] is True:
             self.__video_output[index].write(image)
 
         # If self.__folder is True write the image in the good folder.
-        if self.options["output"]["folder"] is True:
+        if self.output["folder"] is True:
             cv2.imwrite("../../../../../faces_extract/person_" +
                         str(index + 1) + "/image" + str(self.__number) + ".jpg", image)
 

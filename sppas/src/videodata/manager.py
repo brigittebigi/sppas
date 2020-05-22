@@ -32,9 +32,13 @@
 
 """
 
+import time
+from cv2 import error as cv2error
+
+from pympler.asizeof import asizeof
 from sppas.src.videodata.videobuffer import VideoBuffer
-from sppas.src.videodata.facetracking import FaceTraking
-from sppas.src.videodata.coordswriter import sppasImgCoordsWriter
+from sppas.src.videodata.facetracking import FaceTracking
+from sppas.src.videodata.coordswriter import sppasVideoCoordsWriter
 
 # ---------------------------------------------------------------------------
 
@@ -50,8 +54,8 @@ class Manager(object):
 
     """
 
-    def __init__(self, video, buffer_size, buffer_overlap, csv_value=False, v_value=False, f_value=False,
-                 portrait=False, full_square=False, crop=False, crop_resize=False):
+    def __init__(self, video, buffer_size, buffer_overlap,
+                 framing, mode, width=-1, height=-1, csv_value=False, v_value=False, f_value=False):
         """Create a new Manager instance.
 
         :param video: (name of video file, image sequence, url or video stream,
@@ -62,36 +66,36 @@ class Manager(object):
         :param csv_value: (boolean) If is True extract images in csv_files.
         :param v_value: (boolean) If is True extract images in videos.
         :param f_value: (boolean) If is True extract images in folders.
-        :param portrait: (boolean) If is True scale the coordinate
+        :param framing: (boolean) If is True scale the coordinate
         to get the portraits from faces.
-        :param full_square: (boolean) If is True draw square around faces.
-        :param crop: (boolean) If is True crop the image with the coordinates.
-        :param crop_resize: (boolean) If is True crop the image with
+        :param mode: (boolean) If is True draw square around faces.
         the coordinates and resize the image.
 
         """
         self.__vBuffer = VideoBuffer(video, buffer_size, buffer_overlap)
-        self.__coords_writer = sppasImgCoordsWriter(csv=csv_value, video=v_value, folder=f_value)
-        self.__coords_writer.set_portrait(portrait)
-        self.__coords_writer.set_square(full_square)
-        self.__coords_writer.set_crop(crop)
-        self.__coords_writer.set_crop_resize(crop_resize)
+        self.__coords_writer = sppasVideoCoordsWriter(csv=csv_value, video=v_value, folder=f_value)
+        self.__coords_writer.set_framing(framing)
+        self.__coords_writer.set_mode(mode)
+        self.__coords_writer.set_width(width)
+        self.__coords_writer.set_height(height)
 
     # -----------------------------------------------------------------------
 
     def launch_process(self):
         """Returns all the faces coordinates in a list"""
         # Loop over the video
+        start_time = time.time()
+        print("Starting")
         while True:
             # Store the result of VideoBuffer.next()
             result = self.__vBuffer.next()
 
             # If it's the end of the video break the loop
             if result is False:
+                print("--- %s seconds ---" % (time.time() - start_time))
                 return False
-
             # Create the faceTracker
-            self.__fTracker = FaceTraking()
+            self.__fTracker = FaceTracking()
 
             # Initialize the list of FaceDetection objects in the faceTracker
             self.init_faces()
@@ -103,16 +107,20 @@ class Manager(object):
 
     def init_faces(self):
         """Initialize the face_tracker object."""
-        iterator = self.__vBuffer.__iter__()
-        for i in range(0, self.__vBuffer.__len__()):
-            self.__fTracker.append(next(iterator))
-        self.__fTracker.apply()
+        self.__fTracker.persons(self.__vBuffer)
 
     # -----------------------------------------------------------------------
 
     def write(self):
         """Write images in a video writer."""
-        self.__coords_writer.browse_faces(self.__vBuffer.get_overlap(), self.__fTracker.get_faces())
+        self.__coords_writer.browse_faces(self.__vBuffer.get_overlap(), self.__vBuffer, self.__fTracker)
 
     # -----------------------------------------------------------------------
+
+
+# "../../../../../LFPC_test_1.mp4"
+# "../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4"
+manager = Manager("../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4", 100, 0,
+                  "portrait", "crop", width=-1, height=-1, csv_value=True, v_value=True, f_value=True)
+manager.launch_process()
 

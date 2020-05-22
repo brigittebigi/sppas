@@ -32,6 +32,7 @@
 
 """
 
+import numpy as np
 import cv2
 
 from sppas.src.imagedata.coordinates import Coordinates
@@ -68,10 +69,30 @@ def crop(image, coordinate):
     """
     if isinstance(coordinate, Coordinates) is False:
         raise TypeError
-    cropped = image[coordinate.get_y():coordinate.get_y() + coordinate.get_h(),
-                    coordinate.get_x():coordinate.get_x() + coordinate.get_w()]
+    # cv2.imshow("Image", image)
+    # cv2.waitKey(1) & 0xFF
+    x1 = coordinate.x
+    x2 = coordinate.x + coordinate.w
+    y1 = coordinate.y
+    y2 = coordinate.y + coordinate.h
+    # print("x1: ", x1, "x2: ", x2, "y1: ", y1, "y2: ", y2,)
+    # print("width: ", image.shape[1], "height: ", image.shape[0])
+    # if x1 < 0 or y1 < 0 or x2 > image.shape[1] or y2 > image.shape[0]:
+    #     image, x1, x2, y1, y2 = pad_img_to_fit_bbox(image, x1, x2, y1, y2)
+    cropped = image[y1:y2, x1:x2]
     return cropped
 
+# ----------------------------------------------------------------------------
+
+
+def pad_img_to_fit_bbox(img, x1, x2, y1, y2):
+    img = np.pad(img, ((np.abs(np.minimum(0, y1)), np.maximum(y2 - img.shape[0], 0)),
+                       (np.abs(np.minimum(0, x1)), np.maximum(x2 - img.shape[1], 0)), (0, 0)), mode="constant")
+    y1 += np.abs(np.minimum(0, y1))
+    y2 += np.abs(np.minimum(0, y1))
+    x1 += np.abs(np.minimum(0, x1))
+    x2 += np.abs(np.minimum(0, x1))
+    return img, x1, x2, y1, y2
 
 # ----------------------------------------------------------------------------
 
@@ -91,10 +112,10 @@ def surrond_square(image, coordinate, number):
     if isinstance(coordinate, Coordinates) is False:
         raise TypeError
     cv2.rectangle(image, (coordinate.get_x(), coordinate.get_y()), (coordinate.get_x() +
-                          coordinate.get_w(), coordinate.get_y() + coordinate.get_h()),
-                         (number, number*2, 200), 2)
+                                                                    coordinate.get_w(),
+                                                                    coordinate.get_y() + coordinate.get_h()),
+                  (number, number * 2, 200), 2)
     return image
-
 
 # ----------------------------------------------------------------------------
 
@@ -115,4 +136,3 @@ def resize(image, width, height):
         raise ValueError
     image = cv2.resize(image, (width, height), interpolation=cv2.INTER_AREA)
     return image
-

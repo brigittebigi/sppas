@@ -39,7 +39,7 @@ from sppas.src.imagedata.facedetection import FaceDetection, np
 # ---------------------------------------------------------------------------
 
 
-class FaceTraking(object):
+class FaceTracking(object):
     """Class to track a face.
 
     :author:       Florian Hocquet
@@ -53,14 +53,38 @@ class FaceTraking(object):
     def __init__(self):
         """Create a new FaceTraking instance."""
         self.__faces = list()
+        self.__persons = list()
+        self.__size = 0
 
     # -----------------------------------------------------------------------
 
     def append(self, image):
         """Add a FaceDetection object in the list."""
         if isinstance(image, np.ndarray) is False:
-            raise BufferError
+            raise TypeError
         self.__faces.append(FaceDetection(image))
+
+    # -----------------------------------------------------------------------
+
+    def persons(self, buffer):
+        """Add a FaceDetection object in the list."""
+        iterator = buffer.__iter__()
+        for i in range(0, buffer.__len__()):
+            face = FaceDetection(next(iterator))
+            face.detect_all()
+            coordinates = face.get_all()
+            for coord in coordinates:
+                index = coordinates.index(coord)
+                self.__size = len(coordinates)
+                if len(self.__persons) < self.__size:
+                    self.__persons.append(list())
+                self.__persons[index].append(coord)
+
+    # -----------------------------------------------------------------------
+
+    def get_persons(self):
+        """Add a FaceDetection object in the list."""
+        return self.__persons
 
     # -----------------------------------------------------------------------
 
