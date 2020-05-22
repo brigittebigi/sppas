@@ -61,6 +61,7 @@ from ..tier import sppasTier
 
 from ..media import sppasMedia
 from ..ctrlvocab import sppasCtrlVocab
+from ..transcription import sppasTranscription
 
 # ---------------------------------------------------------------------------
 
@@ -734,7 +735,7 @@ class TestTier(unittest.TestCase):
         index = tier.near(sppasPoint(2), direction=0)
         # same distance between both annotations, both should be ok!
         self.assertEqual(index, 0)
-        #self.assertEqual(index, 1)
+        # self.assertEqual(index, 1)
 
         index = tier.near(sppasPoint(2.5), direction=0)
         self.assertEqual(index, 1)
@@ -898,3 +899,47 @@ class TestTier(unittest.TestCase):
 
         intervals = tier.export_to_intervals(separators=list())
         self.assertEqual(0, len(intervals))
+
+    # -----------------------------------------------------------------------
+
+    def test_parent(self):
+        # creating a sppas transcription and adding media and ctrl vocab
+        trs = sppasTranscription()
+        m = sppasMedia("allo.wav")
+        ctrl = sppasCtrlVocab("toto")
+        trs.add_media(m)
+        trs.add_ctrl_vocab(ctrl)
+
+        # sppasTier with the sppasTranscription as a parent
+        tier = sppasTier()
+        tier.set_parent(trs)
+
+        parent = tier.get_parent()
+
+        self.assertEqual(parent.get_media_from_id(m.get_id()), m)
+        self.assertEqual(parent.get_ctrl_vocab_from_name("toto"), ctrl)
+
+    # -----------------------------------------------------------------------
+
+    def test_copy(self):
+        # creating a sppas transcription and adding media and ctrl vocab
+        trs = sppasTranscription()
+        m = sppasMedia("allo.wav")
+        ctrl = sppasCtrlVocab("toto")
+        trs.add_media(m)
+        trs.add_ctrl_vocab(ctrl)
+
+        # sppasTier with the sppasTranscription as a parent
+        tier = sppasTier()
+        tier.set_parent(trs)
+
+        # adding annotations to the tier
+        a0 = sppasAnnotation(sppasLocation(sppasPoint(2.4)))
+        tier.append(a0)
+
+        tier_copy = tier.copy()
+
+        self.assertEqual(tier.get_id(), tier_copy.get_id())
+        self.assertEqual(tier.get_parent(), tier_copy.get_parent())
+        self.assertEqual(tier.get_meta_keys(), tier_copy.get_meta_keys())
+
