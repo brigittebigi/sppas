@@ -42,7 +42,7 @@ from ..aio import open as audio_open
 from ..aio import save as audio_save
 from ..aio import save_fragment as audio_save_fragment
 
-from sppas.src.files.fileutils import sppasFileUtils
+from sppas.src.wkps.fileutils import sppasFileUtils
 
 # ---------------------------------------------------------------------------
 

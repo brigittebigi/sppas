@@ -70,8 +70,8 @@ from wx.lib.buttons import GenBitmapTextButton, GenButton, GenBitmapButton
 
 from ..tools import sppasSwissKnife
 from .image import ColorizeImage
-from .basedraw import sppasBaseWindow
-from .basedraw import WindowState
+from .basewindow import sppasWindow
+from .basewindow import WindowState
 
 # ---------------------------------------------------------------------------
 
@@ -292,7 +292,7 @@ class ToggleButtonEvent(ButtonEvent):
 # ---------------------------------------------------------------------------
 
 
-class BaseButton(sppasBaseWindow):
+class Button(sppasWindow):
     """BaseButton is a custom type of window to represent a button.
 
     :author:       Brigitte Bigi
@@ -320,7 +320,7 @@ class BaseButton(sppasBaseWindow):
         :param name: (str) Name of the button.
 
         """
-        super(BaseButton, self).__init__(
+        super(Button, self).__init__(
             parent, id, pos, size,
             style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
             name=name)
@@ -347,7 +347,7 @@ class BaseButton(sppasBaseWindow):
 # ---------------------------------------------------------------------------
 
 
-class BitmapTextButton(BaseButton):
+class BitmapTextButton(Button):
 
     def __init__(self, parent,
                  id=wx.ID_ANY,
@@ -393,7 +393,7 @@ class BitmapTextButton(BaseButton):
         :param enable: (bool) True to enable the window.
 
         """
-        sppasBaseWindow.Enable(self, enable)
+        sppasWindow.Enable(self, enable)
         self.SetForegroundColour(self.GetForegroundColour())
 
     # -----------------------------------------------------------------------
@@ -414,7 +414,7 @@ class BitmapTextButton(BaseButton):
         :param colour: (wx.Colour)
 
         """
-        BaseButton.SetForegroundColour(self, colour)
+        Button.SetForegroundColour(self, colour)
 
         if self._bitmapcolor == self._default_bitmapcolor:
             self._bitmapcolor = self.GetPenForegroundColour()
@@ -646,7 +646,7 @@ class BitmapTextButton(BaseButton):
 # ---------------------------------------------------------------------------
 
 
-class TextButton(BaseButton):
+class TextButton(Button):
 
     def __init__(self, parent,
                  id=wx.ID_ANY,
@@ -830,7 +830,7 @@ class ToggleButton(BitmapTextButton):
         """
         if self.IsEnabled() is True:
             self._pressed = not self._pressed
-            BaseButton.OnMouseLeftDown(self, event)
+            Button.OnMouseLeftDown(self, event)
 
     # -----------------------------------------------------------------------
 
@@ -896,25 +896,15 @@ class ToggleButton(BitmapTextButton):
         :returns: (wx.Brush)
 
         """
+        bg_color = self.GetBackgroundColour()
+
         if self._pressed is False:
-            if self._bgcolor is None:
-                # Transparent background
-                if wx.Platform == '__WXMAC__':
-                    return wx.TRANSPARENT_BRUSH
-                color = self.GetBackgroundColour()
-                return wx.Brush(color, wx.BRUSHSTYLE_TRANSPARENT)
-            else:
-                return wx.Brush(self._bgcolor, wx.SOLID)
+            return wx.Brush(bg_color, wx.SOLID)
 
         else:
-            if self._bgcolor is None:
-                color = self.GetBackgroundColour()
-            else:
-                color = self._bgcolor
-
-            r = color.Red()
-            g = color.Green()
-            b = color.Blue()
+            r = bg_color.Red()
+            g = bg_color.Green()
+            b = bg_color.Blue()
             if (r + g + b) > 384:
                 color = wx.Colour(r, g, b, 64).ChangeLightness(140)
             else:
@@ -933,7 +923,7 @@ class ToggleButton(BitmapTextButton):
 # ---------------------------------------------------------------------------
 
 
-class BaseCheckButton(BaseButton):
+class BaseCheckButton(Button):
 
     def __init__(self, parent,
                  id=wx.ID_ANY,
@@ -988,7 +978,7 @@ class BaseCheckButton(BaseButton):
         """
         if self.IsEnabled() is True:
             self._pressed = not self._pressed
-            BaseButton.OnMouseLeftDown(self, event)
+            Button.OnMouseLeftDown(self, event)
 
     # -----------------------------------------------------------------------
 
@@ -1276,7 +1266,7 @@ class TestPanelBaseButton(wx.Panel):
         h = 50
         c = 10
         for i in range(1, 6):
-            btn = BaseButton(self, pos=(x, 10), size=(w, h))
+            btn = Button(self, pos=(x, 10), size=(w, h))
             btn.SetBorderWidth(i)
             btn.SetBorderColour(wx.Colour(c, c, c))
             btn.SetBorderStyle(st[i-1])
@@ -1290,7 +1280,7 @@ class TestPanelBaseButton(wx.Panel):
         h = 50
         c = 10
         for i in range(1, 6):
-            btn = BaseButton(self, pos=(x, 70), size=(w, h))
+            btn = Button(self, pos=(x, 70), size=(w, h))
             btn.SetBorderWidth(1)
             btn.SetFocusWidth(i)
             btn.SetFocusColour(wx.Colour(c, c, c))
@@ -1299,7 +1289,7 @@ class TestPanelBaseButton(wx.Panel):
             x += w + 10
             btn.Bind(wx.EVT_BUTTON, self.on_btn_event)
 
-        vertical = BaseButton(self, pos=(560, 10), size=(50, 110))
+        vertical = Button(self, pos=(560, 10), size=(50, 110))
         vertical.SetBackgroundColour(wx.Colour(128, 255, 196))
 
     # -----------------------------------------------------------------------

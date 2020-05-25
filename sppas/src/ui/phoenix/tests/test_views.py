@@ -38,8 +38,8 @@ import os
 import wx
 import logging
 
-from sppas import paths
-from sppas import sppasAppConfig
+from sppas.src.config import paths
+from sppas.src.config import sppasAppConfig
 
 from sppas.src.plugins import sppasPluginsManager
 import sppas.src.audiodata.aio

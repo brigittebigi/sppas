@@ -181,8 +181,8 @@ class sppasStatsViewDialog(sppasDialog):
             choices=[OPT_TAG_BEST, OPT_TAG_ALT],
             majorDimension=0)
         sizera = wx.BoxSizer(wx.VERTICAL)
-        sizera.Add(alt_text, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
-        sizera.Add(withaltbox, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.EXPAND | wx.LEFT | wx.TOP, sppasPanel.fix_size(6))
+        sizera.Add(alt_text, 0, wx.ALIGN_LEFT)
+        sizera.Add(withaltbox, 0, wx.ALIGN_LEFT | wx.EXPAND | wx.LEFT | wx.TOP, sppasPanel.fix_size(6))
 
         radius_text = wx.StaticText(panel, label=OPT_DUR)
         withradiusbox = sppasRadioBoxPanel(
@@ -190,15 +190,15 @@ class sppasStatsViewDialog(sppasDialog):
             choices=[OPT_MIDPOINT_ONLY, OPT_MIDPOINT_RADD, OPT_MIDPOINT_RDEL],
             majorDimension=0)
         sizerr = wx.BoxSizer(wx.VERTICAL)
-        sizerr.Add(radius_text, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
-        sizerr.Add(withradiusbox, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.EXPAND | wx.LEFT | wx.TOP, sppasPanel.fix_size(6))
+        sizerr.Add(radius_text, 0, wx.ALIGN_LEFT)
+        sizerr.Add(withradiusbox, 0, wx.ALIGN_LEFT | wx.EXPAND | wx.LEFT | wx.TOP, sppasPanel.fix_size(6))
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(sizern, 2, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, border=sppasPanel.fix_size(8))
         sizer.AddSpacer(1)
         sizer.Add(sizera, 2, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, border=sppasPanel.fix_size(8))
         sizer.AddSpacer(1)
-        sizer.Add(sizerr, 2, wx.EXPAND | wx.ALIGN_RIGHT | wx.ALL, border=sppasPanel.fix_size(8))
+        sizer.Add(sizerr, 2, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(8))
         panel.SetSizer(sizer)
 
         self.Bind(wx.EVT_COMBOBOX, self._process_ngram, ngrambox)

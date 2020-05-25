@@ -168,7 +168,7 @@ class sppasConvertPanel(sppasScrolledPanel):
         sizer.Add(formats_listctrl, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border*4)
         sizer.Add(opt_force, 0, wx.EXPAND | wx.ALL, border)
         sizer.Add(opt_heuristic, 0, wx.EXPAND | wx.ALL, border)
-        sizer.Add(self.btn_run, 0, wx.ALIGN_CENTRE | wx.ALL, border)
+        sizer.Add(self.btn_run, 0, wx.ALIGN_CENTER | wx.ALL, border)
         sizer.Add(files_listctrl, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border*4)
 
         self.SetSizer(sizer)

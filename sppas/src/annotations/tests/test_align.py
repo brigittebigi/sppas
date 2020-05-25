@@ -49,7 +49,7 @@ from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasAnnotation
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata.aio import sppasXRA
-from sppas.src.files.fileutils import sppasFileUtils
+from sppas.src.wkps.fileutils import sppasFileUtils
 from sppas.src.resources import sppasMapping
 
 from ..annotationsexc import SizeInputsError
@@ -332,7 +332,7 @@ class TestTracksReaderWriter(unittest.TestCase):
         temp = os.path.join(TEMP, "test_split1")
         os.mkdir(temp)
 
-        trks.split_into_tracks(audio, phn_tier, tok_tier, temp)
+        trks.split_into_tracks(audio, phn_tier, tok_tier, None, temp)
         created_files = os.listdir(temp)
         self.assertEqual(22, len(created_files))   # 21 tracks + List
 
@@ -384,7 +384,7 @@ class TestTracksReaderWriter(unittest.TestCase):
         temp = os.path.join(TEMP, "test_split2")
         os.mkdir(temp)
 
-        trks.split_into_tracks(audio, phn_tier, tok_tier, temp)
+        trks.split_into_tracks(audio, phn_tier, tok_tier, None, temp)
         created_files = os.listdir(temp)
         self.assertEqual(22, len(created_files))  # 21 tracks + List
 
@@ -429,12 +429,12 @@ class TestTracksReaderWriter(unittest.TestCase):
         self.assertEqual(12, len(tier_tok))
         self.assertEqual(12, len(tier_pron))
 
-        self.assertEqual("D", aioutils.serialize_labels(tier_phn[1]))
-        self.assertEqual("@", aioutils.serialize_labels(tier_phn[2]))
-        self.assertEqual("f", aioutils.serialize_labels(tier_phn[3]))
-        self.assertEqual("l", aioutils.serialize_labels(tier_phn[4]))
-        self.assertEqual("aI", aioutils.serialize_labels(tier_phn[5]))
-        self.assertEqual("t", aioutils.serialize_labels(tier_phn[6]))
+        self.assertEqual("D", aioutils.serialize_labels(tier_phn[1].get_labels()))
+        self.assertEqual("@", aioutils.serialize_labels(tier_phn[2].get_labels()))
+        self.assertEqual("f", aioutils.serialize_labels(tier_phn[3].get_labels()))
+        self.assertEqual("l", aioutils.serialize_labels(tier_phn[4].get_labels()))
+        self.assertEqual("aI", aioutils.serialize_labels(tier_phn[5].get_labels()))
+        self.assertEqual("t", aioutils.serialize_labels(tier_phn[6].get_labels()))
 
         self.assertEqual("D-@", aioutils.serialize_labels(tier_pron[1]))
         self.assertEqual("f-l-aI-t", aioutils.serialize_labels(tier_pron[2]))
@@ -479,7 +479,7 @@ class TestAlign(unittest.TestCase):
         a = sppasAlign()
         a.load_resources(model)
 
-        tier_phn, tier_tok, tier_pron = a.convert(phn_tier, tok_tier, audio, TEMP)
+        tier_phn, tier_tok, tier_pron = a.convert(phn_tier, tok_tier, None, audio, TEMP)
 
         self.assertEqual(123, len(tier_phn))
         self.assertEqual(39, len(tier_tok))
