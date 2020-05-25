@@ -34,7 +34,7 @@
 
 import numpy as np
 import cv2
-from cv2 import CAP_PROP_POS_FRAMES
+from cv2 import CAP_PROP_POS_FRAMES, CAP_PROP_FPS
 
 from sppas.src.imagedata.coordinates import ImageError
 
@@ -93,6 +93,9 @@ class VideoBuffer(object):
 
         # The video capture to use
         self.__video = None
+
+        # The FPS of the video
+        self.__FPS = None
 
         # List of images
         self.__data = list()
@@ -159,6 +162,15 @@ class VideoBuffer(object):
 
         # Set the begining of the video to the frame 0
         self.__video.set(CAP_PROP_POS_FRAMES, 0)
+
+        # Set the FPS of the video
+        self.__FPS = self.__video.get(CAP_PROP_FPS)
+
+    # -----------------------------------------------------------------------
+
+    def get_fps(self):
+        """Return the FPS of the video."""
+        return self.__FPS
 
     # -----------------------------------------------------------------------
 

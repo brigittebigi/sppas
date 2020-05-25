@@ -34,6 +34,7 @@
 
 import cv2
 from cv2 import VideoWriter_fourcc
+from cv2 import CAP_PROP_FPS
 import numpy as np
 import os
 import csv
@@ -59,9 +60,11 @@ class sppasVideoCoordsWriter(object):
     FRAMING = ["face", "portrait"]
     MODE = ["full", "crop"]
 
-    def __init__(self, csv=False, video=False, folder=False):
+    def __init__(self, path, fps, csv=False, video=False, folder=False):
         """Create a new sppasImgCoordsWriter instance.
 
+        :param path: (str) The path of the video.
+        :param fps: (int) The FPS of the video.
         :param video: (boolean) If is True extract images in csv file.
         :param video: (boolean) If is True extract images in a video.
         :param folder: (boolean) If is True extract images in a folder.
@@ -74,28 +77,55 @@ class sppasVideoCoordsWriter(object):
         # A list of folders
         self.__folder_output = list()
 
+        # The path and the name of the video
+        self.__path, self.video_name = self.__path_video(path)
+
+        # The FPS of the video
+        fps = int(fps)
+        self.__fps = fps
+
         # The dictionary of options
         self.output = {"csv": False, "video": False, "folder": False}
 
-        self.framing = None
-        self.mode = None
+        # The framing you want, face or portrait
+        self.__framing = None
+        # The mode you want, full or crop
+        self.__mode = None
 
-        self.width = None
-        self.height = None
+        # The width you want for your outputs
+        self.__width = None
+        # The height you want for your outputs
+        self.__height = None
 
         # If csv is True create csv files
         if csv is True:
-            self.output["csv"] = True
+            self.set_csv(True)
 
         # If video is True create video writers
         if video is True:
-            self.output["video"] = True
+            self.set_video(True)
 
         # If folder is True create folders
         if folder is True:
-            self.output["folder"] = True
+            self.set_folder(True)
 
+        # The index of the current image
         self.__number = 0
+
+    # -----------------------------------------------------------------------
+
+    def __path_video(self, path):
+        """Return the path and the name of the video.
+
+        :param path: (string) The path of the video.
+
+        """
+        if isinstance(path, str) is False:
+            raise TypeError
+        video_name = path.split("/")
+        video_name = video_name[len(video_name) - 1].split(".")[0]
+        video_path = path.split(video_name)[0]
+        return video_path, video_name
 
     # -----------------------------------------------------------------------
 
@@ -146,39 +176,47 @@ class sppasVideoCoordsWriter(object):
 
     def get_framing(self):
         """Return the framing."""
-        return self.framing
+        return self.__framing
 
     # -----------------------------------------------------------------------
 
     def set_framing(self, value):
-        """Set the framing."""
+        """Set the framing.
+
+        :param value: (str) The framing option to use.
+
+        """
         if isinstance(value, str) is False:
             raise TypeError
         if value not in self.FRAMING:
-            raise IndexError
-        self.framing = value
+            raise ValueError
+        self.__framing = value
 
     # -----------------------------------------------------------------------
 
     def get_mode(self):
         """Return the mode."""
-        return self.mode
+        return self.__mode
 
     # -----------------------------------------------------------------------
 
     def set_mode(self, value):
-        """Set the mode."""
+        """Set the mode.
+
+        :param value: (str) The framing option to use.
+
+        """
         if isinstance(value, str) is False:
             raise TypeError
         if value not in self.MODE:
-            raise IndexError
-        self.mode = value
+            raise ValueError
+        self.__mode = value
 
     # -----------------------------------------------------------------------
 
     def get_width(self):
         """Return the width."""
-        return self.width
+        return self.__width
 
     # -----------------------------------------------------------------------
 
@@ -188,34 +226,35 @@ class sppasVideoCoordsWriter(object):
             raise TypeError
         if value < -1 or value > 15360:
             raise ValueError
-        self.width = value
+        self.__width = value
 
     # -----------------------------------------------------------------------
 
     def get_height(self):
-        """Return the width."""
-        return self.height
+        """Return the height."""
+        return self.__height
 
     # -----------------------------------------------------------------------
 
     def set_height(self, value):
-        """Set the width."""
+        """Set the height."""
         if isinstance(value, int) is False:
             raise TypeError
         if value < -1 or value > 8640:
             raise ValueError
-        self.height = value
+        self.__height = value
 
     # -----------------------------------------------------------------------
 
     def browse_faces(self, overlap, buffer, tracker):
-        """Browse the detected faces.
+        """Browse the buffer and apply modification for each person.
 
-        :param overlap: (overlap) The number of values to delete.
+        :param overlap: (int) The number of values to delete.
         :param buffer: (VideoBuffer) The buffer which contains images.
         :param tracker: (FaceTracking) The FaceTracker object.
 
         """
+        # Initialise the iterator
         iterator = buffer.__iter__()
 
         # Loop over the buffer
@@ -228,10 +267,6 @@ class sppasVideoCoordsWriter(object):
             if i < overlap:
                 continue
 
-            # Show the image
-            # cv2.imshow("Image", img)
-            # cv2.waitKey(1) & 0xFF
-
             # Loop over the persons
             for person in tracker.get_persons():
                 index = tracker.get_persons().index(person)
@@ -239,13 +274,24 @@ class sppasVideoCoordsWriter(object):
                 if i > len(person) - 1:
                     continue
                 self.__portrait(person[i])
-                # Use one of the option of extraction
-                image = self.__mode(image, person[i], index)
-                image = self.__resize(image, person[i], index)
+
+                # If mode != full adjust images
+                if self.__mode != "full":
+                    self.__adjust(image, person[i])
+
+                # Use one of the extraction options
+                image = self.__process(image, person[i], index)
+
+                # If mode != full resize images
+                if self.__mode != "full":
+                    image = self.__resize(image)
+
                 # Store the width and the height of the image
                 (h, w) = image.shape[:2]
+
                 # Create the output files
-                self.__create_out(tracker.get_persons(), w, h)
+                self.__create_out(len(tracker.get_persons()), w, h)
+
                 # Write the image in csv file, video, folder
                 self.__write(image, index, person[i])
 
@@ -263,7 +309,7 @@ class sppasVideoCoordsWriter(object):
         if isinstance(coords, Coordinates) is False:
             raise TypeError
 
-        if self.framing == "portrait":
+        if self.__framing == "portrait":
             # Extend the image with a coeff equal to 2.4
             result = coords.scale(2.4)
 
@@ -272,8 +318,8 @@ class sppasVideoCoordsWriter(object):
 
     # -----------------------------------------------------------------------
 
-    def __mode(self, img_buffer, coords, index):
-        """Draw squares, crop, crop and resize.
+    def __process(self, img_buffer, coords, index):
+        """Draw squares around faces or crop the faces.
 
         :param img_buffer: (numpy.ndarray) The image to be processed.
         :param coords: (Coordinates) The coordinates of the face.
@@ -288,64 +334,127 @@ class sppasVideoCoordsWriter(object):
         if isinstance(coords, Coordinates) is False:
             raise TypeError
 
-        # If full_square option is True, draw a square around the face.
-        if self.mode == "full":
+        # If mode == full, draw a square around the face.
+        if self.__mode == "full":
             number = (index * 80) % 120
             return surrond_square(img_buffer, coords, number)
 
-        # If crop option is True, crop the face.
-        elif self.mode == "crop":
-            self.set_video(False)
+        # If mode == crop, crop the face.
+        elif self.__mode == "crop":
             return crop(img_buffer, coords)
-
-        # If crop_resize option is True, crop the face and resize the image.
-        # elif self.get_crop_resize() is True:
-        #     new_image = crop(img_buffer, coords)
-        #     new_image = resize(new_image, 640, 480)
-        #     return new_image
 
     # -----------------------------------------------------------------------
 
-    def __resize(self, img_buffer, coords, index):
-        """Draw squares, crop, crop and resize.
+    def __adjust(self, img_buffer, coords):
+        """Adjust the coordinates.
 
         :param img_buffer: (numpy.ndarray) The image to be processed.
         :param coords: (Coordinates) The coordinates of the face.
-        :param index: (int) The index of the Coordinates object in the list.
 
         """
-        index = int(index)
-        if isinstance(index, int) is False:
-            raise TypeError
-        if isinstance(img_buffer, np.ndarray) is False:
-            raise TypeError
-        if isinstance(coords, Coordinates) is False:
-            raise TypeError
+        if self.__mode == "crop" and self.__width == -1 and self.__height == -1:
+            self.set_video(False)
 
-        if self.width == -1 and self.height == -1:
-            return img_buffer
+        # If anything has been setted pass
+        if self.__width == -1 and self.__height == -1:
+            pass
+
+        # If only the width has been setted use adjust width
+        if self.__width != -1 and self.__height == -1:
+            self.__adjust_height()
+
+        # If only the height has been setted use adjust height
+        elif self.__width == -1 and self.__height != -1:
+            self.__adjust_width()
+
+        # If both of width and height has been setted
+        if self.__width != -1 and self.__height != -1:
+            self.__adjust_both(coords, img_buffer)
 
     # -----------------------------------------------------------------------
 
-    def __create_out(self, coords, w, h):
+    def __adjust_both(self, coords, img_buffer=None):
+        """Adjust the coordinates with width and height from constructor.
+
+        :param coords: (Coordinates) The coordinates of the face.
+        :param img_buffer: (numpy.ndarray) The image to be processed.
+
+        """
+        coeff = self.__width / self.__height
+        coeff_coords = coords.w / coords.h
+        if coeff != coeff_coords:
+            new_w = int(coords.h * coeff)
+            old_w = coords.w
+            coords.w = new_w
+            shift_x = int((old_w - new_w) / 2)
+            if coords.x + shift_x < 0:
+                shift_x = -coords.x
+            coords.x = coords.x + shift_x
+
+        if img_buffer is not None:
+            (h, w) = img_buffer.shape[:2]
+            if coords.h > h:
+                coords.h = h
+                coords.y = 0
+            if coords.w > w:
+                coords.w = w
+                coords.x = 0
+
+    # -----------------------------------------------------------------------
+
+    def __adjust_width(self):
+        """Adjust the width based on the width from constructor."""
+        if self.__framing == "face":
+            coeff = 0.75
+        else:
+            coeff = 4 / 3
+        self.__width = int(self.__height * coeff)
+
+    # -----------------------------------------------------------------------
+
+    def __adjust_height(self):
+        """Adjust the height based on the width from constructor."""
+        if self.__framing == "face":
+            coeff = 4 / 3
+        else:
+            coeff = 0.75
+        self.__height = int(self.__width * coeff)
+
+    # -----------------------------------------------------------------------
+
+    def __resize(self, img_buffer):
+        """Resize the image with width and height from constructor.
+
+        :param img_buffer: (numpy.ndarray) The image to be processed.
+
+        """
+        if self.__width == -1 and self.__height == -1:
+            return img_buffer
+        else:
+            new_image = resize(img_buffer, self.__width, self.__height)
+            return new_image
+
+    # -----------------------------------------------------------------------
+
+    def __create_out(self, lenght, w, h):
         """Create outputs files and folders for the images.
 
-        :param coords: (list) The list of coordinates.
+        :param lenght: (list) The lenght of the list.
         :param w: (int) The width of the image.
         :param h: (int) The height of the image.
 
         """
         # if the option is True create the csv files
         if self.get_csv() is True:
-            self.__out_csv(len(coords))
+            self.__out_csv(lenght)
 
         # if the option is True create the videos
         if self.get_video() is True:
-            self.__out_video(len(coords), width=w, height=h)
+            self.__out_video(lenght, width=w, height=h)
 
         # if the option is True create the folder
         if self.get_folder() is True:
-            self.__out_folder(len(coords))
+            self.__out_folder(lenght)
 
     # -----------------------------------------------------------------------
 
@@ -359,9 +468,13 @@ class sppasVideoCoordsWriter(object):
         if isinstance(value, int) is False:
             raise TypeError
         for i in range(1, value + 1):
-            path = '../../../../../person_' + str(i) + '.csv'
+
+            # Create the path
+            path = os.path.join(self.__path + self.video_name + '_person_' + str(i) + '.csv')
+
+            # If the csv file does not exist create it
             if os.path.exists(path) is False:
-                file = open('../../../../../person_' + str(i) + '.csv', 'w', newline='')
+                file = open(path, 'w', newline='')
                 writer = csv.writer(file)
                 self.__csv_output.append(writer)
 
@@ -379,10 +492,15 @@ class sppasVideoCoordsWriter(object):
         if isinstance(value, int) is False:
             raise TypeError
         for i in range(1, value + 1):
-            path = os.path.join("../../../../../person_" + str(i) + ".avi")
+
+            # Create the path
+            path = os.path.join(self.__path + self.video_name + '_person_' + str(i) + ".avi")
             if os.path.exists(path) is False:
-                self.__video_output.append(cv2.VideoWriter(path, VideoWriter_fourcc('M', 'J', 'P', 'G'),
-                                                           24, (width, height)))
+                # If the output video does not exist create it
+                self.__video_output.append(cv2.VideoWriter(path, VideoWriter_fourcc(*'MP4V'),
+                                                           self.__fps, (width, height)))
+            if self.__mode == "full":
+                break
 
     # -----------------------------------------------------------------------
 
@@ -395,14 +513,26 @@ class sppasVideoCoordsWriter(object):
         value = int(value)
         if isinstance(value, int) is False:
             raise TypeError
-        main_path = "../../../../../faces_extract/"
+
+        # Create the path of the main folder
+        main_path = self.__path + "faces/"
+
+        # If the main folder does not exist create it
         if os.path.exists(main_path) is False:
             os.mkdir(main_path)
         for i in range(1, value + 1):
-            path = "../../../../../faces_extract/person_" + str(i)
+
+            # Create the path of a folder
+            path = main_path + "_person_" + str(i) + "/"
+
+            # If the folder does not exist create it
             if os.path.exists(path) is False:
                 os.mkdir(path)
-                self.__folder_output.append("../../../../../faces_extract/person_" + str(i) + "/")
+                self.__folder_output.append(path)
+
+            # If mode equal full create only one output
+            if self.__mode == "full":
+                break
 
     # -----------------------------------------------------------------------
 
@@ -414,19 +544,29 @@ class sppasVideoCoordsWriter(object):
         :param coordinate: (Coordinates) The Coordinates object.
 
         """
-        # If self.__video is True write the image in the good csv file.
+        # If csv option is True write the image in the good csv file.
         if self.output["csv"] is True:
             self.__csv_output[index].writerow(
                 [self.__number, image, coordinate.x, coordinate.y, coordinate.w, coordinate.h])
 
-        # If self.__video is True write the image in the good video writer.
+        # If the video option is True write the image in the good video writer.
         if self.output["video"] is True:
-            self.__video_output[index].write(image)
 
-        # If self.__folder is True write the image in the good folder.
+            # If mode equal full create only one output video
+            if self.__mode == "full":
+                index = 0
+                self.__video_output[index].write(image)
+            else:
+                self.__video_output[index].write(image)
+
+        # If the folder option is True write the image in the good folder.
         if self.output["folder"] is True:
-            cv2.imwrite("../../../../../faces_extract/person_" +
-                        str(index + 1) + "/image" + str(self.__number) + ".jpg", image)
+
+            # If mode equal full create only one output folder
+            if self.__mode == "full":
+                index = 0
+                cv2.imwrite(self.__folder_output[index] + "image" + str(self.__number) + ".jpg", image)
+            else:
+                cv2.imwrite(self.__folder_output[index] + "image" + str(self.__number) + ".jpg", image)
 
     # -----------------------------------------------------------------------
-

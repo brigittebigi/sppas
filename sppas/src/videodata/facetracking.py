@@ -50,24 +50,16 @@ class FaceTracking(object):
 
     """
 
-    def __init__(self):
+    def __init__(self, nb_person):
         """Create a new FaceTraking instance."""
-        self.__faces = list()
+        self.__nb_person = nb_person
         self.__persons = list()
         self.__size = 0
 
     # -----------------------------------------------------------------------
 
-    def append(self, image):
-        """Add a FaceDetection object in the list."""
-        if isinstance(image, np.ndarray) is False:
-            raise TypeError
-        self.__faces.append(FaceDetection(image))
-
-    # -----------------------------------------------------------------------
-
-    def persons(self, buffer):
-        """Add a FaceDetection object in the list."""
+    def person(self, buffer):
+        """Create a list for each person."""
         iterator = buffer.__iter__()
         for i in range(0, buffer.__len__()):
             face = FaceDetection(next(iterator))
@@ -75,7 +67,12 @@ class FaceTracking(object):
             coordinates = face.get_all()
             for coord in coordinates:
                 index = coordinates.index(coord)
+                if self.__nb_person != 0:
+                    if index >= self.__nb_person:
+                        break
                 self.__size = len(coordinates)
+                if self.__size > self.__nb_person:
+                    self.__size = self.__nb_person
                 if len(self.__persons) < self.__size:
                     self.__persons.append(list())
                 self.__persons[index].append(coord)
@@ -83,20 +80,7 @@ class FaceTracking(object):
     # -----------------------------------------------------------------------
 
     def get_persons(self):
-        """Add a FaceDetection object in the list."""
+        """Return a list of persons."""
         return self.__persons
-
-    # -----------------------------------------------------------------------
-
-    def apply(self):
-        for face in self.__faces:
-            face.detect_all()
-
-    # -----------------------------------------------------------------------
-
-    def get_faces(self):
-        """Return a list of FaceDetection objects."""
-        return self.__faces
-
     # -----------------------------------------------------------------------
 

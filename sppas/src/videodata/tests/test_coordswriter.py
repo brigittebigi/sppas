@@ -36,9 +36,10 @@
 import unittest
 import numpy as np
 
-from sppas.src.videodata.coordswriter import sppasImgCoordsWriter
+from sppas.src.imagedata.coordinates import Coordinates
+from sppas.src.videodata.coordswriter import sppasVideoCoordsWriter
 from sppas.src.videodata.videobuffer import VideoBuffer
-from sppas.src.videodata.facetracking import FaceTraking
+from sppas.src.videodata.facetracking import FaceTracking
 
 # ---------------------------------------------------------------------------
 
@@ -46,13 +47,35 @@ from sppas.src.videodata.facetracking import FaceTraking
 class TestVideoBuffer(unittest.TestCase):
 
     def setUp(self):
-        self.__fTracker = FaceTraking()
-        self.__vBuffer = VideoBuffer("../../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4", 20, 0)
-        self.__cw = sppasImgCoordsWriter(csv=True, video=True, folder=True)
+        self.__fTracker = FaceTracking(4)
+        self.path = "../../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4"
+        self.image = "../../../../../rooster.jpg"
+        self.__vBuffer = VideoBuffer(self.path, 20, 0)
+        self.__cw = sppasVideoCoordsWriter(self.path, 25,
+                                           csv=True, video=True, folder=True)
 
     # ---------------------------------------------------------------------------
 
-    def test_get_csv(self):
+    def test_path(self):
+        x, y = self.__cw._sppasVideoCoordsWriter__path_video(self.path)
+        self.assertEqual(x, "../../../../../corpus/Test_01_Celia_Brigitte/")
+        self.assertEqual(y, "montage_compressed")
+
+    # ---------------------------------------------------------------------------
+
+    def test_get_set_csv(self):
+        y = self.__cw.get_csv()
+        self.assertEqual(y, True)
+
+        self.__cw.set_csv(False)
+        y = self.__cw.get_csv()
+        self.assertEqual(y, False)
+
+        self.__cw.set_csv("")
+        y = self.__cw.get_csv()
+        self.assertEqual(y, False)
+
+        self.__cw.set_csv(2)
         y = self.__cw.get_csv()
         self.assertEqual(y, True)
 
@@ -62,184 +85,242 @@ class TestVideoBuffer(unittest.TestCase):
         y = self.__cw.get_video()
         self.assertEqual(y, True)
 
+        self.__cw.set_video(False)
+        y = self.__cw.get_video()
+        self.assertEqual(y, False)
+
+        self.__cw.set_video("")
+        y = self.__cw.get_video()
+        self.assertEqual(y, False)
+
+        self.__cw.set_video(2)
+        y = self.__cw.get_video()
+        self.assertEqual(y, True)
+
     # ---------------------------------------------------------------------------
 
     def test_get_folder(self):
         y = self.__cw.get_folder()
         self.assertEqual(y, True)
 
-    # ---------------------------------------------------------------------------
-
-    def test_get_set_portrait(self):
-        y = self.__cw.get_portrait()
+        self.__cw.set_folder(False)
+        y = self.__cw.get_folder()
         self.assertEqual(y, False)
 
-        self.__cw.set_portrait(True)
-        y = self.__cw.get_portrait()
+        self.__cw.set_folder("")
+        y = self.__cw.get_folder()
+        self.assertEqual(y, False)
+
+        self.__cw.set_folder(2)
+        y = self.__cw.get_folder()
         self.assertEqual(y, True)
+    # ---------------------------------------------------------------------------
 
-        self.__cw.set_portrait("")
-        y = self.__cw.get_portrait()
-        self.assertEqual(y, False)
+    def test_get_set_framing(self):
+        y = self.__cw.get_framing()
+        self.assertEqual(y, None)
 
-        self.__cw.set_portrait(2)
-        y = self.__cw.get_portrait()
-        self.assertEqual(y, True)
+        self.__cw.set_framing("face")
+        y = self.__cw.get_framing()
+        self.assertEqual(y, "face")
+
+        self.__cw.set_framing("portrait")
+        y = self.__cw.get_framing()
+        self.assertEqual(y, "portrait")
+
+        with self.assertRaises(TypeError):
+            self.__cw.set_framing(2)
+
+        with self.assertRaises(ValueError):
+            self.__cw.set_framing("aaaaaaaa")
 
     # ---------------------------------------------------------------------------
 
-    def test_get_set_square(self):
-        y = self.__cw.get_square()
-        self.assertEqual(y, False)
+    def test_get_set_mode(self):
+        y = self.__cw.get_mode()
+        self.assertEqual(y, None)
 
-        self.__cw.set_square(True)
-        x = self.__cw.get_square()
-        y = self.__cw.get_crop()
-        z = self.__cw.get_crop_resize()
-        self.assertEqual(x, True)
-        self.assertEqual(y, False)
-        self.assertEqual(z, False)
+        self.__cw.set_mode("full")
+        y = self.__cw.get_mode()
+        self.assertEqual(y, "full")
 
-        self.__cw.set_square("")
-        x = self.__cw.get_square()
-        y = self.__cw.get_crop()
-        z = self.__cw.get_crop_resize()
-        self.assertEqual(x, False)
-        self.assertEqual(y, False)
-        self.assertEqual(z, False)
+        self.__cw.set_mode("crop")
+        y = self.__cw.get_mode()
+        self.assertEqual(y, "crop")
 
-        self.__cw.set_square(2)
-        x = self.__cw.get_square()
-        y = self.__cw.get_crop()
-        z = self.__cw.get_crop_resize()
-        self.assertEqual(x, True)
-        self.assertEqual(y, False)
-        self.assertEqual(z, False)
+        with self.assertRaises(TypeError):
+            self.__cw.set_mode(2)
+
+        with self.assertRaises(ValueError):
+            self.__cw.set_mode("aaaaaaaa")
 
     # ---------------------------------------------------------------------------
 
-    def test_get_set_crop(self):
-        y = self.__cw.get_crop()
-        self.assertEqual(y, False)
+    def test_get_set_width(self):
+        y = self.__cw.get_width()
+        self.assertEqual(y, None)
 
-        self.__cw.set_crop(True)
-        w = self.__cw.get_video()
-        x = self.__cw.get_square()
-        y = self.__cw.get_crop()
-        z = self.__cw.get_crop_resize()
-        self.assertEqual(w, False)
-        self.assertEqual(x, False)
-        self.assertEqual(y, True)
-        self.assertEqual(z, False)
+        self.__cw.set_width(640)
+        y = self.__cw.get_width()
+        self.assertEqual(y, 640)
 
-        self.__cw.set_crop("")
-        w = self.__cw.get_video()
-        x = self.__cw.get_square()
-        y = self.__cw.get_crop()
-        z = self.__cw.get_crop_resize()
-        self.assertEqual(w, False)
-        self.assertEqual(x, False)
-        self.assertEqual(y, False)
-        self.assertEqual(z, False)
+        self.__cw.set_width(500)
+        y = self.__cw.get_width()
+        self.assertEqual(y, 500)
 
-        self.__cw.set_crop(2)
-        w = self.__cw.get_video()
-        x = self.__cw.get_square()
-        y = self.__cw.get_crop()
-        z = self.__cw.get_crop_resize()
-        self.assertEqual(w, False)
-        self.assertEqual(x, False)
-        self.assertEqual(y, True)
-        self.assertEqual(z, False)
+        with self.assertRaises(TypeError):
+            self.__cw.set_width(["a", "b", "c"])
+
+        with self.assertRaises(TypeError):
+            self.__cw.set_width("aaaaaaaa")
+
+        with self.assertRaises(ValueError):
+            self.__cw.set_width(-2)
+
+        with self.assertRaises(ValueError):
+            self.__cw.set_width(15361)
 
     # ---------------------------------------------------------------------------
 
-    def test_get_set_crop_resize(self):
-        y = self.__cw.get_crop_resize()
-        self.assertEqual(y, False)
+    def test_get_set_height(self):
+        y = self.__cw.get_height()
+        self.assertEqual(y, None)
 
-        self.__cw.set_crop_resize(True)
-        x = self.__cw.get_square()
-        y = self.__cw.get_crop()
-        z = self.__cw.get_crop_resize()
-        self.assertEqual(x, False)
-        self.assertEqual(y, False)
-        self.assertEqual(z, True)
+        self.__cw.set_height(640)
+        y = self.__cw.get_height()
+        self.assertEqual(y, 640)
 
-        self.__cw.set_crop_resize("")
-        x = self.__cw.get_square()
-        y = self.__cw.get_crop()
-        z = self.__cw.get_crop_resize()
-        self.assertEqual(x, False)
-        self.assertEqual(y, False)
-        self.assertEqual(z, False)
+        self.__cw.set_height(500)
+        y = self.__cw.get_height()
+        self.assertEqual(y, 500)
 
-        self.__cw.set_crop_resize(2)
-        x = self.__cw.get_square()
-        y = self.__cw.get_crop()
-        z = self.__cw.get_crop_resize()
-        self.assertEqual(x, False)
-        self.assertEqual(y, False)
-        self.assertEqual(z, True)
+        with self.assertRaises(TypeError):
+            self.__cw.set_height(["a", "b", "c"])
 
-    # ---------------------------------------------------------------------------
+        with self.assertRaises(TypeError):
+            self.__cw.set_height("aaaaaaaa")
 
-    def test_browse_faces(self):
-        self.__cw.set_square(True)
-        self.__vBuffer.next()
-        iterator = self.__vBuffer.__iter__()
-        for i in range(0, self.__vBuffer.__len__()):
-            self.__fTracker.append(next(iterator))
-        self.__fTracker.apply()
-        self.__cw.browse_faces(self.__vBuffer.get_overlap(), self.__fTracker.get_faces())
+        with self.assertRaises(ValueError):
+            self.__cw.set_height(-2)
+
+        with self.assertRaises(ValueError):
+            self.__cw.set_height(8641)
 
     # ---------------------------------------------------------------------------
 
     def test_portrait(self):
         with self.assertRaises(TypeError):
-            self.__cw._sppasImgCoordsWriter__portrait(2)
+            self.__cw._sppasVideoCoordsWriter__portrait(2)
 
         with self.assertRaises(TypeError):
-            self.__cw._sppasImgCoordsWriter__portrait("Hello")
+            self.__cw._sppasVideoCoordsWriter__portrait("Hello")
 
         with self.assertRaises(TypeError):
-            self.__cw._sppasImgCoordsWriter__portrait(["a", "b", 1, 2])
+            self.__cw._sppasVideoCoordsWriter__portrait(["a", "b", 1, 2])
 
     # ---------------------------------------------------------------------------
 
     def test_mode(self):
         with self.assertRaises(ValueError):
-            self.__cw._sppasImgCoordsWriter__mode(2, "Hello", "a")
+            self.__cw._sppasVideoCoordsWriter__process(2, "Hello", "a")
 
         with self.assertRaises(TypeError):
-            self.__cw._sppasImgCoordsWriter__out_csv(2, "Hello", ["a"])
+            self.__cw._sppasVideoCoordsWriter__process(2, "Hello", ["a"])
 
         with self.assertRaises(TypeError):
-            self.__cw._sppasImgCoordsWriter__mode(2, "Hello", 2)
+            self.__cw._sppasVideoCoordsWriter__process(2, "Hello", 2)
+
+    # ---------------------------------------------------------------------------
+
+    def test_adjust(self):
+        self.__cw.set_video(True)
+        self.__cw.set_mode("crop")
+        self.__cw.set_width(-1)
+        self.__cw.set_height(-1)
+        self.__cw._sppasVideoCoordsWriter__adjust(np.ndarray, Coordinates)
+        y = self.__cw.get_video()
+        self.assertEqual(y, False)
+
+    # ---------------------------------------------------------------------------
+
+    def test_adjust_both(self):
+        self.__cw.set_width(640)
+        self.__cw.set_height(480)
+        coord = Coordinates(120, 200, 400, 300)
+        self.__cw._sppasVideoCoordsWriter__adjust_both(coord)
+        x = coord.x
+        self.assertEqual(x, 120)
+        y = coord.y
+        self.assertEqual(y, 200)
+        w = coord.w
+        self.assertEqual(w, 400)
+        h = coord.h
+        self.assertEqual(h, 300)
+
+        coord = Coordinates(120, 200, 400, 350)
+        self.__cw._sppasVideoCoordsWriter__adjust_both(coord)
+        x = coord.x
+        self.assertEqual(x, 87)
+        y = coord.y
+        self.assertEqual(y, 200)
+        w = coord.w
+        self.assertEqual(w, 466)
+        h = coord.h
+        self.assertEqual(h, 350)
+
+    # ---------------------------------------------------------------------------
+
+    def test_adjust_width(self):
+        self.__cw.set_framing("face")
+        self.__cw.set_height(480)
+        self.__cw._sppasVideoCoordsWriter__adjust_width()
+        y = self.__cw.get_width()
+        self.assertEqual(y, 360)
+
+        self.__cw.set_framing("portrait")
+        self.__cw.set_height(480)
+        self.__cw._sppasVideoCoordsWriter__adjust_width()
+        y = self.__cw.get_width()
+        self.assertEqual(y, 640)
+
+    # ---------------------------------------------------------------------------
+
+    def test_adjust_height(self):
+        self.__cw.set_framing("face")
+        self.__cw.set_width(640)
+        self.__cw._sppasVideoCoordsWriter__adjust_height()
+        y = self.__cw.get_height()
+        self.assertEqual(y, 853)
+
+        self.__cw.set_framing("portrait")
+        self.__cw.set_width(640)
+        self.__cw._sppasVideoCoordsWriter__adjust_height()
+        y = self.__cw.get_height()
+        self.assertEqual(y, 480)
 
     # ---------------------------------------------------------------------------
 
     def test_out_csv(self):
         with self.assertRaises(TypeError):
-            self.__cw._sppasImgCoordsWriter__out_csv(["a"])
+            self.__cw._sppasVideoCoordsWriter__out_csv(["a"])
         with self.assertRaises(ValueError):
-            self.__cw._sppasImgCoordsWriter__out_csv("a")
+            self.__cw._sppasVideoCoordsWriter__out_csv("a")
 
     # ---------------------------------------------------------------------------
 
     def test_out_video(self):
         with self.assertRaises(TypeError):
-            self.__cw._sppasImgCoordsWriter__out_video(["a"])
+            self.__cw._sppasVideoCoordsWriter__out_video(["a"])
         with self.assertRaises(ValueError):
-            self.__cw._sppasImgCoordsWriter__out_csv("a")
+            self.__cw._sppasVideoCoordsWriter__out_csv("a")
 
     # ---------------------------------------------------------------------------
 
     def test_out_folder(self):
         with self.assertRaises(TypeError):
-            self.__cw._sppasImgCoordsWriter__out_folder(["a"])
+            self.__cw._sppasVideoCoordsWriter__out_folder(["a"])
         with self.assertRaises(ValueError):
-            self.__cw._sppasImgCoordsWriter__out_csv("a")
+            self.__cw._sppasVideoCoordsWriter__out_csv("a")
 
     # ---------------------------------------------------------------------------
 

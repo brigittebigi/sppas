@@ -34,7 +34,6 @@
 """
 
 import unittest
-import numpy as np
 
 from sppas.src.videodata.videobuffer import VideoBuffer, ImageError
 

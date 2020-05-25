@@ -33,9 +33,7 @@
 """
 
 import time
-from cv2 import error as cv2error
 
-from pympler.asizeof import asizeof
 from sppas.src.videodata.videobuffer import VideoBuffer
 from sppas.src.videodata.facetracking import FaceTracking
 from sppas.src.videodata.coordswriter import sppasVideoCoordsWriter
@@ -55,7 +53,7 @@ class Manager(object):
     """
 
     def __init__(self, video, buffer_size, buffer_overlap,
-                 framing, mode, width=-1, height=-1, csv_value=False, v_value=False, f_value=False):
+                 framing, mode, nb_person=0, width=-1, height=-1, csv_value=False, v_value=False, f_value=False):
         """Create a new Manager instance.
 
         :param video: (name of video file, image sequence, url or video stream,
@@ -63,29 +61,35 @@ class Manager(object):
         :param buffer_size: (int) The size of the buffer.
         :param buffer_overlap: (overlap) The number of values to keep
         from the previous buffer.
+        :param framing: (str) The name of the framing option to use.
+        :param mode: (str) The name of the mode option to use.
+        :param nb_person: (int) The number of person to detect.
+        :param width: (int) The width of the outputs images and videos.
+        :param height: (int) The height of the outputs images and videos.
         :param csv_value: (boolean) If is True extract images in csv_files.
         :param v_value: (boolean) If is True extract images in videos.
         :param f_value: (boolean) If is True extract images in folders.
-        :param framing: (boolean) If is True scale the coordinate
-        to get the portraits from faces.
-        :param mode: (boolean) If is True draw square around faces.
-        the coordinates and resize the image.
 
         """
         self.__vBuffer = VideoBuffer(video, buffer_size, buffer_overlap)
-        self.__coords_writer = sppasVideoCoordsWriter(csv=csv_value, video=v_value, folder=f_value)
+        self.__coords_writer = sppasVideoCoordsWriter(video, self.__vBuffer.get_fps(),
+                                                      csv=csv_value, video=v_value, folder=f_value)
         self.__coords_writer.set_framing(framing)
         self.__coords_writer.set_mode(mode)
         self.__coords_writer.set_width(width)
         self.__coords_writer.set_height(height)
 
+        nb_person = int(nb_person)
+        if isinstance(nb_person, int) is False or nb_person < 0:
+            raise ValueError
+        self.nb_person = nb_person
+
     # -----------------------------------------------------------------------
 
     def launch_process(self):
-        """Returns all the faces coordinates in a list"""
+        """Manage the process."""
         # Loop over the video
         start_time = time.time()
-        print("Starting")
         while True:
             # Store the result of VideoBuffer.next()
             result = self.__vBuffer.next()
@@ -95,7 +99,7 @@ class Manager(object):
                 print("--- %s seconds ---" % (time.time() - start_time))
                 return False
             # Create the faceTracker
-            self.__fTracker = FaceTracking()
+            self.__fTracker = FaceTracking(self.nb_person)
 
             # Initialize the list of FaceDetection objects in the faceTracker
             self.init_faces()
@@ -107,20 +111,13 @@ class Manager(object):
 
     def init_faces(self):
         """Initialize the face_tracker object."""
-        self.__fTracker.persons(self.__vBuffer)
+        self.__fTracker.person(self.__vBuffer)
 
     # -----------------------------------------------------------------------
 
     def write(self):
-        """Write images in a video writer."""
+        """Manage the writing process of the outputs files."""
         self.__coords_writer.browse_faces(self.__vBuffer.get_overlap(), self.__vBuffer, self.__fTracker)
 
     # -----------------------------------------------------------------------
-
-
-# "../../../../../LFPC_test_1.mp4"
-# "../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4"
-manager = Manager("../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4", 100, 0,
-                  "portrait", "crop", width=-1, height=-1, csv_value=True, v_value=True, f_value=True)
-manager.launch_process()
 
