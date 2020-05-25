@@ -45,13 +45,13 @@ from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasAnnotation
 
 from ..panel import sppasPanel
-from .basedatactrl import sppasBaseDataWindow
+from .basedatactrl import sppasDataWindow
 from .annctrl import sppasAnnotationWindow
 
 # ---------------------------------------------------------------------------
 
 
-class sppasTierWindow(sppasBaseDataWindow):
+class sppasTierWindow(sppasDataWindow):
     """A window with a DC to draw a sppasTier().
 
     :author:       Brigitte Bigi
