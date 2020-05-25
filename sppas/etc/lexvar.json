@@ -1,0 +1,35 @@
+{
+  "id": "lexvar",
+  "name" : "speaker lexical variation",
+  "descr": "",
+  "required": "",
+  "api": "sppasLexVar",
+
+  "anntype": [
+    "SPEAKER"
+  ],
+
+  "resources": [
+  ],
+
+  "options": [
+    {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-palign",
+      "text": "Input file pattern (time-aligned words or lemmas)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-orepet",
+      "text": "Output file pattern"
+    },
+    {
+      "id": "stopwords",
+      "type": "bool",
+      "value": true,
+      "text": "Add stop-words estimated from the given data"
+    }
+  ]
+}
