@@ -118,7 +118,7 @@ class sppasLexVar(sppasBaseAnnotation):
 
     # ----------------------------------------------------------------------
 
-    def detection(self, tier1, tier2):
+    def lexical_variation_detect(self, tier1, tier2):
         raise NotImplementedError
 
     # ----------------------------------------------------------------------
@@ -163,7 +163,7 @@ class sppasLexVar(sppasBaseAnnotation):
             raise Exception("Tier with name '{:s}' not found in input files."
                             "".format(self._options['tiername']))
 
-        new_tiers = self.detection(tier_spk1, tier_spk2)
+        new_tiers = self.lexical_variation_detect(tier_spk1, tier_spk2)
 
         # Create the transcription result
         trs_output = sppasTranscription(self.name)
