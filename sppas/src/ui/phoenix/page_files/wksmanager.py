@@ -40,11 +40,10 @@ import wx.lib.newevent
 from sppas import sppasTypeError
 from sppas.src.config import msg
 from sppas.src.utils import u
-from sppas.src.wkps.sppasWorkspace import sppasWorkspace
-from sppas.src.wkps.filebase import States
+from sppas.src.wkps.workspace import sppasWorkspace
 from sppas.src.wkps.sppasWkps import sppasWkps
 from sppas.src.wkps.wio import WkpFormatProperty, sppasWkpRW
-
+from sppas.src.wkps.wkpexc import WkpNameError
 
 from ..windows import Confirm, Error
 from ..windows import sppasTextEntryDialog
@@ -180,6 +179,12 @@ class WorkspacesManager(sppasPanel):
         sizer.Add(cv, 1, wx.EXPAND, 0)
 
         self.SetSizer(sizer)
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def _wkps_panel(self):
+        return self.FindWindow("wkpslist")
 
     # -----------------------------------------------------------------------
 
@@ -366,7 +371,7 @@ class WorkspacesManager(sppasPanel):
 
             # import the selected file in the workspaces
             try:
-                self.FindWindow("wkpslist").import_from(pathname)
+                self._wkps_panel.import_from(pathname)
             except Exception as e:
                 message = WKP_ACT_IMPORT_ERROR.format(pathname, str(e))
                 Error(message, "Import error")
@@ -408,7 +413,7 @@ class WorkspacesManager(sppasPanel):
                 return
 
         try:
-            self.FindWindow("wkpslist").export_to(pathname)
+            self._wkps_panel.export_to(pathname)
         except Exception as e:
             message = WKP_ACT_EXPORT_ERROR.format(pathname, str(e))
             Error(message, "Export error")
@@ -420,8 +425,7 @@ class WorkspacesManager(sppasPanel):
 
         """
         # Ask for a name if current is the Blank one
-        wkps = self.FindWindow("wkpslist")
-        if wkps.get_wkp_current_index() == 0:
+        if self._wkps_panel.get_wkp_current_index() == 0:
             dlg = sppasTextEntryDialog(
                 WKP_MSG_ASK_NAME, caption=WKP_ACT_SAVE, value="Corpus")
             if dlg.ShowModal() == wx.ID_CANCEL:
@@ -430,16 +434,16 @@ class WorkspacesManager(sppasPanel):
             dlg.Destroy()
 
             try:
-                wkps.pin(wkp_name)
+                self._wkps_panel.pin(wkp_name)
             except Exception as e:
                 message = WKP_MSG_PIN_ERROR.format(wkp_name, str(e))
                 Error(message, "Save error")
                 return
         else:
-            wkp_name = wkps.get_wkp_name()
+            wkp_name = self._wkps_panel.get_wkp_name()
 
         try:
-            wkps.save(self.__data)
+            self._wkps_panel.save(self.__data)
             self.notify()
         except Exception as e:
             message = WKP_ACT_SAVE_ERROR.format(wkp_name, str(e))
@@ -451,7 +455,7 @@ class WorkspacesManager(sppasPanel):
         """Rename the currently displayed workspace.
 
         """
-        current_name = self.FindWindow("wkpslist").get_wkp_name()
+        current_name = self._wkps_panel.get_wkp_name()
         dlg = sppasTextEntryDialog(
             WKP_MSG_ASK_NAME, caption=WKP_ACT_RENAME, value=current_name)
         if dlg.ShowModal() == wx.ID_CANCEL:
@@ -463,7 +467,7 @@ class WorkspacesManager(sppasPanel):
             return
 
         try:
-            self.FindWindow("wkpslist").rename(new_name)
+            self._wkps_panel.rename(new_name)
         except Exception as e:
             message = WKP_ACT_RENAME_ERROR.format(new_name, str(e))
             Error(message, "Rename error")
@@ -628,10 +632,10 @@ class WorkspacesPanel(sppasPanel):
         :param new_name: (str) New name to assign to the workspace.
 
         """
+        btn = self.GetSizer().GetItem(self.__current).GetWindow()
         # rename the workspace
         u_name = self.__wkps.rename(self.__current, new_name)
         # rename the button
-        btn = self.GetSizer().GetItem(self.__current).GetWindow()
         btn.SetLabel(u_name)
         btn.Refresh()
 
@@ -665,14 +669,19 @@ class WorkspacesPanel(sppasPanel):
             raise IndexError("The 'Blank' workspace can't be removed")
 
         # Remove of the sizer
+        self.__remove_button(index)
+
+        # Delete of the list
+        self.__wkps.delete(index)
+
+    # -----------------------------------------------------------------------
+
+    def __remove_button(self, index):
         wx.LogMessage('Remove workspace at index {:d}'.format(index))
         self.GetSizer().GetItem(index).DeleteWindows()
         self.GetSizer().Remove(index)
         self.Layout()
         self.Refresh()
-
-        # Delete of the list
-        self.__wkps.delete(index)
 
     # -----------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -756,7 +765,14 @@ class WorkspacesPanel(sppasPanel):
         # the button we want to switch on
         wkp_btn = event.GetButtonObj()
         wkp_name = wkp_btn.GetLabel()
-        wkp_index = self.__wkps.index(wkp_name)
+        try:
+            wkp_index = self.__wkps.index(wkp_name)
+        except WkpNameError as e:
+            cur_btn = self.GetSizer().GetItem(self.__current).GetWindow()
+            self.__btn_set_state(cur_btn, True)
+            self.__btn_set_state(wkp_btn, False)
+            wx.LogError(str(e))
+            return
 
         # the current button
         cur_btn = self.GetSizer().GetItem(self.__current).GetWindow()

@@ -37,7 +37,7 @@ import wx
 
 from sppas import sg
 from sppas import annots
-from sppas.src.wkps.fileref import FileReference, sppasAttribute
+from sppas.src.wkps.fileref import sppasCatReference, sppasRefAttribute
 from sppas.src.wkps.filebase import States
 from sppas.src.config import msg
 from sppas.src.utils import u
@@ -516,7 +516,7 @@ class sppasEditAttributes(sppasDialog):
         sizer.Add(value_st, pos=(4, 0), flag=wx.LEFT, border=12)
         value = sppasTextCtrl(parent=panel, value="", name="text_value")
         sizer.Add(value, pos=(4, 1), flag=wx.EXPAND | wx.LEFT | wx.RIGHT, border=2)
-        choice = wx.Choice(panel, choices=sppasAttribute.VALUE_TYPES, name='choice_type')
+        choice = wx.Choice(panel, choices=sppasRefAttribute.VALUE_TYPES, name='choice_type')
         choice.SetSelection(0)
         sizer.Add(choice, pos=(4, 2), flag=wx.EXPAND | wx.RIGHT, border=12)
 
@@ -679,15 +679,15 @@ class TestPanel(ReferencesManager):
     # ------------------------------------------------------------------------
 
     def add_test_data(self):
-        fr1 = FileReference("AB")
+        fr1 = sppasCatReference("AB")
         fr1.set_type(1)
-        fr1.append(sppasAttribute("position", "left", descr="Position related to the other participant"))
-        fr2 = FileReference("CM")
+        fr1.append(sppasRefAttribute("position", "left", descr="Position related to the other participant"))
+        fr2 = sppasCatReference("CM")
         fr2.set_type("SPEAKER")
-        fr2.append(sppasAttribute("position", "right", descr="Position related to the other participant"))
-        fr3 = FileReference("Dialog1")
+        fr2.append(sppasRefAttribute("position", "right", descr="Position related to the other participant"))
+        fr3 = sppasCatReference("Dialog1")
         fr3.set_type(2)
-        fr3.append(sppasAttribute("year", "2003", "int", "Year of recording"))
+        fr3.append(sppasRefAttribute("year", "2003", "int", "Year of recording"))
         fr3.add("place", "Aix-en-Provence")
         nb = self.FindWindow('refsview').AddRefs([fr1, fr2, fr3, fr3])
         if nb > 0:

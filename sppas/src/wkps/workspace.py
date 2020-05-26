@@ -42,8 +42,8 @@
         - a FileName is limited to regular file names (no links, etc).
 
     References are structured as:
-        - a sppasWorkspace contains a list of FileReference,
-        - a FileReference contains a list of sppasAttribute.
+        - a sppasWorkspace contains a list of sppasCatReference,
+        - a sppasCatReference contains a list of sppasRefAttribute.
 
     Example:
     ========
@@ -77,19 +77,19 @@
     ======
 
         - python 2.7.15
-        - python 3.7.0
+        - python 3.6+
 
 """
 
 import os
 import warnings
 import logging
+import uuid
 
 from sppas import sppasTypeError
 
-from .fileutils import sppasGUID
-from .filebase import FileBase, States
-from .fileref import FileReference
+from .filebase import States
+from .fileref import sppasCatReference
 from .filestructure import FileName, FileRoot, FilePath
 from .wkpexc import FileAddValueError
 
@@ -108,19 +108,19 @@ class sppasWorkspace(object):
     sppasWorkspace is the container for a list of files and a catalog.
     It organizes files hierarchically as a collection of FilePath instances,
     each of which is a collection of FileRoot instances, each of which is a 
-    collection of FileName. The catalog is a list of FileReference instances
+    collection of FileName. The catalog is a list of sppasCatReference instances
     each of which is a list of key/att-value.
 
     """
 
-    def __init__(self, identifier=sppasGUID().get()):
+    def __init__(self, identifier=str(uuid.uuid4())):
         """Constructor of a sppasWorkspace.
 
         :param identifier: (str)
 
         """
         self._id = identifier
-        self.__files = list()
+        self.__paths = list()
         self.__refs = list()
 
     # -----------------------------------------------------------------------
@@ -140,13 +140,13 @@ class sppasWorkspace(object):
     def add(self, file_object):
         """Add an object into the data.
 
-        IMPLEMENTED ONLY FOR FilePath and FileReference.
+        IMPLEMENTED ONLY FOR FilePath and sppasCatReference.
 
         :param file_object: (FileBase)
         :raises: sppasTypeError, FileAddValueError, NotImplementedError
 
         """
-        if isinstance(file_object, (FileName, FileRoot, FilePath, FileReference)) is False:
+        if isinstance(file_object, (FileName, FileRoot, FilePath, sppasCatReference)) is False:
             raise sppasTypeError(file_object.id, "FileBase-subclass")
 
         test_obj = self.get_object(file_object.id)
@@ -154,14 +154,15 @@ class sppasWorkspace(object):
             raise FileAddValueError(file_object.id)
 
         if isinstance(file_object, FilePath):
-            self.__files.append(file_object)
+            self.__paths.append(file_object)
 
-        elif isinstance(file_object, FileReference):
+        elif isinstance(file_object, sppasCatReference):
             self.add_ref(file_object)
 
         else:
-            raise NotImplementedError("Adding an object of type {} in a workspace is not implemented."
-                                      "".format(type(file_object)))
+            raise NotImplementedError(
+                "Adding a {} in a workspace is not implemented yet."
+                "".format(type(file_object)))
 
     # -----------------------------------------------------------------------
 
@@ -177,7 +178,7 @@ class sppasWorkspace(object):
         """
         # get or create the corresponding FilePath()
         new_fp = FilePath(os.path.dirname(filename))
-        for fp in self.__files:
+        for fp in self.__paths:
             if fp.id == new_fp.id:
                 new_fp = fp
 
@@ -187,8 +188,8 @@ class sppasWorkspace(object):
         # this is a new path to add into the workspace
         if added is None:
             added = list()
-        elif added is not None and new_fp not in self.__files:
-            self.__files.append(new_fp)
+        elif added is not None and new_fp not in self.__paths:
+            self.__paths.append(new_fp)
 
         return added
 
@@ -214,7 +215,7 @@ class sppasWorkspace(object):
         path = None
         root = None
         removed = list()
-        for fp in self.__files:
+        for fp in self.__paths:
             if fp.get_id() == given_fp.get_id():
                 for fr in fp:
                     rem_id = fr.remove(fn_id)
@@ -235,7 +236,7 @@ class sppasWorkspace(object):
 
             if len(path) == 0:
                 removed.append(path.get_id())
-                self.__files.remove(path)
+                self.__paths.remove(path)
             else:
                 path.update_state()
 
@@ -246,12 +247,12 @@ class sppasWorkspace(object):
     def add_ref(self, ref):
         """Add a reference in the list from its file name.
 
-        :param ref: (FileReference) Reference to add
+        :param ref: (sppasCatReference) Reference to add
         :raises: sppasTypeError, FileAddValueError
 
         """
-        if isinstance(ref, FileReference) is False:
-            raise sppasTypeError(ref, 'FileReference')
+        if isinstance(ref, sppasCatReference) is False:
+            raise sppasTypeError(ref, 'sppasCatReference')
 
         for refe in self.__refs:
             if refe.id == ref.id:
@@ -275,7 +276,7 @@ class sppasWorkspace(object):
                 removes.append(ref)
 
         # Remove these references of the roots
-        for fp in self.__files:
+        for fp in self.__paths:
             for fr in fp:
                 for fc in removes:
                     fr.remove_ref(fc)
@@ -301,7 +302,7 @@ class sppasWorkspace(object):
         Empty FileRoot and FilePath are removed.
 
         """
-        for fp in self.__files:
+        for fp in self.__paths:
             for fr in reversed(fp):
                 for fn in reversed(fr):
                     fn.update_properties()
@@ -320,7 +321,7 @@ class sppasWorkspace(object):
 
         """
         nb = 0
-        for fp in self.__files:
+        for fp in self.__paths:
             for fr in reversed(fp):
                 for fn in reversed(fr):
                     if fn.get_state() == state:
@@ -333,13 +334,13 @@ class sppasWorkspace(object):
 
     # -----------------------------------------------------------------------
 
-    def get_all_files(self):
-        """Return all the files.
+    def get_paths(self):
+        """Return all the stored paths.
 
-        :returns: (list)
+        :returns: (list of FilePath)
 
         """
-        return self.__files
+        return self.__paths
 
     # -----------------------------------------------------------------------
 
@@ -347,7 +348,7 @@ class sppasWorkspace(object):
         """Return the file object matching the given identifier.
 
         :param identifier: (str)
-        :returns: (sppasWorkspace, FilePath, FileRoot, FileName, FileReference)
+        :returns: (sppasWorkspace, FilePath, FileRoot, FileName, sppasCatReference)
 
         """
         if self.id == identifier:
@@ -357,7 +358,7 @@ class sppasWorkspace(object):
             if ref.id == identifier:
                 return ref
 
-        for fp in self.__files:
+        for fp in self.__paths:
             obj = fp.get_object(identifier)
             if obj is not None:
                 return obj
@@ -382,7 +383,7 @@ class sppasWorkspace(object):
         """
         modified = list()
         if file_obj is None:
-            for fp in self.__files:
+            for fp in self.__paths:
                 m = fp.set_state(state)
                 if m is True:
                     modified.append(fp)
@@ -392,7 +393,7 @@ class sppasWorkspace(object):
                     modified.append(ref)
 
         else:
-            if isinstance(file_obj, FileReference):
+            if isinstance(file_obj, sppasCatReference):
                 file_obj.set_state(state)
                 modified.append(file_obj)
 
@@ -401,7 +402,7 @@ class sppasWorkspace(object):
 
             elif isinstance(file_obj, (FileRoot, FileName)):
                 # search for the FilePath matching with the file_obj
-                for fp in self.__files:
+                for fp in self.__paths:
                     # test if file_obj is a root or name in this fp
                     cur_obj = fp.get_object(file_obj.id)
                     if cur_obj is not None:
@@ -436,7 +437,7 @@ class sppasWorkspace(object):
             return 0
 
         associed = 0
-        for fp in self.__files:
+        for fp in self.__paths:
             for fr in fp:
                 if fr.get_state() in (States().AT_LEAST_ONE_CHECKED, States().CHECKED):
                     associed += 1
@@ -457,7 +458,7 @@ class sppasWorkspace(object):
             return 0
 
         dissocied = 0
-        for fp in self.__files:
+        for fp in self.__paths:
             for fr in fp:
                 if fr.get_state() in (States().AT_LEAST_ONE_CHECKED, States().CHECKED):
                     for ref in ref_checked:
@@ -470,7 +471,7 @@ class sppasWorkspace(object):
 
     def is_empty(self):
         """Return if the instance contains information."""
-        return len(self.__files) + len(self.__refs) == 0
+        return len(self.__paths) + len(self.__refs) == 0
 
     # -----------------------------------------------------------------------
 
@@ -479,7 +480,7 @@ class sppasWorkspace(object):
 
         """
         paths = list()
-        for fp in self.__files:
+        for fp in self.__paths:
             if fp.get_state() == state:
                 paths.append(fp)
         return paths
@@ -487,9 +488,11 @@ class sppasWorkspace(object):
     # -----------------------------------------------------------------------
 
     def get_fileroot_from_state(self, state):
-        """Return every FileRoot in the given state."""
+        """Return every FileRoot in the given state.
+
+        """
         roots = list()
-        for fp in self.__files:
+        for fp in self.__paths:
             for fr in fp:
                 if fr.get_state() == state:
                     roots.append(fr)
@@ -500,7 +503,7 @@ class sppasWorkspace(object):
     def get_fileroot_with_ref(self, ref):
         """Return every FileRoot with the given reference."""
         roots = list()
-        for fp in self.__files:
+        for fp in self.__paths:
             for fr in fp:
                 if fr.has_ref(ref) is True:
                     roots.append(fr)
@@ -512,11 +515,11 @@ class sppasWorkspace(object):
         """Return every FileName in the given state.
 
         """
-        if len(self.__files) == 0:
+        if len(self.__paths) == 0:
             return list()
 
         files = list()
-        for fp in self.__files:
+        for fp in self.__paths:
             for fr in fp:
                 for fn in fr:
                     if fn.get_state() == state:
@@ -541,7 +544,7 @@ class sppasWorkspace(object):
     # -----------------------------------------------------------------------
 
     def has_locked_files(self):
-        for fp in self.__files:
+        for fp in self.__paths:
             if fp.get_state() in (States().AT_LEAST_ONE_LOCKED, States().LOCKED):
                 return True
         return False
@@ -578,11 +581,11 @@ class sppasWorkspace(object):
         """
         i = 0
         if entries is None:
-            for fp in self.__files:
+            for fp in self.__paths:
                 i += fp.unlock()
 
         elif isinstance(entries, list):
-            for fp in self.__files:
+            for fp in self.__paths:
                 for fr in fp:
                     for fn in fr:
                         if fn in entries and fn.get_state() == States().LOCKED:
@@ -599,28 +602,25 @@ class sppasWorkspace(object):
     # Proprieties
     # -----------------------------------------------------------------------
 
-    files = property(get_all_files, None)
+    paths = property(get_paths, None)
     refs = property(get_refs, None)
 
     # -----------------------------------------------------------------------
     # Overloads
     # -----------------------------------------------------------------------
 
-    def __iter__(self):
-        for a in self.__files:
-            yield a
-
-    def __getitem__(self, i):
-        return self.__files[i]
-
-    def __len__(self):
-        return len(self.__files)
-
-    # -----------------------------------------------------------------------
+    def __contains__(self, ident):
+        for fp in self.__paths:
+            if fp.id == ident:
+                return True
+        for ref in self.__refs:
+            if ref.id == ident:
+                return True
+        return False
 
     def __hash__(self):
         # use the hashcode of self identifier since that is used
         # for equality checks as well, like "fp in wkp".
         # not required by Python 2.7 but necessary for Python 3.4+
-        return hash((self.get_id(), self.__files, self.__refs))
+        return hash((self.get_id(), self.__paths, self.__refs))
 

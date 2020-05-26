@@ -37,7 +37,7 @@
 import unittest
 
 from sppas import sppasTypeError, u
-from sppas.src.wkps.fileref import FileReference, sppasAttribute
+from sppas.src.wkps.fileref import sppasCatReference, sppasRefAttribute
 from sppas.src.wkps.filebase import States
 
 # ---------------------------------------------------------------------------
@@ -46,10 +46,10 @@ from sppas.src.wkps.filebase import States
 class TestAttribute(unittest.TestCase):
 
     def setUp(self):
-        self.valint = sppasAttribute('age', '12', 'int', 'speaker\'s age')
-        self.valfloat = sppasAttribute('freq', '0.002', 'float', 'word appearance frequency')
-        self.valbool = sppasAttribute('adult', 'false', 'bool', 'speaker is minor')
-        self.valstr = sppasAttribute('utf', 'Hi everyone !', None, u('первый токен'))
+        self.valint = sppasRefAttribute('age', '12', 'int', 'speaker\'s age')
+        self.valfloat = sppasRefAttribute('freq', '0.002', 'float', 'word appearance frequency')
+        self.valbool = sppasRefAttribute('adult', 'false', 'bool', 'speaker is minor')
+        self.valstr = sppasRefAttribute('utf', 'Hi everyone !', None, u('первый токен'))
 
     # ---------------------------------------------------------------------------
 
@@ -83,7 +83,7 @@ class TestAttribute(unittest.TestCase):
 
     def testSetTypeValue(self):
         with self.assertRaises(sppasTypeError) as error:
-            self.valbool.set_value_type('sppasAttribute')
+            self.valbool.set_value_type('sppasRefAttribute')
 
         self.assertTrue(isinstance(error.exception, sppasTypeError))
 
@@ -98,8 +98,8 @@ class TestAttribute(unittest.TestCase):
 class TestReferences(unittest.TestCase):
 
     def setUp(self):
-        self.micros = FileReference('microphone')
-        self.att = sppasAttribute('mic1', 'Bird UM1', None, '最初のインタビューで使えていましたマイク')
+        self.micros = sppasCatReference('microphone')
+        self.att = sppasRefAttribute('mic1', 'Bird UM1', None, '最初のインタビューで使えていましたマイク')
         self.micros.append(self.att)
         self.micros.add('mic2', 'AKG D5')
 
@@ -111,7 +111,7 @@ class TestReferences(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
-    def testsppasAttribute(self):
+    def testsppasRefAttribute(self):
         self.assertFalse(isinstance(self.micros.att('mic2').get_typed_value(), int))
 
     # ---------------------------------------------------------------------------
