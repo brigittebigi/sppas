@@ -31,7 +31,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
-
+import time
 
 from sppas.src.imagedata.facedetection import FaceDetection, np
 
@@ -71,7 +71,7 @@ class FaceTracking(object):
                     if index >= self.__nb_person:
                         break
                 self.__size = len(coordinates)
-                if self.__size > self.__nb_person:
+                if self.__size > self.__nb_person != 0:
                     self.__size = self.__nb_person
                 if len(self.__persons) < self.__size:
                     self.__persons.append(list())
@@ -82,5 +82,6 @@ class FaceTracking(object):
     def get_persons(self):
         """Return a list of persons."""
         return self.__persons
+
     # -----------------------------------------------------------------------
 

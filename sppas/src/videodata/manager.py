@@ -89,15 +89,14 @@ class Manager(object):
     def launch_process(self):
         """Manage the process."""
         # Loop over the video
-        start_time = time.time()
         while True:
             # Store the result of VideoBuffer.next()
             result = self.__vBuffer.next()
 
             # If it's the end of the video break the loop
             if result is False:
-                print("--- %s seconds ---" % (time.time() - start_time))
-                return False
+                break
+
             # Create the faceTracker
             self.__fTracker = FaceTracking(self.nb_person)
 
@@ -106,6 +105,9 @@ class Manager(object):
 
             # Launch the process of creation of the video
             self.write()
+
+        # Close the buffer
+        self.__vBuffer.close()
 
     # -----------------------------------------------------------------------
 

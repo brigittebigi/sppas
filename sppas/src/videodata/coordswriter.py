@@ -38,6 +38,8 @@ from cv2 import CAP_PROP_FPS
 import numpy as np
 import os
 import csv
+import shutil
+import glob
 
 from sppas.src.imagedata.imageutils import crop, surrond_square, resize
 from sppas.src.imagedata.coordinates import Coordinates
@@ -65,7 +67,7 @@ class sppasVideoCoordsWriter(object):
 
         :param path: (str) The path of the video.
         :param fps: (int) The FPS of the video.
-        :param video: (boolean) If is True extract images in csv file.
+        :param csv: (boolean) If is True extract images in csv file.
         :param video: (boolean) If is True extract images in a video.
         :param folder: (boolean) If is True extract images in a folder.
 
@@ -97,6 +99,45 @@ class sppasVideoCoordsWriter(object):
         # The height you want for your outputs
         self.__height = None
 
+        self.__init_outputs(csv, video, folder)
+
+        # The index of the current image
+        self.__number = 0
+
+        # Reset outputs
+        self.__reset()
+
+    # -----------------------------------------------------------------------
+
+    def __reset(self):
+        """Reset outputs before using the writers."""
+        # Delete csv files if already exists
+        csv_path = glob.glob(self.__path + self.video_name + '_person_*.csv')
+        for f in csv_path:
+            if os.path.exists(f) is True:
+                os.remove(f)
+
+        # Delete video files if already exists
+        video_path = glob.glob(self.__path + self.video_name + '_person_*.avi')
+        for f in video_path:
+            if os.path.exists(f) is True:
+                os.remove(f)
+
+        # Delete folder if already exists
+        folder_path = self.__path + "faces/"
+        if os.path.exists(folder_path) is True:
+            shutil.rmtree(folder_path)
+
+    # -----------------------------------------------------------------------
+
+    def __init_outputs(self, csv, video, folder):
+        """Init the values of the outputs options.
+
+        :param csv: (boolean) If is True extract images in csv file.
+        :param video: (boolean) If is True extract images in a video.
+        :param folder: (boolean) If is True extract images in a folder.
+
+        """
         # If csv is True create csv files
         if csv is True:
             self.set_csv(True)
@@ -109,9 +150,6 @@ class sppasVideoCoordsWriter(object):
         if folder is True:
             self.set_folder(True)
 
-        # The index of the current image
-        self.__number = 0
-
     # -----------------------------------------------------------------------
 
     def __path_video(self, path):
@@ -122,9 +160,16 @@ class sppasVideoCoordsWriter(object):
         """
         if isinstance(path, str) is False:
             raise TypeError
+
+        # Store the video name
         video_name = path.split("/")
         video_name = video_name[len(video_name) - 1].split(".")[0]
+
+        # Store the video path
         video_path = path.split(video_name)[0]
+        if video_path == "":
+            video_path = "./"
+
         return video_path, video_name
 
     # -----------------------------------------------------------------------
@@ -495,9 +540,10 @@ class sppasVideoCoordsWriter(object):
 
             # Create the path
             path = os.path.join(self.__path + self.video_name + '_person_' + str(i) + ".avi")
+
+            # If the output video does not exist create it
             if os.path.exists(path) is False:
-                # If the output video does not exist create it
-                self.__video_output.append(cv2.VideoWriter(path, VideoWriter_fourcc(*'MP4V'),
+                self.__video_output.append(cv2.VideoWriter(path, VideoWriter_fourcc(*'MJPG'),
                                                            self.__fps, (width, height)))
             if self.__mode == "full":
                 break
@@ -520,8 +566,8 @@ class sppasVideoCoordsWriter(object):
         # If the main folder does not exist create it
         if os.path.exists(main_path) is False:
             os.mkdir(main_path)
-        for i in range(1, value + 1):
 
+        for i in range(1, value + 1):
             # Create the path of a folder
             path = main_path + "_person_" + str(i) + "/"
 
@@ -529,7 +575,6 @@ class sppasVideoCoordsWriter(object):
             if os.path.exists(path) is False:
                 os.mkdir(path)
                 self.__folder_output.append(path)
-
             # If mode equal full create only one output
             if self.__mode == "full":
                 break
@@ -570,3 +615,4 @@ class sppasVideoCoordsWriter(object):
                 cv2.imwrite(self.__folder_output[index] + "image" + str(self.__number) + ".jpg", image)
 
     # -----------------------------------------------------------------------
+
