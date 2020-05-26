@@ -31,10 +31,8 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
-import time
 
-from sppas.src.imagedata.facedetection import FaceDetection, np
-
+from sppas.src.imagedata.facedetection import FaceDetection
 
 # ---------------------------------------------------------------------------
 
@@ -50,29 +48,59 @@ class FaceTracking(object):
 
     """
 
-    def __init__(self, nb_person):
+    def __init__(self, nb_person=0):
         """Create a new FaceTraking instance."""
         self.__nb_person = nb_person
+        self.__faces = list()
         self.__persons = list()
         self.__size = 0
 
     # -----------------------------------------------------------------------
 
-    def person(self, buffer):
-        """Create a list for each person."""
+    def detect(self, buffer):
+        """Create a list of coordinates for each images.
+
+        :param buffer: (VideoBuffer) The buffer which contains images.
+
+        """
         iterator = buffer.__iter__()
         for i in range(0, buffer.__len__()):
             face = FaceDetection(next(iterator))
             face.detect_all()
-            coordinates = face.get_all()
-            for coord in coordinates:
-                index = coordinates.index(coord)
-                if self.__nb_person != 0:
-                    if index >= self.__nb_person:
-                        break
-                self.__size = len(coordinates)
-                if self.__size > self.__nb_person != 0:
-                    self.__size = self.__nb_person
+            self.__faces.append(face.get_all())
+
+    # -----------------------------------------------------------------------
+
+    def person(self):
+        """Create a list for each person."""
+        if self.__nb_person == 0:
+            self.all_persons()
+        else:
+            self.several_persons()
+
+    # -----------------------------------------------------------------------
+
+    def all_persons(self):
+        """Create a list for each person."""
+        for face in self.__faces:
+            for coord in face:
+                index = face.index(coord)
+                self.__size = len(face)
+                if len(self.__persons) < self.__size:
+                    self.__persons.append(list())
+                self.__persons[index].append(coord)
+
+    # -----------------------------------------------------------------------
+
+    def several_persons(self):
+        """Create a list for each person."""
+        liste = list()
+        for face in self.__faces:
+            liste.append(face[0:self.__nb_person])
+        for face in liste:
+            for coord in face:
+                index = face.index(coord)
+                self.__size = len(face)
                 if len(self.__persons) < self.__size:
                     self.__persons.append(list())
                 self.__persons[index].append(coord)
@@ -82,6 +110,14 @@ class FaceTracking(object):
     def get_persons(self):
         """Return a list of persons."""
         return self.__persons
+
+    # -----------------------------------------------------------------------
+
+    def clear(self):
+        """Return a list of persons."""
+        self.__faces = list()
+        self.__persons = list()
+        self.__size = 0
 
     # -----------------------------------------------------------------------
 

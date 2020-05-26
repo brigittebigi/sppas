@@ -34,7 +34,6 @@
 
 import cv2
 from cv2 import VideoWriter_fourcc
-from cv2 import CAP_PROP_FPS
 import numpy as np
 import os
 import csv
@@ -62,11 +61,12 @@ class sppasVideoCoordsWriter(object):
     FRAMING = ["face", "portrait"]
     MODE = ["full", "crop"]
 
-    def __init__(self, path, fps, csv=False, video=False, folder=False):
+    def __init__(self, path, fps, patron, csv=False, video=False, folder=False):
         """Create a new sppasImgCoordsWriter instance.
 
         :param path: (str) The path of the video.
         :param fps: (int) The FPS of the video.
+        :param patron: (str) The patron to use for the creation of the files.
         :param csv: (boolean) If is True extract images in csv file.
         :param video: (boolean) If is True extract images in a video.
         :param folder: (boolean) If is True extract images in a folder.
@@ -80,7 +80,7 @@ class sppasVideoCoordsWriter(object):
         self.__folder_output = list()
 
         # The path and the name of the video
-        self.__path, self.video_name = self.__path_video(path)
+        self.__path, self.__video_name = self.__path_video(path)
 
         # The FPS of the video
         fps = int(fps)
@@ -99,10 +99,15 @@ class sppasVideoCoordsWriter(object):
         # The height you want for your outputs
         self.__height = None
 
+        # Initialize outputs files
         self.__init_outputs(csv, video, folder)
 
         # The index of the current image
         self.__number = 0
+
+        # The name of the files
+        self.__patron = str()
+        self.set_patron(patron)
 
         # Reset outputs
         self.__reset()
@@ -112,30 +117,31 @@ class sppasVideoCoordsWriter(object):
     def __reset(self):
         """Reset outputs before using the writers."""
         # Delete csv files if already exists
-        csv_path = glob.glob(self.__path + self.video_name + '_person_*.csv')
+        csv_path = glob.glob(self.__cfile_path())
         for f in csv_path:
             if os.path.exists(f) is True:
                 os.remove(f)
 
         # Delete video files if already exists
-        video_path = glob.glob(self.__path + self.video_name + '_person_*.avi')
+        video_path = glob.glob(self.__vfile_path())
         for f in video_path:
             if os.path.exists(f) is True:
                 os.remove(f)
 
         # Delete folder if already exists
-        folder_path = self.__path + "faces/"
-        if os.path.exists(folder_path) is True:
-            shutil.rmtree(folder_path)
+        folder_path = glob.glob(self.__ffile_path())
+        for f in folder_path:
+            if os.path.exists(f) is True:
+                shutil.rmtree(f)
 
     # -----------------------------------------------------------------------
 
     def __init_outputs(self, csv, video, folder):
         """Init the values of the outputs options.
 
-        :param csv: (boolean) If is True extract images in csv file.
-        :param video: (boolean) If is True extract images in a video.
-        :param folder: (boolean) If is True extract images in a folder.
+        :param csv: (boolean) If True extract images in csv file.
+        :param video: (boolean) If True extract images in a video.
+        :param folder: (boolean) If True extract images in a folder.
 
         """
         # If csv is True create csv files
@@ -174,14 +180,75 @@ class sppasVideoCoordsWriter(object):
 
     # -----------------------------------------------------------------------
 
+    def __cfile_path(self, index=None):
+        """Return the path and the name of the video.
+
+        :param index: (int) The int to add is the name of the csv file.
+
+        """
+        if index is not None:
+            index = int(index)
+            if isinstance(index, int) is False:
+                raise TypeError
+
+        if index is None:
+            path = self.__path + self.__video_name + "_*-" + self.get_patron() + ".csv"
+        else:
+            path = self.__path + self.__video_name + "_" + str(index) + "-" + self.get_patron() + ".csv"
+        return path
+
+    # -----------------------------------------------------------------------
+
+    def __vfile_path(self, index=None):
+        """Return the path and the name of the video.
+
+        :param index: (int) The int to add is the name of the video file.
+
+        """
+        if index is not None:
+            index = int(index)
+            if isinstance(index, int) is False:
+                raise TypeError
+
+        if index is None:
+            path = self.__path + self.__video_name + "_*-" + self.get_patron() + ".avi"
+        else:
+            path = self.__path + self.__video_name + "_" + str(index) + "-" + self.get_patron() + ".avi"
+        return path
+
+    # -----------------------------------------------------------------------
+
+    def __ffile_path(self, index=None):
+        """Return the path and the name of the video.
+
+        :param index: (int) The int to add is the name of the folder.
+
+        """
+        if index is not None:
+            index = int(index)
+            if isinstance(index, int) is False:
+                raise TypeError
+
+        if index is None:
+            path = self.__path + "*-" + self.get_patron() + "/"
+        else:
+            path = self.__path + str(index) + "-" + self.get_patron() + "/"
+        return path
+
+    # -----------------------------------------------------------------------
+
     def get_csv(self):
-        """Return True if the option csv is activate."""
+        """Return True if the option csv is enabled."""
         return self.output["csv"]
 
     # -----------------------------------------------------------------------
 
     def set_csv(self, value):
-        """Set the value of csv."""
+        """Enable or not the csv output.
+
+        :param value: (boolean) True to enabled and False to disabled.
+
+        """
         value = bool(value)
         if isinstance(value, bool) is False:
             raise TypeError
@@ -190,13 +257,17 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def get_video(self):
-        """Return True if the option video is activate."""
+        """Return True if the option video is enabled."""
         return self.output["video"]
 
     # -----------------------------------------------------------------------
 
     def set_video(self, value):
-        """Set the value of video."""
+        """Enable or not the video output.
+
+        :param value: (boolean) True to enabled and False to disabled.
+
+        """
         value = bool(value)
         if isinstance(value, bool) is False:
             raise TypeError
@@ -205,13 +276,17 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def get_folder(self):
-        """Return True if the option folder is activate."""
+        """Return True if the option folder is enabled."""
         return self.output["folder"]
 
     # -----------------------------------------------------------------------
 
     def set_folder(self, value):
-        """Set the value of folder."""
+        """Enable or not the folder output.
+
+        :param value: (boolean) True to enabled and False to disabled.
+
+        """
         value = bool(value)
         if isinstance(value, bool) is False:
             raise TypeError
@@ -228,12 +303,13 @@ class sppasVideoCoordsWriter(object):
     def set_framing(self, value):
         """Set the framing.
 
-        :param value: (str) The framing option to use.
+        :param value: (str) The framing to use on each image of the buffer,
+        face or portrait.
 
         """
         if isinstance(value, str) is False:
             raise TypeError
-        if value not in self.FRAMING:
+        if value not in sppasVideoCoordsWriter.FRAMING:
             raise ValueError
         self.__framing = value
 
@@ -248,25 +324,30 @@ class sppasVideoCoordsWriter(object):
     def set_mode(self, value):
         """Set the mode.
 
-        :param value: (str) The framing option to use.
+        :param value: (str) The mode to use on each image of the buffer,
+        full or crop.
 
         """
         if isinstance(value, str) is False:
             raise TypeError
-        if value not in self.MODE:
+        if value not in sppasVideoCoordsWriter.MODE:
             raise ValueError
         self.__mode = value
 
     # -----------------------------------------------------------------------
 
     def get_width(self):
-        """Return the width."""
+        """Return the width of the outputs files."""
         return self.__width
 
     # -----------------------------------------------------------------------
 
     def set_width(self, value):
-        """Set the width."""
+        """Set the width.
+
+        :param value: (int) The width of outputs images and videos.
+
+        """
         if isinstance(value, int) is False:
             raise TypeError
         if value < -1 or value > 15360:
@@ -276,13 +357,17 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def get_height(self):
-        """Return the height."""
+        """Return the height of the outputs files."""
         return self.__height
 
     # -----------------------------------------------------------------------
 
     def set_height(self, value):
-        """Set the height."""
+        """Set the height.
+
+        :param value: (int) The height of outputs images and videos.
+
+        """
         if isinstance(value, int) is False:
             raise TypeError
         if value < -1 or value > 8640:
@@ -291,7 +376,43 @@ class sppasVideoCoordsWriter(object):
 
     # -----------------------------------------------------------------------
 
-    def browse_faces(self, overlap, buffer, tracker):
+    def get_size(self):
+        """Return the size of the outputs files."""
+        return self.__width, self.__height
+
+    # -----------------------------------------------------------------------
+
+    def set_size(self, width, height):
+        """Set the height.
+
+        :param width: (int) The width of outputs images and videos.
+        :param height: (int) The height of outputs images and videos.
+
+        """
+        self.set_width(width)
+        self.set_height(height)
+
+    # -----------------------------------------------------------------------
+
+    def get_patron(self):
+        """Return the patron of the outputs files."""
+        return self.__patron
+
+    # -----------------------------------------------------------------------
+
+    def set_patron(self, value):
+        """Set the patron of the outputs files.
+
+        :param value: (str) The patron in all the outputs files.
+
+        """
+        if isinstance(value, str) is False:
+            raise TypeError
+        self.__patron = value
+
+    # -----------------------------------------------------------------------
+
+    def write(self, overlap, buffer, tracker):
         """Browse the buffer and apply modification for each person.
 
         :param overlap: (int) The number of values to delete.
@@ -325,7 +446,7 @@ class sppasVideoCoordsWriter(object):
                     self.__adjust(image, person[i])
 
                 # Use one of the extraction options
-                image = self.__process(image, person[i], index)
+                image = self.__process_image(image, person[i], index)
 
                 # If mode != full resize images
                 if self.__mode != "full":
@@ -363,7 +484,7 @@ class sppasVideoCoordsWriter(object):
 
     # -----------------------------------------------------------------------
 
-    def __process(self, img_buffer, coords, index):
+    def __process_image(self, img_buffer, coords, index):
         """Draw squares around faces or crop the faces.
 
         :param img_buffer: (numpy.ndarray) The image to be processed.
@@ -513,9 +634,8 @@ class sppasVideoCoordsWriter(object):
         if isinstance(value, int) is False:
             raise TypeError
         for i in range(1, value + 1):
-
             # Create the path
-            path = os.path.join(self.__path + self.video_name + '_person_' + str(i) + '.csv')
+            path = os.path.join(self.__cfile_path(i))
 
             # If the csv file does not exist create it
             if os.path.exists(path) is False:
@@ -537,9 +657,8 @@ class sppasVideoCoordsWriter(object):
         if isinstance(value, int) is False:
             raise TypeError
         for i in range(1, value + 1):
-
             # Create the path
-            path = os.path.join(self.__path + self.video_name + '_person_' + str(i) + ".avi")
+            path = os.path.join(self.__vfile_path(i))
 
             # If the output video does not exist create it
             if os.path.exists(path) is False:
@@ -560,16 +679,9 @@ class sppasVideoCoordsWriter(object):
         if isinstance(value, int) is False:
             raise TypeError
 
-        # Create the path of the main folder
-        main_path = self.__path + "faces/"
-
-        # If the main folder does not exist create it
-        if os.path.exists(main_path) is False:
-            os.mkdir(main_path)
-
         for i in range(1, value + 1):
             # Create the path of a folder
-            path = main_path + "_person_" + str(i) + "/"
+            path = self.__ffile_path(i)
 
             # If the folder does not exist create it
             if os.path.exists(path) is False:

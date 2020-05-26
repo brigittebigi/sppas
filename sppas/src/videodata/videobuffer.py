@@ -94,9 +94,6 @@ class VideoBuffer(object):
         # The video capture to use
         self.__video = None
 
-        # The FPS of the video
-        self.__FPS = None
-
         # List of images
         self.__data = list()
 
@@ -163,14 +160,14 @@ class VideoBuffer(object):
         # Set the begining of the video to the frame 0
         self.__video.set(CAP_PROP_POS_FRAMES, 0)
 
-        # Set the FPS of the video
-        self.__FPS = self.__video.get(CAP_PROP_FPS)
-
     # -----------------------------------------------------------------------
 
     def get_fps(self):
         """Return the FPS of the video."""
-        return self.__FPS
+        if self.__video is None:
+            return 0
+        else:
+            return self.__video.get(CAP_PROP_FPS)
 
     # -----------------------------------------------------------------------
 
@@ -390,7 +387,7 @@ class VideoBuffer(object):
         # Launch and store the result of the reading
         result = self.__load_frames(self.__size - self.__overlap)
 
-        # If the video is invald
+        # If the video is invalid
         if result is False and self.__video.get(CAP_PROP_POS_FRAMES) == 0:
             raise IOError("The input video is not a valid one")
 
@@ -410,6 +407,7 @@ class VideoBuffer(object):
         """Release the flow taken by the reading of the video."""
         # Release the video
         self.__video.release()
+        self.__video = None
 
         # List of images
         self.__data = list()

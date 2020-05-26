@@ -53,7 +53,7 @@ class Manager(object):
     """
 
     def __init__(self, video, buffer_size, buffer_overlap,
-                 framing, mode, nb_person=0, width=-1, height=-1, csv_value=False, v_value=False, f_value=False):
+                 framing, mode, nb_person=0, patron="person", width=-1, height=-1, csv_value=False, v_value=False, f_value=False):
         """Create a new Manager instance.
 
         :param video: (name of video file, image sequence, url or video stream,
@@ -64,6 +64,7 @@ class Manager(object):
         :param framing: (str) The name of the framing option to use.
         :param mode: (str) The name of the mode option to use.
         :param nb_person: (int) The number of person to detect.
+        :param patron: (str) The patron to use for the creation of the files.
         :param width: (int) The width of the outputs images and videos.
         :param height: (int) The height of the outputs images and videos.
         :param csv_value: (boolean) If is True extract images in csv_files.
@@ -72,7 +73,7 @@ class Manager(object):
 
         """
         self.__vBuffer = VideoBuffer(video, buffer_size, buffer_overlap)
-        self.__coords_writer = sppasVideoCoordsWriter(video, self.__vBuffer.get_fps(),
+        self.__coords_writer = sppasVideoCoordsWriter(video, self.__vBuffer.get_fps(), patron,
                                                       csv=csv_value, video=v_value, folder=f_value)
         self.__coords_writer.set_framing(framing)
         self.__coords_writer.set_mode(mode)
@@ -82,44 +83,50 @@ class Manager(object):
         nb_person = int(nb_person)
         if isinstance(nb_person, int) is False or nb_person < 0:
             raise ValueError
-        self.nb_person = nb_person
+        self.__nb_person = nb_person
+
+        self.__fTracker = FaceTracking(self.__nb_person)
+
+        self.__eov = False
 
     # -----------------------------------------------------------------------
 
     def launch_process(self):
         """Manage the process."""
         # Loop over the video
-        while True:
+        while self.__eov is False:
+            # Clear the FaceTracker
+            self.__fTracker.clear()
+
             # Store the result of VideoBuffer.next()
             result = self.__vBuffer.next()
 
             # If it's the end of the video break the loop
             if result is False:
-                break
+                self.__eov = True
 
-            # Create the faceTracker
-            self.__fTracker = FaceTracking(self.nb_person)
-
-            # Initialize the list of FaceDetection objects in the faceTracker
-            self.init_faces()
+            # Initialize the list of coordinates from FaceDetection in the FaceTracker
+            self.use_tracker()
 
             # Launch the process of creation of the video
-            self.write()
+            self.__coords_writer.write(self.__vBuffer.get_overlap(), self.__vBuffer, self.__fTracker)
 
         # Close the buffer
         self.__vBuffer.close()
 
     # -----------------------------------------------------------------------
 
-    def init_faces(self):
-        """Initialize the face_tracker object."""
-        self.__fTracker.person(self.__vBuffer)
+    def use_tracker(self):
+        """Use the FaceTracker object."""
+        self.__fTracker.detect(self.__vBuffer)
+        self.__fTracker.person()
 
     # -----------------------------------------------------------------------
 
-    def write(self):
-        """Manage the writing process of the outputs files."""
-        self.__coords_writer.browse_faces(self.__vBuffer.get_overlap(), self.__vBuffer, self.__fTracker)
 
-    # -----------------------------------------------------------------------
+# "../../../../../video_test/LFPC_test_1.mp4"
+# "../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4"
+manager = Manager("../../../../../video_test/LFPC_test_1.mp4", 100, 0,
+                  "portrait", "crop", width=640, height=480, csv_value=True, v_value=True, f_value=True)
+manager.launch_process()
 
