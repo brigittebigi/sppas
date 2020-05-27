@@ -5,12 +5,12 @@
 // Nodes
 [FileBase|-id; #state; match()]
 [FileData|-data: list; -refs: list;add(); add_file();...]
-[FileReference|-attributs : list; -type; att();...]
+[sppasCatReference|-attributs : list; -type; att();...]
 [FilePath|-roots : list; +subjoined: dict; identifier();...]
 [FileRoot|-files : list; -references : list; +subjoined: dict; update_state(),...]
 [FileName|-name: str; -extension: str; -date: str; -size: str; folder();...]
 
-[sppasAttribut|-id: str; -value: str; -valuetype: str; descr: str; serialize()]
+[sppasRefAttribut|-id: str; -value: str; -valuetype: str; descr: str; serialize()]
 
 [sppasBaseCompare|+methods;get();get_function_names()]
 [sppasPathCompare|exact();iexact();startswith();...]
@@ -19,7 +19,7 @@
 [sppasFileExtCompare|exact();iexact();startswith();...]
 [sppasFileBaseCompare|exact();iexact();startswith();...]
 [sppasFileRefCompare|exact();iexact();ge();equal();...]
-[sppasAttributeCompare|exact();iexact();ge();equal();...]
+[sppasRefAttributeCompare|exact();iexact();ge();equal();...]
 [sppasFileStateCompare|state()]
 
 [sppasBaseFilters|+obj;test_args();fix_logic_bool();fix_function_values();fix_functions()]
@@ -27,10 +27,10 @@
 
 //Edges
 [FileData]++-0..*>[FilePath]
-[FileData]++-0..*>[FileReference]
+[FileData]++-0..*>[sppasCatReference]
 [FilePath]++-1..*>[FileRoot]
 [FileRoot]++-1..*>[FileName]
-[FileReference]++-1..*>[sppasAttribut]
+[sppasCatReference]++-1..*>[sppasRefAttribut]
 
 [FileBase]^[FilePath]
 [FileBase]^[FileRoot]
@@ -44,7 +44,7 @@
 [sppasBaseCompare]^[sppasFileExtCompare]
 [sppasBaseCompare]^[sppasFileBaseCompare]
 [sppasBaseCompare]^[sppasFileRefCompare]
-[sppasBaseCompare]^[sppasAttributeCompare]
+[sppasBaseCompare]^[sppasRefAttributeCompare]
 [sppasBaseCompare]^[sppasFileStateCompare]
 
 

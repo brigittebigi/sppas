@@ -40,27 +40,28 @@ wkps: management of files into workspaces
 *****************************************************************************
 
 This package includes classes to manage a bunch of files organized into
-workspaces. A workspace is made of data related to the filenames and a
-list of references to make relations between files.
+workspaces. A workspace is made of data related to the file names and a
+list of references to make relations between file roots.
 
 Requires the following other packages:
 
 * config
 * utils
+* structs
+* exc
 
 and globals: paths, sppasIndexError.
 
 """
 
-from .fileutils import sppasGUID
 from .fileutils import sppasFileUtils
 from .fileutils import sppasDirUtils
 from .filebase import FileBase
 from .filebase import States
 from .filestructure import FileName, FileRoot, FilePath
-from .fileref import FileReference, sppasAttribute
+from .fileref import sppasCatReference, sppasRefAttribute
 from .filedatafilters import sppasFileDataFilters
-from .sppasWorkspace import sppasWorkspace
+from .workspace import sppasWorkspace
 from .sppasWkps import sppasWkps
 from .wio import sppasWkpRW
 
@@ -71,12 +72,11 @@ __all__ = (
     "FileName",
     "FileRoot",
     "FilePath",
-    "sppasAttribute",
-    "FileReference",
+    "sppasRefAttribute",
+    "sppasCatReference",
     "sppasFileDataFilters",
     "sppasFileUtils",
     "sppasDirUtils",
-    "sppasGUID",
     "sppasWkps",
     "sppasWkpRW"
 )

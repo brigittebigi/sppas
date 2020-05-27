@@ -207,6 +207,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
             wx.LogError("Current range is [%d, %d], but requested offset is %d"
                         "" % (self.start_pos, self.end_pos, offset))
             raise IntervalRangeException(offset, self.start_pos, self.end_pos)
+
         self._slider.SetValue(offset)
 
     # -----------------------------------------------------------------------
@@ -367,10 +368,14 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
             force_pause = True
 
         try:
+            wx.LogDebug("Media seek to position {}".format(offset))
             self.set_pos(offset)
             for m in self.__media:
                 m.Seek(offset)
+                wx.LogDebug(" -> tell after seek: {}".format(m.Tell()))
+
         except IntervalRangeException as e:
+            wx.LogDebug("Media seek error")
             wx.LogError(str(e))
             return
 
@@ -403,14 +408,14 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
     def media_rewind(self):
         """Seek media to some time earlier. Default is 1000 ms."""
-        new_pos = self.pos - self.__shift
+        new_pos = self.get_pos() - self.__shift
         self.media_seek(new_pos)
 
     # -----------------------------------------------------------------------
 
     def media_forward(self):
         """Seek media to some time later on. Default is 1000 ms."""
-        new_pos = self.pos + self.__shift
+        new_pos = self.get_pos() + self.__shift
         self.media_seek(new_pos)
 
     # -----------------------------------------------------------------------
@@ -464,6 +469,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         for m in self.__media:
             m.Stop()
             m.Seek(self.start_pos)
+
         self.set_pos(self.start_pos)
 
     # ----------------------------------------------------------------------
@@ -486,7 +492,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         """
         # If the media didn't started to play... Use "tell" of the media to
         # know where we really are in time.
-        if self.pos == self.start_pos:
+        if self.get_pos() == self.start_pos:
             new_pos = self.media_tell()
         else:
             new_pos = self.pos + self._refreshtimer
@@ -496,6 +502,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         # Move the slider at the new position, except if out of range
         try:
+            wx.LogDebug("On timer. set position to {}".format(new_pos))
             self.set_pos(new_pos)
         except IntervalRangeException:
             self.stop()

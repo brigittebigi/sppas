@@ -39,7 +39,7 @@ import os
 
 import sppas
 from sppas import u
-from ..sppasWorkspace import sppasWorkspace
+from ..workspace import sppasWorkspace
 from ..filedatacompare import *
 from ..filedatafilters import sppasFileDataFilters
 from ..filestructure import FileRoot
@@ -60,14 +60,14 @@ class TestsFileDataFilter (unittest.TestCase):
         self.files.add_file(f2)
         self.files.add_file(f3)
 
-        spk1 = FileReference('spk1')
+        spk1 = sppasCatReference('spk1')
         spk1.set_type('SPEAKER')
-        spk1.append(sppasAttribute('age', '20', "int"))
-        spk1.append(sppasAttribute('name', 'toto'))
+        spk1.append(sppasRefAttribute('age', '20', "int"))
+        spk1.append(sppasRefAttribute('name', 'toto'))
 
-        ref2 = FileReference('record')
-        ref2.append(sppasAttribute('age', '50', "int"))
-        ref2.append(sppasAttribute('name', 'toto'))
+        ref2 = sppasCatReference('record')
+        ref2.append(sppasRefAttribute('age', '50', "int"))
+        ref2.append(sppasRefAttribute('name', 'toto'))
 
         fr1 = self.files.get_object(FileRoot.root(f1))
         fr1.add_ref(spk1)
@@ -125,26 +125,26 @@ class TestsFileDataFilter (unittest.TestCase):
         files.add_file(os.path.join(sppas.paths.samples, 'samples-eng', 'ENG_M15_ENG_T33.wav'))
         files.add_file(os.path.join(sppas.paths.samples, 'samples-eng', 'ENG_M15_ENG_T33.PitchTier'))
 
-        rf = FileReference('corpus-fra')
+        rf = sppasCatReference('corpus-fra')
         rf.set_type('STANDALONE')
 
-        re = FileReference('corpus-eng')
+        re = sppasCatReference('corpus-eng')
         re.set_type('STANDALONE')
 
-        spk1 = FileReference('SPK-B003')
+        spk1 = sppasCatReference('SPK-B003')
         spk1.set_type('SPEAKER')
-        spk1.append(sppasAttribute('gender', 'male', "str"))
-        spk1.append(sppasAttribute('lang', 'fra', "str"))
+        spk1.append(sppasRefAttribute('gender', 'male', "str"))
+        spk1.append(sppasRefAttribute('lang', 'fra', "str"))
 
-        spk2 = FileReference('SPK-C006')
+        spk2 = sppasCatReference('SPK-C006')
         spk2.set_type('SPEAKER')
-        spk2.append(sppasAttribute('gender', 'female', "str"))
-        spk2.append(sppasAttribute('lang', 'fra', "str"))
+        spk2.append(sppasRefAttribute('gender', 'female', "str"))
+        spk2.append(sppasRefAttribute('lang', 'fra', "str"))
 
-        spk3 = FileReference('SPK-M15')
+        spk3 = sppasCatReference('SPK-M15')
         spk3.set_type('SPEAKER')
-        spk3.append(sppasAttribute('gender', 'male', "str"))
-        spk3.append(sppasAttribute('lang', 'eng', "str"))
+        spk3.append(sppasRefAttribute('gender', 'male', "str"))
+        spk3.append(sppasRefAttribute('lang', 'eng', "str"))
 
         fr1 = files.get_object(FileRoot.root(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P8.wav')))
         fr1.add_ref(rf)

@@ -322,7 +322,7 @@ class Button(sppasWindow):
         """
         super(Button, self).__init__(
             parent, id, pos, size,
-            style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
+            style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
             name=name)
 
         # By default, our buttons don't have borders
@@ -923,7 +923,7 @@ class ToggleButton(BitmapTextButton):
 # ---------------------------------------------------------------------------
 
 
-class BaseCheckButton(Button):
+class BaseCheckButton(sppasWindow):
 
     def __init__(self, parent,
                  id=wx.ID_ANY,
@@ -942,8 +942,21 @@ class BaseCheckButton(Button):
         :param name: (str) the button name.
 
         """
-        super(BaseCheckButton, self).__init__(parent, id, pos, size, name)
+        super(BaseCheckButton, self).__init__(
+            parent, id, pos, size,
+            style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
+            name=name)
+
+        # By default, our buttons don't have borders
+        self._vert_border_width = 0
+        self._horiz_border_width = 0
+
+        self._min_width = 12
+        self._min_height = 12
         self._pressed = False
+
+        # Setup Initial Size
+        self.SetInitialSize(size)
 
     # -----------------------------------------------------------------------
 
@@ -978,7 +991,7 @@ class BaseCheckButton(Button):
         """
         if self.IsEnabled() is True:
             self._pressed = not self._pressed
-            Button.OnMouseLeftDown(self, event)
+            sppasWindow.OnMouseLeftDown(self, event)
 
     # -----------------------------------------------------------------------
 
@@ -1082,6 +1095,16 @@ class CheckButton(BaseCheckButton):
     def GetLabel(self):
         """Return the label text as it was passed to SetLabel."""
         return self._label
+
+    # ------------------------------------------------------------------------
+
+    def SetLabel(self, label):
+        """Set the label text.
+
+        :param label: (str) Label text.
+
+        """
+        self._label = label
 
     # ------------------------------------------------------------------------
 
@@ -1343,7 +1366,6 @@ class TestPanelBitmapButton(wx.Panel):
         for c in self.GetChildren():
             c.SetForegroundColour(colour)
 
-
 # ----------------------------------------------------------------------------
 
 
@@ -1371,6 +1393,8 @@ class TestPanelBitmapTextButton(wx.Panel):
 
         b3 = BitmapTextButton(self, label="sppas_colored", pos=(180, 10), size=(50, 50))
         b3.SetBorderWidth(1)
+        b3.SetLabel("RENAMED")
+        b3.Refresh()
 
         b4 = BitmapTextButton(self, label="Add", pos=(240, 10), size=(100, 50), name="add")
         b4.SetBorderWidth(2)
@@ -1405,7 +1429,6 @@ class TestPanelCheckButton(wx.Panel):
 
         btn_check_xs = CheckButton(self, pos=(25, 10), size=(32, 32), name="yes")
         btn_check_xs.Check(True)
-        btn_check_xs.Bind(wx.EVT_BUTTON, self.on_btn_event)
 
         btn_check_s = CheckButton(self, label="disabled", pos=(100, 10), size=(128, 64), name="yes")
         btn_check_s.Enable(False)
@@ -1413,10 +1436,17 @@ class TestPanelCheckButton(wx.Panel):
         btn_check_m = CheckButton(self, label='The text label', pos=(200, 10), size=(384, 128), name="yes")
         font = self.GetFont().MakeBold().Scale(1.4)
         btn_check_m.SetFont(font)
-        btn_check_m.Bind(wx.EVT_BUTTON, self.on_btn_event)
+        btn_check_m.Bind(wx.EVT_CHECKBOX, self.on_btn_event)
+
+    # -----------------------------------------------------------------------
 
     def on_btn_event(self, event):
         obj = event.GetEventObject()
+        i = random.randint(1000, 9999)
+        new_label = "Text-%d" % i
+        obj.SetLabel(new_label)
+        obj.Refresh()
+        print("Button renamed to {}".format(new_label))
 
     # -----------------------------------------------------------------------
 

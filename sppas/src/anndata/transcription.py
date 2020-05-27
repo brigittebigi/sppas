@@ -36,7 +36,6 @@
 
 import logging
 
-from sppas.src.wkps import sppasGUID
 from sppas.src.utils import sppasUnicode
 
 from .anndataexc import AnnDataTypeError
@@ -159,14 +158,15 @@ class sppasTranscription(sppasMetaData):
     def set_name(self, name=None):
         """Set the name of the transcription.
 
-        :param name: (str or None) The identifier name or None.
+        :param name: (str or None) The identifier or None to set the GUID.
         :returns: the name
 
         """
         if name is None:
-            name = sppasGUID().get()
-        su = sppasUnicode(name)
-        self._name = su.to_strip()
+            self._name = self.get_id()
+        else:
+            su = sppasUnicode(name)
+            self._name = su.to_strip()
 
         return self._name
 

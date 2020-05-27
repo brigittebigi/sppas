@@ -34,8 +34,11 @@
 
 
 """
+
+import os
 import unittest
 
+from sppas.src.config import paths
 from sppas.src.wkps.sppasWkps import sppasWkps
 
 
@@ -43,4 +46,74 @@ class TestSppasWorkspaces(unittest.TestCase):
 
     def setUp(self):
         return
+
+    # -----------------------------------------------------------------------
+
+    def test_init(self):
+        wkps = sppasWkps()
+
+        # At least the Blank workspace is stored into the list,
+        # and the existing workspaces on the disk.
+        self.assertGreaterEqual(len(wkps), 1)
+        self.assertEqual(wkps.index("Blank"), 0)
+
+    # -----------------------------------------------------------------------
+
+    def test_new(self):
+        """Create a workspace and append it to the SPPAS workspaces."""
+        wkps = sppasWkps()
+
+        # Attempt to create a workspace with the Blank name
+        with self.assertRaises(ValueError):  # WkpIdValueError
+            wkps.new("Blank")
+
+        # Really create a new workspace
+        wlen = len(wkps)
+        n = wkps.new("test")
+        self.assertEqual(len(wkps), wlen + 1)
+        fn = os.path.join(paths.wkps, n + ".wjson")
+        self.assertTrue(os.path.exists(fn))
+
+        # Attempt to create a workspace with the same name
+        with self.assertRaises(ValueError):  # WkpIdValueError
+            wkps.new(n)
+
+        os.remove(fn)
+
+    # -----------------------------------------------------------------------
+
+    def test_delete(self):
+        wkps = sppasWkps()
+        wlen = len(wkps)
+
+        # Delete a workspace
+        fn = os.path.join(paths.wkps, "test.wjson")
+        n = wkps.new("test")
+        i = wkps.index(n)
+        wkps.delete(i)
+        self.assertFalse(os.path.exists(fn))
+
+        self.assertEqual(len(wkps), wlen)
+
+    # -----------------------------------------------------------------------
+
+    def test_rename(self):
+        """Create, rename and delete a workspace in wkps folder."""
+        wkps = sppasWkps()
+
+        with self.assertRaises(IndexError):  # WkpRenameBlankError
+            wkps.rename(0, "renamed")
+
+        n = wkps.new("test")
+
+        # Rename the workspace
+        i = wkps.index(n)
+        wkps.rename(i, "renamed")
+        fn = os.path.join(paths.wkps, "renamed.wjson")
+        self.assertTrue(os.path.exists(fn))
+
+        # Delete a workspace
+        wkps.delete(i)
+        self.assertFalse(os.path.exists(fn))
+
 

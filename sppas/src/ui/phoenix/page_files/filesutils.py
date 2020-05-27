@@ -33,7 +33,7 @@
 
 import wx
 
-from sppas.src.wkps import sppasAttribute
+from sppas.src.wkps import sppasRefAttribute
 
 # ----------------------------------------------------------------------------
 
@@ -63,7 +63,7 @@ class IdentifierTextValidator(wx.Validator):
     def Validate(self, win=None):
         text_ctrl = self.GetWindow()
         text = text_ctrl.GetValue().strip()
-        if sppasAttribute.validate(text) is False:
+        if sppasRefAttribute.validate(text) is False:
             text_ctrl.SetBackgroundColour("pink")
             text_ctrl.SetFocus()
             text_ctrl.Refresh()

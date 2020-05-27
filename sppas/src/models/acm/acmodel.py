@@ -35,9 +35,9 @@
 import collections
 import json
 import copy
+import uuid
 
 from sppas.src.resources.mapping import sppasMapping
-from sppas.src.wkps.fileutils import sppasGUID
 from sppas.src.utils.makeunicode import sppasUnicode
 
 from ..modelsexc import ModelsDataTypeError
@@ -92,7 +92,7 @@ class sppasAcModel(object):
 
         """
         if name is None:
-            name = sppasGUID().get()
+            name = str(uuid.uuid4())
         su = sppasUnicode(name)
         self._name = su.to_strip()
 

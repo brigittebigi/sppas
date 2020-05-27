@@ -207,7 +207,7 @@ class IntervalRangeException(ValueError):
 class IOExtensionException(IOError):
     """:ERROR 110:.
 
-    Unknown extension for filename {:s}'
+    Unknown extension for filename '{:s}'
 
     """
 
