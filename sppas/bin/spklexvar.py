@@ -64,8 +64,8 @@ if __name__ == "__main__":
     # Fix initial annotation parameters
     # -----------------------------------------------------------------------
 
-    parameters = sppasParam(["otherrepet.json"])
-    ann_step_idx = parameters.activate_annotation("otherrepet")
+    parameters = sppasParam(["lexvar.json"])
+    ann_step_idx = parameters.activate_annotation("spklexvar")
     ann_options = parameters.get_options(ann_step_idx)
 
     # -----------------------------------------------------------------------
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     # Redirect all messages to logging
     # --------------------------------
 
-    with sppasAppConfig() as cg:
+    """with sppasAppConfig() as cg:
         parameters.set_report_filename(cg.log_file)
         if not args.quiet:
             log_level = cg.log_level
@@ -146,7 +146,7 @@ if __name__ == "__main__":
             log_level = cg.quiet_log_level
         lgs = sppasLogSetup(log_level)
         lgs.stream_handler()
-
+"""
     # Get options from arguments
     # --------------------------
 
@@ -172,13 +172,14 @@ if __name__ == "__main__":
             ann.run([args.i, args.s], output_file=args.o)
         else:
             trs = ann.run([args.i, args.s])
+            """
             for tier in trs:
                 for a in tier:
                     print("{} {} {:s}".format(
                         a.get_location().get_best().get_begin().get_midpoint(),
                         a.get_location().get_best().get_end().get_midpoint(),
                         a.get_best_tag().get_content()))
-
+"""
     else:
 
         if not args.quiet:
