@@ -412,12 +412,13 @@ class sppasVideoCoordsWriter(object):
 
     # -----------------------------------------------------------------------
 
-    def write(self, overlap, buffer, tracker):
+    def write(self, overlap, buffer, tracker, landmarks):
         """Browse the buffer and apply modification for each person.
 
         :param overlap: (int) The number of values to delete.
         :param buffer: (VideoBuffer) The buffer which contains images.
         :param tracker: (FaceTracking) The FaceTracker object.
+        :param landmarks: (LandmarkManager) The LandmarkManager object.
 
         """
         # Initialise the iterator

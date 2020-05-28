@@ -84,7 +84,7 @@ class FaceDetection(object):
     """
 
     def __init__(self, image):
-        """Create a new faceDetection instance.
+        """Create a new FaceDetection instance.
 
         :param image: (numpy.ndarray) The image to be processed.
 

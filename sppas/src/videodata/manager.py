@@ -36,6 +36,7 @@ import time
 
 from sppas.src.videodata.videobuffer import VideoBuffer
 from sppas.src.videodata.facetracking import FaceTracking
+from sppas.src.videodata.landmarkmanager import LandmarkManager
 from sppas.src.videodata.coordswriter import sppasVideoCoordsWriter
 
 # ---------------------------------------------------------------------------
@@ -85,7 +86,11 @@ class Manager(object):
             raise ValueError
         self.__nb_person = nb_person
 
+        self.__mode = mode
+
         self.__fTracker = FaceTracking(self.__nb_person)
+
+        self.__landmarks = LandmarkManager()
 
         self.__eov = False
 
@@ -108,8 +113,11 @@ class Manager(object):
             # Initialize the list of coordinates from FaceDetection in the FaceTracker
             self.use_tracker()
 
+            # Initialize the list of points for the faces with FaceLandmark
+            self.__landmarks.process(self.__vBuffer, self.__fTracker, self.__mode)
+
             # Launch the process of creation of the video
-            self.__coords_writer.write(self.__vBuffer.get_overlap(), self.__vBuffer, self.__fTracker)
+            self.__coords_writer.write(self.__vBuffer.get_overlap(), self.__vBuffer, self.__fTracker, self.__landmarks)
 
         # Close the buffer
         self.__vBuffer.close()
