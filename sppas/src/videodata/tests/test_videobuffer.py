@@ -45,6 +45,7 @@ class TestVideoBuffer(unittest.TestCase):
     def setUp(self):
 
         self.__vBuffer = VideoBuffer("../../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4", 100, 10)
+        self.__wBuffer = VideoBuffer("../../../../../corpus/Test_01_Celia_Brigitte/montagecompressed.mp4", 100, 10)
 
     # ---------------------------------------------------------------------------
 
@@ -143,6 +144,18 @@ class TestVideoBuffer(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.__vBuffer.read(end=-3.0)
 
+        self.__vBuffer.read(begining=0, end=100)
+        y = self.__vBuffer.get_eov()
+        self.assertEqual(y, True)
+
+        self.__vBuffer.read(begining=4200, end=4300)
+        y = self.__vBuffer.get_eov()
+        self.assertEqual(y, True)
+
+        self.__vBuffer.read(begining=5000, end=5100)
+        y = self.__vBuffer.get_eov()
+        self.assertEqual(y, False)
+
     # ---------------------------------------------------------------------------
 
     def test_len(self):
@@ -156,6 +169,15 @@ class TestVideoBuffer(unittest.TestCase):
         y = self.__vBuffer.__str__()
         print(y)
         self.assertEqual(len(y), 100)
+
+    # ---------------------------------------------------------------------------
+
+    def test_wrong_buffer(self):
+        with self.assertRaises(IOError):
+            self.__wBuffer.next()
+
+        with self.assertRaises(ImageError):
+            self.__wBuffer.previous()
 
     # ---------------------------------------------------------------------------
 

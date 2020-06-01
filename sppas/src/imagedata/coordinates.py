@@ -170,7 +170,7 @@ class Coordinates(object):
 
     # -----------------------------------------------------------------------
 
-    # Allows to use simplified versions of guetter and setter
+    # Allows to use simplified versions of getter and setter
     x = property(get_x, _set_x)
 
     # -----------------------------------------------------------------------
@@ -196,7 +196,7 @@ class Coordinates(object):
 
     # -----------------------------------------------------------------------
 
-    # Allows to use simplified versions of guetter and setter
+    # Allows to use simplified versions of getter and setter
     y = property(get_y, _set_y)
 
     # -----------------------------------------------------------------------
@@ -221,7 +221,7 @@ class Coordinates(object):
 
     # -----------------------------------------------------------------------
 
-    # Allows to use simplified versions of guetter and setter
+    # Allows to use simplified versions of getter and setter
     w = property(get_w, _set_w)
 
     # -----------------------------------------------------------------------
@@ -246,7 +246,7 @@ class Coordinates(object):
 
     # -----------------------------------------------------------------------
 
-    # Allows to use simplified versions of guetter and setter
+    # Allows to use simplified versions of getter and setter
     h = property(get_h, _set_h)
 
     # -----------------------------------------------------------------------

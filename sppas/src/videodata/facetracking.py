@@ -52,7 +52,6 @@ class FaceTracking(object):
         """Create a new FaceTraking instance."""
         self.__nb_person = nb_person
         self.__faces = list()
-        self.__persons = list()
         self.__size = 0
 
     # -----------------------------------------------------------------------
@@ -71,28 +70,28 @@ class FaceTracking(object):
 
     # -----------------------------------------------------------------------
 
-    def person(self):
+    def person(self, buffer):
         """Create a list for each person."""
         if self.__nb_person == 0:
-            self.all_persons()
+            self.all_persons(buffer)
         else:
-            self.several_persons()
+            self.several_persons(buffer)
 
     # -----------------------------------------------------------------------
 
-    def all_persons(self):
+    def all_persons(self, buffer):
         """Create a list for each person."""
         for face in self.__faces:
             for coord in face:
                 index = face.index(coord)
                 self.__size = len(face)
-                if len(self.__persons) < self.__size:
-                    self.__persons.append(list())
-                self.__persons[index].append(coord)
+                if buffer.len_persons() < self.__size:
+                    buffer.add_person()
+                buffer.add_coordinate(index, coord)
 
     # -----------------------------------------------------------------------
 
-    def several_persons(self):
+    def several_persons(self, buffer):
         """Create a list for each person."""
         liste = list()
         for face in self.__faces:
@@ -101,22 +100,15 @@ class FaceTracking(object):
             for coord in face:
                 index = face.index(coord)
                 self.__size = len(face)
-                if len(self.__persons) < self.__size:
-                    self.__persons.append(list())
-                self.__persons[index].append(coord)
-
-    # -----------------------------------------------------------------------
-
-    def get_persons(self):
-        """Return a list of persons."""
-        return self.__persons
+                if buffer.len_persons() < self.__size:
+                    buffer.add_person()
+                buffer.add_coordinate(index, coord)
 
     # -----------------------------------------------------------------------
 
     def clear(self):
-        """Return a list of persons."""
+        """Reset the tracker."""
         self.__faces = list()
-        self.__persons = list()
         self.__size = 0
 
     # -----------------------------------------------------------------------

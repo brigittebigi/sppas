@@ -35,11 +35,8 @@
 import os
 import numpy as np
 import cv2
-import dlib
 
 from sppas.src.config import sppasPathSettings
-from sppas.src.imagedata.coordinates import Coordinates, ImageError
-from sppas.src.imagedata.imageutils import crop
 
 
 # ---------------------------------------------------------------------------
@@ -56,22 +53,21 @@ class FaceLandmark(object):
 
     """
 
-    def __init__(self, image, coords):
+    LEFT_FACE = (1, 8)
+    RIGHT_FACE = (9, 17)
+    LEFT_BROW_POINTS = (18, 22)
+    RIGHT_BROW_POINTS = (23, 27)
+    NOSE_POINTS = (28, 36)
+    LEFT_EYE_POINTS = (37, 42)
+    RIGHT_EYE_POINTS = (43, 48)
+    MOUTH_POINTS = (49, 68)
+
+    def __init__(self, cascade):
         """Create a new FaceLandmark instance.
 
-        :param image: (numpy.ndarray) The image to be processed.
-        :param coords: (Coordinates) The coordinates of the face.
+        :param cascade: (numpy.ndarray) The model which detects landmark.
 
         """
-        # The image to be processed
-        if isinstance(image, np.ndarray) is False:
-            raise TypeError
-        self.__image = image
-
-        # The coordinate of the face in the image
-        if isinstance(coords, Coordinates) is False:
-            raise TypeError
-        self.__coordinates = coords
 
         # The x-axis coordinates
         self.__landmarks_x = list()
@@ -79,11 +75,23 @@ class FaceLandmark(object):
         # The y-axis coordinates
         self.__landmarks_y = list()
 
-        # The detector
-        self.__detector = dlib.get_frontal_face_detector()
+        # The model
+        self.__cascade = cv2.CascadeClassifier(cascade)
 
-        # The predictor
-        self.__predictor = dlib.shape_predictor(self.__get_predictor())
+        # The detector
+        self.__model = self.__get_model()
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def __get_model():
+        """Return the predictor file."""
+        try:
+            model = os.path.join(sppasPathSettings().resources, "image",
+                                 "lbfmodel68.yaml")
+            return model
+        except OSError:
+            return "File does not exist"
 
     # -----------------------------------------------------------------------
 
@@ -99,19 +107,7 @@ class FaceLandmark(object):
 
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def __get_predictor():
-        """Return the predictor file."""
-        try:
-            predictor = os.path.join(sppasPathSettings().resources, "video",
-                                     "shape_predictor_68_face_landmarks.dat")
-            return predictor
-        except OSError:
-            return "File does not exist"
-
-    # -----------------------------------------------------------------------
-
-    def store_points(self, coordinates):
+    def __store_points(self, coordinates):
         """Store x-axis, y-axis values in each list."""
         for i in range(0, 68):
             self.__landmarks_x.append(coordinates.part(i).x)
@@ -119,56 +115,30 @@ class FaceLandmark(object):
 
     # -----------------------------------------------------------------------
 
-    def __prepare_face(self):
-        """Crop the face from the image."""
-        return crop(self.__image, self.__coordinates)
-
-    # -----------------------------------------------------------------------
-
-    def full_face(self):
-        """Recalibrate x-axis, y-axis coordinates for the image."""
-        for x in self.__landmarks_x:
-            x += self.__coordinates.x
-        for y in self.__landmarks_y:
-            y += self.__coordinates.y
-
-    # -----------------------------------------------------------------------
-
-    def __landmarks(self, face_image):
+    def landmarks(self, image):
         """Determined landmarks from a face.
 
-        :param face_image: (numpy.ndarray) The image to be processed.
+        :param image: (numpy.ndarray) The image to be processed.
 
         """
-        # Transform image into gray scale image
-        gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
+        cv2.imshow("Output", image)
+        # cv2.waitKey(0)
 
-        # Create the bounding box of the face
-        rects = self.__detector(gray, 1)
+        faces = self.__cascade.detectMultiScale(image, 1.5, 5)
+        print(faces)
+        recognizer = cv2.face.LBPHFaceRecognizer_create()
+        recognizer.loadModel(self.__model)
+        ok, landmarks = recognizer.fit(image, faces)
+        print("landmarks LBF", ok, landmarks)
 
-        # Loop over the face detections
-        if len(rects) == 1:
-            # Determine the facial landmarks of the face
-            rect = rects[0]
-            coordinates = self.__predictor(gray, rect)
-
-            # Store the x, y coordinates in the right list
-            self.store_points(coordinates)
-
-            # Loop over coordinates and draw circle around points
-            for index in range(0, 68):
-                cv2.circle(face_image, (self.__landmarks_x[index], self.__landmarks_y[index]), 1, (0, 0, 255), -1)
-        else:
-            raise ImageError
-        # Show image
-        cv2.imshow("Output", face_image)
-        cv2.waitKey(0)
-
-    # -----------------------------------------------------------------------
-
-    def process(self):
-        """Launch the landmarks process."""
-        self.__landmarks(self.__prepare_face())
+        # # Loop over coordinates and draw circle around points
+        # for index in range(0, 68):
+        #     cv2.circle(face_image, (self.__landmarks_x[index], self.__landmarks_y[index]), 1, (0, 0, 255), -1)
+        # else:
+        #     raise ImageError
+        # # Show image
+        # cv2.imshow("Output", face_image)
+        # cv2.waitKey(0)
 
     # -----------------------------------------------------------------------
 
@@ -227,3 +197,11 @@ class FaceLandmark(object):
 
     # -----------------------------------------------------------------------
 
+
+# haarcascade = os.path.join(sppasPathSettings().resources, "image",
+#                            "haarcascade_frontalface_alt2.xml")
+# f = FaceLandmark(haarcascade)
+# image = "../../../../../video_test/image0.jpg"
+# image = cv2.imread(image)
+# f.landmarks(image)
+# print(help(cv2))

@@ -69,30 +69,12 @@ def crop(image, coordinate):
     """
     if isinstance(coordinate, Coordinates) is False:
         raise TypeError
-    # cv2.imshow("Image", image)
-    # cv2.waitKey(1) & 0xFF
     x1 = coordinate.x
     x2 = coordinate.x + coordinate.w
     y1 = coordinate.y
     y2 = coordinate.y + coordinate.h
-    # print("x1: ", x1, "x2: ", x2, "y1: ", y1, "y2: ", y2,)
-    # print("width: ", image.shape[1], "height: ", image.shape[0])
-    # if x1 < 0 or y1 < 0 or x2 > image.shape[1] or y2 > image.shape[0]:
-    #     image, x1, x2, y1, y2 = pad_img_to_fit_bbox(image, x1, x2, y1, y2)
     cropped = image[y1:y2, x1:x2]
     return cropped
-
-# ----------------------------------------------------------------------------
-
-
-def pad_img_to_fit_bbox(img, x1, x2, y1, y2):
-    img = np.pad(img, ((np.abs(np.minimum(0, y1)), np.maximum(y2 - img.shape[0], 0)),
-                       (np.abs(np.minimum(0, x1)), np.maximum(x2 - img.shape[1], 0)), (0, 0)), mode="constant")
-    y1 += np.abs(np.minimum(0, y1))
-    y2 += np.abs(np.minimum(0, y1))
-    x1 += np.abs(np.minimum(0, x1))
-    x2 += np.abs(np.minimum(0, x1))
-    return img, x1, x2, y1, y2
 
 # ----------------------------------------------------------------------------
 
@@ -136,3 +118,55 @@ def resize(image, width, height):
         raise ValueError
     image = cv2.resize(image, (width, height), interpolation=cv2.INTER_AREA)
     return image
+
+# -----------------------------------------------------------------------
+
+
+def portrait(coords, coeff=2.4):
+    """Transform face coordinates to a portrait coordinates.
+
+    :param coords: (Coordinates) The coordinates of the face.
+    :param coeff: (float) The coefficient of the scale.
+
+    """
+    if isinstance(coords, Coordinates) is False:
+        raise TypeError
+
+    # Extend the image with a coeff equal to 2.4
+    result = coords.scale(coeff)
+
+    # Reframe the image on the face
+    coords.shift(result, -30)
+
+# ----------------------------------------------------------------------------
+
+
+def draw_points(image, x, y, option="circle"):
+    """Surround the elements of "image" with squares.
+
+    :param image: (numpy.ndarray) The image to be processed.
+    :param x: (list) The x-axis value for the draw.
+    :param y: (list) The y-axis value for the draw.
+    :param option: (str) The shape of the draw.
+    :returns: An image(numpy.ndarray object).
+
+    """
+    x = int(x)
+    if isinstance(x, int) is False:
+        raise TypeError
+    y = int(y)
+    if isinstance(y, int) is False:
+        raise TypeError
+
+    # If option == "circle" draw circle on the coordinate
+    if option == "circle":
+        cv2.circle(image, (x, y), 4, (0, 0, 255), -1)
+
+    elif option == "ellipse":
+        cv2.ellipse(image, (x, y), (5, 5), 0, 0, 360, (0, 0, 255), 2)
+
+    elif option == "square":
+        cv2.rectangle(image, (x-4, y-4), (x+4, y+4), (0, 0, 255), 2)
+
+# ----------------------------------------------------------------------------
+

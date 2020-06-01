@@ -100,6 +100,9 @@ class VideoBuffer(object):
         # Last read frame
         self.__last_frame = 0
 
+        # End of the video
+        self.__eov = True
+
         # Initialization of the video
         self.init_video(video)
 
@@ -129,6 +132,17 @@ class VideoBuffer(object):
     def get_overlap(self):
         """Return the overlap of the buffer."""
         return self.__overlap
+
+    # -----------------------------------------------------------------------
+
+    def get_eov(self):
+        """Return True if it's the end of the video."""
+        return self.__eov
+
+    # -----------------------------------------------------------------------
+
+    # Allows to use simplified versions of getter and setter
+    eov = property(get_eov, None)
 
     # -----------------------------------------------------------------------
 
@@ -257,7 +271,8 @@ class VideoBuffer(object):
 
             # If it's the end of the video return False
             if frame is None:
-                return False
+                self.__eov = False
+                break
 
             # Add the image in the storage list
             images.append(frame)
@@ -270,6 +285,7 @@ class VideoBuffer(object):
 
         # Set the last frameID to the last frameID the loop goes to
         self.__last_frame = self.__video.get(CAP_PROP_POS_FRAMES)
+
         # Destroy the showing window
         cv2.destroyAllWindows()
 
@@ -322,9 +338,11 @@ class VideoBuffer(object):
             frame = self.__video.read()
             frame = frame[1]
             if frame is None:
-                return False
+                self.__eov = False
+                break
             images.append(frame)
 
+        # Set the last frameID to the last frameID the loop goes to
         self.__last_frame = self.__video.get(CAP_PROP_POS_FRAMES)
         cv2.destroyAllWindows()
 
@@ -353,12 +371,8 @@ class VideoBuffer(object):
         result = self.__load_frames(self.__size - self.__overlap)
 
         # If the video is invald
-        if result is False and self.__video.get(CAP_PROP_POS_FRAMES) == 0:
+        if self.__eov is False and self.__video.get(CAP_PROP_POS_FRAMES) == 0:
             raise IOError("The input video is not a valid one")
-
-        # If it's the end of the video return False
-        if result is False:
-            return False
 
         # Update the Buffer
         self.__next_append(result)
@@ -388,12 +402,8 @@ class VideoBuffer(object):
         result = self.__load_frames(self.__size - self.__overlap)
 
         # If the video is invalid
-        if result is False and self.__video.get(CAP_PROP_POS_FRAMES) == 0:
+        if self.__eov is False and self.__video.get(CAP_PROP_POS_FRAMES) == 0:
             raise IOError("The input video is not a valid one")
-
-        # If it's the end of the video return False
-        if result is False:
-            return False
 
         # Update the Buffer
         self.__prev_append(result)
@@ -414,6 +424,9 @@ class VideoBuffer(object):
 
         # Last read frame
         self.__last_frame = 0
+
+        # End of the video
+        self.__eov = True
 
     # -----------------------------------------------------------------------
 

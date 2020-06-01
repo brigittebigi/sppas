@@ -34,10 +34,11 @@
 
 import time
 
-from sppas.src.videodata.videobuffer import VideoBuffer
+from sppas.src.videodata.personsbuffer import PersonsBuffer
 from sppas.src.videodata.facetracking import FaceTracking
-from sppas.src.videodata.landmarkmanager import LandmarkManager
+from sppas.src.videodata.videolandmark import VideoLandmark
 from sppas.src.videodata.coordswriter import sppasVideoCoordsWriter
+from sppas.src.imagedata.imageutils import crop, portrait
 
 # ---------------------------------------------------------------------------
 
@@ -53,8 +54,8 @@ class Manager(object):
 
     """
 
-    def __init__(self, video, buffer_size, buffer_overlap,
-                 framing, mode, nb_person=0, patron="person", width=-1, height=-1, csv_value=False, v_value=False, f_value=False):
+    def __init__(self, video, buffer_size, buffer_overlap, framing=None, mode=None, draw=None, nb_person=0,
+                 pattern="-person", width=-1, height=-1, csv_value=False, v_value=False, f_value=False):
         """Create a new Manager instance.
 
         :param video: (name of video file, image sequence, url or video stream,
@@ -64,8 +65,9 @@ class Manager(object):
         from the previous buffer.
         :param framing: (str) The name of the framing option to use.
         :param mode: (str) The name of the mode option to use.
+        :param draw: (str) The name of the draw you want to draw.
         :param nb_person: (int) The number of person to detect.
-        :param patron: (str) The patron to use for the creation of the files.
+        :param pattern: (str) The pattern to use for the creation of the files.
         :param width: (int) The width of the outputs images and videos.
         :param height: (int) The height of the outputs images and videos.
         :param csv_value: (boolean) If is True extract images in csv_files.
@@ -73,11 +75,12 @@ class Manager(object):
         :param f_value: (boolean) If is True extract images in folders.
 
         """
-        self.__vBuffer = VideoBuffer(video, buffer_size, buffer_overlap)
-        self.__coords_writer = sppasVideoCoordsWriter(video, self.__vBuffer.get_fps(), patron,
+        self.__pBuffer = PersonsBuffer(video, buffer_size, buffer_overlap)
+        self.__coords_writer = sppasVideoCoordsWriter(video, self.__pBuffer.get_fps(), pattern,
                                                       csv=csv_value, video=v_value, folder=f_value)
         self.__coords_writer.set_framing(framing)
         self.__coords_writer.set_mode(mode)
+        self.__coords_writer.set_draw(draw)
         self.__coords_writer.set_width(width)
         self.__coords_writer.set_height(height)
 
@@ -90,44 +93,84 @@ class Manager(object):
 
         self.__fTracker = FaceTracking(self.__nb_person)
 
-        self.__landmarks = LandmarkManager()
-
-        self.__eov = False
+        self.__landmarks = VideoLandmark()
 
     # -----------------------------------------------------------------------
 
     def launch_process(self):
         """Manage the process."""
         # Loop over the video
-        while self.__eov is False:
+        while self.__pBuffer.eov:
             # Clear the FaceTracker
             self.__fTracker.clear()
 
-            # Store the result of VideoBuffer.next()
-            result = self.__vBuffer.next()
+            # Clear the buffer lists
+            self.__pBuffer.clear()
 
-            # If it's the end of the video break the loop
-            if result is False:
-                self.__eov = True
+            # Store the result of VideoBuffer.next()
+            self.__pBuffer.next()
 
             # Initialize the list of coordinates from FaceDetection in the FaceTracker
             self.use_tracker()
 
             # Initialize the list of points for the faces with FaceLandmark
-            self.__landmarks.process(self.__vBuffer, self.__fTracker, self.__mode)
+            self.landmark_process()
 
             # Launch the process of creation of the video
-            self.__coords_writer.write(self.__vBuffer.get_overlap(), self.__vBuffer, self.__fTracker, self.__landmarks)
+            self.__coords_writer.write(self.__pBuffer)
 
         # Close the buffer
-        self.__vBuffer.close()
+        self.__pBuffer.close()
 
     # -----------------------------------------------------------------------
 
     def use_tracker(self):
         """Use the FaceTracker object."""
-        self.__fTracker.detect(self.__vBuffer)
-        self.__fTracker.person()
+        self.__fTracker.detect(self.__pBuffer)
+        self.__fTracker.person(self.__pBuffer)
+
+    # -----------------------------------------------------------------------
+
+    def landmark_process(self):
+        """Use the VideoLandmark object."""
+        # Loop over the result of FaceTracking
+        for person in self.__pBuffer.get_persons():
+            # Create a list of x-axis, y-axis values for each person
+            self.__pBuffer.add_landmarks()
+
+            # Get the index of the person
+            index = self.__pBuffer.get_persons().index(person)
+
+            # Initialise the iterator
+            iterator = self.__pBuffer.__iter__()
+
+            # Loop over the buffer
+            for i in range(0, self.__pBuffer.__len__()):
+                # Go to the next image
+                img = next(iterator)
+
+                if i > len(person) - 1:
+                    continue
+
+                # Adjust the coordinates to get a more accurate result
+                # portrait(person[i], 1.5)
+
+                # Crop the visage according to the values of the coordinates
+                image = crop(img, person[i])
+
+                # Launch the landmark on the image
+                landmark = self.__landmarks.process(image)
+
+                # Loop over the result of landmark and change the values
+                # according to the base image
+                for d in landmark.keys():
+                    a = list(landmark[d])
+                    a[0] += person[i].x
+                    a[1] += person[i].y
+                    landmark[d] = tuple(a)
+
+                # Add the values in the buffer
+                self.__pBuffer.add_landmark(index, landmark)
 
     # -----------------------------------------------------------------------
 

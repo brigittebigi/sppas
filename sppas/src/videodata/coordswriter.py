@@ -40,7 +40,7 @@ import csv
 import shutil
 import glob
 
-from sppas.src.imagedata.imageutils import crop, surrond_square, resize
+from sppas.src.imagedata.imageutils import crop, surrond_square, resize, portrait, draw_points
 from sppas.src.imagedata.coordinates import Coordinates
 
 
@@ -60,13 +60,14 @@ class sppasVideoCoordsWriter(object):
 
     FRAMING = ["face", "portrait"]
     MODE = ["full", "crop"]
+    DRAW = ["circle", "ellipse", "square"]
 
-    def __init__(self, path, fps, patron, csv=False, video=False, folder=False):
+    def __init__(self, path, fps, pattern, csv=False, video=False, folder=False):
         """Create a new sppasImgCoordsWriter instance.
 
         :param path: (str) The path of the video.
         :param fps: (int) The FPS of the video.
-        :param patron: (str) The patron to use for the creation of the files.
+        :param pattern: (str) The pattern to use for the creation of the files.
         :param csv: (boolean) If is True extract images in csv file.
         :param video: (boolean) If is True extract images in a video.
         :param folder: (boolean) If is True extract images in a folder.
@@ -93,6 +94,8 @@ class sppasVideoCoordsWriter(object):
         self.__framing = None
         # The mode you want, full or crop
         self.__mode = None
+        # The draw you want, circle, ellipse or rectangle
+        self.__draw = None
 
         # The width you want for your outputs
         self.__width = None
@@ -106,8 +109,8 @@ class sppasVideoCoordsWriter(object):
         self.__number = 0
 
         # The name of the files
-        self.__patron = str()
-        self.set_patron(patron)
+        self.__pattern = str()
+        self.set_pattern(pattern)
 
         # Reset outputs
         self.__reset()
@@ -167,14 +170,19 @@ class sppasVideoCoordsWriter(object):
         if isinstance(path, str) is False:
             raise TypeError
 
-        # Store the video name
-        video_name = path.split("/")
-        video_name = video_name[len(video_name) - 1].split(".")[0]
+        # # Store the video name
+        # video_name = path.split("/")
+        # video_name = video_name[len(video_name) - 1].split(".")[0]
+        #
+        # # Store the video path
+        # video_path = path.split(video_name)[0]
+        # if video_path == "":
+        #     video_path = "./"
 
-        # Store the video path
-        video_path = path.split(video_name)[0]
-        if video_path == "":
-            video_path = "./"
+        path = os.path.realpath(path)
+        video_path = os.path.dirname(path) + os.sep
+        video = os.path.basename(path)
+        video_name, extension = os.path.splitext(video)
 
         return video_path, video_name
 
@@ -192,9 +200,9 @@ class sppasVideoCoordsWriter(object):
                 raise TypeError
 
         if index is None:
-            path = self.__path + self.__video_name + "_*-" + self.get_patron() + ".csv"
+            path = self.__path + self.__video_name + "_*" + self.get_pattern() + ".csv"
         else:
-            path = self.__path + self.__video_name + "_" + str(index) + "-" + self.get_patron() + ".csv"
+            path = self.__path + self.__video_name + "_" + str(index) + self.get_pattern() + ".csv"
         return path
 
     # -----------------------------------------------------------------------
@@ -211,9 +219,9 @@ class sppasVideoCoordsWriter(object):
                 raise TypeError
 
         if index is None:
-            path = self.__path + self.__video_name + "_*-" + self.get_patron() + ".avi"
+            path = self.__path + self.__video_name + "_*" + self.get_pattern() + ".avi"
         else:
-            path = self.__path + self.__video_name + "_" + str(index) + "-" + self.get_patron() + ".avi"
+            path = self.__path + self.__video_name + "_" + str(index) + self.get_pattern() + ".avi"
         return path
 
     # -----------------------------------------------------------------------
@@ -230,9 +238,9 @@ class sppasVideoCoordsWriter(object):
                 raise TypeError
 
         if index is None:
-            path = self.__path + "*-" + self.get_patron() + "/"
+            path = self.__path + "*" + self.get_pattern() + "/"
         else:
-            path = self.__path + str(index) + "-" + self.get_patron() + "/"
+            path = self.__path + str(index) + self.get_pattern() + "/"
         return path
 
     # -----------------------------------------------------------------------
@@ -307,6 +315,8 @@ class sppasVideoCoordsWriter(object):
         face or portrait.
 
         """
+        if value is None:
+            value = "portrait"
         if isinstance(value, str) is False:
             raise TypeError
         if value not in sppasVideoCoordsWriter.FRAMING:
@@ -328,11 +338,34 @@ class sppasVideoCoordsWriter(object):
         full or crop.
 
         """
+        if value is None:
+            value = "crop"
         if isinstance(value, str) is False:
             raise TypeError
         if value not in sppasVideoCoordsWriter.MODE:
             raise ValueError
         self.__mode = value
+
+    # -----------------------------------------------------------------------
+
+    def get_draw(self):
+        """Return the draw."""
+        return self.__draw
+
+    # -----------------------------------------------------------------------
+
+    def set_draw(self, value):
+        """Set the draw.
+
+        :param value: (str) The draw to draw on each image of the buffer,
+        circle, ellipse or square.
+
+        """
+        if isinstance(value, str) is False and value is not None:
+            raise TypeError
+        if value not in sppasVideoCoordsWriter.DRAW and value is not None:
+            raise ValueError
+        self.__draw = value
 
     # -----------------------------------------------------------------------
 
@@ -394,31 +427,28 @@ class sppasVideoCoordsWriter(object):
 
     # -----------------------------------------------------------------------
 
-    def get_patron(self):
-        """Return the patron of the outputs files."""
-        return self.__patron
+    def get_pattern(self):
+        """Return the pattern of the outputs files."""
+        return self.__pattern
 
     # -----------------------------------------------------------------------
 
-    def set_patron(self, value):
-        """Set the patron of the outputs files.
+    def set_pattern(self, value):
+        """Set the pattern of the outputs files.
 
-        :param value: (str) The patron in all the outputs files.
+        :param value: (str) The pattern in all the outputs files.
 
         """
         if isinstance(value, str) is False:
             raise TypeError
-        self.__patron = value
+        self.__pattern = value
 
     # -----------------------------------------------------------------------
 
-    def write(self, overlap, buffer, tracker, landmarks):
+    def write(self, buffer):
         """Browse the buffer and apply modification for each person.
 
-        :param overlap: (int) The number of values to delete.
         :param buffer: (VideoBuffer) The buffer which contains images.
-        :param tracker: (FaceTracking) The FaceTracker object.
-        :param landmarks: (LandmarkManager) The LandmarkManager object.
 
         """
         # Initialise the iterator
@@ -431,16 +461,22 @@ class sppasVideoCoordsWriter(object):
             img = next(iterator)
 
             # If overlap continue
-            if i < overlap:
+            if i < buffer.get_overlap():
                 continue
 
             # Loop over the persons
-            for person in tracker.get_persons():
-                index = tracker.get_persons().index(person)
+            for person in buffer.get_persons():
+                index = buffer.get_persons().index(person)
                 image = img
+
                 if i > len(person) - 1:
                     continue
-                self.__portrait(person[i])
+
+                if self.get_draw() is not None:
+                    self.__draw_points(image, buffer.get_landmarks()[index][i])
+
+                if self.__framing == "portrait":
+                    portrait(person[i])
 
                 # If mode != full adjust images
                 if self.__mode != "full":
@@ -457,31 +493,13 @@ class sppasVideoCoordsWriter(object):
                 (h, w) = image.shape[:2]
 
                 # Create the output files
-                self.__create_out(len(tracker.get_persons()), w, h)
+                self.__create_out(buffer.len_persons(), w, h)
 
                 # Write the image in csv file, video, folder
                 self.__write(image, index, person[i])
 
             # Increment the number of image by 1
             self.__number += 1
-
-    # -----------------------------------------------------------------------
-
-    def __portrait(self, coords):
-        """Transform face coordinates to a portrait coordinates.
-
-        :param coords: (Coordinates) The coordinates of the face.
-
-        """
-        if isinstance(coords, Coordinates) is False:
-            raise TypeError
-
-        if self.__framing == "portrait":
-            # Extend the image with a coeff equal to 2.4
-            result = coords.scale(2.4)
-
-            # Reframe the image on the face
-            coords.shift(result, -30)
 
     # -----------------------------------------------------------------------
 
@@ -509,6 +527,24 @@ class sppasVideoCoordsWriter(object):
         # If mode == crop, crop the face.
         elif self.__mode == "crop":
             return crop(img_buffer, coords)
+
+    # -----------------------------------------------------------------------
+
+    def __draw_points(self, img_buffer, five_points):
+        """Draw squares around faces or crop the faces.
+
+        :param img_buffer: (numpy.ndarray) The image to be processed.
+
+        """
+        if isinstance(five_points, dict) is False:
+            raise TypeError
+
+        if isinstance(img_buffer, np.ndarray) is False:
+            raise TypeError
+
+        for keys in five_points.keys():
+            x, y = five_points[keys]
+            draw_points(img_buffer, x, y, option=self.get_draw())
 
     # -----------------------------------------------------------------------
 

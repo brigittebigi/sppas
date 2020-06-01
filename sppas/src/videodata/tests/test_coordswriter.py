@@ -44,7 +44,7 @@ from sppas.src.videodata.facetracking import FaceTracking
 # ---------------------------------------------------------------------------
 
 
-class TestVideoBuffer(unittest.TestCase):
+class TestCoordsWriter(unittest.TestCase):
 
     def setUp(self):
         self.__fTracker = FaceTracking()
@@ -57,7 +57,7 @@ class TestVideoBuffer(unittest.TestCase):
 
     def test_path(self):
         x, y = self.__cw._sppasVideoCoordsWriter__path_video(self.path)
-        self.assertEqual(x, "../../../../../corpus/Test_01_Celia_Brigitte/")
+        self.assertEqual(x, "C:\\Users\\Floroux\\Documents\\stage\\corpus\\Test_01_Celia_Brigitte\\")
         self.assertEqual(y, "montage_compressed")
 
     # ---------------------------------------------------------------------------
@@ -65,17 +65,17 @@ class TestVideoBuffer(unittest.TestCase):
     def test_cfile_path(self):
         path = self.__cw._sppasVideoCoordsWriter__cfile_path()
         path2 = self.__cw._sppasVideoCoordsWriter__path + \
-                self.__cw._sppasVideoCoordsWriter__video_name + "_*-" + self.__cw.get_patron() + ".csv"
+                self.__cw._sppasVideoCoordsWriter__video_name + "_*" + self.__cw.get_pattern() + ".csv"
         self.assertEqual(path, path2)
 
         path = self.__cw._sppasVideoCoordsWriter__cfile_path(1)
         path2 = self.__cw._sppasVideoCoordsWriter__path + \
-                self.__cw._sppasVideoCoordsWriter__video_name + "_1-" + self.__cw.get_patron() + ".csv"
+                self.__cw._sppasVideoCoordsWriter__video_name + "_1" + self.__cw.get_pattern() + ".csv"
         self.assertEqual(path, path2)
 
         path = self.__cw._sppasVideoCoordsWriter__cfile_path(500)
         path2 = self.__cw._sppasVideoCoordsWriter__path + \
-                self.__cw._sppasVideoCoordsWriter__video_name + "_500-" + self.__cw.get_patron() + ".csv"
+                self.__cw._sppasVideoCoordsWriter__video_name + "_500" + self.__cw.get_pattern() + ".csv"
         self.assertEqual(path, path2)
 
     # ---------------------------------------------------------------------------
@@ -83,32 +83,32 @@ class TestVideoBuffer(unittest.TestCase):
     def test_vfile_path(self):
         path = self.__cw._sppasVideoCoordsWriter__vfile_path()
         path2 = self.__cw._sppasVideoCoordsWriter__path + \
-                self.__cw._sppasVideoCoordsWriter__video_name + "_*-" + self.__cw.get_patron() + ".avi"
+                self.__cw._sppasVideoCoordsWriter__video_name + "_*" + self.__cw.get_pattern() + ".avi"
         self.assertEqual(path, path2)
 
         path = self.__cw._sppasVideoCoordsWriter__vfile_path(1)
         path2 = self.__cw._sppasVideoCoordsWriter__path + \
-                self.__cw._sppasVideoCoordsWriter__video_name + "_1-" + self.__cw.get_patron() + ".avi"
+                self.__cw._sppasVideoCoordsWriter__video_name + "_1" + self.__cw.get_pattern() + ".avi"
         self.assertEqual(path, path2)
 
         path = self.__cw._sppasVideoCoordsWriter__vfile_path(500)
         path2 = self.__cw._sppasVideoCoordsWriter__path + \
-                self.__cw._sppasVideoCoordsWriter__video_name + "_500-" + self.__cw.get_patron() + ".avi"
+                self.__cw._sppasVideoCoordsWriter__video_name + "_500" + self.__cw.get_pattern() + ".avi"
         self.assertEqual(path, path2)
 
     # ---------------------------------------------------------------------------
 
     def test_ffile_path(self):
         path = self.__cw._sppasVideoCoordsWriter__ffile_path()
-        path2 = self.__cw._sppasVideoCoordsWriter__path + "*-" + self.__cw.get_patron() + "/"
+        path2 = self.__cw._sppasVideoCoordsWriter__path + "*" + self.__cw.get_pattern() + "/"
         self.assertEqual(path, path2)
 
         path = self.__cw._sppasVideoCoordsWriter__ffile_path(1)
-        path2 = self.__cw._sppasVideoCoordsWriter__path + "1-" + self.__cw.get_patron() + "/"
+        path2 = self.__cw._sppasVideoCoordsWriter__path + "1" + self.__cw.get_pattern() + "/"
         self.assertEqual(path, path2)
 
         path = self.__cw._sppasVideoCoordsWriter__ffile_path(500)
-        path2 = self.__cw._sppasVideoCoordsWriter__path + "500-" + self.__cw.get_patron() + "/"
+        path2 = self.__cw._sppasVideoCoordsWriter__path + "500" + self.__cw.get_pattern() + "/"
         self.assertEqual(path, path2)
 
     # ---------------------------------------------------------------------------
@@ -207,6 +207,30 @@ class TestVideoBuffer(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
+    def test_get_set_draw(self):
+        y = self.__cw.get_draw()
+        self.assertEqual(y, None)
+
+        self.__cw.set_draw("circle")
+        y = self.__cw.get_draw()
+        self.assertEqual(y, "circle")
+
+        self.__cw.set_draw("ellipse")
+        y = self.__cw.get_draw()
+        self.assertEqual(y, "ellipse")
+
+        self.__cw.set_draw("square")
+        y = self.__cw.get_draw()
+        self.assertEqual(y, "square")
+
+        with self.assertRaises(TypeError):
+            self.__cw.set_draw(2)
+
+        with self.assertRaises(ValueError):
+            self.__cw.set_draw("aaaaaaaa")
+
+    # ---------------------------------------------------------------------------
+
     def test_get_set_width(self):
         y = self.__cw.get_width()
         self.assertEqual(y, None)
@@ -259,41 +283,29 @@ class TestVideoBuffer(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
-    def test_get_set_patron(self):
-        y = self.__cw.get_patron()
+    def test_get_set_pattern(self):
+        y = self.__cw.get_pattern()
         self.assertEqual(y, "person")
 
-        self.__cw.set_patron("file")
-        y = self.__cw.get_patron()
+        self.__cw.set_pattern("file")
+        y = self.__cw.get_pattern()
         self.assertEqual(y, "file")
 
-        self.__cw.set_patron("video")
-        y = self.__cw.get_patron()
+        self.__cw.set_pattern("video")
+        y = self.__cw.get_pattern()
         self.assertEqual(y,"video")
 
         with self.assertRaises(TypeError):
-            self.__cw.set_patron(["a", "b", "c"])
+            self.__cw.set_pattern(["a", "b", "c"])
 
         with self.assertRaises(TypeError):
-            self.__cw.set_patron(2)
+            self.__cw.set_pattern(2)
 
         with self.assertRaises(TypeError):
-            self.__cw.set_patron(-2)
+            self.__cw.set_pattern(-2)
 
         with self.assertRaises(TypeError):
-            self.__cw.set_patron(2.0)
-
-    # ---------------------------------------------------------------------------
-
-    def test_portrait(self):
-        with self.assertRaises(TypeError):
-            self.__cw._sppasVideoCoordsWriter__portrait(2)
-
-        with self.assertRaises(TypeError):
-            self.__cw._sppasVideoCoordsWriter__portrait("Hello")
-
-        with self.assertRaises(TypeError):
-            self.__cw._sppasVideoCoordsWriter__portrait(["a", "b", 1, 2])
+            self.__cw.set_pattern(2.0)
 
     # ---------------------------------------------------------------------------
 
@@ -306,6 +318,15 @@ class TestVideoBuffer(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             self.__cw._sppasVideoCoordsWriter__process_image(2, "Hello", 2)
+
+    # ---------------------------------------------------------------------------
+
+    def test_draw_points(self):
+        with self.assertRaises(TypeError):
+            self.__cw._sppasVideoCoordsWriter__draw_points(2, "Hello", 2)
+
+        with self.assertRaises(TypeError):
+            self.__cw._sppasVideoCoordsWriter__draw_points(2, "Hello", {"test": 1})
 
     # ---------------------------------------------------------------------------
 
