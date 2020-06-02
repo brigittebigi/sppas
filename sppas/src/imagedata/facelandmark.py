@@ -62,10 +62,11 @@ class FaceLandmark(object):
     RIGHT_EYE_POINTS = (43, 48)
     MOUTH_POINTS = (49, 68)
 
-    def __init__(self, cascade):
+    def __init__(self, cascade, model):
         """Create a new FaceLandmark instance.
 
         :param cascade: (numpy.ndarray) The model which detects landmark.
+        :param model: (numpy.ndarray) The model which detects landmark.
 
         """
 
@@ -75,35 +76,43 @@ class FaceLandmark(object):
         # The y-axis coordinates
         self.__landmarks_y = list()
 
-        # The model
+        # The cascade model
         self.__cascade = cv2.CascadeClassifier(cascade)
 
         # The detector
-        self.__model = self.__get_model()
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def __get_model():
-        """Return the predictor file."""
-        try:
-            model = os.path.join(sppasPathSettings().resources, "image",
-                                 "lbfmodel68.yaml")
-            return model
-        except OSError:
-            return "File does not exist"
+        self.__model = model
 
     # -----------------------------------------------------------------------
 
     def get_landmarks_x(self):
-        """Return a list of x-axis coordinates."""
+        """Return a list of x-axis values."""
         return self.__landmarks_x
 
     # -----------------------------------------------------------------------
 
+    def get_landmark_x(self, index):
+        """Return a x-axis value."""
+        index = int(index)
+        if isinstance(index, int) is False:
+            raise TypeError
+
+        return self.__landmarks_x[index]
+
+    # -----------------------------------------------------------------------
+
     def get_landmarks_y(self):
-        """Return a list of y-axis coordinates."""
+        """Return a list of y-axis values."""
         return self.__landmarks_y
+
+    # -----------------------------------------------------------------------
+
+    def get_landmark_y(self, index):
+        """Return a y-axis value."""
+        index = int(index)
+        if isinstance(index, int) is False:
+            raise TypeError
+
+        return self.__landmarks_y[index]
 
     # -----------------------------------------------------------------------
 

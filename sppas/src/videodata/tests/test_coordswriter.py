@@ -175,6 +175,10 @@ class TestCoordsWriter(unittest.TestCase):
         y = self.__cw.get_framing()
         self.assertEqual(y, "face")
 
+        self.__cw.set_framing(None)
+        y = self.__cw.get_framing()
+        self.assertEqual(y, None)
+
         self.__cw.set_framing("portrait")
         y = self.__cw.get_framing()
         self.assertEqual(y, "portrait")
@@ -195,6 +199,10 @@ class TestCoordsWriter(unittest.TestCase):
         y = self.__cw.get_mode()
         self.assertEqual(y, "full")
 
+        self.__cw.set_mode(None)
+        y = self.__cw.get_mode()
+        self.assertEqual(y, None)
+
         self.__cw.set_mode("crop")
         y = self.__cw.get_mode()
         self.assertEqual(y, "crop")
@@ -214,6 +222,10 @@ class TestCoordsWriter(unittest.TestCase):
         self.__cw.set_draw("circle")
         y = self.__cw.get_draw()
         self.assertEqual(y, "circle")
+
+        self.__cw.set_draw(None)
+        y = self.__cw.get_draw()
+        self.assertEqual(y, None)
 
         self.__cw.set_draw("ellipse")
         y = self.__cw.get_draw()

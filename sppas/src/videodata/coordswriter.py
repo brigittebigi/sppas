@@ -315,11 +315,9 @@ class sppasVideoCoordsWriter(object):
         face or portrait.
 
         """
-        if value is None:
-            value = "portrait"
-        if isinstance(value, str) is False:
+        if isinstance(value, str) is False and value is not None:
             raise TypeError
-        if value not in sppasVideoCoordsWriter.FRAMING:
+        if value not in sppasVideoCoordsWriter.FRAMING and value is not None:
             raise ValueError
         self.__framing = value
 
@@ -338,11 +336,9 @@ class sppasVideoCoordsWriter(object):
         full or crop.
 
         """
-        if value is None:
-            value = "crop"
-        if isinstance(value, str) is False:
+        if isinstance(value, str) is False and value is not None:
             raise TypeError
-        if value not in sppasVideoCoordsWriter.MODE:
+        if value not in sppasVideoCoordsWriter.MODE and value is not None:
             raise ValueError
         self.__mode = value
 
@@ -455,35 +451,37 @@ class sppasVideoCoordsWriter(object):
         iterator = buffer.__iter__()
 
         # Loop over the buffer
-        for i in range(0, buffer.__len__()):
+        for j in range(0, buffer.__len__()):
 
             # Go to the next frame
             img = next(iterator)
 
             # If overlap continue
-            if i < buffer.get_overlap():
+            if j < buffer.get_overlap():
                 continue
 
             # Loop over the persons
-            for person in buffer.get_persons():
-                index = buffer.get_persons().index(person)
+            for i in range(buffer.nb_persons()):
+                index = i
                 image = img
 
-                if i > len(person) - 1:
+                if buffer.get_landmark(i, j) is None:
                     continue
 
+                # If draw != full draw landmarks points
                 if self.get_draw() is not None:
-                    self.__draw_points(image, buffer.get_landmarks()[index][i])
+                    self.__draw_points(image, buffer.get_landmark(i, j), index)
 
                 if self.__framing == "portrait":
-                    portrait(person[i])
+                    portrait(buffer.get_coordinate(i, j))
 
                 # If mode != full adjust images
-                if self.__mode != "full":
-                    self.__adjust(image, person[i])
+                if self.__mode != "full" and self.__mode is not None:
+                    self.__adjust(image, buffer.get_coordinate(i, j))
 
                 # Use one of the extraction options
-                image = self.__process_image(image, person[i], index)
+                if self.__mode is not None:
+                    image = self.__process_image(image, buffer.get_coordinate(i, j), index)
 
                 # If mode != full resize images
                 if self.__mode != "full":
@@ -493,10 +491,10 @@ class sppasVideoCoordsWriter(object):
                 (h, w) = image.shape[:2]
 
                 # Create the output files
-                self.__create_out(buffer.len_persons(), w, h)
+                self.__create_out(buffer.nb_persons(), w, h)
 
                 # Write the image in csv file, video, folder
-                self.__write(image, index, person[i])
+                self.__write(image, index, buffer.get_coordinate(i, j))
 
             # Increment the number of image by 1
             self.__number += 1
@@ -530,21 +528,26 @@ class sppasVideoCoordsWriter(object):
 
     # -----------------------------------------------------------------------
 
-    def __draw_points(self, img_buffer, five_points):
+    def __draw_points(self, img_buffer, landmark_points, index):
         """Draw squares around faces or crop the faces.
 
         :param img_buffer: (numpy.ndarray) The image to be processed.
+        :param landmark_points: (dict) A list of x-axis, y-axis values,
+        landmark points.
+        :param index: (int) The index of the image in the list.
 
         """
-        if isinstance(five_points, dict) is False:
+        if isinstance(landmark_points, list) is False:
             raise TypeError
 
         if isinstance(img_buffer, np.ndarray) is False:
             raise TypeError
 
-        for keys in five_points.keys():
-            x, y = five_points[keys]
-            draw_points(img_buffer, x, y, option=self.get_draw())
+        number = (index * 80) % 120
+
+        for t in landmark_points:
+            x, y = t
+            draw_points(img_buffer, x, y, number, self.get_draw())
 
     # -----------------------------------------------------------------------
 

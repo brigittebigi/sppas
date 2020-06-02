@@ -32,10 +32,6 @@
 
 """
 
-import numpy as np
-import cv2
-from cv2 import CAP_PROP_POS_FRAMES, CAP_PROP_FPS
-
 from sppas.src.videodata.videobuffer import VideoBuffer
 from sppas.src.imagedata.coordinates import Coordinates
 
@@ -75,14 +71,33 @@ class PersonsBuffer(VideoBuffer):
 
     # -----------------------------------------------------------------------
 
-    def get_persons(self):
-        """Return a list of persons with coordinates."""
-        return self.__persons
+    def get_person(self, index):
+        """Return Coordinates of a person.
+
+        :param index: (int) The index of the person in the list.
+
+        """
+        index = int(index)
+        if isinstance(index, int) is False:
+            raise TypeError
+
+        return self.__persons[index]
 
     # -----------------------------------------------------------------------
 
-    def get_person(self, index, index2):
-        """Return a list of persons with coordinates."""
+    def add_person(self):
+        """Add a person (list) in the list of persons."""
+        self.__persons.append(list())
+
+    # -----------------------------------------------------------------------
+
+    def get_coordinate(self, index, index2):
+        """Return Coordinates of a person at a certain frame.
+
+        :param index: (int) The index of the person in the list.
+        :param index2: (int) The index of the frame.
+
+        """
         index = int(index)
         if isinstance(index, int) is False:
             raise TypeError
@@ -90,14 +105,7 @@ class PersonsBuffer(VideoBuffer):
         index2 = int(index2)
         if isinstance(index2, int) is False:
             raise TypeError
-
         return self.__persons[index][index2]
-
-    # -----------------------------------------------------------------------
-
-    def add_person(self):
-        """Add a person (list) in the list of persons."""
-        self.__persons.append(list())
 
     # -----------------------------------------------------------------------
 
@@ -112,21 +120,34 @@ class PersonsBuffer(VideoBuffer):
         if isinstance(index, int) is False:
             raise TypeError
 
-        if isinstance(coord, Coordinates) is False:
+        if isinstance(coord, Coordinates) is False and coord is not None:
             raise TypeError
 
         self.__persons[index].append(coord)
 
     # -----------------------------------------------------------------------
 
-    def get_landmarks(self):
-        """Return a list of persons with landmarks."""
-        return self.__landmarks
+    def get_landmarks(self, index):
+        """Return landmark points of a person.
+
+        :param index: (int) The index of the person in the list.
+
+        """
+        index = int(index)
+        if isinstance(index, int) is False:
+            raise TypeError
+
+        return self.__landmarks[index]
 
     # -----------------------------------------------------------------------
 
     def get_landmark(self, index, index2):
-        """Return a list of persons with landmarks."""
+        """Return landmark points of a person at a certain frame.
+
+        :param index: (int) The index of the person in the list.
+        :param index2: (int) The index of the frame.
+
+        """
         index = int(index)
         if isinstance(index, int) is False:
             raise TypeError
@@ -134,7 +155,6 @@ class PersonsBuffer(VideoBuffer):
         index2 = int(index2)
         if isinstance(index2, int) is False:
             raise TypeError
-
         return self.__landmarks[index][index2]
 
     # -----------------------------------------------------------------------
@@ -146,17 +166,17 @@ class PersonsBuffer(VideoBuffer):
     # -----------------------------------------------------------------------
 
     def add_landmark(self, index, landmark):
-        """Add a landmark for a person.
+        """Add landmark points for a person.
 
         :param index: (int) The index of the person in the list.
-        :param landmark: (list) The list of five points to add.
+        :param landmark: (list) The list of landmark points to add.
 
         """
         index = int(index)
         if isinstance(index, int) is False:
             raise TypeError
 
-        if isinstance(landmark, dict) is False:
+        if isinstance(landmark, list) is False and landmark is not None:
             raise TypeError
 
         self.__landmarks[index].append(landmark)
@@ -170,14 +190,10 @@ class PersonsBuffer(VideoBuffer):
 
     # -----------------------------------------------------------------------
 
-    def len_persons(self):
-        """Return the len of the list of persons."""
-        return len(self.__persons)
-
-    # -----------------------------------------------------------------------
-
-    def len_landmarks(self):
-        """Return the len of the list of landmarks."""
+    def nb_persons(self):
+        """Return the number of persons."""
+        if len(self.__persons) != 0:
+            return len(self.__persons)
         return len(self.__landmarks)
 
     # ------------------------------------------------------------------------

@@ -38,7 +38,6 @@ from sppas.src.videodata.personsbuffer import PersonsBuffer
 from sppas.src.videodata.facetracking import FaceTracking
 from sppas.src.videodata.videolandmark import VideoLandmark
 from sppas.src.videodata.coordswriter import sppasVideoCoordsWriter
-from sppas.src.imagedata.imageutils import crop, portrait
 
 # ---------------------------------------------------------------------------
 
@@ -91,7 +90,7 @@ class Manager(object):
 
         self.__mode = mode
 
-        self.__fTracker = FaceTracking(self.__nb_person)
+        self.__fTracker = FaceTracking()
 
         self.__landmarks = VideoLandmark()
 
@@ -104,9 +103,6 @@ class Manager(object):
             # Clear the FaceTracker
             self.__fTracker.clear()
 
-            # Clear the buffer lists
-            self.__pBuffer.clear()
-
             # Store the result of VideoBuffer.next()
             self.__pBuffer.next()
 
@@ -114,10 +110,13 @@ class Manager(object):
             self.use_tracker()
 
             # Initialize the list of points for the faces with FaceLandmark
-            self.landmark_process()
+            self.__landmarks.process(self.__pBuffer)
 
             # Launch the process of creation of the video
             self.__coords_writer.write(self.__pBuffer)
+
+            # Reset the output lists
+            self.__pBuffer.clear()
 
         # Close the buffer
         self.__pBuffer.close()
@@ -127,50 +126,7 @@ class Manager(object):
     def use_tracker(self):
         """Use the FaceTracker object."""
         self.__fTracker.detect(self.__pBuffer)
-        self.__fTracker.person(self.__pBuffer)
-
-    # -----------------------------------------------------------------------
-
-    def landmark_process(self):
-        """Use the VideoLandmark object."""
-        # Loop over the result of FaceTracking
-        for person in self.__pBuffer.get_persons():
-            # Create a list of x-axis, y-axis values for each person
-            self.__pBuffer.add_landmarks()
-
-            # Get the index of the person
-            index = self.__pBuffer.get_persons().index(person)
-
-            # Initialise the iterator
-            iterator = self.__pBuffer.__iter__()
-
-            # Loop over the buffer
-            for i in range(0, self.__pBuffer.__len__()):
-                # Go to the next image
-                img = next(iterator)
-
-                if i > len(person) - 1:
-                    continue
-
-                # Adjust the coordinates to get a more accurate result
-                # portrait(person[i], 1.5)
-
-                # Crop the visage according to the values of the coordinates
-                image = crop(img, person[i])
-
-                # Launch the landmark on the image
-                landmark = self.__landmarks.process(image)
-
-                # Loop over the result of landmark and change the values
-                # according to the base image
-                for d in landmark.keys():
-                    a = list(landmark[d])
-                    a[0] += person[i].x
-                    a[1] += person[i].y
-                    landmark[d] = tuple(a)
-
-                # Add the values in the buffer
-                self.__pBuffer.add_landmark(index, landmark)
+        self.__fTracker.create_persons(self.__pBuffer, self.__nb_person)
 
     # -----------------------------------------------------------------------
 

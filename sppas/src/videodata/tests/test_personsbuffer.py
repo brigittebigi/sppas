@@ -53,7 +53,7 @@ class TestVideoBuffer(unittest.TestCase):
         self.__pBuffer.add_person()
         self.__pBuffer.add_person()
         self.__pBuffer.add_person()
-        y = self.__pBuffer.get_persons()
+        y = self.__pBuffer._PersonsBuffer__persons
         self.assertEqual(y, [[], [], []])
 
     # ---------------------------------------------------------------------------
@@ -62,7 +62,7 @@ class TestVideoBuffer(unittest.TestCase):
         self.__pBuffer.add_landmarks()
         self.__pBuffer.add_landmarks()
         self.__pBuffer.add_landmarks()
-        y = self.__pBuffer.get_landmarks()
+        y = self.__pBuffer._PersonsBuffer__landmarks
         self.assertEqual(y, [[], [], []])
 
     # ---------------------------------------------------------------------------
@@ -72,21 +72,20 @@ class TestVideoBuffer(unittest.TestCase):
         self.__pBuffer.add_person()
         self.__pBuffer.add_person()
 
-        w = Coordinates(50, 50, 100, 100)
-        self.__pBuffer.add_coordinate(0, w)
-        x = Coordinates(100, 100, 200, 200)
-        self.__pBuffer.add_coordinate(1, x)
+        x = Coordinates(50, 50, 100, 100)
+        self.__pBuffer.add_coordinate(0, x)
+        self.__pBuffer.add_coordinate(1, None)
         y = Coordinates(150, 150, 300, 300)
         self.__pBuffer.add_coordinate(2, y)
 
         with self.assertRaises(ValueError):
-            self.__pBuffer.add_landmark("aaa", w)
+            self.__pBuffer.add_landmark("aaa", x)
 
         with self.assertRaises(TypeError):
-            self.__pBuffer.add_landmark(["aaa", "aaa", "aaa"], w)
+            self.__pBuffer.add_landmark(["aaa", "aaa", "aaa"], x)
 
-        z = self.__pBuffer.get_persons()
-        self.assertEqual(z, [[w], [x], [y]])
+        z = self.__pBuffer._PersonsBuffer__persons
+        self.assertEqual(z, [[x], [None], [y]])
 
     # ---------------------------------------------------------------------------
 
@@ -95,21 +94,20 @@ class TestVideoBuffer(unittest.TestCase):
         self.__pBuffer.add_landmarks()
         self.__pBuffer.add_landmarks()
 
-        w = {"1": (1, 2), "2": (1, 2), "3": (1, 2), "4": (1, 2)}
-        self.__pBuffer.add_landmark(0, w)
-        x = {"1": (1, 2), "2": (1, 2), "3": (1, 2), "4": (1, 2)}
-        self.__pBuffer.add_landmark(1, x)
-        y = {"1": (1, 2), "2": (1, 2), "3": (1, 2), "4": (1, 2)}
+        x = [(1, 2), (1, 2), (1, 2), (1, 2)]
+        self.__pBuffer.add_landmark(0, x)
+        self.__pBuffer.add_landmark(1, None)
+        y = [(1, 2), (1, 2), (1, 2), (1, 2)]
         self.__pBuffer.add_landmark(2, y)
 
         with self.assertRaises(ValueError):
-            self.__pBuffer.add_landmark("aaa", w)
+            self.__pBuffer.add_landmark("aaa", x)
 
         with self.assertRaises(TypeError):
-            self.__pBuffer.add_landmark(["aaa", "aaa", "aaa"], w)
+            self.__pBuffer.add_landmark(["aaa", "aaa", "aaa"], x)
 
-        z = self.__pBuffer.get_landmarks()
-        self.assertEqual(z, [[w], [x], [y]])
+        z = self.__pBuffer._PersonsBuffer__landmarks
+        self.assertEqual(z, [[x], [None], [y]])
 
     # ---------------------------------------------------------------------------
 
@@ -118,35 +116,36 @@ class TestVideoBuffer(unittest.TestCase):
         self.__pBuffer.add_person()
         self.__pBuffer.add_person()
 
-        w = Coordinates(50, 50, 100, 100)
-        self.__pBuffer.add_coordinate(0, w)
-        x = Coordinates(100, 100, 200, 200)
-        self.__pBuffer.add_coordinate(1, x)
+        x = Coordinates(50, 50, 100, 100)
+        self.__pBuffer.add_coordinate(0, x)
+        self.__pBuffer.add_coordinate(1, None)
         y = Coordinates(150, 150, 300, 300)
         self.__pBuffer.add_coordinate(2, y)
 
-        self.__pBuffer.add_landmarks()
-        self.__pBuffer.add_landmarks()
-        self.__pBuffer.add_landmarks()
-
-        w = {"1": (1, 2), "2": (1, 2), "3": (1, 2), "4": (1, 2)}
-        self.__pBuffer.add_landmark(0, w)
-        x = {"1": (1, 2), "2": (1, 2), "3": (1, 2), "4": (1, 2)}
-        self.__pBuffer.add_landmark(1, x)
-        y = {"1": (1, 2), "2": (1, 2), "3": (1, 2), "4": (1, 2)}
-        self.__pBuffer.add_landmark(2, y)
-
-        len1 = self.__pBuffer.len_persons()
-        len2 = self.__pBuffer.len_landmarks()
-        self.assertEqual(len1, 3)
-        self.assertEqual(len2, 3)
+        len = self.__pBuffer.nb_persons()
+        self.assertEqual(len, 3)
 
         self.__pBuffer.clear()
 
-        len1 = self.__pBuffer.len_persons()
-        len2 = self.__pBuffer.len_landmarks()
-        self.assertEqual(len1, 0)
-        self.assertEqual(len2, 0)
+        self.__pBuffer.add_landmarks()
+        self.__pBuffer.add_landmarks()
+        self.__pBuffer.add_landmarks()
+        self.__pBuffer.add_landmarks()
+
+        x = [(1, 2), (1, 2), (1, 2), (1, 2)]
+        self.__pBuffer.add_landmark(0, x)
+        self.__pBuffer.add_landmark(1, None)
+        y = [(1, 2), (1, 2), (1, 2), (1, 2)]
+        self.__pBuffer.add_landmark(2, y)
+        self.__pBuffer.add_landmark(3, None)
+
+        len = self.__pBuffer.nb_persons()
+        self.assertEqual(len, 4)
+
+        self.__pBuffer.clear()
+
+        len = self.__pBuffer.nb_persons()
+        self.assertEqual(len, 0)
 
     # ---------------------------------------------------------------------------
 

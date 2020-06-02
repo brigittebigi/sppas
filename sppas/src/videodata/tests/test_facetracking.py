@@ -52,16 +52,13 @@ class TestVideoBuffer(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_init(self):
-        nb_person = self.__fTracker._FaceTracking__nb_person
-        self.assertEqual(nb_person, 0)
-
         faces = self.__fTracker._FaceTracking__faces
         self.assertEqual(faces, list())
 
-        persons = self.__pBuffer.get_persons()
+        persons = self.__pBuffer._PersonsBuffer__persons
         self.assertEqual(persons, list())
 
-        size = self.__fTracker._FaceTracking__size
+        size = self.__fTracker._FaceTracking__max_persons
         self.assertEqual(size, 0)
 
     # ---------------------------------------------------------------------------
@@ -71,7 +68,7 @@ class TestVideoBuffer(unittest.TestCase):
         self.__fTracker.detect(self.__pBuffer)
         y = len(self.__fTracker._FaceTracking__faces)
         self.assertEqual(y, self.__pBuffer.get_size())
-        for face in self.__pBuffer.get_persons():
+        for face in self.__pBuffer._PersonsBuffer__persons:
             for coord in face:
                 self.assertTrue(coord, Coordinates)
 
@@ -81,23 +78,25 @@ class TestVideoBuffer(unittest.TestCase):
         self.__pBuffer.next()
         self.__fTracker.detect(self.__pBuffer)
         self.__fTracker.all_persons(self.__pBuffer)
-        for face in self.__pBuffer.get_persons():
+        for face in self.__pBuffer._PersonsBuffer__persons:
             for coord in face:
-                self.assertTrue(coord, Coordinates)
+                try:
+                    self.assertIsInstance(coord, Coordinates)
+                except:
+                    self.assertEqual(coord, None)
 
     # ---------------------------------------------------------------------------
 
     def test_several_persons(self):
-        self.__fTracker._FaceTracking__nb_person = 1
         self.__pBuffer.next()
         self.__fTracker.detect(self.__pBuffer)
-        self.__fTracker.several_persons(self.__pBuffer)
-        for face in self.__pBuffer.get_persons():
+        self.__fTracker.several_persons(self.__pBuffer, nb_person=1)
+        for face in self.__pBuffer._PersonsBuffer__persons:
             for coord in face:
                 self.assertTrue(coord, Coordinates)
-        y = self.__pBuffer.len_persons()
-        self.assertEqual(y, self.__fTracker._FaceTracking__nb_person)
-        for face in self.__pBuffer.get_persons():
+        y = self.__pBuffer.nb_persons()
+        self.assertEqual(y, 1)
+        for face in self.__pBuffer._PersonsBuffer__persons:
             y = len(face)
             self.assertEqual(y, self.__pBuffer.get_size())
 

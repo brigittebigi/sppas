@@ -36,6 +36,7 @@ import os
 
 from sppas.src.config import sppasPathSettings
 from sppas.src.imagedata.facelandmark import FaceLandmark
+from sppas.src.imagedata.imageutils import crop, portrait
 
 # ---------------------------------------------------------------------------
 
@@ -56,10 +57,9 @@ class VideoLandmark(object):
         # List of landmarks coordinates
         self.__landmarks = list()
 
-        # List of five points coordinates for LFPC
-        self.__five = dict()
-
         self.__cascade = self.__get_haarcascade()
+
+        self.__model = self.__get_model()
         self.__size = 0
 
     # -----------------------------------------------------------------------
@@ -76,9 +76,15 @@ class VideoLandmark(object):
 
     # -----------------------------------------------------------------------
 
-    def get_five(self):
-        """Return a list of list of x-axis, y-axis coordinates."""
-        return self.__five
+    @staticmethod
+    def __get_model():
+        """Return the predictor file."""
+        try:
+            model = os.path.join(sppasPathSettings().resources, "image",
+                                 "lbfmodel68.yaml")
+            return model
+        except OSError:
+            return "File does not exist"
 
     # -----------------------------------------------------------------------
 
@@ -88,63 +94,154 @@ class VideoLandmark(object):
 
     # -----------------------------------------------------------------------
 
-    def __landmark(self, image):
-        """Create a list of x-axis, y_axis value for each person.
+    def process(self, buffer):
+        """Browse the buffer.
 
-        :param image: (np.ndarray) The image to be processed
+        :param buffer: (VideoBuffer) The buffer which contains images.
+
+        """
+        self.reset()
+
+        if buffer.nb_persons() == 0:
+            buffer.add_landmarks()
+        else:
+            for i in range(buffer.nb_persons()):
+                # Create a list of x-axis, y-axis values for each person
+                buffer.add_landmarks()
+
+        # Initialise the iterator
+        iterator = buffer.__iter__()
+
+        # Loop over the buffer
+        for j in range(0, len(buffer)):
+            # Go to the next image
+            img = next(iterator)
+
+            if buffer.nb_persons() == 0:
+                self.landmark_person(buffer, img)
+
+            else:
+                self.__landmark_persons(buffer, img, j)
+
+    # -----------------------------------------------------------------------
+
+    def landmark_person(self, buffer, image):
+        """Apply landmark on an already good video.
+
+        :param buffer: (VideoBuffer) The buffer which contains images.
+        :param image: (np.ndarray) The image to be processed.
+
+        """
+        # Launch the landmark on the image
+        landmark = self.__landmark_process(image)
+
+        # Add the values in the buffer
+        buffer.add_landmark(0, landmark)
+
+    # -----------------------------------------------------------------------
+
+    def __landmark_persons(self, buffer, image, index):
+        """Apply for each person on the image.
+
+        :param buffer: (VideoBuffer) The buffer which contains images.
+        :param image: (np.ndarray) The image to be processed.
+        :param index: (int) The index of the image.
+
+        """
+        # Loop over the result of FaceTracking
+        for i in range(buffer.nb_persons()):
+            # Get the index of the person
+            index_person = i
+
+            if index > len(buffer.get_person(i)) - 1:
+                continue
+
+            if buffer.get_coordinate(i, index) is not None:
+                # Adjust the coordinates to get a more accurate result
+                # portrait(person[i], 1.5)
+
+                # Crop the visage according to the values of the coordinates
+                image = crop(image, buffer.get_coordinate(i, index))
+
+                # Launch the landmark on the image
+                landmark = self.__landmark_process(image)
+
+                # Launch the landmark on the image
+                self.__adjust_points(landmark, buffer.get_coordinate(i, index).x, buffer.get_coordinate(i, index).y)
+
+                # Add the values in the buffer
+                buffer.add_landmark(index_person, landmark)
+
+            else:
+                # Add the values in the buffer
+                buffer.add_landmark(index_person, None)
+
+    # -----------------------------------------------------------------------
+
+    def __landmark_process(self, image):
+        """Launch the process to determine the landmarks points.
+
+        :param image: (np.ndarray) The image to be processed.
+
+        """
+        # self.__landmark(image)
+        points = self.__landmark_points()
+        return points
+
+    # -----------------------------------------------------------------------
+
+    def __landmark(self, image):
+        """Create a list of points(x-axis, y-axis values).
+
+        :param image: (np.ndarray) The image to be processed.
 
         """
         try:
             # Initialize and use FaceLandmark
-            face = FaceLandmark(self.__cascade)
+            face = FaceLandmark(self.__cascade, self.__model)
 
             # Launch the process of FaceLandmark
             face.landmarks(image)
         except IndexError:
             raise IOError
 
-        # Add the list of x-axis coordinates
-        self.__landmarks.append(face.get_landmarks_x())
-
-        # Add the list of y-axis coordinates
-        self.__landmarks.append(face.get_landmarks_y())
+        # Add the list of x-axis, y-axis coordinates
+        for i in range(len(face)):
+            self.__landmarks.append((face.get_landmark_x(i), face.get_landmark_y(i)))
 
     # -----------------------------------------------------------------------
 
-    def __five_points(self, image):
-        """Determined the five points needed for the LFPC."""
-        (h, w) = image.shape[:2]
+    def __landmark_points(self):
+        """Determined points for tests because face module does not work."""
+        for i in range(68):
+            self.__landmarks.append((i * 5, i * 5))
 
-        self.__five["left_eyes"] = (0, 0)
-
-        self.__five["left_mouth"] = (w, 0)
-
-        self.__five["chin"] = (0, h)
-
-        self.__five["throat"] = (w, h)
-
-        self.__five["left_visage"] = (int(w/2), int(h/2))
-
-        return self.__five
+        return self.__landmarks
 
     # -----------------------------------------------------------------------
 
-    def process(self, image):
-        """Launch the process to determine the five points.
+    def __adjust_points(self, points, x, y):
+        """Adjust values of the points according to the base image.
 
-        :param image: (np.ndarray) The image to be processed
+        :param points: (list) The list of landmark points.
+        :param x: (int) The start value on the x-axis of
+        the cropped image from the base image.
+        :param y: (int) The start value on the y-axis of
+        the cropped image from the base image.
 
         """
-        self.reset()
-        # self.__landmark(image)
-        five_points = self.__five_points(image)
-        return five_points
+        # Loop over the result of landmark and change the values
+        # according to the base image
+        for d in points:
+            a, b = d
+            a += x
+            b += y
+            d = a, b
 
     # -----------------------------------------------------------------------
 
     def reset(self):
         """Reset the privates attributes."""
         self.__landmarks = list()
-        self.__five = dict()
 
     # -----------------------------------------------------------------------

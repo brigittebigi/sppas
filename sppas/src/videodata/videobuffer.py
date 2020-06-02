@@ -34,7 +34,8 @@
 
 import numpy as np
 import cv2
-from cv2 import CAP_PROP_POS_FRAMES, CAP_PROP_FPS
+from cv2 import CAP_PROP_POS_FRAMES, CAP_PROP_FPS, CAP_PROP_POS_MSEC,\
+                CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FRAME_COUNT
 
 from sppas.src.imagedata.coordinates import ImageError
 
@@ -182,6 +183,51 @@ class VideoBuffer(object):
             return 0
         else:
             return self.__video.get(CAP_PROP_FPS)
+
+    # -----------------------------------------------------------------------
+
+    def get_frame(self):
+        """Return the index of the current frame."""
+        if self.__video is None:
+            return 0
+        else:
+            return self.__video.get(CAP_PROP_POS_FRAMES)
+
+    # -----------------------------------------------------------------------
+
+    def get_ms(self):
+        """Return the current position of the video file in milliseconds."""
+        if self.__video is None:
+            return 0
+        else:
+            return self.__video.get(CAP_PROP_POS_MSEC)
+
+    # -----------------------------------------------------------------------
+
+    def get_width(self):
+        """Return the width of the frames in the video."""
+        if self.__video is None:
+            return 0
+        else:
+            return self.__video.get(CAP_PROP_FRAME_WIDTH)
+
+    # -----------------------------------------------------------------------
+
+    def get_height(self):
+        """Return the height of the frames in the video."""
+        if self.__video is None:
+            return 0
+        else:
+            return self.__video.get(CAP_PROP_FRAME_HEIGHT)
+
+    # -----------------------------------------------------------------------
+
+    def get_frame_count(self):
+        """Return the number of frames in the video."""
+        if self.__video is None:
+            return 0
+        else:
+            return self.__video.get(CAP_PROP_FRAME_COUNT)
 
     # -----------------------------------------------------------------------
 
