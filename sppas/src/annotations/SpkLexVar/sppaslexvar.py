@@ -39,15 +39,16 @@ from sppas import sppasUnicode
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 
-from ..baseannot import sppasBaseAnnotation
+from ..SelfRepet.sppasbaserepet import sppasBaseRepet
 from ..annotationsexc import AnnotationOptionError
 from ..annotationsexc import NoInputError
 from ..annotationsexc import EmptyOutputError
+from ..searchtier import sppasFindTier
 
 # -----------------------------------------------------------------------------
 
 
-class sppasLexVar(sppasBaseAnnotation):
+class sppasLexVar(sppasBaseRepet):
     """SPPAS integration of the occ and rank estimator.
 
     :author:       Brigitte Bigi
@@ -70,6 +71,11 @@ class sppasLexVar(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
+    def set_use_stopwords(self, use_stopwords):
+        return
+
+    # -----------------------------------------------------------------------
+
     def fix_options(self, options):
         """Override Fix all options of the annotation from list sppasOption().
 
@@ -79,10 +85,12 @@ class sppasLexVar(sppasBaseAnnotation):
         for opt in options:
 
             key = opt.get_key()
-            if "alt" == key:
-                self.set_alt(opt.get_value())
-            elif "tiername" == key:
+            if "tiername" == key:
                 self.set_tiername(opt.get_value())
+            elif "stopwords" == key:
+                self.set_use_stopwords(opt.get_value())
+            elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
+                self._options[key] = opt.get_value()
 
             else:
                 raise AnnotationOptionError(key)
@@ -118,8 +126,20 @@ class sppasLexVar(sppasBaseAnnotation):
 
     # ----------------------------------------------------------------------
 
-    def lex_var_detection(self, tier1, tier2):
-        raise NotImplementedError
+    def lexical_variation_detect(self, tier1, tier2):
+        """Detect the lexical variations in between 2 tiers
+
+        :param tier1: (sppasTier)
+        :param tier2: (sppasTier)
+
+        """
+        for ann in tier1:
+            for label in ann.get_labels():
+                for tag, score in label:
+                    print(tag)
+        print("\n")
+
+        return tier1
 
     # ----------------------------------------------------------------------
     # Patterns
@@ -140,7 +160,7 @@ class sppasLexVar(sppasBaseAnnotation):
     def run(self, input_file, opt_input_file=None, output_file=None):
         """Run the automatic annotation process on an input.
 
-        :param input_file: (list of str) time-aligned tokens, or other
+        :param input_file: (list of str) time-aligned tokens
         :param opt_input_file: (list of str) ignored
         :param output_file: (str) the output file name
         :returns: (sppasTranscription)
@@ -151,27 +171,34 @@ class sppasLexVar(sppasBaseAnnotation):
         self.print_diagnosis(input_file[1])
 
         # Get the tier to be used
-        parser1 = sppasRW(input_file[0])
-        trs_input1 = parser1.read()
-        parser2 = sppasRW(input_file[1])
-        trs_input2 = parser2.read()
+        parser = sppasRW(input_file[0])
+        trs_input1 = parser.read()
+        tier_tokens = sppasFindTier.aligned_tokens(trs_input1)
+        tier_input1 = self.make_word_strain(tier_tokens)
+        tier_input1.set_name(tier_input1.get_name() + "-source")
 
-        tier_spk1 = trs_input1.find(self._options['tiername'], case_sensitive=False)
-        tier_spk2 = trs_input2.find(self._options['tiername'], case_sensitive=False)
+        # Get the tier to be used
+        parser = sppasRW(input_file[1])
+        trs_input2 = parser.read()
+        tier_tokens = sppasFindTier.aligned_tokens(trs_input2)
+        tier_input2 = self.make_word_strain(tier_tokens)
+        tier_input2.set_name(tier_input2.get_name() + "-echo")
 
-        if tier_spk1 is None or tier_spk2 is None:
-            raise Exception("Tier with name '{:s}' not found in input files."
-                            "".format(self._options['tiername']))
+        # Repetition Automatic Detection
+        echo_tier = self.lexical_variation_detect(tier_input1, tier_input2)
 
-        new_tiers = self.lex_var_detection(tier_spk1, tier_spk2)
-
-        # Create the transcription result
+        """# Create the transcription result
         trs_output = sppasTranscription(self.name)
-        trs_output.set_meta('lexvar_result_of_src', input_file[0])
-        trs_output.set_meta('lexvar_result_of_echo', input_file[1])
-
-        for tier in new_tiers:
-            trs_output.append(tier)
+        trs_output.set_meta('other_repetition_result_of_src', input_file[0])
+        trs_output.set_meta('other_repetition_result_of_echo', input_file[1])
+        if len(self._word_strain) > 0:
+            trs_output.append(tier_input1)
+        if self._options['stopwords'] is True:
+            trs_output.append(self.make_stop_words(tier_input1))
+        trs_output.append(src_tier)
+        trs_output.append(echo_tier)
+        if len(self._word_strain) > 0:
+            trs_output.append(tier_input2)
 
         # Save in a file
         if output_file is not None:
@@ -183,7 +210,7 @@ class sppasLexVar(sppasBaseAnnotation):
                 raise EmptyOutputError
 
         return trs_output
-
+        """
 
 
 

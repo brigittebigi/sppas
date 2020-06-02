@@ -252,7 +252,6 @@ class sppasMainWindow(sppasDialog):
         """
         event_obj = event.GetEventObject()
         event_name = event_obj.GetName()
-        event_id = event_obj.GetId()
 
         if event_name == "exit":
             self.exit()
@@ -377,12 +376,19 @@ class sppasMainWindow(sppasDialog):
 
     def exit(self):
         """Destroy the frame, terminating the application."""
-        # Stop redirecting logging to this application
+        # Stop redirecting logging to this application log window
         self.log_window.redirect_logging(False)
+
         # Terminate all frames
         if wx.Platform == "__WXMSW__":
             self.DestroyChildren()
+
         self.DestroyFadeOut(deltaN=-6)
+
+        # Under Windows, for an unknown reason (?!), the wxapp.OnExit() is not
+        # invoked if exit() is called directly after clicking the Exit button.
+        if wx.Platform == "__WXMSW__":
+            wx.GetApp().OnExit()
 
     # -----------------------------------------------------------------------
 

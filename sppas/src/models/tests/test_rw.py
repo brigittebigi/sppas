@@ -7,7 +7,7 @@ import glob
 
 from sppas.src.config import symbols
 from sppas.src.config import paths
-from sppas.src.files.fileutils import sppasFileUtils
+from sppas.src.wkps.fileutils import sppasFileUtils
 from sppas.src.utils.compare import sppasCompare
 
 from ..acm.acmbaseio import sppasBaseIO

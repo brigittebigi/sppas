@@ -43,12 +43,12 @@ from sppas import paths
 from sppas.src.audiodata.aio import open as audio_open
 from sppas.src.audiodata import sppasAudioFrames
 
-from .basedatactrl import sppasBaseDataWindow
+from .basedatactrl import sppasDataWindow
 
 # ---------------------------------------------------------------------------
 
 
-class sppasWaveformWindow(sppasBaseDataWindow):
+class sppasWaveformWindow(sppasDataWindow):
     """A base window with a DC to draw amplitude of a channel of an audio.
 
     :author:       Brigitte Bigi

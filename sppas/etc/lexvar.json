@@ -1,7 +1,7 @@
 {
-  "id": "spklexvar",
-  "name": "speaker lexical vcariatiopn",
-  "descr": "lex var",
+  "id": "lexvar",
+  "name" : "speaker lexical variation",
+  "descr": "",
   "required": "",
   "api": "sppasLexVar",
 
@@ -9,24 +9,27 @@
     "SPEAKER"
   ],
 
+  "resources": [
+  ],
+
   "options": [
     {
       "id": "inputpattern",
       "type": "str",
       "value": "-palign",
-      "text": "Input file pattern"
+      "text": "Input file pattern (time-aligned words or lemmas)"
     },
     {
       "id": "outputpattern",
       "type": "str",
-      "value": "-rms",
+      "value": "-orepet",
       "text": "Output file pattern"
     },
     {
-      "id": "tiername",
-      "type": "str",
-      "value": "",
-      "text": ""
+      "id": "stopwords",
+      "type": "bool",
+      "value": true,
+      "text": "Add stop-words estimated from the given data"
     }
   ]
 }

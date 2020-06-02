@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding : utf-8 -*-
 """
     ..
         ---------------------------------------------------------------------
@@ -30,34 +29,34 @@
 
         ---------------------------------------------------------------------
 
-    bin.spklexvar.py
-    ~~~~~~~~~~~~~~~~
+    bin.otherrepetition.py
+    ~~~~~~~~~~~~~~~~~~~~~
 
-:author:       Laurent Vouriot
+:author:       Brigitte Bigi
 :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
 :contact:      contact@sppas.org
 :license:      GPL, v3
-:copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-:summary:      a script to use spklexvar annotation
-"""
+:copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+:summary:      Other-Repetitions automatic annotation.
 
+"""
 import sys
 import os
 from argparse import ArgumentParser
-
 
 PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
 from sppas import sg
-from sppas import sppasAppConfig
 from sppas import sppasLogSetup
+from sppas import sppasAppConfig
 
-from sppas.src.annotations import sppasParam
 from sppas.src.annotations import sppasLexVar
+from sppas.src.annotations import sppasParam
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
 
@@ -74,21 +73,18 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------
 
     parser = ArgumentParser(
-        usage="%(prog)s [actions] [files]",
-        description="Workspace command line interface.",
+        usage="%(prog)s [files] [options]",
+        description=
+        parameters.get_step_name(ann_step_idx) + ": " +
+        parameters.get_step_descr(ann_step_idx),
         epilog="This program is part of {:s} version {:s}. {:s}. Contact the "
                "author at: {:s}".format(sg.__name__, sg.__version__,
-                                        sg.__copyright__, sg.__contact__)
-    )
+                                        sg.__copyright__, sg.__contact__))
+
     parser.add_argument(
         "--quiet",
         action='store_true',
         help="Disable the verbosity")
-
-    parser.add_argument(
-        "--log",
-        metavar="file",
-        help="File name for a Procedure Outcome Report (default: None)")
 
     # Add arguments for input/output files
     # ------------------------------------
@@ -98,17 +94,21 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-i",
         metavar="file",
-        help='Input file name ywith time-aligned annotations of the main speaker.')
+        help='Input file name with time-aligned tokens of the main speaker.')
 
     group_io.add_argument(
         "-s",
         metavar="file",
-        help='Input file name with time-aligned annotations of the echoing speaker')
+        help='Input file name with time-aligned tokens of the echoing speaker')
 
     group_io.add_argument(
         "-o",
         metavar="file",
-        help='Output file.')
+        help='Output file name with other-repetitions.')
+
+    group_io.add_argument(
+        "-r",
+        help='List of stop-words')
 
     # Add arguments from the options of the annotation
     # ------------------------------------------------
@@ -131,10 +131,14 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # -----------------------------------------------------------------------
+    # The automatic annotation is here:
+    # -----------------------------------------------------------------------
+
     # Redirect all messages to logging
     # --------------------------------
 
-    with sppasAppConfig() as cg:
+    """with sppasAppConfig() as cg:
         parameters.set_report_filename(cg.log_file)
         if not args.quiet:
             log_level = cg.log_level
@@ -142,42 +146,41 @@ if __name__ == "__main__":
             log_level = cg.quiet_log_level
         lgs = sppasLogSetup(log_level)
         lgs.stream_handler()
-
+"""
     # Get options from arguments
     # --------------------------
 
     arguments = vars(args)
     for a in arguments:
-        if a not in ('i', 'o', 's', 'quiet'):
+        if a not in ('i', 'o', 's', 'r', 'quiet'):
             parameters.set_option_value(ann_step_idx, a, str(arguments[a]))
             o = parameters.get_step(ann_step_idx).get_option_by_key(a)
 
     if args.i:
 
-        if args.i:
+        if not args.s:
+            print("argparse.py: error: option -s is required with option -i")
+            sys.exit(1)
 
-            if not args.s:
-                print("argparse.py: error: option -s is required with option -i")
-                sys.exit(1)
+        # Perform the annotation on a single file
+        # ---------------------------------------
 
-            # Perform the annotation on a single file
-            # ---------------------------------------
-
-            ann = sppasLexVar(log=None)
-            ann.fix_options(parameters.get_options(ann_step_idx))
-            if args.o:
-                ann.run([args.i, args.s], output_file=args.o)
-            else:
-                trs = ann.run([args.i, args.s])
-                for tier in trs:
-                    for a in tier:
-                        print("{} {} {:s}".format(
-                            a.get_location().get_best().get_begin().get_midpoint(),
-                            a.get_location().get_best().get_end().get_midpoint(),
-                            a.serialize_labels(separator=" ")))
-
+        ann = sppasLexVar(log=None)
+        ann.load_resources(args.r)
+        ann.fix_options(parameters.get_options(ann_step_idx))
+        if args.o:
+            ann.run([args.i, args.s], output_file=args.o)
         else:
+            trs = ann.run([args.i, args.s])
+            """
+            for tier in trs:
+                for a in tier:
+                    print("{} {} {:s}".format(
+                        a.get_location().get_best().get_begin().get_midpoint(),
+                        a.get_location().get_best().get_end().get_midpoint(),
+                        a.get_best_tag().get_content()))
+"""
+    else:
 
-            if not args.quiet:
-                print("No file was given to be annotated. Nothing to do!")
-
+        if not args.quiet:
+            print("No file was given to be annotated. Nothing to do!")

@@ -119,7 +119,7 @@ class InstallationError(OSError):
 
     def __init__(self, error_msg):
         self.parameter = error(500) + \
-                         (error(500, "globals")).format(error=error_msg)
+                         (error(500, "install")).format(error=error_msg)
 
     def __str__(self):
         return repr(self.parameter)
@@ -207,7 +207,7 @@ class IntervalRangeException(ValueError):
 class IOExtensionException(IOError):
     """:ERROR 110:.
 
-    Unknown extension for filename {:s}'
+    Unknown extension for filename '{:s}'
 
     """
 

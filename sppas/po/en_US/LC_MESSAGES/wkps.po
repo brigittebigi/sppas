@@ -15,7 +15,7 @@ msgstr ""
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Language: en_US\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 1.8.11\n"
 
 msgid ":ERROR 9010: "
 msgstr "Name {!s:s} does not match a file or a directory."
@@ -52,3 +52,30 @@ msgstr "Identifier '{ident}' is not valid. It should be between 2 and 12 ASCII-c
 
 msgid ":ERROR 9064: "
 msgstr "Attribute value '{value}' can't be converted into type '{type}'."
+
+msgid ":ERROR 9110: "
+msgstr "Unknown extension '{:s}' for a workspace."
+
+msgid ":ERROR 9120: "
+msgstr "No workspace file is matching the workspace name '{:s}'."
+
+msgid ":ERROR 9160: "
+msgstr "A workspace with name {:s} is already existing."
+
+msgid ":ERROR 9180: "
+msgstr "It is not allowed to export the Blank workspace."
+
+msgid ":ERROR 9182: "
+msgstr "It is not allowed to delete the Blank workspace."
+
+msgid ":ERROR 9184: "
+msgstr "It is not allowed to rename the Blank workspace."
+
+msgid ":ERROR 9186: "
+msgstr "It is not allowed to save the Blank workspace."
+
+msgid ":ERROR 9162: "
+msgstr "It is not allowed to export a workspace with the same name '{:s}'."
+
+msgid ":ERROR 9164: "
+msgstr "Workspace with name '{:s}' was not found."

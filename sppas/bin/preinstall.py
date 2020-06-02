@@ -60,6 +60,8 @@ from sppas.src.ui.term import TerminalController
 EXIT_DELAY = 2
 EXIT_STATUS = 1   # Status for an exit with errors.
 
+# ---------------------------------------------------------------------------
+
 
 def exit_error(msg="Unknown."):
     """Exit the program with status 1 and an error message.
@@ -67,9 +69,11 @@ def exit_error(msg="Unknown."):
     :param msg: (str) Message to print on stdout.
 
     """
-    print("[ ERROR ] {:s}".format(msg))
+    sys.stderr.write("[ ERROR ] {:s}".format(msg))
     time.sleep(EXIT_DELAY)
     sys.exit(EXIT_STATUS)
+
+# ---------------------------------------------------------------------------
 
 
 def check_python():
@@ -99,7 +103,6 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------
     # Fix initial sppasInstallerDeps parameters
     # -----------------------------------------------------------------------
-
     installer = sppasInstallerDeps()
     cmd_features = list()
     i = 0
@@ -115,8 +118,8 @@ if __name__ == "__main__":
         for fid in installer.features_ids():
             enables += \
                 "(" + str(installer.description(fid)) + ", " + fid + ")"\
-                "available = " + str(installer.available(fid)) + "/ "\
-                "enable = " + str(installer.enable(fid)) + "\n"
+                "available: " + str(installer.available(fid)) + "/ "\
+                "enable: " + str(installer.enable(fid)) + "\n"
 
         return enables
 
@@ -141,7 +144,7 @@ if __name__ == "__main__":
     # Add arguments from the features of features.ini
     # -----------------------------------------------
 
-    group_p = parser.add_argument_group("personalize action")
+    group_p = parser.add_argument_group("Customizable actions:")
 
     for fid in installer.features_ids():
         x += 1
@@ -259,7 +262,6 @@ if __name__ == "__main__":
             print('{:s}\n'.format(sep))
 
     if len(errors) > 0:
-        msg += "\nThe installation process terminated with errors:"
         msg += "\n".join(errors)
         exit_error(msg)
 

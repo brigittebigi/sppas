@@ -49,10 +49,9 @@ def search_cmd(command):
     :return: (bool)
 
     """
-    command = command.strip()
     NULL = open(os.path.devnull, "w")
     try:
-        call([command], stdout=NULL, stderr=STDOUT)
+        call(command.strip(), stdout=NULL, stderr=STDOUT, shell=False, cwd=None, timeout=None)
     except OSError:
         NULL.close()
         return False
@@ -146,6 +145,18 @@ class Process(object):
         """Terminate the process if it is running."""
         if self.is_running() is True:
             self.__process.terminate()
+
+    # ------------------------------------------------------------------------
+
+    def status(self):
+        """Return the status of the command.
+
+        You should first make sure that the process has completed running.
+
+        :return: (int)
+
+        """
+        return self.__process.returncode
 
     # ------------------------------------------------------------------------
 

@@ -57,6 +57,7 @@ from .phonedit import sppasSignaix
 from .htk import sppasLab
 from .subtitle import sppasSubRip
 from .subtitle import sppasSubViewer
+from .subtitle import sppasWebVTT
 from .weka import sppasARFF
 from .weka import sppasXRFF
 from .transcriber import sppasTRS
@@ -98,6 +99,7 @@ class sppasRW(object):
     TRANSCRIPTION_TYPES[sppasLab().default_extension.lower()] = sppasLab
     TRANSCRIPTION_TYPES[sppasSubRip().default_extension.lower()] = sppasSubRip
     TRANSCRIPTION_TYPES[sppasSubViewer().default_extension.lower()] = sppasSubViewer
+    TRANSCRIPTION_TYPES[sppasWebVTT().default_extension.lower()] = sppasWebVTT
     TRANSCRIPTION_TYPES[sppasCTM().default_extension.lower()] = sppasCTM
     TRANSCRIPTION_TYPES[sppasSTM().default_extension.lower()] = sppasSTM
     TRANSCRIPTION_TYPES[sppasIntensityTier().default_extension.lower()] = sppasIntensityTier

@@ -98,8 +98,8 @@ class sppasChoiceDialog(sppasBaseMessageDialog):
         choice.SetSelection(0)
 
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(txt, 0, wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 10)
-        s.Add(choice, 1, wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 10)
+        s.Add(txt, 0, wx.ALL | wx.EXPAND, sppasPanel.fix_size(8))
+        s.Add(choice, 1, wx.ALL | wx.EXPAND, sppasPanel.fix_size(8))
 
         h = p.get_font_height()
         p.SetSizer(s)
@@ -212,10 +212,10 @@ class sppasTextEntryDialog(sppasDialog):
         s = wx.BoxSizer(wx.VERTICAL)
 
         txt = sppasStaticText(p, label=message)
-        s.Add(txt, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL, sppasDialog.fix_size(10))
+        s.Add(txt, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT, sppasDialog.fix_size(10))
 
         entry = sppasTextCtrl(p, value=value, validator=self.__validator, name="text_value")
-        s.Add(entry, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL, sppasDialog.fix_size(10))
+        s.Add(entry, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT, sppasDialog.fix_size(10))
 
         p.SetSizer(s)
         p.SetName("content")

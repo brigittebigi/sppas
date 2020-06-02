@@ -57,6 +57,7 @@ from .sclite import sppasCTM
 from .sclite import sppasSTM
 from .subtitle import sppasSubRip
 from .subtitle import sppasSubViewer
+from .subtitle import sppasWebVTT
 from .text import sppasRawText
 from .text import sppasCSV
 from .weka import sppasARFF
@@ -99,6 +100,7 @@ extensions_out_multitiers = ['.xra', '.TextGrid', '.eaf', '.csv', '.mrk', '.antx
 
 # ----------------------------------------------------------------------------
 
+
 __all__ = (
     "sppasANT",
     "sppasANTX",
@@ -115,6 +117,7 @@ __all__ = (
     "sppasSTM",
     "sppasSubRip",
     "sppasSubViewer",
+    "sppasWebVTT",
     "sppasRawText",
     "sppasCSV",
     "sppasARFF",

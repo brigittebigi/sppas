@@ -44,13 +44,13 @@ from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasTag
 from sppas.src.anndata.aio.aioutils import serialize_labels
 
-from .basedatactrl import sppasBaseDataWindow
+from .basedatactrl import sppasDataWindow
 from .pointctrl import sppasPointWindow
 
 # ---------------------------------------------------------------------------
 
 
-class sppasAnnotationWindow(sppasBaseDataWindow):
+class sppasAnnotationWindow(sppasDataWindow):
     """A window with a DC to draw a sppasAnnotation().
 
     :author:       Brigitte Bigi
@@ -134,6 +134,19 @@ class sppasAnnotationWindow(sppasBaseDataWindow):
 
         """
         return
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def GetTransparentBrush():
+        """Get a transparent brush.
+
+        :returns: (wx.Brush)
+
+        """
+        if wx.Platform == '__WXMAC__':
+            return wx.TRANSPARENT_BRUSH
+        return wx.Brush(wx.Colour(0, 0, 0, wx.ALPHA_TRANSPARENT), wx.BRUSHSTYLE_TRANSPARENT)
 
     # -----------------------------------------------------------------------
 

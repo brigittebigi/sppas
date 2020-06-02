@@ -1,0 +1,99 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en_US\n"
+"X-Generator: Poedit 2.2.1\n"
+
+msgid ":ERROR 500: "
+msgstr "The installation process terminated with errors: {error}"
+
+msgid ":INFO 510: "
+msgstr "Installation of '{name}'"
+
+msgid ":INFO 520: "
+msgstr "'{name}' not available on your OS."
+
+msgid ":INFO 530: "
+msgstr "Install of '{name}' is disabled."
+
+msgid ":INFO 540: "
+msgstr "'{name}' is installed."
+
+msgid ":INFO 550: "
+msgstr "Installation of '{name}' failed"
+
+msgid ":INFO 560: "
+msgstr "Installation finished"
+
+msgid ":INFO 570: "
+msgstr "'{name}' does not match any valid package."
+
+msgid ":INFO 580: "
+msgstr "No system command is processed."
+
+msgid "InstallWizard of {soft} {version}."
+msgstr "InstallWizard of {soft} {version}."
+
+msgid "Page ({page}/{total})"
+msgstr "Page ({page}/{total})"
+
+msgid "Back"
+msgstr "Back"
+
+msgid "Next"
+msgstr "Next"
+
+msgid "Install"
+msgstr "Install"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Exit"
+msgstr "Exit"
+
+msgid "View logs"
+msgstr "View logs"
+
+msgid "Confirm exit?"
+msgstr "Confirm exit?"
+
+msgid "Feature:"
+msgstr "Feature:"
+
+msgid "Description:"
+msgstr "Description:"
+
+msgid ":INFO 500: "
+msgstr ""
+"SPPAS is a scientific computer software package developed by Brigitte Bigi, CNRS researcher at 'Laboratoire Parole et Langage', Aix-en-Provence, France.\n"
+"\n"
+"The InstallWizard will install on your computer other programs SPPAS is requiring.\n"
+"To continue, click 'Next'."
+
+msgid ":INFO 502: "
+msgstr "Please read the following license agreement. Click 'Next' to accept."
+
+msgid ":INFO 504: "
+msgstr "Check the boxes in the list below to enable a feature installation:"
+
+msgid ":INFO 506: "
+msgstr ""
+"Click Install button to begin the installation.\n"
+"\n"
+"If you want to review or change any of your installation settings, click 'Back'. Click 'Cancel' to exit the wizard without installing."
+
+msgid ":INFO 508: "
+msgstr ""
+"Before clicking 'Exit' button, share your experience of this installer with the author:\n"
+"Click on the 'Send feedback' button of the 'Log window'."
+
+msgid ":INFO 512: "
+msgstr "See the 'Log Window' for details."

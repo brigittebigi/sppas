@@ -38,7 +38,7 @@ import os.path
 import shutil
 
 from sppas.src.config import paths
-from sppas.src.files.fileutils import sppasFileUtils
+from sppas.src.wkps.fileutils import sppasFileUtils
 from ..aio import open as audio_open
 from ..aio import save as audio_save
 from ..audio import sppasAudioPCM

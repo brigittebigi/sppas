@@ -495,7 +495,7 @@ class FileTreeView(sppasScrolledPanel):
             self.__remove_folder_panel(fpid)
 
         # Add or update
-        for i, fp in enumerate(self.__data):
+        for i, fp in enumerate(self.__data.get_paths()):
             if fp.get_id() not in self.__fps:
                 p = self.__add_folder_panel(fp, i)
                 p.update(fp)
@@ -1060,11 +1060,11 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
     def set_refs(self, refs_list):
         """Display the given list of references.
 
-        :param refs_list: (list of FileReference)
+        :param refs_list: (list of sppasCatReference)
 
         """
         refstext = self.FindWindow("textctrl_refs")
-        # convert the list of FileReference instances into a string
+        # convert the list of sppasCatReference instances into a string
         refs_ids = [ref.id for ref in refs_list]
         txt = " ".join(sorted(refs_ids))
         if len(txt) > 0:
