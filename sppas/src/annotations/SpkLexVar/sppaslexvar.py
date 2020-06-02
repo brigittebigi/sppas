@@ -34,6 +34,7 @@
 """
 
 import logging
+import sys
 
 from sppas import sppasUnicode
 from sppas.src.anndata import sppasRW
@@ -133,13 +134,58 @@ class sppasLexVar(sppasBaseRepet):
         :param tier2: (sppasTier)
 
         """
+        """
+        # Test w/ memory
+        tag_list = list()
+        content_list = list()
+        m = 0
         for ann in tier1:
             for label in ann.get_labels():
                 for tag, score in label:
-                    print(tag)
-        print("\n")
+                    # average size
+                    m += sys.getsizeof(tag.get_content)
 
-        return tier1
+                    # listing tag and content
+                    # we add only words/lemmes
+                    if tag.is_speech():
+                        tag_list.append(tag)
+                        list temps.append(ann.get_lowest_tps())
+                        content_list.append(tag.get_content())
+
+        repet_list = list()
+        repet = 0
+        for ann in tier2:
+            for label in ann.get_labels():
+                for tag, score in label:
+                    # if tag.get_content() in content_list and tag.get_content() not in repet_list:
+                    #    repet_list.append(tag.get_content())
+                    #    repet += 1
+                    if tag in tag_list and tag.get_content() not in repet_list:
+                        repet_list.append(tag.get_content())
+                        repet += 1
+
+        print("average size of a tag content (unicode) : {}".format(m/len(content_list)))
+        print("size of a sppasTag list : {}".format(sys.getsizeof(tag_list)))
+        print("size of a unicode list : {}".format(sys.getsizeof(content_list)))
+        print("repet : {}".format(repet))
+        """
+        # DYNAMIC TESTS
+        # -------------
+
+        # Beaucoup trop long
+        repet = 0
+        repet_list = list()
+        for ann in tier1:
+            for label in ann.get_labels():
+                for tag, score in label:
+                    for ann2 in tier2:
+                        for label2 in ann2.get_labels():
+                            for tag2, score2 in label2:
+                                if tag.is_speech() and tag2.is_speech():
+                                    if tag.get_content() == tag2.get_content() and tag not in repet_list:
+                                        repet_list.append(tag.get_content())
+                                        repet += 1
+        print("nb repet : {}".format(repet))
 
     # ----------------------------------------------------------------------
     # Patterns
