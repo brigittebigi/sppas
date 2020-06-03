@@ -131,10 +131,3 @@ class Manager(object):
 
     # -----------------------------------------------------------------------
 
-
-# "../../../../../video_test/LFPC_test_1.mp4"
-# "../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4"
-manager = Manager("../../../../../video_test/LFPC_test_1.mp4", 100, 0, draw="circle",
-                  framing="portrait", mode="crop", width=640, height=480, csv_value=True, v_value=True, f_value=True)
-manager.launch_process()
-
