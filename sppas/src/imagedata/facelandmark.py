@@ -32,12 +32,8 @@
 
 """
 
-import os
-import numpy as np
+from random import randint
 import cv2
-
-from sppas.src.config import sppasPathSettings
-
 
 # ---------------------------------------------------------------------------
 
@@ -71,10 +67,7 @@ class FaceLandmark(object):
         """
 
         # The x-axis coordinates
-        self.__landmarks_x = list()
-
-        # The y-axis coordinates
-        self.__landmarks_y = list()
+        self.__landmarks = list()
 
         # The cascade model
         self.__cascade = cv2.CascadeClassifier(cascade)
@@ -84,43 +77,26 @@ class FaceLandmark(object):
 
     # -----------------------------------------------------------------------
 
-    def get_landmarks_x(self):
+    def get_landmarks(self):
         """Return a list of x-axis values."""
-        return self.__landmarks_x
+        return self.__landmarks
 
     # -----------------------------------------------------------------------
 
-    def get_landmark_x(self, index):
+    def get_landmark(self, index):
         """Return a x-axis value."""
         index = int(index)
         if isinstance(index, int) is False:
             raise TypeError
 
-        return self.__landmarks_x[index]
-
-    # -----------------------------------------------------------------------
-
-    def get_landmarks_y(self):
-        """Return a list of y-axis values."""
-        return self.__landmarks_y
-
-    # -----------------------------------------------------------------------
-
-    def get_landmark_y(self, index):
-        """Return a y-axis value."""
-        index = int(index)
-        if isinstance(index, int) is False:
-            raise TypeError
-
-        return self.__landmarks_y[index]
+        return self.__landmarks[index]
 
     # -----------------------------------------------------------------------
 
     def __store_points(self, coordinates):
         """Store x-axis, y-axis values in each list."""
         for i in range(0, 68):
-            self.__landmarks_x.append(coordinates.part(i).x)
-            self.__landmarks_x.append(coordinates.part(i).y)
+            self.__landmarks.append((coordinates.part(i).x, coordinates.part(i).y))
 
     # -----------------------------------------------------------------------
 
@@ -130,35 +106,48 @@ class FaceLandmark(object):
         :param image: (numpy.ndarray) The image to be processed.
 
         """
-        cv2.imshow("Output", image)
+        # cv2.imshow("Output", image)
         # cv2.waitKey(0)
+        #
+        # faces = self.__cascade.detectMultiScale(image, 1.5, 5)
+        # recognizer = cv2.face.LBPHFaceRecognizer_create()
+        # recognizer.loadModel(self.__model)
+        # ok, landmarks = recognizer.fit(image, faces)
+        # print("landmarks LBF", ok, landmarks)
 
-        faces = self.__cascade.detectMultiScale(image, 1.5, 5)
-        recognizer = cv2.face.LBPHFaceRecognizer_create()
-        recognizer.loadModel(self.__model)
-        ok, landmarks = recognizer.fit(image, faces)
-        print("landmarks LBF", ok, landmarks)
+        self.__landmark_points(image)
 
-        # # Loop over coordinates and draw circle around points
-        # for index in range(0, 68):
-        #     cv2.circle(face_image, (self.__landmarks_x[index], self.__landmarks_y[index]), 1, (0, 0, 255), -1)
-        # else:
-        #     raise ImageError
-        # # Show image
-        # cv2.imshow("Output", face_image)
-        # cv2.waitKey(0)
+    # -----------------------------------------------------------------------
+
+    def __landmark_points(self, image):
+        """Determined points for tests because face module does not work.
+
+        :param image: (numpy.ndarray) The image to be processed.
+
+        """
+        h, w = image.shape[:2]
+        for i in range(68):
+            x = randint(0, w + 1)
+            y = randint(0, h + 1)
+            self.__landmarks.append((x, y))
+
+    # -----------------------------------------------------------------------
+
+    def reset(self):
+        """Reset the storage list of FaceLandmark."""
+        self.__landmarks = list()
 
     # -----------------------------------------------------------------------
 
     def __len__(self):
         """Return the number of x, y coordinates."""
-        return len(self.__landmarks_x)
+        return len(self.__landmarks)
 
     # -----------------------------------------------------------------------
 
     def __iter__(self):
         for i in range(0, self.__len__()):
-            yield self.__landmarks_x[i], self.__landmarks_y[i]
+            yield self.__landmarks[i]
 
     # ----------------------------------------------------------------------
 
@@ -175,11 +164,12 @@ class FaceLandmark(object):
         if isinstance(y_axis, int) is False:
             raise ValueError
 
-        for x in self.__landmarks_x:
-            if x.__eq__(x_axis) is False:
+        for value in self.__landmarks:
+            if value[0].__eq__(x_axis) is False:
                 isIN = False
-        for y in self.__landmarks_y:
-            if y.__eq__(y_axis) is False:
+
+        for value in self.__landmarks:
+            if value[1].__eq__(y_axis) is False:
                 isIN = False
 
         return isIN
@@ -188,10 +178,9 @@ class FaceLandmark(object):
 
     def __str__(self):
         both = ""
-        for x in self.__landmarks_x:
-            both += "(" + str(x)
-        for y in self.__landmarks_y:
-            both += ", " + str(y) + ")"
+        for value in self.__landmarks:
+            both += str(value)
+        return both
 
     # -----------------------------------------------------------------------
 
@@ -204,4 +193,13 @@ class FaceLandmark(object):
         return str(self).__format__(fmt)
 
     # -----------------------------------------------------------------------
+
+
+# haarcascade = os.path.join(sppasPathSettings().resources, "image",
+#                            "haarcascade_frontalface_alt2.xml")
+# model = os.path.join(sppasPathSettings().resources, "image",
+#                      "lbfmodel68.yaml")
+# f = FaceLandmark(haarcascade, model)
+# f.landmarks(image)
+# print(help(cv2))
 

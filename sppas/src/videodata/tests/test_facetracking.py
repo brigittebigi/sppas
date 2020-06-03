@@ -72,6 +72,9 @@ class TestVideoBuffer(unittest.TestCase):
             for coord in face:
                 self.assertTrue(coord, Coordinates)
 
+        y = self.__fTracker._FaceTracking__max_persons
+        self.assertEqual(y, 2)
+
     # ---------------------------------------------------------------------------
 
     def test_all_persons(self):

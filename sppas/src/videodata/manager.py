@@ -32,8 +32,6 @@
 
 """
 
-import time
-
 from sppas.src.videodata.personsbuffer import PersonsBuffer
 from sppas.src.videodata.facetracking import FaceTracking
 from sppas.src.videodata.videolandmark import VideoLandmark
@@ -58,7 +56,7 @@ class Manager(object):
         """Create a new Manager instance.
 
         :param video: (name of video file, image sequence, url or video stream,
-        GStreamer pipeline, IP camera) The video to browse.
+        GStreamer pipeline, IP camera) The video to be processed.
         :param buffer_size: (int) The size of the buffer.
         :param buffer_overlap: (overlap) The number of values to keep
         from the previous buffer.
@@ -74,15 +72,21 @@ class Manager(object):
         :param f_value: (boolean) If is True extract images in folders.
 
         """
+        # Initialize the buffer
         self.__pBuffer = PersonsBuffer(video, buffer_size, buffer_overlap)
+
+        # Initialize the writer for the outputs files
         self.__coords_writer = sppasVideoCoordsWriter(video, self.__pBuffer.get_fps(), pattern,
                                                       csv=csv_value, video=v_value, folder=f_value)
+
+        # Initialize options of the writer
         self.__coords_writer.set_framing(framing)
         self.__coords_writer.set_mode(mode)
         self.__coords_writer.set_draw(draw)
         self.__coords_writer.set_width(width)
         self.__coords_writer.set_height(height)
 
+        # Initialize the number of persons
         nb_person = int(nb_person)
         if isinstance(nb_person, int) is False or nb_person < 0:
             raise ValueError
@@ -90,8 +94,10 @@ class Manager(object):
 
         self.__mode = mode
 
+        # Initialize the tracker
         self.__fTracker = FaceTracking()
 
+        # Initialize the landmark
         self.__landmarks = VideoLandmark()
 
     # -----------------------------------------------------------------------
@@ -100,20 +106,22 @@ class Manager(object):
         """Manage the process."""
         # Loop over the video
         while self.__pBuffer.eov:
-            # Clear the FaceTracker
-            self.__fTracker.clear()
 
             # Store the result of VideoBuffer.next()
             self.__pBuffer.next()
 
             # Initialize the list of coordinates from FaceDetection in the FaceTracker
-            self.use_tracker()
+            self.__fTracker.detect(self.__pBuffer)
+            self.__fTracker.create_persons(self.__pBuffer, self.__nb_person)
 
             # Initialize the list of points for the faces with FaceLandmark
             self.__landmarks.process(self.__pBuffer)
 
-            # Launch the process of creation of the video
+            # Launch the process of creation of the outputs
             self.__coords_writer.write(self.__pBuffer)
+
+            # Reset the FaceTracker object
+            self.__fTracker.clear()
 
             # Reset the output lists
             self.__pBuffer.clear()
@@ -123,10 +131,10 @@ class Manager(object):
 
     # -----------------------------------------------------------------------
 
-    def use_tracker(self):
-        """Use the FaceTracker object."""
-        self.__fTracker.detect(self.__pBuffer)
-        self.__fTracker.create_persons(self.__pBuffer, self.__nb_person)
 
-    # -----------------------------------------------------------------------
+# "../../../../../video_test/LFPC_test_1.mp4"
+# "../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4"
+manager = Manager("../../../../../video_test/LFPC_test_1.mp4", 100, 0, draw="circle",
+                  framing="portrait", mode="crop", width=640, height=480, csv_value=True, v_value=True, f_value=True)
+manager.launch_process()
 

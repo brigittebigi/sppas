@@ -32,11 +32,10 @@
 
 """
 
-import numpy as np
 import cv2
+import imutils
 
 from sppas.src.imagedata.coordinates import Coordinates
-
 
 # ----------------------------------------------------------------------------
 
@@ -167,6 +166,57 @@ def draw_points(image, x, y, number, option="circle"):
 
     elif option == "square":
         cv2.rectangle(image, (x-4, y-4), (x+4, y+4), (number, number * 2, 200), 2)
+
+# ----------------------------------------------------------------------------
+
+
+def rotate(image, angle):
+    """Rotate the image.
+
+    :param image: (numpy.ndarray) The image to be rotated.
+    :param angle: (int) The angle to use for the rotation.
+
+    """
+    rotated = imutils.rotate_bound(image, angle)
+    # cv2.imshow("Rotated (Correct)", rotated)
+    # cv2.waitKey(0)
+    return rotated
+
+# ----------------------------------------------------------------------------
+
+
+def add_image(image, hand, x, y, w, h):
+    """Rotate the image.
+
+    :param image: (numpy.ndarray) The image to be processed.
+    :param hand: (numpy.ndarray) The image to be added.
+
+    """
+    # Resize the hand to the right size
+    hand = resize(hand, w, h)
+
+    # I want to put hand on the image
+    cols, rows = hand.shape[:2]
+
+    # Crop the part of the image where the hand will take place
+    roi = crop(image, Coordinates(x, y, rows, cols))
+
+    # Now create a mask of hand and create its inverse mask also
+    img2gray = cv2.cvtColor(hand, cv2.COLOR_BGR2GRAY)
+    ret, mask = cv2.threshold(img2gray, 10, 255, cv2.THRESH_BINARY)
+    mask_inv = cv2.bitwise_not(mask)
+
+    # Now black-out the area of logo in ROI
+    img1_bg = cv2.bitwise_and(roi, roi, mask=mask_inv)
+
+    # Take only region of logo from logo image.
+    img2_fg = cv2.bitwise_and(hand, hand, mask=mask)
+
+    # Put logo in ROI and modify the main image
+    combined = cv2.add(img1_bg, img2_fg)
+    image[y:y+rows, x:x+rows] = combined
+
+    return image
 
 # ----------------------------------------------------------------------------
 

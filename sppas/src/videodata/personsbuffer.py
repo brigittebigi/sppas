@@ -53,17 +53,19 @@ class PersonsBuffer(VideoBuffer):
     """
 
     def __init__(self, video, size=200, overlap=0):
-        """Create a new ImageBuffer instance.
+        """Create a new PersonBuffer instance.
 
         :param size: (int) The size of the buffer.
         :param overlap: (overlap) The number of values to keep
         from the previous buffer.
-        :param video: (mp4, etc...) The video to browse
+        :param video: (name of video file, image sequence, url or video stream,
+        GStreamer pipeline, IP camera) The video to be processed.
 
         """
+        # Use the constructor of the mother class
         super(PersonsBuffer, self).__init__(video, size, overlap)
 
-        # The list of the coordinates for each person on the video
+        # The list of coordinates for each person on the video
         self.__persons = list()
 
         # The list of landmarks points for each person on the video
@@ -85,9 +87,10 @@ class PersonsBuffer(VideoBuffer):
 
     # -----------------------------------------------------------------------
 
-    def add_person(self):
+    def add_person(self, nb_person=1):
         """Add a person (list) in the list of persons."""
-        self.__persons.append(list())
+        for i in range(nb_person):
+            self.__persons.append(list())
 
     # -----------------------------------------------------------------------
 
@@ -95,7 +98,7 @@ class PersonsBuffer(VideoBuffer):
         """Return Coordinates of a person at a certain frame.
 
         :param index: (int) The index of the person in the list.
-        :param index2: (int) The index of the frame.
+        :param index2: (int) The index of the frame in the Buffer.
 
         """
         index = int(index)
@@ -145,7 +148,7 @@ class PersonsBuffer(VideoBuffer):
         """Return landmark points of a person at a certain frame.
 
         :param index: (int) The index of the person in the list.
-        :param index2: (int) The index of the frame.
+        :param index2: (int) The index of the frame in the Buffer.
 
         """
         index = int(index)
@@ -159,9 +162,10 @@ class PersonsBuffer(VideoBuffer):
 
     # -----------------------------------------------------------------------
 
-    def add_landmarks(self):
+    def add_landmarks(self, nb_person=1):
         """Add a person (list) in the list of landmarks."""
-        self.__landmarks.append(list())
+        for i in range(nb_person):
+            self.__landmarks.append(list())
 
     # -----------------------------------------------------------------------
 
@@ -184,9 +188,17 @@ class PersonsBuffer(VideoBuffer):
     # -----------------------------------------------------------------------
 
     def clear(self):
-        """Clear the differents storage list of the buffer."""
+        """Clear the storage lists of the buffer."""
         self.__persons = list()
         self.__landmarks = list()
+
+    # -----------------------------------------------------------------------
+
+    def is_empty(self):
+        """Return True if the list of persons is empty."""
+        if len(self.__persons) == 0:
+            return True
+        return False
 
     # -----------------------------------------------------------------------
 

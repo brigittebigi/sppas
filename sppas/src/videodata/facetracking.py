@@ -57,32 +57,25 @@ class FaceTracking(object):
     # -----------------------------------------------------------------------
 
     def detect(self, buffer):
-        """Create a list of coordinates for each images.
+        """Create a list of Coordinates for each image.
 
-        :param buffer: (VideoBuffer) The buffer which contains images.
+        :param buffer: (PersonBuffer) The buffer which contains images.
 
         """
         iterator = buffer.__iter__()
-        for i in range(0, len(buffer)):
+        for i in range(len(buffer)):
             face = FaceDetection(next(iterator))
             face.detect_all()
+            if len(face.get_all()) > self.__max_persons:
+                self.__max_persons = len(face.get_all())
             self.__faces.append(face.get_all())
-        self.max_persons()
-
-    # -----------------------------------------------------------------------
-
-    def max_persons(self):
-        """Determine the number max of person in the video."""
-        for face in self.__faces:
-            if len(face) > self.__max_persons:
-                self.__max_persons = len(face)
 
     # -----------------------------------------------------------------------
 
     def create_persons(self, buffer, nb_person=0):
-        """Create a list for each person.
+        """Browse the list of Coordinates and create a list for each person.
 
-        :param buffer: (VideoBuffer) The buffer which contains images.
+        :param buffer: (PersonBuffer) The buffer which contains images.
         :param nb_person: (int) The number of person to store.
 
         """
@@ -96,11 +89,10 @@ class FaceTracking(object):
     def all_persons(self, buffer):
         """Create a list for each person.
 
-        :param buffer: (VideoBuffer) The buffer which contains images.
+        :param buffer: (PersonBuffer) The buffer which contains images.
 
         """
-        for i in range(self.__max_persons):
-            buffer.add_person()
+        buffer.add_person(self.__max_persons)
 
         for face in self.__faces:
             for i in range(self.__max_persons):
@@ -112,9 +104,9 @@ class FaceTracking(object):
     # -----------------------------------------------------------------------
 
     def several_persons(self, buffer, nb_person):
-        """Create a list for each person.
+        """Create a list for each person with a maximum of nb_person.
 
-        :param buffer: (VideoBuffer) The buffer which contains images.
+        :param buffer: (PersonBuffer) The buffer which contains images.
         :param nb_person: (int) The number of person to store.
 
         """
@@ -135,7 +127,7 @@ class FaceTracking(object):
     # -----------------------------------------------------------------------
 
     def clear(self):
-        """Reset the tracker."""
+        """Reset the private members of the FaceTracker."""
         self.__faces = list()
         self.__max_persons = 0
 

@@ -43,12 +43,11 @@ import glob
 from sppas.src.imagedata.imageutils import crop, surrond_square, resize, portrait, draw_points
 from sppas.src.imagedata.coordinates import Coordinates
 
-
 # ---------------------------------------------------------------------------
 
 
 class sppasVideoCoordsWriter(object):
-    """Class to write images.
+    """Class to write outputs files.
 
     :author:       Florian Hocquet
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -58,8 +57,13 @@ class sppasVideoCoordsWriter(object):
 
     """
 
+    # The framing options
     FRAMING = ["face", "portrait"]
+
+    # The mode options
     MODE = ["full", "crop"]
+
+    # The draw options
     DRAW = ["circle", "ellipse", "square"]
 
     def __init__(self, path, fps, pattern, csv=False, video=False, folder=False):
@@ -90,16 +94,16 @@ class sppasVideoCoordsWriter(object):
         # The dictionary of options
         self.output = {"csv": False, "video": False, "folder": False}
 
-        # The framing you want, face or portrait
+        # The framing to use, face or portrait
         self.__framing = None
-        # The mode you want, full or crop
+        # The mode to use, full or crop
         self.__mode = None
-        # The draw you want, circle, ellipse or rectangle
+        # The shape to draw, circle, ellipse or rectangle
         self.__draw = None
 
-        # The width you want for your outputs
+        # The width you want for the outputs files
         self.__width = None
-        # The height you want for your outputs
+        # The height you want for the outputs files
         self.__height = None
 
         # Initialize outputs files
@@ -108,17 +112,17 @@ class sppasVideoCoordsWriter(object):
         # The index of the current image
         self.__number = 0
 
-        # The name of the files
+        # The pattern to use for the outputs files
         self.__pattern = str()
         self.set_pattern(pattern)
 
-        # Reset outputs
+        # Reset outputs files
         self.__reset()
 
     # -----------------------------------------------------------------------
 
     def __reset(self):
-        """Reset outputs before using the writers."""
+        """Reset outputs files before using the writers."""
         # Delete csv files if already exists
         csv_path = glob.glob(self.__cfile_path())
         for f in csv_path:
@@ -147,15 +151,15 @@ class sppasVideoCoordsWriter(object):
         :param folder: (boolean) If True extract images in a folder.
 
         """
-        # If csv is True create csv files
+        # If csv is True set the csv outputs files to True
         if csv is True:
             self.set_csv(True)
 
-        # If video is True create video writers
+        # If video is True set the video outputs files to True
         if video is True:
             self.set_video(True)
 
-        # If folder is True create folders
+        # If folder is True set the folders outputs to True
         if folder is True:
             self.set_folder(True)
 
@@ -170,26 +174,25 @@ class sppasVideoCoordsWriter(object):
         if isinstance(path, str) is False:
             raise TypeError
 
-        # # Store the video name
-        # video_name = path.split("/")
-        # video_name = video_name[len(video_name) - 1].split(".")[0]
-        #
-        # # Store the video path
-        # video_path = path.split(video_name)[0]
-        # if video_path == "":
-        #     video_path = "./"
-
+        # Store the path of the video
         path = os.path.realpath(path)
+
+        # Add the os separator to the path
         video_path = os.path.dirname(path) + os.sep
+
+        # Store the name and the extension of the video
         video = os.path.basename(path)
+
+        # Store separately the name and the extension of the video
         video_name, extension = os.path.splitext(video)
 
+        # Return the path and the name of the video
         return video_path, video_name
 
     # -----------------------------------------------------------------------
 
     def __cfile_path(self, index=None):
-        """Return the path and the name of the video.
+        """Return the complete path of the csv file.
 
         :param index: (int) The int to add is the name of the csv file.
 
@@ -208,7 +211,7 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def __vfile_path(self, index=None):
-        """Return the path and the name of the video.
+        """Return the complete path of the video file.
 
         :param index: (int) The int to add is the name of the video file.
 
@@ -227,7 +230,7 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def __ffile_path(self, index=None):
-        """Return the path and the name of the video.
+        """Return the complete path of the folder.
 
         :param index: (int) The int to add is the name of the folder.
 
@@ -353,7 +356,7 @@ class sppasVideoCoordsWriter(object):
     def set_draw(self, value):
         """Set the draw.
 
-        :param value: (str) The draw to draw on each image of the buffer,
+        :param value: (str) The shape to draw on each image of the buffer,
         circle, ellipse or square.
 
         """
@@ -372,7 +375,7 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def set_width(self, value):
-        """Set the width.
+        """Set the width of outputs.
 
         :param value: (int) The width of outputs images and videos.
 
@@ -392,7 +395,7 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def set_height(self, value):
-        """Set the height.
+        """Set the height of outputs.
 
         :param value: (int) The height of outputs images and videos.
 
@@ -412,7 +415,7 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def set_size(self, width, height):
-        """Set the height.
+        """Set the size of outputs.
 
         :param width: (int) The width of outputs images and videos.
         :param height: (int) The height of outputs images and videos.
@@ -442,11 +445,16 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def write(self, buffer):
-        """Browse the buffer and apply modification for each person.
+        """Browse the buffer.
 
         :param buffer: (VideoBuffer) The buffer which contains images.
 
         """
+        # If any option is enabled use only the csv outputs files
+        if self.__framing is None and self.__mode is None and self.__draw is None:
+            self.set_video(False)
+            self.set_folder(False)
+
         # Initialise the iterator
         iterator = buffer.__iter__()
 
@@ -456,48 +464,93 @@ class sppasVideoCoordsWriter(object):
             # Go to the next frame
             img = next(iterator)
 
-            # If overlap continue
+            # If image in the overlap continue
             if j < buffer.get_overlap():
                 continue
 
             # Loop over the persons
             for i in range(buffer.nb_persons()):
-                index = i
-                image = img
+                # Copy the image
+                image = img.copy()
 
+                # If any visage has been detected continue
                 if buffer.get_landmark(i, j) is None:
                     continue
 
-                # If draw != full draw landmarks points
-                if self.get_draw() is not None:
-                    self.__draw_points(image, buffer.get_landmark(i, j), index)
+                # If the Tracking process has been used
+                # apply modification for each person detected
+                if buffer.is_empty() is False:
+                    self.write_tracked(buffer, image, i, j)
 
-                if self.__framing == "portrait":
-                    portrait(buffer.get_coordinate(i, j))
-
-                # If mode != full adjust images
-                if self.__mode != "full" and self.__mode is not None:
-                    self.__adjust(image, buffer.get_coordinate(i, j))
-
-                # Use one of the extraction options
-                if self.__mode is not None:
-                    image = self.__process_image(image, buffer.get_coordinate(i, j), index)
-
-                # If mode != full resize images
-                if self.__mode != "full":
-                    image = self.__resize(image)
-
-                # Store the width and the height of the image
-                (h, w) = image.shape[:2]
-
-                # Create the output files
-                self.__create_out(buffer.nb_persons(), w, h)
-
-                # Write the image in csv file, video, folder
-                self.__write(image, index, buffer.get_coordinate(i, j))
+                # Else apply modification for the only person
+                # on the video
+                else:
+                    self.write_not_tracked(buffer, image, j)
 
             # Increment the number of image by 1
             self.__number += 1
+
+    # -----------------------------------------------------------------------
+
+    def write_tracked(self, buffer, image, index, frameID):
+        """Apply modification for each person.
+
+        :param buffer: (VideoBuffer) The buffer which contains images.
+        :param image: (numpy.ndarray) The image to be processed.
+        :param index: (int) The index of the person.
+        :param frameID: (int) The index of the image in the buffer.
+
+        """
+        # If draw is not None draw the shape on landmarks points
+        if self.get_draw() is not None:
+            self.__draw_points(image, buffer.get_landmark(index, frameID), index)
+
+        if self.__framing == "portrait":
+            portrait(buffer.get_coordinate(index, frameID))
+
+        # If mode != full adjust images
+        if self.__mode != "full" and self.__mode is not None:
+            self.__adjust(image, buffer.get_coordinate(index, frameID))
+
+        # Use one of the extraction options
+        if self.__mode is not None:
+            image = self.__process_image(image, buffer.get_coordinate(index, frameID), index)
+
+        # If mode != full resize images
+        if self.__mode != "full" and self.__mode is not None:
+            image = self.__resize(image)
+
+        # Store the width and the height of the image
+        (h, w) = image.shape[:2]
+
+        # Create the output files
+        self.__create_out(buffer.nb_persons(), w, h)
+
+        # Write the image in csv file, video, folder
+        self.__write(image, index, buffer.get_coordinate(index, frameID))
+
+    # -----------------------------------------------------------------------
+
+    def write_not_tracked(self, buffer, image, frameID):
+        """Apply modification for the person.
+
+        :param buffer: (VideoBuffer) The buffer which contains images.
+        :param image: (numpy.ndarray) The image to be processed.
+        :param frameID: (int) The index of the image in the buffer.
+
+        """
+        # If draw is not None draw the shape on landmarks points
+        if self.get_draw() is not None:
+            self.__draw_points(image, buffer.get_landmark(0, frameID), 0)
+
+        # Store the width and the height of the image
+        (h, w) = image.shape[:2]
+
+        # Create the output files
+        self.__create_out(buffer.nb_persons(), w, h)
+
+        # Write the image in csv file, video, folder
+        self.__write(image, 0, buffer.get_coordinate(0, frameID))
 
     # -----------------------------------------------------------------------
 
@@ -506,7 +559,7 @@ class sppasVideoCoordsWriter(object):
 
         :param img_buffer: (numpy.ndarray) The image to be processed.
         :param coords: (Coordinates) The coordinates of the face.
-        :param index: (int) The index of the Coordinates object in the list.
+        :param index: (int) The index of the person in the list of person.
 
         """
         index = int(index)
@@ -519,6 +572,7 @@ class sppasVideoCoordsWriter(object):
 
         # If mode == full, draw a square around the face.
         if self.__mode == "full":
+            # Get a different color for each person
             number = (index * 80) % 120
             return surrond_square(img_buffer, coords, number)
 
@@ -529,12 +583,12 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def __draw_points(self, img_buffer, landmark_points, index):
-        """Draw squares around faces or crop the faces.
+        """Draw circle, ellipse or rectangle on landmark points.
 
         :param img_buffer: (numpy.ndarray) The image to be processed.
         :param landmark_points: (dict) A list of x-axis, y-axis values,
         landmark points.
-        :param index: (int) The index of the image in the list.
+        :param index: (int) The index of the person in the list of person.
 
         """
         if isinstance(landmark_points, list) is False:
@@ -543,8 +597,10 @@ class sppasVideoCoordsWriter(object):
         if isinstance(img_buffer, np.ndarray) is False:
             raise TypeError
 
+        # Get a different color for each person
         number = (index * 80) % 120
 
+        # Draw shape on each landmark points
         for t in landmark_points:
             x, y = t
             draw_points(img_buffer, x, y, number, self.get_draw())
@@ -552,7 +608,7 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def __adjust(self, img_buffer, coords):
-        """Adjust the coordinates.
+        """Adjust the coordinates to get a good result.
 
         :param img_buffer: (numpy.ndarray) The image to be processed.
         :param coords: (Coordinates) The coordinates of the face.
@@ -619,7 +675,7 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def __adjust_height(self):
-        """Adjust the height based on the width from constructor."""
+        """Adjust the height based on the height from constructor."""
         if self.__framing == "face":
             coeff = 4 / 3
         else:
@@ -643,7 +699,7 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def __create_out(self, lenght, w, h):
-        """Create outputs files and folders for the images.
+        """Create csv outputs files, videos, folders.
 
         :param lenght: (list) The lenght of the list.
         :param w: (int) The width of the image.
@@ -667,12 +723,14 @@ class sppasVideoCoordsWriter(object):
     def __out_csv(self, value):
         """Create csv file for each person.
 
-        :param value: (int) The number of person to extract.
+        :param value: (int) The number of person on the video.
 
         """
         value = int(value)
         if isinstance(value, int) is False:
             raise TypeError
+
+        # Loop over the number of persons on the video
         for i in range(1, value + 1):
             # Create the path
             path = os.path.join(self.__cfile_path(i))
@@ -696,6 +754,8 @@ class sppasVideoCoordsWriter(object):
         value = int(value)
         if isinstance(value, int) is False:
             raise TypeError
+
+        # Loop over the number of persons on the video
         for i in range(1, value + 1):
             # Create the path
             path = os.path.join(self.__vfile_path(i))
@@ -704,7 +764,7 @@ class sppasVideoCoordsWriter(object):
             if os.path.exists(path) is False:
                 self.__video_output.append(cv2.VideoWriter(path, VideoWriter_fourcc(*'MJPG'),
                                                            self.__fps, (width, height)))
-            if self.__mode == "full":
+            if self.__mode == "full" or self.__draw is not None and self.__mode is None:
                 break
 
     # -----------------------------------------------------------------------
@@ -719,6 +779,7 @@ class sppasVideoCoordsWriter(object):
         if isinstance(value, int) is False:
             raise TypeError
 
+        # Loop over the number of persons on the video
         for i in range(1, value + 1):
             # Create the path of a folder
             path = self.__ffile_path(i)
@@ -728,13 +789,13 @@ class sppasVideoCoordsWriter(object):
                 os.mkdir(path)
                 self.__folder_output.append(path)
             # If mode equal full create only one output
-            if self.__mode == "full":
+            if self.__mode == "full" or self.__draw is not None and self.__mode is None:
                 break
 
     # -----------------------------------------------------------------------
 
     def __write(self, image, index, coordinate):
-        """Write the image in csv file, video, and folder.
+        """Write the image in csv files, videos, and folders.
 
         :param image: (numpy.ndarray) The image to be processed.
         :param index: (int) The index of the coordinate.
@@ -750,7 +811,7 @@ class sppasVideoCoordsWriter(object):
         if self.output["video"] is True:
 
             # If mode equal full create only one output video
-            if self.__mode == "full":
+            if self.__mode == "full" or self.__draw is not None and self.__mode is None:
                 index = 0
                 self.__video_output[index].write(image)
             else:
@@ -760,11 +821,10 @@ class sppasVideoCoordsWriter(object):
         if self.output["folder"] is True:
 
             # If mode equal full create only one output folder
-            if self.__mode == "full":
+            if self.__mode == "full" or self.__draw is not None and self.__mode is None:
                 index = 0
                 cv2.imwrite(self.__folder_output[index] + "image" + str(self.__number) + ".jpg", image)
             else:
                 cv2.imwrite(self.__folder_output[index] + "image" + str(self.__number) + ".jpg", image)
 
     # -----------------------------------------------------------------------
-

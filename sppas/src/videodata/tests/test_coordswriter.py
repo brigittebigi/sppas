@@ -321,6 +321,26 @@ class TestCoordsWriter(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
+    def test_write(self):
+        self.__cw.set_video(True)
+        self.__cw.set_folder(True)
+
+        self.assertEqual(self.__cw.get_video(), True)
+        self.assertEqual(self.__cw.get_folder(), True)
+
+        self.__cw.set_framing(None)
+        self.__cw.set_mode(None)
+        self.__cw.set_draw(None)
+
+        if self.__cw.get_framing() is None and self.__cw.get_mode() is None and self.__cw.get_framing() is None:
+            self.__cw.set_video(False)
+            self.__cw.set_folder(False)
+
+        self.assertEqual(self.__cw.get_video(), False)
+        self.assertEqual(self.__cw.get_folder(), False)
+
+    # ---------------------------------------------------------------------------
+
     def test_mode(self):
         with self.assertRaises(ValueError):
             self.__cw._sppasVideoCoordsWriter__process_image(2, "Hello", "a")

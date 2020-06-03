@@ -36,7 +36,7 @@
 import unittest
 
 from sppas.src.videodata.personsbuffer import PersonsBuffer
-from sppas.src.imagedata.coordinates import Coordinates, ImageError
+from sppas.src.imagedata.coordinates import Coordinates
 
 # ---------------------------------------------------------------------------
 
@@ -50,20 +50,36 @@ class TestVideoBuffer(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_get_add_person(self):
-        self.__pBuffer.add_person()
-        self.__pBuffer.add_person()
-        self.__pBuffer.add_person()
+        self.__pBuffer.add_person(3)
         y = self.__pBuffer._PersonsBuffer__persons
         self.assertEqual(y, [[], [], []])
+
+        self.__pBuffer.add_person()
+        y = self.__pBuffer._PersonsBuffer__persons
+        self.assertEqual(y, [[], [], [], []])
+
+        self.__pBuffer.clear()
+
+        self.__pBuffer.add_person()
+        y = self.__pBuffer._PersonsBuffer__persons
+        self.assertEqual(y, [[]])
 
     # ---------------------------------------------------------------------------
 
     def test_get_add_landmarks(self):
-        self.__pBuffer.add_landmarks()
-        self.__pBuffer.add_landmarks()
-        self.__pBuffer.add_landmarks()
+        self.__pBuffer.add_landmarks(3)
         y = self.__pBuffer._PersonsBuffer__landmarks
         self.assertEqual(y, [[], [], []])
+
+        self.__pBuffer.add_landmarks()
+        y = self.__pBuffer._PersonsBuffer__landmarks
+        self.assertEqual(y, [[], [], [], []])
+
+        self.__pBuffer.clear()
+
+        self.__pBuffer.add_landmarks()
+        y = self.__pBuffer._PersonsBuffer__landmarks
+        self.assertEqual(y, [[]])
 
     # ---------------------------------------------------------------------------
 
@@ -112,9 +128,7 @@ class TestVideoBuffer(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_clear_len(self):
-        self.__pBuffer.add_person()
-        self.__pBuffer.add_person()
-        self.__pBuffer.add_person()
+        self.__pBuffer.add_person(3)
 
         x = Coordinates(50, 50, 100, 100)
         self.__pBuffer.add_coordinate(0, x)
@@ -125,12 +139,11 @@ class TestVideoBuffer(unittest.TestCase):
         len = self.__pBuffer.nb_persons()
         self.assertEqual(len, 3)
 
+        self.assertFalse(self.__pBuffer.is_empty())
+
         self.__pBuffer.clear()
 
-        self.__pBuffer.add_landmarks()
-        self.__pBuffer.add_landmarks()
-        self.__pBuffer.add_landmarks()
-        self.__pBuffer.add_landmarks()
+        self.__pBuffer.add_landmarks(4)
 
         x = [(1, 2), (1, 2), (1, 2), (1, 2)]
         self.__pBuffer.add_landmark(0, x)
@@ -142,7 +155,11 @@ class TestVideoBuffer(unittest.TestCase):
         len = self.__pBuffer.nb_persons()
         self.assertEqual(len, 4)
 
+        self.assertTrue(self.__pBuffer.is_empty())
+
         self.__pBuffer.clear()
+
+        self.assertTrue(self.__pBuffer.is_empty())
 
         len = self.__pBuffer.nb_persons()
         self.assertEqual(len, 0)
