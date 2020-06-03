@@ -134,7 +134,6 @@ class FaceLandmark(object):
         # cv2.waitKey(0)
 
         faces = self.__cascade.detectMultiScale(image, 1.5, 5)
-        print(faces)
         recognizer = cv2.face.LBPHFaceRecognizer_create()
         recognizer.loadModel(self.__model)
         ok, landmarks = recognizer.fit(image, faces)
@@ -206,11 +205,3 @@ class FaceLandmark(object):
 
     # -----------------------------------------------------------------------
 
-
-# haarcascade = os.path.join(sppasPathSettings().resources, "image",
-#                            "haarcascade_frontalface_alt2.xml")
-# f = FaceLandmark(haarcascade)
-# image = "../../../../../video_test/image0.jpg"
-# image = cv2.imread(image)
-# f.landmarks(image)
-# print(help(cv2))
