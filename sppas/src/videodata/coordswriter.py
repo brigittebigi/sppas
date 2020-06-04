@@ -550,7 +550,7 @@ class sppasVideoCoordsWriter(object):
         self.__create_out(buffer.nb_persons(), w, h)
 
         # Write the image in csv file, video, folder
-        self.__write(image, 0, buffer.get_coordinate(0, frameID))
+        self.__write(image, 0)
 
     # -----------------------------------------------------------------------
 
@@ -794,7 +794,7 @@ class sppasVideoCoordsWriter(object):
 
     # -----------------------------------------------------------------------
 
-    def __write(self, image, index, coordinate):
+    def __write(self, image, index, coordinate=None):
         """Write the image in csv files, videos, and folders.
 
         :param image: (numpy.ndarray) The image to be processed.

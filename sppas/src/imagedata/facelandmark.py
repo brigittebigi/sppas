@@ -126,9 +126,44 @@ class FaceLandmark(object):
 
         """
         h, w = image.shape[:2]
-        for i in range(68):
-            x = randint(0, w + 1)
-            y = randint(0, h + 1)
+        # for i in range(68):
+        #     x = randint(0, w + 1)
+        #     y = randint(0, h + 1)
+        #     self.__landmarks.append((x, y))
+
+        for i in range(10):
+            x = 3*w/4 * ((i+1)/10)
+            y = (h/10) * 2
+            self.__landmarks.append((x, y))
+
+        for i in range(10):
+            x = 3*w/4 * ((i+1)/10)
+            y = (h/10) * 3
+            self.__landmarks.append((x, y))
+
+        for i in range(10):
+            x = 3*w/4 * ((i+1)/10)
+            y = (h/10) * 4
+            self.__landmarks.append((x, y))
+
+        for i in range(10):
+            x = 3*w/4 * ((i+1)/10)
+            y = (h/10) * 5
+            self.__landmarks.append((x, y))
+
+        for i in range(10):
+            x = 3*w/4 * ((i+1)/10)
+            y = (h/10) * 6
+            self.__landmarks.append((x, y))
+
+        for i in range(10):
+            x = 3*w/4 * ((i+1)/10)
+            y = (h/10) * 7
+            self.__landmarks.append((x, y))
+
+        for i in range(8):
+            x = 3*w/4 * ((i+1)/10)
+            y = (h/10) * 8
             self.__landmarks.append((x, y))
 
     # -----------------------------------------------------------------------

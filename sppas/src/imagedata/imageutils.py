@@ -159,7 +159,7 @@ def draw_points(image, x, y, number, option="circle"):
 
     # If option == "circle" draw circle on the coordinate
     if option == "circle":
-        cv2.circle(image, (x, y), 4, (number, number * 2, 200), -1)
+        cv2.circle(image, (x, y), 3, (number, number * 2, 200), -1)
 
     elif option == "ellipse":
         cv2.ellipse(image, (x, y), (5, 5), 0, 0, 360, (number, number * 2, 200), 2)
