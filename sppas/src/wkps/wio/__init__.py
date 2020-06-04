@@ -44,8 +44,11 @@
 
 from .wkpreadwrite import sppasWkpRW
 from .wjson import sppasWJSON
+from .wkpreadwrite import WkpFormatProperty
+
 
 __all__ = (
     "sppasWkpRW",
+    "WkpFormatProperty",
     "sppasWJSON"
 )

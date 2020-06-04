@@ -35,7 +35,7 @@ import wx
 import wx.lib.newevent
 
 from sppas.src.wkps import States, sppasWorkspace
-from sppas.src.wkps import sppasAttribute, FileReference
+from sppas.src.wkps import sppasRefAttribute, sppasCatReference
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasCollapsiblePanel
@@ -136,7 +136,7 @@ class RefsTreeView(sppasScrolledPanel):
         :raise: Exception
 
         """
-        r = FileReference(ref_name)
+        r = sppasCatReference(ref_name)
         r.set_type(ref_type)
         self.__data.add_ref(r)  # can raise a ValueError
         self.__add_ref_panel(r)
@@ -219,7 +219,7 @@ class RefsTreeView(sppasScrolledPanel):
             att = ref.att(identifier)
             if att is None:
                 # Create the attribute and add it
-                att = sppasAttribute(identifier, value, att_type, description)
+                att = sppasRefAttribute(identifier, value, att_type, description)
                 ref.append(att)
                 panel = self.__refps[ref.get_id()]
                 panel.add(att)
@@ -246,9 +246,9 @@ class RefsTreeView(sppasScrolledPanel):
     # ------------------------------------------------------------------------
 
     def __add_ref_panel(self, ref):
-        """Create a child panel to display the content of a FileReference.
+        """Create a child panel to display the content of a sppasCatReference.
 
-        :param ref: (FileReference)
+        :param ref: (sppasCatReference)
         :return: FileRefCollapsiblePanel
 
         """
@@ -264,7 +264,7 @@ class RefsTreeView(sppasScrolledPanel):
     # ------------------------------------------------------------------------
 
     def __remove_ref_panel(self, identifier):
-        """Remove a child panel that displays the content of a FileReference.
+        """Remove a child panel that displays the content of a sppasCatReference.
 
         :param identifier: (str)
         :return: FileRefCollapsiblePanel
@@ -461,7 +461,7 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
     def add(self, att):
         """Add an attribute in the listctrl child panel.
 
-        :param att: (sppasAttribute)
+        :param att: (sppasRefAttribute)
 
         """
         if att.get_id() in self.__atts:
@@ -502,10 +502,10 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
     def update(self, fs):
         """Update each att of a given ref or update the given att.
 
-        :param fs: (FileReference or sppasAttribute)
+        :param fs: (sppasCatReference or sppasRefAttribute)
 
         """
-        if isinstance(fs, FileReference):
+        if isinstance(fs, sppasCatReference):
             if fs.get_id() != self.__refid:
                 return
 
@@ -525,7 +525,7 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
             reftypetext.SetValue(fs.get_type())
             self.change_state(fs.get_state())
 
-        elif isinstance(fs, sppasAttribute):
+        elif isinstance(fs, sppasRefAttribute):
             self.__update_att(fs)
 
         self.Layout()
@@ -693,8 +693,8 @@ class TestPanel(RefsTreeView):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
         data = sppasWorkspace()
-        micros = FileReference('microphone')
-        att1 = sppasAttribute('mic1', 'Bird UM1', None, '最初のインタビューで使えていましたマイク')
+        micros = sppasCatReference('microphone')
+        att1 = sppasRefAttribute('mic1', 'Bird UM1', None, '最初のインタビューで使えていましたマイク')
         micros.append(att1)
         micros.add('mic2', 'AKG D5')
         data.add_ref(micros)
@@ -702,22 +702,22 @@ class TestPanel(RefsTreeView):
 
         self.CreateRef("TestCreateRef", "STANDALONE")
 
-        r1 = FileReference('SpeakerAB')
+        r1 = sppasCatReference('SpeakerAB')
         r1.set_type('SPEAKER')
-        r1.append(sppasAttribute('initials', 'AB'))
-        r1.append(sppasAttribute('L1', 'French'))
-        r1.append(sppasAttribute('XXXXX', 'INVISIBLE'))
+        r1.append(sppasRefAttribute('initials', 'AB'))
+        r1.append(sppasRefAttribute('L1', 'French'))
+        r1.append(sppasRefAttribute('XXXXX', 'INVISIBLE'))
         r1.set_state(States().CHECKED)
-        r2 = FileReference('SpeakerCM')
+        r2 = sppasCatReference('SpeakerCM')
         r2.set_type('SPEAKER')
-        r2.append(sppasAttribute('initials', 'CM'))
-        r2.append(sppasAttribute('XXXXX', 'VISIBLE'))
+        r2.append(sppasRefAttribute('initials', 'CM'))
+        r2.append(sppasRefAttribute('XXXXX', 'VISIBLE'))
 
         self.AddRefs([r1, r2, r2])
 
         self.RemoveAttribute("XXXXX")
 
-        r3 = FileReference('Dialog1')
+        r3 = sppasCatReference('Dialog1')
         r3.set_type('INTERACTION')
         r3.set_state(States().CHECKED)
 
@@ -728,5 +728,5 @@ class TestPanel(RefsTreeView):
 
         # should not be seen
         r3.append(
-        sppasAttribute('where', 'Aix-en-Provence', descr='Place of recording'))
+        sppasRefAttribute('where', 'Aix-en-Provence', descr='Place of recording'))
 

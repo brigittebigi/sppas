@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """
     ..
         ---------------------------------------------------------------------
@@ -28,31 +29,27 @@
 
         ---------------------------------------------------------------------
 
-sppas: Global imports and some settings for external use.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.annotations.LPC
+    ~~~~~~~~~~~~~~~~~~~~~
 
 :author:       Brigitte Bigi
 :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-:contact:      contact@sppas.org
+:contact:      develop@sppas.org
 :license:      GPL, v3
 :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
+LPC is the "Langue française Parlée Complétée".
+The conversion of phonemes into keys of LPC is performed using
+a rule-based system. This RBS phoneme-to-key segmentation system
+is based on the following principles:
+
+    - a key is mainly of the form CV
+    - a key can be C- or -V
+
 """
 
-from sppas.src.config import *
-from sppas.src.exc import *
-from sppas.src.structs import *
-from sppas.src.anndata import *
-from sppas.src.audiodata import *
-from sppas.src.calculus import *
-from sppas.src.models import *
-from sppas.src.plugins import *
-from sppas.src.resources import *
-from sppas.src.utils import *
-from sppas.src.wkps import *
-from sppas.src.annotations import *
+from .sppaslpc import sppasLPC
 
-__version__ = sg.__version__
-__name__ = sg.__name__
-__author__ = sg.__author__
-__docformat__ = sg.__docformat__
+__all__ = (
+    'sppasLPC'
+)

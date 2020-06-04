@@ -119,28 +119,28 @@ class TestSilences(unittest.TestCase):
         # data should be the initial samples
         self.assertEqual(len(samples), len(data))
         for s, d in zip(samples, data):
-            self.assertEquals(s, d)
+            self.assertEqual(s, d)
 
     # -----------------------------------------------------------------------
 
     def test_vagueness(self):
         silences = sppasSilences(self.channel, win_len=0.020, vagueness=0.005)
-        self.assertEquals(0.005, silences.get_vagueness())
+        self.assertEqual(0.005, silences.get_vagueness())
         silences.set_vagueness(0.01)
-        self.assertEquals(0.01, silences.get_vagueness())
+        self.assertEqual(0.01, silences.get_vagueness())
         silences.set_vagueness(0.05)
-        self.assertEquals(0.02, silences.get_vagueness())
+        self.assertEqual(0.02, silences.get_vagueness())
         silences.set_vagueness(0.005)
-        self.assertEquals(0.005, silences.get_vagueness())
+        self.assertEqual(0.005, silences.get_vagueness())
 
     # -----------------------------------------------------------------------
 
     def test_channel(self):
         silences = sppasSilences(self.channel, win_len=0.020, vagueness=0.005)
-        self.assertEquals(self.channel, silences._channel)
+        self.assertEqual(self.channel, silences._channel)
         cha = sppasChannel()
         silences.set_channel(cha)
-        self.assertEquals(cha, silences._channel)
+        self.assertEqual(cha, silences._channel)
 
     # -----------------------------------------------------------------------
 
@@ -149,7 +149,7 @@ class TestSilences(unittest.TestCase):
         # there are 160 samples in a window of 20ms.
         # so we'll estimate 8000/160 = 50 rms values
         rms = silences.get_volstats()
-        self.assertEquals(50, len(rms))
+        self.assertEqual(50, len(rms))
         # The 2000 first and last samples are 0. so rms is also 0.
         for i in range(12):
             self.assertEqual(0, rms[i])

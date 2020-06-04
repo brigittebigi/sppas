@@ -29,10 +29,57 @@
     src.wkps.filebase.py
     ~~~~~~~~~~~~~~~~~~~~~
 
+    Define a base class to represent any kind of data with an id and a state
+    and define the class to represent this latter.
+
 """
 
 from sppas.src.utils import sppasUnicode
+
 from .wkpexc import FileIdValueError
+
+# ---------------------------------------------------------------------------
+
+
+class States(object):
+    """All states of any FileBase.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    :Example:
+
+        >>>with States() as s:
+        >>>    print(s.UNUSED)
+
+    This class is a solution to mimic an 'Enum' but is compatible with both
+    Python 2.7 and Python 3+.
+
+    """
+
+    def __init__(self):
+        """Create the dictionary."""
+        self.__dict__ = dict(
+            MISSING=-1,
+            UNUSED=0,
+            CHECKED=1,
+            LOCKED=2,
+            AT_LEAST_ONE_CHECKED=3,
+            AT_LEAST_ONE_LOCKED=4
+        )
+
+    # -----------------------------------------------------------------------
+
+    def __enter__(self):
+        return self
+
+    # -----------------------------------------------------------------------
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
 
 # ---------------------------------------------------------------------------
 
@@ -107,7 +154,7 @@ class FileBase(object):
     # -----------------------------------------------------------------------
 
     def match(self, functions, logic_bool="and"):
-        """Return True if the filebase matches all or any of the functions.
+        """Return True if this instance matches all or any of the functions.
 
         Functions are defined in a comparator. They return a boolean.
         The type of the value depends on the function.
@@ -165,7 +212,7 @@ class FileBase(object):
     # -----------------------------------------------------------------------
 
     def __repr__(self):
-        """Function called by print.
+        """String conversion when called by print.
 
         :returns: (str) Printed representation of the object.
 
@@ -177,6 +224,8 @@ class FileBase(object):
     def __eq__(self, other):
         """Allows to compare self with other by using "==".
 
+        Compare the identifier, but not the state.
+
         :param other: (FileName, str)
 
         """
@@ -185,11 +234,19 @@ class FileBase(object):
                 return self.id == other.id
             else:
                 return self.id == other
+
         return False
 
     # -----------------------------------------------------------------------
 
     def __ne__(self, other):
+        """Allows to compare self with other by using "!=".
+
+        Compare the identifier, but not the state.
+
+        :param other: (FileName, str)
+
+        """
         if other is not None:
             return not self == other
         return False
@@ -199,8 +256,7 @@ class FileBase(object):
     def __gt__(self, other):
         """Allows to compare self with other by using ">".
 
-        Can be used, for example, to sort a list of FileName() instances
-        alphabetically.
+        Can be used, for example, to sort a list of instances alphabetically.
 
         :param other: (FileName, str)
 
@@ -214,8 +270,7 @@ class FileBase(object):
     def __lt__(self, other):
         """Allows to compare self with other by using "<".
 
-        Can be used, for example, to sort a list of FileName() instances
-        alphabetically.
+        Can be used, for example, to sort a list of instances alphabetically.
 
         :param other: (FileName, str)
 
@@ -229,46 +284,3 @@ class FileBase(object):
     def __hash__(self):
         return hash((self.get_state(),
                      self.get_id()))
-
-# ---------------------------------------------------------------------------
-
-
-class States(object):
-    """All states of any FileBase.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
-    :Example:
-
-        >>>with States() as s:
-        >>>    print(s.UNUSED)
-
-    This class is a solution to mimic an 'Enum' but is compatible with both
-    Python 2.7 and Python 3+.
-
-    """
-
-    def __init__(self):
-        """Create the dictionary."""
-        self.__dict__ = dict(
-            MISSING=-1,
-            UNUSED=0,
-            CHECKED=1,
-            LOCKED=2,
-            AT_LEAST_ONE_CHECKED=3,
-            AT_LEAST_ONE_LOCKED=4
-        )
-
-    # -----------------------------------------------------------------------
-
-    def __enter__(self):
-        return self
-
-    # -----------------------------------------------------------------------
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        pass

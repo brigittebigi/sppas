@@ -253,13 +253,13 @@ class sppasPlayerControlsPanel(sppasPanel):
         # Organize the panels into the main sizer
         border = sppasPanel.fix_size(2)
         nav_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        nav_sizer.Add(panel1, 3, wx.ALIGN_CENTRE | wx.EXPAND | wx.LEFT | wx.RIGHT, border)
-        nav_sizer.Add(panel2, 5, wx.ALIGN_CENTER | wx.EXPAND | wx.LEFT | wx.RIGHT, border)
-        nav_sizer.Add(panel3, 3, wx.ALIGN_CENTER | wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.Add(panel1, 3, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.Add(panel2, 5, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.Add(panel3, 3, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(slider, 0, wx.ALIGN_CENTRE | wx.EXPAND | wx.ALL, border)
-        sizer.Add(nav_sizer, 0, wx.ALIGN_CENTRE | wx.EXPAND | wx.ALL, border)
+        sizer.Add(slider, 0, wx.EXPAND | wx.ALL, border)
+        sizer.Add(nav_sizer, 0, wx.EXPAND | wx.ALL, border)
 
         self.SetSizer(sizer)
 
@@ -367,7 +367,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         border = sppasPanel.fix_size(2)
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(btn_mute, 0, wx.ALIGN_CENTER | wx.ALL, border)
-        sizer.Add(slider, 1, wx.ALIGN_CENTER | wx.EXPAND, border)
+        sizer.Add(slider, 1, wx.EXPAND, border)
         panel.SetSizer(sizer)
 
         return panel

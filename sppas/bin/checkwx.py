@@ -39,29 +39,41 @@
     :copyright:    Copyright (C) 2011-2017  Brigitte Bigi
     :summary:      Check wxpython, required (only) to use the GUI.
 
+    Status is:
+
+        - -1 if wxpython is not installed
+        - 0 if wxpython is installed and is the right one
+        - 1 if wxpython is installed and not the right one
+        - 2 for an unknown error
+
 """
+
 import sys
 
 try:
     import wx
 except ImportError:
-    sys.exit(2)
-
-# ----------------------------------------------------------------------------
-
-
-def get_wx_version():
-    try:
-        wxv = wx.version().split()[0]
-    except Exception:
-        wxv = '2'
-    return int(wxv[0])
-
-# ----------------------------------------------------------------------------
+    sys.exit(-1)
 
 
 if __name__ == "__main__":
-    version = get_wx_version()
-    if version >= 3:
+
+    # Version of python
+    py = 2
+    if sys.version_info >= (3, 0):
+        py = 3
+
+    # Version of wxpython
+    try:
+        wxv = wx.version().split()[0]
+    except Exception:
+        sys.exit(2)
+    version = int(wxv[0])
+
+    # Match between Python and WxPython
+    if py == 3 and version == 4:
         sys.exit(0)
+    if py == 2 and version == 3:
+        sys.exit(0)
+
     sys.exit(1)

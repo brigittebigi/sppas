@@ -263,6 +263,9 @@ class sppasAnalyzePanel(sppasPanel):
         progress.set_fraction(1)
         progress.close()
 
+        if page is None:
+            return
+
         # send data to the parent
         if success > 0:
             self.Layout()

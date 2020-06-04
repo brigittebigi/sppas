@@ -28,7 +28,7 @@
 
         ---------------------------------------------------------------------
 
-    src.annotations.OtherRepet.rules.py
+    src.annotations.OtherRepet.keyrules.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     The set of rules to accept or reject a self-repetition.

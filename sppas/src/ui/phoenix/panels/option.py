@@ -226,8 +226,8 @@ class sppasOptionsPanel(sppasScrolledPanel):
         filebtn.Bind(wx.EVT_BUTTON, self.__on_select_filename)
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(filetext, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(filebtn, 0, wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border=4)
+        sizer.Add(filetext, 1, wx.EXPAND)
+        sizer.Add(filebtn, 0, wx.LEFT, border=4)
 
         self.GetSizer().Add(st, 0, wx.LEFT, 8)
         self.GetSizer().Add(sizer, 0, wx.LEFT | wx.BOTTOM, 8)

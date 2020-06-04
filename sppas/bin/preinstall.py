@@ -40,15 +40,16 @@ Install these features before launching the SPPAS application to enable them.
 
 import sys
 import os
+import time
 from argparse import ArgumentParser
 
 PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas import sg
+from sppas import sg, cfg
 from sppas import sppasLogSetup
-from sppas import sppasAppConfig
+from sppas import sppasLogFile
 from sppas.src.preinstall import sppasInstallerDeps
 
 from sppas.src.ui.term import ProcessProgressTerminal
@@ -56,33 +57,70 @@ from sppas.src.ui.term import TerminalController
 
 # ---------------------------------------------------------------------------
 
+EXIT_DELAY = 2
+EXIT_STATUS = 1   # Status for an exit with errors.
+
+# ---------------------------------------------------------------------------
+
+
+def exit_error(msg="Unknown."):
+    """Exit the program with status 1 and an error message.
+
+    :param msg: (str) Message to print on stdout.
+
+    """
+    sys.stderr.write("[ ERROR ] {:s}".format(msg))
+    time.sleep(EXIT_DELAY)
+    sys.exit(EXIT_STATUS)
+
+# ---------------------------------------------------------------------------
+
+
+def check_python():
+    """Check if the current python in use is the right one: 3.6+.
+
+    Exit if it's not the case.
+
+    """
+    if sys.version_info < (3, 6):
+        exit_error("The version of Python is too old: "
+                   "This program requires at least version 3.6.")
+
+# ---------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
-    lgs = sppasLogSetup(0)
-    lgs.stream_handler()
+
+    lgs = sppasLogSetup(cfg.log_level)
+    log_report = sppasLogFile(pattern="install")
+    lgs.file_handler(log_report.get_filename())
+
+    # -----------------------------------------------------------------------
+    # Test version of Python
+    # -----------------------------------------------------------------------
+    check_python()
 
     # -----------------------------------------------------------------------
     # Fix initial sppasInstallerDeps parameters
     # -----------------------------------------------------------------------
-
-    p = ProcessProgressTerminal()
-    cfg = sppasAppConfig()
-    installer = sppasInstallerDeps(p)
-    feats_ids = installer.get_feat_ids()
+    installer = sppasInstallerDeps()
     cmd_features = list()
     i = 0
     x = 0
 
-    def search_feature(string):
-        for feat_id in feats_ids:
-            if string == feat_id:
-                return feat_id
+    def search_feature(feature_identifier):
+        for fid in installer.features_ids():
+            if feature_identifier == fid:
+                return fid
 
     def get_enables():
         enables = "\n"
-        for feat in feats_ids:
-            enables += "(" + str(installer.get_feat_desc(feat)) + "," + feat + ") available = "\
-                       + str(installer.get_available(feat)) + "/ enable = " + str(installer.get_enable(feat)) + "\n"
+        for fid in installer.features_ids():
+            enables += \
+                "(" + str(installer.description(fid)) + ", " + fid + ")"\
+                "available: " + str(installer.available(fid)) + "/ "\
+                "enable: " + str(installer.enable(fid)) + "\n"
+
         return enables
 
     # ----------------------------------------------------------------------------
@@ -91,7 +129,7 @@ if __name__ == "__main__":
 
     parser = ArgumentParser(
         usage="%(prog)s [action]",
-        description="PostInstall commmand interface.\n" +
+        description="PreInstall command interface.\n" +
         get_enables(),
         epilog="This program is part of {:s} version {:s}. {:s}. Contact the "
                "author at: {:s}".format(sg.__name__, sg.__version__,
@@ -104,28 +142,29 @@ if __name__ == "__main__":
         help="Disable the verbosity")
 
     # Add arguments from the features of features.ini
-
     # -----------------------------------------------
 
-    group_p = parser.add_argument_group("personalize action")
+    group_p = parser.add_argument_group("Customizable actions:")
 
-    for feature_id in feats_ids:
+    for fid in installer.features_ids():
         x += 1
-        a = "group_personalize" + str(x)
+        # a = "group_personalize" + str(x)
         a = group_p.add_mutually_exclusive_group()
-        cmd_features.append(feature_id)
-        cmd_features.append("no" + feature_id)
+        cmd_features.append(fid)
+        cmd_features.append("no" + fid)
         a.add_argument(
-            "--" + feature_id,
+            "--" + fid,
             action='store_true',
-            help="Enable the {desc}"
-            .format(desc=installer.get_feat_desc(feature_id)))
+            help="Enable feature '{name}': '{desc}'".format(
+                name=fid,
+                desc=installer.description(fid)))
 
         a.add_argument(
-            "--no" + feature_id,
+            "--no" + fid,
             action='store_true',
-            help="Disable the {desc}"
-            .format(desc=installer.get_feat_desc(feature_id)))
+            help="Disable feature '{name}': '{desc}'".format(
+                name=fid,
+                desc=installer.description(fid)))
 
     group_g = parser.add_argument_group("overall action")
     group_ge = group_g.add_mutually_exclusive_group()
@@ -134,13 +173,13 @@ if __name__ == "__main__":
         "-a",
         "--all",
         action='store_true',
-        help="Install with all the features enabled")
+        help="Install all the available features for this os.")
 
     group_ge.add_argument(
         "-d",
         "--default",
         action='store_true',
-        help="Install with all the features with their default enable")
+        help="Install all the features that are enabled by default.")
 
     # Force to print help if no argument is given then parse
     # ------------------------------------------------------
@@ -150,40 +189,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Fix user communication way
-    # -------------------------------
-
-    sep = "-" * 72
-    try:
-        term = TerminalController()
-        print(term.render('${GREEN}{:s}${NORMAL}').format(sep))
-        print(term.render('${RED} {} - Version {}${NORMAL}'
-                          '').format(sg.__name__, sg.__version__))
-        print(term.render('${BLUE} {} ${NORMAL}').format(sg.__copyright__))
-        print(term.render('${BLUE} {} ${NORMAL}').format(sg.__url__))
-        print(term.render('${GREEN}{:s}${NORMAL}\n').format(sep))
-
-        # Redirect all messages to a logging
-        # ----------------------------------------
-        lgs = sppasLogSetup(50)
-        lgs.null_handler()
-
-    except:
-        print('{:s}\n'.format(sep))
-        print('{}   -  Version {}'.format(sg.__name__, sg.__version__))
-        print(sg.__copyright__)
-        print(sg.__url__ + '\n')
-        print('{:s}\n'.format(sep))
-
-        # Redirect all messages to a logging
-        # ----------------------------------
-        lgs = sppasLogSetup(50)
-        lgs.null_handler()
-
-    # ------------------------------
-    # Installation is running here :
-    # ------------------------------
-
     arguments = vars(args)
     arguments_true = list()
     for a in arguments:
@@ -192,56 +197,73 @@ if __name__ == "__main__":
 
     if args.quiet and len(arguments_true) == 1:
         parser.print_usage()
-        print("{:s}: error: argument --quiet: not allowed alone"
-              "".format(os.path.basename(PROGRAM)))
-        sys.exit(1)
+        exit_error("{:s}: error: argument --quiet: not allowed alone."
+                   "".format(os.path.basename(PROGRAM)))
 
     if not args.quiet:
-        lgs.set_log_level(cfg.log_level)
-    else:
-        lgs.set_log_level(cfg.quiet_log_level)
-    lgs.stream_handler()
+        p = ProcessProgressTerminal()
+        installer.set_progress(p)
 
+    # Fix user communication way
+    # -------------------------------
+
+    sep = "-" * 72
+    if not args.quiet:
+        try:
+            term = TerminalController()
+            print(term.render('${GREEN}{:s}${NORMAL}').format(sep))
+            print(term.render('${RED} {} - Version {}${NORMAL}'
+                              '').format(sg.__name__, sg.__version__))
+            print(term.render('${BLUE} {} ${NORMAL}').format(sg.__copyright__))
+            print(term.render('${BLUE} {} ${NORMAL}').format(sg.__url__))
+            print(term.render('${GREEN}{:s}${NORMAL}\n').format(sep))
+
+        except:
+            print('{:s}\n'.format(sep))
+            print('{}   -  Version {}'.format(sg.__name__, sg.__version__))
+            print(sg.__copyright__)
+            print(sg.__url__ + '\n')
+            print('{:s}\n'.format(sep))
+
+    # enable all available features
     if args.all:
-        # Because when the verification of the config file
-        # is done during the instantiation of the Installer
-        # but the modification by the user and the update
-        # of the config file is done after the instantiation
-        # of the Installer so the modification of the enable
-        # with -a etc... will modify the Features object
-        # and then the config file.
-        if cfg.cfg_file_exist() is False:
-            for feat_id in feats_ids:
-                installer.set_enable(feat_id)
-        installer.install()
+        for fid in installer.features_ids():
+            installer.enable(fid, True)
 
-    elif args.default:
-        installer.install()
+    # Set the values of enable individually for each feature
+    for a in arguments_true:
+        if a in cmd_features:
+            if a.startswith("no") is False:
+                fid = search_feature(a)
+                if installer.available(fid) is True:
+                    installer.enable(fid, True)
+            else:
+                a = a.replace("no", "")
+                fid = search_feature(a)
+                if installer.available(fid) is True:
+                    installer.enable(fid, False)
 
-    # Set the values of enable for each feature
-    # -----------------------------------------
-    else:
-        for a in arguments_true:
-            if a in cmd_features:
-                if "no" not in a:
-                    if installer.get_cfg_exist() is False:
-                        installer.set_enable(search_feature(a))
-                elif "no" in a:
-                    a = a.replace("no", "")
-                    if installer.get_cfg_exist() is False:
-                        installer.unset_enable(search_feature(a))
-        installer.install()
+    # process the installation
+    errors = installer.install()
 
-    try:
-        term = TerminalController()
-        print(term.render('\n${GREEN}{:s}${NORMAL}').format(sep))
-        print(term.render('${RED}See {}.').format("..."))
-        print(term.render('${GREEN}Thank you for using {}.').format(sg.__name__))
-        print(term.render('${GREEN}{:s}${NORMAL}').format(sep))
-    except:
-        print('\n{:s}\n'.format(sep))
-        print("See {} for details.\nThank you for using {}."
-              "".format("...", sg.__name__))
-        print('{:s}\n'.format(sep))
+    msg = "See full installation report in file: {}".format(log_report.get_filename())
 
-    p.close()
+    if not args.quiet:
+        p.close()
+        try:
+            term = TerminalController()
+            print(term.render('\n${GREEN}{:s}${NORMAL}').format(sep))
+            print(term.render('${RED}See {}.').format("..."))
+            print(term.render('${GREEN}Thank you for using {}.').format(sg.__name__))
+            print(term.render('${GREEN}{:s}${NORMAL}').format(sep))
+        except:
+            print('\n{:s}\n'.format(sep))
+            print(msg)
+            print('{:s}\n'.format(sep))
+
+    if len(errors) > 0:
+        msg += "\n".join(errors)
+        exit_error(msg)
+
+cfg.save()
+sys.exit(0)

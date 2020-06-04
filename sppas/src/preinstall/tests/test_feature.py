@@ -72,34 +72,34 @@ class TestFeature(unittest.TestCase):
         self.__feature.set_enable(True)
         y = self.__feature.get_enable()
         self.assertIsInstance(y, bool)
-        self.assertEqual(y, True)
+        self.assertFalse(y)
 
         self.__feature.set_available(False)
         self.__feature.set_enable(True)
         y = self.__feature.get_enable()
         self.assertIsInstance(y, bool)
-        self.assertEqual(y, False)
+        self.assertFalse(y)
 
         self.__feature.set_available(True)
         self.__feature.set_enable(["a", "b", "c"])
         y = self.__feature.get_enable()
         self.assertIsInstance(y, bool)
-        self.assertEqual(y, True)
+        self.assertTrue(y)
 
         self.__feature.set_enable({"1": "a", "2": "b", "3": "c"})
         y = self.__feature.get_enable()
         self.assertIsInstance(y, bool)
-        self.assertEqual(y, True)
+        self.assertTrue(y)
 
         self.__feature.set_enable("")
         y = self.__feature.get_enable()
         self.assertIsInstance(y, bool)
-        self.assertEqual(y, False)
+        self.assertFalse(y)
 
         self.__feature.set_enable(4)
         y = self.__feature.get_enable()
         self.assertIsInstance(y, bool)
-        self.assertEqual(y, True)
+        self.assertTrue(y)
 
     # ---------------------------------------------------------------------------
 

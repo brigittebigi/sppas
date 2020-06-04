@@ -63,6 +63,38 @@ class FileOSError(OSError):
 # ---------------------------------------------------------------------------
 
 
+class WkpExtensionError(IOError):
+    """:ERROR 9110:.
+
+    Unknown extension for a workspace '{:s}'.
+
+    """
+
+    def __init__(self, ext):
+        self.parameter = error(9110) + (error(9110, "wkps")).format(ext)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class WkpFileError(IOError):
+    """:ERROR 9120:.
+
+    No workspace file is matching the workspace name '{:s}'.
+
+    """
+
+    def __init__(self, ext):
+        self.parameter = error(9120) + (error(9120, "wkps")).format(ext)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
 class FileTypeError(TypeError):
     """:ERROR 9012:.
 
@@ -206,6 +238,7 @@ class FileRemoveValueError(ValueError):
 
 # ---------------------------------------------------------------------------
 
+
 class AttributeIdValueError(ValueError):
     """:ERROR 9062:.
 
@@ -234,3 +267,116 @@ class AttributeTypeValueError(ValueError):
 
     def __str__(self):
         return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class WkpIdValueError(ValueError):
+    """:ERROR 9160:.
+
+    A workspace with name {:s} is already existing.
+
+    """
+
+    def __init__(self, name):
+        self.parameter = error(9160) + (error(9160, "wkps")).format(name)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class WkpExportBlankError(IndexError):
+    """:ERROR 9180:.
+
+    It is not allowed to export the Blank workspace.
+
+    """
+
+    def __init__(self):
+        self.parameter = error(9180) + (error(9180, "wkps"))
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class WkpDeleteBlankError(IndexError):
+    """:ERROR 9182:.
+
+    It is not allowed to delete the Blank workspace.
+
+    """
+
+    def __init__(self):
+        self.parameter = error(9182) + (error(9182, "wkps"))
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class WkpRenameBlankError(IndexError):
+    """:ERROR 9184:.
+
+    It is not allowed to rename the Blank workspace.
+
+    """
+
+    def __init__(self):
+        self.parameter = error(9184) + (error(9184, "wkps"))
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class WkpSaveBlankError(IndexError):
+    """:ERROR 9186:.
+
+    It is not allowed to save the Blank workspace.
+
+    """
+
+    def __init__(self):
+        self.parameter = error(9186) + (error(9186, "wkps"))
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class WkpExportValueError(ValueError):
+    """:ERROR 9162:.
+
+    It is not allowed to export a workspace with the same name '{:s}'.
+
+    """
+
+    def __init__(self, name):
+        self.parameter = error(9162) + (error(9162, "wkps")).format(name)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# ---------------------------------------------------------------------------
+
+
+class WkpNameError(ValueError):
+    """:ERROR 9164:.
+
+    Workspace with name '{:s}' was not found.
+
+    """
+
+    def __init__(self, name):
+        self.parameter = error(9164) + (error(9164, "wkps")).format(name)
+
+    def __str__(self):
+        return repr(self.parameter)
+

@@ -34,7 +34,9 @@
 """
 
 import unittest
-from sppas.src.preinstall.features import Features, Feature
+
+from sppas.src.preinstall.feature import Feature
+from sppas.src.preinstall.features import Features
 
 # ---------------------------------------------------------------------------
 
@@ -101,10 +103,10 @@ class TestFeatures(unittest.TestCase):
         """Return the dictionary of system dependencies of the feature."""
         # For WindowsInstaller
         y = self.__features.packages("wxpython")
-        self.assertEqual(y, {'nil': '1'})
+        self.assertEqual(y, {})
 
         y = self.__features.packages("brew")
-        self.assertEqual(y, {'nil': '1'})
+        self.assertEqual(y, {})
 
     # ---------------------------------------------------------------------------
 
@@ -115,7 +117,7 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(y, {'wxpython': '>;4.0'})
 
         y = self.__features.pypi("brew")
-        self.assertEqual(y, {'nil': '1'})
+        self.assertEqual(y, {})
 
     # ---------------------------------------------------------------------------
 
@@ -123,10 +125,10 @@ class TestFeatures(unittest.TestCase):
         # For WindowsInstaller
         """Return the command to execute for the feature."""
         y = self.__features.cmd("wxpython")
-        self.assertEqual(y, "nil")
+        self.assertEqual(y, "")
 
         y = self.__features.cmd("brew")
-        self.assertEqual(y, "none")
+        self.assertEqual(y, "")
 
     # ---------------------------------------------------------------------------
 
@@ -137,17 +139,9 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(y.sections(), ["wxpython", "brew", "julius"])
         self.assertEqual(len(y.sections()), 3)
 
-        self.assertEqual(y.get("wxpython", "req_win"), "nil")
-        self.assertEqual(y.get("wxpython", "req_pip"), "wxpython:>;4.0")
-        self.assertEqual(y.get("wxpython", "cmd_win"), "nil")
+        self.assertEqual(y.get("wxpython", "pip"), "wxpython:>;4.0")
 
-        self.assertEqual(y.get("brew", "req_win"), "nil")
-        self.assertEqual(y.get("brew", "req_pip"), "nil")
-        self.assertEqual(y.get("brew", "cmd_win"), "none")
-
-        self.assertEqual(y.get("julius", "req_win"), "nil")
-        self.assertEqual(y.get("julius", "req_pip"), "nil")
-        self.assertEqual(y.get("julius", "cmd_win"), "none")
+        self.assertEqual(y.get("julius", "cmd_win"), "python3 ./juliusdownload.py")
 
     # ---------------------------------------------------------------------------
 
@@ -160,19 +154,19 @@ class TestFeatures(unittest.TestCase):
         y = self.__features.get_ids()
 
         self.assertEqual(y[0], "wxpython")
-        self.assertEqual(self.__features.packages(y[0]), {'nil': '1'})
+        self.assertEqual(self.__features.packages(y[0]), {})
         self.assertEqual(self.__features.pypi(y[0]), {'wxpython': '>;4.0'})
-        self.assertEqual(self.__features.cmd(y[0]), "nil")
+        self.assertEqual(self.__features.cmd(y[0]), "")
 
         self.assertEqual(y[1], "brew")
-        self.assertEqual(self.__features.packages(y[1]), {'nil': '1'})
-        self.assertEqual(self.__features.pypi(y[1]), {'nil': '1'})
-        self.assertEqual(self.__features.cmd(y[1]), "none")
+        self.assertEqual(self.__features.packages(y[1]), {})
+        self.assertEqual(self.__features.pypi(y[1]), {})
+        self.assertEqual(self.__features.cmd(y[1]), "")
 
         self.assertEqual(y[2], "julius")
-        self.assertEqual(self.__features.packages(y[2]), {'nil': '1'})
-        self.assertEqual(self.__features.pypi(y[2]), {'nil': '1'})
-        self.assertEqual(self.__features.cmd(y[2]), "none")
+        self.assertEqual(self.__features.packages(y[2]), {})
+        self.assertEqual(self.__features.pypi(y[2]), {})
+        self.assertEqual(self.__features.cmd(y[2]), "python3 ./juliusdownload.py")
 
     # ---------------------------------------------------------------------------
 

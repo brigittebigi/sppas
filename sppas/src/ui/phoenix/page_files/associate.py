@@ -504,7 +504,7 @@ class sppasFilesFilterDialog(sppasDialog):
             self.__append_filter("ref")
 
         elif event_name == "filter_att":
-            dlg = sppasAttributeFilterDialog(self)
+            dlg = sppasRefAttributeFilterDialog(self)
             response = dlg.ShowModal()
             if response == wx.ID_OK:
                 # Name of the method in sppasFileDataFilters,
@@ -661,7 +661,7 @@ class sppasStringFilterDialog(sppasDialog):
 # ---------------------------------------------------------------------------
 
 
-class sppasAttributeFilterDialog(sppasDialog):
+class sppasRefAttributeFilterDialog(sppasDialog):
     """Dialog to get a filter on an attribute.
 
     :author:       Brigitte Bigi
@@ -698,7 +698,7 @@ class sppasAttributeFilterDialog(sppasDialog):
         :param parent: (wx.Window)
 
         """
-        super(sppasAttributeFilterDialog, self).__init__(
+        super(sppasRefAttributeFilterDialog, self).__init__(
             parent=parent,
             title='{:s} filter'.format(sg.__name__),
             style=wx.DEFAULT_FRAME_STYLE)
@@ -754,7 +754,7 @@ class sppasAttributeFilterDialog(sppasDialog):
             value="",
             validator=IdentifierTextValidator())
 
-        choices = [row[0] for row in sppasAttributeFilterDialog.choices]
+        choices = [row[0] for row in sppasRefAttributeFilterDialog.choices]
         self.radiobox = sppasRadioBoxPanel(
             panel,
             choices=choices,
@@ -784,7 +784,7 @@ class sppasAttributeFilterDialog(sppasDialog):
 
     def _on_radiobox_checked(self, event):
         value = self.radiobox.GetStringSelection()
-        if value in sppasAttributeFilterDialog.choices[10:]:
+        if value in sppasRefAttributeFilterDialog.choices[10:]:
             self.checkbox.SetValue(False)
             self.checkbox.Enable(False)
         else:

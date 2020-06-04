@@ -40,8 +40,8 @@ import os
 import sppas
 
 
-from ..fileref import sppasAttribute, FileReference
-from ..sppasWorkspace import sppasWorkspace
+from ..fileref import sppasRefAttribute, sppasCatReference
+from ..workspace import sppasWorkspace
 from ..filestructure import FileName, FileRoot
 from ..filebase import States
 
@@ -58,34 +58,34 @@ class TestWorkspace(unittest.TestCase):
         self.data.add_file(os.path.join(sppas.paths.samples, 'samples-jpn', 'JPA_M16_JPA_T02.TextGrid'))
         self.data.add_file(os.path.join(sppas.paths.samples, 'samples-cat', 'TB-FE1-H1_phrase1.TextGrid'))
 
-        self.r1 = FileReference('SpeakerAB')
+        self.r1 = sppasCatReference('SpeakerAB')
         self.r1.set_type('SPEAKER')
-        self.r1.append(sppasAttribute('initials', 'AB'))
-        self.r1.append(sppasAttribute('sex', 'F'))
-        self.r2 = FileReference('SpeakerCM')
+        self.r1.append(sppasRefAttribute('initials', 'AB'))
+        self.r1.append(sppasRefAttribute('sex', 'F'))
+        self.r2 = sppasCatReference('SpeakerCM')
         self.r2.set_type('SPEAKER')
-        self.r2.append(sppasAttribute('initials', 'CM'))
-        self.r2.append(sppasAttribute('sex', 'F'))
-        self.r3 = FileReference('Dialog1')
+        self.r2.append(sppasRefAttribute('initials', 'CM'))
+        self.r2.append(sppasRefAttribute('sex', 'F'))
+        self.r3 = sppasCatReference('Dialog1')
         self.r3.set_type('INTERACTION')
-        self.r3.append(sppasAttribute('when', '2003', 'int', 'Year of recording'))
-        self.r3.append(sppasAttribute('where', 'Aix-en-Provence', descr='Place of recording'))
+        self.r3.append(sppasRefAttribute('when', '2003', 'int', 'Year of recording'))
+        self.r3.append(sppasRefAttribute('where', 'Aix-en-Provence', descr='Place of recording'))
 
     # ---------------------------------------------------------------------------
 
     def test_init(self):
         data = sppasWorkspace()
         self.assertEqual(36, len(data.id))
-        self.assertEqual(0, len(data))
+        self.assertEqual(0, len(data.get_paths()))
 
     # ---------------------------------------------------------------------------
 
     def test_state(self):
         self.data.set_object_state(States().CHECKED)
-        self.assertEqual(States().CHECKED, self.data[0].state)
-        self.assertEqual(States().CHECKED, self.data[1].state)
-        self.assertEqual(States().CHECKED, self.data[2].state)
-        self.assertEqual(States().CHECKED, self.data[3].state)
+        self.assertEqual(States().CHECKED, self.data.get_paths()[0].state)
+        self.assertEqual(States().CHECKED, self.data.get_paths()[1].state)
+        self.assertEqual(States().CHECKED, self.data.get_paths()[2].state)
+        self.assertEqual(States().CHECKED, self.data.get_paths()[3].state)
 
     # ---------------------------------------------------------------------------
 
@@ -93,7 +93,7 @@ class TestWorkspace(unittest.TestCase):
         """This is exactly what We WILL NEVER DO."""
         wkp = sppasWorkspace()
         wkp.add_file(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
-        for fp in wkp:
+        for fp in wkp.get_paths():
             for fr in fp:
                 for fn in fr:
                     fn.set_state(States().CHECKED)
@@ -107,7 +107,7 @@ class TestWorkspace(unittest.TestCase):
                     self.assertEqual(fn.state, States().CHECKED)
         # ... BUT fp and fr were not updated! So our workspace is CORRUPTED.
         # WE EXPECT STATE OF FR AND FN TO BE **checked** AND THEY ARE NOT:
-        for fp in wkp:
+        for fp in wkp.get_paths():
             self.assertEqual(fp.state, States().UNUSED)
             for fr in fp:
                 self.assertEqual(fr.state, States().UNUSED)
@@ -120,7 +120,7 @@ class TestWorkspace(unittest.TestCase):
         wkp.add_file(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
         fn = wkp.get_object(os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt'))
         wkp.set_object_state(States().CHECKED, fn)
-        for fp in wkp:
+        for fp in wkp.get_paths():
             self.assertEqual(fp.state, States().CHECKED)
             for fr in fp:
                 self.assertEqual(fr.state, States().CHECKED)
@@ -130,17 +130,17 @@ class TestWorkspace(unittest.TestCase):
     def test_lock_all(self):
         # Lock all files
         self.data.set_object_state(States().LOCKED)
-        self.assertEqual(States().LOCKED, self.data[0].state)
-        self.assertEqual(States().LOCKED, self.data[1].state)
-        self.assertEqual(States().LOCKED, self.data[2].state)
-        self.assertEqual(States().LOCKED, self.data[3].state)
+        self.assertEqual(States().LOCKED, self.data.get_paths()[0].state)
+        self.assertEqual(States().LOCKED, self.data.get_paths()[1].state)
+        self.assertEqual(States().LOCKED, self.data.get_paths()[2].state)
+        self.assertEqual(States().LOCKED, self.data.get_paths()[3].state)
 
         # as soon as a file is locked, the "set_object_state()" does not work anymore
         self.data.set_object_state(States().CHECKED)
-        self.assertEqual(States().LOCKED, self.data[0].state)
-        self.assertEqual(States().LOCKED, self.data[1].state)
-        self.assertEqual(States().LOCKED, self.data[2].state)
-        self.assertEqual(States().LOCKED, self.data[3].state)
+        self.assertEqual(States().LOCKED, self.data.get_paths()[0].state)
+        self.assertEqual(States().LOCKED, self.data.get_paths()[1].state)
+        self.assertEqual(States().LOCKED, self.data.get_paths()[2].state)
+        self.assertEqual(States().LOCKED, self.data.get_paths()[3].state)
 
         # only the unlock method has to be used to unlock files
         self.data.unlock()
@@ -155,14 +155,14 @@ class TestWorkspace(unittest.TestCase):
         self.data.set_object_state(States().LOCKED, fn)
         self.assertEqual(States().LOCKED, fn.state)
 
-        self.assertEqual(States().UNUSED, self.data[0].state)
-        self.assertEqual(States().AT_LEAST_ONE_LOCKED, self.data[1].state)
+        self.assertEqual(States().UNUSED, self.data.get_paths()[0].state)
+        self.assertEqual(States().AT_LEAST_ONE_LOCKED, self.data.get_paths()[1].state)
 
         # unlock a single file
         n = self.data.unlock([fn])
         self.assertEqual(1, n)
         self.assertEqual(States().CHECKED, fn.state)
-        self.assertEqual(States().AT_LEAST_ONE_CHECKED, self.data[1].state)
+        self.assertEqual(States().AT_LEAST_ONE_CHECKED, self.data.get_paths()[1].state)
 
     # ---------------------------------------------------------------------------
 
@@ -187,13 +187,13 @@ class TestWorkspace(unittest.TestCase):
 
         self.data.associate()
 
-        for fp in self.data:
+        for fp in self.data.get_paths():
             for fr in fp:
                 self.assertTrue(self.r1 in fr.get_references())
 
         self.data.dissociate()
 
-        for fp in self.data:
+        for fp in self.data.get_paths():
             for fr in fp:
                 self.assertEqual(0, len(fr.get_references()))
 

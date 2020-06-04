@@ -12,7 +12,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Language: fr_FR\n"
-"X-Generator: Poedit 1.8.11\n"
+"X-Generator: Poedit 2.2.1\n"
 
 msgid "Home"
 msgstr "Accueil"
@@ -66,6 +66,9 @@ msgid "Close"
 msgstr "Fermer"
 
 msgid "Send"
+msgstr "Envoyer"
+
+msgid "Send feedback"
 msgstr "Envoyer"
 
 msgid "Settings"

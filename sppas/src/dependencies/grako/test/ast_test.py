@@ -10,7 +10,7 @@ from dependencies.grako.ast import AST
 class ASTTests(unittest.TestCase):
     def test_ast(self):
         ast = AST()
-        self.assertEquals([], list(ast.items()))
+        self.assertEqual([], list(ast.items()))
         self.assertTrue(hasattr(ast, '__json__'))
 
     def test_init(self):
@@ -20,7 +20,7 @@ class ASTTests(unittest.TestCase):
         ))
         for k, v in data:
             ast[k] = v
-        self.assertEquals(data, list(ast.items()))
+        self.assertEqual(data, list(ast.items()))
 
     def test_empty(self):
         ast = AST()

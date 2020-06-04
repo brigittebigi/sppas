@@ -46,10 +46,6 @@ from sppas.src.anndata import sppasRW
 from sppas.src.anndata import FileFormatProperty
 
 from ..windows import sppasPanel
-from ..windows.baseviewctrl import BaseTreeViewCtrl
-from ..windows.baseviewctrl import SelectedIconRenderer
-from ..windows.baseviewctrl import YesNoIconRenderer
-from ..windows.baseviewctrl import ColumnProperties
 from ..windows import CheckListCtrl
 
 # ---------------------------------------------------------------------------

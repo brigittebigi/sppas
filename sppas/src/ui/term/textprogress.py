@@ -33,7 +33,10 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import sys
+
+from sppas.src.utils.makeunicode import u, b
 
 from ..progress import sppasBaseProgress
 from .terminalcontroller import TerminalController
@@ -65,19 +68,25 @@ class ProcessProgressTerminal(sppasBaseProgress):
     The progress self._bar is colored, if the terminal supports color
     output; and adjusts to the width of the terminal.
 
+    The use of a colored terminal controller is temporarily disabled:
+    problems with bytes/unicode in Python3 must be solved.
+
     """
 
     def __init__(self):
         """Create a ProcessProgressTerminal instance."""
         super(ProcessProgressTerminal, self).__init__()
         try:
+            raise NotImplementedError
             self._term = TerminalController()
             if not (self._term.CLEAR_EOL and self._term.UP and self._term.BOL):
                 self._term = None
             self._bar = self._term.render(BAR)
-        except:
-            print('[WARNING] The progress bar is disabled because this terminal'
-                  ' does not support colors, EOL, UP, etc.')
+        except Exception as e:
+            # import traceback
+            # print('[WARNING] The progress bar is disabled because this terminal'
+            #       ' does not support colors, EOL, UP, etc. Returned error: {}'
+            #       ''.format(traceback.format_exc()))
             self._term = None
             self._bar = ""
 
@@ -96,20 +105,24 @@ class ProcessProgressTerminal(sppasBaseProgress):
             percent = self._percent
         if message is None:
             message = self._text
+        else:
+            message = u(message)
 
         if self._term:
             n = int((WIDTH - 10) * percent)
             if self._cleared is True:
                 self._cleared = False
 
-                sys.stdout.write(self._term.BOL + self._term.CLEAR_EOL +
-                                 self._term.UP + self._term.CLEAR_EOL +
-                                 self._term.UP + self._term.CLEAR_EOL)
+                sys.stdout.write(u(self._term.BOL + self._term.CLEAR_EOL +
+                                   self._term.UP + self._term.CLEAR_EOL +
+                                   self._term.UP + self._term.CLEAR_EOL))
 
+            val = self._bar % (100*percent, b('=')*n, b('-')*(WIDTH-10-n))
             sys.stdout.write(
-                self._term.BOL + self._term.UP + self._term.CLEAR_EOL +
-                (self._bar % (100*percent, '='*n, '-'*(WIDTH-10-n))) +
-                self._term.CLEAR_EOL + message.center(WIDTH))
+                str(self._term.BOL + self._term.UP + self._term.CLEAR_EOL) +
+                str(val) +
+                str(self._term.CLEAR_EOL) +
+                str(message.center(WIDTH)))
         else:
             print('  => ' + message)
 
@@ -132,13 +145,16 @@ class ProcessProgressTerminal(sppasBaseProgress):
         :param header: (str) new progress header text.
 
         """
+        if header is None:
+            header = ""
         if self._term:
             self._header = self._term.render(HEADER % header.center(WIDTH))
+            self._header = u(self._header)
             sys.stdout.write("\n" + self._header + "\n")
             sys.stdout.write("\n")
 
         else:
-            self._header = "\n         * * *  " + header + "  * * *  "
+            self._header = u("\n         * * *  " + header + "  * * *  ")
             print(self._header)
 
     # ------------------------------------------------------------------

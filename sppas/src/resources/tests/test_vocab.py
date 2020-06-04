@@ -38,7 +38,7 @@ import os.path
 import shutil
 
 from sppas.src.config import paths
-from sppas.src.files.fileutils import sppasFileUtils
+from sppas.src.wkps.fileutils import sppasFileUtils
 from sppas.src.utils.makeunicode import u
 
 from ..vocab import sppasVocabulary

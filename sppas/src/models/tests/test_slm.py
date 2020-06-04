@@ -14,7 +14,7 @@ from sppas.src.models.slm.statlangmodel import sppasSLM
 from sppas.src.models.slm.arpaio import sppasArpaIO
 from sppas.src.resources.vocab import sppasVocabulary
 from sppas.src.utils.compare import sppasCompare
-from sppas.src.files.fileutils import sppasFileUtils
+from sppas.src.wkps.fileutils import sppasFileUtils
 
 from ..modelsexc import NgramOrderValueError
 from ..modelsexc import NgramCountValueError

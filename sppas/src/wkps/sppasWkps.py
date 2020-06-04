@@ -45,8 +45,12 @@ from sppas import sppasIndexError
 
 from sppas.src.utils.makeunicode import sppasUnicode
 
-from .wkpexc import FileOSError
-from .sppasWorkspace import sppasWorkspace
+from .wkpexc import FileTypeError
+from .wkpexc import WkpExtensionError, WkpIdValueError
+from .wkpexc import WkpExportBlankError, WkpDeleteBlankError, WkpRenameBlankError, WkpSaveBlankError
+from .wkpexc import WkpExportValueError, WkpNameError, WkpFileError
+
+from .workspace import sppasWorkspace
 from .wio.wkpreadwrite import sppasWkpRW
 
 # ---------------------------------------------------------------------------
@@ -59,14 +63,12 @@ class sppasWkps(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     A workspace is made of:
 
         - a file in which data are saved and loaded when needed;
         - a name, matching the filename without path nor extension.
-
-    TODO: Use SPPAS exceptions and/or define new ones. Use PO for messages.
 
     """
 
@@ -102,34 +104,7 @@ class sppasWkps(object):
                 wkp_name = os.path.basename(fn_observed)
                 # append in the list
                 self.__wkps.append(wkp_name)
-                logging.debug('Founded workspace {:s}'.format(wkp_name))
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def verify_path_exist(d):
-        """ Verify if a path contained in a dictionary exists on the system
-
-        :param d: (dict) dictionary obtained after reading a workspace
-        :returns: (bool) false if the path is not on the system
-        """
-        if 'id' not in d:
-            raise KeyError("Workspace 'id' is missing of the dictionary to parse.")
-        return os.path.exists(d['id'])
-
-    # ------------------------------------------------------------------------
-
-    @staticmethod
-    def modify_path(d, new_path):
-        """ Replace the paths contained in the given dictionary by the new_path
-
-        :param d: (dict) dictionary obtained after reading a workspace
-        :param new_path: (str)
-
-        """
-        if os.path.exists(new_path) is False:
-            raise FileOSError(new_path)
-        d['id'] = new_path
+                logging.info('Workspace added: {:s}'.format(wkp_name))
 
     # ------------------------------------------------------------------------
 
@@ -140,32 +115,36 @@ class sppasWkps(object):
         :returns: The real name used to save the workspace
 
         """
-
         if os.path.exists(filename) is False:
-            raise IOError('Invalid filename {:s}'.format(filename))
+            raise FileTypeError(filename)
 
         name, ext = os.path.splitext(os.path.basename(filename))
-        if ext.lower() != self.ext.lower():
-            raise IOError('{:s} is not a valid extension for workspace files'
-                          ''.format(ext))
+        # remove the "." at the beginning of the extension
+        ext = ext[1:]
+        # check if the workspace is one of the supported file extensions
+        if ext.lower() not in sppasWkpRW.extensions():
+            raise WkpExtensionError(ext)
 
         # Check if a workspace with the same name is not already existing
-        sp = sppasUnicode(name)
-        u_name = sp.to_strip()
-        if u_name in self:
-            raise ValueError('A workspace with name {:s} is already existing.'
-                             ''.format(u_name))
+        u_name = self.__raises_existing(name)
 
         # Copy the file -- modify the filename if any
         try:
             dest = os.path.join(paths.wkps, u_name + self.ext)
             shutil.copyfile(filename, dest)
-
-            with open(dest, 'r'):
-                pass
         except:
+            # We should raise a customized exception.
             raise
-        # append in the list
+
+        # Test if the wkp can be parsed
+        try:
+            w = sppasWkpRW(filename).read()
+        except:
+            # remove of the workspaces directory.
+            os.remove(dest)
+            raise
+
+        # Append in the list
         self.__wkps.append(u_name)
         return u_name
 
@@ -180,24 +159,21 @@ class sppasWkps(object):
 
         """
         # set the name in unicode and with the appropriate extension
-        su = sppasUnicode(name)
-        u_name = su.to_strip()
-        if u_name in self:
-            raise ValueError('A workspace with name {:s} is already existing.'
-                             ''.format(u_name))
+        u_name = self.__raises_existing(name)
 
         # create the empty workspace data & save
         fn = os.path.join(paths.wkps, u_name) + self.ext
 
         self.__wkps.append(u_name)
         wkp = sppasWorkspace(u_name)
+        sppasWkpRW(fn).write(wkp)
 
-        return sppasWkpRW(fn).write(wkp)
+        return u_name
 
     # -----------------------------------------------------------------------
 
     def export_to_file(self, index, filename):
-        """Save the an existing workspace into an external file.
+        """Save an existing workspace into an external file.
 
         Override filename if the file already exists.
 
@@ -207,13 +183,13 @@ class sppasWkps(object):
 
         """
         if index == 0:
-            raise IndexError('It is not allowed to export the Blank workspace.')
+            raise WkpExportBlankError
 
         u_name = self[index]
         fn = os.path.join(paths.wkps, u_name) + self.ext
         if fn == filename:
-            raise IOError("'{!s:s}' and '{!s:s}' are the same file"
-                          "".format(fn, filename))
+            raise WkpExportValueError(filename)
+
         shutil.copyfile(fn, filename)
 
     # -----------------------------------------------------------------------
@@ -226,7 +202,7 @@ class sppasWkps(object):
 
         """
         if index == 0:
-            raise IndexError('It is not allowed to delete the Blank workspace.')
+            raise WkpDeleteBlankError
 
         try:
             fn = self.check_filename(index)
@@ -240,12 +216,14 @@ class sppasWkps(object):
     # -----------------------------------------------------------------------
 
     def index(self, name):
-        """Return the index of the workspace with the given name."""
-        su = sppasUnicode(name)
-        u_name = su.to_strip()
-        if u_name not in self:
-            raise ValueError("Workspace name '{:s}' not found.".format(name))
+        """Return the index of the workspace with the given name.
 
+        :param name: (str)
+        :returns: (int)
+        :raises: ValueError
+
+        """
+        u_name = self.__raises_not_existing(name)
         i = 0
         while self.__wkps[i] != u_name:
             i += 1
@@ -264,14 +242,8 @@ class sppasWkps(object):
 
         """
         if index == 0:
-            raise IndexError('It is not allowed to rename the Blank workspace.')
-
-        su = sppasUnicode(new_name)
-        u_name = su.to_strip()
-
-        if u_name in self:
-            raise ValueError('A workspace with name {:s} is already existing.'
-                             ''.format(u_name))
+            raise WkpRenameBlankError
+        u_name = self.__raises_existing(new_name)
 
         cur_name = self[index]
         if cur_name == new_name:
@@ -297,8 +269,7 @@ class sppasWkps(object):
         """
         fn = os.path.join(paths.wkps, self[index]) + self.ext
         if os.path.exists(fn) is False:
-            raise OSError('The file matching the workspace {:s} is not '
-                          'existing'.format(fn[:-4]))
+            raise WkpFileError(fn[:-4])
 
         return fn
 
@@ -339,7 +310,7 @@ class sppasWkps(object):
 
         """
         if index == 0:
-            raise IndexError("It is not allowed to save the 'Blank' workspace.")
+            raise WkpSaveBlankError
 
         if index == -1:
             u_name = self.new("New workspace")
@@ -350,6 +321,38 @@ class sppasWkps(object):
         parser = sppasWkpRW(filename)
         parser.write(data)
 
+        return u_name
+
+    # -----------------------------------------------------------------------
+    # Private useful methods
+    # -----------------------------------------------------------------------
+
+    def __raises_not_existing(self, name):
+        """Raises WkpNameError if name is not already in self."""
+        sp = sppasUnicode(name)
+        u_name = sp.to_strip()
+        contains = False
+        for a in self.__wkps:
+            if a.lower() == u_name.lower():
+                contains = True
+                break
+        if contains is False:
+            raise WkpNameError(u_name)
+        return u_name
+
+    # -----------------------------------------------------------------------
+
+    def __raises_existing(self, name):
+        """Raises WkpIdValueError if name is already in self."""
+        sp = sppasUnicode(name)
+        u_name = sp.to_strip()
+        contains = False
+        for a in self.__wkps:
+            if a.lower() == u_name.lower():
+                contains = True
+                break
+        if contains is True:
+            raise WkpIdValueError(u_name)
         return u_name
 
     # -----------------------------------------------------------------------

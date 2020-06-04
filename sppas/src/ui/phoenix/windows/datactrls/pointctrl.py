@@ -38,13 +38,13 @@ import wx
 import wx.lib.newevent
 
 from sppas.src.anndata import sppasPoint
-from ..basedraw import sppasBaseWindow
-from .basedatactrl import sppasBaseDataWindow
+from ..basewindow import sppasWindow
+from .basedatactrl import sppasDataWindow
 
 # ---------------------------------------------------------------------------
 
 
-class sppasPointWindow(sppasBaseDataWindow):
+class sppasPointWindow(sppasDataWindow):
     """A window with a DC to draw a sppasPoint().
 
     :author:       Brigitte Bigi

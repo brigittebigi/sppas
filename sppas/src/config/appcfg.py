@@ -31,20 +31,28 @@
     src.config.appcfg.py
     ~~~~~~~~~~~~~~~~~~~~~
 
+    Modifiable values are:
+
+        - log_level
+        - splash_delay
+        - deps dictionary
+
+    Un-modifiable values are:
+
+        - quiet_log_level
+
 """
 
 import os
 import sys
 import json
 
-from .settings import sppasBaseSettings
-from .settings import sppasGlobalSettings
 from .settings import sppasPathSettings
 
 # ---------------------------------------------------------------------------
 
 
-class sppasAppConfig(sppasBaseSettings):
+class sppasAppConfig(object):
     """Configuration for any SPPAS Application.
 
         :author:       Florian Hocquet, Brigitte Bigi
@@ -65,32 +73,70 @@ class sppasAppConfig(sppasBaseSettings):
         """
         super(sppasAppConfig, self).__init__()
 
-        with sppasGlobalSettings() as sg:
-            name = sg.__name__ + " " + sg.__version__
-
         # Create a default configuration
-        self.__dict__ = dict(
-            name=name,
-            log_level=0,  # 15,
-            quiet_log_level=30,
-            log_file=None,
-            splash_delay=3,
-            deps=dict()
-        )
+        self.__log_level = 0  # 15,
+        self.__quiet_log_level = 30
+        self.__splash_delay = 3
+        self.__deps = dict()
 
         # Load the existing configuration file (if any)
         self.load()
 
     # -----------------------------------------------------------------------
 
-    def set(self, key, value):
-        """Set any member of this config.
+    def __enter__(self):
+        return self
 
-        :param key: (str)
-        :param value: (any type)
+    # -----------------------------------------------------------------------
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.save()
+
+    # -----------------------------------------------------------------------
+
+    def get_log_level(self):
+        return self.__log_level
+
+    def set_log_level(self, value):
+        """Set the log level for the application.
+
+        :param value: (int) Logging ranges from 0 (any) to 50 (critical only).
 
         """
-        setattr(self, key, value)
+        value = int(value)
+        if value < 0:
+            value = 0
+        if value > 50:
+            value = 50
+        self.__log_level = value
+
+    log_level = property(get_log_level, set_log_level)
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def quiet_log_level(self):
+        return self.__quiet_log_level
+
+    # -----------------------------------------------------------------------
+
+    def get_splash_delay(self):
+        return self.__splash_delay
+
+    def set_splash_delay(self, value):
+        """Set the delay to draw the splash.
+
+        :param value: (int) Delay ranges from 0 to 10 seconds.
+
+        """
+        value = int(value)
+        if value < 0:
+            value = 0
+        if value > 10:
+            value = 10
+        self.__splash_delay = value
+
+    splash_delay = property(get_splash_delay, set_splash_delay)
 
     # -----------------------------------------------------------------------
 
@@ -104,7 +150,7 @@ class sppasAppConfig(sppasBaseSettings):
     # -----------------------------------------------------------------------
 
     def cfg_file_exists(self):
-        """Return if the config file exists or not."""
+        """Return True if the config file exists."""
         cfg = self.cfg_filename()
         if cfg is None:
             return False
@@ -114,21 +160,28 @@ class sppasAppConfig(sppasBaseSettings):
     # ------------------------------------------------------------------------
 
     def load(self):
-        """Override. Load the configuration from a file."""
+        """Load partly the configuration from a file."""
         if self.cfg_file_exists() is True:
             with open(self.cfg_filename()) as cfg:
-                self.__dict__["deps"] = json.load(cfg)
+                d = json.load(cfg)
+            self.__splash_delay = d.get("splash_delay", 3)
+            self.__log_level = d.get("log_level", 0)
+            self.__deps = d.get("deps", dict())
 
     # ------------------------------------------------------------------------
 
     def save(self):
-        """Override. Save the dictionary in a file."""
+        """Save partly the dictionary into a file."""
         # Admin rights are needed to write in an hidden file.
         # So it's needed to switch the file in a normal mode
         # to modify it and then to hide back the file.
         self.hide_unhide(".deps~", "-")
         with open(self.cfg_filename(), "w") as f:
-            f.write(json.dumps(self.__dict__["deps"], indent=2))
+            d = dict()
+            d["log_level"] = self.__log_level
+            d["splash_delay"] = self.__splash_delay
+            d["deps"] = self.__deps
+            f.write(json.dumps(d, indent=2))
         self.hide_unhide(".deps~", "+")
 
     # ------------------------------------------------------------------------
@@ -160,19 +213,19 @@ class sppasAppConfig(sppasBaseSettings):
 
     def get_deps(self):
         """Return the list of dependency features."""
-        return list(self.__dict__["deps"].keys())
+        return list(self.__deps.keys())
 
     # ------------------------------------------------------------------------
 
-    def dep_enabled(self, key):
-        """Return True if a dependency is enabled.
+    def dep_installed(self, key):
+        """Return True if a dependency was successfully installed by SPPAS.
 
         :param key: (str) Identifier of a feature.
 
         """
-        if key not in self.__dict__["deps"]:
+        if key not in self.__deps:
             return False
-        return self.__dict__["deps"][key]
+        return self.__deps[key]
 
     # ------------------------------------------------------------------------
 
@@ -183,8 +236,8 @@ class sppasAppConfig(sppasBaseSettings):
         configuration file.
 
         :param key: (str) Identifier of a feature
-        :param value: (bool) Enabled or disabled
+        :param value: (bool) Installed or disabled
 
         """
-        self.__dict__["deps"][key] = value
+        self.__deps[key] = bool(value)
 

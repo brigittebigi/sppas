@@ -40,8 +40,8 @@ try:
 except ImportError:
     import ConfigParser as cp
 
-from sppas.src.config.settings import sppasPathSettings
-from sppas.src.config.appcfg import sppasAppConfig
+from sppas.src.config import paths
+from sppas.src.config import cfg
 from .feature import Feature
 
 # ---------------------------------------------------------------------------
@@ -58,51 +58,57 @@ class Features(object):
 
     """
 
-    def __init__(self, req, cmdos):
+    def __init__(self, req="", cmdos=""):
         """Create a new Feature instance.
 
             A Features instance is a container for a list of features.
             It parses a '.ini' file to get each feature config.
+
+        :param req: (str)
+        :param cmdos: (str)
 
         """
         self.__req = req
         self.__cmdos = cmdos
         self.__features = list()
         self.set_features()
-        self.update_features()
 
     # ------------------------------------------------------------------------
 
     @staticmethod
     def get_features_filename():
         """Return the name of the file with the features descriptions."""
-        feat_filename = None
-        with sppasPathSettings() as paths:
-            feat_filename = os.path.join(paths.etc, "features.ini")
-
-        return feat_filename
+        return os.path.join(paths.etc, "features.ini")
 
     # ------------------------------------------------------------------------
 
     def update_config(self):
-        """Update the config file with the features."""
-        with sppasAppConfig() as cfg:
-            for f in self.__features:
-                cfg.set_dep(f.get_id(), f.get_enable())
-            cfg.save()
+        """Update the active configuration instance with the features.
+
+        Newly enabled features are enabled in the config file, but if a feature
+        was already enabled in the config, it is not changed.
+
+        """
+        for f in self.__features:
+            enabled = f.get_enable()
+            if enabled is True:
+                cfg.set_dep(f.get_id(), enabled)
 
     # ------------------------------------------------------------------------
 
     def update_features(self):
-        """Update the features with the config file."""
+        """Update the features with the config file.
+
+        Disable a feature if it was already installed.
+
+        """
         ids = self.get_ids()
-        with sppasAppConfig() as cfg:
-            for f in cfg.get_deps():
-                if f in ids:
-                    self.enable(f, cfg.dep_enabled(f))
-                else:
-                    logging.error("The config file contains an unknown "
-                                  "feature identifier {}".format(f))
+        for f in cfg.get_deps():
+            if f in ids:
+                self.enable(f, not cfg.dep_installed(f))
+            else:
+                logging.error("The config file contains an unknown "
+                              "feature identifier {}".format(f))
 
     # ------------------------------------------------------------------------
 
@@ -125,6 +131,7 @@ class Features(object):
                     return feat.get_enable()
                 return feat.set_enable(value)
 
+        logging.error("Unknown feature {}".format(fid))
         return False
 
     # ------------------------------------------------------------------------
@@ -142,6 +149,7 @@ class Features(object):
                     return feat.get_available()
                 return feat.set_available(value)
 
+        logging.error("Unknown feature {}".format(fid))
         return False
 
     # ------------------------------------------------------------------------
@@ -156,6 +164,7 @@ class Features(object):
             if feat.get_id() == fid:
                 return feat.get_desc()
 
+        logging.error("Unknown feature {}".format(fid))
         return None
 
     # ------------------------------------------------------------------------
@@ -164,12 +173,14 @@ class Features(object):
         """Return the dictionary of system dependencies of the feature.
 
         :param fid: (str) Identifier of a feature
+        :return: (dict) key=package; value=version
 
         """
         for feat in self.__features:
             if feat.get_id() == fid:
                 return feat.get_packages()
 
+        logging.error("Unknown feature {}".format(fid))
         return dict()
 
     # ------------------------------------------------------------------------
@@ -178,11 +189,14 @@ class Features(object):
         """Return the dictionary of pip dependencies of the feature.
 
         :param fid: (str) Identifier of a feature
+        :return: (dict) key=package; value=version
 
         """
         for feat in self.__features:
             if feat.get_id() == fid:
                 return feat.get_pypi()
+
+        logging.error("Unknown feature {}".format(fid))
         return dict()
 
     # ------------------------------------------------------------------------
@@ -191,22 +205,35 @@ class Features(object):
         """Return the command to execute for the feature.
 
         :param fid: (str) Identifier of a feature
+        :return: (str)
 
         """
         for feat in self.__features:
             if feat.get_id() == fid:
                 return feat.get_cmd()
+
+        logging.error("Unknown feature {}".format(fid))
         return str()
 
     # ---------------------------------------------------------------------------
 
     def set_features(self):
-        """Browses the features.ini file and instantiate a Feature()."""
+        """Browses the features.ini file and instantiate a Feature().
+
+        Only unix-based systems can have package requirements. If they don't,
+        the corresponding req_ attribute is missing or empty or with "nil".
+
+        A feature is not available for a system, if none of the corresponding "cmd_"
+        and "req_" and the "pip" attributes are defined.
+
+        """
         self.__features = list()
         features_parser = self.__init_features()
 
         for fid in (features_parser.sections()):
             feature = Feature(fid)
+            self.__features.append(feature)
+            feature.set_available(False)
 
             # Description of the feature
             desc = features_parser.get(fid, "desc")
@@ -215,39 +242,35 @@ class Features(object):
             # Feature is enabled or not
             feature.set_enable(features_parser.getboolean(fid, "enable"))
 
-            # Package dependencies
+            # System package dependencies
             try:
                 d = features_parser.get(fid, self.__req)
-                if d == "nil" or d == "":
-                    feature.set_packages({"nil": "1"})
-                    feature.set_available(True)
-                else:
-                    feature.set_available(True)
+                if len(d) > 0 and d.lower() != "nil":
                     depend_packages = self.__parse_depend(d)
                     feature.set_packages(depend_packages)
             except cp.NoOptionError:
-                logging.info("Feature {} has no defined section {}.")
+                pass
 
             # Pypi dependencies
             try:
-                d = features_parser.get(fid, "req_pip")
-                if d == "nil" or d == "":
-                    feature.set_pypi({"nil": "1"})
-                else:
+                d = features_parser.get(fid, "pip")
+                if len(d) > 0 and d.lower() != "nil":
                     depend_pypi = self.__parse_depend(d)
                     feature.set_pypi(depend_pypi)
             except cp.NoOptionError:
-                logging.info("Feature {} has no defined section {}.")
+                pass
 
             # Command to be executed
             try:
                 cmd = features_parser.get(fid, self.__cmdos)
-                if cmd == "none":
-                    feature.set_available(False)
-                feature.set_cmd(cmd)
-                self.__features.append(feature)
+                if len(cmd) > 0 and cmd != "none" and cmd != "nil":
+                    feature.set_cmd(cmd)
             except cp.NoOptionError:
-                logging.info("Feature {} has no defined section {}.")
+                pass
+
+            # Is available?
+            if len(feature.get_cmd()) > 0 or len(feature.get_pypi()) > 0 or len(feature.get_packages()) > 0:
+                feature.set_available(True)
 
     # ------------------------------------------------------------------------
     # Private: Internal use only.
@@ -267,6 +290,7 @@ class Features(object):
         except cp.MissingSectionHeaderError:
             raise IOError("Malformed features configuration file {}: "
                           "missing section header.".format(cfg))
+
         return features_parser
 
     # ---------------------------------------------------------------------------

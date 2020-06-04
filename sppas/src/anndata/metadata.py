@@ -35,10 +35,10 @@
 """
 
 from collections import OrderedDict
+import uuid
 
 from sppas.src.config import sg
 from sppas.src.utils import sppasUnicode
-from sppas.src.wkps import sppasGUID
 
 # ---------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ class sppasMetaData(object):
 
     def gen_id(self):
         """Re-generate an 'id'."""
-        self.__metadata['id'] = sppasGUID().get()
+        self.__metadata['id'] = str(uuid.uuid4())
 
     # -----------------------------------------------------------------------
 

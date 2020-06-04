@@ -35,7 +35,7 @@
 """
 
 from sppas import sppasTypeError
-from ..sppasWorkspace import sppasWorkspace
+from ..workspace import sppasWorkspace
 
 # ---------------------------------------------------------------------------
 
@@ -83,7 +83,7 @@ class sppasBaseWkpIO(sppasWorkspace):
         self._id = wkp.get_id()
         for reference in wkp.get_refs():
             self.add_ref(reference)
-        for filepath in wkp.get_all_files():
+        for filepath in wkp.get_paths():
             self.add(filepath)
 
     # -----------------------------------------------------------------------

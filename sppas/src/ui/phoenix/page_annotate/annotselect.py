@@ -151,7 +151,7 @@ class sppasAnnotationsPanel(sppasPanel):
 
         sizer_top = wx.BoxSizer(wx.HORIZONTAL)
         sizer_top.Add(btn_back_top, 0, wx.RIGHT, btn_size // 4)
-        sizer_top.Add(title, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_CENTER_HORIZONTAL)
+        sizer_top.Add(title, 1, wx.ALIGN_CENTER)
         top_panel.SetSizerAndFit(sizer_top)
 
         scrolled = sppasScrolledPanel(self, name="anns_list", style=wx.BORDER_NONE)

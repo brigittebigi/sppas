@@ -46,27 +46,46 @@ GOTO EndHeader
 
 SET PYTHONIOENCODING=UTF-8
 
-if exist pythonw3.exe (
+WHERE pythonw3.exe >nul 2>nul
+if %ERRORLEVEL% EQU 0 (
 
-        start "" pythonw3.exe .\sppas\bin\sppasgui.py
+    start "" pythonw3.exe .\sppas\bin\sppasgui.py
+    exit
 
 ) else (
 
-    if exist python3.exe (
+    WHERE python3.exe >nul 2>nul
+    if %ERRORLEVEL% EQU 0 (
+
+        color 1E
         start "" python3.exe .\sppas\bin\sppasgui.py
+        exit
 
     ) else (
 
+        color 04
+
         if exist C:\Python27\pythonw.exe (
             start "" C:\Python27\pythonw.exe .\sppas\bin\sppasgui.py
+            exit
         ) else (
             if exist C:\Python27\python.exe (
                 start "" C:\Python27\python.exe .\sppas\bin\sppasgui.py
+                exit
             ) else (
-                start "" python.exe .\sppas\bin\sppasgui.py
+
+
+                WHERE python.exe >nul 2>nul
+                if %ERRORLEVEL% EQU 0 (
+                    start "" python.exe .\sppas\bin\sppasgui.py
+                    exit
+                ) else (
+                        color 4E
+                        echo Python is not an internal command of your operating system.
+                        echo Install it first with the Windows Store or from http://www.python.org.
+                )
             )
         )
     )
 )
 
-exit

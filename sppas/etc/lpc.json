@@ -1,0 +1,38 @@
+{
+  "id": "lpc",
+  "name": "LPC key code",
+  "descr": "Generate LPC key codes from phonemes and optionally tags a video. Requires time-aligned phonemes.",
+  "required": "alignment",
+  "api": "sppasLPC",
+
+  "resources": [
+    {
+      "path": "lpc",
+      "type": "file",
+      "ext": ".txt",
+      "name": ""
+    }
+  ],
+
+  "options": [
+    {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-palign",
+      "text": "Input file pattern (time-aligned phonemes)"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-lpc",
+      "text": "Output file pattern"
+    },
+    {
+      "id": "createvideo",
+      "type": "bool",
+      "value": true,
+      "text": "Tags the video with the code"
+    }
+
+  ]
+}

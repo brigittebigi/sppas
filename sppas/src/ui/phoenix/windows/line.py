@@ -41,12 +41,13 @@
 """
 
 import wx
-from .basedraw import sppasDrawWindow
+
+from .basedcwindow import sppasDCWindow
 
 # ---------------------------------------------------------------------------
 
 
-class sppasStaticLine(sppasDrawWindow):
+class sppasStaticLine(sppasDCWindow):
     """A static line is a window in which a line is drawn centered.
 
     :author:       Brigitte Bigi

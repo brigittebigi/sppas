@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.tests.test_glob.py
+    src.ui.phoenix.tests.test_windows.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -37,11 +37,12 @@
 import wx
 import logging
 
-from sppas import sppasAppConfig
+from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
-import sppas.src.ui.phoenix.windows.basedraw as basedraw
+import sppas.src.ui.phoenix.windows.basedcwindow as dcwin
+import sppas.src.ui.phoenix.windows.basewindow as basedraw
 import sppas.src.ui.phoenix.windows.toolbar as toolbar
 import sppas.src.ui.phoenix.windows.line as line
 import sppas.src.ui.phoenix.windows.button as button
@@ -68,6 +69,7 @@ class TestPanel(wx.Choicebook):
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
+        self.AddPage(dcwin.TestPanel(self), "Base DC Window")
         self.AddPage(multiplayer.TestPanel(self), "Multi Media Player")
         self.AddPage(player.TestPanel(self), "Player Control")
         self.AddPage(media.TestPanel(self), "Media Control")

@@ -42,7 +42,7 @@ from sppas.src.config import sg
 
 from ..filebase import FileBase, States
 from ..filestructure import FilePath, FileRoot, FileName
-from ..fileref import FileReference, sppasAttribute
+from ..fileref import sppasCatReference, sppasRefAttribute
 from ..wkpexc import FileOSError
 
 from .basewkpio import sppasBaseWkpIO
@@ -116,12 +116,11 @@ class sppasWJSON(sppasBaseWkpIO):
         """Write in the filename.
 
         :param filename: (str)
-        :returns: json file
 
         """
         serialized_dict = self._serialize()
         with open(filename, 'w') as f:
-            return json.dump(serialized_dict, f, indent=4, separators=(',', ': '))
+            json.dump(serialized_dict, f, indent=4, separators=(',', ': '))
 
     # -----------------------------------------------------------------------
 
@@ -141,7 +140,7 @@ class sppasWJSON(sppasBaseWkpIO):
 
         # The list of paths/roots/files stored in this sppasWorkspace()
         d['paths'] = list()
-        for fp in self.get_all_files():
+        for fp in self.get_paths():
             d['paths'].append(self._serialize_path(fp))
 
         # The list of references/attributes stored in this sppasWorkspace()
@@ -154,9 +153,9 @@ class sppasWJSON(sppasBaseWkpIO):
     # -----------------------------------------------------------------------
 
     def _serialize_ref(self, fref):
-        """Convert a FileReference into a serializable structure.
+        """Convert a sppasCatReference into a serializable structure.
 
-        :param fref: (FileReference)
+        :param fref: (sppasCatReference)
         :returns: (dict) a dictionary that can be serialized
 
         """
@@ -177,9 +176,9 @@ class sppasWJSON(sppasBaseWkpIO):
 
     @staticmethod
     def _serialize_attributes(att):
-        """Convert a sppasAttribute into a serializable structure.
+        """Convert a sppasRefAttribute into a serializable structure.
 
-        :param att: (sppasAttribute)
+        :param att: (sppasRefAttribute)
         :returns: (dict) a dictionary that can be serialized
 
         """
@@ -253,11 +252,15 @@ class sppasWJSON(sppasBaseWkpIO):
         :returns: (dict) a dictionary that can be serialized
 
         """
-        dict_files = dict()
-        dict_files["id"] = fn.get_id().split(os.sep)[-1]
-        dict_files["state"] = fn.get_state()
+        dict_file = dict()
+        dict_file["id"] = fn.get_id().split(os.sep)[-1]
+        dict_file["state"] = fn.get_state()
 
-        return dict_files
+        # subjoined data are simply added as-it
+        if fn.subjoined is not None:
+            dict_file['subjoin'] = fn.subjoined
+
+        return dict_file
 
     # -----------------------------------------------------------------------
 
@@ -282,8 +285,8 @@ class sppasWJSON(sppasBaseWkpIO):
                 self._parse_path(dict_path)
 
         if 'catalogue' in d:
-            for dictref in d['catalogue']:
-                self._parse_ref(dictref)
+            for dict_ref in d['catalogue']:
+                self._parse_ref(dict_ref)
 
         return self.id
 
@@ -293,12 +296,12 @@ class sppasWJSON(sppasBaseWkpIO):
         """Fill the ref of a sppasWJSON reader with the given dictionary.
 
         :param d: (dict)
-        :returns: (FileReference)
+        :returns: (sppasCatReference)
 
         """
         if "id" not in d:
             raise KeyError("reference 'id' is missing of the dictionary to parse.")
-        fr = FileReference(d["id"])
+        fr = sppasCatReference(d["id"])
 
         if 'type' in d:
             fr.set_type(d["type"])
@@ -329,13 +332,14 @@ class sppasWJSON(sppasBaseWkpIO):
         if 'id' not in d:
             raise KeyError("path 'id' is missing of the dictionary to parse.")
 
-        missing = False
         path = d["id"]
         # check if the entry path exists
         if os.path.exists(d["id"]) is False:
-            # check if the relative path exists
-            if os.path.exists(d["rel"]) is True:
-                path = os.path.abspath(d["rel"])
+            # check if the relative path exists. "rel" was introduced in v2.0.
+            # check if "rel" exists for compatibility with v1.0.
+            if "rel" in d:
+                if os.path.exists(d["rel"]) is True:
+                    path = os.path.abspath(d["rel"])
         # in any case, create the corresponding object
         fp = FilePath(path)
 
@@ -372,7 +376,7 @@ class sppasWJSON(sppasBaseWkpIO):
                 fr.append(self._parse_file(dict_file, path))
 
         for ref in d["refids"]:
-            refe = FileReference(ref)
+            refe = sppasCatReference(ref)
             fr.add_ref(refe)
 
         # append subjoined dict "as it"
@@ -404,6 +408,9 @@ class sppasWJSON(sppasBaseWkpIO):
         else:
             fn.set_state(States().UNUSED)
 
+        # append subjoined dict "as it"
+        fn.subjoined = d.get('subjoin', None)
+
         return fn
 
     # -----------------------------------------------------------------------
@@ -413,12 +420,12 @@ class sppasWJSON(sppasBaseWkpIO):
         """Fill the attribute of a sppasWJSON reader with the given dictionary.
 
         :param d: (dict)
-        :returns: (sppasAttribute)
+        :returns: (sppasRefAttribute)
 
         """
         if 'id' not in d:
             raise KeyError("attribute 'id' is missing of the dictionary to parse.")
-        att = sppasAttribute(d['id'])
+        att = sppasRefAttribute(d['id'])
 
         att.set_value(d["value"])
         att.set_value_type(d["type"])

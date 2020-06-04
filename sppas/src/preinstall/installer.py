@@ -33,9 +33,15 @@
 """
 
 import logging
+import shutil
+import shlex
+import subprocess
 
-from sppas.src.config.process import Process, search_cmd
+from sppas.src.exc import InstallationError
+from sppas.src.utils.makeunicode import u
 from sppas.src.config import info
+# from sppas.src.config.process import Process
+
 from .features import Features
 
 # ---------------------------------------------------------------------------
@@ -46,7 +52,6 @@ def _(identifier):
 
 
 MESSAGES = {
-    "beginning": _(500),
     "beginning_feature": _(510),
     "available_false": _(520),
     "enable_false": _(530),
@@ -54,10 +59,100 @@ MESSAGES = {
     "install_failed": _(550),
     "install_finished": _(560),
     "does_not_exist": _(570),
-    "dont_need": _(580)
 }
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------
+
+
+class ProcessRunner(object):
+    """Convenient class to execute a subprocess.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    A Process is a wrapper of subprocess.run command.
+    After 30 sec. of waiting, it will stops and raise TimoutExpired.
+    
+    Launch a command:
+    >>> p = ProcessRunner()
+    >>> p.run("ls -l")
+
+    Return stdout of a command:
+    >>> p.out()
+
+    Return stderr of a command:
+    >>> p.error()
+    
+    Return the status of the command:
+    >>> p.status()
+
+    """
+
+    def __init__(self):
+        """Create a new Process instance."""
+        self.__process = None  # subprocess.CompletedProcess()
+
+    # ------------------------------------------------------------------------
+
+    def run(self, command):
+        """Execute command with subprocess.run.
+
+        :param command: (str) The command you want to execute
+
+        """
+        logging.info("Process command: {}".format(command))
+        command = command.strip()
+        command_args = shlex.split(command)
+        self.__process = subprocess.run(
+            command_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=False,
+            cwd=None,
+            timeout=120,   # will raise TimeoutExpired() after 120 seconds
+            check=False,
+            encoding=None,
+            errors=None,
+            text=None,
+            env=None,
+            universal_newlines=True)
+
+    # ------------------------------------------------------------------------
+
+    def out(self):
+        """Return the stdout of the process.
+
+        :return: (str) output message
+
+        """
+        if self.__process is None:
+            return ""
+        return self.__process.stdout
+
+    # ------------------------------------------------------------------------
+
+    def error(self):
+        """Return the stderr of the process.
+
+        :return: (str) error message
+
+        """
+        if self.__process is None:
+            return ""
+        return self.__process.stderr
+
+    # ------------------------------------------------------------------------
+
+    def status(self):
+        """Return value of the process."""
+        if self.__process is None:
+            return 0
+        return self.__process.returncode
+
+# -----------------------------------------------------------------------
 
 
 class Installer(object):
@@ -70,30 +165,43 @@ class Installer(object):
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
         It will browse the Features() to install, according to the OS of
-        the computer. The installation is launched with the method:
+        the computer. Must be sub-classed to create the appropriate Features().
+        Then, the installation is launched with:
 
-        >>> Installer.install()
+        >>> class SubInstaller(Installer):
+        >>>     def __init__(self):
+        >>>         super(SubInstaller, self).__init__()
+        >>>         self._features = Features(req="", cmdos="")
+        >>> SubInstaller().install()
 
     """
 
-    def __init__(self, p=None):
-        """Create a new Installer instance.
-
-        :param p: (ProcessProgressTerminal) The installation progress.
-
-        """
-        logging.basicConfig(level=logging.DEBUG)
-        self.__pbar = p
-        self.__progression = 0
-        self.__total__errors = ""
-        self.__errors = ""
-        self._features = Features(req="", cmdos="")
+    def __init__(self):
+        """Create a new Installer instance. """
+        self.__pbar = None
+        self.__pvalue = 0
+        self._features = None
+        self.__python = "python3"
+        if shutil.which("python3") is None:
+            self.__python = "python"
+        logging.info("Python installer command: {}".format(self.__python))
 
     # ------------------------------------------------------------------------
     # Public methods
     # ------------------------------------------------------------------------
 
-    def get_feat_ids(self):
+    def set_progress(self, progress):
+        """Set the progress bar.
+
+        :param progress: (ProcessProgressTerminal) The installation progress.
+
+        """
+        # TODO: we should test if instance if ok
+        self.__pbar = progress
+
+    # ------------------------------------------------------------------------
+
+    def get_fids(self):
         """Return the list of feature identifiers."""
         return self._features.get_ids()
 
@@ -133,144 +241,125 @@ class Installer(object):
     # ------------------------------------------------------------------------
 
     def install(self):
-        """Process the installation procedure."""
-        if self.__pbar is not None:
-            self.__pbar.set_header(MESSAGES["beginning"])
+        """Process the installation."""
+        errors = list()
+        for fid in self._features.get_ids():
+            self.__pheader(self.__message("beginning_feature", fid))
 
-        for feat_id in self.get_feat_ids():
-            self.__set_errors("")
-            self.__get_set_progress(0)
-            self.__pbar.set_header(
-                MESSAGES["beginning_feature"].format(
-                    name=self._features.description(feat_id)))
+            if self._features.available(fid) is False:
+                self.__pmessage(self.__message("available_false", fid))
 
-            if self._features.available(feat_id) is False:
-                self.__pbar.update(
-                    self.__get_set_progress(1),
-                    MESSAGES["available_false"].format(
-                        name=self._features.description(feat_id)))
-
-            elif self._features.enable(feat_id) is False:
-                self.__pbar.update(
-                    self.__get_set_progress(1),
-                    MESSAGES["enable_false"].format(
-                        name=self._features.description(feat_id)))
+            elif self._features.enable(fid) is False:
+                self.__pmessage(self.__message("enable_false", fid))
 
             else:
 
                 try:
-                    self.__install_cmd(feat_id)
-                    self.__install_packages(feat_id)
-                    self.__install_pypis(feat_id)
-                    self._features.enable(feat_id, True)
-                    self.__pbar.set_header(
-                        MESSAGES["install_success"].format(
-                            name=self._features.description(feat_id)))
+                    if len(self._features.cmd(fid)) > 0:
+                        self.__install_cmd(fid)
+                    if len(self._features.packages(fid)) > 0:
+                        self.__install_packages(fid)
+                    if len(self._features.pypi(fid)) > 0:
+                        self.__install_pypis(fid)
+                except InstallationError as e:
+                    self._features.enable(fid, False)
+                    self.__pmessage(self.__message("install_failed", fid))
+                    errors.append(str(e))
+                    logging.error(str(e))
 
                 except NotImplementedError:
-                    self._features.enable(feat_id, False)
-                    self.__pbar.set_header(
-                        MESSAGES["install_failed"].format(
-                            name=self._features.description(feat_id)))
+                    self._features.enable(fid, False)
+                    self.__pmessage(self.__message("install_failed", fid))
+                    msg = "Installation of feature {} is not implemented yet " \
+                          "for this os.".format(fid)
+                    errors.append(msg)
+                    logging.error(msg)
+
+                else:
+                    self._features.enable(fid, True)
+                    self.__pmessage(self.__message("install_success", fid))
 
         self._features.update_config()
-        self.__pbar.set_header(MESSAGES["install_finished"])
-
-        return self.__total__errors
+        return errors
 
     # ------------------------------------------------------------------------
+    # Private methods to install
     # ------------------------------------------------------------------------
 
-    def __install_cmd(self, feat_id):
+    @staticmethod
+    def test_command(command):
+        command = command.strip()
+        command_args = shlex.split(command)
+        if len(command_args) == 0:
+            return True
+
+        if shutil.which(command_args[0]):
+            return False
+        return True
+
+    # ------------------------------------------------------------------------
+
+    def __install_cmd(self, fid):
         """Execute a system command for a feature.
 
-        :param feat_id: (str) Identifier of a feature
+        :param fid: (str) Identifier of a feature
+        :raises: InstallationError()
 
         """
-        feat_id = str(feat_id)
-        feature_command = self._features.cmd(feat_id)
+        err = ""
+        command = self._features.cmd(fid)
+        cmd_exists = Installer.test_command(command)
+        if cmd_exists is False:
+            try:
+                process = ProcessRunner()
+                process.run(self._features.cmd(fid))
+                err = process.error()
+                stdout = process.out()
+                logging.info("Return code: {}".format(process.status()))
+                if len(stdout) > 3:
+                    logging.info(stdout)
+            except Exception as e:
+                raise InstallationError(str(e))
 
-        if feature_command == "none":
-            self._features.available(feat_id, False)
-            self.__pbar.update(
-                self.__get_set_progress(self.__calcul_pourc(feat_id)),
-                MESSAGES["does_not_exist"].format(name=feat_id))
+        if len(err) > 3:
+            raise InstallationError(err)
 
-        elif feature_command == "nil":
-            self.__pbar.update(
-                self.__get_set_progress(self.__calcul_pourc(feat_id)),
-                MESSAGES["dont_need"])
-
-        else:
-            if search_cmd(feat_id) is False:
-                self.__install_cmds(feature_command, feat_id)
-            else:
-                self.__pbar.update(
-                    self.__get_set_progress(self.__calcul_pourc(feat_id)), feat_id)
-                logging.info(MESSAGES["install_success"].format(name=feat_id))
-
-        if len(self.__errors) != 0:
-            raise NotImplementedError
+        self.__pupdate(fid, MESSAGES["install_success"].format(name=fid))
 
     # ------------------------------------------------------------------------
 
-    def __install_packages(self, feat_id):
+    def __install_packages(self, fid):
         """Manage installation of system packages.
 
-        :param feat_id: (str) Identifier of a feature
+        :param fid: (str) Identifier of a feature
+        :raises: InstallationError()
 
         """
-        feat_id = str(feat_id)
+        for package, version in self._features.packages(fid).items():
+            if self._search_package(package) is False:
+                self._install_package(package)
 
-        for package, version in self._features.packages(feat_id).items():
-            if package == "nil":
-                self.__pbar.update(
-                    self.__get_set_progress(self.__calcul_pourc(feat_id)),
-                    MESSAGES["dont_need"].format(name=feat_id))
+            elif self._version_package(package, version) is False:
+                self._update_package(package, version)
 
-            else:
-                if self._search_package(package) is False:
-                    if self._install_package(package) is False:
-                        break
-                elif self._version_package(package, version) is False:
-                    if self._update_package(package) is False:
-                        break
-                self.__pbar.update(
-                    self.__get_set_progress(self.__calcul_pourc(feat_id)),
-                    MESSAGES["install_success"].format(name=package))
-
-        if len(self.__errors) != 0:
-            raise NotImplementedError
+            self.__pupdate(fid, MESSAGES["install_success"].format(name=package))
 
     # ------------------------------------------------------------------------
 
-    def __install_pypis(self, feat_id):
+    def __install_pypis(self, fid):
         """Manage the installation of pip packages.
 
-        :param feat_id: (str) Identifier of a feature
+        :param fid: (str) Identifier of a feature
+        :raises: InstallationError()
 
         """
-        feat_id = str(feat_id)
+        for package, version in self._features.pypi(fid).items():
+            if self.__search_pypi(package) is False:
+                self.__install_pypi(package)
+            elif self.__version_pypi(package, version) is False:
+                self.__update_pypi(package)
 
-        for package, version in self._features.pypi(feat_id).items():
-            if package == "nil":
-                self.__pbar.update(
-                    self.__get_set_progress(self.__calcul_pourc(feat_id)),
-                    MESSAGES["dont_need"].format(name=feat_id))
-
-            else:
-                if self.__search_pypi(package) is False:
-                    if self.__install_pypi(package) is False:
-                        break
-                elif self.__version_pypi(package, version) is False:
-                    if self.__update_pypi(package) is False:
-                        break
-                self.__pbar.update(
-                    self.__get_set_progress(self.__calcul_pourc(feat_id)), package)
-                logging.info(MESSAGES["install_success"].format(name=package))
-
-        if len(self.__errors) != 0:
-            raise NotImplementedError
+            self.__pupdate(fid, MESSAGES["install_success"].format(name=package))
 
     # ------------------------------------------------------------------------
     # Management of package dependencies. OS dependent: must be overridden.
@@ -282,7 +371,6 @@ class Installer(object):
         :param package: (str) The system package to search.
 
         """
-        package = str(package)
         raise NotImplementedError
 
     # ------------------------------------------------------------------------
@@ -294,7 +382,6 @@ class Installer(object):
         :returns: False or None
 
         """
-        package = str(package)
         raise NotImplementedError
 
     # ------------------------------------------------------------------------
@@ -306,8 +393,6 @@ class Installer(object):
         :param req_version: (str) The minimum version required.
 
         """
-        package = str(package)
-        req_version = str(req_version)
         raise NotImplementedError
 
     # ------------------------------------------------------------------------
@@ -320,113 +405,66 @@ class Installer(object):
         :param req_version: (str) The minimum version required.
 
         """
-        stdout_show = str(stdout_show)
-        req_version = str(req_version)
         raise NotImplementedError
 
     # ------------------------------------------------------------------------
 
-    def _update_package(self, package):
+    def _update_package(self, package, req_version):
         """To be overridden. Update package.
 
         :param package: (str) The system package to update.
         :returns: False or None
 
         """
-        package = str(package)
         raise NotImplementedError
 
     # ------------------------------------------------------------------------
     # Private, for internal use only. Not needed by any sub-class.
     # ------------------------------------------------------------------------
 
-    def __calcul_pourc(self, fid):
-        """Estimate and return a percentage of progression.
+    def __pheader(self, text):
+        if self.__pbar is not None:
+            self.__pvalue = 0
+            self.__pbar.set_header(text)
+        logging.info("    * * * * *   {}   * * * * * ".format(text))
+
+    def __pmessage(self, text):
+        if self.__pbar is not None:
+            self.__pbar.set_text(text)
+        logging.info("  ==> {text}".format(text=text))
+
+    def __pupdate(self, fid, text):
+        self.__pvalue += self.__eval_step(fid)
+        if self.__pbar is not None:
+            self.__pbar.update(self.__pvalue, text)
+        if self.__pvalue > 90:
+            self.__pvalue = 100
+        logging.info("  ==> {}".format(text))
+        # Makes GUI crashing: logging.info("({}%)".format(text, self.__pvalue))
+
+    def __message(self, mid, fid):
+        if mid in MESSAGES:
+            return MESSAGES[mid].format(name=fid)
+        else:
+            return mid
+
+    # ------------------------------------------------------------------------
+
+    def __eval_step(self, fid):
+        """Return the percentage of 1 step in progression for a given feature.
 
         :param fid: (str) Identifier of a feature
         :return: (float)
 
         """
+        nb_cmd = 0
+        if len(self._features.cmd(fid)) > 0:
+            nb_cmd = 1
         nb_packages = len(self._features.packages(fid))
         nb_pypi = len(self._features.pypi(fid))
-        pourc = round((1 / (1 + nb_packages + nb_pypi)), 2)
-        return pourc
+        nb_total = nb_cmd + nb_packages + nb_pypi
 
-    # ------------------------------------------------------------------------
-
-    def __get_set_progress(self, value):
-        """Return the progression and/or set it.
-
-        :param value: (int) The value you want to add.
-        :return: (float) The value of the progression.
-
-        """
-        if value == 0:
-            self.__progression = 0
-            return self.__progression
-        self.__progression += value
-        if self.__progression >= 0.99:
-            self.__progression = 1.0
-        return self.__progression
-
-    # ------------------------------------------------------------------------
-
-    def __set_total_errors(self, msg):
-        """Add an error message in total errors.
-
-        :param msg: (str)
-
-        """
-        if len(msg) != 0:
-            string = str(msg)
-            self.__total__errors += string
-
-    # ------------------------------------------------------------------------
-
-    def __set_errors(self, msg):
-        """Append an error message.
-
-        :param msg: (str)
-
-        """
-        msg = str(msg)
-        if len(msg) == 0:
-            self.__errors = ""
-        else:
-            self.__errors += msg
-
-    # ------------------------------------------------------------------------
-
-    def __fill_errors(self, error_msg):
-        """Fill errors and total_errors.
-
-        :param error_msg: (str)
-
-        """
-        self.__set_errors(error_msg)
-        self.__set_total_errors(error_msg)
-
-    # ------------------------------------------------------------------------
-
-    def __install_cmds(self, command, feat_id):
-        """Install feat_id with the given command.
-
-        :param command: (str) The command to execute.
-        :param feat_id: (str) Identifier of a feature
-
-        """
-        feat_id = str(feat_id)
-
-        try:
-            process = Process()
-            process.run_popen(command)
-            error = process.error()
-            if len(error) != 0:
-                self.__fill_errors("Installation \"{name}\" failed.\nError : {error}".format(name=feat_id, error=error))
-
-        except FileNotFoundError:
-            self.__fill_errors("Installation \"{name}\" failed.\nError : {error}"
-                               .format(name=feat_id, error=FileNotFoundError))
+        return int(round((1. / float(nb_total)), 2) * 100.)
 
     # ------------------------------------------------------------------------
 
@@ -437,19 +475,24 @@ class Installer(object):
 
         """
         try:
-            package = str(package)
-            command = "pip3 show " + package
-            process = Process()
-            process.run_popen(command)
-            error = process.error()
-            if "not found" in error:
+            command = self.__python + " -m pip show " + package
+            process = ProcessRunner()
+            process.run(command)
+            logging.info("Return code: {}".format(process.status()))
+            err = process.error()
+            stdout = process.out()
+            stdout = stdout.replace("b''", "")
+
+            # pip3 can either:
+            #   - show information about the Pypi package,
+            #   - show nothing, or
+            #   - make an error with a message including 'not found'.
+            if len(err) > 3 or len(stdout) == 0:
                 return False
-            else:
-                return True
-        except FileNotFoundError:
-            self.__fill_errors("Installation \"{name}\" failed.\nError : {error}"
-                               .format(name=package, error=FileNotFoundError))
-            return False
+        except Exception as e:
+            raise InstallationError(str(e))
+
+        return True
 
     # ------------------------------------------------------------------------
 
@@ -457,23 +500,24 @@ class Installer(object):
         """Install a Python Pypi package.
 
         :param package: (str) The pip package to install
-        :returns: False or None
+        :raises: InstallationError()
 
         """
         try:
-            package = str(package)
-            command = "pip3 install " + package + " --no-warn-script-location"
-            process = Process()
-            process.run_popen(command)
-            error = process.error()
-            if len(error) != 0:
-                self.__fill_errors("Package: \"{name}\"\nError: {error}"
-                                   "".format(name=package, error=error))
-                return False
-        except FileNotFoundError:
-            self.__fill_errors("Installation \"{name}\" failed.\nError : {error}"
-                               .format(name=package, error=FileNotFoundError))
-            return False
+            command = self.__python + " -m pip install " + package + " --no-warn-script-location"
+            process = ProcessRunner()
+            process.run(command)
+            logging.info("Return code: {}".format(process.status()))
+            err = process.error()
+            stdout = process.out()
+
+            if len(stdout) > 3:
+                logging.info(stdout)
+        except Exception as e:
+            raise InstallationError(str(e))
+
+        if len(err) > 3:
+            raise InstallationError(err)
 
     # ------------------------------------------------------------------------
 
@@ -485,19 +529,18 @@ class Installer(object):
 
         """
         try:
-            package = str(package)
-            command = "pip3 show " + package
-            process = Process()
-            process.run_popen(command)
-            error = process.error()
+            command = self.__python + " -m pip show " + package
+            process = ProcessRunner()
+            process.run(command)
+            logging.info("Return code: {}".format(process.status()))
+            err = process.error()
+            if len(err) > 3:
+                return False
             stdout = process.out()
             return not Installer.__need_update_pypi(stdout, req_version)
 
-        except FileNotFoundError:
-            self.__fill_errors("Installation \"{name}\" failed.\nError : {error}"
-                               .format(name=package, error=FileNotFoundError))
-
-        return False
+        except Exception:
+            return False
 
     # ------------------------------------------------------------------------
 
@@ -511,7 +554,7 @@ class Installer(object):
         """
         stdout_show = str(stdout_show)
         req_version = str(req_version)
-        version = stdout_show.split("\n")[1].split(":")[1].replace(" ", "")
+        version = stdout_show.split("\\r\\n")[1].split(":")[1].replace(" ", "")
         v = ""
         i = 0
         for letter in version:
@@ -545,28 +588,30 @@ class Installer(object):
         """Update package.
 
         :param package: (str) The pip package to update.
-        :returns: False or None
+        :raises: InstallationError()
 
         """
         try:
-            package = str(package)
-            command = "pip3 install -U " + package
-            process = Process()
-            process.run_popen(command)
-            error = process.error()
-            if len(error) != 0:
-                self.__fill_errors("Package: \"{name}\"\nError: {error}"
-                                   "".format(name=package, error=error))
-                return False
-        except FileNotFoundError:
-            self.__fill_errors("Installation \"{name}\" failed.\nError : {error}"
-                               .format(name=package, error=FileNotFoundError))
-            return False
+            # Deprecated:
+            # command = "pip3 install -U " + package
+            command = self.__python + " -m pip install -U " + package + " --no-warn-script-location"
+            process = ProcessRunner()
+            process.run(command)
+            logging.info("Return code: {}".format(process.status()))
+        except Exception as e:
+            raise InstallationError(str(e))
+
+        err = u(process.error().strip())
+        stdout = u(process.out())
+        if len(stdout) > 3:
+            logging.info(stdout)
+        if len(err) > 3:
+            raise InstallationError(err)
 
 # ----------------------------------------------------------------------------
 
 
-class Deb(Installer):
+class DebianInstaller(Installer):
     """An installer for Debian-based package manager systems.
 
         :author:       Florian Hocquet
@@ -575,15 +620,15 @@ class Deb(Installer):
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-        This Deb(Installer) is made for the Debians distributions of Linux,
+        This DebianInstaller(Installer) is made for the apt package installer,
         like Debian, Ubuntu or Mint.
 
     """
 
-    def __init__(self, p):
-        """Create a new Deb instance."""
-        super(Deb, self).__init__(p)
-        self._features = Features("req_deb", "cmd_deb")
+    def __init__(self):
+        """Create a new DebianInstaller instance."""
+        super(DebianInstaller, self).__init__()
+        self._features = Features(req="req_deb", cmdos="cmd_deb")
 
     # -----------------------------------------------------------------------
 
@@ -593,6 +638,17 @@ class Deb(Installer):
         :param package: (str) The system package to search.
 
         """
+        try:
+            command = "dpkg -s " + package
+            process = ProcessRunner()
+            process.run(command)
+        except Exception as e:
+            raise InstallationError(str(e))
+
+        err = process.error()
+        if len(err) > 3:
+            return False
+
         return True
 
     # -----------------------------------------------------------------------
@@ -604,7 +660,21 @@ class Deb(Installer):
         :returns: False or None
 
         """
-        raise NotImplementedError
+        try:
+            # -y option is to answer yes to confirmation questions
+            command = "apt install " + package + " -y"
+            process = ProcessRunner()
+            process.run(command)
+        except Exception as e:
+            raise InstallationError(str(e))
+
+        stdout = process.out()
+        if len(stdout) > 3:
+            logging.info(stdout)
+
+        err = process.error()
+        if len(err) > 3 and "WARNING" not in err:
+            raise InstallationError(err)
 
     # -----------------------------------------------------------------------
 
@@ -631,7 +701,7 @@ class Deb(Installer):
 
     # -----------------------------------------------------------------------
 
-    def _update_package(self, package):
+    def _update_package(self, package, req_version):
         """Update package.
 
         :param package: (str) The system package to update.
@@ -643,7 +713,7 @@ class Deb(Installer):
 # ---------------------------------------------------------------------------
 
 
-class Rpm(Installer):
+class RpmInstaller(Installer):
     """An installer for RPM-based package manager system.
 
         :author:       Florian Hocquet
@@ -656,9 +726,9 @@ class Rpm(Installer):
 
     """
 
-    def __init__(self, p):
-        """Create a new Rpm(Installer) instance."""
-        super(Rpm, self).__init__(p)
+    def __init__(self):
+        """Create a new RpmInstaller(Installer) instance."""
+        super(RpmInstaller, self).__init__()
         self._features = Features("req_rpm", "cmd_rpm")
 
     # ------------------------------------------------------------------------
@@ -707,7 +777,7 @@ class Rpm(Installer):
 
     # ------------------------------------------------------------------------
 
-    def _update_package(self, package):
+    def _update_package(self, package, req_version):
         """Update package.
 
         :param package: (str) The system package to update.
@@ -719,7 +789,7 @@ class Rpm(Installer):
 # ---------------------------------------------------------------------------
 
 
-class Dnf(Installer):
+class DnfInstaller(Installer):
     """An installer for DNF-based package manager systems.
 
         :author:       Florian Hocquet
@@ -733,9 +803,9 @@ class Dnf(Installer):
 
     """
 
-    def __init__(self, p):
-        """Create a new Dnf(Installer) instance."""
-        super(Dnf, self).__init__(p)
+    def __init__(self):
+        """Create a new DnfInstaller(Installer) instance."""
+        super(DnfInstaller, self).__init__()
         self._features = Features("req_dnf", "cmd_dnf")
 
     # ------------------------------------------------------------------------
@@ -746,7 +816,7 @@ class Dnf(Installer):
         :param package: (str) The system package to search.
 
         """
-        return True
+        raise NotImplementedError
 
     # ------------------------------------------------------------------------
 
@@ -784,7 +854,7 @@ class Dnf(Installer):
 
     # ------------------------------------------------------------------------
 
-    def _update_package(self, package):
+    def _update_package(self, package, req_version):
         """Update package.
 
         :param package: (str) The system package to update.
@@ -809,9 +879,9 @@ class WindowsInstaller(Installer):
 
     """
 
-    def __init__(self, p):
+    def __init__(self):
         """Create a new WindowsInstaller instance."""
-        super(WindowsInstaller, self).__init__(p)
+        super(WindowsInstaller, self).__init__()
         self._features = Features("req_win", "cmd_win")
 
     # ------------------------------------------------------------------------
@@ -828,7 +898,7 @@ class WindowsInstaller(Installer):
 # ----------------------------------------------------------------------------
 
 
-class MacOs(Installer):
+class MacOsInstaller(Installer):
     """An installer for MacOS systems.
 
         :author:       Florian Hocquet
@@ -839,9 +909,9 @@ class MacOs(Installer):
 
     """
 
-    def __init__(self, p):
-        """Create a new MacOs(Installer) instance."""
-        super(MacOs, self).__init__(p)
+    def __init__(self):
+        """Create a new MacOsInstaller(Installer) instance."""
+        super(MacOsInstaller, self).__init__()
         self._features = Features("req_ios", "cmd_ios")
 
     # ------------------------------------------------------------------------
@@ -850,22 +920,19 @@ class MacOs(Installer):
         """Returns True if package is already installed.
 
         :param package: (str) The system package to search.
+        :return: (bool)
 
         """
         try:
             package = str(package)
             command = "brew list " + package
-            process = Process()
-            process.run_popen(command)
-            error = process.error()
-            if len(error) != 0:
-                return False
-            else:
+            process = ProcessRunner()
+            process.run(command)
+            if len(process.out()) > 3:
                 return True
-        except FileNotFoundError:
-            self.__fill_errors("Installation \"{name}\" failed.\nError : {error}"
-                               .format(name=package, error=FileNotFoundError))
             return False
+        except Exception as e:
+            raise InstallationError(str(e))
 
     # ------------------------------------------------------------------------
 
@@ -873,31 +940,28 @@ class MacOs(Installer):
         """Install package.
 
         :param package: (str) The system package to install.
-        :returns: False or None
+        :raise: InstallationError() if an error occurred
 
         """
         try:
             package = str(package)
             command = "brew install " + package
-            process = Process()
-            process.run_popen(command)
-            error = process.error()
-            if len(error) != 0:
-                if "Warning: You are using macOS" in error:
-                    if self._search_package(package) is False:
-                        self.__fill_errors("Package: \"{name}\"\nError: {error}".format(name=package, error=error))
-                        return False
+            process = ProcessRunner()
+            process.run(command)
+            err = process.error()
+            stdout = process.out()
+            if len(stdout) > 3:
+                logging.info(stdout)
 
-                elif "No available" in error:
-                    self.__fill_errors("Package: \"{name}\"\nError: {error}".format(name=package, error=error))
-                    return False
-                else:
-                    self.__fill_errors("Package: \"{name}\"\nError: {error}".format(name=package, error=error))
-                    return False
-        except FileNotFoundError:
-            self.__fill_errors("Installation \"{name}\" failed.\nError: {error}"
-                               .format(name=package, error=FileNotFoundError))
-            return False
+        except Exception as e:
+            raise InstallationError(str(e))
+
+        if len(err) > 3:
+            if "Warning: You are using macOS" in err:
+                if self._search_package(package) is False:
+                    raise InstallationError(err)
+            else:
+                raise InstallationError(err)
 
     # ------------------------------------------------------------------------
 
@@ -912,18 +976,16 @@ class MacOs(Installer):
             req_version = str(req_version)
             package = str(package)
             command = "brew info " + package
-            process = Process()
-            process.run_popen(command)
-            error = process.error()
-            stdout = process.out()
-            if self._need_update_package(stdout, req_version):
-                return False
-            else:
-                return True
-        except FileNotFoundError:
-            self.__fill_errors("Installation \"{name}\" failed.\nError: {error}"
-                               .format(name=package, error=FileNotFoundError))
-            return False
+            process = ProcessRunner()
+            process.run(command)
+            err = process.error()
+        except Exception as e:
+            raise InstallationError(str(e))
+
+        if len(err) > 3:
+            raise InstallationError(err)
+        stdout = process.out()
+        return not self._need_update_package(stdout, req_version)
 
     # ------------------------------------------------------------------------
 
@@ -960,18 +1022,14 @@ class MacOs(Installer):
         version = float(req_version[1])
 
         if comparator == ">=":
-            if v < version:
-                return True
-            else:
-                return False
-        else:
-            raise ValueError("Your comparator : " +
-                             comparator +
-                             " does not refer to a valid comparator")
+            return v < version
+
+        raise ValueError("The comparator: " + comparator +
+                         " does not refer to a valid comparator")
 
     # ------------------------------------------------------------------------
 
-    def _update_package(self, package):
+    def _update_package(self, package, req_version):
         """Update package.
 
         :param package: (str) The system package to update.
@@ -981,18 +1039,18 @@ class MacOs(Installer):
         try:
             package = str(package)
             command = "brew upgrade " + package
-            process = Process()
-            process.run_popen(command)
-            error = process.error()
-            if len(error) != 0:
-                if "Could not find" in error:
-                    self.__fill_errors("Package: \"{name}\"\nError: {error}".format(name=package, error=error))
-                else:
-                    self.__fill_errors("Package: \"{name}\"\nError: {error}".format(name=package, error=error))
-                return False
-        except FileNotFoundError:
-            self.__fill_errors("Installation \"{name}\" failed.\nError: {error}"
-                               .format(name=package, error=FileNotFoundError))
-            return False
+            process = ProcessRunner()
+            process.run(command)
+            err = process.error()
+            stdout = process.out()
+            if len(stdout) > 3:
+                logging.info(stdout)
+        except Exception as e:
+            raise InstallationError(str(e))
 
-
+        if len(err) > 3:
+            if "Warning: You are using macOS" or "already installed" in err:
+                if self._version_package(package, req_version) is False:
+                    raise InstallationError(err)
+            else:
+                raise InstallationError(err)

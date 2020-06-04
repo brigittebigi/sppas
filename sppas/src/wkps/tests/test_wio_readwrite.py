@@ -40,7 +40,8 @@ import sppas
 import unittest
 from sppas.src.wkps.wio.wkpreadwrite import sppasWkpRW
 from sppas.src.wkps.wio.wjson import sppasWJSON
-from sppas.src.wkps.fileref import FileReference, sppasAttribute
+from sppas.src.wkps.fileref import sppasCatReference, sppasRefAttribute
+from sppas.src.wkps.wio.wannotationpro import sppasWANT
 
 # ---------------------------------------------------------------------------
 
@@ -48,13 +49,17 @@ from sppas.src.wkps.fileref import FileReference, sppasAttribute
 class testSppasWkpRW(unittest.TestCase):
 
     def setUp(self):
-        self.rw = sppasWkpRW(os.path.join(sppas.paths.sppas, 'src', 'wkps', 'wio', 'tests', 'file.wjson'))
+        self.rw = sppasWkpRW(os.path.join(sppas.paths.sppas, 'src', 'wkps', 'tests', 'data', 'save.wjson'))
         self.wkp = sppasWJSON()
-        self.r1 = FileReference("ref1")
+        self.r1 = sppasCatReference("ref1")
         self.file = os.path.join(sppas.paths.samples, 'samples-pol', '0001.txt')
-        self.r1.append(sppasAttribute('initials', 'AB'))
-        self.r1.append(sppasAttribute('sex', 'F'))
-        self.att = sppasAttribute("att")
+        self.r1.append(sppasRefAttribute('initials', 'AB'))
+        self.r1.append(sppasRefAttribute('sex', 'F'))
+        self.att = sppasRefAttribute("att")
+
+        self.rw2 = sppasWkpRW(os.path.join(sppas.paths.wkps, 'AnnotProWkp.antw'))
+        self.want = sppasWANT()
+
     # -------------------------------------------------------------------------
 
     def test_extensions(self):
@@ -64,17 +69,23 @@ class testSppasWkpRW(unittest.TestCase):
     # -------------------------------------------------------------------------
 
     def test_read(self):
+        # WJSON
         self.assertEqual(type(self.rw.read()), type(self.wkp))
         ws = self.rw.read()
         ws.add_ref(self.r1)
         self.wkp.add_ref(self.r1)
-        self.assertEqual(ws.get_all_files(), self.wkp.get_all_files())
+        self.assertEqual(ws.get_paths(), self.wkp.get_paths())
+        self.assertEqual(type(ws), sppasWJSON)
+
+        # WANT
+        want = self.rw2.read()
+        self.assertEqual(type(want), sppasWANT)
 
     # -------------------------------------------------------------------------
 
     def test_create_wkp_from_extension(self):
         self.assertEqual(type(self.rw.create_wkp_from_extension("test.wjson")), sppasWJSON)
-        self.assertNotEqual(type(self.rw.create_wkp_from_extension("test")), sppasWJSON)
+        self.assertEqual(type(self.rw.create_wkp_from_extension("test.antw")), sppasWANT)
 
     # -------------------------------------------------------------------------
 

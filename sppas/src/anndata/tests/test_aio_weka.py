@@ -56,7 +56,7 @@ from ..ann.annlabel import sppasLabel
 from ..ann.annotation import sppasAnnotation
 from ..ann.annlocation import sppasLocation
 
-from sppas.src.files.fileutils import sppasFileUtils
+from sppas.src.wkps.fileutils import sppasFileUtils
 from sppas.src.utils.makeunicode import u
 
 # ---------------------------------------------------------------------------

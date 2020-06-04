@@ -34,6 +34,8 @@
 
 import uuid
 import re
+import os
+from sppas.src.config import paths
 
 
 class Feature(object):
@@ -88,7 +90,7 @@ class Feature(object):
         self.__enable = False
 
         # Represent if the feature is available
-        self.__available = True
+        self.__available = False
 
         # Represent a description of the feature
         self.__desc = str()
@@ -99,7 +101,7 @@ class Feature(object):
         # Represent the required pip packages
         self.__pypi = dict()
 
-        # Represent the command to enable the feature
+        # Represent a command to be executed
         self.__cmd = str()
 
     # ------------------------------------------------------------------------
@@ -221,10 +223,16 @@ class Feature(object):
     def set_cmd(self, value):
         """Set the command to execute.
 
-        :param value: (str) The unique command for the OS.
+        :param value: (str) The system command for the OS.
 
         """
         value = str(value)
+        if "$SPPAS" in value:
+            base_dir = paths.basedir
+            if "\\" in base_dir:
+                base_dir = base_dir.replace("\\", "\\\\")
+            value = value.replace("$SPPAS", base_dir)
+
         self.__cmd = value
 
     # ------------------------------------------------------------------------
