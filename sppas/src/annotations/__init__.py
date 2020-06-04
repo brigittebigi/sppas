@@ -62,6 +62,7 @@ from .SearchIPUs import sppasSearchIPUs
 from .TextNorm import sppasTextNorm
 from .Phon import sppasPhon
 from .Syll import sppasSyll
+from .LPC import sppasLPC
 from .TGA import sppasTGA
 from .Align import sppasAlign
 from .SelfRepet import sppasSelfRepet
@@ -88,6 +89,7 @@ __all__ = (
     'sppasPhon',
     'sppasAlign',
     'sppasSyll',
+    'sppasLPC',
     'sppasTGA',
     'sppasSelfRepet',
     'sppasActivity',
