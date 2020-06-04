@@ -35,7 +35,9 @@
 
 import logging
 import sys
+import random
 
+from itertools import islice
 from sppas import sppasUnicode
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
@@ -127,6 +129,46 @@ class sppasLexVar(sppasBaseRepet):
 
     # ----------------------------------------------------------------------
 
+    @staticmethod
+    def contains(list1, list2):
+        """Check if a list is contained in an other one
+        :param list1: (list)
+        :param list2: (list)
+        :returns: (bool)
+
+        """
+        for i in range(len(list1) - len(list2) + 1):
+            if list1[i:i + len(list2)] == list2:
+                return True
+        return False
+
+    # ----------------------------------------------------------------------
+
+    @staticmethod
+    def window(sequence, window_size=2):
+        """Returns a sliding window (of width n) over data from the iterable
+        
+        https://stackoverflow.com/questions/6822725/rolling-or-sliding-window-iterator
+        :param sequence: (list)
+        :param window_size: (int)
+        
+        """
+        it = iter(sequence)
+        result = list(islice(it, window_size))
+        if len(result) == window_size:
+            yield result
+        for elem in it:
+            result = result[1:] + [elem, ]
+            yield result
+
+    # ----------------------------------------------------------------------
+
+    @staticmethod
+    def rules():
+        return random.Random().choice([True, False])
+
+    # ----------------------------------------------------------------------
+
     def lexical_variation_detect(self, tier1, tier2):
         """Detect the lexical variations in between 2 tiers
 
@@ -144,12 +186,11 @@ class sppasLexVar(sppasBaseRepet):
                 for tag, score in label:
                     # average size
                     m += sys.getsizeof(tag.get_content)
-
                     # listing tag and content
                     # we add only words/lemmes
                     if tag.is_speech():
                         tag_list.append(tag)
-                        list temps.append(ann.get_lowest_tps())
+                        # list temps.append(ann.get_lowest_tps())
                         content_list.append(tag.get_content())
 
         repet_list = list()
@@ -157,21 +198,21 @@ class sppasLexVar(sppasBaseRepet):
         for ann in tier2:
             for label in ann.get_labels():
                 for tag, score in label:
-                    # if tag.get_content() in content_list and tag.get_content() not in repet_list:
-                    #    repet_list.append(tag.get_content())
-                    #    repet += 1
-                    if tag in tag_list and tag.get_content() not in repet_list:
+                    if tag.get_content() in content_list and tag.get_content() not in repet_list:
                         repet_list.append(tag.get_content())
                         repet += 1
+                    # if tag in tag_list and tag.get_content() not in repet_list:
+                    #     repet_list.append(tag.get_content())
+                    #     repet += 1
 
         print("average size of a tag content (unicode) : {}".format(m/len(content_list)))
         print("size of a sppasTag list : {}".format(sys.getsizeof(tag_list)))
         print("size of a unicode list : {}".format(sys.getsizeof(content_list)))
         print("repet : {}".format(repet))
-        """
+        
         # DYNAMIC TESTS
         # -------------
-
+        
         # Beaucoup trop long
         repet = 0
         repet_list = list()
@@ -186,6 +227,41 @@ class sppasLexVar(sppasBaseRepet):
                                         repet_list.append(tag.get_content())
                                         repet += 1
         print("nb repet : {}".format(repet))
+        """
+
+        # test with window rolling
+        # ------------------------
+
+        content_list_tier1 = list()
+        content_list_tier2 = list()
+        window_list = list()
+        for ann in tier1:
+            for label in ann.get_labels():
+                for tag, score in label:
+                    if tag.is_speech():
+                        content_list_tier1.append(tag.get_content())
+
+        for ann2 in tier2:
+            for label2 in ann2.get_labels():
+                for tag2, score2 in label2:
+                    if tag2.is_speech():
+                        content_list_tier2.append(tag2.get_content())
+
+        for window in self.window(content_list_tier2, 3):
+            window_list.append(window)
+
+        repet = 0
+        for sub in window_list:
+            if self.contains(content_list_tier1, sub):
+                print(self.contains(content_list_tier1, sub))
+                repet += 1
+
+        print(window_list)
+        print(content_list_tier1)
+        print(content_list_tier2)
+        print(repet)
+
+        return repet
 
     # ----------------------------------------------------------------------
     # Patterns
