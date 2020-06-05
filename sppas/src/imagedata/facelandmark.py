@@ -93,6 +93,54 @@ class FaceLandmark(object):
 
     # -----------------------------------------------------------------------
 
+    def get_left_face(self):
+        """Return coordinates of the left side of the face."""
+        return self.__landmarks[FaceLandmark.LEFT_FACE[0] - 1: FaceLandmark.LEFT_FACE[1] - 1]
+
+    # -----------------------------------------------------------------------
+
+    def get_right_face(self):
+        """Return coordinates of the right side of the face."""
+        return self.__landmarks[FaceLandmark.RIGHT_FACE[0] - 1: FaceLandmark.RIGHT_FACE[1] - 1]
+
+    # -----------------------------------------------------------------------
+
+    def get_left_brow(self):
+        """Return coordinates of the left brow."""
+        return self.__landmarks[FaceLandmark.LEFT_BROW_POINTS[0] - 1: FaceLandmark.LEFT_BROW_POINTS[1] - 1]
+
+    # -----------------------------------------------------------------------
+
+    def get_right_brow(self):
+        """Return coordinates of the right brow."""
+        return self.__landmarks[FaceLandmark.RIGHT_BROW_POINTS[0] - 1: FaceLandmark.RIGHT_BROW_POINTS[1] - 1]
+
+    # -----------------------------------------------------------------------
+
+    def get_nose(self):
+        """Return coordinates of the nose."""
+        return self.__landmarks[FaceLandmark.NOSE_POINTS[0] - 1: FaceLandmark.NOSE_POINTS[1] - 1]
+
+    # -----------------------------------------------------------------------
+
+    def get_left_eyes(self):
+        """Return coordinates of the left eye."""
+        return self.__landmarks[FaceLandmark.LEFT_EYE_POINTS[0] - 1: FaceLandmark.LEFT_EYE_POINTS[1] - 1]
+
+    # -----------------------------------------------------------------------
+
+    def get_right_eyes(self):
+        """Return coordinates of the right eye."""
+        return self.__landmarks[FaceLandmark.RIGHT_EYE_POINTS[0] - 1: FaceLandmark.RIGHT_EYE_POINTS[1] - 1]
+
+    # -----------------------------------------------------------------------
+
+    def get_mouth(self):
+        """Return coordinates of the mouth."""
+        return self.__landmarks[FaceLandmark.MOUTH_POINTS[0] - 1: FaceLandmark.MOUTH_POINTS[1] - 1]
+
+    # -----------------------------------------------------------------------
+
     def __store_points(self, coordinates):
         """Store x-axis, y-axis values in each list."""
         for i in range(0, 68):
