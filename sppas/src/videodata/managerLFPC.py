@@ -51,7 +51,7 @@ class ManagerLFPC(object):
 
     """
 
-    def __init__(self, video, buffer_size, draw=None, pattern="-person", transcription=None,
+    def __init__(self, video, buffer_size, overlap=0, draw=None, pattern="-person", transcription=None,
                  v_value=False, f_value=False):
         """Create a new ManagerLFPC instance.
 
@@ -66,7 +66,7 @@ class ManagerLFPC(object):
 
         """
         # Initialize the buffer
-        self.__pBuffer = PersonsBuffer(video, buffer_size, 0)
+        self.__pBuffer = PersonsBuffer(video, buffer_size, overlap)
 
         # Initialize the writer for the outputs files
         self.__coords_writer = sppasVideoCoordsWriter(video, self.__pBuffer.get_fps(), pattern,

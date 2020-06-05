@@ -55,10 +55,10 @@ class VideoTagLFPC(object):
 
     """
 
-    def __init__(self, transcription, buffer_size, nb_frames, fps):
+    def __init__(self, tier, buffer_size, nb_frames, fps):
         """Create a new VideoTagLFPC instance.
 
-        :param transcription: (Idk) The object which contain audio transcription.
+        :param tier: (Idk) The ID of the keys(picote).
         :param buffer_size: (int) The size of the buffer.
         :param nb_frames: (int) The number of frame in the video.
         :param fps: (int) The fps of the video.
@@ -79,7 +79,7 @@ class VideoTagLFPC(object):
 
         # The list of transcription
         self.__transcription = list()
-        self.__init_transcription(transcription)
+        self.__init_transcription(tier)
 
     # -----------------------------------------------------------------------
 
@@ -88,7 +88,7 @@ class VideoTagLFPC(object):
         for i in range(9):
             try:
                 filename = "hand-lfpc-" + str(i) + ".png"
-                path = os.path.join(sppasPathSettings().resources, "image", filename)
+                path = os.path.join(sppasPathSettings().etc, "image", filename)
                 self.__hands.append(path)
             except OSError:
                 return "File does not exist"
@@ -102,7 +102,7 @@ class VideoTagLFPC(object):
 
         """
         # Browse the transcription and add each "syllabe" in the private list
-        for i in range(len(transcription)):
+        for i in range(400):
             # Bla bla bla
 
             # Add it in the transcription list
@@ -114,7 +114,7 @@ class VideoTagLFPC(object):
 
     def __transform_transcription(self):
         """Convert the transcription list into something useful."""
-        list_syllable = list()
+        list_syllabe = list()
 
         # Loop over the transcription
         for syllable in self.__transcription:
@@ -123,62 +123,16 @@ class VideoTagLFPC(object):
             duration = syllable[1] - syllable[0]
 
             # nb_frames = duration(ms) / fps(images/second)
-            nb_frame = int(duration * 1000 / self.__fps)
+            nb_frame = int(duration / self.__fps)
 
             # Determine the hand and the position for the syllable
-            hand, pointID = self.__hand(syllable[2], syllable[3])
             for i in range(nb_frame):
                 # Add it in the list
-                list_syllable.append((hand, pointID))
+                list_syllabe.append((syllable[2], syllable[3]))
 
         # Replace the transcription list
         self.__transcription.clear()
-        self.__transcription = list_syllable
-
-    # -----------------------------------------------------------------------
-
-    def __hand(self, consonant_id, vowel_id):
-        """Determine where and which hand to place for a syllable.
-
-        :param consonant_id: (Idk) The object which contain audio transcription.
-        :param vowel_id: (int) The number of frame in the video
-
-        """
-        hand = None
-        pointID = None
-        if consonant_id == "und":
-            hand = self.__hands[0]
-        elif consonant_id == "p" or "d" or "Z":
-            hand = self.__hands[1]
-        elif consonant_id == "l" or "S" or "J" or "w":
-            hand = self.__hands[2]
-        elif consonant_id == "g":
-            hand = self.__hands[3]
-        elif consonant_id == "b" or "n" or "H":
-            hand = self.__hands[4]
-        elif consonant_id == "nil" or "m" or "t" or "f":
-            hand = self.__hands[5]
-        elif consonant_id == "k" or "v" or "z":
-            hand = self.__hands[6]
-        elif consonant_id == "j" or "N":
-            hand = self.__hands[7]
-        elif consonant_id == "s" or "R":
-            hand = self.__hands[8]
-
-        if vowel_id == "nil":
-            pointID = 0
-        elif vowel_id == "2" or "@":
-            pointID = 1
-        elif vowel_id == "E" or "u" or "O/":
-            pointID = 2
-        elif vowel_id == "A/" or "9":
-            pointID = 3
-        elif vowel_id == "i" or "O~" or "a~":
-            pointID = 4
-        elif vowel_id == "y" or "e" or "U~/":
-            pointID = 5
-
-        return hand, pointID
+        self.__transcription = list_syllabe
 
     # -----------------------------------------------------------------------
 
@@ -196,8 +150,8 @@ class VideoTagLFPC(object):
         if pointID == 0:
             # x = x.15 + ((x.15 - x.36) / 5.)
             # y = x.15
-            x = int(landmark[14][0] + ((landmark[14][0] - landmark[35][0]) / 5.))
-            y = int(landmark[14][1])
+            x = int(landmark[2][0] - landmark[17][0])
+            y = int(landmark[2][1])
 
         #   - Position 1: at left, close to the eye
         elif pointID == 1:
