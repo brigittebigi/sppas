@@ -64,9 +64,6 @@ class VideoTagLFPC(object):
         :param fps: (int) The fps of the video.
 
         """
-        self.__transcription = list()
-        self.__init_transcription(transcription)
-
         # The size of the buffer
         self.__size = buffer_size
 
@@ -80,10 +77,14 @@ class VideoTagLFPC(object):
         self.__hands = list()
         self.__init_hands()
 
+        # The list of transcription
+        self.__transcription = list()
+        self.__init_transcription(transcription)
+
     # -----------------------------------------------------------------------
 
     def __init_hands(self):
-        """Return the predictor file."""
+        """Store the paths of the hands."""
         for i in range(9):
             try:
                 filename = "hand-lfpc-" + str(i) + ".png"
@@ -95,23 +96,44 @@ class VideoTagLFPC(object):
     # -----------------------------------------------------------------------
 
     def __init_transcription(self, transcription):
-        """Init the transcription list."""
+        """Init the transcription list.
+
+        :param transcription: (Idk) The object which contain audio transcription.
+
+        """
         # Browse the transcription and add each "syllabe" in the private list
-        for i in range(400):
+        for i in range(len(transcription)):
             # Bla bla bla
-            self.__transcription.append(("start_ms", "end_ms", "consonant_ID", "vowel_ID"))
+
+            # Add it in the transcription list
+            self.__transcription.append((0, 1, "consonant_ID", "vowel_ID"))
+
+        self.__transform_transcription()
 
     # -----------------------------------------------------------------------
 
     def __transform_transcription(self):
         """Convert the transcription list into something useful."""
-        liste_buffer = list()
+        list_syllable = list()
+
+        # Loop over the transcription
         for syllable in self.__transcription:
+
+            # Duration equal "end_time" - "start_time"
             duration = syllable[1] - syllable[0]
-            nb_frame = duration / self.__fps
+
+            # nb_frames = duration(ms) / fps(images/second)
+            nb_frame = int(duration * 1000 / self.__fps)
+
+            # Determine the hand and the position for the syllable
             hand, pointID = self.__hand(syllable[2], syllable[3])
             for i in range(nb_frame):
-                liste_buffer.append((hand, pointID))
+                # Add it in the list
+                list_syllable.append((hand, pointID))
+
+        # Replace the transcription list
+        self.__transcription.clear()
+        self.__transcription = list_syllable
 
     # -----------------------------------------------------------------------
 
@@ -122,12 +144,113 @@ class VideoTagLFPC(object):
         :param vowel_id: (int) The number of frame in the video
 
         """
-        # Bla bla bla
-        return 1, 2
+        hand = None
+        pointID = None
+        if consonant_id == "und":
+            hand = self.__hands[0]
+        elif consonant_id == "p" or "d" or "Z":
+            hand = self.__hands[1]
+        elif consonant_id == "l" or "S" or "J" or "w":
+            hand = self.__hands[2]
+        elif consonant_id == "g":
+            hand = self.__hands[3]
+        elif consonant_id == "b" or "n" or "H":
+            hand = self.__hands[4]
+        elif consonant_id == "nil" or "m" or "t" or "f":
+            hand = self.__hands[5]
+        elif consonant_id == "k" or "v" or "z":
+            hand = self.__hands[6]
+        elif consonant_id == "j" or "N":
+            hand = self.__hands[7]
+        elif consonant_id == "s" or "R":
+            hand = self.__hands[8]
+
+        if vowel_id == "nil":
+            pointID = 0
+        elif vowel_id == "2" or "@":
+            pointID = 1
+        elif vowel_id == "E" or "u" or "O/":
+            pointID = 2
+        elif vowel_id == "A/" or "9":
+            pointID = 3
+        elif vowel_id == "i" or "O~" or "a~":
+            pointID = 4
+        elif vowel_id == "y" or "e" or "U~/":
+            pointID = 5
+
+        return hand, pointID
 
     # -----------------------------------------------------------------------
 
-    def process(self, transcription):
+    def calcul_position(self, pointID, landmark):
+        """Calcul the coordinates of the LFPC points.
+
+        :param pointID: (int) The ID of the LFPC point.
+        :param landmark: (list) The landmark positions.
+
+        """
+        x = int()
+        y = int()
+
+        #   - Position 0: at right, out of the face
+        if pointID == 0:
+            # x = x.15 + ((x.15 - x.36) / 5.)
+            # y = x.15
+            x = int(landmark[14][0] + ((landmark[14][0] - landmark[35][0]) / 5.))
+            y = int(landmark[14][1])
+
+        #   - Position 1: at left, close to the eye
+        elif pointID == 1:
+            # x = x.1 + ((x.30 - x.1) / 3.)
+            # y = y.1
+            x = landmark[0][0] + ((landmark[29][0] - landmark[1][0]) / 3.)
+            y = landmark[0][1]
+
+        #   - Position 2: at the middle of the chin
+        elif pointID == 2:
+            # x = x.9
+            # y = y.9 - ((y.9 - y.58) / 3.)
+            x = landmark[8][0]
+            y = landmark[8][1] - ((landmark[8][1] - landmark[57][1]) / 3.)
+
+        #   - Position 3: at left
+        elif pointID == 3:
+            # x = x.3
+            # y = y.3
+            x = landmark[2][0]
+            y = landmark[2][1]
+
+        #   - Position 4: at left of the mouth
+        elif pointID == 4:
+            # x = x.4 + ((x.49 - x.4) / 5.)
+            # y = y.4
+            x = landmark[3][0] + ((landmark[48][0] - landmark[3][0]) / 5.)
+            y = landmark[3][1]
+
+        #   - Position 5: under the chin, out of the face
+        elif pointID == 5:
+            # x = x.9
+            # y = y.9 + ((y.9 - y.58) / 2.)
+            x = landmark[8][0]
+            y = landmark[8][1] + ((landmark[8][1] - landmark[57][1]) / 2.)
+
+        return x, y
+
+    # -----------------------------------------------------------------------
+
+    def process(self, buffer):
         """Launch the tag process."""
+        for i in range(len(buffer)):
+            # Store the lfpc code in a var
+            lfpc_code = self.__transcription[i + buffer.get_frame() - buffer.get_size()]
+
+            # Store the path of the hand to use
+            path = lfpc_code[0]
+
+            # Determine the position of the hand on the face
+            x, y = self.calcul_position(lfpc_code[1], buffer.get_landmark(0, i))
+
+            # Add in a new buffer
+            buffer.add_lfpc((path, x, y))
 
     # -----------------------------------------------------------------------
