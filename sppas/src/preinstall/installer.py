@@ -116,7 +116,7 @@ class ProcessRunner(object):
             check=False,
             encoding=None,
             errors=None,
-            text=None,
+            # text=None,   # does not work with python 3.6
             env=None,
             universal_newlines=True)
 
@@ -242,6 +242,9 @@ class Installer(object):
 
     def install(self):
         """Process the installation."""
+        # Update pip before any installation.
+        self.update_pip()
+
         errors = list()
         for fid in self._features.get_ids():
             self.__pheader(self.__message("beginning_feature", fid))
@@ -284,6 +287,16 @@ class Installer(object):
 
     # ------------------------------------------------------------------------
     # Private methods to install
+    # ------------------------------------------------------------------------
+
+    def update_pip(self):
+        logging.info("Update pip, the package installer for Python:")
+        try:
+            process = ProcessRunner()
+            process.run("python3 -m pip install --upgrade pip")
+        except Exception as e:
+            raise InstallationError(str(e))
+
     # ------------------------------------------------------------------------
 
     @staticmethod

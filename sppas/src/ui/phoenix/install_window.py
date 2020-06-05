@@ -49,7 +49,8 @@ from .windows import sppasPanel, sppasScrolledPanel, sppasImgBgPanel
 from .windows import sppasTitleText, sppasStaticText, sppasMessageText
 from .windows import CheckListCtrl
 from .windows.book import sppasSimplebook
-from .windows.dialogs import sppasDialog
+
+from .windows.frame import sppasTopFrame
 from .windows.dialogs import sppasProgressDialog
 
 from .windows import YesNoQuestion
@@ -101,7 +102,7 @@ Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 # -----------------------------------------------------------------------
 
 
-class sppasInstallWindow(sppasDialog):
+class sppasInstallWindow(sppasTopFrame):
     """Create the main frame of SPPAS.
 
     :author:       Brigitte Bigi
@@ -146,7 +147,13 @@ class sppasInstallWindow(sppasDialog):
 
         # Members
         self._init_infos()
-        self.__installer = sppasInstallerDeps()
+        try:
+            self.__installer = sppasInstallerDeps()
+        except Exception as e:
+            logging.error("No installation will be performed. The installer "
+                          "wasn't created due to the following error: {}"
+                          "".format(str(e)))
+            self.__installer = None
 
         # Fix this frame content
         self._create_content()
@@ -169,7 +176,7 @@ class sppasInstallWindow(sppasDialog):
         Set the title, the icon and the properties of the frame.
 
         """
-        sppasDialog._init_infos(self)
+        sppasTopFrame._init_infos(self)
 
         # Fix some frame properties
         self.SetMinSize(wx.Size(sppasPanel.fix_size(320), sppasPanel.fix_size(200)))
@@ -851,11 +858,12 @@ class sppasFeaturesInstallPanel(sppasPanel):
                             name="features_list")
         lst.AppendColumn(MSG_FEAT, wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(80))
         lst.AppendColumn(MSG_DESCR, wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(380))
-        for fid in self.__installer.features_ids():
-            idx = lst.InsertItem(lst.GetItemCount(), fid)
-            lst.SetItem(idx, 1, self.__installer.description(fid))
-            if self.__installer.enable(fid) is True:
-                lst.Select(idx, on=True)
+        if self.__installer is not None:
+            for fid in self.__installer.features_ids():
+                idx = lst.InsertItem(lst.GetItemCount(), fid)
+                lst.SetItem(idx, 1, self.__installer.description(fid))
+                if self.__installer.enable(fid) is True:
+                    lst.Select(idx, on=True)
 
         return lst
 
@@ -870,13 +878,15 @@ class sppasFeaturesInstallPanel(sppasPanel):
     def _on_selected_item(self, evt):
         index = evt.GetIndex()
         fid = self.features_list.GetItemText(index, 1)
-        self.__installer.enable(fid, True)
+        if self.__installer is not None:
+            self.__installer.enable(fid, True)
         logging.info("Installation of feature {} enabled".format(fid))
 
     def _on_deselected_item(self, evt):
         index = evt.GetIndex()
         fid = self.features_list.GetItemText(index, 1)
-        self.__installer.enable(fid, False)
+        if self.__installer is not None:
+            self.__installer.enable(fid, False)
         logging.info("Installation of feature {} disabled".format(fid))
 
 # ---------------------------------------------------------------------------
@@ -961,5 +971,4 @@ class sppasTerminatedInstallPanel(sppasPanel):
         sizer.Add(msg1, 1, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
         sizer.Add(msg2, 1, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
         self.SetSizer(sizer)
-
 

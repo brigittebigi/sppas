@@ -236,11 +236,18 @@ class Features(object):
             feature.set_available(False)
 
             # Description of the feature
-            desc = features_parser.get(fid, "desc")
+            try:
+                desc = features_parser.get(fid, "desc")
+            except cp.NoOptionError:
+                desc = "No description."
             feature.set_desc(desc)
 
             # Feature is enabled or not
-            feature.set_enable(features_parser.getboolean(fid, "enable"))
+            try:
+                e = features_parser.getboolean(fid, "enable")
+            except cp.NoOptionError:
+                e = False
+            feature.set_enable(e)
 
             # System package dependencies
             try:
