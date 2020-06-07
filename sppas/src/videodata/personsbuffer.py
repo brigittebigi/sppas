@@ -119,7 +119,6 @@ class PersonsBuffer(VideoBuffer):
         :param coord: (Coordinate) The coordinate to add.
 
         """
-        index = int(index)
         if isinstance(index, int) is False:
             raise TypeError
 
@@ -194,11 +193,19 @@ class PersonsBuffer(VideoBuffer):
 
     # -----------------------------------------------------------------------
 
-    def is_empty(self):
-        """Return True if the list of persons is empty."""
+    def is_tracked(self):
+        """Return False if the list of persons is empty."""
         if len(self.__persons) == 0:
-            return True
-        return False
+            return False
+        return True
+
+    # -----------------------------------------------------------------------
+
+    def is_landmarked(self):
+        """Return False if the list of landmarks is empty."""
+        if len(self.__landmarks) == 0:
+            return False
+        return True
 
     # -----------------------------------------------------------------------
 

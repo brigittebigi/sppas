@@ -139,7 +139,7 @@ class TestVideoBuffer(unittest.TestCase):
         len = self.__pBuffer.nb_persons()
         self.assertEqual(len, 3)
 
-        self.assertFalse(self.__pBuffer.is_empty())
+        self.assertTrue(self.__pBuffer.is_tracked())
 
         self.__pBuffer.clear()
 
@@ -155,11 +155,11 @@ class TestVideoBuffer(unittest.TestCase):
         len = self.__pBuffer.nb_persons()
         self.assertEqual(len, 4)
 
-        self.assertTrue(self.__pBuffer.is_empty())
+        self.assertFalse(self.__pBuffer.is_tracked())
 
         self.__pBuffer.clear()
 
-        self.assertTrue(self.__pBuffer.is_empty())
+        self.assertFalse(self.__pBuffer.is_tracked())
 
         len = self.__pBuffer.nb_persons()
         self.assertEqual(len, 0)

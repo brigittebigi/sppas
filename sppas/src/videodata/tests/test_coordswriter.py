@@ -38,7 +38,7 @@ import numpy as np
 
 from sppas.src.imagedata.coordinates import Coordinates
 from sppas.src.videodata.coordswriter import sppasVideoCoordsWriter
-from sppas.src.videodata.videobuffer import VideoBuffer
+from sppas.src.videodata.personsbuffer import PersonsBuffer
 from sppas.src.videodata.facetracking import FaceTracking
 
 # ---------------------------------------------------------------------------
@@ -49,7 +49,7 @@ class TestCoordsWriter(unittest.TestCase):
     def setUp(self):
         self.__fTracker = FaceTracking()
         self.path = "../../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4"
-        self.__vBuffer = VideoBuffer(self.path, 100, 0)
+        self.__pBuffer = PersonsBuffer(self.path, 100, 0)
         self.__cw = sppasVideoCoordsWriter(self.path, 25, "person",
                                            csv=True, video=True, folder=True)
 
@@ -338,6 +338,65 @@ class TestCoordsWriter(unittest.TestCase):
 
         self.assertEqual(self.__cw.get_video(), False)
         self.assertEqual(self.__cw.get_folder(), False)
+
+    # ---------------------------------------------------------------------------
+
+    def test_verify_option(self):
+        self.__cw.set_mode("full")
+        self.assertEqual(self.__cw.get_mode(), "full")
+        self.assertEqual(self.__cw.get_framing(), None)
+        self.__cw._sppasVideoCoordsWriter__verify_options(self.__pBuffer)
+        self.assertEqual(self.__cw.get_mode(), "full")
+        self.assertEqual(self.__cw.get_framing(), "face")
+        self.__cw.set_mode(None)
+        self.__cw.set_framing(None)
+
+        self.__cw.set_framing("face")
+        self.assertEqual(self.__cw.get_mode(), None)
+        self.assertEqual(self.__cw.get_framing(), "face")
+        self.__cw._sppasVideoCoordsWriter__verify_options(self.__pBuffer)
+        self.assertEqual(self.__cw.get_mode(), "full")
+        self.assertEqual(self.__cw.get_framing(), "face")
+        self.__cw.set_mode(None)
+        self.__cw.set_framing(None)
+
+        self.__cw.set_mode("crop")
+        self.assertEqual(self.__cw.get_mode(), "crop")
+        self.assertEqual(self.__cw.get_framing(), None)
+        self.__cw._sppasVideoCoordsWriter__verify_options(self.__pBuffer)
+        self.assertEqual(self.__cw.get_mode(), "crop")
+        self.assertEqual(self.__cw.get_framing(), "portrait")
+        self.__cw.set_mode(None)
+        self.__cw.set_framing(None)
+
+        self.__cw.set_framing("portrait")
+        self.assertEqual(self.__cw.get_mode(), None)
+        self.assertEqual(self.__cw.get_framing(), "portrait")
+        self.__cw._sppasVideoCoordsWriter__verify_options(self.__pBuffer)
+        self.assertEqual(self.__cw.get_mode(), "crop")
+        self.assertEqual(self.__cw.get_framing(), "portrait")
+        self.__cw.set_mode(None)
+        self.__cw.set_framing(None)
+
+        self.__cw.set_framing("portrait")
+        self.__cw.set_mode("crop")
+        self.assertEqual(self.__cw.get_mode(), "crop")
+        self.assertEqual(self.__cw.get_framing(), "portrait")
+        self.assertEqual(self.__cw.get_draw(), None)
+        self.__cw._sppasVideoCoordsWriter__verify_options(self.__pBuffer)
+        self.assertEqual(self.__cw.get_video(), False)
+        self.__cw.set_mode(None)
+        self.__cw.set_framing(None)
+
+        self.__cw.set_framing("portrait")
+        self.__cw.set_mode("crop")
+        self.__cw.set_draw("circle")
+        self.assertEqual(self.__cw.get_mode(), "crop")
+        self.assertEqual(self.__cw.get_framing(), "portrait")
+        self.assertEqual(self.__cw.get_draw(), "circle")
+        self.assertEqual(self.__pBuffer.is_landmarked(), False)
+        self.__cw._sppasVideoCoordsWriter__verify_options(self.__pBuffer)
+        self.assertEqual(self.__cw.get_video(), False)
 
     # ---------------------------------------------------------------------------
 

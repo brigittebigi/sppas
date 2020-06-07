@@ -96,7 +96,7 @@ class ManagerLFPC(object):
             self.__landmarks.process(self.__pBuffer)
 
             # Launch the process of creation of the outputs
-            self.__coords_writer.write(self.__pBuffer)
+            self.__coords_writer.process(self.__pBuffer)
 
             # Reset the output lists
             self.__pBuffer.clear()
@@ -105,10 +105,4 @@ class ManagerLFPC(object):
         self.__pBuffer.close()
 
     # -----------------------------------------------------------------------
-
-
-# "../../../../../video_test/LFPC_test_1.mp4"
-# "../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4"
-manager = ManagerLFPC("../../../../../video_test/LFPC_test_1.mp4", 100, draw="circle", v_value=True, f_value=True)
-manager.launch_process()
 

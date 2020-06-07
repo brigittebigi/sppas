@@ -221,3 +221,10 @@ class TestCoordinates(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
+    def test_copy(self):
+        c = self.__coordinates.copy()
+        self.assertEqual(c, Coordinates(143, 17, 150, 98))
+        self.assertTrue(self.__coordinates.__eq__(c))
+
+    # ---------------------------------------------------------------------------
+

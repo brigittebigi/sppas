@@ -9,27 +9,20 @@
         ___/  |     |     |   | ___/              of speech
         http://www.sppas.org/
         Use of this software is governed by the GNU Public License, version 3.
-
         SPPAS is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
         the Free Software Foundation, either version 3 of the License, or
         (at your option) any later version.
-
         SPPAS is distributed in the hope that it will be useful,
         but WITHOUT ANY WARRANTY; without even the implied warranty of
         MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
         GNU General Public License for more details.
-
         You should have received a copy of the GNU General Public License
         along with SPPAS. If not, see <http://www.gnu.org/licenses/>.
-
         This banner notice must not be removed.
-
         ---------------------------------------------------------------------
-
     src.videodata.manager.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~
-
 """
 
 from sppas.src.videodata.personsbuffer import PersonsBuffer
@@ -42,36 +35,41 @@ from sppas.src.videodata.coordswriter import sppasVideoCoordsWriter
 
 class Manager(object):
     """Class to manage a process.
-
     :author:       Florian Hocquet
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
     """
 
-    def __init__(self, video, buffer_size, buffer_overlap, framing=None, mode=None, draw=None, nb_person=0,
+    def __init__(self, video, buffer_size, buffer_overlap,
+                 tracking=True, landmark=False, framing=None, mode=None, draw=None, nb_person=0,
                  pattern="-person", width=-1, height=-1, csv_value=False, v_value=False, f_value=False):
         """Create a new Manager instance.
-
         :param video: (name of video file, image sequence, url or video stream,
         GStreamer pipeline, IP camera) The video to be processed.
         :param buffer_size: (int) The size of the buffer.
         :param buffer_overlap: (overlap) The number of values to keep
         from the previous buffer.
+        :param tracking: (boolean) If True use the tracking process.
+        :param landmark: (boolean) If True use the landmark process.
         :param framing: (str) The name of the framing option to use.
         :param mode: (str) The name of the mode option to use.
-        :param draw: (str) The name of the draw you want to draw.
+        :param draw: (str) The name of the shape to draw.
         :param nb_person: (int) The number of person to detect.
         :param pattern: (str) The pattern to use for the creation of the files.
         :param width: (int) The width of the outputs images and videos.
         :param height: (int) The height of the outputs images and videos.
-        :param csv_value: (boolean) If is True extract images in csv_files.
-        :param v_value: (boolean) If is True extract images in videos.
-        :param f_value: (boolean) If is True extract images in folders.
-
+        :param csv_value: (boolean) If True extract images in csv_files.
+        :param v_value: (boolean) If True extract images in videos.
+        :param f_value: (boolean) If True extract images in folders.
         """
+        # If true launch the tracking process
+        self.__tracking = tracking
+
+        # If true launch the landmark process
+        self.__landmark = landmark
+
         # Initialize the buffer
         self.__pBuffer = PersonsBuffer(video, buffer_size, buffer_overlap)
 
@@ -110,15 +108,17 @@ class Manager(object):
             # Store the result of VideoBuffer.next()
             self.__pBuffer.next()
 
-            # Initialize the list of coordinates from FaceDetection in the FaceTracker
-            self.__fTracker.detect(self.__pBuffer)
-            self.__fTracker.create_persons(self.__pBuffer, self.__nb_person)
+            if self.__tracking is True:
+                # Initialize the list of coordinates from FaceDetection in the FaceTracker
+                self.__fTracker.detect(self.__pBuffer)
+                self.__fTracker.create_persons(self.__pBuffer, self.__nb_person)
 
-            # Initialize the list of points for the faces with FaceLandmark
-            self.__landmarks.process(self.__pBuffer)
+            if self.__landmark is True:
+                # Initialize the list of points for the faces with FaceLandmark
+                self.__landmarks.process(self.__pBuffer)
 
             # Launch the process of creation of the outputs
-            self.__coords_writer.write(self.__pBuffer)
+            self.__coords_writer.process(self.__pBuffer)
 
             # Reset the FaceTracker object
             self.__fTracker.clear()
@@ -130,11 +130,4 @@ class Manager(object):
         self.__pBuffer.close()
 
     # -----------------------------------------------------------------------
-
-
-# "../../../../../video_test/LFPC_test_1.mp4"
-# "../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4"
-manager = Manager("../../../../../video_test/LFPC_test_1.mp4", 100, 0, draw="circle",
-                  framing="portrait", mode="crop", width=640, height=480, csv_value=True, v_value=True, f_value=True)
-manager.launch_process()
 

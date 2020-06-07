@@ -180,38 +180,38 @@ class FaceLandmark(object):
         #     self.__landmarks.append((x, y))
 
         for i in range(10):
-            x = 3*w/4 * ((i+1)/10)
-            y = (h/10) * 2
+            x = int(3*w/4 * ((i+1)/10))
+            y = int((h/10) * 2)
             self.__landmarks.append((x, y))
 
         for i in range(10):
-            x = 3*w/4 * ((i+1)/10)
-            y = (h/10) * 3
+            x = int(3*w/4 * ((i+1)/10))
+            y = int((h/10) * 3)
             self.__landmarks.append((x, y))
 
         for i in range(10):
-            x = 3*w/4 * ((i+1)/10)
-            y = (h/10) * 4
+            x = int(3*w/4 * ((i+1)/10))
+            y = int((h/10) * 4)
             self.__landmarks.append((x, y))
 
         for i in range(10):
-            x = 3*w/4 * ((i+1)/10)
-            y = (h/10) * 5
+            x = int(3*w/4 * ((i+1)/10))
+            y = int((h/10) * 5)
             self.__landmarks.append((x, y))
 
         for i in range(10):
-            x = 3*w/4 * ((i+1)/10)
-            y = (h/10) * 6
+            x = int(3*w/4 * ((i+1)/10))
+            y = int((h/10) * 6)
             self.__landmarks.append((x, y))
 
         for i in range(10):
-            x = 3*w/4 * ((i+1)/10)
-            y = (h/10) * 7
+            x = int(3*w/4 * ((i+1)/10))
+            y = int((h/10) * 7)
             self.__landmarks.append((x, y))
 
         for i in range(8):
-            x = 3*w/4 * ((i+1)/10)
-            y = (h/10) * 8
+            x = int(3*w/4 * ((i+1)/10))
+            y = int((h/10) * 8)
             self.__landmarks.append((x, y))
 
     # -----------------------------------------------------------------------

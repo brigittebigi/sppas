@@ -99,7 +99,7 @@ class VideoLandmark(object):
         """
         # If Tracker process haven't been used create only one
         # person for the landmark
-        if buffer.is_empty():
+        if buffer.is_tracked() is False:
             buffer.add_landmarks()
 
         # Else create a landmark for each person in the video
@@ -117,7 +117,7 @@ class VideoLandmark(object):
 
             # If Tracker process haven't been used apply
             # landmark for only one person
-            if buffer.is_empty():
+            if buffer.is_tracked() is False:
                 self.landmark_person(buffer, img)
 
             # Else apply landmark for each person
@@ -177,7 +177,7 @@ class VideoLandmark(object):
                                      buffer.get_coordinate(i, index).h)
 
                 # Adjust the coordinates to get a more accurate result
-                # portrait(coords, 1.5)
+                portrait(coords, 1.5)
 
                 # Crop the visage according to the values of the coordinates
                 image = crop(image, coords)

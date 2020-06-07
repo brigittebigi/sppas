@@ -9,27 +9,20 @@
         ___/  |     |     |   | ___/              of speech
         http://www.sppas.org/
         Use of this software is governed by the GNU Public License, version 3.
-
         SPPAS is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
         the Free Software Foundation, either version 3 of the License, or
         (at your option) any later version.
-
         SPPAS is distributed in the hope that it will be useful,
         but WITHOUT ANY WARRANTY; without even the implied warranty of
         MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
         GNU General Public License for more details.
-
         You should have received a copy of the GNU General Public License
         along with SPPAS. If not, see <http://www.gnu.org/licenses/>.
-
         This banner notice must not be removed.
-
         ---------------------------------------------------------------------
-
     src.videodata.coordswriter.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~
-
 """
 
 import cv2
@@ -81,6 +74,8 @@ class sppasVideoCoordsWriter(object):
         self.__csv_output = list()
         # A list of video writers
         self.__video_output = list()
+        # A list of video writers
+        self.__base_output = list()
         # A list of folders
         self.__folder_output = list()
 
@@ -92,7 +87,7 @@ class sppasVideoCoordsWriter(object):
         self.__fps = fps
 
         # The dictionary of options
-        self.output = {"csv": False, "video": False, "folder": False}
+        self.__output = {"csv": False, "video": False, "folder": False}
 
         # The framing to use, face or portrait
         self.__framing = None
@@ -132,6 +127,12 @@ class sppasVideoCoordsWriter(object):
         # Delete video files if already exists
         video_path = glob.glob(self.__vfile_path())
         for f in video_path:
+            if os.path.exists(f) is True:
+                os.remove(f)
+
+        # Delete video files if already exists
+        usable_path = glob.glob(self.__base_path())
+        for f in usable_path:
             if os.path.exists(f) is True:
                 os.remove(f)
 
@@ -210,6 +211,25 @@ class sppasVideoCoordsWriter(object):
 
     # -----------------------------------------------------------------------
 
+    def __base_path(self, index=None):
+        """Return the complete path of the video file.
+
+        :param index: (int) The int to add is the name of the video file.
+
+        """
+        if index is not None:
+            index = int(index)
+            if isinstance(index, int) is False:
+                raise TypeError
+
+        if index is None:
+            path = self.__path + self.__video_name + "_*" + self.get_pattern() + "_usable" + ".avi"
+        else:
+            path = self.__path + self.__video_name + "_" + str(index) + self.get_pattern() + "_usable" + ".avi"
+        return path
+
+    # -----------------------------------------------------------------------
+
     def __vfile_path(self, index=None):
         """Return the complete path of the video file.
 
@@ -250,7 +270,7 @@ class sppasVideoCoordsWriter(object):
 
     def get_csv(self):
         """Return True if the option csv is enabled."""
-        return self.output["csv"]
+        return self.__output["csv"]
 
     # -----------------------------------------------------------------------
 
@@ -263,13 +283,13 @@ class sppasVideoCoordsWriter(object):
         value = bool(value)
         if isinstance(value, bool) is False:
             raise TypeError
-        self.output["csv"] = value
+        self.__output["csv"] = value
 
     # -----------------------------------------------------------------------
 
     def get_video(self):
         """Return True if the option video is enabled."""
-        return self.output["video"]
+        return self.__output["video"]
 
     # -----------------------------------------------------------------------
 
@@ -282,13 +302,13 @@ class sppasVideoCoordsWriter(object):
         value = bool(value)
         if isinstance(value, bool) is False:
             raise TypeError
-        self.output["video"] = value
+        self.__output["video"] = value
 
     # -----------------------------------------------------------------------
 
     def get_folder(self):
         """Return True if the option folder is enabled."""
-        return self.output["folder"]
+        return self.__output["folder"]
 
     # -----------------------------------------------------------------------
 
@@ -301,7 +321,7 @@ class sppasVideoCoordsWriter(object):
         value = bool(value)
         if isinstance(value, bool) is False:
             raise TypeError
-        self.output["folder"] = value
+        self.__output["folder"] = value
 
     # -----------------------------------------------------------------------
 
@@ -444,104 +464,166 @@ class sppasVideoCoordsWriter(object):
 
     # -----------------------------------------------------------------------
 
-    def write(self, buffer):
+    def process(self, buffer):
         """Browse the buffer.
 
         :param buffer: (VideoBuffer) The buffer which contains images.
 
         """
-        # If any option is enabled use only the csv outputs files
-        if self.__framing is None and self.__mode is None and self.__draw is None:
-            self.set_video(False)
-            self.set_folder(False)
+        # Verify the options
+        self.__verify_options(buffer)
 
         # Initialise the iterator
         iterator = buffer.__iter__()
 
         # Loop over the buffer
-        for j in range(0, buffer.__len__()):
+        for frameID in range(0, buffer.__len__()):
 
             # Go to the next frame
             img = next(iterator)
 
+            image1 = img.copy()
+            image2 = img.copy()
+
             # If image in the overlap continue
-            if j < buffer.get_overlap():
+            if frameID < buffer.get_overlap():
                 continue
 
             # Loop over the persons
             for i in range(buffer.nb_persons()):
-                # Copy the image
-                image = img.copy()
 
-                # If any visage has been detected continue
-                if buffer.get_landmark(i, j) is None:
-                    continue
+                # If tracking process has been used
+                if buffer.is_tracked() is True:
+                    # If any visage has been detected continue
+                    if buffer.get_coordinate(i, frameID) is None:
+                        continue
 
-                # If the Tracking process has been used
-                # apply modification for each person detected
-                if buffer.is_empty() is False:
-                    self.write_tracked(buffer, image, i, j)
+                # If landmark process has been used
+                elif buffer.is_landmarked() is True:
+                    # If any visage has been detected continue
+                    if buffer.get_landmark(i, frameID) is None:
+                        continue
 
-                # Else apply modification for the only person
-                # on the video
-                else:
-                    self.write_not_tracked(buffer, image, j)
+                # Write the usable output videos
+                self.__manage_usable(buffer, image1, i, frameID)
+
+                # If any option is enabled use only the csv outputs files
+                option = self.__framing is None and self.__mode is None and self.__draw is None
+                if option is False:
+                    # Write the outputs
+                    self.__manage_verification(buffer, image2, i, frameID)
 
             # Increment the number of image by 1
             self.__number += 1
 
     # -----------------------------------------------------------------------
 
-    def write_tracked(self, buffer, image, index, frameID):
-        """Apply modification for each person.
+    def __verify_options(self, buffer):
+        """Verify the option values.
 
         :param buffer: (VideoBuffer) The buffer which contains images.
-        :param image: (numpy.ndarray) The image to be processed.
-        :param index: (int) The index of the person.
-        :param frameID: (int) The index of the image in the buffer.
 
         """
-        # If draw is not None draw the shape on landmarks points
-        if self.get_draw() is not None:
-            self.__draw_points(image, buffer.get_landmark(index, frameID), index)
+        # If only mode has been setted and equal to full
+        if self.get_mode() == "full" and self.get_framing() is None:
+            # Set framing to face
+            self.set_framing("face")
 
-        if self.__framing == "portrait":
-            portrait(buffer.get_coordinate(index, frameID))
+        # If only framing has been setted and equal to face
+        if self.get_framing() == "face" and self.get_mode() is None:
+            # Set mode to full
+            self.set_mode("full")
 
-        # If mode != full adjust images
-        if self.__mode != "full" and self.__mode is not None:
-            self.__adjust(image, buffer.get_coordinate(index, frameID))
+        # If only mode has been setted and equal to crop
+        if self.get_mode() == "crop" and self.get_framing() is None:
+            # Set framing to portrait
+            self.set_framing("portrait")
 
-        # Use one of the extraction options
-        if self.__mode is not None:
-            image = self.__process_image(image, buffer.get_coordinate(index, frameID), index)
+        # If only framing has been setted and equal to portrait
+        if self.get_framing() == "portrait" and self.get_mode() is None:
+            # Set mode to crop
+            self.set_mode("crop")
 
-        # If mode != full resize images
-        if self.__mode != "full" and self.__mode is not None:
-            image = self.__resize(image)
-
-        # Store the width and the height of the image
-        (h, w) = image.shape[:2]
-
-        # Create the output files
-        self.__create_out(buffer.nb_persons(), w, h)
-
-        # Write the image in csv file, video, folder
-        self.__write(image, index, buffer.get_coordinate(index, frameID))
+        # If option are the same as the one for the usable output videos
+        if self.get_framing() == "portrait" and self.get_mode() == "crop" and \
+                self.get_draw() is None or buffer.is_landmarked() is False:
+            # Set output video to False
+            self.set_video(False)
 
     # -----------------------------------------------------------------------
 
-    def write_not_tracked(self, buffer, image, frameID):
-        """Apply modification for the person.
+    def __manage_usable(self, buffer, image, index, frameID):
+        """Manage the creation of one of the usable output video.
 
         :param buffer: (VideoBuffer) The buffer which contains images.
         :param image: (numpy.ndarray) The image to be processed.
-        :param frameID: (int) The index of the image in the buffer.
+        :param index: (int) The ID of the person.
+        :param frameID: (int) The ID of the image in the buffer.
 
         """
-        # If draw is not None draw the shape on landmarks points
-        if self.get_draw() is not None:
-            self.__draw_points(image, buffer.get_landmark(0, frameID), 0)
+        # If tracking process has been used
+        if buffer.is_tracked() is True:
+            # Create the usable image
+            image = self.__apply_usable(buffer, image, index, frameID)
+
+        # Store the width and the height of the image
+        (h, w) = image.shape[:2]
+
+        # Create the usable output videos
+        self.__out_base(buffer.nb_persons(), w, h)
+
+        # Write the image in usable output video
+        self.__write_base(image, index)
+
+    # -----------------------------------------------------------------------
+
+    def __apply_usable(self, buffer, image, index, frameID):
+        """Modify the image for the usable output video.
+
+        :param buffer: (VideoBuffer) The buffer which contains images.
+        :param image: (numpy.ndarray) The image to be processed.
+        :param index: (int) The ID of the person.
+        :param frameID: (int) The ID of the image in the buffer.
+
+        """
+        # Copy the Coordinates object in the buffer
+        coord = buffer.get_coordinate(index, frameID).copy()
+
+        # Make portrait with coordinates
+        portrait(coord)
+
+        # Adjust the coordinate
+        self.__adjust(image, coord)
+
+        # Crop the image
+        base_image = crop(image, coord)
+
+        # Resize the image
+        base_image = self.__resize(base_image)
+
+        return base_image
+
+    # -----------------------------------------------------------------------
+
+    def __manage_verification(self, buffer, image, index, frameID):
+        """Manage the creation of the verification outputs.
+
+        :param buffer: (VideoBuffer) The buffer which contains images.
+
+        """
+        if self.get_mode() != "full":
+            # Copy the image
+            image = image.copy()
+
+        # If the landmark process has been used
+        if buffer.is_landmarked() is True:
+            # Apply modification
+            self.__apply_landmarked(buffer, image, index, frameID)
+
+        # If the tracking process has been used
+        if buffer.is_tracked() is True:
+            # Aplly modification
+            image = self.__apply_tracked(buffer, image, index, frameID)
 
         # Store the width and the height of the image
         (h, w) = image.shape[:2]
@@ -550,7 +632,60 @@ class sppasVideoCoordsWriter(object):
         self.__create_out(buffer.nb_persons(), w, h)
 
         # Write the image in csv file, video, folder
-        self.__write(image, 0)
+        try:
+            self.__write(image, index, buffer.get_coordinate(index, frameID))
+        except IndexError:
+            self.__write(image, index)
+
+    # -----------------------------------------------------------------------
+
+    def __apply_tracked(self, buffer, image, index, frameID):
+        """Apply modification based on the tracking.
+
+        :param buffer: (VideoBuffer) The buffer which contains images.
+        :param image: (numpy.ndarray) The image to be processed.
+        :param index: (int) The ID of the person.
+        :param frameID: (int) The ID of the image in the buffer.
+
+        """
+        # If portrait option has been selected
+        if self.__framing == "portrait":
+            # Transform Coordinates into portrait
+            portrait(buffer.get_coordinate(index, frameID))
+
+        # If mode is not full
+        if self.__mode != "full" and self.__mode is not None:
+            # Adjust the Coordinates
+            self.__adjust(image, buffer.get_coordinate(index, frameID))
+
+        # If a mode has been selected
+        if self.__mode is not None:
+            # Use one of the extraction options
+            image = self.__process_image(image, buffer.get_coordinate(index, frameID), index)
+
+        # If mode is not full
+        # or if a mode has been selected
+        if self.__mode != "full" and self.__mode is not None:
+            # Resize the image
+            image = self.__resize(image)
+
+        return image
+
+    # -----------------------------------------------------------------------
+
+    def __apply_landmarked(self, buffer, image, index, frameID):
+        """Apply modification based on the landmark.
+
+        :param buffer: (VideoBuffer) The buffer which contains images.
+        :param image: (numpy.ndarray) The image to be processed.
+        :param index: (int) The ID of the person.
+        :param frameID: (int) The ID of the image in the buffer.
+
+        """
+        # If draw is not None
+        if self.get_draw() is not None:
+            # Draw the shape on landmarks points
+            self.__draw_points(image, buffer.get_landmark(index, frameID), index)
 
     # -----------------------------------------------------------------------
 
@@ -559,7 +694,7 @@ class sppasVideoCoordsWriter(object):
 
         :param img_buffer: (numpy.ndarray) The image to be processed.
         :param coords: (Coordinates) The coordinates of the face.
-        :param index: (int) The index of the person in the list of person.
+        :param index: (int) The ID of the person in the list of person.
 
         """
         index = int(index)
@@ -570,14 +705,17 @@ class sppasVideoCoordsWriter(object):
         if isinstance(coords, Coordinates) is False:
             raise TypeError
 
-        # If mode == full, draw a square around the face.
+        # If mode is full
         if self.__mode == "full":
             # Get a different color for each person
             number = (index * 80) % 120
+
+            # Draw a square around the face
             return surrond_square(img_buffer, coords, number)
 
-        # If mode == crop, crop the face.
+        # If mode is crop
         elif self.__mode == "crop":
+            # Crop the face
             return crop(img_buffer, coords)
 
     # -----------------------------------------------------------------------
@@ -769,6 +907,30 @@ class sppasVideoCoordsWriter(object):
 
     # -----------------------------------------------------------------------
 
+    def __out_base(self, value, width=640, height=480):
+        """Create video writer for each person.
+
+        :param value: (int) The number of person to extract.
+        :param width: (int) The width of the videos.
+        :param height: (int) The height of the videos.
+
+        """
+        value = int(value)
+        if isinstance(value, int) is False:
+            raise TypeError
+
+        # Loop over the number of persons on the video
+        for i in range(1, value + 1):
+            # Create the path
+            path = os.path.join(self.__base_path(i))
+
+            # If the output video does not exist create it
+            if os.path.exists(path) is False:
+                self.__base_output.append(cv2.VideoWriter(path, VideoWriter_fourcc(*'MJPG'),
+                                                          self.__fps, (width, height)))
+
+    # -----------------------------------------------------------------------
+
     def __out_folder(self, value):
         """Create folder for each person.
 
@@ -802,14 +964,45 @@ class sppasVideoCoordsWriter(object):
         :param coordinate: (Coordinates) The Coordinates object.
 
         """
+        # Write the image in a csv file
+        self.__write_csv(image, index, coordinate)
+
+        # Write the image in a video
+        self.__write_video(image, index)
+
+        # Write the image in a folder
+        self.__write_folder(image, index)
+
+    # -----------------------------------------------------------------------
+
+    def __write_csv(self, image, index, coordinate=None):
+        """Write the image in a csv file.
+
+        :param image: (numpy.ndarray) The image to be processed.
+        :param index: (int) The index of the coordinate.
+        :param coordinate: (Coordinates) The Coordinates object.
+
+        """
         # If csv option is True write the image in the good csv file.
-        if self.output["csv"] is True:
-            self.__csv_output[index].writerow(
-                [self.__number, image, coordinate.x, coordinate.y, coordinate.w, coordinate.h])
+        if self.get_csv() is True:
+            if coordinate is not None:
+                self.__csv_output[index].writerow(
+                    [self.__number, image, coordinate.x, coordinate.y, coordinate.w, coordinate.h])
+            else:
+                self.__csv_output[index].writerow(
+                    [self.__number, image])
 
+    # -----------------------------------------------------------------------
+
+    def __write_video(self, image, index):
+        """Write the image in a video.
+
+        :param image: (numpy.ndarray) The image to be processed.
+        :param index: (int) The index of the coordinate.
+
+        """
         # If the video option is True write the image in the good video writer.
-        if self.output["video"] is True:
-
+        if self.get_video() is True:
             # If mode equal full create only one output video
             if self.__mode == "full" or self.__draw is not None and self.__mode is None:
                 index = 0
@@ -817,8 +1010,17 @@ class sppasVideoCoordsWriter(object):
             else:
                 self.__video_output[index].write(image)
 
+    # -----------------------------------------------------------------------
+
+    def __write_folder(self, image, index):
+        """Write the image in a folder.
+
+        :param image: (numpy.ndarray) The image to be processed.
+        :param index: (int) The index of the coordinate.
+
+        """
         # If the folder option is True write the image in the good folder.
-        if self.output["folder"] is True:
+        if self.get_folder() is True:
 
             # If mode equal full create only one output folder
             if self.__mode == "full" or self.__draw is not None and self.__mode is None:
@@ -828,3 +1030,15 @@ class sppasVideoCoordsWriter(object):
                 cv2.imwrite(self.__folder_output[index] + "image" + str(self.__number) + ".jpg", image)
 
     # -----------------------------------------------------------------------
+
+    def __write_base(self, image, index):
+        """Write the image in csv files, videos, and folders.
+
+        :param image: (numpy.ndarray) The image to be processed.
+        :param index: (int) The index of the coordinate.
+
+        """
+        self.__base_output[index].write(image)
+
+    # -----------------------------------------------------------------------
+

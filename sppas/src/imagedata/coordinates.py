@@ -321,6 +321,12 @@ class Coordinates(object):
 
     # -----------------------------------------------------------------------
 
+    def copy(self):
+        """Return a copy of the current Coordinates."""
+        return Coordinates(self.x, self.y, self.w, self.h)
+
+    # -----------------------------------------------------------------------
+
     def __str__(self):
         return "confidence :" + str(self.get_confidence()) + "\n" \
                "x: " + str(self.get_x()) + "\n" \
