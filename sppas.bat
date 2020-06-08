@@ -49,7 +49,7 @@ SET PYTHONIOENCODING=UTF-8
 WHERE pythonw3.exe >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
 
-    start "" pythonw3.exe .\sppas\bin\sppasgui.py
+    start "" pythonw3.exe -m sppas
     exit
 
 ) else (
@@ -58,7 +58,7 @@ if %ERRORLEVEL% EQU 0 (
     if %ERRORLEVEL% EQU 0 (
 
         color 1E
-        start "" python3.exe .\sppas\bin\sppasgui.py
+        start "" python3.exe -m sppas
         exit
 
     ) else (

@@ -33,16 +33,43 @@
 
 Global exceptions for sppas.
 
+    - main exception: 000
+    - type errors: 100-series
+    - index errors: 200-series
+    - value errors: 300-series
+    - key errors: 400-series
+    - os errors: 500-series
+    - IO errors: 600-series
+
 """
 
 from sppas.src.config import error
 
 
 # -----------------------------------------------------------------------
+# Main errors
+# -----------------------------------------------------------------------
+
+
+class sppasError(Exception):
+    """:ERROR 0000:.
+
+    The following error occurred: {message}.
+
+    """
+
+    def __init__(self, message):
+        self.parameter = error(0) + \
+                         (error(0, "globals")).format(message=message)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# -----------------------------------------------------------------------
 
 
 class sppasTypeError(TypeError):
-    """:ERROR 100:.
+    """:ERROR 0100:.
 
     {!s:s} is not of the expected type '{:s}'.
 
@@ -59,7 +86,7 @@ class sppasTypeError(TypeError):
 
 
 class sppasIndexError(IndexError):
-    """:ERROR 200:.
+    """:ERROR 0200:.
 
     Invalid index value {:d}.
 
@@ -75,26 +102,8 @@ class sppasIndexError(IndexError):
 # -----------------------------------------------------------------------
 
 
-class sppasKeyError(KeyError):
-    """:ERROR 250:.
-
-    Invalid key '{!s:s}' for data '{!s:s}'.
-
-    """
-
-    def __init__(self, data_name, value):
-        self.parameter = error(250) + \
-                         (error(250, "globals")).format(value, data_name)
-
-    def __str__(self):
-        return repr(self.parameter)
-
-
-# -----------------------------------------------------------------------
-
-
 class sppasValueError(ValueError):
-    """:ERROR 300:.
+    """:ERROR 0300:.
 
     Invalid value '{!s:s}' for '{!s:s}'.
 
@@ -110,16 +119,16 @@ class sppasValueError(ValueError):
 # -----------------------------------------------------------------------
 
 
-class InstallationError(OSError):
-    """:ERROR 500:.
+class sppasKeyError(KeyError):
+    """:ERROR 0400:.
 
-    Installation failed with error: {error}.
+    Invalid key '{!s:s}' for data '{!s:s}'.
 
     """
 
-    def __init__(self, error_msg):
-        self.parameter = error(500) + \
-                         (error(500, "install")).format(error=error_msg)
+    def __init__(self, data_name, value):
+        self.parameter = error(400) + \
+                         (error(400, "globals")).format(value, data_name)
 
     def __str__(self):
         return repr(self.parameter)
@@ -127,16 +136,53 @@ class InstallationError(OSError):
 # -----------------------------------------------------------------------
 
 
+class sppasInstallationError(OSError):
+    """:ERROR 0510:.
+
+    Installation failed with error: {error}.
+
+    """
+
+    def __init__(self, error_msg):
+        self.parameter = error(510) + \
+                         (error(510, "globals")).format(error=error_msg)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# -----------------------------------------------------------------------
+
+
+class sppasEnableFeatureError(OSError):
+    """:ERROR 0520:.
+
+    Feature {name} is not enabled; its installation should be processed first.
+
+    """
+
+    def __init__(self, name):
+        self.parameter = error(520) + \
+                         (error(520, "globals")).format(name=name)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+
+# -----------------------------------------------------------------------
+# Specialized Value errors (300-series)
+# -----------------------------------------------------------------------
+
+
 class NegativeValueError(ValueError):
-    """:ERROR 010:.
+    """:ERROR 0310:.
 
     Expected a positive value. Got {value}.
 
     """
 
     def __init__(self, value):
-        self.parameter = error('010') + \
-                         (error('010', "globals")).format(value=value)
+        self.parameter = error(310) + \
+                         (error(310, "globals")).format(value=value)
 
     def __str__(self):
         return repr(self.parameter)
@@ -145,36 +191,15 @@ class NegativeValueError(ValueError):
 
 
 class RangeBoundsException(ValueError):
-    """:ERROR 012:.
+    """:ERROR 0320:.
 
     Min value {} is bigger than max value {}.'
 
     """
 
     def __init__(self, min_value, max_value):
-        self.parameter = error('012') + \
-                         (error('012', "globals")).format(
-                             min_value=min_value,
-                             max_value=max_value)
-
-    def __str__(self):
-        return repr(self.parameter)
-
-
-# -----------------------------------------------------------------------
-
-
-class IndexRangeException(IndexError):
-    """:ERROR 014:.
-
-    List index {} out of range [{},{}].
-
-    """
-
-    def __init__(self, value, min_value, max_value):
-        self.parameter = error('014') + \
-                         (error('014', "globals")).format(
-                             value=value,
+        self.parameter = error(320) + \
+                         (error(320, "globals")).format(
                              min_value=min_value,
                              max_value=max_value)
 
@@ -185,15 +210,15 @@ class IndexRangeException(IndexError):
 
 
 class IntervalRangeException(ValueError):
-    """:ERROR 016:.
+    """:ERROR 0330:.
 
     Value {} is out of range [{},{}].
 
     """
 
     def __init__(self, value, min_value, max_value):
-        self.parameter = error('016') + \
-                         (error('016', "globals")).format(
+        self.parameter = error(330) + \
+                         (error(330, "globals")).format(
                              value=value,
                              min_value=min_value,
                              max_value=max_value)
@@ -204,16 +229,39 @@ class IntervalRangeException(ValueError):
 # -----------------------------------------------------------------------
 
 
-class IOExtensionException(IOError):
-    """:ERROR 110:.
+class IndexRangeException(ValueError):
+    """:ERROR 0340:.
+
+    List index {} out of range [{},{}].
+
+    """
+
+    def __init__(self, value, min_value, max_value):
+        self.parameter = error(340) + \
+                         (error(340, "globals")).format(
+                             value=value,
+                             min_value=min_value,
+                             max_value=max_value)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+
+# -----------------------------------------------------------------------
+# Specialized IO errors (600-series)
+# -----------------------------------------------------------------------
+
+
+class IOExtensionError(IOError):
+    """:ERROR 0610:.
 
     Unknown extension for filename '{:s}'
 
     """
 
     def __init__(self, filename):
-        self.parameter = error('110') + \
-                         (error('110', "globals")).format(filename)
+        self.parameter = error(610) + \
+                         (error(610, "globals")).format(filename)
 
     def __str__(self):
         return repr(self.parameter)
@@ -222,15 +270,15 @@ class IOExtensionException(IOError):
 
 
 class NoDirectoryError(IOError):
-    """:ERROR 112:.
+    """:ERROR 0620:.
 
     The directory {dirname} does not exist.
 
     """
 
     def __init__(self, dirname):
-        self.parameter = error(112) + \
-                         (error(112, "globals")).format(dirname=dirname)
+        self.parameter = error(620) + \
+                         (error(620, "globals")).format(dirname=dirname)
 
     def __str__(self):
         return repr(self.parameter)

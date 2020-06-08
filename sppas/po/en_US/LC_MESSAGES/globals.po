@@ -17,41 +17,47 @@ msgstr ""
 "Language: en_US\n"
 "X-Generator: Poedit 2.0.6\n"
 
-msgid ":ERROR 010: "
-msgstr "Expected a positive value. Got {value}."
-
-msgid ":ERROR 012: "
-msgstr "Min value {min_value} is bigger than max value {max_value}."
-
-msgid ":ERROR 014: "
-msgstr "List index {value} out of range [{min_value},{max_value}]"
-
-msgid ":ERROR 016: "
-msgstr "Value {value} out of range [{min_value},{max_value}]"
+msgid ":ERROR 000: "
+msgstr "The following error occurred: {message}."
 
 msgid ":ERROR 100: "
 msgstr "{!s:s} is not of the expected type '{:s}'."
 
-msgid ":ERROR 110: "
-msgstr "Unknown extension for filename {:s}"
-
-msgid ":ERROR 112: "
-msgstr "The directory {dirname} does not exist."
-
 msgid ":ERROR 200: "
 msgstr "Invalid index value {:d}."
-
-msgid ":ERROR 250: "
-msgstr "Invalid key '{!s:s}' for data '{!s:s}'"
 
 msgid ":ERROR 300: "
 msgstr "Invalid value '{!s:s}' for '{!s:s}'."
 
-msgid ":ERROR 500: "
+msgid ":ERROR 310: "
+msgstr "Expected a positive value. Got {value}."
+
+msgid ":ERROR 320: "
+msgstr "Min value {min_value} is bigger than max value {max_value}."
+
+msgid ":ERROR 340: "
+msgstr "List index {value} out of range [{min_value},{max_value}]."
+
+msgid ":ERROR 330: "
+msgstr "Value {value} out of range [{min_value},{max_value}]."
+
+msgid ":ERROR 400: "
+msgstr "Invalid key '{!s:s}' for data '{!s:s}'."
+
+msgid ":ERROR 510: "
 msgstr "Installation failed with error: {error}"
 
+msgid ":ERROR 520: "
+msgstr "Feature {name} is not enabled; its installation should be processed first."
+
+msgid ":ERROR 610: "
+msgstr "Unknown extension for filename {:s}."
+
+msgid ":ERROR 620: "
+msgstr "The directory {dirname} does not exist."
+
 msgid ":INFO 510: "
-msgstr "Installation of '{name}'"
+msgstr "Installation of '{name}'."
 
 msgid ":INFO 520: "
 msgstr "'{name}' not available on your OS."
@@ -63,10 +69,10 @@ msgid ":INFO 540: "
 msgstr "'{name}' is installed."
 
 msgid ":INFO 550: "
-msgstr "Installation of '{name}' failed"
+msgstr "Installation of '{name}' failed."
 
 msgid ":INFO 560: "
-msgstr "Installation finished"
+msgstr "Installation finished."
 
 msgid ":INFO 570: "
 msgstr "'{name}' does not match any valid package."

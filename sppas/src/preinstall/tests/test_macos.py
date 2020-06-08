@@ -35,7 +35,7 @@
 
 import unittest
 
-from sppas.src.exc import InstallationError
+from sppas.src.exc import sppasInstallationError
 from sppas.src.preinstall.installer import MacOsInstaller
 
 # ---------------------------------------------------------------------------
@@ -61,9 +61,9 @@ class TestInstallerMacOs(unittest.TestCase):
 
     def test_install_package(self):
         """Install package."""
-        with self.assertRaises(InstallationError):
+        with self.assertRaises(sppasInstallationError):
             self.assertFalse(self.__macos._install_package("juliuussssss"))
-        with self.assertRaises(InstallationError):
+        with self.assertRaises(sppasInstallationError):
             self.assertFalse(self.__macos._install_package(4))
 
     # ---------------------------------------------------------------------------
@@ -118,10 +118,8 @@ class TestInstallerMacOs(unittest.TestCase):
 
     def test_update_package(self):
         """Update package."""
-        with self.assertRaises(InstallationError):
+        with self.assertRaises(sppasInstallationError):
             self.assertFalse(self.__macos._update_package("wxpythonnnn", "4.0"))
-        with self.assertRaises(InstallationError):
+        with self.assertRaises(sppasInstallationError):
             self.assertFalse(self.__macos._update_package(4, "4.0"))
-
-    # ---------------------------------------------------------------------------
 

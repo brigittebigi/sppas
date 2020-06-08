@@ -36,7 +36,7 @@
 import unittest
 
 from sppas import sppasLogSetup
-from sppas.src.exc import InstallationError
+from sppas.src.exc import sppasInstallationError
 from sppas.src.preinstall.features import Features
 from sppas.src.preinstall.installer import Installer
 
@@ -106,7 +106,7 @@ class TestInstaller(unittest.TestCase):
 
     def test_install_pypis(self):
         # Manage the installation of pip packages.
-        with self.assertRaises(InstallationError):
+        with self.assertRaises(sppasInstallationError):
             self.__installer._Installer__install_pypi("wxpythonnnn")
 
         # Wont raise exception and wont return error message
@@ -117,7 +117,7 @@ class TestInstaller(unittest.TestCase):
     def test_search_pypi(self):
         self.assertTrue(self.__installer._Installer__search_pypi("pip"))
         self.assertFalse(self.__installer._Installer__search_pypi("wxpythonnnnnn"))
-        with self.assertRaises(InstallationError):
+        with self.assertRaises(sppasInstallationError):
             self.assertFalse(self.__installer._Installer__search_pypi(4))
 
     # ---------------------------------------------------------------------------
@@ -167,9 +167,9 @@ class TestInstaller(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_update_pypi(self):
-        with self.assertRaises(InstallationError):
+        with self.assertRaises(sppasInstallationError):
             self.__installer._Installer__update_pypi("wxpythonnnn")
-        with self.assertRaises(InstallationError):
+        with self.assertRaises(sppasInstallationError):
             self.assertFalse(self.__installer._Installer__update_pypi(4))
 
         self.__installer._Installer__update_pypi("pip")

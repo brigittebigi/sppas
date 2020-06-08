@@ -37,10 +37,9 @@ import shutil
 import shlex
 import subprocess
 
-from sppas.src.exc import InstallationError
+from sppas.src.exc import sppasInstallationError
 from sppas.src.utils.makeunicode import u
 from sppas.src.config import info
-# from sppas.src.config.process import Process
 
 from .features import Features
 
@@ -264,7 +263,7 @@ class Installer(object):
                         self.__install_packages(fid)
                     if len(self._features.pypi(fid)) > 0:
                         self.__install_pypis(fid)
-                except InstallationError as e:
+                except sppasInstallationError as e:
                     self._features.enable(fid, False)
                     self.__pmessage(self.__message("install_failed", fid))
                     errors.append(str(e))
@@ -295,7 +294,7 @@ class Installer(object):
             process = ProcessRunner()
             process.run("python3 -m pip install --upgrade pip")
         except Exception as e:
-            raise InstallationError(str(e))
+            raise sppasInstallationError(str(e))
 
     # ------------------------------------------------------------------------
 
@@ -316,7 +315,7 @@ class Installer(object):
         """Execute a system command for a feature.
 
         :param fid: (str) Identifier of a feature
-        :raises: InstallationError()
+        :raises: sppasInstallationError
 
         """
         err = ""
@@ -332,10 +331,10 @@ class Installer(object):
                 if len(stdout) > 3:
                     logging.info(stdout)
             except Exception as e:
-                raise InstallationError(str(e))
+                raise sppasInstallationError(str(e))
 
         if len(err) > 3:
-            raise InstallationError(err)
+            raise sppasInstallationError(err)
 
         self.__pupdate(fid, MESSAGES["install_success"].format(name=fid))
 
@@ -345,7 +344,7 @@ class Installer(object):
         """Manage installation of system packages.
 
         :param fid: (str) Identifier of a feature
-        :raises: InstallationError()
+        :raises: sppasInstallationError
 
         """
         for package, version in self._features.packages(fid).items():
@@ -363,7 +362,7 @@ class Installer(object):
         """Manage the installation of pip packages.
 
         :param fid: (str) Identifier of a feature
-        :raises: InstallationError()
+        :raises: sppasInstallationError
 
         """
         for package, version in self._features.pypi(fid).items():
@@ -503,7 +502,7 @@ class Installer(object):
             if len(err) > 3 or len(stdout) == 0:
                 return False
         except Exception as e:
-            raise InstallationError(str(e))
+            raise sppasInstallationError(str(e))
 
         return True
 
@@ -513,7 +512,7 @@ class Installer(object):
         """Install a Python Pypi package.
 
         :param package: (str) The pip package to install
-        :raises: InstallationError()
+        :raises: sppasInstallationError
 
         """
         try:
@@ -527,10 +526,10 @@ class Installer(object):
             if len(stdout) > 3:
                 logging.info(stdout)
         except Exception as e:
-            raise InstallationError(str(e))
+            raise sppasInstallationError(str(e))
 
         if len(err) > 3:
-            raise InstallationError(err)
+            raise sppasInstallationError(err)
 
     # ------------------------------------------------------------------------
 
@@ -601,7 +600,7 @@ class Installer(object):
         """Update package.
 
         :param package: (str) The pip package to update.
-        :raises: InstallationError()
+        :raises: sppasInstallationError
 
         """
         try:
@@ -612,14 +611,14 @@ class Installer(object):
             process.run(command)
             logging.info("Return code: {}".format(process.status()))
         except Exception as e:
-            raise InstallationError(str(e))
+            raise sppasInstallationError(str(e))
 
         err = u(process.error().strip())
         stdout = u(process.out())
         if len(stdout) > 3:
             logging.info(stdout)
         if len(err) > 3:
-            raise InstallationError(err)
+            raise sppasInstallationError(err)
 
 # ----------------------------------------------------------------------------
 
@@ -656,7 +655,7 @@ class DebianInstaller(Installer):
             process = ProcessRunner()
             process.run(command)
         except Exception as e:
-            raise InstallationError(str(e))
+            raise sppasInstallationError(str(e))
 
         err = process.error()
         if len(err) > 3:
@@ -679,7 +678,7 @@ class DebianInstaller(Installer):
             process = ProcessRunner()
             process.run(command)
         except Exception as e:
-            raise InstallationError(str(e))
+            raise sppasInstallationError(str(e))
 
         stdout = process.out()
         if len(stdout) > 3:
@@ -687,7 +686,7 @@ class DebianInstaller(Installer):
 
         err = process.error()
         if len(err) > 3 and "WARNING" not in err:
-            raise InstallationError(err)
+            raise sppasInstallationError(err)
 
     # -----------------------------------------------------------------------
 
@@ -945,7 +944,7 @@ class MacOsInstaller(Installer):
                 return True
             return False
         except Exception as e:
-            raise InstallationError(str(e))
+            raise sppasInstallationError(str(e))
 
     # ------------------------------------------------------------------------
 
@@ -953,7 +952,7 @@ class MacOsInstaller(Installer):
         """Install package.
 
         :param package: (str) The system package to install.
-        :raise: InstallationError() if an error occurred
+        :raises: sppasInstallationError
 
         """
         try:
@@ -967,14 +966,14 @@ class MacOsInstaller(Installer):
                 logging.info(stdout)
 
         except Exception as e:
-            raise InstallationError(str(e))
+            raise sppasInstallationError(str(e))
 
         if len(err) > 3:
             if "Warning: You are using macOS" in err:
                 if self._search_package(package) is False:
-                    raise InstallationError(err)
+                    raise sppasInstallationError(err)
             else:
-                raise InstallationError(err)
+                raise sppasInstallationError(err)
 
     # ------------------------------------------------------------------------
 
@@ -993,10 +992,10 @@ class MacOsInstaller(Installer):
             process.run(command)
             err = process.error()
         except Exception as e:
-            raise InstallationError(str(e))
+            raise sppasInstallationError(str(e))
 
         if len(err) > 3:
-            raise InstallationError(err)
+            raise sppasInstallationError(err)
         stdout = process.out()
         return not self._need_update_package(stdout, req_version)
 
@@ -1059,11 +1058,11 @@ class MacOsInstaller(Installer):
             if len(stdout) > 3:
                 logging.info(stdout)
         except Exception as e:
-            raise InstallationError(str(e))
+            raise sppasInstallationError(str(e))
 
         if len(err) > 3:
             if "Warning: You are using macOS" or "already installed" in err:
                 if self._version_package(package, req_version) is False:
-                    raise InstallationError(err)
+                    raise sppasInstallationError(err)
             else:
-                raise InstallationError(err)
+                raise sppasInstallationError(err)
