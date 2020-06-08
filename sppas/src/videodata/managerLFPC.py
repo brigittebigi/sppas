@@ -211,9 +211,3 @@ class ManagerLFPC(object):
 
     # -----------------------------------------------------------------------
 
-
-# "../../../../../video_test/LFPC_test_1.mp4"
-# "../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4"
-manager = ManagerLFPC("../../../../../video_test/LFPC_test_1.mp4", 100, draw="circle", v_value=True, f_value=True)
-manager.launch_process()
-
