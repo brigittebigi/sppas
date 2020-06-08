@@ -35,8 +35,10 @@
 import os
 
 from sppas.src.config import sppasPathSettings
-from sppas.src.videodata.personsbuffer import PersonsBuffer
-from sppas.src.imagedata.coordinates import Coordinates
+from sppas import separators
+
+from sppas.src.imagedata.imageutils import rotate, add_image
+
 
 # ---------------------------------------------------------------------------
 
@@ -55,31 +57,12 @@ class VideoTagLFPC(object):
 
     """
 
-    def __init__(self, tier, buffer_size, nb_frames, fps):
-        """Create a new VideoTagLFPC instance.
-
-        :param tier: (Idk) The ID of the keys(picote).
-        :param buffer_size: (int) The size of the buffer.
-        :param nb_frames: (int) The number of frame in the video.
-        :param fps: (int) The fps of the video.
-
-        """
-        # The size of the buffer
-        self.__size = buffer_size
-
-        # The duration of the video(milliseconds)
-        self.__duration = int(nb_frames * fps)
-
-        # The fps of the video
-        self.__fps = fps
+    def __init__(self):
+        """Create a new VideoTagLFPC instance."""
 
         # The list of hands
         self.__hands = list()
         self.__init_hands()
-
-        # The list of transcription
-        self.__transcription = list()
-        self.__init_transcription(tier)
 
     # -----------------------------------------------------------------------
 
@@ -88,51 +71,10 @@ class VideoTagLFPC(object):
         for i in range(9):
             try:
                 filename = "hand-lfpc-" + str(i) + ".png"
-                path = os.path.join(sppasPathSettings().etc, "image", filename)
+                path = os.path.join(sppasPathSettings().etc, "lpc", filename)
                 self.__hands.append(path)
             except OSError:
                 return "File does not exist"
-
-    # -----------------------------------------------------------------------
-
-    def __init_transcription(self, transcription):
-        """Init the transcription list.
-
-        :param transcription: (Idk) The object which contain audio transcription.
-
-        """
-        # Browse the transcription and add each "syllabe" in the private list
-        for i in range(400):
-            # Bla bla bla
-
-            # Add it in the transcription list
-            self.__transcription.append((0, 1, "consonant_ID", "vowel_ID"))
-
-        self.__transform_transcription()
-
-    # -----------------------------------------------------------------------
-
-    def __transform_transcription(self):
-        """Convert the transcription list into something useful."""
-        list_syllabe = list()
-
-        # Loop over the transcription
-        for syllable in self.__transcription:
-
-            # Duration equal "end_time" - "start_time"
-            duration = syllable[1] - syllable[0]
-
-            # nb_frames = duration(ms) / fps(images/second)
-            nb_frame = int(duration / self.__fps)
-
-            # Determine the hand and the position for the syllable
-            for i in range(nb_frame):
-                # Add it in the list
-                list_syllabe.append((syllable[2], syllable[3]))
-
-        # Replace the transcription list
-        self.__transcription.clear()
-        self.__transcription = list_syllabe
 
     # -----------------------------------------------------------------------
 
@@ -192,19 +134,27 @@ class VideoTagLFPC(object):
 
     # -----------------------------------------------------------------------
 
-    def process(self, buffer):
-        """Launch the tag process."""
-        for i in range(len(buffer)):
-            # Store the lfpc code in a var
-            lfpc_code = self.__transcription[i + buffer.get_frame() - buffer.get_size()]
+    def tag(self, image, lpc_code, landmarks):
+        """Tag the image according to the lpc_code.
 
-            # Store the path of the hand to use
-            path = lfpc_code[0]
+        :param image: (numpy.ndarray) The image to be processed.
+        :param lpc_code: (string) The LPC code for the syllable.
+        :param landmarks: (list) The list a landmark points.
 
-            # Determine the position of the hand on the face
-            x, y = self.calcul_position(lfpc_code[1], buffer.get_landmark(0, i))
+        """
+        # Store the width and the height of the image
+        h, w = image.shape[:2]
 
-            # Add in a new buffer
-            buffer.add_lfpc((path, x, y))
+        # Store the consonant and the vowel code separately
+        codes = lpc_code.split(separators.phonemes)
+        consonant_code = codes[0]
+        vowel_code = codes[0]
+
+        # Get the coordinates of the vowel
+        x, y = self.calcul_position(vowel_code, landmarks)
+
+        # Tag the image
+        add_image(image, self.__hands[consonant_code], x, y, w, h)
 
     # -----------------------------------------------------------------------
+

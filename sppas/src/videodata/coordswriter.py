@@ -479,15 +479,15 @@ class sppasVideoCoordsWriter(object):
         # Loop over the buffer
         for frameID in range(0, buffer.__len__()):
 
+            # If image in the overlap continue
+            if frameID < buffer.get_overlap():
+                continue
+
             # Go to the next frame
             img = next(iterator)
 
             image1 = img.copy()
             image2 = img.copy()
-
-            # If image in the overlap continue
-            if frameID < buffer.get_overlap():
-                continue
 
             # Loop over the persons
             for i in range(buffer.nb_persons()):
@@ -504,12 +504,14 @@ class sppasVideoCoordsWriter(object):
                     if buffer.get_landmark(i, frameID) is None:
                         continue
 
-                # Write the usable output videos
-                self.__manage_usable(buffer, image1, i, frameID)
+                if self.__width != -1 and self.__height != -1:
+                    # Write the usable output videos
+                    self.__manage_usable(buffer, image1, i, frameID)
 
                 # If any option is enabled use only the csv outputs files
                 option = self.__framing is None and self.__mode is None and self.__draw is None
-                if option is False:
+                if option is False and \
+                        self.get_csv() is True and self.get_video() is True and self.get_folder() is True:
                     # Write the outputs
                     self.__manage_verification(buffer, image2, i, frameID)
 
@@ -549,6 +551,11 @@ class sppasVideoCoordsWriter(object):
                 self.get_draw() is None or buffer.is_landmarked() is False:
             # Set output video to False
             self.set_video(False)
+
+        # If only landmark process has been used
+        if buffer.is_landmarked() is True and buffer.is_tracked() is False:
+            # Set the csv output to False
+            self.set_csv(False)
 
     # -----------------------------------------------------------------------
 
@@ -611,7 +618,8 @@ class sppasVideoCoordsWriter(object):
         :param buffer: (VideoBuffer) The buffer which contains images.
 
         """
-        if self.get_mode() != "full":
+        if self.get_mode() != "full" and self.get_mode() is not None or \
+                self.get_mode() is not None and self.get_framing() is not None and self.get_draw() is None:
             # Copy the image
             image = image.copy()
 

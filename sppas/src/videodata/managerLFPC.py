@@ -51,7 +51,7 @@ class ManagerLFPC(object):
 
     """
 
-    def __init__(self, video, buffer_size, overlap=0, draw=None, pattern="-person", transcription=None,
+    def __init__(self, video, buffer_size, overlap=0, draw=None, pattern="-person", tier=None,
                  v_value=False, f_value=False):
         """Create a new ManagerLFPC instance.
 
@@ -76,11 +76,14 @@ class ManagerLFPC(object):
         self.__coords_writer.set_draw(draw)
 
         # Initialize the LFPC tagger
-        self.__lfpc_Tagger = VideoTagLFPC(transcription, self.__pBuffer.get_size(),
-                                          self.__pBuffer.get_frame_count(), self.__pBuffer.get_fps())
+        self.__lfpc_Tagger = VideoTagLFPC()
 
         # Initialize the landmark
         self.__landmarks = VideoLandmark()
+
+        # The list of transcription
+        self.__transcription = list()
+        self.__store_syllable(tier)
 
     # -----------------------------------------------------------------------
 
@@ -95,6 +98,9 @@ class ManagerLFPC(object):
             # Initialize the list of points for the faces with FaceLandmark
             self.__landmarks.process(self.__pBuffer)
 
+            # Launch the Tag process
+            self.__lfpc_tagging()
+
             # Launch the process of creation of the outputs
             self.__coords_writer.process(self.__pBuffer)
 
@@ -105,4 +111,109 @@ class ManagerLFPC(object):
         self.__pBuffer.close()
 
     # -----------------------------------------------------------------------
+
+    def __store_syllable(self, tier):
+        """Store the syllable from the tier object.
+
+        :param tier: (sppasTier)
+
+        """
+        prev_end_time = 0
+        prev_end_frame = 0
+
+        # For each LPC-syllable of the tier
+        for ann in tier:
+            # Get start time and end time in seconds
+            start_time, end_time = self.__get_interval_time(ann)
+
+            # Get the string of the C-V key codes
+            key_codes = ann.get_best_tag().get_content()
+
+            # There were a gap between the previous syllable and the current one
+            if start_time > prev_end_time:
+                pass
+
+            # If the code is valid
+            if len(key_codes) == 2:
+                # Store the duration of the syllable
+                duration = end_time - start_time
+                # Deduce the number of frames for the syllable
+                nb_frame = int(duration * self.__pBuffer.get_fps())
+                # Deduce the ID of the first frame of the syllable
+                first_frame = int(start_time / self.__pBuffer.get_fps())
+
+                # If there is a blank between the previous syllable and the current one
+                if prev_end_frame + 1 != first_frame:
+                    # Get the number of blank
+                    nb_none = (first_frame - prev_end_frame) - 1
+                    # Fill the blank with None
+                    for frame in range(nb_none):
+                        self.__transcription.append(None)
+
+                # Store the syllable in the transcription list
+                for frame in range(nb_frame):
+                    self.__transcription.append(key_codes)
+
+            # Set the new prev_end_time
+            prev_end_time = end_time
+
+            # Set the new prev_end_frame
+            prev_end_frame = len(self.__transcription) - 1
+
+    # -----------------------------------------------------------------------
+
+    def __lfpc_tagging(self):
+        """Call the tagging process for each syllable."""
+        iterator = self.__pBuffer.__iter__()
+        for frameID in range(len(self.__pBuffer)):
+            # If image in the overlap continue
+            if frameID < self.__pBuffer.get_overlap():
+                continue
+
+            # Get the image
+            frame = next(iterator)
+
+            # Get the LPC code
+            lpc_code = self.__transcription[frameID + self.__pBuffer.get_frame() - self.__pBuffer.get_size()]
+
+            # Get the landmark points
+            landmarks = self.__pBuffer.get_landmark(0, frameID)
+
+            # Tag the image with the LPC code
+            self.__lfpc_Tagger.tag(frame, lpc_code, landmarks)
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def __get_interval_time(ann):
+        """Return the interval in time of the given annotation.
+
+        :param ann: (sppasAnnotation)
+        :returns: (float, float) The interval includes the vagueness.
+
+        """
+        # location of the interval (sppasLocation instance)
+        location = ann.get_location()
+
+        # Localization of the interval (sppasPoint instances)
+        start_loc = location.get_lowest_localization()
+        end_loc = location.get_highest_localization()
+
+        # Time values with their vagueness added
+        start_time = start_loc.get_midpoint()
+        if start_loc.get_radius() is not None:
+            start_time -= start_loc.get_radius()
+        end_time = end_loc.get_midpoint()
+        if end_loc.get_radius() is not None:
+            end_time += end_loc.get_radius()
+
+        return float(start_time), float(end_time)
+
+    # -----------------------------------------------------------------------
+
+
+# "../../../../../video_test/LFPC_test_1.mp4"
+# "../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4"
+manager = ManagerLFPC("../../../../../video_test/LFPC_test_1.mp4", 100, draw="circle", v_value=True, f_value=True)
+manager.launch_process()
 
