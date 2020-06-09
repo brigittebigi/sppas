@@ -199,41 +199,18 @@ class sppasLexVar(sppasBaseRepet):
 
     # ----------------------------------------------------------------------
 
-    def set_source(self, start, end):
-        """Set the position of the source.
-
-        Setting the position of the source automatically resets the echos
-        because it's not correct to change the source of existing echos.
-
-        :param start: Start position of the source
-        :param end: End position of the source
-        :raises: ValueError, IndexError
-
-        """
-        s1 = int(start)
-        s2 = int(end)
-        if s1 > s2:
-            raise RangeBoundsException(s1, s2)
-        if s1 < 0 or s2 < 0:
-            raise ValueError
-
-        self.__sources.append((s1, s2))
-
-    # ----------------------------------------------------------------------
-
     def select(self, index, speaker):
         """Append (or not) an repetition.
 
         :param index: (int) end index of the entry of the source (speaker1)
-        :param speaker1: (DataSpeaker) Entries of speaker 1
+        :param speaker: (DataSpeaker) Entries of speaker 1
         :returns: (bool)
 
         """
         # Rule 1: keep any repetition containing at least 1 relevant token
         keep_me = self.__rules.rule_syntagme(0, index, speaker)
         if keep_me is True:
-            self.__sources.append([speaker[i] for i in range(0, index)])
-        return keep_me
+           return keep_me
 
     # ----------------------------------------------------------------------
 
@@ -270,7 +247,7 @@ class sppasLexVar(sppasBaseRepet):
         # Storing Data
         # ------------
 
-        # windowing the unicode list and creating dataSpeaker
+        # windowing the unicode list
         for window in self.window(content_list_tier1, window_size):
             window_list1.append(window)
 
@@ -284,10 +261,10 @@ class sppasLexVar(sppasBaseRepet):
             while y < len(window_list2):
                 data_spk2 = DataSpeaker(window_list2[y])
                 index = self.get_longest(data_spk1, data_spk2)
-                self.select(index, data_spk1)
+                if self.select(index, data_spk1):
+                    self.__sources.append(window_list1[i])
                 y += 1
             i += 1
-        print(self.__sources)
 
     # ----------------------------------------------------------------------
     # Patterns
