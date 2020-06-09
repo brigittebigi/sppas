@@ -33,11 +33,12 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import unittest
 import os
 from random import randint
 
-from sppas import u
+from sppas.src.utils import u
 from sppas.src.wkps import FileName, FileRoot, FilePath, sppasCatReference, sppasRefAttribute
 from sppas.src.wkps.filedatacompare import sppasFileBaseCompare
 from sppas.src.wkps.filedatacompare import sppasFileNameCompare

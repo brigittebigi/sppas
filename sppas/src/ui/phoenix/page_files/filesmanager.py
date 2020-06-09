@@ -36,7 +36,7 @@
 import os
 import wx
 
-from sppas import paths
+from sppas.src.config import paths
 
 from sppas.src.config import msg
 from sppas.src.wkps.workspace import States

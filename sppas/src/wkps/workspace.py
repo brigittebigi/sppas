@@ -86,7 +86,7 @@ import warnings
 import logging
 import uuid
 
-from sppas import sppasTypeError
+from sppas.src.exceptions import sppasTypeError
 
 from .filebase import States
 from .fileref import sppasCatReference

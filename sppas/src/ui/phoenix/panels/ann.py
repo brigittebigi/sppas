@@ -47,7 +47,7 @@ import json
 import xml.etree.cElementTree as ET
 import wx.richtext
 
-from sppas import paths
+from sppas.src.config import paths
 from sppas.src.utils import u
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata.aio.xra import sppasXRA

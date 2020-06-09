@@ -40,10 +40,10 @@
     :summary:      Test the reader/writer of SPPAS for Praat files.
 
 """
+
 import unittest
 import os
 
-from sppas import paths
 from sppas.src.utils.makeunicode import u
 
 from ..anndataexc import AioLineFormatError

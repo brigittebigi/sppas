@@ -1,0 +1,169 @@
+# ---------------------------------------------------------------------------
+#
+# This is the description file fra.txt, made by Brigitte Bigi.
+# It defines the phonemes, their classes, and their keys in the LfPC code.
+#
+# If you intend to change this file, please read SPPAS documentation before!
+#
+# Use of this file is governed by the GNU Public License, version 3.
+# This banner notice must not be removed.
+# Copyright (C) 2011-2020  Brigitte Bigi, Laboratoire Parole et Langage
+#
+# ---------------------------------------------------------------------------
+#
+# A syllable is always coded with a C-V sequence.
+# The vowel is represented by a position on the face, and the consonant
+# by an hand key.
+#
+# Example of use:
+# The word "Bonjour" is phonetized /b-O~-j-u-R/
+# It is syllabified /b-O~.j-u.R/ then converted to keys:
+#    /b-O~/ = 4-4
+#    /j-u/ = 7-2
+#    /R/ = 8-0
+# The first key always refers to a consonant and the second to a vowel.
+#
+# ---------------------------------------------------------------------------
+# By convention in this configuration file:
+#
+# - cnil substitutes a missing consonant.
+#   It will be used when there's no consonant before the vowel.
+#
+# - vnil substitutes a missing vowel.
+#   It will be used when there's no vowel after a consonant.
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# Here is the list of phonemes and their class.
+# ---------------------------------------------------------------------------
+# A phoneme/class definition is made as 3 columns:
+# 	- first column is the key-word "PHONCLASS";
+#	- second column is the phoneme;
+#	- third column is the class-symbol.
+#
+# It is important to note that:
+# 	- a vowel has to be mentioned with the class-symbol "V";
+# 	- a consonant has to be mentioned with the class-symbol "C";
+#	- the class-symbol for a break is "#".
+
+
+# The filled pause is not coded, it is considered a break.
+PHONCLASS fp #
+
+# List of French vowels, use V symbol
+PHONCLASS i V
+PHONCLASS e V
+PHONCLASS E V
+PHONCLASS a V
+PHONCLASS A V
+PHONCLASS O V
+PHONCLASS o V
+PHONCLASS u V
+PHONCLASS y V
+PHONCLASS 2 V
+PHONCLASS 9 V
+PHONCLASS @ V
+PHONCLASS e~ V
+PHONCLASS E~ V
+PHONCLASS a~ V
+PHONCLASS o~ V
+PHONCLASS O~ V
+PHONCLASS 9~ V
+PHONCLASS U~ V
+PHONCLASS EU V
+PHONCLASS eu V
+PHONCLASS oe V
+PHONCLASS U~/ V
+PHONCLASS A/ V
+PHONCLASS O/ V
+
+# Vowels added for Quebec French
+PHONCLASS 3 V
+PHONCLASS A~ V
+PHONCLASS I V
+PHONCLASS U V
+PHONCLASS Y V
+
+# List of French consonants
+
+PHONCLASS j C
+PHONCLASS H C
+PHONCLASS w C
+
+PHONCLASS l C
+PHONCLASS R C
+PHONCLASS r C
+
+PHONCLASS p C
+PHONCLASS t C
+PHONCLASS k C
+PHONCLASS b C
+PHONCLASS d C
+PHONCLASS g C
+PHONCLASS ? C
+
+PHONCLASS n C
+PHONCLASS m C
+PHONCLASS N C
+PHONCLASS J C
+
+PHONCLASS s C
+PHONCLASS S C
+PHONCLASS z C
+PHONCLASS Z C
+PHONCLASS v C
+PHONCLASS f C
+
+# ---------------------------------------------------------------------------
+# Must not be modified:
+
+PHONCLASS cnil C
+PHONCLASS vnil V
+
+# ---------------------------------------------------------------------------
+# Here is the list of key codes
+# ---------------------------------------------------------------------------
+
+PHONKEY cnil 5
+PHONKEY vnil 0
+
+PHONKEY A/ 3
+PHONKEY a 3
+PHONKEY A 3
+PHONKEY @ 1
+PHONKEY a~ 4
+PHONKEY A~ 4
+PHONKEY i 4
+PHONKEY e 5
+PHONKEY E 2
+PHONKEY 2 1
+PHONKEY U~/ 5
+PHONKEY 9 3
+PHONKEY O/ 2
+PHONKEY O~ 4
+PHONKEY o~ 4
+PHONKEY u 2
+PHONKEY y 5
+
+PHONKEY b 4
+PHONKEY d 1
+PHONKEY f 5
+PHONKEY g 3
+PHONKEY H 4
+PHONKEY j 7
+PHONKEY k 6
+PHONKEY l 2
+PHONKEY m 5
+PHONKEY n 4
+PHONKEY p 1
+PHONKEY R 8
+PHONKEY r 8
+PHONKEY s 8
+PHONKEY S 2
+PHONKEY t 5
+PHONKEY v 6
+PHONKEY w 2
+PHONKEY z 6
+PHONKEY Z 1
+

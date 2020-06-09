@@ -35,12 +35,12 @@
 
 import wx
 
-from sppas import sg
-from sppas import annots
-from sppas.src.wkps.fileref import sppasCatReference, sppasRefAttribute
-from sppas.src.wkps.filebase import States
+from sppas.src.config import sg
+from sppas.src.config import annots
 from sppas.src.config import msg
 from sppas.src.utils import u
+from sppas.src.wkps.fileref import sppasCatReference, sppasRefAttribute
+from sppas.src.wkps.filebase import States
 
 from ..windows import sppasDialog
 from ..windows import sppasPanel

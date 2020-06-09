@@ -40,8 +40,8 @@ import os
 import codecs
 import wx
 
-from sppas import sg
-from sppas import paths
+from sppas.src.config import sg
+from sppas.src.config import paths
 
 from ..windows import sppasPanel
 from ..windows import sppasTextCtrl

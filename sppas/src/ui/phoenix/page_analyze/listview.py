@@ -42,7 +42,7 @@ import wx
 import wx.dataview
 import wx.lib.newevent
 
-from sppas import paths
+from sppas.src.config import paths
 
 import sppas.src.audiodata.aio
 from sppas.src.anndata import sppasRW
@@ -669,7 +669,7 @@ class TrsListViewPanel(sppasBaseViewPanel):
         Add the appropriate metadata.
         The tiers, medias and controlled vocab lists are collapsed if empty.
 
-        :raises: IOExtensionException
+        :raises: IOExtensionError
 
         """
         parser = sppasRW(self._filename)

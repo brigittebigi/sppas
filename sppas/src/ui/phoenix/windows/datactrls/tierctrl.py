@@ -39,7 +39,7 @@ import logging
 import wx
 from math import ceil, floor
 
-from sppas import paths
+from sppas.src.config import paths
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasAnnotation

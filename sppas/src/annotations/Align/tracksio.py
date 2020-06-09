@@ -37,7 +37,7 @@ import codecs
 import logging
 import traceback
 
-from sppas import NoDirectoryError
+from sppas.src.exceptions import NoDirectoryError
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasLocation
 from sppas.src.anndata import sppasInterval

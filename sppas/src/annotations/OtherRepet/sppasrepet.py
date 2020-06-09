@@ -33,14 +33,14 @@
 
 """
 
-from sppas import symbols
-from sppas import sppasRW
-from sppas import sppasTranscription
-from sppas import sppasTier
-from sppas import sppasInterval
-from sppas import sppasLocation
-from sppas import sppasLabel
-from sppas import sppasTag
+from sppas.src.config import symbols
+from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasTranscription
+from sppas.src.anndata import sppasTier
+from sppas.src.anndata import sppasInterval
+from sppas.src.anndata import sppasLocation
+from sppas.src.anndata import sppasLabel
+from sppas.src.anndata import sppasTag
 
 from sppas.src.anndata.anndataexc import TierAddError
 from sppas.src.anndata.aio.aioutils import serialize_labels

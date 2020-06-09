@@ -35,13 +35,13 @@
 
 import os
 
-from sppas import IndexRangeException
-from sppas import symbols
+from sppas.src.config import symbols
+from sppas.src.exceptions import IndexRangeException
+from sppas.src.resources import sppasWordStrain
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasTag
 from sppas.src.anndata.aio.aioutils import serialize_labels
-from sppas.src.resources import sppasWordStrain
 
 from ..baseannot import sppasBaseAnnotation
 from ..annotationsexc import AnnotationOptionError

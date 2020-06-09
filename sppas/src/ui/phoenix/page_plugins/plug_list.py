@@ -38,9 +38,9 @@ import wx
 import os
 import time
 
-from sppas import msg
-from sppas import u
-from sppas import sppasTypeError
+from sppas.src.config import msg
+from sppas.src.exceptions import sppasTypeError
+from sppas.src.utils import u
 from sppas.src.plugins import sppasPluginsManager
 from sppas.src.wkps import sppasWorkspace, States
 

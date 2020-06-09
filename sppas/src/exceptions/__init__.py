@@ -1,4 +1,3 @@
-GOTO EndHeader
 """
     ..
         ---------------------------------------------------------------------
@@ -29,63 +28,54 @@ GOTO EndHeader
 
         ---------------------------------------------------------------------
 
-    sppas.bat
-    ~~~~~~~~~~~~~
-
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
+    :contact:      develop@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-    :summary:      SPPAS for Windows.
+
+*****************************************************************************
+exceptions: global exceptions of this software.
+*****************************************************************************
+
+This package includes classes to fix all global exceptions.
+Requires the following other packages:
+
+* config
 
 """
-:EndHeader
 
-@echo off
+from .exc import sppasError               # 0000
+from .exc import sppasTypeError           # 0100
+from .exc import sppasIndexError          # 0200
+from .exc import sppasValueError          # 0300
+from .exc import sppasKeyError            # 0400
+from .exc import sppasInstallationError   # 0510
+from .exc import sppasEnableFeatureError  # 0520
 
-SET PYTHONIOENCODING=UTF-8
+from .exc import NegativeValueError       # 0310
+from .exc import RangeBoundsException     # 0320
+from .exc import IntervalRangeException   # 0330
+from .exc import IndexRangeException      # 0340
 
-WHERE pythonw3.exe >nul 2>nul
-if %ERRORLEVEL% EQU 0 (
+from .exc import IOExtensionError         # 0610
+from .exc import NoDirectoryError         # 0620
 
-    start "" pythonw3.exe -m sppas
-    exit
-
-) else (
-
-    WHERE python3.exe >nul 2>nul
-    if %ERRORLEVEL% EQU 0 (
-
-        color 1E
-        start "" python3.exe -m sppas
-        exit
-
-    ) else (
-
-        color 04
-
-        if exist C:\Python27\pythonw.exe (
-            start "" C:\Python27\pythonw.exe .\sppas\bin\sppasgui.py
-            exit
-        ) else (
-            if exist C:\Python27\python.exe (
-                start "" C:\Python27\python.exe .\sppas\bin\sppasgui.py
-                exit
-            ) else (
+# ---------------------------------------------------------------------------
 
 
-                WHERE python.exe >nul 2>nul
-                if %ERRORLEVEL% EQU 0 (
-                    start "" python.exe .\sppas\bin\sppasgui.py
-                    exit
-                ) else (
-                        color 4E
-                        echo Python is not an internal command of your operating system.
-                        echo Install it first with the Windows Store or from http://www.python.org.
-                )
-            )
-        )
-    )
+__all__ = (
+    "sppasError",
+    "sppasTypeError",
+    "sppasIndexError",
+    "sppasValueError",
+    "sppasKeyError",
+    "sppasInstallationError",
+    "sppasEnableFeatureError",
+    "NegativeValueError",
+    "RangeBoundsException",
+    "IntervalRangeException",
+    "IndexRangeException",
+    "IOExtensionError",
+    "NoDirectoryError"
 )
-

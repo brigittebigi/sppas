@@ -36,7 +36,7 @@
 import unittest
 import os
 
-from sppas import paths
+from sppas.src.config import paths
 from ..manager import sppasPluginsManager
 
 # ---------------------------------------------------------------------------

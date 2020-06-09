@@ -34,12 +34,13 @@
     Data structures to store repetitions.
 
 """
+
 import re
 
-from sppas import symbols
-from sppas import sppasUnicode
-from sppas import RangeBoundsException
-from sppas import IndexRangeException
+from sppas.src.config import symbols
+from sppas.src.exceptions import RangeBoundsException
+from sppas.src.exceptions import IndexRangeException
+from sppas.src.utils import sppasUnicode
 
 # ---------------------------------------------------------------------------
 

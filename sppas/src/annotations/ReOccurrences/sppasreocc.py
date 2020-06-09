@@ -34,9 +34,7 @@
 
 """
 
-import logging
-
-from sppas import IndexRangeException
+from sppas.src.exceptions import IndexRangeException
 
 from sppas.src.utils import sppasUnicode
 from sppas.src.anndata import sppasRW

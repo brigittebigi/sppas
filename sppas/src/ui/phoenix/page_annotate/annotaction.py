@@ -37,8 +37,9 @@
 import wx
 import os
 
-from sppas import msg, u
-from sppas import annots, paths
+from sppas.src.config import msg
+from sppas.src.config import annots, paths
+from sppas.src.utils import u
 
 from ..windows.dialogs import Error
 from ..windows import sppasStaticLine

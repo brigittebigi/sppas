@@ -62,7 +62,7 @@ Main differences from SubRip are:
 import codecs
 import datetime
 
-from sppas import sg
+from sppas.src.config import sg
 from sppas.src.utils import b
 from .basetrsio import sppasBaseIO
 from ..anndataexc import AnnDataTypeError

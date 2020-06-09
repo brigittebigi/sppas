@@ -53,7 +53,7 @@ sppasDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, sppasDir)
 
 from sppas.src.config import *
-from sppas.src.exc import *
+from sppas.src.exceptions import *
 from sppas.src.structs import *
 from sppas.src.anndata import *
 from sppas.src.audiodata import *

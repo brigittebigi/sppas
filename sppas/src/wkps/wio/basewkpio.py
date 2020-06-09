@@ -34,7 +34,7 @@
 
 """
 
-from sppas import sppasTypeError
+from sppas.src.exceptions import sppasTypeError
 from ..workspace import sppasWorkspace
 
 # ---------------------------------------------------------------------------

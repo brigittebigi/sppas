@@ -37,8 +37,8 @@
 import unittest
 import os
 
-import sppas
-from sppas import u
+from sppas.src.config import paths
+from sppas.src.utils import u
 from ..workspace import sppasWorkspace
 from ..filedatacompare import *
 from ..filedatafilters import sppasFileDataFilters
@@ -50,9 +50,9 @@ from ..filestructure import FileRoot
 class TestsFileDataFilter (unittest.TestCase):
 
     def setUp(self):
-        f1 = os.path.join(sppas.paths.samples, 'samples-fra', 'AC track_0379.PitchTier')
-        f2 = os.path.join(sppas.paths.samples, 'samples-jpn', 'JPA_M16_JPA_T02.TextGrid')
-        f3 = os.path.join(sppas.paths.samples, 'samples-cat', 'TB-FE1-H1_phrase1.TextGrid')
+        f1 = os.path.join(paths.samples, 'samples-fra', 'AC track_0379.PitchTier')
+        f2 = os.path.join(paths.samples, 'samples-jpn', 'JPA_M16_JPA_T02.TextGrid')
+        f3 = os.path.join(paths.samples, 'samples-cat', 'TB-FE1-H1_phrase1.TextGrid')
 
         self.files = sppasWorkspace()
         self.files.add_file(__file__)
@@ -114,16 +114,16 @@ class TestsFileDataFilter (unittest.TestCase):
 
     def test_att_extended(self):
         files = sppasWorkspace()
-        files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P8.wav'))
-        files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P8.TextGrid'))
-        files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P9.wav'))
-        files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P9.TextGrid'))
-        files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_C006-P6.wav'))
-        files.add_file(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_C006-P6.TextGrid'))
-        files.add_file(os.path.join(sppas.paths.samples, 'samples-eng', 'ENG_M15_ENG_T02.wav'))
-        files.add_file(os.path.join(sppas.paths.samples, 'samples-eng', 'ENG_M15_ENG_T02.PitchTier'))
-        files.add_file(os.path.join(sppas.paths.samples, 'samples-eng', 'ENG_M15_ENG_T33.wav'))
-        files.add_file(os.path.join(sppas.paths.samples, 'samples-eng', 'ENG_M15_ENG_T33.PitchTier'))
+        files.add_file(os.path.join(paths.samples, 'samples-fra', 'F_F_B003-P8.wav'))
+        files.add_file(os.path.join(paths.samples, 'samples-fra', 'F_F_B003-P8.TextGrid'))
+        files.add_file(os.path.join(paths.samples, 'samples-fra', 'F_F_B003-P9.wav'))
+        files.add_file(os.path.join(paths.samples, 'samples-fra', 'F_F_B003-P9.TextGrid'))
+        files.add_file(os.path.join(paths.samples, 'samples-fra', 'F_F_C006-P6.wav'))
+        files.add_file(os.path.join(paths.samples, 'samples-fra', 'F_F_C006-P6.TextGrid'))
+        files.add_file(os.path.join(paths.samples, 'samples-eng', 'ENG_M15_ENG_T02.wav'))
+        files.add_file(os.path.join(paths.samples, 'samples-eng', 'ENG_M15_ENG_T02.PitchTier'))
+        files.add_file(os.path.join(paths.samples, 'samples-eng', 'ENG_M15_ENG_T33.wav'))
+        files.add_file(os.path.join(paths.samples, 'samples-eng', 'ENG_M15_ENG_T33.PitchTier'))
 
         rf = sppasCatReference('corpus-fra')
         rf.set_type('STANDALONE')
@@ -146,23 +146,23 @@ class TestsFileDataFilter (unittest.TestCase):
         spk3.append(sppasRefAttribute('gender', 'male', "str"))
         spk3.append(sppasRefAttribute('lang', 'eng', "str"))
 
-        fr1 = files.get_object(FileRoot.root(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P8.wav')))
+        fr1 = files.get_object(FileRoot.root(os.path.join(paths.samples, 'samples-fra', 'F_F_B003-P8.wav')))
         fr1.add_ref(rf)
         fr1.add_ref(spk1)
 
-        fr2 = files.get_object(FileRoot.root(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_B003-P9.wav')))
+        fr2 = files.get_object(FileRoot.root(os.path.join(paths.samples, 'samples-fra', 'F_F_B003-P9.wav')))
         fr2.add_ref(rf)
         fr2.add_ref(spk1)
 
-        fr3 = files.get_object(FileRoot.root(os.path.join(sppas.paths.samples, 'samples-fra', 'F_F_C006-P6.wav')))
+        fr3 = files.get_object(FileRoot.root(os.path.join(paths.samples, 'samples-fra', 'F_F_C006-P6.wav')))
         fr3.add_ref(rf)
         fr3.add_ref(spk2)
 
-        fr4 = files.get_object(FileRoot.root(os.path.join(sppas.paths.samples, 'samples-eng', 'ENG_M15_ENG_T02.wav')))
+        fr4 = files.get_object(FileRoot.root(os.path.join(paths.samples, 'samples-eng', 'ENG_M15_ENG_T02.wav')))
         fr4.add_ref(spk3)
         fr4.add_ref(re)
 
-        fr5 = files.get_object(FileRoot.root(os.path.join(sppas.paths.samples, 'samples-eng', 'ENG_M15_ENG_T33.wav')))
+        fr5 = files.get_object(FileRoot.root(os.path.join(paths.samples, 'samples-eng', 'ENG_M15_ENG_T33.wav')))
         fr5.add_ref(spk3)
         fr5.add_ref(re)
 

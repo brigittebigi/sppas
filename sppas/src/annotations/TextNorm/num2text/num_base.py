@@ -28,9 +28,11 @@
         This banner notice must not be removed.
 
         ---------------------------------------------------------------------
+
 """
 
-from sppas import sppasValueError, sppasTypeError, sppasDictRepl
+from sppas.src.exceptions import sppasValueError, sppasTypeError
+from sppas.src.resources import sppasDictRepl
 
 # ---------------------------------------------------------------------------
 

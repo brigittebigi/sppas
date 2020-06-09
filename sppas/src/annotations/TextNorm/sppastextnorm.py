@@ -43,14 +43,14 @@ from sppas.src.config import paths
 from sppas.src.config import symbols
 from sppas.src.config import info
 
-from sppas import sppasDictRepl
-from sppas import sppasVocabulary
+from sppas.src.resources import sppasDictRepl
+from sppas.src.resources import sppasVocabulary
 
-from sppas import sppasRW
-from sppas import sppasTranscription
-from sppas import sppasTier
-from sppas import sppasLabel
-from sppas import sppasTag
+from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasTranscription
+from sppas.src.anndata import sppasTier
+from sppas.src.anndata import sppasLabel
+from sppas.src.anndata import sppasTag
 
 from ..baseannot import sppasBaseAnnotation
 from ..searchtier import sppasFindTier
