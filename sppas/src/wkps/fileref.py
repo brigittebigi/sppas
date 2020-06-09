@@ -33,7 +33,7 @@
 
 """
 
-from sppas.src.exc import sppasTypeError, sppasIndexError
+from sppas.src.exceptions.exc import sppasTypeError, sppasIndexError
 from sppas.src.config import annots
 from sppas.src.utils.makeunicode import sppasUnicode
 

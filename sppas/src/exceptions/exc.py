@@ -28,8 +28,8 @@
 
         ---------------------------------------------------------------------
 
-    src.sppasexc.py
-    ~~~~~~~~~~~~~~~
+    src.exceptions.exc.py
+    ~~~~~~~~~~~~~~~~~~~~~~
 
 Global exceptions for sppas.
 
@@ -64,6 +64,9 @@ class sppasError(Exception):
 
     def __str__(self):
         return repr(self.parameter)
+
+    def __format__(self, fmt):
+        return str(self).__format__(fmt)
 
 # -----------------------------------------------------------------------
 

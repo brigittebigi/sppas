@@ -40,8 +40,8 @@
 
 import wx
 
-from sppas import msg
-from sppas import u
+from sppas.src.config import msg
+from sppas.src.utils import u
 from sppas.src.wkps import States
 
 from ..windows import sppasPanel

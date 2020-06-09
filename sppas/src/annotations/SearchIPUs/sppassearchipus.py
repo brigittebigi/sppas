@@ -37,6 +37,9 @@
 import os
 
 from sppas.src.config import symbols
+from sppas.src.config import annots
+from sppas.src.config import info
+from sppas.src.utils import u
 
 import sppas.src.audiodata.aio
 from sppas.src.anndata import sppasTranscription
@@ -48,9 +51,6 @@ from sppas.src.anndata import sppasPoint
 from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasTag
 from sppas.src.anndata import sppasRW
-from sppas import annots
-from sppas import info
-from sppas import u
 
 from ..annotationsexc import AnnotationOptionError
 from ..baseannot import sppasBaseAnnotation

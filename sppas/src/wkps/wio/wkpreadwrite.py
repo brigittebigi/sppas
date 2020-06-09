@@ -37,7 +37,7 @@
 import os
 from collections import OrderedDict
 
-from sppas import IOExtensionError
+from sppas.src.exceptions import IOExtensionError
 from sppas.src.utils.makeunicode import u
 from sppas.src.anndata.anndataexc import AioEncodingError
 

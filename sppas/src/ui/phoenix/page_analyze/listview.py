@@ -42,7 +42,7 @@ import wx
 import wx.dataview
 import wx.lib.newevent
 
-from sppas import paths
+from sppas.src.config import paths
 
 import sppas.src.audiodata.aio
 from sppas.src.anndata import sppasRW

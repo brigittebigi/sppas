@@ -35,10 +35,10 @@
 
 import unittest
 
-from sppas import sppasLogSetup
-from sppas.src.exc import sppasInstallationError
-from sppas.src.preinstall.features import Features
-from sppas.src.preinstall.installer import Installer
+from sppas.src.config import sppasLogSetup
+from sppas.src.exceptions import sppasInstallationError
+from ..features import Features
+from ..installer import Installer
 
 # ---------------------------------------------------------------------------
 

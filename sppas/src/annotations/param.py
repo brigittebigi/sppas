@@ -37,9 +37,9 @@ import logging
 import json
 import os
 
-from sppas import paths
-from sppas import annots
-from sppas import sppasTypeError
+from sppas.src.config import paths
+from sppas.src.config import annots
+from sppas.src.exceptions import sppasTypeError
 
 from sppas.src.config import msg
 from sppas.src.structs import sppasOption

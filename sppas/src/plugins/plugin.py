@@ -43,7 +43,7 @@ import signal
 from subprocess import Popen
 
 from sppas.src.structs import sppasOption
-from sppas import IOExtensionError
+from sppas.src.exceptions import IOExtensionError
 
 from .pluginsexc import PluginConfigFileError
 from .pluginsexc import CommandExecError

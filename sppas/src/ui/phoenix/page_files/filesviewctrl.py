@@ -35,7 +35,7 @@ import os
 import wx
 import wx.lib.newevent
 
-from sppas import paths
+from sppas.src.config import paths
 from sppas.src.anndata import sppasRW
 from sppas.src.wkps import States, FileName, FileRoot, FilePath, sppasWorkspace
 from sppas.src.ui import sppasTrash

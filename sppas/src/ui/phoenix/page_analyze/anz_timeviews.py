@@ -39,10 +39,10 @@ import os
 import wx
 import mimetypes
 
-from sppas import paths
-import sppas.src.audiodata.aio
+from sppas.src.config import paths
 from sppas.src.config import msg
 from sppas.src.utils import u
+import sppas.src.audiodata.aio
 import sppas.src.anndata
 
 from ..windows import sppasPanel

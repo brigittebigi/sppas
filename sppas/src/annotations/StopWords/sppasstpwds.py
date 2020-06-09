@@ -36,8 +36,8 @@
 import logging
 import os
 
-from sppas import symbols
-from sppas import sppasUnicode
+from sppas.src.config import symbols
+from sppas.src.utils import sppasUnicode
 
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription

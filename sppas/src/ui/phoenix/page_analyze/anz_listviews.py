@@ -38,7 +38,7 @@ import os
 import wx
 import mimetypes
 
-from sppas import paths
+from sppas.src.config import paths
 import sppas.src.audiodata.aio
 import sppas.src.anndata.aio
 from sppas.src.config import msg

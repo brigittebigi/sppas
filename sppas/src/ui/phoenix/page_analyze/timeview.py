@@ -40,7 +40,7 @@ import wx
 import wx.lib
 import wx.media
 
-from sppas import paths
+from sppas.src.config import paths
 from sppas.src.anndata import sppasTranscription
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasAnnotation

@@ -36,10 +36,10 @@
 
 import wx
 
-from sppas import msg
-from sppas import u
-from sppas import annots
-from sppas import sppasUnicode
+from sppas.src.config import msg
+from sppas.src.config import annots
+from sppas.src.utils import u
+from sppas.src.utils import sppasUnicode
 
 from ..panels import sppasOptionsPanel
 from ..windows import sppasDialog

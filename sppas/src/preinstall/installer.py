@@ -37,7 +37,7 @@ import shutil
 import shlex
 import subprocess
 
-from sppas.src.exc import sppasInstallationError
+from sppas.src.exceptions.exc import sppasInstallationError
 from sppas.src.utils.makeunicode import u
 from sppas.src.config import info
 

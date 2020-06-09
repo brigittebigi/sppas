@@ -112,8 +112,7 @@ try:
     from sppas.src.ui.wxgui.dialogs.msgdialogs import ShowInformation
     from sppas.src.ui.wxgui.structs.prefs import Preferences_IO
     from sppas.src.ui.wxgui.structs.theme import sppasTheme
-    from sppas import sppasLogSetup  #, sppasLogFile
-    # from sppas import sppasAppConfig
+    from sppas.src.config import sppasLogSetup
 except Exception as e:
     print(str(e))
     exit_error("An unexpected error occurred.\n"

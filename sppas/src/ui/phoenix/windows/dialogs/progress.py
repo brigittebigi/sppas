@@ -37,7 +37,7 @@
 import wx
 import time
 
-from sppas import sppasAppConfig
+from sppas.src.config import sppasAppConfig
 from sppas.src.ui.progress import sppasBaseProgress
 
 # ---------------------------------------------------------------------------

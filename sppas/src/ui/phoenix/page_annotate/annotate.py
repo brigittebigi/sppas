@@ -42,8 +42,8 @@
 
 import wx
 
-from sppas import sppasTypeError
-from sppas import annots
+from sppas.src.exceptions import sppasTypeError
+from sppas.src.config import annots
 
 from sppas.src.annotations import sppasParam
 from sppas.src.wkps import States, sppasWorkspace

@@ -37,7 +37,7 @@
 import wx
 import logging
 
-from sppas import sppasAppConfig
+from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:

@@ -38,8 +38,8 @@
 import wx
 import logging
 
-from sppas import msg
-from sppas import u
+from sppas.src.config import msg
+from sppas.src.utils import u
 import sppas.src.anndata.aio
 import sppas.src.audiodata.aio
 

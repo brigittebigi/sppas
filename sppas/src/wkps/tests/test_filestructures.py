@@ -38,7 +38,7 @@ import unittest
 import os
 import sppas
 
-from sppas import paths
+from sppas.src.config import paths
 from sppas.src.wkps.filebase import FileBase, States
 from sppas.src.wkps.filestructure import FileName
 from sppas.src.wkps.filestructure import FileRoot

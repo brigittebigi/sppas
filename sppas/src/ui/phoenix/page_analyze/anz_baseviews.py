@@ -37,7 +37,7 @@
 import wx
 import os
 
-from sppas import msg
+from sppas.src.config import msg
 from sppas.src.utils import u
 
 from ..windows import sppasStaticLine
