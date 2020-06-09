@@ -46,9 +46,9 @@ import traceback
 import wx
 import logging
 
-from sppas import sg, cfg
-from sppas import sppasLogSetup
-from sppas import sppasLogFile
+from sppas.src.config import sg, cfg
+from sppas.src.config import sppasLogSetup
+from sppas.src.config import sppasLogFile
 from .main_settings import WxAppSettings
 from .install_window import sppasInstallWindow
 

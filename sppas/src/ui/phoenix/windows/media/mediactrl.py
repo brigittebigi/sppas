@@ -41,7 +41,7 @@ import wx
 import wx.media
 import wx.lib.newevent
 
-from sppas import paths
+from sppas.src.config import paths
 from sppas.src.audiodata import sppasAudioPCM
 import sppas.src.audiodata.aio
 

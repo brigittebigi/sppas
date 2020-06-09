@@ -39,7 +39,7 @@
 import os
 import wx
 
-from sppas import paths
+from sppas.src.config import paths
 from sppas.src.audiodata.aio import open as audio_open
 from sppas.src.audiodata import sppasAudioFrames
 

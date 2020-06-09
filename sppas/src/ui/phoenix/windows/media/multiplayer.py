@@ -39,7 +39,7 @@ import wx
 import wx.media
 
 from sppas.src.config import paths
-from sppas.src.exc import IntervalRangeException
+from sppas.src.exceptions.exc import IntervalRangeException
 
 from ..panel import sppasPanel
 from .mediactrl import sppasMediaCtrl

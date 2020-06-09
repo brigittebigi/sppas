@@ -11,9 +11,6 @@ msgstr ""
 "Language: en_US\n"
 "X-Generator: Poedit 2.2.1\n"
 
-msgid ":ERROR 500: "
-msgstr "Le processus d’installation s’est terminé avec les erreurs suivantes : {error}"
-
 msgid ":INFO 510: "
 msgstr "Installation de '{name}'"
 

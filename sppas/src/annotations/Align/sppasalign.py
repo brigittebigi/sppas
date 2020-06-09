@@ -39,7 +39,7 @@ import os
 import logging
 import traceback
 
-from sppas import NoDirectoryError
+from sppas.src.exceptions import NoDirectoryError
 from sppas.src.config import paths
 from sppas.src.config import annots
 from sppas.src.config import info

@@ -36,9 +36,8 @@
 
 """
 
-from sppas import sppasTypeError
-
 import collections
+from sppas.src.exceptions import sppasTypeError
 
 # ---------------------------------------------------------------------------
 

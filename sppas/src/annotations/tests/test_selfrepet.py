@@ -33,10 +33,11 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import unittest
 import os
 
-from sppas import paths
+from sppas.src.config import paths
 
 from ..SelfRepet.datastructs import DataRepetition
 from ..SelfRepet.datastructs import Entry
@@ -46,6 +47,7 @@ from ..SelfRepet.detectrepet import SelfRepetition
 from ..SelfRepet.sppasrepet import sppasSelfRepet
 
 # ---------------------------------------------------------------------------
+
 
 STOP_LIST = ["ah", "aller", "alors", "après", "avec", "avoir", "bon", "ce",
              "comme", "c'est", "dans", "de", "de+le", "dire", "donc", "eeh",

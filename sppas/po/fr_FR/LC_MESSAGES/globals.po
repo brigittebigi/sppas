@@ -17,38 +17,44 @@ msgstr ""
 "Language: en_US\n"
 "X-Generator: Poedit 2.0.6\n"
 
-msgid ":ERROR 010: "
-msgstr "Une valeur positive était attendue, alors que {value} a été donnée."
-
-msgid ":ERROR 012: "
-msgstr "La valeur minimale donnée {min_value} est supérieur à la valeur maximale donnée {max_value}."
-
-msgid ":ERROR 014: "
-msgstr "L'index {value} est en dehors de l'intervalle [{min_value},{max_value}]."
-
-msgid ":ERROR 016: "
-msgstr "La valeur {value} est en dehors de l'intervalle [{min_value},{max_value}]."
+msgid ":ERROR 000: "
+msgstr "L'erreur suivante a été relevée: {message}."
 
 msgid ":ERROR 100: "
 msgstr "{!s:s} n'est pas du type attendu: '{:s}'."
 
-msgid ":ERROR 110: "
-msgstr "L'extension du fichier {:s} est inconnue"
-
-msgid ":ERROR 112: "
-msgstr "Le dossier {dirname} n'existe pas."
-
 msgid ":ERROR 200: "
 msgstr "Valeur d'index invalide: {:d}."
-
-msgid ":ERROR 250: "
-msgstr "Clé inconnue '{!s:s}' pour les données '{!s:s}'"
 
 msgid ":ERROR 300: "
 msgstr "La valeur '{!s:s}' est incorrecte pour '{!s:s}'."
 
-msgid ":ERROR 500: "
+msgid ":ERROR 310: "
+msgstr "Une valeur positive était attendue, alors que {value} a été donnée."
+
+msgid ":ERROR 320: "
+msgstr "La valeur minimale donnée {min_value} est supérieur à la valeur maximale donnée {max_value}."
+
+msgid ":ERROR 340: "
+msgstr "L'index {value} est en dehors de l'intervalle [{min_value},{max_value}]."
+
+msgid ":ERROR 330: "
+msgstr "La valeur {value} est en dehors de l'intervalle [{min_value},{max_value}]."
+
+msgid ":ERROR 400: "
+msgstr "Clé inconnue '{!s:s}' pour les données '{!s:s}'"
+
+msgid ":ERROR 510: "
 msgstr "L'installation a échouée avec l'erreur: {error}."
+
+msgid ":ERROR 520: "
+msgstr "La fonctionnalité {name} n'est pas activée; son installation est requise avant de pouvoir l'utiliser."
+
+msgid ":ERROR 610: "
+msgstr "L'extension du fichier {:s} est inconnue"
+
+msgid ":ERROR 620: "
+msgstr "Le dossier {dirname} n'existe pas."
 
 msgid ":INFO 510: "
 msgstr "Installation de '{name}'"

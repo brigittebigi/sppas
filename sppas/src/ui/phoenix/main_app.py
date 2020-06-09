@@ -52,7 +52,7 @@ try:
 except ImportError:
     adv_import = False
 
-from sppas import sg, cfg
+from sppas.src.config import sg, cfg
 from .main_settings import WxAppSettings
 from .main_window import sppasMainWindow
 from .tools import sppasSwissKnife

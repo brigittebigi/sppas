@@ -36,14 +36,13 @@
 
 """
 
-import unittest
 import os
 import random
 import tempfile
 from datetime import date
 
 from sppas.src.utils import sppasUnicode
-from sppas import NoDirectoryError
+from sppas.src.exceptions import NoDirectoryError
 
 # ----------------------------------------------------------------------------
 

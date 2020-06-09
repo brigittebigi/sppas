@@ -91,7 +91,7 @@ from sppas import sg
 from sppas.src.wkps import sppasWkps
 from sppas.src.wkps import sppasCatReference, States, sppasRefAttribute
 from sppas.src.wkps.wkpexc import FileOSError
-from sppas.src.exc import sppasTypeError
+from sppas.src.exceptions.exc import sppasTypeError
 
 # ---------------------------------------------------------------------------
 

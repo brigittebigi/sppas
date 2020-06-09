@@ -37,7 +37,7 @@
 import os
 import wx
 
-from sppas import paths
+from sppas.src.config import paths
 
 from .anz_baseviews import BaseViewFilesPanel
 from .textview import TextViewPanel

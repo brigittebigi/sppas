@@ -38,7 +38,7 @@ import os
 import wx
 import codecs
 
-from sppas import paths
+from sppas.src.config import paths
 from sppas.src.config import msg
 from sppas.src.utils import u
 from sppas.src.anndata import sppasRW

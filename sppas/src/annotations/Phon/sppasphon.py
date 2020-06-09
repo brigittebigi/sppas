@@ -39,11 +39,11 @@ from sppas.src.config import separators
 from sppas.src.config import annots
 from sppas.src.config import info
 
-from sppas import sppasRW
-from sppas import sppasTranscription
-from sppas import sppasTier
-from sppas import sppasLabel
-from sppas import sppasTag
+from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasTranscription
+from sppas.src.anndata import sppasTier
+from sppas.src.anndata import sppasLabel
+from sppas.src.anndata import sppasTag
 
 from sppas.src.resources import sppasDictPron
 from sppas.src.resources import sppasMapping

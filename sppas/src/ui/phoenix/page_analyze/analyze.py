@@ -50,9 +50,9 @@ import os
 import random
 import wx
 
-from sppas import sppasTypeError
-from sppas import paths
-from sppas import msg
+from sppas.src.config import paths
+from sppas.src.config import msg
+from sppas.src.exceptions import sppasTypeError
 from sppas.src.utils import u
 from sppas.src.wkps import sppasWorkspace, States
 from sppas.src.anndata import sppasRW, FileFormatProperty

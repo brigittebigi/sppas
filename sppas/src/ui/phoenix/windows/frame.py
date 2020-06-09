@@ -104,9 +104,9 @@ class sppasFrame(wx.Frame):
         self.SetIcon(_icon)
 
         # colors & font
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        self.SetBackgroundColour(settings.bg_color)
+        self.SetForegroundColour(settings.fg_color)
+        self.SetFont(settings.text_font)
 
     # -----------------------------------------------------------------------
     # Fade-in at start-up and Fade-out at close
@@ -225,7 +225,7 @@ class sppasTopFrame(wx.TopLevelWindow):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -262,8 +262,6 @@ class sppasTopFrame(wx.TopLevelWindow):
         Set the title, the icon and the properties of the frame.
 
         """
-        settings = wx.GetApp().settings
-
         # Fix minimum frame size
         self.SetMinSize(wx.Size(320, 200))
 
@@ -272,14 +270,18 @@ class sppasTopFrame(wx.TopLevelWindow):
 
         # icon
         _icon = wx.Icon()
-        bmp = sppasSwissKnife.get_bmp_icon("sppas_32", height=64)
+        bmp = sppasSwissKnife.get_bmp_icon("sppas_64", height=64)
         _icon.CopyFromBitmap(bmp)
         self.SetIcon(_icon)
 
         # colors & font
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        try:
+            settings = wx.GetApp().settings
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
     # -----------------------------------------------------------------------
     # Fade-in at start-up and Fade-out at close
@@ -302,6 +304,19 @@ class sppasTopFrame(wx.TopLevelWindow):
 
     # -----------------------------------------------------------------------
 
+    def SetHeader(self, window):
+        """Assign the header window to this dialog.
+
+        :param window: (wx.Window) Any kind of wx.Window, wx.Panel, ...
+
+        """
+        window.SetName("header")
+        window.SetBackgroundColour(wx.GetApp().settings.header_bg_color)
+        window.SetForegroundColour(wx.GetApp().settings.header_fg_color)
+        window.SetFont(wx.GetApp().settings.header_text_font)
+
+    # -----------------------------------------------------------------------
+
     def SetContent(self, window):
         """Assign the content window to this dialog.
 
@@ -312,6 +327,33 @@ class sppasTopFrame(wx.TopLevelWindow):
         window.SetBackgroundColour(wx.GetApp().settings.bg_color)
         window.SetForegroundColour(wx.GetApp().settings.fg_color)
         window.SetFont(wx.GetApp().settings.text_font)
+
+    # -----------------------------------------------------------------------
+
+    def SetActions(self, window):
+        """Assign the actions window to this dialog.
+
+        :param window: (wx.Window) Any kind of wx.Window, wx.Panel, ...
+
+        """
+        window.SetName("actions")
+        window.SetBackgroundColour(wx.GetApp().settings.action_bg_color)
+        window.SetForegroundColour(wx.GetApp().settings.action_fg_color)
+        window.SetFont(wx.GetApp().settings.action_text_font)
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def content(self):
+        return self.FindWindow("content")
+
+    @property
+    def actions(self):
+        return self.FindWindow("actions")
+
+    @property
+    def header(self):
+        return self.FindWindow("header")
 
     # ------------------------------------------------------------------------
 
@@ -334,6 +376,44 @@ class sppasTopFrame(wx.TopLevelWindow):
         line.SetPenStyle(wx.PENSTYLE_SOLID)
         line.SetDepth(depth)
         return line
+
+    # ---------------------------------------------------------------------------
+    # Put the whole content of the dialog in a sizer
+    # ---------------------------------------------------------------------------
+
+    def LayoutComponents(self):
+        """Create the sizer and layout the components of the dialog."""
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        # Add header
+        header = self.FindWindow("header")
+        if header is not None:
+            sizer.Add(header, 0, wx.EXPAND, 0)
+            sizer.Add(self.HorizLine(self), 0, wx.ALL | wx.EXPAND, 0)
+
+        # Add content
+        content = self.FindWindow("content")
+        if content is not None:
+            sizer.Add(content, 1, wx.EXPAND, 0)
+        else:
+            sizer.AddSpacer(1)
+
+        # Add action buttons
+        actions = self.FindWindow("actions")
+        if actions is not None:
+            sizer.Add(self.HorizLine(self), 0, wx.ALL | wx.EXPAND, 0)
+            # proportion is 0 to ask the sizer to never hide the buttons
+            sizer.Add(actions, 0, wx.EXPAND, 0)
+
+        # Since Layout doesn't happen until there is a size event, you will
+        # sometimes have to force the issue by calling Layout yourself. For
+        # example, if a frame is given its size when it is created, and then
+        # you add child windows to it, and then a sizer, and finally Show it,
+        # then it may not receive another size event (depending on platform)
+        # in order to do the initial layout. Simply calling self.Layout from
+        # the end of the frame's __init__ method will usually resolve this.
+        self.SetSizer(sizer)
+        self.Layout()
 
     # ---------------------------------------------------------------------------
     # Private
@@ -386,3 +466,28 @@ class sppasTopFrame(wx.TopLevelWindow):
         except AttributeError:
             obj_size = int(value)
         return obj_size
+    # -----------------------------------------------------------------------
+    # GUI
+    # -----------------------------------------------------------------------
+
+    def UpdateUI(self):
+        """Apply settings to all panels and refresh."""
+        # apply new (or not) 'wx' values to content.
+        p = self.FindWindow("content")
+        p.SetBackgroundColour(wx.GetApp().settings.bg_color)
+        p.SetForegroundColour(wx.GetApp().settings.fg_color)
+        p.SetFont(wx.GetApp().settings.text_font)
+
+        # apply new (or not) 'wx' values to header.
+        p = self.FindWindow("header")
+        p.SetBackgroundColour(wx.GetApp().settings.header_bg_color)
+        p.SetForegroundColour(wx.GetApp().settings.header_fg_color)
+        p.SetFont(wx.GetApp().settings.header_text_font)
+
+        # apply new (or not) 'wx' values to actions.
+        p = self.FindWindow("actions")
+        p.SetBackgroundColour(wx.GetApp().settings.action_bg_color)
+        p.SetForegroundColour(wx.GetApp().settings.action_fg_color)
+        p.SetFont(wx.GetApp().settings.action_text_font)
+
+        self.Refresh()

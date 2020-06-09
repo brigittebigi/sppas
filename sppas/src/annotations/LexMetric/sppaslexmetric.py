@@ -34,9 +34,8 @@
 """
 
 import logging
-import os
 
-from sppas import sppasUnicode
+from sppas.src.utils import sppasUnicode
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 

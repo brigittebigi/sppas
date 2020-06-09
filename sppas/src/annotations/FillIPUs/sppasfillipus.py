@@ -36,8 +36,10 @@
 
 import os
 
-import sppas.src.audiodata.aio
 from sppas.src.config import symbols
+from sppas.src.config import info
+from sppas.src.utils import u
+import sppas.src.audiodata.aio
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 from sppas.src.anndata import sppasMedia
@@ -45,8 +47,6 @@ from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasTag
 from sppas.src.config import annots
 import sppas.src.anndata.aio
-from sppas import info
-from sppas import u
 
 from ..SearchIPUs.sppassearchipus import sppasSearchIPUs
 from ..annotationsexc import AnnotationOptionError

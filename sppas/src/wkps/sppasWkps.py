@@ -40,8 +40,8 @@ import os
 import logging
 import shutil
 
-from sppas import paths
-from sppas import sppasIndexError
+from sppas.src.config import paths
+from sppas.src.exceptions import sppasIndexError
 
 from sppas.src.utils.makeunicode import sppasUnicode
 

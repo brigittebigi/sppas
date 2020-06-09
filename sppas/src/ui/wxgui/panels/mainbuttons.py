@@ -38,9 +38,9 @@
 import wx
 import webbrowser
 
-from sppas import msg
-from sppas import u
-from sppas import sg
+from sppas.src.config import msg
+from sppas.src.config import sg
+from sppas.src.utils import u
 
 from sppas.src.ui.tips import sppasTips
 from sppas.src.ui.wxgui.panels.buttons import ButtonPanel, \

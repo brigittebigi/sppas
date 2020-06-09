@@ -32,10 +32,11 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import unittest
 import os
 
-from sppas import paths
+from sppas.src.config import paths
 
 from ..plugin import sppasPluginParam
 from ..process import sppasPluginProcess

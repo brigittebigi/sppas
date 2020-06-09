@@ -169,7 +169,13 @@ def info(msg_id, domain=None):
     :param domain: (str) Name of the domain
 
     """
-    msg = ":INFO " + str(msg_id) + ": "
+    # Format the input message
+    if isinstance(msg_id, int):
+        msg = "{:04d}".format(msg_id)
+    else:
+        msg = str(msg_id)
+    msg = ":INFO " + msg + ": "
+
     if domain is not None:
         try:
             st = sppasTranslate()
@@ -190,7 +196,13 @@ def error(msg_id, domain=None):
     :param domain: (str) Name of the domain
 
     """
-    msg = ":ERROR " + str(msg_id) + ": "
+    # Format the input message
+    if isinstance(msg_id, int):
+        msg = "{:04d}".format(msg_id)
+    else:
+        msg = str(msg_id)
+    msg = ":ERROR " + msg + ": "
+
     if domain is not None:
         try:
             st = sppasTranslate()

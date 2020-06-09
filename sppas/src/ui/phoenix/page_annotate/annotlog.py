@@ -37,9 +37,9 @@
 import wx
 import codecs
 
-from sppas import sg
-from sppas import msg
-from sppas import u
+from sppas.src.config import sg
+from sppas.src.config import msg
+from sppas.src.utils import u
 from sppas.src.annotations import sppasAnnotationsManager
 
 from sppas.src.config.logs import sppasLogFile
