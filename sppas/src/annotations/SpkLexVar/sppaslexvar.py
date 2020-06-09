@@ -59,14 +59,14 @@ from ..searchtier import sppasFindTier
 class sppasLexVar(sppasBaseRepet):
     """SPPAS integration of the occ and rank estimator.
 
-    :author:       Brigitte Bigi
+    :author:       Laurent Vouriot
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
     """
-    def __init__(self, stop_list, log=None):
+    def __init__(self, log=None):
         """Create a new sppasLexMetric instance.
 
         Log is used for a better communication of the annotation process and its
@@ -77,7 +77,7 @@ class sppasLexVar(sppasBaseRepet):
         """
         super(sppasLexVar, self).__init__("lexvar.json", log)
 
-        self.__rules = SelfRules(stop_list)
+        self.__rules = SelfRules(self._stop_words)
         self.__sources = list()
 
     # -----------------------------------------------------------------------
@@ -183,13 +183,12 @@ class sppasLexVar(sppasBaseRepet):
         """
         last_token = -1
         # Get the longest string
-        for t in range(0, len(speaker1)):
+        for t in range(len(speaker1)):
 
             param2 = 0
-            spk = speaker2
 
             # search
-            repet_idx = speaker1.is_word_repeated(t, param2, spk)
+            repet_idx = speaker1.is_word_repeated(t, param2, speaker2)
             if repet_idx > -1:
                 last_token = t
             else:
@@ -209,8 +208,7 @@ class sppasLexVar(sppasBaseRepet):
         """
         # Rule 1: keep any repetition containing at least 1 relevant token
         keep_me = self.__rules.rule_syntagme(0, index, speaker)
-        if keep_me is True:
-           return keep_me
+        return keep_me
 
     # ----------------------------------------------------------------------
 
@@ -227,7 +225,6 @@ class sppasLexVar(sppasBaseRepet):
 
         content_list_tier1 = list()
         content_list_tier2 = list()
-        window_list1 = list()
         window_list2 = list()
 
         # getting all the unicodes from the first tier
@@ -247,24 +244,30 @@ class sppasLexVar(sppasBaseRepet):
         # Storing Data
         # ------------
 
-        # windowing the unicode list
-        for window in self.window(content_list_tier1, window_size):
-            window_list1.append(window)
-
+        # windowing the unicode list for the second speaker
         for window in self.window(content_list_tier2, window_size):
             window_list2.append(window)
 
         i = 0
-        while i < len(window_list1):
-            data_spk1 = DataSpeaker(window_list1[i])
+        while i < len(content_list_tier1):
+            window = self.window(content_list_tier1[i:], window_size)
+            data_spk1 = DataSpeaker(window)
+
+            max_index = 0
             y = 0
             while y < len(window_list2):
                 data_spk2 = DataSpeaker(window_list2[y])
                 index = self.get_longest(data_spk1, data_spk2)
-                if self.select(index, data_spk1):
-                    self.__sources.append(window_list1[i])
+                if index != -1:
+                    if self.select(index, data_spk1):
+                        self.__sources.append(window[:index])
+                        if index > max_index:
+                            max_index = index
                 y += 1
-            i += 1
+            if max_index == 0:
+                i += 1
+            else:
+                i += max_index + 1
 
     # ----------------------------------------------------------------------
     # Patterns
@@ -310,7 +313,7 @@ class sppasLexVar(sppasBaseRepet):
         tier_input2.set_name(tier_input2.get_name() + "-echo")
 
         # Repetition Automatic Detection
-        echo_tier = self.lexical_variation_detect(tier_input1, tier_input2, window_size=0)
+        echo_tier = self.lexical_variation_detect(tier_input1, tier_input2, 0)
 
         # Create the transcription result
         trs_output = sppasTranscription(self.name)
