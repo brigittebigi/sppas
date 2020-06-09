@@ -52,6 +52,7 @@ from sppas.src.anndata import sppasAnnotation
 from sppas.src.anndata import sppasInterval
 
 
+from ..SelfRepet.datastructs import DataSpeaker
 from ..SpkLexVar.sppaslexvar import sppasLexVar
 
 # ---------------------------------------------------------------------------
@@ -60,7 +61,8 @@ from ..SpkLexVar.sppaslexvar import sppasLexVar
 class test_sppaslexvar(unittest.TestCase):
 
     def setUp(self):
-        self.lexvar = sppasLexVar()
+        l = ["plouc", "plaf"]
+        self.lexvar = sppasLexVar(l)
 
         # creating the tier list
         # ----------------------
@@ -111,14 +113,14 @@ class test_sppaslexvar(unittest.TestCase):
 
         # tags
         tag1 = sppasTag("bonjour")
-        tag2 = sppasTag("ça")
+        tag2 = sppasTag("ca")
         tag3 = sppasTag("va")
         tag4 = sppasTag("bien")
         tag5 = sppasTag("toi")
 
         tag6 = sppasTag("salut")
         tag7 = sppasTag("oui")
-        tag8 = sppasTag("ça")
+        tag8 = sppasTag("ca")
         tag9 = sppasTag("va")
         tag10 = sppasTag("bien")
 
@@ -149,9 +151,9 @@ class test_sppaslexvar(unittest.TestCase):
 
         annot6.append_label(label6)
         annot7.append_label(label7)
-        annot9.append_label(label8)
+        annot8.append_label(label8)
         annot9.append_label(label9)
-        annot9.append_label(label10)
+        annot10.append_label(label10)
 
         self.tier_spk2.add(annot6)
         self.tier_spk2.add(annot7)
@@ -211,4 +213,42 @@ class test_sppaslexvar(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_lexical_variation_detect(self):
-        self.lexvar.lexical_variation_detect(self.tier_spk1, self.tier_spk2)
+        self.lexvar.lexical_variation_detect(self.tier_spk1, self.tier_spk2, 2)
+
+    # -----------------------------------------------------------------------
+
+    def test_get_longest(self):
+        content_list_tier1 = list()
+        content_list_tier2 = list()
+        window_list = list()
+
+        # getting all the unicodes from the first tier
+        for ann in self.tier_spk1:
+            for label in ann.get_labels():
+                for tag, score in label:
+                    if tag.is_speech():
+                        content_list_tier1.append(tag.get_content())
+
+        # getting all the unicodes from the second tier
+        for ann2 in self.tier_spk2:
+            for label2 in ann2.get_labels():
+                for tag2, score2 in label2:
+                    if tag2.is_speech():
+                        content_list_tier2.append(tag2.get_content())
+
+        # windowing the unicode list and creating dataSpeaker
+        for window in self.lexvar.window(content_list_tier1, 2):
+            window_list.append(window)
+        data_spk1 = DataSpeaker(window_list)
+
+        for window in self.lexvar.window(content_list_tier2, 2):
+            window_list.append(window)
+        data_spk2 = DataSpeaker(window_list)
+
+        self.assertEqual(self.lexvar.get_longest(data_spk1, data_spk2), 3)
+
+    # -----------------------------------------------------------------------
+
+    def test_select(self):
+        dataspk1 = DataSpeaker(["oui", "ça", "va", "très", "bien"])
+        self.lexvar.select(4, dataspk1)
