@@ -35,14 +35,19 @@
 
 import logging
 import sys
-import random
-
 from itertools import islice
+
 from sppas import sppasUnicode
+from sppas import RangeBoundsException
+
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 
+
+from ..SelfRepet.rules import SelfRules
+from ..SelfRepet.datastructs import DataSpeaker
 from ..SelfRepet.sppasbaserepet import sppasBaseRepet
+from ..SelfRepet import sppasSelfRepet
 from ..annotationsexc import AnnotationOptionError
 from ..annotationsexc import NoInputError
 from ..annotationsexc import EmptyOutputError
@@ -61,7 +66,7 @@ class sppasLexVar(sppasBaseRepet):
     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
     """
-    def __init__(self, log=None):
+    def __init__(self, stop_list, log=None):
         """Create a new sppasLexMetric instance.
 
         Log is used for a better communication of the annotation process and its
@@ -71,6 +76,9 @@ class sppasLexVar(sppasBaseRepet):
 
         """
         super(sppasLexVar, self).__init__("lexvar.json", log)
+
+        self.__rules = SelfRules(stop_list)
+        self.__sources = list()
 
     # -----------------------------------------------------------------------
 
@@ -132,6 +140,7 @@ class sppasLexVar(sppasBaseRepet):
     @staticmethod
     def contains(list1, list2):
         """Check if a list is contained in an other one
+
         :param list1: (list)
         :param list2: (list)
         :returns: (bool)
@@ -164,104 +173,121 @@ class sppasLexVar(sppasBaseRepet):
     # ----------------------------------------------------------------------
 
     @staticmethod
-    def rules():
-        return random.Random().choice([True, False])
+    def get_longest(speaker1, speaker2):
+        """Return the index of the last token of the longest repeated string.
+
+        :param speaker1: (DataSpeaker) Entries of speaker 1
+        :param speaker2: (DataSpeaker2) Entries of speaker 2 (or None)
+        :returns: (int) Index or -1
+
+        """
+        last_token = -1
+        # Get the longest string
+        for t in range(0, len(speaker1)):
+
+            param2 = 0
+            spk = speaker2
+
+            # search
+            repet_idx = speaker1.is_word_repeated(t, param2, spk)
+            if repet_idx > -1:
+                last_token = t
+            else:
+                break
+
+        return last_token
 
     # ----------------------------------------------------------------------
 
-    def lexical_variation_detect(self, tier1, tier2):
+    def set_source(self, start, end):
+        """Set the position of the source.
+
+        Setting the position of the source automatically resets the echos
+        because it's not correct to change the source of existing echos.
+
+        :param start: Start position of the source
+        :param end: End position of the source
+        :raises: ValueError, IndexError
+
+        """
+        s1 = int(start)
+        s2 = int(end)
+        if s1 > s2:
+            raise RangeBoundsException(s1, s2)
+        if s1 < 0 or s2 < 0:
+            raise ValueError
+
+        self.__sources.append((s1, s2))
+
+    # ----------------------------------------------------------------------
+
+    def select(self, index, speaker):
+        """Append (or not) an repetition.
+
+        :param index: (int) end index of the entry of the source (speaker1)
+        :param speaker1: (DataSpeaker) Entries of speaker 1
+        :returns: (bool)
+
+        """
+        # Rule 1: keep any repetition containing at least 1 relevant token
+        keep_me = self.__rules.rule_syntagme(0, index, speaker)
+        if keep_me is True:
+            self.__sources.append([speaker[i] for i in range(0, index)])
+        return keep_me
+
+    # ----------------------------------------------------------------------
+
+    def lexical_variation_detect(self, tier1, tier2, window_size):
         """Detect the lexical variations in between 2 tiers
 
         :param tier1: (sppasTier)
         :param tier2: (sppasTier)
+        :param window_size: (int)
 
         """
-        """
-        # Test w/ memory
-        tag_list = list()
-        content_list = list()
-        m = 0
-        for ann in tier1:
-            for label in ann.get_labels():
-                for tag, score in label:
-                    # average size
-                    m += sys.getsizeof(tag.get_content)
-                    # listing tag and content
-                    # we add only words/lemmes
-                    if tag.is_speech():
-                        tag_list.append(tag)
-                        # list temps.append(ann.get_lowest_tps())
-                        content_list.append(tag.get_content())
-
-        repet_list = list()
-        repet = 0
-        for ann in tier2:
-            for label in ann.get_labels():
-                for tag, score in label:
-                    if tag.get_content() in content_list and tag.get_content() not in repet_list:
-                        repet_list.append(tag.get_content())
-                        repet += 1
-                    # if tag in tag_list and tag.get_content() not in repet_list:
-                    #     repet_list.append(tag.get_content())
-                    #     repet += 1
-
-        print("average size of a tag content (unicode) : {}".format(m/len(content_list)))
-        print("size of a sppasTag list : {}".format(sys.getsizeof(tag_list)))
-        print("size of a unicode list : {}".format(sys.getsizeof(content_list)))
-        print("repet : {}".format(repet))
-        
-        # DYNAMIC TESTS
-        # -------------
-        
-        # Beaucoup trop long
-        repet = 0
-        repet_list = list()
-        for ann in tier1:
-            for label in ann.get_labels():
-                for tag, score in label:
-                    for ann2 in tier2:
-                        for label2 in ann2.get_labels():
-                            for tag2, score2 in label2:
-                                if tag.is_speech() and tag2.is_speech():
-                                    if tag.get_content() == tag2.get_content() and tag not in repet_list:
-                                        repet_list.append(tag.get_content())
-                                        repet += 1
-        print("nb repet : {}".format(repet))
-        """
-
-        # test with window rolling
-        # ------------------------
+        # word windowing
+        # --------------
 
         content_list_tier1 = list()
         content_list_tier2 = list()
-        window_list = list()
+        window_list1 = list()
+        window_list2 = list()
+
+        # getting all the unicodes from the first tier
         for ann in tier1:
             for label in ann.get_labels():
                 for tag, score in label:
                     if tag.is_speech():
                         content_list_tier1.append(tag.get_content())
 
+        # getting all the unicodes from the second tier
         for ann2 in tier2:
             for label2 in ann2.get_labels():
                 for tag2, score2 in label2:
                     if tag2.is_speech():
                         content_list_tier2.append(tag2.get_content())
 
-        for window in self.window(content_list_tier2, 3):
-            window_list.append(window)
+        # Storing Data
+        # ------------
 
-        repet = 0
-        for sub in window_list:
-            if self.contains(content_list_tier1, sub):
-                print(self.contains(content_list_tier1, sub))
-                repet += 1
+        # windowing the unicode list and creating dataSpeaker
+        for window in self.window(content_list_tier1, window_size):
+            window_list1.append(window)
 
-        print(window_list)
-        print(content_list_tier1)
-        print(content_list_tier2)
-        print(repet)
+        for window in self.window(content_list_tier2, window_size):
+            window_list2.append(window)
 
-        return repet
+        i = 0
+        while i < len(window_list1):
+            data_spk1 = DataSpeaker(window_list1[i])
+            y = 0
+            while y < len(window_list2):
+                data_spk2 = DataSpeaker(window_list2[y])
+                index = self.get_longest(data_spk1, data_spk2)
+                self.select(index, data_spk1)
+                y += 1
+            i += 1
+        print(self.__sources)
 
     # ----------------------------------------------------------------------
     # Patterns
@@ -307,9 +333,9 @@ class sppasLexVar(sppasBaseRepet):
         tier_input2.set_name(tier_input2.get_name() + "-echo")
 
         # Repetition Automatic Detection
-        echo_tier = self.lexical_variation_detect(tier_input1, tier_input2)
+        echo_tier = self.lexical_variation_detect(tier_input1, tier_input2, window_size=0)
 
-        """# Create the transcription result
+        # Create the transcription result
         trs_output = sppasTranscription(self.name)
         trs_output.set_meta('other_repetition_result_of_src', input_file[0])
         trs_output.set_meta('other_repetition_result_of_echo', input_file[1])
@@ -332,7 +358,7 @@ class sppasLexVar(sppasBaseRepet):
                 raise EmptyOutputError
 
         return trs_output
-        """
+
 
 
 
