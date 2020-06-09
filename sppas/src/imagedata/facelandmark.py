@@ -35,6 +35,9 @@
 from random import randint
 import cv2
 
+import os
+from sppas.src.config import sppasPathSettings
+
 # ---------------------------------------------------------------------------
 
 
@@ -156,9 +159,9 @@ class FaceLandmark(object):
         """
         # cv2.imshow("Output", image)
         # cv2.waitKey(0)
-        #
+
         # faces = self.__cascade.detectMultiScale(image, 1.5, 5)
-        # recognizer = cv2.face.LBPHFaceRecognizer_create()
+        # recognizer = cv2.face.createFacemarkLBF()
         # recognizer.loadModel(self.__model)
         # ok, landmarks = recognizer.fit(image, faces)
         # print("landmarks LBF", ok, landmarks)
@@ -276,13 +279,4 @@ class FaceLandmark(object):
         return str(self).__format__(fmt)
 
     # -----------------------------------------------------------------------
-
-
-# haarcascade = os.path.join(sppasPathSettings().resources, "image",
-#                            "haarcascade_frontalface_alt2.xml")
-# model = os.path.join(sppasPathSettings().resources, "image",
-#                      "lbfmodel68.yaml")
-# f = FaceLandmark(haarcascade, model)
-# f.landmarks(image)
-# print(help(cv2))
 

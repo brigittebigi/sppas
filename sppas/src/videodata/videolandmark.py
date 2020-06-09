@@ -171,10 +171,7 @@ class VideoLandmark(object):
             # If a person has been detected
             if buffer.get_coordinate(i, index) is not None:
                 # Duplicate the coordinates
-                coords = Coordinates(buffer.get_coordinate(i, index).x,
-                                     buffer.get_coordinate(i, index).y,
-                                     buffer.get_coordinate(i, index).w,
-                                     buffer.get_coordinate(i, index).h)
+                coords = buffer.get_coordinate(i, index).copy()
 
                 # Adjust the coordinates to get a more accurate result
                 portrait(coords, 1.5)

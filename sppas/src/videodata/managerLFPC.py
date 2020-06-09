@@ -118,8 +118,10 @@ class ManagerLFPC(object):
         :param tier: (sppasTier)
 
         """
+        # The previous code
         prev_end_time = 0
         prev_end_frame = 0
+        prev_lpc_code = str()
 
         # For each LPC-syllable of the tier
         for ann in tier:
@@ -148,17 +150,21 @@ class ManagerLFPC(object):
                     nb_none = (first_frame - prev_end_frame) - 1
                     # Fill the blank with None
                     for frame in range(nb_none):
-                        self.__transcription.append(None)
+                        self.__transcription.append([prev_lpc_code, key_codes, frame, nb_none])
 
                 # Store the syllable in the transcription list
                 for frame in range(nb_frame):
                     self.__transcription.append(key_codes)
 
-            # Set the new prev_end_time
+            # Set the new previous code
             prev_end_time = end_time
-
-            # Set the new prev_end_frame
             prev_end_frame = len(self.__transcription) - 1
+            prev_lpc_code = self.__transcription[prev_end_frame]
+
+    # -----------------------------------------------------------------------
+
+    def __fill_blanks(self):
+        """Fill the blanks."""
 
     # -----------------------------------------------------------------------
 
@@ -179,8 +185,13 @@ class ManagerLFPC(object):
             # Get the landmark points
             landmarks = self.__pBuffer.get_landmark(0, frameID)
 
-            # Tag the image with the LPC code
-            self.__lfpc_Tagger.tag(frame, lpc_code, landmarks)
+            if isinstance(lpc_code, str) and landmarks is not None:
+                # Tag the image with the LPC code
+                self.__lfpc_Tagger.tag(frame, lpc_code, landmarks)
+
+            if isinstance(lpc_code, list) and landmarks is not None:
+                # Tag the image with the LPC code
+                self.__lfpc_Tagger.tag_blank(frame, lpc_code, landmarks)
 
     # -----------------------------------------------------------------------
 
@@ -210,4 +221,10 @@ class ManagerLFPC(object):
         return float(start_time), float(end_time)
 
     # -----------------------------------------------------------------------
+
+
+# "../../../../../video_test/LFPC_test_1.mp4"
+# "../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4"
+manager = ManagerLFPC("../../../../../video_test/LFPC_test_1.mp4", 100, draw="circle", v_value=True, f_value=True)
+manager.launch_process()
 

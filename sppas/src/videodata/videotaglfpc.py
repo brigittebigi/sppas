@@ -147,14 +147,50 @@ class VideoTagLFPC(object):
 
         # Store the consonant and the vowel code separately
         codes = lpc_code.split(separators.phonemes)
-        consonant_code = codes[0]
-        vowel_code = codes[0]
+        consonant_code = int(codes[0])
+        vowel_code = int(codes[1])
 
         # Get the coordinates of the vowel
         x, y = self.calcul_position(vowel_code, landmarks)
 
         # Tag the image
         add_image(image, self.__hands[consonant_code], x, y, w, h)
+
+    # -----------------------------------------------------------------------
+
+    def tag_blank(self, image, lpc_code, landmarks):
+        """Tag the image according to the lpc_code.
+
+        :param image: (numpy.ndarray) The image to be processed.
+        :param lpc_code: (string) The LPC code for the syllable.
+        :param landmarks: (list) The list a landmark points.
+
+        """
+        # Store the width and the height of the image
+        h, w = image.shape[:2]
+
+        # Store the consonant and the vowel of the previous code
+        codes = lpc_code[0].split(separators.phonemes)
+        prev_vowel = int(codes[1])
+        prev_x, prev_y = self.calcul_position(prev_vowel, landmarks)
+
+        # Store the consonant and the vowel of the next code
+        codes = lpc_code[1].split(separators.phonemes)
+        next_vowel = int(codes[1])
+        next_x, next_y = self.calcul_position(next_vowel, landmarks)
+
+        # Store the index of the blank
+        index = lpc_code[2]
+
+        # Store the number of blanks
+        nb_blank = lpc_code[3]
+
+        # Calcul the position for this hand
+        x = prev_x + (next_x - prev_x) / nb_blank * index
+        y = prev_y + (next_y - prev_y) / nb_blank * index
+
+        # Tag the image
+        add_image(image, self.__hands[0], x, y, w*0.1, h*0.1)
 
     # -----------------------------------------------------------------------
 
