@@ -42,7 +42,7 @@ from sppas.src.imagedata.coordinates import Coordinates
 # ---------------------------------------------------------------------------
 
 
-class TestVideoBuffer(unittest.TestCase):
+class TestFaceTracking(unittest.TestCase):
 
     def setUp(self):
         self.path = "../../../../../corpus/Test_01_Celia_Brigitte/montage_compressed.mp4"

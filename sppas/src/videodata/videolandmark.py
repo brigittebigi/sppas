@@ -32,12 +32,8 @@
 
 """
 
-import os
-
-from sppas.src.config import sppasPathSettings
 from sppas.src.imagedata.facelandmark import FaceLandmark
 from sppas.src.imagedata.imageutils import crop, portrait
-from sppas.src.imagedata.coordinates import Coordinates
 
 # ---------------------------------------------------------------------------
 
@@ -56,38 +52,7 @@ class VideoLandmark(object):
     def __init__(self):
         """Create a new VideoLandmark instance."""
 
-        self.__face = None
-        self.init_landmark()
-
-    # -----------------------------------------------------------------------
-
-    def init_landmark(self):
-        """Initialize the FaceLandmark with a predictor and a model."""
-        self.__face = FaceLandmark(self.__get_haarcascade(), self.__get_model())
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def __get_haarcascade():
-        """Return the predictor file."""
-        try:
-            haarcascade = os.path.join(sppasPathSettings().resources, "image",
-                                       "haarcascade_frontalface_alt2.xml")
-            return haarcascade
-        except OSError:
-            return "File does not exist"
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def __get_model():
-        """Return the predictor file."""
-        try:
-            model = os.path.join(sppasPathSettings().resources, "image",
-                                 "lbfmodel68.yaml")
-            return model
-        except OSError:
-            return "File does not exist"
+        self.__face = FaceLandmark()
 
     # -----------------------------------------------------------------------
 
@@ -182,8 +147,9 @@ class VideoLandmark(object):
                 # Launch the landmark on the image
                 landmark = self.__landmark(image)
 
-                # Adjust the result according to the base image
-                landmark = self.__adjust_points(landmark, coords.x, coords.y)
+                if landmark is not None:
+                    # Adjust the result according to the base image
+                    landmark = self.__adjust_points(landmark, coords.x, coords.y)
 
                 # Add the values in the buffer
                 buffer.add_landmark(index_person, landmark)

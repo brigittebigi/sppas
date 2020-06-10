@@ -41,7 +41,7 @@ from sppas.src.imagedata.coordinates import Coordinates
 # ---------------------------------------------------------------------------
 
 
-class TestVideoBuffer(unittest.TestCase):
+class TestPersonBuffer(unittest.TestCase):
 
     def setUp(self):
 

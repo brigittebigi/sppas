@@ -33,11 +33,12 @@
 """
 
 import os
+import cv2
 
 from sppas.src.config import sppasPathSettings
 from sppas import separators
 
-from sppas.src.imagedata.imageutils import rotate, add_image
+from sppas.src.imagedata.imageutils import add_image, rotate
 
 
 # ---------------------------------------------------------------------------
@@ -92,22 +93,22 @@ class VideoTagLFPC(object):
         if pointID == 0:
             # x = x.15 + ((x.15 - x.36) / 5.)
             # y = x.15
-            x = int(landmark[2][0] - landmark[17][0])
-            y = int(landmark[2][1])
+            x = landmark[2][0] - (landmark[17][0] - landmark[2][0])
+            y = landmark[2][1]
 
         #   - Position 1: at left, close to the eye
         elif pointID == 1:
             # x = x.1 + ((x.30 - x.1) / 3.)
             # y = y.1
-            x = landmark[0][0] + ((landmark[29][0] - landmark[1][0]) / 3.)
-            y = landmark[0][1]
+            x = landmark[0][0] + ((landmark[28][0] - landmark[0][0]) / 3.)
+            y = landmark[0][1] + ((landmark[17][1] - landmark[2][1]) / 4.)
 
         #   - Position 2: at the middle of the chin
         elif pointID == 2:
             # x = x.9
             # y = y.9 - ((y.9 - y.58) / 3.)
-            x = landmark[8][0]
-            y = landmark[8][1] - ((landmark[8][1] - landmark[57][1]) / 3.)
+            x = (landmark[8][0] + landmark[9][0]) / 2
+            y = landmark[8][1] + (landmark[57][1] - landmark[8][1])
 
         #   - Position 3: at left
         elif pointID == 3:
@@ -120,15 +121,15 @@ class VideoTagLFPC(object):
         elif pointID == 4:
             # x = x.4 + ((x.49 - x.4) / 5.)
             # y = y.4
-            x = landmark[3][0] + ((landmark[48][0] - landmark[3][0]) / 5.)
-            y = landmark[3][1]
+            x = landmark[48][0] - ((landmark[48][0] - landmark[2][0]) / 3.)
+            y = landmark[2][1]
 
         #   - Position 5: under the chin, out of the face
         elif pointID == 5:
             # x = x.9
             # y = y.9 + ((y.9 - y.58) / 2.)
             x = landmark[8][0]
-            y = landmark[8][1] + ((landmark[8][1] - landmark[57][1]) / 2.)
+            y = landmark[8][1] - ((landmark[57][1] - landmark[8][1]) / 4.)
 
         return x, y
 
@@ -152,9 +153,13 @@ class VideoTagLFPC(object):
 
         # Get the coordinates of the vowel
         x, y = self.calcul_position(vowel_code, landmarks)
+        x = int(x)
+        y = int(y)
 
         # Tag the image
-        add_image(image, self.__hands[consonant_code], x, y, w, h)
+        hand = cv2.imread(self.__hands[consonant_code])
+        hand = rotate(hand, -75)
+        add_image(image, hand, x, y, int(w * 0.25), int(h * 0.25))
 
     # -----------------------------------------------------------------------
 
@@ -173,11 +178,15 @@ class VideoTagLFPC(object):
         codes = lpc_code[0].split(separators.phonemes)
         prev_vowel = int(codes[1])
         prev_x, prev_y = self.calcul_position(prev_vowel, landmarks)
+        prev_x = int(prev_x)
+        prev_y = int(prev_y)
 
         # Store the consonant and the vowel of the next code
         codes = lpc_code[1].split(separators.phonemes)
         next_vowel = int(codes[1])
         next_x, next_y = self.calcul_position(next_vowel, landmarks)
+        next_x = int(next_x)
+        next_y = int(next_y)
 
         # Store the index of the blank
         index = lpc_code[2]
@@ -186,11 +195,12 @@ class VideoTagLFPC(object):
         nb_blank = lpc_code[3]
 
         # Calcul the position for this hand
-        x = prev_x + (next_x - prev_x) / nb_blank * index
-        y = prev_y + (next_y - prev_y) / nb_blank * index
+        x = int(prev_x + (next_x - prev_x) / nb_blank * index)
+        y = int(prev_y + (next_y - prev_y) / nb_blank * index)
 
         # Tag the image
-        add_image(image, self.__hands[0], x, y, w*0.1, h*0.1)
+        hand = cv2.imread(self.__hands[0])
+        hand = rotate(hand, -75)
+        add_image(image, hand, x, y, int(w * 0.25), int(h * 0.25))
 
     # -----------------------------------------------------------------------
-

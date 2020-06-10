@@ -35,7 +35,7 @@
 from sppas.src.videodata.personsbuffer import PersonsBuffer
 from sppas.src.videodata.videolandmark import VideoLandmark
 from sppas.src.videodata.coordswriter import sppasVideoCoordsWriter
-from sppas.src.videodata.videotaglfpc import VideoTagLFPC
+from sppas.src.annotations.LPC.videotaglpc import VideoTagLFPC
 
 # ---------------------------------------------------------------------------
 
@@ -51,8 +51,8 @@ class ManagerLFPC(object):
 
     """
 
-    def __init__(self, video, buffer_size, overlap=0, draw=None, pattern="-person", tier=None,
-                 v_value=False, f_value=False):
+    def __init__(self, video, tier=None, buffer_size=200, overlap=0, draw=None, pattern="-person",
+                 usable=False, v_value=False, f_value=False):
         """Create a new ManagerLFPC instance.
 
         :param video: (name of video file, image sequence, url or video stream,
@@ -65,15 +65,16 @@ class ManagerLFPC(object):
         :param f_value: (boolean) If is True extract images in folders.
 
         """
-        # Initialize the buffer
+        # Initialize the PersonBuffer
+        # Because the process have to store the landmark
         self.__pBuffer = PersonsBuffer(video, buffer_size, overlap)
 
         # Initialize the writer for the outputs files
         self.__coords_writer = sppasVideoCoordsWriter(video, self.__pBuffer.get_fps(), pattern,
-                                                      video=v_value, folder=f_value)
+                                                      usable=usable, video=v_value, folder=f_value)
 
         # Initialize options of the writer
-        self.__coords_writer.set_draw(draw)
+        self.__coords_writer.set_options(draw=draw)
 
         # Initialize the LFPC tagger
         self.__lfpc_Tagger = VideoTagLFPC()
@@ -81,9 +82,12 @@ class ManagerLFPC(object):
         # Initialize the landmark
         self.__landmarks = VideoLandmark()
 
-        # The list of transcription
-        self.__transcription = list()
-        self.__store_syllable(tier)
+        self.__tier = False
+        if tier is not None:
+            # The list of lpc_codes
+            self.__tier = True
+            self.__img_codes = list()
+            self.__store_syllable(tier)
 
     # -----------------------------------------------------------------------
 
@@ -98,8 +102,9 @@ class ManagerLFPC(object):
             # Initialize the list of points for the faces with FaceLandmark
             self.__landmarks.process(self.__pBuffer)
 
-            # Launch the Tag process
-            self.__lfpc_tagging()
+            if self.__tier is True:
+                # Launch the Tag process
+                self.__lfpc_tagging()
 
             # Launch the process of creation of the outputs
             self.__coords_writer.process(self.__pBuffer)
@@ -119,9 +124,8 @@ class ManagerLFPC(object):
 
         """
         # The previous code
-        prev_end_time = 0
         prev_end_frame = 0
-        prev_lpc_code = str()
+        prev_lpc_code = "0-0"
 
         # For each LPC-syllable of the tier
         for ann in tier:
@@ -131,12 +135,8 @@ class ManagerLFPC(object):
             # Get the string of the C-V key codes
             key_codes = ann.get_best_tag().get_content()
 
-            # There were a gap between the previous syllable and the current one
-            if start_time > prev_end_time:
-                pass
-
             # If the code is valid
-            if len(key_codes) == 2:
+            if len(key_codes) == 3:
                 # Store the duration of the syllable
                 duration = end_time - start_time
                 # Deduce the number of frames for the syllable
@@ -144,22 +144,21 @@ class ManagerLFPC(object):
                 # Deduce the ID of the first frame of the syllable
                 first_frame = int(start_time / self.__pBuffer.get_fps())
 
-                # If there is a blank between the previous syllable and the current one
+                # If there were a gap between the previous syllable and the current one
                 if prev_end_frame + 1 != first_frame:
                     # Get the number of blank
                     nb_none = (first_frame - prev_end_frame) - 1
                     # Fill the blank with None
                     for frame in range(nb_none):
-                        self.__transcription.append([prev_lpc_code, key_codes, frame, nb_none])
+                        self.__img_codes.append((prev_lpc_code, key_codes, frame, nb_none + 1))
 
                 # Store the syllable in the transcription list
                 for frame in range(nb_frame):
-                    self.__transcription.append(key_codes)
+                    self.__img_codes.append(key_codes)
 
             # Set the new previous code
-            prev_end_time = end_time
-            prev_end_frame = len(self.__transcription) - 1
-            prev_lpc_code = self.__transcription[prev_end_frame]
+            prev_end_frame = len(self.__img_codes) - 1
+            prev_lpc_code = self.__img_codes[prev_end_frame]
 
     # -----------------------------------------------------------------------
 
@@ -179,19 +178,23 @@ class ManagerLFPC(object):
             # Get the image
             frame = next(iterator)
 
+            # Recover the part of the lpc_code that is interesting
+            #
+            part = int(frameID + self.__pBuffer.get_frame() - (self.__pBuffer.get_size() - self.__pBuffer.get_overlap()))
             # Get the LPC code
-            lpc_code = self.__transcription[frameID + self.__pBuffer.get_frame() - self.__pBuffer.get_size()]
+            lpc_code = self.__img_codes[part]
 
             # Get the landmark points
             landmarks = self.__pBuffer.get_landmark(0, frameID)
 
-            if isinstance(lpc_code, str) and landmarks is not None:
-                # Tag the image with the LPC code
-                self.__lfpc_Tagger.tag(frame, lpc_code, landmarks)
+            if landmarks is not None:
+                if isinstance(lpc_code, str):
+                    # Tag the image with the LPC code
+                    self.__lfpc_Tagger.tag(frame, lpc_code, landmarks)
 
-            if isinstance(lpc_code, list) and landmarks is not None:
-                # Tag the image with the LPC code
-                self.__lfpc_Tagger.tag_blank(frame, lpc_code, landmarks)
+                else:
+                    # Tag the transition
+                    self.__lfpc_Tagger.tag_blank(frame, lpc_code, landmarks)
 
     # -----------------------------------------------------------------------
 

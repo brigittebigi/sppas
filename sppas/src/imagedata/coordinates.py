@@ -109,7 +109,7 @@ class Coordinates(object):
 
         # Represent the detection confidence of an object from an image.
         self.__confidence = float
-        self._set_confidence(confidence)
+        self.__set_confidence(confidence)
 
         # Represent where the image start on the x axis
         self.__x = 0
@@ -135,7 +135,7 @@ class Coordinates(object):
 
     # -----------------------------------------------------------------------
 
-    def _set_confidence(self, value):
+    def __set_confidence(self, value):
         """Set confidence value.
 
         :param value: (float) The new confidence value.
@@ -155,7 +155,7 @@ class Coordinates(object):
 
     # -----------------------------------------------------------------------
 
-    def _set_x(self, value):
+    def __set_x(self, value):
         """Set x-axis value.
 
         :param value: (int) The new x-axis value.
@@ -171,7 +171,7 @@ class Coordinates(object):
     # -----------------------------------------------------------------------
 
     # Allows to use simplified versions of getter and setter
-    x = property(get_x, _set_x)
+    x = property(get_x, __set_x)
 
     # -----------------------------------------------------------------------
 
@@ -181,7 +181,7 @@ class Coordinates(object):
 
     # -----------------------------------------------------------------------
 
-    def _set_y(self, value):
+    def __set_y(self, value):
         """Set y-axis value.
 
         :param value: (int) The new y-axis value.
@@ -197,7 +197,7 @@ class Coordinates(object):
     # -----------------------------------------------------------------------
 
     # Allows to use simplified versions of getter and setter
-    y = property(get_y, _set_y)
+    y = property(get_y, __set_y)
 
     # -----------------------------------------------------------------------
 
@@ -207,7 +207,7 @@ class Coordinates(object):
 
     # -----------------------------------------------------------------------
 
-    def _set_w(self, value):
+    def __set_w(self, value):
         """Set width value.
 
         :param value: (int) The new width value.
@@ -222,7 +222,7 @@ class Coordinates(object):
     # -----------------------------------------------------------------------
 
     # Allows to use simplified versions of getter and setter
-    w = property(get_w, _set_w)
+    w = property(get_w, __set_w)
 
     # -----------------------------------------------------------------------
 
@@ -232,7 +232,7 @@ class Coordinates(object):
 
     # -----------------------------------------------------------------------
 
-    def _set_h(self, value):
+    def __set_h(self, value):
         """Set height value.
 
         :param value: (int) The new height value.
@@ -247,7 +247,7 @@ class Coordinates(object):
     # -----------------------------------------------------------------------
 
     # Allows to use simplified versions of getter and setter
-    h = property(get_h, _set_h)
+    h = property(get_h, __set_h)
 
     # -----------------------------------------------------------------------
 

@@ -34,6 +34,8 @@
 
 import cv2
 import imutils
+import os
+from sppas.src.config import sppasPathSettings
 
 from sppas.src.imagedata.coordinates import Coordinates
 
@@ -198,6 +200,9 @@ def add_image(image, hand, x, y, w, h):
     # I want to put hand on the image
     cols, rows = hand.shape[:2]
 
+    x = int(x - rows * 0.6)
+
+    print("x", x, "y", y)
     # Crop the part of the image where the hand will take place
     roi = crop(image, Coordinates(x, y, rows, cols))
 
@@ -214,7 +219,7 @@ def add_image(image, hand, x, y, w, h):
 
     # Put logo in ROI and modify the main image
     combined = cv2.add(img1_bg, img2_fg)
-    image[y:y+rows, x:x+rows] = combined
+    image[y:y+cols, x:x+rows] = combined
 
     return image
 

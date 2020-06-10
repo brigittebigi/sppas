@@ -42,10 +42,12 @@ class Manager(object):
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
     """
 
-    def __init__(self, video, buffer_size, buffer_overlap,
-                 tracking=True, landmark=False, framing=None, mode=None, draw=None, nb_person=0,
-                 pattern="-person", width=-1, height=-1, csv_value=False, v_value=False, f_value=False):
+    def __init__(self, video, buffer_size, buffer_overlap, tracking=True, landmark=False,
+                 framing=None, mode=None, draw=None,
+                 nb_person=0, pattern="-person", width=-1, height=-1,
+                 usable_value=True, csv_value=False, v_value=False, f_value=False):
         """Create a new Manager instance.
+
         :param video: (name of video file, image sequence, url or video stream,
         GStreamer pipeline, IP camera) The video to be processed.
         :param buffer_size: (int) The size of the buffer.
@@ -63,6 +65,7 @@ class Manager(object):
         :param csv_value: (boolean) If True extract images in csv_files.
         :param v_value: (boolean) If True extract images in videos.
         :param f_value: (boolean) If True extract images in folders.
+
         """
         # If true launch the tracking process
         self.__tracking = tracking
@@ -75,14 +78,8 @@ class Manager(object):
 
         # Initialize the writer for the outputs files
         self.__coords_writer = sppasVideoCoordsWriter(video, self.__pBuffer.get_fps(), pattern,
-                                                      csv=csv_value, video=v_value, folder=f_value)
-
-        # Initialize options of the writer
-        self.__coords_writer.set_framing(framing)
-        self.__coords_writer.set_mode(mode)
-        self.__coords_writer.set_draw(draw)
-        self.__coords_writer.set_width(width)
-        self.__coords_writer.set_height(height)
+                                                      usable=usable_value, csv=csv_value, video=v_value, folder=f_value)
+        self.__coords_writer.set_options(framing, mode, draw, width, height)
 
         # Initialize the number of persons
         nb_person = int(nb_person)
