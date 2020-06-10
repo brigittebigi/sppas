@@ -179,8 +179,8 @@ class ManagerLFPC(object):
             frame = next(iterator)
 
             # Recover the part of the lpc_code that is interesting
-            #
-            part = int(frameID + self.__pBuffer.get_frame() - (self.__pBuffer.get_size() - self.__pBuffer.get_overlap()))
+            # from 0 to 100, then from 100 to 200...
+            part = int(frameID + self.__pBuffer.get_frame() - self.__pBuffer.get_size())
             # Get the LPC code
             lpc_code = self.__img_codes[part]
 
@@ -193,7 +193,7 @@ class ManagerLFPC(object):
                     self.__lfpc_Tagger.tag(frame, lpc_code, landmarks)
 
                 else:
-                    # Tag the transition
+                    # Tag the transition with two LPC code
                     self.__lfpc_Tagger.tag_blank(frame, lpc_code, landmarks)
 
     # -----------------------------------------------------------------------
