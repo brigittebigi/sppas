@@ -17,65 +17,65 @@ msgstr ""
 "Language: en_US\n"
 "X-Generator: Poedit 2.0.6\n"
 
-msgid ":ERROR 000: "
+msgid ":ERROR 0000: "
 msgstr "The following error occurred: {message}."
 
-msgid ":ERROR 100: "
+msgid ":ERROR 0100: "
 msgstr "{!s:s} is not of the expected type '{:s}'."
 
-msgid ":ERROR 200: "
+msgid ":ERROR 0200: "
 msgstr "Invalid index value {:d}."
 
-msgid ":ERROR 300: "
+msgid ":ERROR 0300: "
 msgstr "Invalid value '{!s:s}' for '{!s:s}'."
 
-msgid ":ERROR 310: "
+msgid ":ERROR 0310: "
 msgstr "Expected a positive value. Got {value}."
 
-msgid ":ERROR 320: "
+msgid ":ERROR 0320: "
 msgstr "Min value {min_value} is bigger than max value {max_value}."
 
-msgid ":ERROR 340: "
+msgid ":ERROR 0340: "
 msgstr "List index {value} out of range [{min_value},{max_value}]."
 
-msgid ":ERROR 330: "
+msgid ":ERROR 0330: "
 msgstr "Value {value} out of range [{min_value},{max_value}]."
 
-msgid ":ERROR 400: "
+msgid ":ERROR 0400: "
 msgstr "Invalid key '{!s:s}' for data '{!s:s}'."
 
-msgid ":ERROR 510: "
+msgid ":ERROR 0510: "
 msgstr "Installation failed with error: {error}"
 
-msgid ":ERROR 520: "
+msgid ":ERROR 0520: "
 msgstr "Feature {name} is not enabled; its installation should be processed first."
 
-msgid ":ERROR 610: "
+msgid ":ERROR 0610: "
 msgstr "Unknown extension for filename {:s}."
 
-msgid ":ERROR 620: "
+msgid ":ERROR 0620: "
 msgstr "The directory {dirname} does not exist."
 
-msgid ":INFO 510: "
+msgid ":INFO 0510: "
 msgstr "Installation of '{name}'."
 
-msgid ":INFO 520: "
+msgid ":INFO 0520: "
 msgstr "'{name}' not available on your OS."
 
-msgid ":INFO 530: "
+msgid ":INFO 0530: "
 msgstr "Install of '{name}' is disabled."
 
-msgid ":INFO 540: "
+msgid ":INFO 0540: "
 msgstr "'{name}' is installed."
 
-msgid ":INFO 550: "
+msgid ":INFO 0550: "
 msgstr "Installation of '{name}' failed."
 
-msgid ":INFO 560: "
+msgid ":INFO 0560: "
 msgstr "Installation finished."
 
-msgid ":INFO 570: "
+msgid ":INFO 0570: "
 msgstr "'{name}' does not match any valid package."
 
-msgid ":INFO 580: "
+msgid ":INFO 0580: "
 msgstr "No system command is processed."
