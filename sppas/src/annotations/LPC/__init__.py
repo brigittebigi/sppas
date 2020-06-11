@@ -48,7 +48,27 @@ is based on the following principles:
 
 """
 
-from .sppaslpc import sppasLPC
+from sppas.src.config import cfg
+from sppas.src.exceptions import sppasEnableFeatureError
+
+# ---------------------------------------------------------------------------
+# Define classes in case opencv&numpy are not installed.
+# ---------------------------------------------------------------------------
+
+
+class sppasLPC(object):
+    def __init__(self, *args, **kwargs):
+        raise sppasEnableFeatureError("video")
+
+
+# ---------------------------------------------------------------------------
+# Import the classes in case the "video" feature is enabled: opencv&numpy
+# are both installed and the automatic detections can work.
+# ---------------------------------------------------------------------------
+
+
+if cfg.dep_installed("video"):
+    from .sppaslpc import sppasLPC
 
 __all__ = (
     'sppasLPC'
