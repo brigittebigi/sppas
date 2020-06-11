@@ -138,7 +138,7 @@ if __name__ == "__main__":
     # Redirect all messages to logging
     # --------------------------------
 
-    """with sppasAppConfig() as cg:
+    with sppasAppConfig() as cg:
         parameters.set_report_filename(cg.log_file)
         if not args.quiet:
             log_level = cg.log_level
@@ -146,7 +146,7 @@ if __name__ == "__main__":
             log_level = cg.quiet_log_level
         lgs = sppasLogSetup(log_level)
         lgs.stream_handler()
-"""
+
     # Get options from arguments
     # --------------------------
 
@@ -165,21 +165,21 @@ if __name__ == "__main__":
         # Perform the annotation on a single file
         # ---------------------------------------
 
-        ann = sppasLexVar(log=None)
+        ann = sppasLexVar()
         ann.load_resources(args.r)
         ann.fix_options(parameters.get_options(ann_step_idx))
         if args.o:
             ann.run([args.i, args.s], output_file=args.o)
         else:
             trs = ann.run([args.i, args.s])
-            """
+
             for tier in trs:
                 for a in tier:
                     print("{} {} {:s}".format(
                         a.get_location().get_best().get_begin().get_midpoint(),
                         a.get_location().get_best().get_end().get_midpoint(),
                         a.get_best_tag().get_content()))
-"""
+
     else:
 
         if not args.quiet:
