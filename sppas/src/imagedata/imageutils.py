@@ -33,7 +33,8 @@
 """
 
 import cv2
-import imutils
+import numpy as np
+# import imutils
 import os
 from sppas.src.config import sppasPathSettings
 
@@ -170,19 +171,61 @@ def draw_points(image, x, y, number, option="circle"):
         cv2.rectangle(image, (x-4, y-4), (x+4, y+4), (number, number * 2, 200), 2)
 
 # ----------------------------------------------------------------------------
+#
+#
+# def rotate(image, angle):
+#     """Rotate the image.
+#
+#     :param image: (numpy.ndarray) The image to be rotated.
+#     :param angle: (int) The angle to use for the rotation.
+#
+#     """
+#     rotated = imutils.rotate_bound(image, angle)
+#     # cv2.imshow("Rotated (Correct)", rotated)
+#     # cv2.waitKey(0)
+#     return rotated
 
 
-def rotate(image, angle):
-    """Rotate the image.
+def rotate(image, angle, center=None, scale=1.0):
+    # grab the dimensions of the image
+    (h, w) = image.shape[:2]
 
-    :param image: (numpy.ndarray) The image to be rotated.
-    :param angle: (int) The angle to use for the rotation.
+    # if the center is None, initialize it as the center of
+    # the image
+    if center is None:
+        center = (w // 2, h // 2)
 
-    """
-    rotated = imutils.rotate_bound(image, angle)
-    # cv2.imshow("Rotated (Correct)", rotated)
-    # cv2.waitKey(0)
+    # perform the rotation
+    matrix = cv2.getRotationMatrix2D(center, angle, scale)
+    rotated = cv2.warpAffine(image, matrix, (w, h))
+
+    # return the rotated image
     return rotated
+
+
+def rotate_bound(image, angle):
+    # grab the dimensions of the image and then determine the
+    # center
+    (h, w) = image.shape[:2]
+    (cX, cY) = (w / 2, h / 2)
+
+    # grab the rotation matrix (applying the negative of the
+    # angle to rotate clockwise), then grab the sine and cosine
+    # (i.e., the rotation components of the matrix)
+    matrix = cv2.getRotationMatrix2D((cX, cY), -angle, 1.0)
+    cos = np.abs(matrix[0, 0])
+    sin = np.abs(matrix[0, 1])
+
+    # compute the new bounding dimensions of the image
+    nW = int((h * sin) + (w * cos))
+    nH = int((h * cos) + (w * sin))
+
+    # adjust the rotation matrix to take into account translation
+    matrix[0, 2] += (nW / 2) - cX
+    matrix[1, 2] += (nH / 2) - cY
+
+    # perform the actual rotation and return the image
+    return cv2.warpAffine(image, matrix, (nW, nH))
 
 # ----------------------------------------------------------------------------
 

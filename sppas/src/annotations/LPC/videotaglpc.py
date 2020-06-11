@@ -38,8 +38,7 @@ import cv2
 from sppas.src.config import sppasPathSettings
 from sppas import separators
 
-from sppas.src.imagedata.imageutils import add_image, rotate
-
+from sppas.src.imagedata.imageutils import add_image, rotate_bound
 
 # ---------------------------------------------------------------------------
 
@@ -158,7 +157,7 @@ class VideoTagLFPC(object):
 
         # Tag the image
         hand = cv2.imread(self.__hands[consonant_code])
-        hand = rotate(hand, -75)
+        hand = rotate_bound(hand, -75)
         add_image(image, hand, x, y, int(w * 0.25), int(h * 0.25))
 
     # -----------------------------------------------------------------------
@@ -200,7 +199,6 @@ class VideoTagLFPC(object):
 
         # Tag the image
         hand = cv2.imread(self.__hands[0])
-        hand = rotate(hand, -75)
+        hand = rotate_bound(hand, -75)
         add_image(image, hand, x, y, int(w * 0.25), int(h * 0.25))
 
-    # -----------------------------------------------------------------------
