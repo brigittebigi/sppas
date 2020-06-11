@@ -42,6 +42,11 @@ from sppas import RangeBoundsException
 
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
+from sppas.src.anndata import sppasTier
+from sppas.src.anndata import sppasInterval
+from sppas.src.anndata import sppasLocation
+from sppas.src.anndata import sppasLabel
+from sppas.src.anndata import sppasTag
 
 
 from ..SelfRepet.rules import SelfRules
@@ -165,11 +170,12 @@ class sppasLexVar(sppasBaseRepet):
         it = iter(sequence)
         result = list(islice(it, window_size))
         if len(result) == window_size:
-            yield result
+            # yield result
+            return result
         for elem in it:
             result = result[1:] + [elem, ]
-            yield result
-
+            # yield result
+        return result
     # ----------------------------------------------------------------------
 
     @staticmethod
@@ -224,17 +230,22 @@ class sppasLexVar(sppasBaseRepet):
         # --------------
 
         content_list_tier1 = list()
+        time_list_tier1 = list()
         content_list_tier2 = list()
-        window_list2 = list()
 
-        # getting all the unicodes from the first tier
+        window_list2 = list()
+        window_list1 = list()
+
+        # getting all the unicodes tokens from the first tier + the time location
+        # useful for creating the tier
         for ann in tier1:
             for label in ann.get_labels():
                 for tag, score in label:
                     if tag.is_speech():
                         content_list_tier1.append(tag.get_content())
+                        time_list_tier1.append(ann.get_location())
 
-        # getting all the unicodes from the second tier
+        # getting all the unicodes tokens from the second tier
         for ann2 in tier2:
             for label2 in ann2.get_labels():
                 for tag2, score2 in label2:
@@ -244,23 +255,28 @@ class sppasLexVar(sppasBaseRepet):
         # Storing Data
         # ------------
 
+        # windowing the unicode list for the first speaker
+        for window in self.window(content_list_tier1, window_size):
+            window_list1.append(window)
         # windowing the unicode list for the second speaker
         for window in self.window(content_list_tier2, window_size):
             window_list2.append(window)
 
-        i = 0
-        while i < len(content_list_tier1):
-            window = self.window(content_list_tier1[i:], window_size)
-            data_spk1 = DataSpeaker(window)
+        # lemme comparison
+        # ----------------
 
+        i = 0
+        while i < len(window_list1):
+            data_spk1 = DataSpeaker(window_list1[i])
             max_index = 0
             y = 0
             while y < len(window_list2):
                 data_spk2 = DataSpeaker(window_list2[y])
+                # TODO : RENAME INDEX
                 index = self.get_longest(data_spk1, data_spk2)
                 if index != -1:
                     if self.select(index, data_spk1):
-                        self.__sources.append(window[:index])
+                        self.__sources.append((i, i + index))
                         if index > max_index:
                             max_index = index
                 y += 1
@@ -269,6 +285,28 @@ class sppasLexVar(sppasBaseRepet):
             else:
                 i += max_index + 1
 
+        # Creating the src tier
+        # ---------------------
+
+        tier_src = sppasTier("Repeats")
+        for src in self.__sources:
+            (i, nb) = src
+            loc_begin = time_list_tier1[i]
+            # i + nb
+            loc_end = time_list_tier1[nb]
+
+            begin_point = loc_begin.get_lowest_localization()
+            end_point = loc_end.get_highest_localization()
+
+            interval = sppasInterval(begin_point, end_point)
+            location = sppasLocation(interval)
+
+            tags = [sppasTag(content_list_tier1[i] for i in range(i, i + nb))]
+            tier_src.create_annotation(location, [sppasLabel(tag) for tag in tags])
+
+        return tier_src
+
+        # ./sppaslexvar -i AB -s CM -o toto.Textgrid -r ressource/vocab/frap.lem
     # ----------------------------------------------------------------------
     # Patterns
     # ----------------------------------------------------------------------
@@ -313,7 +351,7 @@ class sppasLexVar(sppasBaseRepet):
         tier_input2.set_name(tier_input2.get_name() + "-echo")
 
         # Repetition Automatic Detection
-        echo_tier = self.lexical_variation_detect(tier_input1, tier_input2, 0)
+        src_tier = self.lexical_variation_detect(tier_input1, tier_input2, 2)
 
         # Create the transcription result
         trs_output = sppasTranscription(self.name)
@@ -324,7 +362,6 @@ class sppasLexVar(sppasBaseRepet):
         if self._options['stopwords'] is True:
             trs_output.append(self.make_stop_words(tier_input1))
         trs_output.append(src_tier)
-        trs_output.append(echo_tier)
         if len(self._word_strain) > 0:
             trs_output.append(tier_input2)
 
