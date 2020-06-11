@@ -46,7 +46,7 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas.src.videodata.manager import Manager
+from sppas.src.videodata import Manager
 
 # ---------------------------------------------------------------------------
 
@@ -75,19 +75,21 @@ if __name__ == "__main__":
 
     group_p = parser.add_argument_group("Parameters")
 
-    group_p.add_argument("--video",
+    group_p.add_argument("-i",
                          required=True,
-                         help="path to input video")
+                         help="Input video filename")
 
-    group_p.add_argument("--size",
-                         required=True,
+    group_p.add_argument("-s",
+                         required=False,
                          type=int,
-                         help="size of the buffer")
+                         default=100,
+                         help="size of the buffer (default: 100)")
 
-    group_p.add_argument("--overlap",
-                         required=True,
+    group_p.add_argument("-p",
+                         required=False,
                          type=int,
-                         help="overlap of the buffer")
+                         default=0,
+                         help="overlap of the buffer (default=0)")
 
     # Configuration
     # -----------------------------------------------
@@ -99,7 +101,7 @@ if __name__ == "__main__":
                          type=bool,
                          help="use the tracking process on each person")
 
-    group_c.add_argument("--land",
+    group_c.add_argument("--mark",
                          default=False,
                          type=bool,
                          help="use the landmark process on each person")
@@ -162,36 +164,17 @@ if __name__ == "__main__":
     if len(sys.argv) <= 1:
         sys.argv.append('-h')
 
-    args = vars(parser.parse_args())
+    args = parser.parse_args()
 
     # Add arguments for input/output files
     # ------------------------------------
 
-    video_path = args["video"]
-    buffer_size = args["size"]
-    buffer_overlap = args["overlap"]
-
-    tracking = args["tracking"]
-    landmark = args["landmark"]
-
-    csv_output = args["csv"]
-    video_output = args["videos"]
-    folder_ouput = args["folders"]
-
-    framing = args["framing"]
-    mode = args["mode"]
-    draw = args["draw"]
-
-    nb_person = args["nb_person"]
-    pattern = args["pattern"]
-    width = args["width"]
-    height = args["height"]
-
-    manager = Manager(video_path, buffer_size, buffer_overlap,
-                      tracking=tracking, landmark=landmark,
-                      framing=framing, mode=mode, draw=draw, nb_person=nb_person,
-                      pattern=pattern, width=width, height=height,
-                      csv_value=csv_output, v_value=video_output, f_value=folder_ouput)
+    manager = Manager(args.i, args.s, args.p,
+                      tracking=args.track, landmark=args.mark,
+                      framing=args.framing, mode=args.mode, draw=args.draw,
+                      nb_person=args.nb_person,
+                      pattern=args.pattern, width=args.width, height=args.height,
+                      csv_value=args.csv, v_value=args.videos, f_value=args.folders)
 
     manager.launch_process()
 

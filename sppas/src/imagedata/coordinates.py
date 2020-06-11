@@ -113,19 +113,15 @@ class Coordinates(object):
 
         # Represent where the image start on the x axis
         self.__x = 0
-        self.x = x
 
         # Represent where the image start on the y axis
         self.__y = 0
-        self.y = y
 
         # Represent the width of the image.
         self.__w = 0
-        self.w = w
 
         # Represent the height of the image.
         self.__h = 0
-        self.h = h
 
     # -----------------------------------------------------------------------
 
