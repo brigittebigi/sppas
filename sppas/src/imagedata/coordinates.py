@@ -96,14 +96,14 @@ class Coordinates(object):
     # 4K height multiply by 4
     MAX_H = 8640
 
-    def __init__(self, x, y, w, h, confidence=0.0):
+    def __init__(self, value_x, value_y, value_w, value_h, confidence=0.0):
         """Create a new sppasCoordinates instance.
 
         :param confidence: (float) The detection confidence of an object from an image.
-        :param x: (int) Where the image starts on the x axis.
-        :param y: (int) Where the image starts on the y axis.
-        :param w: (int) The width of the image.
-        :param h: (int) The height of the image.
+        :param value_x: (int) Where the image starts on the x axis.
+        :param value_y: (int) Where the image starts on the y axis.
+        :param value_w: (int) The width of the image.
+        :param value_h: (int) The height of the image.
 
         """
 
@@ -113,15 +113,19 @@ class Coordinates(object):
 
         # Represent where the image start on the x axis
         self.__x = 0
+        self.__set_x(value_x)
 
         # Represent where the image start on the y axis
         self.__y = 0
+        self.__set_y(value_y)
 
         # Represent the width of the image.
         self.__w = 0
+        self.__set_w(value_w)
 
         # Represent the height of the image.
         self.__h = 0
+        self.__set_h(value_h)
 
     # -----------------------------------------------------------------------
 
