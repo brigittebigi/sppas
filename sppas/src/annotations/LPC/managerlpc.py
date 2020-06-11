@@ -33,9 +33,10 @@
 """
 
 from math import ceil
-from sppas.src.videodata.personsbuffer import PersonsBuffer
-from sppas.src.videodata.videolandmark import VideoLandmark
-from sppas.src.videodata.coordswriter import sppasVideoCoordsWriter
+
+from sppas.src.videodata import PersonsBuffer
+from sppas.src.videodata import VideoLandmark
+from sppas.src.videodata import sppasVideoCoordsWriter
 from sppas.src.annotations.LPC.videotaglpc import VideoTagLFPC
 
 # ---------------------------------------------------------------------------
