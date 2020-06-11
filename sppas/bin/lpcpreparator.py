@@ -38,8 +38,13 @@ Install these features before launching the SPPAS application to enable them.
 
 """
 
+import os
 import sys
 from argparse import ArgumentParser
+
+PROGRAM = os.path.abspath(__file__)
+SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
+sys.path.append(SPPAS)
 
 from sppas.src.videodata.manager import Manager
 
