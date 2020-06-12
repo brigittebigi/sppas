@@ -200,9 +200,31 @@ class Installer(object):
 
     # ------------------------------------------------------------------------
 
-    def get_fids(self):
-        """Return the list of feature identifiers."""
-        return self._features.get_ids()
+    def get_fids(self, feat_type=None):
+        """Return the list of feature identifiers.
+
+        :param feat_type: (str) Only return features of the given type.
+        :returns: (list)
+
+        """
+        if feat_type is None:
+            return self._features.get_ids()
+
+        f = list()
+        for feat in self._features:
+            if feat.feature_type() == feat_type:
+                f.append(feat.get_id())
+        return f
+
+    # ------------------------------------------------------------------------
+
+    def feature_type(self, fid):
+        """Return the feature type: deps, lang, annot.
+
+        :param fid: (str) Identifier of a feature
+
+        """
+        return self._features.feature_type(fid)
 
     # ------------------------------------------------------------------------
 
@@ -229,13 +251,24 @@ class Installer(object):
     # ------------------------------------------------------------------------
 
     def description(self, fid):
-        """Return the description of the feature.
+        """Return the long description of the feature.
 
         :param fid: (str) Identifier of a feature
         :return: (str)
 
         """
         return self._features.description(fid)
+
+    # ------------------------------------------------------------------------
+
+    def brief(self, fid):
+        """Return the brief description of the feature.
+
+        :param fid: (str) Identifier of a feature
+        :return: (str)
+
+        """
+        return self._features.brief(fid)
 
     # ------------------------------------------------------------------------
 

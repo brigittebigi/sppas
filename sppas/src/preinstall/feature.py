@@ -32,34 +32,30 @@
 
 """
 
+import logging
 import uuid
 import re
-import os
 from sppas.src.config import paths
+
+# ---------------------------------------------------------------------------
+
+
+MSG_NO_BRIEF = "No brief description available"
+MSG_NO_DESCR = "No description is available for this feature."
+
+# ---------------------------------------------------------------------------
 
 
 class Feature(object):
     """Store information of one feature required by the application.
 
-        :author:       Florian Hocquet
+        :author:       Florian Hocquet, Brigitte Bigi
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
         :contact:      contact@sppas.org
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-        A Feature is set and instantiate to its default values and updated when
-        its setters are used.
-        A Feature has 7 privates attributes :
-
-        - id
-        - enable
-        - available
-        - desc
-        - dict_packages
-        - dict_pypi
-        - cmd
-
-        For example :
+        :Example:
 
         >>> feature = Feature("feature")
         >>> feature.get_id()
@@ -92,17 +88,16 @@ class Feature(object):
         # Represent if the feature is available
         self.__available = False
 
-        # Represent a description of the feature
-        self.__desc = str()
+        # Represent a short description of the feature
+        self.__brief = MSG_NO_BRIEF
 
-        # Represent the required system packages
-        self.__packages = dict()
+        # Represent a full description of the feature
+        self.__descr = MSG_NO_DESCR
 
-        # Represent the required pip packages
-        self.__pypi = dict()
+    # ------------------------------------------------------------------------
 
-        # Represent a command to be executed
-        self.__cmd = str()
+    def get_type(self):
+        return str()
 
     # ------------------------------------------------------------------------
 
@@ -130,12 +125,6 @@ class Feature(object):
 
     # ------------------------------------------------------------------------
 
-    def get_available(self):
-        """Return True if the feature is available."""
-        return self.__available
-
-    # ------------------------------------------------------------------------
-
     def set_enable(self, value):
         """Set the value of enable.
 
@@ -147,6 +136,12 @@ class Feature(object):
         else:
             value = bool(value)
             self.__enable = value
+
+    # ------------------------------------------------------------------------
+
+    def get_available(self):
+        """Return True if the feature is available."""
+        return self.__available
 
     # ------------------------------------------------------------------------
 
@@ -163,9 +158,29 @@ class Feature(object):
 
     # ------------------------------------------------------------------------
 
+    def get_brief(self):
+        """Return a short description of the feature."""
+        return self.__brief
+
+    # ------------------------------------------------------------------------
+
+    def set_brief(self, value):
+        """Set the brief description of the feature.
+
+        :param value: (str) The description to describe the feature.
+
+        """
+        value = str(value)
+        value = value.strip()
+        if len(value) == 0:
+            value = MSG_NO_BRIEF
+        self.__brief = value
+
+    # ------------------------------------------------------------------------
+
     def get_desc(self):
         """Return the description of the feature."""
-        return self.__desc
+        return self.__descr
 
     # ------------------------------------------------------------------------
 
@@ -176,7 +191,51 @@ class Feature(object):
 
         """
         value = str(value)
-        self.__desc = value
+        value = value.strip()
+        if len(value) == 0:
+            value = MSG_NO_DESCR
+        self.__descr = value
+
+    # ------------------------------------------------------------------------
+
+    def __str__(self):
+        return "id: " + str(self.get_id()) + "\n" \
+               "enable: " + str(self.get_enable()) + "\n" \
+               "available: " + str(self.get_available()) + "\n" \
+               "brief: " + str(self.get_brief()) + "\n" \
+               "description: " + str(self.get_desc()) + "\n"
+
+
+class DepsFeature(Feature):
+    """Store information of one feature required by the application.
+
+        :author:       Florian Hocquet, Brigitte Bigi
+        :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+        :contact:      contact@sppas.org
+        :license:      GPL, v3
+        :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+        Sub-class to represent a package to be installed or a command to be
+        executed, or both, ie the need of external programs.
+
+    """
+
+    def __init__(self, identifier):
+        super(DepsFeature, self).__init__(identifier)
+
+        # Represent the required system packages
+        self.__packages = dict()
+
+        # Represent the required pip packages
+        self.__pypi = dict()
+
+        # Represent a command to be executed
+        self.__cmd = str()
+
+    # ------------------------------------------------------------------------
+
+    def get_type(self):
+        return "deps"
 
     # ------------------------------------------------------------------------
 
@@ -235,14 +294,102 @@ class Feature(object):
 
         self.__cmd = value
 
+# ---------------------------------------------------------------------------
+
+
+class LangFeature(Feature):
+    """Store information of one feature required by the application.
+
+        :author:       Florian Hocquet, Brigitte Bigi
+        :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+        :contact:      contact@sppas.org
+        :license:      GPL, v3
+        :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+        Sub-class to represent a language support, ie the need to download
+        linguistic resources of a given language to enable language-dependent
+        automatic annotations.
+
+    """
+
+    def __init__(self, identifier):
+        super(LangFeature, self).__init__(identifier)
+        self.__lang = str()
+
     # ------------------------------------------------------------------------
 
-    def __str__(self):
-        return "id : " + str(self.get_id()) + "\n" \
-               "enable : " + str(self.get_enable()) + "\n" \
-               "available : " + str(self.get_available()) + "\n" \
-               "desc : " + str(self.get_desc()) + "\n" \
-               "packages : " + str(self.get_packages()) + "\n" \
-               "pypi : " + str(self.get_pypi()) + "\n" \
-               "cmd : " + str(self.get_cmd()) + "\n"
+    def get_type(self):
+        return "lang"
+
+    # ------------------------------------------------------------------------
+
+    def get_lang(self):
+        """Return the lang resource name to be downloaded."""
+        return self.__lang
+
+    # ------------------------------------------------------------------------
+
+    def set_lang(self, value):
+        """Set the iso-6639-3 code of the lang resource to download.
+
+        :param value: (str) 3 chars
+
+        """
+        value = str(value)
+        value = value.strip()
+        if len(value) != 3:
+            logging.warning("Attempted to set a wrong language '{:s}' for "
+                            "feature '{}'.".format(value, self.get_id()))
+        else:
+            self.__lang = value
+
+# ---------------------------------------------------------------------------
+
+
+class AnnotFeature(Feature):
+    """Store information of one feature required by the application.
+
+        :author:       Florian Hocquet, Brigitte Bigi
+        :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+        :contact:      contact@sppas.org
+        :license:      GPL, v3
+        :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+        Sub-class to represent a the support of an automatic annotation, ie
+        the need to download resources (models, protos...) to enable the
+        automatic annotation.
+
+    """
+
+    def __init__(self, identifier):
+        super(AnnotFeature, self).__init__(identifier)
+        self.__annot = str()
+
+    # ------------------------------------------------------------------------
+
+    def get_type(self):
+        return "annot"
+
+    # ------------------------------------------------------------------------
+
+    def get_annot(self):
+        """Return the annotation resource name to be downloaded."""
+        return self.__annot
+
+    # ------------------------------------------------------------------------
+
+    def set_annot(self, value):
+        """Set the annotation resource name to download.
+
+        :param value: (str) ascii-only chars
+
+        """
+        value = str(value)
+        value = value.strip()
+        if len(value) == 0:
+            logging.warning("Attempted to set a wrong annot name '{:s}' for "
+                            "feature '{}'.".format(value, self.get_id()))
+        else:
+            self.__annot = value
+
 
