@@ -51,6 +51,7 @@ sys.path.append(SPPAS)
 from sppas import sg
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
+from sppas.src.config import cfg
 
 from sppas.src.annotations import sppasLexVar
 from sppas.src.annotations import sppasParam
@@ -138,14 +139,13 @@ if __name__ == "__main__":
     # Redirect all messages to logging
     # --------------------------------
 
-    with sppasAppConfig() as cg:
-        parameters.set_report_filename(cg.log_file)
-        if not args.quiet:
-            log_level = cg.log_level
-        else:
-            log_level = cg.quiet_log_level
-        lgs = sppasLogSetup(log_level)
-        lgs.stream_handler()
+    # parameters.set_report_filename(cfg.log_file)
+    if not args.quiet:
+        log_level = cfg.log_level
+    else:
+        log_level = cfg.quiet_log_level
+    lgs = sppasLogSetup(log_level)
+    lgs.stream_handler()
 
     # Get options from arguments
     # --------------------------
