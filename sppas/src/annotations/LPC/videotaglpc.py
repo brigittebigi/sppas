@@ -71,7 +71,7 @@ class VideoTagLFPC(object):
         for i in range(9):
             try:
                 filename = "hand-lfpc-" + str(i) + ".png"
-                path = os.path.join(sppasPathSettings().etc, "lpc", filename)
+                path = os.path.join(sppasPathSettings().resources, "lpc", filename)
                 self.__hands.append(path)
             except OSError:
                 return "File does not exist"
