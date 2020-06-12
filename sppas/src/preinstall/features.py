@@ -42,7 +42,7 @@ except ImportError:
 
 from sppas.src.config import paths
 from sppas.src.config import cfg
-from .feature import Feature
+from .feature import Feature, DepsFeature, LangFeature, AnnotFeature
 
 # ---------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ from .feature import Feature
 class Features(object):
     """Manage the list of required external features of the software.
 
-        :author:       Florian Hocquet
+        :author:       Florian Hocquet, Brigitte Bigi
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
         :contact:      contact@sppas.org
         :license:      GPL, v3
@@ -59,10 +59,10 @@ class Features(object):
     """
 
     def __init__(self, req="", cmdos=""):
-        """Create a new Feature instance.
+        """Create a new Features instance.
 
-            A Features instance is a container for a list of features.
-            It parses a '.ini' file to get each feature config.
+        A Features instance is a container for a list of features.
+        It parses a '.ini' file to get each feature config.
 
         :param req: (str)
         :param cmdos: (str)
@@ -118,6 +118,21 @@ class Features(object):
 
     # ------------------------------------------------------------------------
 
+    def feature_type(self, fid):
+        """Return the feature type: deps, lang, annot.
+
+        :param fid: (str) Identifier of a feature
+
+        """
+        for feat in self.__features:
+            if feat.get_id() == fid:
+                return feat.get_type()
+
+        logging.error("Unknown feature {}".format(fid))
+        return None
+
+    # ------------------------------------------------------------------------
+
     def enable(self, fid, value=None):
         """Return True if the feature is enabled and/or set it.
 
@@ -154,6 +169,21 @@ class Features(object):
 
     # ------------------------------------------------------------------------
 
+    def brief(self, fid):
+        """Return the brief description of the feature.
+
+        :param fid: (str) Identifier of a feature
+
+        """
+        for feat in self.__features:
+            if feat.get_id() == fid:
+                return feat.get_brief()
+
+        logging.error("Unknown feature {}".format(fid))
+        return None
+
+    # ------------------------------------------------------------------------
+
     def description(self, fid):
         """Return the description of the feature
 
@@ -178,7 +208,11 @@ class Features(object):
         """
         for feat in self.__features:
             if feat.get_id() == fid:
-                return feat.get_packages()
+                if isinstance(feat, DepsFeature) is True:
+                    return feat.get_packages()
+                else:
+                    logging.error("Feature {} is not a DepsFeature:"
+                                  "No packages are defined.".format(fid))
 
         logging.error("Unknown feature {}".format(fid))
         return dict()
@@ -194,7 +228,11 @@ class Features(object):
         """
         for feat in self.__features:
             if feat.get_id() == fid:
-                return feat.get_pypi()
+                if isinstance(feat, DepsFeature) is True:
+                    return feat.get_pypi()
+                else:
+                    logging.error("Feature {} is not a DepsFeature:"
+                                  "No pypi are defined.".format(fid))
 
         logging.error("Unknown feature {}".format(fid))
         return dict()
@@ -210,7 +248,51 @@ class Features(object):
         """
         for feat in self.__features:
             if feat.get_id() == fid:
-                return feat.get_cmd()
+                if isinstance(feat, DepsFeature) is True:
+                    return feat.get_cmd()
+                else:
+                    logging.error("Feature {} is not a DepsFeature:"
+                                  "No cmd is defined.".format(fid))
+
+        logging.error("Unknown feature {}".format(fid))
+        return str()
+
+    # ------------------------------------------------------------------------
+
+    def lang(self, fid):
+        """Return the lang code of the linguistic resource to download.
+
+        :param fid: (str) Identifier of a feature
+        :return: (str)
+
+        """
+        for feat in self.__features:
+            if feat.get_id() == fid:
+                if isinstance(feat, LangFeature) is True:
+                    return feat.get_lang()
+                else:
+                    logging.error("Feature {} is not a LangFeature:"
+                                  "No lang is defined.".format(fid))
+
+        logging.error("Unknown feature {}".format(fid))
+        return str()
+
+    # ------------------------------------------------------------------------
+
+    def annot(self, fid):
+        """Return the name the annotation resource to download.
+
+        :param fid: (str) Identifier of a feature
+        :return: (str)
+
+        """
+        for feat in self.__features:
+            if feat.get_id() == fid:
+                if isinstance(feat, AnnotFeature) is True:
+                    return feat.get_annot()
+                else:
+                    logging.error("Feature {} is not an AnnotFeature:"
+                                  "No annot is defined.".format(fid))
 
         logging.error("Unknown feature {}".format(fid))
         return str()
@@ -231,53 +313,121 @@ class Features(object):
         features_parser = self.__init_features()
 
         for fid in (features_parser.sections()):
-            feature = Feature(fid)
-            self.__features.append(feature)
-            feature.set_available(False)
+            # Type of the feature
+            try:
+                feature = self.__set_feature(fid, features_parser)
+            except cp.NoOptionError:
+                logging.error("Missing or wrong feature type for feature {}"
+                              "".format(fid))
+                continue
 
-            # Description of the feature
+            # here we should verify if fid is not already in the list of features
+            self.__features.append(feature)
+
+            # Brief description of the feature
+            try:
+                desc = features_parser.get(fid, "brief")
+                feature.set_brief(desc)
+            except cp.NoOptionError:
+                pass
+
+            # Long description of the feature
             try:
                 desc = features_parser.get(fid, "desc")
+                feature.set_desc(desc)
             except cp.NoOptionError:
-                desc = "No description."
-            feature.set_desc(desc)
+                pass
 
             # Feature is enabled or not
             try:
                 e = features_parser.getboolean(fid, "enable")
-            except cp.NoOptionError:
-                e = False
-            feature.set_enable(e)
-
-            # System package dependencies
-            try:
-                d = features_parser.get(fid, self.__req)
-                if len(d) > 0 and d.lower() != "nil":
-                    depend_packages = self.__parse_depend(d)
-                    feature.set_packages(depend_packages)
+                feature.set_enable(e)
             except cp.NoOptionError:
                 pass
 
-            # Pypi dependencies
-            try:
-                d = features_parser.get(fid, "pip")
-                if len(d) > 0 and d.lower() != "nil":
-                    depend_pypi = self.__parse_depend(d)
-                    feature.set_pypi(depend_pypi)
-            except cp.NoOptionError:
-                pass
+    # ------------------------------------------------------------------------
 
-            # Command to be executed
-            try:
-                cmd = features_parser.get(fid, self.__cmdos)
-                if len(cmd) > 0 and cmd != "none" and cmd != "nil":
-                    feature.set_cmd(cmd)
-            except cp.NoOptionError:
-                pass
+    def __set_feature(self, fid, parser):
+        feature = None
+        try:
+            ft = parser.get(fid, "type")
+            if ft == "deps":
+                feature = DepsFeature(fid)
+                self.__fill_deps_feature(feature, parser)
+            if ft == "lang":
+                feature = LangFeature(fid)
+                self.__fill_lang_feature(feature, parser)
+            if ft == "annot":
+                feature = AnnotFeature(fid)
+                self.__fill_annot_feature(feature, parser)
+        except cp.NoOptionError:
+            pass
 
-            # Is available?
-            if len(feature.get_cmd()) > 0 or len(feature.get_pypi()) > 0 or len(feature.get_packages()) > 0:
-                feature.set_available(True)
+        if feature is not None:
+            return feature
+        raise cp.NoOptionError
+
+    # ------------------------------------------------------------------------
+
+    def __fill_deps_feature(self, feature, parser):
+        fid = feature.get_id()
+        # System package dependencies
+        try:
+            d = parser.get(fid, self.__req)
+            if len(d) > 0 and d.lower() != "nil":
+                depend_packages = self.__parse_depend(d)
+                feature.set_packages(depend_packages)
+        except cp.NoOptionError:
+            pass
+
+        # Pypi dependencies
+        try:
+            d = parser.get(fid, "pip")
+            if len(d) > 0 and d.lower() != "nil":
+                depend_pypi = self.__parse_depend(d)
+                feature.set_pypi(depend_pypi)
+        except cp.NoOptionError:
+            pass
+
+        # Command to be executed
+        try:
+            cmd = parser.get(fid, self.__cmdos)
+            if len(cmd) > 0 and cmd != "none" and cmd != "nil":
+                feature.set_cmd(cmd)
+        except cp.NoOptionError:
+            pass
+
+        # Is available?
+        if len(feature.get_cmd()) > 0 or len(feature.get_pypi()) > 0 or len(feature.get_packages()) > 0:
+            feature.set_available(True)
+
+    # ------------------------------------------------------------------------
+
+    def __fill_lang_feature(self, feature, parser):
+        fid = feature.get_id()
+        try:
+            lang = parser.get(fid, "lang")
+            feature.set_lang(lang)
+        except cp.NoOptionError:
+            pass
+
+        # Is available?
+        if len(feature.get_lang()) > 0:
+            feature.set_available(True)
+
+    # ------------------------------------------------------------------------
+
+    def __fill_annot_feature(self, feature, parser):
+        fid = feature.get_id()
+        try:
+            annot = parser.get(fid, "annot")
+            feature.set_annot(annot)
+        except cp.NoOptionError:
+            pass
+
+        # Is available?
+        if len(feature.get_annot()) > 0:
+            feature.set_available(True)
 
     # ------------------------------------------------------------------------
     # Private: Internal use only.

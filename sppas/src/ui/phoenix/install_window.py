@@ -129,7 +129,7 @@ class sppasInstallWindow(sppasTopFrame):
     """
 
     # List of the page names of the main notebook
-    pages = ("page_home", "page_license", "page_features", "page_ready",
+    pages = ("page_home", "page_license", "page_features_deps", "page_ready",
              "page_terminate")
 
     def __init__(self):
@@ -232,7 +232,7 @@ class sppasInstallWindow(sppasTopFrame):
         book.AddPage(sppasLicenseInstallPanel(book), text="")
 
         # 3rd: select the features to be installed
-        book.AddPage(sppasFeaturesInstallPanel(book, installer=self.__installer), text="")
+        book.AddPage(sppasFeaturesInstallDepsPanel(book, installer=self.__installer), text="")
 
         # 4th: ready to process install
         book.AddPage(sppasReadyInstallPanel(book), text="")
@@ -807,7 +807,7 @@ class sppasLicenseInstallPanel(sppasPanel):
 # ---------------------------------------------------------------------------
 
 
-class sppasFeaturesInstallPanel(sppasPanel):
+class sppasFeaturesInstallDepsPanel(sppasPanel):
     """Create a panel to display a welcome message when installing.
 
     :author:       Brigitte Bigi
@@ -819,9 +819,9 @@ class sppasFeaturesInstallPanel(sppasPanel):
     """
 
     def __init__(self, parent, installer=None):
-        super(sppasFeaturesInstallPanel, self).__init__(
+        super(sppasFeaturesInstallDepsPanel, self).__init__(
             parent=parent,
-            name="page_features",
+            name="page_features_deps",
             style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.TAB_TRAVERSAL
         )
         self.__installer = installer
@@ -858,12 +858,19 @@ class sppasFeaturesInstallPanel(sppasPanel):
                             name="features_list")
         lst.AppendColumn(MSG_FEAT, wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(80))
         lst.AppendColumn(MSG_DESCR, wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(380))
+        nb = 0
         if self.__installer is not None:
+            # for fid in self.__installer.features_ids("deps"):
             for fid in self.__installer.features_ids():
                 idx = lst.InsertItem(lst.GetItemCount(), fid)
                 lst.SetItem(idx, 1, self.__installer.description(fid))
                 if self.__installer.enable(fid) is True:
                     lst.Select(idx, on=True)
+                nb += 1
+
+        if nb == 0:
+            idx = lst.InsertItem(lst.GetItemCount(), " --- ")
+            lst.SetItem(idx, 1, "No features of this type are defined")
 
         return lst
 

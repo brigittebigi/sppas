@@ -32,6 +32,8 @@
 
 """
 
+from math import ceil
+
 from sppas.src.videodata import PersonsBuffer
 from sppas.src.videodata import VideoLandmark
 from sppas.src.videodata import sppasVideoCoordsWriter
@@ -124,6 +126,7 @@ class ManagerLFPC(object):
 
         """
         # The previous code
+        prev_end_time = 0
         prev_end_frame = 0
         prev_lpc_code = "0-0"
 
@@ -131,7 +134,6 @@ class ManagerLFPC(object):
         for ann in tier:
             # Get start time and end time in seconds
             start_time, end_time = self.__get_interval_time(ann)
-
             # Get the string of the C-V key codes
             key_codes = ann.get_best_tag().get_content()
 
@@ -140,23 +142,30 @@ class ManagerLFPC(object):
                 # Store the duration of the syllable
                 duration = end_time - start_time
                 # Deduce the number of frames for the syllable
-                nb_frame = int(duration * self.__pBuffer.get_fps())
+                nb_frame = ceil(duration * self.__pBuffer.get_fps())
                 # Deduce the ID of the first frame of the syllable
-                first_frame = int(start_time / self.__pBuffer.get_fps())
+                first_frame = ceil(start_time * self.__pBuffer.get_fps())
 
                 # If there were a gap between the previous syllable and the current one
                 if prev_end_frame + 1 != first_frame:
                     # Get the number of blank
                     nb_none = (first_frame - prev_end_frame) - 1
-                    # Fill the blank with None
-                    for frame in range(nb_none):
-                        self.__img_codes.append((prev_lpc_code, key_codes, frame, nb_none + 1))
+                    time = start_time - prev_end_time < 0.5
+                    if time is True:
+                        # Fill the blank with the prev and the current lpc codes
+                        for frame in range(nb_none):
+                            self.__img_codes.append((prev_lpc_code, key_codes, frame, nb_none + 1))
+                    else:
+                        # Fill the blank with None
+                        for frame in range(nb_none):
+                            self.__img_codes.append(None)
 
                 # Store the syllable in the transcription list
                 for frame in range(nb_frame):
                     self.__img_codes.append(key_codes)
 
             # Set the new previous code
+            prev_end_time = end_time
             prev_end_frame = len(self.__img_codes) - 1
             prev_lpc_code = self.__img_codes[prev_end_frame]
 
@@ -182,19 +191,23 @@ class ManagerLFPC(object):
             # from 0 to 100, then from 100 to 200...
             part = int(frameID + self.__pBuffer.get_frame() - self.__pBuffer.get_size())
             # Get the LPC code
-            lpc_code = self.__img_codes[part]
+            try:
+                lpc_code = self.__img_codes[part]
+                # Get the landmark points
+                landmarks = self.__pBuffer.get_landmark(0, frameID)
 
-            # Get the landmark points
-            landmarks = self.__pBuffer.get_landmark(0, frameID)
+                if landmarks is not None and lpc_code is not None:
+                    if isinstance(lpc_code, str):
+                        # Tag the image with the LPC code
+                        self.__lfpc_Tagger.tag(frame, lpc_code, landmarks)
 
-            if landmarks is not None:
-                if isinstance(lpc_code, str):
-                    # Tag the image with the LPC code
-                    self.__lfpc_Tagger.tag(frame, lpc_code, landmarks)
-
-                else:
-                    # Tag the transition with two LPC code
-                    self.__lfpc_Tagger.tag_blank(frame, lpc_code, landmarks)
+                    else:
+                        # Tag the transition with two LPC code
+                        self.__lfpc_Tagger.tag_blank(frame, lpc_code, landmarks)
+            except IndexError:
+                # The len of the lpc codes list is smaller than
+                # the number of frame of the input video
+                pass
 
     # -----------------------------------------------------------------------
 

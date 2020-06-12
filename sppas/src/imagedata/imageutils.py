@@ -34,9 +34,6 @@
 
 import cv2
 import numpy as np
-# import imutils
-import os
-from sppas.src.config import sppasPathSettings
 
 from sppas.src.imagedata.coordinates import Coordinates
 
@@ -171,19 +168,6 @@ def draw_points(image, x, y, number, option="circle"):
         cv2.rectangle(image, (x-4, y-4), (x+4, y+4), (number, number * 2, 200), 2)
 
 # ----------------------------------------------------------------------------
-#
-#
-# def rotate(image, angle):
-#     """Rotate the image.
-#
-#     :param image: (numpy.ndarray) The image to be rotated.
-#     :param angle: (int) The angle to use for the rotation.
-#
-#     """
-#     rotated = imutils.rotate_bound(image, angle)
-#     # cv2.imshow("Rotated (Correct)", rotated)
-#     # cv2.waitKey(0)
-#     return rotated
 
 
 def rotate(image, angle, center=None, scale=1.0):
@@ -201,6 +185,8 @@ def rotate(image, angle, center=None, scale=1.0):
 
     # return the rotated image
     return rotated
+
+# ----------------------------------------------------------------------------
 
 
 def rotate_bound(image, angle):
@@ -237,19 +223,32 @@ def add_image(image, hand, x, y, w, h):
     :param hand: (numpy.ndarray) The image to be added.
 
     """
+    # Get the shape of the background image
+    h_im, w_im = image.shape[:2]
+
     # Resize the hand to the right size
     hand = resize(hand, w, h)
-
-    # I want to put hand on the image
     cols, rows = hand.shape[:2]
-
     x = int(x - rows * 0.6)
 
-    print("x", x, "y", y)
+    # If the hand will go out of the image
+    # change the values
+    if x < 0:
+        x = 0
+    if y < 0:
+        y = 0
+    if x + rows > w_im:
+        rows = w_im - x
+    if y + cols > h_im:
+        cols = h_im - y
+    hand = crop(hand, Coordinates(0, 0, rows, cols))
+
     # Crop the part of the image where the hand will take place
     roi = crop(image, Coordinates(x, y, rows, cols))
 
     # Now create a mask of hand and create its inverse mask also
+    # If an error occure with cv2.cvtColor
+    # it's because of the crop of the hand
     img2gray = cv2.cvtColor(hand, cv2.COLOR_BGR2GRAY)
     ret, mask = cv2.threshold(img2gray, 10, 255, cv2.THRESH_BINARY)
     mask_inv = cv2.bitwise_not(mask)

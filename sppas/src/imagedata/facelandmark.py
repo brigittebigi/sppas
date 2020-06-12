@@ -71,7 +71,9 @@ class FaceLandmark(object):
         self.__cascade = cv2.CascadeClassifier(self.__get_haarcascade())
 
         # The detector
-        self.__model = self.__get_model()
+        self.__recognizer = cv2.face.createFacemarkLBF()
+        # Load the model
+        self.__recognizer.loadModel(self.__get_model())
 
     # -----------------------------------------------------------------------
 
@@ -183,12 +185,8 @@ class FaceLandmark(object):
         try:
             # Detect face (0.010 second)
             faces = self.__cascade.detectMultiScale(image, scaleFactor=1.05, minNeighbors=3, flags=0)
-            # Create the landmark (0.0 second)
-            recognizer = cv2.face.createFacemarkLBF()
-            # Load the model (1.0 second)
-            recognizer.loadModel(self.__model)
             # Apply the landmark (0.0030 second)
-            ok, landmarks = recognizer.fit(image, faces)
+            ok, landmarks = self.__recognizer.fit(image, faces)
 
             # If a face has been detected
             if ok is True:
@@ -307,12 +305,4 @@ class FaceLandmark(object):
         return str(self).__format__(fmt)
 
     # -----------------------------------------------------------------------
-
-
-# face = FaceLandmark()
-#
-# image = "../../../../../video_test/image0.jpg"
-# image = cv2.imread(image)
-#
-# face.landmarks(image)
 

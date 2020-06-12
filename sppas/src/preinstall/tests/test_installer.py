@@ -61,6 +61,13 @@ class TestInstaller(unittest.TestCase):
 
     # ---------------------------------------------------------------------------
 
+    def test_type(self):
+        self.assertEqual(self.__installer.feature_type("video"), "deps")
+        self.assertEqual(self.__installer.feature_type("julius"), "deps")
+        self.assertEqual(self.__installer.feature_type("wxpython"), "deps")
+
+    # ---------------------------------------------------------------------------
+
     def test_get_feat_ids(self):
         # Return the list of feature identifiers.
         y = self.__installer.get_fids()

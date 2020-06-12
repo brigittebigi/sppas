@@ -9,30 +9,30 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Language: en_US\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.0.6\n"
 
-msgid ":INFO 510: "
+msgid ":INFO 0510: "
 msgstr "Installation of '{name}'"
 
-msgid ":INFO 520: "
+msgid ":INFO 0520: "
 msgstr "'{name}' not available on your OS."
 
-msgid ":INFO 530: "
+msgid ":INFO 0530: "
 msgstr "Install of '{name}' is disabled."
 
-msgid ":INFO 540: "
+msgid ":INFO 0540: "
 msgstr "'{name}' is installed."
 
-msgid ":INFO 550: "
+msgid ":INFO 0550: "
 msgstr "Installation of '{name}' failed"
 
-msgid ":INFO 560: "
+msgid ":INFO 0560: "
 msgstr "Installation finished"
 
-msgid ":INFO 570: "
+msgid ":INFO 0570: "
 msgstr "'{name}' does not match any valid package."
 
-msgid ":INFO 580: "
+msgid ":INFO 0580: "
 msgstr "No system command is processed."
 
 msgid "InstallWizard of {soft} {version}."
@@ -68,29 +68,29 @@ msgstr "Feature:"
 msgid "Description:"
 msgstr "Description:"
 
-msgid ":INFO 500: "
+msgid ":INFO 0500: "
 msgstr ""
 "SPPAS is a scientific computer software package developed by Brigitte Bigi, CNRS researcher at 'Laboratoire Parole et Langage', Aix-en-Provence, France.\n"
 "\n"
 "The InstallWizard will install on your computer other programs SPPAS is requiring.\n"
 "To continue, click 'Next'."
 
-msgid ":INFO 502: "
+msgid ":INFO 0502: "
 msgstr "Please read the following license agreement. Click 'Next' to accept."
 
-msgid ":INFO 504: "
+msgid ":INFO 0504: "
 msgstr "Check the boxes in the list below to enable a feature installation:"
 
-msgid ":INFO 506: "
+msgid ":INFO 0506: "
 msgstr ""
 "Click Install button to begin the installation.\n"
 "\n"
 "If you want to review or change any of your installation settings, click 'Back'. Click 'Cancel' to exit the wizard without installing."
 
-msgid ":INFO 508: "
+msgid ":INFO 0508: "
 msgstr ""
 "Before clicking 'Exit' button, share your experience of this installer with the author:\n"
 "Click on the 'Send feedback' button of the 'Log window'."
 
-msgid ":INFO 512: "
+msgid ":INFO 0512: "
 msgstr "See the 'Log Window' for details."

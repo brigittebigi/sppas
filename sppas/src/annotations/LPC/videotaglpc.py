@@ -71,7 +71,7 @@ class VideoTagLFPC(object):
         for i in range(9):
             try:
                 filename = "hand-lfpc-" + str(i) + ".png"
-                path = os.path.join(sppasPathSettings().etc, "lpc", filename)
+                path = os.path.join(sppasPathSettings().resources, "lpc", filename)
                 self.__hands.append(path)
             except OSError:
                 return "File does not exist"
@@ -88,47 +88,47 @@ class VideoTagLFPC(object):
         x = int()
         y = int()
 
-        #   - Position 0: at right, out of the face
+        #   - Position 0: at left, out of the face
         if pointID == 0:
-            # x = x.15 + ((x.15 - x.36) / 5.)
-            # y = x.15
-            x = landmark[2][0] - (landmark[17][0] - landmark[2][0])
-            y = landmark[2][1]
+            # x = x.1 + ((x.19 - x.0))
+            # y = y.1
+            x = landmark[0][0] - (landmark[18][0] - landmark[0][0])
+            y = landmark[0][1]
 
         #   - Position 1: at left, close to the eye
         elif pointID == 1:
-            # x = x.1 + ((x.30 - x.1) / 3.)
-            # y = y.1
+            # x = x.1 + ((x.29 - x.1) / 3.)
+            # y = y.1 + ((x.18 - x.3) / 1.4)
             x = landmark[0][0] + ((landmark[28][0] - landmark[0][0]) / 3.)
-            y = landmark[0][1] + ((landmark[17][1] - landmark[2][1]) / 4.)
+            y = landmark[0][1] + ((landmark[17][1] - landmark[2][1]) / 1.4)
 
         #   - Position 2: at the middle of the chin
         elif pointID == 2:
-            # x = x.9
-            # y = y.9 - ((y.9 - y.58) / 3.)
-            x = (landmark[8][0] + landmark[9][0]) / 2
-            y = landmark[8][1] + (landmark[57][1] - landmark[8][1])
+            # x = (x.9 - x.10) / 2.
+            # y = y.9 + ((y.52 - y.9) * 1.2)
+            x = (landmark[8][0] + landmark[9][0]) / 2.
+            y = landmark[8][1] + ((landmark[51][1] - landmark[8][1]) * 1.2)
 
         #   - Position 3: at left
         elif pointID == 3:
-            # x = x.3
-            # y = y.3
-            x = landmark[2][0]
-            y = landmark[2][1]
+            # x = x.5
+            # y = y.1
+            x = landmark[0][0]
+            y = landmark[0][1]
 
         #   - Position 4: at left of the mouth
         elif pointID == 4:
-            # x = x.4 + ((x.49 - x.4) / 5.)
-            # y = y.4
+            # x = x.49 - ((x.49 - x.3) / 3.)
+            # y = y.3
             x = landmark[48][0] - ((landmark[48][0] - landmark[2][0]) / 3.)
-            y = landmark[2][1]
+            y = landmark[0][1]
 
         #   - Position 5: under the chin, out of the face
         elif pointID == 5:
-            # x = x.9
-            # y = y.9 + ((y.9 - y.58) / 2.)
-            x = landmark[8][0]
-            y = landmark[8][1] - ((landmark[57][1] - landmark[8][1]) / 4.)
+            # x = (x.9 - x.10) / 2.
+            # y = y.9 - ((y.58 - y.9) / 8.)
+            x = (landmark[8][0] + landmark[9][0]) / 2.
+            y = landmark[8][1] - ((landmark[57][1] - landmark[8][1]) / 8.)
 
         return x, y
 
@@ -158,7 +158,7 @@ class VideoTagLFPC(object):
         # Tag the image
         hand = cv2.imread(self.__hands[consonant_code])
         hand = rotate_bound(hand, -75)
-        add_image(image, hand, x, y, int(w * 0.25), int(h * 0.25))
+        add_image(image, hand, x, y, int(w * 0.50), int(h * 0.50))
 
     # -----------------------------------------------------------------------
 
@@ -200,5 +200,5 @@ class VideoTagLFPC(object):
         # Tag the image
         hand = cv2.imread(self.__hands[0])
         hand = rotate_bound(hand, -75)
-        add_image(image, hand, x, y, int(w * 0.25), int(h * 0.25))
+        add_image(image, hand, x, y, int(w * 0.50), int(h * 0.50))
 
