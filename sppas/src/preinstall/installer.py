@@ -211,9 +211,9 @@ class Installer(object):
             return self._features.get_ids()
 
         f = list()
-        for feat in self._features:
-            if feat.feature_type() == feat_type:
-                f.append(feat.get_id())
+        for fid in self._features.get_ids():
+            if self.feature_type(fid) == feat_type:
+                f.append(fid)
         return f
 
     # ------------------------------------------------------------------------
@@ -224,7 +224,8 @@ class Installer(object):
         :param fid: (str) Identifier of a feature
 
         """
-        return self._features.feature_type(fid)
+        ft = self._features.feature_type(fid)
+        return ft
 
     # ------------------------------------------------------------------------
 
@@ -272,6 +273,16 @@ class Installer(object):
 
     # ------------------------------------------------------------------------
 
+    def update_pip(self):
+        logging.info("Update pip, the package installer for Python:")
+        try:
+            process = ProcessRunner()
+            process.run("python3 -m pip install --upgrade pip")
+        except Exception as e:
+            raise sppasInstallationError(str(e))
+
+    # ------------------------------------------------------------------------
+
     def install(self):
         """Process the installation."""
         # Update pip before any installation.
@@ -280,22 +291,14 @@ class Installer(object):
         errors = list()
         for fid in self._features.get_ids():
             self.__pheader(self.__message("beginning_feature", fid))
-
             if self._features.available(fid) is False:
                 self.__pmessage(self.__message("available_false", fid))
-
             elif self._features.enable(fid) is False:
                 self.__pmessage(self.__message("enable_false", fid))
-
             else:
 
                 try:
-                    if len(self._features.cmd(fid)) > 0:
-                        self.__install_cmd(fid)
-                    if len(self._features.packages(fid)) > 0:
-                        self.__install_packages(fid)
-                    if len(self._features.pypi(fid)) > 0:
-                        self.__install_pypis(fid)
+                    self.__install_feature(fid)
                 except sppasInstallationError as e:
                     self._features.enable(fid, False)
                     self.__pmessage(self.__message("install_failed", fid))
@@ -321,16 +324,6 @@ class Installer(object):
     # Private methods to install
     # ------------------------------------------------------------------------
 
-    def update_pip(self):
-        logging.info("Update pip, the package installer for Python:")
-        try:
-            process = ProcessRunner()
-            process.run("python3 -m pip install --upgrade pip")
-        except Exception as e:
-            raise sppasInstallationError(str(e))
-
-    # ------------------------------------------------------------------------
-
     @staticmethod
     def test_command(command):
         command = command.strip()
@@ -341,6 +334,48 @@ class Installer(object):
         if shutil.which(command_args[0]):
             return False
         return True
+
+    # ------------------------------------------------------------------------
+
+    def __install_feature(self, fid):
+        """Install the given feature depending on its type."""
+        ft = self._features.feature_type(fid)
+        if ft == "deps":
+            if len(self._features.cmd(fid)) > 0:
+                self.__install_cmd(fid)
+            if len(self._features.packages(fid)) > 0:
+                self.__install_packages(fid)
+            if len(self._features.pypi(fid)) > 0:
+                self.__install_pypis(fid)
+        elif ft == "lang":
+            self.__install_lang(fid)
+        elif ft == "annot":
+            self.__install_annot(fid)
+        else:
+            raise sppasInstallationError("Unknown feature type {}."
+                                         "".format(fid))
+
+    # ------------------------------------------------------------------------
+
+    def __install_lang(self, fid):
+        """Download, unzip and install resources for a given language.
+
+        :param fid: (str) Identifier of a feature
+        :raises: sppasInstallationError
+
+        """
+        raise NotImplementedError
+
+    # ------------------------------------------------------------------------
+
+    def __install_annot(self, fid):
+        """Download, unzip and install resources for a given annotation.
+
+        :param fid: (str) Identifier of a feature
+        :raises: sppasInstallationError
+
+        """
+        raise NotImplementedError
 
     # ------------------------------------------------------------------------
 

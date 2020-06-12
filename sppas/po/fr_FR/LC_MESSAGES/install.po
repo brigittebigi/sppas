@@ -79,7 +79,19 @@ msgid ":INFO 0502: "
 msgstr "En cliquant sur ‘Suivant’, vous acceptez les termes de la licence ci-dessous."
 
 msgid ":INFO 0504: "
-msgstr "Cochez les cases pour activer les fonctionnalités:"
+msgstr "Cochez les cases pour activer les fonctionnalités :"
+
+msgid ":INFO 0514: "
+msgstr "Installation de programmes tiers."
+
+msgid ":INFO 0524: "
+msgstr "Téléchargement de resources linguistiques pour les annotations dépendentes de la langue."
+
+msgid ":INFO 0534: "
+msgstr "Téléchargement de resources requises par certaines annotations."
+
+msgid ":INFO 0544: "
+msgstr "Toutes les installations et les téléchargements."
 
 msgid ":INFO 0506: "
 msgstr ""

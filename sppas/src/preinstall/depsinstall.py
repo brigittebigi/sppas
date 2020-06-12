@@ -114,9 +114,35 @@ class sppasInstallerDeps(object):
 
     # ------------------------------------------------------------------------
 
-    def features_ids(self):
-        """Return the list of feature identifiers."""
-        return self.__installer.get_fids()
+    def features_ids(self, feat_type=None):
+        """Return the list of feature identifiers.
+
+        :param feat_type: (str) Only return features of the given type.
+        :returns: (list)
+
+        """
+        return self.__installer.get_fids(feat_type)
+
+    # ------------------------------------------------------------------------
+
+    def feature_type(self, feat_id):
+        """Return the feature type: deps, lang, annot.
+
+        :param feat_id: (str) Identifier of a feature
+        :return: (str) or None
+
+        """
+        return self.__installer.feature_type(feat_id)
+
+    # ------------------------------------------------------------------------
+
+    def brief(self, feat_id):
+        """Return the brief description of the feature.
+
+        :param feat_id: (str) Identifier of a feature
+
+        """
+        return self.__installer.brief(feat_id)
 
     # ------------------------------------------------------------------------
 

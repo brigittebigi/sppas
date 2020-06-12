@@ -79,7 +79,19 @@ msgid ":INFO 0502: "
 msgstr "Please read the following license agreement. Click 'Next' to accept."
 
 msgid ":INFO 0504: "
-msgstr "Check the boxes in the list below to enable a feature installation:"
+msgstr "Check the boxes in the list below to enable a feature:"
+
+msgid ":INFO 0514: "
+msgstr "Installation of external programs."
+
+msgid ":INFO 0524: "
+msgstr "Download linguistic resources for language-dependent annotations."
+
+msgid ":INFO 0534: "
+msgstr "Download resources to enable the annotations."
+
+msgid ":INFO 0544: "
+msgstr "All installation and download."
 
 msgid ":INFO 0506: "
 msgstr ""
