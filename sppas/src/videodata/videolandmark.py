@@ -77,6 +77,7 @@ class VideoLandmark(object):
 
         # Loop over the buffer
         for j in range(0, len(buffer)):
+            print(j)
             # Go to the next image
             img = next(iterator)
 

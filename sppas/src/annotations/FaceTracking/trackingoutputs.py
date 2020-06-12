@@ -27,7 +27,7 @@
 
         ---------------------------------------------------------------------
 
-    src.videodata.manageroutputs.py
+    src.videodata.trackingoutputs.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -35,17 +35,13 @@
 import cv2
 from cv2 import VideoWriter_fourcc
 import os
-import csv
-import shutil
-import glob
 
 from sppas.src.videodata.videooutputs import VideoOutputs
-
 
 # ---------------------------------------------------------------------------
 
 
-class ManagerOutputs(VideoOutputs):
+class TrackingOutputs(VideoOutputs):
     """Class to write outputs files.
 
     :author:       Florian Hocquet
@@ -89,8 +85,7 @@ class ManagerOutputs(VideoOutputs):
             if os.path.exists(path) is False:
                 self._video_output.append(cv2.VideoWriter(path, VideoWriter_fourcc(*'MJPG'),
                                                           self._fps, (width, height)))
-            if self._mOptions.get_mode() == "full" or \
-                    self._mOptions.get_draw() != "None" and self._mOptions.get_mode() == "None":
+            if self._mOptions.get_mode() == "full" or self._mOptions.get_mode() == "None":
                 break
 
     # -----------------------------------------------------------------------
@@ -115,14 +110,13 @@ class ManagerOutputs(VideoOutputs):
                 os.mkdir(path)
                 self._folder_output.append(path)
             # If mode equal full create only one output
-            if self._mOptions.get_mode() == "full" or \
-                    self._mOptions.get_draw() != "None" and self._mOptions.get_mode() == "None":
+            if self._mOptions.get_mode() == "full" or self._mOptions.get_mode() == "None":
                 break
 
     # -----------------------------------------------------------------------
 
     def _write_csv(self, index, number, coordinate, landmark):
-        """Write the image in a csv file.
+        """Write the information in a csv file.
 
         :param index: (int) The index of the coordinate.
         :param number: (int) The number for output name.
@@ -132,21 +126,12 @@ class ManagerOutputs(VideoOutputs):
         """
         # If csv option is True write the image in the good csv file.
         if self._mOptions.get_csv() is True:
-            if coordinate is not None and landmark is not None:
+            if coordinate is not None:
                 self._csv_output[index].writerow(
-                    [number, [coordinate.x, coordinate.y, coordinate.w, coordinate.h], landmark])
-
-            elif coordinate is not None:
-                self._csv_output[index].writerow(
-                    [number, [coordinate.x, coordinate.y, coordinate.w, coordinate.h], None])
-
-            elif landmark is not None:
-                self._csv_output[index].writerow(
-                    [number, None, landmark])
-
+                    [number, [coordinate.x, coordinate.y, coordinate.w, coordinate.h]])
             else:
                 self._csv_output[index].writerow(
-                    [number, None, None])
+                    [number, None])
 
     # -----------------------------------------------------------------------
 
@@ -160,8 +145,7 @@ class ManagerOutputs(VideoOutputs):
         # If the video option is True write the image in the good video writer.
         if self._mOptions.get_video() is True:
             # If mode equal full create only one output video
-            if self._mOptions.get_mode() == "full" or \
-                    self._mOptions.get_draw() != "None" and self._mOptions.get_mode() == "None":
+            if self._mOptions.get_mode() == "full" or self._mOptions.get_mode() == "None":
                 index = 0
                 self._video_output[index].write(image)
             else:
@@ -181,22 +165,10 @@ class ManagerOutputs(VideoOutputs):
         if self._mOptions.get_folder() is True:
 
             # If mode equal full create only one output folder
-            if self._mOptions.get_mode() == "full" or \
-                    self._mOptions.get_draw() != "None" and self._mOptions.get_mode() == "None":
+            if self._mOptions.get_mode() == "full" or self._mOptions.get_mode() == "None":
                 index = 0
                 cv2.imwrite(self._folder_output[index] + "image" + str(number) + ".jpg", image)
             else:
                 cv2.imwrite(self._folder_output[index] + "image" + str(number) + ".jpg", image)
-
-    # -----------------------------------------------------------------------
-
-    def write_base(self, image, index):
-        """Write the image in csv files, videos, and folders.
-
-        :param image: (numpy.ndarray) The image to be processed.
-        :param index: (int) The index of the coordinate.
-
-        """
-        self._base_output[index].write(image)
 
     # -----------------------------------------------------------------------

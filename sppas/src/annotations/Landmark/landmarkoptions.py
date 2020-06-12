@@ -29,7 +29,6 @@
 
     src.videodata.manageroptions.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~
-
 """
 
 from sppas.src.structs.baseoption import sppasBaseOption
@@ -37,7 +36,7 @@ from sppas.src.structs.baseoption import sppasBaseOption
 # ---------------------------------------------------------------------------
 
 
-class ManagerOptions(object):
+class LandmarkOptions(object):
     """Class to manage options.
 
     :author:       Florian Hocquet
@@ -54,27 +53,15 @@ class ManagerOptions(object):
     # The mode options
     MODE = ["full", "crop"]
 
-    # The draw options
-    DRAW = ["circle", "ellipse", "square"]
-
     def __init__(self, pattern, usable=False, csv=False, video=False, folder=False):
-        """Create a new ManagerOptions instance."""
+        """Create a new LandmarkOptions instance."""
 
         # The dictionary of options
         self.__output = {"usable": sppasBaseOption("bool", False), "csv": sppasBaseOption("bool", False),
                          "video": sppasBaseOption("bool", False), "folder": sppasBaseOption("bool", False)}
 
-        # The framing to use, face or portrait
-        self.__framing = sppasBaseOption("str", None)
-        # The mode to use, full or crop
-        self.__mode = sppasBaseOption("str", None)
         # The shape to draw, circle, ellipse or rectangle
         self.__draw = sppasBaseOption("bool", False)
-
-        # The width you want for the outputs files
-        self.__width = sppasBaseOption("int", -1)
-        # The height you want for the outputs files
-        self.__height = sppasBaseOption("int", -1)
 
         # Initialize outputs files
         self.__init_outputs(usable, csv, video, folder)
@@ -112,46 +99,9 @@ class ManagerOptions(object):
 
     # -----------------------------------------------------------------------
 
-    def set_options(self, framing, mode, draw, width, height):
+    def set_options(self, draw):
         """Set the values of the options."""
-        self.set_framing(framing)
-        self.set_mode(mode)
         self.set_draw(draw)
-        self.set_width(width)
-        self.set_height(height)
-
-        self.__verify_options()
-
-    # -----------------------------------------------------------------------
-
-    def __verify_options(self):
-        """Verify the option values."""
-        # If only mode has been setted and equal to full
-        if self.get_mode() == "full" and self.get_framing() == "None":
-            # Set framing to face
-            self.set_framing("face")
-
-        # If only framing has been setted and equal to face
-        if self.get_framing() == "face" and self.get_mode() == "None":
-            # Set mode to full
-            self.set_mode("full")
-
-        # If only mode has been setted and equal to crop
-        if self.get_mode() == "crop" and self.get_framing() == "None":
-            # Set framing to portrait
-            self.set_framing("portrait")
-
-        # If only framing has been setted and equal to portrait
-        if self.get_framing() == "portrait" and self.get_mode() == "None":
-            # Set mode to crop
-            self.set_mode("crop")
-
-        # If any option has been chosen
-        if self.get_framing() == "None" and self.get_mode() == "None" and self.get_draw() == "None":
-            # Set the outputs to False
-            self.set_csv(False)
-            self.set_video(False)
-            self.set_folder(False)
 
     # -----------------------------------------------------------------------
 
@@ -162,11 +112,7 @@ class ManagerOptions(object):
         all_options += "csv: " + str(self.get_csv()) + "\n"
         all_options += "video: " + str(self.get_video()) + "\n"
         all_options += "folder: " + str(self.get_folder()) + "\n"
-        all_options += "framing: " + self.get_framing() + "\n"
-        all_options += "mode: " + self.get_mode() + "\n"
-        all_options += "draw: " + self.get_draw() + "\n"
-        all_options += "width: " + str(self.get_width()) + "\n"
-        all_options += "height: " + str(self.get_height()) + "\n"
+        all_options += "draw: " + str(self.get_draw()) + "\n"
         all_options += "pattern: " + self.get_pattern() + "\n"
         return all_options
 
@@ -248,48 +194,6 @@ class ManagerOptions(object):
 
     # -----------------------------------------------------------------------
 
-    def get_framing(self):
-        """Return the framing."""
-        return self.__framing.get_value()
-
-    # -----------------------------------------------------------------------
-
-    def set_framing(self, value):
-        """Set the framing.
-
-        :param value: (str) The framing to use on each image of the buffer,
-        face or portrait.
-
-        """
-        if isinstance(value, str) is False and value is not None:
-            raise TypeError
-        if value not in ManagerOptions.FRAMING and value is not None:
-            raise ValueError
-        self.__framing.set_value(value)
-
-    # -----------------------------------------------------------------------
-
-    def get_mode(self):
-        """Return the mode."""
-        return self.__mode.get_value()
-
-    # -----------------------------------------------------------------------
-
-    def set_mode(self, value):
-        """Set the mode.
-
-        :param value: (str) The mode to use on each image of the buffer,
-        full or crop.
-
-        """
-        if isinstance(value, str) is False and value is not None:
-            raise TypeError
-        if value not in ManagerOptions.MODE and value is not None:
-            raise ValueError
-        self.__mode.set_value(value)
-
-    # -----------------------------------------------------------------------
-
     def get_draw(self):
         """Return the draw."""
         return self.__draw.get_value()
@@ -306,64 +210,6 @@ class ManagerOptions(object):
         if isinstance(value, bool) is False:
             raise TypeError
         self.__draw.set_value(value)
-
-    # -----------------------------------------------------------------------
-
-    def get_width(self):
-        """Return the width of the outputs files."""
-        return self.__width.get_value()
-
-    # -----------------------------------------------------------------------
-
-    def set_width(self, value):
-        """Set the width of outputs.
-
-        :param value: (int) The width of outputs images and videos.
-
-        """
-        if isinstance(value, int) is False:
-            raise TypeError
-        if value < -1 or value > 15360:
-            raise ValueError
-        self.__width.set_value(value)
-
-    # -----------------------------------------------------------------------
-
-    def get_height(self):
-        """Return the height of the outputs files."""
-        return self.__height.get_value()
-
-    # -----------------------------------------------------------------------
-
-    def set_height(self, value):
-        """Set the height of outputs.
-
-        :param value: (int) The height of outputs images and videos.
-
-        """
-        if isinstance(value, int) is False:
-            raise TypeError
-        if value < -1 or value > 8640:
-            raise ValueError
-        self.__height.set_value(value)
-
-    # -----------------------------------------------------------------------
-
-    def get_size(self):
-        """Return the size of the outputs files."""
-        return self.__width, self.__height
-
-    # -----------------------------------------------------------------------
-
-    def set_size(self, width, height):
-        """Set the size of outputs.
-
-        :param width: (int) The width of outputs images and videos.
-        :param height: (int) The height of outputs images and videos.
-
-        """
-        self.set_width(width)
-        self.set_height(height)
 
     # -----------------------------------------------------------------------
 

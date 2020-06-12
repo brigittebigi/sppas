@@ -35,16 +35,15 @@
 
 import numpy as np
 
-from sppas.src.imagedata.imageutils import crop, surrond_square, resize, portrait, draw_points
+from sppas.src.imagedata.imageutils import crop, surrond_square, resize, portrait
 from sppas.src.imagedata.coordinates import Coordinates
-from sppas.src.videodata.manageroptions import ManagerOptions
-from sppas.src.videodata.manageroutputs import ManagerOutputs
-
+from sppas.src.annotations.FaceTracking.trackingoptions import TrackingOptions
+from sppas.src.annotations.FaceTracking.trackingoutputs import TrackingOutputs
 
 # ---------------------------------------------------------------------------
 
 
-class sppasVideoCoordsWriter(object):
+class TrackingWriter(object):
     """Class to manage outputs files.
 
     :author:       Florian Hocquet
@@ -67,19 +66,19 @@ class sppasVideoCoordsWriter(object):
 
         """
         # Initialize the options manager
-        self.__mOptions = ManagerOptions(pattern, usable=usable, csv=csv, video=video, folder=folder)
+        self.__tOptions = TrackingOptions(pattern, usable=usable, csv=csv, video=video, folder=folder)
 
         # The outputs manager
-        self.__mOutputs = ManagerOutputs(path, fps, self.__mOptions)
+        self.__tOutputs = TrackingOutputs(path, fps, self.__tOptions)
 
         # The index of the current image
         self.__number = 0
 
     # -----------------------------------------------------------------------
 
-    def set_options(self, framing=None, mode=None, draw=False, width=640, height=480):
+    def set_options(self, framing=None, mode=None, width=640, height=480):
         """Set the values of the options."""
-        self.__mOptions.set_options(framing, mode, draw, width, height)
+        self.__tOptions.set_options(framing, mode, width, height)
 
     # -----------------------------------------------------------------------
 
@@ -133,23 +132,16 @@ class sppasVideoCoordsWriter(object):
                 if buffer.get_coordinate(i, frameid) is None:
                     continue
 
-            # If landmark process has been used
-            elif buffer.is_landmarked() is True:
-                # If any visage has been detected continue
-                if buffer.get_landmark(i, frameid) is None:
-                    continue
-
-            if self.__mOptions.get_width() != -1 and self.__mOptions.get_height() != -1 and \
-                    self.__mOptions.get_usable() is True:
+            if self.__tOptions.get_width() != -1 and self.__tOptions.get_height() != -1 and \
+                    self.__tOptions.get_usable() is True:
                 # Write the usable output videos
                 self.__manage_usable(buffer, image1, i, frameid)
 
             # If any option is enabled use only the csv outputs files
-            option = self.__mOptions.get_framing() == "None" and self.__mOptions.get_mode() == "None" and \
-                     self.__mOptions.get_draw() is False
+            option = self.__tOptions.get_framing() == "None" and self.__tOptions.get_mode() == "None"
             if option is False and \
-                    self.__mOptions.get_csv() is True or self.__mOptions.get_video() is True or \
-                    self.__mOptions.get_folder() is True:
+                    self.__tOptions.get_csv() is True or self.__tOptions.get_video() is True or \
+                    self.__tOptions.get_folder() is True:
                 # Write the outputs
                 self.__manage_verification(buffer, image2, i, frameid)
 
@@ -162,10 +154,9 @@ class sppasVideoCoordsWriter(object):
 
         """
         # If option are the same as the one for the usable output videos
-        if self.__mOptions.get_framing() == "portrait" and self.__mOptions.get_mode() == "crop" and \
-                self.__mOptions.get_draw() is False or buffer.is_landmarked() is False:
+        if self.__tOptions.get_framing() == "portrait" and self.__tOptions.get_mode() == "crop":
             # Set output video to False
-            self.__mOptions.set_video(False)
+            self.__tOptions.set_video(False)
 
     # -----------------------------------------------------------------------
 
@@ -187,10 +178,10 @@ class sppasVideoCoordsWriter(object):
         (h, w) = image.shape[:2]
 
         # Create the usable output videos
-        self.__mOutputs.out_base(buffer.nb_persons(), w, h)
+        self.__tOutputs.out_base(buffer.nb_persons(), w, h)
 
         # Write the image in usable output video
-        self.__mOutputs.write_base(image, index)
+        self.__tOutputs.write_base(image, index)
 
     # -----------------------------------------------------------------------
 
@@ -228,14 +219,9 @@ class sppasVideoCoordsWriter(object):
         :param buffer: (VideoBuffer) The buffer which contains images.
 
         """
-        if self.__mOptions.get_mode() != "full" and self.__mOptions.get_mode() != "None":
+        if self.__tOptions.get_mode() != "full" and self.__tOptions.get_mode() != "None":
             # Copy the image
             image = image.copy()
-
-        # If the landmark process has been used
-        if buffer.is_landmarked() is True:
-            # Apply modification
-            self.__apply_landmarked(buffer, image, index, frameID)
 
         # If the tracking process has been used
         if buffer.is_tracked() is True:
@@ -246,23 +232,10 @@ class sppasVideoCoordsWriter(object):
         (h, w) = image.shape[:2]
 
         # Create the output files
-        self.__mOutputs.create_out(buffer.nb_persons(), w, h)
+        self.__tOutputs.create_out(buffer.nb_persons(), w, h)
 
         # Write the image in csv file, video, folder
-        if buffer.is_landmarked() is True and buffer.is_tracked() is True:
-            self.__mOutputs.write(image, index, self.__number,
-                                  buffer.get_coordinate(index, frameID), buffer.get_landmark(index, frameID))
-
-        elif buffer.is_landmarked() is True and buffer.is_tracked() is False:
-            self.__mOutputs.write(image, index, self.__number,
-                                  None, buffer.get_landmark(index, frameID))
-
-        elif buffer.is_landmarked() is False and buffer.is_tracked() is True:
-            self.__mOutputs.write(image, index, self.__number,
-                                  buffer.get_coordinate(index, frameID), None)
-
-        else:
-            self.__mOutputs.write(image, index, self.__number, None, None)
+        self.__tOutputs.write(image, index, self.__number, coordinate=buffer.get_coordinate(index, frameID))
 
     # -----------------------------------------------------------------------
 
@@ -276,43 +249,27 @@ class sppasVideoCoordsWriter(object):
 
         """
         # If portrait option has been selected
-        if self.__mOptions.get_framing() == "portrait":
+        if self.__tOptions.get_framing() == "portrait":
             # Transform Coordinates into portrait
             portrait(buffer.get_coordinate(index, frameID))
 
         # If mode is not full
-        if self.__mOptions.get_mode() != "full" and self.__mOptions.get_mode() != "None":
+        if self.__tOptions.get_mode() != "full" and self.__tOptions.get_mode() != "None":
             # Adjust the Coordinates
             self.__adjust(image, buffer.get_coordinate(index, frameID))
 
         # If a mode has been selected
-        if self.__mOptions.get_mode() != "None":
+        if self.__tOptions.get_mode() != "None":
             # Use one of the extraction options
             image = self.__process_image(image, buffer.get_coordinate(index, frameID), index)
 
         # If mode is not full
         # or if a mode has been selected
-        if self.__mOptions.get_mode() != "full" and self.__mOptions.get_mode() != "None":
+        if self.__tOptions.get_mode() != "full" and self.__tOptions.get_mode() != "None":
             # Resize the image
             image = self.__resize(image)
 
         return image
-
-    # -----------------------------------------------------------------------
-
-    def __apply_landmarked(self, buffer, image, index, frameID):
-        """Apply modification based on the landmark.
-
-        :param buffer: (VideoBuffer) The buffer which contains images.
-        :param image: (numpy.ndarray) The image to be processed.
-        :param index: (int) The ID of the person.
-        :param frameID: (int) The ID of the image in the buffer.
-
-        """
-        # If draw is not None
-        if self.__mOptions.get_draw() is True and buffer.get_landmark(index, frameID) is not None:
-            # Draw the shape on landmarks points
-            self.__draw_points(image, buffer.get_landmark(index, frameID), index)
 
     # -----------------------------------------------------------------------
 
@@ -333,7 +290,7 @@ class sppasVideoCoordsWriter(object):
             raise TypeError
 
         # If mode is full
-        if self.__mOptions.get_mode() == "full":
+        if self.__tOptions.get_mode() == "full":
             # Get a different color for each person
             number = (index * 80) % 120
 
@@ -341,34 +298,9 @@ class sppasVideoCoordsWriter(object):
             return surrond_square(img_buffer, coords, number)
 
         # If mode is crop
-        elif self.__mOptions.get_mode() == "crop":
+        elif self.__tOptions.get_mode() == "crop":
             # Crop the face
             return crop(img_buffer, coords)
-
-    # -----------------------------------------------------------------------
-
-    def __draw_points(self, img_buffer, landmark_points, index):
-        """Draw circle, ellipse or rectangle on landmark points.
-
-        :param img_buffer: (numpy.ndarray) The image to be processed.
-        :param landmark_points: (dict) A list of x-axis, y-axis values,
-        landmark points.
-        :param index: (int) The index of the person in the list of person.
-
-        """
-        if isinstance(landmark_points, list) is False:
-            raise TypeError
-
-        if isinstance(img_buffer, np.ndarray) is False:
-            raise TypeError
-
-        # Get a different color for each person
-        number = (index * 80) % 120
-
-        # Draw shape on each landmark points
-        for t in landmark_points:
-            x, y = t
-            draw_points(img_buffer, x, y, number)
 
     # -----------------------------------------------------------------------
 
@@ -379,23 +311,23 @@ class sppasVideoCoordsWriter(object):
         :param coords: (Coordinates) The coordinates of the face.
 
         """
-        if self.__mOptions.get_mode() == "crop" and self.__mOptions.get_width() == -1 and self.__mOptions.get_height() == -1:
-            self.__mOptions.set_video(False)
+        if self.__tOptions.get_mode() == "crop" and self.__tOptions.get_width() == -1 and self.__tOptions.get_height() == -1:
+            self.__tOptions.set_video(False)
 
         # If anything has been setted pass
-        if self.__mOptions.get_width() == -1 and self.__mOptions.get_height() == -1:
+        if self.__tOptions.get_width() == -1 and self.__tOptions.get_height() == -1:
             pass
 
         # If only the width has been setted use adjust width
-        if self.__mOptions.get_width() != -1 and self.__mOptions.get_height() == -1:
+        if self.__tOptions.get_width() != -1 and self.__tOptions.get_height() == -1:
             self.__adjust_height()
 
         # If only the height has been setted use adjust height
-        elif self.__mOptions.get_width() == -1 and self.__mOptions.get_height() != -1:
+        elif self.__tOptions.get_width() == -1 and self.__tOptions.get_height() != -1:
             self.__adjust_width()
 
         # If both of width and height has been setted
-        if self.__mOptions.get_width() != -1 and self.__mOptions.get_height() != -1:
+        if self.__tOptions.get_width() != -1 and self.__tOptions.get_height() != -1:
             self.__adjust_both(coords, img_buffer)
 
     # -----------------------------------------------------------------------
@@ -407,7 +339,7 @@ class sppasVideoCoordsWriter(object):
         :param img_buffer: (numpy.ndarray) The image to be processed.
 
         """
-        coeff = self.__mOptions.get_width() / self.__mOptions.get_height()
+        coeff = self.__tOptions.get_width() / self.__tOptions.get_height()
         coeff_coords = coords.w / coords.h
         if coeff != coeff_coords:
             new_w = int(coords.h * coeff)
@@ -431,21 +363,21 @@ class sppasVideoCoordsWriter(object):
 
     def __adjust_width(self):
         """Adjust the width based on the width from constructor."""
-        if self.__mOptions.get_framing() == "face":
+        if self.__tOptions.get_framing() == "face":
             coeff = 0.75
         else:
             coeff = 4 / 3
-        self.__mOptions.set_width(int(self.__mOptions.get_height() * coeff))
+        self.__tOptions.set_width(int(self.__tOptions.get_height() * coeff))
 
     # -----------------------------------------------------------------------
 
     def __adjust_height(self):
         """Adjust the height based on the height from constructor."""
-        if self.__mOptions.get_framing() == "face":
+        if self.__tOptions.get_framing() == "face":
             coeff = 4 / 3
         else:
             coeff = 0.75
-        self.__mOptions.set_height(int(self.__mOptions.get_width() * coeff))
+        self.__tOptions.set_height(int(self.__tOptions.get_width() * coeff))
 
     # -----------------------------------------------------------------------
 
@@ -455,10 +387,10 @@ class sppasVideoCoordsWriter(object):
         :param img_buffer: (numpy.ndarray) The image to be processed.
 
         """
-        if self.__mOptions.get_width() == -1 and self.__mOptions.get_height() == -1:
+        if self.__tOptions.get_width() == -1 and self.__tOptions.get_height() == -1:
             return img_buffer
         else:
-            new_image = resize(img_buffer, self.__mOptions.get_width(), self.__mOptions.get_height())
+            new_image = resize(img_buffer, self.__tOptions.get_width(), self.__tOptions.get_height())
             return new_image
 
     # -----------------------------------------------------------------------

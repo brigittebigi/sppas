@@ -158,7 +158,7 @@ class VideoTagLFPC(object):
         # Tag the image
         hand = cv2.imread(self.__hands[consonant_code])
         hand = rotate_bound(hand, -75)
-        add_image(image, hand, x, y, int(w * 0.50), int(h * 0.50))
+        add_image(image, hand, x, y, int(w * 0.60), int(h * 0.60))
 
     # -----------------------------------------------------------------------
 
@@ -200,5 +200,5 @@ class VideoTagLFPC(object):
         # Tag the image
         hand = cv2.imread(self.__hands[0])
         hand = rotate_bound(hand, -75)
-        add_image(image, hand, x, y, int(w * 0.50), int(h * 0.50))
+        add_image(image, hand, x, y, int(w * 0.60), int(h * 0.60))
 

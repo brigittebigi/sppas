@@ -241,7 +241,7 @@ class sppasLPC(sppasBaseAnnotation):
         """
         if cfg.dep_installed("video") is True:
             self.logfile.print_message("Create the tagged video", status=annots.info)
-            manager = ManagerLFPC(video_file, lpc_keys, 100, draw="circle", usable=True, v_value=True, f_value=True)
+            manager = ManagerLFPC(video_file, lpc_keys, 100, draw=True, usable=True, v_value=True, f_value=True)
             manager.launch_process()
         else:
             self.logfile.print_message(

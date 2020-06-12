@@ -300,7 +300,7 @@ class Coordinates(object):
         new_y = self.y + y
 
         if new_x < 0:
-            raise ImageError("The x-axis value have to be superior to 0.")
+            new_x = 0
         elif new_y < 0:
             new_y = 0
 

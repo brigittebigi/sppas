@@ -37,7 +37,7 @@ from sppas.src.structs.baseoption import sppasBaseOption
 # ---------------------------------------------------------------------------
 
 
-class ManagerOptions(object):
+class ImageOptions(object):
     """Class to manage options.
 
     :author:       Florian Hocquet
@@ -57,19 +57,16 @@ class ManagerOptions(object):
     # The draw options
     DRAW = ["circle", "ellipse", "square"]
 
-    def __init__(self, pattern, usable=False, csv=False, video=False, folder=False):
-        """Create a new ManagerOptions instance."""
+    def __init__(self, pattern, usable=False, folder=False):
+        """Create a new ImageOptions instance."""
 
         # The dictionary of options
-        self.__output = {"usable": sppasBaseOption("bool", False), "csv": sppasBaseOption("bool", False),
-                         "video": sppasBaseOption("bool", False), "folder": sppasBaseOption("bool", False)}
+        self.__output = {"usable": sppasBaseOption("bool", False), "folder": sppasBaseOption("bool", False)}
 
         # The framing to use, face or portrait
         self.__framing = sppasBaseOption("str", None)
         # The mode to use, full or crop
         self.__mode = sppasBaseOption("str", None)
-        # The shape to draw, circle, ellipse or rectangle
-        self.__draw = sppasBaseOption("bool", False)
 
         # The width you want for the outputs files
         self.__width = sppasBaseOption("int", -1)
@@ -77,7 +74,7 @@ class ManagerOptions(object):
         self.__height = sppasBaseOption("int", -1)
 
         # Initialize outputs files
-        self.__init_outputs(usable, csv, video, folder)
+        self.__init_outputs(usable, folder)
 
         # The pattern to use for the outputs files
         self.__pattern = sppasBaseOption("str", None)
@@ -85,12 +82,10 @@ class ManagerOptions(object):
 
     # -----------------------------------------------------------------------
 
-    def __init_outputs(self, usable, csv, video, folder):
+    def __init_outputs(self, usable, folder):
         """Init the values of the outputs options.
 
         :param usable: (boolean) If True create the usable videos.
-        :param csv: (boolean) If True extract images in csv file.
-        :param video: (boolean) If True extract images in a video.
         :param folder: (boolean) If True extract images in a folder.
 
         """
@@ -98,25 +93,16 @@ class ManagerOptions(object):
         if usable is True:
             self.set_usable(True)
 
-        # If csv is True set the csv outputs files to True
-        if csv is True:
-            self.set_csv(True)
-
-        # If video is True set the video outputs files to True
-        if video is True:
-            self.set_video(True)
-
         # If folder is True set the folders outputs to True
         if folder is True:
             self.set_folder(True)
 
     # -----------------------------------------------------------------------
 
-    def set_options(self, framing, mode, draw, width, height):
+    def set_options(self, framing, mode, width, height):
         """Set the values of the options."""
         self.set_framing(framing)
         self.set_mode(mode)
-        self.set_draw(draw)
         self.set_width(width)
         self.set_height(height)
 
@@ -146,11 +132,9 @@ class ManagerOptions(object):
             # Set mode to crop
             self.set_mode("crop")
 
-        # If any option has been chosen
-        if self.get_framing() == "None" and self.get_mode() == "None" and self.get_draw() == "None":
-            # Set the outputs to False
-            self.set_csv(False)
-            self.set_video(False)
+        # If only framing has been setted and equal to portrait
+        if self.get_framing() == "face" and self.get_mode() == "crop":
+            # Set mode to crop
             self.set_folder(False)
 
     # -----------------------------------------------------------------------
@@ -159,12 +143,9 @@ class ManagerOptions(object):
         """Return the pattern of the outputs files."""
         all_options = ""
         all_options += "usable: " + str(self.get_usable()) + "\n"
-        all_options += "csv: " + str(self.get_csv()) + "\n"
-        all_options += "video: " + str(self.get_video()) + "\n"
         all_options += "folder: " + str(self.get_folder()) + "\n"
         all_options += "framing: " + self.get_framing() + "\n"
         all_options += "mode: " + self.get_mode() + "\n"
-        all_options += "draw: " + self.get_draw() + "\n"
         all_options += "width: " + str(self.get_width()) + "\n"
         all_options += "height: " + str(self.get_height()) + "\n"
         all_options += "pattern: " + self.get_pattern() + "\n"
@@ -188,44 +169,6 @@ class ManagerOptions(object):
         if isinstance(value, bool) is False:
             raise TypeError
         self.__output["usable"].set_value(value)
-
-    # -----------------------------------------------------------------------
-
-    def get_csv(self):
-        """Return True if the option csv is enabled."""
-        return self.__output["csv"].get_value()
-
-    # -----------------------------------------------------------------------
-
-    def set_csv(self, value):
-        """Enable or not the csv output.
-
-        :param value: (boolean) True to enabled and False to disabled.
-
-        """
-        value = bool(value)
-        if isinstance(value, bool) is False:
-            raise TypeError
-        self.__output["csv"].set_value(value)
-
-    # -----------------------------------------------------------------------
-
-    def get_video(self):
-        """Return True if the option video is enabled."""
-        return self.__output["video"].get_value()
-
-    # -----------------------------------------------------------------------
-
-    def set_video(self, value):
-        """Enable or not the video output.
-
-        :param value: (boolean) True to enabled and False to disabled.
-
-        """
-        value = bool(value)
-        if isinstance(value, bool) is False:
-            raise TypeError
-        self.__output["video"].set_value(value)
 
     # -----------------------------------------------------------------------
 
@@ -263,7 +206,7 @@ class ManagerOptions(object):
         """
         if isinstance(value, str) is False and value is not None:
             raise TypeError
-        if value not in ManagerOptions.FRAMING and value is not None:
+        if value not in ImageOptions.FRAMING and value is not None:
             raise ValueError
         self.__framing.set_value(value)
 
@@ -284,28 +227,9 @@ class ManagerOptions(object):
         """
         if isinstance(value, str) is False and value is not None:
             raise TypeError
-        if value not in ManagerOptions.MODE and value is not None:
+        if value not in ImageOptions.MODE and value is not None:
             raise ValueError
         self.__mode.set_value(value)
-
-    # -----------------------------------------------------------------------
-
-    def get_draw(self):
-        """Return the draw."""
-        return self.__draw.get_value()
-
-    # -----------------------------------------------------------------------
-
-    def set_draw(self, value):
-        """Set the draw.
-
-        :param value: (str) The shape to draw on each image of the buffer,
-        circle, ellipse or square.
-
-        """
-        if isinstance(value, bool) is False:
-            raise TypeError
-        self.__draw.set_value(value)
 
     # -----------------------------------------------------------------------
 

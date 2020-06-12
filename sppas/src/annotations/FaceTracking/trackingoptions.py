@@ -27,9 +27,8 @@
 
         ---------------------------------------------------------------------
 
-    src.videodata.manageroptions.py
+    src.videodata.trackingoptions.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~
-
 """
 
 from sppas.src.structs.baseoption import sppasBaseOption
@@ -37,7 +36,7 @@ from sppas.src.structs.baseoption import sppasBaseOption
 # ---------------------------------------------------------------------------
 
 
-class ManagerOptions(object):
+class TrackingOptions(object):
     """Class to manage options.
 
     :author:       Florian Hocquet
@@ -54,11 +53,8 @@ class ManagerOptions(object):
     # The mode options
     MODE = ["full", "crop"]
 
-    # The draw options
-    DRAW = ["circle", "ellipse", "square"]
-
     def __init__(self, pattern, usable=False, csv=False, video=False, folder=False):
-        """Create a new ManagerOptions instance."""
+        """Create a new TrackingOptions instance."""
 
         # The dictionary of options
         self.__output = {"usable": sppasBaseOption("bool", False), "csv": sppasBaseOption("bool", False),
@@ -68,8 +64,6 @@ class ManagerOptions(object):
         self.__framing = sppasBaseOption("str", None)
         # The mode to use, full or crop
         self.__mode = sppasBaseOption("str", None)
-        # The shape to draw, circle, ellipse or rectangle
-        self.__draw = sppasBaseOption("bool", False)
 
         # The width you want for the outputs files
         self.__width = sppasBaseOption("int", -1)
@@ -112,11 +106,10 @@ class ManagerOptions(object):
 
     # -----------------------------------------------------------------------
 
-    def set_options(self, framing, mode, draw, width, height):
+    def set_options(self, framing, mode, width, height):
         """Set the values of the options."""
         self.set_framing(framing)
         self.set_mode(mode)
-        self.set_draw(draw)
         self.set_width(width)
         self.set_height(height)
 
@@ -147,9 +140,8 @@ class ManagerOptions(object):
             self.set_mode("crop")
 
         # If any option has been chosen
-        if self.get_framing() == "None" and self.get_mode() == "None" and self.get_draw() == "None":
+        if self.get_framing() == "None" and self.get_mode() == "None":
             # Set the outputs to False
-            self.set_csv(False)
             self.set_video(False)
             self.set_folder(False)
 
@@ -164,7 +156,6 @@ class ManagerOptions(object):
         all_options += "folder: " + str(self.get_folder()) + "\n"
         all_options += "framing: " + self.get_framing() + "\n"
         all_options += "mode: " + self.get_mode() + "\n"
-        all_options += "draw: " + self.get_draw() + "\n"
         all_options += "width: " + str(self.get_width()) + "\n"
         all_options += "height: " + str(self.get_height()) + "\n"
         all_options += "pattern: " + self.get_pattern() + "\n"
@@ -263,7 +254,7 @@ class ManagerOptions(object):
         """
         if isinstance(value, str) is False and value is not None:
             raise TypeError
-        if value not in ManagerOptions.FRAMING and value is not None:
+        if value not in TrackingOptions.FRAMING and value is not None:
             raise ValueError
         self.__framing.set_value(value)
 
@@ -284,28 +275,9 @@ class ManagerOptions(object):
         """
         if isinstance(value, str) is False and value is not None:
             raise TypeError
-        if value not in ManagerOptions.MODE and value is not None:
+        if value not in TrackingOptions.MODE and value is not None:
             raise ValueError
         self.__mode.set_value(value)
-
-    # -----------------------------------------------------------------------
-
-    def get_draw(self):
-        """Return the draw."""
-        return self.__draw.get_value()
-
-    # -----------------------------------------------------------------------
-
-    def set_draw(self, value):
-        """Set the draw.
-
-        :param value: (str) The shape to draw on each image of the buffer,
-        circle, ellipse or square.
-
-        """
-        if isinstance(value, bool) is False:
-            raise TypeError
-        self.__draw.set_value(value)
 
     # -----------------------------------------------------------------------
 

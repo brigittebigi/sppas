@@ -27,15 +27,14 @@
 
         ---------------------------------------------------------------------
 
-    src.videodata.manager.py
+    src.videodata.managerlandmark.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
 from sppas.src.videodata.personsbuffer import PersonsBuffer
-from sppas.src.videodata.facetracking import FaceTracking
 from sppas.src.videodata.videolandmark import VideoLandmark
-from sppas.src.videodata.coordswriter import sppasVideoCoordsWriter
+from sppas.src.annotations.Landmark.landmarkwriter import LandmarkWriter
 
 # ---------------------------------------------------------------------------
 
@@ -49,21 +48,18 @@ class Manager(object):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    # Initialize the manager
-    >>> manager = Manager(video, 90, 0, tracking=True, landmark=True,
-    >>>           framing="face", mode="full", draw=False,
-    >>>           nb_person=0, pattern="-person", width=640, height=480,
-    >>>           usable_value=True, csv_value=True, v_value=True, f_value=True)
 
-    # Launch the process
+    >>> manager = Manager(video, 90, 0,
+    >>>                   pattern="-person",
+    >>>                   usable_value=True, csv_value=True, f_value=True)
     >>> manager.launch_process()
 
     """
 
-    def __init__(self, video, buffer_size, buffer_overlap, tracking=True, landmark=False,
-                 framing=None, mode=None, draw=False,
-                 nb_person=0, pattern="-person", width=-1, height=-1,
-                 usable_value=True, csv_value=False, v_value=False, f_value=False):
+    def __init__(self, video, buffer_size, buffer_overlap,
+                 draw=True,
+                 pattern="-person",
+                 usable_value=True, csv_value=False, f_value=False):
         """Create a new Manager instance.
 
         :param video: (name of video file, image sequence, url or video stream,
@@ -71,44 +67,19 @@ class Manager(object):
         :param buffer_size: (int) The size of the buffer.
         :param buffer_overlap: (overlap) The number of values to keep
         from the previous buffer.
-        :param tracking: (boolean) If True use the tracking process.
-        :param landmark: (boolean) If True use the landmark process.
-        :param framing: (str) The name of the framing option to use.
-        :param mode: (str) The name of the mode option to use.
-        :param draw: (str) The name of the shape to draw.
-        :param nb_person: (int) The number of person to detect.
+        :param draw: (str) True to draw circle around landmark points.
         :param pattern: (str) The pattern to use for the creation of the files.
-        :param width: (int) The width of the outputs images and videos.
-        :param height: (int) The height of the outputs images and videos.
         :param csv_value: (boolean) If True extract images in csv_files.
-        :param v_value: (boolean) If True extract images in videos.
         :param f_value: (boolean) If True extract images in folders.
 
         """
-        # If true launch the tracking process
-        self.__tracking = tracking
-
-        # If true launch the landmark process
-        self.__landmark = landmark
-
         # Initialize the buffer
         self.__pBuffer = PersonsBuffer(video, buffer_size, buffer_overlap)
 
         # Initialize the writer for the outputs files
-        self.__coords_writer = sppasVideoCoordsWriter(video, self.__pBuffer.get_fps(), pattern,
-                                                      usable=usable_value, csv=csv_value, video=v_value, folder=f_value)
-        self.__coords_writer.set_options(framing, mode, draw, width, height)
-
-        # Initialize the number of persons
-        nb_person = int(nb_person)
-        if isinstance(nb_person, int) is False or nb_person < 0:
-            raise ValueError
-        self.__nb_person = nb_person
-
-        self.__mode = mode
-
-        # Initialize the tracker
-        self.__fTracker = FaceTracking()
+        self.__lWriter = LandmarkWriter(video, self.__pBuffer.get_fps(), pattern,
+                                        usable=usable_value, csv=csv_value, folder=f_value)
+        self.__lWriter.set_options(draw)
 
         # Initialize the landmark
         self.__landmarks = VideoLandmark()
@@ -119,24 +90,14 @@ class Manager(object):
         """Manage the process."""
         # Loop over the video
         while self.__pBuffer.eov:
-
             # Store the result of VideoBuffer.next()
             self.__pBuffer.next()
 
-            if self.__tracking is True:
-                # Initialize the list of coordinates from FaceDetection in the FaceTracker
-                self.__fTracker.detect(self.__pBuffer)
-                self.__fTracker.create_persons(self.__pBuffer, self.__nb_person)
-
-            if self.__landmark is True:
-                # Initialize the list of points for the faces with FaceLandmark
-                self.__landmarks.process(self.__pBuffer)
+            # Initialize the list of points for the faces with FaceLandmark
+            self.__landmarks.process(self.__pBuffer)
 
             # Launch the process of creation of the outputs
-            self.__coords_writer.process(self.__pBuffer)
-
-            # Reset the FaceTracker object
-            self.__fTracker.clear()
+            self.__lWriter.process(self.__pBuffer)
 
             # Reset the output lists
             self.__pBuffer.clear()

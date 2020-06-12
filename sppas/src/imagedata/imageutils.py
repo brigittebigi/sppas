@@ -140,14 +140,13 @@ def portrait(coords, coeff=2.4):
 # ----------------------------------------------------------------------------
 
 
-def draw_points(image, x, y, number, option="circle"):
+def draw_points(image, x, y, number):
     """Surround the elements of "image" with squares.
 
     :param image: (numpy.ndarray) The image to be processed.
     :param x: (list) The x-axis value for the draw.
     :param y: (list) The y-axis value for the draw.
     :param number: (int) value of R and G (the color of the draw).
-    :param option: (str) The shape of the draw.
 
     """
     x = int(x)
@@ -157,15 +156,8 @@ def draw_points(image, x, y, number, option="circle"):
     if isinstance(y, int) is False:
         raise TypeError
 
-    # If option == "circle" draw circle on the coordinate
-    if option == "circle":
-        cv2.circle(image, (x, y), 3, (number, number * 2, 200), -1)
-
-    elif option == "ellipse":
-        cv2.ellipse(image, (x, y), (5, 5), 0, 0, 360, (number, number * 2, 200), 2)
-
-    elif option == "square":
-        cv2.rectangle(image, (x-4, y-4), (x+4, y+4), (number, number * 2, 200), 2)
+    # Draw circle on the coordinate
+    cv2.circle(image, (x, y), 3, (number, number * 2, 200), -1)
 
 # ----------------------------------------------------------------------------
 

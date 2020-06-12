@@ -36,7 +36,7 @@ from math import ceil
 
 from sppas.src.videodata import PersonsBuffer
 from sppas.src.videodata import VideoLandmark
-from sppas.src.videodata import sppasVideoCoordsWriter
+from sppas.src.annotations.LPC.LPCWriter import LPCWriter
 from sppas.src.annotations.LPC.videotaglpc import VideoTagLFPC
 
 # ---------------------------------------------------------------------------
@@ -53,7 +53,9 @@ class ManagerLFPC(object):
 
     """
 
-    def __init__(self, video, tier=None, buffer_size=200, overlap=0, draw=None, pattern="-person",
+    def __init__(self, video, tier=None, buffer_size=200, overlap=0,
+                 draw=False,
+                 pattern="-person",
                  usable=False, v_value=False, f_value=False):
         """Create a new ManagerLFPC instance.
 
@@ -72,11 +74,11 @@ class ManagerLFPC(object):
         self.__pBuffer = PersonsBuffer(video, buffer_size, overlap)
 
         # Initialize the writer for the outputs files
-        self.__coords_writer = sppasVideoCoordsWriter(video, self.__pBuffer.get_fps(), pattern,
-                                                      usable=usable, video=v_value, folder=f_value)
+        self.__coords_writer = LPCWriter(video, self.__pBuffer.get_fps(), pattern,
+                                         usable=usable, video=v_value, folder=f_value)
 
         # Initialize options of the writer
-        self.__coords_writer.set_options(draw=draw)
+        self.__coords_writer.set_options(draw)
 
         # Initialize the LFPC tagger
         self.__lfpc_Tagger = VideoTagLFPC()
@@ -106,7 +108,9 @@ class ManagerLFPC(object):
 
             if self.__tier is True:
                 # Launch the Tag process
-                self.__lfpc_tagging()
+                end = self.__lfpc_tagging()
+                if end is False:
+                    break
 
             # Launch the process of creation of the outputs
             self.__coords_writer.process(self.__pBuffer)
@@ -207,7 +211,7 @@ class ManagerLFPC(object):
             except IndexError:
                 # The len of the lpc codes list is smaller than
                 # the number of frame of the input video
-                pass
+                return False
 
     # -----------------------------------------------------------------------
 
@@ -237,4 +241,3 @@ class ManagerLFPC(object):
         return float(start_time), float(end_time)
 
     # -----------------------------------------------------------------------
-
