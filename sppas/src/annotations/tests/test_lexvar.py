@@ -57,43 +57,11 @@ from ..SpkLexVar.sppaslexvar import sppasLexVar
 
 # ---------------------------------------------------------------------------
 
-
 class test_sppaslexvar(unittest.TestCase):
 
     def setUp(self):
-        l = ["plouc", "plaf"]
-        self.lexvar = sppasLexVar(l)
-
-        # creating the tier list
-        # ----------------------
-
-        # here is how our tier list look like
-        # -tier_spk1 (str)
-        #     -annot1
-        #         -label1
-        #             -tag1
-        #             -tag2
-        #     -annot2
-        #         -label2
-        #             -tag3
-        #             -tag4
-        #     -annot3
-        #         -label3
-        #             -tag5
-        #             -tag6
-        # -tier_spk2 (int)
-        #     -annot4
-        #         -label4
-        #             -tag7
-        #             -tag8
-        #     -annot5
-        #         -label5
-        #             -tag9
-        #     -annot6
-        #         -label6
-        #             -tag10
-        #         -label7
-        #             -tag11
+        self.lexvar = sppasLexVar()
+        self.lexvar.__sources = [(1, 2), (2, 3), (3, 4), (4, 5), (5, 6)]
 
         # tiers
         self.tier_spk1 = sppasTier()
@@ -105,6 +73,7 @@ class test_sppaslexvar(unittest.TestCase):
         annot3 = sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(3), sppasPoint(4))))
         annot4 = sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(4), sppasPoint(5))))
         annot5 = sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(5), sppasPoint(6))))
+
         annot6 = sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(6), sppasPoint(7))))
         annot7 = sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(7), sppasPoint(8))))
         annot8 = sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(8), sppasPoint(9))))
@@ -218,37 +187,41 @@ class test_sppaslexvar(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_get_longest(self):
-        content_list_tier1 = list()
-        content_list_tier2 = list()
-        window_list = list()
-
-        # getting all the unicodes from the first tier
-        for ann in self.tier_spk1:
-            for label in ann.get_labels():
-                for tag, score in label:
-                    if tag.is_speech():
-                        content_list_tier1.append(tag.get_content())
-
-        # getting all the unicodes from the second tier
-        for ann2 in self.tier_spk2:
-            for label2 in ann2.get_labels():
-                for tag2, score2 in label2:
-                    if tag2.is_speech():
-                        content_list_tier2.append(tag2.get_content())
-
-        # windowing the unicode list and creating dataSpeaker
-        for window in self.lexvar.window(content_list_tier1, 2):
-            window_list.append(window)
-        data_spk1 = DataSpeaker(window_list)
-
-        for window in self.lexvar.window(content_list_tier2, 2):
-            window_list.append(window)
-        data_spk2 = DataSpeaker(window_list)
-
-        self.assertEqual(self.lexvar.get_longest(data_spk1, data_spk2), 3)
+        pass
 
     # -----------------------------------------------------------------------
 
     def test_select(self):
         dataspk1 = DataSpeaker(["oui", "ça", "va", "très", "bien"])
-        self.lexvar.select(4, dataspk1)
+        dataspk2 = DataSpeaker(["oui", "ça", "va", "très", "bien"])
+        self.lexvar.select(4, dataspk1, dataspk2)
+
+    # -----------------------------------------------------------------------
+
+    def test_content_listing(self):
+        a = ["bonjour", "ca", "va", "bien", "toi"]
+        content, time = self.lexvar.tier_content_listing(self.tier_spk1, True)
+        self.assertEqual(a, content)
+
+    # -----------------------------------------------------------------------
+
+    def test_create_tier(self):
+        content = ["bonjour", "ca", "va", "bien", "toi"]
+
+        time_list = [sppasLocation(sppasPoint(1.)),
+                     sppasLocation(sppasPoint(2.)),
+                     sppasLocation(sppasPoint(3.)),
+                     sppasLocation(sppasPoint(4.)),
+                     sppasLocation(sppasPoint(5.))]
+
+        lexvar = sppasLexVar()
+        lexvar.__sources = [(1, 2), (2, 3), (3, 4), (4, 5), (5, 6)]
+        tier = lexvar.create_tier(content, time_list)
+
+
+
+
+
+
+
+
