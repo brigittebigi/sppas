@@ -177,28 +177,19 @@ class TestCoordsWriter(unittest.TestCase):
 
     def test_get_set_draw(self):
         y = self.__cw._sppasVideoCoordsWriter__mOptions.get_draw()
-        self.assertEqual(y, "None")
+        self.assertEqual(y, False)
 
-        self.__cw._sppasVideoCoordsWriter__mOptions.set_draw("circle")
+        self.__cw._sppasVideoCoordsWriter__mOptions.set_draw(False)
         y = self.__cw._sppasVideoCoordsWriter__mOptions.get_draw()
-        self.assertEqual(y, "circle")
-
-        self.__cw._sppasVideoCoordsWriter__mOptions.set_draw(None)
+        self.assertEqual(y, False)
+        self.__cw._sppasVideoCoordsWriter__mOptions.set_draw(True)
         y = self.__cw._sppasVideoCoordsWriter__mOptions.get_draw()
-        self.assertEqual(y, "None")
-
-        self.__cw._sppasVideoCoordsWriter__mOptions.set_draw("ellipse")
-        y = self.__cw._sppasVideoCoordsWriter__mOptions.get_draw()
-        self.assertEqual(y, "ellipse")
-
-        self.__cw._sppasVideoCoordsWriter__mOptions.set_draw("square")
-        y = self.__cw._sppasVideoCoordsWriter__mOptions.get_draw()
-        self.assertEqual(y, "square")
+        self.assertEqual(y, True)
 
         with self.assertRaises(TypeError):
             self.__cw._sppasVideoCoordsWriter__mOptions.set_draw(2)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.__cw._sppasVideoCoordsWriter__mOptions.set_draw("aaaaaaaa")
 
     # ---------------------------------------------------------------------------
@@ -290,11 +281,11 @@ class TestCoordsWriter(unittest.TestCase):
 
         self.__cw._sppasVideoCoordsWriter__mOptions.set_framing(None)
         self.__cw._sppasVideoCoordsWriter__mOptions.set_mode(None)
-        self.__cw._sppasVideoCoordsWriter__mOptions.set_draw(None)
+        self.__cw._sppasVideoCoordsWriter__mOptions.set_draw(False)
 
         if self.__cw._sppasVideoCoordsWriter__mOptions.get_framing() == "None" \
                 and self.__cw._sppasVideoCoordsWriter__mOptions.get_mode() == "None" \
-                and self.__cw._sppasVideoCoordsWriter__mOptions.get_framing() == "None":
+                and self.__cw._sppasVideoCoordsWriter__mOptions.get_draw() is False:
             self.__cw._sppasVideoCoordsWriter__mOptions.set_video(False)
             self.__cw._sppasVideoCoordsWriter__mOptions.set_folder(False)
 
@@ -309,7 +300,7 @@ class TestCoordsWriter(unittest.TestCase):
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_framing(), "None")
         self.__cw._sppasVideoCoordsWriter__verify_options(self.__pBuffer)
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_mode(), "full")
-        self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_framing(), "face")
+        self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_framing(), "None")
         self.__cw._sppasVideoCoordsWriter__mOptions.set_mode(None)
         self.__cw._sppasVideoCoordsWriter__mOptions.set_framing(None)
 
@@ -317,7 +308,7 @@ class TestCoordsWriter(unittest.TestCase):
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_mode(), "None")
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_framing(), "face")
         self.__cw._sppasVideoCoordsWriter__verify_options(self.__pBuffer)
-        self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_mode(), "full")
+        self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_mode(), "None")
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_framing(), "face")
         self.__cw._sppasVideoCoordsWriter__mOptions.set_mode(None)
         self.__cw._sppasVideoCoordsWriter__mOptions.set_framing(None)
@@ -327,7 +318,7 @@ class TestCoordsWriter(unittest.TestCase):
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_framing(), "None")
         self.__cw._sppasVideoCoordsWriter__verify_options(self.__pBuffer)
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_mode(), "crop")
-        self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_framing(), "portrait")
+        self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_framing(), "None")
         self.__cw._sppasVideoCoordsWriter__mOptions.set_mode(None)
         self.__cw._sppasVideoCoordsWriter__mOptions.set_framing(None)
 
@@ -335,7 +326,7 @@ class TestCoordsWriter(unittest.TestCase):
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_mode(), "None")
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_framing(), "portrait")
         self.__cw._sppasVideoCoordsWriter__verify_options(self.__pBuffer)
-        self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_mode(), "crop")
+        self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_mode(), "None")
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_framing(), "portrait")
         self.__cw._sppasVideoCoordsWriter__mOptions.set_mode(None)
         self.__cw._sppasVideoCoordsWriter__mOptions.set_framing(None)
@@ -344,7 +335,7 @@ class TestCoordsWriter(unittest.TestCase):
         self.__cw._sppasVideoCoordsWriter__mOptions.set_mode("crop")
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_mode(), "crop")
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_framing(), "portrait")
-        self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_draw(), "None")
+        self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_draw(), False)
         self.__cw._sppasVideoCoordsWriter__verify_options(self.__pBuffer)
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_video(), False)
         self.__cw._sppasVideoCoordsWriter__mOptions.set_mode(None)
@@ -352,10 +343,10 @@ class TestCoordsWriter(unittest.TestCase):
 
         self.__cw._sppasVideoCoordsWriter__mOptions.set_framing("portrait")
         self.__cw._sppasVideoCoordsWriter__mOptions.set_mode("crop")
-        self.__cw._sppasVideoCoordsWriter__mOptions.set_draw("circle")
+        self.__cw._sppasVideoCoordsWriter__mOptions.set_draw(True)
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_mode(), "crop")
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_framing(), "portrait")
-        self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_draw(), "circle")
+        self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_draw(), True)
         self.assertEqual(self.__pBuffer.is_landmarked(), False)
         self.__cw._sppasVideoCoordsWriter__verify_options(self.__pBuffer)
         self.assertEqual(self.__cw._sppasVideoCoordsWriter__mOptions.get_video(), False)

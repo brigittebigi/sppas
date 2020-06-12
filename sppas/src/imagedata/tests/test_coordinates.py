@@ -206,9 +206,6 @@ class TestCoordinates(unittest.TestCase):
         y = self.__coordinates.y
         self.assertEqual(y, 0)
 
-        with self.assertRaises(ImageError):
-            self.__coordinates.shift(-200, 20)
-
     # ---------------------------------------------------------------------------
 
     def test_equal(self):

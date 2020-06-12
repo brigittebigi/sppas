@@ -40,11 +40,11 @@ from sppas.src.videodata.manageroptions import ManagerOptions
 # ---------------------------------------------------------------------------
 
 
-class TestCoordsWriter(unittest.TestCase):
+class TestManagerOptions(unittest.TestCase):
 
     def setUp(self):
         self.__mOptions = ManagerOptions("-person", usable=True, csv=True, video=True, folder=True)
-        self.__mOptions.set_options(None, None, None, -1, -1)
+        self.__mOptions.set_options(None, None, False, -1, -1)
 
     # --------------------------------------------------------------------------
 
@@ -170,28 +170,20 @@ class TestCoordsWriter(unittest.TestCase):
 
     def test_get_set_draw(self):
         y = self.__mOptions.get_draw()
-        self.assertEqual(y, "None")
+        self.assertEqual(y, False)
 
-        self.__mOptions.set_draw("circle")
+        self.__mOptions.set_draw(True)
         y = self.__mOptions.get_draw()
-        self.assertEqual(y, "circle")
+        self.assertEqual(y, True)
 
-        self.__mOptions.set_draw(None)
+        self.__mOptions.set_draw(False)
         y = self.__mOptions.get_draw()
-        self.assertEqual(y, "None")
-
-        self.__mOptions.set_draw("ellipse")
-        y = self.__mOptions.get_draw()
-        self.assertEqual(y, "ellipse")
-
-        self.__mOptions.set_draw("square")
-        y = self.__mOptions.get_draw()
-        self.assertEqual(y, "square")
+        self.assertEqual(y, False)
 
         with self.assertRaises(TypeError):
             self.__mOptions.set_draw(2)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.__mOptions.set_draw("aaaaaaaa")
 
     # ---------------------------------------------------------------------------
