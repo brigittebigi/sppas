@@ -32,12 +32,13 @@
 
 """
 
+import logging
 import os
 import numpy
 import cv2
 
 from sppas.src.config import paths
-from sppas.src.exceptions import sppasTypeError
+from sppas.src.exceptions import sppasTypeError, sppasIOError, sppasError
 from .coordinates import sppasCoords
 from .image import sppasImage
 
@@ -83,28 +84,36 @@ class FaceDetection(object):
         # The future serialized model, type: "cv2.dnn_Net"
         # it allows to create and manipulate comprehensive artificial neural networks.
         self.__net = cv2.dnn_Net
-        self.load_resources()
+        self.load_resources(model=None, proto=None)
 
         # List of coordinates of detected faces
         self.__coords = list()
 
     # -----------------------------------------------------------------------
 
-    def load_resources(self):
-        """Initialize proto file and model file."""
-        try:
-            # Load the Artificial Neural Network model
-            model = os.path.join(paths.resources, "video",
-                                 "res10_300x300_ssd_iter_140000.caffemodel")
+    def load_resources(self, model, proto):
+        """Initialize proto file and model file.
 
-            # Load the Caffe prototxt file
+        :raise: IOError
+
+        """
+        if model is None:
+            model = os.path.join(paths.resources, "video", "res10_300x300_ssd_iter_140000.caffemodel")
+        if os.path.exists(model) is False:
+            raise sppasIOError(model)
+
+        if proto is None:
             proto = os.path.join(paths.resources, "video", "deploy.prototxt.txt")
+        if os.path.exists(model) is False:
+            raise sppasIOError(proto)
 
+        try:
             # Create and load the serialized model, type: "cv2.dnn_Net"
             self.__net = cv2.dnn.readNetFromCaffe(proto, model)
-            raise OSError
-        except OSError:
-            return "File does not exist"
+        except cv2.error as e:
+            logging.error("Artificial Neural Network model or proto for "
+                          "FaceDetection can't be read.")
+            raise sppasError(str(e))
 
     # -----------------------------------------------------------------------
 
@@ -114,6 +123,9 @@ class FaceDetection(object):
         :param image: (sppasImage or numpy.ndarray)
 
         """
+        # Invalidate current list of coordinates
+        self.__coords = list()
+
         # Convert image to sppasImage if necessary
         if isinstance(image, numpy.ndarray) is True:
             image = sppasImage(input_array=image)

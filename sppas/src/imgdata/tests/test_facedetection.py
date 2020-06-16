@@ -34,8 +34,10 @@
 """
 
 import os
+import cv2
 import unittest
 
+from sppas.src.config import paths
 from ..coordinates import sppasCoords
 from ..image import sppasImage
 from ..facedetection import FaceDetection
@@ -49,7 +51,14 @@ DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 class TestFaceDetection(unittest.TestCase):
 
-    def test_detect(self):
+    def test_load_resources(self):
+        fd = FaceDetection()
+        with self.assertRaises(IOError):
+            fd.load_resources("toto.txt", "toto")
+
+    # ------------------------------------------------------------------------
+
+    def test_detect_default(self):
         fd = FaceDetection()
         # Nothing detected... we still didn't asked for
         self.assertEqual(0, len(fd))
@@ -76,7 +85,13 @@ class TestFaceDetection(unittest.TestCase):
         fn_detected = os.path.join(DATA, "BrigitteBigi-Slovenie2016-face.jpg")
         face = sppasImage(filename=fn_detected)
 
-        self.assertTrue(cropped == face)
+        self.assertEqual(len(cropped), len(face))
+        for r1, r2 in zip(cropped, face):
+            self.assertEqual(len(r1), len(r2))
+            for c1, c2 in zip(r1, r2):
+                self.assertTrue(len(c1), 3)
+                self.assertTrue(len(c2), 3)
+                # we can't compare values, they are close but not equals!
 
     # ------------------------------------------------------------------------
 

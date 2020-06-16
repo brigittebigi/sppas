@@ -301,3 +301,21 @@ class NoDirectoryError(IOError):
 
     def __str__(self):
         return repr(self.parameter)
+
+# -----------------------------------------------------------------------
+
+
+class sppasOpenError(IOError):
+    """:ERROR 0650:.
+
+    File '{:s}' can't be open or read.
+
+    """
+
+    def __init__(self, filename):
+        self.parameter = error(650) + \
+                         (error(650, "globals")).format(filename)
+
+    def __str__(self):
+        return repr(self.parameter)
+

@@ -56,6 +56,9 @@ msgstr "L'extension du fichier {:s} est inconnue"
 msgid ":ERROR 0620: "
 msgstr "Le dossier {dirname} n'existe pas."
 
+msgid ":ERROR 0650: "
+msgstr "Le fichier '{:s}' n'a pas pu être ouvert ou n'a pas pu être chargé."
+
 msgid ":INFO 0510: "
 msgstr "Installation de '{name}'"
 

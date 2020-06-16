@@ -56,6 +56,9 @@ msgstr "Unknown extension for filename {:s}."
 msgid ":ERROR 0620: "
 msgstr "The directory {dirname} does not exist."
 
+msgid ":ERROR 0650: "
+msgstr "File '{:s}' can't be open or read."
+
 msgid ":INFO 0510: "
 msgstr "Installation of '{name}'."
 
