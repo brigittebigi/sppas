@@ -33,7 +33,7 @@
 """
 
 from sppas.src.videodata.videobuffer import VideoBuffer
-from sppas.src.imagedata.coordinates import Coordinates
+from sppas.src.imgdata.coordinates import sppasCoords
 
 # ---------------------------------------------------------------------------
 
@@ -74,7 +74,7 @@ class PersonsBuffer(VideoBuffer):
     # -----------------------------------------------------------------------
 
     def get_person(self, index):
-        """Return Coordinates of a person.
+        """Return sppasCoords of a person.
 
         :param index: (int) The index of the person in the list.
 
@@ -95,7 +95,7 @@ class PersonsBuffer(VideoBuffer):
     # -----------------------------------------------------------------------
 
     def get_coordinate(self, index, index2):
-        """Return Coordinates of a person at a certain frame.
+        """Return sppasCoords of a person at a certain frame.
 
         :param index: (int) The index of the person in the list.
         :param index2: (int) The index of the frame in the Buffer.
@@ -122,7 +122,7 @@ class PersonsBuffer(VideoBuffer):
         if isinstance(index, int) is False:
             raise TypeError
 
-        if isinstance(coord, Coordinates) is False and coord is not None:
+        if isinstance(coord, sppasCoords) is False and coord is not None:
             raise TypeError
 
         self.__persons[index].append(coord)

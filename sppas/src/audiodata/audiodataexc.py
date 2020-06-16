@@ -49,7 +49,7 @@ class AudioError(Exception):
     """
 
     def __init__(self):
-        self.parameter = error(2000) + (error(2000, "audiodata"))
+        self.parameter = error(2000) + (error(2000, "data"))
 
     def __str__(self):
         return repr(self.parameter)
@@ -66,7 +66,7 @@ class AudioTypeError(TypeError):
 
     def __init__(self, extension):
         self.parameter = error(2005) + \
-                         (error(2005, "audiodata")).format(extension=extension)
+                         (error(2005, "data")).format(extension=extension)
 
     def __str__(self):
         return repr(self.parameter)
@@ -84,7 +84,7 @@ class AudioIOError(IOError):
 
     def __init__(self, message="", filename=""):
         self.parameter = error(2010) + \
-                         (error(2010, "audiodata")).format(filename=filename, message=message)
+                         (error(2010, "data")).format(filename=filename, message=message)
 
     def __str__(self):
         return repr(self.parameter)
@@ -101,7 +101,7 @@ class AudioDataError(Exception):
 
     def __init__(self, filename=""):
         self.parameter = error(2015) + \
-                         (error(2015, "audiodata")).format(filename=filename)
+                         (error(2015, "data")).format(filename=filename)
 
     def __str__(self):
         return repr(self.parameter)
@@ -119,7 +119,7 @@ class ChannelIndexError(ValueError):
     def __init__(self, index):
         index = int(index)
         self.parameter = error(2020) + \
-                         (error(2020, "audiodata")).format(number=index)
+                         (error(2020, "data")).format(number=index)
 
     def __str__(self):
         return repr(self.parameter)
@@ -138,7 +138,7 @@ class IntervalError(ValueError):
         value1 = int(value1)
         value2 = int(value2)
         self.parameter = error(2025) + \
-                         (error(2025, "audiodata")).format(value1=value1,
+                         (error(2025, "data")).format(value1=value1,
                                                            value2=value2)
 
     def __str__(self):
@@ -156,7 +156,7 @@ class ChannelError(Exception):
 
     def __init__(self):
         self.parameter = error(2050) + \
-                         (error(2050, "audiodata"))
+                         (error(2050, "data"))
 
     def __str__(self):
         return repr(self.parameter)
@@ -176,13 +176,13 @@ class MixChannelError(ValueError):
     def __init__(self, value=0):
         value = int(value)
         if value == 1:
-            self.parameter = error(2060) + (error(2060, "audiodata"))
+            self.parameter = error(2060) + (error(2060, "data"))
         elif value == 2:
-            self.parameter = error(2061) + (error(2061, "audiodata"))
+            self.parameter = error(2061) + (error(2061, "data"))
         elif value == 3:
-            self.parameter = error(2062) + (error(2062, "audiodata"))
+            self.parameter = error(2062) + (error(2062, "data"))
         else:
-            self.parameter = error(2050) + (error(2050, "audiodata"))
+            self.parameter = error(2050) + (error(2050, "data"))
 
     def __str__(self):
         return repr(self.parameter)
@@ -200,7 +200,7 @@ class SampleWidthError(ValueError):
     def __init__(self, value):
         value = int(value)
         self.parameter = error(2070) + \
-                         (error(2070, "audiodata")).format(value=value)
+                         (error(2070, "data")).format(value=value)
 
     def __str__(self):
         return repr(self.parameter)
@@ -217,7 +217,7 @@ class FrameRateError(ValueError):
     def __init__(self, value):
         value = int(value)
         self.parameter = error(2080) + \
-                         (error(2080, "audiodata")).format(value=value)
+                         (error(2080, "data")).format(value=value)
 
     def __str__(self):
         return repr(self.parameter)

@@ -28,14 +28,14 @@
 
         ---------------------------------------------------------------------
 
-    src.imagedata.tests.test_facedetection.py
+    src.imgdata.tests.test_facedetection.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
 import unittest
 
-from sppas.src.imagedata.facedetection import FaceDetection, Coordinates, cv2
+from sppas.src.imgdata.facedetection import FaceDetection, sppasCoords, cv2
 
 
 # ---------------------------------------------------------------------------
@@ -283,7 +283,7 @@ class TestFaceDetection(unittest.TestCase):
     def test_get_best(self):
         self.__faceDetection1.detect_all()
         coordinates = self.__faceDetection1.get_best()
-        self.assertIsInstance(coordinates, Coordinates)
+        self.assertIsInstance(coordinates, sppasCoords)
 
         x = coordinates.get_x()
         self.assertEqual(x, 219)
@@ -324,9 +324,9 @@ class TestFaceDetection(unittest.TestCase):
 
     def test_contains(self):
         self.__faceDetection1.detect_all()
-        c1 = Coordinates(219, 131, 70, 96)
+        c1 = sppasCoords(219, 131, 70, 96)
         self.assertTrue(self.__faceDetection1.__contains__(c1))
-        c2 = Coordinates(219, 131, 70, 200)
+        c2 = sppasCoords(219, 131, 70, 200)
         self.assertFalse(self.__faceDetection1.__contains__(c2))
 
         with self.assertRaises(ValueError):

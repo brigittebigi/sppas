@@ -36,7 +36,7 @@
 import unittest
 
 from sppas.src.videodata.personsbuffer import PersonsBuffer
-from sppas.src.imagedata.coordinates import Coordinates
+from sppas.src.imgdata.coordinates import sppasCoords
 
 # ---------------------------------------------------------------------------
 
@@ -88,10 +88,10 @@ class TestPersonBuffer(unittest.TestCase):
         self.__pBuffer.add_person()
         self.__pBuffer.add_person()
 
-        x = Coordinates(50, 50, 100, 100)
+        x = sppasCoords(50, 50, 100, 100)
         self.__pBuffer.add_coordinate(0, x)
         self.__pBuffer.add_coordinate(1, None)
-        y = Coordinates(150, 150, 300, 300)
+        y = sppasCoords(150, 150, 300, 300)
         self.__pBuffer.add_coordinate(2, y)
 
         with self.assertRaises(ValueError):
@@ -130,10 +130,10 @@ class TestPersonBuffer(unittest.TestCase):
     def test_clear_len(self):
         self.__pBuffer.add_person(3)
 
-        x = Coordinates(50, 50, 100, 100)
+        x = sppasCoords(50, 50, 100, 100)
         self.__pBuffer.add_coordinate(0, x)
         self.__pBuffer.add_coordinate(1, None)
-        y = Coordinates(150, 150, 300, 300)
+        y = sppasCoords(150, 150, 300, 300)
         self.__pBuffer.add_coordinate(2, y)
 
         len = self.__pBuffer.nb_persons()

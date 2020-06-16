@@ -28,14 +28,14 @@
 
         ---------------------------------------------------------------------
 
-    src.imagedata.tests.test_coordinates.py
+    src.imgdata.tests.test_coordinates.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
 import unittest
 
-from sppas.src.imagedata.coordinates import Coordinates, ImageError
+from ..coordinates import sppasCoords
 
 # ---------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ from sppas.src.imagedata.coordinates import Coordinates, ImageError
 class TestCoordinates(unittest.TestCase):
 
     def setUp(self):
-        self.__coordinates = Coordinates(143, 17, 150, 98, 0.7)
+        self.__coordinates = sppasCoords(143, 17, 150, 98, 0.7)
 
     # ---------------------------------------------------------------------------
 
@@ -62,18 +62,18 @@ class TestCoordinates(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_get_set_confidence(self):
-        self.__coordinates._Coordinates__set_confidence(0.5)
+        self.__coordinates._sppasCoords__set_confidence(0.5)
         confidence = self.__coordinates.get_confidence()
         self.assertEqual(confidence, 0.5)
 
-        with self.assertRaises(ValueError):
-            self.__coordinates._Coordinates__set_confidence("Bonjour")
+        with self.assertRaises(TypeError):
+            self.__coordinates._sppasCoords__set_confidence("Bonjour")
 
         with self.assertRaises(ValueError):
-            self.__coordinates._Coordinates__set_confidence(-0.7)
+            self.__coordinates._sppasCoords__set_confidence(-0.7)
 
         with self.assertRaises(ValueError):
-            self.__coordinates._Coordinates__set_confidence(1.1)
+            self.__coordinates._sppasCoords__set_confidence(1.1)
 
     # ---------------------------------------------------------------------------
 
@@ -82,7 +82,7 @@ class TestCoordinates(unittest.TestCase):
         x = self.__coordinates.x
         self.assertEqual(x, 18)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.__coordinates.x = "Bonjour"
         x = self.__coordinates.x
         self.assertEqual(x, 18)
@@ -104,7 +104,7 @@ class TestCoordinates(unittest.TestCase):
         y = self.__coordinates.y
         self.assertEqual(y, 18)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.__coordinates.y = "Bonjour"
         y = self.__coordinates.y
         self.assertEqual(y, 18)
@@ -126,7 +126,7 @@ class TestCoordinates(unittest.TestCase):
         w = self.__coordinates.w
         self.assertEqual(w, 18)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.__coordinates.w = "Bonjour"
         w = self.__coordinates.w
         self.assertEqual(w, 18)
@@ -148,7 +148,7 @@ class TestCoordinates(unittest.TestCase):
         h = self.__coordinates.h
         self.assertEqual(h, 18)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.__coordinates.h = "Bonjour"
         h = self.__coordinates.h
         self.assertEqual(h, 18)
@@ -166,15 +166,26 @@ class TestCoordinates(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_scale(self):
-        shift_x = self.__coordinates.scale(2.0)
+        coordinates = sppasCoords(143, 17, 150, 98)
+        shift_x = coordinates.scale(2.)
+        self.assertEqual(coordinates.w, 300)
+        self.assertEqual(coordinates.h, 196)
         self.assertEqual(shift_x, -75)
-        w = self.__coordinates.w
-        self.assertEqual(w, 300)
-        h = self.__coordinates.h
-        self.assertEqual(h, 196)
 
-        with self.assertRaises(ValueError):
-            self.__coordinates.scale(2)
+        coordinates = sppasCoords(143, 17, 150, 98)
+        shift_x = coordinates.scale(3)
+        self.assertEqual(coordinates.w, 450)
+        self.assertEqual(coordinates.h, 294)
+        self.assertEqual(shift_x, -150)
+
+        coordinates = sppasCoords(143, 17, 150, 98)
+        shift_x = coordinates.scale("0.5")
+        self.assertEqual(coordinates.w, 75)
+        self.assertEqual(coordinates.h, 49)
+        self.assertEqual(shift_x, 37)  # it's 37.5... rounded to 37.
+
+        with self.assertRaises(TypeError):
+            self.__coordinates.scale("a")
 
     # ---------------------------------------------------------------------------
 
@@ -199,7 +210,7 @@ class TestCoordinates(unittest.TestCase):
         self.assertEqual(x, 143)
         self.assertEqual(y, 17)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.__coordinates.shift("a", "a")
 
         self.__coordinates.shift(20, -20)
@@ -209,18 +220,27 @@ class TestCoordinates(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_equal(self):
-        c = Coordinates(143, 17, 150, 98)
+        self.assertTrue(self.__coordinates == ([143, 17, 150, 98, 0.2]))
+        self.assertFalse(self.__coordinates != ([143, 17, 150, 98, 0.2]))
+        self.assertTrue(self.__coordinates != ([14, 1, 150, 98]))
+
+        c = sppasCoords(143, 17, 150, 98)
         self.assertTrue(self.__coordinates.__eq__(c))
 
-        c = Coordinates(143, 17, 150, 200)
+        c = sppasCoords(143, 17, 150, 200)
         self.assertFalse(self.__coordinates.__eq__(c))
 
     # ---------------------------------------------------------------------------
 
     def test_copy(self):
         c = self.__coordinates.copy()
-        self.assertEqual(c, Coordinates(143, 17, 150, 98))
+        self.assertEqual(c, sppasCoords(143, 17, 150, 98))
         self.assertTrue(self.__coordinates.__eq__(c))
 
     # ---------------------------------------------------------------------------
+
+    def test_print(self):
+        c = sppasCoords(143, 17, 150, 98)
+        self.assertEqual(str(c), "(143, 17) (150, 98): 0.0")
+
 

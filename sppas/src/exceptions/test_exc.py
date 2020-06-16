@@ -119,6 +119,12 @@ class TestExceptions(unittest.TestCase):
 
     def test_io_errors(self):
         try:
+            raise sppasIOError("toto.txt")
+        except OSError as e:
+            self.assertTrue(isinstance(e, sppasIOError))
+            self.assertTrue("0600" in str(e))
+
+        try:
             raise IOExtensionError(".to")
         except OSError as e:
             self.assertTrue(isinstance(e, IOExtensionError))

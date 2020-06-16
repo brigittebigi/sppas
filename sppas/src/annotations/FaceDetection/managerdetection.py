@@ -27,14 +27,14 @@
 
         ---------------------------------------------------------------------
 
-    src.imagedata.managerdetection.py
+    src.imgdata.managerdetection.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
 import cv2
 
-from sppas.src.imagedata.facedetection import FaceDetection
+from sppas.src.imgdata.facedetection import FaceDetection
 from sppas.src.annotations.FaceDetection.detectionwriter import DetectionWriter
 
 # ---------------------------------------------------------------------------

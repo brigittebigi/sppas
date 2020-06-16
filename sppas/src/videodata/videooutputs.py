@@ -312,7 +312,7 @@ class VideoOutputs(object):
         :param image: (numpy.ndarray) The image to be processed.
         :param index: (int) The index of the coordinate.
         :param number: (int) The number for output name.
-        :param coordinate: (Coordinates) The Coordinates object.
+        :param coordinate: (sppasCoords) The sppasCoords object.
         :param landmark: (list) The list of landmark points.
 
         """
@@ -332,7 +332,7 @@ class VideoOutputs(object):
 
         :param index: (int) The index of the coordinate.
         :param number: (int) The number for output name.
-        :param coordinate: (Coordinates) The Coordinates object.
+        :param coordinate: (sppasCoords) The sppasCoords object.
         :param landmark: (list) The list of landmark points.
 
         """

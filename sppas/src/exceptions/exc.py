@@ -170,6 +170,22 @@ class sppasEnableFeatureError(OSError):
     def __str__(self):
         return repr(self.parameter)
 
+# -----------------------------------------------------------------------
+
+
+class sppasIOError(IOError):
+    """:ERROR 0600:.
+
+    No such file or directory: {name}
+
+    """
+
+    def __init__(self, filename):
+        self.parameter = error(600) + \
+                         (error(600, "globals")).format(filename)
+
+    def __str__(self):
+        return repr(self.parameter)
 
 # -----------------------------------------------------------------------
 # Specialized Value errors (300-series)

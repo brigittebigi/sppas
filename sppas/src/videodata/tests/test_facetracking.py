@@ -37,7 +37,7 @@ import unittest
 
 from sppas.src.videodata.personsbuffer import PersonsBuffer
 from sppas.src.videodata.facetracking import FaceTracking
-from sppas.src.imagedata.coordinates import Coordinates
+from sppas.src.imgdata.coordinates import sppasCoords
 
 # ---------------------------------------------------------------------------
 
@@ -70,7 +70,7 @@ class TestFaceTracking(unittest.TestCase):
         self.assertEqual(y, self.__pBuffer.get_size())
         for face in self.__pBuffer._PersonsBuffer__persons:
             for coord in face:
-                self.assertTrue(coord, Coordinates)
+                self.assertTrue(coord, sppasCoords)
 
         y = self.__fTracker._FaceTracking__max_persons
         self.assertEqual(y, 2)
@@ -84,7 +84,7 @@ class TestFaceTracking(unittest.TestCase):
         for face in self.__pBuffer._PersonsBuffer__persons:
             for coord in face:
                 try:
-                    self.assertIsInstance(coord, Coordinates)
+                    self.assertIsInstance(coord, sppasCoords)
                 except:
                     self.assertEqual(coord, None)
 
@@ -96,7 +96,7 @@ class TestFaceTracking(unittest.TestCase):
         self.__fTracker.several_persons(self.__pBuffer, nb_person=1)
         for face in self.__pBuffer._PersonsBuffer__persons:
             for coord in face:
-                self.assertTrue(coord, Coordinates)
+                self.assertTrue(coord, sppasCoords)
         y = self.__pBuffer.nb_persons()
         self.assertEqual(y, 1)
         for face in self.__pBuffer._PersonsBuffer__persons:

@@ -36,7 +36,7 @@
 import unittest
 import numpy as np
 
-from sppas.src.imagedata.coordinates import Coordinates
+from sppas.src.imgdata.coordinates import sppasCoords
 from sppas.src.videodata.coordswriter import sppasVideoCoordsWriter
 from sppas.src.videodata.personsbuffer import PersonsBuffer
 from sppas.src.videodata.facetracking import FaceTracking
@@ -379,7 +379,7 @@ class TestCoordsWriter(unittest.TestCase):
         self.__cw._sppasVideoCoordsWriter__mOptions.set_mode("crop")
         self.__cw._sppasVideoCoordsWriter__mOptions.set_width(-1)
         self.__cw._sppasVideoCoordsWriter__mOptions.set_height(-1)
-        self.__cw._sppasVideoCoordsWriter__adjust(np.ndarray, Coordinates)
+        self.__cw._sppasVideoCoordsWriter__adjust(np.ndarray, sppasCoords)
         y = self.__cw._sppasVideoCoordsWriter__mOptions.get_video()
         self.assertEqual(y, False)
 
@@ -388,7 +388,7 @@ class TestCoordsWriter(unittest.TestCase):
     def test_adjust_both(self):
         self.__cw._sppasVideoCoordsWriter__mOptions.set_width(640)
         self.__cw._sppasVideoCoordsWriter__mOptions.set_height(480)
-        coord = Coordinates(120, 200, 400, 300)
+        coord = sppasCoords(120, 200, 400, 300)
         self.__cw._sppasVideoCoordsWriter__adjust_both(coord)
         x = coord.x
         self.assertEqual(x, 120)
@@ -399,7 +399,7 @@ class TestCoordsWriter(unittest.TestCase):
         h = coord.h
         self.assertEqual(h, 300)
 
-        coord = Coordinates(120, 200, 400, 350)
+        coord = sppasCoords(120, 200, 400, 350)
         self.__cw._sppasVideoCoordsWriter__adjust_both(coord)
         x = coord.x
         self.assertEqual(x, 87)

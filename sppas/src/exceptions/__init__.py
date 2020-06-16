@@ -52,6 +52,7 @@ from .exc import sppasValueError          # 0300
 from .exc import sppasKeyError            # 0400
 from .exc import sppasInstallationError   # 0510
 from .exc import sppasEnableFeatureError  # 0520
+from .exc import sppasIOError             # 0600
 
 from .exc import NegativeValueError       # 0310
 from .exc import RangeBoundsException     # 0320
@@ -72,6 +73,7 @@ __all__ = (
     "sppasKeyError",
     "sppasInstallationError",
     "sppasEnableFeatureError",
+    "sppasIOError",
     "NegativeValueError",
     "RangeBoundsException",
     "IntervalRangeException",

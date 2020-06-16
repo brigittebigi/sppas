@@ -30,7 +30,7 @@
         ---------------------------------------------------------------------
 
 *****************************************************************************
-imagedata: management of image files
+imgdata: management of image files
 *****************************************************************************
 
 Requires the following other packages:
@@ -47,11 +47,16 @@ from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
 
 # Store the rectangle and a score of an image
-from .coordinates import Coordinates
+from .coordinates import sppasCoords
 
 # ---------------------------------------------------------------------------
 # Define classes in case opencv&numpy are not installed.
 # ---------------------------------------------------------------------------
+
+
+class sppasImage(object):
+    def __init__(self):
+        raise sppasEnableFeatureError("video")
 
 
 class FaceDetection(object):
@@ -74,6 +79,8 @@ def extensions():
 
 
 if cfg.dep_installed("video"):
+    # Subclass of numpy.ndarray to manipulate images
+    from .imageutils import sppasImage
     # Automatic face detection, based on opencv caffe model
     from .facedetection import FaceDetection
     # Automatic face landmark
@@ -98,7 +105,8 @@ if cfg.dep_installed("video"):
 
 
 __all__ = (
-    "Coordinates",
+    "sppasCoords",
+    "sppasImage",
     "FaceDetection",
     "FaceLandmark",
     "extensions"

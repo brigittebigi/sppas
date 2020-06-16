@@ -35,10 +35,10 @@
 import os
 import cv2
 
-from sppas.src.config import sppasPathSettings
-from sppas import separators
+from sppas.src.config import paths
+from sppas.src.config import separators
 
-from sppas.src.imagedata.imageutils import add_image, rotate_bound
+from sppas.src.imgdata.imageutils import overlay, rotate_bound
 
 # ---------------------------------------------------------------------------
 
@@ -71,7 +71,7 @@ class VideoTagLFPC(object):
         for i in range(9):
             try:
                 filename = "hand-lfpc-" + str(i) + ".png"
-                path = os.path.join(sppasPathSettings().resources, "lpc", filename)
+                path = os.path.join(paths.resources, "lpc", filename)
                 self.__hands.append(path)
             except OSError:
                 return "File does not exist"
@@ -158,7 +158,7 @@ class VideoTagLFPC(object):
         # Tag the image
         hand = cv2.imread(self.__hands[consonant_code])
         hand = rotate_bound(hand, -75)
-        add_image(image, hand, x, y, int(w * 0.60), int(h * 0.60))
+        overlay(image, hand, x, y, int(w * 0.60), int(h * 0.60))
 
     # -----------------------------------------------------------------------
 
@@ -200,5 +200,5 @@ class VideoTagLFPC(object):
         # Tag the image
         hand = cv2.imread(self.__hands[0])
         hand = rotate_bound(hand, -75)
-        add_image(image, hand, x, y, int(w * 0.60), int(h * 0.60))
+        overlay(image, hand, x, y, int(w * 0.60), int(h * 0.60))
 

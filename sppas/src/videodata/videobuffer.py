@@ -37,7 +37,7 @@ import cv2
 from cv2 import CAP_PROP_POS_FRAMES, CAP_PROP_FPS, CAP_PROP_POS_MSEC,\
                 CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FRAME_COUNT
 
-from sppas.src.imagedata.coordinates import ImageError
+from sppas.src.imgdata.coordinates import ImageError
 
 # ---------------------------------------------------------------------------
 

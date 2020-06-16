@@ -28,7 +28,7 @@
 
         ---------------------------------------------------------------------
 
-    src.imagedata.tests.test_coordinates.py
+    src.imgdata.tests.test_coordinates.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -36,7 +36,7 @@
 import unittest
 import cv2
 
-from sppas.src.imagedata.facelandmark import FaceLandmark
+from sppas.src.imgdata.facelandmark import FaceLandmark
 
 # ---------------------------------------------------------------------------
 

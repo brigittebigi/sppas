@@ -35,8 +35,9 @@
 
 import numpy as np
 
-from sppas.src.imagedata.imageutils import crop, surrond_square, resize, portrait
-from sppas.src.imagedata.coordinates import Coordinates
+from sppas.src.imgdata import sppasImage
+from sppas.src.imgdata.imageutils import surrond_square, resize, portrait
+from sppas.src.imgdata.coordinates import sppasCoords
 from sppas.src.annotations.FaceTracking.trackingoptions import TrackingOptions
 from sppas.src.annotations.FaceTracking.trackingoutputs import TrackingOutputs
 
@@ -194,7 +195,7 @@ class TrackingWriter(object):
         :param frameID: (int) The ID of the image in the buffer.
 
         """
-        # Copy the Coordinates object in the buffer
+        # Copy the sppasCoords object in the buffer
         coord = buffer.get_coordinate(index, frameID).copy()
 
         # Make portrait with coordinates
@@ -204,7 +205,8 @@ class TrackingWriter(object):
         self.__adjust(image, coord)
 
         # Crop the image
-        base_image = crop(image, coord)
+        img = sppasImage(input_array=image)
+        base_image = img.icrop(coord)
 
         # Resize the image
         base_image = self.__resize(base_image)
@@ -250,12 +252,12 @@ class TrackingWriter(object):
         """
         # If portrait option has been selected
         if self.__tOptions.get_framing() == "portrait":
-            # Transform Coordinates into portrait
+            # Transform sppasCoords into portrait
             portrait(buffer.get_coordinate(index, frameID))
 
         # If mode is not full
         if self.__tOptions.get_mode() != "full" and self.__tOptions.get_mode() != "None":
-            # Adjust the Coordinates
+            # Adjust the sppasCoords
             self.__adjust(image, buffer.get_coordinate(index, frameID))
 
         # If a mode has been selected
@@ -277,7 +279,7 @@ class TrackingWriter(object):
         """Draw squares around faces or crop the faces.
 
         :param img_buffer: (numpy.ndarray) The image to be processed.
-        :param coords: (Coordinates) The coordinates of the face.
+        :param coords: (sppasCoords) The coordinates of the face.
         :param index: (int) The ID of the person in the list of person.
 
         """
@@ -286,7 +288,7 @@ class TrackingWriter(object):
             raise TypeError
         if isinstance(img_buffer, np.ndarray) is False:
             raise TypeError
-        if isinstance(coords, Coordinates) is False:
+        if isinstance(coords, sppasCoords) is False:
             raise TypeError
 
         # If mode is full
@@ -300,7 +302,8 @@ class TrackingWriter(object):
         # If mode is crop
         elif self.__tOptions.get_mode() == "crop":
             # Crop the face
-            return crop(img_buffer, coords)
+            img = sppasImage(input_array=img_buffer)
+            return img.icrop(coords)
 
     # -----------------------------------------------------------------------
 
@@ -308,7 +311,7 @@ class TrackingWriter(object):
         """Adjust the coordinates to get a good result.
 
         :param img_buffer: (numpy.ndarray) The image to be processed.
-        :param coords: (Coordinates) The coordinates of the face.
+        :param coords: (sppasCoords) The coordinates of the face.
 
         """
         if self.__tOptions.get_mode() == "crop" and self.__tOptions.get_width() == -1 and self.__tOptions.get_height() == -1:
@@ -335,7 +338,7 @@ class TrackingWriter(object):
     def __adjust_both(self, coords, img_buffer=None):
         """Adjust the coordinates with width and height from constructor.
 
-        :param coords: (Coordinates) The coordinates of the face.
+        :param coords: (sppasCoords) The coordinates of the face.
         :param img_buffer: (numpy.ndarray) The image to be processed.
 
         """

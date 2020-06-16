@@ -32,7 +32,7 @@
 
 """
 
-from sppas.src.imagedata.facedetection import FaceDetection
+from sppas.src.imgdata.facedetection import FaceDetection
 
 # ---------------------------------------------------------------------------
 
@@ -57,7 +57,7 @@ class FaceTracking(object):
     # -----------------------------------------------------------------------
 
     def detect(self, buffer):
-        """Create a list of Coordinates for each image.
+        """Create a list of sppasCoords for each image.
 
         :param buffer: (PersonBuffer) The buffer which contains images.
 
@@ -73,7 +73,7 @@ class FaceTracking(object):
     # -----------------------------------------------------------------------
 
     def create_persons(self, buffer, nb_person=0):
-        """Browse the list of Coordinates and create a list for each person.
+        """Browse the list of sppasCoords and create a list for each person.
 
         :param buffer: (PersonBuffer) The buffer which contains images.
         :param nb_person: (int) The number of person to store.

@@ -32,8 +32,9 @@
 
 """
 
-from sppas.src.imagedata.facelandmark import FaceLandmark
-from sppas.src.imagedata.imageutils import crop, portrait
+from sppas.src.imgdata import sppasImage
+from sppas.src.imgdata.facelandmark import FaceLandmark
+from sppas.src.imgdata.imageutils import portrait
 
 # ---------------------------------------------------------------------------
 
@@ -143,7 +144,8 @@ class VideoLandmark(object):
                 portrait(coords, 1.5)
 
                 # Crop the visage according to the values of the coordinates
-                image = crop(image, coords)
+                img = sppasImage(input_array=image)
+                image = img.icrop(coords)
 
                 # Launch the landmark on the image
                 landmark = self.__landmark(image)

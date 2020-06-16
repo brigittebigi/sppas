@@ -27,7 +27,7 @@
 
         ---------------------------------------------------------------------
 
-    src.imagedata.facedetection.py
+    src.imgdata.facedetection.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -37,7 +37,7 @@ import numpy as np
 import cv2
 
 from sppas.src.config import sppasPathSettings
-from sppas.src.imagedata.coordinates import Coordinates
+from sppas.src.imgdata.coordinates import sppasCoords
 
 # ---------------------------------------------------------------------------
 
@@ -229,8 +229,8 @@ class FaceDetection(object):
 
         x, y, w, h = startX, startY, endX - startX, endY - startY
 
-        # Then creates an Coordinates object with these values
-        self.__coordinates.append(Coordinates(x, y, w, h, confidence))
+        # Then creates an sppasCoords object with these values
+        self.__coordinates.append(sppasCoords(x, y, w, h, confidence))
 
     # -----------------------------------------------------------------------
 
@@ -291,7 +291,7 @@ class FaceDetection(object):
 
     def __contains__(self, value):
         """Return true if value in self.__coordinates."""
-        if isinstance(value, Coordinates) is False:
+        if isinstance(value, sppasCoords) is False:
             raise ValueError
         else:
             for c in self.__coordinates:
