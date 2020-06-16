@@ -336,7 +336,7 @@ class sppasCoords(object):
 
     def __eq__(self, other):
         """Return true if self equal other."""
-        if isinstance(other, list):
+        if isinstance(other, (list, tuple)):
             if len(other) >= 4:
                 other = sppasCoords(other[0], other[1], other[2], other[3])
             else:

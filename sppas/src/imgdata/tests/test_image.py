@@ -28,7 +28,7 @@
 
         ---------------------------------------------------------------------
 
-    src.imgdata.tests.test_images.py
+    src.imgdata.tests.test_image.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -39,7 +39,7 @@ import cv2
 import numpy
 
 from ..coordinates import sppasCoords
-from ..imageutils import sppasImage, crop
+from ..image import sppasImage
 
 # ---------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 class TestConfiguration(unittest.TestCase):
 
-    def test_variable(self):
+    def test_init(self):
         fn = os.path.join(DATA, "BrigitteBigi-Slovenie2016.jpg")
         img = cv2.imread(fn)
         self.assertEqual(len(img), 803)
@@ -75,10 +75,13 @@ class TestConfiguration(unittest.TestCase):
     def test_crop(self):
         fn = os.path.join(DATA, "BrigitteBigi-Slovenie2016.jpg")
         image = sppasImage(filename=fn)
-        cropped = image.icrop(sppasCoords(100, 100, 320, 200))
-        # The cropped image is 200 rows and 320 columns
-        self.assertEqual(200, len(cropped))
+        cropped = image.icrop(sppasCoords(886, 222, 177, 189))
+        # The cropped image is 189 rows and 177 columns of pixels
+        self.assertEqual(189, len(cropped))
         for row in cropped:
-            self.assertEqual(len(row), 320)
+            self.assertEqual(len(row), 177)
+
+        fnc = os.path.join(DATA, "BrigitteBigi-Slovenie2016-face.jpg")
+        cv2.imwrite(fnc, cropped)
 
 

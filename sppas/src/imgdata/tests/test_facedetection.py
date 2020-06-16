@@ -33,305 +33,91 @@
 
 """
 
+import os
 import unittest
 
-from sppas.src.imgdata.facedetection import FaceDetection, sppasCoords, cv2
+from ..coordinates import sppasCoords
+from ..image import sppasImage
+from ..facedetection import FaceDetection
 
+# ---------------------------------------------------------------------------
+
+DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 # ---------------------------------------------------------------------------
 
 
 class TestFaceDetection(unittest.TestCase):
 
-    def setUp(self):
-        img = cv2.imread("../../../../../../trump.jpg")
-        self.__faceDetection1 = FaceDetection(img)
+    def test_detect(self):
+        fd = FaceDetection()
+        # Nothing detected... we still didn't asked for
+        self.assertEqual(0, len(fd))
 
-        img = cv2.imread("../../../../../../iron_chic.jpg")
-        self.__faceDetection2 = FaceDetection(img)
+        # The image we'll work on
+        fn = os.path.join(DATA, "BrigitteBigi-Slovenie2016.jpg")
+        with self.assertRaises(TypeError):
+            fd.detect(fn)
+        img = sppasImage(filename=fn)
+        fd.detect(img)
 
-        img = cv2.imread("../../../../../../rooster.jpg")
-        self.__faceDetection3 = FaceDetection(img)
+        # only one face should be detected
+        self.assertEqual(1, len(fd))
 
-    # ---------------------------------------------------------------------------
+        coords = fd.get_best()
+        self.assertTrue(coords == [886, 222, 177, 189])
+        self.assertGreater(coords.get_confidence(), 0.99)
+        cropped = sppasImage(input_array=img.icrop(coords))
+        # The cropped image is 189 rows and 177 columns of pixels
+        self.assertEqual(189, len(cropped))
+        for row in cropped:
+            self.assertEqual(len(row), 177)
 
-    def test_detect_all(self):
-        self.__faceDetection1.detect_all()
-        coordinates = self.__faceDetection1.get_all()
-        x = coordinates[0].get_x()
-        self.assertEqual(x, 219)
-        y = coordinates[0].get_y()
-        self.assertEqual(y, 131)
-        w = coordinates[0].get_w()
-        self.assertEqual(w, 70)
-        h = coordinates[0].get_h()
-        self.assertEqual(h, 96)
+        fn_detected = os.path.join(DATA, "BrigitteBigi-Slovenie2016-face.jpg")
+        face = sppasImage(filename=fn_detected)
 
-        x = coordinates[1].get_x()
-        self.assertEqual(x, 631)
-        y = coordinates[1].get_y()
-        self.assertEqual(y, 129)
-        w = coordinates[1].get_w()
-        self.assertEqual(w, 68)
-        h = coordinates[1].get_h()
-        self.assertEqual(h, 91)
+        self.assertTrue(cropped == face)
 
-        self.__faceDetection2.detect_all()
-        coordinates = self.__faceDetection2.get_all()
-        x = coordinates[0].get_x()
-        self.assertEqual(x, 260)
-        y = coordinates[0].get_y()
-        self.assertEqual(y, 59)
-        w = coordinates[0].get_w()
-        self.assertEqual(w, 173)
-        h = coordinates[0].get_h()
-        self.assertEqual(h, 220)
+    # ------------------------------------------------------------------------
 
-        x = coordinates[1].get_x()
-        self.assertEqual(x, 135)
-        y = coordinates[1].get_y()
-        self.assertEqual(y, 127)
-        w = coordinates[1].get_w()
-        self.assertEqual(w, 126)
-        h = coordinates[1].get_h()
-        self.assertEqual(h, 196)
+    def test_getters(self):
+        fd = FaceDetection()
+        # The image we'll work on
+        fn = os.path.join(DATA, "Slovenia2016.jpg")
+        img = sppasImage(filename=fn)
 
-        x = coordinates[2].get_x()
-        self.assertEqual(x, 6)
-        y = coordinates[2].get_y()
-        self.assertEqual(y, 154)
-        w = coordinates[2].get_w()
-        self.assertEqual(w, 133)
-        h = coordinates[2].get_h()
-        self.assertEqual(h, 197)
+        fd.detect(img)
+        # two faces should be detected
+        self.assertEqual(2, len(fd))
+        self.assertTrue(fd[0] == [927, 238, 97, 117])   # me
+        self.assertTrue(fd[1] == [519, 198, 109, 109])  # kasia
 
-        self.__faceDetection3.detect_all()
-        coordinates = self.__faceDetection3.get_all()
-        x = coordinates[0].get_x()
-        self.assertEqual(x, 317)
-        y = coordinates[0].get_y()
-        self.assertEqual(y, 83)
-        w = coordinates[0].get_w()
-        self.assertEqual(w, 70)
-        h = coordinates[0].get_h()
-        self.assertEqual(h, 102)
+        # get best
+        coords = fd.get_best()
+        self.assertTrue(coords == [927, 238, 97, 117])   # me
 
-    # ---------------------------------------------------------------------------
+        coords = fd.get_best(3)
+        self.assertTrue(coords[0] == [927, 238, 97, 117])   # me
+        self.assertTrue(coords[1] == [519, 198, 109, 109])  # kasia
+        self.assertIsNone(coords[2])
 
-    def test_detect_confidence(self):
-        self.__faceDetection1.detect_confidence(0.9)
-        coordinates = self.__faceDetection1.get_all()
-        self.assertEqual(len(coordinates), 1)
-        self.assertEqual(self.__faceDetection1.__len__(), 1)
-        x = coordinates[0].get_x()
-        self.assertEqual(x, 219)
-        y = coordinates[0].get_y()
-        self.assertEqual(y, 131)
-        w = coordinates[0].get_w()
-        self.assertEqual(w, 70)
-        h = coordinates[0].get_h()
-        self.assertEqual(h, 96)
+        # get confidence
+        coords = fd.get_confidence(0.9)
+        self.assertEqual(len(coords), 2)
+        coords = fd.get_confidence(0.91)
+        self.assertEqual(len(coords), 1)
+        coords = fd.get_confidence(0.98)
+        self.assertEqual(len(coords), 0)
 
-        self.__faceDetection2.detect_confidence(0.9)
-        coordinates = self.__faceDetection2.get_all()
-        self.assertEqual(len(coordinates), 3)
-        self.assertEqual(self.__faceDetection2.__len__(), 3)
-        x = coordinates[0].get_x()
-        self.assertEqual(x, 260)
-        y = coordinates[0].get_y()
-        self.assertEqual(y, 59)
-        w = coordinates[0].get_w()
-        self.assertEqual(w, 173)
-        h = coordinates[0].get_h()
-        self.assertEqual(h, 220)
-
-        x = coordinates[1].get_x()
-        self.assertEqual(x, 135)
-        y = coordinates[1].get_y()
-        self.assertEqual(y, 127)
-        w = coordinates[1].get_w()
-        self.assertEqual(w, 126)
-        h = coordinates[1].get_h()
-        self.assertEqual(h, 196)
-
-        x = coordinates[2].get_x()
-        self.assertEqual(x, 6)
-        y = coordinates[2].get_y()
-        self.assertEqual(y, 154)
-        w = coordinates[2].get_w()
-        self.assertEqual(w, 133)
-        h = coordinates[2].get_h()
-        self.assertEqual(h, 197)
-
-        self.__faceDetection3.detect_confidence(0.9)
-        coordinates = self.__faceDetection3.get_all()
-        self.assertEqual(len(coordinates), 1)
-        self.assertEqual(self.__faceDetection3.__len__(), 1)
-        x = coordinates[0].get_x()
-        self.assertEqual(x, 317)
-        y = coordinates[0].get_y()
-        self.assertEqual(y, 83)
-        w = coordinates[0].get_w()
-        self.assertEqual(w, 70)
-        h = coordinates[0].get_h()
-        self.assertEqual(h, 102)
-
-    # ---------------------------------------------------------------------------
-
-    def test_detect_number(self):
-        self.__faceDetection1.detect_number(1)
-        coordinates = self.__faceDetection1.get_all()
-        self.assertEqual(len(coordinates), 1)
-        self.assertEqual(self.__faceDetection1.__len__(), 1)
-        x = coordinates[0].get_x()
-        self.assertEqual(x, 219)
-        y = coordinates[0].get_y()
-        self.assertEqual(y, 131)
-        w = coordinates[0].get_w()
-        self.assertEqual(w, 70)
-        h = coordinates[0].get_h()
-        self.assertEqual(h, 96)
-
-        self.__faceDetection2.detect_number(2)
-        coordinates = self.__faceDetection2.get_all()
-        self.assertEqual(len(coordinates), 2)
-        self.assertEqual(self.__faceDetection2.__len__(), 2)
-        x = coordinates[0].get_x()
-        self.assertEqual(x, 260)
-        y = coordinates[0].get_y()
-        self.assertEqual(y, 59)
-        w = coordinates[0].get_w()
-        self.assertEqual(w, 173)
-        h = coordinates[0].get_h()
-        self.assertEqual(h, 220)
-
-        x = coordinates[1].get_x()
-        self.assertEqual(x, 135)
-        y = coordinates[1].get_y()
-        self.assertEqual(y, 127)
-        w = coordinates[1].get_w()
-        self.assertEqual(w, 126)
-        h = coordinates[1].get_h()
-        self.assertEqual(h, 196)
-
-        self.__faceDetection3.detect_number(0)
-        coordinates = self.__faceDetection3.get_all()
-        self.assertEqual(len(coordinates), 0)
-        self.assertEqual(self.__faceDetection3.__len__(), 0)
-        with self.assertRaises(IndexError):
-            coordinates[0].get_x()
-        with self.assertRaises(IndexError):
-            coordinates[0].get_y()
-        with self.assertRaises(IndexError):
-            coordinates[0].get_w()
-        with self.assertRaises(IndexError):
-            coordinates[0].get_h()
-
-    # # ---------------------------------------------------------------------------
-    #
-    # def test_make_square(self):
-    #     x, y, w, h = self.__faceDetection1.make_square(50, 50, 120, 200)
-    #     self.assertEqual(x, 10)
-    #     self.assertEqual(y, 50)
-    #     self.assertEqual(w, 200)
-    #     self.assertEqual(h, 200)
-    #
-    #     x, y, w, h = self.__faceDetection1.make_square(20, 50, 120, 200)
-    #     self.assertEqual(x, 0)
-    #     self.assertEqual(y, 50)
-    #     self.assertEqual(w, 200)
-    #     self.assertEqual(h, 200)
-    #
-    #     x, y, w, h = self.__faceDetection1.make_square(60, 60, 300, 200)
-    #     self.assertEqual(x, 60)
-    #     self.assertEqual(y, 10)
-    #     self.assertEqual(w, 300)
-    #     self.assertEqual(h, 300)
-    #
-    #     x, y, w, h = self.__faceDetection1.make_square(60, 50, 300, 200)
-    #     self.assertEqual(x, 60)
-    #     self.assertEqual(y, 0)
-    #     self.assertEqual(w, 300)
-    #     self.assertEqual(h, 300)
-
-    # ---------------------------------------------------------------------------
-
-    def test_get_all(self):
-        self.__faceDetection1.detect_all()
-        coordinates = self.__faceDetection1.get_all()
-
-        x = coordinates[0].get_x()
-        self.assertEqual(x, 219)
-        y = coordinates[0].get_y()
-        self.assertEqual(y, 131)
-        w = coordinates[0].get_w()
-        self.assertEqual(w, 70)
-        h = coordinates[0].get_h()
-        self.assertEqual(h, 96)
-
-        x = coordinates[1].get_x()
-        self.assertEqual(x, 631)
-        y = coordinates[1].get_y()
-        self.assertEqual(y, 129)
-        w = coordinates[1].get_w()
-        self.assertEqual(w, 68)
-        h = coordinates[1].get_h()
-        self.assertEqual(h, 91)
-
-    # ---------------------------------------------------------------------------
-
-    def test_get_best(self):
-        self.__faceDetection1.detect_all()
-        coordinates = self.__faceDetection1.get_best()
-        self.assertIsInstance(coordinates, sppasCoords)
-
-        x = coordinates.get_x()
-        self.assertEqual(x, 219)
-        y = coordinates.get_y()
-        self.assertEqual(y, 131)
-        w = coordinates.get_w()
-        self.assertEqual(w, 70)
-        h = coordinates.get_h()
-        self.assertEqual(h, 96)
-
-    # ---------------------------------------------------------------------------
-
-    def test_get_number(self):
-        self.__faceDetection1.detect_all()
-        coordinates = self.__faceDetection1.get_nbest(2)
-        self.assertEqual(len(coordinates), 2)
-        self.assertEqual(self.__faceDetection1.__len__(), 2)
-
-        x = coordinates[0].get_x()
-        self.assertEqual(x, 219)
-        y = coordinates[0].get_y()
-        self.assertEqual(y, 131)
-        w = coordinates[0].get_w()
-        self.assertEqual(w, 70)
-        h = coordinates[0].get_h()
-        self.assertEqual(h, 96)
-
-        x = coordinates[1].get_x()
-        self.assertEqual(x, 631)
-        y = coordinates[1].get_y()
-        self.assertEqual(y, 129)
-        w = coordinates[1].get_w()
-        self.assertEqual(w, 68)
-        h = coordinates[1].get_h()
-        self.assertEqual(h, 91)
-
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def test_contains(self):
-        self.__faceDetection1.detect_all()
-        c1 = sppasCoords(219, 131, 70, 96)
-        self.assertTrue(self.__faceDetection1.__contains__(c1))
-        c2 = sppasCoords(219, 131, 70, 200)
-        self.assertFalse(self.__faceDetection1.__contains__(c2))
+        fd = FaceDetection()
+        # The image we'll work on
+        fn = os.path.join(DATA, "Slovenia2016.jpg")
+        img = sppasImage(filename=fn)
+        fd.detect(img)
 
-        with self.assertRaises(ValueError):
-            c3 = 2
-            self.assertTrue(self.__faceDetection1.__contains__(c3))
-
-# ---------------------------------------------------------------------------
-
+        self.assertTrue(sppasCoords(927, 238, 97, 117) in fd)
+        self.assertTrue((927, 238, 97, 117) in fd)
+        self.assertFalse((0, 0, 97, 117) in fd)
