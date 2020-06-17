@@ -80,11 +80,11 @@ def extensions():
 
 if cfg.dep_installed("video"):
     # Subclass of numpy.ndarray to manipulate images
-    from .imageutils import sppasImage
+    from .image import sppasImage
     # Automatic face detection, based on opencv caffe model
     from .facedetection import FaceDetection
     # Automatic face landmark
-    from .facelandmark import FaceLandmark
+    # from .facelandmark import FaceLandmark
 
     def extensions():
         """Return the list of supported file extensions in lower case.

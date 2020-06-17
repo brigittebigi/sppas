@@ -30,6 +30,8 @@
     src.imgdata.facedetection.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    Requires the "video" feature of SPPAS.
+
 """
 
 import logging
@@ -39,6 +41,7 @@ import cv2
 
 from sppas.src.config import paths
 from sppas.src.exceptions import sppasTypeError, sppasIOError, sppasError
+from sppas.src.exceptions import IntervalRangeException
 from .coordinates import sppasCoords
 from .image import sppasImage
 
@@ -46,7 +49,7 @@ from .image import sppasImage
 
 
 class FaceDetection(object):
-    """Class to detect faces.
+    """Detect faces in an image.
 
     :author:       Florian Hocquet, Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -54,8 +57,8 @@ class FaceDetection(object):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    A faceDetection instance allows to analyze an image in order to detect
-    faces. It estimates a list of sppasCoordinates for each detected face.
+    This class allows to analyze an image in order to detect faces. It
+    stores a list of sppasCoords() for each detected face.
 
     This class uses a model in 300x300 because it's more accurate, for example
     with an HD image the deep learning neural network will automaticaly split
@@ -63,17 +66,27 @@ class FaceDetection(object):
 
     :Example:
 
-        >>> f = FaceDetection(image)
-        >>> # Detect all the faces in the image
-        >>> f.detect()
-        >>> # Get all the detected objects
-        >>> f.get_all()
+        >>> f = FaceDetection()
+        >>> # Detect all the faces in an image
+        >>> f.detect(sppasImage(filename="image path"))
+        >>> # Get number of detected faces
+        >>> len(f)
+        >>> # Browse through the detected face coordinates:
+        >>> for c in f:
+        >>>     print(c)
         >>> # Get the detected object with the highest score
         >>> f.get_best()
         >>> # Get the 2 faces with the highest scores
-        >>> f.get_number(2)
+        >>> f.get_best(2)
+        >>> # Get detected faces with a confidence score greater than 0.9
+        >>> f.get_confidence(0.9)
 
     """
+
+    MIN_CONFIDENCE = 0.2
+    MAX_CONFIDENCE = 1.
+
+    # -----------------------------------------------------------------------
 
     def __init__(self):
         """Create a new FaceDetection instance.
@@ -84,27 +97,29 @@ class FaceDetection(object):
         # The future serialized model, type: "cv2.dnn_Net"
         # it allows to create and manipulate comprehensive artificial neural networks.
         self.__net = cv2.dnn_Net
-        self.load_resources(model=None, proto=None)
+        self.load_model()
 
-        # List of coordinates of detected faces
+        # List of coordinates of detected faces, sorted by confidence score.
         self.__coords = list()
 
     # -----------------------------------------------------------------------
 
-    def load_resources(self, model, proto):
+    def load_model(self, model=None, proto=None):
         """Initialize proto file and model file.
 
-        :raise: IOError
+        :param model: (str) Filename of the caffe model.
+        :param proto: (str) Filename of the proto describing the model
+        :raise: IOError, Exception
 
         """
         if model is None:
-            model = os.path.join(paths.resources, "video", "res10_300x300_ssd_iter_140000.caffemodel")
+            model = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000.caffemodel")
         if os.path.exists(model) is False:
             raise sppasIOError(model)
 
         if proto is None:
-            proto = os.path.join(paths.resources, "video", "deploy.prototxt.txt")
-        if os.path.exists(model) is False:
+            proto = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000.prototxt")
+        if os.path.exists(proto) is False:
             raise sppasIOError(proto)
 
         try:
@@ -140,19 +155,21 @@ class FaceDetection(object):
 
         # Loops over the detections and for each object in detection
         # get the confidence
-        for i in range(0, detections.shape[2]):
+        for i in range(detections.shape[2]):
             # Sets the confidence score of the current object
             confidence = detections[0, 0, i, 2]
 
             # Filter out weak detections by ensuring the `confidence` is
             # greater than a minimum empirically fixed confidence.
-            if confidence > 0.2:
-                self.__to_coords(detections, i, w, h, confidence)
+            if confidence > FaceDetection.MIN_CONFIDENCE:
+                new_coords = self.__to_coords(detections, i, w, h, confidence)
+                logging.info("Face detected: {}".format(new_coords))
+                self.__coords.append(new_coords)
 
     # -----------------------------------------------------------------------
 
     def get_best(self, nb=1):
-        """Return the coordinate object with the n-best scores.
+        """Return the coordinates with the n-best scores.
 
         :param nb: (int) number of coordinates to return
         :return: (list of sppasCoords or sppasCoords or None)
@@ -181,16 +198,54 @@ class FaceDetection(object):
     def get_confidence(self, confidence=0.2):
         """Return the coordinate object with the better scores.
 
-        :param confidence: (float) Minimum confidence score
+        :param confidence: (float) Minimum confidence score ranging [0.2, 1]
         :return: (list of sppasCoords or sppasCoords or None)
 
         """
         # No face was previously detected
         if len(self.__coords) == 0:
             return None
-        c = self.__to_dtype(confidence, dtype=float)
 
+        # Verify given comparison score
+        c = self.__to_dtype(confidence, dtype=float)
+        if confidence < FaceDetection.MIN_CONFIDENCE or \
+                confidence > FaceDetection.MAX_CONFIDENCE:
+            raise IntervalRangeException(confidence, FaceDetection.MIN_CONFIDENCE, FaceDetection.MAX_CONFIDENCE)
+
+        # return the list of sppasCoords with highest confidence
         return [coord.copy() for coord in self.__coords if coord.get_confidence() > c]
+
+    # -----------------------------------------------------------------------
+
+    def filter_best(self, nb=1):
+        """Filter the coordinates to select only the n-best scores.
+
+        If there are less coordinates than those requested, nothing is changed.
+
+        :param nb: (int) number of coordinates to keep
+
+        """
+        # check nb value and select the n-best coordinates
+        best = self.get_best(nb)
+        # apply only if requested n-best is less than actual size
+        if nb < len(self.__coords):
+            self.__coords = best
+
+    # -----------------------------------------------------------------------
+
+    def filter_confidence(self, confidence=0.2):
+        """Filter the coordinates to select only the n-best scores.
+
+        If there are less coordinates than those requested, nothing is changed.
+
+        :param confidence: (float) Minimum confidence score
+
+        """
+        # check confidence value and select the best coordinates
+        best = self.get_confidence(confidence)
+        # apply only if requested n-best is less than actual size
+        if len(best) < len(self.__coords):
+            self.__coords = best
 
     # -----------------------------------------------------------------------
     # Private
@@ -223,20 +278,20 @@ class FaceDetection(object):
 
         x, y, w, h = startX, startY, endX - startX, endY - startY
 
-        # Then creates an sppasCoords object with these values
-        self.__coords.append(sppasCoords(x, y, w, h, confidence))
+        # Then creates a sppasCoords object with these values
+        return sppasCoords(x, y, w, h, confidence)
 
     # -----------------------------------------------------------------------
 
     def __detections(self, image):
         """Initialize net and blob for the processing.
 
-        :returns: The width, the height of an image and detections.
+        :returns: detections.
 
         """
-        # Load the image and construct an input blob for the image
-        # by resizing to a fixed 300x300 pixels and then normalizing
-        # its type: "numpy.ndarray"
+        # Load the image and construct an input blob for the image.
+        # This blob corresponds to the defaults proto and model:
+        # resize image to a fixed 300x300 pixels
         blob = cv2.dnn.blobFromImage(
             cv2.resize(image, (300, 300)),
             1.0, (300, 300), (104.0, 177.0, 123.0))
@@ -244,6 +299,7 @@ class FaceDetection(object):
         # To detect faces, pass the blob through the net to analyze it
         self.__net.setInput(blob)
 
+        # Runs forward pass to compute output of layer.
         # Then return the detections. They contain predictions about
         # what the image contains, type: "numpy.ndarray"
         return self.__net.forward()
@@ -253,7 +309,6 @@ class FaceDetection(object):
     # -----------------------------------------------------------------------
 
     def __len__(self):
-        """Return the number of coordinates."""
         return len(self.__coords)
 
     # -----------------------------------------------------------------------

@@ -1,0 +1,72 @@
+{
+  "id": "facedetect",
+  "name": "Face Detection",
+  "descr": "Detect faces on an images.",
+  "required": "",
+  "api": "sppasFaceDetection",
+
+  "resources": [
+    {
+      "path": "faces",
+      "type": "file",
+      "ext": "",
+      "name": "res10_300x300_ssd_iter_140000"
+    }
+  ],
+
+  "anntype": [
+    "STANDALONE"
+  ],
+
+  "options": [
+    {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "",
+      "text": "Input file pattern"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-face",
+      "text": "Output file pattern"
+    },
+    {
+      "id": "nbest",
+      "type": "int",
+      "value": "1",
+      "text": "Number of faces to select among those detected"
+    },
+    {
+      "id": "score",
+      "type": "float",
+      "value": "0.2",
+      "text": "Minimum confidence score to select detected faces"
+    },
+    {
+      "id": "csv",
+      "type": "bool",
+      "value": false,
+      "text": "Save coordinates of detected faces in a CSV file"
+    },
+    {
+      "id": "tag",
+      "type": "bool",
+      "value": false,
+      "text": "Surround the detected faces in the output image"
+    },
+    {
+      "id": "folder",
+      "type": "bool",
+      "value": false,
+      "text": "Save detected faces in a list of images"
+    },
+    {
+      "id": "portrait",
+      "type": "bool",
+      "value": false,
+      "text": "Consider the portrait instead of the face in output images"
+    }
+  ]
+}
+

@@ -34,10 +34,8 @@
 """
 
 import os
-import cv2
 import unittest
 
-from sppas.src.config import paths
 from ..coordinates import sppasCoords
 from ..image import sppasImage
 from ..facedetection import FaceDetection
@@ -54,7 +52,7 @@ class TestFaceDetection(unittest.TestCase):
     def test_load_resources(self):
         fd = FaceDetection()
         with self.assertRaises(IOError):
-            fd.load_resources("toto.txt", "toto")
+            fd.load_model("toto.txt", "toto")
 
     # ------------------------------------------------------------------------
 

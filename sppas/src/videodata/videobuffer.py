@@ -37,8 +37,6 @@ import cv2
 from cv2 import CAP_PROP_POS_FRAMES, CAP_PROP_FPS, CAP_PROP_POS_MSEC,\
                 CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FRAME_COUNT
 
-from sppas.src.imgdata.coordinates import ImageError
-
 # ---------------------------------------------------------------------------
 
 
@@ -170,7 +168,7 @@ class VideoBuffer(object):
         try:
             self.__video.open(video)
         except TypeError:
-            raise ImageError
+            raise
 
         # Set the begining of the video to the frame 0
         self.__video.set(CAP_PROP_POS_FRAMES, 0)
@@ -239,7 +237,7 @@ class VideoBuffer(object):
         """
         for image in images:
             if isinstance(image, np.ndarray) is False:
-                raise ImageError
+                raise TypeError
 
         # Delete the n"self.__size - self.__overlap"
         # first images from the Buffer and keep
@@ -259,7 +257,7 @@ class VideoBuffer(object):
         """
         for image in images:
             if isinstance(image, np.ndarray) is False:
-                raise ImageError
+                raise TypeError
 
         # Set the last frame to last frame + overlap because
         # while the browse of the video with the method previous
@@ -439,7 +437,7 @@ class VideoBuffer(object):
 
         # If the frameID to go to is less than 0 raise an error
         if self.__last_frame - (self.__size + self.__size - self.__overlap) < 0:
-            raise ImageError("You can't reach a frameID inferior to 0")
+            raise ValueError("You can't reach a frameID inferior to 0")
 
         # Set the begining of the video to the frameID of the precedent Buffer
         self.__video.set(CAP_PROP_POS_FRAMES, self.__last_frame - (self.__size + self.__size - self.__overlap))

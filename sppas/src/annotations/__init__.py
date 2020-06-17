@@ -50,6 +50,7 @@ Requires the following other packages:
 * files
 * anndata
 * audiodata
+* imgdata  -- if "video" feature enabled
 * resources
 * structs
 
@@ -62,7 +63,6 @@ from .SearchIPUs import sppasSearchIPUs
 from .TextNorm import sppasTextNorm
 from .Phon import sppasPhon
 from .Syll import sppasSyll
-from .LPC import sppasLPC
 from .TGA import sppasTGA
 from .Align import sppasAlign
 from .SelfRepet import sppasSelfRepet
@@ -74,6 +74,8 @@ from .StopWords import StopWords
 from .StopWords import sppasStopWords
 from .LexMetric import sppasLexMetric
 from .SpkLexVar import sppasLexVar
+from .LPC import sppasLPC
+from .FaceDetection import sppasFaceDetection
 
 from .searchtier import sppasFindTier
 from .param import sppasParam
@@ -90,7 +92,6 @@ __all__ = (
     'sppasPhon',
     'sppasAlign',
     'sppasSyll',
-    'sppasLPC',
     'sppasTGA',
     'sppasSelfRepet',
     'sppasActivity',
@@ -103,5 +104,7 @@ __all__ = (
     'sppasFindTier',
     'sppasParam',
     'sppasAnnotationsManager',
-    'sppasLexVar'
+    'sppasLexVar',
+    'sppasLPC',
+    'sppasFaceDetection'
 )

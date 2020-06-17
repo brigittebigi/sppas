@@ -28,7 +28,7 @@
         ---------------------------------------------------------------------
 
     src.videodata.manageroptions.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -112,27 +112,27 @@ class ImageOptions(object):
 
     def __verify_options(self):
         """Verify the option values."""
-        # If only mode has been setted and equal to full
+        # If only mode has been set and equal to full
         if self.get_mode() == "full" and self.get_framing() == "None":
             # Set framing to face
             self.set_framing("face")
 
-        # If only framing has been setted and equal to face
+        # If only framing has been set and equal to face
         if self.get_framing() == "face" and self.get_mode() == "None":
             # Set mode to full
             self.set_mode("full")
 
-        # If only mode has been setted and equal to crop
+        # If only mode has been set and equal to crop
         if self.get_mode() == "crop" and self.get_framing() == "None":
             # Set framing to portrait
             self.set_framing("portrait")
 
-        # If only framing has been setted and equal to portrait
+        # If only framing has been set and equal to portrait
         if self.get_framing() == "portrait" and self.get_mode() == "None":
             # Set mode to crop
             self.set_mode("crop")
 
-        # If only framing has been setted and equal to portrait
+        # If only framing has been set and equal to portrait
         if self.get_framing() == "face" and self.get_mode() == "crop":
             # Set mode to crop
             self.set_folder(False)
