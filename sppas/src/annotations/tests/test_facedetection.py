@@ -28,7 +28,7 @@
 
         ---------------------------------------------------------------------
 
-    src.imgdata.tests.test_facedetection.py
+    src.annotations.tests.test_facedetection.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -59,7 +59,7 @@ class TestFaceDetection(unittest.TestCase):
         self.assertEqual(0, len(fd))
 
         # The image we'll work on
-        fn = os.path.join(paths, "faces", "BrigitteBigiSlovenie2016.jpg")
+        fn = os.path.join(paths.samples, "faces", "BrigitteBigiSlovenie2016.jpg")
         with self.assertRaises(TypeError):
             fd.detect(fn)
         img = sppasImage(filename=fn)
@@ -77,7 +77,7 @@ class TestFaceDetection(unittest.TestCase):
         for row in cropped:
             self.assertEqual(len(row), 177)
 
-        fn_detected = os.path.join(paths, "faces", "BrigitteBigiSlovenie2016-face.jpg")
+        fn_detected = os.path.join(paths.samples, "faces", "BrigitteBigiSlovenie2016-face.jpg")
         face = sppasImage(filename=fn_detected)
 
         self.assertEqual(len(cropped), len(face))
@@ -93,7 +93,7 @@ class TestFaceDetection(unittest.TestCase):
     def test_getters(self):
         fd = FaceDetection()
         # The image we'll work on
-        fn = os.path.join(DATA, "Slovenia2016.jpg")
+        fn = os.path.join(paths.samples, "faces", "Slovenia2016.jpg")
         img = sppasImage(filename=fn)
 
         fd.detect(img)
@@ -124,7 +124,7 @@ class TestFaceDetection(unittest.TestCase):
     def test_contains(self):
         fd = FaceDetection()
         # The image we'll work on
-        fn = os.path.join(DATA, "Slovenia2016.jpg")
+        fn = os.path.join(paths.samples, "faces", "Slovenia2016.jpg")
         img = sppasImage(filename=fn)
         fd.detect(img)
 

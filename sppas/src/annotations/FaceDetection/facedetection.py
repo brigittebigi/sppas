@@ -97,8 +97,7 @@ class FaceDetection(object):
         """
         # The future serialized model, type: "cv2.dnn_Net"
         # it allows to create and manipulate comprehensive artificial neural networks.
-        self.__net = cv2.dnn_Net
-        self.load_model()
+        self.__net = None
 
         # List of coordinates of detected faces, sorted by confidence score.
         self.__coords = list()
@@ -113,13 +112,15 @@ class FaceDetection(object):
         :raise: IOError, Exception
 
         """
+        # Set a default model and proto in order to be able to test the class
         if model is None:
             model = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000.caffemodel")
-        if os.path.exists(model) is False:
-            raise sppasIOError(model)
-
         if proto is None:
             proto = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000.prototxt")
+
+        # Use the given model and proto
+        if os.path.exists(model) is False:
+            raise sppasIOError(model)
         if os.path.exists(proto) is False:
             raise sppasIOError(proto)
 
@@ -139,6 +140,8 @@ class FaceDetection(object):
         :param image: (sppasImage or numpy.ndarray)
 
         """
+        if self.__net is None:
+            self.load_model()
         # Invalidate current list of coordinates
         self.__coords = list()
 
@@ -152,8 +155,11 @@ class FaceDetection(object):
         (h, w) = image.shape[:2]
         logging.debug("Image size is ({:d}, {:d})".format(w, h))
 
-        # initialize the net and make predictions
-        detections = self.__detections(image)
+        try:
+            # initialize the net and make predictions
+            detections = self.__detections(image)
+        except cv2.error as e:
+            raise sppasError("Face detection failed: {}".format(str(e)))
 
         # Loops over the detections and for each object in detection
         # get the confidence
@@ -180,6 +186,9 @@ class FaceDetection(object):
         :raise: ImageXXXError if scale or shift are not possible
 
         """
+        if len(self.__coords) == 0:
+            return
+
         portraits = [c.copy() for c in self.__coords]
         for c in portraits:
             # Scale the image. Shift values indicate how to shift x,y to get

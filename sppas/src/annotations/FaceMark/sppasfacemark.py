@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.annotations.FaceDetection.sppasfacedetect.py
+    src.annotations.FaceMark.sppasfacemark.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -44,13 +44,13 @@ from sppas.src.imgdata import sppasImageWriter
 
 from ..annotationsexc import AnnotationOptionError
 from ..baseannot import sppasBaseAnnotation
-from .facedetection import FaceDetection
+from .facelandmark import FaceLandmark
 
 # ----------------------------------------------------------------------------
 
 
-class sppasFaceDetection(sppasBaseAnnotation):
-    """SPPAS integration of the automatic face detection on an image.
+class sppasFaceMark(sppasBaseAnnotation):
+    """SPPAS integration of the automatic face landmark on an image.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -69,8 +69,8 @@ class sppasFaceDetection(sppasBaseAnnotation):
         :param log: (sppasLog) Human-readable logs.
 
         """
-        super(sppasFaceDetection, self).__init__("facedetect.json", log)
-        self.__fd = FaceDetection()
+        super(sppasFaceMark, self).__init__("facemark.json", log)
+        self.__fl = FaceLandmark()
         self.__writer = sppasImageWriter()
 
     # -----------------------------------------------------------------------
@@ -83,7 +83,7 @@ class sppasFaceDetection(sppasBaseAnnotation):
         """
         model = model_basename + ".caffemodel"
         proto = model_basename + ".prototxt"
-        self.__fd.load_model(model, proto)
+        self.__fl.load_model(model, proto)
 
     # -----------------------------------------------------------------------
     # Methods to fix options
@@ -98,34 +98,13 @@ class sppasFaceDetection(sppasBaseAnnotation):
         for opt in options:
 
             key = opt.get_key()
-            if key == "nbest":
-                self._options["nbest"] = opt.get_value()
-
-            elif key == "score":
-                self._options["score"] = opt.get_value()
-
-            elif key == "csv":
+            if key == "csv":
                 self._options["csv"] = opt.get_value()
                 self.__writer.set_options(csv=opt.get_value())
 
             elif key == "tag":
                 self._options["tag"] = opt.get_value()
                 self.__writer.set_options(tag=opt.get_value())
-
-            elif key == "crop":
-                self._options["crop"] = opt.get_value()
-                self.__writer.set_options(crop=opt.get_value())
-
-            elif key == "portrait":
-                self._options["portrait"] = opt.get_value()
-
-            elif key == "width":
-                self._options["width"] = opt.get_value()
-                self.__writer.set_options(width=opt.get_value())
-
-            elif key == "height":
-                self._options["height"] = opt.get_value()
-                self.__writer.set_options(height=opt.get_value())
 
             elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
                 self._options[key] = opt.get_value()
@@ -147,44 +126,34 @@ class sppasFaceDetection(sppasBaseAnnotation):
         :param input_file: (list of str) (image)
         :param opt_input_file: (list of str) ignored
         :param output_file: (str) the output file name
-        :returns: (list of sppasCoords) Coordinates of detected faces
+        :returns: (list of points) Coordinates of detected landmarks
 
         """
         # Get the image from the input
         image = sppasImage(filename=input_file[0])
 
         # Search for coordinates of faces
-        self.__fd.detect(image)
-        self.logfile.print_message(str(len(self.__fd)) + " faces found.",
-                                   indent=2, status=annots.info)
-
-        # Filter coordinates (number of faces / score)
-        if self._options["nbest"] != 0:
-            self.__fd.filter_best(self._options["nbest"])
-        self.__fd.filter_confidence(self._options["score"])
+        self.__fl.mark(image)
 
         # Make the output list of coordinates
-        if self._options["portrait"] is True:
-            try:
-                self.__fd.to_portrait(image)
-            except Exception as e:
-                self.logfile.print_message(
-                    "Faces can't be scaled to portrait: {}".format(str(e)),
-                    indent=2, status=annots.error)
-        coords = [c.copy() for c in self.__fd]
+        coords = [c.copy() for c in self.__fl]
 
         # Save result as a list of coordinates (csv), a tagged image
         # and/or a list of images (face or portrait) in a folder
         if output_file is not None:
-            self.__writer.write(image, coords, output_file, self.get_pattern())
+            self.__writer.write(image, coords, output_file, pattern="")
 
         return coords
 
     # -----------------------------------------------------------------------
 
+    def get_input_pattern(self):
+        """Pattern this annotation expects for its input filename."""
+        return self._options.get("inputpattern", '-face')
+
     def get_pattern(self):
         """Pattern this annotation uses in an output filename."""
-        return self._options.get("outputpattern", "-face")
+        return self._options.get("outputpattern", "-mark")
 
     @staticmethod
     def get_input_extensions():

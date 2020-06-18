@@ -336,7 +336,10 @@ class sppasImageWriter(object):
         for i, c in enumerate(coords):
             # Fix the image filename
             fn, fe = os.path.splitext(out_img_name)
-            out_iname = "{:s}{:s}{:d}{:s}".format(fn, pattern, i, fe)
+            if len(pattern) > 0 and fn.endswith(pattern):
+                # the out_img_name is already including the pattern
+                fn = fn[:len(fn)-len(pattern)]
+            out_iname = "{:s}_{:d}{:s}{:s}".format(fn, i+1, pattern, fe)
 
             # Crop the image at the coordinates
             img = image.icrop(c)
