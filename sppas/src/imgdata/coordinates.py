@@ -257,16 +257,17 @@ class sppasCoords(object):
 
         # Check new values with the width and height of the given image
         if image is not None:
-            (width, height) = image.shape[:2]
+            (height, width) = image.shape[:2]
             if new_w > width:
                 raise ImageWidthError(new_w, width)
             if new_h > height:
                 raise ImageHeightError(new_h, height)
 
         shift_x = int(float(self.__w - new_w) / 2.)
+        shift_y = int(float(self.__h - new_h) / 2.)
         self.__w = new_w
         self.__h = new_h
-        return shift_x
+        return shift_x, shift_y
 
     # -----------------------------------------------------------------------
 
@@ -292,7 +293,7 @@ class sppasCoords(object):
 
         if image is not None:
             # Get the width and height of image
-            (max_w, max_h) = image.shape[:2]
+            (max_h, max_w) = image.shape[:2]
             if new_x > max_w:
                 raise ImageEastingError(new_x, max_w)
             elif new_x + self.__w > max_w:

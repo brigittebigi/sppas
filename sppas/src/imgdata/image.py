@@ -200,6 +200,12 @@ class sppasImage(numpy.ndarray):
 
     # -----------------------------------------------------------------------
 
+    def size(self):
+        (h, w) = self.shape[:2]
+        return w, h
+
+    # -----------------------------------------------------------------------
+
     def __to_dtype(self, value, dtype=int):
         """Convert a value to int or raise the appropriate exception."""
         try:

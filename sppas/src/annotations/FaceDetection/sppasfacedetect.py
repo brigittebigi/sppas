@@ -41,6 +41,7 @@ from sppas.src.config import annots
 from sppas.src.imgdata import extensions
 from sppas.src.imgdata import FaceDetection
 from sppas.src.imgdata import sppasImage
+from sppas.src.imgdata import sppasImageWriter
 
 from ..annotationsexc import AnnotationOptionError
 from ..baseannot import sppasBaseAnnotation
@@ -70,6 +71,7 @@ class sppasFaceDetection(sppasBaseAnnotation):
         """
         super(sppasFaceDetection, self).__init__("facedetect.json", log)
         self.__fd = FaceDetection()
+        self.__writer = sppasImageWriter()
 
     # -----------------------------------------------------------------------
 
@@ -104,15 +106,26 @@ class sppasFaceDetection(sppasBaseAnnotation):
 
             elif key == "csv":
                 self._options["csv"] = opt.get_value()
+                self.__writer.set_options(csv=opt.get_value())
 
             elif key == "tag":
                 self._options["tag"] = opt.get_value()
+                self.__writer.set_options(tag=opt.get_value())
 
-            elif key == "folder":
-                self._options["folder"] = opt.get_value()
+            elif key == "crop":
+                self._options["crop"] = opt.get_value()
+                self.__writer.set_options(crop=opt.get_value())
 
             elif key == "portrait":
                 self._options["portrait"] = opt.get_value()
+
+            elif key == "width":
+                self._options["width"] = opt.get_value()
+                self.__writer.set_options(width=opt.get_value())
+
+            elif key == "height":
+                self._options["height"] = opt.get_value()
+                self.__writer.set_options(height=opt.get_value())
 
             elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
                 self._options[key] = opt.get_value()
@@ -123,8 +136,6 @@ class sppasFaceDetection(sppasBaseAnnotation):
     # -----------------------------------------------------------------------
     # Getters and Setters
     # -----------------------------------------------------------------------
-
-
 
     # ----------------------------------------------------------------------
     # Apply the annotation on a given file
@@ -153,12 +164,21 @@ class sppasFaceDetection(sppasBaseAnnotation):
         self.__fd.filter_confidence(self._options["score"])
 
         # Make the output list of coordinates
+        pattern = "-face"
+        if self._options["portrait"] is True:
+            pattern = "-portrait"
+            try:
+                self.__fd.to_portrait(image)
+            except Exception as e:
+                self.logfile.print_message(
+                    "Faces can't be scaled to portrait: {}".format(str(e)),
+                    indent=2, status=annots.error)
         coords = [c.copy() for c in self.__fd]
 
         # Save result as a list of coordinates (csv), a tagged image
         # and/or a list of images (face or portrait) in a folder
         if output_file is not None:
-            pass
+            self.__writer.write(image, coords, output_file, pattern)
 
         return coords
 
@@ -166,7 +186,7 @@ class sppasFaceDetection(sppasBaseAnnotation):
 
     def get_pattern(self):
         """Pattern this annotation uses in an output filename."""
-        return self._options.get("outputpattern", "-face")
+        return self._options.get("outputpattern", "-faces")
 
     @staticmethod
     def get_input_extensions():

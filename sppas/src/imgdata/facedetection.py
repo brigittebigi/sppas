@@ -149,6 +149,7 @@ class FaceDetection(object):
 
         # Extract the w, h of the image
         (h, w) = image.shape[:2]
+        logging.debug("Image size is ({:d}, {:d})".format(w, h))
 
         # initialize the net and make predictions
         detections = self.__detections(image)
@@ -163,8 +164,32 @@ class FaceDetection(object):
             # greater than a minimum empirically fixed confidence.
             if confidence > FaceDetection.MIN_CONFIDENCE:
                 new_coords = self.__to_coords(detections, i, w, h, confidence)
-                logging.info("Face detected: {}".format(new_coords))
+                logging.debug("Face detected: {}".format(new_coords))
                 self.__coords.append(new_coords)
+
+    # -----------------------------------------------------------------------
+
+    def to_portrait(self, image=None):
+        """Scale coordinates of faces to a portrait size.
+
+        The given image allows to ensure we wont scale larger than what the
+        image can do.
+
+        :param image: (sppasImage) The original image.
+        :raise: ImageXXXError if scale or shift are not possible
+
+        """
+        portraits = [c.copy() for c in self.__coords]
+        for c in portraits:
+            # Scale the image. Shift values indicate how to shift x,y to get
+            # the face exactly at the center of the new coordinates.
+            shift_x, shift_y = c.scale(2.2, image)
+            # Re-frame the image on the face.
+            shift_y = int(float(shift_y) / 1.5)
+            c.shift(shift_x, shift_y, image)
+
+        # no error occurred, all faces can be converted to their portrait
+        self.__coords = portraits
 
     # -----------------------------------------------------------------------
 
@@ -227,6 +252,8 @@ class FaceDetection(object):
         """
         # check nb value and select the n-best coordinates
         best = self.get_best(nb)
+        if nb == 1:
+            best = [best]
         # apply only if requested n-best is less than actual size
         if nb < len(self.__coords):
             self.__coords = best

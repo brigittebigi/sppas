@@ -15,7 +15,7 @@ msgstr ""
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Language: en_US\n"
-"X-Generator: Poedit 1.8.11\n"
+"X-Generator: Poedit 2.0.6\n"
 
 msgid ":ERROR 2000: "
 msgstr "No audio file defined."
@@ -52,3 +52,24 @@ msgstr "Invalid sample width. Expect 1, 2 or 4. Got {value}."
 
 msgid ":ERROR 2080: "
 msgstr "Invalid framerate. Got {value}."
+
+msgid ":ERROR 2610: "
+msgstr "Image of file {filename} can't be read by opencv library."
+
+msgid ":ERROR 2620: "
+msgstr "Image of file {filename} can't be written by opencv library."
+
+msgid ":ERROR 2330: "
+msgstr "The value {} can't be superior to the one of the image {}."
+
+msgid ":ERROR 2332: "
+msgstr "The width value {} can't be superior to the width {} of the image."
+
+msgid ":ERROR 2334: "
+msgstr "The height value {} can't be superior to the height {} of the image."
+
+msgid ":ERROR 2336: "
+msgstr "The x-axis value {} can't be superior to the width {} of the image."
+
+msgid ":ERROR 2338: "
+msgstr "The y-axis value {} can't be superior to the height {} of the image."

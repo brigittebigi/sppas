@@ -34,14 +34,20 @@
     {
       "id": "nbest",
       "type": "int",
-      "value": "1",
-      "text": "Number of faces to select among those detected"
+      "value": "0",
+      "text": "Number of faces to select among those detected (0=auto)"
     },
     {
       "id": "score",
       "type": "float",
       "value": "0.2",
       "text": "Minimum confidence score to select detected faces"
+    },
+    {
+      "id": "portrait",
+      "type": "bool",
+      "value": false,
+      "text": "Consider the portrait instead of the face in output images"
     },
     {
       "id": "csv",
@@ -56,16 +62,22 @@
       "text": "Surround the detected faces in the output image"
     },
     {
-      "id": "folder",
+      "id": "crop",
       "type": "bool",
       "value": false,
-      "text": "Save detected faces in a list of images"
+      "text": "Save detected faces in cropped images"
     },
     {
-      "id": "portrait",
-      "type": "bool",
-      "value": false,
-      "text": "Consider the portrait instead of the face in output images"
+      "id": "width",
+      "type": "int",
+      "value": 0,
+      "text": "Resize all the output images to a fixed width (0=no)"
+    },
+    {
+      "id": "height",
+      "type": "int",
+      "value": 0,
+      "text": "Resize all the output images to a fixed height (0=no)"
     }
   ]
 }

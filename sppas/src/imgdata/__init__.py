@@ -59,6 +59,11 @@ class sppasImage(object):
         raise sppasEnableFeatureError("video")
 
 
+class sppasImageWriter(object):
+    def __init__(self):
+        raise sppasEnableFeatureError("video")
+
+
 class FaceDetection(object):
     def __init__(self):
         raise sppasEnableFeatureError("video")
@@ -79,8 +84,9 @@ def extensions():
 
 
 if cfg.dep_installed("video"):
-    # Subclass of numpy.ndarray to manipulate images
+    # Subclass of numpy.ndarray to manipulate images and image-writer
     from .image import sppasImage
+    from .imgwriter import sppasImageWriter
     # Automatic face detection, based on opencv caffe model
     from .facedetection import FaceDetection
     # Automatic face landmark

@@ -38,10 +38,15 @@
 
 """
 
+from random import randint
+import logging
+import codecs
 import cv2
 import os
 import shutil
 import glob
+from .coordinates import sppasCoords
+from .image import sppasImage
 
 # ---------------------------------------------------------------------------
 
@@ -55,103 +60,74 @@ class ImageWriterOptions(object):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
+    Fix options to write an image and a set of coordinates:
+
+    - write coordinates in a CSV file;
+    - write the image with coordinates tagged by a square;
+    - write a set of cropped images in a folder;
+    - can force all saved images to be resized
+
     """
 
-    # The framing options. The first one is the default one.
-    FRAMING = ["face", "portrait"]
+    def __init__(self):
+        """Create a new ImageWriterOptions instance.
 
-    # The mode options. The first one is the default one.
-    MODE = ["full", "crop"]
-
-    # The draw options. The first one is the default one.
-    DRAW = ["circle", "ellipse", "square"]
-
-    def __init__(self, pattern, folder=False, usable=False):
-        """Create a new ImageWriterOptions instance."""
-
-        # The dictionary of options to define the outputs
-        self._output = {"usable": False, "folder": False}
-
-        # The framing to use, face or portrait
-        self._framing = None
-        # The mode to use, full or crop
-        self._mode = None
-
-        # The width you want for the outputs files
-        self._width = -1
-        # The height you want for the outputs files
-        self._height = -1
-
-        # Initialize outputs files
-        self.__init_outputs(usable, folder)
-
-        # The pattern to use for the outputs files
-        self.__pattern = str()
-        self.set_pattern(pattern)
-
-    # -----------------------------------------------------------------------
-
-    def __init_outputs(self, usable, folder):
-        """Init the values of the output options.
-
-        :param usable: (boolean) If True create the usable videos.
-        :param folder: (boolean) If True extract images in a folder.
+        Set options to their default values, i.e. do not write anything!
 
         """
-        # If csv is True set the csv outputs files to True
-        if usable is True:
-            self.set_usable(True)
+        # The dictionary of outputs
+        self._outputs = {"csv": False, "tag": False, "crop": False}
 
-        # If folder is True set the folders outputs to True
-        if folder is True:
-            self.set_folder(True)
-
-    # -----------------------------------------------------------------------
-
-    def set_options(self, framing, mode, width, height):
-        """Set the values of the options."""
-        self.set_framing(framing)
-        self.set_mode(mode)
-        self.set_width(width)
-        self.set_height(height)
-
-        self.__verify_options()
+        # Force the width of output image files (0=No)
+        self._width = 0
+        # Force the height of output image files (0=No)
+        self._height = 0
 
     # -----------------------------------------------------------------------
 
-    def __verify_options(self):
-        """Verify and adjust the option values."""
-        if self._mode is None:
-            # If only framing has been set and equal to face
-            if self._framing == "face":
-                self._mode = "full"
-            # If only framing has been set and equal to portrait
-            if self._framing == "portrait":
-                self._mode = "crop"
-
-        elif self._mode == "full":
-            # If only mode has been set and equal to full
-            if self._framing is None:
-                self._framing = "face"
-
-        elif self._mode == "crop":
-            # If only mode has been set and equal to crop
-            if self._framing is None:
-                self._framing = "portrait"
-            # If only framing has been set and equal to portrait
-            elif self._framing == "face":
-                self.set_folder(False)
+    def get_csv_output(self):
+        """Return True if coordinates will be saved in a CSV file."""
+        return self._outputs["csv"]
 
     # -----------------------------------------------------------------------
 
-    def get_usable(self):
-        """Return True if the option usable is enabled."""
-        return self._output["usable"]
+    def set_csv_output(self, value):
+        """Set to True to save coordinates to a CSV file.
+
+        :param value: (bool)
+
+        """
+        value = bool(value)
+        if isinstance(value, bool) is False:
+            raise TypeError
+        self._outputs["csv"] = value
 
     # -----------------------------------------------------------------------
 
-    def set_usable(self, value):
-        """Enable or not the usable output.
+    def get_tag_output(self):
+        """Return True if faces of the image will be surrounded."""
+        return self._outputs["tag"]
+
+    # -----------------------------------------------------------------------
+
+    def set_tag_output(self, value):
+        """Set to True to surround the faces of the image.
+
+        :param value: (bool)
+
+        """
+        self._outputs["tag"] = bool(value)
+
+    # -----------------------------------------------------------------------
+
+    def get_crop_output(self):
+        """Return True if the option to crop faces is enabled."""
+        return self._outputs["crop"]
+
+    # -----------------------------------------------------------------------
+
+    def set_crop_output(self, value):
+        """Set to true to create cropped images.
 
         :param value: (bool) True to enabled and False to disabled.
 
@@ -159,86 +135,25 @@ class ImageWriterOptions(object):
         value = bool(value)
         if isinstance(value, bool) is False:
             raise TypeError
-        self._output["usable"] = value
-
-    # -----------------------------------------------------------------------
-
-    def get_folder(self):
-        """Return True if the option folder is enabled."""
-        return self._output["folder"]
-
-    # -----------------------------------------------------------------------
-
-    def set_folder(self, value):
-        """Enable or not the folder output.
-
-        :param value: (bool) True to enabled and False to disabled.
-
-        """
-        value = bool(value)
-        if isinstance(value, bool) is False:
-            raise TypeError
-        self._output["folder"] = value
-
-    # -----------------------------------------------------------------------
-
-    def get_framing(self):
-        """Return the framing."""
-        return self._framing.get_value()
-
-    # -----------------------------------------------------------------------
-
-    def set_framing(self, value):
-        """Set the framing.
-
-        :param value: (str) The framing to use on each image of the buffer,
-        face or portrait.
-
-        """
-        if isinstance(value, str) is False and value is not None:
-            raise TypeError
-        if value not in ImageWriterOptions.FRAMING and value is not None:
-            raise ValueError
-        self._framing.set_value(value)
-
-    # -----------------------------------------------------------------------
-
-    def get_mode(self):
-        """Return the mode."""
-        return self._mode
-
-    # -----------------------------------------------------------------------
-
-    def set_mode(self, value):
-        """Set the mode.
-
-        :param value: (str) The mode to use on each image of the buffer,
-        full or crop.
-
-        """
-        if isinstance(value, str) is False and value is not None:
-            raise TypeError
-        if value not in ImageWriterOptions.MODE and value is not None:
-            raise ValueError
-        self._mode = value
+        self._outputs["crop"] = value
 
     # -----------------------------------------------------------------------
 
     def get_width(self):
-        """Return the width of the outputs files."""
+        """Return the width of the output image files."""
         return self._width
 
     # -----------------------------------------------------------------------
 
     def set_width(self, value):
-        """Set the width of outputs.
+        """Set the width of output image files.
 
         :param value: (int) The width of outputs images and videos.
 
         """
         if isinstance(value, int) is False:
             raise TypeError
-        if value < -1 or value > 15360:
+        if value < -1 or value > sppasCoords.MAX_W:
             raise ValueError
         self._width = value
 
@@ -258,7 +173,7 @@ class ImageWriterOptions(object):
         """
         if isinstance(value, int) is False:
             raise TypeError
-        if value < -1 or value > 8640:
+        if value < -1 or value > sppasCoords.MAX_H:
             raise ValueError
         self._height = value
 
@@ -280,29 +195,15 @@ class ImageWriterOptions(object):
         self.set_width(width)
         self.set_height(height)
 
-    # -----------------------------------------------------------------------
-
-    def get_pattern(self):
-        """Return the pattern of the outputs files."""
-        return self.__pattern
-
-    # -----------------------------------------------------------------------
-
-    def set_pattern(self, value):
-        """Set the pattern of the outputs files.
-
-        :param value: (str) The pattern in all the outputs files.
-
-        """
-        if isinstance(value, str) is False:
-            raise TypeError
-        self.__pattern = value
+    csv = property(get_csv_output, set_csv_output)
+    tag = property(get_tag_output, set_tag_output)
+    crop = property(get_crop_output, set_crop_output)
 
 # ---------------------------------------------------------------------------
 
 
-class ImagesWriter(object):
-    """Write a bunch of images into files.
+class sppasImageWriter(object):
+    """Write an image and optionally coordinates into files.
 
     :author:       Florian Hocquet, Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -312,268 +213,144 @@ class ImagesWriter(object):
 
     """
 
-    def __init__(self, path, pattern, folder=False, usable=False):
+    # generate 10 visually distinct RGB colours
+    N = 10
+    COLORS = colors = {k: [] for k in 'rgb'}
+    for i in range(N):
+        temp = {k: randint(0, 255) for k in 'rgb'}
+        for k in temp:
+            while 1:
+                c = temp[k]
+                t = set(j for j in range(c - 15, c + 15) if 0 <= j <= 255)
+                if t.intersection(COLORS[k]):
+                    temp[k] = randint(0, 255)
+                else:
+                    break
+            COLORS[k].append(temp[k])
+
+    # -----------------------------------------------------------------------
+
+    def __init__(self):
         """Create a new ImgWriter instance.
 
-        :param path: (str) The path of the image.
-        :param pattern: (str) The pattern to use for the creation of the files.
-        :param folder: (boolean) If is True extract images in a folder.
+        Write the given image in the given filename.
+        Parts of the image can be extracted in separate image files and/or
+        surrounded on the given image.
+        Output images can be resized.
 
         """
         # Initialize the options manager
-        self._options = ImageWriterOptions(pattern, usable=usable, folder=folder)
-
-        # The outputs manager
-        self.__iOutputs = ImageOutputs(path, self._options)
-
-        # The index of the current image
-        self.__number = 0
+        self._options = ImageWriterOptions()
 
     # -----------------------------------------------------------------------
 
-    def set_options(self, framing=None, mode=None, width=640, height=480):
-        """Set the values of the options."""
-        self._options.set_options(framing, mode, width, height)
+    def set_options(self, csv=None, tag=None, crop=None,
+                    width=None, height=None):
+        """Set the value of each option."""
+        if csv is not None:
+            self._options.set_csv_output(csv)
+        if tag is not None:
+            self._options.set_tag_output(tag)
+        if crop is not None:
+            self._options.set_crop_output(crop)
+        if width is not None:
+            self._options.set_width(width)
+        if height is not None:
+            self._options.set_height(height)
 
     # -----------------------------------------------------------------------
 
-    def manage_modifications(self, faces, image1, image2):
-        """Verify the option values.
+    def write(self, image, coords, out_img_name, pattern=""):
+        """Save the image into file(s) depending on the options.
 
-        :param faces: (list) The list of face coordinates;
-        :param image1: (numpy.ndarray) The first image to be processed.
-        :param image2: (numpy.ndarray) The second to be processed.
+        :param image: (sppasImage) The image to write
+        :param coords: (sppasCoords) The coordinates of objects
+        :param out_img_name: (str) The filename of the output image file
+        :param pattern: (str) Pattern to add to a cropped image filename
 
         """
-        # Loop over the persons
-        for i in range(len(faces)):
+        if self._options.csv is True:
+            fn, fe = os.path.splitext(out_img_name)
+            out_csv_name = fn + ".csv"
+            self.write_csv_coords(coords, out_csv_name, out_img_name)
 
-            # Write the usable output videos
-            self.__manage_usable(faces, image1, i)
+        if self._options.tag is True:
+            self.write_tagged_img(image, coords, out_img_name)
 
-            # Write the outputs
-            self.__manage_verification(faces, image2, i)
+        if self._options.crop is True:
+            self.write_cropped_img(image, coords, out_img_name, pattern)
 
     # -----------------------------------------------------------------------
 
-    def __manage_usable(self, faces, image, index):
-        """Manage the creation of one of the usable output video.
+    def write_csv_coords(self, coords, out_csv_name, img_name=""):
+        """Write or append a list of coordinates in a CSV file.
 
-        :param faces: (list) The list of face coordinates.
-        :param image: (numpy.ndarray) The image to be processed.
-        :param index: (int) The ID of the person.
+        :param coords: (sppasCoords) The coordinates of objects
+        :param out_csv_name: (str) The filename of the CSV file to write
+        :param img_name: (str) The filename of the image
 
         """
-        image = self.__apply_usable(faces, image, index)
-
-        # Create the usable output videos
-        self.__iOutputs.out_base(len(faces))
-
-        # Write the image in usable output video
-        self.__iOutputs.write_base(image, index, self.__number)
+        mode = "w"
+        if os.path.exists(out_csv_name) is True:
+            mode = "a+"
+        with codecs.open(out_csv_name, mode, encoding="utf-8") as f:
+            for i, c in enumerate(coords):
+                f.write("{:s};".format(img_name))
+                f.write("{:d};".format(i))
+                f.write("{:d};".format(c.x))
+                f.write("{:d};".format(c.y))
+                f.write("{:d};".format(c.w))
+                f.write("{:d};".format(c.h))
+                f.write("{:f}\n".format(c.get_confidence()))
 
     # -----------------------------------------------------------------------
 
-    def __apply_usable(self, faces, image, index):
-        """Modify the image for the usable output video.
+    def write_tagged_img(self, image, coords, out_img_name):
+        """Tag and save the images with squares at given coords.
 
-        :param faces: (list) The list of face coordinates.
-        :param image: (numpy.ndarray) The image to be processed.
-        :param index: (int) The ID of the person.
+        :param image: (sppasImage) The image to write
+        :param coords: (sppasCoords) The coordinates of objects
+        :param out_img_name: (str) The filename of the output image file
 
         """
-        # Copy the sppasCoords object in the faces
-        coord = faces[index].copy()
+        # Make a copy of the image to tag it without changing the given image
+        img = sppasImage(input_array=image.copy())
+        w, h = img.size()
+        pen_width = int(float(w + h) / 500.)
 
-        # Adjust the coordinate
-        self.__adjust(image, coord)
+        # Add squares at given coordinates
+        for i, c in enumerate(coords):
+            # Get the i-th color
+            r = sppasImageWriter.COLORS['r'][i % sppasImageWriter.N]
+            g = sppasImageWriter.COLORS['g'][i % sppasImageWriter.N]
+            b = sppasImageWriter.COLORS['b'][i % sppasImageWriter.N]
+            # Draw the square
+            img = img.isurround(c, color=(r, g, b), thickness=pen_width)
 
-        # Crop the image
-        img = sppasImage(input_array=image)
-        base_image = img.icrop(coord)
-
-        # Resize the image
-        base_image = self.__resize(base_image)
-
-        return base_image
+        # Save tagged image
+        cv2.imwrite(out_img_name, img)
 
     # -----------------------------------------------------------------------
 
-    def __manage_verification(self, faces, image, index):
-        """Manage the creation of the verification outputs.
+    def write_cropped_img(self, image, coords, out_img_name, pattern=""):
+        """Crop and save the images with squares at given coords.
 
-        :param faces: (list) The list of face coordinates.
+        :param image: (sppasImage) The image to write
+        :param coords: (sppasCoords) The coordinates of objects
+        :param out_img_name: (str) The filename of the output image files
+        :param pattern: (str) Pattern to add to each file
 
         """
-        if self._options.get_mode() != "full" and self._options.get_mode() != "None":
-            # Copy the image
-            image = image.copy()
+        for i, c in enumerate(coords):
+            # Fix the image filename
+            fn, fe = os.path.splitext(out_img_name)
+            out_iname = "{:s}{:s}{:d}{:s}".format(fn, pattern, i, fe)
 
-        # Aplly modification
-        image = self.__apply_tracked(faces, image, index)
+            # Crop the image at the coordinates
+            img = image.icrop(c)
 
-        # Store the width and the height of the image
-        (h, w) = image.shape[:2]
+            # Save the cropped image
+            cv2.imwrite(out_iname, img)
 
-        # Create the output files
-        self.__iOutputs.create_out(len(faces))
 
-        # Write the image in csv file, video, folder
-        try:
-            self.__iOutputs.write(image, index, self.__number)
-        except IndexError:
-            self.__iOutputs.write(image, index, self.__number)
-
-    # -----------------------------------------------------------------------
-
-    def __apply_tracked(self, faces, image, index):
-        """Apply modification based on the tracking.
-
-        :param faces: (list) The list of face coordinates.
-        :param image: (numpy.ndarray) The image to be processed.
-        :param index: (int) The ID of the person.
-
-        """
-        # If portrait option has been selected
-        if self._options.get_framing() == "portrait":
-            # Transform sppasCoords into portrait
-            portrait(faces[index])
-
-        # If mode is not full
-        if self._options.get_mode() != "full" and self._options.get_mode() != "None":
-            # Adjust the sppasCoords
-            self.__adjust(image, faces[index])
-
-        # If a mode has been selected
-        if self._options.get_mode() != "None":
-            # Use one of the extraction options
-            image = self.__process_image(image, faces[index], index)
-
-        # If mode is not full
-        # or if a mode has been selected
-        if self._options.get_mode() != "full" and self._options.get_mode() != "None":
-            # Resize the image
-            image = self.__resize(image)
-
-        return image
-
-    # -----------------------------------------------------------------------
-
-    def __process_image(self, img, coords, index):
-        """Draw squares around faces or crop the faces.
-
-        :param img: (numpy.ndarray) The image to be processed.
-        :param coords: (sppasCoords) The coordinates of the face.
-        :param index: (int) The ID of the person in the list of person.
-
-        """
-        index = int(index)
-        if isinstance(index, int) is False:
-            raise TypeError
-        if isinstance(img, np.ndarray) is False:
-            raise TypeError
-        if isinstance(coords, sppasCoords) is False:
-            raise TypeError
-
-        # If mode is full
-        if self._options.get_mode() == "full":
-            # Get a different color for each person
-            number = (index * 80) % 120
-
-            # Draw a square around the face
-            return surrond_square(img, coords, number)
-
-        # If mode is crop
-        elif self._options.get_mode() == "crop":
-            # Crop the face
-            simg = sppasImage(input_array=img)
-            return simg.icrop(coords)
-
-    # -----------------------------------------------------------------------
-
-    def __adjust(self, img, coords):
-        """Adjust the coordinates to get a good result.
-
-        :param img: (numpy.ndarray) The image to be processed.
-        :param coords: (sppasCoords) The coordinates of the face.
-
-        """
-        # If anything has been setted pass
-        if self._options.get_width() == -1 and self._options.get_height() == -1:
-            pass
-
-        # If only the width has been setted use adjust width
-        if self._options.get_width() != -1 and self._options.get_height() == -1:
-            self.__adjust_height()
-
-        # If only the height has been setted use adjust height
-        elif self._options.get_width() == -1 and self._options.get_height() != -1:
-            self.__adjust_width()
-
-        # If both of width and height has been setted
-        if self._options.get_width() != -1 and self._options.get_height() != -1:
-            self.__adjust_both(coords, img)
-
-    # -----------------------------------------------------------------------
-
-    def __adjust_both(self, coords, img=None):
-        """Adjust the coordinates with width and height from constructor.
-
-        :param coords: (sppasCoords) The coordinates of the face.
-        :param img: (numpy.ndarray) The image to be processed.
-
-        """
-        coeff = self._options.get_width() / self._options.get_height()
-        coeff_coords = coords.w / coords.h
-        if coeff != coeff_coords:
-            new_w = int(coords.h * coeff)
-            old_w = coords.w
-            coords.w = new_w
-            shift_x = int((old_w - new_w) / 2)
-            if coords.x + shift_x < 0:
-                shift_x = -coords.x
-            coords.x = coords.x + shift_x
-
-        if img is not None:
-            (h, w) = img.shape[:2]
-            if coords.h > h:
-                coords.h = h
-                coords.y = 0
-            if coords.w > w:
-                coords.w = w
-                coords.x = 0
-
-    # -----------------------------------------------------------------------
-
-    def __adjust_width(self):
-        """Adjust the width based on the width from constructor."""
-        if self._options.get_framing() == "face":
-            coeff = 0.75
-        else:
-            coeff = 4 / 3
-        self._options.set_width(int(self._options.get_height() * coeff))
-
-    # -----------------------------------------------------------------------
-
-    def __adjust_height(self):
-        """Adjust the height based on the height from constructor."""
-        if self._options.get_framing() == "face":
-            coeff = 4 / 3
-        else:
-            coeff = 0.75
-        self._options.set_height(int(self._options.get_width() * coeff))
-
-    # -----------------------------------------------------------------------
-
-    def __resize(self, img):
-        """Resize the image with width and height from constructor.
-
-        :param img: (numpy.ndarray) The image to be processed.
-
-        """
-        if self._options.get_width() == -1 and self._options.get_height() == -1:
-            return img
-        else:
-            new_image = resize(img, self._options.get_width(), self._options.get_height())
-            return new_image
 
