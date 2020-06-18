@@ -42,7 +42,6 @@
 
 """
 
-from sppas.src.config import sg
 from sppas.src.config import error
 
 # -----------------------------------------------------------------------

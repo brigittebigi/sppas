@@ -34,7 +34,7 @@
 
 from sppas.src.videodata.personsbuffer import PersonsBuffer
 from sppas.src.videodata.facetracking import FaceTracking
-from sppas.src.annotations.FaceTracking.trackingwriter import TrackingWriter
+from sppas.src.annotations.PersonTracking.trackingwriter import TrackingWriter
 
 # ---------------------------------------------------------------------------
 

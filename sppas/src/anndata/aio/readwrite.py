@@ -113,8 +113,34 @@ class sppasRW(object):
 
     @staticmethod
     def extensions():
-        """Return the list of supported extensions in lower case."""
+        """Return the whole list of supported extensions in lower case."""
         return list(sppasRW.TRANSCRIPTION_TYPES.keys())
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def extensions_in():
+        """Return the list of supported extensions if the reader exists."""
+        e = list()
+        for ext in list(sppasRW.TRANSCRIPTION_TYPES.keys()):
+            fp = FileFormatProperty(extension=ext)
+            if fp.get_reader() is True:
+                e.append(ext)
+
+        return e
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def extensions_out():
+        """Return the list of supported extensions if the writer exists."""
+        e = list()
+        for ext in list(sppasRW.TRANSCRIPTION_TYPES.keys()):
+            fp = FileFormatProperty(extension=ext)
+            if fp.get_writer() is True:
+                e.append(ext)
+
+        return e
 
     # -----------------------------------------------------------------------
 

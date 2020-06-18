@@ -36,8 +36,8 @@
 import numpy as np
 
 from sppas.src.imgdata.imageutils import draw_points
-from sppas.src.annotations.Landmark.landmarkoptions import LandmarkOptions
-from sppas.src.annotations.Landmark.landmarkoutputs import LandmarkOutputs
+from sppas.src.annotations.FaceMark.landmarkoptions import LandmarkOptions
+from sppas.src.annotations.FaceMark.landmarkoutputs import LandmarkOutputs
 
 # ---------------------------------------------------------------------------
 

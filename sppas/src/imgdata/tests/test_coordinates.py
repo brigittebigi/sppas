@@ -167,19 +167,20 @@ class TestCoordinates(unittest.TestCase):
 
     def test_scale(self):
         coordinates = sppasCoords(143, 17, 150, 98)
-        shift_x = coordinates.scale(2.)
+        shift_x, shift_y = coordinates.scale(2.)
         self.assertEqual(coordinates.w, 300)
         self.assertEqual(coordinates.h, 196)
         self.assertEqual(shift_x, -75)
+        self.assertEqual(shift_y, -49)
 
         coordinates = sppasCoords(143, 17, 150, 98)
-        shift_x = coordinates.scale(3)
+        shift_x, shift_y = coordinates.scale(3)
         self.assertEqual(coordinates.w, 450)
         self.assertEqual(coordinates.h, 294)
         self.assertEqual(shift_x, -150)
 
         coordinates = sppasCoords(143, 17, 150, 98)
-        shift_x = coordinates.scale("0.5")
+        shift_x, shift_y = coordinates.scale("0.5")
         self.assertEqual(coordinates.w, 75)
         self.assertEqual(coordinates.h, 49)
         self.assertEqual(shift_x, 37)  # it's 37.5... rounded to 37.

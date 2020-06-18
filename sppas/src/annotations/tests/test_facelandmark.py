@@ -36,7 +36,7 @@
 import unittest
 import cv2
 
-from sppas.src.imgdata.facelandmark import FaceLandmark
+from sppas.src.annotations.FaceMark.facelandmark import FaceLandmark
 
 # ---------------------------------------------------------------------------
 

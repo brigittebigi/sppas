@@ -34,7 +34,7 @@
 
 from sppas.src.videodata.personsbuffer import PersonsBuffer
 from sppas.src.videodata.videolandmark import VideoLandmark
-from sppas.src.annotations.Landmark.landmarkwriter import LandmarkWriter
+from sppas.src.annotations.FaceMark.landmarkwriter import LandmarkWriter
 
 # ---------------------------------------------------------------------------
 

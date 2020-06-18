@@ -28,23 +28,15 @@
         ---------------------------------------------------------------------
 
     src.imgdata.imgwriter.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    Bunch of classes to write an image with various options:
-
-        - ImageWriterOptions
-        - ImageOutputs
-        - ImageWriter
+    ~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
 from random import randint
-import logging
 import codecs
 import cv2
 import os
-import shutil
-import glob
+
 from .coordinates import sppasCoords
 from .image import sppasImage
 
@@ -348,6 +340,11 @@ class sppasImageWriter(object):
 
             # Crop the image at the coordinates
             img = image.icrop(c)
+
+            # Resize the cropped image, if requested
+            if self._options.get_width() > 0 or self._options.get_height() > 0:
+                img = img.iresize(self._options.get_width(),
+                                  self._options.get_height())
 
             # Save the cropped image
             cv2.imwrite(out_iname, img)

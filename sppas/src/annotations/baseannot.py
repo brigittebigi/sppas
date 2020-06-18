@@ -37,11 +37,11 @@ import logging
 import os
 import json
 
-import sppas.src.anndata.aio
 from sppas.src.config import annots
 from sppas.src.config import paths
 from sppas.src.config import info
 from sppas.src.wkps import sppasFileUtils
+from sppas.src.anndata import sppasRW
 
 from .annotationsexc import AnnotationOptionError
 from .diagnosis import sppasDiagnosis
@@ -190,7 +190,20 @@ class sppasBaseAnnotation(object):
     @staticmethod
     def get_input_extensions():
         """Extensions that the annotation expects for its input filename."""
-        return sppas.src.anndata.aio.annotations_in
+        ext = sppasRW.extensions_out()
+        if ".pitchtier" in ext:
+            ext.remove(".pitchtier")
+        if ".hz" in ext:
+            ext.remove(".hz")
+        return ext
+        #return sppas.src.anndata.aio.annotations_in
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def get_output_extensions():
+        """Filename extensions that the annotation can write."""
+        return sppasRW.extensions_out()
 
     # -----------------------------------------------------------------------
 

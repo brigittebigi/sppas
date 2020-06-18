@@ -38,12 +38,9 @@ import unittest
 import cv2
 import numpy
 
+from sppas.src.config import paths
 from ..coordinates import sppasCoords
 from ..image import sppasImage
-
-# ---------------------------------------------------------------------------
-
-DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 # ---------------------------------------------------------------------------
 
@@ -51,7 +48,7 @@ DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 class TestConfiguration(unittest.TestCase):
 
     def test_init(self):
-        fn = os.path.join(DATA, "BrigitteBigi-Slovenie2016.jpg")
+        fn = os.path.join(paths.samples, "faces", "BrigitteBigiSlovenie2016.jpg")
         img = cv2.imread(fn)
         self.assertEqual(len(img), 803)
 
@@ -73,7 +70,7 @@ class TestConfiguration(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_crop(self):
-        fn = os.path.join(DATA, "BrigitteBigi-Slovenie2016.jpg")
+        fn = os.path.join(paths.samples, "faces", "BrigitteBigiSlovenie2016.jpg")
         image = sppasImage(filename=fn)
         cropped = image.icrop(sppasCoords(886, 222, 177, 189))
         # The cropped image is 189 rows and 177 columns of pixels
@@ -81,7 +78,7 @@ class TestConfiguration(unittest.TestCase):
         for row in cropped:
             self.assertEqual(len(row), 177)
 
-        fnc = os.path.join(DATA, "BrigitteBigi-Slovenie2016-face.jpg")
+        fnc = os.path.join(paths.samples, "faces", "BrigitteBigiSlovenie2016-face.jpg")
         cv2.imwrite(fnc, cropped)
 
 

@@ -131,21 +131,41 @@ class sppasImage(numpy.ndarray):
 
     # ------------------------------------------------------------------------
 
-    def iresize(self, width, height):
+    def iresize(self, width=0, height=0):
         """Return a new array with the specified width and height.
 
-        :param width: (int) The width you want to resize to.
-        :param height: (int) The width you want to resize to.
+        :param width: (int) The width to resize to (0=proportional to height)
+        :param height: (int) The width to resize to (0=proportional to width)
         :return: (numpy.ndarray)
 
         """
         if len(self) == 0:
             return
+        width = self.__to_dtype(width)
+        height = self.__to_dtype(height)
         if width < 0:
             raise ValueError
         if height < 0:
             raise ValueError
-        image = cv2.resize(self, (width, height), interpolation=cv2.INTER_AREA)
+        if width+height == 0:
+            return self.copy()
+
+        (h, w) = self.shape[:2]
+        prop_width = prop_height = 0
+        propw = proph = 1.
+        if width != 0:
+            prop_width = width
+            propw = float(width) / float(w)
+        if height != 0:
+            prop_height = height
+            proph = float(height) / float(h)
+        if width == 0:
+            prop_width = int(float(w) * proph)
+        if height == 0:
+            prop_height = int(float(h) * propw)
+
+        image = cv2.resize(self, (prop_width, prop_height),
+                           interpolation=cv2.INTER_AREA)
         return image
 
     # -----------------------------------------------------------------------

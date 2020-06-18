@@ -29,42 +29,28 @@
 
         ---------------------------------------------------------------------
 
-*****************************************************************************
-imgdata: management of image files
-*****************************************************************************
+    src.annotations.FaceDetection
+    ~~~~~~~~~~~~~~~~~~~~~
 
-Requires the following other packages:
-
-* config
-* exceptions
-
-If the video feature is not enabled, the sppasEnableFeatureError() is raised
-when a class is instantiated.
+:author:       Brigitte Bigi
+:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+:contact:      develop@sppas.org
+:license:      GPL, v3
+:copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
 """
 
 from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
 
-# Store the rectangle and a score of an image
-from .coordinates import sppasCoords
-
 # ---------------------------------------------------------------------------
 # Define classes in case opencv&numpy are not installed.
 # ---------------------------------------------------------------------------
 
 
-class sppasImage(object):
+class FaceLandmark(object):
     def __init__(self):
         raise sppasEnableFeatureError("video")
-
-
-class sppasImageWriter(object):
-    def __init__(self):
-        raise sppasEnableFeatureError("video")
-
-
-extensions = list()
 
 # ---------------------------------------------------------------------------
 # Import the classes in case the "video" feature is enabled: opencv&numpy
@@ -73,34 +59,8 @@ extensions = list()
 
 
 if cfg.dep_installed("video"):
-    # Subclass of numpy.ndarray to manipulate images
-    from .image import sppasImage
-    # Write image and coordinates
-    from .imgwriter import sppasImageWriter
-
-    def opencv_extensions():
-        """Return the list of supported file extensions in lower case.
-
-            Windows bitmaps - *.bmp, *.dib (always supported)
-            JPEG files - *.jpeg, *.jpg, *.jpe (see the Notes section)
-            JPEG 2000 files - *.jp2 (see the Notes section)
-            Portable Network Graphics - *.png (see the Notes section)
-            Portable image format - *.pbm, *.pgm, *.ppm (always supported)
-            Sun rasters - *.sr, *.ras (always supported)
-            TIFF files - *.tiff, *.tif (see the Notes section)
-
-        """
-        return (".jpg", ".bmp", ".dib", ".jpeg", ".jpe", ".jp2", ".png",
-                ".pbm", ".pgm", ".sr", ".ras", ".tiff", ".tif")
-
-    extensions.extend(opencv_extensions())
-
-# ---------------------------------------------------------------------------
-
+    from .facelandmark import FaceLandmark
 
 __all__ = (
-    "sppasCoords",
-    "sppasImage",
-    "sppasImageWriter",
-    "extensions"
+    'FaceLandmark'
 )

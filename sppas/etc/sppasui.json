@@ -94,6 +94,12 @@
       "id": "reoccurrences",
       "config": "reoccurrences.json",
       "cli": "reoccurrences.py"
+    },
+
+    {
+      "id": "facedetect",
+      "config": "facedetect.json",
+      "cli": "facedetection.py"
     }
   ],
 

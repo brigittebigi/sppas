@@ -39,14 +39,19 @@ import os
 
 from sppas.src.config import paths
 from sppas.src.config import annots
+from sppas.src.config import msg
 from sppas.src.exceptions import sppasTypeError
 
-from sppas.src.config import msg
 from sppas.src.structs import sppasOption
 from sppas.src.structs import sppasLangResource
-from sppas.src.anndata.aio import extensions_out as annots_ext
 
 from sppas.src.wkps import sppasWorkspace, States
+from sppas.src.anndata import sppasRW
+from sppas.src.imgdata import extensions
+
+# ----------------------------------------------------------------------------
+
+annots_ext = sppasRW.extensions_out() + extensions
 
 # ----------------------------------------------------------------------------
 
@@ -574,7 +579,6 @@ class sppasParam(object):
         :returns: the extension really set.
 
         """
-
         # Force to contain the dot
         if not output_format.startswith("."):
             output_format = "." + output_format

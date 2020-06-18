@@ -245,10 +245,12 @@ class sppasAnnotationsManager(Thread):
             types=a.get_types())
         # logging.debug('{:d} files to process'.format(len(files_to_process)))
         # logging.debug(files_to_process)
-        out_files = a.batch_processing(
-            files_to_process,
-            self._progress,
-            self._parameters.get_output_format())
+        supported_out_formats = a.get_output_extensions()
+        out_format = self._parameters.get_output_format()
+        if out_format not in supported_out_formats:
+            out_format = supported_out_formats[0]
+
+        out_files = a.batch_processing(files_to_process, self._progress, out_format)
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)

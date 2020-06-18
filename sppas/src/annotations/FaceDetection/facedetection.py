@@ -31,6 +31,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Requires the "video" feature of SPPAS.
+    Automatic face detection, based on opencv caffe model.
 
 """
 
@@ -42,8 +43,8 @@ import cv2
 from sppas.src.config import paths
 from sppas.src.exceptions import sppasTypeError, sppasIOError, sppasError
 from sppas.src.exceptions import IntervalRangeException
-from .coordinates import sppasCoords
-from .image import sppasImage
+from sppas.src.imgdata.coordinates import sppasCoords
+from sppas.src.imgdata.image import sppasImage
 
 # ---------------------------------------------------------------------------
 

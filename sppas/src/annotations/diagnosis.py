@@ -39,8 +39,16 @@ import os
 from sppas.src.config import sg
 from sppas.src.config import annots
 from sppas.src.config import info
-import sppas.src.anndata
+
+import sppas.src.imgdata
+from sppas.src.anndata import sppasRW
 import sppas.src.audiodata.aio
+
+# ----------------------------------------------------------------------------
+
+anndata_ext = sppasRW.extensions_in()
+imgdata_ext = sppas.src.imgdata.extensions
+audiodata_ext = sppas.src.audiodata.aio.extensions
 
 # ----------------------------------------------------------------------------
 
@@ -70,7 +78,7 @@ class sppasDiagnosis:
 
     @staticmethod
     def check_file(filename):
-        """Check file of any type: audio or annotated file.
+        """Check file of any type: audio or image or annotated file.
 
         The extension of the filename is used to know the type of the file.
 
@@ -80,11 +88,14 @@ class sppasDiagnosis:
         """
         ext = os.path.splitext(filename)[1]
 
-        if ext.lower() in sppas.src.audiodata.aio.extensions:
+        if ext.lower() in audiodata_ext:
             return sppasDiagnosis.check_audio_file(filename)
 
-        if ext.lower() in sppas.src.anndata.aio.extensions:
+        if ext.lower() in anndata_ext:
             return sppasDiagnosis.check_trs_file(filename)
+
+        if ext.lower() in imgdata_ext:
+            return sppasDiagnosis.check_img_file(filename)
 
         message = info(1006, "annotations") + \
                   (info(1020, "annotations")).format(extension=ext)
@@ -207,4 +218,22 @@ class sppasDiagnosis:
             message = info(1002, "annotations") + info(1024, "annotations")
             return annots.warning, message
 
+        return status, message
+
+    # ------------------------------------------------------------------------
+
+    @staticmethod
+    def check_img_file(filename):
+        """Check an image file.
+
+        Are verified:
+
+            Nothing
+
+        :param filename: (string) name of the input file
+        :returns: tuple with (status identifier, message)
+
+        """
+        status = annots.ok
+        message = info(1000, "annotations")
         return status, message

@@ -33,7 +33,7 @@
 """
 
 from sppas.src.imgdata import sppasImage
-from sppas.src.imgdata.facelandmark import FaceLandmark
+from sppas.src.annotations.FaceMark.facelandmark import FaceLandmark
 from sppas.src.imgdata.imageutils import portrait
 
 # ---------------------------------------------------------------------------
@@ -120,7 +120,7 @@ class VideoLandmark(object):
         :param index: (int) The index of the image in the Buffer.
 
         """
-        # Loop over the result of FaceTracking
+        # Loop over the result of PersonTracking
         for i in range(buffer.nb_persons()):
             # Reset the FaceLandmark
             self.reset()

@@ -54,10 +54,12 @@ from sppas import sg, annots
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 
-from sppas.src.anndata.aio import extensions_out
+from sppas.src.anndata import sppasRW
 from sppas.src.annotations import sppasAlign
 from sppas.src.annotations import sppasParam
 from sppas.src.annotations import sppasAnnotationsManager
+
+extensions_out = sppasRW.extensions_out()
 
 if __name__ == "__main__":
 

@@ -32,7 +32,7 @@
 
 """
 
-from sppas.src.imgdata.facedetection import FaceDetection
+from sppas.src.annotations.FaceDetection.facedetection import FaceDetection
 
 # ---------------------------------------------------------------------------
 

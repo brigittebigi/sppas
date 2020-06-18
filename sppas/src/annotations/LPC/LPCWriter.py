@@ -33,7 +33,7 @@
 
 """
 
-from sppas.src.annotations.Landmark.landmarkwriter import LandmarkWriter
+from sppas.src.annotations.FaceMark.landmarkwriter import LandmarkWriter
 
 # ---------------------------------------------------------------------------
 

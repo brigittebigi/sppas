@@ -55,6 +55,7 @@ from sppas import sg, annots, separators
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 
+from sppas.src.imgdata import extensions
 from sppas.src.annotations import sppasFaceDetection
 from sppas.src.annotations import sppasParam
 from sppas.src.annotations import sppasAnnotationsManager
@@ -122,6 +123,14 @@ if __name__ == "__main__":
         metavar="model",
         help='Model base name')
 
+    group_io.add_argument(
+        "-e",
+        metavar=".ext",
+        default=annots.extension,
+        choices=extensions,
+        help='Output file extension. One of: {:s}'
+             ''.format(" ".join(extensions)))
+
     # Add arguments from the options of the annotation
     # ------------------------------------------------
 
@@ -172,7 +181,7 @@ if __name__ == "__main__":
 
     arguments = vars(args)
     for a in arguments:
-        if a not in ('i', 'o', 'r', 'I', 'quiet', 'log'):
+        if a not in ('i', 'o', 'r', 'e', 'I', 'quiet', 'log'):
             parameters.set_option_value(ann_step_idx, a, str(arguments[a]))
 
     if args.i:
@@ -197,9 +206,6 @@ if __name__ == "__main__":
 
     elif args.I:
 
-        raise NotImplementedError("The integration of FaceDetection annotation in the "
-                                  "annotations manager is not implemented yet!")
-
         # Perform the annotation on a set of files
         # ----------------------------------------
 
@@ -210,6 +216,7 @@ if __name__ == "__main__":
 
         # Fix the output file extension and others
         parameters.set_report_filename(args.log)
+        parameters.set_output_format(args.e)
 
         # Perform the annotation
         process = sppasAnnotationsManager()

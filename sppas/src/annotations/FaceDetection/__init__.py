@@ -48,6 +48,11 @@ from sppas.src.exceptions import sppasEnableFeatureError
 # ---------------------------------------------------------------------------
 
 
+class FaceDetection(object):
+    def __init__(self):
+        raise sppasEnableFeatureError("video")
+
+
 class sppasFaceDetection(object):
     def __init__(self, *args, **kwargs):
         raise sppasEnableFeatureError("video")
@@ -60,6 +65,7 @@ class sppasFaceDetection(object):
 
 
 if cfg.dep_installed("video"):
+    from .facedetection import FaceDetection
     from .sppasfacedetect import sppasFaceDetection
 
 __all__ = (

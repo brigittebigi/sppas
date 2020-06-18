@@ -71,13 +71,13 @@
       "id": "width",
       "type": "int",
       "value": 0,
-      "text": "Resize all the output images to a fixed width (0=no)"
+      "text": "Resize all the cropped images to a fixed width (0=no)"
     },
     {
       "id": "height",
       "type": "int",
       "value": 0,
-      "text": "Resize all the output images to a fixed height (0=no)"
+      "text": "Resize all the cropped images to a fixed height (0=no)"
     }
   ]
 }

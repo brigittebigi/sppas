@@ -38,8 +38,8 @@ import numpy as np
 from sppas.src.imgdata import sppasImage
 from sppas.src.imgdata.imageutils import surrond_square, resize, portrait
 from sppas.src.imgdata.coordinates import sppasCoords
-from sppas.src.annotations.FaceTracking.trackingoptions import TrackingOptions
-from sppas.src.annotations.FaceTracking.trackingoutputs import TrackingOutputs
+from sppas.src.annotations.PersonTracking.trackingoptions import TrackingOptions
+from sppas.src.annotations.PersonTracking.trackingoutputs import TrackingOutputs
 
 # ---------------------------------------------------------------------------
 

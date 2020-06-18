@@ -39,12 +39,12 @@ import os
 
 from sppas.src.config import annots
 from sppas.src.imgdata import extensions
-from sppas.src.imgdata import FaceDetection
 from sppas.src.imgdata import sppasImage
 from sppas.src.imgdata import sppasImageWriter
 
 from ..annotationsexc import AnnotationOptionError
 from ..baseannot import sppasBaseAnnotation
+from .facedetection import FaceDetection
 
 # ----------------------------------------------------------------------------
 
@@ -164,9 +164,7 @@ class sppasFaceDetection(sppasBaseAnnotation):
         self.__fd.filter_confidence(self._options["score"])
 
         # Make the output list of coordinates
-        pattern = "-face"
         if self._options["portrait"] is True:
-            pattern = "-portrait"
             try:
                 self.__fd.to_portrait(image)
             except Exception as e:
@@ -178,7 +176,7 @@ class sppasFaceDetection(sppasBaseAnnotation):
         # Save result as a list of coordinates (csv), a tagged image
         # and/or a list of images (face or portrait) in a folder
         if output_file is not None:
-            self.__writer.write(image, coords, output_file, pattern)
+            self.__writer.write(image, coords, output_file, pattern="")
 
         return coords
 
@@ -186,9 +184,14 @@ class sppasFaceDetection(sppasBaseAnnotation):
 
     def get_pattern(self):
         """Pattern this annotation uses in an output filename."""
-        return self._options.get("outputpattern", "-faces")
+        return self._options.get("outputpattern", "-face")
 
     @staticmethod
     def get_input_extensions():
         """Extensions that the annotation expects for its input filename."""
+        return extensions
+
+    @staticmethod
+    def get_output_extensions():
+        """Extensions that the annotation can deal with for its output filename."""
         return extensions

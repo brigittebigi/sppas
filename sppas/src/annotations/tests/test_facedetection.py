@@ -36,13 +36,10 @@
 import os
 import unittest
 
-from ..coordinates import sppasCoords
-from ..image import sppasImage
-from ..facedetection import FaceDetection
-
-# ---------------------------------------------------------------------------
-
-DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+from sppas.src.config import paths
+from sppas.src.imgdata.coordinates import sppasCoords
+from sppas.src.imgdata.image import sppasImage
+from sppas.src.annotations.FaceDetection.facedetection import FaceDetection
 
 # ---------------------------------------------------------------------------
 
@@ -62,7 +59,7 @@ class TestFaceDetection(unittest.TestCase):
         self.assertEqual(0, len(fd))
 
         # The image we'll work on
-        fn = os.path.join(DATA, "BrigitteBigi-Slovenie2016.jpg")
+        fn = os.path.join(paths, "faces", "BrigitteBigiSlovenie2016.jpg")
         with self.assertRaises(TypeError):
             fd.detect(fn)
         img = sppasImage(filename=fn)
@@ -80,7 +77,7 @@ class TestFaceDetection(unittest.TestCase):
         for row in cropped:
             self.assertEqual(len(row), 177)
 
-        fn_detected = os.path.join(DATA, "BrigitteBigi-Slovenie2016-face.jpg")
+        fn_detected = os.path.join(paths, "faces", "BrigitteBigiSlovenie2016-face.jpg")
         face = sppasImage(filename=fn_detected)
 
         self.assertEqual(len(cropped), len(face))
