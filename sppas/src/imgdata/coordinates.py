@@ -84,31 +84,34 @@ class sppasCoords(object):
 
     # -----------------------------------------------------------------------
 
-    def __init__(self, value_x, value_y, value_w, value_h, confidence=None):
+    def __init__(self, x=0, y=0, w=0, h=0,confidence=None):
         """Create a new sppasCoords instance.
 
-        :param value_x: (int) Where the image starts on the x-axis.
-        :param value_y: (int) Where the image starts on the y-axis.
-        :param value_w: (int) The width of the image.
-        :param value_h: (int) The height of the image.
+        Allows to represent a point (x,y), or a size(w,h) or both, with an
+        optional confidence score ranging [0.0,1.0].
+
+        :param x: (int) The x-axis value
+        :param y: (int) The y-axis value
+        :param w: (int) The width value
+        :param h: (int) The height value
         :param confidence: (float) An optional confidence score ranging [0,1]
 
         """
         self.__x = 0
-        self.__set_x(value_x)
+        self.__set_x(x)
 
         self.__y = 0
-        self.__set_y(value_y)
+        self.__set_y(y)
 
         self.__w = 0
-        self.__set_w(value_w)
+        self.__set_w(w)
 
         self.__h = 0
-        self.__set_h(value_h)
+        self.__set_h(h)
 
         # Save memory by using None instead of float if confidence is not set
         self.__confidence = None
-        self.__set_confidence(confidence)
+        self.set_confidence(confidence)
 
     # -----------------------------------------------------------------------
 
@@ -120,7 +123,7 @@ class sppasCoords(object):
 
     # -----------------------------------------------------------------------
 
-    def __set_confidence(self, value):
+    def set_confidence(self, value):
         """Set confidence value.
 
         :param value: (float) The new confidence value ranging [0, 1].
@@ -220,7 +223,11 @@ class sppasCoords(object):
     def __to_dtype(self, value, dtype=int):
         """Convert a value to int or raise the appropriate exception."""
         try:
-            value = dtype(value)
+            v = dtype(value)
+            if dtype is int:
+                value = int(round(value))
+            else:
+                value = v
             if isinstance(value, dtype) is False:
                 raise sppasTypeError(value, str(dtype))
         except ValueError:
@@ -318,10 +325,12 @@ class sppasCoords(object):
     # -----------------------------------------------------------------------
 
     def __str__(self):
-        return \
-               "(" + str(self.__x) + ", " + str(self.__y) + ") " \
-               "(" + str(self.__w) + ", " + str(self.__h) + "): " \
-               + str(self.get_confidence())
+        s = "({:d},{:d})".format(self.__x, self.__y)
+        if self.__w > 0 or self.__h > 0:
+            s += " ({:d},{:d})".format(self.__w, self.__h)
+        if self.__confidence is not None:
+            s += ": {:f}".format(self.__confidence)
+        return s
 
     # -----------------------------------------------------------------------
 
@@ -336,7 +345,7 @@ class sppasCoords(object):
     # -----------------------------------------------------------------------
 
     def __eq__(self, other):
-        """Return true if self equal other."""
+        """Return true if self equal other (except for confidence score)."""
         if isinstance(other, (list, tuple)):
             if len(other) >= 4:
                 other = sppasCoords(other[0], other[1], other[2], other[3])

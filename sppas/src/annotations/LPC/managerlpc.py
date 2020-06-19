@@ -36,7 +36,6 @@ from math import ceil
 
 from sppas.src.videodata import PersonsBuffer
 from sppas.src.videodata import VideoLandmark
-from sppas.src.annotations.LPC.LPCWriter import LPCWriter
 from sppas.src.annotations.LPC.videotaglpc import VideoTagLFPC
 
 # ---------------------------------------------------------------------------
@@ -74,11 +73,11 @@ class ManagerLFPC(object):
         self.__pBuffer = PersonsBuffer(video, buffer_size, overlap)
 
         # Initialize the writer for the outputs files
-        self.__coords_writer = LPCWriter(video, self.__pBuffer.get_fps(), pattern,
-                                         usable=usable, video=v_value, folder=f_value)
+        # self.__coords_writer = LPCWriter(video, self.__pBuffer.get_fps(), pattern,
+        #                                 usable=usable, video=v_value, folder=f_value)
 
         # Initialize options of the writer
-        self.__coords_writer.set_options(draw)
+        # self.__coords_writer.set_options(draw)
 
         # Initialize the LFPC tagger
         self.__lfpc_Tagger = VideoTagLFPC()
@@ -113,7 +112,7 @@ class ManagerLFPC(object):
                     break
 
             # Launch the process of creation of the outputs
-            self.__coords_writer.process(self.__pBuffer)
+            # self.__coords_writer.process(self.__pBuffer)
 
             # Reset the output lists
             self.__pBuffer.clear()
@@ -239,5 +238,3 @@ class ManagerLFPC(object):
             end_time += end_loc.get_radius()
 
         return float(start_time), float(end_time)
-
-    # -----------------------------------------------------------------------

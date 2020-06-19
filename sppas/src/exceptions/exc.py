@@ -182,7 +182,7 @@ class sppasIOError(IOError):
 
     def __init__(self, filename):
         self.parameter = error(600) + \
-                         (error(600, "globals")).format(filename)
+                         (error(600, "globals")).format(name=filename)
 
     def __str__(self):
         return repr(self.parameter)

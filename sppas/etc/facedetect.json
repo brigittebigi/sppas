@@ -10,7 +10,13 @@
       "path": "faces",
       "type": "file",
       "ext": "",
-      "name": "res10_300x300_ssd_iter_140000"
+      "name": "res10_300x300_ssd_iter_140000.caffemodel"
+    },
+    {
+      "path": "faces",
+      "type": "file",
+      "ext": "",
+      "name": "haarcascade_frontalface_alt2.xml"
     }
   ],
 

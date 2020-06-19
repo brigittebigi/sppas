@@ -50,6 +50,9 @@ msgstr "Installation failed with error: {error}"
 msgid ":ERROR 0520: "
 msgstr "Feature {name} is not enabled; its installation should be processed first."
 
+msgid ":ERROR 0600: "
+msgstr "No such file or directory: {name}"
+
 msgid ":ERROR 0610: "
 msgstr "Unknown extension for filename {:s}."
 

@@ -43,6 +43,7 @@ import cv2
 from sppas.src.config import paths
 from sppas.src.exceptions import sppasTypeError, sppasIOError, sppasError
 from sppas.src.exceptions import IntervalRangeException
+from sppas.src.exceptions import IOExtensionError
 from sppas.src.imgdata.coordinates import sppasCoords
 from sppas.src.imgdata.image import sppasImage
 
@@ -98,39 +99,71 @@ class FaceDetection(object):
         # The future serialized model, type: "cv2.dnn_Net"
         # it allows to create and manipulate comprehensive artificial neural networks.
         self.__net = None
+        self.__cascade = None
 
         # List of coordinates of detected faces, sorted by confidence score.
         self.__coords = list()
 
     # -----------------------------------------------------------------------
 
-    def load_model(self, model=None, proto=None):
+    def load_model(self, model1, model2=None):
         """Initialize proto file and model file.
 
-        :param model: (str) Filename of the caffe model.
-        :param proto: (str) Filename of the proto describing the model
+        :param model1: (str) Filename of the caffe model for DNN detection
+        :param model2: (str) Filename of the model for Haar cascade classifier
         :raise: IOError, Exception
 
         """
-        # Set a default model and proto in order to be able to test the class
-        if model is None:
-            model = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000.caffemodel")
-        if proto is None:
-            proto = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000.prototxt")
+        dnnmodel = None
+        haarcascade = None
+        if model1.endswith("caffemodel"):
+            dnnmodel = model1
+        elif model1.endswith("xml"):
+            haarcascade = model1
+        else:
+            raise IOExtensionError(model1)
 
-        # Use the given model and proto
-        if os.path.exists(model) is False:
-            raise sppasIOError(model)
-        if os.path.exists(proto) is False:
-            raise sppasIOError(proto)
+        if model2 is not None:
+            if model2.endswith("caffemodel") and dnnmodel is None:
+                dnnmodel = model2
+            elif model2.endswith("xml") and haarcascade is None:
+                haarcascade = model2
+            else:
+                logging.warning("Model {} ignored.".format(model2))
 
-        try:
-            # Create and load the serialized model, type: "cv2.dnn_Net"
-            self.__net = cv2.dnn.readNetFromCaffe(proto, model)
-        except cv2.error as e:
-            logging.error("Artificial Neural Network model or proto for "
-                          "FaceDetection can't be read.")
-            raise sppasError(str(e))
+        # Create and load the serialized model, type: "cv2.dnn_Net"
+        if dnnmodel is not None:
+            if os.path.exists(dnnmodel) is False:
+                raise sppasIOError(dnnmodel)
+            else:
+                fn, fe = os.path.splitext(dnnmodel)
+                proto = fn + ".prototxt"
+                if os.path.exists(proto) is False:
+                    raise sppasIOError(proto)
+                try:
+                    self.__net = cv2.dnn.readNetFromCaffe(proto, dnnmodel)
+                except cv2.error as e:
+                    logging.error("Artificial Neural Network model or proto for "
+                                  "FaceDetection can't be read.")
+                    raise sppasError(str(e))
+
+        # Create and load the model of the Haar cascade classifier
+        if haarcascade is not None:
+            if os.path.exists(haarcascade) is False:
+                raise sppasIOError(haarcascade)
+            else:
+                try:
+                    self.__cascade = cv2.CascadeClassifier(haarcascade)
+                except cv2.error as e:
+                    logging.error("Artificial Neural Network model or proto for "
+                                  "FaceDetection can't be read.")
+                    raise sppasError(str(e))
+
+    # -----------------------------------------------------------------------
+
+    def invalidate(self):
+        """Invalidate current list of detected faces."""
+        self.__coords = list()
 
     # -----------------------------------------------------------------------
 
@@ -140,8 +173,6 @@ class FaceDetection(object):
         :param image: (sppasImage or numpy.ndarray)
 
         """
-        if self.__net is None:
-            self.load_model()
         # Invalidate current list of coordinates
         self.__coords = list()
 
@@ -151,13 +182,26 @@ class FaceDetection(object):
         if isinstance(image, sppasImage) is False:
             raise sppasTypeError("image", "sppasImage")
 
+        # Load default models if it wasn't done
+        if self.__net is None and self.__cascade is None:
+            raise sppasError("A model must be loaded first")
+
+        # If several models were loaded, priority is given to dnn
+        if self.__net is not None:
+            self.__detect_with_dnn(image)
+
+        if len(self.__coords) == 0 and self.__cascade is not None:
+            self.__detect_with_haarcascade(image)
+
+    # -----------------------------------------------------------------------
+
+    def __detect_with_dnn(self, image):
         # Extract the w, h of the image
         (h, w) = image.shape[:2]
-        logging.debug("Image size is ({:d}, {:d})".format(w, h))
 
         try:
             # initialize the net and make predictions
-            detections = self.__detections(image)
+            detections = self.__net_detections(image)
         except cv2.error as e:
             raise sppasError("Face detection failed: {}".format(str(e)))
 
@@ -173,6 +217,22 @@ class FaceDetection(object):
                 new_coords = self.__to_coords(detections, i, w, h, confidence)
                 logging.debug("Face detected: {}".format(new_coords))
                 self.__coords.append(new_coords)
+
+    # -----------------------------------------------------------------------
+
+    def __detect_with_haarcascade(self, image):
+        # make predictions
+        detections = self.__haar_detections(image)
+
+        faces = list()
+        for rect, weight in zip(detections[0], detections[2]):
+            coords = sppasCoords(rect[0], rect[1], rect[2], rect[3])
+            faces.append((coords, weight/100.))
+
+        # sort by confidence score (the highest the better)
+        for coords, score in reversed(sorted(faces, key=lambda x: x[1])):
+            coords.set_confidence(score)
+            self.__coords.append(coords)
 
     # -----------------------------------------------------------------------
 
@@ -193,10 +253,22 @@ class FaceDetection(object):
         for c in portraits:
             # Scale the image. Shift values indicate how to shift x,y to get
             # the face exactly at the center of the new coordinates.
-            shift_x, shift_y = c.scale(2.2, image)
-            # Re-frame the image on the face.
-            shift_y = int(float(shift_y) / 1.5)
-            c.shift(shift_x, shift_y, image)
+            shift_x = shift_y = 0
+            factor = 2.2
+            while factor > 1.0:
+                try:
+                    # We need to be sure we wont scale larger than the
+                    # original image. If not, reduce the scale factor.
+                    shift_x, shift_y = c.scale(factor, image)
+                    factor = 0.
+                except:
+                    factor -= 0.1
+
+            # Re-frame the image on the face if we really scaled the image
+            if shift_x+shift_y > 0:
+                c.shift(shift_x, 0, image)
+                shift_y = int(float(shift_y) / 1.5)
+                c.shift(0, shift_y, image)
 
         # no error occurred, all faces can be converted to their portrait
         self.__coords = portraits
@@ -301,26 +373,7 @@ class FaceDetection(object):
 
     # -----------------------------------------------------------------------
 
-    def __to_coords(self, detections, index, width, height, confidence):
-        """Determine the coordinates of "number" objects.
-
-        :returns: A list of coordinates objects.
-
-        """
-        # Determines the hitbox of the current object
-        box = detections[0, 0, index, 3:7] * numpy.array([width, height, width, height])
-
-        # Sets the values of the corners of the box
-        (startX, startY, endX, endY) = box.astype("int")
-
-        x, y, w, h = startX, startY, endX - startX, endY - startY
-
-        # Then creates a sppasCoords object with these values
-        return sppasCoords(x, y, w, h, confidence)
-
-    # -----------------------------------------------------------------------
-
-    def __detections(self, image):
+    def __net_detections(self, image):
         """Initialize net and blob for the processing.
 
         :returns: detections.
@@ -340,6 +393,43 @@ class FaceDetection(object):
         # Then return the detections. They contain predictions about
         # what the image contains, type: "numpy.ndarray"
         return self.__net.forward()
+
+    # -----------------------------------------------------------------------
+
+    def __to_coords(self, detections, index, width, height, confidence):
+        """Convert net detections into a list of sppasCoords.
+
+        :returns: A list of coordinates objects.
+
+        """
+        # Determines the hitbox of the current object
+        box = detections[0, 0, index, 3:7] * numpy.array([width, height, width, height])
+
+        # Sets the values of the corners of the box
+        (startX, startY, endX, endY) = box.astype("int")
+
+        x, y, w, h = startX, startY, endX - startX, endY - startY
+
+        # Then creates a sppasCoords object with these values
+        return sppasCoords(x, y, w, h, confidence)
+
+    # -----------------------------------------------------------------------
+
+    def __haar_detections(self, image):
+        """Detect faces using the Haar Cascade classifier."""
+        try:
+            detections = self.__cascade.detectMultiScale3(
+                image,
+                scaleFactor=1.04,
+                minNeighbors=3,
+                flags=1,
+                outputRejectLevels=True
+            )
+
+        except cv2.error as e:
+            self.__landmarks = list()
+            raise sppasError("Face detection failed: {}".format(str(e)))
+        return detections
 
     # -----------------------------------------------------------------------
     # Overloads
@@ -371,8 +461,7 @@ class FaceDetection(object):
     # -----------------------------------------------------------------------
 
     def __str__(self):
-        for c in self.__coords:
-            print(c.__str__())
+        return "\n".join([str(c) for c in self.__coords])
 
     # -----------------------------------------------------------------------
 
