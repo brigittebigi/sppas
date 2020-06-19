@@ -114,7 +114,7 @@ class TestFaceLandmark(unittest.TestCase):
 
     def test_mark_montage(self):
         fl = FaceLandmark()
-        fl.load_model(MODEL, NET)
+        fl.load_model(MODEL, HAAR)
 
         # The image we'll work on, with 3 faces to be detected
         fn = os.path.join(DATA, "montage.png")
@@ -126,13 +126,16 @@ class TestFaceLandmark(unittest.TestCase):
         fd.to_portrait(img)
 
         landmark_coords = list()
-        for coord in fd:
+        for i, coord in enumerate(fd):
             # Create an image of the ROI
-            i = img.icrop(coord)
+            cropped_face = img.icrop(coord)
+            fn = os.path.join(DATA, "face-{:d}.jpg".format(i))
+            cv2.imwrite(fn, i)
             try:
-                fl.mark(i)
+                fl.mark(cropped_face)
                 landmark_coords.append(coord)
-            except:
-                pass
+            except Exception as e:
+                print(str(e))
 
-        print(landmark_coords)
+        for coord in landmark_coords:
+            print(coord)

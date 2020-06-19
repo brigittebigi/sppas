@@ -34,6 +34,8 @@
 
 """
 
+from collections import namedtuple
+
 from sppas.src.exceptions import sppasTypeError
 from sppas.src.exceptions import IntervalRangeException
 from .imgdataexc import ImageEastingError, ImageNorthingError
@@ -319,6 +321,53 @@ class sppasCoords(object):
         """Return a deep copy of the current sppasCoords."""
         return sppasCoords(self.__x, self.__y, self.__w, self.__h,
                            self.__confidence)
+
+    # -----------------------------------------------------------------------
+
+    def area(self):
+        """Return the area of the rectangle."""
+        return self.__w * self.__h
+
+    # -----------------------------------------------------------------------
+
+    def intersection_area(self, other):
+        """Return the intersection area of two rectangles.
+
+        :param other: (sppasCoords)
+
+        """
+        if isinstance(other, sppasCoords) is False:
+            raise sppasTypeError(other, "sppasCoords")
+        self_xmax = self.__x + self.__w
+        other_xmax = other.x + other.w
+        dx = min(self_xmax, other_xmax) - max(self.__x, other.x)
+
+        self_ymax = self.__y + self.__h
+        other_ymax = other.y + other.h
+        dy = min(self_ymax, other_ymax) - max(self.__y, other.y)
+
+        if dx >= 0 and dy >= 0:
+            return dx * dy
+        return 0
+
+    # -----------------------------------------------------------------------
+
+    def overlap(self, other):
+        """Return the 2 percentage of overlaps.
+
+        1. the overlapped area is overlapping other of XX percent of its area.
+        2. the overlapped area is overlapping self of XX percent of my area.
+
+        :param other: (sppasCoords)
+        :returns: percentage of overlap of self in other and of other in self.
+
+        """
+        in_area = self.intersection_area(other)
+        if in_area == 0:
+            return 0., 0.
+        my_area = float(self.area())
+        other_area = float(other.area())
+        return (in_area/other_area)*100., (in_area/my_area)*100.
 
     # -----------------------------------------------------------------------
     # Overloads

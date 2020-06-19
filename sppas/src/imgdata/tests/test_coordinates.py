@@ -45,7 +45,7 @@ class TestCoordinates(unittest.TestCase):
     def setUp(self):
         self.__coordinates = sppasCoords(143, 17, 150, 98, 0.7)
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def test_init(self):
         confidence = self.__coordinates.get_confidence()
@@ -59,7 +59,7 @@ class TestCoordinates(unittest.TestCase):
         h = self.__coordinates.h
         self.assertEqual(h, 98)
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def test_get_set_confidence(self):
         self.__coordinates._sppasCoords__set_confidence(0.5)
@@ -75,7 +75,7 @@ class TestCoordinates(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.__coordinates._sppasCoords__set_confidence(1.1)
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def test_get_set_x(self):
         self.__coordinates.x = 18
@@ -97,7 +97,7 @@ class TestCoordinates(unittest.TestCase):
         x = self.__coordinates.x
         self.assertEqual(x, 18)
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def test_get_set_y(self):
         self.__coordinates.y = 18
@@ -119,7 +119,7 @@ class TestCoordinates(unittest.TestCase):
         y = self.__coordinates.y
         self.assertEqual(y, 18)
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def test_get_set_w(self):
         self.__coordinates.w = 18
@@ -141,7 +141,7 @@ class TestCoordinates(unittest.TestCase):
         w = self.__coordinates.w
         self.assertEqual(w, 18)
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def test_get_set_h(self):
         self.__coordinates.h = 18
@@ -163,7 +163,7 @@ class TestCoordinates(unittest.TestCase):
         h = self.__coordinates.h
         self.assertEqual(h, 18)
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def test_scale(self):
         coordinates = sppasCoords(143, 17, 150, 98)
@@ -188,7 +188,7 @@ class TestCoordinates(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.__coordinates.scale("a")
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def test_shift(self):
         self.__coordinates.shift(20)
@@ -218,7 +218,7 @@ class TestCoordinates(unittest.TestCase):
         y = self.__coordinates.y
         self.assertEqual(y, 0)
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def test_equal(self):
         self.assertTrue(self.__coordinates == ([143, 17, 150, 98, 0.2]))
@@ -231,14 +231,29 @@ class TestCoordinates(unittest.TestCase):
         c = sppasCoords(143, 17, 150, 200)
         self.assertFalse(self.__coordinates.__eq__(c))
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     def test_copy(self):
         c = self.__coordinates.copy()
         self.assertEqual(c, sppasCoords(143, 17, 150, 98))
         self.assertTrue(self.__coordinates.__eq__(c))
 
-    # ---------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
+
+    def test_overlap(self):
+        c1 = sppasCoords(0, 0, 30, 30)
+        c2 = sppasCoords(10, 10, 40, 40)
+        self.assertEqual(c1.area(), 900)
+        self.assertEqual(c2.area(), 1600)
+        self.assertEqual(c1.intersection_area(c2), 400)
+
+        s, o = c1.overlap(c2)
+        # the overlapped area is overlapping other of XX percent of its area
+        self.assertEqual(s, float(400)/float(1600) * 100.)
+        # the overlapped area is overlapping self of XX percent of its area
+        self.assertEqual(o, float(400)/float(900) * 100.)
+
+    # ------------------------------------------------------------------------
 
     def test_print(self):
         c = sppasCoords(143, 17, 150, 98)

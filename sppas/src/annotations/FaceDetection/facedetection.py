@@ -40,7 +40,6 @@ import os
 import numpy
 import cv2
 
-from sppas.src.config import paths
 from sppas.src.exceptions import sppasTypeError, sppasIOError, sppasError
 from sppas.src.exceptions import IntervalRangeException
 from sppas.src.exceptions import IOExtensionError
@@ -85,8 +84,11 @@ class FaceDetection(object):
 
     """
 
+    # Minimum confidence score to filter DNN detections
     MIN_CONFIDENCE = 0.2
     MAX_CONFIDENCE = 1.
+    # Minimum ratio of a face comparing to the image
+    MIN_RATIO = 0.05
 
     # -----------------------------------------------------------------------
 
@@ -196,9 +198,7 @@ class FaceDetection(object):
     # -----------------------------------------------------------------------
 
     def __detect_with_dnn(self, image):
-        # Extract the w, h of the image
-        (h, w) = image.shape[:2]
-
+        w, h = image.size()
         try:
             # initialize the net and make predictions
             detections = self.__net_detections(image)
@@ -207,16 +207,37 @@ class FaceDetection(object):
 
         # Loops over the detections and for each object in detection
         # get the confidence
+        selected = list()
         for i in range(detections.shape[2]):
             # Sets the confidence score of the current object
             confidence = detections[0, 0, i, 2]
 
-            # Filter out weak detections by ensuring the `confidence` is
-            # greater than a minimum empirically fixed confidence.
+            # Filter out weak detections:
+            # 1. by ensuring the `confidence` is greater than a minimum
+            #    empirically fixed confidence.
+            # 2. by ignoring too small faces, ie less than 5% of the image size
             if confidence > FaceDetection.MIN_CONFIDENCE:
                 new_coords = self.__to_coords(detections, i, w, h, confidence)
-                logging.debug("Face detected: {}".format(new_coords))
-                self.__coords.append(new_coords)
+                if new_coords.w > int(float(w) * FaceDetection.MIN_RATIO) and new_coords.h > int(float(w) * FaceDetection.MIN_RATIO):
+                    selected.append(new_coords)
+
+        # Filter out detections:
+        # 3. Overlapping faces
+        for i, coord in enumerate(selected):
+            # does this coord is overlapping some other ones?
+            keep_me = True
+            for j, other in enumerate(selected):
+                if i != j and coord.intersection_area(other) > 0:
+                    area_o, area_s = coord.overlap(other)
+                    # reject this face if more than 50% of its area is
+                    # overlapping another one and the other one has a
+                    # bigger dimension, either w or h or both
+                    if area_s > 50. and (coord.w < other.w or coord.h < other.h):
+                        keep_me = False
+                        break
+
+            if keep_me is True:
+                self.__coords.append(coord)
 
     # -----------------------------------------------------------------------
 
@@ -265,7 +286,7 @@ class FaceDetection(object):
                     factor -= 0.1
 
             # Re-frame the image on the face if we really scaled the image
-            if shift_x+shift_y > 0:
+            if shift_x != 0 and shift_y != 0:
                 c.shift(shift_x, 0, image)
                 shift_y = int(float(shift_y) / 1.5)
                 c.shift(0, shift_y, image)
@@ -416,19 +437,34 @@ class FaceDetection(object):
     # -----------------------------------------------------------------------
 
     def __haar_detections(self, image):
-        """Detect faces using the Haar Cascade classifier."""
+        """Detect faces using the Haar Cascade classifier.
+
+        This classifier already delete overlapped detections and too small
+        detected faces.
+
+        """
+        # Ignore too small detections, ie less than 5% of the image size
+        w, h = image.size()
+        min_w = int(float(w) * FaceDetection.MIN_RATIO)
+        min_h = int(float(h) * FaceDetection.MIN_RATIO)
         try:
             detections = self.__cascade.detectMultiScale3(
                 image,
                 scaleFactor=1.04,
                 minNeighbors=3,
-                flags=1,
-                outputRejectLevels=True
+                minSize=(min_w, min_h),
+                flags=0,
+                outputRejectLevels=True   # cv2.error if set to False
             )
 
         except cv2.error as e:
             self.__landmarks = list()
             raise sppasError("Face detection failed: {}".format(str(e)))
+
+        # detections is a tuple with 3 values:
+        # - a list of N-list of 68 points
+        # - a list of N time the value 20 (???)
+        # - a list of N weight values
         return detections
 
     # -----------------------------------------------------------------------

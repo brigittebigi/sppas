@@ -37,8 +37,9 @@ import os
 import unittest
 
 from sppas.src.config import paths
-from sppas.src.imgdata.coordinates import sppasCoords
-from sppas.src.imgdata.image import sppasImage
+from sppas.src.imgdata import sppasCoords
+from sppas.src.imgdata import sppasImage
+from sppas.src.imgdata import sppasImageWriter
 from sppas.src.annotations.FaceDetection.facedetection import FaceDetection
 
 # ---------------------------------------------------------------------------
@@ -120,9 +121,15 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
             fd.detect(fn)
         img = sppasImage(filename=fn)
         fd.detect(img)
+        coords = [c.copy() for c in fd]
 
-        # 8 faces are detected (including the 3 right ones)
-        self.assertEqual(8, len(fd))
+        w = sppasImageWriter()
+        w.set_options(tag=True)
+        fn = os.path.join(DATA, "montage-haarfaces.png")
+        w.write(img, coords, fn)
+
+        # 8 faces are detected (including the 3 right ones) but 2 are too small
+        self.assertEqual(6, len(fd))
 
 # ---------------------------------------------------------------------------
 
@@ -159,6 +166,7 @@ class TestDNNFaceDetection(unittest.TestCase):
             fd.detect(fn)
         img = sppasImage(filename=fn)
         fd.detect(img)
+        print(fd)
 
         # only one face should be detected
         self.assertEqual(1, len(fd))
@@ -187,6 +195,7 @@ class TestDNNFaceDetection(unittest.TestCase):
         # --------------------------------------------------------
         fd.to_portrait(img)
         coords = fd.get_best()
+        print(coords)
         self.assertTrue(coords == [780, 147, 389, 415])
         cropped = sppasImage(input_array=img.icrop(coords))
 
@@ -215,6 +224,12 @@ class TestDNNFaceDetection(unittest.TestCase):
             fd.detect(fn)
         img = sppasImage(filename=fn)
         fd.detect(img)
+        coords = [c.copy() for c in fd]
+
+        w = sppasImageWriter()
+        w.set_options(tag=True)
+        fn = os.path.join(DATA, "montage-dnnfaces.png")
+        w.write(img, coords, fn)
 
         # Detected faces are
         # (877,237) (154,208): 0.975750
