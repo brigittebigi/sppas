@@ -316,8 +316,12 @@ class sppasImageWriter(object):
             r = sppasImageWriter.COLORS['r'][i % sppasImageWriter.N]
             g = sppasImageWriter.COLORS['g'][i % sppasImageWriter.N]
             b = sppasImageWriter.COLORS['b'][i % sppasImageWriter.N]
-            # Draw the square
-            img = img.isurround(c, color=(r, g, b), thickness=pen_width)
+            # Draw the square and eventually the confidence inside the square
+            text = ""
+            if c.get_confidence() > 0.:
+                text = "{:.3f}".format(c.get_confidence())
+            img = img.isurround(c, color=(r, g, b), thickness=pen_width,
+                                text=text)
 
         # Save tagged image
         cv2.imwrite(out_img_name, img)

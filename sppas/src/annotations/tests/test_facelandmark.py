@@ -49,7 +49,7 @@ DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 MODEL = os.path.join(paths.resources, "faces", "lbfmodel68.yaml")
 
 NET = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000.caffemodel")
-HAAR = os.path.join(paths.resources, "faces", "haarcascade_frontalface_alt2.xml")
+HAAR = os.path.join(paths.resources, "faces", "haarcascade_profileface.xml")
 
 # ---------------------------------------------------------------------------
 
@@ -132,10 +132,10 @@ class TestFaceLandmark(unittest.TestCase):
             fn = os.path.join(DATA, "face-{:d}.jpg".format(i))
             cv2.imwrite(fn, i)
             try:
+                print(coord)
                 fl.mark(cropped_face)
                 landmark_coords.append(coord)
+                print(fl)
             except Exception as e:
-                print(str(e))
+                print("Coords {}: {}".format(i, str(e)))
 
-        for coord in landmark_coords:
-            print(coord)

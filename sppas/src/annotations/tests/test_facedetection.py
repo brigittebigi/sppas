@@ -47,7 +47,8 @@ from sppas.src.annotations.FaceDetection.facedetection import FaceDetection
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 NET = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000.caffemodel")
-HAAR = os.path.join(paths.resources, "faces", "haarcascade_frontalface_alt2.xml")
+#HAAR = os.path.join(paths.resources, "faces", "haarcascade_profileface.xml")
+HAAR = os.path.join(paths.resources, "faces", "haarcascade_frontalface_alt.xml")
 
 # ---------------------------------------------------------------------------
 
@@ -129,7 +130,7 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
         w.write(img, coords, fn)
 
         # 8 faces are detected (including the 3 right ones) but 2 are too small
-        self.assertEqual(6, len(fd))
+        self.assertEqual(4, len(fd))
 
 # ---------------------------------------------------------------------------
 

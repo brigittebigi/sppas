@@ -170,12 +170,13 @@ class sppasImage(numpy.ndarray):
 
     # -----------------------------------------------------------------------
 
-    def isurround(self, coords, color=(50, 100, 200), thickness=2):
+    def isurround(self, coords, color=(50, 100, 200), thickness=2, text=""):
         """Return a new array with a square surrounding the given coords.
 
         :param coords: (sppasCoords) Area to surround
         :param color: (int, int, int) Rectangle color or brightness (if grayscale image).
         :param thickness: (int) Thickness of lines that make up the rectangle. Negative values, like CV_FILLED , mean that the function has to draw a filled rectangle.
+        :param text: (str) Add text
         :return: (numpy.ndarray)
 
         """
@@ -194,6 +195,16 @@ class sppasImage(numpy.ndarray):
                       (coords.x + coords.w, coords.y + coords.h),
                       color,
                       thickness)
+        if len(text) > 0:
+            (h, w) = self.shape[:2]
+            font_scale = (float(w * h)) / (1920. * 1080.)
+            th = thickness//3
+            text_size = cv2.getTextSize(text, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                                        fontScale=font_scale*2, thickness=th)
+            cv2.putText(image, text,
+                        (coords.x + thickness, coords.y + thickness + text_size[1]),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        font_scale, color, th)
 
         return image
 

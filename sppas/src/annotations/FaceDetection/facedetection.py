@@ -82,13 +82,21 @@ class FaceDetection(object):
         >>> # Get detected faces with a confidence score greater than 0.9
         >>> f.get_confidence(0.9)
 
+    Below is a list of things to do to improve FaceDetection results:
+        - Normalize properly FaceDetection scores
+        - Add an unlimited number of models for face detection
+        - Allow to estimate all face detections and fusion of results
+
     """
 
     # Minimum confidence score to filter DNN detections
     MIN_CONFIDENCE = 0.2
     MAX_CONFIDENCE = 1.
-    # Minimum ratio of a face comparing to the image
+
+    # Minimum ratio of a face compared to the image
     MIN_RATIO = 0.05
+    # it means that width and height of a face must be at least 5% of the
+    # image width and height respectively
 
     # -----------------------------------------------------------------------
 
@@ -197,66 +205,6 @@ class FaceDetection(object):
 
     # -----------------------------------------------------------------------
 
-    def __detect_with_dnn(self, image):
-        w, h = image.size()
-        try:
-            # initialize the net and make predictions
-            detections = self.__net_detections(image)
-        except cv2.error as e:
-            raise sppasError("Face detection failed: {}".format(str(e)))
-
-        # Loops over the detections and for each object in detection
-        # get the confidence
-        selected = list()
-        for i in range(detections.shape[2]):
-            # Sets the confidence score of the current object
-            confidence = detections[0, 0, i, 2]
-
-            # Filter out weak detections:
-            # 1. by ensuring the `confidence` is greater than a minimum
-            #    empirically fixed confidence.
-            # 2. by ignoring too small faces, ie less than 5% of the image size
-            if confidence > FaceDetection.MIN_CONFIDENCE:
-                new_coords = self.__to_coords(detections, i, w, h, confidence)
-                if new_coords.w > int(float(w) * FaceDetection.MIN_RATIO) and new_coords.h > int(float(w) * FaceDetection.MIN_RATIO):
-                    selected.append(new_coords)
-
-        # Filter out detections:
-        # 3. Overlapping faces
-        for i, coord in enumerate(selected):
-            # does this coord is overlapping some other ones?
-            keep_me = True
-            for j, other in enumerate(selected):
-                if i != j and coord.intersection_area(other) > 0:
-                    area_o, area_s = coord.overlap(other)
-                    # reject this face if more than 50% of its area is
-                    # overlapping another one and the other one has a
-                    # bigger dimension, either w or h or both
-                    if area_s > 50. and (coord.w < other.w or coord.h < other.h):
-                        keep_me = False
-                        break
-
-            if keep_me is True:
-                self.__coords.append(coord)
-
-    # -----------------------------------------------------------------------
-
-    def __detect_with_haarcascade(self, image):
-        # make predictions
-        detections = self.__haar_detections(image)
-
-        faces = list()
-        for rect, weight in zip(detections[0], detections[2]):
-            coords = sppasCoords(rect[0], rect[1], rect[2], rect[3])
-            faces.append((coords, weight/100.))
-
-        # sort by confidence score (the highest the better)
-        for coords, score in reversed(sorted(faces, key=lambda x: x[1])):
-            coords.set_confidence(score)
-            self.__coords.append(coords)
-
-    # -----------------------------------------------------------------------
-
     def to_portrait(self, image=None):
         """Scale coordinates of faces to a portrait size.
 
@@ -287,9 +235,14 @@ class FaceDetection(object):
 
             # Re-frame the image on the face if we really scaled the image
             if shift_x != 0 and shift_y != 0:
-                c.shift(shift_x, 0, image)
-                shift_y = int(float(shift_y) / 1.5)
-                c.shift(0, shift_y, image)
+                # TODO: to_portrait does not shift outside of the original image
+                try:
+                    c.shift(shift_x, 0, image)
+                    shift_y = int(float(shift_y) / 1.5)
+                    c.shift(0, shift_y, image)
+                except:
+                    # pass
+                    raise
 
         # no error occurred, all faces can be converted to their portrait
         self.__coords = portraits
@@ -394,6 +347,50 @@ class FaceDetection(object):
 
     # -----------------------------------------------------------------------
 
+    def __detect_with_dnn(self, image):
+        w, h = image.size()
+        try:
+            # initialize the net and make predictions
+            detections = self.__net_detections(image)
+        except cv2.error as e:
+            raise sppasError("Face detection failed: {}".format(str(e)))
+
+        # Loops over the detections and for each object in detection
+        # get the confidence
+        selected = list()
+        for i in range(detections.shape[2]):
+            # Sets the confidence score of the current object
+            confidence = detections[0, 0, i, 2]
+
+            # Filter out weak detections:
+            # 1. by ensuring the `confidence` is greater than a minimum
+            #    empirically fixed confidence.
+            # 2. by ignoring too small faces, ie less than 5% of the image size
+            if confidence > FaceDetection.MIN_CONFIDENCE:
+                new_coords = self.__to_coords(detections, i, w, h, confidence)
+                if new_coords.w > int(float(w) * FaceDetection.MIN_RATIO) and new_coords.h > int(float(w) * FaceDetection.MIN_RATIO):
+                    selected.append(new_coords)
+
+        # Filter out detections:
+        # 3. Overlapping faces
+        for i, coord in enumerate(selected):
+            # does this coord is overlapping some other ones?
+            keep_me = True
+            for j, other in enumerate(selected):
+                if i != j and coord.intersection_area(other) > 0:
+                    area_o, area_s = coord.overlap(other)
+                    # reject this face if more than 50% of its area is
+                    # overlapping another one and the other one has a
+                    # bigger dimension, either w or h or both
+                    if area_s > 50. and (coord.w < other.w or coord.h < other.h):
+                        keep_me = False
+                        break
+
+            if keep_me is True:
+                self.__coords.append(coord)
+
+    # -----------------------------------------------------------------------
+
     def __net_detections(self, image):
         """Initialize net and blob for the processing.
 
@@ -436,6 +433,25 @@ class FaceDetection(object):
 
     # -----------------------------------------------------------------------
 
+    def __detect_with_haarcascade(self, image):
+        # make predictions
+        detections = self.__haar_detections(image)
+
+        faces = list()
+        for rect, weight in zip(detections[0], detections[2]):
+            coords = sppasCoords(rect[0], rect[1], rect[2], rect[3])
+            if weight > 0.:
+                faces.append((coords, weight/200.))
+            else:
+                faces.append((coords, 0.))
+
+        # sort by confidence score (the highest the better)
+        for coords, score in reversed(sorted(faces, key=lambda x: x[1])):
+            coords.set_confidence(score)
+            self.__coords.append(coords)
+
+    # -----------------------------------------------------------------------
+
     def __haar_detections(self, image):
         """Detect faces using the Haar Cascade classifier.
 
@@ -450,7 +466,7 @@ class FaceDetection(object):
         try:
             detections = self.__cascade.detectMultiScale3(
                 image,
-                scaleFactor=1.04,
+                scaleFactor=1.05,
                 minNeighbors=3,
                 minSize=(min_w, min_h),
                 flags=0,
