@@ -40,34 +40,129 @@ from sppas.src.config import paths
 from sppas.src.imgdata import sppasCoords
 from sppas.src.imgdata import sppasImage
 from sppas.src.imgdata import sppasImageWriter
-from sppas.src.annotations.FaceDetection.facedetection import FaceDetection
+
+from ..FaceDetection.facedetection import HaarCascadeDetector
+from ..FaceDetection.facedetection import NeuralNetDetector
+from ..FaceDetection.facedetection import FaceDetection
 
 # ---------------------------------------------------------------------------
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 NET = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000.caffemodel")
-#HAAR = os.path.join(paths.resources, "faces", "haarcascade_profileface.xml")
-HAAR = os.path.join(paths.resources, "faces", "haarcascade_frontalface_alt.xml")
+HAAR1 = os.path.join(paths.resources, "faces", "haarcascade_profileface.xml")
+HAAR2 = os.path.join(paths.resources, "faces", "haarcascade_frontalface_alt.xml")
 
 # ---------------------------------------------------------------------------
 
 
 class TestFaceDetection(unittest.TestCase):
 
-    def test_load_resources(self):
+    def test_load_model(self):
         fd = FaceDetection()
-        self.assertIsNone(fd._FaceDetection__net)
-        self.assertIsNone(fd._FaceDetection__cascade)
+        self.assertIsNone(fd._detector)
 
         with self.assertRaises(IOError):
             fd.load_model("toto.txt")
 
         fd.load_model(NET)
-        self.assertIsNotNone(fd._FaceDetection__net)
+        self.assertIsNotNone(fd._detector)
+        self.assertEqual(len(fd._detector), 1)
+        self.assertIsInstance(fd._detector[0], NeuralNetDetector)
 
-        fd.load_model(HAAR)
-        self.assertIsNotNone(fd._FaceDetection__cascade)
+        fd.load_model(HAAR1)
+        self.assertIsNotNone(fd._detector)
+        self.assertEqual(len(fd._detector), 1)
+        self.assertIsInstance(fd._detector[0], HaarCascadeDetector)
+
+        fd.load_model(HAAR1, NET, HAAR2)
+        self.assertEqual(len(fd._detector), 3)
+
+    # ------------------------------------------------------------------------
+
+    def test_to_portrait(self):
+        fd = FaceDetection()
+        fn = os.path.join(DATA, "Slovenia2016.jpg")
+        img = sppasImage(filename=fn)   # (w, h) = (1632, 916)
+
+        fd.invalidate()
+        fd._coords.append(sppasCoords(200, 200, 150, 150))
+        fd.to_portrait(img)
+        self.assertEqual(fd[0], sppasCoords(110, 140, 330, 330))
+
+        # coords at top-left (can't fully shift)
+        fd.invalidate()
+        fd._coords.append(sppasCoords(10, 10, 100, 100))
+        fd.to_portrait(img)
+        self.assertEqual(fd[0], [0, 0, 220, 220])
+
+        # coords at bottom-right (can't fully shift)
+        fd.invalidate()
+        fd._coords.append(sppasCoords(1500, 850, 100, 60))
+        fd.to_portrait(img)
+        self.assertEqual(fd[0], [1500, 850, 220, 132])
+
+    # ------------------------------------------------------------------------
+
+    def test_contains(self):
+        fd = FaceDetection()
+        fd.load_model(NET)
+        # The image we'll work on
+        fn = os.path.join(DATA, "Slovenia2016.jpg")
+        img = sppasImage(filename=fn)
+        fd.detect(img)
+
+        self.assertTrue(sppasCoords(927, 238, 97, 117) in fd)
+        self.assertTrue((927, 238, 97, 117) in fd)
+        self.assertFalse((0, 0, 97, 117) in fd)
+
+    # ------------------------------------------------------------------------
+
+    def test_getters(self):
+        fd = FaceDetection()
+        fd.load_model(NET)
+        # The image we'll work on
+        fn = os.path.join(DATA, "Slovenia2016.jpg")
+        img = sppasImage(filename=fn)
+
+        fd.detect(img)
+        # two faces should be detected
+        self.assertEqual(2, len(fd))
+        self.assertTrue(fd[0] == [927, 238, 97, 117])   # me
+        self.assertTrue(fd[1] == [519, 198, 109, 109])  # kasia
+
+        # get best
+        coords = fd.get_best()
+        self.assertTrue(coords == [927, 238, 97, 117])   # me
+
+        # get more coords than those detected
+        coords = fd.get_best(3)
+        self.assertTrue(coords[0] == [927, 238, 97, 117])   # me
+        self.assertTrue(coords[1] == [519, 198, 109, 109])  # kasia
+        self.assertIsNone(coords[2])
+
+        # get confidence
+        coords = fd.get_confidence(0.9)
+        self.assertEqual(len(coords), 2)
+        coords = fd.get_confidence(0.91)
+        self.assertEqual(len(coords), 1)
+        coords = fd.get_confidence(0.98)
+        self.assertEqual(len(coords), 0)
+
+    # ------------------------------------------------------------------------
+
+    def test_multi_detect(self):
+        fd = FaceDetection()
+        fn = os.path.join(DATA, "montage.png")
+        img = sppasImage(filename=fn)
+        w = sppasImageWriter()
+        w.set_options(tag=True)
+
+        fd.load_model(HAAR1, HAAR2, NET)
+        fd.detect(img)
+        coords = [c.copy() for c in fd]
+        fn = os.path.join(DATA, "montage-faces.png")
+        w.write(img, coords, fn)
 
 # ---------------------------------------------------------------------------
 
@@ -76,8 +171,9 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
 
     def test_detect_nothing(self):
         fd = FaceDetection()
-        fd.load_model(HAAR)
+        fd.load_model(HAAR1)
         # Nothing detected... we still didn't asked for
+        self.assertIsInstance(fd._detector[0], HaarCascadeDetector)
         self.assertEqual(0, len(fd))
 
         # The image we'll work on
@@ -94,7 +190,7 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
 
     def test_detect_one_face_good_img_quality(self):
         fd = FaceDetection()
-        fd.load_model(HAAR)
+        fd.load_model(HAAR1)
         # Nothing detected... we still didn't asked for
         self.assertEqual(0, len(fd))
 
@@ -105,32 +201,45 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
         img = sppasImage(filename=fn)
         fd.detect(img)
 
-        # only one face should be detected but it detects 2....
+        # No profile face in the image
+        self.assertEqual(0, len(fd))
+
+        # Only 1 frontal face in the image but 2 detected
+        fd.load_model(HAAR2)
+        fd.detect(img)
         self.assertEqual(2, len(fd))
+
+        # combining both detectors: only the right coords are selected
+        fd.load_model(HAAR1, HAAR2)
+        fd.detect(img)
+        self.assertEqual(1, len(fd))
 
     # ------------------------------------------------------------------------
 
     def test_detect_montage(self):
         fd = FaceDetection()
-        fd.load_model(HAAR)
-        # Nothing detected... we still didn't asked for
-        self.assertEqual(0, len(fd))
-
-        # The image we'll work on, with 3 faces to be detected
-        fn = os.path.join(DATA, "montage.png")
-        with self.assertRaises(TypeError):
-            fd.detect(fn)
+        fn = os.path.join(DATA, "montage.png")   # 3 faces should be found
         img = sppasImage(filename=fn)
-        fd.detect(img)
-        coords = [c.copy() for c in fd]
-
         w = sppasImageWriter()
         w.set_options(tag=True)
-        fn = os.path.join(DATA, "montage-haarfaces.png")
-        w.write(img, coords, fn)
 
-        # 8 faces are detected (including the 3 right ones) but 2 are too small
+        # With the profile model
+        # ----------------------
+        fd.load_model(HAAR1)
+        fd.detect(img)
+        coords = [c.copy() for c in fd]
+        fn = os.path.join(DATA, "montage-haarprofilefaces.png")
+        w.write(img, coords, fn)
         self.assertEqual(4, len(fd))
+
+        # With the frontal model
+        # ----------------------
+        fd.load_model(HAAR2)
+        fd.detect(img)
+        coords = [c.copy() for c in fd]
+        fn = os.path.join(DATA, "montage-haarfrontfaces.png")
+        w.write(img, coords, fn)
+        self.assertEqual(7, len(fd))
 
 # ---------------------------------------------------------------------------
 
@@ -232,59 +341,5 @@ class TestDNNFaceDetection(unittest.TestCase):
         fn = os.path.join(DATA, "montage-dnnfaces.png")
         w.write(img, coords, fn)
 
-        # Detected faces are
-        # (877,237) (154,208): 0.975750
-        # (238,199) (192,261): 0.962529
-        # (1605,282) (155,219): 0.479989
-        # (419,935) (165,135): 0.456266
-        # (235,306) (143,143): 0.218089
-
         # only 3 faces should be detected
-        # self.assertEqual(3, len(fd))
-
-    # ------------------------------------------------------------------------
-
-    def test_getters(self):
-        fd = FaceDetection()
-        fd.load_model(NET)
-        # The image we'll work on
-        fn = os.path.join(DATA, "Slovenia2016.jpg")
-        img = sppasImage(filename=fn)
-
-        fd.detect(img)
-        # two faces should be detected
-        self.assertEqual(2, len(fd))
-        self.assertTrue(fd[0] == [927, 238, 97, 117])   # me
-        self.assertTrue(fd[1] == [519, 198, 109, 109])  # kasia
-
-        # get best
-        coords = fd.get_best()
-        self.assertTrue(coords == [927, 238, 97, 117])   # me
-
-        # get more coords than those detected
-        coords = fd.get_best(3)
-        self.assertTrue(coords[0] == [927, 238, 97, 117])   # me
-        self.assertTrue(coords[1] == [519, 198, 109, 109])  # kasia
-        self.assertIsNone(coords[2])
-
-        # get confidence
-        coords = fd.get_confidence(0.9)
-        self.assertEqual(len(coords), 2)
-        coords = fd.get_confidence(0.91)
-        self.assertEqual(len(coords), 1)
-        coords = fd.get_confidence(0.98)
-        self.assertEqual(len(coords), 0)
-
-    # ------------------------------------------------------------------------
-
-    def test_contains(self):
-        fd = FaceDetection()
-        fd.load_model(NET)
-        # The image we'll work on
-        fn = os.path.join(DATA, "Slovenia2016.jpg")
-        img = sppasImage(filename=fn)
-        fd.detect(img)
-
-        self.assertTrue(sppasCoords(927, 238, 97, 117) in fd)
-        self.assertTrue((927, 238, 97, 117) in fd)
-        self.assertFalse((0, 0, 97, 117) in fd)
+        self.assertEqual(4, len(fd))

@@ -17,6 +17,12 @@
       "type": "file",
       "ext": "",
       "name": "haarcascade_profileface.xml"
+    },
+    {
+      "path": "faces",
+      "type": "file",
+      "ext": "",
+      "name": "haarcascade_frontalface_alt.xml"
     }
   ],
 

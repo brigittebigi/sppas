@@ -75,14 +75,13 @@ class sppasFaceDetection(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    def load_resources(self, model_dnn, model_haar, **kwargs):
+    def load_resources(self, model1, *args, lang=None):
         """Fix the model file.
 
-        :param model: (str) Filename of the model
+        :param model1: (str) Filename of the model
 
         """
-        self.__fd.load_model(model_dnn, model_haar)
-        # self.__fd.load_model(None, model_haar)
+        self.__fd.load_model(model1, *args)
 
     # -----------------------------------------------------------------------
     # Methods to fix options

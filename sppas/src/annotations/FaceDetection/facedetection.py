@@ -50,7 +50,7 @@ from sppas.src.imgdata.image import sppasImage
 
 
 class BaseObjectsDetector(object):
-    """Detect objects in an image.
+    """Abstract class to detect objects in an image.
 
     :author:       Florian Hocquet, Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -96,7 +96,7 @@ class BaseObjectsDetector(object):
         self.__min_ratio = BaseObjectsDetector.DEFAULT_MIN_RATIO
 
         # Minimum confidence score of a detected object
-        # It is suppose that the confidence scores of detected object is
+        # It is supposed that the confidence scores of detected objects is
         # ranging [0., 1.]
         self.__min_score = BaseObjectsDetector.DEFAULT_MIN_SCORE
 
@@ -156,9 +156,9 @@ class BaseObjectsDetector(object):
     # -----------------------------------------------------------------------
 
     def load_model(self, model, *args):
-        """Load at least a model.
+        """Load at least a model to instantiate a detector.
 
-        :param model: Filename of the model (DNN, HaarCascade, ...)
+        :param model: Filename of a model (DNN, HaarCascade, ...)
         :raise: OSError if model is not loaded.
 
         """
@@ -197,7 +197,7 @@ class BaseObjectsDetector(object):
     # -----------------------------------------------------------------------
 
     def invalidate(self):
-        """Invalidate current list of detected objects."""
+        """Invalidate current list of detected object coordiantes."""
         self._coords = list()
 
     # -----------------------------------------------------------------------
@@ -406,23 +406,19 @@ class HaarCascadeDetector(BaseObjectsDetector):
         detections = self.__haar_detections(image)
 
         # Convert detections into a list of sppasCoords
+        if len(detections[0]) == 0:
+            return
 
         # Detection weights normalization into confidence scores
-        # TODO: weight normalization into confidence scores
-        scores = list()
-        for weight in detections[2]:
-            if weight < 0.:
-                weight = 0.
-            weight = weight / 200.
-            scores.append(weight)
+        scores = self.normalize_weights([d[0] for d in detections[2]])
 
         # convert the detected positions into a list of sppasCoords
         detected_objects = list()
         for rect, score in zip(detections[0], scores):
             coords = sppasCoords(rect[0], rect[1], rect[2], rect[3])
             # Enable the condition as soon as weight are normalized into scores
-            # if score > self.get_min_score():
-            detected_objects.append((coords, score))
+            if score > self.get_min_score():
+                detected_objects.append((coords, score))
 
         # sort by confidence score (the highest the better)
         for coords, score in reversed(sorted(detected_objects, key=lambda x: x[1])):
@@ -451,7 +447,7 @@ class HaarCascadeDetector(BaseObjectsDetector):
         try:
             detections = self._detector.detectMultiScale3(
                 image,
-                scaleFactor=1.05,
+                scaleFactor=1.04,
                 minNeighbors=3,
                 minSize=(min_w, min_h),
                 flags=0,
@@ -465,12 +461,34 @@ class HaarCascadeDetector(BaseObjectsDetector):
 
         return detections
 
+    # -----------------------------------------------------------------------
+
+    def normalize_weights(self, dataset):
+        """Return the normalized list of values.
+
+        Use the Unity-based normalization, slightly adapted.
+
+        """
+        a = BaseObjectsDetector.DEFAULT_MIN_SCORE
+        b = 0.998
+        coeff = b-a
+        norm_list = list()
+        if isinstance(dataset, list):
+            min_value = min(dataset) * b     # multiplying by b = custom
+            max_value = max(dataset) * 1.01  # multiplying by 1.01 = custom
+
+            for value in dataset:
+                tmp = a + ((value - min_value)*coeff) / (max_value - min_value)
+                norm_list.append(tmp)
+
+        return norm_list
+
 # ---------------------------------------------------------------------------
 # OpenCV Artifical Neural Networks for objects detection
 # ---------------------------------------------------------------------------
 
 
-class NetDetector(BaseObjectsDetector):
+class NeuralNetDetector(BaseObjectsDetector):
     """Detect objects in an image with Artificial Neural Networks.
 
     :author:       Florian Hocquet, Brigitte Bigi
@@ -482,7 +500,7 @@ class NetDetector(BaseObjectsDetector):
     """
 
     def __init__(self):
-        super(NetDetector, self).__init__()
+        super(NeuralNetDetector, self).__init__()
         self._extension = ".caffemodel"
 
     # -----------------------------------------------------------------------
@@ -539,14 +557,14 @@ class NetDetector(BaseObjectsDetector):
                     selected.append(new_coords)
 
         # Filter out detections:
-        # 3. Overlapping faces
+        # 3. Overlapping objects. Because this detector don't do it!
         for i, coord in enumerate(selected):
             # does this coord is overlapping some other ones?
             keep_me = True
             for j, other in enumerate(selected):
                 if i != j and coord.intersection_area(other) > 0:
                     area_o, area_s = coord.overlap(other)
-                    # reject this face if more than 50% of its area is
+                    # reject this object if more than 50% of its area is
                     # overlapping another one and the other one has a
                     # bigger dimension, either w or h or both
                     if area_s > 50. and (coord.w < other.w or coord.h < other.h):
@@ -633,18 +651,14 @@ class FaceDetection(BaseObjectsDetector):
         >>> # Get detected faces with a confidence score greater than 0.9
         >>> f.get_confidence(0.9)
 
-    Below is a list of things to do to improve FaceDetection results:
-        - Normalize properly FaceDetection scores or HaarCascadeClassifier
-        - Allow to estimate all face detections and fusion of results
-
     Contrariwise to the base class, this class allows multiple models
-    in order to launch multiple detections.
+    in order to launch multiple detections and to combine results.
 
     """
 
     DETECTORS = dict()
     DETECTORS[HaarCascadeDetector().get_extension().lower()] = HaarCascadeDetector
-    DETECTORS[NetDetector().get_extension().lower()] = NetDetector
+    DETECTORS[NeuralNetDetector().get_extension().lower()] = NeuralNetDetector
 
     def __init__(self):
         """Create a new FaceDetection instance."""
@@ -654,7 +668,9 @@ class FaceDetection(BaseObjectsDetector):
     # -----------------------------------------------------------------------
 
     def load_model(self, model, *args):
-        """Instantiate detectors from the given models.
+        """Instantiate detector(s) from the given models.
+
+        Calling this method invalidates the existing detectors.
 
         :param model: (str) Default model filename
         :param args: Other models to load in order to create object detectors
@@ -663,10 +679,14 @@ class FaceDetection(BaseObjectsDetector):
         """
         self._detector = list()
         detector = FaceDetection.create_detector_from_extension(model)
+        detector.load_model(model)
+        detector.set_min_ratio(self.get_min_ratio() / 2.)
         self._detector.append(detector)
 
         for filename in args:
             detector = FaceDetection.create_detector_from_extension(filename)
+            detector.load_model(filename)
+            detector.set_min_ratio(self.get_min_ratio() / 2.)
             self._detector.append(detector)
 
     # -----------------------------------------------------------------------
@@ -688,7 +708,7 @@ class FaceDetection(BaseObjectsDetector):
         :returns: BaseObjectsDetector
 
         """
-        extension = os.path.splitext(filename)[1][1:]
+        extension = os.path.splitext(filename)[1]
         extension = extension.lower()
         if extension in FaceDetection.extensions():
             return FaceDetection.DETECTORS[extension]()
@@ -703,12 +723,47 @@ class FaceDetection(BaseObjectsDetector):
         :param image: (sppasImage or numpy.ndarray)
 
         """
+        detected = list()
         for i in range(len(self._detector)):
             # If several models were loaded, priority is given to the first one
             self._detector[i].detect(image)
-            # We stop to detect as soon as a detector can find objects
-            if len(self._coords) > 0:
-                break
+
+            # Add detected objects to our list
+            # Each confidence score is divided by the number of detectors
+            for coord in self._detector[i]:
+                c = coord.copy()
+                score = c.get_confidence()
+                c.set_confidence(score / float(len(self._detector)))
+                detected.append(c)
+
+        logging.debug("All detected objects:")
+        for d in detected:
+            logging.debug(d)
+
+        # Reduce the list of detected objects by selecting overlapping
+        # objects and adjust their scores:
+        #    - add confidence score to the one we keep and
+        #    - cancel confidence score of the one we remove
+        for i, coord in enumerate(detected):
+            # does this coord is overlapping some other ones?
+            for j, other in enumerate(detected):
+                if i != j and coord.intersection_area(other) > 0:
+                    # if we did not already cancelled the other coordinates
+                    if other.get_confidence() > 0.:
+                        # how much are they overlapping?
+                        area_o, area_s = coord.overlap(other)
+                        # reject this object if more than 50% of its area is
+                        # overlapping another one and the other one has a
+                        # bigger dimension, either w or h or both
+                        if area_s > 50. and (coord.w < other.w or coord.h < other.h):
+                            c = other.get_confidence() + coord.get_confidence()
+                            coord.set_confidence(0.)
+                            other.set_confidence(c)
+                            break
+
+        # Finally, keep only detected objects if their score is higher then
+        # the min ratio we fixed
+        self._coords = [c for c in detected if c.get_confidence() > self.get_min_score()]
 
     # -----------------------------------------------------------------------
 
@@ -722,15 +777,15 @@ class FaceDetection(BaseObjectsDetector):
         :raise: ImageXXXError if scale or shift are not possible
 
         """
-        if len(self.__coords) == 0:
+        if len(self._coords) == 0:
             return
 
-        portraits = [c.copy() for c in self.__coords]
+        portraits = [c.copy() for c in self._coords]
         for c in portraits:
             # Scale the image. Shift values indicate how to shift x,y to get
             # the face exactly at the center of the new coordinates.
             shift_x = shift_y = 0
-            factor = 2.2
+            factor = 2.0
             while factor > 1.0:
                 try:
                     # We need to be sure we wont scale larger than the
@@ -741,15 +796,27 @@ class FaceDetection(BaseObjectsDetector):
                     factor -= 0.1
 
             # Re-frame the image on the face if we really scaled the image
-            if shift_x != 0 and shift_y != 0:
-                # TODO: to_portrait does not shift outside of the original image
-                try:
-                    c.shift(shift_x, 0, image)
-                    shift_y = int(float(shift_y) / 1.5)
-                    c.shift(0, shift_y, image)
-                except:
-                    # pass
-                    raise
+            if shift_x != 0 or shift_y != 0:
+                while shift_x != 0:
+                    try:
+                        c.shift(shift_x, 0, image)
+                        shift_x = 0
+                    except:
+                        if shift_x > 0:
+                            shift_x -= 1
+                        else:
+                            shift_x += 1
+                # in a portrait, the face is slightly at top, not the middle
+                shift_y = int(float(shift_y) / 1.5)
+                while shift_y != 0:
+                    try:
+                        c.shift(0, shift_y, image)
+                        shift_y = 0
+                    except:
+                        if shift_y > 0:
+                            shift_y -= 1
+                        else:
+                            shift_y += 1
 
         # no error occurred, all faces can be converted to their portrait
         self._coords = portraits
