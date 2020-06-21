@@ -61,6 +61,8 @@ from .exc import IndexRangeException      # 0340
 
 from .exc import IOExtensionError         # 0610
 from .exc import NoDirectoryError         # 0620
+from .exc import sppasOpenError           # 0650
+from .exc import sppasWriteError          # 0660
 
 # ---------------------------------------------------------------------------
 
@@ -79,5 +81,7 @@ __all__ = (
     "IntervalRangeException",
     "IndexRangeException",
     "IOExtensionError",
-    "NoDirectoryError"
+    "NoDirectoryError",
+    "sppasOpenError",
+    "sppasWriteError"
 )

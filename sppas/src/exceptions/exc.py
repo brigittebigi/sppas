@@ -319,3 +319,19 @@ class sppasOpenError(IOError):
     def __str__(self):
         return repr(self.parameter)
 
+# -----------------------------------------------------------------------
+
+
+class sppasWriteError(IOError):
+    """:ERROR 0660:.
+
+    File '{:s}' can't be saved.
+
+    """
+
+    def __init__(self, filename):
+        self.parameter = error(660) + \
+                         (error(660, "globals")).format(filename)
+
+    def __str__(self):
+        return repr(self.parameter)

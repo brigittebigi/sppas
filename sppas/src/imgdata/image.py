@@ -32,11 +32,14 @@
 
 """
 
+import logging
 import os
 import cv2
 import numpy
 
-from sppas.src.exceptions import sppasIOError, sppasTypeError
+from sppas.src.exceptions import sppasIOError
+from sppas.src.exceptions import sppasTypeError
+from sppas.src.exceptions import sppasWriteError
 from .coordinates import sppasCoords
 from .imgdataexc import ImageReadError
 
@@ -237,6 +240,15 @@ class sppasImage(numpy.ndarray):
 
     # -----------------------------------------------------------------------
 
+    def write(self, filename):
+        try:
+            cv2.imwrite(filename, self)
+        except cv2.error as e:
+            logging.error(str(e))
+            sppasWriteError(filename)
+
+    # -----------------------------------------------------------------------
+
     def __to_dtype(self, value, dtype=int):
         """Convert a value to int or raise the appropriate exception."""
         try:
@@ -265,3 +277,6 @@ class sppasImage(numpy.ndarray):
                 if r1 != r2 or g1 != g2 or b1 != b2:
                     return False
         return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)

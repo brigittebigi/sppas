@@ -55,12 +55,12 @@ from .coordinates import sppasCoords
 
 
 class sppasImage(object):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         raise sppasEnableFeatureError("video")
 
 
 class sppasImageWriter(object):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         raise sppasEnableFeatureError("video")
 
 

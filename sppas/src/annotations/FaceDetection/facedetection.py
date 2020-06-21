@@ -79,7 +79,6 @@ class BaseObjectsDetector(object):
 
     DEFAULT_MIN_RATIO = 0.05
     DEFAULT_MIN_SCORE = 0.2
-    DEFAULT_MAX_SCORE = 1.0
 
     # -----------------------------------------------------------------------
 
@@ -149,8 +148,8 @@ class BaseObjectsDetector(object):
 
         """
         value = BaseObjectsDetector.to_dtype(value, dtype=float)
-        if value < 0. or value > BaseObjectsDetector.DEFAULT_MAX_SCORE:
-            raise IntervalRangeException(value, 0., BaseObjectsDetector.DEFAULT_MAX_SCORE)
+        if value < 0. or value > 1.:
+            raise IntervalRangeException(value, 0., 1.)
         self.__min_score = value
 
     # -----------------------------------------------------------------------
@@ -193,6 +192,7 @@ class BaseObjectsDetector(object):
             raise sppasError("A model must be loaded first")
 
         self._detection(image)
+        self._filter_overlapped()
 
     # -----------------------------------------------------------------------
 
@@ -317,6 +317,16 @@ class BaseObjectsDetector(object):
 
         """
         raise NotImplementedError
+
+    # -----------------------------------------------------------------------
+
+    def _filter_overlapped(self, overlap=50.):
+        """Remove overlapping detected objects.
+
+        To be overridden.
+
+        """
+        pass
 
     # -----------------------------------------------------------------------
     # Overloads
@@ -469,7 +479,7 @@ class HaarCascadeDetector(BaseObjectsDetector):
         Use the Unity-based normalization, slightly adapted.
 
         """
-        a = BaseObjectsDetector.DEFAULT_MIN_SCORE
+        a = self.get_min_score()
         b = 0.998
         coeff = b-a
         norm_list = list()
@@ -541,7 +551,7 @@ class NeuralNetDetector(BaseObjectsDetector):
         # Loops over the detections and for each object in detection
         # get the confidence
         w, h = image.size()
-        selected = list()
+        self._coords = list()
         for i in range(detections.shape[2]):
             # Sets the confidence score of the current object
             confidence = detections[0, 0, i, 2]
@@ -554,22 +564,34 @@ class NeuralNetDetector(BaseObjectsDetector):
                 new_coords = self.__to_coords(detections, i, w, h, confidence)
                 if new_coords.w > int(float(w) * self.get_min_ratio()) and new_coords.h > int(
                         float(w) * self.get_min_ratio()):
-                    selected.append(new_coords)
+                    self._coords.append(new_coords)
 
-        # Filter out detections:
-        # 3. Overlapping objects. Because this detector don't do it!
+    # -----------------------------------------------------------------------
+
+    def _filter_overlapped(self, overlap=50.):
+        """Remove overlapping detected objects.
+
+        :param overlap: (float) Minimum percentage of the overlapped area to invalidate a detected object.
+
+        """
+        selected = [c for c in self._coords]
+        self._coords = list()
         for i, coord in enumerate(selected):
             # does this coord is overlapping some other ones?
             keep_me = True
             for j, other in enumerate(selected):
                 if i != j and coord.intersection_area(other) > 0:
-                    area_o, area_s = coord.overlap(other)
-                    # reject this object if more than 50% of its area is
-                    # overlapping another one and the other one has a
-                    # bigger dimension, either w or h or both
-                    if area_s > 50. and (coord.w < other.w or coord.h < other.h):
-                        keep_me = False
-                        break
+                    # if we did not already invalidated other
+                    if other.get_confidence() > 0.:
+                        area_o, area_s = coord.overlap(other)
+                        # reject this object if more than 50% of its area is
+                        # overlapping another one and the other one has a
+                        # bigger dimension, either w or h or both
+                        if area_s > overlap and (coord.w < other.w or coord.h < other.h):
+                            # Invalidate this coord. It won't be considered anymore.
+                            keep_me = False
+                            coord.set_confidence(0.)
+                            break
 
             if keep_me is True:
                 self._coords.append(coord)
@@ -680,14 +702,15 @@ class FaceDetection(BaseObjectsDetector):
         self._detector = list()
         detector = FaceDetection.create_detector_from_extension(model)
         detector.load_model(model)
-        detector.set_min_ratio(self.get_min_ratio() / 2.)
         self._detector.append(detector)
 
         for filename in args:
             detector = FaceDetection.create_detector_from_extension(filename)
             detector.load_model(filename)
-            detector.set_min_ratio(self.get_min_ratio() / 2.)
             self._detector.append(detector)
+
+        for detector in self._detector:
+            detector.set_min_ratio(self.get_min_ratio() / len(self._detector))
 
     # -----------------------------------------------------------------------
 
@@ -723,22 +746,38 @@ class FaceDetection(BaseObjectsDetector):
         :param image: (sppasImage or numpy.ndarray)
 
         """
-        detected = list()
+        # list of tuple (coord, score). The score allows to sort the list.
+        detected_objects = list()
         for i in range(len(self._detector)):
             # If several models were loaded, priority is given to the first one
             self._detector[i].detect(image)
 
             # Add detected objects to our list
-            # Each confidence score is divided by the number of detectors
             for coord in self._detector[i]:
-                c = coord.copy()
-                score = c.get_confidence()
-                c.set_confidence(score / float(len(self._detector)))
-                detected.append(c)
+                detected_objects.append((coord, coord.get_confidence()))
 
-        logging.debug("All detected objects:")
-        for d in detected:
-            logging.debug(d)
+        # sort by confidence score (the highest the better)
+        for coord, score in reversed(sorted(detected_objects, key=lambda x: x[1])):
+            self._coords.append(coord)
+
+        logging.debug(" ... All detected objects of the {:d} predictors:"
+                      "".format(len(self._detector)))
+        for coord in self._coords:
+            logging.debug(" ... ... {}".format(coord))
+
+    # -----------------------------------------------------------------------
+
+    def _filter_overlapped(self, overlap=50.):
+        """Remove overlapping detected objects and to small scores.
+
+        """
+        # Divide the score by the number of detectors
+        detected = list()
+        for coord in self._coords:
+            c = coord.copy()
+            score = c.get_confidence()
+            c.set_confidence(score / float(len(self._detector)))
+            detected.append(c)
 
         # Reduce the list of detected objects by selecting overlapping
         # objects and adjust their scores:
@@ -755,11 +794,10 @@ class FaceDetection(BaseObjectsDetector):
                         # reject this object if more than 50% of its area is
                         # overlapping another one and the other one has a
                         # bigger dimension, either w or h or both
-                        if area_s > 50. and (coord.w < other.w or coord.h < other.h):
+                        if area_s > overlap and (coord.w < other.w or coord.h < other.h):
                             c = other.get_confidence() + coord.get_confidence()
                             coord.set_confidence(0.)
                             other.set_confidence(c)
-                            break
 
         # Finally, keep only detected objects if their score is higher then
         # the min ratio we fixed
@@ -781,42 +819,35 @@ class FaceDetection(BaseObjectsDetector):
             return
 
         portraits = [c.copy() for c in self._coords]
+
         for c in portraits:
             # Scale the image. Shift values indicate how to shift x,y to get
             # the face exactly at the center of the new coordinates.
-            shift_x = shift_y = 0
-            factor = 2.0
-            while factor > 1.0:
-                try:
-                    # We need to be sure we wont scale larger than the
-                    # original image. If not, reduce the scale factor.
-                    shift_x, shift_y = c.scale(factor, image)
-                    factor = 0.
-                except:
-                    factor -= 0.1
+            # The scale is done without matter of the image size.
+            shift_x, shift_y = c.scale(2.1)
+            # the face is slightly at top, not exactly at the middle
+            shift_y = int(float(shift_y) / 1.5)
+            if image is None:
+                c.shift(shift_x, shift_y)
+            else:
 
-            # Re-frame the image on the face if we really scaled the image
-            if shift_x != 0 or shift_y != 0:
-                while shift_x != 0:
-                    try:
-                        c.shift(shift_x, 0, image)
-                        shift_x = 0
-                    except:
-                        if shift_x > 0:
-                            shift_x -= 1
-                        else:
-                            shift_x += 1
-                # in a portrait, the face is slightly at top, not the middle
-                shift_y = int(float(shift_y) / 1.5)
-                while shift_y != 0:
-                    try:
-                        c.shift(0, shift_y, image)
-                        shift_y = 0
-                    except:
-                        if shift_y > 0:
-                            shift_y -= 1
-                        else:
-                            shift_y += 1
+                try:
+                    c.shift(shift_x, 0, image)
+                    shifted_x = True
+                except:
+                    shifted_x = False
+                try:
+                    c.shift(0, shift_y, image)
+                    shifted_y = True
+                except:
+                    shifted_y = False
+
+                w, h = image.size()
+                if c.x + c.w > w or shifted_x is False:
+                    c.x = max(0, w - c.w)
+
+                if c.y + c.h > h or shifted_y is False:
+                    c.y = max(0, h - c.h)
 
         # no error occurred, all faces can be converted to their portrait
         self._coords = portraits

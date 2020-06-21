@@ -256,7 +256,17 @@ class TestCoordinates(unittest.TestCase):
     # ------------------------------------------------------------------------
 
     def test_print(self):
+        c = sppasCoords(143, 17, 0, 0)
+        self.assertEqual(str(c), "(143,17)")
+
+        c = sppasCoords(143, 17, 0, 0, 0.123)
+        self.assertEqual(str(c), "(143,17): 0.123000")
+
         c = sppasCoords(143, 17, 150, 98)
-        self.assertEqual(str(c), "(143, 17) (150, 98): 0.0")
+        self.assertEqual(str(c), "(143,17) (150,98)")
+
+        c = sppasCoords(143, 17, 150, 98, 0.998)
+        self.assertEqual(str(c), "(143,17) (150,98): 0.998000")
+
 
 
