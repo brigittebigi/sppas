@@ -43,6 +43,7 @@
 
 """
 
+import logging
 import os
 import sys
 import json
@@ -144,7 +145,7 @@ class sppasAppConfig(object):
     def cfg_filename():
         """Return the name of the config file."""
         with sppasPathSettings() as paths:
-            cfg_filename = os.path.join(paths.basedir, ".deps~")
+            cfg_filename = os.path.join(paths.basedir, ".app~")
         return cfg_filename
 
     # -----------------------------------------------------------------------
@@ -154,8 +155,7 @@ class sppasAppConfig(object):
         cfg = self.cfg_filename()
         if cfg is None:
             return False
-
-        return os.path.exists(cfg)
+        return os.path.isfile(cfg)
 
     # ------------------------------------------------------------------------
 
@@ -171,48 +171,43 @@ class sppasAppConfig(object):
     # ------------------------------------------------------------------------
 
     def save(self):
-        """Save partly the dictionary into a file."""
+        """Save into a JSON file."""
         # Admin rights are needed to write in an hidden file.
         # So it's needed to switch the file in a normal mode
         # to modify it and then to hide back the file.
-        self.hide_unhide(".deps~", "-")
+        self.__hide(False)
         with open(self.cfg_filename(), "w") as f:
             d = dict()
             d["log_level"] = self.__log_level
             d["splash_delay"] = self.__splash_delay
             d["deps"] = self.__deps
             f.write(json.dumps(d, indent=2))
-        self.hide_unhide(".deps~", "+")
+
+        self.__hide(True)
 
     # ------------------------------------------------------------------------
 
-    def hide_unhide(self, filename, operator):
+    def __hide(self, value):
         """Hide or un-hide a file.
 
-        :param filename: (str)
-        :param operator: ()
+        :param value: (bool) Hide the config filename
 
         """
-        if filename.startswith(".") is False:
-            filename = "." + filename
-
-        if filename.endswith("~") is False:
-            filename = filename + "~"
-
+        filename = self.cfg_filename()
         system = sys.platform
-        with sppasPathSettings() as sp:
-            config = os.path.join(sp.basedir, filename)
         if system == "win32":
-            p = os.popen('attrib ' + operator + 'h ' + config)
+            oper = "+"
+            if value is False:
+                oper = "-"
+            p = os.popen('attrib ' + oper + 'h ' + filename)
             p.close()
-        return filename
 
     # ------------------------------------------------------------------------
     # Methods related to the list of dependencies for the features.
     # ------------------------------------------------------------------------
 
     def get_deps(self):
-        """Return the list of dependency features."""
+        """Return the list of dependency feature identifers."""
         return list(self.__deps.keys())
 
     # ------------------------------------------------------------------------

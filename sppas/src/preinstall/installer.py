@@ -37,9 +37,10 @@ import shutil
 import shlex
 import subprocess
 
+from sppas.src.config import cfg
+from sppas.src.config import info
 from sppas.src.exceptions.exc import sppasInstallationError
 from sppas.src.utils.makeunicode import u
-from sppas.src.config import info
 
 from .features import Features
 
@@ -315,9 +316,9 @@ class Installer(object):
 
                 else:
                     self._features.enable(fid, True)
+                    cfg.set_dep(fid, True)
                     self.__pmessage(self.__message("install_success", fid))
 
-        self._features.update_config()
         return errors
 
     # ------------------------------------------------------------------------

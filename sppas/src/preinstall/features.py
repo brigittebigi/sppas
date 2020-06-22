@@ -82,36 +82,6 @@ class Features(object):
 
     # ------------------------------------------------------------------------
 
-    def update_config(self):
-        """Update the active configuration instance with the features.
-
-        Newly enabled features are enabled in the config file, but if a feature
-        was already enabled in the config, it is not changed.
-
-        """
-        for f in self.__features:
-            enabled = f.get_enable()
-            if enabled is True:
-                cfg.set_dep(f.get_id(), enabled)
-
-    # ------------------------------------------------------------------------
-
-    def update_features(self):
-        """Update the features with the config file.
-
-        Disable a feature if it was already installed.
-
-        """
-        ids = self.get_ids()
-        for f in cfg.get_deps():
-            if f in ids:
-                self.enable(f, not cfg.dep_installed(f))
-            else:
-                logging.error("The config file contains an unknown "
-                              "feature identifier {}".format(f))
-
-    # ------------------------------------------------------------------------
-
     def get_ids(self):
         """Return the list of feature identifiers."""
         return [f.get_id() for f in self.__features]
@@ -344,6 +314,16 @@ class Features(object):
                 feature.set_enable(e)
             except cp.NoOptionError:
                 pass
+
+        # Disable the installation of the already installed features, but
+        # they are still available: they can be updated if selected.
+        ids = self.get_ids()
+        for f in cfg.get_deps():
+            if f in ids:
+                self.enable(f, not cfg.dep_installed(f))
+            else:
+                logging.error("The config file contains an unknown "
+                              "feature identifier {}".format(f))
 
     # ------------------------------------------------------------------------
 
