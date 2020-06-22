@@ -10,13 +10,16 @@
       "path": "faces",
       "type": "file",
       "ext": "",
-      "name": "res10_300x300_ssd_iter_140000"
+      "name": "res10_300x300_ssd_iter_140000",
+      "lang": false
     }
   ],
 
   "anntype": [
     "STANDALONE"
   ],
+
+  "outformat": "IMAGE",
 
   "options": [
     {

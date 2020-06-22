@@ -8,6 +8,12 @@
   "resources": [
   ],
 
+  "anntype": [
+    "STANDALONE"
+  ],
+
+  "outformat": "ANNOT",
+
   "options": [
     {
       "id": "outputpattern",

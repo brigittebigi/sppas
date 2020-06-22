@@ -268,7 +268,7 @@ class AnnotationsPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.linked = False
         self.parameters = sppasParam()
         self._prefsIO = preferences
-        self.parameters.set_output_format(self._prefsIO.GetValue('M_OUTPUT_EXT'))
+        self.parameters.set_output_extension(self._prefsIO.GetValue('M_OUTPUT_EXT'), "ANNOT")
 
         _contentbox = self.__create_content()
 
@@ -387,4 +387,4 @@ class AnnotationsPanel(wx.lib.scrolledpanel.ScrolledPanel):
         for sp in self.step_panels:
             sp.SetPrefs(prefs)
 
-        self.parameters.set_output_format(self._prefsIO.GetValue('M_OUTPUT_EXT'))
+        self.parameters.set_output_extension(self._prefsIO.GetValue('M_OUTPUT_EXT'), "ANNOT")

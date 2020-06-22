@@ -288,10 +288,19 @@ class sppasAnnotationsSettings(sppasBaseSettings):
             info=3,
 
             # default file extension for annotated files created by SPPAS
-            extension=".xra",
+            annot_extension=".xra",
+            audio_extension=".wav",
+            video_extension=".mp4",
+            image_extension=".jpg",
 
-            # all the types of automatic annotations implemented into SPPAS
+            # all the input types of automatic annotations
+            #  - standalone = only one input file
+            #  - speaker = two input files of the same speaker
+            #  - interaction = two input files of different speakers
             types=("STANDALONE", "SPEAKER", "INTERACTION"),
+
+            # all the output formats of automatic annotations
+            outformat=("ANNOT", "AUDIO", "IMAGE", "VIDEO"),
 
             # standard iso639-3 code for an undetermined language.
             UNDETERMINED="und"

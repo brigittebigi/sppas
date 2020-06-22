@@ -134,7 +134,7 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-e",
         metavar=".ext",
-        default=annots.extension,
+        default=annots.annot_extension,
         choices=extensions_out,
         help='Output file extension. One of: {:s}'
              ''.format(" ".join(extensions_out)))
@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
         # Fix the output file extension
         parameters.set_lang(args.l)
-        parameters.set_output_format(args.e)
+        parameters.set_output_extension(args.e, parameters.get_outformat(ann_step_idx))
         parameters.set_report_filename(args.log)
 
         # Perform the annotation

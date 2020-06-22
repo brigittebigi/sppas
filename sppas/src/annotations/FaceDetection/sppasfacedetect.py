@@ -188,8 +188,3 @@ class sppasFaceDetection(sppasBaseAnnotation):
     def get_input_extensions():
         """Extensions that the annotation expects for its input filename."""
         return extensions
-
-    @staticmethod
-    def get_output_extensions():
-        """Extensions that the annotation can deal with for its output filename."""
-        return extensions

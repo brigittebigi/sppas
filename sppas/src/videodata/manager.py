@@ -34,7 +34,7 @@
 
 from sppas.src.videodata.personsbuffer import PersonsBuffer
 from sppas.src.videodata.facetracking import FaceTracking
-from sppas.src.videodata.videolandmark import VideoLandmark
+from sppas.src.annotations.FaceMark.videolandmark import VideoLandmark
 from sppas.src.videodata.coordswriter import sppasVideoCoordsWriter
 
 # ---------------------------------------------------------------------------

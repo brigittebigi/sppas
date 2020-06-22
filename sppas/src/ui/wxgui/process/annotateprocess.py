@@ -112,7 +112,7 @@ class AnnotateProcess(object):
 
         for entry in filelist:
             parameters.add_to_workspace(entry)
-        parameters.set_output_format(self.preferences.GetValue('M_OUTPUT_EXT'))
+        parameters.set_output_extension(self.preferences.GetValue('M_OUTPUT_EXT'), "ANNOT")
 
         # Create the progress bar then run the annotations
         wx.BeginBusyCursor()

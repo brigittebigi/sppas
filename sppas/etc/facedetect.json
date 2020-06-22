@@ -10,25 +10,30 @@
       "path": "faces",
       "type": "file",
       "ext": "",
-      "name": "res10_300x300_ssd_iter_140000.caffemodel"
+      "name": "res10_300x300_ssd_iter_140000.caffemodel",
+      "lang": false
     },
     {
       "path": "faces",
       "type": "file",
       "ext": "",
-      "name": "haarcascade_profileface.xml"
+      "name": "haarcascade_profileface.xml",
+      "lang": false
     },
     {
       "path": "faces",
       "type": "file",
       "ext": "",
-      "name": "haarcascade_frontalface_alt.xml"
+      "name": "haarcascade_frontalface_alt.xml",
+      "lang": false
     }
   ],
 
   "anntype": [
     "STANDALONE"
   ],
+
+  "outformat": "IMAGE",
 
   "options": [
     {
@@ -70,7 +75,7 @@
     {
       "id": "tag",
       "type": "bool",
-      "value": false,
+      "value": true,
       "text": "Surround the detected faces in the output image"
     },
     {

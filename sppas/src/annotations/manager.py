@@ -39,6 +39,7 @@ import sys
 import os
 from threading import Thread
 
+from sppas.src.config import annots
 from sppas.src.wkps import sppasFileUtils
 from sppas.src.wkps import States
 from sppas.src.anndata import sppasTranscription, sppasRW
@@ -238,18 +239,20 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
+        step_idx = self._parameters.get_step_idx(annotation_key)
         a = self._create_ann_instance(annotation_key)
+
         files_to_process = self.get_annot_files(
             pattern=a.get_input_pattern(),
             extensions=a.get_input_extensions(),
             types=a.get_types())
+        if self._logfile:
+            self._logfile.print_message("Number of files to process: {}"
+                                        "".format(len(files_to_process)), indent=0)
+
         # logging.debug('{:d} files to process'.format(len(files_to_process)))
         # logging.debug(files_to_process)
-        supported_out_formats = a.get_output_extensions()
-        out_format = self._parameters.get_output_format()
-        if out_format not in supported_out_formats:
-            out_format = supported_out_formats[0]
-
+        out_format = self._parameters.get_output_extension(step_idx)
         out_files = a.batch_processing(files_to_process, self._progress, out_format)
 
         self._parameters.add_to_workspace(out_files)
@@ -265,6 +268,7 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
+        step_idx = self._parameters.get_step_idx("fillipus")
         a = self._create_ann_instance("fillipus")
 
         files = list()
@@ -279,7 +283,7 @@ class sppasAnnotationsManager(Thread):
         out_files = a.batch_processing(
             files,
             self._progress,
-            self._parameters.get_output_format())
+            self._parameters.get_output_extension(step_idx))
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)
@@ -294,6 +298,7 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
+        step_idx = self._parameters.get_step_idx("rms")
         a = self._create_ann_instance("rms")
 
         # Required input file
@@ -318,7 +323,7 @@ class sppasAnnotationsManager(Thread):
         out_files = a.batch_processing(
             files,
             self._progress,
-            self._parameters.get_output_format())
+            self._parameters.get_output_extension(step_idx))
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)
@@ -336,6 +341,7 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
+        step_idx = self._parameters.get_step_idx("alignment")
         a = self._create_ann_instance("alignment")
 
         # Required input file is a phonetization
@@ -350,8 +356,9 @@ class sppasAnnotationsManager(Thread):
             base_f = base_f.replace(a.get_input_pattern(), "")
 
             # Get the tokens input file
-            extt = [a.get_opt_input_pattern() + self._parameters.get_output_format()]
-            for e in sppas.src.anndata.aio.extensions_out:
+            tokens_idx = self._parameters.get_step_idx("textnorm")
+            extt = list()
+            for e in self._parameters.get_output_extensions(tokens_idx):
                 extt.append(a.get_opt_input_pattern() + e)
             tok = sppasAnnotationsManager._get_filename(base_f, extt)
 
@@ -366,7 +373,7 @@ class sppasAnnotationsManager(Thread):
         out_files = a.batch_processing(
             files,
             self._progress,
-            self._parameters.get_output_format())
+            self._parameters.get_output_extension(step_idx))
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)
@@ -407,7 +414,8 @@ class sppasAnnotationsManager(Thread):
             pattern="", extensions=sppas.src.audiodata.aio.extensions)
         total = len(filelist)
 
-        output_format = self._parameters.get_output_format()
+        # get the output extension of any annotation of type ANNOT.
+        output_format = self._parameters.get_output_extension(self._parameters.get_step_idx("alignment"))
 
         for i, f in enumerate(filelist):
 
@@ -439,7 +447,7 @@ class sppasAnnotationsManager(Thread):
                         trs.get_min_loc().get_midpoint(),
                         trs.get_max_loc().get_midpoint())
                     trs.append(tier)
-                    out_file = basef + "-merge" + self._parameters.get_output_format()
+                    out_file = basef + "-merge" + output_format
                     parser = sppasRW(out_file)
                     parser.write(trs)
                     self._logfile.print_message(out_file, indent=1, status=0)
@@ -474,7 +482,8 @@ class sppasAnnotationsManager(Thread):
 
         # create a list with the pattern followed by each possible extension
         if len(pattern) > 0:
-            pat_ext = [pattern + self._parameters.get_output_format()]
+            # pat_ext = [pattern + self._parameters.get_output_format()]
+            pat_ext = list()
             for e in extensions:
                 pat_ext.append(pattern + e)
         else:
@@ -484,7 +493,6 @@ class sppasAnnotationsManager(Thread):
                 wkp.get_fileroot_from_state(States().AT_LEAST_ONE_CHECKED)
 
         for root in roots:
-
             new_file = sppasAnnotationsManager._get_filename(root.id, pat_ext)
             if new_file is None:
                 continue

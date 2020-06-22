@@ -72,6 +72,7 @@ if __name__ == "__main__":
     manager = sppasAnnotationsManager()
 
     all_langs = list()
+    all_langs.append("und")
     for i in range(parameters.get_step_numbers()):
         a = parameters.get_step(i)
         all_langs.extend(a.get_langlist())
@@ -108,18 +109,18 @@ if __name__ == "__main__":
 
     group_io.add_argument(
         "-l",
-        required=True,
         metavar="lang",
         choices=all_langs,
+        default="und",
         help='Language code (iso8859-3). One of: {:s}.'
              ''.format(" ".join(all_langs)))
 
     group_io.add_argument(
         "-e",
         metavar=".ext",
-        default=annots.extension,
+        default=annots.annot_extension,
         choices=extensions_out,
-        help='Output file extension. One of: {:s}'
+        help='Output annotation file extension. One of: {:s}'
              ''.format(" ".join(extensions_out)))
 
     # Add the annotations
@@ -211,7 +212,7 @@ if __name__ == "__main__":
     # -------------------------------
 
     parameters.set_lang(args.l)
-    parameters.set_output_format(args.e)
+    parameters.set_output_extension(args.e, "ANNOT")
     parameters.set_report_filename(args.log)
 
     # ----------------------------------------------------------------------------

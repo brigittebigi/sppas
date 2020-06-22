@@ -8,6 +8,8 @@
   "resources": [
   ],
 
+  "outformat": "ANNOT",
+
   "options": [
     {
       "id": "outputpattern",

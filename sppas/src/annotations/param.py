@@ -47,26 +47,24 @@ from sppas.src.structs import sppasLangResource
 
 from sppas.src.wkps import sppasWorkspace, States
 from sppas.src.anndata import sppasRW
-from sppas.src.imgdata import extensions
-
-# ----------------------------------------------------------------------------
-
-annots_ext = sppasRW.extensions_out() + extensions
+from sppas.src.imgdata import extensions as image_extensions
+from sppas.src.audiodata.aio import extensions as audio_extensions
+from sppas.src.videodata import extensions as video_extensions
 
 # ----------------------------------------------------------------------------
 
 
 class annotationParam(object):
-    """Annotation parameters data manager.
+    """Annotation data parameters.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    Class to store data of an automatic annotation like its name, description,
-    supported languages, etc.
+    Class to store meta data of an automatic annotation like its name,
+    description, supported languages, etc.
 
     """
 
@@ -86,6 +84,9 @@ class annotationParam(object):
         self.__api = None
         # The types this annotation can support
         self.__types = []
+        # The main output format type and the output extension
+        self.__out_format = annots.outformat[0]
+        self.__out_ext = self.get_default_out_extension()
         # The status of the annotation
         self.__enabled = False
         self.__invalid = False
@@ -120,7 +121,9 @@ class annotationParam(object):
             self.__key = conf['id']
             self.__name = msg(conf.get('name', ''), "annotations)")  # translate the name
             self.__descr = conf.get('descr', "")
-            self.__types = conf.get('anntype', ["STANDALONE"])
+            self.__types = conf.get('anntype', [annots.types[0]])
+            self.__out_format = conf.get('outformat', annots.outformat[0])
+            self.__out_ext = self.get_default_out_extension()
             self.__api = conf.get('api', None)
             if self.__api is None:
                 self.__enabled = False
@@ -138,7 +141,8 @@ class annotationParam(object):
                 lr.set(new_resource['type'],
                        new_resource['path'],
                        new_resource.get('name', ''),
-                       new_resource['ext'])
+                       new_resource['ext'],
+                       new_resource.get('lang', True))
                 self.__resources.append(lr)
 
         else:
@@ -201,6 +205,67 @@ class annotationParam(object):
 
     # -----------------------------------------------------------------------
 
+    def get_default_out_extension(self):
+        """Return the default output extension this annotation can create."""
+        if self.__out_format == "ANNOT":
+            return annots.annot_extension
+        if self.__out_format == "IMAGE":
+            return annots.image_extension
+        if self.__out_format == "VIDEO":
+            return annots.video_extension
+        if self.__out_format == "AUDIO":
+            return annots.audio_extension
+
+        return ""
+
+    # -----------------------------------------------------------------------
+
+    def get_out_extension(self):
+        """Return the output extension this annotation will create."""
+        return self.__out_ext
+
+    # -----------------------------------------------------------------------
+
+    def get_out_format(self):
+        """Return the output type format of this annotation."""
+        return self.__out_format
+
+    # -----------------------------------------------------------------------
+
+    def get_out_extensions(self):
+        """Return the list of output extensions this annotation can support."""
+        if self.__out_format == "ANNOT":
+            return ["."+e for e in sppasRW.extensions_out()]
+        if self.__out_format == "IMAGE":
+            return image_extensions
+        if self.__out_format == "VIDEO":
+            return video_extensions
+        if self.__out_format == "AUDIO":
+            return audio_extensions
+
+        return list()
+
+    # -----------------------------------------------------------------------
+
+    def set_out_extension(self, ext):
+        """Set the output extension of the file this annotation will create.
+
+        :param ext: (str)
+        :return: Case-sensitive extension
+        :raise: ValueError if ext is not appropriate
+
+        """
+        for e in self.get_out_extensions():
+            if e.startswith(".") is False:
+                e = "." + e
+            if ext.lower() == e.lower():
+                self.__out_ext = e
+                return self.__out_ext
+
+        raise ValueError("{} not in supported formats {}".format(ext, self.get_out_extensions()))
+
+    # -----------------------------------------------------------------------
+
     def get_descr(self):
         """Return the description of the annotation (str)."""
         return self.__descr
@@ -222,9 +287,11 @@ class annotationParam(object):
     def get_lang(self):
         """Return the language or an empty string or None."""
         if len(self.__resources) > 0:
-            return self.__resources[0].get_lang()
+            for r in self.__resources:
+                if r.is_lang_resource():
+                    return r.get_lang()
 
-        # this annotation does not require a lang to be defined
+        # this annotation does not require a lang resource to work with
         return None
 
     # -----------------------------------------------------------------------
@@ -305,9 +372,6 @@ class sppasParam(object):
         """
         # A log file to communicate to the user
         self._report = None
-
-        # The format of the annotated files
-        self._output_ext = annots.extension
 
         # Input files to annotate
         self._workspace = sppasWorkspace()
@@ -566,34 +630,67 @@ class sppasParam(object):
     # Annotation file output format
     # -----------------------------------------------------------------------
 
-    def get_output_format(self):
-        """Return the output format of the annotations (extension)."""
-        return self._output_ext
+    def get_output_extension(self, step):
+        """Return the output format of the annotation (extension)."""
+        return self.annotations[step].get_out_extension()
 
     # -----------------------------------------------------------------------
 
-    def set_output_format(self, output_format):
-        """Fix the output format of the annotations.
+    def get_output_extensions(self, step):
+        """Return the list of supported extensions."""
+        return self.annotations[step].get_out_extensions()
 
-        :param output_format: (str) File extension (with or without a dot)
-        :returns: the extension really set.
+    # -----------------------------------------------------------------------
+
+    def get_outformat(self, step):
+        """Return the output format of the annotation."""
+        return self.annotations[step].get_out_format()
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def get_outformat_extensions(out_format):
+        """Return the list of output extensions an out_format can support."""
+        if out_format == "ANNOT":
+            return ["."+e for e in sppasRW.extensions_out()]
+        if out_format == "IMAGE":
+            return image_extensions
+        if out_format == "VIDEO":
+            return video_extensions
+        if out_format == "AUDIO":
+            return audio_extensions
+
+        return list()
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def get_default_outformat_extension(out_format):
+        """Return the default output extension of an out_format."""
+        if out_format == "ANNOT":
+            return annots.annot_extension
+        if out_format == "IMAGE":
+            return annots.image_extension
+        if out_format == "VIDEO":
+            return annots.video_extension
+        if out_format == "AUDIO":
+            return annots.audio_extension
+
+        return ""
+
+    # -----------------------------------------------------------------------
+
+    def set_output_extension(self, output_ext, output_format):
+        """Fix the output extension of all the annotations of a given out format.
+
+        :param output_ext: (str) File extension (with or without a dot)
+        :param output_format: (str) Either annot, audio, video or image
 
         """
         # Force to contain the dot
-        if not output_format.startswith("."):
-            output_format = "." + output_format
+        if not output_ext.startswith("."):
+            output_ext = "." + output_ext
 
-        # Force to use the appropriate upper-lower cases
-        for e in annots_ext:
-            if output_format.lower() == e.lower():
-                output_format = e
-
-        # Check if this extension is know. If not, set to the default.
-        if output_format not in annots_ext:
-            # Instead we could raise an exception...
-            logging.warning(
-                "Unknown extension: {:s}. Output format is set to the "
-                "default: {:s}.".format(output_format, annots.extension))
-            output_format = annots.extension
-
-        self._output_ext = output_format
+        for a in self.annotations:
+            if a.get_out_format() == output_format:
+                e = a.set_out_extension(output_ext)

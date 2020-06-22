@@ -81,6 +81,9 @@ class Manager(sppasVideodataError):
     pass
 
 
+extensions = list()
+
+
 # ---------------------------------------------------------------------------
 # Import the classes in case the "video" feature is enabled: opencv&numpy
 # are both installed and the automatic detections can work.
@@ -92,8 +95,14 @@ if cfg.dep_installed("video"):
     from .facetracking import FaceTracking
     from .videobuffer import VideoBuffer
     from .personsbuffer import PersonsBuffer
-    from .videolandmark import VideoLandmark
-    from .manager import Manager
+
+    def opencv_extensions():
+        """Return the list of supported file extensions in lower case.
+
+        TODO: make the full list of supported video file extensions
+
+        """
+        return (".mp4", ".avi")
 
 # ---------------------------------------------------------------------------
 
@@ -103,6 +112,5 @@ __all__ = (
     "FaceTracking",
     "VideoBuffer",
     "PersonsBuffer",
-    "VideoLandmark",
-    "Manager"
+    "extensions"
 )

@@ -121,12 +121,13 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-r",
         metavar="model",
-        help='Model base name')
+        action='append',
+        help='Model base name (as many .caffemodel or .xml models as wishes)')
 
     group_io.add_argument(
         "-e",
         metavar=".ext",
-        default=annots.extension,
+        default=annots.image_extension,
         choices=extensions,
         help='Output file extension. One of: {:s}'
              ''.format(" ".join(extensions)))
@@ -194,7 +195,7 @@ if __name__ == "__main__":
             sys.exit(1)
 
         ann = sppasFaceDetection(log=None)
-        ann.load_resources(args.r)
+        ann.load_resources(args.r[0], *args.r[1:])
         ann.fix_options(parameters.get_options(ann_step_idx))
 
         if args.o:
@@ -216,7 +217,7 @@ if __name__ == "__main__":
 
         # Fix the output file extension and others
         parameters.set_report_filename(args.log)
-        parameters.set_output_format(args.e)
+        parameters.set_output_extension(args.e, parameters.get_outformat(ann_step_idx))
 
         # Perform the annotation
         process = sppasAnnotationsManager()

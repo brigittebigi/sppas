@@ -46,7 +46,7 @@ import sppas.src.audiodata.aio
 
 # ----------------------------------------------------------------------------
 
-anndata_ext = sppasRW.extensions_in()
+anndata_ext = ["."+e for e in sppasRW.extensions_in()]
 imgdata_ext = sppas.src.imgdata.extensions
 audiodata_ext = sppas.src.audiodata.aio.extensions
 

@@ -32,7 +32,7 @@
 
 """
 
-from sppas.src.annotations.FaceDetection.facedetection import FaceDetection
+from sppas.src.imgdata import sppasImageObjectDetection
 
 # ---------------------------------------------------------------------------
 
@@ -64,11 +64,11 @@ class FaceTracking(object):
         """
         iterator = buffer.__iter__()
         for i in range(len(buffer)):
-            face = FaceDetection(next(iterator))
-            face.detect_all()
-            if len(face.get_all()) > self.__max_persons:
-                self.__max_persons = len(face.get_all())
-            self.__faces.append(face.get_all())
+            face = sppasImageObjectDetection(next(iterator))
+            face.detect()
+            if len(face) > self.__max_persons:
+                self.__max_persons = len(face)
+            self.__faces.append(face)
 
     # -----------------------------------------------------------------------
 
@@ -131,5 +131,4 @@ class FaceTracking(object):
         self.__faces = list()
         self.__max_persons = 0
 
-    # -----------------------------------------------------------------------
 

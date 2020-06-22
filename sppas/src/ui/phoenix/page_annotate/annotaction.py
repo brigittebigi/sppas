@@ -35,6 +35,7 @@
 """
 
 import wx
+import logging
 import os
 
 from sppas.src.config import msg
@@ -47,7 +48,7 @@ from ..windows import sppasToolbar
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasStaticText
-from ..windows import BitmapTextButton, CheckButton, RadioButton
+from ..windows import BitmapTextButton, RadioButton
 
 from .annotevent import PageChangeEvent
 from .annotselect import LANG_NONE
@@ -61,7 +62,7 @@ def _(message):
     return u(msg(message, "ui"))
 
 
-MSG_STEP_FORMAT = _("STEP 1: choose an output file format")
+MSG_STEP_FORMAT = _("STEP 1: choose the output file format(s)")
 MSG_STEP_LANG = _("STEP 2: fix the language(s)")
 MSG_STEP_ANNCHOICE = _("STEP 3: select and configure annotations")
 MSG_STEP_RUN = _("STEP 4: perform the annotations")
@@ -148,10 +149,10 @@ class sppasActionAnnotatePanel(sppasPanel):
                     reports.append(f)
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        action_sizer = self._create_action_content()
+        action_panel = self._create_action_content()
         reports_panel = ReportsPanel(self, reports, name="reports_panel")
 
-        sizer.Add(action_sizer, 3, wx.EXPAND)
+        sizer.Add(action_panel, 3, wx.EXPAND)
         sizer.Add(self.__create_vline(), 0, wx.EXPAND)
         sizer.Add(reports_panel, 1, wx.EXPAND)
 
@@ -202,25 +203,23 @@ class sppasActionAnnotatePanel(sppasPanel):
     # ------------------------------------------------------------------------
 
     def __create_action_format(self, parent):
-        """The output file format (step 1).
-
-        TODO: Fix dynamically the list of output formats with sppasRW()
-
-        """
-        p = sppasPanel(parent, style=wx.BORDER_NONE, name="format_panel")
-
-        st = sppasStaticText(p, label=MSG_STEP_FORMAT)
-        all_formats = ['.xra', '.TextGrid', '.eaf', '.antx', '.mrk', '.csv']
-        default = self.__param.get_output_format()
-        wx.LogMessage("Default output format is {:s}".format(default))
-        choice = wx.ComboBox(p, -1, choices=all_formats, name="format_choice")
-        choice.SetSelection(choice.GetItems().index(default))
-        choice.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
-
-        s = wx.BoxSizer(wx.HORIZONTAL)
+        """The output file formats (step 1). """
         border = sppasPanel.fix_size(10)
+        p = sppasPanel(parent, style=wx.BORDER_NONE, name="format_panel")
+        s = wx.BoxSizer(wx.HORIZONTAL)
+        st = sppasStaticText(p, label=MSG_STEP_FORMAT)
         s.Add(st, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.ALL, border)
-        s.Add(choice, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, border)
+
+        for out_format in annots.outformat:
+            all_formats = self.__param.get_outformat_extensions(out_format)
+            if len(all_formats) == 0:
+                continue
+            default = self.__param.get_default_outformat_extension(out_format)
+            box = wx.ComboBox(p, -1, choices=all_formats, name="format_choice_"+out_format)
+            box.SetSelection(box.GetItems().index(default))
+            box.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
+            s.Add(box, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, border)
+
         p.SetSizer(s)
         return p
 
@@ -359,7 +358,10 @@ class sppasActionAnnotatePanel(sppasPanel):
 
         # Language choice changed
         self.FindWindow("lang_choice").Bind(wx.EVT_COMBOBOX, self._on_lang_changed)
-        self.FindWindow("format_choice").Bind(wx.EVT_COMBOBOX, self._on_format_changed)
+        for out_format in annots.outformat:
+            box = self.FindWindow("format_choice_"+out_format)
+            if box is not None:
+                box.Bind(wx.EVT_COMBOBOX, self._on_format_changed)
 
     # -----------------------------------------------------------------------
 
@@ -444,9 +446,10 @@ class sppasActionAnnotatePanel(sppasPanel):
 
     def _on_format_changed(self, event):
         choice = event.GetEventObject()
-        new_format = choice.GetValue()
-        self.__param.set_output_format(new_format)
-        wx.LogDebug("New output format is {:s}".format(new_format))
+        new_ext = choice.GetValue()
+        out_format = choice.GetName().replace("format_choice_", "")
+        self.__param.set_output_extension(new_ext, out_format)
+        wx.LogDebug("New output format for {} is {:s}".format(out_format, new_ext))
 
     # -----------------------------------------------------------------------
 
@@ -464,6 +467,7 @@ class sppasActionAnnotatePanel(sppasPanel):
         for i in range(self.__param.get_step_numbers()):
             a = self.__param.get_step(i)
             if a.get_activate() is True:
+                logging.debug("Annotation activated: {}".format(a.get_key()))
                 for x, ann_type in enumerate(annots.types):
                     if ann_type in a.get_types():
                         ann_enabled[x] = True
