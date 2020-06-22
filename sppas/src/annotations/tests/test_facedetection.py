@@ -41,8 +41,8 @@ from sppas.src.imgdata import sppasCoords
 from sppas.src.imgdata import sppasImage
 from sppas.src.imgdata import sppasImageWriter
 
-from ..FaceDetection.facedetection import HaarCascadeDetector
-from ..FaceDetection.facedetection import NeuralNetDetector
+from sppas.src.imgdata import HaarCascadeDetector
+from sppas.src.imgdata import NeuralNetDetector
 from ..FaceDetection.facedetection import FaceDetection
 
 # ---------------------------------------------------------------------------
@@ -161,9 +161,10 @@ class TestFaceDetection(unittest.TestCase):
 
         fd.load_model(HAAR1, HAAR2, NET)
         fd.detect(img)
-        coords = [c.copy() for c in fd]
-        fn = os.path.join(DATA, "montage-faces.png")
-        w.write(img, coords, fn)
+        self.assertEqual(3, len(fd))
+        # coords = [c.copy() for c in fd]
+        # fn = os.path.join(DATA, "montage-faces.png")
+        # w.write(img, coords, fn)
 
 # ---------------------------------------------------------------------------
 
@@ -230,18 +231,18 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
 
         # with the default min score
         fd.detect(img)
-        coords = [c.copy() for c in fd]
-        fn = os.path.join(DATA, "montage-haarprofilefaces.png")
-        w.write(img, coords, fn)
+        # coords = [c.copy() for c in fd]
+        # fn = os.path.join(DATA, "montage-haarprofilefaces.png")
+        # w.write(img, coords, fn)
         self.assertEqual(4, len(fd))
 
         # will detect the same because haar system is normalizing weights
         # with the min score
         fd.set_min_score(0.067)
         fd.detect(img)
-        coords = [c.copy() for c in fd]
-        fn = os.path.join(DATA, "montage-haarprofilefaces.png")
-        w.write(img, coords, fn)
+        # coords = [c.copy() for c in fd]
+        # fn = os.path.join(DATA, "montage-haarprofilefaces.png")
+        # w.write(img, coords, fn)
         self.assertEqual(4, len(fd))
 
         # With the frontal model
@@ -249,9 +250,9 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
         fd.set_min_score(FaceDetection.DEFAULT_MIN_SCORE)
         fd.load_model(HAAR2)
         fd.detect(img)
-        coords = [c.copy() for c in fd]
-        fn = os.path.join(DATA, "montage-haarfrontfaces.png")
-        w.write(img, coords, fn)
+        # coords = [c.copy() for c in fd]
+        # fn = os.path.join(DATA, "montage-haarfrontfaces.png")
+        # w.write(img, coords, fn)
         self.assertEqual(6, len(fd))
 
         # With both models
@@ -323,7 +324,7 @@ class TestDNNFaceDetection(unittest.TestCase):
         # --------------------------------------------------------
         fd.to_portrait(img)
         coords = fd.get_best()
-        self.assertTrue(coords == [798, 159, 354, 386])
+        self.assertTrue(coords == [789, 154, 371, 396])
         cropped = sppasImage(input_array=img.icrop(coords))
 
         fn_detected = os.path.join(DATA, "BrigitteBigiSlovenie2016-portrait.jpg")
@@ -354,10 +355,10 @@ class TestDNNFaceDetection(unittest.TestCase):
         fd.detect(img)
         coords = [c.copy() for c in fd]
 
-        w = sppasImageWriter()
-        w.set_options(tag=True)
-        fn = os.path.join(DATA, "montage-dnnfaces.png")
-        w.write(img, coords, fn)
+        # w = sppasImageWriter()
+        # w.set_options(tag=True)
+        # fn = os.path.join(DATA, "montage-dnnfaces.png")
+        # w.write(img, coords, fn)
         self.assertEqual(4, len(fd))
 
         fd.set_min_score(0.067)

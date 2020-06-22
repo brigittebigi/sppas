@@ -49,19 +49,35 @@ from sppas.src.exceptions import sppasEnableFeatureError
 # Store the rectangle and a score of an image
 from .coordinates import sppasCoords
 
+
 # ---------------------------------------------------------------------------
 # Define classes in case opencv&numpy are not installed.
 # ---------------------------------------------------------------------------
 
 
-class sppasImage(object):
+class sppasImageDataError(object):
     def __init__(self, *args, **kwargs):
         raise sppasEnableFeatureError("video")
 
 
-class sppasImageWriter(object):
-    def __init__(self, *args, **kwargs):
-        raise sppasEnableFeatureError("video")
+class sppasImage(sppasImageDataError):
+    pass
+
+
+class sppasImageWriter(sppasImageDataError):
+    pass
+
+
+class HaarCascadeDetector(sppasImageDataError):
+    pass
+
+
+class NeuralNetDetector(sppasImageDataError):
+    pass
+
+
+class sppasImageObjectDetection(sppasImageDataError):
+    pass
 
 
 extensions = list()
@@ -77,6 +93,10 @@ if cfg.dep_installed("video"):
     from .image import sppasImage
     # Write image and coordinates
     from .imgwriter import sppasImageWriter
+    # Automatically detect objects in an image
+    from .objdetec import HaarCascadeDetector
+    from .objdetec import NeuralNetDetector
+    from .objdetec import sppasImageObjectDetection
 
     def opencv_extensions():
         """Return the list of supported file extensions in lower case.
@@ -102,5 +122,8 @@ __all__ = (
     "sppasCoords",
     "sppasImage",
     "sppasImageWriter",
-    "extensions"
+    "extensions",
+    "HaarCascadeDetector",
+    "NeuralNetDetector",
+    "sppasImageObjectDetection"
 )
