@@ -117,6 +117,7 @@ class FaceDetection(sppasImageObjectDetection):
                     shifted_x = True
                 except:
                     shifted_x = False
+
                 try:
                     c.shift(0, shift_y, image)
                     shifted_y = True

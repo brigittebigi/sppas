@@ -280,7 +280,7 @@ class sppasCoords(object):
 
     # -----------------------------------------------------------------------
 
-    def shift(self, x_value, y_value=0, image=None):
+    def shift(self, x_value=0, y_value=0, image=None):
         """Multiply width and height value with coeff value.
 
         :param x_value: (int) The value to add to x-axis value.
@@ -294,23 +294,26 @@ class sppasCoords(object):
         y_value = self.__to_dtype(y_value)
 
         new_x = self.__x + x_value
-        new_y = self.__y + y_value
         if new_x < 0:
             new_x = 0
-        elif new_y < 0:
+
+        new_y = self.__y + y_value
+        if new_y < 0:
             new_y = 0
 
         if image is not None:
             # Get the width and height of image
             (max_h, max_w) = image.shape[:2]
-            if new_x > max_w:
-                raise ImageEastingError(new_x, max_w)
-            elif new_x + self.__w > max_w:
-                raise ImageBoundError(new_x + self.__w, max_w)
-            elif new_y > max_h:
-                raise ImageNorthingError(new_y, max_h)
-            elif new_y + self.__h > max_h:
-                raise ImageBoundError(new_y + self.__h, max_h)
+            if x_value > 0:
+                if new_x > max_w:
+                    raise ImageEastingError(new_x, max_w)
+                elif new_x + self.__w > max_w:
+                    raise ImageBoundError(new_x + self.__w, max_w)
+            if y_value > 0:
+                if new_y > max_h:
+                    raise ImageNorthingError(new_y, max_h)
+                elif new_y + self.__h > max_h:
+                    raise ImageBoundError(new_y + self.__h, max_h)
 
         self.__x = new_x
         self.__y = new_y

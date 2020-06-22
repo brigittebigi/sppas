@@ -39,6 +39,7 @@ import cv2
 
 from sppas.src.config import paths
 from sppas.src.imgdata import sppasImage
+from sppas.src.imgdata import sppasImageWriter
 from sppas.src.imgdata import sppasCoords
 from ..FaceDetection import FaceDetection
 from ..FaceMark.facelandmark import FaceLandmark
@@ -49,7 +50,8 @@ DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 MODEL = os.path.join(paths.resources, "faces", "lbfmodel68.yaml")
 
 NET = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000.caffemodel")
-HAAR = os.path.join(paths.resources, "faces", "haarcascade_profileface.xml")
+HAAR1 = os.path.join(paths.resources, "faces", "haarcascade_profileface.xml")
+HAAR2 = os.path.join(paths.resources, "faces", "haarcascade_frontalface_alt.xml")
 
 # ---------------------------------------------------------------------------
 
@@ -63,6 +65,7 @@ class TestFaceLandmark(unittest.TestCase):
             fl.load_model("toto.txt", "toto")
 
         fl.load_model(MODEL, NET)
+        fl.load_model(MODEL, NET, HAAR1, HAAR2)
 
     # ------------------------------------------------------------------------
 
@@ -114,28 +117,37 @@ class TestFaceLandmark(unittest.TestCase):
 
     def test_mark_montage(self):
         fl = FaceLandmark()
-        fl.load_model(MODEL, HAAR)
+        fl.load_model(MODEL, HAAR1, HAAR2, NET)
 
         # The image we'll work on, with 3 faces to be detected
         fn = os.path.join(DATA, "montage.png")
         img = sppasImage(filename=fn)
 
         fd = FaceDetection()
-        fd.load_model(NET)
+        fd.load_model(HAAR1, HAAR2, NET)
         fd.detect(img)
+        self.assertEqual(len(fd), 3)
         fd.to_portrait(img)
 
-        landmark_coords = list()
         for i, coord in enumerate(fd):
             # Create an image of the ROI
             cropped_face = img.icrop(coord)
             fn = os.path.join(DATA, "face-{:d}.jpg".format(i))
-            cv2.imwrite(fn, i)
+            cropped_face.write(fn)
+
             try:
-                print(coord)
                 fl.mark(cropped_face)
-                landmark_coords.append(coord)
-                print(fl)
+                face_coords = fl.get_detected_face()
+                face_coords.x += coord.x
+                face_coords.y += coord.y
+                img = img.isurround(face_coords, color=((50 * (i+1)) % 256, (100 * (i+1)) % 256, 200), thickness=2, text="")
+                for c in fl:
+                    c.x = c.x + coord.x - 2
+                    c.y = c.y + coord.y - 2
+                    c.w = 4
+                    c.h = 4
+                    img = img.isurround(c, color=((50*(i+1)) % 256, (100*(i+1)) % 256, 200), thickness=1, text="")
             except Exception as e:
                 print("Coords {}: {}".format(i, str(e)))
 
+        img.write(os.path.join(DATA, "montage-faces.png"))

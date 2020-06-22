@@ -76,23 +76,22 @@ class FaceLandmark(object):
 
     # -----------------------------------------------------------------------
 
-    def load_model(self, model_landmark, model_face):
-        """Initialize proto file and model file.
+    def load_model(self, model_landmark, model_fd, *args):
+        """Initialize the face detection and recognizer from model files.
 
         :param model_landmark: (str) Filename of the recognizer model.
-        :param model_face: (str) Filename of the model for face detection
+        :param model_fd: (str) A filename of a model for face detection
+        :param *args: (str) Other filenames of models for face detection
         :raise: IOError, Exception
 
         """
-        # Use the given model and haar cascade
         if os.path.exists(model_landmark) is False:
             raise sppasIOError(model_landmark)
-        if os.path.exists(model_face) is False:
-            raise sppasIOError(model_face)
 
-        self.__fd.load_model(model_face)
         self.__recognizer = cv2.face.createFacemarkLBF()
         self.__recognizer.loadModel(model_landmark)
+
+        self.__fd.load_model(model_fd, *args)
 
     # -----------------------------------------------------------------------
     # Getters of specific points
@@ -199,6 +198,14 @@ class FaceLandmark(object):
         if len(self.__landmarks) == 68:
             return self.__landmarks[48:]
         return list()
+
+    # -----------------------------------------------------------------------
+
+    def get_detected_face(self):
+        """Return coordinates of the detected face, or None."""
+        if len(self.__fd) > 0:
+            return self.__fd.get_best()
+        return None
 
     # -----------------------------------------------------------------------
     # Automatic detection of the landmark points

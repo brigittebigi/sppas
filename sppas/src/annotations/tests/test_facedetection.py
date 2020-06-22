@@ -103,6 +103,12 @@ class TestFaceDetection(unittest.TestCase):
         fd.to_portrait(img)
         self.assertEqual(fd[0], [1422, 790, 210, 126])
 
+        # the 3rd face in montage.png
+        fd.invalidate()
+        fd._coords.append(sppasCoords(1546, 253, 276, 276))
+        fd.to_portrait(img)
+        self.assertEqual(fd[0], [1053, 153, 579, 579])
+
     # ------------------------------------------------------------------------
 
     def test_contains(self):
@@ -162,7 +168,9 @@ class TestFaceDetection(unittest.TestCase):
         fd.load_model(HAAR1, HAAR2, NET)
         fd.detect(img)
         self.assertEqual(3, len(fd))
-        # coords = [c.copy() for c in fd]
+        coords = [c.copy() for c in fd]
+        for c in coords:
+            print(c)
         # fn = os.path.join(DATA, "montage-faces.png")
         # w.write(img, coords, fn)
 

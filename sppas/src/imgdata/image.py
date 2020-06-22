@@ -130,7 +130,7 @@ class sppasImage(numpy.ndarray):
         y2 = coordinate.y + coordinate.h
         cropped = self[y1:y2, x1:x2]
 
-        return cropped
+        return sppasImage(input_array=cropped)
 
     # ------------------------------------------------------------------------
 
