@@ -373,10 +373,13 @@ class Installer(object):
         :raises: sppasInstallationError
 
         """
-        self.__pmessage("Download, unzip and install linguistic resources "
-                        "for {} language".format(fid))
+        self.__pmessage("Download, unzip and install linguistic resources for {} language".format(fid))
         zip_path = self._features.lang(fid) + ".zip"
-        Installer.install_resource(zip_path)
+        url = paths.urlresources
+        if url.endswith("/") is False:
+            url += "/"
+        url += "lang/"
+        Installer.install_resource(url, zip_path)
         self.__pupdate(fid, MESSAGES["install_success"].format(name=fid))
 
     # ------------------------------------------------------------------------
@@ -388,23 +391,27 @@ class Installer(object):
         :raises: sppasInstallationError
 
         """
-        self.__pmessage("Download, unzip and install resources for {} "
-                        "annotation".format(fid))
+        self.__pmessage("Download, unzip and install resources for {} annotation".format(fid))
         zip_path = self._features.annot(fid) + ".zip"
-        Installer.install_resource(zip_path)
+        url = paths.urlresources
+        if url.endswith("/") is False:
+            url += "/"
+        url += "annot/"
+        Installer.install_resource(url, zip_path)
         self.__pupdate(fid, MESSAGES["install_success"].format(name=fid))
 
     # ------------------------------------------------------------------------
 
     @staticmethod
-    def install_resource(zip_path):
+    def install_resource(web_url, zip_path):
         """Install the given zip file in the resources of SPPAS.
 
+        :param web_url: (str) URL of the directory
         :param zip_path: (str) Zip filename to download and install
 
         """
         err = ""
-        url = paths.urlresources + zip_path
+        url = web_url + zip_path
         tmp = os.path.join(paths.resources, zip_path)
 
         # Attempt to open the url and manage the errors if any

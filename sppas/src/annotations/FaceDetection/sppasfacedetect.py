@@ -75,7 +75,7 @@ class sppasFaceDetection(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    def load_resources(self, model1, *args, lang=None):
+    def load_resources(self, model1, *args, **kwargs):
         """Fix the model file.
 
         :param model1: (str) Filename of the model

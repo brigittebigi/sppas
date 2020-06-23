@@ -130,7 +130,7 @@ class sppasPathSettings(sppasBaseSettings):
             wkps=os.path.join(base_dir, "workspaces"),
             logs=os.path.join(base_dir, ".logs"),
             trash=os.path.join(base_dir, ".trash"),
-            urlresources="http://www.sppas.org/resources/"
+            urlresources="https://hdl.handle.net/11403/sppasresources/"
         )
 
 # ---------------------------------------------------------------------------
