@@ -30,15 +30,21 @@
     src.preinstall.installer.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    Compatible only with Python 3+.
+
 """
 
 import logging
 import shutil
 import shlex
 import subprocess
+import os
+import urllib.request
+import zipfile
 
 from sppas.src.config import cfg
 from sppas.src.config import info
+from sppas.src.config import paths
 from sppas.src.exceptions.exc import sppasInstallationError
 from sppas.src.utils.makeunicode import u
 
@@ -292,14 +298,16 @@ class Installer(object):
         errors = list()
         for fid in self._features.get_ids():
             self.__pheader(self.__message("beginning_feature", fid))
+
             if self._features.available(fid) is False:
                 self.__pmessage(self.__message("available_false", fid))
             elif self._features.enable(fid) is False:
                 self.__pmessage(self.__message("enable_false", fid))
             else:
-
+                self.__pmessage("")
                 try:
                     self.__install_feature(fid)
+
                 except sppasInstallationError as e:
                     self._features.enable(fid, False)
                     self.__pmessage(self.__message("install_failed", fid))
@@ -365,7 +373,11 @@ class Installer(object):
         :raises: sppasInstallationError
 
         """
-        raise NotImplementedError
+        self.__pmessage("Download, unzip and install linguistic resources "
+                        "for {} language".format(fid))
+        zip_path = self._features.lang(fid) + ".zip"
+        Installer.install_resource(zip_path)
+        self.__pupdate(fid, MESSAGES["install_success"].format(name=fid))
 
     # ------------------------------------------------------------------------
 
@@ -376,7 +388,56 @@ class Installer(object):
         :raises: sppasInstallationError
 
         """
-        raise NotImplementedError
+        self.__pmessage("Download, unzip and install resources for {} "
+                        "annotation".format(fid))
+        zip_path = self._features.annot(fid) + ".zip"
+        Installer.install_resource(zip_path)
+        self.__pupdate(fid, MESSAGES["install_success"].format(name=fid))
+
+    # ------------------------------------------------------------------------
+
+    @staticmethod
+    def install_resource(zip_path):
+        """Install the given zip file in the resources of SPPAS.
+
+        :param zip_path: (str) Zip filename to download and install
+
+        """
+        err = ""
+        url = paths.urlresources + zip_path
+        tmp = os.path.join(paths.resources, zip_path)
+
+        # Attempt to open the url and manage the errors if any
+        req = urllib.request.Request(url)
+        try:
+            response = urllib.request.urlopen(req)
+        except urllib.error.URLError as e:
+            if hasattr(e, 'reason'):
+                err = "Failed to establish a connection to the url {}: {}" \
+                      "".format(url, e.reason)
+            elif hasattr(e, 'code'):
+                err = "The web server couldn't fulfill the request for url {}. " \
+                      "Error code: {}".format(url, e.code)
+            else:
+                err = "Unknown connection error."
+
+        else:
+            # Everything is fine. Download the file.
+            with open(tmp, 'wb') as out_file:
+                shutil.copyfileobj(response, out_file)
+
+            # Unzip the downloaded resource file
+            try:
+                z = zipfile.ZipFile(tmp)
+                z.extractall(os.path.join(paths.resources))
+                z.close()
+            except zipfile.error as e:
+                err = str(e)
+
+        if os.path.exists(tmp) is True:
+            os.remove(tmp)
+        if len(err) > 0:
+            raise sppasInstallationError(err)
 
     # ------------------------------------------------------------------------
 
@@ -538,14 +599,25 @@ class Installer(object):
         :return: (float)
 
         """
-        nb_cmd = 0
-        if len(self._features.cmd(fid)) > 0:
-            nb_cmd = 1
-        nb_packages = len(self._features.packages(fid))
-        nb_pypi = len(self._features.pypi(fid))
-        nb_total = nb_cmd + nb_packages + nb_pypi
+        nb_total = 0
+        ft = self._features.feature_type(fid)
+        if ft == "deps":
+            nb_cmd = 0
+            if len(self._features.cmd(fid)) > 0:
+                nb_cmd = 1
+            nb_packages = len(self._features.packages(fid))
+            nb_pypi = len(self._features.pypi(fid))
+            nb_total = nb_cmd + nb_packages + nb_pypi
+        elif ft == "annot":
+            if len(self._features.annot(fid)) > 0:
+                nb_total = 1
+        elif ft == "lang":
+            if len(self._features.lang(fid)) > 0:
+                nb_total = 1
 
-        return int(round((1. / float(nb_total)), 2) * 100.)
+        if nb_total > 0:
+            return int(round((1. / float(nb_total)), 2) * 100.)
+        return 0
 
     # ------------------------------------------------------------------------
 

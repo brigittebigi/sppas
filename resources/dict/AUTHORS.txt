@@ -29,6 +29,7 @@ fra.dict:
     Author: Brigitte Bigi
     Copyright (C) 2011-2019 Brigitte Bigi, LPL, CNRS
 
+
 fraquebec:
     Copyright (c) Marie-Hélène Côté, Université de Lausanne
     Author: Marie-Hélène Côté
@@ -43,18 +44,17 @@ ita.dict:
 jpn.dict:
     Part of the Julius software
 
-	
+
 spa.dict:
     http://www.speech.cs.cmu.edu/sphinx/models/hub4spanish_itesm/
     Converted in SAMPA by Brigitte Bigi.
 
-	
+
 yue.dict:
-    The character pronunciation comes from Jyutping phrase box from the 
+    The character pronunciation comes from Jyutping phrase box from the
     Linguistic Society of Hong Kong.
-    "The copyright of the Jyutping phrase box belongs to the Linguistic 
-    Society of Hong Kong.  We would like to thank the Jyutping Group of the 
-    Linguistic Society of Hong Kong for permission to use the electronic file 
+    "The copyright of the Jyutping phrase box belongs to the Linguistic
+    Society of Hong Kong.  We would like to thank the Jyutping Group of the
+    Linguistic Society of Hong Kong for permission to use the electronic file
     in our research and/or product development."
-    
-    
+

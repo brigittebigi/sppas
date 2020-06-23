@@ -33,9 +33,11 @@
 
 """
 
+import os
 import unittest
 
 from sppas.src.config import sppasLogSetup
+from sppas.src.config import paths
 from sppas.src.exceptions import sppasInstallationError
 from ..features import Features
 from ..installer import Installer
@@ -58,6 +60,22 @@ class TestInstaller(unittest.TestCase):
         lgs = sppasLogSetup(0)
         lgs.stream_handler()
         self.__installer = InstallerTest()
+
+    # ---------------------------------------------------------------------------
+
+    def test_download_resource(self):
+        with self.assertRaises(sppasInstallationError):
+            InstallerTest().install_resource("toto.zip")
+
+        with self.assertRaises(sppasInstallationError):
+            InstallerTest().install_resource("badtest.zip")
+
+        InstallerTest().install_resource("test.zip")
+        downloaded = os.path.join(paths.resources, "test.zip")
+        installed = os.path.join(paths.resources, "faces", "test.txt")
+        self.assertTrue(os.path.exists(installed))
+        self.assertFalse(os.path.exists(downloaded))
+        os.remove(installed)
 
     # ---------------------------------------------------------------------------
 

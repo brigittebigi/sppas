@@ -336,10 +336,10 @@ class Features(object):
                 self.__fill_deps_feature(feature, parser)
             if ft == "lang":
                 feature = LangFeature(fid)
-                self.__fill_lang_feature(feature, parser)
+                self.__fill_lang_feature(feature)
             if ft == "annot":
                 feature = AnnotFeature(fid)
-                self.__fill_annot_feature(feature, parser)
+                self.__fill_annot_feature(feature)
         except cp.NoOptionError:
             pass
 
@@ -383,31 +383,21 @@ class Features(object):
 
     # ------------------------------------------------------------------------
 
-    def __fill_lang_feature(self, feature, parser):
+    def __fill_lang_feature(self, feature):
+        # the identifier of the feature is also the name of the zip file to
+        # download and install
         fid = feature.get_id()
-        try:
-            lang = parser.get(fid, "lang")
-            feature.set_lang(lang)
-        except cp.NoOptionError:
-            pass
-
-        # Is available?
-        if len(feature.get_lang()) > 0:
-            feature.set_available(True)
+        feature.set_lang(fid)
+        feature.set_available(True)
 
     # ------------------------------------------------------------------------
 
-    def __fill_annot_feature(self, feature, parser):
+    def __fill_annot_feature(self, feature):
+        # the identifier of the feature is also the name of the zip file to
+        # download and install
         fid = feature.get_id()
-        try:
-            annot = parser.get(fid, "annot")
-            feature.set_annot(annot)
-        except cp.NoOptionError:
-            pass
-
-        # Is available?
-        if len(feature.get_annot()) > 0:
-            feature.set_available(True)
+        feature.set_annot(fid)
+        feature.set_available(True)
 
     # ------------------------------------------------------------------------
     # Private: Internal use only.
