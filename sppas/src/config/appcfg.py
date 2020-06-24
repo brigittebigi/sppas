@@ -54,7 +54,7 @@ from .settings import sppasPathSettings
 
 
 class sppasAppConfig(object):
-    """Configuration for any SPPAS Application.
+    """Configuration for SPPAS application.
 
         :author:       Florian Hocquet, Brigitte Bigi
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -62,20 +62,29 @@ class sppasAppConfig(object):
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
+    An instance of this class has to be created for any application using
+    the SPPAS API.
+
     """
+
+    APP_CONFIG_FILENAME = ".app~"
+
+    # -----------------------------------------------------------------------
 
     def __init__(self):
         """Create a new sppasAppConfig instance.
 
-            The configuration is set to its default values and updated
-            with the content of a configuration file (if existing).
-            The configuration is saved when this instance is deleted.
+        The configuration is set to its default values and updated
+        with the content of a configuration file (if existing).
+
+        The configuration is saved the 1st time this class is instantiated
+        and when this class is deleted.
 
         """
         super(sppasAppConfig, self).__init__()
 
         # Create a default configuration
-        self.__log_level = 0  # 15,
+        self.__log_level = 15,
         self.__quiet_log_level = 30
         self.__splash_delay = 3
         self.__deps = dict()
@@ -127,7 +136,7 @@ class sppasAppConfig(object):
     def set_splash_delay(self, value):
         """Set the delay to draw the splash.
 
-        :param value: (int) Delay ranges from 0 to 10 seconds.
+        :param value: (int) Delay ranging 0..10 seconds.
 
         """
         value = int(value)
@@ -145,25 +154,25 @@ class sppasAppConfig(object):
     def cfg_filename():
         """Return the name of the config file."""
         with sppasPathSettings() as paths:
-            cfg_filename = os.path.join(paths.basedir, ".app~")
+            cfg_filename = os.path.join(paths.basedir,
+                                        sppasAppConfig.APP_CONFIG_FILENAME)
         return cfg_filename
-
-    # -----------------------------------------------------------------------
-
-    def cfg_file_exists(self):
-        """Return True if the config file exists."""
-        cfg = self.cfg_filename()
-        if cfg is None:
-            return False
-        return os.path.isfile(cfg)
 
     # ------------------------------------------------------------------------
 
     def load(self):
-        """Load partly the configuration from a file."""
-        if self.cfg_file_exists() is True:
+        """Load the configuration from a file."""
+        cfg = self.cfg_filename()
+
+        if os.path.exists(cfg) is False:
+            # The file isn't existing. It's the first launch. Save it
+            # with the default values.
+            self.save()
+
+        else:
             with open(self.cfg_filename()) as cfg:
                 d = json.load(cfg)
+
             self.__splash_delay = d.get("splash_delay", 3)
             self.__log_level = d.get("log_level", 0)
             self.__deps = d.get("deps", dict())

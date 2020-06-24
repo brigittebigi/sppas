@@ -42,7 +42,6 @@ Create and run the application with:
 
 """
 
-import traceback
 import wx
 import logging
 
@@ -122,11 +121,11 @@ class sppasInstallApp(wx.App):
                     if ':' in msg:
                         msg = msg[:msg.index(":")]
                         error = int(msg)
-                except:
-                    logging.error(traceback.format_exc())
+                except Exception as e:
+                    logging.error(str(e))
                     pass
             else:
-                logging.error(traceback.format_exc())
+                logging.error(str(e))
             return error
 
         return 0

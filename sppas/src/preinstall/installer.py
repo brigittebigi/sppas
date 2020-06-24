@@ -301,8 +301,15 @@ class Installer(object):
 
             if self._features.available(fid) is False:
                 self.__pmessage(self.__message("available_false", fid))
+
             elif self._features.enable(fid) is False:
+                # force to add a package dependency into the .app~file.
+                # even if not enabled. it'll help manual edit of the file.
+                if self._features.feature_type(fid) == "deps":
+                    if cfg.dep_installed(fid) is False:
+                        cfg.set_dep(fid, False)
                 self.__pmessage(self.__message("enable_false", fid))
+
             else:
                 self.__pmessage("")
                 try:
@@ -311,6 +318,8 @@ class Installer(object):
                 except sppasInstallationError as e:
                     self._features.enable(fid, False)
                     self.__pmessage(self.__message("install_failed", fid))
+                    if self._features.feature_type(fid) == "deps":
+                        cfg.set_dep(fid, False)
                     errors.append(str(e))
                     logging.error(str(e))
 
@@ -327,6 +336,7 @@ class Installer(object):
                     cfg.set_dep(fid, True)
                     self.__pmessage(self.__message("install_success", fid))
 
+        cfg.save()
         return errors
 
     # ------------------------------------------------------------------------
