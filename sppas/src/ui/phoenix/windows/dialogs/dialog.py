@@ -238,7 +238,7 @@ class sppasDialog(wx.Dialog):
             static_bmp = BitmapTextButton(panel, name=icon_name)
             static_bmp.SetBorderWidth(0)
             static_bmp.SetFocusWidth(0)
-            static_bmp.SetMinSize(wx.Size(min_height, min_height))
+            static_bmp.SetMinSize(wx.Size(min_height - 2, min_height - 2))
             sizer.Add(static_bmp, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, spacing)
 
         txt = sppasTitleText(panel, value=title)

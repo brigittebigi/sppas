@@ -32,6 +32,8 @@
     ui.phoenix.page_annotate.annselect.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    Select and configure each annotation.
+
 """
 
 import wx

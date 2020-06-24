@@ -77,8 +77,7 @@ class sppasOptionsPanel(sppasScrolledPanel):
 
         self.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(320),
                                 sppasScrolledPanel.fix_size(180)))
-        self.Fit()
-        self.SetupScrolling()
+        self.SetupScrolling(scroll_x=True, scroll_y=True)
         self.Layout()
 
     # ------------------------------------------------------------------------
@@ -126,13 +125,12 @@ class sppasOptionsPanel(sppasScrolledPanel):
         :param value: (bool) the current value
 
         """
-        logging.debug("Add an option with a checkbox: {} {}".format(label, value))
         cb = CheckButton(self, label=label)
         cb.SetMinSize(wx.Size(sppasScrolledPanel.fix_size(300),
                               self.get_font_height()*2))
         cb.SetFocusWidth(0)
         cb.SetValue(value)
-        self.GetSizer().Add(cb, 0, wx.LEFT | wx.BOTTOM, 4)
+        self.GetSizer().Add(cb, 0, wx.EXPAND | wx.LEFT | wx.BOTTOM, sppasScrolledPanel.fix_size(4))
         self._items.append(cb)
 
     # ------------------------------------------------------------------------
@@ -154,8 +152,8 @@ class sppasOptionsPanel(sppasScrolledPanel):
         sc.SetValue(value)
         self.__apply_settings(sc)
 
-        self.GetSizer().Add(st, 0, wx.LEFT, 8)
-        self.GetSizer().Add(sc, 0, wx.LEFT | wx.BOTTOM, 8)
+        self.GetSizer().Add(st, 0, wx.EXPAND | wx.LEFT, sppasScrolledPanel.fix_size(4))
+        self.GetSizer().Add(sc, 0, wx.LEFT | wx.BOTTOM, sppasScrolledPanel.fix_size(12))
 
         self._items.append(sc)
 
@@ -178,8 +176,8 @@ class sppasOptionsPanel(sppasScrolledPanel):
         fsc.SetValue(value)
         self.__apply_settings(fsc)
 
-        self.GetSizer().Add(st, 0, wx.LEFT, 8)
-        self.GetSizer().Add(fsc, 0, wx.LEFT | wx.BOTTOM, 8)
+        self.GetSizer().Add(st, 0, wx.EXPAND | wx.LEFT, sppasScrolledPanel.fix_size(4))
+        self.GetSizer().Add(fsc, 0, wx.LEFT | wx.BOTTOM, sppasScrolledPanel.fix_size(12))
 
         self._items.append(fsc)
 
@@ -200,8 +198,8 @@ class sppasOptionsPanel(sppasScrolledPanel):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(textctrl)
 
-        self.GetSizer().Add(st, 0, wx.LEFT, 8)
-        self.GetSizer().Add(sizer, 0, wx.LEFT | wx.BOTTOM, 8)
+        self.GetSizer().Add(st, 0, wx.EXPAND | wx.LEFT, sppasScrolledPanel.fix_size(4))
+        self.GetSizer().Add(sizer, 0, wx.EXPAND | wx.LEFT | wx.BOTTOM, sppasScrolledPanel.fix_size(12))
 
         self._items.append(textctrl)
 
@@ -229,8 +227,8 @@ class sppasOptionsPanel(sppasScrolledPanel):
         sizer.Add(filetext, 1, wx.EXPAND)
         sizer.Add(filebtn, 0, wx.LEFT, border=4)
 
-        self.GetSizer().Add(st, 0, wx.LEFT, 8)
-        self.GetSizer().Add(sizer, 0, wx.LEFT | wx.BOTTOM, 8)
+        self.GetSizer().Add(st, 0, wx.EXPAND | wx.LEFT, sppasScrolledPanel.fix_size(4))
+        self.GetSizer().Add(sizer, 0, wx.EXPAND | wx.LEFT | wx.BOTTOM, sppasScrolledPanel.fix_size(12))
 
         self.file_buttons[filebtn] = filetext
         self._items.append(filetext)
