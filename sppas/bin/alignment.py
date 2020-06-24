@@ -57,7 +57,7 @@ from sppas import sppasAppConfig
 from sppas.src.annotations import sppasAlign
 from sppas.src.annotations import sppasParam
 from sppas.src.annotations import sppasAnnotationsManager
-
+from sppas.src.anndata.aio.aioutils import serialize_labels
 
 if __name__ == "__main__":
 
@@ -229,7 +229,7 @@ if __name__ == "__main__":
                     print("{} {} {:s}".format(
                         a.get_location().get_best().get_begin().get_midpoint(),
                         a.get_location().get_best().get_end().get_midpoint(),
-                        a.serialize_labels(" ")))
+                        serialize_labels(a.get_labels(), " ")))
 
     elif args.I:
 

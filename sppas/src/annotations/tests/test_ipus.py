@@ -43,6 +43,7 @@
 import unittest
 import struct
 
+from sppas.src.utils import b
 from sppas.src.annotations.SearchIPUs.silences import sppasSilences
 from sppas.src.audiodata import sppasChannel
 
@@ -79,47 +80,10 @@ class TestSilences(unittest.TestCase):
                 samples[i] = -1000 + j
 
         # Convert samples into frames (divide the use of memory by 2 --only!)
-        converted = b''.join(struct.pack('<h', elem) for elem in samples)
+        converted = b('').join(struct.pack('<h', elem) for elem in samples)
 
         self.channel = sppasChannel(
-            framerate=8000, sampwidth=2, frames=str(converted)
-        )
-
-    # -----------------------------------------------------------------------
-
-    def test_convert_frames_samples(self):
-
-        # Create the samples.
-        samples = [0] * 8000
-        for i in range(2000, 3000):
-            if i % 2:
-                samples[i] = i - 2000
-            else:
-                samples[i] = -i + 2000
-        for i in range(3000, 5000):
-            if i % 2:
-                samples[i] = 1000
-            else:
-                samples[i] = -1000
-        for j, i in enumerate(range(5000, 6000)):
-            if i % 2:
-                samples[i] = 1000 - j
-            else:
-                samples[i] = -1000 + j
-
-        # Convert samples into frames
-        # pack interprets strings as packed binary data:
-        #   - < little endian
-        #   - h short (integer 2 bytes)
-        frames = b''.join(struct.pack('<h', elem) for elem in samples)
-
-        # Convert-back to samples
-        data = list(struct.unpack("<{}h".format(len(frames) / 2), frames))
-
-        # data should be the initial samples
-        self.assertEqual(len(samples), len(data))
-        for s, d in zip(samples, data):
-            self.assertEqual(s, d)
+            framerate=8000, sampwidth=2, frames=converted)
 
     # -----------------------------------------------------------------------
 

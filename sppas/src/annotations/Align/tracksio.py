@@ -504,10 +504,8 @@ class TracksWriter:
         :param number: (int)
 
         """
-        phonemes = annotation.serialize_labels(
-            separator=" ",
-            empty="",
-            alt=True
+        phonemes = serialize_labels(annotation.get_labels(),
+            separator=" ", empty="", alt=True
         )
         fnp = TrackNamesGenerator.phones_filename(dir_align, number)
         with codecs.open(fnp, "w", sg.__encoding__) as fp:
@@ -524,10 +522,8 @@ class TracksWriter:
         :param number: (int)
 
         """
-        tokens = annotation.serialize_labels(
-            separator=" ",
-            empty="",
-            alt=True
+        tokens = serialize_labels(annotation.get_labels(),
+            separator=" ", empty="", alt=True
         )
         fnt = TrackNamesGenerator.tokens_filename(dir_align, number)
         with codecs.open(fnt, "w", sg.__encoding__) as fp:

@@ -40,6 +40,7 @@ from sppas.src.config import symbols
 from sppas.src.config import info
 from sppas.src.utils import u
 import sppas.src.audiodata.aio
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 from sppas.src.anndata import sppasMedia
@@ -199,7 +200,7 @@ class sppasFillIPUs(sppasBaseAnnotation):
             pass
         units = list()
         for a in trs[0]:
-            units.append(a.serialize_labels())
+            units.append(serialize_labels(a.get_labels()))
         ipus = [u for u in units if u != SIL_ORTHO]
 
         # Create the instance to fill in IPUs

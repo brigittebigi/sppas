@@ -288,7 +288,7 @@ class sppasImageWriter(object):
         with codecs.open(out_csv_name, mode, encoding="utf-8") as f:
             for i, c in enumerate(coords):
                 f.write("{:s};".format(img_name))
-                f.write("{:d};".format(i))
+                f.write("{:d};".format(i+1))
                 f.write("{:d};".format(c.x))
                 f.write("{:d};".format(c.y))
                 f.write("{:d};".format(c.w))

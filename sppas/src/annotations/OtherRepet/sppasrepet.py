@@ -123,7 +123,7 @@ class sppasOtherRepet(sppasBaseRepet):
         while tok_start_src < tok_end_src:
 
             # Build an array with the tokens
-            tokens1 = [inputtier1[i].serialize_labels()
+            tokens1 = [serialize_labels(inputtier1[i])
                        for i in range(tok_start_src, tok_end_src+1)]
             speaker1 = DataSpeaker(tokens1)
 

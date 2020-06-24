@@ -56,6 +56,7 @@ from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 
 from sppas.src.anndata.aio import extensions_out
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.annotations import sppasLPC
 from sppas.src.annotations.LPC.lpckeys import LPC
 from sppas.src.annotations import sppasParam
@@ -226,7 +227,7 @@ if __name__ == "__main__":
                     print("{} {} {:s}".format(
                         a.get_location().get_best().get_begin().get_midpoint(),
                         a.get_location().get_best().get_end().get_midpoint(),
-                        a.serialize_labels(" ")))
+                        serialize_labels(a.get_labels(), " ")))
 
     elif args.I:
 

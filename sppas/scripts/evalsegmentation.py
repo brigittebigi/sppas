@@ -51,6 +51,7 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.anndata import sppasRW
 from sppas.src.calculus import ubpa
 import sppas.src.anndata.aio
@@ -424,7 +425,7 @@ for f in files:
     imax = len(ref_tier)-1
 
     for ref_ann, hyp_ann in zip(ref_tier, hyp_tier):
-        etiquette = ref_ann.serialize_labels()
+        etiquette = serialize_labels(ref_ann.get_labels())
         if etiquette == "#":
             continue
 

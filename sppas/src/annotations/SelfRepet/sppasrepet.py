@@ -41,6 +41,7 @@ from sppas.src.anndata import sppasInterval
 from sppas.src.anndata import sppasLocation
 from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasTag
+from sppas.src.anndata.aio.aioutils import serialize_labels
 
 from ..searchtier import sppasFindTier
 from ..annotationsexc import EmptyOutputError
@@ -100,7 +101,7 @@ class sppasSelfRepet(sppasBaseRepet):
         """
         nb_breaks = 0
         for i in range(start, len(tier)):
-            if tier[i].serialize_labels() == SIL_ORTHO:
+            if serialize_labels(tier[i].get_labels()) == SIL_ORTHO:
                 nb_breaks += 1
                 if nb_breaks == span:
                     return i
@@ -141,7 +142,7 @@ class sppasSelfRepet(sppasBaseRepet):
         while tok_start < tok_end:
 
             # Build an array with the tokens
-            tokens = [tier[i].serialize_labels()
+            tokens = [serialize_labels(tier[i].get_labels())
                       for i in range(tok_start, tok_end+1)]
             speaker = DataSpeaker(tokens)
 

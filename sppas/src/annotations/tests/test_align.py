@@ -225,7 +225,7 @@ class TestTracksWriter(unittest.TestCase):
                                    sppasLabel(sppasTag('je suis')))
 
         with self.assertRaises(SizeInputsError):
-            TracksWriter._write_text_tracks(tier_phn, sppasTier('toto'), TEMP)
+            TracksWriter._write_text_tracks(tier_phn, sppasTier('toto'), None, TEMP)
 
         dir_tracks = os.path.join(TEMP, "test_write_text_tracks_1")
         os.mkdir(dir_tracks)
@@ -284,15 +284,15 @@ class TestTracksReader(unittest.TestCase):
         self.assertEqual(12, len(tier_tok))
         self.assertEqual(12, len(tier_pron))
 
-        self.assertEqual("dh", aioutils.serialize_labels(tier_phn[1]))
-        self.assertEqual("ax", aioutils.serialize_labels(tier_phn[2]))
-        self.assertEqual("f", aioutils.serialize_labels(tier_phn[3]))
-        self.assertEqual("l", aioutils.serialize_labels(tier_phn[4]))
-        self.assertEqual("ay", aioutils.serialize_labels(tier_phn[5]))
-        self.assertEqual("t", aioutils.serialize_labels(tier_phn[6]))
+        self.assertEqual("dh", aioutils.serialize_labels(tier_phn[1].get_labels()))
+        self.assertEqual("ax", aioutils.serialize_labels(tier_phn[2].get_labels()))
+        self.assertEqual("f", aioutils.serialize_labels(tier_phn[3].get_labels()))
+        self.assertEqual("l", aioutils.serialize_labels(tier_phn[4].get_labels()))
+        self.assertEqual("ay", aioutils.serialize_labels(tier_phn[5].get_labels()))
+        self.assertEqual("t", aioutils.serialize_labels(tier_phn[6].get_labels()))
 
-        self.assertEqual("dh-ax", aioutils.serialize_labels(tier_pron[1]))
-        self.assertEqual("f-l-ay-t", aioutils.serialize_labels(tier_pron[2]))
+        self.assertEqual("dh-ax", aioutils.serialize_labels(tier_pron[1].get_labels()))
+        self.assertEqual("f-l-ay-t", aioutils.serialize_labels(tier_pron[2].get_labels()))
 
 # ---------------------------------------------------------------------------
 
@@ -436,8 +436,9 @@ class TestTracksReaderWriter(unittest.TestCase):
         self.assertEqual("aI", aioutils.serialize_labels(tier_phn[5].get_labels()))
         self.assertEqual("t", aioutils.serialize_labels(tier_phn[6].get_labels()))
 
-        self.assertEqual("D-@", aioutils.serialize_labels(tier_pron[1]))
-        self.assertEqual("f-l-aI-t", aioutils.serialize_labels(tier_pron[2]))
+        self.assertEqual("D-@", aioutils.serialize_labels(tier_pron[1].get_labels()))
+        ann = tier_pron[2]
+        self.assertEqual("f-l-aI-t", aioutils.serialize_labels(ann.get_labels()))
 
 # ---------------------------------------------------------------------------
 
@@ -485,14 +486,14 @@ class TestAlign(unittest.TestCase):
         self.assertEqual(39, len(tier_tok))
         self.assertEqual(39, len(tier_pron))
 
-        self.assertEqual("D", aioutils.serialize_labels(tier_phn[1]))
-        self.assertEqual("@", aioutils.serialize_labels(tier_phn[2]))
-        self.assertEqual("f", aioutils.serialize_labels(tier_phn[3]))
-        self.assertEqual("l", aioutils.serialize_labels(tier_phn[4]))
-        self.assertEqual("aI", aioutils.serialize_labels(tier_phn[5]))
-        self.assertEqual("t", aioutils.serialize_labels(tier_phn[6]))
-        self.assertEqual("{", aioutils.serialize_labels(tier_phn[21]))
-        self.assertEqual("{-n-d", aioutils.serialize_labels(tier_pron[7]))
+        self.assertEqual("D", aioutils.serialize_labels(tier_phn[1].get_labels()))
+        self.assertEqual("@", aioutils.serialize_labels(tier_phn[2].get_labels()))
+        self.assertEqual("f", aioutils.serialize_labels(tier_phn[3].get_labels()))
+        self.assertEqual("l", aioutils.serialize_labels(tier_phn[4].get_labels()))
+        self.assertEqual("aI", aioutils.serialize_labels(tier_phn[5].get_labels()))
+        self.assertEqual("t", aioutils.serialize_labels(tier_phn[6].get_labels()))
+        self.assertEqual("{", aioutils.serialize_labels(tier_phn[21].get_labels()))
+        self.assertEqual("{-n-d", aioutils.serialize_labels(tier_pron[7].get_labels()))
 
     # -----------------------------------------------------------------------
 

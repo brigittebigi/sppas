@@ -218,7 +218,7 @@ class TestFeatures(unittest.TestCase):
     def test__len__(self):
         # Return the number of features.
         y = self.__features.__len__()
-        self.assertEqual(y, 4)
+        self.assertEqual(y, 22)
 
     # ---------------------------------------------------------------------------
 

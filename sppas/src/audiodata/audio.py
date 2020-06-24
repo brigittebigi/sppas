@@ -51,6 +51,7 @@
 
 """
 
+from sppas.src.utils import b
 from .audioframes import sppasAudioFrames
 from .audioconvert import sppasAudioConverter
 from .audiodataexc import AudioError
@@ -235,7 +236,7 @@ class sppasAudioPCM(object):
                                    data)
             return self.append_channel(channel)
 
-        frames = b""
+        frames = b("")
         sw = self.get_sampwidth()
         for i in range(index*sw, len(data), nc*sw):
             frames += data[i:i+sw]
@@ -265,7 +266,7 @@ class sppasAudioPCM(object):
             raise AudioDataError
 
         for index in range(nc):
-            frames = b""
+            frames = b("")
             for i in range(index*sw, len(data), nc*sw):
                 frames = frames + data[i:i+sw]
             channel = sppasChannel(self.get_framerate(),

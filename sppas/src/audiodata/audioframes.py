@@ -37,6 +37,7 @@
 import audioop
 import struct
 
+from sppas.src.utils import b
 from .audiodataexc import SampleWidthError, ChannelIndexError
 
 # ---------------------------------------------------------------------------
@@ -54,7 +55,7 @@ class sppasAudioFrames(object):
     TODO: There's no unittests of this class.
 
     """
-    def __init__(self, frames=b"", sampwidth=2, nchannels=1):
+    def __init__(self, frames=b(""), sampwidth=2, nchannels=1):
         """Create an sppasAudioFrames instance.
 
         :param frames: (str) input frames.

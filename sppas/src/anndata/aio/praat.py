@@ -70,6 +70,7 @@ from .aioutils import fill_gaps
 from .aioutils import merge_overlapping_annotations
 from .aioutils import load
 from .aioutils import format_labels
+from .aioutils import serialize_labels
 from .basetrsio import sppasBaseIO
 
 # ---------------------------------------------------------------------------
@@ -228,7 +229,8 @@ class sppasBasePraat(sppasBaseIO):
     @staticmethod
     def _serialize_labels_text(annotation):
         """Convert the annotation labels into a string."""
-        text = annotation.serialize_labels(separator="\n", empty="", alt=True)
+        text = serialize_labels(annotation.get_labels(),
+                                separator="\n", empty="", alt=True)
 
         if '"' in text:
             text = re.sub('([^"])["]([^"])', '\\1""\\2', text)

@@ -41,6 +41,7 @@
     :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
 
 """
+
 import unittest
 import os.path
 

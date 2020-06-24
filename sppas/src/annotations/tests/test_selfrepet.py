@@ -322,11 +322,11 @@ class TestsppasSelfRepet(unittest.TestCase):
 
     def test_set_options(self):
         s = sppasSelfRepet()
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ValueError):
             s.set_span(0)
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ValueError):
             s.set_span(30)
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ValueError):
             s.set_alpha(-2)
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ValueError):
             s.set_alpha(10)

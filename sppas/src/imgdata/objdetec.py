@@ -87,7 +87,7 @@ class BaseObjectsDetector(object):
     """
 
     DEFAULT_MIN_RATIO = 0.05
-    DEFAULT_MIN_SCORE = 0.2
+    DEFAULT_MIN_SCORE = 0.18
 
     # -----------------------------------------------------------------------
 

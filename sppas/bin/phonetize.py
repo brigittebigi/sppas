@@ -53,6 +53,7 @@ from sppas import sg, annots
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.anndata.aio import extensions_out
 from sppas.src.annotations import sppasPhon
 from sppas.src.annotations.Phon.phonetize import sppasDictPhonetizer
@@ -222,12 +223,12 @@ if __name__ == "__main__":
                     if a.location_is_point():
                         print("{}, {:s}".format(
                             a.get_location().get_best().get_midpoint(),
-                            a.serialize_labels(" ")))
+                            serialize_labels(a.get_labels(), " ")))
                     else:
                         print("{}, {}, {:s}".format(
                             a.get_location().get_best().get_begin().get_midpoint(),
                             a.get_location().get_best().get_end().get_midpoint(),
-                            a.serialize_labels(" ")))
+                            serialize_labels(a.get_labels(), " ")))
 
     elif args.I:
 

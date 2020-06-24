@@ -53,6 +53,7 @@ from sppas import sg
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.annotations import sppasReOcc
 from sppas.src.annotations import sppasParam
 
@@ -173,7 +174,7 @@ if __name__ == "__main__":
                     print("{} {} {:s}".format(
                         a.get_location().get_best().get_begin().get_midpoint(),
                         a.get_location().get_best().get_end().get_midpoint(),
-                        a.serialize_labels(separator=" ")))
+                        serialize_labels(a.get_labels(), separator=" ")))
 
     else:
 

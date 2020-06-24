@@ -142,7 +142,7 @@ for ann in tier:
     if ann.get_best_tag().is_silence():
         continue
 
-    old_label = ann.serialize_labels(separator=" ", empty="", alt=True)
+    old_label = serialize_labels(ann.get_labels(), separator=" ", empty="", alt=True)
     if old_label.startswith("ipu_"):
         try:
             space = old_label.index(' ')
@@ -164,14 +164,14 @@ for ann in tier:
 i = len(tier)-1
 while i >= 0:
     # current annotation: label and end of its localization
-    label = tier[i].serialize_labels()
+    label = serialize_labels(tier[i].get_labels())
     end_loc = tier[i].get_location().get_best().get_end().copy()
 
     # take a look at the previous annotations
     i -= 1
     c = i
     while label == SIL_ORTHO and c >= 0:
-        label = tier[c].serialize_labels()
+        label = serialize_labels(tier[c].get_labels())
         c -= 1
     c += 1
     # c is now pointing to the ipu just before an eventual sequence of silences

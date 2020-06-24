@@ -52,6 +52,7 @@ from sppas.src.anndata import sppasTag
 from sppas.src.anndata import sppasPoint
 from sppas.src.anndata import sppasRW
 import sppas.src.audiodata.aio
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.audiodata.audio import sppasAudioPCM
 from sppas.src.audiodata import sppasChannel
 from sppas.src.utils.makeunicode import u
@@ -226,7 +227,7 @@ tier_phrase = sppasTier("phrase")
 nb = False
 newend = 0
 for i, ann in enumerate(tier):
-    text = ann.serialize_labels(separator="_", empty="", alt=False)
+    text = serialize_labels(ann.get_labels(), separator="_", empty="", alt=False)
     if pattern.match(text):
         nb =True
         start = ann.get_lowest_localization().get_midpoint() - offset
@@ -248,7 +249,7 @@ tier_mot = sppasTier("mot")
 if int(args.o) > 50:
     newend = 0
     for i, ann in enumerate(tier):
-        text = ann.serialize_labels(separator="_", empty="", alt=False)
+        text = serialize_labels(ann.get_labels(), separator="_", empty="", alt=False)
         if pattern.match(text):
             start = ann.get_lowest_localization().get_midpoint()
             end = ann.get_highest_localization().get_midpoint()
@@ -294,19 +295,19 @@ if not tier_phrase.is_empty():
     frames = b''
     blanks = int(blank * framerate * sampwidth)
     frames_blank = b'\x00' * blanks
-    for i, Tier in enumerate(tier):
+    for i, ann in enumerate(tier):
         print("> tier {:d} = {:s}".format(i, tier.get_name()))
-        text = Tier.serialize_labels(separator="_", empty="", alt=False)
-        if len(text) == 0 or Tier.get_best_tag().is_silence():
+        text = serialize_labels(ann.get_labels(), separator="_", empty="", alt=False)
+        if len(text) == 0 or ann.get_best_tag().is_silence():
             print("> tier {:d} = silence".format(i))
             continue
 
         # concatenation of sound chunks which contains the word
         if pattern.match(text):
-            begin = Tier.get_lowest_localization().get_midpoint() - offset
+            begin = ann.get_lowest_localization().get_midpoint() - offset
             if begin < 0:
                 begin = 0
-            end = Tier.get_highest_localization().get_midpoint() + offset
+            end = ann.get_highest_localization().get_midpoint() + offset
             chunk_size = int((end - begin) * framerate + offset)
             if not args.quiet:
                 print("> chunk_size = " + str(chunk_size))
