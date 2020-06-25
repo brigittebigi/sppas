@@ -1,8 +1,8 @@
 {
   "id": "lexvar",
-  "name" : "speaker lexical variation",
-  "descr": "",
-  "required": "",
+  "name" : "Speaker Lexical Variation",
+  "descr": "Detect repeated sequences in two distinct files of time-aligned tokens of a speaker",
+  "required": "alignment",
   "api": "sppasLexVar",
 
   "anntype": [
@@ -12,6 +12,12 @@
   "outformat": "ANNOT",
 
   "resources": [
+    {
+      "path": "vocab",
+      "type": "file",
+      "ext": ".stp",
+      "name": ""
+    }
   ],
 
   "options": [
@@ -28,10 +34,22 @@
       "text": "Output file pattern"
     },
     {
+      "id": "span",
+      "type": "int",
+      "value": 10,
+      "text": "Span window length in number of tokens"
+    },
+    {
       "id": "stopwords",
       "type": "bool",
       "value": true,
       "text": "Add stop-words estimated from the given data"
+    },
+    {
+      "id": "alpha",
+      "type": "float",
+      "value": 0.5,
+      "text": "Coefficient to add data-specific stop-words"
     }
   ]
 }

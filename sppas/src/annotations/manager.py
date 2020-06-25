@@ -435,10 +435,14 @@ class sppasAnnotationsManager(Thread):
                 ann_key = self._parameters.get_step_key(s)
 
                 # create an instance of the annotation to get its pattern
-                a = self._get_instance_name(ann_key)()
-                pattern = a.get_pattern()
-                if len(pattern) > 0:
-                    nbfiles += self.__add_trs(trs, basef + pattern + output_format)
+                try:
+                    a = self._get_instance_name(ann_key)()
+                    pattern = a.get_pattern()
+                    if len(pattern) > 0:
+                        nbfiles += self.__add_trs(trs, basef + pattern + output_format)
+                except:
+                    # ignore annotations if the corresponding feature is not installed
+                    pass
 
             if nbfiles > 1:
                 try:

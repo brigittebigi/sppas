@@ -28,8 +28,8 @@
 
         ---------------------------------------------------------------------
 
-    bin.sppasspklexvar.py
-    ~~~~~~~~~~~~~~~~
+    src.annotations.SpkLexVar.sppasspklexvar.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -63,7 +63,7 @@ from ..OtherRepet import OtherRules
 
 
 class sppasLexVar(sppasBaseRepet):
-    """SPPAS integration of the occ and rank estimator.
+    """SPPAS integration of the speaker lexical variation annotation.
 
     :author:       Laurent Vouriot
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -71,9 +71,12 @@ class sppasLexVar(sppasBaseRepet):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
+    Main differences compared to repetitions:
+    The span option is used to fix the max number of continuous tokens to analyze.
+
     """
     def __init__(self, log=None):
-        """Create a new sppasLexMetric instance.
+        """Create a new sppasLexVar instance.
 
         Log is used for a better communication of the annotation process and its
         results. If None, logs are redirected to the default logging system.
@@ -82,254 +85,235 @@ class sppasLexVar(sppasBaseRepet):
 
         """
         super(sppasLexVar, self).__init__("lexvar.json", log)
-
+        self.max_span = 30
         self.__rules = OtherRules(self._stop_words)
-        self.__sources = dict()
-
-    # -----------------------------------------------------------------------
-
-    def set_use_stopwords(self, use_stopwords):
-        return
-
-    # -----------------------------------------------------------------------
-
-    def fix_options(self, options):
-        """Override Fix all options of the annotation from list sppasOption().
-
-        :param options: (list of sppasOption)
-
-        """
-        for opt in options:
-
-            key = opt.get_key()
-            if "tiername" == key:
-                self.set_tiername(opt.get_value())
-            elif "stopwords" == key:
-                self.set_use_stopwords(opt.get_value())
-            elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
-                self._options[key] = opt.get_value()
-
-            else:
-                raise AnnotationOptionError(key)
-
-    # -----------------------------------------------------------------------
-
-    def set_tiername(self, tier_name):
-        """Fix the tiername option.
-
-        :param tier_name: (str)
-
-        """
-        self._options['tiername'] = sppasUnicode(tier_name).to_strip()
-
-    # ----------------------------------------------------------------------
-
-    def input_tier(self, input_file):
-        """Return the input tier from the input file.
-
-        :param input_file: (str) Name of an annotated file
-
-        """
-        parser = sppasRW(input_file)
-        trs_input = parser.read()
-
-        tier_spk = trs_input.find(self._options['tiername'], case_sensitive=False)
-        if tier_spk is None:
-            logging.error("Tier with name '{:s}' not found in input file {:s}."
-                          "".format(self._options['tiername'], input_file))
-            raise NoInputError
-
-        return tier_spk
 
     # ----------------------------------------------------------------------
 
     @staticmethod
-    def contains(list1, list2):
-        """Check if a list is contained in an other one
+    def tier_to_list(tier, loc=False):
+        """Create a list with the tokens contained in a tier.
 
-        :param list1: (list)
-        :param list2: (list)
-        :returns: (bool)
-
-        """
-        for i in range(len(list1) - len(list2) + 1):
-            if list1[i:i + len(list2)] == list2:
-                return True
-        return False
-
-    # ----------------------------------------------------------------------
-
-    @staticmethod
-    def window(sequence, window_size=2):
-        """Returns a sliding window (of width n) over data from the iterable
-        
-        https://stackoverflow.com/questions/6822725/rolling-or-sliding-window-iterator
-        :param sequence: (list)
-        :param window_size: (int)
-        
-        """
-        it = iter(sequence)
-        result = list(islice(it, window_size))
-        if len(result) == window_size:
-            return result
-        for elem in it:
-            result = result[1:] + [elem, ]
-        return result
-    # ----------------------------------------------------------------------
-
-    @staticmethod
-    def get_longest(speaker1, speaker2):
-        """Return the index of the last token of the longest repeated string.
-
-        :param speaker1: (DataSpeaker) Entries of speaker 1
-        :param speaker2: (DataSpeaker2) Entries of speaker 2 (or None)
-        :returns: (int) Index or -1
-
-        """
-        last_token = -1
-        # Get the longest string
-        for t in range(len(speaker1)):
-
-            param2 = 0
-
-            # search
-            repet_idx = speaker1.is_word_repeated(t, param2, speaker2)
-            if repet_idx > -1:
-                last_token = t
-            else:
-                break
-
-        return last_token
-
-    # ----------------------------------------------------------------------
-
-    def select(self, index, speaker1, speaker2):
-        """Append (or not) an repetition.
-
-        :param index: (int) end index of the entry of the source (speaker1)
-        :param speaker1: (DataSpeaker) Entries of speaker 1
-        :param speaker2: (DataSpeaker) Entries of speaker 2
-        :returns: (bool)
-
-        """
-        # Rule 1: keep any repetition containing at least 1 relevant token
-        keep_me = self.__rules.rule_syntagme(0, index, speaker1)
-        if keep_me is False:
-            # Rule 2: keep any repetition if N>2 AND strict echo
-            keep_me = self.__rules.rule_strict(0, index, speaker1, speaker2)
-        return keep_me
-
-    # ----------------------------------------------------------------------
-
-    @staticmethod
-    def tier_content_listing(tier, time=False):
-        """Create a list with the tokens contained in a tier
         :param tier: (sppasTier)
-        :param time: (bool) if true create a the corresponding time list
-
-        :returns:  (list) list of content and list of time or just list of content
+        :param loc: (bool) if true create the corresponding list of sppasLocation()
+        :returns:  (list, list) list of unicode content and list of location
 
         """
         content = list()
-        time_list = list()
+        localiz = list()
 
         for ann in tier:
             for label in ann.get_labels():
                 for tag, score in label:
                     if tag.is_speech():
                         content.append(tag.get_content())
-                        if time:
-                            time_list.append(ann.get_location())
+                        if loc is True:
+                            localiz.append(ann.get_location())
 
-        # if time:
-        #     return content, time_list
-        # else:
-        #     return content
-
-        return content, time_list if time else content
+        return content, localiz
 
     # ----------------------------------------------------------------------
 
-    def create_tier(self, content_list, time_list):
-        """Create a source tier from content en time liste
+    @staticmethod
+    def get_longest(speaker1, speaker2):
+        """Return the index of the last token of the longest repeated sequence.
 
-        :param content_list: (list) list of repeated token
-        :param time_list: (list) list of time corresponding to a token used to recreate a tier
+        No matter if a non-speech event occurs in the middle of the repeated
+        sequence and no matter if a non-speech event occurs in the middle of
+        the source sequence.
+        No matter if tokens are not repeated in the same order.
+
+        :param speaker1: (DataSpeaker) Entries of speaker 1
+        :param speaker2: (DataSpeaker) Entries of speaker 2
+        :returns: (int) Index or -1
+
+        """
+        last_token = -1
+        # Get the longest repeated number of words
+        for index1 in range(len(speaker1)):
+            if speaker1.is_word(index1) is True:
+                param2 = 0
+                # search
+                repet_idx = speaker1.is_word_repeated(index1, param2, speaker2)
+                if repet_idx > -1:
+                    last_token = index1
+                else:
+                    break
+
+        return last_token
+
+    # ----------------------------------------------------------------------
+
+    def select(self, index1, speaker1, speaker2):
+        """Append (or not) a repetition.
+
+        :param index1: (int) end index of the entry of the source (speaker1)
+        :param speaker1: (DataSpeaker) Entries of speaker 1
+        :param speaker2: (DataSpeaker) Entries of speaker 2
+        :returns: (bool)
+
+        """
+        # Rule 1: keep any repetition containing at least 1 relevant token
+        keep_me = self.__rules.rule_syntagme(0, index1, speaker1)
+        if keep_me is False:
+            # Rule 2: keep any repetition if N>2 AND strict echo
+            keep_me = self.__rules.rule_strict(0, index1, speaker1, speaker2)
+        return keep_me
+
+    # ----------------------------------------------------------------------
+
+    def _get_longest_selected(self, data_spk1, data_spk2):
+        """Return the end-index of the longest selected sequence."""
+        # get the index of the longest repeated sequence of tokens
+        spk2_echo_idx = sppasLexVar.get_longest(data_spk1, data_spk2)
+        if spk2_echo_idx != -1:
+            # apply the selection rules to verify that the repeated
+            # sequence is validated.
+            if self.select(spk2_echo_idx, data_spk1, data_spk2):
+                return spk2_echo_idx
+        return -1
+
+    # ----------------------------------------------------------------------
+
+    @staticmethod
+    def _add_source(sources, start, end):
+        """Add the source key (start, end) in the dict of sources."""
+        # store the repeated sequence in our list of sources
+        if (start, end) not in sources:
+            # add it in the dict if we found it for the first time
+            sources[(start, end)] = 0
+
+            # increment the number of times the source was repeated
+        cpt = sources[(start, end)]
+        sources[(start, end)] = cpt + 1
+
+    # ----------------------------------------------------------------------
+
+    def _detect_all_sources(self, win_spk1, win_spk2):
+        """Return all reprises of speaker1 in speaker2.
+
+        :return: (dict) dict of sources
+
+        - key: (index_start, index_end)
+        - value: the number of time the source is repeated
+
+        """
+        sources = dict()
+
+        # for each window on data of speaker 1
+        spk1_widx = 0
+        while spk1_widx < len(win_spk1):
+            data_spk1 = win_spk1[spk1_widx]
+            print("Window of speaker 1: {}".format(data_spk1))
+            # index of the longest detected source in the window of speaker2
+            max_index = 0
+
+            # for each window on data of speaker 2
+            spk2_widx = 0
+            while spk2_widx < len(win_spk2):
+                data_spk2 = win_spk2[spk2_widx]
+                print("   Window of speaker 2: {}".format(data_spk2))
+
+                # get the index of the longest selected sequence of tokens
+                spk2_echo_idx = self._get_longest_selected(data_spk1, data_spk2)
+                if spk2_echo_idx != -1:
+                    sppasLexVar._add_source(sources, start=spk1_widx,
+                                            end=spk1_widx + spk2_echo_idx)
+
+                    if spk2_echo_idx > max_index:
+                        max_index = spk2_echo_idx
+
+                spk2_widx += 1
+
+            # Index of the next speaker1 window to analyze
+            if max_index > 0:
+                spk1_widx += max_index
+            spk1_widx += 1
+
+        return sources
+
+    # ----------------------------------------------------------------------
+
+    def _merge_sources(self, sources):
+        """Merge sources if their start index is the same."""
+        return sources
+
+    # ----------------------------------------------------------------------
+
+    @staticmethod
+    def create_tier(sources, content, location):
+        """Create a tier from content end localization lists.
+
+        :param sources: (dict) dict of sources -- in fact, the indexes.
+        :param content: (list) list of tokens
+        :param location: (list) list of location corresponding to the tokens
         :returns: (sppasTier)
 
         """
-        tier_src = sppasTier("Repeats")
-        for src in self.__sources:
-            (i, nb) = src
-            loc_begin = time_list[i]
-            loc_end = time_list[nb]
-
+        tier_content = sppasTier("RepeatContent")
+        tier_occ = sppasTier("RepeatCount")
+        for src in sources:
+            start_idx, end_idx = src
+            count = sources[src]
+            # Create the location of the source, from start to end
+            loc_begin = location[start_idx]
+            loc_end = location[end_idx]
             begin_point = loc_begin.get_lowest_localization()
             end_point = loc_end.get_highest_localization()
+            location = sppasLocation(sppasInterval(begin_point, end_point))
 
-            interval = sppasInterval(begin_point, end_point)
-            location = sppasLocation(interval)
+            # Create the list of labels of the source from the content
+            labels = list()
+            for i in range(start_idx, end_idx+1):
+                labels.append(sppasLabel(sppasTag(content[i])))
 
-            tags = [sppasTag(content_list[i] for i in range(i, i + nb))]
-            tier_src.create_annotation(location, [sppasLabel(tag) for tag in tags])
+            # Add the annotation into the source tier
+            tier_content.create_annotation(location, labels)
+            tier_occ.create_annotation(location.copy(),
+                                       sppasLabel(sppasTag(count, "int")))
 
-        return tier_src
+        return tier_content, tier_occ
 
     # ----------------------------------------------------------------------
 
-    def lexical_variation_detect(self, tier1, tier2, window_size):
+    def windowing(self, content):
+        """Return all the list of dataspk."""
+        windows = list()
+        for i in range(len(content)-1):
+            window = content[i:i+self._options["span"]]
+            windows.append(DataSpeaker(window))
+        return windows
+
+    # ----------------------------------------------------------------------
+
+    def lexical_variation_detect(self, tier1, tier2):
         """Detect the lexical variations in between 2 tiers
 
         :param tier1: (sppasTier)
         :param tier2: (sppasTier)
-        :param window_size: (int)
 
         """
-        # getting all the unicodes tokens from the first tier + the time location
-        # useful for creating the tier
-        content_list_tier1, time_list_tier1 = self.tier_content_listing(tier1, True)
-        # getting all the unicodes tokens from the second tier
-        content_list_tier2 = self.tier_content_listing(tier2, False)
-        
-        window_list2 = list()
-        window_list1 = list()
-        # windowing the unicode list for the first speaker
-        for window in self.window(content_list_tier1, window_size):
-            window_list1.append(window)
-        # windowing the unicode list for the second speaker
-        for window in self.window(content_list_tier2, window_size):
-            window_list2.append(window)
+        # getting all the unicode tokens from the first tier + the localization
+        content_tier1, loc_tier1 = self.tier_to_list(tier1, True)
+        content_tier2, loc_none = self.tier_to_list(tier2, False)
+        # windowing the unicode list for the speakers
+        window_list1 = self.windowing(content_tier1)
+        window_list2 = self.windowing(content_tier2)
 
-        i = 0
-        while i < len(window_list1):
-            data_spk1 = DataSpeaker(window_list1[i])
-            max_index = 0
-            y = 0
-            cpt = 0
-            while y < len(window_list2):
-                data_spk2 = DataSpeaker(window_list2[y])
-                # TODO : RENAME INDEX
-                index = self.get_longest(data_spk1, data_spk2)
-                print(index)
-                if index != -1:
-                    if self.select(index, data_spk1, data_spk2):
-                        if (i, i + index) in self.__sources:
-                            cpt += 1
-                        else:
-                            self.__sources[(i, i + index)] = 1
-                        self.__sources[(i, i + index)] = cpt
-                        if index > max_index:
-                            max_index = index
-                y += 1
-            if max_index == 0:
-                i += 1
-            else:
-                i += max_index + 1
+        # detect all possible sources and store them in a dict with
+        # key=(start, end) and value=occ.
+        sources = self._detect_all_sources(window_list1, window_list2)
 
-        # Creating the src tier
-        return self.create_tier(content_list_tier1, time_list_tier1)
+        # merge sources if they are starting at the same index but not
+        # ending the same???
+        # merge source if they are overlapping???
+        # remove sources with an identical token sequence??? (or count)?
+        merged_sources = self._merge_sources(sources)
 
-        # ./sppaslexvar -i AB -s CM -o toto.Textgrid -r ressource/vocab/frap.lem
+        # create result tiers from the sources
+        tiers = self.create_tier(merged_sources, content_tier1, loc_tier1)
+        return tiers
+
     # ----------------------------------------------------------------------
     # Patterns
     # ----------------------------------------------------------------------
@@ -349,7 +333,7 @@ class sppasLexVar(sppasBaseRepet):
     def run(self, input_file, opt_input_file=None, output_file=None):
         """Run the automatic annotation process on an input.
 
-        :param input_file: (list of str) time-aligned tokens
+        :param input_file: (list of str) time-aligned tokens of 2 files
         :param opt_input_file: (list of str) ignored
         :param output_file: (str) the output file name
         :returns: (sppasTranscription)
@@ -364,7 +348,7 @@ class sppasLexVar(sppasBaseRepet):
         trs_input1 = parser.read()
         tier_tokens = sppasFindTier.aligned_tokens(trs_input1)
         tier_input1 = self.make_word_strain(tier_tokens)
-        tier_input1.set_name(tier_input1.get_name() + "-source")
+        tier_input1.set_name(tier_input1.get_name() + "-src")
 
         # Get the tier to be used
         parser = sppasRW(input_file[1])
@@ -373,20 +357,22 @@ class sppasLexVar(sppasBaseRepet):
         tier_input2 = self.make_word_strain(tier_tokens)
         tier_input2.set_name(tier_input2.get_name() + "-echo")
 
-        # Repetition Automatic Detection
-        src_tier = self.lexical_variation_detect(tier_input1, tier_input2, 2)
+        # Reprise Automatic Detection - i.e. a repeated passage of lexical entries
+        tiers = self.lexical_variation_detect(tier_input1, tier_input2)
 
         # Create the transcription result
         trs_output = sppasTranscription(self.name)
-        trs_output.set_meta('other_repetition_result_of_src', input_file[0])
-        trs_output.set_meta('other_repetition_result_of_echo', input_file[1])
+        trs_output.set_meta('speaker_lexvar_result_of_src', input_file[0])
+        trs_output.set_meta('spkeaker_lexvar_result_of_echo', input_file[1])
         if len(self._word_strain) > 0:
             trs_output.append(tier_input1)
         if self._options['stopwords'] is True:
             trs_output.append(self.make_stop_words(tier_input1))
-        trs_output.append(src_tier)
         if len(self._word_strain) > 0:
             trs_output.append(tier_input2)
+
+        for out_tier in tiers:
+            trs_output.append(out_tier)
 
         # Save in a file
         if output_file is not None:
@@ -396,8 +382,6 @@ class sppasLexVar(sppasBaseRepet):
                 self.print_filename(output_file)
             else:
                 raise EmptyOutputError
-
-        print(self.__sources)
 
         return trs_output
 
