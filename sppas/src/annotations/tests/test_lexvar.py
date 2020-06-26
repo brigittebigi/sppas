@@ -54,6 +54,27 @@ from sppas.src.anndata import sppasInterval
 from sppas.src.utils import sppasCompare
 from ..SelfRepet.datastructs import DataSpeaker
 from ..SpkLexVar.sppaslexvar import sppasLexVar
+from ..SpkLexVar.sppaslexvar import LexReprise
+
+# ---------------------------------------------------------------------------
+
+
+class test_sppaslexreprise(unittest.TestCase):
+
+    def test_eq(self):
+        r1 = LexReprise(1, 3)
+        r2 = LexReprise(1, 5)
+        r3 = LexReprise(1, 3)
+        reprises = [r1, r2, r3]
+
+        self.assertEqual(r1, r3)
+        self.assertNotEqual(r1, r2)
+        self.assertEqual(r1, (1, 3))
+        self.assertNotEqual(r1, (1, 4))
+
+        self.assertTrue(r1 in reprises)
+        self.assertTrue((1, 3) in reprises)
+        self.assertFalse(1 in reprises)
 
 # ---------------------------------------------------------------------------
 
@@ -115,6 +136,11 @@ class test_sppaslexvar(unittest.TestCase):
         dataspk2 = DataSpeaker(["toto", "oui", "ça"])
         self.assertEqual(sppasLexVar.get_longest(dataspk1, dataspk2), 2)
 
+        # no matter if tokens are not repeated in the same order
+        dataspk1 = DataSpeaker(["ça", "va", "bien"])
+        dataspk2 = DataSpeaker(["ça", "#", "va"])
+        self.assertEqual(sppasLexVar.get_longest(dataspk1, dataspk2), 1)
+
     # -----------------------------------------------------------------------
 
     def test_select(self):
@@ -151,34 +177,66 @@ class test_sppaslexvar(unittest.TestCase):
 
     # -----------------------------------------------------------------------
 
-    def test_detect_all_sources(self):
-        pass
-
-    # -----------------------------------------------------------------------
-
     def test_add_source(self):
-        sources = dict()
-        sppasLexVar._add_source(sources, 1, 3)
+        dataspk = DataSpeaker(["bonjour", "#", "non", "pas", "vraiment", "non"])
+        sources = list()
+        sppasLexVar._add_source(sources, 1, 3, dataspk)
         self.assertEqual(len(sources), 1)
-        self.assertEqual(sources[(1, 3)], 1)
-        sppasLexVar._add_source(sources, 1, 5)
+        self.assertTrue((1, 3) in sources)
+
+        sppasLexVar._add_source(sources, 1, 5, dataspk)
         self.assertEqual(len(sources), 2)
-        self.assertEqual(sources[(1, 5)], 1)
-        sppasLexVar._add_source(sources, 1, 3)
+        self.assertTrue((1, 5) in sources)
+
+        sppasLexVar._add_source(sources, 1, 3, dataspk)
         self.assertEqual(len(sources), 2)
-        self.assertEqual(sources[(1, 3)], 2)
+        self.assertTrue((1, 3) in sources)
 
     # -----------------------------------------------------------------------
 
-    def test_merge_sources(self):
-        self.content1 = ["bonjour", "moi", "ca", "va", "bien", "#", "et", "toi", "ca" "va", "bien"]
+    def test_detect_all_sources(self):
+        dataspk1 = ["bonjour", "moi", "ca", "va", "bien", "#", "et", "toi", "ca", "ok", "#"]
+        dataspk2 = ["oui", "toi", "#", "comment", "ca", "#", "va"]
+        lexvar = sppasLexVar()
+        lexvar.set_span(3)
+        winspk1 = lexvar.windowing(dataspk1)
+        winspk2 = lexvar.windowing(dataspk2)
 
-        sources = dict()
-        sppasLexVar._add_source(sources, 1, 3)    # moi ca va
-        sppasLexVar._add_source(sources, 1, 6)    # moi ca va bien # et
-        sppasLexVar._add_source(sources, 1, 3)    # moi ca va
-        sppasLexVar._add_source(sources, 2, 4)    # ca va bien
-        sppasLexVar._add_source(sources, 8, 10)   # ca va bien
+        # in one way
+        sources = lexvar._detect_all_sources(winspk1, winspk2)
+        self.assertEqual(len(sources), 3)
+
+        self.assertTrue((2, 1) in sources)
+        self.assertEqual("ca va", serialize_labels(sources[0].get_labels(), " "))
+
+        self.assertTrue((7, 0) in sources)
+        self.assertEqual("toi", serialize_labels(sources[1].get_labels(), " "))
+
+        self.assertTrue((8, 0) in sources)
+        self.assertEqual("ca", serialize_labels(sources[2].get_labels(), " "))
+
+        # in the other way
+        sources = lexvar._detect_all_sources(winspk2, winspk1)
+        self.assertEqual(len(sources), 2)
+
+        self.assertTrue((1, 0) in sources)
+        self.assertEqual("toi", serialize_labels(sources[0].get_labels(), " "))
+
+        self.assertTrue((4, 2) in sources)
+        self.assertEqual("ca # va", serialize_labels(sources[1].get_labels(), " "))
+
+    # -----------------------------------------------------------------------
+
+    def test_sources_identifiers(self):
+        content = ["bonjour", "moi", "ca", "va", "bien", "#", "et", "toi", "ca", "va", "#"]
+        dataspk = DataSpeaker(content)
+
+        sources = list()
+        sppasLexVar._add_source(sources, 1, 3, dataspk)    # moi ca va
+        sppasLexVar._add_source(sources, 1, 6, dataspk)    # moi ca va bien # et
+        sppasLexVar._add_source(sources, 1, 3, dataspk)    # moi ca va
+        sppasLexVar._add_source(sources, 2, 4, dataspk)    # ca va bien
+        sppasLexVar._add_source(sources, 8, 10, dataspk)   # ca va bien
         self.assertEqual(len(sources), 4)
         expected_keys = [(1, 3), (1, 6), (2, 4), (8, 10)]
         for expected in expected_keys:
@@ -189,14 +247,17 @@ class test_sppaslexvar(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_create_tier(self):
-        sources = dict()
-        sources[(1, 3)] = 1
+        sources = list()
+
         lexvar = sppasLexVar()
-        tier_tok, tier_occ = lexvar.create_tier(sources, self.content1, self.loc1)
+        lexvar.set_span(3)
+        lexvar._add_source(sources, 1, 2, DataSpeaker(self.content1[1:4]))   # ca va bien
+
+        tier_tok, tier_occ = lexvar.create_tier(sources, self.loc1)
         self.assertEqual(1, len(tier_tok))
-        self.assertEqual(1, len(tier_occ))
+        #self.assertEqual(1, len(tier_occ))
         self.assertEqual("ca va bien", serialize_labels(tier_tok[0].get_labels(), " "))
-        self.assertEqual("1", serialize_labels(tier_occ[0].get_labels(), " "))
+        #self.assertEqual("1", serialize_labels(tier_occ[0].get_labels(), " "))
 
 
 

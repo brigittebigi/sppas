@@ -47,7 +47,7 @@ from sppas.src.anndata import sppasInterval
 from sppas.src.anndata import sppasLocation
 from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasTag
-
+from sppas.src.anndata.aio.aioutils import serialize_labels
 
 from ..SelfRepet.rules import SelfRules
 from ..SelfRepet.datastructs import DataSpeaker
@@ -62,10 +62,65 @@ from ..OtherRepet import OtherRules
 # -----------------------------------------------------------------------------
 
 
+class LexReprise(object):
+    """Store a lexical reprise.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
+
+    """
+
+    def __init__(self, win_idx, end_idx):
+        self.__win_idx = win_idx    # index of the window
+        self.__end = end_idx        # index of the last repeated entry in the window
+        self.__labels = list()
+
+    def get_start(self):
+        return self.__win_idx
+
+    def get_end(self):
+        return self.__end
+
+    def set_content(self, dataspk):
+        """Set the labels from the content.
+
+        :param dataspk: (DataSpk) The data content of the window win_idx and end refer to
+
+        """
+        for i in range(self.__end + 1):
+            tag = sppasTag(dataspk[i])
+            print(tag)
+            self.__labels.append(sppasLabel(tag))
+
+    def get_labels(self):
+        return [label.copy() for label in self.__labels]
+
+    def __eq__(self, other):
+        if isinstance(other, (list, tuple)) and len(other) > 1:
+            return self.__win_idx == other[0] and self.__end == other[1]
+
+        if isinstance(other, LexReprise):
+            return self.__win_idx == other.get_start() and self.__end == other.get_end()
+
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __str__(self):
+        labels = serialize_labels(self.__labels, separator=" ")
+        return str(self.__win_idx)+" "+str(self.__end)+": "+labels
+
+# -----------------------------------------------------------------------------
+
+
 class sppasLexVar(sppasBaseRepet):
     """SPPAS integration of the speaker lexical variation annotation.
 
-    :author:       Laurent Vouriot
+    :author:       Laurent Vouriot, Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
@@ -176,16 +231,15 @@ class sppasLexVar(sppasBaseRepet):
     # ----------------------------------------------------------------------
 
     @staticmethod
-    def _add_source(sources, start, end):
-        """Add the source key (start, end) in the dict of sources."""
+    def _add_source(sources, win_idx, end, dataspk):
+        """Add the source in the list of sources."""
+        print("   *** add source ({}, {})".format(win_idx, end))
         # store the repeated sequence in our list of sources
-        if (start, end) not in sources:
+        if (win_idx, end) not in sources:
             # add it in the dict if we found it for the first time
-            sources[(start, end)] = 0
-
-            # increment the number of times the source was repeated
-        cpt = sources[(start, end)]
-        sources[(start, end)] = cpt + 1
+            lex_reprise = LexReprise(win_idx, end)
+            lex_reprise.set_content(dataspk)
+            sources.append(lex_reprise)
 
     # ----------------------------------------------------------------------
 
@@ -198,63 +252,64 @@ class sppasLexVar(sppasBaseRepet):
         - value: the number of time the source is repeated
 
         """
-        sources = dict()
+        sources = list()
 
-        # for each window on data of speaker 1
+        # index of the end-token of the longest detected source in the previous window
+        prev_max_index = -1
+        # for each window on data of speaker 1, spk_widx1=index of the window1
         spk1_widx = 0
         while spk1_widx < len(win_spk1):
             data_spk1 = win_spk1[spk1_widx]
-            print("Window of speaker 1: {}".format(data_spk1))
-            # index of the longest detected source in the window of speaker2
-            max_index = 0
 
+            max_index = -1
             # for each window on data of speaker 2
             spk2_widx = 0
             while spk2_widx < len(win_spk2):
                 data_spk2 = win_spk2[spk2_widx]
-                print("   Window of speaker 2: {}".format(data_spk2))
 
                 # get the index of the longest selected sequence of tokens
                 spk2_echo_idx = self._get_longest_selected(data_spk1, data_spk2)
-                if spk2_echo_idx != -1:
-                    sppasLexVar._add_source(sources, start=spk1_widx,
-                                            end=spk1_widx + spk2_echo_idx)
-
+                if spk2_echo_idx > -1 and spk2_echo_idx > prev_max_index:
                     if spk2_echo_idx > max_index:
                         max_index = spk2_echo_idx
-
+                        if max_index == self._options["span"]:
+                            break
                 spk2_widx += 1
 
+            if max_index > -1:
+                sppasLexVar._add_source(sources,
+                                        win_idx=spk1_widx,
+                                        end=max_index,
+                                        dataspk=data_spk1)
+
             # Index of the next speaker1 window to analyze
-            if max_index > 0:
-                spk1_widx += max_index
             spk1_widx += 1
+            prev_max_index = max_index - 1
 
         return sources
 
     # ----------------------------------------------------------------------
 
     def _merge_sources(self, sources):
-        """Merge sources if their start index is the same."""
+        """Merge sources if content is the same."""
         return sources
 
     # ----------------------------------------------------------------------
 
     @staticmethod
-    def create_tier(sources, content, location):
+    def create_tier(sources, location):
         """Create a tier from content end localization lists.
 
         :param sources: (dict) dict of sources -- in fact, the indexes.
-        :param content: (list) list of tokens
         :param location: (list) list of location corresponding to the tokens
         :returns: (sppasTier)
 
         """
         tier_content = sppasTier("RepeatContent")
-        tier_occ = sppasTier("RepeatCount")
-        for src in sources:
-            start_idx, end_idx = src
-            count = sources[src]
+        for lexreprise in sources:
+            start_idx = lexreprise.get_start()
+            end_idx = start_idx + lexreprise.get_end()
+
             # Create the location of the source, from start to end
             loc_begin = location[start_idx]
             loc_end = location[end_idx]
@@ -262,17 +317,10 @@ class sppasLexVar(sppasBaseRepet):
             end_point = loc_end.get_highest_localization()
             location = sppasLocation(sppasInterval(begin_point, end_point))
 
-            # Create the list of labels of the source from the content
-            labels = list()
-            for i in range(start_idx, end_idx+1):
-                labels.append(sppasLabel(sppasTag(content[i])))
-
             # Add the annotation into the source tier
-            tier_content.create_annotation(location, labels)
-            tier_occ.create_annotation(location.copy(),
-                                       sppasLabel(sppasTag(count, "int")))
+            tier_content.create_annotation(location, lexreprise.get_labels())
 
-        return tier_content, tier_occ
+        return tier_content, None
 
     # ----------------------------------------------------------------------
 
@@ -287,7 +335,7 @@ class sppasLexVar(sppasBaseRepet):
     # ----------------------------------------------------------------------
 
     def lexical_variation_detect(self, tier1, tier2):
-        """Detect the lexical variations in between 2 tiers
+        """Detect the lexical variations between 2 tiers.
 
         :param tier1: (sppasTier)
         :param tier2: (sppasTier)
