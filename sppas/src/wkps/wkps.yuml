@@ -3,14 +3,21 @@
 // {generate:true}
 
 // Nodes
-[FileBase|-id; #state; match()]
-[FileData|-data: list; -refs: list;add(); add_file();...]
-[sppasCatReference|-attributs : list; -type; att();...]
-[FilePath|-roots : list; +subjoined: dict; identifier();...]
-[FileRoot|-files : list; -references : list; +subjoined: dict; update_state(),...]
-[FileName|-name: str; -extension: str; -date: str; -size: str; folder();...]
+[States|enum]
+[sppasWorkspace|-id; -refs: list; -paths: list; add(); add_file();...]
+[sppasBaseWkpIO|#default_extension: str; #software: str; detect(); set()]
+[sppasWJSON|detect();read(); write()]
+[sppasWANT|detect();read(); write()]
+[sppasWkpRW|WORKSPACE_TYPES: dict; -filename: str; read(); write(); create_wkp_from_ext();]
 
-[sppasRefAttribut|-id: str; -value: str; -valuetype: str; descr: str; serialize()]
+[FileBase|-id; #state; match();get_state();get_id()]
+
+[sppasCatReference|-attributs: list; -type; +subjoined: dict; att();...]
+[sppasRefAttribute|-id: str; -value: str; -valuetype: str; descr: str;]
+
+[FilePath|-roots: list; +subjoined: dict; set_object_state();...]
+[FileRoot|-files: list; -references: list; +subjoined: dict; update_state(),...]
+[FileName|-name: str; -extension: str; -date: str; -size: str; folder();...]
 
 [sppasBaseCompare|+methods;get();get_function_names()]
 [sppasPathCompare|exact();iexact();startswith();...]
@@ -26,17 +33,23 @@
 [sppasFileDataFilters|path();root();name();extension();file()]
 
 //Edges
-[FileData]++-0..*>[FilePath]
-[FileData]++-0..*>[sppasCatReference]
+[FileBase]++1..1>[States]
+[sppasWorkspace]++-0..*>[FilePath]
 [FilePath]++-1..*>[FileRoot]
 [FileRoot]++-1..*>[FileName]
-[sppasCatReference]++-1..*>[sppasRefAttribut]
+[sppasWorkspace]++-0..*>[sppasCatReference]
+[sppasCatReference]++-1..*>[sppasRefAttribute]
+[sppasWkpRW]++-0..1>[sppasWJSON]
+[sppasWkpRW]++-0..1>[sppasWANT]
 
+// Inheritances
+[sppasWorkspace]^[sppasBaseWkpIO]
+[sppasBaseWkpIO]^[sppasWJSON]
+[sppasBaseWkpIO]^[sppasWANT]
+[FileBase]^[sppasCatReference]
 [FileBase]^[FilePath]
 [FileBase]^[FileRoot]
 [FileBase]^[FileName]
-[FileBase]^[FileData]
-
 
 [sppasBaseCompare]^[sppasPathCompare]
 [sppasBaseCompare]^[sppasRootCompare]
@@ -46,6 +59,5 @@
 [sppasBaseCompare]^[sppasFileRefCompare]
 [sppasBaseCompare]^[sppasRefAttributeCompare]
 [sppasBaseCompare]^[sppasFileStateCompare]
-
 
 [sppasBaseFilters]^[sppasFileDataFilters]

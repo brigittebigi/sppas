@@ -440,13 +440,10 @@ class sppasWorkspace(object):
         for fp in self.__paths:
             for fr in fp:
                 if fr.get_state() in (States().AT_LEAST_ONE_CHECKED, States().CHECKED):
-                    associed += 1
-                    if fr.get_references() is not None:
-                        ref_extended = fr.get_references()
-                        ref_extended.extend(ref_checked)
-                        fr.set_references(list(set(ref_extended)))
-                    else:
-                        fr.set_references(ref_checked)
+                    for ref in ref_checked:
+                        added = fr.add_ref(ref)
+                        if added is True:
+                            associed += 1
 
         return associed
 
