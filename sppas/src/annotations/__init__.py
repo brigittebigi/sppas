@@ -73,7 +73,7 @@ from .ReOccurrences import sppasReOcc
 from .StopWords import StopWords
 from .StopWords import sppasStopWords
 from .LexMetric import sppasLexMetric
-from .SpkLexVar import sppasLexVar
+from .SpkLexRep import sppasLexRep
 from .LPC import sppasLPC
 from .FaceDetection import sppasFaceDetection
 
@@ -104,7 +104,7 @@ __all__ = (
     'sppasFindTier',
     'sppasParam',
     'sppasAnnotationsManager',
-    'sppasLexVar',
+    'sppasLexRep',
     'sppasLPC',
     'sppasFaceDetection'
 )

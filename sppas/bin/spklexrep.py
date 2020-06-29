@@ -53,7 +53,7 @@ from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 from sppas.src.config import cfg
 
-from sppas.src.annotations import sppasLexVar
+from sppas.src.annotations import sppasLexRep
 from sppas.src.annotations import sppasParam
 
 # ---------------------------------------------------------------------------
@@ -65,8 +65,8 @@ if __name__ == "__main__":
     # Fix initial annotation parameters
     # -----------------------------------------------------------------------
 
-    parameters = sppasParam(["lexvar.json"])
-    ann_step_idx = parameters.activate_annotation("spklexvar")
+    parameters = sppasParam(["lexrep.json"])
+    ann_step_idx = parameters.activate_annotation("spklexrep")
     ann_options = parameters.get_options(ann_step_idx)
 
     # -----------------------------------------------------------------------
@@ -165,7 +165,7 @@ if __name__ == "__main__":
         # Perform the annotation on a single file
         # ---------------------------------------
 
-        ann = sppasLexVar()
+        ann = sppasLexRep()
         ann.load_resources(args.r)
         ann.fix_options(parameters.get_options(ann_step_idx))
         if args.o:

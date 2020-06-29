@@ -28,17 +28,13 @@
 
         ---------------------------------------------------------------------
 
-    src.annotations.SpkLexVar.sppasspklexvar.py
+    src.annotations.SpkLexRep.sppaslexrep.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
 import logging
 import sys
-from itertools import islice
-
-from sppas import sppasUnicode
-from sppas import RangeBoundsException
 
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
@@ -49,12 +45,8 @@ from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasTag
 from sppas.src.anndata.aio.aioutils import serialize_labels
 
-from ..SelfRepet.rules import SelfRules
 from ..SelfRepet.datastructs import DataSpeaker
 from ..SelfRepet.sppasbaserepet import sppasBaseRepet
-from ..SelfRepet import sppasSelfRepet
-from ..annotationsexc import AnnotationOptionError
-from ..annotationsexc import NoInputError
 from ..annotationsexc import EmptyOutputError
 from ..searchtier import sppasFindTier
 from ..OtherRepet import OtherRules
@@ -63,7 +55,7 @@ from ..OtherRepet import OtherRules
 
 
 class LexReprise(object):
-    """Store a lexical reprise.
+    """Data structure to store a lexical reprise.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -117,7 +109,7 @@ class LexReprise(object):
 # -----------------------------------------------------------------------------
 
 
-class sppasLexVar(sppasBaseRepet):
+class sppasLexRep(sppasBaseRepet):
     """SPPAS integration of the speaker lexical variation annotation.
 
     :author:       Laurent Vouriot, Brigitte Bigi
@@ -139,7 +131,7 @@ class sppasLexVar(sppasBaseRepet):
         :param log: (sppasLog) Human-readable logs.
 
         """
-        super(sppasLexVar, self).__init__("lexvar.json", log)
+        super(sppasLexRep, self).__init__("lexrep.json", log)
         self.max_span = 30
         self.__rules = OtherRules(self._stop_words)
 
@@ -220,7 +212,7 @@ class sppasLexVar(sppasBaseRepet):
     def _get_longest_selected(self, data_spk1, data_spk2):
         """Return the end-index of the longest selected sequence."""
         # get the index of the longest repeated sequence of tokens
-        spk2_echo_idx = sppasLexVar.get_longest(data_spk1, data_spk2)
+        spk2_echo_idx = sppasLexRep.get_longest(data_spk1, data_spk2)
         if spk2_echo_idx != -1:
             # apply the selection rules to verify that the repeated
             # sequence is validated.
@@ -269,7 +261,7 @@ class sppasLexVar(sppasBaseRepet):
 
                 # get the index of the longest selected sequence of tokens
                 spk2_echo_idx = self._get_longest_selected(data_spk1, data_spk2)
-                if spk2_echo_idx > -1 and spk2_echo_idx > prev_max_index:
+                if spk2_echo_idx > -1 and (spk1_widx+spk2_echo_idx) > prev_max_index:
                     if spk2_echo_idx > max_index:
                         max_index = spk2_echo_idx
                         if max_index == self._options["span"]:
@@ -277,14 +269,14 @@ class sppasLexVar(sppasBaseRepet):
                 spk2_widx += 1
 
             if max_index > -1:
-                sppasLexVar._add_source(sources,
+                sppasLexRep._add_source(sources,
                                         win_idx=spk1_widx,
                                         end=max_index,
                                         dataspk=data_spk1)
+                prev_max_index = spk1_widx + max_index
 
             # Index of the next speaker1 window to analyze
             spk1_widx += 1
-            prev_max_index = max_index - 1
 
         return sources
 
@@ -297,11 +289,11 @@ class sppasLexVar(sppasBaseRepet):
     # ----------------------------------------------------------------------
 
     @staticmethod
-    def create_tier(sources, location):
+    def create_tier(sources, locations):
         """Create a tier from content end localization lists.
 
         :param sources: (dict) dict of sources -- in fact, the indexes.
-        :param location: (list) list of location corresponding to the tokens
+        :param locations: (list) list of location corresponding to the tokens
         :returns: (sppasTier)
 
         """
@@ -311,8 +303,8 @@ class sppasLexVar(sppasBaseRepet):
             end_idx = start_idx + lexreprise.get_end()
 
             # Create the location of the source, from start to end
-            loc_begin = location[start_idx]
-            loc_end = location[end_idx]
+            loc_begin = locations[start_idx]
+            loc_end = locations[end_idx]
             begin_point = loc_begin.get_lowest_localization()
             end_point = loc_end.get_highest_localization()
             location = sppasLocation(sppasInterval(begin_point, end_point))
@@ -359,7 +351,7 @@ class sppasLexVar(sppasBaseRepet):
         merged_sources = self._merge_sources(sources)
 
         # create result tiers from the sources
-        tiers = self.create_tier(merged_sources, content_tier1, loc_tier1)
+        tiers = self.create_tier(merged_sources, loc_tier1)
         return tiers
 
     # ----------------------------------------------------------------------
@@ -420,7 +412,8 @@ class sppasLexVar(sppasBaseRepet):
             trs_output.append(tier_input2)
 
         for out_tier in tiers:
-            trs_output.append(out_tier)
+            if out_tier is not None:
+                trs_output.append(out_tier)
 
         # Save in a file
         if output_file is not None:

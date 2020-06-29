@@ -1,9 +1,9 @@
 {
-  "id": "lexvar",
-  "name" : "Speaker Lexical Variation",
+  "id": "spklexrep",
+  "name" : "Speaker Lexical Repeated",
   "descr": "Detect repeated sequences in two distinct files of time-aligned tokens of a speaker",
   "required": "alignment",
-  "api": "sppasLexVar",
+  "api": "sppasLexRep",
 
   "anntype": [
     "SPEAKER"
@@ -30,7 +30,7 @@
     {
       "id": "outputpattern",
       "type": "str",
-      "value": "-orepet",
+      "value": "-spkrep",
       "text": "Output file pattern"
     },
     {
