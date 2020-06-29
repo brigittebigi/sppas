@@ -298,10 +298,10 @@ class sppasImageWriter(object):
     # -----------------------------------------------------------------------
 
     def write_tagged_img(self, image, coords, out_img_name):
-        """Tag and save the images with squares at given coords.
+        """Tag and save the images with colored squares at given coords.
 
         :param image: (sppasImage) The image to write
-        :param coords: (sppasCoords) The coordinates of objects
+        :param coords: (list or list of list of sppasCoords) The coordinates of objects
         :param out_img_name: (str) The filename of the output image file
 
         """
@@ -316,13 +316,11 @@ class sppasImageWriter(object):
             r = sppasImageWriter.COLORS['r'][i % sppasImageWriter.N]
             g = sppasImageWriter.COLORS['g'][i % sppasImageWriter.N]
             b = sppasImageWriter.COLORS['b'][i % sppasImageWriter.N]
-            # Draw the square and eventually the confidence inside the square
-            text = ""
-            if c.get_confidence() > 0.:
-                text = "{:.3f}".format(c.get_confidence())
-            img = img.isurround(c, color=(r, g, b), thickness=pen_width,
-                                text=text)
-
+            # Draw the square and
+            # the confidence inside the square if the coord is not a point
+            if isinstance(c, (list, tuple)) is False:
+                c = [c]
+            img = img.isurround(c, color=(r, g, b), thickness=pen_width, score=True)
         # Save tagged image
         cv2.imwrite(out_img_name, img)
 

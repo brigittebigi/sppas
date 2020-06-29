@@ -84,7 +84,7 @@ class sppasAppConfig(object):
         super(sppasAppConfig, self).__init__()
 
         # Create a default configuration
-        self.__log_level = 15,
+        self.__log_level = 15
         self.__quiet_log_level = 30
         self.__splash_delay = 3
         self.__deps = dict()

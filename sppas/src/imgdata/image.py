@@ -173,29 +173,51 @@ class sppasImage(numpy.ndarray):
 
     # -----------------------------------------------------------------------
 
-    def isurround(self, coords, color=(50, 100, 200), thickness=2, text=""):
-        """Return a new array with a square surrounding the given coords.
+    def isurround(self, coords, color=(50, 100, 200), thickness=2, score=False):
+        """Return a new array with a square surrounding all the given coords.
 
-        :param coords: (sppasCoords) Area to surround
+        :param coords: (List of sppasCoords) Areas to surround
         :param color: (int, int, int) Rectangle color or brightness (if grayscale image).
         :param thickness: (int) Thickness of lines that make up the rectangle. Negative values, like CV_FILLED , mean that the function has to draw a filled rectangle.
-        :param text: (str) Add text
+        :param score: (bool) Add the confidence score
         :return: (numpy.ndarray)
 
         """
-        if isinstance(coords, sppasCoords) is False:
-            if isinstance(coords, list) and len(coords) >= 4:
+        img = self.copy()
+        for c in coords:
+            if c.w > 0 and c.h > 0:
+                # Draw the square and eventually the confidence inside the square
+                text = ""
+                if score is True and c.get_confidence() > 0.:
+                    text = "{:.3f}".format(c.get_confidence())
+                img.surround_coord(c, color, thickness, text)
+            else:
+                img.surround_point(c, color, thickness)
+        return img
+
+    # -----------------------------------------------------------------------
+
+    def surround_coord(self, coord, color, thickness, text=""):
+        """Add a square surrounding the given coordinates.
+
+        :param coord: (sppasCoords) Area to surround
+        :param color: (int, int, int) Rectangle color or brightness (if grayscale image).
+        :param thickness: (int) Thickness of lines that make up the rectangle. Negative values, like CV_FILLED , mean that the function has to draw a filled rectangle.
+        :param text: (str) Add text
+
+        """
+        if isinstance(coord, sppasCoords) is False:
+            if isinstance(coord, (tuple, list)) and len(coord) >= 4:
                 try:
-                    coords = sppasCoords(coords[0], coords[1], coords[2], coords[3])
+                    coord = sppasCoords(coord[0], coord[1], coord[2], coord[3])
                 except:
                     pass
-        if isinstance(coords, sppasCoords) is False:
-            sppasTypeError(coords, "sppasCoords")
+        if isinstance(coord, sppasCoords) is False:
+            sppasTypeError(coord, "sppasCoords")
 
-        image = sppasImage(input_array=self)
-        cv2.rectangle(image,
-                      (coords.x, coords.y),
-                      (coords.x + coords.w, coords.y + coords.h),
+        cv2.rectangle(self,
+                      (coord.x, coord.y),
+                      (coord.x + coord.w, coord.y + coord.h),
                       color,
                       thickness)
         if len(text) > 0:
@@ -204,12 +226,35 @@ class sppasImage(numpy.ndarray):
             th = thickness//3
             text_size = cv2.getTextSize(text, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                                         fontScale=font_scale*2, thickness=th)
-            cv2.putText(image, text,
-                        (coords.x + thickness, coords.y + thickness + text_size[1]),
+            cv2.putText(self, text,
+                        (coord.x + thickness, coord.y + thickness + text_size[1]),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         font_scale, color, th)
 
-        return image
+    # ----------------------------------------------------------------------------
+
+    def surround_point(self, point, color, thickness):
+        """Add a square surrounding the given point.
+
+        :param point: (sppasCoords, list, tuple) (x,y) values to surround
+        :param color: (int, int, int) Rectangle color or brightness (if grayscale image).
+        :param thickness: (int) Thickness of lines that make up the rectangle. Negative values, like CV_FILLED , mean that the function has to draw a filled rectangle.
+
+        """
+        if isinstance(point, sppasCoords) is False:
+            if isinstance(point, (tuple, list)) and len(point) >= 2:
+                try:
+                    point = sppasCoords(point[0], point[1])
+                except:
+                    pass
+        if isinstance(point, sppasCoords) is False:
+            sppasTypeError(point, "sppasCoords, tuple, list")
+
+        x = point.x - (thickness * 2)
+        y = point.y - (thickness * 2)
+        w = h = thickness * 4
+
+        cv2.rectangle(self, (x, y), (x + w, y + h), color, thickness)
 
     # ----------------------------------------------------------------------------
 

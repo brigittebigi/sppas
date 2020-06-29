@@ -129,25 +129,25 @@ class TestFaceLandmark(unittest.TestCase):
         self.assertEqual(len(fd), 3)
         fd.to_portrait(img)
 
+        w = sppasImageWriter()
+        w.set_options(tag=True)
+        faces = list()       # list of coords
         for i, coord in enumerate(fd):
             # Create an image of the ROI
             cropped_face = img.icrop(coord)
-            fn = os.path.join(DATA, "face-{:d}.jpg".format(i))
-            cropped_face.write(fn)
-
             try:
                 fl.mark(cropped_face)
                 face_coords = fl.get_detected_face()
                 face_coords.x += coord.x
                 face_coords.y += coord.y
-                img = img.isurround(face_coords, color=((50 * (i+1)) % 256, (100 * (i+1)) % 256, 200), thickness=2, text="")
-                for c in fl:
-                    c.x = c.x + coord.x - 2
-                    c.y = c.y + coord.y - 2
-                    c.w = 4
-                    c.h = 4
-                    img = img.isurround(c, color=((50*(i+1)) % 256, (100*(i+1)) % 256, 200), thickness=1, text="")
-            except Exception as e:
-                print("Coords {}: {}".format(i, str(e)))
+                faces.append(face_coords)
 
-        img.write(os.path.join(DATA, "montage-faces.png"))
+                fn = os.path.join(DATA, "face-{:d}.jpg".format(i))
+                cropped_face.write(fn)
+                w.write(cropped_face, [[c for c in fl]], fn)
+
+            except Exception as e:
+                print("Error for coords {}: {}".format(i, str(e)))
+
+        fn = os.path.join(DATA, "montage-faces.png")
+        w.write(img, faces, fn)

@@ -211,6 +211,12 @@ class FaceLandmark(object):
     # Automatic detection of the landmark points
     # -----------------------------------------------------------------------
 
+    def invalidate(self):
+        """Invalidate current list of landmark coordinates."""
+        self.__landmarks = list()
+
+    # -----------------------------------------------------------------------
+
     def mark(self, image):
         """Evaluate landmark points on an image representing a face.
 
@@ -249,7 +255,7 @@ class FaceLandmark(object):
             for (x, y) in points:
                 self.__landmarks.append(sppasCoords(x, y))
         else:
-            raise sppasError("No landmaks detected in the image.")
+            raise sppasError("No landmarks detected in the image.")
 
     # -----------------------------------------------------------------------
     # Overloads

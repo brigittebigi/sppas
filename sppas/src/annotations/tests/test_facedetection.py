@@ -383,10 +383,10 @@ class TestDNNFaceDetection(unittest.TestCase):
         fd.detect(img)
         coords = [c.copy() for c in fd]
 
-        # w = sppasImageWriter()
-        # w.set_options(tag=True)
-        # fn = os.path.join(DATA, "montage-dnnfaces.png")
-        # w.write(img, coords, fn)
+        w = sppasImageWriter()
+        w.set_options(tag=True)
+        fn = os.path.join(DATA, "montage-dnnfaces.png")
+        w.write(img, coords, fn)
         self.assertEqual(4, len(fd))
 
         fd.set_min_score(0.067)

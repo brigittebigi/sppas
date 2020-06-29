@@ -35,9 +35,7 @@
 import cv2
 import numpy
 
-from sppas.src.exceptions import sppasIOError, sppasTypeError
 from .coordinates import sppasCoords
-from .imgdataexc import ImageReadError
 
 # ----------------------------------------------------------------------------
 
