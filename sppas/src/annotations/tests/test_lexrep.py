@@ -91,7 +91,7 @@ class test_sppasLexRep(unittest.TestCase):
         self.content2 = ["salut", "oui", "ca", "va", "bien"]
         self.loc1 = list()
         for i, c in enumerate(self.content1):
-            loc = sppasLocation(sppasInterval(sppasPoint(i), sppasPoint(i + 1)))
+            loc = sppasLocation(sppasInterval(sppasPoint(float(i)), sppasPoint(float(i) + 1.)))
             self.loc1.append(loc)
             self.tier_spk1.create_annotation(loc, sppasLabel(sppasTag(c)))
         for i, c in enumerate(self.content2):
@@ -252,12 +252,41 @@ class test_sppasLexRep(unittest.TestCase):
         lexvar.set_span(3)
         lexvar._add_source(sources, 1, 2, DataSpeaker(self.content1[1:4]))   # ca va bien
 
-        tier_tok, tier_occ = lexvar.create_tier(sources, self.loc1)
+        tier_tok = lexvar.create_tier(sources, self.loc1)
         self.assertEqual(1, len(tier_tok))
         self.assertEqual("ca va bien", serialize_labels(tier_tok[0].get_labels(), " "))
 
         lexvar._add_source(sources, 4, 0, DataSpeaker(self.content1[4:5]))   # toi
-        tier_tok, tier_occ = lexvar.create_tier(sources, self.loc1)
+        tier_tok = lexvar.create_tier(sources, self.loc1)
         self.assertEqual(2, len(tier_tok))
         self.assertEqual("ca va bien", serialize_labels(tier_tok[0].get_labels(), " "))
         self.assertEqual("toi", serialize_labels(tier_tok[1].get_labels(), " "))
+
+    # -----------------------------------------------------------------------
+
+    def test_windowing(self):
+        lexvar = sppasLexRep()
+        lexvar.set_span(3)
+        lexvar.set_span_duration(5.)
+        wins = lexvar.windowing(self.content1)
+        self.assertEqual(len(wins), 5)
+        wins = lexvar.windowing(self.content1, self.loc1)
+        self.assertEqual(len(wins), 5)
+
+        lexvar.set_span_duration(2.5)
+        wins = lexvar.windowing(self.content1, self.loc1)
+        self.assertEqual(len(wins), 5)
+
+    # -----------------------------------------------------------------------
+
+    def test_lexrep_detect(self):
+        lexvar = sppasLexRep()
+        lexvar.set_span(3)
+        t1, t2 = lexvar.lexical_variation_detect(self.tier_spk1, self.tier_spk2)
+        self.assertEqual(len(t1), 1)
+        self.assertEqual(len(t2), 1)
+        self.assertEqual(t1.get_name(), "LexRepContent-1")
+        self.assertEqual(t2.get_name(), "LexRepContent-2")
+        self.assertEqual("ca va bien", serialize_labels(t1[0].get_labels(), " "))
+        self.assertEqual("ca va bien", serialize_labels(t2[0].get_labels(), " "))
+

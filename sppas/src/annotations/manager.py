@@ -426,7 +426,7 @@ class sppasAnnotationsManager(Thread):
 
             self._logfile.print_message("File: " + f, indent=0)
             if self._progress:
-                self._progress.set_text(os.path.basename(f)+" ("+str(i+1)+"/"+str(total)+")")
+                self._progress.set_text(os.path.basename(f) + " (" + str(i+1) + "/" + str(total)+")")
 
             # Add all files content in the same order than to annotate
             trs = sppasTranscription()
@@ -498,25 +498,37 @@ class sppasAnnotationsManager(Thread):
 
         for root in roots:
             new_file = sppasAnnotationsManager._get_filename(root.id, pat_ext)
+            logging.info("New file: {}".format(new_file))
             if new_file is None:
                 continue
 
             if len(types) == 0 or "STANDALONE" in types:
                 files.append(new_file)
             if "SPEAKER" in types:
-                logging.error("Annotations of type SPEAKER are not supported yet.")
-                pass
+                other_files = self.__matching_files(root, pat_ext, "SPEAKER")
+                for f in other_files:
+                    files.append((new_file, f))
             if "INTERACTION" in types:
-                for ref in root.get_references():
-                    if ref.get_type() == "INTERACTION":
-                        for fr in wkp.get_fileroot_with_ref(ref):
-                            if fr != root:
-                                other_file = sppasAnnotationsManager._get_filename(fr.id, pat_ext)
+                other_files = self.__matching_files(root, pat_ext, "INTERACTION")
+                for f in other_files:
+                    files.append((new_file, f))
 
-                                if other_file is not None:
-                                    files.append((new_file, other_file))
+        # Remove duplicated entries of the list and return it
+        return list(set(files))
 
-        return files
+    # ------------------------------------------------------------------------
+
+    def __matching_files(self, root, pat_ext, ann_type):
+        other_files = list()
+        wkp = self._parameters.get_workspace()
+        for ref in root.get_references():
+            if ref.get_type() == ann_type:
+                for fr in wkp.get_fileroot_with_ref(ref):
+                    if fr != root:
+                        other_file = sppasAnnotationsManager._get_filename(fr.id, pat_ext)
+                        if other_file is not None:
+                            other_files.append(other_file)
+        return other_files
 
     # ------------------------------------------------------------------------
 

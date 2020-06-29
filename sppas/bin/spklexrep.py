@@ -53,8 +53,10 @@ from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 from sppas.src.config import cfg
 
+from sppas.src.annotations import sppasAnnotationsManager
 from sppas.src.annotations import sppasLexRep
 from sppas.src.annotations import sppasParam
+from sppas.src.wkps import sppasWkpRW
 
 # ---------------------------------------------------------------------------
 
@@ -68,6 +70,7 @@ if __name__ == "__main__":
     parameters = sppasParam(["lexrep.json"])
     ann_step_idx = parameters.activate_annotation("spklexrep")
     ann_options = parameters.get_options(ann_step_idx)
+    extensions_out = parameters.get_output_extensions(ann_step_idx)
 
     # -----------------------------------------------------------------------
     # Verify and extract args:
@@ -90,23 +93,42 @@ if __name__ == "__main__":
     # Add arguments for input/output files
     # ------------------------------------
 
-    group_io = parser.add_argument_group('Files')
+    group_wkp = parser.add_argument_group('Files (auto)')
+    group_wkp.add_argument(
+        "-w",
+        metavar="wkp",
+        help='Workspace.')
+    group_wkp.add_argument(
+        "-l",
+        metavar="lang",
+        choices=parameters.get_langlist(ann_step_idx),
+        help='Language code (iso8859-3). One of: {:s}.'
+             ''.format(" ".join(parameters.get_langlist(ann_step_idx))))
+    group_wkp.add_argument(
+        "-e",
+        metavar=".ext",
+        default=parameters.get_output_extension(ann_step_idx),
+        choices=extensions_out,
+        help='Output file extension. One of: {:s}'
+             ''.format(" ".join(extensions_out)))
+    group_wkp.add_argument(
+        "--log",
+        metavar="file",
+        help="File name for a Procedure Outcome Report (default: None)")
 
+    group_io = parser.add_argument_group('Files (manual)')
     group_io.add_argument(
         "-i",
         metavar="file",
-        help='Input file name with time-aligned tokens of the main speaker.')
-
+        help='Input file name with time-aligned tokens of speaker 1.')
     group_io.add_argument(
         "-s",
         metavar="file",
-        help='Input file name with time-aligned tokens of the echoing speaker')
-
+        help='Input file name with time-aligned tokens of speaker 2.')
     group_io.add_argument(
         "-o",
         metavar="file",
         help='Output file name with other-repetitions.')
-
     group_io.add_argument(
         "-r",
         help='List of stop-words')
@@ -131,6 +153,9 @@ if __name__ == "__main__":
         sys.argv.append('-h')
 
     args = parser.parse_args()
+    if args.w and args.i:
+        print("argparse.py: error: choose either -w or -i input options, not both.")
+        sys.exit(1)
 
     # -----------------------------------------------------------------------
     # The automatic annotation is here:
@@ -152,7 +177,7 @@ if __name__ == "__main__":
 
     arguments = vars(args)
     for a in arguments:
-        if a not in ('i', 'o', 's', 'r', 'quiet'):
+        if a not in ('i', 'o', 's', 'r', 'w', 'l', 'e', 'log', 'quiet'):
             parameters.set_option_value(ann_step_idx, a, str(arguments[a]))
             o = parameters.get_step(ann_step_idx).get_option_by_key(a)
 
@@ -179,6 +204,26 @@ if __name__ == "__main__":
                         a.get_location().get_best().get_begin().get_midpoint(),
                         a.get_location().get_best().get_end().get_midpoint(),
                         a.get_best_tag().get_content()))
+
+    elif args.w:
+
+        if not args.l:
+            print("argparse.py: error: option -l is required with option -w")
+            sys.exit(1)
+
+        parser = sppasWkpRW(args.w)
+        wkp = parser.read()
+        parameters.set_workspace(wkp)
+
+        # Fix the output file extension and others
+        parameters.set_lang(args.l)
+        parameters.set_output_extension(args.e, parameters.get_outformat(ann_step_idx))
+        parameters.set_report_filename(args.log)
+
+        # Perform the annotation
+        process = sppasAnnotationsManager()
+        process.annotate(parameters)
+
 
     else:
 

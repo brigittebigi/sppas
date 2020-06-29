@@ -97,6 +97,12 @@
     },
 
     {
+      "id": "spklexrep",
+      "config": "lexrep.json",
+      "cli": "spklexrep.py"
+    },
+
+    {
       "id": "facedetect",
       "config": "facedetect.json",
       "cli": "facedetection.py"

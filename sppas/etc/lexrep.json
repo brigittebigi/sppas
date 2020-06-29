@@ -40,6 +40,12 @@
       "text": "Span window length in number of tokens"
     },
     {
+      "id": "spandur",
+      "type": "float",
+      "value": 3.0,
+      "text": "Span window maximum duration (in seconds)"
+    },
+    {
       "id": "stopwords",
       "type": "bool",
       "value": true,
