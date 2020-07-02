@@ -43,6 +43,7 @@
 from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
 
+
 # ---------------------------------------------------------------------------
 # Define classes in case opencv&numpy are not installed.
 # ---------------------------------------------------------------------------
@@ -52,6 +53,12 @@ class FaceLandmark(object):
     def __init__(self):
         raise sppasEnableFeatureError("video")
 
+
+class sppasFaceMark(object):
+    def __init__(self):
+        raise sppasEnableFeatureError("video")
+
+
 # ---------------------------------------------------------------------------
 # Import the classes in case the "video" feature is enabled: opencv&numpy
 # are both installed and the automatic detections can work.
@@ -60,7 +67,10 @@ class FaceLandmark(object):
 
 if cfg.dep_installed("video"):
     from .facelandmark import FaceLandmark
+    from .sppasfacemark import sppasFaceMark
+
 
 __all__ = (
-    'FaceLandmark'
+    'FaceLandmark',
+    'sppasFaceMark'
 )

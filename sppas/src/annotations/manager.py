@@ -498,7 +498,6 @@ class sppasAnnotationsManager(Thread):
 
         for root in roots:
             new_file = sppasAnnotationsManager._get_filename(root.id, pat_ext)
-            logging.info("New file: {}".format(new_file))
             if new_file is None:
                 continue
 

@@ -76,6 +76,7 @@ from .LexMetric import sppasLexMetric
 from .SpkLexRep import sppasLexRep
 from .LPC import sppasLPC
 from .FaceDetection import sppasFaceDetection
+from .FaceMark import sppasFaceMark
 
 from .searchtier import sppasFindTier
 from .param import sppasParam
@@ -106,5 +107,6 @@ __all__ = (
     'sppasAnnotationsManager',
     'sppasLexRep',
     'sppasLPC',
-    'sppasFaceDetection'
+    'sppasFaceDetection',
+    'sppasFaceMark'
 )

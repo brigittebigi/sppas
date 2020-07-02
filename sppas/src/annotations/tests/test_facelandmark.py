@@ -35,7 +35,6 @@
 
 import os
 import unittest
-import cv2
 
 from sppas.src.config import paths
 from sppas.src.imgdata import sppasImage
@@ -47,9 +46,12 @@ from ..FaceMark.facelandmark import FaceLandmark
 # ---------------------------------------------------------------------------
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
-MODEL = os.path.join(paths.resources, "faces", "lbfmodel68.yaml")
+MODEL_LBF68 = os.path.join(paths.resources, "faces", "lbfmodel68.yaml")
+MODEL_LBF5 = os.path.join(paths.resources, "faces", "lbfmodel5.yaml")
+MODEL_AAM = os.path.join(paths.resources, "faces", "aam.xml")
+MODEL_DAT = os.path.join(paths.resources, "faces", "kazemi_landmark.dat")
 
-NET = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000.caffemodel")
+NET = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000_fp16.caffemodel")
 HAAR1 = os.path.join(paths.resources, "faces", "haarcascade_profileface.xml")
 HAAR2 = os.path.join(paths.resources, "faces", "haarcascade_frontalface_alt.xml")
 
@@ -64,8 +66,8 @@ class TestFaceLandmark(unittest.TestCase):
         with self.assertRaises(IOError):
             fl.load_model("toto.txt", "toto")
 
-        fl.load_model(MODEL, NET)
-        fl.load_model(MODEL, NET, HAAR1, HAAR2)
+        fl.load_model(MODEL_AAM, NET)
+        fl.load_model(MODEL_AAM, NET, HAAR1, HAAR2)
 
     # ------------------------------------------------------------------------
 
@@ -85,7 +87,7 @@ class TestFaceLandmark(unittest.TestCase):
 
     def test_mark_nothing(self):
         fl = FaceLandmark()
-        fl.load_model(MODEL, NET)
+        fl.load_model(MODEL_DAT, NET)
         # Nothing detected... we still didn't asked for
 
         # The image we'll work on
@@ -102,22 +104,25 @@ class TestFaceLandmark(unittest.TestCase):
 
     def test_mark_normal(self):
         fl = FaceLandmark()
-        fl.load_model(MODEL, NET)
+        fl.load_model(MODEL_LBF68, NET)
 
         # The image we'll work on
-        fn = os.path.join(paths.samples, "faces", "BrigitteBigiSlovenie2016.jpg")
+        fn = os.path.join(DATA, "BrigitteBigiSlovenie2016-portrait.jpg")
         with self.assertRaises(TypeError):
             fl.mark(fn)
         img = sppasImage(filename=fn)
         fl.mark(img)
 
-        print(fl)
+        fn = os.path.join(DATA, "BrigitteBigiSlovenie2016-mark.jpg")
+        w = sppasImageWriter()
+        w.set_options(tag=True)
+        w.write(img, [[c for c in fl]], fn)
 
     # ------------------------------------------------------------------------
 
     def test_mark_montage(self):
         fl = FaceLandmark()
-        fl.load_model(MODEL, HAAR1, HAAR2, NET)
+        fl.load_model(MODEL_LBF68, HAAR1, HAAR2, NET)
 
         # The image we'll work on, with 3 faces to be detected
         fn = os.path.join(DATA, "montage.png")

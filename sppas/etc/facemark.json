@@ -1,7 +1,7 @@
 {
   "id": "facemark",
   "name": "Face Landmark",
-  "descr": "Estimate face landmarks as a set o 68 points on an image of a face or a portrait",
+  "descr": "Estimate face landmarks as a set o 68 points on an image of the portrait of a person",
   "required": "",
   "api": "sppasFaceMark",
 
@@ -10,7 +10,28 @@
       "path": "faces",
       "type": "file",
       "ext": "",
-      "name": "res10_300x300_ssd_iter_140000",
+      "name": "lbfmodel68.yaml",
+      "lang": false
+    },
+    {
+      "path": "faces",
+      "type": "file",
+      "ext": "",
+      "name": "res10_300x300_ssd_iter_140000_fp16.caffemodel",
+      "lang": false
+    },
+    {
+      "path": "faces",
+      "type": "file",
+      "ext": "",
+      "name": "haarcascade_profileface.xml",
+      "lang": false
+    },
+    {
+      "path": "faces",
+      "type": "file",
+      "ext": "",
+      "name": "haarcascade_frontalface_alt.xml",
       "lang": false
     }
   ],

@@ -256,7 +256,7 @@ class sppasImageWriter(object):
         """Save the image into file(s) depending on the options.
 
         :param image: (sppasImage) The image to write
-        :param coords: (sppasCoords) The coordinates of objects
+        :param coords: (list or list of list of sppasCoords) The coordinates of objects
         :param out_img_name: (str) The filename of the output image file
         :param pattern: (str) Pattern to add to a cropped image filename
 
@@ -286,14 +286,23 @@ class sppasImageWriter(object):
         if os.path.exists(out_csv_name) is True:
             mode = "a+"
         with codecs.open(out_csv_name, mode, encoding="utf-8") as f:
-            for i, c in enumerate(coords):
-                f.write("{:s};".format(img_name))
-                f.write("{:d};".format(i+1))
-                f.write("{:d};".format(c.x))
-                f.write("{:d};".format(c.y))
-                f.write("{:d};".format(c.w))
-                f.write("{:d};".format(c.h))
-                f.write("{:f}\n".format(c.get_confidence()))
+            for i, c1 in enumerate(coords):
+                if isinstance(c1, (list, tuple)) is False:
+                    self.__write_coords(img_name, f, c1, i)
+                else:
+                    for j, c2 in enumerate(c1):
+                        self.__write_coords(img_name, f, c2, j)
+
+    # -----------------------------------------------------------------------
+
+    def __write_coords(self, img_name, fd, coords, i):
+        fd.write("{:s};".format(img_name))
+        fd.write("{:d};".format(i + 1))
+        fd.write("{:d};".format(coords.x))
+        fd.write("{:d};".format(coords.y))
+        fd.write("{:d};".format(coords.w))
+        fd.write("{:d};".format(coords.h))
+        fd.write("{:f}\n".format(coords.get_confidence()))
 
     # -----------------------------------------------------------------------
 

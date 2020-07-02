@@ -34,13 +34,9 @@
 
 """
 
-import logging
-import os
-
-from sppas.src.config import annots
-from sppas.src.imgdata import extensions
 from sppas.src.imgdata import sppasImage
 from sppas.src.imgdata import sppasImageWriter
+from sppas.src.imgdata import extensions
 
 from ..annotationsexc import AnnotationOptionError
 from ..baseannot import sppasBaseAnnotation
@@ -61,7 +57,7 @@ class sppasFaceMark(sppasBaseAnnotation):
     """
 
     def __init__(self, log=None):
-        """Create a new sppasRMS instance.
+        """Create a new sppasFaceMark instance.
 
         Log is used for a better communication of the annotation process and its
         results. If None, logs are redirected to the default logging system.
@@ -75,15 +71,15 @@ class sppasFaceMark(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    def load_resources(self, model_basename, **kwargs):
+    def load_resources(self, model_lbf, model_fd, *args, **kwargs):
         """Fix the model and proto files.
 
-        :param model_basename: (str) Basename of the dnn model and proto files
+        :param model_lbf: (str) LBF model for landmark
+        :param model_fd: (str) Model for face detection
+        :param args: other models for face detection
 
         """
-        model = model_basename + ".caffemodel"
-        proto = model_basename + ".prototxt"
-        self.__fl.load_model(model, proto)
+        self.__fl.load_model(model_lbf, model_fd, *args)
 
     # -----------------------------------------------------------------------
     # Methods to fix options
@@ -141,7 +137,7 @@ class sppasFaceMark(sppasBaseAnnotation):
         # Save result as a list of coordinates (csv), a tagged image
         # and/or a list of images (face or portrait) in a folder
         if output_file is not None:
-            self.__writer.write(image, coords, output_file, pattern="")
+            self.__writer.write(image, [coords], output_file, pattern="")
 
         return coords
 

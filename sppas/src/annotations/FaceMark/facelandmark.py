@@ -33,6 +33,20 @@
     Requires the "video" feature of SPPAS.
     Automatic face landmark detection.
 
+    OpenCV’s facial landmark API is called Facemark. It has three different
+    implementations of landmark detection based on three different papers:
+
+        - FacemarkKazemi: This implementation is based on a paper titled
+        "One Millisecond Face Alignment with an Ensemble of Regression Trees"
+         by V.Kazemi and J. Sullivan published in CVPR 2014.
+        - FacemarkAAM: This implementation uses an Active Appearance Model
+        and is based on an the paper titled "Optimization problems for fast
+        AAM fitting in-the-wild" by G. Tzimiropoulos and M. Pantic, published
+        in ICCV 2013.
+        - FacemarkLBF: This implementation is based a paper titled "Face
+        alignment at 3000 fps via regressing local binary features" by
+        S. Ren published in CVPR 2014.
+
 """
 
 import logging
@@ -40,7 +54,6 @@ import cv2
 import os
 import numpy
 
-from sppas.src.config import paths
 from sppas.src.exceptions import sppasIOError, sppasError
 from sppas.src.imgdata import sppasCoords
 from ..FaceDetection.facedetection import FaceDetection
@@ -49,7 +62,7 @@ from ..FaceDetection.facedetection import FaceDetection
 
 
 class FaceLandmark(object):
-    """Estimate face landmarks on an image of a face or a portrait.
+    """Estimate face landmarks on an image of a portrait.
 
     :author:       Florian Hocquet, Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -58,7 +71,7 @@ class FaceLandmark(object):
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     This class is intentionally limited to mark only one face.
-    It then expects an image cropped on the face or the portrait of a person.
+    It then expects an image cropped on the portrait of a person.
 
     """
 
@@ -71,7 +84,7 @@ class FaceLandmark(object):
         self.__fd = FaceDetection()
         # The landmark recognizer
         self.__recognizer = None
-        # The expected number of points for this model
+        # The expected number of points for the recognizer
         self.__nb_points = 68
 
     # -----------------------------------------------------------------------
@@ -88,7 +101,14 @@ class FaceLandmark(object):
         if os.path.exists(model_landmark) is False:
             raise sppasIOError(model_landmark)
 
-        self.__recognizer = cv2.face.createFacemarkLBF()
+        # "Face alignment at 3000 fps via regressing local binary features"
+        # by S. Ren published in CVPR 2014.
+        if model_landmark.endswith("yaml"):
+            self.__recognizer = cv2.face.createFacemarkLBF()
+        elif model_landmark.endswith("xml"):
+            self.__recognizer = cv2.face.createFacemarkAAM()
+        elif model_landmark.endswith("dat"):
+            self.__recognizer = cv2.face.createFacemarkKazemi()
         self.__recognizer.loadModel(model_landmark)
 
         self.__fd.load_model(model_fd, *args)
@@ -231,8 +251,8 @@ class FaceLandmark(object):
         if len(self.__fd) == 0:
             raise sppasError("No face detected in the image.")
         if len(self.__fd) > 1:
-            logging.warning("Only one face was expected in the image but {}"
-                            "were found. Only the first one will be considered."
+            logging.warning("Only one face was expected in the image but {} "
+                            "were found. Only the best one will be considered."
                             "".format(len(self.__fd)))
         coords = self.__fd.get_best()
         rects = numpy.array([[coords.x, coords.y, coords.w, coords.h]], dtype=numpy.int32)

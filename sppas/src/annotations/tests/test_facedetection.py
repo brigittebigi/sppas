@@ -49,7 +49,7 @@ from ..FaceDetection.facedetection import FaceDetection
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
-NET = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000.caffemodel")
+NET = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000_fp16.caffemodel")
 HAAR1 = os.path.join(paths.resources, "faces", "haarcascade_profileface.xml")
 HAAR2 = os.path.join(paths.resources, "faces", "haarcascade_frontalface_alt.xml")
 
