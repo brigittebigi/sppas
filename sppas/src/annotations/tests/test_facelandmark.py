@@ -105,6 +105,7 @@ class TestFaceLandmark(unittest.TestCase):
     def test_mark_normal(self):
         fl = FaceLandmark()
         fl.load_model(MODEL_LBF68, NET)
+        fl.load_model(MODEL_DAT, NET)
 
         # The image we'll work on
         fn = os.path.join(DATA, "BrigitteBigiSlovenie2016-portrait.jpg")
@@ -122,7 +123,8 @@ class TestFaceLandmark(unittest.TestCase):
 
     def test_mark_montage(self):
         fl = FaceLandmark()
-        fl.load_model(MODEL_LBF68, HAAR1, HAAR2, NET)
+        fl.load_model(MODEL_LBF68, NET)
+        fl.load_model(MODEL_DAT, NET)
 
         # The image we'll work on, with 3 faces to be detected
         fn = os.path.join(DATA, "montage.png")
@@ -138,17 +140,18 @@ class TestFaceLandmark(unittest.TestCase):
         w.set_options(tag=True)
         faces = list()       # list of coords
         for i, coord in enumerate(fd):
+            fn = os.path.join(DATA, "montage_{:d}-face.jpg".format(i))
             # Create an image of the ROI
             cropped_face = img.icrop(coord)
+            cropped_face.write(fn)
             try:
+                fn = os.path.join(DATA, "montage_{:d}-mark.jpg".format(i))
                 fl.mark(cropped_face)
                 face_coords = fl.get_detected_face()
                 face_coords.x += coord.x
                 face_coords.y += coord.y
                 faces.append(face_coords)
 
-                fn = os.path.join(DATA, "face-{:d}.jpg".format(i))
-                cropped_face.write(fn)
                 w.write(cropped_face, [[c for c in fl]], fn)
 
             except Exception as e:
