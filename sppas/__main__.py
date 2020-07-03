@@ -35,11 +35,11 @@
     In Python, '__main__' is the name of the scope in which top-level code
     executes. Within SPPAS, it allows to launch the Graphical User Interface.
 
-    To launch the GUI, it allows the followings 3 possibilities:
+To launch the GUI, this main file allows the followings 3 possibilities:
 
-    >>> python3 -m sppas
-    >>> python3 sppas
-    >>> python3 sppas/__main__.py
+>>> python3 -m sppas
+>>> python3 sppas
+>>> python3 sppas/__main__.py
 
 """
 

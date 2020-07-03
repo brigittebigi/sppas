@@ -32,11 +32,13 @@
     src.annotations.LPC
     ~~~~~~~~~~~~~~~~~~~~~
 
-:author:       Brigitte Bigi
-:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-:contact:      develop@sppas.org
-:license:      GPL, v3
-:copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+This package requires video feature, for opencv and numpy dependencies.
 
 LPC is the "Langue française Parlée Complétée".
 The conversion of phonemes into keys of LPC is performed using

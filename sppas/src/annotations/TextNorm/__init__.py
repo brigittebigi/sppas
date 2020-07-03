@@ -55,6 +55,7 @@ For details, read the following reference:
     | 5th Language & Technology Conference, Poznan (Poland).
 
 """
+
 from .sppastextnorm import sppasTextNorm
 from .orthotranscription import sppasOrthoTranscription
 from .splitter import sppasSimpleSplitter

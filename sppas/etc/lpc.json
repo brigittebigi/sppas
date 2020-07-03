@@ -32,8 +32,8 @@
     {
       "id": "createvideo",
       "type": "bool",
-      "value": true,
-      "text": "Tags the video with the code"
+      "value": false,
+      "text": "Tags the video with the code (not implemented yet)"
     }
 
   ]

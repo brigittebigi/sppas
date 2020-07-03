@@ -160,9 +160,9 @@ class TestDataSpeaker(unittest.TestCase):
         self.assertEqual(d.get_next_word(0), 2)
         self.assertEqual(d.get_next_word(1), 2)
 
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ValueError):
             d.get_next_word(-1)
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ValueError):
             d.get_next_word(3)
 
     # -----------------------------------------------------------------------

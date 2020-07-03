@@ -101,6 +101,13 @@ class test_sppasLexRep(unittest.TestCase):
 
     # -----------------------------------------------------------------------
 
+    def test_init(self):
+        lex = sppasLexRep()
+        self.assertEqual(lex._options["span"], 10)
+        self.assertEqual(lex._options["spandur"], 3.)
+
+    # -----------------------------------------------------------------------
+
     def test_tier_to_list(self):
         content, loc = sppasLexRep.tier_to_list(self.tier_spk1, True)
         self.assertEqual(self.content1, content)
@@ -198,8 +205,19 @@ class test_sppasLexRep(unittest.TestCase):
         dataspk2 = ["oui", "toi", "#", "comment", "ca", "#", "va"]
         lexvar = sppasLexRep()
         lexvar.set_span(3)
+        lexvar.set_span_duration(20)
         winspk1 = lexvar.windowing(dataspk1)
         winspk2 = lexvar.windowing(dataspk2)
+
+        # in the other way
+        sources = lexvar._detect_all_sources(winspk2, winspk1)
+        self.assertEqual(len(sources), 2)
+
+        self.assertTrue((1, 0) in sources)
+        self.assertEqual("toi", serialize_labels(sources[0].get_labels(), " "))
+
+        self.assertTrue((4, 2) in sources)
+        self.assertEqual("ca # va", serialize_labels(sources[1].get_labels(), " "))
 
         # in one way
         sources = lexvar._detect_all_sources(winspk1, winspk2)
@@ -213,16 +231,6 @@ class test_sppasLexRep(unittest.TestCase):
 
         self.assertTrue((8, 0) in sources)
         self.assertEqual("ca", serialize_labels(sources[2].get_labels(), " "))
-
-        # in the other way
-        sources = lexvar._detect_all_sources(winspk2, winspk1)
-        self.assertEqual(len(sources), 2)
-
-        self.assertTrue((1, 0) in sources)
-        self.assertEqual("toi", serialize_labels(sources[0].get_labels(), " "))
-
-        self.assertTrue((4, 2) in sources)
-        self.assertEqual("ca # va", serialize_labels(sources[1].get_labels(), " "))
 
     # -----------------------------------------------------------------------
 

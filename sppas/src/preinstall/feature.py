@@ -332,16 +332,15 @@ class LangFeature(Feature):
     def set_lang(self, value):
         """Set the iso-6639-3 code of the lang resource to download.
 
-        :param value: (str) 3 chars
+        :param value: (str) 3 chars if standard name
 
         """
         value = str(value)
         value = value.strip()
         if len(value) != 3:
-            logging.warning("Attempted to set a wrong language '{:s}' for "
-                            "feature '{}'.".format(value, self.get_id()))
-        else:
-            self.__lang = value
+            logging.warning("Set a non-standard language name '{:s}'"
+                            " for feature '{}'.".format(value, self.get_id()))
+        self.__lang = value
 
 # ---------------------------------------------------------------------------
 

@@ -31,6 +31,12 @@
     annotations.Align.__init__.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
 This package includes the implementation of the Alignment annotation.
 
 Alignment is the process of aligning speech with its corresponding
@@ -63,6 +69,7 @@ Each phoneme is represented by one of these statistical representations.
 SPPAS is based on the use of HTK-ASCII acoustic models.
 
 """
+
 from .aligners import sppasAligners
 from .tracksgmt import TrackSegmenter
 from .tracksio import TracksReaderWriter

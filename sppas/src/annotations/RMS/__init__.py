@@ -40,4 +40,10 @@
 
 """
 
+from .irms import IntervalsRMS
 from .sppasrms import sppasRMS
+
+__all__ = (
+    'IntervalsRMS',
+    'sppasRMS'
+)

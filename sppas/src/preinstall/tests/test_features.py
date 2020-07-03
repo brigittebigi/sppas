@@ -65,7 +65,11 @@ class TestFeatures(unittest.TestCase):
     def test_get_ids(self):
         # Return the list of feature identifiers.
         y = self.__features.get_ids()
-        self.assertEqual(y, ["wxpython", "brew", "julius", "video"])
+        self.assertTrue("wxpython" in y)
+        self.assertTrue("brew" in y)
+        self.assertTrue("julius" in y)
+        self.assertTrue("video" in y)
+        self.assertTrue("pol" in y)
 
     # ---------------------------------------------------------------------------
 
@@ -148,8 +152,8 @@ class TestFeatures(unittest.TestCase):
         # Return a parsed version of the features.ini file.
         y = self.__features._Features__init_features()
 
-        self.assertEqual(len(y.sections()), 4)
-        self.assertEqual(y.sections(), ["wxpython", "brew", "julius", "video"])
+        self.assertGreater(len(y.sections()), 20)
+        self.assertTrue("wxpython" in y.sections())
 
         self.assertEqual(y.get("wxpython", "pip"), "wxpython:>;4.0")
 
@@ -218,7 +222,7 @@ class TestFeatures(unittest.TestCase):
     def test__len__(self):
         # Return the number of features.
         y = self.__features.__len__()
-        self.assertEqual(y, 22)
+        self.assertEqual(y, 23)
 
     # ---------------------------------------------------------------------------
 

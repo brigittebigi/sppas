@@ -46,7 +46,6 @@ from sppas.src.anndata import sppasInterval
 from sppas.src.anndata import sppasLocation
 from sppas.src.anndata import sppasTag
 from sppas.src.anndata import sppasLabel
-from sppas.src.annotations.LPC.managerlpc import ManagerLFPC
 
 from ..baseannot import sppasBaseAnnotation
 from ..searchtier import sppasFindTier
@@ -240,9 +239,11 @@ class sppasLPC(sppasBaseAnnotation):
 
         """
         if cfg.dep_installed("video") is True:
-            self.logfile.print_message("Create the tagged video", status=annots.info)
-            manager = ManagerLFPC(video_file, lpc_keys, 100, draw=True, usable=True, v_value=True, f_value=True)
-            manager.launch_process()
+            self.logfile.print_message("Creating a tagged video with the LPC key codes"
+                                       " is not implemented yet.", status=annots.info)
+            # self.logfile.print_message("Create the tagged video", status=annots.info)
+            # manager = ManagerLFPC(video_file, lpc_keys, 100, draw=True, usable=True, v_value=True, f_value=True)
+            # manager.launch_process()
         else:
             self.logfile.print_message(
                 "To tag a video, the video support feature must be enabled."

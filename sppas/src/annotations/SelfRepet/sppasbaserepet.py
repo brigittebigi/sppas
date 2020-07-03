@@ -75,15 +75,16 @@ class sppasBaseRepet(sppasBaseAnnotation):
         :param log: (sppasLog) Human-readable logs.
 
         """
-        super(sppasBaseRepet, self).__init__(config, log)
-
-        self.max_span = 8
-
         # List of options to configure this automatic annotation
         self._options = dict()
         self._options['span'] = 3
         self._options['stopwords'] = True
 
+        # Option values can be overridden by those defined in the config file
+        super(sppasBaseRepet, self).__init__(config, log)
+
+        # Members
+        self.max_span = 8
         self._word_strain = sppasWordStrain()
         self._stop_words = StopWords()
 

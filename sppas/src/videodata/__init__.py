@@ -51,7 +51,7 @@ from sppas.src.exceptions import sppasEnableFeatureError
 # Define classes in case opencv&numpy are not installed.
 # ---------------------------------------------------------------------------
 
-
+"""
 class sppasVideodataError(object):
     def __init__(self, *args, **kwargs):
         raise sppasEnableFeatureError("video")
@@ -79,7 +79,7 @@ class VideoLandmark(sppasVideodataError):
 
 class Manager(sppasVideodataError):
     pass
-
+"""
 
 extensions = list()
 
@@ -89,12 +89,11 @@ extensions = list()
 # are both installed and the automatic detections can work.
 # ---------------------------------------------------------------------------
 
-
 if cfg.dep_installed("video"):
-    from .coordswriter import sppasVideoCoordsWriter
-    from .facetracking import FaceTracking
-    from .videobuffer import VideoBuffer
-    from .personsbuffer import PersonsBuffer
+    # from .coordswriter import sppasVideoCoordsWriter
+    # from .facetracking import FaceTracking
+    # from .videobuffer import VideoBuffer
+    # from .personsbuffer import PersonsBuffer
 
     def opencv_extensions():
         """Return the list of supported file extensions in lower case.
@@ -108,9 +107,9 @@ if cfg.dep_installed("video"):
 
 
 __all__ = (
-    "sppasVideoCoordsWriter",
-    "FaceTracking",
-    "VideoBuffer",
-    "PersonsBuffer",
+    # "sppasVideoCoordsWriter",
+    # "FaceTracking",
+    # "VideoBuffer",
+    # "PersonsBuffer",
     "extensions"
 )

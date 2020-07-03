@@ -113,7 +113,6 @@ class sppasActivity(sppasBaseAnnotation):
         """
         self._options['duration'] = bool(value)
 
-
     # -----------------------------------------------------------------------
     # Automatic annotation
     # -----------------------------------------------------------------------

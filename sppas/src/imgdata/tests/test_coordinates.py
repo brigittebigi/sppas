@@ -62,18 +62,18 @@ class TestCoordinates(unittest.TestCase):
     # ------------------------------------------------------------------------
 
     def test_get_set_confidence(self):
-        self.__coordinates._sppasCoords__set_confidence(0.5)
+        self.__coordinates.set_confidence(0.5)
         confidence = self.__coordinates.get_confidence()
         self.assertEqual(confidence, 0.5)
 
         with self.assertRaises(TypeError):
-            self.__coordinates._sppasCoords__set_confidence("Bonjour")
+            self.__coordinates.set_confidence("Bonjour")
 
         with self.assertRaises(ValueError):
-            self.__coordinates._sppasCoords__set_confidence(-0.7)
+            self.__coordinates.set_confidence(-0.7)
 
         with self.assertRaises(ValueError):
-            self.__coordinates._sppasCoords__set_confidence(1.1)
+            self.__coordinates.set_confidence(1.1)
 
     # ------------------------------------------------------------------------
 

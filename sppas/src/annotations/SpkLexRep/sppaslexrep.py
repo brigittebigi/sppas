@@ -119,6 +119,7 @@ class sppasLexRep(sppasBaseRepet):
 
     Main differences compared to repetitions:
     The span option is used to fix the max number of continuous tokens to analyze.
+    The span window has a duration limit.
 
     """
     def __init__(self, log=None):

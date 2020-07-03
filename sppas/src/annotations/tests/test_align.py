@@ -563,7 +563,7 @@ class TestAlign(unittest.TestCase):
             phn_file = os.path.join(expected_result_dir, filename.replace('.wav', '-phon.xra'))
             tok_file = os.path.join(expected_result_dir, filename.replace('.wav', '-token.xra'))
             result_file = os.path.join(paths.samples, samples_folder, filename.replace('.wav', '-palign.xra'))
-            expected_result = sa.run([audio_file, phn_file], [tok_file], result_file)
+            expected_result = sa.run(phn_file, [audio_file, tok_file], result_file)
             print('Evaluate:', audio_file)
 
             self.compare_tiers(expected_tier_phones,

@@ -32,11 +32,11 @@
     src.annotations.Intsint
     ~~~~~~~~~~~~~~~~~~~~~~~
 
-:author:       Brigitte Bigi
-:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-:contact:      develop@sppas.org
-:license:      GPL, v3
-:copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
 
 INTSINT is an acronym for INternational Transcription System for INTonation.
 It was originally developed by Daniel Hirst in his 1987 thesis as a
@@ -70,6 +70,7 @@ into SPPAS corresponds to the most recent version of the algorithm:
     | Chicago
 
 """
+
 from .intsint import Intsint
 from .sppasintsint import sppasIntsint
 

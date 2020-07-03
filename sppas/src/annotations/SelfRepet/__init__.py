@@ -32,13 +32,14 @@
     src.annotations.SelfRepet
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
-:author:       Brigitte Bigi
-:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-:contact:      develop@sppas.org
-:license:      GPL, v3
-:copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
 
 """
+
 from .rules import SelfRules
 from .datastructs import DataSpeaker
 from .detectrepet import SelfRepetition
