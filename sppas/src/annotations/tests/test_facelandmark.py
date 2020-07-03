@@ -47,9 +47,8 @@ from ..FaceMark.facelandmark import FaceLandmark
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 MODEL_LBF68 = os.path.join(paths.resources, "faces", "lbfmodel68.yaml")
-MODEL_LBF5 = os.path.join(paths.resources, "faces", "lbfmodel5.yaml")
-MODEL_AAM = os.path.join(paths.resources, "faces", "aam.xml")
 MODEL_DAT = os.path.join(paths.resources, "faces", "kazemi_landmark.dat")
+# --> not efficient: os.path.join(paths.resources, "faces", "aam.xml")
 
 NET = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000_fp16.caffemodel")
 HAAR1 = os.path.join(paths.resources, "faces", "haarcascade_profileface.xml")
@@ -66,8 +65,9 @@ class TestFaceLandmark(unittest.TestCase):
         with self.assertRaises(IOError):
             fl.load_model("toto.txt", "toto")
 
-        fl.load_model(MODEL_AAM, NET)
-        fl.load_model(MODEL_AAM, NET, HAAR1, HAAR2)
+        fl.load_model(NET, MODEL_LBF68, MODEL_DAT)
+        with self.assertRaises(Exception):
+            fl.load_model(MODEL_DAT, MODEL_LBF68)
 
     # ------------------------------------------------------------------------
 
@@ -104,8 +104,7 @@ class TestFaceLandmark(unittest.TestCase):
 
     def test_mark_normal(self):
         fl = FaceLandmark()
-        fl.load_model(MODEL_LBF68, NET)
-        fl.load_model(MODEL_DAT, NET)
+        fl.load_model(NET, MODEL_LBF68, MODEL_DAT)
 
         # The image we'll work on
         fn = os.path.join(DATA, "BrigitteBigiSlovenie2016-portrait.jpg")
@@ -123,8 +122,7 @@ class TestFaceLandmark(unittest.TestCase):
 
     def test_mark_montage(self):
         fl = FaceLandmark()
-        fl.load_model(MODEL_LBF68, NET)
-        fl.load_model(MODEL_DAT, NET)
+        fl.load_model(NET, MODEL_LBF68, MODEL_DAT)
 
         # The image we'll work on, with 3 faces to be detected
         fn = os.path.join(DATA, "montage.png")

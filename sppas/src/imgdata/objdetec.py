@@ -28,7 +28,7 @@
         ---------------------------------------------------------------------
 
     src.imgdata.objdetec.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~
 
     Requires the "video" feature of SPPAS.
     Automatic object detection, based on opencv.
@@ -45,6 +45,11 @@ from sppas.src.exceptions import IntervalRangeException
 from sppas.src.exceptions import IOExtensionError
 from .coordinates import sppasCoords
 from .image import sppasImage
+
+# ---------------------------------------------------------------------------
+
+
+ERR_MODEL_MISS = "At least a model must be loaded first."
 
 # ---------------------------------------------------------------------------
 
@@ -205,7 +210,7 @@ class BaseObjectsDetector(object):
 
         # Verify if a model is instantiated
         if self._detector is None:
-            raise sppasError("A model must be loaded first")
+            raise sppasError(ERR_MODEL_MISS)
 
         self._detection(image)
         self._filter_overlapped()

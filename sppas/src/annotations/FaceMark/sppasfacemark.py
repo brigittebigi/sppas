@@ -30,7 +30,7 @@
         ---------------------------------------------------------------------
 
     src.annotations.FaceMark.sppasfacemark.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -71,15 +71,15 @@ class sppasFaceMark(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    def load_resources(self, model_lbf, model_fd, *args, **kwargs):
+    def load_resources(self, model_fd, model_lbf, *args, **kwargs):
         """Fix the model and proto files.
 
-        :param model_lbf: (str) LBF model for landmark
         :param model_fd: (str) Model for face detection
-        :param args: other models for face detection
+        :param model_lbf: (str) LBF model for landmark
+        :param args: other models for landmark (Kazemi/LBF/AAM)
 
         """
-        self.__fl.load_model(model_lbf, model_fd, *args)
+        self.__fl.load_model(model_fd, model_lbf, *args)
 
     # -----------------------------------------------------------------------
     # Methods to fix options
@@ -134,8 +134,7 @@ class sppasFaceMark(sppasBaseAnnotation):
         # Make the output list of coordinates
         coords = [c.copy() for c in self.__fl]
 
-        # Save result as a list of coordinates (csv), a tagged image
-        # and/or a list of images (face or portrait) in a folder
+        # Save result as a list of coordinates (csv) and/or a tagged image
         if output_file is not None:
             self.__writer.write(image, [coords], output_file, pattern="")
 

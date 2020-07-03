@@ -121,13 +121,13 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-r",
         metavar="model",
-        help='Model base name')
+        action='append',
+        help='Landmark model name (Kazemi, LBF or AAM)')
 
     group_io.add_argument(
         "-R",
         metavar="model",
-        action='append',
-        help='FaceDetection model base name (as many .caffemodel or .xml models as wishes)')
+        help='FaceDetection model name')
 
     group_io.add_argument(
         "-e",
@@ -196,15 +196,15 @@ if __name__ == "__main__":
         # ---------------------------------------
 
         if not args.r:
-            print("argparse.py: error: option -R is required with option -i")
-            sys.exit(1)
-
-        if not args.R:
             print("argparse.py: error: option -r is required with option -i")
             sys.exit(1)
 
+        if not args.R:
+            print("argparse.py: error: option -R is required with option -i")
+            sys.exit(1)
+
         ann = sppasFaceMark(log=None)
-        ann.load_resources(args.r, args.R[0], *args.R[1:])
+        ann.load_resources(args.R, args.r[0], *args.r[1:])
         ann.fix_options(parameters.get_options(ann_step_idx))
 
         if args.o:

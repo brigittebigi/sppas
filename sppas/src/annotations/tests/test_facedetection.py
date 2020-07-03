@@ -52,6 +52,7 @@ DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 NET = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000_fp16.caffemodel")
 HAAR1 = os.path.join(paths.resources, "faces", "haarcascade_profileface.xml")
 HAAR2 = os.path.join(paths.resources, "faces", "haarcascade_frontalface_alt.xml")
+HAAR3 = os.path.join(paths.resources, "faces", "lbpcascade_frontalface_improved.xml")
 
 # ---------------------------------------------------------------------------
 
@@ -77,6 +78,9 @@ class TestFaceDetection(unittest.TestCase):
 
         fd.load_model(HAAR1, NET, HAAR2)
         self.assertEqual(len(fd._detector), 3)
+
+        fd.load_model(HAAR3)
+        self.assertEqual(len(fd._detector), 1)
 
     # ------------------------------------------------------------------------
 
@@ -183,14 +187,14 @@ class TestFaceDetection(unittest.TestCase):
         w = sppasImageWriter()
         w.set_options(tag=True)
 
-        fd.load_model(HAAR1, HAAR2, NET)
+        fd.load_model(HAAR3, HAAR1, HAAR2, NET)
         fd.detect(img)
-        self.assertEqual(3, len(fd))
         coords = [c.copy() for c in fd]
         for c in coords:
             print(c)
-        # fn = os.path.join(DATA, "montage-faces.png")
-        # w.write(img, coords, fn)
+        fn = os.path.join(DATA, "montage-faces.png")
+        w.write(img, coords, fn)
+        self.assertEqual(3, len(fd))
 
 # ---------------------------------------------------------------------------
 
@@ -218,31 +222,33 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
 
     def test_detect_one_face_good_img_quality(self):
         fd = FaceDetection()
-        fd.load_model(HAAR1)
-        # Nothing detected... we still didn't asked for
-        self.assertEqual(0, len(fd))
-
-        # The image we'll work on
         fn = os.path.join(paths.samples, "faces", "BrigitteBigiSlovenie2016.jpg")
-        with self.assertRaises(TypeError):
-            fd.detect(fn)
         img = sppasImage(filename=fn)
-        fd.detect(img)
 
         # No profile face in the image
+        fd.load_model(HAAR1)
+        fd.detect(img)
         self.assertEqual(0, len(fd))
 
-        # Only 1 frontal face in the image but 2 detected
+        # Only 1 frontal face in the image
         fd.load_model(HAAR2)
         fd.detect(img)
         self.assertGreaterEqual(1, len(fd))
-        print(fd[0])
 
-        # combining both detectors: only the right coords are selected
-        fd.load_model(HAAR1, HAAR2)
-        fd.set_min_score(0.1)
+        # Only 1 frontal face in the image but 2 detected
+        fd.load_model(HAAR3)
+        fd.detect(img)
+        self.assertGreaterEqual(2, len(fd))
+
+        # combining all cascade detectors: only the right coords are selected
+        fd.load_model(HAAR1, HAAR2, HAAR3)
         fd.detect(img)
         self.assertEqual(1, len(fd))
+        self.assertEqual(1, len(fd))
+        self.assertEqual(fd[0].x, 873)
+        self.assertEqual(fd[0].y, 217)
+        self.assertEqual(fd[0].w, 192)
+        self.assertEqual(fd[0].h, 192)
 
     # ------------------------------------------------------------------------
 
@@ -273,8 +279,8 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
         # w.write(img, coords, fn)
         self.assertEqual(4, len(fd))
 
-        # With the frontal model
-        # ----------------------
+        # With the frontal model 1
+        # ------------------------
         fd.set_min_score(FaceDetection.DEFAULT_MIN_SCORE)
         fd.load_model(HAAR2)
         fd.detect(img)
@@ -283,11 +289,40 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
         # w.write(img, coords, fn)
         self.assertEqual(6, len(fd))
 
-        # With both models
+        # With the frontal model 2
+        # ------------------------
+        fd.load_model(HAAR3)
+        fd.detect(img)
+        self.assertEqual(2, len(fd))
+
+        # With both models 1 & 2
         # ----------------------
         fd.load_model(HAAR1, HAAR2)
         fd.detect(img)
         self.assertEqual(5, len(fd))
+
+        # With both models 1 & 3
+        # ----------------------
+        fd.load_model(HAAR1, HAAR2)
+        fd.detect(img)
+        self.assertEqual(5, len(fd))
+
+        # With both models 2 & 3
+        # ----------------------
+        fd.load_model(HAAR1, HAAR2)
+        fd.detect(img)
+        self.assertEqual(5, len(fd))
+
+        # With all 3 models
+        # ----------------------
+        fd.load_model(HAAR1, HAAR2, HAAR3)
+        fd.detect(img)
+
+        w = sppasImageWriter()
+        w.set_options(tag=True)
+        fn = os.path.join(DATA, "montage-faces.png")
+        w.write(img, [c.copy() for c in fd], fn)
+        self.assertEqual(3, len(fd))
 
 # ---------------------------------------------------------------------------
 
