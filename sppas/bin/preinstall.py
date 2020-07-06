@@ -157,7 +157,6 @@ if __name__ == "__main__":
         sys.argv.append('-h')
 
     args = parser.parse_args()
-    print(args)
     if args.quiet and len(args) == 1:
         parser.print_usage()
         exit_error("{:s}: error: argument --quiet: not allowed alone."

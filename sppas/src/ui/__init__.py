@@ -47,7 +47,6 @@ from .trash import sppasTrash
 __all__ = (
     "sppasTrash",
     "sppasTips",
-    # "sppasWkps",
     "TerminalController",
     "ProcessProgressTerminal"
 )

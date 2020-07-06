@@ -47,9 +47,9 @@ from sppas.src.structs import sppasLangResource
 
 from sppas.src.wkps import sppasWorkspace, States
 from sppas.src.anndata import sppasRW
-from sppas.src.imgdata import extensions as image_extensions
+from sppas.src.imgdata import image_extensions
 from sppas.src.audiodata.aio import extensions as audio_extensions
-from sppas.src.videodata import extensions as video_extensions
+from sppas.src.videodata import video_extensions
 
 # ----------------------------------------------------------------------------
 

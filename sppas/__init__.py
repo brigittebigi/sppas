@@ -28,14 +28,16 @@
 
         ---------------------------------------------------------------------
 
-sppas: Global imports and some settings for external use.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-:author:       Brigitte Bigi
-:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-:contact:      contact@sppas.org
-:license:      GPL, v3
-:copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+Global imports and some settings for external use.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Import all packages except those of the UI.
 
 """
 
@@ -54,16 +56,21 @@ sys.path.insert(0, sppasDir)
 
 from sppas.src.config import *
 from sppas.src.exceptions import *
+from sppas.src.utils import *
 from sppas.src.structs import *
+from sppas.src.calculus import *
+
+from sppas.src.wkps import *
+from sppas.src.models import *
+from sppas.src.resources import *
+
 from sppas.src.anndata import *
 from sppas.src.audiodata import *
-from sppas.src.calculus import *
-from sppas.src.models import *
-from sppas.src.plugins import *
-from sppas.src.resources import *
-from sppas.src.utils import *
-from sppas.src.wkps import *
+from sppas.src.imgdata import *
+from sppas.src.videodata import *
+
 from sppas.src.annotations import *
+from sppas.src.plugins import *
 
 # ---------------------------------------------------------------------------
 

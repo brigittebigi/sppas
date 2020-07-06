@@ -43,11 +43,12 @@ from sppas.src.config import info
 import sppas.src.imgdata
 from sppas.src.anndata import sppasRW
 import sppas.src.audiodata.aio
+import sppas.src.videodata
 
 # ----------------------------------------------------------------------------
 
 anndata_ext = ["."+e for e in sppasRW.extensions_in()]
-imgdata_ext = sppas.src.imgdata.extensions
+imgdata_ext = sppas.src.imgdata.image_extensions
 audiodata_ext = sppas.src.audiodata.aio.extensions
 
 # ----------------------------------------------------------------------------

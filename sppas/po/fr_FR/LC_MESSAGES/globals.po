@@ -15,9 +15,9 @@ msgstr ""
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Language: en_US\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 1.8.11\n"
 
-msgid ":ERROR 0000: "
+msgid ":ERROR 0001: "
 msgstr "L'erreur suivante a été relevée: {message}."
 
 msgid ":ERROR 0100: "
@@ -49,6 +49,12 @@ msgstr "L'installation a échouée avec l'erreur: {error}."
 
 msgid ":ERROR 0520: "
 msgstr "La fonctionnalité {name} n'est pas activée; son installation est requise avant de pouvoir l'utiliser."
+
+msgid ":ERROR 0530: "
+msgstr "Le package {package} n'a pas pu être importé. L'installation de la fonctionnalité {name} est requise pour pouvoir l'utiliser."
+
+msgid ":ERROR 0540: "
+msgstr "Le package {package} nécessite une mise à jour. Une ré-installation de la fonctionnalité {name} est requise pour pouvoir l'utiliser."
 
 msgid ":ERROR 0610: "
 msgstr "L'extension du fichier {:s} est inconnue"

@@ -49,7 +49,7 @@ Requires the following other packages:
 
 * config
 * utils
-* files
+* wkps
 
 """
 

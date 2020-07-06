@@ -47,19 +47,19 @@ Requires the following other packages:
 
 * config
 * utils
-* files
+* exc
+* structs
+* wkps
+* resources
 * anndata
 * audiodata
-* imgdata  -- if "video" feature enabled
-* resources
-* structs
+* imgdata    -- if "video" feature enabled
+* videodata  -- if "video" feature enabled
 
 """
 
 from .Activity import sppasActivity
 from .Align import sppasAlign
-from .FaceDetection import sppasFaceDetection
-from .FaceMark import sppasFaceMark
 from .FillIPUs import sppasFillIPUs
 from .Intsint import sppasIntsint
 from .LexMetric import sppasLexMetric
@@ -77,13 +77,17 @@ from .StopWords import sppasStopWords
 from .Syll import sppasSyll
 from .TextNorm import sppasTextNorm
 from .TGA import sppasTGA
+from .FaceDetection import sppasFaceDetection
+from .FaceMark import sppasFaceMark
 
 from .searchtier import sppasFindTier
 from .param import sppasParam
 from .manager import sppasAnnotationsManager
 
+
 # ---------------------------------------------------------------------------
-#
+
+
 __all__ = (
     'sppasMomel',
     'sppasIntsint',

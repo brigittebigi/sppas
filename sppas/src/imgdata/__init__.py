@@ -45,50 +45,49 @@ when a class is instantiated.
 
 from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
+from sppas.src.exceptions import sppasPackageFeatureError
+from sppas.src.exceptions import sppasPackageUpdateFeatureError
 
 # Store the rectangle and a score of an image
 from .coordinates import sppasCoords
 
 
-# ---------------------------------------------------------------------------
-# Define classes in case opencv&numpy are not installed.
-# ---------------------------------------------------------------------------
+# The feature "video" is enabled. Check if it's really correct!
+if cfg.dep_installed("video") is True:
+    try:
+        import cv2
+    except ImportError:
+        # Invalidate the feature because the package is not installed
+        cfg.set_dep("video", False)
+    else:
+        v = cv2.__version__.split(".")[0]
+        if v != '4':
+            # Invalidate the feature because the package is not up-to-date
+            cfg.set_dep("video", False)
 
+    class sppasImageDataError(object):
+        def __init__(self, *args, **kwargs):
+            if v != '4':
+                raise sppasPackageUpdateFeatureError("cv2", "video")
+            else:
+                raise sppasPackageFeatureError("cv2", "video")
 
-class sppasImageDataError(object):
-    def __init__(self, *args, **kwargs):
-        raise sppasEnableFeatureError("video")
+else:
+    # The feature "video" is not enabled or unknown.
+    cfg.set_dep("video", False)
 
+    class sppasImageDataError(object):
+        def __init__(self, *args, **kwargs):
+            raise sppasEnableFeatureError("video")
 
-class sppasImage(sppasImageDataError):
-    pass
-
-
-class sppasImageWriter(sppasImageDataError):
-    pass
-
-
-class HaarCascadeDetector(sppasImageDataError):
-    pass
-
-
-class NeuralNetDetector(sppasImageDataError):
-    pass
-
-
-class sppasImageObjectDetection(sppasImageDataError):
-    pass
-
-
-extensions = list()
 
 # ---------------------------------------------------------------------------
-# Import the classes in case the "video" feature is enabled: opencv&numpy
-# are both installed and the automatic detections can work.
+# Either import classes or define them in cases opencv is valid or not.
 # ---------------------------------------------------------------------------
 
+image_extensions = list()
 
-if cfg.dep_installed("video"):
+if cfg.dep_installed("wxpython") is True:
     # Subclass of numpy.ndarray to manipulate images
     from .image import sppasImage
     # Write image and coordinates
@@ -113,7 +112,28 @@ if cfg.dep_installed("video"):
         return (".jpg", ".bmp", ".dib", ".jpeg", ".jpe", ".jp2", ".png",
                 ".pbm", ".pgm", ".sr", ".ras", ".tiff", ".tif")
 
-    extensions.extend(opencv_extensions())
+    image_extensions.extend(opencv_extensions())
+
+else:
+
+    class sppasImage(sppasImageDataError):
+        pass
+
+
+    class sppasImageWriter(sppasImageDataError):
+        pass
+
+
+    class HaarCascadeDetector(sppasImageDataError):
+        pass
+
+
+    class NeuralNetDetector(sppasImageDataError):
+        pass
+
+
+    class sppasImageObjectDetection(sppasImageDataError):
+        pass
 
 # ---------------------------------------------------------------------------
 
@@ -122,7 +142,7 @@ __all__ = (
     "sppasCoords",
     "sppasImage",
     "sppasImageWriter",
-    "extensions",
+    "image_extensions",
     "HaarCascadeDetector",
     "NeuralNetDetector",
     "sppasImageObjectDetection"

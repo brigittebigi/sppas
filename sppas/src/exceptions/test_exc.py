@@ -54,7 +54,8 @@ class TestExceptions(unittest.TestCase):
             raise sppasError("the exception message")
         except Exception as e:
             self.assertTrue(isinstance(e, sppasError))
-            self.assertTrue("0000" in str(e))
+            self.assertTrue("0001" in str(e))
+            self.assertTrue(1, e.status)
 
     # -----------------------------------------------------------------------
 
@@ -64,6 +65,7 @@ class TestExceptions(unittest.TestCase):
         except TypeError as e:
             self.assertTrue(isinstance(e, sppasTypeError))
             self.assertTrue("0100" in str(e))
+            self.assertTrue(100, e.status)
 
     # -----------------------------------------------------------------------
 
@@ -73,6 +75,7 @@ class TestExceptions(unittest.TestCase):
         except IndexError as e:
             self.assertTrue(isinstance(e, sppasIndexError))
             self.assertTrue("0200" in str(e))
+            self.assertTrue(200, e.status)
 
     # -----------------------------------------------------------------------
 
@@ -82,12 +85,14 @@ class TestExceptions(unittest.TestCase):
         except ValueError as e:
             self.assertTrue(isinstance(e, sppasValueError))
             self.assertTrue("0300" in str(e))
+            self.assertTrue(300, e.status)
 
         try:
             raise NegativeValueError(-3)
         except ValueError as e:
             self.assertTrue(isinstance(e, NegativeValueError))
             self.assertTrue("0310" in str(e))
+            self.assertTrue(310, e.status)
 
         # to be continued...
 
@@ -99,6 +104,7 @@ class TestExceptions(unittest.TestCase):
         except KeyError as e:
             self.assertTrue(isinstance(e, sppasKeyError))
             self.assertTrue("0400" in str(e))
+            self.assertTrue(400, e.status)
 
     # -----------------------------------------------------------------------
 
@@ -108,12 +114,28 @@ class TestExceptions(unittest.TestCase):
         except OSError as e:
             self.assertTrue(isinstance(e, sppasInstallationError))
             self.assertTrue("0510" in str(e))
+            self.assertTrue(510, e.status)
 
         try:
             raise sppasEnableFeatureError("feature name")
         except OSError as e:
             self.assertTrue(isinstance(e, sppasEnableFeatureError))
             self.assertTrue("0520" in str(e))
+            self.assertTrue(520, e.status)
+
+        try:
+            raise sppasPackageFeatureError("package", "feature")
+        except OSError as e:
+            self.assertTrue(isinstance(e, sppasPackageFeatureError))
+            self.assertTrue("0530" in str(e))
+            self.assertTrue(530, e.status)
+
+        try:
+            raise sppasPackageUpdateFeatureError("package", "feature")
+        except OSError as e:
+            self.assertTrue(isinstance(e, sppasPackageUpdateFeatureError))
+            self.assertTrue("0540" in str(e))
+            self.assertTrue(540, e.status)
 
     # -----------------------------------------------------------------------
 
@@ -123,15 +145,18 @@ class TestExceptions(unittest.TestCase):
         except OSError as e:
             self.assertTrue(isinstance(e, sppasIOError))
             self.assertTrue("0600" in str(e))
+            self.assertTrue(600, e.status)
 
         try:
             raise IOExtensionError(".to")
         except OSError as e:
             self.assertTrue(isinstance(e, IOExtensionError))
             self.assertTrue("0610" in str(e))
+            self.assertTrue(610, e.status)
 
         try:
             raise NoDirectoryError("folder name")
         except OSError as e:
             self.assertTrue(isinstance(e, NoDirectoryError))
             self.assertTrue("0620" in str(e))
+            self.assertTrue(620, e.status)

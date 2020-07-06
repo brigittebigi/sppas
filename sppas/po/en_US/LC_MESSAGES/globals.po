@@ -15,9 +15,9 @@ msgstr ""
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Language: en_US\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 1.8.11\n"
 
-msgid ":ERROR 0000: "
+msgid ":ERROR 0001: "
 msgstr "The following error occurred: {message}."
 
 msgid ":ERROR 0100: "
@@ -49,6 +49,12 @@ msgstr "Installation failed with error: {error}"
 
 msgid ":ERROR 0520: "
 msgstr "Feature {name} is not enabled; its installation should be processed first."
+
+msgid ":ERROR 0530: "
+msgstr "The package {package} can't be imported. The installation of the feature {name} should be processed first."
+
+msgid ":ERROR 0540: "
+msgstr "The package {package} is not up-to-date. The re-installation of the feature {name} should be processed first."
 
 msgid ":ERROR 0600: "
 msgstr "No such file or directory: {name}"

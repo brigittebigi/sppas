@@ -47,7 +47,26 @@ from sppas.src.anndata import sppasTranscription, sppasRW
 import sppas.src.audiodata.aio
 import sppas.src.anndata.aio
 
-from sppas.src.annotations import *
+from sppas.src.annotations.Activity import sppasActivity
+from sppas.src.annotations.Align import sppasAlign
+from sppas.src.annotations.FillIPUs import sppasFillIPUs
+from sppas.src.annotations.Intsint import sppasIntsint
+from sppas.src.annotations.LexMetric import sppasLexMetric
+from sppas.src.annotations.LPC import sppasLPC
+from sppas.src.annotations.Momel import sppasMomel
+from sppas.src.annotations.OtherRepet import sppasOtherRepet
+from sppas.src.annotations.Phon import sppasPhon
+from sppas.src.annotations.ReOccurrences import sppasReOcc
+from sppas.src.annotations.RMS import sppasRMS
+from sppas.src.annotations.SearchIPUs import sppasSearchIPUs
+from sppas.src.annotations.SelfRepet import sppasSelfRepet
+from sppas.src.annotations.SpkLexRep import sppasLexRep
+from sppas.src.annotations.StopWords import sppasStopWords
+from sppas.src.annotations.Syll import sppasSyll
+from sppas.src.annotations.TextNorm import sppasTextNorm
+from sppas.src.annotations.TGA import sppasTGA
+from sppas.src.annotations.FaceDetection import sppasFaceDetection
+from sppas.src.annotations.FaceMark import sppasFaceMark
 
 from .infotier import sppasMetaInfoTier
 from .log import sppasLog
@@ -199,15 +218,30 @@ class sppasAnnotationsManager(Thread):
         step_idx = self._parameters.get_step_idx(annotation_key)
 
         # Create the instance and fix options
-        auto_annot = self._get_instance_name(annotation_key)(self._logfile)
+        try:
+            auto_annot = self._get_instance_name(annotation_key)(self._logfile)
+        except Exception as e:
+            self._parameters.disable_step(step_idx)
+            self._logfile.print_message(
+                "Annotation {} is disabled due to the following error: {}"
+                "".format(annotation_key, str(e)))
+            return None
+
         self._fix_ann_options(annotation_key, auto_annot)
 
         # Load language resources
         if self._progress:
             self._progress.set_text("Loading resources...")
         step = self._parameters.get_step(step_idx)
-        auto_annot.load_resources(*step.get_langresource(), 
-                                  lang=step.get_lang())
+        try:
+            auto_annot.load_resources(*step.get_langresource(),
+                                      lang=step.get_lang())
+        except Exception as e:
+            self._parameters.disable_step(step_idx)
+            self._logfile.print_message(
+                "Annotation {} is disabled due to the following error: {}"
+                "".format(annotation_key, str(e)))
+            return None
 
         return auto_annot
 
@@ -241,6 +275,8 @@ class sppasAnnotationsManager(Thread):
         """
         step_idx = self._parameters.get_step_idx(annotation_key)
         a = self._create_ann_instance(annotation_key)
+        if a is None:
+            return 0
 
         files_to_process = self.get_annot_files(
             pattern=a.get_input_pattern(),

@@ -41,7 +41,6 @@ Requires the following other packages:
 If the video feature is not enabled, the sppasEnableFeatureError() is raised
 when a class is instantiated.
 
-"""
 
 from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
@@ -51,7 +50,7 @@ from sppas.src.exceptions import sppasEnableFeatureError
 # Define classes in case opencv&numpy are not installed.
 # ---------------------------------------------------------------------------
 
-"""
+
 class sppasVideodataError(object):
     def __init__(self, *args, **kwargs):
         raise sppasEnableFeatureError("video")
@@ -79,9 +78,7 @@ class VideoLandmark(sppasVideodataError):
 
 class Manager(sppasVideodataError):
     pass
-"""
 
-extensions = list()
 
 
 # ---------------------------------------------------------------------------
@@ -89,27 +86,34 @@ extensions = list()
 # are both installed and the automatic detections can work.
 # ---------------------------------------------------------------------------
 
-if cfg.dep_installed("video"):
+# if cfg.dep_installed("video"):
     # from .coordswriter import sppasVideoCoordsWriter
     # from .facetracking import FaceTracking
     # from .videobuffer import VideoBuffer
     # from .personsbuffer import PersonsBuffer
 
-    def opencv_extensions():
-        """Return the list of supported file extensions in lower case.
+    # def opencv_extensions():
+    #     Return the list of supported file extensions in lower case.
 
-        TODO: make the full list of supported video file extensions
+    #    TODO: make the full list of supported video file extensions
 
-        """
-        return (".mp4", ".avi")
+    #    return (".mp4", ".avi")
+
+    # extensions = opencv_extensions()
 
 # ---------------------------------------------------------------------------
-
 
 __all__ = (
     # "sppasVideoCoordsWriter",
     # "FaceTracking",
     # "VideoBuffer",
     # "PersonsBuffer",
-    "extensions"
+)
+
+"""
+
+video_extensions = list()
+
+__all__ = (
+    "video_extensions",
 )

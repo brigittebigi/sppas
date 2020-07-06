@@ -33,7 +33,7 @@
 
 Global exceptions for sppas.
 
-    - main exception: 000
+    - main exception: 001
     - type errors: 100-series
     - index errors: 200-series
     - value errors: 300-series
@@ -52,21 +52,24 @@ from sppas.src.config import error
 
 
 class sppasError(Exception):
-    """:ERROR 0000:.
+    """:ERROR 0001:.
 
     The following error occurred: {message}.
 
     """
 
     def __init__(self, message):
-        self.parameter = error(0) + \
-                         (error(0, "globals")).format(message=message)
+        self._status = 1
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(message=message)
 
     def __str__(self):
         return repr(self.parameter)
 
-    def __format__(self, fmt):
-        return str(self).__format__(fmt)
+    def get_status(self):
+        return self._status
+
+    status = property(get_status, None)
 
 # -----------------------------------------------------------------------
 
@@ -79,11 +82,17 @@ class sppasTypeError(TypeError):
     """
 
     def __init__(self, rtype, expected):
-        self.parameter = error(100) + \
-                         (error(100, "globals")).format(rtype, expected)
+        self._status = 100
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(rtype, expected)
 
     def __str__(self):
         return repr(self.parameter)
+
+    def get_status(self):
+        return self._status
+
+    status = property(get_status, None)
 
 # -----------------------------------------------------------------------
 
@@ -96,11 +105,17 @@ class sppasIndexError(IndexError):
     """
 
     def __init__(self, index):
-        self.parameter = error(200) + \
-                         (error(200, "globals")).format(index)
+        self._status = 200
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(index)
 
     def __str__(self):
         return repr(self.parameter)
+
+    def get_status(self):
+        return self._status
+
+    status = property(get_status, None)
 
 # -----------------------------------------------------------------------
 
@@ -113,11 +128,17 @@ class sppasValueError(ValueError):
     """
 
     def __init__(self, data_name, value):
-        self.parameter = error(300) + \
-                         (error(300, "globals")).format(value, data_name)
+        self._status = 300
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(value, data_name)
 
     def __str__(self):
         return repr(self.parameter)
+
+    def get_status(self):
+        return self._status
+
+    status = property(get_status, None)
 
 # -----------------------------------------------------------------------
 
@@ -130,16 +151,45 @@ class sppasKeyError(KeyError):
     """
 
     def __init__(self, data_name, value):
-        self.parameter = error(400) + \
-                         (error(400, "globals")).format(value, data_name)
+        self._status = 400
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(value, data_name)
 
     def __str__(self):
         return repr(self.parameter)
 
+    def get_status(self):
+        return self._status
+
+    status = property(get_status, None)
+
 # -----------------------------------------------------------------------
 
 
-class sppasInstallationError(OSError):
+class sppasOSError(OSError):
+    """:ERROR 0500:.
+
+    OS error: {error}.
+
+    """
+
+    def __init__(self, error_msg):
+        self._status = 500
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(error=error_msg)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+    def get_status(self):
+        return self._status
+
+    status = property(get_status, None)
+
+# -----------------------------------------------------------------------
+
+
+class sppasInstallationError(sppasOSError):
     """:ERROR 0510:.
 
     Installation failed with error: {error}.
@@ -147,28 +197,63 @@ class sppasInstallationError(OSError):
     """
 
     def __init__(self, error_msg):
-        self.parameter = error(510) + \
-                         (error(510, "globals")).format(error=error_msg)
-
-    def __str__(self):
-        return repr(self.parameter)
+        super(sppasInstallationError, self).__init__(error_msg)
+        self._status = 510
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(error=error_msg)
 
 # -----------------------------------------------------------------------
 
 
-class sppasEnableFeatureError(OSError):
+class sppasEnableFeatureError(sppasOSError):
     """:ERROR 0520:.
 
-    Feature {name} is not enabled; its installation should be processed first.
+    Feature {name} is not enabled; its installation should be processed
+    first.
 
     """
 
     def __init__(self, name):
-        self.parameter = error(520) + \
-                         (error(520, "globals")).format(name=name)
+        super(sppasEnableFeatureError, self).__init__("")
+        self._status = 520
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(name=name)
 
-    def __str__(self):
-        return repr(self.parameter)
+# -----------------------------------------------------------------------
+
+
+class sppasPackageFeatureError(sppasOSError):
+    """:ERROR 0530:.
+
+    The package {package} can't be imported. The installation of the
+    feature {name} should be processed first.
+
+    """
+
+    def __init__(self, package, name):
+        super(sppasPackageFeatureError, self).__init__("")
+        self._status = 530
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(
+                             package=package, name=name)
+
+# -----------------------------------------------------------------------
+
+
+class sppasPackageUpdateFeatureError(sppasOSError):
+    """:ERROR 0540:.
+
+    The package {package} is not up-to-date. The re-installation of the
+    feature {name} should be processed first."
+
+    """
+
+    def __init__(self, package, name):
+        super(sppasPackageUpdateFeatureError, self).__init__("")
+        self._status = 540
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(
+                             package=package, name=name)
 
 # -----------------------------------------------------------------------
 
@@ -181,18 +266,24 @@ class sppasIOError(IOError):
     """
 
     def __init__(self, filename):
-        self.parameter = error(600) + \
-                         (error(600, "globals")).format(name=filename)
+        self._status = 600
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(name=filename)
 
     def __str__(self):
         return repr(self.parameter)
+
+    def get_status(self):
+        return self._status
+
+    status = property(get_status, None)
 
 # -----------------------------------------------------------------------
 # Specialized Value errors (300-series)
 # -----------------------------------------------------------------------
 
 
-class NegativeValueError(ValueError):
+class NegativeValueError(sppasValueError):
     """:ERROR 0310:.
 
     Expected a positive value. Got {value}.
@@ -200,16 +291,15 @@ class NegativeValueError(ValueError):
     """
 
     def __init__(self, value):
-        self.parameter = error(310) + \
-                         (error(310, "globals")).format(value=value)
-
-    def __str__(self):
-        return repr(self.parameter)
+        super(NegativeValueError, self).__init__("", 0)
+        self._status = 310
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(value=value)
 
 # -----------------------------------------------------------------------
 
 
-class RangeBoundsException(ValueError):
+class RangeBoundsException(sppasValueError):
     """:ERROR 0320:.
 
     Min value {} is bigger than max value {}.'
@@ -217,18 +307,17 @@ class RangeBoundsException(ValueError):
     """
 
     def __init__(self, min_value, max_value):
-        self.parameter = error(320) + \
-                         (error(320, "globals")).format(
+        super(RangeBoundsException, self).__init__("", 0)
+        self._status = 320
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(
                              min_value=min_value,
                              max_value=max_value)
-
-    def __str__(self):
-        return repr(self.parameter)
 
 # -----------------------------------------------------------------------
 
 
-class IntervalRangeException(ValueError):
+class IntervalRangeException(sppasValueError):
     """:ERROR 0330:.
 
     Value {} is out of range [{},{}].
@@ -236,19 +325,18 @@ class IntervalRangeException(ValueError):
     """
 
     def __init__(self, value, min_value, max_value):
-        self.parameter = error(330) + \
-                         (error(330, "globals")).format(
+        super(IntervalRangeException, self).__init__("", 0)
+        self._status = 330
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(
                              value=value,
                              min_value=min_value,
                              max_value=max_value)
 
-    def __str__(self):
-        return repr(self.parameter)
-
 # -----------------------------------------------------------------------
 
 
-class IndexRangeException(ValueError):
+class IndexRangeException(sppasValueError):
     """:ERROR 0340:.
 
     List index {} out of range [{},{}].
@@ -256,22 +344,20 @@ class IndexRangeException(ValueError):
     """
 
     def __init__(self, value, min_value, max_value):
-        self.parameter = error(340) + \
-                         (error(340, "globals")).format(
+        super(IndexRangeException, self).__init__("", 0)
+        self._status = 340
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(
                              value=value,
                              min_value=min_value,
                              max_value=max_value)
-
-    def __str__(self):
-        return repr(self.parameter)
-
 
 # -----------------------------------------------------------------------
 # Specialized IO errors (600-series)
 # -----------------------------------------------------------------------
 
 
-class IOExtensionError(IOError):
+class IOExtensionError(sppasIOError):
     """:ERROR 0610:.
 
     Unknown extension for filename '{:s}'
@@ -279,16 +365,15 @@ class IOExtensionError(IOError):
     """
 
     def __init__(self, filename):
+        super(IOExtensionError, self).__init__("")
+        self._status = 610
         self.parameter = error(610) + \
                          (error(610, "globals")).format(filename)
-
-    def __str__(self):
-        return repr(self.parameter)
 
 # -----------------------------------------------------------------------
 
 
-class NoDirectoryError(IOError):
+class NoDirectoryError(sppasIOError):
     """:ERROR 0620:.
 
     The directory {dirname} does not exist.
@@ -296,16 +381,15 @@ class NoDirectoryError(IOError):
     """
 
     def __init__(self, dirname):
-        self.parameter = error(620) + \
-                         (error(620, "globals")).format(dirname=dirname)
-
-    def __str__(self):
-        return repr(self.parameter)
+        super(NoDirectoryError, self).__init__("")
+        self._status = 620
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(dirname=dirname)
 
 # -----------------------------------------------------------------------
 
 
-class sppasOpenError(IOError):
+class sppasOpenError(sppasIOError):
     """:ERROR 0650:.
 
     File '{:s}' can't be open or read.
@@ -313,11 +397,10 @@ class sppasOpenError(IOError):
     """
 
     def __init__(self, filename):
-        self.parameter = error(650) + \
-                         (error(650, "globals")).format(filename)
-
-    def __str__(self):
-        return repr(self.parameter)
+        super(sppasOpenError, self).__init__("")
+        self._status = 650
+        self.parameter += error(self._status) + \
+                          (error(self._status, "globals")).format(filename)
 
 # -----------------------------------------------------------------------
 
@@ -330,8 +413,7 @@ class sppasWriteError(IOError):
     """
 
     def __init__(self, filename):
+        super(sppasWriteError, self).__init__("")
+        self._status = 660
         self.parameter = error(660) + \
                          (error(660, "globals")).format(filename)
-
-    def __str__(self):
-        return repr(self.parameter)

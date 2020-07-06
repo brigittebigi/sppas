@@ -36,9 +36,11 @@
 
 import logging
 import os
-
+from sppas.src.config import cfg
 from sppas.src.config import annots
-from sppas.src.imgdata import extensions
+from sppas.src.exceptions import sppasEnableFeatureError
+
+from sppas.src.imgdata import image_extensions
 from sppas.src.imgdata import sppasImage
 from sppas.src.imgdata import sppasImageWriter
 
@@ -69,6 +71,9 @@ class sppasFaceDetection(sppasBaseAnnotation):
         :param log: (sppasLog) Human-readable logs.
 
         """
+        if cfg.dep_installed("facedetect") is False:
+            raise sppasEnableFeatureError("facedetect")
+
         super(sppasFaceDetection, self).__init__("facedetect.json", log)
         self.__fd = FaceDetection()
         self.__writer = sppasImageWriter()
@@ -188,4 +193,4 @@ class sppasFaceDetection(sppasBaseAnnotation):
     @staticmethod
     def get_input_extensions():
         """Extensions that the annotation expects for its input filename."""
-        return extensions
+        return image_extensions

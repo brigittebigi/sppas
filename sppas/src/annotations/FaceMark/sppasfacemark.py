@@ -34,15 +34,15 @@
 
 """
 
+from sppas.src.config import cfg
+from sppas.src.exceptions import sppasEnableFeatureError
 from sppas.src.imgdata import sppasImage
 from sppas.src.imgdata import sppasImageWriter
-from sppas.src.imgdata import extensions
+from sppas.src.imgdata import image_extensions
 
 from ..annotationsexc import AnnotationOptionError
 from ..baseannot import sppasBaseAnnotation
 from .facelandmark import FaceLandmark
-
-# ----------------------------------------------------------------------------
 
 
 class sppasFaceMark(sppasBaseAnnotation):
@@ -65,6 +65,12 @@ class sppasFaceMark(sppasBaseAnnotation):
         :param log: (sppasLog) Human-readable logs.
 
         """
+        if cfg.dep_installed("facedetect") is False:
+            raise sppasEnableFeatureError("facedetect")
+
+        if cfg.dep_installed("facemark") is False:
+            raise sppasEnableFeatureError("facemark")
+
         super(sppasFaceMark, self).__init__("facemark.json", log)
         self.__fl = FaceLandmark()
         self.__writer = sppasImageWriter()
@@ -153,4 +159,4 @@ class sppasFaceMark(sppasBaseAnnotation):
     @staticmethod
     def get_input_extensions():
         """Extensions that the annotation expects for its input filename."""
-        return extensions
+        return image_extensions
