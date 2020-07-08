@@ -36,6 +36,7 @@
 
 import os
 import json
+import logging
 from collections import OrderedDict
 
 from sppas.src.config import sg
@@ -271,18 +272,24 @@ class sppasWJSON(sppasBaseWkpIO):
         :returns: the id of the workspace
 
         """
-        if 'id' not in d:
-            raise KeyError("Workspace 'id' is missing of the dictionary to parse. ")
         try:
-            idw = FileBase.validate_id(d['id'])
-            self._id = idw
-        except ValueError:
+            wid = d.get('id', None)
+            if wid is None:
+                raise KeyError("Workspace 'id' is missing of the dictionary to parse. ")
+            self._id = FileBase.validate_id(wid)
+        except ValueError as e:
             # We keep our current 'id'
-            pass
+            logging.warning(str(e))
+        except KeyError as e:
+            logging.warning(str(e))
+
+        version = d.get('wjson', None)
+        if version is None:
+            raise KeyError("Version of the wjson is missing of the dictionary to parse. ")
 
         if 'paths' in d:
             for dict_path in d['paths']:
-                self._parse_path(dict_path)
+                self._parse_path(dict_path, version)
 
         if 'catalogue' in d:
             for dict_ref in d['catalogue']:
@@ -296,6 +303,7 @@ class sppasWJSON(sppasBaseWkpIO):
         """Fill the ref of a sppasWJSON reader with the given dictionary.
 
         :param d: (dict)
+        :param version: (str) Indicate the version of the wjson
         :returns: (sppasCatReference)
 
         """
@@ -322,10 +330,11 @@ class sppasWJSON(sppasBaseWkpIO):
 
     # -----------------------------------------------------------------------
 
-    def _parse_path(self, d):
+    def _parse_path(self, d, version):
         """Fill the paths of a sppasWJSON reader with the given dictionary.
 
         :param d: (dict)
+        :param version: (str) Indicate the version of the wjson
         :returns: (FilePath)
 
         """
@@ -346,7 +355,7 @@ class sppasWJSON(sppasBaseWkpIO):
         # parse its roots
         if 'roots' in d:
             for dict_root in d["roots"]:
-                fr = self._parse_root(dict_root, path)
+                fr = self._parse_root(dict_root, path, version)
                 fp.append(fr)
 
         # append subjoined
@@ -357,23 +366,27 @@ class sppasWJSON(sppasBaseWkpIO):
 
     # -----------------------------------------------------------------------
 
-    def _parse_root(self, d, path):
+    def _parse_root(self, d, path, version):
         """Fill the root of a sppasWJSON reader with the given dictionary.
 
         :param d: (dict)
         :param path: (str) path of the file used to create the whole path of the file
         as only the name of the file is kept in the wjson file
+        :param version: (str) Indicate the version of the wjson
         :returns: (FileRoot)
 
         """
         if "id" not in d:
             raise KeyError("root 'id' is missing of the dictionary to parse.")
 
-        fr = FileRoot(path + os.sep + d["id"])
+        if version == "1.0":
+            fr = FileRoot(d["id"])
+        else:
+            fr = FileRoot(path + os.sep + d["id"])
 
         if "files" in d:
             for dict_file in d["files"]:
-                fr.append(self._parse_file(dict_file, path))
+                fr.append(self._parse_file(dict_file, path, version))
 
         for ref in d["refids"]:
             refe = sppasCatReference(ref)
@@ -387,19 +400,23 @@ class sppasWJSON(sppasBaseWkpIO):
     # -----------------------------------------------------------------------
 
     @staticmethod
-    def _parse_file(d, path):
+    def _parse_file(d, path, version):
         """Fill the files of a sppasWJSON reader with the given dictionary.
 
         :param d: (dict)
         :param path: (str) path of the file used to create the whole path of the file
         as only the name of the file is kept in the wjson file
+        :param version: (str) Indicate the version of the wjson
         :returns: (FileName)
 
         """
         if 'id' not in d:
             raise KeyError("file 'id' is missing of the dictionary to parse.")
 
-        fn = FileName(path + os.sep + d["id"])
+        if version == "1.0":
+            fn = FileName(d["id"])
+        else:
+            fn = FileName(path + os.sep + d["id"])
 
         # parse the state value
         s = d.get('state', States().UNUSED)
