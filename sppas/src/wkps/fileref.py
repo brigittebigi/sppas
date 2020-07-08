@@ -164,8 +164,15 @@ class sppasRefAttribute(object):
         """
         if type_name in sppasRefAttribute.VALUE_TYPES:
             self.__valuetype = type_name
+            try:
+                self.get_typed_value()
+            except AttributeTypeValueError:
+                self.__valuetype = 'str'
+                raise
+
         elif type_name is None:
             self.__valuetype = 'str'
+
         else:
             raise sppasTypeError(type_name, " ".join(sppasRefAttribute.VALUE_TYPES))
 
@@ -186,6 +193,8 @@ class sppasRefAttribute(object):
                 elif self.__valuetype == 'bool':
                     return self.__value.lower() == 'true'
             except ValueError:
+                raise AttributeTypeValueError(self.__value, self.__valuetype)
+            except TypeError:
                 raise AttributeTypeValueError(self.__value, self.__valuetype)
 
         return self.__value

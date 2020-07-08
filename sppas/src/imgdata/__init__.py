@@ -87,7 +87,7 @@ else:
 
 image_extensions = list()
 
-if cfg.dep_installed("wxpython") is True:
+if cfg.dep_installed("video") is True:
     # Subclass of numpy.ndarray to manipulate images
     from .image import sppasImage
     # Write image and coordinates

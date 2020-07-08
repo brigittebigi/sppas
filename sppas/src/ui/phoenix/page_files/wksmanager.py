@@ -311,6 +311,8 @@ class WorkspacesManager(sppasPanel):
             self.notify()
 
         except Exception as e:
+            import traceback
+            print(traceback.format_exc())
             # the workspace panel has to switch back to the current
             wkpslist.switch_to(event.from_wkp)
 

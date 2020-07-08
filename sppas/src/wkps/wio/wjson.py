@@ -185,7 +185,7 @@ class sppasWJSON(sppasBaseWkpIO):
         """
         dict_att = dict()
         dict_att["id"] = att.get_id()
-        dict_att["value"] = att.get_typed_value()
+        dict_att["value"] = att.get_value()
         dict_att["type"] = att.get_value_type()
         dict_att["descr"] = att.get_description()
 
@@ -303,7 +303,6 @@ class sppasWJSON(sppasBaseWkpIO):
         """Fill the ref of a sppasWJSON reader with the given dictionary.
 
         :param d: (dict)
-        :param version: (str) Indicate the version of the wjson
         :returns: (sppasCatReference)
 
         """
