@@ -284,7 +284,7 @@ class Installer(object):
         logging.info("Update pip, the package installer for Python:")
         try:
             process = ProcessRunner()
-            process.run("python3 -m pip install --upgrade pip")
+            process.run(self.__python + " -m pip install --upgrade pip")
         except Exception as e:
             raise sppasInstallationError(str(e))
 
@@ -425,31 +425,37 @@ class Installer(object):
         tmp = os.path.join(paths.resources, zip_path)
 
         # Attempt to open the url and manage the errors if any
-        req = urllib.request.Request(url)
         try:
-            response = urllib.request.urlopen(req)
-        except urllib.error.URLError as e:
-            if hasattr(e, 'reason'):
-                err = "Failed to establish a connection to the url {}: {}" \
-                      "".format(url, e.reason)
-            elif hasattr(e, 'code'):
-                err = "The web server couldn't fulfill the request for url {}. " \
-                      "Error code: {}".format(url, e.code)
-            else:
-                err = "Unknown connection error."
-
+            req = urllib.request.Request(url)
+        except ValueError as e:
+            err = str(e)
         else:
-            # Everything is fine. Download the file.
-            with open(tmp, 'wb') as out_file:
-                shutil.copyfileobj(response, out_file)
-
-            # Unzip the downloaded resource file
             try:
-                z = zipfile.ZipFile(tmp)
-                z.extractall(os.path.join(paths.resources))
-                z.close()
-            except zipfile.error as e:
+                response = urllib.request.urlopen(req)
+            except urllib.error.URLError as e:
+                if hasattr(e, 'reason'):
+                    err = "Failed to establish a connection to the url {}: {}" \
+                          "".format(url, e.reason)
+                elif hasattr(e, 'code'):
+                    err = "The web server couldn't fulfill the request for url {}. " \
+                          "Error code: {}".format(url, e.code)
+                else:
+                    err = "Unknown connection error."
+            except Exception as e:
                 err = str(e)
+
+            else:
+                # Everything is fine. Download the file.
+                with open(tmp, 'wb') as out_file:
+                    shutil.copyfileobj(response, out_file)
+
+                # Unzip the downloaded resource file
+                try:
+                    z = zipfile.ZipFile(tmp)
+                    z.extractall(os.path.join(paths.resources))
+                    z.close()
+                except zipfile.error as e:
+                    err = str(e)
 
         if os.path.exists(tmp) is True:
             os.remove(tmp)
@@ -674,7 +680,7 @@ class Installer(object):
 
         """
         try:
-            command = self.__python + " -m pip install " + package + " --no-warn-script-location"
+            command = self.__python + " -m pip install " + package + " --user --no-warn-script-location"
             process = ProcessRunner()
             process.run(command)
             logging.info("Return code: {}".format(process.status()))

@@ -54,11 +54,13 @@ from .coordinates import sppasCoords
 
 # The feature "video" is enabled. Check if it's really correct!
 if cfg.dep_installed("video") is True:
+    v = '4'
     try:
         import cv2
     except ImportError:
         # Invalidate the feature because the package is not installed
         cfg.set_dep("video", False)
+
     else:
         v = cv2.__version__.split(".")[0]
         if v != '4':

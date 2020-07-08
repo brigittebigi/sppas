@@ -44,6 +44,10 @@ from ..installer import Installer
 
 # ---------------------------------------------------------------------------
 
+DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+
+# ---------------------------------------------------------------------------
+
 
 class InstallerTest(Installer):
     """Manage the installation of external required or optional features. """
@@ -65,12 +69,12 @@ class TestInstaller(unittest.TestCase):
 
     def test_download_resource(self):
         with self.assertRaises(sppasInstallationError):
-            InstallerTest().install_resource("toto.zip")
+            InstallerTest().install_resource("url", "toto.zip")
 
         with self.assertRaises(sppasInstallationError):
-            InstallerTest().install_resource("badtest.zip")
+            InstallerTest().install_resource(DATA, "badtest.zip")
 
-        InstallerTest().install_resource("test.zip")
+        InstallerTest().install_resource(DATA, "test.zip")
         downloaded = os.path.join(paths.resources, "test.zip")
         installed = os.path.join(paths.resources, "faces", "test.txt")
         self.assertTrue(os.path.exists(installed))

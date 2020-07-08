@@ -204,7 +204,7 @@ class test_sppasLexRep(unittest.TestCase):
         dataspk1 = ["bonjour", "moi", "ca", "va", "bien", "#", "et", "toi", "ca", "ok", "#"]
         dataspk2 = ["oui", "toi", "#", "comment", "ca", "#", "va"]
         lexvar = sppasLexRep()
-        lexvar.set_span(3)
+        lexvar.set_span(2)
         lexvar.set_span_duration(20)
         winspk1 = lexvar.windowing(dataspk1)
         winspk2 = lexvar.windowing(dataspk2)
@@ -278,6 +278,8 @@ class test_sppasLexRep(unittest.TestCase):
         lexvar.set_span_duration(5.)
         wins = lexvar.windowing(self.content1)
         self.assertEqual(len(wins), 5)
+        for w in wins:
+            self.assertEqual(3, len(w))
         wins = lexvar.windowing(self.content1, self.loc1)
         self.assertEqual(len(wins), 5)
 
