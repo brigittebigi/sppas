@@ -39,36 +39,34 @@ from sppas.src.exceptions import sppasEnableFeatureError
 from sppas.src.exceptions import sppasPackageFeatureError
 from sppas.src.exceptions import sppasPackageUpdateFeatureError
 
-
-# The feature "wxpython" is enabled. Check if really correct!
-if cfg.dep_installed("wxpython") is True:
-    v = '0'
-    try:
-        import wx
-    except ImportError:
-        # Invalidate the feature because the package is not installed
+# Check if installation and feature configuration are matching...
+try:
+    import wx
+    if cfg.dep_installed("wxpython") is False:
+        # WxPython wasn't installed by the SPPAS setup.
+        cfg.set_dep("wxpython", True)
+except ImportError:
+    if cfg.dep_installed("wxpython") is True:
+        # Invalidate the feature because the package is not installed!
         cfg.set_dep("wxpython", False)
-    else:
-        v = wx.version().split()[0][0]
-        if v != '4':
-            # Invalidate the feature because the package is not up-to-date
-            cfg.set_dep("wxpython", False)
-
-    class sppasWxError(object):
-        def __init__(self, *args, **kwargs):
-            if v != '4':
-                raise sppasPackageUpdateFeatureError("wx", "wxpython")
-            else:
+        class sppasWxError(object):
+            def __init__(self, *args, **kwargs):
                 raise sppasPackageFeatureError("wx", "wxpython")
+    else:
+        class sppasWxError(object):
+            def __init__(self, *args, **kwargs):
+                raise sppasEnableFeatureError("wxpython")
 
-else:
-    # The feature "wxpython" is not enabled or unknown.
-    cfg.set_dep("wxpython", False)
+# The feature "wxpython" is enabled. Check the version!
+if cfg.dep_installed("wxpython") is True:
+    v = wx.version().split()[0][0]
+    if v != '4':
+        # Invalidate the feature because the package is not up-to-date
+        cfg.set_dep("wxpython", False)
 
-    class sppasWxError(object):
-        def __init__(self, *args, **kwargs):
-            raise sppasEnableFeatureError("wxpython")
-
+        class sppasWxError(object):
+            def __init__(self, *args, **kwargs):
+                raise sppasPackageUpdateFeatureError("wx", "wxpython")
 
 # ---------------------------------------------------------------------------
 # Either import classes or define them in cases wxpython is valid or not.
