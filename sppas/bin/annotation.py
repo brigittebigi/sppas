@@ -37,8 +37,8 @@
 :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
 :contact:      contact@sppas.org
 :license:      GPL, v3
-:copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-:summary:      Run any or all the automatic annotations.
+:copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+:summary:      Run any or some of the (ANNOT outformat) automatic annotations.
 
 """
 
@@ -65,7 +65,7 @@ from sppas.src.ui.term.terminalcontroller import TerminalController
 if __name__ == "__main__":
 
     # -----------------------------------------------------------------------
-    # Fix initial annotation parameters (parse spasui.json)
+    # Fix initial annotation parameters (parse sppasui.json)
     # -----------------------------------------------------------------------
 
     parameters = sppasParam()
@@ -127,10 +127,11 @@ if __name__ == "__main__":
     # ------------------------------------------------
 
     for i in range(parameters.get_step_numbers()):
-        parser.add_argument(
-            "--" + parameters.get_step_key(i),
-            action='store_true',
-            help="Activate " + parameters.get_step_name(i))
+        if parameters.get_outformat(i) == "ANNOT":
+            parser.add_argument(
+                "--" + parameters.get_step_key(i),
+                action='store_true',
+                help="Activate " + parameters.get_step_name(i))
 
     parser.add_argument(
         "--merge",
