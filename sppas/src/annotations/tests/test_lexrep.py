@@ -204,10 +204,23 @@ class test_sppasLexRep(unittest.TestCase):
         dataspk1 = ["bonjour", "moi", "ca", "va", "bien", "#", "et", "toi", "ca", "ok", "#"]
         dataspk2 = ["oui", "toi", "#", "comment", "ca", "#", "va"]
         lexvar = sppasLexRep()
-        lexvar.set_span(2)
-        lexvar.set_span_duration(20)
+        lexvar.set_span(3)
+        lexvar.set_span_duration(10)
         winspk1 = lexvar.windowing(dataspk1)
         winspk2 = lexvar.windowing(dataspk2)
+
+        # in one way
+        sources = lexvar._detect_all_sources(winspk1, winspk2)
+        self.assertEqual(3, len(sources))
+
+        self.assertTrue((2, 1) in sources)
+        self.assertEqual("ca va", serialize_labels(sources[0].get_labels(), " "))
+
+        self.assertTrue((7, 0) in sources)
+        self.assertEqual("toi", serialize_labels(sources[1].get_labels(), " "))
+
+        self.assertTrue((8, 0) in sources)
+        self.assertEqual("ca", serialize_labels(sources[2].get_labels(), " "))
 
         # in the other way
         sources = lexvar._detect_all_sources(winspk2, winspk1)
@@ -218,19 +231,6 @@ class test_sppasLexRep(unittest.TestCase):
 
         self.assertTrue((4, 2) in sources)
         self.assertEqual("ca # va", serialize_labels(sources[1].get_labels(), " "))
-
-        # in one way
-        sources = lexvar._detect_all_sources(winspk1, winspk2)
-        self.assertEqual(len(sources), 3)
-
-        self.assertTrue((2, 1) in sources)
-        self.assertEqual("ca va", serialize_labels(sources[0].get_labels(), " "))
-
-        self.assertTrue((7, 0) in sources)
-        self.assertEqual("toi", serialize_labels(sources[1].get_labels(), " "))
-
-        self.assertTrue((8, 0) in sources)
-        self.assertEqual("ca", serialize_labels(sources[2].get_labels(), " "))
 
     # -----------------------------------------------------------------------
 
@@ -276,16 +276,26 @@ class test_sppasLexRep(unittest.TestCase):
         lexvar = sppasLexRep()
         lexvar.set_span(3)
         lexvar.set_span_duration(5.)
-        wins = lexvar.windowing(self.content1)
+
+        # all windows are of the "span" size because there's not time limit
+        wins = lexvar.windowing(self.content1, location=None)
         self.assertEqual(len(wins), 5)
-        for w in wins:
-            self.assertEqual(3, len(w))
+        for i, w in enumerate(wins):
+            size = min(3, len(wins)-i)
+            self.assertEqual(size, len(w))
+
         wins = lexvar.windowing(self.content1, self.loc1)
         self.assertEqual(len(wins), 5)
+        for i, w in enumerate(wins):
+            size = min(3, len(wins)-i)
+            self.assertEqual(size, len(w))
 
         lexvar.set_span_duration(2.5)
         wins = lexvar.windowing(self.content1, self.loc1)
         self.assertEqual(len(wins), 5)
+        for i, w in enumerate(wins):
+            size = min(2, len(wins)-i)
+            self.assertEqual(size, len(w))
 
     # -----------------------------------------------------------------------
 

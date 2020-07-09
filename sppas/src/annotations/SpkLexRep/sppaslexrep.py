@@ -34,7 +34,6 @@
 """
 
 import logging
-import sys
 
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
@@ -356,23 +355,26 @@ class sppasLexRep(sppasBaseRepet):
         span_dur = self._options["spandur"]
         windows = list()
         for i in range(len(content)):
-            end_idx = min(span_tok, len(content)-i)
-            if location is not None and end_idx > 1:
-                win_loc = location[i:i+end_idx]
+            end_size = min(span_tok, len(content)-i)
+            if location is not None and end_size > 1:
+                win_loc = location[i:i+end_size]
                 # Get the duration this window is covering
                 start_point = win_loc[0].get_lowest_localization()
-                end_point = win_loc[end_idx-1].get_highest_localization()
+                end_point = win_loc[end_size-1].get_highest_localization()
                 win_dur = end_point.get_midpoint() - start_point.get_midpoint()
                 # Reduce the window duration to match the max duration
-                while win_dur > span_dur and end_idx > 0:
-                    end_point = win_loc[end_idx-1].get_highest_localization()
+                while win_dur > span_dur and end_size > 0:
+                    end_point = win_loc[end_size-1].get_highest_localization()
                     win_dur = end_point.get_midpoint() - start_point.get_midpoint()
-                    end_idx -= 1
-                if end_idx < min(span_tok, len(content)-i):
-                    logging.debug(" ... window was reduced to {} tokens."
-                                  "".format(end_idx+1))
+                    if win_dur <= span_dur:
+                        break
+                    end_size -= 1
 
-            win_tok = content[i:i+end_idx+1]
+                if end_size < min(span_tok, len(content)-i):
+                    logging.debug(" ... window was reduced to {} tokens."
+                                  "".format(end_size+1))
+
+            win_tok = content[i:i+end_size]
             windows.append(DataSpeaker(win_tok))
 
         return windows
