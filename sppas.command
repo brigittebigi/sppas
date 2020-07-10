@@ -143,6 +143,6 @@ if [ "$v" == "2" ]; then
     echo "on Python 2, and Python 2 is no longer supported."
     $PYTHON $PROGRAM_DIR/sppas/bin/sppasgui.py
 else
-    $PYTHON -m sppas
+    $PYTHON sppas
 fi
 
