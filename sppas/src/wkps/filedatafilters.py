@@ -327,10 +327,16 @@ class sppasFileDataFilters(sppasBaseFilters):
         # the set of results
         data = sppasBaseSet()
 
+        # --------------------------------------------
+        # WORKS ONLY IF A ROOT HAS ONLY ONE REFERENCE
+        # --------------------------------------------
+
         # search for the data to be returned:
         for path in self.obj.get_paths():
             # append all files of the path
             for fr in path:
+                # Find if one of the references of this root is matching one
+                # of the requested function
                 for ref in fr.references:
                     is_matching = ref.match(ref_functions, logic_bool)
                     if is_matching is True:

@@ -60,17 +60,17 @@ class TestsFileDataFilter (unittest.TestCase):
         self.files.add_file(f2)
         self.files.add_file(f3)
 
-        spk1 = sppasCatReference('spk1')
-        spk1.set_type('SPEAKER')
-        spk1.append(sppasRefAttribute('age', '20', "int"))
-        spk1.append(sppasRefAttribute('name', 'toto'))
+        ref1 = sppasCatReference('spk1')
+        ref1.set_type('SPEAKER')
+        ref1.append(sppasRefAttribute('age', '20', "int"))
+        ref1.append(sppasRefAttribute('name', 'toto'))
 
         ref2 = sppasCatReference('record')
         ref2.append(sppasRefAttribute('age', '50', "int"))
         ref2.append(sppasRefAttribute('name', 'toto'))
 
         fr1 = self.files.get_object(FileRoot.root(f1))
-        fr1.add_ref(spk1)
+        fr1.add_ref(ref1)
 
         fr2 = self.files.get_object(FileRoot.root(f3))
         fr2.add_ref(ref2)
@@ -94,7 +94,9 @@ class TestsFileDataFilter (unittest.TestCase):
 
     def test_ref_id(self):
         self.assertEqual(1, len(self.data_filter.ref(startswith=u('rec'))))
+        self.assertEqual(1, len(self.data_filter.ref(not_startswith=u('rec'))))
         self.assertEqual(0, len(self.data_filter.ref(startswith=u('aa'))))
+        self.assertEqual(2, len(self.data_filter.ref(not_startswith=u('aa'))))
 
     def test_att(self):
         self.assertEqual(1, len(self.data_filter.att(iequal=('age', '20'))))
@@ -112,7 +114,7 @@ class TestsFileDataFilter (unittest.TestCase):
     def test_mixed_filter_argument_way(self):
         self.assertEqual(2, len(self.data_filter.extension(not_exact=u('.PY'), startswith=u('.TEXT'), logic_bool='and')))
 
-    def test_att_extended(self):
+    def test_extended(self):
         files = sppasWorkspace()
         files.add_file(os.path.join(paths.samples, 'samples-fra', 'F_F_B003-P8.wav'))
         files.add_file(os.path.join(paths.samples, 'samples-fra', 'F_F_B003-P8.TextGrid'))
@@ -167,11 +169,21 @@ class TestsFileDataFilter (unittest.TestCase):
         fr5.add_ref(re)
 
         data_filter = sppasFileDataFilters(files)
+        # Test references
+        self.assertEqual(6, len(data_filter.ref(contains=u('fra'))))
+        self.assertEqual(0, len(data_filter.ref(startswith=u('aa'))))
+        self.assertEqual(10, len(data_filter.ref(not_startswith=u('aa'))))
+
+        # Error because the roots have more than one ref:
+        # self.assertEqual(4, len(data_filter.ref(not_contains=u('fra'))))
+
+        # Test attributes
         self.assertEqual(8, len(data_filter.att(exact=('gender', 'male'))))
         self.assertEqual(2, len(data_filter.att(exact=('gender', 'female'))))
+        self.assertEqual(8, len(data_filter.att(not_exact=('gender', 'female'))))
         self.assertEqual(8, len(data_filter.att(iexact=('gender', 'MALE'))))
         self.assertEqual(2, len(data_filter.att(iexact=('gender', 'FEMALE'))))
         self.assertEqual(10, len(data_filter.att(contains=('gender', 'male'))))
+        self.assertEqual(0, len(data_filter.att(not_contains=('gender', 'male'))))
         self.assertEqual(4, len(data_filter.att(exact=('gender', 'male'), iexact=("lang", "fra"), logic_bool="and")))
         self.assertEqual(4, len(data_filter.att(exact=('gender', 'male')) & data_filter.att(exact=("lang", "fra"))))
-
