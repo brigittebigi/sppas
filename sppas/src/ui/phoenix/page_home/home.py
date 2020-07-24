@@ -29,8 +29,10 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_files.welcome.py
+    ui.phoenix.page_home.home.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Home page of the GUI.
 
 """
 

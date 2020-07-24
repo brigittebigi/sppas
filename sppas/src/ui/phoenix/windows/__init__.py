@@ -48,6 +48,8 @@ from .dialogs import sppasMetaData, MetaDataEdit
 
 from .line import sppasStaticLine
 
+from .basewindow import WindowState
+from .button import Button
 from .button import TextButton
 from .button import BitmapTextButton
 from .button import CheckButton
@@ -102,6 +104,8 @@ __all__ = (
     "Error",
     "YesNoQuestion",
     "sppasStaticLine",
+    "WindowState",
+    "Button",
     'TextButton',
     'BitmapTextButton',
     "BitmapButton",

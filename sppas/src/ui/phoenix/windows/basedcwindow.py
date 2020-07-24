@@ -113,7 +113,7 @@ class sppasDCWindow(wx.Window):
                  size=wx.DefaultSize,
                  style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
                  name="dcwindow"):
-        """Initialize a new sppasDrawWindow instance.
+        """Initialize a new sppasDCWindow instance.
 
         :param parent: (wx.Window) Parent window.
         :param id: (int) A value of -1 indicates a default value.

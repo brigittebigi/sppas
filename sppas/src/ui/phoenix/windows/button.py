@@ -454,10 +454,10 @@ class BitmapTextButton(Button):
             x_pos = x + (margin // 2)
 
         if w < h:
-            y_pos = (h - bmp_size + margin) // 2
+            y_pos = (h - bmp_size) // 2
         else:
             if self._align == wx.ALIGN_CENTER:
-                x_pos = (w - bmp_size + margin) // 2
+                x_pos = (w - bmp_size) // 2
 
         return x_pos, y_pos, bmp_size
 
