@@ -50,7 +50,7 @@ from ..windows import sppasScrolledPanel
 from ..windows import sppasStaticLine
 from ..windows import sppasStaticText
 from ..windows import sppasTextCtrl
-from ..windows import BitmapTextButton, TextButton, sppasTextButton
+from ..windows import BitmapTextButton, TextButton
 
 from .annotevent import PageChangeEvent
 

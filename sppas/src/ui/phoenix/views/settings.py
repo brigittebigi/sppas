@@ -41,7 +41,7 @@ from sppas.src.utils import u
 
 from ..windows import sppasDialog
 from ..windows import sppasPanel
-from ..windows import sppasBitmapButton
+from ..windows import BitmapButton
 from ..windows.book import sppasNotebook
 
 from ..tools import sppasSwissKnife
@@ -62,7 +62,7 @@ MSG_ACTIONS = u(msg("Bottom", "ui"))
 
 
 def GetColour(parent):
-    """Return the color choose by the user.
+    """Return the color the user choose.
 
     :param parent: (wx.Window)
 
@@ -124,8 +124,8 @@ class sppasSettingsDialog(sppasDialog):
 
         self.LayoutComponents()
         self.GetSizer().Fit(self)
-        self.CenterOnParent()
         self.FadeIn(deltaN=-8)
+        self.CenterOnParent()
 
     # -----------------------------------------------------------------------
 
@@ -141,20 +141,15 @@ class sppasSettingsDialog(sppasDialog):
 
     def _create_content(self):
         """Create the content of the message dialog."""
+        s = sppasPanel.fix_size(16)
         # Make the notebook and an image list
         notebook = sppasNotebook(self, name="content")
-        il = wx.ImageList(16, 16)
-        idx1 = il.Add(sppasSwissKnife.get_bmp_icon("font_color", height=16))
+        il = wx.ImageList(s, s)
+        idx1 = il.Add(sppasSwissKnife.get_bmp_icon("font_color", height=s))
         notebook.AssignImageList(il)
 
         page1 = WxSettingsPanel(notebook)
-        # page2 = PrefsThemePanel(self.notebook, self.preferences)
-        # page3 = PrefsAnnotationPanel(self.notebook, self.preferences)
-        # add the pages to the notebook with the label to show on the tab
-
         notebook.AddPage(page1, MSG_FONT_COLORS)
-        # self.notebook.AddPage(page2, "Icons Theme")
-        # self.notebook.AddPage(page3, "Annotation")
 
         # put an image on the first tab
         notebook.SetPageImage(0, idx1)
@@ -210,74 +205,52 @@ class WxSettingsPanel(sppasPanel):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
+
     def __init__(self, parent):
         super(WxSettingsPanel, self).__init__(
             parent=parent,
             style=wx.BORDER_NONE
         )
         self._create_content()
-        self.SetAutoLayout(True)
-
         self.Bind(wx.EVT_BUTTON, self._process_event)
-
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
-
-    # ------------------------------------------------------------------------
-
-    def _create_content(self):
-        """"""
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer_top = self._create_content_colors_fonts()
-        sizer.Add(sizer_top, 0, wx.EXPAND)
-        # btn = sppasBitmapTextButton(
-        #     parent=self,
-        #     name="window-apply",
-        #     label="Test on this window",
-        #     style=wx.BORDER_SIMPLE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
-        # btn.SetSize((-1, wx.GetApp().settings.action_height))
-        # sizer.Add(btn, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_CENTER_HORIZONTAL)
-        # sizer.AddStretchSpacer(1)
-
-        # ----------
-        self.SetSizer(sizer)
+        # self.SetBackgroundColour(wx.GetApp().settings.bg_color)
+        # self.SetForegroundColour(wx.GetApp().settings.fg_color)
+        # self.SetFont(wx.GetApp().settings.text_font)
 
     # -----------------------------------------------------------------------
 
-    def _create_content_colors_fonts(self):
+    def _create_content(self):
         """"""
-
         sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # Colors&Fonts of the header panel
-        p = sppasColoursFontPanel(
-            parent=self,
-            style=wx.BORDER_SUNKEN,
-            name="colors_font_header",
-            title=MSG_HEADER)
-        sizer.Add(p, 1, wx.EXPAND | wx.ALL, border=10)
+        p1 = sppasColoursFontPanel(
+             parent=self,
+             style=wx.BORDER_SUNKEN,
+             name="colors_font_header",
+             title=MSG_HEADER)
+        sizer.Add(p1, 1, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(4))
 
         # Colors&Fonts of the main panel
-        p = sppasColoursFontPanel(
-            parent=self,
-            style=wx.BORDER_SUNKEN,
-            name="colors_font_content",
-            title=MSG_CONTENT)
-        sizer.Add(p, 1, wx.EXPAND | wx.ALL, border=10)
+        p2 = sppasColoursFontPanel(
+             parent=self,
+             style=wx.BORDER_SUNKEN,
+             name="colors_font_content",
+             title=MSG_CONTENT)
+        sizer.Add(p2, 1, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(4))
 
         # Colors&Fonts of the actions panel
-        p = sppasColoursFontPanel(
-            parent=self,
-            style=wx.BORDER_SUNKEN,
-            name="colors_font_actions",
-            title=MSG_ACTIONS)
-        sizer.Add(p, 1, wx.EXPAND | wx.ALL, border=10)
+        p3 = sppasColoursFontPanel(
+             parent=self,
+             style=wx.BORDER_SUNKEN,
+             name="colors_font_actions",
+             title=MSG_ACTIONS)
+        sizer.Add(p3, 1, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(4))
 
-        return sizer
+        self.SetSizerAndFit(sizer)
 
     # -----------------------------------------------------------------------
 
@@ -368,6 +341,12 @@ class WxSettingsPanel(sppasPanel):
 class sppasColoursFontPanel(sppasPanel):
     """Panel to propose the change of colors and font.
 
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
     """
 
     def __init__(self, parent,
@@ -379,56 +358,55 @@ class sppasColoursFontPanel(sppasPanel):
                  title=""):
         super(sppasColoursFontPanel, self).__init__(parent, id, pos, size, style, name)
 
+        b = sppasPanel.fix_size(5)
         flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL
-        gbs = wx.GridBagSizer(hgap=10, vgap=10)
+        gbs = wx.GridBagSizer(hgap=b, vgap=b)
 
         # ---------- Title
 
         txt = wx.StaticText(self, -1, title, name="title")
-        gbs.Add(txt, (0, 0), flag=flag, border=5)
+        gbs.Add(txt, (0, 0), flag=flag, border=b)
 
         # ---------- Background color
 
         txt_bg = wx.StaticText(self, -1, MSG_BG)
-        gbs.Add(txt_bg, (1, 0), flag=flag, border=5)
+        gbs.Add(txt_bg, (1, 0), flag=flag, border=b)
 
-        btn_color_bg = sppasBitmapButton(
-            parent=self,
-            name="bg_color",
-            style=wx.BORDER_SIMPLE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
-        btn_color_bg.SetSize((wx.GetApp().settings.action_height,
-                              wx.GetApp().settings.action_height))
-        gbs.Add(btn_color_bg, (1, 1), flag=flag, border=5)
+        btn_color_bg = self.create_button("bg_color")
+        gbs.Add(btn_color_bg, (1, 1), flag=flag, border=b)
 
         # ---------- Foreground color
 
         txt_fg = wx.StaticText(self, -1, MSG_FG)
-        gbs.Add(txt_fg, (2, 0), flag=flag, border=5)
+        gbs.Add(txt_fg, (2, 0), flag=flag, border=b)
 
-        btn_color_fg = sppasBitmapButton(
-            parent=self,
-            name="fg_color",
-            style=wx.BORDER_SIMPLE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
-        btn_color_fg.SetSize((wx.GetApp().settings.action_height,
-                              wx.GetApp().settings.action_height))
-        gbs.Add(btn_color_fg, (2, 1), flag=flag, border=5)
+        btn_color_fg = self.create_button(name="fg_color")
+        gbs.Add(btn_color_fg, (2, 1), flag=flag, border=b)
 
         # ---------- Font
 
         txt_font = wx.StaticText(self, -1, MSG_FONT)
-        gbs.Add(txt_font, (3, 0), flag=flag, border=5)
+        gbs.Add(txt_font, (3, 0), flag=flag, border=b)
 
-        btn_font = sppasBitmapButton(
-            parent=self,
-            name="font",
-            style=wx.BORDER_SIMPLE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
-        btn_font.SetSize((wx.GetApp().settings.action_height,
-                          wx.GetApp().settings.action_height))
-        gbs.Add(btn_font, (3, 1), flag=flag, border=5)
+        btn_font = self.create_button(name="font")
+        gbs.Add(btn_font, (3, 1), flag=flag, border=b)
 
         gbs.AddGrowableCol(1)
         self.SetSizer(gbs)
-        self.SetMinSize(wx.Size(180, 200))
+        self.SetMinSize(wx.Size(sppasPanel.fix_size(150),
+                                sppasPanel.fix_size(150)))
+
+    # -----------------------------------------------------------------------
+
+    def create_button(self, name):
+        btn = BitmapButton(parent=self, name=name)
+        btn.SetBorderWidth(1)
+        btn.SetFocusWidth(0)
+        btn.SetMinSize(wx.Size(sppasPanel.fix_size(20),
+                               sppasPanel.fix_size(20)))
+        btn.SetSize((wx.GetApp().settings.action_height,
+                     wx.GetApp().settings.action_height))
+        return btn
 
     # -----------------------------------------------------------------------
 

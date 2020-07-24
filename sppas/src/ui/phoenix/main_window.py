@@ -570,7 +570,6 @@ class sppasActionsPanel(sppasPanel):
         self.SetMinSize(wx.Size(-1, settings.action_height))
         sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        # exit_btn = sppasBitmapTextButton(self, MSG_ACTION_EXIT, "exit")
         exit_btn = self._create_button(MSG_ACTION_EXIT, "exit")
         about_btn = self._create_button(MSG_ACTION_ABOUT, "about")
         settings_btn = self._create_button(MSG_ACTION_SETTINGS, "settings")
