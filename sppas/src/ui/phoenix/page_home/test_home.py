@@ -40,7 +40,9 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
+from sppas.src.ui.phoenix.page_home.welcome import TestPanelWelcome
 from sppas.src.ui.phoenix.page_home.links import TestPanelLinksButton
+from sppas.src.ui.phoenix.page_home.home import TestPanelHome
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -54,11 +56,17 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        self.SetBackgroundColour(wx.Colour(100, 100, 100))
-        self.SetForegroundColour(wx.Colour(0, 0, 10))
+        # self.SetBackgroundColour(wx.Colour(100, 100, 100))
+        # self.SetForegroundColour(wx.Colour(0, 0, 10))
 
         # Make the bunch of test panels for the choice book
-        self.AddPage(TestPanelLinksButton(self), "Link buttons")
+        panels = list()
+        panels.append(TestPanelWelcome(self))
+        panels.append(TestPanelLinksButton(self))
+        panels.append(TestPanelHome(self))
+
+        for p in panels:
+            self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)

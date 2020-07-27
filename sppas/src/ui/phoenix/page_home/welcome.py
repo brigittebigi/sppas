@@ -29,27 +29,38 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_home.home.py
+    ui.phoenix.page_home.welcome.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    Home page of the GUI.
 
 """
 
 import wx
-import webbrowser
 
 from sppas.src.config import sg
 
 from ..windows import sppasPanel
-from .welcome import sppasWelcomePanel
-from .links import sppasLinksPanel
+from ..windows import sppasTitleText
+from ..windows import sppasMessageText
 
 # ---------------------------------------------------------------------------
 
 
-class sppasHomePanel(sppasPanel):
-    """Create a panel to display a welcome message.
+WELCOME = \
+    "SPPAS is a scientific computer software package developed " \
+    "by Brigitte Bigi, CNRS researcher at 'Laboratoire Parole et " \
+    "Langage', Aix-en-Provence, France.\n\n" \
+    "By using SPPAS, you agree to cite one of its references in your " \
+    "publications.\n\n" \
+    "You are invited to report problems or suggestions " \
+    "with the feedback form of the 'Log Window'.\n\n" \
+    "For any help when using SPPAS, see the tutorials on the web and " \
+    "the documentation first."
+
+# ---------------------------------------------------------------------------
+
+
+class sppasWelcomePanel(sppasPanel):
+    """Create a panel to display a welcome message with a title.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -60,21 +71,19 @@ class sppasHomePanel(sppasPanel):
     """
 
     def __init__(self, parent):
-        super(sppasHomePanel, self).__init__(
+        super(sppasWelcomePanel, self).__init__(
             parent=parent,
-            name="page_home",
+            name="welcome_panel",
             style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.TAB_TRAVERSAL
         )
         self._create_content()
 
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+    # -----------------------------------------------------------------------
 
-    # ------------------------------------------------------------------------
-
-    def set_data(self, data):
-        pass
+    def SetFont(self, font):
+        sppasPanel.SetFont(self, font)
+        self.FindWindow("title").SetFont(wx.GetApp().settings.header_text_font)
+        self.Layout()
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -82,22 +91,39 @@ class sppasHomePanel(sppasPanel):
 
     def _create_content(self):
         """Create the main content."""
-        pw = sppasWelcomePanel(self)
-        pl = sppasLinksPanel(self)
+        h = self.get_font_height()
+        title = "{:s} - {:s}".format(sg.__name__, sg.__title__)
+
+        # Create a title
+        st = sppasTitleText(self, value=title)
+        st.SetName("title")
+        st.SetMinSize(wx.Size(sppasPanel.fix_size(320), h*3))
+
+        # Create a "static" message text
+        txt = sppasMessageText(self, WELCOME)
+        txt.SetMinSize(wx.Size(sppasPanel.fix_size(320), h*6))
 
         # Organize the title and message
         sizer = wx.BoxSizer(wx.VERTICAL)
-        # sizer.AddStretchSpacer(1)
-        sizer.Add(pw, 1, wx.EXPAND | wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, sppasPanel.fix_size(8))
-        sizer.Add(pl, 1, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, sppasPanel.fix_size(8))
-        # sizer.AddStretchSpacer(2)
+        sizer.Add(st, 0, wx.EXPAND | wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, h)
+        sizer.Add(txt, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, h)
 
         self.SetSizer(sizer)
 
 # ----------------------------------------------------------------------------
 
 
-class TestPanelHome(sppasHomePanel):
+class TestPanelWelcome(wx.Panel):
+
     def __init__(self, parent):
-        super(TestPanelHome, self).__init__(parent)
+        super(TestPanelWelcome, self).__init__(
+            parent,
+            style=wx.BORDER_NONE | wx.WANTS_CHARS,
+            name="Test Welcome Panel")
+
+        s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(sppasWelcomePanel(self), 0, wx.ALL, 0)
+        s.Add(sppasWelcomePanel(self), 1, wx.EXPAND, 0)
+        self.SetSizer(s)
+
 

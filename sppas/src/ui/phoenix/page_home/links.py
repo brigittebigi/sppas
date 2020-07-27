@@ -39,19 +39,32 @@ import webbrowser
 
 from ..windows import Button
 from ..windows import WindowState
+from ..windows import sppasPanel
 from ..tools import sppasSwissKnife
 
 # ---------------------------------------------------------------------------
 
 
 class LinkButton(Button):
+    """A button to get access to an URL.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    This window is implemented as "the focus follows mouse" so that when the
+    mouse is over the window, it gives it the focus.
+
+    """
 
     def __init__(self, parent,
                  id=wx.ID_ANY,
                  pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
                  name=wx.ButtonNameStr):
-        """Default class constructor.
+        """Create a custom button to get access to an URL.
 
         :param parent: the parent (required);
         :param id: window identifier.
@@ -59,19 +72,20 @@ class LinkButton(Button):
         :param size: the size;
         :param name: the name of the bitmap.
 
-        By default, the name of the button is the name of its bitmap.
-
+        By default, the name of the button is the name of its image.
         The label is optional.
-        By default, the label is under the bitmap.
+        The label is under the bitmap with a colored background.
 
         """
         super(LinkButton, self).__init__(
             parent, id, pos, size, name)
         self.SetBorderWidth(1)
+
         # The url
         self._label = ""
         self._url = ""
         self._color = wx.Colour(128, 128, 128, 128)
+
         # The icon image
         self._image = None
         if name != wx.ButtonNameStr:
@@ -164,9 +178,8 @@ class LinkButton(Button):
 
     def DrawContent(self, dc, gc):
         x, y, w, h = self.GetContentRect()
-        print("{} Draw content: x={}, h={}".format(self.GetName(), x, h))
 
-        if w >= 4 and h >= 4:
+        if w >= self._min_width and h >= self._min_height:
             color = self.GetPenForegroundColour()
             pen = wx.Pen(color, 1, self._border_style)
             dc.SetPen(pen)
@@ -192,7 +205,6 @@ class LinkButton(Button):
         spacing = th // 2
 
         # spacing is applied vertically
-        print("Draw content label: x={}, h={}".format(x, h))
         x_bmp, y_pos, bmp_size = self.__get_bitmap_properties(
             x, y + th + spacing,
             w, h - th - (2 * spacing))
@@ -212,7 +224,7 @@ class LinkButton(Button):
     def __get_bitmap_properties(self, x, y, w, h):
         # w, h is the available size
         bmp_size = min(w, h)                  # force a squared button
-        margin = max(int(bmp_size * 0.2), 2)  # optimal margin (20% of btn size)
+        margin = max(int(bmp_size * 0.3), 2)  # optimal margin (30% of btn size)
         bmp_size -= margin
         y_pos = y + ((h - bmp_size) // 2)
         x_pos = x + ((w - bmp_size) // 2)
@@ -225,6 +237,8 @@ class LinkButton(Button):
         # if no image was given
         if self._image is None:
             return False
+        if btn_size < 4:
+            return
 
         try:
             # get the image from its name
@@ -263,38 +277,100 @@ class LinkButton(Button):
 
     # -----------------------------------------------------------------------
 
-    def OnMouseLeftDown(self, event):
-        """Handle the wx.EVT_LEFT_DOWN event.
-
-        :param event: a wx.MouseEvent event to be processed.
-
-        """
-        if self.IsEnabled() is False:
-            return
-
-        self.CaptureMouse()
-        self.SetFocus()
-        self._set_state(WindowState().selected)
-
-    # -----------------------------------------------------------------------
-
     def OnMouseLeftUp(self, event):
         """Handle the wx.EVT_LEFT_UP event.
 
         :param event: a wx.MouseEvent event to be processed.
 
         """
-        # No URL was defined, or
         # the link button is not enabled, or
-        # the mouse was down outside of the button (but is up inside)
-        if len(self._url) == 0 or self.IsEnabled() is False or \
-                self.HasCapture() is False:
+        if self.IsEnabled() is False:
             return
 
-        # Directs all mouse input to this window
+        # Mouse was down outside of the window but is up inside.
+        if self.HasCapture() is False:
+            return
+
+        # Stop to redirect all mouse inputs to this window
         self.ReleaseMouse()
 
-        webbrowser.open(url=self._url)
+        if self._state[1] == WindowState().selected:
+            self._set_state(WindowState().focused)
+
+            self.Refresh()
+            # No URL was defined, or
+            # the mouse was down outside of the button (but is up inside)
+            if len(self._url) > 0:
+                webbrowser.open(url=self._url)
+
+# ----------------------------------------------------------------------------
+
+
+class sppasLinksPanel(sppasPanel):
+    """A panel with buttons to get access to SPPAS on the web.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent):
+        super(sppasLinksPanel, self).__init__(
+            parent=parent,
+            name="welcome_panel",
+            style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.TAB_TRAVERSAL
+        )
+        self._create_content()
+
+    # ------------------------------------------------------------------------
+    # Private methods to construct the panel.
+    # ------------------------------------------------------------------------
+
+    def _create_content(self):
+        """Create the main content."""
+        b1 = LinkButton(self, name="sppas_colored")
+        b1.SetLinkLabel("SPPAS Home")
+        b1.SetLinkURL("http://www.sppas.org/")
+        b1.SetLinkBgColour(wx.Colour(87, 109, 159, 128))
+        b1.SetMinSize(wx.Size(sppasPanel.fix_size(82), sppasPanel.fix_size(112)))
+
+        b2 = LinkButton(self, name="link_docweb")
+        b2.SetLinkLabel("Documentation")
+        b2.SetLinkURL("http://www.sppas.org/documentation.html")
+        b2.SetLinkBgColour(wx.Colour(241, 211, 79, 128))
+        b2.SetMinSize(wx.Size(sppasPanel.fix_size(82), sppasPanel.fix_size(112)))
+
+        b3 = LinkButton(self, name="link_tutovideo")
+        b3.SetLinkLabel("Tutorials")
+        b3.SetLinkURL("http://www.sppas.org/tutorial.html")
+        b3.SetLinkBgColour(wx.Colour(0, 160, 40, 128))
+        b3.SetMinSize(wx.Size(sppasPanel.fix_size(82), sppasPanel.fix_size(112)))
+
+        b4 = LinkButton(self, name="link_question")
+        b4.SetLinkLabel("F.A.Q.")
+        b4.SetLinkURL("http://www.sppas.org/faq.html")
+        b4.SetLinkBgColour(wx.Colour(220, 120, 40, 128))
+        b4.SetMinSize(wx.Size(sppasPanel.fix_size(82), sppasPanel.fix_size(112)))
+
+        b5 = LinkButton(self, name="link_author")
+        b5.SetLinkLabel("The author")
+        b5.SetLinkURL("http://www.lpl-aix.fr/~bigi/")
+        b5.SetLinkBgColour(wx.Colour(30, 30, 120, 128))
+        b5.SetMinSize(wx.Size(sppasPanel.fix_size(82), sppasPanel.fix_size(112)))
+
+        # Organize the title and message
+        b = sppasPanel.fix_size(12)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(b1, 0, wx.ALL, b)
+        sizer.Add(b2, 0, wx.TOP | wx.BOTTOM | wx.RIGHT, b)
+        sizer.Add(b3, 0, wx.TOP | wx.BOTTOM | wx.RIGHT, b)
+        sizer.Add(b4, 0, wx.TOP | wx.BOTTOM | wx.RIGHT, b)
+        sizer.Add(b5, 0, wx.RIGHT | wx.TOP | wx.BOTTOM, b)
+
+        self.SetSizer(sizer)
 
 # ----------------------------------------------------------------------------
 
@@ -305,17 +381,23 @@ class TestPanelLinksButton(wx.Panel):
         super(TestPanelLinksButton, self).__init__(
             parent,
             style=wx.BORDER_NONE | wx.WANTS_CHARS,
-            name="Test BitmapButton")
+            name="Test Links Buttons and Panel")
 
-        b1 = LinkButton(self, pos=(10, 10), size=(150, 150), name="SPPAS")
+        p = sppasPanel(self)
+        b1 = LinkButton(p, pos=(10, 10), size=(150, 150), name="SPPAS")
         b1.SetLinkLabel("SPPAS Home")
         b1.SetLinkBgColour(wx.Colour(200, 20, 20, 120))
-        b2 = LinkButton(self, pos=(170, 10), size=(150, 150))
-        b3 = LinkButton(self, pos=(340, 10), size=(200, 150), name="like")
-        b4 = LinkButton(self, pos=(560, 10), size=(150, 100))
+        b2 = LinkButton(p, pos=(170, 10), size=(150, 150))
+        b3 = LinkButton(p, pos=(340, 10), size=(200, 150), name="like")
+        b4 = LinkButton(p, pos=(560, 10), size=(150, 100))
         b4.SetLinkLabel("Search...")
         b4.SetLinkURL("https://duckduckgo.com/")
 
+        s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(p, 0, wx.ALL, 0)
+        s.AddStretchSpacer(1)
+        s.Add(sppasLinksPanel(self), 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
+        self.SetSizer(s)
 
 
 

@@ -315,8 +315,8 @@ class sppasWindow(sppasDCWindow):
         if self.IsEnabled() is False:
             return
 
+        # Direct all mouse inputs to this window
         self.CaptureMouse()
-        self.SetFocus()
         self._set_state(WindowState().selected)
 
     # -----------------------------------------------------------------------
@@ -334,7 +334,7 @@ class sppasWindow(sppasDCWindow):
         if self.HasCapture() is False:
             return
 
-        # Directs all mouse input to this window
+        # Stop to redirect all mouse inputs to this window
         self.ReleaseMouse()
 
         # If the window was down when the mouse was released...

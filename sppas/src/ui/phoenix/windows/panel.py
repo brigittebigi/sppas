@@ -90,6 +90,33 @@ class sppasPanel(wx.Panel):
 
     # -----------------------------------------------------------------------
 
+    def ShouldInheritColours(self):
+        try:
+            wx.GetApp().settings
+            return False
+        except AttributeError:
+            return True
+
+    # -----------------------------------------------------------------------
+
+    def InheritsBackgroundColour(self):
+        try:
+            wx.GetApp().settings
+            return False
+        except AttributeError:
+            return True
+
+    # -----------------------------------------------------------------------
+
+    def InheritsForegroundColour(self):
+        try:
+            wx.GetApp().settings
+            return False
+        except AttributeError:
+            return True
+
+    # -----------------------------------------------------------------------
+
     def SetBackgroundColour(self, colour):
         """Override."""
         wx.Panel.SetBackgroundColour(self, colour)

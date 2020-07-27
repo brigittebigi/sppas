@@ -756,7 +756,7 @@ class sppasDCWindow(wx.Window):
             dc.SetPen(pen)
 
             # upper line
-            dc.DrawLine(self._vert_border_width - i, i, w - self._vert_border_width + i, i)
+            dc.DrawLine(self._vert_border_width - i - 1, i, w - self._vert_border_width + i, i)
             # bottom line
             dc.DrawLine(self._vert_border_width - i, h - i - 1, w - self._vert_border_width + i, h - i - 1)
 
