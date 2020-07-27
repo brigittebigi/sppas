@@ -88,7 +88,7 @@ class sppasHomePanel(sppasPanel):
         # Organize the title and message
         sizer = wx.BoxSizer(wx.VERTICAL)
         # sizer.AddStretchSpacer(1)
-        sizer.Add(pw, 1, wx.EXPAND | wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, sppasPanel.fix_size(8))
+        sizer.Add(pw, 1, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, sppasPanel.fix_size(8))
         sizer.Add(pl, 1, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, sppasPanel.fix_size(8))
         # sizer.AddStretchSpacer(2)
 
