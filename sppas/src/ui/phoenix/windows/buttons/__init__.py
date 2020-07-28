@@ -1,9 +1,11 @@
 from .basebutton import ButtonEvent
 from .basebutton import ToggleButtonEvent
 from .basebutton import Button
+from .textbutton import TextButton
 
 __all__ = (
     "ButtonEvent",
     "ToggleButtonEvent",
-    "Button"
+    "Button",
+    "TextButton"
 )

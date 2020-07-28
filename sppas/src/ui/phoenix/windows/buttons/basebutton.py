@@ -35,10 +35,10 @@
     Description
     ===========
 
-    This module implements a base class of a generic buttons, meaning that
+    This module implements a base class of a generic button, meaning that
     it is not built on native controls but is self-drawn.
-
-    It acts like a normal button except for the focus that can follow the mouse.
+    It acts like a normal button except for the focus that can follow the
+    mouse.
 
     Sample usage:
     ============
@@ -51,7 +51,7 @@
 
                 wx.Frame.__init__(self, parent, wx.ID_ANY, title, size=(400, 300))
                 panel = wx.Panel(self)
-                btn = buttons.BaseButton(panel, -1, pos=(50, 50), size=(128, 32))
+                btn = buttons.Button(panel, -1, pos=(50, 50), size=(128, 32))
 
         app = wx.App()
         frame = appFrame(None, 'Button Test')
@@ -140,7 +140,7 @@ class ToggleButtonEvent(ButtonEvent):
 
 
 class Button(sppasWindow):
-    """BaseButton is a custom type of window to represent a button.
+    """Button is a custom type of window to represent a button.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France

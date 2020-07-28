@@ -50,7 +50,7 @@ from .line import sppasStaticLine
 
 from .basewindow import WindowState
 from .buttons import Button
-from .button import TextButton
+from .buttons import TextButton
 from .button import BitmapTextButton
 from .button import CheckButton
 from .button import RadioButton

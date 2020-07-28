@@ -41,6 +41,7 @@ from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 from sppas.src.ui.phoenix.windows.buttons.basebutton import TestPanelBaseButton
+from sppas.src.ui.phoenix.windows.buttons.textbutton import TestPanelTextButton
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -67,6 +68,7 @@ class TestPanel(wx.Choicebook):
         # Make the bunch of test panels
         panels = list()
         panels.append(TestPanelBaseButton(self))
+        panels.append(TestPanelTextButton(self))
 
         # Add such panels to pages of the choice book.
         for p in panels:
