@@ -71,6 +71,7 @@ from ..tools import sppasSwissKnife
 from .image import ColorizeImage
 from .basewindow import sppasWindow
 from .basewindow import WindowState
+from .buttons.basebutton import Button, ButtonEvent, ToggleButtonEvent
 
 # ---------------------------------------------------------------------------
 
@@ -78,134 +79,6 @@ DEFAULT_STYLE = wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS
 
 # ---------------------------------------------------------------------------
 # Custom buttons
-# ---------------------------------------------------------------------------
-
-
-class ButtonEvent(wx.PyCommandEvent):
-    """Base class for an event sent when the button is activated."""
-
-    def __init__(self, event_type, event_id):
-        """Default class constructor.
-
-        :param event_type: the event type;
-        :param event_id: the event identifier.
-
-        """
-        super(ButtonEvent, self).__init__(event_type, event_id)
-        self.__button = None
-
-    # ------------------------------------------------------------------------
-
-    def SetButtonObj(self, btn):
-        """Set the event object for the event.
-
-        :param btn: the button object
-
-        """
-        self.__button = btn
-
-    # ------------------------------------------------------------------------
-
-    def GetButtonObj(self):
-        """Return the object associated with this event."""
-        return self.__button
-
-    # -----------------------------------------------------------------------
-
-    Button = property(GetButtonObj, SetButtonObj)
-
-
-# ---------------------------------------------------------------------------
-
-
-class ToggleButtonEvent(ButtonEvent):
-    """Base class for an event sent when the toggle button is activated."""
-
-    def __init__(self, event_type, event_id):
-        """Default class constructor.
-
-        :param event_type: the event type;
-        :param event_id: the event identifier.
-
-        """
-        super(ToggleButtonEvent, self).__init__(event_type, event_id)
-        self.__isdown = False
-
-    # -----------------------------------------------------------------------
-
-    def SetIsDown(self, is_down):
-        """Set the button toggle status as 'down' or 'up'.
-
-        :param is_down: (bool) True if the button is clicked, False otherwise.
-
-        """
-        self.__isdown = bool(is_down)
-
-    # -----------------------------------------------------------------------
-
-    def GetIsDown(self):
-        """Return the button toggle status as True if the button is down.
-
-        :returns: (bool)
-
-        """
-        return self.__isdown
-
-# ---------------------------------------------------------------------------
-
-
-class Button(sppasWindow):
-    """BaseButton is a custom type of window to represent a button.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
-    """
-
-    def __init__(self, parent,
-                 id=wx.ID_ANY,
-                 pos=wx.DefaultPosition,
-                 size=wx.DefaultSize,
-                 name=wx.ButtonNameStr):
-        """Default class constructor.
-
-        :param parent: (wx.Window) parent window. Must not be ``None``;
-        :param id: (int) window identifier. A value of -1 indicates a default value;
-        :param pos: the control position. A value of (-1, -1) indicates a default
-         position, chosen by either the windowing system or wxPython, depending on
-         platform;
-        :param size: the control size. A value of (-1, -1) indicates a default size,
-         chosen by either the windowing system or wxPython, depending on platform;
-        :param name: (str) Name of the button.
-
-        """
-        super(Button, self).__init__(
-            parent, id, pos, size,
-            style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
-            name=name)
-
-        # By default, our buttons don't have borders
-        self._vert_border_width = 0
-        self._horiz_border_width = 0
-
-        self._min_width = 12
-        self._min_height = 12
-
-        # Setup Initial Size
-        self.SetInitialSize(size)
-
-    # -----------------------------------------------------------------------
-
-    def Notify(self):
-        """Sends a wx.EVT_BUTTON event to the listener (if any)."""
-        evt = ButtonEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, self.GetId())
-        evt.SetButtonObj(self)
-        evt.SetEventObject(self)
-        self.GetEventHandler().ProcessEvent(evt)
-
 # ---------------------------------------------------------------------------
 
 
@@ -1131,68 +1004,6 @@ class RadioButton(CheckButton):
 # ----------------------------------------------------------------------------
 
 
-class TestPanelBaseButton(wx.Panel):
-
-    def __init__(self, parent):
-        super(TestPanelBaseButton, self).__init__(
-            parent,
-            style=wx.BORDER_NONE | wx.WANTS_CHARS,
-            name="Test BaseButton")
-
-        self.SetForegroundColour(wx.Colour(150, 160, 170))
-        st = [wx.PENSTYLE_SHORT_DASH,
-              wx.PENSTYLE_LONG_DASH,
-              wx.PENSTYLE_DOT_DASH,
-              wx.PENSTYLE_SOLID,
-              wx.PENSTYLE_HORIZONTAL_HATCH]
-
-        # play with the border
-        x = 10
-        w = 100
-        h = 50
-        c = 10
-        for i in range(1, 6):
-            btn = Button(self, pos=(x, 10), size=(w, h))
-            btn.SetBorderWidth(i)
-            btn.SetBorderColour(wx.Colour(c, c, c))
-            btn.SetBorderStyle(st[i-1])
-            c += 40
-            x += w + 10
-            btn.Bind(wx.EVT_BUTTON, self.on_btn_event)
-
-        # play with the focus
-        x = 10
-        w = 100
-        h = 50
-        c = 10
-        for i in range(1, 6):
-            btn = Button(self, pos=(x, 70), size=(w, h))
-            btn.SetBorderWidth(1)
-            btn.SetFocusWidth(i)
-            btn.SetFocusColour(wx.Colour(c, c, c))
-            btn.SetFocusStyle(st[i-1])
-            c += 40
-            x += w + 10
-            btn.Bind(wx.EVT_BUTTON, self.on_btn_event)
-
-        vertical = Button(self, pos=(560, 10), size=(50, 110))
-        vertical.SetBackgroundColour(wx.Colour(128, 255, 196))
-
-    # -----------------------------------------------------------------------
-
-    def SetForegroundColour(self, colour):
-        wx.Panel.SetForegroundColour(self, colour)
-        for c in self.GetChildren():
-            c.SetForegroundColour(colour)
-
-    # -----------------------------------------------------------------------
-
-    def on_btn_event(self, event):
-        obj = event.GetEventObject()
-
-# ----------------------------------------------------------------------------
-
-
 class TestPanelBitmapButton(wx.Panel):
 
     def __init__(self, parent):
@@ -1417,9 +1228,6 @@ class TestPanel(sc.ScrolledPanel):
         tbpanel.SetSizer(tbsizer)
         sizer.Add(tbpanel, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 2)
 
-        sizer.Add(wx.StaticText(self, label="BaseButton()"), 0, wx.TOP | wx.BOTTOM, 2)
-        sizer.Add(TestPanelBaseButton(self), 1, wx.EXPAND | wx.TOP | wx.BOTTOM, 2)
-        sizer.Add(wx.StaticLine(self))
         sizer.Add(wx.StaticText(self, label="BitmapButton() - no text"), 0, wx.TOP | wx.BOTTOM, 2)
         sizer.Add(TestPanelBitmapButton(self), 1, wx.EXPAND | wx.TOP | wx.BOTTOM, 2)
         sizer.Add(wx.StaticLine(self))

@@ -140,11 +140,9 @@ class sppasDCWindow(wx.Window):
             self.InheritAttributes()
 
         # Border to draw (0=no border)
-        pc = self.GetPenForegroundColour()
         self._vert_border_width = 2
         self._horiz_border_width = 2
-        self._default_border_color = pc
-        self._border_color = self._default_border_color
+        self._border_color = self.GetForegroundColour()
         self._border_style = wx.PENSTYLE_SOLID
 
         # Bind the events related to our window
@@ -198,14 +196,10 @@ class sppasDCWindow(wx.Window):
         :param colour: (wx.Colour)
 
         """
+        # If the border color wasn't changed by the user, we set it to the fg
+        if self._border_color == self.GetForegroundColour():
+            self._border_color = colour
         wx.Window.SetForegroundColour(self, colour)
-
-        # If the border color wasn't changed by the user
-        pc = self.GetPenForegroundColour()
-        if self._border_color == self._default_border_color:
-            self._border_color = pc
-
-        self._default_border_color = pc
 
     # -----------------------------------------------------------------------
 
@@ -335,6 +329,47 @@ class sppasDCWindow(wx.Window):
 
     # -----------------------------------------------------------------------
 
+    def GetHighlightedColour(self, color, delta=20):
+        """Return a modified color if necessary.
+
+        Lightness and transparency is modified but transparency is not
+        supported under Windows.
+
+        :param color: (wx.Color)
+        :param delta: (int)
+        :return: (wx.Colour)
+
+        """
+        if delta > 50:
+            delta = 50
+
+        # Change transparency. Wont have any effect under Windows.
+        r = color.Red()
+        g = color.Green()
+        b = color.Blue()
+        a = color.Alpha()
+        if a > 128:
+            a = max(64, a // 2)
+
+        return wx.Colour(r, g, b, a).ChangeLightness(100 + delta)
+
+    # -----------------------------------------------------------------------
+
+    def GetPenBackgroundColour(self):
+        """Get the background color for the brush.
+
+        brush background is the normal background if the window is enabled but
+        lightness and transparency is modified if the window is disabled.
+
+        """
+        color = self.GetBackgroundColour()
+        if self.IsEnabled() is True:
+            return color
+
+        return self.GetHighlightedColour(color, 40)
+
+    # -----------------------------------------------------------------------
+
     def GetPenForegroundColour(self):
         """Get the foreground color for the pen.
 
@@ -342,19 +377,25 @@ class sppasDCWindow(wx.Window):
         lightness and transparency are modified if the window is disabled.
 
         """
-        normal_color = self.GetForegroundColour()
+        color = self.GetForegroundColour()
         if self.IsEnabled() is True:
-            return normal_color
+            return color
 
-        r, g, b = normal_color.Red(), normal_color.Green(), normal_color.Blue()
-        a = normal_color.Alpha()
-        if a > 128:
-            a = max(56, a // 2)
-        delta = 40
-        if (r + g + b) > 384 and self.IsEnabled() is False:
-            return wx.Colour(r, g, b, a).ChangeLightness(100 - delta)
+        return self.GetHighlightedColour(color, 40)
 
-        return wx.Colour(r, g, b, a).ChangeLightness(100 + delta)
+    # -----------------------------------------------------------------------
+
+    def GetPenBorderColour(self):
+        """Return the colour of the border for the pen.
+
+        :returns: (wx.Color)
+
+        """
+        color = self._border_color
+        if self.IsEnabled() is True:
+            return color
+
+        return self.GetHighlightedColour(color, 30)
 
     # -----------------------------------------------------------------------
 
@@ -375,21 +416,6 @@ class sppasDCWindow(wx.Window):
 
         """
         self._border_color = color
-
-    # -----------------------------------------------------------------------
-
-    def GetHighlightedBackgroundColour(self):
-        """Return a background color with a different lightness."""
-        color = self.GetBackgroundColour()
-        r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
-        if a > 128:
-            a = max(64, a // 2)
-
-        delta = 20
-        if (r + g + b) > 384:
-            return wx.Colour(r, g, b, a).ChangeLightness(100 - delta)
-
-        return wx.Colour(r, g, b, a).ChangeLightness(100 + delta)
 
     # -----------------------------------------------------------------------
 
@@ -645,22 +671,8 @@ class sppasDCWindow(wx.Window):
         :returns: (wx.Brush)
 
         """
-        bg_color = self.GetBackgroundColour()
-
-        if self.IsEnabled() is True:
-            color = bg_color
-
-        else:
-            # Wont have any effect under Windows (alpha is ignored!)
-            r = bg_color.Red()
-            g = bg_color.Green()
-            b = bg_color.Blue()
-            a = bg_color.Alpha()
-            if a > 128:
-                a = max(56, a // 2)
-            color = wx.Colour(r, g, b, a)
-
-        return wx.Brush(color, wx.BRUSHSTYLE_SOLID)
+        bg_color = self.GetPenBackgroundColour()
+        return wx.Brush(bg_color, wx.BRUSHSTYLE_SOLID)
 
     # -----------------------------------------------------------------------
     # Draw methods (private)
@@ -750,10 +762,11 @@ class sppasDCWindow(wx.Window):
 
         """
         w, h = self.GetClientSize()
-        r = self._border_color.Red()
-        g = self._border_color.Green()
-        b = self._border_color.Blue()
-        a = self._border_color.Alpha()
+        border_color = self.GetPenBorderColour()
+        r = border_color.Red()
+        g = border_color.Green()
+        b = border_color.Blue()
+        a = border_color.Alpha()
 
         for i in reversed(range(self._vert_border_width)):
             # gradient border color, using transparency.
@@ -817,8 +830,9 @@ class TestPanel(wx.Panel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(
             parent,
-            name="Test sppasBaseWindow")
+            name="Test DCWindow")
         self.SetBackgroundColour(wx.GetApp().settings.bg_color)
+        self.SetForegroundColour(wx.GetApp().settings.fg_color)
 
         bgpbtn = wx.Button(self, label="BG-panel", pos=(10, 10), size=(64, 64), name="bgp_color")
         bgbbtn = wx.Button(self, label="BG-buttons", pos=(110, 10), size=(64, 64), name="bgb_color")
@@ -846,22 +860,58 @@ class TestPanel(wx.Panel):
             c += 40
             x += w + 10
 
-        w1 = sppasDCWindow(self, pos=(10, 300), size=(50, 110), name="w1")
+        w1 = sppasDCWindow(self, pos=(10, 170), size=(50, 110), name="w1")
         w1.SetBackgroundColour(wx.Colour(128, 255, 196))
         w1.Enable(True)
 
-        w2 = sppasDCWindow(self, pos=(110, 300), size=(50, 110), name="w2")
+        w2 = sppasDCWindow(self, pos=(10, 300), size=(50, 110), name="w2")
         w2.SetBackgroundColour(wx.Colour(128, 255, 196))
         w2.Enable(False)
 
-        w3 = sppasDCWindow(self, pos=(210, 300), size=(50, 110), name="w3")
+        w3 = sppasDCWindow(self, pos=(110, 170), size=(50, 110), name="w3")
         w3.Enable(False)
         w3.Enable(True)
 
-        w4 = sppasDCWindow(self, pos=(310, 300), size=(50, 110), name="w4")
+        w4 = sppasDCWindow(self, pos=(110, 300), size=(50, 110), name="w4")
         w4.Enable(False)
         w4.Enable(True)
         w4.Enable(False)
+
+        w5 = sppasDCWindow(self, pos=(210, 170), size=(50, 110), name="w5")
+        w5.Enable(True)
+        w5.SetBorderColour(wx.Colour(28, 200, 166))
+
+        w6 = sppasDCWindow(self, pos=(210, 300), size=(50, 110), name="w6")
+        w6.Enable(False)
+        w6.SetBorderColour(wx.Colour(28, 200, 166))
+
+        w7 = sppasDCWindow(self, pos=(310, 170), size=(50, 110), name="w7")
+        w7.Enable(True)
+        w7.SetForegroundColour(wx.Colour(28, 200, 166))
+
+        w8 = sppasDCWindow(self, pos=(310, 300), size=(50, 110), name="w8")
+        w8.Enable(False)
+        w8.SetForegroundColour(wx.Colour(28, 200, 166))
+
+        w9 = sppasDCWindow(self, pos=(410, 170), size=(50, 110), name="w9")
+        w9.Enable(True)
+        w9.SetBorderColour(wx.Colour(128, 100, 66))
+        w9.SetForegroundColour(wx.Colour(28, 200, 166))
+
+        w10 = sppasDCWindow(self, pos=(410, 300), size=(50, 110), name="w10")
+        w10.Enable(False)
+        w10.SetBorderColour(wx.Colour(128, 100, 66))
+        w10.SetForegroundColour(wx.Colour(28, 200, 166))
+
+        w11 = sppasDCWindow(self, pos=(510, 170), size=(50, 110), name="w11")
+        w11.Enable(True)
+        w11.SetForegroundColour(wx.Colour(28, 200, 166))
+        w11.SetBorderColour(wx.Colour(128, 100, 66))
+
+        w12 = sppasDCWindow(self, pos=(510, 300), size=(50, 110), name="w12")
+        w12.Enable(False)
+        w12.SetForegroundColour(wx.Colour(28, 200, 166))
+        w12.SetBorderColour(wx.Colour(128, 100, 66))
 
     # -----------------------------------------------------------------------
 

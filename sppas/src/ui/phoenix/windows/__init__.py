@@ -49,7 +49,7 @@ from .dialogs import sppasMetaData, MetaDataEdit
 from .line import sppasStaticLine
 
 from .basewindow import WindowState
-from .button import Button
+from .buttons import Button
 from .button import TextButton
 from .button import BitmapTextButton
 from .button import CheckButton

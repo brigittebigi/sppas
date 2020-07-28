@@ -419,6 +419,27 @@ class sppasWindow(sppasDCWindow):
     # Draw methods
     # -----------------------------------------------------------------------
 
+    def GetPenBackgroundColour(self):
+        """Get the background color for the brush.
+
+
+        returned background is the normal background if the window is enabled but
+        lightness and transparency is modified if the window is disabled or
+        selected.
+
+        """
+        color = self.GetBackgroundColour()
+
+        if self._state[1] == WindowState().selected:
+            return self.GetHighlightedColour(color, -20)
+
+        if self.IsEnabled() is True:
+            return color
+
+        return self.GetHighlightedColour(color, 40)
+
+    # -----------------------------------------------------------------------
+
     def Draw(self):
         """Draw normally then add focus indicator."""
         dc, gc = super(sppasWindow, self).Draw()
@@ -542,36 +563,60 @@ class TestPanel(wx.Panel):
             c += 40
             x += w + 10
 
-        # play with the focus
-        x = 10
-        w = 100
-        h = 50
-        c = 10
-        for i in range(1, 6):
-            win = sppasWindow(self, pos=(x, 170), size=(w, h))
-            win.SetBorderWidth(1)
-            win.SetFocusWidth(i)
-            win.SetFocusColour(wx.Colour(c, c, c))
-            win.SetFocusStyle(st[i-1])
-            c += 40
-            x += w + 10
-
-        w1 = sppasWindow(self, pos=(10, 300), size=(50, 110), name="w1")
+        w1 = sppasWindow(self, pos=(10, 170), size=(50, 110), name="w1")
         w1.SetBackgroundColour(wx.Colour(128, 255, 196))
         w1.Enable(True)
 
-        w2 = sppasWindow(self, pos=(110, 300), size=(50, 110), name="w2")
+        w2 = sppasWindow(self, pos=(10, 300), size=(50, 110), name="w2")
         w2.SetBackgroundColour(wx.Colour(128, 255, 196))
         w2.Enable(False)
 
-        w3 = sppasWindow(self, pos=(210, 300), size=(50, 110), name="w3")
+        w3 = sppasWindow(self, pos=(110, 170), size=(50, 110), name="w3")
         w3.Enable(False)
         w3.Enable(True)
 
-        w4 = sppasWindow(self, pos=(310, 300), size=(50, 110), name="w4")
+        w4 = sppasWindow(self, pos=(110, 300), size=(50, 110), name="w4")
         w4.Enable(False)
         w4.Enable(True)
         w4.Enable(False)
+
+        w5 = sppasWindow(self, pos=(210, 170), size=(50, 110), name="w5")
+        w5.Enable(True)
+        w5.SetBorderColour(wx.Colour(28, 200, 166))
+
+        w6 = sppasWindow(self, pos=(210, 300), size=(50, 110), name="w6")
+        w6.Enable(False)
+        w6.SetBorderColour(wx.Colour(28, 200, 166))
+
+        w7 = sppasWindow(self, pos=(310, 170), size=(50, 110), name="w7")
+        w7.Enable(True)
+        w7.SetForegroundColour(wx.Colour(28, 200, 166))
+
+        w8 = sppasWindow(self, pos=(310, 300), size=(50, 110), name="w8")
+        w8.Enable(False)
+        w8.SetForegroundColour(wx.Colour(28, 200, 166))
+
+        w9 = sppasWindow(self, pos=(410, 170), size=(50, 110), name="w9")
+        w9.Enable(True)
+        w9.SetBorderColour(wx.Colour(128, 100, 66))
+        w9.SetForegroundColour(wx.Colour(28, 200, 166))
+
+        w10 = sppasWindow(self, pos=(410, 300), size=(50, 110), name="w10")
+        w10.Enable(False)
+        w10.SetBorderColour(wx.Colour(128, 100, 66))
+        w10.SetForegroundColour(wx.Colour(28, 200, 166))
+
+        w11 = sppasWindow(self, pos=(510, 170), size=(50, 110), name="w11")
+        w11.Enable(True)
+        w11.SetBackgroundColour(wx.Colour(28, 200, 166))
+        w11.SetForegroundColour(wx.Colour(228, 200, 166))
+        w11.SetBorderColour(wx.Colour(128, 100, 66))
+
+        w12 = sppasWindow(self, pos=(510, 300), size=(50, 110), name="w12")
+        w12.Enable(False)
+        w12.SetBackgroundColour(wx.Colour(28, 200, 166))
+        w12.SetForegroundColour(wx.Colour(228, 200, 166))
+        w12.SetBorderColour(wx.Colour(128, 100, 66))
 
     # -----------------------------------------------------------------------
 

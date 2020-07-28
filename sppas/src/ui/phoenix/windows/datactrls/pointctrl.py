@@ -128,10 +128,10 @@ class sppasPointWindow(sppasDataWindow):
 
         # If highlighted
         if self.HasFocus() is True:
-            c1 = self.GetHighlightedBackgroundColour()
+            c1 = self.GetHighlightedColour(self.GetBackgroundColour())
             c2 = self.GetPenForegroundColour()
         else:
-            c2 = self.GetHighlightedBackgroundColour()
+            c2 = self.GetHighlightedColour(self.GetBackgroundColour())
             c1 = self.GetPenForegroundColour()
 
         if w > 5:

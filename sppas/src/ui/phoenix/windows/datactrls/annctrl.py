@@ -169,7 +169,7 @@ class sppasAnnotationWindow(sppasDataWindow):
         else:
             if self._bgcolor is not None:
                 # Fill in the content
-                c2 = self.GetHighlightedBackgroundColour()
+                c2 = self.GetHighlightedColour(self.GetBackgroundColour())
                 c1 = self._bgcolor
                 mid = h // 2
                 box_rect = wx.Rect(0, 0, w, mid)
@@ -288,7 +288,8 @@ class sppasAnnotationWindow(sppasDataWindow):
 
     def _DrawEmptyContent(self, dc, gc):
         x, y, w, h = self.GetContentRect()
-        pen = wx.Pen(self.GetHighlightedBackgroundColour(), 1, wx.SOLID)
+        bg = self.GetHighlightedColour(self.GetBackgroundColour())
+        pen = wx.Pen(bg, 1, wx.SOLID)
         pen.SetCap(wx.CAP_BUTT)
         dc.SetPen(pen)
         dc.DrawRectangle(x, y, w, h)
