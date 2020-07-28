@@ -743,11 +743,28 @@ class sppasDCWindow(wx.Window):
     # -----------------------------------------------------------------------
 
     def DrawBorder(self, dc, gc):
+        """Draw a gradient border with corners that appear slightly rounded.
+
+        Notice that the transparency is not supported under Windows so that
+        the borders don't have a gradient color!
+
+        """
         w, h = self.GetClientSize()
         r = self._border_color.Red()
         g = self._border_color.Green()
         b = self._border_color.Blue()
         a = self._border_color.Alpha()
+
+        for i in reversed(range(self._vert_border_width)):
+            # gradient border color, using transparency.
+            alpha = max(a - (i * 25), 0)
+            pen = wx.Pen(wx.Colour(r, g, b, alpha), 1, self._border_style)
+            dc.SetPen(pen)
+
+            # left line
+            dc.DrawLine(i, self._horiz_border_width - i - 1, i, h - self._horiz_border_width + i + 1)
+            # right line
+            dc.DrawLine(w - i - 1, self._horiz_border_width - i - 1, w - i - 1, h - self._horiz_border_width + i + 1)
 
         for i in reversed(range(self._horiz_border_width)):
             # gradient border color, using transparency
@@ -756,20 +773,9 @@ class sppasDCWindow(wx.Window):
             dc.SetPen(pen)
 
             # upper line
-            dc.DrawLine(self._vert_border_width - i - 1, i, w - self._vert_border_width + i, i)
+            dc.DrawLine(self._vert_border_width - i - 1, i, w - self._vert_border_width + i + 1, i)
             # bottom line
-            dc.DrawLine(self._vert_border_width - i, h - i - 1, w - self._vert_border_width + i, h - i - 1)
-
-        for i in reversed(range(self._vert_border_width)):
-            # gradient border color, using transparency
-            alpha = max(a - (i * 25), 0)
-            pen = wx.Pen(wx.Colour(r, g, b, alpha), 1, self._border_style)
-            dc.SetPen(pen)
-
-            # left line
-            dc.DrawLine(i, self._horiz_border_width - i, i, h - self._horiz_border_width + i)
-            # right line
-            dc.DrawLine(w - i - 1, self._horiz_border_width - i, w - i - 1, h - self._horiz_border_width + i)
+            dc.DrawLine(self._vert_border_width - i - 1, h - i - 1, w - self._vert_border_width + i + 1, h - i - 1)
 
     # -----------------------------------------------------------------------
 

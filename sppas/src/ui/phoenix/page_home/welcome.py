@@ -101,7 +101,6 @@ class sppasWelcomePanel(sppasPanel):
 
         # Create a "static" message text
         txt = sppasMessageText(self, WELCOME)
-        txt.SetMinSize(wx.Size(sppasPanel.fix_size(320), h*6))
 
         # Organize the title and message
         sizer = wx.BoxSizer(wx.VERTICAL)

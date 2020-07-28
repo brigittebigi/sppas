@@ -122,7 +122,7 @@ class LinkButton(Button):
         """
         label = self.GetLabel()
         if not label:
-            return wx.Size(32, 32)
+            return wx.Size(self._min_width, self._min_height)
 
         dc = wx.ClientDC(self)
         dc.SetFont(self.GetFont())
@@ -153,7 +153,14 @@ class LinkButton(Button):
         """Color of the background of the label."""
         return self._color
 
+    # -----------------------------------------------------------------------
+
     def SetLinkBgColour(self, color):
+        """Color of the background of the label.
+
+        :param color: (wx.Colour)
+
+        """
         self._color = color
 
     # -----------------------------------------------------------------------
@@ -170,41 +177,53 @@ class LinkButton(Button):
         :param url: (str) URL to open.
 
         """
-        self._url = url
+        self._url = str(url)
 
     # ------------------------------------------------------------------------
     # Methods to draw the button
     # ------------------------------------------------------------------------
 
     def DrawContent(self, dc, gc):
+        """Draw the link button with an image at top and a label at bottom.
+
+        Don't draw if the size is not large enough.
+
+        """
         x, y, w, h = self.GetContentRect()
 
         if w >= self._min_width and h >= self._min_height:
-            color = self.GetPenForegroundColour()
-            pen = wx.Pen(color, 1, self._border_style)
-            dc.SetPen(pen)
 
             # No label is defined.
-            # Draw the square bitmap icon at the center with a 5% margin all around
             if self._label is None:
-                x_pos, y_pos, bmp_size = self.__get_bitmap_properties(x, y, w, h)
-                designed = self.__draw_bitmap(dc, gc, x_pos, y_pos, bmp_size)
-                if designed is False:
-                    pen.SetCap(wx.CAP_BUTT)
-                    dc.DrawRectangle(self._vert_border_width,
-                                     self._horiz_border_width,
-                                     w - (2 * self._vert_border_width),
-                                     h - (2 * self._horiz_border_width))
+                self._DrawContentWithoutLabel(dc, gc, x, y, w, h)
             else:
-                self._DrawContentLabel(dc, gc, x, y, w, h)
+                self._DrawContentWithLabel(dc, gc, x, y, w, h)
 
     # -----------------------------------------------------------------------
 
-    def _DrawContentLabel(self, dc, gc, x, y, w, h):
-        tw, th = self.get_text_extend(dc, gc, self._label)
-        spacing = th // 2
+    def _DrawContentWithoutLabel(self, dc, gc, x, y, w, h):
+        """Draw the square bitmap at the center with a margin all around.
 
-        # spacing is applied vertically
+        """
+        x_pos, y_pos, bmp_size = self.__get_bitmap_properties(x, y, w, h)
+        designed = self.__draw_bitmap(dc, gc, x_pos, y_pos, bmp_size)
+        if designed is False:
+            color = self.GetPenForegroundColour()
+            pen = wx.Pen(color, 1, self._border_style)
+            dc.SetPen(pen)
+            pen.SetCap(wx.CAP_BUTT)
+            dc.DrawRectangle(self._vert_border_width,
+                             self._horiz_border_width,
+                             w - (2 * self._vert_border_width),
+                             h - (2 * self._horiz_border_width))
+
+    # -----------------------------------------------------------------------
+
+    def _DrawContentWithLabel(self, dc, gc, x, y, w, h):
+        tw, th = self.get_text_extend(dc, gc, self._label)
+
+        # a spacing is applied vertically
+        spacing = th // 2
         x_bmp, y_pos, bmp_size = self.__get_bitmap_properties(
             x, y + th + spacing,
             w, h - th - (2 * spacing))
@@ -212,11 +231,16 @@ class LinkButton(Button):
             margin = h - bmp_size - th - spacing
             y += (margin // 2)
 
+        # Draw the bitmap at top
         self.__draw_bitmap(dc, gc, x_bmp, y, bmp_size)
+
+        # Draw the background of the label at bottom
         dc.SetPen(wx.TRANSPARENT_PEN)
         dc.SetBrush(wx.Brush(self._color, wx.BRUSHSTYLE_SOLID))
-        dc.DrawRectangle(self._horiz_border_width, h - th - spacing,
-                         w, th+(2*spacing))
+        # we draw the background of the focus line with the same color
+        bg_h = th + spacing + self._vert_border_width + self._focus_width + self._focus_spacing
+        dc.DrawRectangle(x, h - th - spacing, w, bg_h)
+
         self.__draw_label(dc, gc, (w - tw) // 2, h - th)
 
     # -----------------------------------------------------------------------
@@ -358,7 +382,7 @@ class sppasLinksPanel(sppasPanel):
         b5 = LinkButton(self, name="link_author")
         b5.SetLinkLabel("The author")
         b5.SetLinkURL("http://www.lpl-aix.fr/~bigi/")
-        b5.SetLinkBgColour(wx.Colour(30, 30, 120, 128))
+        b5.SetLinkBgColour(wx.Colour(50, 50, 150, 128))
         b5.SetMinSize(wx.Size(sppasPanel.fix_size(82), sppasPanel.fix_size(112)))
 
         # Organize the title and message
