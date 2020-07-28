@@ -64,16 +64,21 @@ class TestsFileDataFilter (unittest.TestCase):
         ref1.set_type('SPEAKER')
         ref1.append(sppasRefAttribute('age', '20', "int"))
         ref1.append(sppasRefAttribute('name', 'toto'))
+        ref1.append(sppasRefAttribute('gender', 'male'))
 
         ref2 = sppasCatReference('record')
         ref2.append(sppasRefAttribute('age', '50', "int"))
         ref2.append(sppasRefAttribute('name', 'toto'))
+
+        ref3 = sppasCatReference('whatever')
+        ref3.append(sppasRefAttribute('gender', 'female'))
 
         fr1 = self.files.get_object(FileRoot.root(f1))
         fr1.add_ref(ref1)
 
         fr2 = self.files.get_object(FileRoot.root(f3))
         fr2.add_ref(ref2)
+        fr2.add_ref(ref3)
 
         self.data_filter = sppasFileDataFilters(self.files)
 
@@ -94,9 +99,16 @@ class TestsFileDataFilter (unittest.TestCase):
 
     def test_ref_id(self):
         self.assertEqual(1, len(self.data_filter.ref(startswith=u('rec'))))
-        self.assertEqual(1, len(self.data_filter.ref(not_startswith=u('rec'))))
         self.assertEqual(0, len(self.data_filter.ref(startswith=u('aa'))))
         self.assertEqual(2, len(self.data_filter.ref(not_startswith=u('aa'))))
+        # test with "not_":
+        self.assertEqual(2, len(self.data_filter.ref(not_startswith=u('rec'))))
+        # it's 2 because:
+        #  - fr1 has ref1 which does not starts with "rec" so it returns true to the filter;
+        #  - fr2 has 2 references:
+        #       * ref2 returns false to the filter (to not select this root) but
+        #       * ref3 returns true to the filter because it does not starts with "rec".
+        # so fr2 is also selected because at least one of its ref returned true.
 
     def test_att(self):
         self.assertEqual(1, len(self.data_filter.att(iequal=('age', '20'))))
@@ -174,8 +186,8 @@ class TestsFileDataFilter (unittest.TestCase):
         self.assertEqual(0, len(data_filter.ref(startswith=u('aa'))))
         self.assertEqual(10, len(data_filter.ref(not_startswith=u('aa'))))
 
-        # Error because the roots have more than one ref:
-        # self.assertEqual(4, len(data_filter.ref(not_contains=u('fra'))))
+        # because the roots have more than one ref:
+        self.assertEqual(10, len(data_filter.ref(not_contains=u('fra'))))
 
         # Test attributes
         self.assertEqual(8, len(data_filter.att(exact=('gender', 'male'))))

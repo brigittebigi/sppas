@@ -303,14 +303,14 @@ class sppasFileDataFilters(sppasBaseFilters):
     def ref(self, **kwargs):
         """Apply functions on all file properties of the object.
 
-        Each argument is made of a function name and its expected value.
-        Each function can be prefixed with 'not_', like in the next example.
+        Return any fileroot for which at least one of its references is
+        matching the filter.
 
         :Example:
 
-            >>> f.ref(startswith="toto", not_endswith="tutu", logic_bool="and")
-            >>> f.ref(startswith="toto") & f.ref(not_endswith="tutu")
-            >>> f.ref(startswith="toto") | f.ref(startswith="tutu")
+            >>> f.ref(startswith="toto", endswith="tutu", logic_bool="and")
+            >>> f.ref(startswith="toto") & f.ref(endswith="tutu")
+            >>> f.ref(startswith="toto") | f.ref(contains="tutu")
 
         :param kwargs: logic_bool/any sppasFileStateCompare() method.
         :returns: (sppasDataSet) Set of FileName() instances
@@ -326,10 +326,6 @@ class sppasFileDataFilters(sppasBaseFilters):
 
         # the set of results
         data = sppasBaseSet()
-
-        # --------------------------------------------
-        # WORKS ONLY IF A ROOT HAS ONLY ONE REFERENCE
-        # --------------------------------------------
 
         # search for the data to be returned:
         for path in self.obj.get_paths():
