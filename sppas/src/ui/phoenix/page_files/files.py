@@ -266,3 +266,11 @@ class sppasFilesPanel(sppasPanel):
             evt = DataChangedEvent(data=data)
             evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)
+
+# ----------------------------------------------------------------------------
+
+
+class TestPanelFiles(sppasFilesPanel):
+    def __init__(self, parent):
+        super(TestPanelFiles, self).__init__(parent)
+

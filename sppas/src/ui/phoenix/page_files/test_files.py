@@ -29,8 +29,10 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.tests.test_windows.py
+    src.ui.phoenix.page_files.test_files.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    A panel and an application to test classes of this package.
 
 """
 
@@ -40,18 +42,13 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
-# Tested files are the ones with a TestPanel class:
-import sppas.src.ui.phoenix.windows.basedcwindow as dcwin
-import sppas.src.ui.phoenix.windows.basewindow as basedraw
-import sppas.src.ui.phoenix.windows.toolbar as toolbar
-import sppas.src.ui.phoenix.windows.line as line
-import sppas.src.ui.phoenix.windows.button as button
-import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
-import sppas.src.ui.phoenix.windows.panel as panel
-import sppas.src.ui.phoenix.windows.listctrl as listctrl
-import sppas.src.ui.phoenix.windows.media.mediactrl as media
-import sppas.src.ui.phoenix.windows.media.playerctrl as player
-import sppas.src.ui.phoenix.windows.media.multiplayer as multiplayer
+import sppas.src.ui.phoenix.page_files.filesmanager as filesmanager
+import sppas.src.ui.phoenix.page_files.refsmanager as refsmanager
+import sppas.src.ui.phoenix.page_files.wksmanager as wksmanager
+import sppas.src.ui.phoenix.page_files.filesviewctrl as filesviewctrl
+import sppas.src.ui.phoenix.page_files.refsviewctrl as refsviewctrl
+
+from sppas.src.ui.phoenix.page_files.files import TestPanelFiles
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -65,22 +62,23 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
+        # self.SetBackgroundColour(wx.Colour(100, 100, 100))
+        # self.SetForegroundColour(wx.Colour(0, 0, 10))
+
         # Make the bunch of test panels for the choice book
-        self.AddPage(dcwin.TestPanel(self), "Base DC Window")
-        self.AddPage(multiplayer.TestPanel(self), "Multi Media Player")
-        self.AddPage(player.TestPanel(self), "Player Control")
-        self.AddPage(media.TestPanel(self), "Media Control")
-        self.AddPage(toolbar.TestPanel(self), "Toolbar")
-        self.AddPage(listctrl.TestPanel(self), "ListCtrl")
-        self.AddPage(panel.TestPanel(self), "Panels")
-        self.AddPage(buttonbox.TestPanel(self), "ButtonBox")
-        self.AddPage(button.TestPanel(self), "Buttons")
-        self.AddPage(line.TestPanel(self), "Lines")
-        self.AddPage(basedraw.TestPanel(self), "Base Window")
+        panels = list()
+        panels.append(TestPanelFiles(self))
+        panels.append(filesmanager.TestPanel(self))
+        panels.append(refsmanager.TestPanel(self))
+        panels.append(wksmanager.TestPanel(self))
+        panels.append(filesviewctrl.TestPanel(self))
+        panels.append(refsviewctrl.TestPanel(self))
+
+        for p in panels:
+            self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
-        self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
 
     # -----------------------------------------------------------------------
 
@@ -91,6 +89,7 @@ class TestPanel(wx.Choicebook):
 
         """
         key_code = event.GetKeyCode()
+        # logging.debug('Test panel received the key event {:d}'.format(key_code))
 
         # Keeps on going the event to the current page of the book.
         event.Skip()
@@ -103,6 +102,8 @@ class TestPanel(wx.Choicebook):
         sel = self.GetSelection()
         event.Skip()
 
+    # -----------------------------------------------------------------------
+
     def OnPageChanging(self, event):
         old = event.GetOldSelection()
         new = event.GetSelection()
@@ -114,7 +115,35 @@ class TestPanel(wx.Choicebook):
 # ----------------------------------------------------------------------------
 
 
+class TestFrame(wx.Frame):
+
+    def __init__(self):
+        super(TestFrame, self).__init__(None, title="Test Files Frame")
+        self.SetSize(wx.Size(900, 600))
+        self.SetMinSize(wx.Size(640, 480))
+
+        # create a panel in the frame
+        sizer = wx.BoxSizer()
+        sizer.Add(TestPanel(self), 1, wx.EXPAND, 0)
+        self.SetSizer(sizer)
+
+        # show result
+        self.Layout()
+        self.Show()
+
+# ----------------------------------------------------------------------------
+
+
 class TestApp(wx.App):
+    """Application to test a TestPanel.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
 
     def __init__(self):
         """Create a customized application."""
@@ -124,26 +153,14 @@ class TestApp(wx.App):
                         filename=None,
                         useBestVisual=True,
                         clearSigInt=True)
-
-        # create the frame
-        frm = wx.Frame(None, title='Test frame', size=wx.Size(900, 600))
-        frm.SetMinSize(wx.Size(640, 480))
-        self.SetTopWindow(frm)
-
         # Fix language and translation
         self.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
         self.__cfg = sppasAppConfig()
         self.settings = WxAppSettings()
         self.setup_debug_logging()
 
-        # create a panel in the frame
-        sizer = wx.BoxSizer()
-        sizer.Add(TestPanel(frm), 1, wx.EXPAND, 0)
-        frm.SetSizer(sizer)
-
-        # show result
-        frm.Layout()
-        frm.Show()
+        frm = TestFrame()
+        self.SetTopWindow(frm)
 
     @staticmethod
     def setup_debug_logging():

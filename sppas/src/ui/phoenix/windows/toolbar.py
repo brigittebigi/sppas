@@ -85,6 +85,14 @@ class sppasToolbar(sppasPanel):
             self.SetMinSize(wx.Size(-1, self._h))
         else:
             self.SetMinSize(wx.Size(self._h, -1))
+
+        try:
+            self.SetBackgroundColour(wx.GetApp().settings.bg_color)
+            self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            self.SetFont(wx.GetApp().settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
+
         self.Bind(wx.EVT_TOGGLEBUTTON, self.__on_tg_btn_event)
 
     # -----------------------------------------------------------------------
@@ -273,7 +281,7 @@ class sppasToolbar(sppasPanel):
         if self.GetSizer().GetOrientation() == wx.HORIZONTAL:
             align = wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL
         else:
-            align = wx.ALIGN_LEFT | wx.ALIGN_CENTER_HORIZONTAL | wx.ALL
+            align = wx.ALIGN_LEFT | wx.ALL
         self.GetSizer().Add(st, 0, align, 6)
 
         return st
@@ -315,7 +323,6 @@ class sppasToolbar(sppasPanel):
         if icon is not None:
             btn = BitmapTextButton(self, label=text, name=icon)
             btn.SetLabelPosition(wx.RIGHT)
-            btn.SetBitmapColour(self.GetForegroundColour())
             if text is None:
                 btn.SetSpacing(0)
                 btn.SetMaxSize(wx.Size(self._h*2, self._h*2))
@@ -345,12 +352,10 @@ class sppasToolbar(sppasPanel):
             btn = ToggleButton(self, label=text)
             btn.LabelPosition = wx.CENTRE
 
-        btn.FocusStyle = self._fs
-        btn.FocusWidth = self._fw
-        btn.FocusColour = self._fc
-        btn.Spacing = sppasPanel.fix_size(self._h // 3)
-        btn.BorderWidth = 1
-        btn.BitmapColour = self.GetForegroundColour()
+        btn.SetFocusStyle(self._fs)
+        btn.SetFocusWidth(self._fw)
+        btn.SetFocusColour(self._fc)
+        btn.SetBorderWidth(1)
         btn.SetMinSize(wx.Size(self._h, self._h))
 
         return btn
@@ -432,10 +437,10 @@ class TestPanel(wx.Panel):
         self.SetForegroundColour(wx.Colour(150, 160, 170))
 
         tbh = sppasToolbar(self, orient=wx.HORIZONTAL)
-        tbh.AddTitleText("title:", wx.Colour(128, 196, 228))
+        tbh.AddTitleText("Highlighted text", wx.Colour(128, 196, 228))
         tbh.AddButton("sppas_32", "icon")
         tbh.AddButton("sppas_32")
-        tbh.AddText("Text")
+        tbh.AddText("Simple text")
         tbh.AddSpacer()
         b1 = tbh.AddToggleButton("wifi", text="Wifi")
         b1.Enable(True)

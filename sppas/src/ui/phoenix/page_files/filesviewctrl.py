@@ -1329,14 +1329,12 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         self.notify(self.__frid)
 
 # ----------------------------------------------------------------------------
-# Panel tested by test_glob.py
-# ----------------------------------------------------------------------------
 
 
 class TestPanel(FileTreeView):
 
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent)
+        super(TestPanel, self).__init__(parent, "Files tree view")
 
         self.AddFiles([os.path.abspath(__file__)])
         self.AddFiles([os.path.join(paths.samples, "samples-fra")])

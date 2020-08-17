@@ -792,12 +792,9 @@ class WorkspacesPanel(sppasPanel):
         btn.Refresh()
 
 # ----------------------------------------------------------------------------
-# Panel tested by test_glob.py
-# ----------------------------------------------------------------------------
 
 
 class TestPanel(WorkspacesManager):
 
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent)
-        self.SetBackgroundColour(wx.Colour(128, 128, 128))
+        super(TestPanel, self).__init__(parent, name="WorkspaceManager")

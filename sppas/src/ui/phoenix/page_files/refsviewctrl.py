@@ -691,7 +691,7 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
 class TestPanel(RefsTreeView):
 
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent)
+        super(TestPanel, self).__init__(parent, name="References tree view")
         data = sppasWorkspace()
         micros = sppasCatReference('microphone')
         att1 = sppasRefAttribute('mic1', 'Bird UM1', None, '最初のインタビューで使えていましたマイク')

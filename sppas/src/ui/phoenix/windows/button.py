@@ -514,29 +514,6 @@ class ToggleButton(BitmapTextButton):
 
     # -----------------------------------------------------------------------
 
-    def GetBackgroundBrush(self):
-        """Get the brush for drawing the background of the window.
-
-        :returns: (wx.Brush)
-
-        """
-        bg_color = self.GetBackgroundColour()
-
-        if self._pressed is False:
-            return wx.Brush(bg_color, wx.SOLID)
-
-        else:
-            r = bg_color.Red()
-            g = bg_color.Green()
-            b = bg_color.Blue()
-            if (r + g + b) > 384:
-                color = wx.Colour(r, g, b, 64).ChangeLightness(140)
-            else:
-                color = wx.Colour(r, g, b, 64).ChangeLightness(60)
-            return wx.Brush(color, wx.SOLID)
-
-    # -----------------------------------------------------------------------
-
     def Notify(self):
         """Sends a wx.EVT_TOGGLEBUTTON event to the listener (if any)."""
         evt = ToggleButtonEvent(wx.wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, self.GetId())

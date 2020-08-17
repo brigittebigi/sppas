@@ -280,14 +280,12 @@ class FilesManager(sppasPanel):
                     "unknown paths and filenames of the list.")
 
 # ----------------------------------------------------------------------------
-# Panel tested by test_glob.py
-# ----------------------------------------------------------------------------
 
 
 class TestPanel(FilesManager):
 
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent)
+        super(TestPanel, self).__init__(parent, name="FilesManager")
         self.add_one_test_data()
 
     # ------------------------------------------------------------------------

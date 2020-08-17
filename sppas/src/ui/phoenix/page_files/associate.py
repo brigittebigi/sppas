@@ -155,7 +155,6 @@ class AssociatePanel(sppasPanel):
         btn.SetFocusColour(wx.Colour(128, 128, 196, 128))   # violet
         btn.SetLabelPosition(wx.BOTTOM)
         btn.SetSpacing(sppasPanel.fix_size(4))
-        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(sppasPanel.fix_size(24),
                                sppasPanel.fix_size(24)))
         return btn

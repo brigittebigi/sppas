@@ -652,7 +652,7 @@ class sppasEditAttributes(sppasDialog):
 class TestPanel(ReferencesManager):
 
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent)
+        super(TestPanel, self).__init__(parent, name="ReferencesManager")
         self.add_test_data()
 
     # ------------------------------------------------------------------------

@@ -111,7 +111,7 @@ class TestPanel(wx.Choicebook):
 class TestFrame(wx.Frame):
 
     def __init__(self):
-        super(TestFrame, self).__init__(None, title="Test Frame")
+        super(TestFrame, self).__init__(None, title="Test Home Frame")
         self.SetSize(wx.Size(900, 600))
         self.SetMinSize(wx.Size(640, 480))
 
