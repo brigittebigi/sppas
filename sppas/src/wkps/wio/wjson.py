@@ -201,11 +201,18 @@ class sppasWJSON(sppasBaseWkpIO):
 
         """
         dict_path = dict()
-        dict_path["id"] = fp.get_id()
-        dict_path["rel"] = os.path.relpath(fp.get_id())
-        dict_path["roots"] = list()
+
+        # Systematically save the path with the "/" instead of the os separator
+        path = fp.get_id()
+        path = path.replace(os.sep, "/")
+        dict_path["id"] = path
+
+        rel_path = os.path.relpath(fp.get_id())
+        rel_path = rel_path.replace(os.sep, "/")
+        dict_path["rel"] = rel_path
 
         # serialize the roots
+        dict_path["roots"] = list()
         for fr in fp:
             dict_path["roots"].append(self._serialize_root(fr))
 
@@ -341,13 +348,23 @@ class sppasWJSON(sppasBaseWkpIO):
             raise KeyError("path 'id' is missing of the dictionary to parse.")
 
         path = d["id"]
+
+        # Ensure we'll use the separator of the current system
+        path = path.replace("/", os.sep)
+
         # check if the entry path exists
         if os.path.exists(d["id"]) is False:
+            logging.debug("Absolute path {:s} does not exist.".format(path))
             # check if the relative path exists. "rel" was introduced in v2.0.
             # check if "rel" exists for compatibility with v1.0.
             if "rel" in d:
-                if os.path.exists(d["rel"]) is True:
-                    path = os.path.abspath(d["rel"])
+                rel_path = os.path.abspath(d["rel"])
+                rel_path = rel_path.replace("/", os.sep)
+                if os.path.exists(rel_path) is True:
+                    logging.debug("Relative path {:s} exists.".format(rel_path))
+                    path = rel_path
+                else:
+                    logging.debug("Relative path {:s} does not exist too.".format(rel_path))
         # in any case, create the corresponding object
         fp = FilePath(path)
 

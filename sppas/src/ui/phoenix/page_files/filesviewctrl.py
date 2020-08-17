@@ -597,6 +597,8 @@ class FileTreeView(sppasScrolledPanel):
         panel = evt.GetEventObject()
         fs_id = panel.get_id()
         fs = self.__data.get_object(fs_id)
+        if fs is None:
+            return
         if fs.subjoined is None:
             fs.subjoined = dict()
         fs.subjoined['expand'] = panel.IsExpanded()

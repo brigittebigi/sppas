@@ -706,7 +706,11 @@ class FilePath(FileBase):
         :raises: PathTypeError
 
         """
-        super(FilePath, self).__init__(os.path.abspath(filepath))
+        if os.path.exists(filepath) is False:
+            rel_path = os.path.abspath(filepath)
+            if os.path.exists(rel_path) is True:
+                filepath = rel_path
+        super(FilePath, self).__init__(filepath)
 
         if os.path.exists(filepath) is False:
             self._state = States().MISSING
