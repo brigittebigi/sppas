@@ -167,9 +167,6 @@ class AssociatePanel(sppasPanel):
         will be called.
 
         """
-        # The user pressed a key of its keyboard
-        self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
-
         # The user clicked (LeftDown - LeftUp) an action button
         self.Bind(wx.EVT_BUTTON, self._process_action)
 
@@ -184,13 +181,6 @@ class AssociatePanel(sppasPanel):
 
     # ------------------------------------------------------------------------
     # Callbacks to events
-    # ------------------------------------------------------------------------
-
-    def _process_key_event(self, event):
-        """Respond to a keypress event."""
-        key_code = event.GetKeyCode()
-        event.Skip()
-
     # ------------------------------------------------------------------------
 
     def _process_action(self, event):

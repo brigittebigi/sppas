@@ -175,9 +175,6 @@ class ReferencesManager(sppasPanel):
         will be called.
 
         """
-        # The user pressed a key of its keyboard
-        self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
-
         # The user clicked (LeftDown - LeftUp) an action button of the toolbar
         self.Bind(wx.EVT_BUTTON, self._process_action)
 
@@ -205,24 +202,6 @@ class ReferencesManager(sppasPanel):
 
     # ------------------------------------------------------------------------
 
-    def _process_key_event(self, event):
-        """Process a key event.
-
-        :param event: (wx.Event)
-
-        """
-        key_code = event.GetKeyCode()
-        cmd_down = event.CmdDown()
-        shift_down = event.ShiftDown()
-
-        # Ctrl+r
-        if key_code == 82 and cmd_down is True:
-            self._add()
-        else:
-            event.Skip()
-
-    # ------------------------------------------------------------------------
-
     def _process_action(self, event):
         """Process an action of a button.
 
@@ -232,7 +211,7 @@ class ReferencesManager(sppasPanel):
         name = event.GetButtonObj().GetName()
 
         if name == "refs-add":
-            self._add()
+            self.create_ref()
 
         elif name == "refs-delete":
             self._delete()
@@ -244,7 +223,7 @@ class ReferencesManager(sppasPanel):
 
     # ------------------------------------------------------------------------
 
-    def _add(self):
+    def create_ref(self):
         """Open a dialog to create and append a new reference."""
         dlg = sppasCreateReference(self)
         response = dlg.ShowModal()

@@ -324,21 +324,22 @@ class sppasMainWindow(sppasDialog):
             self.FindWindow("header").enable("page_files")
             self.show_page("page_files")
 
-        elif key_code == wx.WXK_LEFT and event.CmdDown():
-            self.show_next_page(direction=-1)
+        elif event.ControlDown() or event.CmdDown():
+            if key_code == wx.WXK_LEFT:
+                self.show_next_page(direction=-1)
 
-        elif key_code == wx.WXK_RIGHT and event.CmdDown():
-            self.show_next_page(direction=1)
+            elif key_code == wx.WXK_RIGHT:
+                self.show_next_page(direction=1)
 
-        elif key_code == wx.WXK_UP and event.CmdDown():
-            page_name = sppasMainWindow.pages[0]
-            self.FindWindow("header").enable(page_name)
-            self.show_page(page_name)
+            elif key_code == wx.WXK_UP:
+                page_name = sppasMainWindow.pages[0]
+                self.FindWindow("header").enable(page_name)
+                self.show_page(page_name)
 
-        elif key_code == wx.WXK_DOWN and event.CmdDown():
-            page_name = sppasMainWindow.pages[-1]
-            self.FindWindow("header").enable(page_name)
-            self.show_page(page_name)
+            elif key_code == wx.WXK_DOWN:
+                page_name = sppasMainWindow.pages[-1]
+                self.FindWindow("header").enable(page_name)
+                self.show_page(page_name)
 
         else:
             # Keeps on going the event to the current page of the book.

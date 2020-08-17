@@ -168,14 +168,8 @@ class FilesManager(sppasPanel):
         will be called.
 
         """
-        # The user pressed a key of its keyboard
-        self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
-
         # The user clicked (LeftDown - LeftUp) an action button of the toolbar
         self.Bind(wx.EVT_BUTTON, self._process_action)
-
-        # Capture keys
-        self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
 
         # Changes occurred in the child files tree
         self.Bind(EVT_DATA_CHANGED, self._process_data_changed)
@@ -201,25 +195,6 @@ class FilesManager(sppasPanel):
 
     # ------------------------------------------------------------------------
 
-    def _process_key_event(self, event):
-        """Process a key event.
-
-        :param event: (wx.Event)
-
-        """
-        key_code = event.GetKeyCode()
-        cmd_down = event.CmdDown()
-        shift_down = event.ShiftDown()
-        wx.LogDebug("Files manager. Key pressed: {:d}".format(key_code))
-
-        # Ctrl+a
-        if key_code == 65 and cmd_down is True:
-            self._add()
-        else:
-            event.Skip()
-
-    # ------------------------------------------------------------------------
-
     def _process_action(self, event):
         """Process an action of a button.
 
@@ -229,16 +204,16 @@ class FilesManager(sppasPanel):
         name = event.GetButtonObj().GetName()
 
         if name == "files-add":
-            self._add()
+            self.add()
 
         elif name == "files-remove":
-            self._remove()
+            self.remove()
 
         elif name == "files-delete":
-            self._delete()
+            self.delete()
 
         elif name == "files-missing":
-            self._edit_missing()
+            self.edit_missing()
 
         event.Skip()
 
@@ -246,7 +221,7 @@ class FilesManager(sppasPanel):
     # GUI methods to perform actions on the data
     # ------------------------------------------------------------------------
 
-    def _add(self):
+    def add(self):
         """Add user-selected files into the files viewer."""
         filenames = list()
         dlg = sppasFileDialog(self)
@@ -264,7 +239,7 @@ class FilesManager(sppasPanel):
 
     # ------------------------------------------------------------------------
 
-    def _remove(self):
+    def remove(self):
         """Remove the checked files of the fileviewer."""
         data = self.get_data()
         if data.is_empty():
@@ -277,7 +252,7 @@ class FilesManager(sppasPanel):
 
     # ------------------------------------------------------------------------
 
-    def _delete(self):
+    def delete(self):
         """Move into the trash the checked files of the fileviewer."""
         data = self.get_data()
         if data.is_empty():
@@ -301,7 +276,7 @@ class FilesManager(sppasPanel):
 
     # ------------------------------------------------------------------------
 
-    def _edit_missing(self):
+    def edit_missing(self):
         """Open a dialog to take decisions about missing files of the data."""
         Information("In a future version, you'll be able to remove or rename "
                     "unknown paths and filenames of the list.")

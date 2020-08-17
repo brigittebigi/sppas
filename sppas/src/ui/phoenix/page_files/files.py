@@ -45,8 +45,7 @@
 
 import wx
 
-from sppas.src.wkps import States, sppasWorkspace
-
+from sppas.src.wkps import sppasWorkspace
 from sppas.src.exceptions import sppasTypeError
 
 from ..windows import sppasPanel
@@ -93,9 +92,12 @@ class sppasFilesPanel(sppasPanel):
         self._create_content()
         self._setup_events()
 
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        try:
+            self.SetBackgroundColour(wx.GetApp().settings.bg_color)
+            self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            self.SetFont(wx.GetApp().settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
         # Organize items and fix a size for each of them
         self.Layout()
@@ -110,7 +112,7 @@ class sppasFilesPanel(sppasPanel):
         :returns: (sppasWorkspace) data of the files-viewer model.
 
         """
-        return self.FindWindow("filesview").get_data()
+        return self.FindWindow("files_panel").get_data()
 
     # ------------------------------------------------------------------------
 
@@ -133,10 +135,10 @@ class sppasFilesPanel(sppasPanel):
     def _create_content(self):
         """Create the main content."""
         # Create all the panels
-        wp = WorkspacesManager(self, name='workspaces')
-        fm = FilesManager(self, name="filesview")
-        ap = AssociatePanel(self, name="associate")
-        cm = ReferencesManager(self, name="references")
+        wp = WorkspacesManager(self, name='wkps_panel')
+        fm = FilesManager(self, name="files_panel")
+        ap = AssociatePanel(self, name="assoc_panel")
+        cm = ReferencesManager(self, name="refs_panel")
 
         # Organize all the panels vertically, separated by 2px grey lines.
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -154,7 +156,7 @@ class sppasFilesPanel(sppasPanel):
 
     def __create_vline(self):
         """Create a vertical line, used to separate the panels."""
-        line = sppasStaticLine(self, orient=wx.LI_VERTICAL)
+        line = sppasStaticLine(self, orient=wx.LI_VERTICAL, name="static_line")
         line.SetMinSize(wx.Size(2, -1))
         line.SetSize(wx.Size(2, -1))
         line.SetPenStyle(wx.PENSTYLE_SOLID)
@@ -189,12 +191,36 @@ class sppasFilesPanel(sppasPanel):
 
         """
         key_code = event.GetKeyCode()
-        cmd_down = event.CmdDown()
+        cmd_down = event.CmdDown() or event.ControlDown()
         shift_down = event.ShiftDown()
 
-        # CMD+S: Pin&Save the workspace
-        if key_code == 83 and cmd_down is True:
-            self.FindWindow("workspaces").pin_save()
+        if event.AltDown() is True:
+            if key_code == 65:    # alt+a Add files
+                self.FindWindow("files_panel").add()
+
+            elif key_code == 69:  # alt+e Export workspace
+                self.FindWindow("wkps_panel").export_wkp()
+
+            elif key_code == 70:  # alt+f Check files
+                self.FindWindow("assoc_panel").check_filter()
+
+            elif key_code == 71:  # alt+g Check all files
+                self.FindWindow("assoc_panel").check_all()
+
+            elif key_code == 73:  # alt+i Import workspace
+                self.FindWindow("wkps_panel").import_wkp()
+
+            elif key_code == 75:  # alt+l Link files/refs
+                self.FindWindow("assoc_panel").add_links()
+
+            elif key_code == 77:  # alt+n Rename the workspace
+                self.FindWindow("wkps_panel").rename_wkp()
+
+            elif key_code == 82:  # alt+r Create a reference
+                self.FindWindow("refs_panel").create_ref()
+
+            elif key_code == 83:  # alt+s Pin&Save the workspace
+                self.FindWindow("wkps_panel").pin_save_wkp()
 
         else:
             event.Skip()
@@ -232,7 +258,7 @@ class sppasFilesPanel(sppasPanel):
         """
         # Set the data to appropriate children panels
         for panel in self.GetChildren():
-            if panel.GetName() in ("workspaces", "filesview", "associate", "references"):
+            if panel.GetName() in ("wkps_panel", "files_panel", "assoc_panel", "refs_panel"):
                 if emitted is not panel:
                     panel.set_data(data)
 

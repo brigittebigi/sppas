@@ -32,8 +32,10 @@
     ui.phoenix.page_home.home.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Home page of the GUI.
-    The workspace is not needed in this page.
+    One of the main pages of the wx4-based GUI of SPPAS.
+
+    The workspace is not needed in this page. It simply display a welcome
+    message and links to the SPPAS web site.
 
 """
 
@@ -60,14 +62,23 @@ class sppasHomePanel(sppasPanel):
     def __init__(self, parent):
         super(sppasHomePanel, self).__init__(
             parent=parent,
-            name="page_home",
-            style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.TAB_TRAVERSAL
+            id=wx.ID_ANY,
+            pos=wx.DefaultPosition,
+            size=wx.DefaultSize,
+            style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.NO_FULL_REPAINT_ON_RESIZE,
+            name="page_home"
         )
         self._create_content()
 
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        try:
+            self.SetBackgroundColour(wx.GetApp().settings.bg_color)
+            self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            self.SetFont(wx.GetApp().settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
+
+        # Organize items and fix a size for each of them
+        self.Layout()
 
     # ------------------------------------------------------------------------
 
@@ -86,8 +97,8 @@ class sppasHomePanel(sppasPanel):
         # Organize the title and message
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.AddStretchSpacer(1)
-        sizer.Add(pw, 1, wx.EXPAND | wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, sppasPanel.fix_size(8))
-        sizer.Add(pl, 1, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, sppasPanel.fix_size(8))
+        sizer.Add(pw, 2, wx.EXPAND | wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, sppasPanel.fix_size(8))
+        sizer.Add(pl, 2, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, sppasPanel.fix_size(8))
         sizer.AddStretchSpacer(1)
 
         self.SetSizer(sizer)

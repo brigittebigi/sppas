@@ -228,33 +228,12 @@ class WorkspacesManager(sppasPanel):
         will be called.
 
         """
-        # The user pressed a key of its keyboard
-        self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
-
         # The user clicked (LeftDown - LeftUp) an action button of the toolbar
         self.Bind(wx.EVT_BUTTON, self._process_action)
 
         # The workspaces has changed.
         # This event is sent by the 'wkpslist' child window.
         self.Bind(EVT_WKP_CHANGED, self._process_wkp_changed)
-
-    # -----------------------------------------------------------------------
-
-    def _process_key_event(self, event):
-        """Process a key event.
-
-        :param event: (wx.Event)
-
-        """
-        key_code = event.GetKeyCode()
-        cmd_down = event.CmdDown()
-
-        # Ctrl+s
-        if key_code == 83 and cmd_down is True:
-            self.pin_save()
-
-        else:
-            event.Skip()
 
     # -----------------------------------------------------------------------
 
@@ -341,7 +320,7 @@ class WorkspacesManager(sppasPanel):
             self.export_wkp()
 
         elif name == "workspace_pin":
-            self.pin_save()
+            self.pin_save_wkp()
 
         elif name == "workspace_rename":
             self.rename_wkp()
@@ -422,7 +401,7 @@ class WorkspacesManager(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def pin_save(self):
+    def pin_save_wkp(self):
         """Pin and/or save the currently displayed data into a workspace.
 
         """
