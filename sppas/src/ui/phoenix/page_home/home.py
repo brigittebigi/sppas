@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Home page of the GUI.
+    The workspace is not needed in this page.
 
 """
 

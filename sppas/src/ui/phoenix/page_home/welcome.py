@@ -51,10 +51,10 @@ WELCOME = \
     "Langage', Aix-en-Provence, France.\n\n" \
     "By using SPPAS, you agree to cite one of its references in your " \
     "publications.\n\n" \
-    "You are invited to report problems or suggestions " \
-    "with the feedback form of the 'Log Window'.\n\n" \
     "For any help when using SPPAS, see the tutorials on the web and " \
-    "the documentation first."
+    "the documentation first. " \
+    "You are invited to report problems or any constructive comment " \
+    "with the feedback form of the 'Log Window'.\n\n"
 
 # ---------------------------------------------------------------------------
 
@@ -81,8 +81,13 @@ class sppasWelcomePanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def SetFont(self, font):
+        """Override base class."""
         sppasPanel.SetFont(self, font)
-        self.FindWindow("title").SetFont(wx.GetApp().settings.header_text_font)
+        try:
+            settings = wx.GetApp().settings
+            self.FindWindow("title").SetFont(settings.header_text_font)
+        except AttributeError:
+            pass
         self.Layout()
 
     # ------------------------------------------------------------------------

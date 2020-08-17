@@ -32,6 +32,9 @@
     ui.phoenix.page_home.links.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    A panel with link buttons to get a direct access to the SPPAS website.
+    The link button is drawn with an image at top and a label at bottom.
+
 """
 
 import wx
@@ -105,7 +108,7 @@ class LinkButton(Button):
     # -----------------------------------------------------------------------
 
     def SetImage(self, image_name):
-        """Set a new image.
+        """Set a new image but do not refresh the button.
 
         :param image_name: (str) Name of the image or full filename
 
@@ -117,7 +120,7 @@ class LinkButton(Button):
     def DoGetBestSize(self):
         """Overridden base class virtual.
 
-        Determines the best size of the button based on the label.
+        Determines the best size of the button.
 
         """
         label = self.GetLabel()
@@ -166,7 +169,7 @@ class LinkButton(Button):
     # -----------------------------------------------------------------------
 
     def GetLinkURL(self):
-        """Return the url as it was passed to SetLabel."""
+        """Return the url as it was passed to SetLinkURL."""
         return self._url
 
     # ------------------------------------------------------------------------
@@ -177,7 +180,11 @@ class LinkButton(Button):
         :param url: (str) URL to open.
 
         """
-        self._url = str(url)
+        if url is None:
+            url = ""
+        else:
+            url = str(url)
+        self._url = url
 
     # ------------------------------------------------------------------------
     # Methods to draw the button
@@ -186,7 +193,7 @@ class LinkButton(Button):
     def DrawContent(self, dc, gc):
         """Draw the link button with an image at top and a label at bottom.
 
-        Don't draw if the size is not large enough.
+        Won't draw if the size is not large enough.
 
         """
         x, y, w, h = self.GetContentRect()
@@ -227,7 +234,7 @@ class LinkButton(Button):
         x_bmp, y_pos, bmp_size = self.__get_bitmap_properties(
             x, y + th + spacing,
             w, h - th - (2 * spacing))
-        if bmp_size > 15:
+        if bmp_size > self._min_width:
             margin = h - bmp_size - th - spacing
             y += (margin // 2)
 
@@ -302,7 +309,9 @@ class LinkButton(Button):
     # -----------------------------------------------------------------------
 
     def OnMouseLeftUp(self, event):
-        """Handle the wx.EVT_LEFT_UP event.
+        """Override base class to handle the wx.EVT_LEFT_UP event.
+
+        Open the given url in the default web browser.
 
         :param event: a wx.MouseEvent event to be processed.
 
@@ -322,8 +331,6 @@ class LinkButton(Button):
             self._set_state(WindowState().focused)
 
             self.Refresh()
-            # No URL was defined, or
-            # the mouse was down outside of the button (but is up inside)
             if len(self._url) > 0:
                 webbrowser.open(url=self._url)
 
@@ -339,14 +346,21 @@ class sppasLinksPanel(sppasPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
+    Link buttons are organized horizontally and their size is fixed to
+    (82, 112).
+    The background of their label is 50% transparent but it won't work
+    under Windows.
+
     """
 
     def __init__(self, parent):
         super(sppasLinksPanel, self).__init__(
             parent=parent,
-            name="welcome_panel",
+            name="links_panel",
             style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.TAB_TRAVERSAL
         )
+        self.btn_width = sppasPanel.fix_size(82)
+        self.btn_height = sppasPanel.fix_size(112)
         self._create_content()
 
     # ------------------------------------------------------------------------
@@ -355,38 +369,39 @@ class sppasLinksPanel(sppasPanel):
 
     def _create_content(self):
         """Create the main content."""
+        # Create the link buttons
         b1 = LinkButton(self, name="sppas_colored")
         b1.SetLinkLabel("SPPAS Home")
         b1.SetLinkURL("http://www.sppas.org/")
         b1.SetLinkBgColour(wx.Colour(87, 109, 159, 128))
-        b1.SetMinSize(wx.Size(sppasPanel.fix_size(82), sppasPanel.fix_size(112)))
+        b1.SetMinSize(wx.Size(self.btn_width, self.btn_height))
 
         b2 = LinkButton(self, name="link_docweb")
         b2.SetLinkLabel("Documentation")
         b2.SetLinkURL("http://www.sppas.org/documentation.html")
         b2.SetLinkBgColour(wx.Colour(241, 211, 79, 128))
-        b2.SetMinSize(wx.Size(sppasPanel.fix_size(82), sppasPanel.fix_size(112)))
+        b2.SetMinSize(wx.Size(self.btn_width, self.btn_height))
 
         b3 = LinkButton(self, name="link_tutovideo")
         b3.SetLinkLabel("Tutorials")
         b3.SetLinkURL("http://www.sppas.org/tutorial.html")
         b3.SetLinkBgColour(wx.Colour(0, 160, 40, 128))
-        b3.SetMinSize(wx.Size(sppasPanel.fix_size(82), sppasPanel.fix_size(112)))
+        b3.SetMinSize(wx.Size(self.btn_width, self.btn_height))
 
         b4 = LinkButton(self, name="link_question")
         b4.SetLinkLabel("F.A.Q.")
         b4.SetLinkURL("http://www.sppas.org/faq.html")
         b4.SetLinkBgColour(wx.Colour(220, 120, 40, 128))
-        b4.SetMinSize(wx.Size(sppasPanel.fix_size(82), sppasPanel.fix_size(112)))
+        b4.SetMinSize(wx.Size(self.btn_width, self.btn_height))
 
         b5 = LinkButton(self, name="link_author")
         b5.SetLinkLabel("The author")
         b5.SetLinkURL("http://www.lpl-aix.fr/~bigi/")
         b5.SetLinkBgColour(wx.Colour(50, 50, 150, 128))
-        b5.SetMinSize(wx.Size(sppasPanel.fix_size(82), sppasPanel.fix_size(112)))
+        b5.SetMinSize(wx.Size(self.btn_width, self.btn_height))
 
-        # Organize the title and message
-        b = sppasPanel.fix_size(12)
+        # Organize the buttons horizontally
+        b = int(float(self.btn_width) * 0.15)
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(b1, 0, wx.ALL, b)
         sizer.Add(b2, 0, wx.TOP | wx.BOTTOM | wx.RIGHT, b)

@@ -32,6 +32,8 @@
     src.ui.phoenix.page_home.test_home.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    A panel and an application to test classes of this package.
+
 """
 
 import wx
@@ -106,7 +108,35 @@ class TestPanel(wx.Choicebook):
 # ----------------------------------------------------------------------------
 
 
+class TestFrame(wx.Frame):
+
+    def __init__(self):
+        super(TestFrame, self).__init__(None, title="Test Frame")
+        self.SetSize(wx.Size(900, 600))
+        self.SetMinSize(wx.Size(640, 480))
+
+        # create a panel in the frame
+        sizer = wx.BoxSizer()
+        sizer.Add(TestPanel(self), 1, wx.EXPAND, 0)
+        self.SetSizer(sizer)
+
+        # show result
+        self.Layout()
+        self.Show()
+
+# ----------------------------------------------------------------------------
+
+
 class TestApp(wx.App):
+    """Application to test a TestPanel.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
 
     def __init__(self):
         """Create a customized application."""
@@ -116,26 +146,14 @@ class TestApp(wx.App):
                         filename=None,
                         useBestVisual=True,
                         clearSigInt=True)
-
-        # create the frame
-        frm = wx.Frame(None, title='Test frame', size=wx.Size(900, 600))
-        frm.SetMinSize(wx.Size(640, 480))
-        self.SetTopWindow(frm)
-
         # Fix language and translation
         self.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
         self.__cfg = sppasAppConfig()
         self.settings = WxAppSettings()
         self.setup_debug_logging()
 
-        # create a panel in the frame
-        sizer = wx.BoxSizer()
-        sizer.Add(TestPanel(frm), 1, wx.EXPAND, 0)
-        frm.SetSizer(sizer)
-
-        # show result
-        frm.Layout()
-        frm.Show()
+        frm = TestFrame()
+        self.SetTopWindow(frm)
 
     @staticmethod
     def setup_debug_logging():
