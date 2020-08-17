@@ -191,8 +191,6 @@ class sppasFilesPanel(sppasPanel):
 
         """
         key_code = event.GetKeyCode()
-        cmd_down = event.CmdDown() or event.ControlDown()
-        shift_down = event.ShiftDown()
 
         if event.AltDown() is True:
             if key_code == 65:    # alt+a Add files

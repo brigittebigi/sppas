@@ -37,9 +37,7 @@ import os
 import wx
 
 from sppas.src.config import paths
-
 from sppas.src.config import msg
-from sppas.src.wkps.workspace import States
 
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
@@ -83,7 +81,7 @@ class FilesManager(sppasPanel):
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
             size=wx.DefaultSize,
-            style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.NO_FULL_REPAINT_ON_RESIZE | wx.CLIP_CHILDREN,
+            style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
         self.__current_dir = paths.samples
@@ -240,7 +238,7 @@ class FilesManager(sppasPanel):
     # ------------------------------------------------------------------------
 
     def remove(self):
-        """Remove the checked files of the fileviewer."""
+        """Remove the checked files of the file viewer."""
         data = self.get_data()
         if data.is_empty():
             wx.LogMessage('No files in data. Nothing to remove.')
@@ -253,7 +251,7 @@ class FilesManager(sppasPanel):
     # ------------------------------------------------------------------------
 
     def delete(self):
-        """Move into the trash the checked files of the fileviewer."""
+        """Move into the trash the checked files of the file viewer."""
         data = self.get_data()
         if data.is_empty():
             wx.LogMessage('No files in data. Nothing to delete.')
@@ -290,8 +288,6 @@ class TestPanel(FilesManager):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
-        self.SetBackgroundColour(wx.Colour(50, 50, 50))
-        self.SetForegroundColour(wx.Colour(250, 250, 250))
         self.add_one_test_data()
 
     # ------------------------------------------------------------------------

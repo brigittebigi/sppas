@@ -70,6 +70,9 @@ class sppasHomePanel(sppasPanel):
         )
         self._create_content()
 
+        # Capture keys to get access to links
+        self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
+
         try:
             self.SetBackgroundColour(wx.GetApp().settings.bg_color)
             self.SetForegroundColour(wx.GetApp().settings.fg_color)
@@ -92,7 +95,7 @@ class sppasHomePanel(sppasPanel):
     def _create_content(self):
         """Create the main content."""
         pw = sppasWelcomePanel(self)
-        pl = sppasLinksPanel(self)
+        pl = sppasLinksPanel(self, name="links_panel")
 
         # Organize the title and message
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -102,6 +105,33 @@ class sppasHomePanel(sppasPanel):
         sizer.AddStretchSpacer(1)
 
         self.SetSizer(sizer)
+
+    # -----------------------------------------------------------------------
+
+    def _process_key_event(self, event):
+        """Process a key event.
+
+        :param event: (wx.Event)
+
+        """
+        key_code = event.GetKeyCode()
+
+        if event.AltDown() is True:
+            if key_code == 66:      # alt+b Browse to the author home page
+                self.FindWindow("links_panel").author_btn.browse()
+
+            elif key_code == 68:    # alt+d Browse to the documentation page
+                self.FindWindow("links_panel").doc_btn.browse()
+
+            elif key_code == 72:    # alt+h Browse to SPPAS Home page
+                self.FindWindow("links_panel").home_btn.browse()
+
+            elif key_code == 81:    # alt+q Browse to the F.A.Q. page
+                self.FindWindow("links_panel").faq_btn.browse()
+
+            elif key_code == 84:    # alt+t Browse to tutorials page
+                self.FindWindow("links_panel").tuto_btn.browse()
+
 
 # ----------------------------------------------------------------------------
 

@@ -72,7 +72,7 @@ REF_ACT_DEL = _("Delete")
 REF_MSG_CREATE_ERROR = _(
     "The reference {:s} has not been created due to the following error: {:s}")
 REF_MSG_DEL_ERROR = _("An error occurred while removing the references: {:s}")
-REF_MSG_DEL_INFO = _("{:d} references deleted.")
+REF_MSG_DEL_INFO = _("{:d} reference(s) deleted.")
 REF_MSG_NB_CHECKED = _("No reference checked.")
 
 # ----------------------------------------------------------------------------

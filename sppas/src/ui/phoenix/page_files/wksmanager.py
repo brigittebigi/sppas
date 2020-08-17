@@ -541,7 +541,7 @@ class WorkspacesPanel(sppasPanel):
         :param index: (int) Index of the workspace to switch on
 
         """
-        # check if the given index is a valid one
+        # check if the given index is a valid one - raise if not!
         wkp_name = self.__wkps[index]
 
         # the currently displayed button
@@ -801,4 +801,3 @@ class TestPanel(WorkspacesManager):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
         self.SetBackgroundColour(wx.Colour(128, 128, 128))
-

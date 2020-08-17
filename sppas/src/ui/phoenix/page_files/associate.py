@@ -68,6 +68,11 @@ MSG_NO_CHECKED = u(msg("None of the files is matching the given filters.", "ui")
 ASS_ACT_CHECK_ERROR = \
     u(msg("Files can't be filtered due to the following error:\n{!s:s}", "ui"))
 
+TITLE_FILTER = msg("Define filters to check files", "ui")
+MSG_CANCEL = msg("Cancel", "ui")
+MSG_APPLY = msg("Apply", "ui")
+MSG_CASE = msg("Case sensitive", "ui")
+
 # ---------------------------------------------------------------------------
 
 
@@ -116,7 +121,6 @@ class AssociatePanel(sppasPanel):
         if isinstance(data, sppasWorkspace) is False:
             raise sppasTypeError("sppasWorkspace", type(data))
         self.__data = data
-        wx.LogDebug("Data {} in Associate Panel.".format(data.get_id()))
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -371,8 +375,7 @@ class sppasFilesFilterDialog(sppasDialog):
             style=wx.DEFAULT_FRAME_STYLE)
 
         self.match_all = True
-        self.CreateHeader(title="Define filters to check files",
-                          icon_name="check_filter")
+        self.CreateHeader(title=TITLE_FILTER, icon_name="check_filter")
         self._create_content()
         self._create_buttons()
         self.Bind(wx.EVT_BUTTON, self._process_event)
@@ -403,7 +406,7 @@ class sppasFilesFilterDialog(sppasDialog):
     def _create_content(self):
         """Create the content of the message dialog."""
         panel = sppasPanel(self, name="content")
-        tb = self.__create_toolbar(panel)
+        tb = sppasFilesFilterDialog.__create_toolbar(panel)
         self.listctrl = wx.dataview.DataViewListCtrl(panel, wx.ID_ANY)
         self.listctrl.AppendTextColumn("filter", width=80)
         self.listctrl.AppendTextColumn("function", width=90)
@@ -420,7 +423,8 @@ class sppasFilesFilterDialog(sppasDialog):
 
     # -----------------------------------------------------------------------
 
-    def __create_toolbar(self, parent):
+    @staticmethod
+    def __create_toolbar(parent):
         """Create the toolbar."""
         tb = sppasToolbar(parent)
         tb.set_focus_color(wx.Colour(196, 196, 96, 128))
@@ -442,9 +446,9 @@ class sppasFilesFilterDialog(sppasDialog):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # Create the buttons
-        cancel_btn = self.__create_action_button(panel, "Cancel", "cancel")
-        apply_or_btn = self.__create_action_button(panel, "Apply - OR", "window-apply")
-        apply_and_btn = self.__create_action_button(panel, "Apply - AND", "ok")
+        cancel_btn = self.__create_action_button(panel, MSG_CANCEL, "cancel")
+        apply_or_btn = self.__create_action_button(panel, MSG_APPLY + " - OR", "window-apply")
+        apply_and_btn = self.__create_action_button(panel, MSG_APPLY + " - AND", "ok")
         apply_and_btn.SetFocus()
 
         sizer.Add(cancel_btn, 1, wx.ALL | wx.EXPAND, 0)
@@ -751,7 +755,7 @@ class sppasRefAttributeFilterDialog(sppasDialog):
             style=wx.RA_SPECIFY_COLS)
         self.radiobox.SetSelection(1)
         self.radiobox.Bind(wx.EVT_RADIOBOX, self._on_radiobox_checked)
-        self.checkbox = CheckButton(panel, label="Case sensitive")
+        self.checkbox = CheckButton(panel, label=MSG_CASE)
         self.checkbox.SetMinSize(wx.Size(-1, panel.get_font_height()*2))
         self.checkbox.SetFocusWidth(0)
         self.checkbox.SetValue(False)

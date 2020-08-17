@@ -331,8 +331,14 @@ class LinkButton(Button):
             self._set_state(WindowState().focused)
 
             self.Refresh()
-            if len(self._url) > 0:
-                webbrowser.open(url=self._url)
+            self.browse()
+
+    # -----------------------------------------------------------------------
+
+    def browse(self):
+        """Open the web browser at the defined url, if any."""
+        if len(self._url) > 0:
+            webbrowser.open(url=self._url)
 
 # ----------------------------------------------------------------------------
 
@@ -353,10 +359,10 @@ class sppasLinksPanel(sppasPanel):
 
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, name="links_panel"):
         super(sppasLinksPanel, self).__init__(
             parent=parent,
-            name="links_panel",
+            name=name,
             style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.TAB_TRAVERSAL
         )
         self.btn_width = sppasPanel.fix_size(82)
@@ -410,6 +416,30 @@ class sppasLinksPanel(sppasPanel):
         sizer.Add(b5, 0, wx.RIGHT | wx.TOP | wx.BOTTOM, b)
 
         self.SetSizer(sizer)
+
+    # ------------------------------------------------------------------------
+    # Direct accesses to the buttons
+    # ------------------------------------------------------------------------
+
+    @property
+    def home_btn(self):
+        return self.FindWindow("sppas_colored")
+
+    @property
+    def doc_btn(self):
+        return self.FindWindow("link_docweb")
+
+    @property
+    def tuto_btn(self):
+        return self.FindWindow("link_tutovideo")
+
+    @property
+    def faq_btn(self):
+        return self.FindWindow("link_question")
+
+    @property
+    def author_btn(self):
+        return self.FindWindow("link_author")
 
 # ----------------------------------------------------------------------------
 
