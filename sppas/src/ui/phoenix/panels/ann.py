@@ -57,7 +57,7 @@ from sppas.src.anndata.aio.aioutils import format_labels
 
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
-from ..windows.dialogs import MetaDataEdit
+from ..views.metaedit import MetaDataEdit
 
 # ---------------------------------------------------------------------------
 

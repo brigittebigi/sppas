@@ -50,7 +50,7 @@ from ..windows.dialogs import sppasProgressDialog
 from ..windows.dialogs import sppasChoiceDialog
 from ..windows.dialogs import sppasTextEntryDialog
 from ..windows.dialogs import Confirm
-from ..windows.dialogs import MetaDataEdit
+from ..views import MetaDataEdit
 from ..views import TiersView
 from ..views import StatsView
 from ..views import sppasTiersSingleFilterDialog

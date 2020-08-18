@@ -723,7 +723,7 @@ class sppasHomeInstallPanel(sppasPanel):
         sppas_logo = TextButton(self, label=sg.__url__, name="sppas_web")
         sppas_logo.SetMinSize(wx.Size(sppasPanel.fix_size(200), -1))
         sppas_logo.SetBorderWidth(1)
-        sppas_logo.SetLabelPosition(wx.CENTER)
+        sppas_logo.SetAlign(wx.ALIGN_CENTER)
 
         # Organize the title and message
         sizer = wx.BoxSizer(wx.VERTICAL)

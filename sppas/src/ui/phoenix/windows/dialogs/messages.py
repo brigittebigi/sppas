@@ -92,7 +92,7 @@ class sppasBaseMessageDialog(sppasDialog):
         self.LayoutComponents()
         self.CenterOnParent()
         self.GetSizer().Fit(self)
-        self.FadeIn(deltaN=-5)
+        self.FadeIn(deltaN=-4)
 
     # -----------------------------------------------------------------------
 
@@ -227,7 +227,7 @@ class sppasYesNoDialog(sppasBaseMessageDialog):
 # ---------------------------------------------------------------------------
 
 
-class sppasConfirm(sppasBaseMessageDialog):
+class sppasConfirmDialog(sppasBaseMessageDialog):
     """Create a message in a wx.Dialog to confirm an action after an error.
 
     :author:       Brigitte Bigi
@@ -239,7 +239,7 @@ class sppasConfirm(sppasBaseMessageDialog):
     wx.ID_YES is returned if 'yes' is clicked.
     wx.ID_CANCEL is returned if the dialog is destroyed or cancel is clicked.
 
-    >>> dialog = sppasConfirm("Confirm..."))
+    >>> dialog = sppasConfirmDialog("Confirm..."))
     >>> response = dialog.ShowModal()
     >>> dialog.Destroy()
     >>> if response == wx.ID_YES:
@@ -248,7 +248,7 @@ class sppasConfirm(sppasBaseMessageDialog):
     """
 
     def __init__(self, message, title=None):
-        super(sppasConfirm, self).__init__(
+        super(sppasConfirmDialog, self).__init__(
             parent=None,
             message=message,
             title=title,
@@ -499,7 +499,7 @@ def Confirm(message, title=None):
 
     """
     wx.LogMessage(message)
-    dialog = sppasConfirm(message, title)
+    dialog = sppasConfirmDialog(message, title)
     response = dialog.ShowModal()
     dialog.Destroy()
     wx.LogMessage("Confirmed by user." if response == wx.ID_YES else "User cancelled.")

@@ -333,7 +333,7 @@ class sppasToolbar(sppasPanel):
 
         else:
             btn = TextButton(self, label=text)
-            btn.SetLabelPosition(wx.CENTRE)
+            btn.SetAlign(wx.ALIGN_CENTRE)
 
         btn.SetFocusStyle(self._fs)
         btn.SetFocusWidth(self._fw)

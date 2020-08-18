@@ -59,11 +59,11 @@ from sppas.src.anndata import sppasCtrlVocab
 from sppas.src.anndata import sppasMetaData
 
 from ..views import AudioRoamer
+from ..views import MetaDataEdit
 from ..windows.listctrl import CheckListCtrl, sppasListCtrl
 from ..windows.text import sppasStaticText, sppasTextCtrl
 from ..windows.panel import sppasPanel
 from ..windows.panel import sppasCollapsiblePanel
-from ..windows.dialogs import MetaDataEdit
 
 from .baseview import sppasBaseViewPanel
 

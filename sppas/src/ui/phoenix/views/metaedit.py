@@ -43,16 +43,16 @@ from sppas.src.config import msg
 from sppas.src.utils import u
 from sppas.src.anndata import sppasMetaData
 
-from ..panel import sppasPanel
-from ..toolbar import sppasToolbar
-from ..listctrl import sppasListCtrl
-from ..line import sppasStaticLine
-from ..text import sppasTextCtrl, sppasStaticText
-from ..book import sppasSimplebook
-from ..buttons import BitmapButton
+from src.ui.phoenix.windows.panel import sppasPanel
+from src.ui.phoenix.windows.toolbar import sppasToolbar
+from src.ui.phoenix.windows.listctrl import sppasListCtrl
+from src.ui.phoenix.windows.line import sppasStaticLine
+from src.ui.phoenix.windows.text import sppasTextCtrl, sppasStaticText
+from src.ui.phoenix.windows.book import sppasSimplebook
+from src.ui.phoenix.windows.buttons import BitmapButton
 
-from .messages import Error
-from .dialog import sppasDialog
+from src.ui.phoenix.windows.dialogs.messages import Error
+from src.ui.phoenix.windows.dialogs.dialog import sppasDialog
 
 # ---------------------------------------------------------------------------
 

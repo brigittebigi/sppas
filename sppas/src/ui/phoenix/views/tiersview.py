@@ -46,7 +46,7 @@ from sppas.src.utils import u
 from ..windows.dialogs import sppasDialog
 from ..windows.dialogs import Information
 from ..windows.book import sppasNotebook
-from ..panels import sppasTierListCtrl
+from ..panels.tierlist import sppasTierListCtrl
 
 # ---------------------------------------------------------------------------
 
