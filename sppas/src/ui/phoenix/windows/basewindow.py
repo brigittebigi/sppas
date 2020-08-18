@@ -500,9 +500,9 @@ class sppasWindow(sppasDCWindow):
         w, h = self.GetClientSize()
         dc.SetPen(focus_pen)
         gc.SetPen(focus_pen)
-        x = (self._vert_border_width * 2) + 2
-        y = h - self._horiz_border_width - self._focus_width - 2
-        dc.DrawLine(x, y, w - x - 2, y)
+        x = self._vert_border_width
+        y = h - self._horiz_border_width - self._focus_width - self._focus_spacing
+        dc.DrawLine(x, y, w - x, y)
 
     # -----------------------------------------------------------------------
 
