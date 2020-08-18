@@ -42,9 +42,9 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
-import sppas.src.ui.phoenix.page_files.filesmanager as filesmanager
-import sppas.src.ui.phoenix.page_files.refsmanager as refsmanager
-import sppas.src.ui.phoenix.page_files.wksmanager as wksmanager
+import sppas.src.ui.phoenix.page_files.pathstree as filesmanager
+import sppas.src.ui.phoenix.page_files.refstree as refsmanager
+import sppas.src.ui.phoenix.page_files.workspaces as wksmanager
 import sppas.src.ui.phoenix.page_files.filesviewctrl as filesviewctrl
 import sppas.src.ui.phoenix.page_files.refsviewctrl as refsviewctrl
 

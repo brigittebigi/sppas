@@ -26,7 +26,7 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.page_files.filesmanager.py
+    src.ui.phoenix.page_files.pathstree.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Main panel to manage the tree of files.
@@ -46,7 +46,7 @@ from ..windows import YesNoQuestion, Information
 from ..windows import sppasFileDialog
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 
-from .filesviewctrl import FileTreeView
+from .filesviewctrl import FileTreeViewPanel
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
@@ -62,7 +62,7 @@ FLS_MSG_CONFIRM_DEL = msg("Are you sure you want to delete {:d} files?")
 # ----------------------------------------------------------------------------
 
 
-class FilesManager(sppasPanel):
+class PathsTreePanel(sppasPanel):
     """Manage the tree of files and actions to perform on them.
 
     :author:       Brigitte Bigi
@@ -76,7 +76,7 @@ class FilesManager(sppasPanel):
     HIGHLIGHT_COLOUR = wx.Colour(228, 128, 128, 196)
 
     def __init__(self, parent, name=wx.PanelNameStr):
-        super(FilesManager, self).__init__(
+        super(PathsTreePanel, self).__init__(
             parent,
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
@@ -117,7 +117,7 @@ class FilesManager(sppasPanel):
     def _create_content(self):
         """Create the main content."""
         tb = self.__create_toolbar()
-        fv = FileTreeView(self, name="filestree")
+        fv = FileTreeViewPanel(self, name="filestree")
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(tb, proportion=0, flag=wx.EXPAND, border=0)
@@ -136,8 +136,8 @@ class FilesManager(sppasPanel):
     def __create_toolbar(self):
         """Create the toolbar."""
         tb = sppasToolbar(self)
-        tb.set_focus_color(FilesManager.HIGHLIGHT_COLOUR)
-        tb.AddTitleText(FLS_TITLE, FilesManager.HIGHLIGHT_COLOUR)
+        tb.set_focus_color(PathsTreePanel.HIGHLIGHT_COLOUR)
+        tb.AddTitleText(FLS_TITLE, PathsTreePanel.HIGHLIGHT_COLOUR)
         tb.AddButton("files-add", FLS_ACT_ADD)
         tb.AddButton("files-remove", FLS_ACT_REM)
         tb.AddButton("files-delete", FLS_ACT_DEL)
@@ -282,7 +282,7 @@ class FilesManager(sppasPanel):
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(FilesManager):
+class TestPanel(PathsTreePanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="FilesManager")

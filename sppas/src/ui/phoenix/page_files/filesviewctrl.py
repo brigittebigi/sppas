@@ -145,7 +145,7 @@ class FileAnnotIcon(object):
 # ---------------------------------------------------------------------------
 
 
-class FileTreeView(sppasScrolledPanel):
+class FileTreeViewPanel(sppasScrolledPanel):
     """A control to display data files in a tree-spreadsheet style.
 
     :author:       Brigitte Bigi
@@ -165,7 +165,7 @@ class FileTreeView(sppasScrolledPanel):
         :param name: (str)
 
         """
-        super(FileTreeView, self).__init__(parent, name=name)
+        super(FileTreeViewPanel, self).__init__(parent, name=name)
 
         # The workspace to display
         self.__data = sppasWorkspace()
@@ -1331,7 +1331,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(FileTreeView):
+class TestPanel(FileTreeViewPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, "Files tree view")

@@ -26,7 +26,7 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.page_files.wksmanager.py
+    src.ui.phoenix.page_files.workspaces.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Main panel to manage the workspaces.
@@ -109,7 +109,7 @@ WKP_ACT_RENAME_ERROR = _(
 # ---------------------------------------------------------------------------
 
 
-class WorkspacesManager(sppasPanel):
+class WorkspacesPanel(sppasPanel):
     """Manage the workspaces and actions to perform on them.
 
     :author:       Brigitte Bigi
@@ -125,7 +125,7 @@ class WorkspacesManager(sppasPanel):
     # -----------------------------------------------------------------------
 
     def __init__(self, parent, name=wx.PanelNameStr):
-        super(WorkspacesManager, self).__init__(
+        super(WorkspacesPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
@@ -171,7 +171,7 @@ class WorkspacesManager(sppasPanel):
     def _create_content(self):
         """Create the main content."""
         tb = self.__create_toolbar()
-        cv = WorkspacesPanel(self, name="wkpslist")
+        cv = WkpsRadioboxPanel(self, name="wkpslist")
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(tb, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, sppasPanel.fix_size(4))
@@ -190,9 +190,9 @@ class WorkspacesManager(sppasPanel):
 
     def __create_toolbar(self):
         tb = sppasToolbar(self, orient=wx.VERTICAL)
-        tb.set_focus_color(WorkspacesManager.HIGHLIGHT_COLOUR)
+        tb.set_focus_color(WorkspacesPanel.HIGHLIGHT_COLOUR)
 
-        tb.AddTitleText(WKP_TITLE, color=WorkspacesManager.HIGHLIGHT_COLOUR)
+        tb.AddTitleText(WKP_TITLE, color=WorkspacesPanel.HIGHLIGHT_COLOUR)
         b = tb.AddButton("workspace_import", WKP_ACT_IMPORT)
         b.SetAlign(wx.ALIGN_LEFT)
         b = tb.AddButton("workspace_export", WKP_ACT_EXPORT)
@@ -462,7 +462,7 @@ class WorkspacesManager(sppasPanel):
 # ---------------------------------------------------------------------------
 
 
-class WorkspacesPanel(sppasPanel):
+class WkpsRadioboxPanel(sppasPanel):
     """Manager of the list of available workspaces in the software.
 
     :author:       Brigitte Bigi
@@ -476,7 +476,7 @@ class WorkspacesPanel(sppasPanel):
 
     """
     def __init__(self, parent, name=wx.PanelNameStr):
-        super(WorkspacesPanel, self).__init__(
+        super(WkpsRadioboxPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
@@ -712,14 +712,14 @@ class WorkspacesPanel(sppasPanel):
         button.SetBorderWidth(0)
         button.SetBorderColour(self.GetForegroundColour())
         button.SetBorderStyle(wx.PENSTYLE_SOLID)
-        button.SetFocusColour(WorkspacesManager.HIGHLIGHT_COLOUR)
+        button.SetFocusColour(WorkspacesPanel.HIGHLIGHT_COLOUR)
 
     # -----------------------------------------------------------------------
 
     def __set_active_btn_style(self, button):
         """Set a special style to the button."""
         button.SetBorderWidth(1)
-        button.SetBorderColour(WorkspacesManager.HIGHLIGHT_COLOUR)
+        button.SetBorderColour(WorkspacesPanel.HIGHLIGHT_COLOUR)
         button.SetBorderStyle(wx.PENSTYLE_SOLID)
         button.SetFocusColour(self.GetForegroundColour())
 
@@ -798,7 +798,7 @@ class WorkspacesPanel(sppasPanel):
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(WorkspacesManager):
+class TestPanel(WorkspacesPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="WorkspaceManager")

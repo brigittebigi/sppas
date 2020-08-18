@@ -1,0 +1,14 @@
+//page_files UML class diagram
+//copy/paste the content of this file at: https://yuml.me/diagram/scruffy/class/draw
+
+[sppasFilesPanel]++-1[WorkspacesPanel]
+[sppasFilesPanel]++-1[PathsTreePanel]
+[sppasFilesPanel]++-1[AssociatePanel]
+[sppasFilesPanel]++-1[ReferencesTreePanel]
+[WorkspacesPanel]++-1[Toolbar]
+[WorkspacesPanel]++-1[WkpsRadioboxPanel]
+[PathsTreePanel]++-1[Toolbar]
+[PathsTreePanel]++-1[FilesTreeViewPanel]
+[ReferencesTreePanel]++-1[Toolbar]
+[ReferencesTreePanel]++-1[RefsTreeViewPanel]
+

@@ -52,9 +52,9 @@ from ..windows import sppasPanel
 from ..windows import sppasStaticLine
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 
-from .wksmanager import WorkspacesManager
-from .filesmanager import FilesManager
-from .refsmanager import ReferencesManager
+from .workspaces import WorkspacesPanel
+from .pathstree import PathsTreePanel
+from .refstree import ReferencesTreePanel
 from .associate import AssociatePanel
 
 # ---------------------------------------------------------------------------
@@ -135,10 +135,10 @@ class sppasFilesPanel(sppasPanel):
     def _create_content(self):
         """Create the main content."""
         # Create all the panels
-        wp = WorkspacesManager(self, name='wkps_panel')
-        fm = FilesManager(self, name="files_panel")
+        wp = WorkspacesPanel(self, name='wkps_panel')
+        fm = PathsTreePanel(self, name="files_panel")
         ap = AssociatePanel(self, name="assoc_panel")
-        cm = ReferencesManager(self, name="refs_panel")
+        cm = ReferencesTreePanel(self, name="refs_panel")
 
         # Organize all the panels vertically, separated by 2px grey lines.
         sizer = wx.BoxSizer(wx.HORIZONTAL)

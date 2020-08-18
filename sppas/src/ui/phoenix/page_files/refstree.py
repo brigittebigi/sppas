@@ -26,7 +26,7 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.page_files.refsmanager.py
+    src.ui.phoenix.page_files.refstree.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Main panel to manage the references.
@@ -40,7 +40,6 @@ from sppas.src.config import annots
 from sppas.src.config import msg
 from sppas.src.utils import u
 from sppas.src.wkps.fileref import sppasCatReference, sppasRefAttribute
-from sppas.src.wkps.filebase import States
 
 from ..windows import sppasDialog
 from ..windows import sppasPanel
@@ -53,7 +52,7 @@ from ..windows import Information
 from ..windows import Error
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 
-from .refsviewctrl import RefsTreeView
+from .refsviewctrl import RefsTreeViewPanel
 from .filesutils import IdentifierTextValidator
 
 # ---------------------------------------------------------------------------
@@ -71,14 +70,14 @@ REF_ACT_DEL = _("Delete")
 
 REF_MSG_CREATE_ERROR = _(
     "The reference {:s} has not been created due to the following error: {:s}")
-REF_MSG_DEL_ERROR = _("An error occurred while removing the references: {:s}")
+REF_MSG_DEL_ERROR = _("An error occurred while removing the reference(s): {:s}")
 REF_MSG_DEL_INFO = _("{:d} reference(s) deleted.")
 REF_MSG_NB_CHECKED = _("No reference checked.")
 
 # ----------------------------------------------------------------------------
 
 
-class ReferencesManager(sppasPanel):
+class ReferencesTreePanel(sppasPanel):
     """Manage references and actions on perform on them.
 
     :author:       Brigitte Bigi
@@ -94,7 +93,7 @@ class ReferencesManager(sppasPanel):
     # ------------------------------------------------------------------------
 
     def __init__(self, parent, name=wx.PanelNameStr):
-        super(ReferencesManager, self).__init__(
+        super(ReferencesTreePanel, self).__init__(
             parent,
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
@@ -128,7 +127,7 @@ class ReferencesManager(sppasPanel):
     def _create_content(self):
         """Create the main content."""
         tb = self.__create_toolbar()
-        cv = RefsTreeView(self, name="refsview")
+        cv = RefsTreeViewPanel(self, name="refsview")
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(tb, proportion=0, flag=wx.EXPAND, border=0)
@@ -146,9 +145,9 @@ class ReferencesManager(sppasPanel):
 
     def __create_toolbar(self):
         tb = sppasToolbar(self)
-        tb.set_focus_color(ReferencesManager.HIGHLIGHT_COLOUR)
+        tb.set_focus_color(ReferencesTreePanel.HIGHLIGHT_COLOUR)
 
-        tb.AddTitleText(REF_TITLE, color=ReferencesManager.HIGHLIGHT_COLOUR)
+        tb.AddTitleText(REF_TITLE, color=ReferencesTreePanel.HIGHLIGHT_COLOUR)
         tb.AddButton("refs-add", REF_ACT_CREATE)
         tb.AddButton("refs-edit", REF_ACT_EDIT)
         tb.AddButton("refs-delete", REF_ACT_DEL)
@@ -623,14 +622,14 @@ class sppasEditAttributes(sppasDialog):
         button.SetBorderWidth(1)
         button.SetBorderColour(self.GetForegroundColour())
         button.SetBorderStyle(wx.PENSTYLE_SOLID)
-        button.SetFocusColour(ReferencesManager.HIGHLIGHT_COLOUR)
+        button.SetFocusColour(ReferencesTreePanel.HIGHLIGHT_COLOUR)
 
     # -----------------------------------------------------------------------
 
     def __set_active_radio_style(self, button):
         """Set a special style to a button."""
         button.SetBorderWidth(2)
-        button.SetBorderColour(ReferencesManager.HIGHLIGHT_COLOUR)
+        button.SetBorderColour(ReferencesTreePanel.HIGHLIGHT_COLOUR)
         button.SetBorderStyle(wx.PENSTYLE_SOLID)
         button.SetFocusColour(self.GetForegroundColour())
 
@@ -649,7 +648,7 @@ class sppasEditAttributes(sppasDialog):
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(ReferencesManager):
+class TestPanel(ReferencesTreePanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="ReferencesManager")

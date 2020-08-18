@@ -63,7 +63,7 @@ STATES_ICON_NAMES = {
 # ---------------------------------------------------------------------------
 
 
-class RefsTreeView(sppasScrolledPanel):
+class RefsTreeViewPanel(sppasScrolledPanel):
     """A control to display data references in a tree-spreadsheet style.
 
     :author:       Brigitte Bigi
@@ -84,7 +84,7 @@ class RefsTreeView(sppasScrolledPanel):
         :param name: (str)
 
         """
-        super(RefsTreeView, self).__init__(parent, name=name)
+        super(RefsTreeViewPanel, self).__init__(parent, name=name)
 
         # The workspace to display
         self.__data = sppasWorkspace()
@@ -688,7 +688,7 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(RefsTreeView):
+class TestPanel(RefsTreeViewPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="References tree view")
