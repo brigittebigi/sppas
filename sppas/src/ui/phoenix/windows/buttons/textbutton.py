@@ -37,12 +37,12 @@
 import wx
 import random
 
-from .basebutton import Button
+from .basebutton import BaseButton
 
 # ---------------------------------------------------------------------------
 
 
-class TextButton(Button):
+class TextButton(BaseButton):
     """TextButton is a custom button with a label.
 
     :author:       Brigitte Bigi
@@ -72,7 +72,45 @@ class TextButton(Button):
         super(TextButton, self).__init__(parent, id, pos, size, name)
 
         self._label = label
-        self._labelpos = wx.CENTER
+        self._align = wx.ALIGN_CENTER  # or ALIGN_LEFT or ALIGN_RIGHT
+
+    # ------------------------------------------------------------------------
+
+    def GetLabel(self):
+        """Return the label text as it was passed to SetLabel."""
+        return self._label
+
+    # ------------------------------------------------------------------------
+
+    def SetLabel(self, label):
+        """Set the label text.
+
+        :param label: (str) Label text.
+
+        """
+        if label is None:
+            label = ""
+        self._label = str(label)
+
+    # -----------------------------------------------------------------------
+
+    def GetAlign(self):
+        return self._align
+
+    def SetAlign(self, align=wx.ALIGN_CENTER):
+        """Set the position of the label in the button.
+
+        :param align: (int) label is at the center, at left or at right.
+
+        """
+        if align not in [wx.ALIGN_CENTER, wx.ALIGN_LEFT, wx.ALIGN_RIGHT]:
+            return
+        self._align = align
+
+    # -----------------------------------------------------------------------
+
+    Label = property(GetLabel, SetLabel)
+    Align = property(GetAlign, SetAlign)
 
     # -----------------------------------------------------------------------
 
@@ -88,66 +126,38 @@ class TextButton(Button):
 
         dc = wx.ClientDC(self)
         dc.SetFont(self.GetFont())
-        retWidth, retHeight = dc.GetTextExtent(label)
+        ret_width, ret_height = dc.GetTextExtent(label)
 
-        width = int(max(retWidth, retHeight) * 1.5)
+        width = int(max(ret_width, ret_height) * 1.5)
         return wx.Size(width, width)
 
     # -----------------------------------------------------------------------
 
-    def GetLabelPosition(self):
-        return self._labelpos
-
-    def SetLabelPosition(self, pos=wx.BOTTOM):
-        """Set the position of the label: top, bottom, left, right."""
-        if pos not in [wx.TOP, wx.BOTTOM, wx.LEFT, wx.RIGHT]:
-            return
-        self._labelpos = pos
-
-    # -----------------------------------------------------------------------
-
-    LabelPosition = property(GetLabelPosition, SetLabelPosition)
-
-    # -----------------------------------------------------------------------
-
     def DrawContent(self, dc, gc):
-
+        """Draw the button. """
         x, y, w, h = self.GetClientRect()
         x += self._vert_border_width
         y += self._horiz_border_width
         w -= (2 * self._vert_border_width)
         h -= ((2 * self._horiz_border_width) + self._focus_width + 2)
 
-        # No label is defined.
         tw, th = self.get_text_extend(dc, gc, self._label)
+        if tw < 6 or th < 6:
+            return
 
-        if self._labelpos == wx.BOTTOM:
-            self.__draw_label(dc, gc, (w - tw) // 2, h - th)
+        if self._align == wx.ALIGN_LEFT:
+            self._draw_label(dc, gc, 1, (h - th) // 2)
 
-        elif self._labelpos == wx.TOP:
-            self.__draw_label(dc, gc, (w - tw) // 2, y)
-
-        elif self._labelpos == wx.LEFT:
-            self.__draw_label(dc, gc, 2, (h - th) // 2)
-
-        elif self._labelpos == wx.RIGHT:
-            self.__draw_label(dc, gc, w - tw - 2, (h - th) // 2)
+        elif self._align == wx.ALIGN_RIGHT:
+            self._draw_label(dc, gc, w - tw - 1, (h - th) // 2)
 
         else:
             # Center the text.
-            self.__draw_label(dc, gc, (w - tw) // 2, (h - th) // 2)
+            self._draw_label(dc, gc, (w - tw) // 2, (h - th) // 2)
 
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def get_text_extend(dc, gc, text):
-        if wx.Platform == '__WXGTK__':
-            return dc.GetTextExtent(text)
-        return gc.GetTextExtent(text)
-
-    # -----------------------------------------------------------------------
-
-    def __draw_label(self, dc, gc, x, y):
+    def _draw_label(self, dc, gc, x, y):
         font = self.GetFont()
         gc.SetFont(font)
         dc.SetFont(font)
@@ -222,9 +232,10 @@ class TestPanelTextButton(wx.Panel):
 
         # play with enabled/disabled and colors
         # -------------------------------------
-        btn1 = TextButton(self, label="Hello...", pos=(10, 230), size=(w, h))
+        btn1 = TextButton(self, pos=(10, 230), size=(w, h))
         btn1.Enable(True)
         btn1.SetBorderWidth(1)
+        btn1.SetLabel("Set label")
 
         btn2 = TextButton(self, label="Disabled!", pos=(150, 230), size=(w, h))
         btn2.Enable(False)
@@ -241,6 +252,20 @@ class TestPanelTextButton(wx.Panel):
         btn4.SetBorderWidth(1)
         btn4.SetBackgroundColour(wx.Colour(222, 222, 200))
         btn4.SetForegroundColour(wx.Colour(22, 22, 20))
+
+        # play with alignment
+        # -------------------------------------
+        btn5 = TextButton(self, label="Centered", pos=(10, 340), size=(w, h))
+        btn5.SetBorderWidth(1)
+        btn5.SetAlign(wx.ALIGN_CENTER)
+
+        btn6 = TextButton(self, label="Text at left", pos=(150, 340), size=(w, h))
+        btn6.SetBorderWidth(1)
+        btn6.SetAlign(wx.ALIGN_LEFT)
+
+        btn7 = TextButton(self, label="Text at right", pos=(290, 340), size=(w, h))
+        btn7.SetBorderWidth(1)
+        btn7.SetAlign(wx.ALIGN_RIGHT)
 
     # -----------------------------------------------------------------------
 

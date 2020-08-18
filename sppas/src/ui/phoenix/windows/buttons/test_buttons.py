@@ -42,6 +42,10 @@ from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 from sppas.src.ui.phoenix.windows.buttons.basebutton import TestPanelBaseButton
 from sppas.src.ui.phoenix.windows.buttons.textbutton import TestPanelTextButton
+from sppas.src.ui.phoenix.windows.buttons.bitmapbutton import TestPanelBitmapButton
+from sppas.src.ui.phoenix.windows.buttons.bitmapbutton import TestPanelBitmapTextButton
+from sppas.src.ui.phoenix.windows.buttons.checkbutton import TestPanelCheckButton
+from sppas.src.ui.phoenix.windows.buttons.checkbutton import TestPanelRadioButton
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -69,6 +73,10 @@ class TestPanel(wx.Choicebook):
         panels = list()
         panels.append(TestPanelBaseButton(self))
         panels.append(TestPanelTextButton(self))
+        panels.append(TestPanelBitmapButton(self))
+        panels.append(TestPanelBitmapTextButton(self))
+        panels.append(TestPanelCheckButton(self))
+        panels.append(TestPanelRadioButton(self))
 
         # Add such panels to pages of the choice book.
         for p in panels:

@@ -45,7 +45,6 @@ import sppas.src.ui.phoenix.windows.basedcwindow as dcwin
 import sppas.src.ui.phoenix.windows.basewindow as basedraw
 import sppas.src.ui.phoenix.windows.toolbar as toolbar
 import sppas.src.ui.phoenix.windows.line as line
-import sppas.src.ui.phoenix.windows.button as button
 import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
 import sppas.src.ui.phoenix.windows.panel as panel
 import sppas.src.ui.phoenix.windows.listctrl as listctrl
@@ -74,7 +73,6 @@ class TestPanel(wx.Choicebook):
         self.AddPage(listctrl.TestPanel(self), "ListCtrl")
         self.AddPage(panel.TestPanel(self), "Panels")
         self.AddPage(buttonbox.TestPanel(self), "ButtonBox")
-        self.AddPage(button.TestPanel(self), "Buttons")
         self.AddPage(line.TestPanel(self), "Lines")
         self.AddPage(basedraw.TestPanel(self), "Base Window")
 

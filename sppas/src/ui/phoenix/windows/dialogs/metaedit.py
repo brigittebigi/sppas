@@ -49,7 +49,7 @@ from ..listctrl import sppasListCtrl
 from ..line import sppasStaticLine
 from ..text import sppasTextCtrl, sppasStaticText
 from ..book import sppasSimplebook
-from ..button import BitmapButton
+from ..buttons import BitmapButton
 
 from .messages import Error
 from .dialog import sppasDialog

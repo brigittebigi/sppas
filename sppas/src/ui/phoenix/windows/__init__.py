@@ -49,13 +49,13 @@ from .dialogs import sppasMetaData, MetaDataEdit
 from .line import sppasStaticLine
 
 from .basewindow import WindowState
-from .buttons import Button
+from .buttons import BaseButton
 from .buttons import TextButton
-from .button import BitmapTextButton
-from .button import CheckButton
-from .button import RadioButton
-from .button import ToggleButton
-from .button import BitmapButton
+from .buttons import BitmapButton
+from .buttons import BitmapTextButton
+from .buttons import ToggleButton
+from .buttons import CheckButton
+from .buttons import RadioButton
 
 from .buttonbox import sppasRadioBoxPanel
 
@@ -105,7 +105,7 @@ __all__ = (
     "YesNoQuestion",
     "sppasStaticLine",
     "WindowState",
-    "Button",
+    "BaseButton",
     'TextButton',
     'BitmapTextButton',
     "BitmapButton",

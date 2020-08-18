@@ -37,7 +37,8 @@
 import wx
 import wx.media
 
-from ..button import ToggleButton, BitmapTextButton
+from ..buttons import ToggleButton
+from ..buttons import BitmapTextButton
 from ..panel import sppasPanel
 from .mediaevents import MediaEvents
 

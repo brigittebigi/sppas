@@ -42,7 +42,7 @@ import wx
 import wx.lib.scrolledpanel as sc
 
 from ..tools import sppasSwissKnife
-from .button import BitmapTextButton
+from .buttons import BitmapTextButton
 
 # ---------------------------------------------------------------------------
 

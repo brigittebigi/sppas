@@ -40,7 +40,7 @@
 import wx
 import webbrowser
 
-from ..windows import Button
+from ..windows import BaseButton
 from ..windows import WindowState
 from ..windows import sppasPanel
 from ..tools import sppasSwissKnife
@@ -48,7 +48,7 @@ from ..tools import sppasSwissKnife
 # ---------------------------------------------------------------------------
 
 
-class LinkButton(Button):
+class LinkButton(BaseButton):
     """A button to get access to an URL.
 
     :author:       Brigitte Bigi
@@ -102,7 +102,7 @@ class LinkButton(Button):
         :param enable: (bool) True to enable the window.
 
         """
-        Button.Enable(self, enable)
+        BaseButton.Enable(self, enable)
         self.SetForegroundColour(self.GetForegroundColour())
 
     # -----------------------------------------------------------------------
