@@ -327,7 +327,7 @@ class sppasToolbar(sppasPanel):
                 btn.SetSpacing(0)
                 btn.SetMaxSize(wx.Size(self._h*2, self._h*2))
             else:
-                btn.SetSpacing(sppasPanel.fix_size(12))
+                btn.SetSpacing(sppasPanel.fix_size(10))
                 btn.SetMaxSize(wx.Size(self._h*4, self._h*2))
 
         else:

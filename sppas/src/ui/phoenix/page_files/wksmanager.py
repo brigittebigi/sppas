@@ -174,9 +174,9 @@ class WorkspacesManager(sppasPanel):
         cv = WorkspacesPanel(self, name="wkpslist")
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(tb, 0, wx.EXPAND, 0)
+        sizer.Add(tb, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, sppasPanel.fix_size(4))
         sizer.Add(self.__create_hline(), 0, wx.EXPAND, 0)
-        sizer.Add(cv, 1, wx.EXPAND, 0)
+        sizer.Add(cv, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, sppasPanel.fix_size(4))
 
         self.SetSizer(sizer)
 
@@ -193,10 +193,14 @@ class WorkspacesManager(sppasPanel):
         tb.set_focus_color(WorkspacesManager.HIGHLIGHT_COLOUR)
 
         tb.AddTitleText(WKP_TITLE, color=WorkspacesManager.HIGHLIGHT_COLOUR)
-        tb.AddButton("workspace_import", WKP_ACT_IMPORT)
-        tb.AddButton("workspace_export", WKP_ACT_EXPORT)
-        tb.AddButton("workspace_pin", WKP_ACT_SAVE)
-        tb.AddButton("workspace_rename", WKP_ACT_RENAME)
+        b = tb.AddButton("workspace_import", WKP_ACT_IMPORT)
+        b.SetAlign(wx.ALIGN_LEFT)
+        b = tb.AddButton("workspace_export", WKP_ACT_EXPORT)
+        b.SetAlign(wx.ALIGN_LEFT)
+        b = tb.AddButton("workspace_pin", WKP_ACT_SAVE)
+        b.SetAlign(wx.ALIGN_LEFT)
+        b = tb.AddButton("workspace_rename", WKP_ACT_RENAME)
+        b.SetAlign(wx.ALIGN_LEFT)
         return tb
 
     # -----------------------------------------------------------------------
@@ -688,7 +692,7 @@ class WorkspacesPanel(sppasPanel):
         """
         btn = RadioButton(self, label=name, name=name)
         btn.SetBorderWidth(2)
-        btn.SetSpacing(sppasPanel.fix_size(12))
+        btn.SetSpacing(sppasPanel.fix_size(10))
         btn.SetMinSize(wx.Size(-1, sppasPanel.fix_size(32)))
         btn.SetSize(wx.Size(-1, sppasPanel.fix_size(32)))
         i = self.__wkps.index(name)
@@ -698,7 +702,7 @@ class WorkspacesPanel(sppasPanel):
         else:
             self.__set_normal_btn_style(btn)
             btn.SetValue(False)
-        self.GetSizer().Add(btn, 0, wx.EXPAND | wx.ALL, 2)
+        self.GetSizer().Add(btn, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, sppasPanel.fix_size(2))
         return i
 
     # -----------------------------------------------------------------------
