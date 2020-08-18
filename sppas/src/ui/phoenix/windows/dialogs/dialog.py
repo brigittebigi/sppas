@@ -91,7 +91,7 @@ class sppasDialog(wx.Dialog):
             - at middle: "content"
             - at bottom: "actions"
 
-        Keys can only captured by the content panel.
+        Keys can only be captured by the content panel.
 
         """
         super(sppasDialog, self).__init__(*args, **kw)
@@ -113,12 +113,14 @@ class sppasDialog(wx.Dialog):
         Set the title, the icon and the properties of the frame.
 
         """
-        settings = wx.GetApp().settings
-
         # colors & font
-        self.SetBackgroundColour(settings.bg_color)
-        self.SetForegroundColour(settings.fg_color)
-        self.SetFont(settings.text_font)
+        try:
+            settings = wx.GetApp().settings
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
+        except:
+            self.InheritAttributes()
 
         # Fix minimum frame size
         self.SetMinSize(wx.Size(sppasDialog.fix_size(320),
@@ -400,26 +402,32 @@ class sppasDialog(wx.Dialog):
     def UpdateUI(self):
         """Assign settings to self and children, then refresh."""
         # colors & font
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        try:
+            settings = wx.GetApp().settings
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
 
-        for w in self.GetChildren():
-            name = w.GetName()
-            if name == "header":
-                w.SetBackgroundColour(wx.GetApp().settings.header_bg_color)
-                w.SetForegroundColour(wx.GetApp().settings.header_fg_color)
-                w.SetFont(wx.GetApp().settings.header_text_font)
-            elif name == "actions":
-                w.SetBackgroundColour(wx.GetApp().settings.action_bg_color)
-                w.SetForegroundColour(wx.GetApp().settings.action_fg_color)
-                w.SetFont(wx.GetApp().settings.action_text_font)
-            else:
-                w.SetBackgroundColour(wx.GetApp().settings.bg_color)
-                w.SetForegroundColour(wx.GetApp().settings.fg_color)
-                w.SetFont(wx.GetApp().settings.text_font)
-            w.Layout()
-            w.Refresh()
+            for w in self.GetChildren():
+                name = w.GetName()
+                if name == "header":
+                    w.SetBackgroundColour(settings.header_bg_color)
+                    w.SetForegroundColour(settings.header_fg_color)
+                    w.SetFont(settings.header_text_font)
+                elif name == "actions":
+                    w.SetBackgroundColour(settings.action_bg_color)
+                    w.SetForegroundColour(settings.action_fg_color)
+                    w.SetFont(settings.action_text_font)
+                else:
+                    w.SetBackgroundColour(settings.bg_color)
+                    w.SetForegroundColour(settings.fg_color)
+                    w.SetFont(settings.text_font)
+                w.Layout()
+                w.Refresh()
+        except:
+            pass
+
+        # other incoming settings...
 
         self.Layout()
         self.Refresh()
@@ -518,8 +526,10 @@ class sppasDialog(wx.Dialog):
     # -----------------------------------------------------------------------
 
     def get_font_height(self):
-        font = self.GetFont()
+        try:
+            font = wx.GetApp().settings.text_font
+        except AttributeError:
+            font = self.GetFont()
         return int(float(font.GetPixelSize()[1]))
-
 
 
