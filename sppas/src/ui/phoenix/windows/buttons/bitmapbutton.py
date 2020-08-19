@@ -78,6 +78,7 @@ class BitmapTextButton(TextButton):
         self._default_bitmapcolor = self.GetPenForegroundColour()
         self._bitmapcolor = self._default_bitmapcolor
         self._labelpos = wx.CENTER
+        self.img_margin = 0.2  # margin all around the image (20% of btn size)
 
         # The icon image
         self._image = None
@@ -238,7 +239,7 @@ class BitmapTextButton(TextButton):
     def __get_bitmap_properties(self, x, y, w, h):
         # w, h is the available size
         bmp_size = min(w, h)                  # force a squared button
-        margin = max(int(bmp_size * 0.2), 2)  # optimal margin (20% of btn size)
+        margin = max(int(bmp_size * self.img_margin), 2)
         bmp_size -= margin
         y_pos = y + (margin // 2)
         if self._align == wx.ALIGN_LEFT:

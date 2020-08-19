@@ -381,10 +381,19 @@ class sppasBaseRisePanel(sppasPanel):
 
 
 class sppasCollapsiblePanel(sppasBaseRisePanel):
+    """A collapsible panel is a window on which controls are placed.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
 
     def __init__(self, parent, id=wx.ID_ANY, label="", pos=wx.DefaultPosition,
                  size=wx.DefaultSize, style=0, name="CollapsiblePane"):
-        """Create a CollapsiblePanel.
+        """Create a sppasCollapsiblePanel.
 
         :param parent: (wx.Window) Parent window must NOT be none
         :param id: (int) window identifier or -1

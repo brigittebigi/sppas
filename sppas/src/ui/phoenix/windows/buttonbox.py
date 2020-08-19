@@ -37,6 +37,7 @@
 import wx
 
 from .buttons import RadioButton
+from .buttons import ToggleButton
 from .buttons import ButtonEvent
 from .panels import sppasPanel
 
@@ -44,19 +45,30 @@ from .panels import sppasPanel
 
 
 class sppasRadioBoxPanel(sppasPanel):
+    """A radio box is a list of mutually exclusive radio buttons.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    The parent can bind wx.EVT_RADIOBOX.
+
+    """
 
     def __init__(self, parent,
                  id=wx.ID_ANY,
                  pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
-                 choices=[],
+                 choices=(),
                  majorDimension=0,
                  style=wx.RA_SPECIFY_COLS,
                  name=wx.RadioBoxNameStr):
         super(sppasRadioBoxPanel, self).__init__(parent, id, pos, size, name=name)
 
-        self.__buttons = list()
-        self.__selection = 0
+        self._buttons = list()
+        self.__selection = -1
         self._create_content(style, choices, majorDimension)
         self._setup_events()
         self.Layout()
@@ -71,13 +83,13 @@ class sppasRadioBoxPanel(sppasPanel):
         :returns: (bool)
 
         """
-        if n > len(self.__buttons):
+        if n > len(self._buttons):
             return False
         # do not disable the selected button
         if n == self.__selection and enable is False:
             return False
 
-        self.__buttons[n].Enable(enable)
+        self._buttons[n].Enable(enable)
         return True
 
     # ------------------------------------------------------------------------
@@ -92,7 +104,7 @@ class sppasRadioBoxPanel(sppasPanel):
 
         """
         found = -1
-        for i, c in enumerate(self.__buttons):
+        for i, c in enumerate(self._buttons):
             label = c.GetLabel()
             if bCase is False and label.lower() == string.lower():
                 found = i
@@ -118,7 +130,7 @@ class sppasRadioBoxPanel(sppasPanel):
 
     def GetCount(self):
         """Return the number of items in the control."""
-        return len(self.__buttons)
+        return len(self._buttons)
 
     # ------------------------------------------------------------------------
 
@@ -135,23 +147,28 @@ class sppasRadioBoxPanel(sppasPanel):
     def SetSelection(self, n):
         """Set the selection to the given item.
 
-        :param n: (int) – Index of the item
+        :param n: (int) – Index of the item or -1 to disable the current
 
         """
-        if n > len(self.__buttons):
-            return
-        # do not re-select the current one
-        if self.__selection == n:
+        if n > len(self._buttons):
             return
 
-        btn = self.__buttons[n]
-        # do not select a disabled button
-        if btn.IsEnabled() is True:
+        if n >= 0:
+            btn = self._buttons[n]
+            # do not select a disabled button
+            if btn.IsEnabled() is True:
+                # un-select the current selected button
+                if self.__selection not in (-1, n):
+                    self._activate(self.__selection, False)
+                # select the expected one
+                self.__selection = n
+                self._activate(n, True)
+                btn.SetValue(True)
+        else:
             # un-select the current selected button
-            self.__buttons[self.__selection].SetValue(False)
-            # select the expected one
-            self.__selection = n
-            btn.SetValue(True)
+            if self.__selection != -1:
+                self._activate(self.__selection, False)
+            self.__selection = -1
 
     # ------------------------------------------------------------------------
 
@@ -163,9 +180,11 @@ class sppasRadioBoxPanel(sppasPanel):
         was invalid.
 
         """
-        if n > len(self.__buttons):
+        if n < 0:
             return ""
-        return self.__buttons[n].GetLabel()
+        if n > len(self._buttons):
+            return ""
+        return self._buttons[n].GetLabel()
 
     # ------------------------------------------------------------------------
 
@@ -175,7 +194,9 @@ class sppasRadioBoxPanel(sppasPanel):
         :returns: (str) The label of the selected item
 
         """
-        return self.__buttons[self.__selection].GetLabel()
+        if self.__selection >= 0:
+            return self._buttons[self.__selection].GetLabel()
+        return ""
 
     # ------------------------------------------------------------------------
 
@@ -196,9 +217,11 @@ class sppasRadioBoxPanel(sppasPanel):
         :returns: (bool)
 
         """
-        if n > len(self.__buttons):
+        if n < 0:
             return False
-        return self.__buttons[n].IsEnabled(n)
+        if n > len(self._buttons):
+            return False
+        return self._buttons[n].IsEnabled(n)
 
     # ------------------------------------------------------------------------
 
@@ -243,18 +266,28 @@ class sppasRadioBoxPanel(sppasPanel):
         :returns: (bool)
 
         """
-        if n > len(self.__buttons):
+        if n > len(self._buttons):
             return False
-        return self.__buttons[n].IsShown()
+        return self._buttons[n].IsShown()
 
     # ------------------------------------------------------------------------
 
     def Notify(self):
         """Sends a wx.EVT_RADIOBUTTON event to the listener (if any)."""
         evt = ButtonEvent(wx.EVT_RADIOBOX.typeId, self.GetId())
-        evt.SetButtonObj(self.__buttons[self.__selection])
+        evt.SetButtonObj(self._buttons[self.__selection])
         evt.SetEventObject(self)
         self.GetEventHandler().ProcessEvent(evt)
+
+    # ------------------------------------------------------------------------
+
+    def SetVGap(self, value):
+        self.GetSizer().SetVGap(value)
+
+    # ------------------------------------------------------------------------
+
+    def SetHGap(self, value):
+        self.GetSizer().SetHGap(value)
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -262,37 +295,45 @@ class sppasRadioBoxPanel(sppasPanel):
 
     def _create_content(self, style, choices, majorDimension):
         """Create the main content."""
-        rows = len(choices)
+        rows = 1
         cols = 1
         if len(choices) > 1:
-            if majorDimension > 0:
+            if majorDimension > 1:
                 if style == wx.RA_SPECIFY_COLS:
                     cols = majorDimension
                     rows = (len(choices)+1) // majorDimension
                 elif style == wx.RA_SPECIFY_ROWS:
                     rows = majorDimension
                     cols = (len(choices)+1) // majorDimension
+            else:  # one dimension
+                if style == wx.RA_SPECIFY_COLS:
+                    cols = majorDimension
+                    rows = len(choices)
+                elif style == wx.RA_SPECIFY_ROWS:
+                    rows = majorDimension
+                    cols = len(choices)
 
-        grid = wx.GridBagSizer(rows, cols)
+        gap = sppasPanel.fix_size(2)
+        grid = wx.GridBagSizer(vgap=gap, hgap=gap)
         if style == wx.RA_SPECIFY_COLS:
             for c in range(cols):
                 for r in range(rows):
                     index = (c*rows)+r
                     if index < len(choices):
-                        btn = RadioButton(self, label=choices[index], name="radiobutton_%d_%d" % (c, r))
-                        btn.SetMinSize(wx.Size(-1, self.get_font_height()*2))
+                        btn = self._create_button(label=choices[index],
+                                                  name="button_%d_%d" % (c, r))
                         grid.Add(btn, pos=(r, c), flag=wx.EXPAND)
-                        self.__buttons.append(btn)
+                        self._buttons.append(btn)
 
         else:
             for r in range(rows):
                 for c in range(cols):
                     index = (r*cols)+c
                     if index < len(choices):
-                        btn = RadioButton(self, label=choices[index], name="radiobutton_%d_%d" % (r, c))
-                        btn.SetMinSize(wx.Size(-1, self.get_font_height()*2))
+                        btn = self._create_button(label=choices[index],
+                                                  name="button_%d_%d" % (r, c))
                         grid.Add(btn, pos=(r, c), flag=wx.EXPAND)
-                        self.__buttons.append(btn)
+                        self._buttons.append(btn)
 
         for c in range(cols):
             grid.AddGrowableCol(c)
@@ -300,10 +341,29 @@ class sppasRadioBoxPanel(sppasPanel):
         for r in range(rows):
             grid.AddGrowableRow(r)
 
-        self.__buttons[0].SetValue(True)
+        if len(choices) > 0:
+            self.SetSelection(0)
         self.SetMinSize(wx.Size(
             sppasPanel.fix_size(self.get_font_height()*rows), -1))
         self.SetSizer(grid)
+
+    # -----------------------------------------------------------------------
+
+    def _create_button(self, label, name):
+        """Create the button to add into the box."""
+        btn = RadioButton(self, label=label, name=name)
+        btn.Enable(True)
+        btn.SetValue(False)
+        btn.SetMinSize(wx.Size(-1, self.get_font_height() * 2))
+        return btn
+
+    # ------------------------------------------------------------------------
+
+    def _activate(self, n, value):
+        """Check/Uncheck the n-th button."""
+        btn = self._buttons[n]
+        if btn.IsEnabled() is True:
+            btn.SetValue(value)
 
     # -----------------------------------------------------------------------
     # Events management
@@ -331,9 +391,84 @@ class sppasRadioBoxPanel(sppasPanel):
 
         """
         evt_btn = event.GetButtonObj()
-        new_selected_index = self.__buttons.index(evt_btn)
+        new_selected_index = self._buttons.index(evt_btn)
         self.SetSelection(new_selected_index)
         self.Notify()
+
+# ----------------------------------------------------------------------------
+
+
+class sppasToggleBoxPanel(sppasRadioBoxPanel):
+    """A toggle box is a list of mutually exclusive toggle buttons.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    The parent can bind wx.EVT_RADIOBOX.
+
+    """
+
+    def __init__(self, parent,
+                 id=wx.ID_ANY,
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 choices=[],
+                 majorDimension=0,
+                 style=wx.RA_SPECIFY_COLS,
+                 name=wx.RadioBoxNameStr):
+        super(sppasToggleBoxPanel, self).__init__(
+            parent, id, pos, size, choices, majorDimension, style, name)
+
+    # -----------------------------------------------------------------------
+
+    def _setup_events(self):
+        """Associate a handler function with the events.
+
+        It means that when an event occurs then the process handler function
+        will be called.
+
+        """
+        # The user pressed a key of its keyboard
+        # self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
+
+        # The user clicked (LeftDown - LeftUp) an action button
+        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_btn_event)
+
+    # -----------------------------------------------------------------------
+
+    def _create_button(self, label, name):
+        """Create the button to add into the box."""
+        btn = ToggleButton(self, label=label, name=name)
+        btn.SetImage(None)
+        btn.img_margin = 0.3
+
+        # Get the font height for the header
+        h = self.get_font_height()
+
+        btn.SetLabelPosition(wx.LEFT)
+        btn.SetFocusStyle(wx.PENSTYLE_SOLID)
+        btn.SetFocusWidth(h//4)
+        btn.SetSpacing(sppasPanel.fix_size(h))
+
+        btn.Enable(True)
+        btn.SetValue(False)
+        btn.SetMinSize(wx.Size(-1, self.get_font_height() * 2))
+        return btn
+
+    # ------------------------------------------------------------------------
+
+    def _activate(self, n, value):
+        """Check/Uncheck the n-th button."""
+        btn = self._buttons[n]
+        if btn.IsEnabled() is True:
+            btn.SetValue(value)
+            if value is True:
+                btn.SetImage("check_yes")
+            else:
+                btn.SetImage(None)
 
 # ----------------------------------------------------------------------------
 # Panels to test
@@ -353,7 +488,7 @@ class TestPanelRadioBox(wx.Panel):
             pos=(10, 10),
             size=wx.Size(200, 300),
             choices=["bananas", "pears", "tomatoes", "apples", "pineapples"],
-            majorDimension=2,
+            majorDimension=1,
             style=wx.RA_SPECIFY_COLS,
             name="radio_in_cols")
         rbc.Bind(wx.EVT_RADIOBOX, self.on_btn_event)
@@ -374,12 +509,34 @@ class TestPanelRadioBox(wx.Panel):
         # disable apples
         rbr.EnableItem(3, False)
 
+        tbr = sppasToggleBoxPanel(
+            self, pos=(10, 350), size=wx.Size(400, 100),
+            choices=["choice 1", "choice 2", "choice 3", "choice 4", "choice 5", "choice 6", "choice 7"],
+            majorDimension=3,
+            style=wx.RA_SPECIFY_ROWS,
+            name="toogle_in_rows"
+        )
+        tbr.Bind(wx.EVT_RADIOBOX, self.on_btn_event)
+
+        tbc = sppasToggleBoxPanel(
+            self, pos=(550, 10), size=wx.Size(100, 200),
+            choices=["choice 1", "choice 2", "choice 3", "choice 4", "choice 5", "choice 6"],
+            majorDimension=1,
+            style=wx.RA_SPECIFY_COLS,
+            name="toogle_in_cols"
+        )
+        tbc.SetVGap(0)
+        tbc.SetHGap(0)
+        tbc.Refresh()
+        tbc.Bind(wx.EVT_RADIOBOX, self.on_btn_event)
+
     # -----------------------------------------------------------------------
 
     def on_btn_event(self, event):
         obj = event.GetEventObject()
         wx.LogDebug('* * * RadioBox Event by {:s} * * *'.format(obj.GetName()))
-        wx.LogDebug(" --> selection {:d}".format(obj.GetSelection()))
+        wx.LogDebug(" --> selection index {:d}".format(obj.GetSelection()))
+        wx.LogDebug(" --> selection {:s}".format(obj.GetStringSelection()))
 
 # ----------------------------------------------------------------------------
 
