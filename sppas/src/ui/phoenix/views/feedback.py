@@ -106,7 +106,7 @@ class sppasFeedbackDialog(sppasDialog):
                                 sppasDialog.fix_size(320)))
         self.LayoutComponents()
         self.CenterOnParent()
-        self.FadeIn(deltaN=-8)
+        self.FadeIn()
 
     # -----------------------------------------------------------------------
 

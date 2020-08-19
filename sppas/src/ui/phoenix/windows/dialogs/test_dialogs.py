@@ -42,6 +42,7 @@ from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 from sppas.src.ui.phoenix.windows.dialogs.messages import TestPanelMessageDialog
 from sppas.src.ui.phoenix.windows.dialogs.entries import TestPanelEntriesDialog
+from sppas.src.ui.phoenix.windows.dialogs.progress import TestPanelProgressDialog
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -69,6 +70,7 @@ class TestPanel(wx.Choicebook):
         panels = list()
         panels.append(TestPanelMessageDialog(self))
         panels.append(TestPanelEntriesDialog(self))
+        panels.append(TestPanelProgressDialog(self))
 
         # Add such panels to pages of the choice book.
         for p in panels:

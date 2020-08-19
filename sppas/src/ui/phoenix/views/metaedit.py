@@ -111,7 +111,7 @@ class sppasMetaDataEditDialog(sppasDialog):
         self.LayoutComponents()
         self.CenterOnParent()
         self.GetSizer().Fit(self)
-        self.FadeIn(deltaN=-8)
+        self.FadeIn()
 
     # -----------------------------------------------------------------------
 

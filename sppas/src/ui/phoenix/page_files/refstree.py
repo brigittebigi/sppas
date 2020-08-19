@@ -318,7 +318,7 @@ class sppasCreateReference(sppasDialog):
         self.GetSizer().Fit(self)
         self.SetFocus()
         self.CenterOnParent()
-        self.FadeIn(deltaN=-8)
+        self.FadeIn()
 
     # ------------------------------------------------------------------------
     # Public methods
@@ -423,7 +423,7 @@ class sppasEditAttributes(sppasDialog):
         self.LayoutComponents()
         self.GetSizer().Fit(self)
         self.CenterOnParent()
-        self.FadeIn(deltaN=-8)
+        self.FadeIn()
 
     # -----------------------------------------------------------------------
 

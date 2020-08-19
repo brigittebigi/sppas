@@ -124,7 +124,7 @@ class sppasSettingsDialog(sppasDialog):
 
         self.LayoutComponents()
         self.GetSizer().Fit(self)
-        self.FadeIn(deltaN=-8)
+        self.FadeIn()
         self.CenterOnParent()
 
     # -----------------------------------------------------------------------

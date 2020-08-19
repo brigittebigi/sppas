@@ -181,7 +181,7 @@ class sppasTextEntryDialog(sppasDialog):
         self.LayoutComponents()
         self.CenterOnParent()
         self.GetSizer().Fit(self)
-        self.FadeIn(deltaN=-10)
+        self.FadeIn()
 
     # -----------------------------------------------------------------------
     # Manage the text value
@@ -300,7 +300,7 @@ class TestPanelEntriesDialog(wx.Panel):
         super(TestPanelEntriesDialog, self).__init__(
             parent,
             style=wx.BORDER_NONE | wx.WANTS_CHARS,
-            name="Test Message Dialogs")
+            name="Test Entries Dialogs")
 
         wx.Button(self, label="Choice (empty)", pos=(10, 10), size=(128, 64),
                   name="btn_empty_choice")
@@ -327,7 +327,7 @@ class TestPanelEntriesDialog(wx.Panel):
             dlg = sppasChoiceDialog("An empty list of choices:", choices=["apples", "peers", "figs"])
             response = dlg.ShowModal()
             value = dlg.GetStringSelection()
-            dlg.DestroyFadeOut(deltaN=-20)
+            dlg.DestroyFadeOut()
             wx.LogMessage("Response of dialog: {:d}. Selected: {:s}".format(response, value))
 
         elif name == "btn_entry":

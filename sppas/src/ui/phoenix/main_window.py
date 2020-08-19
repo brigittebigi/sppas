@@ -123,7 +123,7 @@ class sppasMainWindow(sppasDialog):
             name="sppas_main_dlg")
 
         # Members
-        self._init_infos()
+        delta = self._init_infos()
 
         # Create the log window of the application and show it.
         self.log_window = sppasLogWindow(self, sppasAppConfig().log_level)
@@ -136,7 +136,7 @@ class sppasMainWindow(sppasDialog):
         # Fix this frame properties
         self.Enable()
         self.CenterOnScreen(wx.BOTH)
-        self.FadeIn(deltaN=-4)
+        self.FadeIn(delta)
         self.Show(True)
 
     # ------------------------------------------------------------------------
@@ -148,6 +148,8 @@ class sppasMainWindow(sppasDialog):
 
         Set the title, the icon and the properties of the frame.
 
+        :return: Delta value to fade in the window
+
         """
         sppasDialog._init_infos(self)
 
@@ -156,6 +158,12 @@ class sppasMainWindow(sppasDialog):
         self.SetMinSize(wx.Size(min_width, 480))
         self.SetSize(wx.GetApp().settings.frame_size)
         self.SetName('{:s}'.format(sg.__name__))
+
+        try:
+            delta = wx.GetApp().settings.fade_in_delta
+        except AttributeError:
+            delta = -5
+        return delta
 
     # -----------------------------------------------------------------------
 
@@ -384,7 +392,11 @@ class sppasMainWindow(sppasDialog):
         if wx.Platform == "__WXMSW__":
             self.DestroyChildren()
 
-        self.DestroyFadeOut(deltaN=-6)
+        try:
+            delta = wx.GetApp().settings.fade_out_delta
+        except AttributeError:
+            delta = -10
+        self.DestroyFadeOut(delta)
 
         # Under Windows, for an unknown reason (?!), the wxapp.OnExit() is not
         # invoked if exit() is called directly after clicking the Exit button.

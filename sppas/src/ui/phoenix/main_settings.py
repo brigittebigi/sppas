@@ -133,6 +133,11 @@ class WxAppSettings(sppasBaseSettings):
 
             title_height=font_height * 5,
             action_height=font_height * 3,
+
+            # Value to apply to the opacity when starting/closing the windows
+            fade_in_delta=-5,
+            fae_out_delta=-10
+
         )
 
     # -----------------------------------------------------------------------

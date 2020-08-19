@@ -169,7 +169,7 @@ class sppasInstallWindow(sppasTopFrame):
         # Fix this frame properties
         self.Enable()
         self.CenterOnScreen(wx.BOTH)
-        self.FadeIn(deltaN=-4)
+        self.FadeIn()
         self.Show(True)
 
     # ------------------------------------------------------------------------
@@ -376,7 +376,7 @@ class sppasInstallWindow(sppasTopFrame):
         # Terminate all frames
         if wx.Platform == "__WXMSW__":
             self.DestroyChildren()
-        self.DestroyFadeOut(deltaN=-6)
+        self.DestroyFadeOut()
 
     # -----------------------------------------------------------------------
 

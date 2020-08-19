@@ -92,7 +92,7 @@ class sppasBaseMessageDialog(sppasDialog):
         self.LayoutComponents()
         self.CenterOnParent()
         self.GetSizer().Fit(self)
-        self.FadeIn(deltaN=-4)
+        self.FadeIn()
 
     # -----------------------------------------------------------------------
 
@@ -474,7 +474,7 @@ def YesNoQuestion(message):
     wx.LogMessage(message)
     dialog = sppasYesNoDialog(message)
     response = dialog.ShowModal()
-    dialog.Destroy()
+    dialog.DestroyFadeOut()
     wx.LogMessage("User clicked yes" if response == wx.ID_YES else "User clicked no")
     return response
 
@@ -501,7 +501,7 @@ def Confirm(message, title=None):
     wx.LogMessage(message)
     dialog = sppasConfirmDialog(message, title)
     response = dialog.ShowModal()
-    dialog.Destroy()
+    dialog.DestroyFadeOut()
     wx.LogMessage("Confirmed by user." if response == wx.ID_YES else "User cancelled.")
     return response
 
@@ -526,7 +526,7 @@ def Error(message):
     wx.LogError(message)
     dialog = sppasErrorDialog(message, title=None)
     response = dialog.ShowModal()
-    dialog.Destroy()
+    dialog.DestroyFadeOut()
     return response
 
 # ---------------------------------------------------------------------------
@@ -548,7 +548,7 @@ def Information(message):
     wx.LogMessage(message)
     dialog = sppasInformationDialog(message)
     response = dialog.ShowModal()
-    dialog.Destroy()
+    dialog.DestroyFadeOut()
     return response
 
 # ---------------------------------------------------------------------------
@@ -570,7 +570,7 @@ def Warn(message):
     wx.LogWarning(message)
     dialog = sppasWarnDialog(message)
     response = dialog.ShowModal()
-    dialog.Destroy()
+    dialog.DestroyFadeOut()
     return response
 
 # ----------------------------------------------------------------------------

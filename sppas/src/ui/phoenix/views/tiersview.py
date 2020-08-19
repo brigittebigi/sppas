@@ -94,7 +94,7 @@ class sppasTiersViewDialog(sppasDialog):
         self.LayoutComponents()
         self.GetSizer().Fit(self)
         self.CenterOnParent()
-        self.FadeIn(deltaN=-8)
+        self.FadeIn()
 
     # -----------------------------------------------------------------------
 

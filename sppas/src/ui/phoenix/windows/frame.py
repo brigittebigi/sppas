@@ -73,13 +73,12 @@ class sppasFrame(wx.Frame):
         # To fade-in and fade-out the opacity
         self.opacity_in = 0
         self.opacity_out = 255
-        self.deltaN = -10
+        self.delta = None
         self.timer1 = None
         self.timer2 = None
 
         # Fix this frame properties
         self.CenterOnScreen(wx.BOTH)
-        # self.FadeIn(deltaN=-4)
 
     # -----------------------------------------------------------------------
 
@@ -89,8 +88,6 @@ class sppasFrame(wx.Frame):
         Set the title, the icon and the properties of the frame.
 
         """
-        settings = wx.GetApp().settings
-
         # Fix minimum frame size
         self.SetMinSize(wx.Size(320, 200))
 
@@ -104,27 +101,41 @@ class sppasFrame(wx.Frame):
         self.SetIcon(_icon)
 
         # colors & font
-        self.SetBackgroundColour(settings.bg_color)
-        self.SetForegroundColour(settings.fg_color)
-        self.SetFont(settings.text_font)
+        try:
+            settings = wx.GetApp().settings
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
     # -----------------------------------------------------------------------
     # Fade-in at start-up and Fade-out at close
     # -----------------------------------------------------------------------
 
-    def FadeIn(self, deltaN=-10):
+    def FadeIn(self, delta=None):
         """Fade-in opacity."""
-        self.deltaN = int(deltaN)
+        if delta is None:
+            try:
+                delta = wx.GetApp().settings.fade_in_delta
+            except AttributeError:
+                delta = -5
+        self.delta = delta
         self.SetTransparent(self.opacity_in)
         self.timer1 = wx.Timer(self, -1)
-        self.timer1.Start(1)
+        self.timer1.Start(5)
         self.Bind(wx.EVT_TIMER, self.__alpha_cycle_in, self.timer1)
 
-    def DestroyFadeOut(self, deltaN=-10):
+    def DestroyFadeOut(self, delta=None):
         """Destroy with a fade-out opacity."""
-        self.deltaN = int(deltaN)
+        if delta is None:
+            try:
+                delta = wx.GetApp().settings.fade_out_delta
+            except AttributeError:
+                delta = -5
+        self.delta = int(delta)
         self.timer2 = wx.Timer(self, -1)
-        self.timer2.Start(1)
+        self.timer2.Start(5)
         self.Bind(wx.EVT_TIMER, self.__alpha_cycle_out, self.timer2)
 
     # -----------------------------------------------------------------------
@@ -168,13 +179,13 @@ class sppasFrame(wx.Frame):
 
     def __alpha_cycle_in(self, *args):
         """Fade-in opacity of the dialog."""
-        self.opacity_in += self.deltaN
+        self.opacity_in += self.delta
         if self.opacity_in <= 0:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_in = 0
 
         if self.opacity_in >= 255:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_in = 255
             self.timer1.Stop()
 
@@ -184,15 +195,15 @@ class sppasFrame(wx.Frame):
 
     def __alpha_cycle_out(self, *args):
         """Fade-out opacity of the dialog."""
-        self.opacity_out += self.deltaN
+        self.opacity_out += self.delta
 
         if self.opacity_out >= 255:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_out = 255
             self.timer2.Stop()
 
         if self.opacity_out <= 0:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_out = 0
             wx.CallAfter(self.Destroy)
 
@@ -246,7 +257,7 @@ class sppasTopFrame(wx.TopLevelWindow):
         # To fade-in and fade-out the opacity
         self.opacity_in = 0
         self.opacity_out = 255
-        self.deltaN = -10
+        self.delta = None
         self.timer1 = None
         self.timer2 = None
 
@@ -287,17 +298,27 @@ class sppasTopFrame(wx.TopLevelWindow):
     # Fade-in at start-up and Fade-out at close
     # -----------------------------------------------------------------------
 
-    def FadeIn(self, deltaN=-10):
+    def FadeIn(self, delta=None):
         """Fade-in opacity."""
-        self.deltaN = int(deltaN)
+        if delta is None:
+            try:
+                delta = wx.GetApp().settings.fade_in_delta
+            except AttributeError:
+                delta = -5
+        self.delta = int(delta)
         self.SetTransparent(self.opacity_in)
         self.timer1 = wx.Timer(self, -1)
         self.timer1.Start(1)
         self.Bind(wx.EVT_TIMER, self.__alpha_cycle_in, self.timer1)
 
-    def DestroyFadeOut(self, deltaN=-10):
+    def DestroyFadeOut(self, delta=None):
         """Destroy with a fade-out opacity."""
-        self.deltaN = int(deltaN)
+        if delta is None:
+            try:
+                delta = wx.GetApp().settings.fade_out_delta
+            except AttributeError:
+                delta = -5
+        self.delta = int(delta)
         self.timer2 = wx.Timer(self, -1)
         self.timer2.Start(1)
         self.Bind(wx.EVT_TIMER, self.__alpha_cycle_out, self.timer2)
@@ -421,13 +442,13 @@ class sppasTopFrame(wx.TopLevelWindow):
 
     def __alpha_cycle_in(self, *args):
         """Fade-in opacity of the dialog."""
-        self.opacity_in += self.deltaN
+        self.opacity_in += self.delta
         if self.opacity_in <= 0:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_in = 0
 
         if self.opacity_in >= 255:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_in = 255
             self.timer1.Stop()
 
@@ -437,15 +458,15 @@ class sppasTopFrame(wx.TopLevelWindow):
 
     def __alpha_cycle_out(self, *args):
         """Fade-out opacity of the dialog."""
-        self.opacity_out += self.deltaN
+        self.opacity_out += self.delta
 
         if self.opacity_out >= 255:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_out = 255
             self.timer2.Stop()
 
         if self.opacity_out <= 0:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_out = 0
             wx.CallAfter(self.Destroy)
 

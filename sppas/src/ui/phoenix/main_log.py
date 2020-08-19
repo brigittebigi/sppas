@@ -214,7 +214,7 @@ class sppasLogWindow(wx.TopLevelWindow):
         # To fade-in and fade-out the opacity
         self.opacity_in = 0
         self.opacity_out = 255
-        self.deltaN = -3
+        self.delta = -5
 
         # Members
         self.handler = sppasHandlerToWx(self)
@@ -350,20 +350,20 @@ class sppasLogWindow(wx.TopLevelWindow):
         """Fade-in opacity."""
         self.SetTransparent(self.opacity_in)
         self.timer1 = wx.Timer(self, -1)
-        self.timer1.Start(1)
+        self.timer1.Start(5)
         self.Bind(wx.EVT_TIMER, self.__alpha_cycle_in, self.timer1)
 
     # ---------------------------------------------------------------------------
 
     def __alpha_cycle_in(self, *args):
         """Fade-in opacity of the dialog."""
-        self.opacity_in += self.deltaN
+        self.opacity_in += self.delta
         if self.opacity_in <= 0:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_in = 0
 
         if self.opacity_in >= 255:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_in = 255
             self.timer1.Stop()
 

@@ -295,7 +295,7 @@ class sppasAboutDialog(sppasDialog):
 
         h = self.GetFont().GetPixelSize()[1] * 50
         self.SetSize(wx.Size(h, h))
-        self.FadeIn(deltaN=-8)
+        self.FadeIn()
 
 # ------------------------------------------------------------------------
 
@@ -325,7 +325,7 @@ class sppasAboutPluginDialog(sppasDialog):
 
         h = self.GetFont().GetPixelSize()[1] * 50
         self.SetSize(wx.Size(h, h))
-        self.FadeIn(deltaN=-8)
+        self.FadeIn()
 
 # -------------------------------------------------------------------------
 
