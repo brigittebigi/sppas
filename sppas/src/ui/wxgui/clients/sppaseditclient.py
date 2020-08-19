@@ -152,10 +152,10 @@ class SppasEdit(wx.Panel):
 
         # the display panel
         dp = self._set_display()
-        # the navigation bar: a set of panels: self._trans, self._media, self._navig
+        # the navigation bar: a set of anz_panels: self._trans, self._media, self._navig
         sp = self._set_navigation()
 
-        # put the panels in a sizer
+        # put the anz_panels in a sizer
         sizer.Add(dp, 1, wx.TOP|wx.EXPAND, border=0)
         sizer.Add(sp, 0, wx.BOTTOM|wx.EXPAND, border=0)
 
@@ -186,7 +186,7 @@ class SppasEdit(wx.Panel):
 
 
     def _set_navigation(self):
-        """Set all panels: transcription, media and navigate."""
+        """Set all anz_panels: transcription, media and navigate."""
 
         sp = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -254,7 +254,7 @@ class SppasEdit(wx.Panel):
         wx.Window.SetForegroundColour(self, self._prefsIO.GetValue('M_FG_COLOUR'))
         wx.Window.SetFont(self, self._prefsIO.GetValue('M_FONT'))
 
-        # Apply on panels of self
+        # Apply on anz_panels of self
         self._trans.SetBackgroundColour(self._prefsIO.GetValue('M_BG_COLOUR'))
         self._media.SetBackgroundColour(self._prefsIO.GetValue('M_BG_COLOUR'))
         self._navig.SetBackgroundColour(self._prefsIO.GetValue('M_BG_COLOUR'))
@@ -344,12 +344,12 @@ class SppasEdit(wx.Panel):
 
     def OnObjectSelected(self, event):
         """
-        Update panels when the selected object has changed.
+        Update anz_panels when the selected object has changed.
         """
         selobj = event.object
         fname  = event.string
 
-        # panels that must be adapted (Set or Unset).
+        # anz_panels that must be adapted (Set or Unset).
         # (they will get the object with their own displayctrl access)
         self._media.SetMedia()
         self._trans.SetTrs()

@@ -193,7 +193,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         # set to toolbar
         btn = self.FindWindow("subtoolbar1").get_button("tier_paste")
         btn.SetFocusColour(color)
-        # set to the panels
+        # set to the anz_panels
         for filename in self._files:
             panel = self._files[filename]
             panel.SetHighLightColor(color)
@@ -550,7 +550,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     # -----------------------------------------------------------------------
 
     def paste_tiers(self):
-        """Paste tiers of the clipboard to the panels."""
+        """Paste tiers of the clipboard to the anz_panels."""
         paste = 0
         for filename in self._files:
             panel = self._files[filename]
@@ -565,7 +565,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     # -----------------------------------------------------------------------
 
     def duplicate_tiers(self):
-        """Duplicate checked tiers of the panels."""
+        """Duplicate checked tiers of the anz_panels."""
         nbf, nbt = self.__get_checked_nb()
         if nbt == 0:
             wx.LogWarning("Duplicate: no tier checked.")
@@ -584,7 +584,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     # -----------------------------------------------------------------------
 
     def move_tiers(self, up=True):
-        """Move up or down checked tiers of the panels."""
+        """Move up or down checked tiers of the anz_panels."""
         nbf, nbt = self.__get_checked_nb()
         if nbt == 0:
             wx.LogWarning("Move: no tier checked.")

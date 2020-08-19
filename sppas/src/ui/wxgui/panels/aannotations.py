@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.wxgui.panels.aannotations.py
+    src.wxgui.anz_panels.aannotations.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """

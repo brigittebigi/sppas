@@ -153,7 +153,7 @@ class SndRoamer(scrolled.ScrolledPanel):
 
         """
         sizer = wx.BoxSizer(wx.VERTICAL)
-        # create the panels
+        # create the anz_panels
         self._propertyPanel = AudioInfo(self, self._prefsIO)
         self._managerPanel  = AudioRoamer(self, self._prefsIO)
         self._playerPanel   = SndPlayer(self, prefsIO=self._prefsIO)

@@ -36,11 +36,11 @@
 
 import wx
 
-from .panel import sppasPanel
-from .text import sppasStaticText
+from .panels import sppasPanel
 from .buttons import BitmapTextButton
 from .buttons import ToggleButton
 from .buttons import TextButton
+from .text import sppasStaticText
 
 # ----------------------------------------------------------------------------
 

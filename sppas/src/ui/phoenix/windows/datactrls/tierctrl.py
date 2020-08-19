@@ -44,7 +44,7 @@ from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasAnnotation
 
-from ..panel import sppasPanel
+from ..panels import sppasPanel
 from .basedatactrl import sppasDataWindow
 from .annctrl import sppasAnnotationWindow
 

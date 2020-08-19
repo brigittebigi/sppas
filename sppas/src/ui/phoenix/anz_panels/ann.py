@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.panels.ann.py
+    src.ui.phoenix.anz_panels.ann.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Editor for a sppasAnnotation().

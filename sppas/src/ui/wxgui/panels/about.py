@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.wxgui.panels.about.py
+    src.wxgui.anz_panels.about.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
     GUI panel for displaying information about a software.

@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.wxgui.panels.buttons.py
+    src.wxgui.anz_panels.buttons.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     :author:       Brigitte Bigi

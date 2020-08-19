@@ -171,7 +171,7 @@ class FrameSPPAS(wx.Frame):
     # ------------------------------------------------------------------------
 
     def _create_content(self):
-        """Organize all sub-panels into a main panel and return it."""
+        """Organize all sub-anz_panels into a main panel and return it."""
 
         main_panel = wx.Panel(self, -1, style=wx.NO_BORDER)
         main_panel.SetBackgroundColour(self.preferences.GetValue('M_BG_COLOUR'))

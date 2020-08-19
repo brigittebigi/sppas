@@ -39,7 +39,7 @@ import wx
 from sppas.src.config import sg
 
 from ..tools import sppasSwissKnife
-from . import sppasStaticLine
+from .line import sppasStaticLine
 
 # ----------------------------------------------------------------------------
 
@@ -492,7 +492,7 @@ class sppasTopFrame(wx.TopLevelWindow):
     # -----------------------------------------------------------------------
 
     def UpdateUI(self):
-        """Apply settings to all panels and refresh."""
+        """Apply settings to all anz_panels and refresh."""
         # apply new (or not) 'wx' values to content.
         p = self.FindWindow("content")
         p.SetBackgroundColour(wx.GetApp().settings.bg_color)

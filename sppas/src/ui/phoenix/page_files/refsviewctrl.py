@@ -242,7 +242,7 @@ class RefsTreeViewPanel(sppasScrolledPanel):
         return nb
 
     # ------------------------------------------------------------------------
-    # Manage the data and their panels
+    # Manage the data and their anz_panels
     # ------------------------------------------------------------------------
 
     def __add_ref_panel(self, ref):

@@ -177,7 +177,7 @@ class ComponentFrame(wx.Frame):
     # ------------------------------------------------------------------------
 
     def _create_content(self):
-        """Organize all sub-panels into a main panel and return it."""
+        """Organize all sub-anz_panels into a main panel and return it."""
 
         mainpanel = wx.Panel(self, -1,  style=wx.NO_BORDER)
         mainpanel.SetBackgroundColour(self._prefsIO.GetValue('M_BG_COLOUR'))
@@ -505,7 +505,7 @@ class ComponentFrame(wx.Frame):
         self._prefsIO = prefs
         self.toolbar.SetPrefs(self._prefsIO)
 
-        # change to the children panels
+        # change to the children anz_panels
         evt = SettingsEvent(prefsIO=self._prefsIO)
         evt.SetEventObject(self)
         wx.PostEvent(self._filepanel, evt)

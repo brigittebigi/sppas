@@ -43,7 +43,7 @@ from sppas.src.config import annots
 from sppas.src.utils import u
 from sppas.src.utils import sppasUnicode
 
-from ..panels import sppasOptionsPanel
+from ..anz_panels import sppasOptionsPanel
 from ..windows import sppasDialog
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel

@@ -151,7 +151,7 @@ class IPUscribe(wx.Panel):
         self._sndname = None
         self._buttons = dict()
 
-        # a set of panels:
+        # a set of anz_panels:
         self._txtinfo = wx.StaticText(self,  -1, "", style=wx.ALIGN_LEFT)
         self._trsPanel = IPUscribeData(self, prefsIO)
         self._create_media()
@@ -405,7 +405,7 @@ class IPUscribe(wx.Panel):
         """Change font of all texts."""
 
         wx.Window.SetFont(self, font)
-        # Apply on all panels
+        # Apply on all anz_panels
         self._trsPanel.SetFont(font)
         self._mediaPanel.SetFont(font)
         self._navPanel.SetFont(font)
@@ -418,10 +418,10 @@ class IPUscribe(wx.Panel):
     # ----------------------------------------------------------------------
 
     def SetBackgroundColour(self, color):
-        """Change background of all panels."""
+        """Change background of all anz_panels."""
 
         wx.Window.SetBackgroundColour(self, color)
-        # Apply as background on all panels
+        # Apply as background on all anz_panels
         self._trsPanel.SetBackgroundColour(color)
         self._mediaPanel.SetBackgroundColour(color)
         self._navPanel.SetBackgroundColour(color)
@@ -435,10 +435,10 @@ class IPUscribe(wx.Panel):
     # ----------------------------------------------------------------------
 
     def SetForegroundColour(self, color):
-        """Change foreground of all panels."""
+        """Change foreground of all anz_panels."""
 
         wx.Window.SetForegroundColour(self, color)
-        # Apply as foreground on all panels
+        # Apply as foreground on all anz_panels
         self._trsPanel.SetForegroundColour(color)
         self._mediaPanel.SetForegroundColour(color)
         self._navPanel.SetForegroundColour(color)
@@ -602,7 +602,7 @@ class IPUscribeData(scrolled.ScrolledPanel):
         self._prefsIO = prefsIO
 
         # members
-        self._ipupanels = list()  # list of IPU panels
+        self._ipupanels = list()  # list of IPU anz_panels
         self._ipudata = list()    # list of all IPU data
         self._trsname = None      # the transcription file name
         self._trsinput = None     # the transcription object
@@ -661,17 +661,17 @@ class IPUscribeData(scrolled.ScrolledPanel):
         """Change font of all texts."""
 
         wx.Window.SetFont(self, font)
-        # Apply on all panels
+        # Apply on all anz_panels
         for p in self._ipupanels:
             p.SetFont(font)
 
     # ----------------------------------------------------------------------
 
     def SetForegroundColour(self, color):
-        """Change foreground of all panels."""
+        """Change foreground of all anz_panels."""
 
         wx.Window.SetForegroundColour(self, color)
-        # Apply as foreground on all panels
+        # Apply as foreground on all anz_panels
         for p in self._ipupanels:
             p.SetForegroundColour(color)
 
@@ -785,7 +785,7 @@ class IPUscribeData(scrolled.ScrolledPanel):
         if nb_page > self.GetPageCount():
             return -1
 
-        # Remove existing IPU panels
+        # Remove existing IPU anz_panels
         for i in reversed(range(len(self._ipupanels))):
             self._ipupanels[i].Destroy()
             self._ipusizer.Remove(i)

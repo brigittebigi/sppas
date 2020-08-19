@@ -62,8 +62,8 @@ from ..views import AudioRoamer
 from ..views import MetaDataEdit
 from ..windows.listctrl import CheckListCtrl, sppasListCtrl
 from ..windows.text import sppasStaticText, sppasTextCtrl
-from ..windows.panel import sppasPanel
-from ..windows.panel import sppasCollapsiblePanel
+from ..windows.panels import sppasPanel
+from ..windows.panels import sppasCollapsiblePanel
 
 from .baseview import sppasBaseViewPanel
 

@@ -39,7 +39,7 @@ import wx.media
 
 from ..buttons import ToggleButton
 from ..buttons import BitmapTextButton
-from ..panel import sppasPanel
+from ..panels import sppasPanel
 from .mediaevents import MediaEvents
 
 # ---------------------------------------------------------------------------
@@ -54,7 +54,7 @@ class sppasPlayerControlsPanel(sppasPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
-    Four children panels are to be created and organized into a BoxSizer:
+    Four children anz_panels are to be created and organized into a BoxSizer:
         - widgets_panel: a panel, free to be used to add widgets
         - transport_panel: all buttons to play a media
         - volume_panel: a button to mute and a slider to adjust the volume
@@ -245,13 +245,13 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     def _create_content(self):
         """Create the content of the panel."""
-        # Create the main panels
+        # Create the main anz_panels
         panel1 = self.__create_widgets_panel()
         panel2 = self.__create_transport_panel()
         panel3 = self.__create_volume_panel()
         slider = self.__create_seek_slider_panel()
 
-        # Organize the panels into the main sizer
+        # Organize the anz_panels into the main sizer
         border = sppasPanel.fix_size(2)
         nav_sizer = wx.BoxSizer(wx.HORIZONTAL)
         nav_sizer.Add(panel1, 3, wx.EXPAND | wx.LEFT | wx.RIGHT, border)

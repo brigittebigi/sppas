@@ -134,13 +134,13 @@ class sppasFilesPanel(sppasPanel):
 
     def _create_content(self):
         """Create the main content."""
-        # Create all the panels
+        # Create all the anz_panels
         wp = WorkspacesPanel(self, name='wkps_panel')
         fm = PathsTreePanel(self, name="files_panel")
         ap = AssociatePanel(self, name="assoc_panel")
         cm = ReferencesTreePanel(self, name="refs_panel")
 
-        # Organize all the panels vertically, separated by 2px grey lines.
+        # Organize all the anz_panels vertically, separated by 2px grey lines.
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(wp, 1, wx.EXPAND, 0)
         sizer.Add(self.__create_vline(), 0, wx.EXPAND, 0)
@@ -155,7 +155,7 @@ class sppasFilesPanel(sppasPanel):
     # ------------------------------------------------------------------------
 
     def __create_vline(self):
-        """Create a vertical line, used to separate the panels."""
+        """Create a vertical line, used to separate the anz_panels."""
         line = sppasStaticLine(self, orient=wx.LI_VERTICAL, name="static_line")
         line.SetMinSize(wx.Size(2, -1))
         line.SetSize(wx.Size(2, -1))
@@ -228,7 +228,7 @@ class sppasFilesPanel(sppasPanel):
     def _process_data_changed(self, event):
         """Process a change of data.
 
-        Set the data of the event to the other panels.
+        Set the data of the event to the other anz_panels.
 
         :param event: (wx.Event)
 
@@ -254,7 +254,7 @@ class sppasFilesPanel(sppasPanel):
         :param data: (sppasWorkspace)
 
         """
-        # Set the data to appropriate children panels
+        # Set the data to appropriate children anz_panels
         for panel in self.GetChildren():
             if panel.GetName() in ("wkps_panel", "files_panel", "assoc_panel", "refs_panel"):
                 if emitted is not panel:

@@ -62,7 +62,7 @@ class TestPanel(wx.Choicebook):
         self.SetBackgroundColour(wx.Colour(100, 100, 100))
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
-        # Make the bunch of test panels for the choice book
+        # Make the bunch of test anz_panels for the choice book
         p = tierctrl.TestPanel(self)
         self.AddPage(p, p.GetName())
         p = annctrl.TestPanel(self)

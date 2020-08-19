@@ -29,10 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.page_files.test_files.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    A panel and an application to test classes of this package.
+    src.ui.phoenix.windows.buttons.test_buttons.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -42,13 +40,8 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
-import sppas.src.ui.phoenix.page_files.pathstree as filesmanager
-import sppas.src.ui.phoenix.page_files.refstree as refsmanager
-import sppas.src.ui.phoenix.page_files.workspaces as wksmanager
-import sppas.src.ui.phoenix.page_files.filesviewctrl as filesviewctrl
-import sppas.src.ui.phoenix.page_files.refsviewctrl as refsviewctrl
-
-from sppas.src.ui.phoenix.page_files.files import TestPanelFiles
+from sppas.src.ui.phoenix.windows.panels.panel import TestPanelPanels
+from sppas.src.ui.phoenix.windows.panels.risepanel import TestPanelCollapsiblePanel
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -56,27 +49,32 @@ from sppas.src.ui.phoenix.page_files.files import TestPanelFiles
 
 
 class TestPanel(wx.Choicebook):
+    """Choicebook to test a bunch of TestPanelXXX() anz_panels.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
     def __init__(self, parent):
         wx.Choicebook.__init__(
             self,
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        # self.SetBackgroundColour(wx.Colour(100, 100, 100))
-        # self.SetForegroundColour(wx.Colour(0, 0, 10))
-
-        # Make the bunch of test anz_panels for the choice book
+        # Make the bunch of test anz_panels
         panels = list()
-        panels.append(TestPanelFiles(self))
-        panels.append(filesmanager.TestPanel(self))
-        panels.append(refsmanager.TestPanel(self))
-        panels.append(wksmanager.TestPanel(self))
-        panels.append(filesviewctrl.TestPanel(self))
-        panels.append(refsviewctrl.TestPanel(self))
+        panels.append(TestPanelPanels(self))
+        panels.append(TestPanelCollapsiblePanel(self))
 
+        # Add such anz_panels to pages of the choice book.
         for p in panels:
             self.AddPage(p, p.GetName())
 
+        # Allows to switch pages of the choice book.
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
 
@@ -115,27 +113,8 @@ class TestPanel(wx.Choicebook):
 # ----------------------------------------------------------------------------
 
 
-class TestFrame(wx.Frame):
-
-    def __init__(self):
-        super(TestFrame, self).__init__(None, title="Test Files Frame")
-        self.SetSize(wx.Size(900, 600))
-        self.SetMinSize(wx.Size(640, 480))
-
-        # create a panel in the frame
-        sizer = wx.BoxSizer()
-        sizer.Add(TestPanel(self), 1, wx.EXPAND, 0)
-        self.SetSizer(sizer)
-
-        # show result
-        self.Layout()
-        self.Show()
-
-# ----------------------------------------------------------------------------
-
-
 class TestApp(wx.App):
-    """Application to test a TestPanel.
+    """Application to test a TestPanel().
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -153,14 +132,26 @@ class TestApp(wx.App):
                         filename=None,
                         useBestVisual=True,
                         clearSigInt=True)
+
+        # create the frame
+        frm = wx.Frame(None, title='Test frame', size=wx.Size(900, 600))
+        frm.SetMinSize(wx.Size(640, 480))
+        self.SetTopWindow(frm)
+
         # Fix language and translation
         self.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
         self.__cfg = sppasAppConfig()
         self.settings = WxAppSettings()
         self.setup_debug_logging()
 
-        frm = TestFrame()
-        self.SetTopWindow(frm)
+        # create a panel in the frame
+        sizer = wx.BoxSizer()
+        sizer.Add(TestPanel(frm), 1, wx.EXPAND, 0)
+        frm.SetSizer(sizer)
+
+        # show result
+        frm.Layout()
+        frm.Show()
 
     @staticmethod
     def setup_debug_logging():

@@ -43,7 +43,7 @@ from sppas.src.config import msg
 from sppas.src.utils import u
 from sppas.src.anndata import sppasMetaData
 
-from src.ui.phoenix.windows.panel import sppasPanel
+from src.ui.phoenix.windows.panels import sppasPanel
 from src.ui.phoenix.windows.toolbar import sppasToolbar
 from src.ui.phoenix.windows.listctrl import sppasListCtrl
 from src.ui.phoenix.windows.line import sppasStaticLine
@@ -242,7 +242,7 @@ class sppasMetaDataEditDialog(sppasDialog):
     # -----------------------------------------------------------------------
 
     def __create_vline(self, parent):
-        """Create an horizontal line, used to separate the panels."""
+        """Create an horizontal line, used to separate the anz_panels."""
         line = sppasStaticLine(parent, orient=wx.LI_VERTICAL)
         line.SetMinSize(wx.Size(5, -1))
         line.SetPenStyle(wx.PENSTYLE_SOLID)

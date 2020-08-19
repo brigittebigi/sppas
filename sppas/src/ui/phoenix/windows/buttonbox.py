@@ -38,7 +38,7 @@ import wx
 
 from .buttons import RadioButton
 from .buttons import ButtonEvent
-from .panel import sppasPanel
+from .panels import sppasPanel
 
 # ---------------------------------------------------------------------------
 

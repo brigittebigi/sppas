@@ -46,7 +46,7 @@ from sppas.src.audiodata import sppasAudioPCM
 import sppas.src.audiodata.aio
 
 from sppas.src.ui.phoenix.windows.datactrls import sppasWaveformWindow
-from sppas.src.ui.phoenix.windows.panel import sppasPanel
+from sppas.src.ui.phoenix.windows.panels import sppasPanel
 from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
 
 # ---------------------------------------------------------------------------

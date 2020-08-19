@@ -51,7 +51,7 @@ from ..windows import sppasSplitterWindow
 from ..windows import sppasMultiPlayerPanel
 from ..windows import MediaEvents
 from ..windows import BitmapTextButton
-from ..panels import sppasTiersEditWindow
+from ..anz_panels import sppasTiersEditWindow
 from ..main_events import EVT_VIEW
 
 from .anz_baseviews import BaseViewFilesPanel
@@ -189,7 +189,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
     def SetHighLightColor(self, color):
         """Set a color to highlight buttons, and for the focus."""
         self._hicolor = color
-        # set to the panels
+        # set to the anz_panels
         for filename in self._files:
             panel = self._files[filename]
             panel.SetHighLightColor(color)
@@ -347,7 +347,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
 
     def __add_custom_controls(self, control_panel):
         """Add custom widgets to the player controls panel."""
-        # to switch panels of the splitter
+        # to switch anz_panels of the splitter
         btn1 = BitmapTextButton(control_panel.widgets_panel, name="way_up_down")
         control_panel.SetButtonProperties(btn1)
         control_panel.AddWidget(btn1)
@@ -419,7 +419,7 @@ class TimeViewFilesPanel(BaseViewFilesPanel):
             else:
                 self.__enable_tier_into_scrolled(trs_filename, tier_name)
 
-        # not implemented yet: child panels don't allow to select an ann
+        # not implemented yet: child anz_panels don't allow to select an ann
         elif action == "period_selected":
             period = event.value
             # start = int(period[0] * 1000.)

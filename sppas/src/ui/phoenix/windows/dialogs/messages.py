@@ -39,8 +39,8 @@ import wx
 from sppas.src.config import msg
 from sppas.src.utils import u
 
+from ..panels import sppasPanel
 from ..text import sppasMessageText
-from ..panel import sppasPanel
 from .dialog import sppasDialog
 
 # ----------------------------------------------------------------------------

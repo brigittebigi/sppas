@@ -93,7 +93,7 @@ FileDirtyCommandEvent, spEVT_FILE_DIRTY_COMMAND = newevent.NewCommandEvent()
 
 
 # ----------------------------------------------------------------------------
-# Events for panels
+# Events for anz_panels
 # ----------------------------------------------------------------------------
 
 PanelSelectedEvent, spEVT_PANEL_SELECTED = newevent.NewEvent()

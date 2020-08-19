@@ -40,10 +40,10 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
-import sppas.src.ui.phoenix.panels.option as option
-import sppas.src.ui.phoenix.panels.ann as ann
-import sppas.src.ui.phoenix.panels.tierlist as tierlist
-import sppas.src.ui.phoenix.panels.tiers as tiers
+import sppas.src.ui.phoenix.anz_panels.option as option
+import sppas.src.ui.phoenix.anz_panels.ann as ann
+import sppas.src.ui.phoenix.anz_panels.tierlist as tierlist
+import sppas.src.ui.phoenix.anz_panels.tiers as tiers
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -60,7 +60,7 @@ class TestPanel(wx.Choicebook):
         self.SetBackgroundColour(wx.Colour(100, 100, 100))
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
-        # Make the bunch of test panels for the choice book
+        # Make the bunch of test anz_panels for the choice book
         self.AddPage(tiers.TestPanel(self), "Tiers edit window")
         self.AddPage(tierlist.TestPanel(self), "Tierctrl list")
         self.AddPage(ann.TestPanel(self), "Annotation edit panel")

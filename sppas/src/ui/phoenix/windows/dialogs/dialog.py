@@ -42,9 +42,9 @@ from sppas.src.utils import u
 
 from sppas.src.ui.phoenix.tools import sppasSwissKnife
 from sppas.src.ui.phoenix.windows.buttons import BitmapTextButton
+from sppas.src.ui.phoenix.windows.panels import sppasPanel
 from sppas.src.ui.phoenix.windows.line import sppasStaticLine
 from sppas.src.ui.phoenix.windows.text import sppasTitleText
-from sppas.src.ui.phoenix.windows.panel import sppasPanel
 
 # ----------------------------------------------------------------------------
 

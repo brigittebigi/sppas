@@ -170,7 +170,7 @@ class sppasMainWindow(sppasDialog):
     def _create_content(self):
         """Create the content of the frame.
 
-        Content is made of a menu, an area for panels and action buttons.
+        Content is made of a menu, an area for anz_panels and action buttons.
 
         """
         # add a customized menu (instead of an header+toolbar)
@@ -284,7 +284,7 @@ class sppasMainWindow(sppasDialog):
     def _process_data_changed(self, event):
         """Process a change of data.
 
-        Set the data of the event to the other panels.
+        Set the data of the event to the other anz_panels.
 
         :param event: (wx.Event) An event with a sppasWorkspace()
 
@@ -298,7 +298,7 @@ class sppasMainWindow(sppasDialog):
                         "".format(emitted.GetName()))
             return
 
-        # Set the data to appropriate children panels
+        # Set the data to appropriate children anz_panels
         book = self.FindWindow('content')
         for i in range(book.GetPageCount()):
             page = book.GetPage(i)

@@ -53,7 +53,7 @@ from sppas.src.ui.phoenix.windows.buttons.checkbutton import TestPanelRadioButto
 
 
 class TestPanel(wx.Choicebook):
-    """Choicebook to test a bunch of TestPanelXXX() panels.
+    """Choicebook to test a bunch of TestPanelXXX() anz_panels.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -69,7 +69,7 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        # Make the bunch of test panels
+        # Make the bunch of test anz_panels
         panels = list()
         panels.append(TestPanelBaseButton(self))
         panels.append(TestPanelTextButton(self))
@@ -78,7 +78,7 @@ class TestPanel(wx.Choicebook):
         panels.append(TestPanelCheckButton(self))
         panels.append(TestPanelRadioButton(self))
 
-        # Add such panels to pages of the choice book.
+        # Add such anz_panels to pages of the choice book.
         for p in panels:
             self.AddPage(p, p.GetName())
 

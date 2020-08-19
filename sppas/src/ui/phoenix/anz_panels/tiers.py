@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.panels.tiers.py
+    src.ui.phoenix.anz_panels.tiers.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -247,7 +247,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     # -----------------------------------------------------------------------
 
     def swap_top_down_panels(self):
-        """Swap the panels of the splitter."""
+        """Swap the anz_panels of the splitter."""
         win_1 = self.GetWindow1()
         win_2 = self.GetWindow2()
         w, h = win_2.GetSize()

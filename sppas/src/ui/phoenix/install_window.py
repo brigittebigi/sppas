@@ -197,7 +197,7 @@ class sppasInstallWindow(sppasTopFrame):
     def _create_content(self):
         """Create the content of the frame.
 
-        Content is made of a menu, an area for panels and action buttons.
+        Content is made of a menu, an area for anz_panels and action buttons.
 
         """
         # add a customized header

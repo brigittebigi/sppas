@@ -288,7 +288,7 @@ class FileTreeViewPanel(sppasScrolledPanel):
                 sppasTrash().put_file_into(filename)
                 wx.LogMessage('{:s} moved into SPPAS Trash.'.format(filename))
             except Exception as e:
-                # Re-Add it into the data and the panels or not?????
+                # Re-Add it into the data and the anz_panels or not?????
                 wx.LogError("File {!s:s} can't be deleted due to the "
                             "following error: {:s}.".format(filename, str(e)))
 
@@ -331,7 +331,7 @@ class FileTreeViewPanel(sppasScrolledPanel):
             self.change_state(entry, States().LOCKED)
 
     # ------------------------------------------------------------------------
-    # Manage the data and their panels
+    # Manage the data and their anz_panels
     # ------------------------------------------------------------------------
 
     def add_folder(self, foldername, add_files=True):
@@ -404,7 +404,7 @@ class FileTreeViewPanel(sppasScrolledPanel):
             wx.LogWarning("File not added: {:s}".format(filename))
             return added
 
-        # add the entries into the panels
+        # add the entries into the anz_panels
         for fs in added_fs:
             if isinstance(fs, FileName):
                 wx.LogDebug("Added file to the data {:s}".format(fs.get_id()))

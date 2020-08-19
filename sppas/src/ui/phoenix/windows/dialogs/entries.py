@@ -36,7 +36,7 @@
 
 import wx
 
-from ..panel import sppasPanel
+from ..panels import sppasPanel
 from ..text import sppasMessageText, sppasStaticText, sppasTextCtrl
 from .dialog import sppasDialog
 from .messages import sppasBaseMessageDialog
