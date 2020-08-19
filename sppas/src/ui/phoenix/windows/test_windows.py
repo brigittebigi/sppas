@@ -46,6 +46,7 @@ import sppas.src.ui.phoenix.windows.basewindow as basedraw
 import sppas.src.ui.phoenix.windows.toolbar as toolbar
 import sppas.src.ui.phoenix.windows.line as line
 import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
+import sppas.src.ui.phoenix.windows.combobox as combobox
 import sppas.src.ui.phoenix.windows.listctrl as listctrl
 import sppas.src.ui.phoenix.windows.media.mediactrl as media
 import sppas.src.ui.phoenix.windows.media.playerctrl as player
@@ -64,13 +65,14 @@ class TestPanel(wx.Choicebook):
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
         # Make the bunch of test anz_panels for the choice book
+        self.AddPage(combobox.TestPanelComboBox(self), "ComboBox")
         self.AddPage(dcwin.TestPanel(self), "Base DC Window")
         self.AddPage(multiplayer.TestPanel(self), "Multi Media Player")
         self.AddPage(player.TestPanel(self), "Player Control")
         self.AddPage(media.TestPanel(self), "Media Control")
         self.AddPage(toolbar.TestPanel(self), "Toolbar")
         self.AddPage(listctrl.TestPanel(self), "ListCtrl")
-        self.AddPage(buttonbox.TestPanel(self), "ButtonBox")
+        self.AddPage(buttonbox.TestPanel(self), "RadioBox & ToggleBox")
         self.AddPage(line.TestPanel(self), "Lines")
         self.AddPage(basedraw.TestPanel(self), "Base Window")
 

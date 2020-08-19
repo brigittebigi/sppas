@@ -73,8 +73,8 @@ class sppasBaseRisePanel(sppasPanel):
             parent, id, pos, size, style, name)
 
         # Public members
-        self.img_collapsed = "arrow_collapsed"
-        self.img_expanded = "arrow_expanded"
+        self.__img_collapsed = "arrow_collapsed"
+        self.__img_expanded = "arrow_expanded"
 
         # Look&feel
         try:
@@ -98,9 +98,19 @@ class sppasBaseRisePanel(sppasPanel):
         # Bind the events
         self.Bind(wx.EVT_BUTTON, self.OnButton, self._btn)
         self.Bind(wx.EVT_SIZE, self.OnSize)
-        self.SetInitialSize()
+        self.SetInitialSize(size)
 
         self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def SetCollapsedIcon(self, name="arrow_collapsed"):
+        self.__img_collapsed = name
+        self.Refresh()
+
+    def SetExpandedIcon(self, name="arrow_expanded"):
+        self.__img_expanded = name
+        self.Refresh()
 
     # -----------------------------------------------------------------------
 
@@ -146,15 +156,15 @@ class sppasBaseRisePanel(sppasPanel):
 
         """
         collapse = bool(collapse)
-        if self.IsCollapsed() == collapse:
-            return
+        # if self.IsCollapsed() == collapse:
+        #    return
 
         # update our state
         self.Freeze()
         if collapse is True:
-            self._btn.SetImage(self.img_collapsed)
+            self._btn.SetImage(self.__img_collapsed)
         else:
-            self._btn.SetImage(self.img_expanded)
+            self._btn.SetImage(self.__img_expanded)
 
         if self._child_panel:
             if collapse is True:
@@ -342,9 +352,10 @@ class sppasBaseRisePanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _create_collapsible_button(self, parent, text):
-        img_name = self.img_expanded
+        img_name = self.__img_expanded
         if self.IsCollapsed():
-            img_name = self.img_collapsed
+            img_name = self.__img_collapsed
+
         btn = BitmapTextButton(parent, label=text, name=img_name)
         btn.SetLabelPosition(wx.RIGHT)
         btn.SetAlign(wx.ALIGN_CENTER)
@@ -392,7 +403,7 @@ class sppasCollapsiblePanel(sppasBaseRisePanel):
     """
 
     def __init__(self, parent, id=wx.ID_ANY, label="", pos=wx.DefaultPosition,
-                 size=wx.DefaultSize, style=0, name="CollapsiblePane"):
+                 size=wx.DefaultSize, style=0, name="collapsible_panel"):
         """Create a sppasCollapsiblePanel.
 
         :param parent: (wx.Window) Parent window must NOT be none
@@ -486,6 +497,7 @@ class TestPanelCollapsiblePanel(sc.ScrolledPanel):
         checkbox.Bind(wx.EVT_BUTTON, self.OnCkeckedPanel)
 
         p3 = sppasBaseRisePanel(self, label="SPPAS BaseRisePanel using SetPane...")
+        p3.SetExpandedIcon("arrow_combo")
         child_panel = sppasPanel(p3)
         child_panel.SetBackgroundColour(wx.YELLOW)
         self.MakePanelContent(child_panel)
@@ -500,7 +512,7 @@ class TestPanelCollapsiblePanel(sc.ScrolledPanel):
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p4)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(p2, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, border=10)
+        sizer.Add(p2, 0, wx.ALIGN_LEFT | wx.ALL, border=10)
         sizer.Add(p3, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, border=10)
         sizer.Add(p4, 0, wx.EXPAND | wx.ALL, border=10)
 

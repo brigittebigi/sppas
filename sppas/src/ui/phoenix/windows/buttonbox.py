@@ -39,12 +39,12 @@ import wx
 from .buttons import RadioButton
 from .buttons import ToggleButton
 from .buttons import ButtonEvent
-from .panels import sppasPanel
+from .panels import sppasPanel, sppasScrolledPanel
 
 # ---------------------------------------------------------------------------
 
 
-class sppasRadioBoxPanel(sppasPanel):
+class sppasRadioBoxPanel(sppasScrolledPanel):
     """A radio box is a list of mutually exclusive radio buttons.
 
     :author:       Brigitte Bigi
@@ -71,6 +71,10 @@ class sppasRadioBoxPanel(sppasPanel):
         self.__selection = -1
         self._create_content(style, choices, majorDimension)
         self._setup_events()
+
+        # r = self.GetSizer().GetRows()
+        # self.SetMinSize(wx.Size(-1, (r * int(float(self.get_font_height() * 1.5))) + (r*self.GetSizer().GetHGap())))
+        self.SetupScrolling(scroll_x=True, scroll_y=True)
         self.Layout()
 
     # ------------------------------------------------------------------------
@@ -307,12 +311,13 @@ class sppasRadioBoxPanel(sppasPanel):
                     cols = (len(choices)+1) // majorDimension
             else:  # one dimension
                 if style == wx.RA_SPECIFY_COLS:
-                    cols = majorDimension
+                    cols = 1
                     rows = len(choices)
                 elif style == wx.RA_SPECIFY_ROWS:
-                    rows = majorDimension
+                    rows = 1
                     cols = len(choices)
 
+        wx.LogMessage("rows={:d}, cols={:d}".format(rows, cols))
         gap = sppasPanel.fix_size(2)
         grid = wx.GridBagSizer(vgap=gap, hgap=gap)
         if style == wx.RA_SPECIFY_COLS:
@@ -341,6 +346,7 @@ class sppasRadioBoxPanel(sppasPanel):
         for r in range(rows):
             grid.AddGrowableRow(r)
 
+        wx.LogMessage("Len choices = {:d} ; len buttons = {:d}".format(len(choices), len(self._buttons)))
         if len(choices) > 0:
             self.SetSelection(0)
         self.SetMinSize(wx.Size(
@@ -443,7 +449,7 @@ class sppasToggleBoxPanel(sppasRadioBoxPanel):
         """Create the button to add into the box."""
         btn = ToggleButton(self, label=label, name=name)
         btn.SetImage(None)
-        btn.img_margin = 0.3
+        # btn.img_margin = 0.3
 
         # Get the font height for the header
         h = self.get_font_height()
@@ -455,7 +461,7 @@ class sppasToggleBoxPanel(sppasRadioBoxPanel):
 
         btn.Enable(True)
         btn.SetValue(False)
-        btn.SetMinSize(wx.Size(-1, self.get_font_height() * 2))
+        # btn.SetMinSize(wx.Size(-1, int(float(self.get_font_height()) * 1.5)))
         return btn
 
     # ------------------------------------------------------------------------

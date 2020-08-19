@@ -95,9 +95,13 @@ from .dialogs import sppasProgressDialog
 
 # buttonbox package requires panels and buttons
 from .buttonbox import sppasRadioBoxPanel
+from .buttonbox import sppasToggleBoxPanel
 
 # toolbar requires panels, buttons and text
 from .toolbar import sppasToolbar
+
+# combobox requires panels, buttons and buttonbox
+from .combobox import sppasComboBox
 
 from .media import MediaType
 from .media import MediaEvents

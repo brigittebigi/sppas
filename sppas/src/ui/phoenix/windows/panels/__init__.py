@@ -2,6 +2,7 @@ from .panel import sppasPanel
 from .panel import sppasTransparentPanel
 from .panel import sppasImgBgPanel
 from .scpanel import sppasScrolledPanel
+from .risepanel import sppasBaseRisePanel
 from .risepanel import sppasCollapsiblePanel
 
 __all__ = (
@@ -9,6 +10,7 @@ __all__ = (
     "sppasTransparentPanel",
     "sppasImgBgPanel",
     "sppasScrolledPanel",
+    "sppasBaseRisePanel",
     "sppasCollapsiblePanel"
 )
 
