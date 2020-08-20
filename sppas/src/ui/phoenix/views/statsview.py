@@ -51,6 +51,7 @@ from ..windows import sppasPanel
 from ..windows import sppasRadioBoxPanel
 from ..windows.book import sppasNotebook
 from ..windows.listctrl import SortListCtrl
+from ..windows import sppasComboBox
 
 # --------------------------------------------------------------------------
 
@@ -279,7 +280,7 @@ class sppasStatsViewDialog(sppasDialog):
     def _process_ngram(self, event):
         wx.LogDebug("Process ngram")
         # get new n value of the N-gram
-        self.ngram = int(event.GetSelection() + 1)
+        self.ngram = int(event.GetEventObject().GetSelection() + 1)
 
         # update infos of TierStats objects
         for ts in self._data:

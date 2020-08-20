@@ -72,8 +72,10 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
         self._create_content(style, choices, majorDimension)
         self._setup_events()
 
-        # r = self.GetSizer().GetRows()
-        # self.SetMinSize(wx.Size(-1, (r * int(float(self.get_font_height() * 1.5))) + (r*self.GetSizer().GetHGap())))
+        # THE MIN HEIGHT OF 100 MUST BE CHANGED TO BE ADAPTED DYNAMICALLY
+        r = self.GetSizer().GetRows()
+        self.SetMinSize(wx.Size(-1, min(sppasPanel.fix_size(100),
+                                        (r * int(float(self.get_font_height() * 1.8))) + (r*self.GetSizer().GetHGap()))))
         self.SetupScrolling(scroll_x=True, scroll_y=True)
         self.Layout()
 
@@ -276,6 +278,12 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
 
     # ------------------------------------------------------------------------
 
+    def GetItems(self):
+        """Return the list of choices (list of str)."""
+        return [btn.GetLabel() for btn in self._buttons]
+
+    # ------------------------------------------------------------------------
+
     def Notify(self):
         """Sends a wx.EVT_RADIOBUTTON event to the listener (if any)."""
         evt = ButtonEvent(wx.EVT_RADIOBOX.typeId, self.GetId())
@@ -458,10 +466,11 @@ class sppasToggleBoxPanel(sppasRadioBoxPanel):
         btn.SetFocusStyle(wx.PENSTYLE_SOLID)
         btn.SetFocusWidth(h//4)
         btn.SetSpacing(sppasPanel.fix_size(h))
+        btn.SetAlign(wx.ALIGN_LEFT)
 
         btn.Enable(True)
         btn.SetValue(False)
-        # btn.SetMinSize(wx.Size(-1, int(float(self.get_font_height()) * 1.5)))
+        btn.SetMinSize(wx.Size(-1, int(float(self.get_font_height()) * 1.8)))
         return btn
 
     # ------------------------------------------------------------------------

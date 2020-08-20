@@ -51,6 +51,7 @@ from ..windows import sppasStaticLine
 from ..windows import sppasStaticText
 from ..windows import sppasTextCtrl
 from ..windows import BitmapTextButton, TextButton
+from ..windows import sppasComboBox
 
 from .annotevent import PageChangeEvent
 
@@ -347,8 +348,8 @@ class sppasEnableAnnotation(sppasPanel):
             lang = self.__annparam.get_lang()
             if lang is None or len(lang) == 0:
                 lang = LANG_NONE
-            choice = wx.ComboBox(
-                self, -1, choices=sorted(choice_list), name="lang_choice")
+            choice = sppasComboBox(
+                self, choices=sorted(choice_list), name="lang_choice")
             choice.SetSelection(choice.GetItems().index(lang))
             choice.Bind(wx.EVT_COMBOBOX, self._on_lang_changed)
 

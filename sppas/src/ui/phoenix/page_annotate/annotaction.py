@@ -49,10 +49,10 @@ from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasStaticText
 from ..windows import BitmapTextButton, RadioButton
+from ..windows import sppasComboBox  # todo: implement FindString() and Delete()
 
 from .annotevent import PageChangeEvent
 from .annotselect import LANG_NONE
-
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
@@ -215,7 +215,7 @@ class sppasActionAnnotatePanel(sppasPanel):
             if len(all_formats) == 0:
                 continue
             default = self.__param.get_default_outformat_extension(out_format)
-            box = wx.ComboBox(p, -1, choices=all_formats, name="format_choice_"+out_format)
+            box = sppasComboBox(p, -1, choices=all_formats, name="format_choice_"+out_format)
             box.SetSelection(box.GetItems().index(default))
             box.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
             s.Add(box, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, border)
