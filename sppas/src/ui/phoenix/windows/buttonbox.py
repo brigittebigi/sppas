@@ -69,26 +69,49 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
 
         self._buttons = list()
         self.__selection = -1
-        self._create_content(style, choices, majorDimension)
+        gap = sppasPanel.fix_size(2)
+        self._major_dimension = majorDimension
+        self._style = style
+        self._create_content(choices, gap, gap)
         self._setup_events()
 
-        # THE MIN HEIGHT OF 100 MUST BE CHANGED TO BE ADAPTED DYNAMICALLY
-        r = self.GetSizer().GetRows()
-        self.SetMinSize(wx.Size(-1, min(sppasPanel.fix_size(100),
-                                        (r * int(float(self.get_font_height() * 1.8))) + (r*self.GetSizer().GetHGap()))))
         self.SetupScrolling(scroll_x=True, scroll_y=True)
         self.Layout()
+
+    # ------------------------------------------------------------------------
+
+    def DoGetBestSize(self):
+        if self.GetSizer() is None or len(self._buttons) == 0:
+            # min enough values to provide warnings due to the scrollbars
+            size = wx.Size(sppasPanel.fix_size(10), sppasPanel.fix_size(20))
+        else:
+            c = self.GetSizer().GetCols()
+            r = self.GetSizer().GetRows()
+            min_width = sppasPanel.fix_size(self.get_font_height() * c)
+            expected_height = (r * int(float(self.get_font_height() * 1.8))) + (r * self.GetSizer().GetHGap())
+            if c == 1:
+                min_height = min(expected_height,
+                    sppasPanel.fix_size(100)  # SHOULD BE DYNAMICALLY ESTIMATED
+                    )
+            else:
+                min_height = expected_height
+
+            size = wx.Size(min_width, min_height)
+
+        return size
 
     # ------------------------------------------------------------------------
 
     def EnableItem(self, n, enable=True):
         """Enable or disable an individual button in the radiobox.
 
-        :param n: (int) – The zero-based button to enable or disable.
-        :param enable: (bool) – True to enable, False to disable.
+        :param n: (int) The zero-based button to enable or disable.
+        :param enable: (bool) True to enable, False to disable.
         :returns: (bool)
 
         """
+        if n < 0:
+            return False
         if n > len(self._buttons):
             return False
         # do not disable the selected button
@@ -232,47 +255,58 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
     # ------------------------------------------------------------------------
 
     def SetItemLabel(self, n, text):
-        """Set the text of the n’th item in the radio box.
+        """Set the text of the n'th item in the radio box.
 
-        :param n: (int) – The zero-based index.
+        :param n: (int) The zero-based index.
 
         """
-        raise NotImplementedError
+        if n < 0:
+            return False
+        if n > len(self._buttons):
+            return False
+        self._buttons[n].SetLabel(text)
+        self._buttons[n].Refresh()
+        return True
 
     # ------------------------------------------------------------------------
 
     def SetString(self, n, string):
         """Set the label for the given item.
 
-        :param n: (int) – The zero-based item index.
-        :param string: (string) – The label to set.
+        :param n: (int) The zero-based item index.
+        :param string: (string) The label to set.
 
         """
-        raise NotImplementedError
+        return self.SetItemLabel(n, string)
 
     # ------------------------------------------------------------------------
 
     def ShowItem(self, item, show=True):
         """Show or hide individual buttons.
 
-        :param item: (int) – The zero-based position of the button to show or hide.
-        :param show: (bool) – True to show, False to hide.
-        :returns: (bool) True if the item has been shown or hidden or False
+        :param item: (int) The zero-based position of the button to show or hide.
+        :param show: (bool) True to show, False to hide.
+        :return: (bool) True if the item has been shown or hidden or False
         if nothing was done because it already was in the requested state.
 
         """
-        raise NotImplementedError
+        if item > len(self._buttons) or item < 0:
+            return False
+        btn = self._buttons[item]
+        self.GetSizer().Show(btn, show)
+        self.GetSizer().Layout()
+        return True
 
     # ------------------------------------------------------------------------
 
     def IsItemShown(self, n):
         """Return True if the item is currently shown or False if it was hidden using Show.
 
-        :param n: (int) – The zero-based item index.
+        :param n: (int) The zero-based item index.
         :returns: (bool)
 
         """
-        if n > len(self._buttons):
+        if n > len(self._buttons) or n < 0:
             return False
         return self._buttons[n].IsShown()
 
@@ -302,33 +336,92 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
         self.GetSizer().SetHGap(value)
 
     # ------------------------------------------------------------------------
-    # Private methods to construct the panel.
+
+    def Append(self, string):
+        hgap = self.GetSizer().GetHGap()
+        vgap = self.GetSizer().GetVGap()
+        choices = self.GetItems()
+        enabled = list()
+        showed = list()
+        for btn in self._buttons:
+            enabled.append(btn.IsEnabled())
+            showed.append(btn.IsShown())
+            btn.Destroy()
+        self._buttons = list()
+
+        choices.append(string)
+        enabled.append(True)
+        showed.append(True)
+
+        self._create_content(choices, hgap, vgap)
+        for i, btn in enumerate(self._buttons):
+            btn.Enable(enabled[i])
+            self.ShowItem(i, show=showed[i])
+
+        self.SetSelection(self.__selection)
+        self.Layout()
+
     # ------------------------------------------------------------------------
 
-    def _create_content(self, style, choices, majorDimension):
-        """Create the main content."""
+    def Delete(self, n):
+        hgap = self.GetSizer().GetHGap()
+        vgap = self.GetSizer().GetVGap()
+        choices = self.GetItems()
+        choices.pop(n)
+        self._buttons.pop(n)
+        enabled = list()
+        showed = list()
+        if self.__selection == n:
+            self.__selection = -1
+        elif self.__selection > n:
+            self.__selection -= 1
+        for btn in self._buttons:
+            enabled.append(btn.IsEnabled())
+            showed.append(btn.IsShown())
+            btn.Destroy()
+        self._buttons = list()
+
+        self._create_content(choices, hgap, vgap)
+        for i, btn in enumerate(self._buttons):
+            btn.Enable(enabled[i])
+            self.ShowItem(i, show=showed[i])
+
+        self.SetSelection(self.__selection)
+        self.Layout()
+
+    # ------------------------------------------------------------------------
+
+    def get_rows_cols_counts(self, choices):
+        """Return the number of rows and cols."""
         rows = 1
         cols = 1
         if len(choices) > 1:
-            if majorDimension > 1:
-                if style == wx.RA_SPECIFY_COLS:
-                    cols = majorDimension
-                    rows = (len(choices)+1) // majorDimension
-                elif style == wx.RA_SPECIFY_ROWS:
-                    rows = majorDimension
-                    cols = (len(choices)+1) // majorDimension
+            if self._major_dimension > 1:
+                if self._style == wx.RA_SPECIFY_COLS:
+                    cols = self._major_dimension
+                    rows = (len(choices)+1) // self._major_dimension
+                elif self._style == wx.RA_SPECIFY_ROWS:
+                    rows = self._major_dimension
+                    cols = (len(choices)+1) // self._major_dimension
             else:  # one dimension
-                if style == wx.RA_SPECIFY_COLS:
+                if self._style == wx.RA_SPECIFY_COLS:
                     cols = 1
                     rows = len(choices)
-                elif style == wx.RA_SPECIFY_ROWS:
+                elif self._style == wx.RA_SPECIFY_ROWS:
                     rows = 1
                     cols = len(choices)
+        return rows, cols
 
-        wx.LogMessage("rows={:d}, cols={:d}".format(rows, cols))
-        gap = sppasPanel.fix_size(2)
-        grid = wx.GridBagSizer(vgap=gap, hgap=gap)
-        if style == wx.RA_SPECIFY_COLS:
+    # ------------------------------------------------------------------------
+    # Private methods to construct the panel.
+    # ------------------------------------------------------------------------
+
+    def _create_content(self, choices, hgap=0, vgap=0):
+        """Create the main content."""
+        rows, cols = self.get_rows_cols_counts(choices)
+
+        grid = wx.GridBagSizer(vgap=vgap, hgap=hgap)
+        if self._style == wx.RA_SPECIFY_COLS:
             for c in range(cols):
                 for r in range(rows):
                     index = (c*rows)+r
@@ -354,11 +447,8 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
         for r in range(rows):
             grid.AddGrowableRow(r)
 
-        wx.LogMessage("Len choices = {:d} ; len buttons = {:d}".format(len(choices), len(self._buttons)))
         if len(choices) > 0:
             self.SetSelection(0)
-        self.SetMinSize(wx.Size(
-            sppasPanel.fix_size(self.get_font_height()*rows), -1))
         self.SetSizer(grid)
 
     # -----------------------------------------------------------------------
@@ -457,7 +547,6 @@ class sppasToggleBoxPanel(sppasRadioBoxPanel):
         """Create the button to add into the box."""
         btn = ToggleButton(self, label=label, name=name)
         btn.SetImage(None)
-        # btn.img_margin = 0.3
 
         # Get the font height for the header
         h = self.get_font_height()
@@ -534,14 +623,19 @@ class TestPanelRadioBox(wx.Panel):
         tbr.Bind(wx.EVT_RADIOBOX, self.on_btn_event)
 
         tbc = sppasToggleBoxPanel(
-            self, pos=(550, 10), size=wx.Size(100, 200),
-            choices=["choice 1", "choice 2", "choice 3", "choice 4", "choice 5", "choice 6"],
+            self, pos=(550, 10), size=wx.Size(110, 200),
+            choices=["choice 1", "choice 2", "choice 3", "choice 3--", "choice 4", "choice 5", "choice 6"],
             majorDimension=1,
             style=wx.RA_SPECIFY_COLS,
             name="toogle_in_cols"
         )
         tbc.SetVGap(0)
         tbc.SetHGap(0)
+        tbc.EnableItem(3, False)
+        tbc.Append("Append 1")
+        tbc.Delete(2)
+        tbc.Append("Append 2")
+        tbc.SetItemLabel(1, "changed 2")
         tbc.Refresh()
         tbc.Bind(wx.EVT_RADIOBOX, self.on_btn_event)
 
@@ -552,20 +646,3 @@ class TestPanelRadioBox(wx.Panel):
         wx.LogDebug('* * * RadioBox Event by {:s} * * *'.format(obj.GetName()))
         wx.LogDebug(" --> selection index {:d}".format(obj.GetSelection()))
         wx.LogDebug(" --> selection {:s}".format(obj.GetStringSelection()))
-
-# ----------------------------------------------------------------------------
-
-
-class TestPanel(sppasPanel):
-
-    def __init__(self, parent):
-        super(TestPanel, self).__init__(
-            parent,
-            style=wx.BORDER_NONE | wx.WANTS_CHARS,
-            name="Test ButtonBox")
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(TestPanelRadioBox(self), 1, wx.EXPAND | wx.TOP | wx.BOTTOM, 2)
-        sizer.Add(wx.StaticLine(self))
-
-        self.SetSizer(sizer)

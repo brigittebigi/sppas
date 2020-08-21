@@ -358,6 +358,8 @@ class sppasActionAnnotatePanel(sppasPanel):
 
         # Language choice changed
         self.FindWindow("lang_choice").Bind(wx.EVT_COMBOBOX, self._on_lang_changed)
+
+        # Output format changed
         for out_format in annots.outformat:
             box = self.FindWindow("format_choice_"+out_format)
             if box is not None:
@@ -428,7 +430,7 @@ class sppasActionAnnotatePanel(sppasPanel):
 
     def _on_lang_changed(self, event):
         choice = event.GetEventObject()
-        lang = choice.GetValue()
+        lang = choice.GetStringSelection()
         if lang == LANG_NONE:
             lang = None
 
@@ -446,10 +448,9 @@ class sppasActionAnnotatePanel(sppasPanel):
 
     def _on_format_changed(self, event):
         choice = event.GetEventObject()
-        new_ext = choice.GetValue()
+        new_ext = choice.GetStringSelection()
         out_format = choice.GetName().replace("format_choice_", "")
         self.__param.set_output_extension(new_ext, out_format)
-        wx.LogDebug("New output format for {} is {:s}".format(out_format, new_ext))
 
     # -----------------------------------------------------------------------
 

@@ -72,7 +72,7 @@ class TestPanel(wx.Choicebook):
         self.AddPage(media.TestPanel(self), "Media Control")
         self.AddPage(toolbar.TestPanel(self), "Toolbar")
         self.AddPage(listctrl.TestPanel(self), "ListCtrl")
-        self.AddPage(buttonbox.TestPanel(self), "RadioBox & ToggleBox")
+        self.AddPage(buttonbox.TestPanelRadioBox(self), "RadioBox & ToggleBox")
         self.AddPage(line.TestPanel(self), "Lines")
         self.AddPage(basedraw.TestPanel(self), "Base Window")
 

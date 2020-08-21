@@ -45,6 +45,19 @@ from .buttonbox import sppasToggleBoxPanel
 
 
 class PopupToggleBox(wx.Dialog):
+    """A dialog embedding a sppasToggleBoxPanel.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    The parent can bind wx.EVT_COMBOBOX.
+    The sppasComboBox is not editable.
+
+    """
+
     def __init__(self, parent, choices, name="popup"):
         """Constructor"""
         super(PopupToggleBox, self).__init__(
@@ -57,7 +70,7 @@ class PopupToggleBox(wx.Dialog):
         tglbox = sppasToggleBoxPanel(self, choices=choices, majorDimension=1, name="togglebox")
         tglbox.SetVGap(0)
         tglbox.SetHGap(0)
-        sizer.Add(tglbox, 1, wx.EXPAND | wx.LEFT, sppasPanel.fix_size(4))
+        sizer.Add(tglbox, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, sppasPanel.fix_size(2))
 
         # Look&feel
         try:
@@ -72,6 +85,8 @@ class PopupToggleBox(wx.Dialog):
         self.SetSizerAndFit(sizer)
         wx.CallAfter(self.Refresh)
 
+    # ------------------------------------------------------------------------
+    
     @property
     def tglbox(self):
         return self.FindWindow("togglebox")
@@ -79,12 +94,12 @@ class PopupToggleBox(wx.Dialog):
     # ------------------------------------------------------------------------
 
     def SetBackgroundColour(self, color):
-        wx.Dialog.SetForegroundColour(self, color)
-        self.tglbox.SetForegroundColour(color)
-
-    def SetForegroundColour(self, color):
         wx.Dialog.SetBackgroundColour(self, color)
         self.tglbox.SetBackgroundColour(color)
+
+    def SetForegroundColour(self, color):
+        wx.Dialog.SetForegroundColour(self, color)
+        self.tglbox.SetForegroundColour(color)
 
     def SetFont(self, font):
         wx.Dialog.SetFont(self, font)
@@ -103,7 +118,7 @@ class sppasComboBox(sppasPanel):
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     The parent can bind wx.EVT_COMBOBOX.
-    The parent can Bind the wx.EVT_COLLAPSIBLEPANE_CHANGED.
+    The sppasComboBox is not editable.
 
     """
 
@@ -123,7 +138,7 @@ class sppasComboBox(sppasPanel):
         super(sppasComboBox, self).__init__(
             parent, id, pos, size, style, name=name)
 
-        self.popup = PopupToggleBox(self.GetTopLevelParent(), choices, name="popup")
+        self._popup = PopupToggleBox(self.GetTopLevelParent(), choices, name="popup")
         self._create_content(choices)
 
         # Look&feel
@@ -135,7 +150,8 @@ class sppasComboBox(sppasPanel):
         except AttributeError:
             self.InheritAttributes()
 
-        self.popup.Bind(wx.EVT_RADIOBOX, self._process_selection_change)
+        self._popup.Bind(wx.EVT_RADIOBOX, self._process_selection_change)
+        self._popup.Bind(wx.EVT_MOUSE_EVENTS, self._process_mouse_event)
         self.Bind(wx.EVT_BUTTON, self._process_rise)
 
     # ------------------------------------------------------------------------
@@ -144,11 +160,15 @@ class sppasComboBox(sppasPanel):
         wx.Panel.SetForegroundColour(self, color)
         self._txtbtn.SetBackgroundColour(color)
         self._arrowbtn.SetForegroundColour(color)
+        self._popup.SetBackgroundColour(color)
 
+    # ------------------------------------------------------------------------
+    
     def SetForegroundColour(self, color):
         wx.Panel.SetBackgroundColour(self, color)
         self._txtbtn.SetForegroundColour(color)
         self._arrowbtn.SetBackgroundColour(color)
+        self._popup.SetForegroundColour(color)
 
     # ------------------------------------------------------------------------
 
@@ -187,60 +207,129 @@ class sppasComboBox(sppasPanel):
         return self.FindWindow("txtbtn")
 
     # ------------------------------------------------------------------------
+    # Public methods to manage the combo box
+    # ------------------------------------------------------------------------
 
     def GetSelection(self):
-        return self.popup.tglbox.GetSelection()
+        """Return the item being selected or -1 if no item is selected."""
+        return self._popup.tglbox.GetSelection()
 
     # ------------------------------------------------------------------------
 
     def SetSelection(self, idx=-1):
-        """"""
-        self.popup.tglbox.SetSelection(idx)
-        s = self.popup.tglbox.GetStringSelection()
+        """Set the selection to the given item.
+
+        :param idx: (int) The string position to select, starting from zero.
+
+        """
+        self._popup.tglbox.SetSelection(idx)
+        s = self._popup.tglbox.GetStringSelection()
         self._txtbtn.SetLabel(s)
 
     # ------------------------------------------------------------------------
 
     def GetValue(self):
-        return self.popup.tglbox.GetStringSelection()
+        return self._popup.tglbox.GetStringSelection()
+
+    # ------------------------------------------------------------------------
+
+    def GetString(self, idx):
+        """Return the label of the item with the given index.
+
+        :param idx: (int) The zero-based index.
+
+        """
+        items = self._popup.tglbox.GetItems()
+        if 0 < len(items) < idx:
+            return items[idx]        
+        return ""
+
+    # ------------------------------------------------------------------------
+
+    def GetStringSelection(self):
+        """Return the label of the selected item. """
+        return self._popup.tglbox.GetStringSelection()
 
     # ------------------------------------------------------------------------
 
     def GetItems(self):
         """Return the list of all string items."""
-        return self.popup.tglbox.GetItems()
+        return self._popup.tglbox.GetItems()
 
     # ------------------------------------------------------------------------
 
-    def FindString(self, str):
-        raise NotImplementedError
+    def FindString(self, string, case_sensitive=False):
+        """Find an item whose label matches the given string.
 
+        :param string: (str) String to find.
+        :param case_sensitive: (bool) Whether search is case sensitive
+        :return: (int) Index of the first item matching the string or -1
+        
+        """
+        for i, label in enumerate(self._popup.tglbox.GetItems()):
+            if case_sensitive is True and label == string:
+                return i
+            if case_sensitive is False and label.lower() == string.lower():
+                return i
+        return -1
+
+    # ------------------------------------------------------------------------
+
+    def IsListEmpty(self):
+        """Return True if the list of combobox choices is empty."""
+        return len(self._popup.tglbox.GetItems()) == 0
+
+    # ------------------------------------------------------------------------
+
+    def GetCount(self):
+        """Return the number of items in the control."""
+        return len(self._popup.tglbox.GetItems())
+
+    # ------------------------------------------------------------------------
+
+    def EnableItem(self, n, enable=True):
+        """Enable or disable an individual item.
+
+        :param n: (int) The zero-based item to enable or disable.
+        :param enable: (bool) True to enable, False to disable.
+        :returns: (bool)
+
+        """
+        return self._popup.tglbox.EnableItem(n, enable)
+
+    # ------------------------------------------------------------------------
+    # Events management
     # ------------------------------------------------------------------------
 
     def _process_selection_change(self, event):
         obj = event.GetEventObject()
         sel = obj.GetStringSelection()
-        wx.LogDebug('* * * RadioBox Event by {:s} * * *'.format(obj.GetName()))
-        wx.LogDebug(" --> selection index {:d}".format(obj.GetSelection()))
-        wx.LogDebug(" --> selection {:s}".format(sel))
         self._txtbtn.SetLabel(sel)
-        self.popup.Hide()
+        self._popup.Hide()
         self.Notify()
 
     # ------------------------------------------------------------------------
 
+    def _process_mouse_event(self, event):
+        if event.Leaving():
+            self._popup.Hide()
+        event.Skip()
+
+    # ------------------------------------------------------------------------
+
     def _process_rise(self, event):
-        if self.popup.IsShown() is True:
-            self.popup.Hide()
+        if self._popup.IsShown() is True:
+            self._popup.Hide()
         else:
             (w, h) = self.GetClientSize()
             # Get the absolute position of this panel
             (x, y) = self.GetScreenPosition()
             # Show the togglebox at an appropriate place
-            self.popup.SetSize(wx.Size(w, -1))
-            self.popup.SetPosition(wx.Point(x, y+h))
-            self.popup.Layout()
-            self.popup.Show()
+            # SHOULD ESTIMATE IF ENOUGH ROOM AT BOTTOM AND DISPLAY AT TOP IF NOT...
+            self._popup.SetSize(wx.Size(w, -1))
+            self._popup.SetPosition(wx.Point(x, y+h))
+            self._popup.Layout()
+            self._popup.Show()
 
     # ------------------------------------------------------------------------
 
@@ -286,6 +375,8 @@ class TestPanelComboBox(wx.Panel):
         self.SetSizer(s)
 
         self.Bind(wx.EVT_COMBOBOX, self._process_combobox)
+
+    # ------------------------------------------------------------------------
 
     def _process_combobox(self, event):
         wx.LogMessage("ComboBox event received. Sender: {:s}. Selection: {:d}"
