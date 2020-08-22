@@ -298,6 +298,16 @@ class sppasComboBox(sppasPanel):
         return self._popup.tglbox.EnableItem(n, enable)
 
     # ------------------------------------------------------------------------
+
+    def Append(self, string):
+        return self._popup.tglbox.Append(string)
+
+    # ------------------------------------------------------------------------
+
+    def Delete(self, n):
+        self._popup.tglbox.Delete(n)
+
+    # ------------------------------------------------------------------------
     # Events management
     # ------------------------------------------------------------------------
 

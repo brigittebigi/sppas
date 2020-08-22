@@ -361,6 +361,8 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
         self.SetSelection(self.__selection)
         self.Layout()
 
+        return len(self._buttons) - 1
+
     # ------------------------------------------------------------------------
 
     def Delete(self, n):

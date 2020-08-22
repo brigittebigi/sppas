@@ -146,7 +146,6 @@ class sppasAnnotationsPanel(sppasPanel):
         top_panel = sppasPanel(self, name="annotselect_top_panel")
         btn_back_top = BitmapTextButton(top_panel, name="arrow_up")
         btn_back_top.SetFocusWidth(0)
-        btn_back_top.SetBitmapColour(self.GetForegroundColour())
         btn_back_top.SetMinSize(wx.Size(btn_size, btn_size))
 
         title = sppasStaticText(
@@ -227,7 +226,7 @@ class sppasAnnotationsPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def SetFont(self, font):
-        wx.Window.SetFont(self, font)
+        wx.Panel.SetFont(self, font)
         for child in self.GetChildren():
             if child.GetName() != "title_text":
                 child.SetFont(font)
@@ -241,7 +240,7 @@ class sppasAnnotationsPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def SetForegroundColour(self, colour):
-        wx.Window.SetForegroundColour(self, colour)
+        wx.Panel.SetForegroundColour(self, colour)
         for child in self.GetChildren():
             if child.GetName() != "title_text":
                 child.SetForegroundColour(colour)
@@ -295,7 +294,7 @@ class sppasEnableAnnotation(sppasPanel):
     def _create_content(self):
         """Create the main content."""
         es = self.__create_enable_panel()
-        ls = self.__create_lang_sizer()
+        ls = self.__create_langchoice_panel()
         ds = self.__create_description_sizer()
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(es, 0, wx.ALIGN_CENTRE | wx.RIGHT | wx.LEFT, sppasPanel.fix_size(8))
@@ -317,7 +316,6 @@ class sppasEnableAnnotation(sppasPanel):
         btn_enable.LabelPosition = wx.RIGHT
         btn_enable.SetSpacing(sppasPanel.fix_size(12))
         btn_enable.SetFocusWidth(0)
-        btn_enable.SetBitmapColour(self.GetForegroundColour())
         btn_enable.SetMinSize(wx.Size(w-2, h-2))
         btn_enable.SetMaxSize(wx.Size(w-2, h))
 
@@ -334,7 +332,7 @@ class sppasEnableAnnotation(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def __create_lang_sizer(self):
+    def __create_langchoice_panel(self):
         w = sppasPanel.fix_size(80)
         choice_list = self.__annparam.get_langlist()
 
@@ -434,11 +432,8 @@ class sppasEnableAnnotation(sppasPanel):
     # -----------------------------------------------------------------------
 
     def SetForegroundColour(self, colour):
-        wx.Window.SetForegroundColour(self, colour)
-        for c in self.GetChildren():
-            for cc in c.GetChildren():
-                if cc.GetName() != "configure":
-                    cc.SetForegroundColour(colour)
+        sppasPanel.SetForegroundColour(self, colour)
+        self.FindWindow("configure").SetForegroundColour(wx.Colour(80, 100, 220))
 
     # -----------------------------------------------------------------------
 
@@ -450,7 +445,7 @@ class sppasEnableAnnotation(sppasPanel):
         else:
             colour = wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
 
-        wx.Window.SetBackgroundColour(self, colour)
+        wx.Panel.SetBackgroundColour(self, colour)
         for c in self.GetChildren():
             c.SetBackgroundColour(colour)
 
@@ -464,7 +459,7 @@ class sppasEnableAnnotation(sppasPanel):
                 lang = LANG_NONE
             choice = self.FindWindow("lang_choice")
             choice.SetSelection(choice.GetItems().index(lang))
-            choice.Refresh()
+            # choice.Refresh()
 
 # ---------------------------------------------------------------------------
 

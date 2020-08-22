@@ -237,7 +237,7 @@ class sppasActionAnnotatePanel(sppasPanel):
 
         lang_list = list(set(all_langs))
         lang_list.append(LANG_NONE)
-        choice = wx.ComboBox(p, -1, choices=sorted(lang_list), name="lang_choice")
+        choice = sppasComboBox(p, choices=sorted(lang_list), name="lang_choice")
         choice.SetSelection(choice.GetItems().index(LANG_NONE))
         choice.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
 
