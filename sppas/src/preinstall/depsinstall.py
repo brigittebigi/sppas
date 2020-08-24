@@ -38,7 +38,11 @@ import sys
 import os
 import logging
 
-from .installer import DebianInstaller, DnfInstaller, RpmInstaller, WindowsInstaller, MacOsInstaller
+from .installer import DebianInstaller
+from .installer import DnfInstaller
+from .installer import RpmInstaller
+from .installer import WindowsInstaller
+from .installer import MacOsInstaller
 
 # ---------------------------------------------------------------------------
 
@@ -103,9 +107,15 @@ class sppasInstallerDeps(object):
         self.__os = None
         self.__set_os()
         self.__installer = self.os()()
-        logging.info("System installer: {}".format(self.__installer.__class__.__name__))
+        logging.debug("InstallerDeps .......")
+        logging.info("System installer: {}"
+                     "".format(self.__installer.__class__.__name__))
+        logging.debug("InstallerDeps ok ****** 1")
         if progress is not None:
+            logging.debug("set progress")
             self.__installer.set_progress(progress)
+            logging.debug("set progress done")
+        logging.debug("InstallerDeps ok OK ok")
 
     # ------------------------------------------------------------------------
 

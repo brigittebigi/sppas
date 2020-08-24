@@ -57,11 +57,11 @@ class sppasImage(numpy.ndarray):
 
     :Example:
         >>> # explicit constructor to create an image
-        >>> img1 = Image(shape=(3,))
+        >>> img1 = sppasImage(shape=(3,))
         >>> # read the image from a file
-        >>> img2 = Image(filename=os.path.join("some image file"))
+        >>> img2 = sppasImage(filename=os.path.join("some image file"))
         >>> # construct from an existing ndarray
-        >>> img3 = Image(input_array=img1)
+        >>> img3 = sppasImage(input_array=img1)
 
     An image of width=320 and height=200 is represented by len(img)=200;
     each of these 200 rows contains 320 lists of [r,g,b] values.
