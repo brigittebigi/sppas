@@ -68,7 +68,7 @@ class sppasImage(numpy.ndarray):
 
     """
 
-    def __new__(cls, shape=0, dtype=float, buffer=None, offset=0,
+    def __new__(cls, shape=0, dtype=numpy.uint8, buffer=None, offset=0,
                 strides=None, order=None, input_array=None, filename=None):
         """Return the instance of this class.
 

@@ -35,6 +35,7 @@
 
 import os
 import unittest
+import numpy as np
 
 from sppas.src.config import paths
 from sppas.src.imgdata import sppasCoords
@@ -245,10 +246,10 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
         fd.detect(img)
         self.assertEqual(1, len(fd))
         self.assertEqual(1, len(fd))
-        self.assertEqual(fd[0].x, 873)
+        self.assertTrue(fd[0].x in [872, 873])
         self.assertEqual(fd[0].y, 217)
-        self.assertEqual(fd[0].w, 192)
-        self.assertEqual(fd[0].h, 192)
+        self.assertTrue(fd[0].w in range(190, 198))
+        self.assertTrue(fd[0].h in range(190, 198))
 
     # ------------------------------------------------------------------------
 
