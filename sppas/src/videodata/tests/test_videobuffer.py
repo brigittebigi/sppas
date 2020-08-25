@@ -38,7 +38,6 @@ import os
 import numpy as np
 
 from sppas.src.config import paths
-from sppas.src.imgdata import sppasImage
 
 from ..video import sppasVideo
 from ..videobuffer import sppasVideoBuffer
@@ -48,12 +47,12 @@ from ..videobuffer import sppasVideoBuffer
 
 class TestVideo(unittest.TestCase):
 
-    VIDEO = os.path.join(paths.samples, "faces", "video_sample.mkv")
+    # VIDEO = os.path.join(paths.samples, "faces", "video_sample.mkv")
+    VIDEO = os.path.join(paths.samples, "faces", "merged_compressed.mp4")
 
     # -----------------------------------------------------------------------
 
     def test_init(self):
-        """Test several ways to instantiate a video without video."""
         bv = sppasVideo()
         self.assertFalse(bv.video_capture())
         self.assertEqual(0, bv.get_framerate())
@@ -75,15 +74,24 @@ class TestVideo(unittest.TestCase):
         self.assertTrue(bv.video_capture())
         self.assertEqual(25, bv.get_framerate())
         self.assertEqual(0, bv.tell())
-        self.assertEqual(0, bv.get_ms())
         self.assertEqual(960, bv.get_width())
         self.assertEqual(540, bv.get_height())
         self.assertEqual(1181, bv.get_nframes())
+        self.assertEqual(47.240, bv.get_duration())
 
         # invalid file
         with self.assertRaises(Exception):
             bv.open("toto.xxx")
         self.assertFalse(bv.video_capture())
+
+    # -----------------------------------------------------------------------
+
+    def test_seek_tell(self):
+        bv = sppasVideo()
+        bv.open(TestVideo.VIDEO)
+
+        bv.seek(200)
+        self.assertEqual(200, bv.tell())
 
     # -----------------------------------------------------------------------
 
@@ -113,19 +121,28 @@ class TestVideo(unittest.TestCase):
         # Read the: 10 last frames of the video
         c = bv.get_nframes()
         frames = bv.read(from_pos=c-10, to_pos=-1)
-        self.assertEqual(c, bv.tell())
+        self.assertIsNotNone(frames)
         self.assertEqual(10, len(frames))
+        self.assertEqual(c, bv.tell())
 
         # we reached the end. Try to read again...
         frame = bv.read()
         self.assertIsNone(frame)
+
+        # Try to read after seek
+        bv.seek(bv.get_nframes()-5)
+        x = 0
+        while bv.read() is not None:
+            x += 1
+        self.assertEqual(5, x)
 
 # ---------------------------------------------------------------------------
 
 
 class TestVideoBuffer(unittest.TestCase):
 
-    VIDEO = os.path.join(paths.samples, "faces", "video_sample.mkv")
+    # VIDEO = os.path.join(paths.samples, "faces", "video_sample.mkv")
+    VIDEO = os.path.join(paths.samples, "faces", "merged_compressed.mp4")
 
     # -----------------------------------------------------------------------
 
@@ -135,7 +152,6 @@ class TestVideoBuffer(unittest.TestCase):
         self.assertEqual(bv.get_size(), sppasVideoBuffer.DEFAULT_BUFFER_SIZE)
         self.assertEqual(bv.get_overlap(), sppasVideoBuffer.DEFAULT_BUFFER_OVERLAP)
         self.assertFalse(bv.video_capture())
-        self.assertTrue(bv.eov)
         self.assertEqual(0, bv.get_framerate())
         self.assertEqual(0, bv.tell())
 
@@ -176,14 +192,12 @@ class TestVideoBuffer(unittest.TestCase):
         self.assertTrue(os.path.exists(TestVideoBuffer.VIDEO))
         bv = sppasVideoBuffer(TestVideoBuffer.VIDEO)
         self.assertTrue(bv.video_capture())
-        self.assertTrue(bv.eov)
         self.assertEqual(0, len(bv))
         self.assertEqual(25, bv.get_framerate())
         self.assertEqual(0, bv.tell())
-        self.assertEqual(0, bv.get_ms())
+        self.assertEqual(1181, bv.get_nframes())
         self.assertEqual(960, bv.get_width())
         self.assertEqual(540, bv.get_height())
-        self.assertEqual(1181, bv.get_nframes())
 
     # -----------------------------------------------------------------------
 
@@ -223,13 +237,17 @@ class TestVideoBuffer(unittest.TestCase):
 
     def test_next(self):
         bv = sppasVideoBuffer()
+
+        # no video. so no next buffer to fill in.
         bv.next()
         self.assertEqual(0, len(bv))
 
+        # with a video file
         bv = sppasVideoBuffer(TestVideoBuffer.VIDEO, size=50, overlap=5)
 
         # Fill in the first buffer of images
         bv.next()
+        self.assertEqual(50, bv.tell())
         self.assertEqual(50, len(bv))
         copied = list()
         for image in bv:
@@ -238,18 +256,18 @@ class TestVideoBuffer(unittest.TestCase):
 
         # Fill in the second buffer of images. Test the overlapped images.
         bv.next()
+        self.assertEqual(95, bv.tell())
         self.assertEqual(50, len(bv))
         for i in range(5):
             self.assertTrue(np.array_equal(copied[45+i], bv[i]))
 
         # Last buffer is not full
+        self.assertEqual(1181, bv.get_nframes())
         bv.seek_buffer(bv.get_nframes()-15)
+        self.assertEqual(95, bv.tell())
+        self.assertEqual(bv.get_nframes()-15, bv.tell_buffer())
         bv.next()
+        # we reached the end of the video
+        self.assertEqual(1181, bv.tell())
         self.assertEqual(15, len(bv))
 
-    # -----------------------------------------------------------------------
-
-    def test_previous(self):
-        bv = sppasVideoBuffer()
-        bv.previous()
-        self.assertEqual(0, len(bv))

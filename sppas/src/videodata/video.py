@@ -97,12 +97,25 @@ class sppasVideo(object):
         try:
             self.__video.open(video)
             if not self.__video.isOpened():
-                logging.error("OpenCV failed to open the video. "
-                              "Video file not supported?")
+                logging.error("OpenCV failed to open the video.")
                 raise Exception
         except:
             self.__video = None
             raise VideoReadError(video)
+
+        # Test the video under this platform...
+        success = True
+        test_pos = self.get_nframes() - 10
+        if test_pos > 0:
+            success = self.__video.set(cv2.CAP_PROP_POS_FRAMES, test_pos)
+            if success is True:
+                real_pos = self.__video.get(cv2.CAP_PROP_POS_FRAMES)
+                if real_pos != test_pos:
+                    success = False
+        if success is False:
+            self.close()
+            logging.error("OpenCV failed to browse the video.")
+            raise IOError("OpenCV failed to browse the video.")
 
         # Set the beginning of the video to the frame 0
         self.__video.set(cv2.CAP_PROP_POS_FRAMES, 0)
@@ -127,6 +140,7 @@ class sppasVideo(object):
         success, img = self.__video.read()
         if img is None or success is False:
             return None
+
         return sppasVideo._preprocess_image(img)
 
     # -----------------------------------------------------------------------
@@ -170,10 +184,9 @@ class sppasVideo(object):
         self.seek(from_pos)
 
         # Read as many frames as expected or as possible
-        for i in range(from_pos, to_pos):
+        for i in range(to_pos-from_pos):
             frame = self._read()
             if frame is None:
-                # this should never happen...
                 break
             images.append(frame)
 
@@ -204,6 +217,14 @@ class sppasVideo(object):
     # Getters and setters
     # -----------------------------------------------------------------------
 
+    def get_duration(self):
+        """Return the duration of the video in seconds (float)."""
+        if self.__video is None:
+            return 0.
+        return float(self.get_nframes()) * (1. / float(self.get_framerate()))
+
+    # -----------------------------------------------------------------------
+
     def get_framerate(self):
         """Return the FPS of the current video."""
         if self.__video is None:
@@ -228,15 +249,9 @@ class sppasVideo(object):
 
         """
         value = self.check_frame(value)
-        self.__video.set(cv2.CAP_PROP_POS_FRAMES, value)
-
-    # -----------------------------------------------------------------------
-
-    def get_ms(self):
-        """Return the current position (milliseconds) of the video."""
-        if self.__video is None:
-            return 0
-        return self.__video.get(cv2.CAP_PROP_POS_MSEC)
+        success = self.__video.set(cv2.CAP_PROP_POS_FRAMES, value)
+        if success is False:
+            raise IOError("Seek is not supported by your platform for this video.")
 
     # -----------------------------------------------------------------------
 
