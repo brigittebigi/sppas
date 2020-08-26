@@ -1,4 +1,3 @@
-# -*- coding: UTF-8 -*-
 """
     ..
         ---------------------------------------------------------------------
@@ -29,49 +28,39 @@
 
         ---------------------------------------------------------------------
 
-    src.annotations.FaceDetection
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    :author:       Brigitte Bigi, Florian Hocquet
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
-Detect faces of an image.
-This package requires video feature, for opencv and numpy dependencies.
+    src.annotations.tests.test_facetracking.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
-from sppas.src.config import cfg
-from sppas.src.exceptions import sppasEnableFeatureError
+import os
+import unittest
+
+from sppas.src.config import paths
+from ..FaceTracking.facebuffer import sppasFacesVideoBuffer
 
 # ---------------------------------------------------------------------------
-# Define classes in case opencv&numpy are not installed.
-# ---------------------------------------------------------------------------
 
+DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+MODEL_LBF68 = os.path.join(paths.resources, "faces", "lbfmodel68.yaml")
+MODEL_DAT = os.path.join(paths.resources, "faces", "kazemi_landmark.dat")
+# --> not efficient: os.path.join(paths.resources, "faces", "aam.xml")
 
-class FaceDetection(object):
-    def __init__(self):
-        raise sppasEnableFeatureError("video")
+NET = os.path.join(paths.resources, "faces", "res10_300x300_ssd_iter_140000_fp16.caffemodel")
+HAAR1 = os.path.join(paths.resources, "faces", "haarcascade_profileface.xml")
+HAAR2 = os.path.join(paths.resources, "faces", "haarcascade_frontalface_alt.xml")
 
-
-class sppasFaceDetection(object):
-    def __init__(self, *args, **kwargs):
-        raise sppasEnableFeatureError("video")
-
-
-# ---------------------------------------------------------------------------
-# Import the classes in case the "video" feature is enabled: opencv&numpy
-# are both installed and the automatic detections can work.
 # ---------------------------------------------------------------------------
 
 
-if cfg.dep_installed("video"):
-    from .facedetection import FaceDetection
-    from .sppasfacedetect import sppasFaceDetection
+class TestFaceBuffer(unittest.TestCase):
 
-__all__ = (
-    'FaceDetection',
-    'sppasFaceDetection'
-)
+    def test_load_resources(self):
+        fvb = sppasFacesVideoBuffer()
+        with self.assertRaises(IOError):
+            fvb.load_fd_model("toto.txt", "toto")
+        with self.assertRaises(IOError):
+            fvb.load_fl_model("toto.txt", "toto")
+
+        fvb.load_fd_model(NET, HAAR1, HAAR2)
+        fvb.load_fl_model(NET, MODEL_LBF68, MODEL_DAT)

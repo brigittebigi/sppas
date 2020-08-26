@@ -41,6 +41,7 @@ Requires the following other packages:
 If the video feature is not enabled, the sppasEnableFeatureError() is raised
 when a class is instantiated.
 
+"""
 
 from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
@@ -56,29 +57,12 @@ class sppasVideodataError(object):
         raise sppasEnableFeatureError("video")
 
 
-class sppasVideoCoordsWriter(sppasVideodataError):
+class sppasVideo(sppasVideodataError):
     pass
 
 
-class FaceTracking(sppasVideodataError):
+class sppasVideoBuffer(sppasVideodataError):
     pass
-
-
-class VideoBuffer(sppasVideodataError):
-    pass
-
-
-class PersonsBuffer(sppasVideodataError):
-    pass
-
-
-class VideoLandmark(sppasVideodataError):
-    pass
-
-
-class Manager(sppasVideodataError):
-    pass
-
 
 
 # ---------------------------------------------------------------------------
@@ -86,34 +70,26 @@ class Manager(sppasVideodataError):
 # are both installed and the automatic detections can work.
 # ---------------------------------------------------------------------------
 
-# if cfg.dep_installed("video"):
-    # from .coordswriter import sppasVideoCoordsWriter
-    # from .facetracking import FaceTracking
-    # from .videobuffer import VideoBuffer
-    # from .personsbuffer import PersonsBuffer
 
-    # def opencv_extensions():
-    #     Return the list of supported file extensions in lower case.
+if cfg.dep_installed("video"):
+    from .video import sppasVideo
+    from .videobuffer import sppasVideoBuffer
 
-    #    TODO: make the full list of supported video file extensions
+    def opencv_extensions():
+        """Return the list of supported file extensions in lower case.
 
-    #    return (".mp4", ".avi")
+        TODO: make the full list of supported video file extensions
 
-    # extensions = opencv_extensions()
+        """
+        return (".mp4", ".avi")
+
+    video_extensions = opencv_extensions()
 
 # ---------------------------------------------------------------------------
 
 __all__ = (
-    # "sppasVideoCoordsWriter",
-    # "FaceTracking",
-    # "VideoBuffer",
-    # "PersonsBuffer",
-)
-
-"""
-
-video_extensions = list()
-
-__all__ = (
+    "sppasVideo",
+    "sppasVideoBuffer",
     "video_extensions",
 )
+

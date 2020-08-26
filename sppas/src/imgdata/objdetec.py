@@ -405,7 +405,7 @@ class HaarCascadeDetector(BaseObjectsDetector):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    The HaarCascadeClassefier, when used to detect ojects, is returning a
+    The HaarCascadeClassifier, when used to detect objects, is returning a
     list of detections, with weights instead of confidence scores. This class
     converts weights into scores ranging [0.998, min_ratio] with a modified
     version of the Unity-based normalization method.

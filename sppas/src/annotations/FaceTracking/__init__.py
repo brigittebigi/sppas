@@ -38,7 +38,7 @@
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-Detect faces of an image.
+Track faces of a video.
 This package requires video feature, for opencv and numpy dependencies.
 
 """
@@ -51,12 +51,12 @@ from sppas.src.exceptions import sppasEnableFeatureError
 # ---------------------------------------------------------------------------
 
 
-class FaceDetection(object):
+class FaceTracking(object):
     def __init__(self):
         raise sppasEnableFeatureError("video")
 
 
-class sppasFaceDetection(object):
+class sppasFaceTracking(object):
     def __init__(self, *args, **kwargs):
         raise sppasEnableFeatureError("video")
 
@@ -68,10 +68,10 @@ class sppasFaceDetection(object):
 
 
 if cfg.dep_installed("video"):
-    from .facedetection import FaceDetection
-    from .sppasfacedetect import sppasFaceDetection
+    from .facetrack import FaceTracking
+    # from .sppasfacetracking import sppasFaceTracking
 
 __all__ = (
-    'FaceDetection',
-    'sppasFaceDetection'
+    'FaceTracking',
+    # 'sppasFaceTracking'
 )
