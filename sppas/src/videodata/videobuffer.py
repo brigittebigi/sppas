@@ -53,7 +53,7 @@ class sppasVideoBuffer(sppasVideo):
 
     :Example:
 
-    Initialize a VideoBuffer, with a size of 100 images, an overlap of 10:
+    Initialize a VideoBuffer with a size of 100 images and overlap of 10:
     >>> v = sppasVideoBuffer(video, 100, 10)
 
     Bufferize the next sequence of images of the video:
@@ -206,9 +206,7 @@ class sppasVideoBuffer(sppasVideo):
     # -----------------------------------------------------------------------
 
     def next(self):
-        """Go to the next sequence of the video.
-
-        :returns: False if it's the end of the video.
+        """Fill in the buffer with the next sequence of images of the video.
 
         """
         if self.video_capture() is False:

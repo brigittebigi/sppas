@@ -47,8 +47,7 @@ from ..videobuffer import sppasVideoBuffer
 
 class TestVideo(unittest.TestCase):
 
-    # VIDEO = os.path.join(paths.samples, "faces", "video_sample.mkv")
-    VIDEO = os.path.join(paths.samples, "faces", "merged_compressed.mp4")
+    VIDEO = os.path.join(paths.samples, "faces", "video_sample.mp4")
 
     # -----------------------------------------------------------------------
 
@@ -141,8 +140,7 @@ class TestVideo(unittest.TestCase):
 
 class TestVideoBuffer(unittest.TestCase):
 
-    # VIDEO = os.path.join(paths.samples, "faces", "video_sample.mkv")
-    VIDEO = os.path.join(paths.samples, "faces", "merged_compressed.mp4")
+    VIDEO = os.path.join(paths.samples, "faces", "video_sample.mp4")
 
     # -----------------------------------------------------------------------
 

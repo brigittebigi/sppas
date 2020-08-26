@@ -47,10 +47,10 @@ from sppas.src.config import error
 # -----------------------------------------------------------------------
 
 
-class VideoReadError(IOError):
+class VideoOpenError(IOError):
     """:ERROR 3610:.
 
-    Video of file {filename} can't be read by opencv library.
+    Video of file {filename} can't be opened by opencv library.
 
     """
 
@@ -72,6 +72,22 @@ class VideoWriteError(IOError):
 
     def __init__(self, name):
         self.parameter = error(3620) + (error(3620, "data")).format(filename=name)
+
+    def __str__(self):
+        return repr(self.parameter)
+
+# -----------------------------------------------------------------------
+
+
+class VideoBrowseError(IOError):
+    """:ERROR 3630:.
+
+    Video of file {filename} can't be read by OpenCV library.
+
+    """
+
+    def __init__(self, name):
+        self.parameter = error(3630) + (error(3630, "data")).format(filename=name)
 
     def __str__(self):
         return repr(self.parameter)

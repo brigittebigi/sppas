@@ -41,7 +41,8 @@ from ..exceptions import NegativeValueError
 from ..exceptions import IntervalRangeException
 from ..exceptions import RangeBoundsException
 
-from .videodataexc import VideoReadError
+from .videodataexc import VideoOpenError
+from .videodataexc import VideoBrowseError
 
 # ---------------------------------------------------------------------------
 
@@ -97,11 +98,10 @@ class sppasVideo(object):
         try:
             self.__video.open(video)
             if not self.__video.isOpened():
-                logging.error("OpenCV failed to open the video.")
                 raise Exception
         except:
             self.__video = None
-            raise VideoReadError(video)
+            raise VideoOpenError(video)
 
         # Test the video under this platform...
         success = True
@@ -114,8 +114,7 @@ class sppasVideo(object):
                     success = False
         if success is False:
             self.close()
-            logging.error("OpenCV failed to browse the video.")
-            raise IOError("OpenCV failed to browse the video.")
+            raise VideoBrowseError(video)
 
         # Set the beginning of the video to the frame 0
         self.__video.set(cv2.CAP_PROP_POS_FRAMES, 0)
