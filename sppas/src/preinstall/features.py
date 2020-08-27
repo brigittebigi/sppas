@@ -413,7 +413,7 @@ class Features(object):
 
         features_parser = cp.ConfigParser()
         try:
-            features_parser.read(self.get_features_filename())
+            features_parser.read(self.get_features_filename(), encoding="utf-8")
         except cp.MissingSectionHeaderError:
             raise IOError("Malformed features configuration file {}: "
                           "missing section header.".format(cfg))

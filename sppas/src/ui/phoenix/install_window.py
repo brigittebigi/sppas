@@ -38,6 +38,8 @@ import os
 import wx
 import logging
 import webbrowser
+import traceback
+import sys
 
 from sppas.src.config import sg, paths, cfg
 from sppas.src.config import msg, info, error
@@ -159,6 +161,8 @@ class sppasInstallWindow(sppasTopFrame):
             logging.error("No installation will be performed. The installer "
                           "wasn't created due to the following error: {}"
                           "".format(str(e)))
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
             self.__installer = None
 
         # Fix this frame content

@@ -39,6 +39,8 @@
 import logging
 
 from sppas.src.videodata import sppasVideoBuffer
+from sppas.src.exceptions import NegativeValueError
+from sppas.src.exceptions import IndexRangeException
 
 from ..FaceDetection import FaceDetection
 from ..FaceMark import FaceLandmark
@@ -72,8 +74,6 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         :param video: (mp4, etc...) The video filename to browse
 
         """
-        super(sppasFacesVideoBuffer, self).__init__()
-
         # The face detection and face landmark systems
         self.__fd = FaceDetection()
         self.__fl = FaceLandmark()
@@ -89,14 +89,23 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         # The list of persons the faces&landmarks are assigned
         self.__persons = list()
 
+        super(sppasFacesVideoBuffer, self).__init__(video, size, overlap)
+
     # -----------------------------------------------------------------------
 
     def reset(self):
-        """Reset the all information related to the buffer."""
+        """Override. Reset all the info related to the buffer content."""
         sppasVideoBuffer.reset(self)
+        self.__reset()
+
+    # -----------------------------------------------------------------------
+
+    def __reset(self):
         self.__faces = list()
         self.__landmarks = list()
         self.__persons = list()
+        self.__fl.invalidate()
+        self.__fd.invalidate()
 
     # -----------------------------------------------------------------------
     # Face detection & face landmark
@@ -113,8 +122,7 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
 
         """
         self.__fd.load_model(model, *args)
-        self.__fl.invalidate()
-        self.reset()
+        self.__reset()
 
     # -----------------------------------------------------------------------
 
@@ -130,22 +138,40 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
 
         """
         self.__fl.load_model(model_fd, model_landmark, *args)
-        self.__fd.invalidate()
-        self.reset()
+        self.__reset()
 
     # -----------------------------------------------------------------------
 
     def detect_buffer(self):
-        """Search for faces in the currently loaded buffer of a video.
+        """Search for faces and landmarks in the current images of the buffer.
+
+        Calling this method invalidates the existing results.
+
+        :raise: sppasError if no model was loaded.
+
+        """
+        self.detect_faces_buffer()
+        self.detect_landmarks_buffer()
+
+    # -----------------------------------------------------------------------
+
+    def detect_faces_buffer(self):
+        """Search for faces in the current images of the buffer.
+
+        Calling this method invalidates the existing results.
 
         :raise: sppasError if no model was loaded.
 
         """
         # Invalidate previous lists of faces
-        self.__faces = list()
-        self.__landmarks = list()
+        self.__reset()
 
-        # Determine the coordinates of all the detected faces.
+        # No buffer is in-use.
+        if self.__len__() == 0:
+            logging.warning("Nothing to detect: no images in the buffer.")
+            return
+
+        # Determine the coordinates of faces in each image.
         # They are ranked from the highest score to the lowest one.
         iter_images = self.__iter__()
         for i in range(self.__len__()):
@@ -155,11 +181,37 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
             self.__fd.detect(image)
             self.__fd.to_portrait(image)
             self.__faces.append([c.copy() for c in self.__fd])
+            self.__fd.invalidate()
+
+        self.__landmarks = [tuple()]*len(self.__faces)
+        self.__persons = [None]*len(self.__faces)
+
+    # -----------------------------------------------------------------------
+
+    def detect_landmarks_buffer(self):
+        """Search for landmarks in each detected face of the buffer.
+
+        :raise: sppasError if no model was loaded.
+
+        """
+        # No buffer is in-use.
+        if self.__len__() == 0:
+            logging.warning("Nothing to detect: no images in the buffer.")
+            return
+
+        if len(self.__faces) == 0:
+            logging.warning("Nothing to detect: no faces were detected in "
+                            "the images of the buffer.")
+            return
+
+        # Determine the landmarks of all the detected faces of each image.
+        self.__landmarks = [tuple()]*len(self.__faces)
+        iter_images = self.__iter__()
+        for i in range(self.__len__()):
+            image = next(iter_images)
 
             # Perform face landmark on each detected face
-            iter_coords = self.__fd.__iter__()
-            for j in range(0, self.__fd.__len__()):
-                coord = next(iter_coords)
+            for coord in self.__faces[i]:
                 # Create an image of the Region Of Interest (the portrait)
                 cropped_face = image.icrop(coord)
                 try:
@@ -167,17 +219,14 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
                     face_coords = self.__fl.get_detected_face()
                     # face_coords.x += coord.x
                     # face_coords.y += coord.y
-                    self.__landmarks.append(face_coords)
+                    self.__landmarks[i] = face_coords
+                    self.__fl.invalidate()
 
                 except Exception as e:
                     logging.warning(
                         "A face was detected at coords {} of the {:d}-th "
                         "image, but no landmarks can be estimated: {:s}."
                         "".format(coord, i+1, str(e)))
-                    self.__landmarks.append(tuple())
-
-            self.__fd.invalidate()
-            self.__fl.invalidate()
 
     # -----------------------------------------------------------------------
 
@@ -188,12 +237,23 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         :return: (list of sppasCoords) Coordinates of the faces
 
         """
+        buffer_index = self.__check_buffer_index(buffer_index)
+        if len(self.__faces) != self.__len__():
+            raise ValueError("No face was detected on the images of the buffer")
         return self.__faces[buffer_index]
 
     # -----------------------------------------------------------------------
 
     def get_detected_landmarks(self, buffer_index):
-        """"""
+        """Return the landmarks of the faces detected at the given index.
+
+        :param buffer_index: (int) Index in the current buffer
+        :return: (list of list of sppasCoords) Coordinates of the face landmarks
+
+        """
+        buffer_index = self.__check_buffer_index(buffer_index)
+        if len(self.__faces) != self.__len__():
+            raise ValueError("No face was detected on the images of the buffer")
         return self.__landmarks[buffer_index]
 
     # -----------------------------------------------------------------------
@@ -202,16 +262,44 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         """Return the name of the person detected at the given index.
 
         :param buffer_index: (int) Index in the current buffer.
+        :return: The person defined at the index
 
         """
+        buffer_index = self.__check_buffer_index(buffer_index)
+        if len(self.__faces) != self.__len__():
+            raise ValueError("No person was defined on the faces of the images of the buffer")
         return self.__persons[buffer_index]
 
     # -----------------------------------------------------------------------
 
-    def set_detected_person(self, buffer_index, name=None):
-        """"""
-        self.__persons[buffer_index] = name
+    def set_detected_person(self, buffer_index, information=None):
+        """Set information about a person corresponding to a detected face.
 
+        The information can be None, the name of the person, a dict
+        with key=name and value=probability or  anything else.
 
+        :param buffer_index: (int) Index in the current buffer.
+        :param information: (any type)
 
+        """
+        buffer_index = self.__check_buffer_index(buffer_index)
+        if len(self.__faces) != self.__len__():
+            raise ValueError("No person was defined on the faces of the images of the buffer")
+        self.__persons[buffer_index] = information
+
+    # -----------------------------------------------------------------------
+    # Private
+    # -----------------------------------------------------------------------
+
+    def __check_buffer_index(self, value):
+        """Raise an exception if the given index is not valid."""
+        value = int(value)
+        if value < 0:
+            raise NegativeValueError(value)
+        (begin, end) = self.get_range()
+        if begin == -1 or end == -1:
+            raise ValueError("Invalid index value: no buffer is loaded.")
+        if begin <= value <= end:
+            return value
+        raise IndexRangeException(value, begin, end)
 

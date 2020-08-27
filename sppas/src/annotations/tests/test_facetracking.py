@@ -37,6 +37,8 @@ import os
 import unittest
 
 from sppas.src.config import paths
+from sppas.src.exceptions import sppasError
+
 from ..FaceTracking.facebuffer import sppasFacesVideoBuffer
 
 # ---------------------------------------------------------------------------
@@ -55,6 +57,10 @@ HAAR2 = os.path.join(paths.resources, "faces", "haarcascade_frontalface_alt.xml"
 
 class TestFaceBuffer(unittest.TestCase):
 
+    VIDEO = os.path.join(paths.samples, "faces", "video_sample.mp4")
+
+    # -----------------------------------------------------------------------
+
     def test_load_resources(self):
         fvb = sppasFacesVideoBuffer()
         with self.assertRaises(IOError):
@@ -64,3 +70,47 @@ class TestFaceBuffer(unittest.TestCase):
 
         fvb.load_fd_model(NET, HAAR1, HAAR2)
         fvb.load_fl_model(NET, MODEL_LBF68, MODEL_DAT)
+
+    # -----------------------------------------------------------------------
+
+    def test_nothing(self):
+        # Instantiate a video buffer
+        fvb = sppasFacesVideoBuffer(size=10, overlap=0)
+        with self.assertRaises(ValueError):
+            fvb.get_detected_faces(3)
+        fvb.detect_buffer()
+        with self.assertRaises(ValueError):
+            fvb.get_detected_faces(3)
+
+        # Open a video and fill-in the buffer with size-images.
+        fvb.open(TestFaceBuffer.VIDEO)
+        fvb.next()
+        self.assertEqual(10, len(fvb))
+        self.assertEqual(10, fvb.tell())
+        self.assertEqual((0, 9), fvb.get_range())
+        with self.assertRaises(ValueError):
+            fvb.get_detected_faces(3)
+
+        # Still no detector was defined... i.e. no model loaded
+        with self.assertRaises(sppasError):
+            fvb.detect_buffer()
+
+        # Still no detector was defined... i.e. no model loaded
+        with self.assertRaises(sppasError):
+            fvb.detect_faces_buffer()
+
+    # -----------------------------------------------------------------------
+
+    def test_detect(self):
+        fvb = sppasFacesVideoBuffer(video=TestFaceBuffer.VIDEO,
+                                    size=10, overlap=0)
+        fvb.next()
+        self.assertEqual(10, len(fvb))
+        self.assertEqual(10, fvb.tell())
+        self.assertEqual((0, 9), fvb.get_range())
+
+        fvb.load_fd_model(NET, HAAR1, HAAR2)
+        fvb.detect_faces_buffer()
+        for i in range(10):
+            print(fvb.get_detected_faces(i))
+
