@@ -65,8 +65,7 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     """
 
     def __init__(self, video=None,
-                 size=sppasVideoBuffer.DEFAULT_BUFFER_SIZE,
-                 overlap=sppasVideoBuffer.DEFAULT_BUFFER_OVERLAP):
+                 size=sppasVideoBuffer.DEFAULT_BUFFER_SIZE):
         """Create a new sppasFacesVideoBuffer instance.
 
         :param size: (int) Number if images of the buffer
@@ -75,6 +74,8 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         :param video: (mp4, etc...) The video filename to browse
 
         """
+        super(sppasFacesVideoBuffer, self).__init__(video=None, size=size, overlap=0)
+
         # The face detection and face landmark systems
         self.__fd = FaceDetection()
         self.__fl = FaceLandmark()
@@ -90,7 +91,9 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         # The list of persons the faces&landmarks are assigned
         self.__persons = list()
 
-        super(sppasFacesVideoBuffer, self).__init__(video, size, overlap)
+        # Then, open the video
+        if video is not None:
+            self.open(video)
 
     # -----------------------------------------------------------------------
 

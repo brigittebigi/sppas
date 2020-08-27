@@ -59,6 +59,8 @@ class FaceTracking(object):
         """Create a new FaceTracker instance."""
         # The expected number of faces. -1 means auto.
         self.__nb_faces = -1
+
+        # Not currently used:
         # A reference image to represent the face of each person
         # key=a name or any other identifier, value=sppasImage
         self.__img_known_faces = dict()      # user-defined persons
@@ -84,6 +86,8 @@ class FaceTracking(object):
     def set_reference_faces(self, known_faces=tuple()):
         """Set the list of images representing faces of known persons.
 
+        ***** UNUSED *****
+
         The given images can be a list with images to represents the faces
         or a dictionary with key=string and value=the image.
         :param known_faces: (list of sppasImage or dict)
@@ -95,7 +99,7 @@ class FaceTracking(object):
             for i, img in enumerate(known_faces):
                 if isinstance(img, np.ndarray) is False:
                     raise sppasTypeError(img, "(sppasImages, numpy.ndarray)")
-                names.append("X{:03d}".format(i))
+                names.append("#{:03d}".format(i))
         elif isinstance(known_faces, dict):
             for key in enumerate(known_faces):
                 img = known_faces[key]
@@ -115,7 +119,7 @@ class FaceTracking(object):
     # -----------------------------------------------------------------------
 
     def invalidate(self):
-        """Invalidate the list of all detected faces."""
+        """Invalidate the list of all automatically added faces."""
         self.__img_unknown_faces = list()
 
     # -----------------------------------------------------------------------
@@ -129,30 +133,25 @@ class FaceTracking(object):
         """
         # Determine the coordinates of all the detected faces.
         # They are ranked from the highest score to the lowest one.
-        video_buffer.detect_faces()
+        video_buffer.detect_buffer()
 
-        # Assign a face to each known and unknown person
-        tracked_faces = self.__track(video_buffer)
-
-        return tracked_faces
+        # Assign a person to each detected face
+        self.__track_persons(video_buffer)
 
     # -----------------------------------------------------------------------
     # Private
     # -----------------------------------------------------------------------
 
-        # distances = self.__face_distance(known_face_encodings, unknown_encoding)
-        # result = list(distances <= tolerance)
-    # -----------------------------------------------------------------------
+    def __track_persons(self, video_buffer):
+        """Compare given faces to the reference ones.
 
-    def __track(self, all_faces):
-        """Compare given faces to the reference ones and sort them.
-
-        :param all_faces: (list of list of sppasCoords)
+        :param video_buffer: (sppasFacesVideoBuffer)
 
         """
         all_identified = list()
+        """
         # Fill in the list with the appropriate coordinates
-        for faces in all_faces:
+        for faces in video_buffer:
 
             identified = list()
             # "faces" is a list of sppasCoords corresponding to a face in an image
@@ -169,12 +168,10 @@ class FaceTracking(object):
         if self.__nb_faces != -1:
             nb_persons = self.__nb_faces
 
-        # One list of sppasCoords for each person
-        persons = [[None]*nb_persons for i in range(len(all_faces))]
         # Fill in the persons with the identified
         for i, faces in enumerate(all_faces):
             identified = all_identified[i]
             for x in range(len(identified)):
                 persons[i][identified[x]] = faces[x]
+        """
 
-        return persons

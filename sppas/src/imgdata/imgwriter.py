@@ -232,7 +232,7 @@ class sppasImageWriter(object):
 
         """
         # Initialize the options manager
-        self._options = ImageWriterOptions()
+        self.options = ImageWriterOptions()
 
     # -----------------------------------------------------------------------
 
@@ -240,15 +240,15 @@ class sppasImageWriter(object):
                     width=None, height=None):
         """Set the value of each option."""
         if csv is not None:
-            self._options.set_csv_output(csv)
+            self.options.set_csv_output(csv)
         if tag is not None:
-            self._options.set_tag_output(tag)
+            self.options.set_tag_output(tag)
         if crop is not None:
-            self._options.set_crop_output(crop)
+            self.options.set_crop_output(crop)
         if width is not None:
-            self._options.set_width(width)
+            self.options.set_width(width)
         if height is not None:
-            self._options.set_height(height)
+            self.options.set_height(height)
 
     # -----------------------------------------------------------------------
 
@@ -261,15 +261,15 @@ class sppasImageWriter(object):
         :param pattern: (str) Pattern to add to a cropped image filename
 
         """
-        if self._options.csv is True:
+        if self.options.csv is True:
             fn, fe = os.path.splitext(out_img_name)
             out_csv_name = fn + ".csv"
             self.write_csv_coords(coords, out_csv_name, out_img_name)
 
-        if self._options.tag is True:
+        if self.options.tag is True:
             self.write_tagged_img(image, coords, out_img_name)
 
-        if self._options.crop is True:
+        if self.options.crop is True:
             self.write_cropped_img(image, coords, out_img_name, pattern)
 
     # -----------------------------------------------------------------------
@@ -356,9 +356,9 @@ class sppasImageWriter(object):
             img = image.icrop(c)
 
             # Resize the cropped image, if requested
-            if self._options.get_width() > 0 or self._options.get_height() > 0:
-                img = img.iresize(self._options.get_width(),
-                                  self._options.get_height())
+            if self.options.get_width() > 0 or self.options.get_height() > 0:
+                img = img.iresize(self.options.get_width(),
+                                  self.options.get_height())
 
             # Save the cropped image
             cv2.imwrite(out_iname, img)

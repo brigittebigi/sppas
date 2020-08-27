@@ -75,7 +75,7 @@ class TestFaceBuffer(unittest.TestCase):
 
     def test_nothing(self):
         # Instantiate a video buffer
-        fvb = sppasFacesVideoBuffer(size=10, overlap=0)
+        fvb = sppasFacesVideoBuffer(size=10)
         with self.assertRaises(ValueError):
             fvb.get_detected_faces(3)
         fvb.detect_buffer()
@@ -102,8 +102,7 @@ class TestFaceBuffer(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_detect(self):
-        fvb = sppasFacesVideoBuffer(video=TestFaceBuffer.VIDEO,
-                                    size=10, overlap=0)
+        fvb = sppasFacesVideoBuffer(video=TestFaceBuffer.VIDEO, size=10)
         fvb.next()
         self.assertEqual(10, len(fvb))
         self.assertEqual(10, fvb.tell())

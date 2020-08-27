@@ -722,6 +722,8 @@ class sppasImageObjectDetection(BaseObjectsDetector):
 
     def get_nb_recognizers(self):
         """Return the number of initialized face recognizers."""
+        if self._detector is None:
+            return 0
         return len(self._detector)
 
     # -----------------------------------------------------------------------
