@@ -720,6 +720,12 @@ class sppasImageObjectDetection(BaseObjectsDetector):
 
     # -----------------------------------------------------------------------
 
+    def get_nb_recognizers(self):
+        """Return the number of initialized face recognizers."""
+        return len(self._detector)
+
+    # -----------------------------------------------------------------------
+
     def load_model(self, model, *args):
         """Instantiate detector(s) from the given models.
 

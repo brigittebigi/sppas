@@ -109,8 +109,31 @@ class TestFaceBuffer(unittest.TestCase):
         self.assertEqual(10, fvb.tell())
         self.assertEqual((0, 9), fvb.get_range())
 
+        # Detect the face in the video
         fvb.load_fd_model(NET, HAAR1, HAAR2)
         fvb.detect_faces_buffer()
         for i in range(10):
-            print(fvb.get_detected_faces(i))
+            # print("* Image {:d}".format(i))
+            faces = fvb.get_detected_faces(i)
+            self.assertEqual(1, len(faces))
+            # for coord in faces:
+            #    print(coord)
 
+        # Detect the landmarks of the face in the video
+        with self.assertRaises(sppasError):
+            fvb.detect_landmarks_buffer()
+        fvb.load_fl_model(NET, MODEL_LBF68, MODEL_DAT)
+
+        fvb.detect_faces_buffer()
+        fvb.detect_landmarks_buffer()
+        for i in range(10):
+            # print("* Image {:d}".format(i))
+            faces = fvb.get_detected_faces(i)
+            landmarks = fvb.get_detected_landmarks(i)
+            self.assertEqual(len(faces), len(landmarks))
+            for x in range(len(faces)):
+                self.assertEqual(68, len(landmarks[x]))
+
+        fvb.next()
+        with self.assertRaises(ValueError):
+            fvb.get_detected_faces(3)

@@ -41,6 +41,7 @@ import logging
 from sppas.src.videodata import sppasVideoBuffer
 from sppas.src.exceptions import NegativeValueError
 from sppas.src.exceptions import IndexRangeException
+from sppas.src.exceptions import sppasError
 
 from ..FaceDetection import FaceDetection
 from ..FaceMark import FaceLandmark
@@ -108,6 +109,15 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         self.__fd.invalidate()
 
     # -----------------------------------------------------------------------
+
+    def next(self):
+        """Override. Fill in the buffer with the next images.
+
+        """
+        sppasVideoBuffer.next(self)
+        self.__reset()
+
+    # -----------------------------------------------------------------------
     # Face detection & face landmark
     # -----------------------------------------------------------------------
 
@@ -170,6 +180,8 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         if self.__len__() == 0:
             logging.warning("Nothing to detect: no images in the buffer.")
             return
+        if self.__fd.get_nb_recognizers() == 0:
+            raise sppasError("A face recognizer must be initialized first")
 
         # Determine the coordinates of faces in each image.
         # They are ranked from the highest score to the lowest one.
@@ -203,23 +215,24 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
             logging.warning("Nothing to detect: no faces were detected in "
                             "the images of the buffer.")
             return
+        if self.__fl.get_nb_recognizers() == 0:
+            raise sppasError("A landmark recognizer must be initialized first")
 
         # Determine the landmarks of all the detected faces of each image.
-        self.__landmarks = [tuple()]*len(self.__faces)
         iter_images = self.__iter__()
         for i in range(self.__len__()):
             image = next(iter_images)
-
+            self.__landmarks[i] = list()
             # Perform face landmark on each detected face
             for coord in self.__faces[i]:
                 # Create an image of the Region Of Interest (the portrait)
                 cropped_face = image.icrop(coord)
                 try:
                     self.__fl.mark(cropped_face)
-                    face_coords = self.__fl.get_detected_face()
+                    # face_coords = self.__fl.get_detected_face()
                     # face_coords.x += coord.x
                     # face_coords.y += coord.y
-                    self.__landmarks[i] = face_coords
+                    self.__landmarks[i].append([c.copy() for c in self.__fl])
                     self.__fl.invalidate()
 
                 except Exception as e:
@@ -248,12 +261,12 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         """Return the landmarks of the faces detected at the given index.
 
         :param buffer_index: (int) Index in the current buffer
-        :return: (list of list of sppasCoords) Coordinates of the face landmarks
+        :return: (list of sppasCoords or list of list of sppasCoords) Coordinates of the face landmarks
 
         """
         buffer_index = self.__check_buffer_index(buffer_index)
-        if len(self.__faces) != self.__len__():
-            raise ValueError("No face was detected on the images of the buffer")
+        if len(self.__landmarks) != self.__len__():
+            raise ValueError("No landmarks were detected on the images of the buffer")
         return self.__landmarks[buffer_index]
 
     # -----------------------------------------------------------------------

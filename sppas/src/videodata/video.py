@@ -292,9 +292,8 @@ class sppasVideo(object):
         :return: (sppasImage)
 
         """
+        image = np.array(image, dtype=np.uint8)  # Unsigned integer (0 to 255)
+        return sppasImage(input_array=image)
+        # image = np.expand_dims(image, -1)
         # image = cv2.resize(image, (width, height))
         # image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        image = np.array(image, dtype=np.uint8)  # Unsigned integer (0 to 255)
-        image = np.expand_dims(image, -1)
-        return sppasImage(input_array=image)
-

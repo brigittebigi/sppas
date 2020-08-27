@@ -100,6 +100,12 @@ class FaceLandmark(object):
 
     # -----------------------------------------------------------------------
 
+    def get_nb_recognizers(self):
+        """Return the number of initialized landmark recognizers."""
+        return len(self.__markers)
+
+    # -----------------------------------------------------------------------
+
     def load_model(self, model_fd, model_landmark, *args):
         """Initialize the face detection and recognizer from model files.
 
@@ -123,7 +129,7 @@ class FaceLandmark(object):
     # -----------------------------------------------------------------------
 
     def add_model(self, filename):
-        """Append a recognizer into the list land load the model.
+        """Append a recognizer into the list and load the model.
 
         :param filename: (str) A recognizer model (Kazemi, LBF, AAM).
         :raise: IOError, Exception
