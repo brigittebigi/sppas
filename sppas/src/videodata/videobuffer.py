@@ -89,8 +89,8 @@ class sppasVideoBuffer(sppasVideo):
         # List of images
         self.__data = list()
 
-        # Last bufferized frame
-        self.__last_frame = 0
+        # First and last frame indexes of the buffer
+        self.__buffer_idx = (-1, -1)
 
         # Initialization of the video
         if video is not None:
@@ -123,7 +123,7 @@ class sppasVideoBuffer(sppasVideo):
         self.__data = list()
 
         # Last read frame
-        self.__last_frame = 0
+        self.__buffer_idx = (-1, -1)
 
     # -----------------------------------------------------------------------
 
@@ -190,18 +190,30 @@ class sppasVideoBuffer(sppasVideo):
         """
         value = self.check_frame(value)
         self.reset()
-        self.__last_frame = value
+        self.__buffer_idx = (-1, value-1)
 
     # -----------------------------------------------------------------------
 
     def tell_buffer(self):
-        """Return the current frame position for the buffer.
+        """Return the frame position for the next buffer to be read.
 
         Possibly, it can't match the current position in the stream, if
         video.read() was invoked for example.
 
         """
-        return self.__last_frame
+        return self.__buffer_idx[1] + 1
+
+    # -----------------------------------------------------------------------
+
+    def get_range(self):
+        """Return the indexes of the frames of the current buffer.
+
+        :return: (tuple) start index, end index of the frames in the buffer
+
+        """
+        if -1 in self.__buffer_idx:
+            return -1, -1
+        return self.__buffer_idx
 
     # -----------------------------------------------------------------------
 
@@ -216,19 +228,21 @@ class sppasVideoBuffer(sppasVideo):
         nb_frames = self.__size - self.__overlap
         # But if it's the first frame loading, we'll fill in the buffer of the
         # full size, i.e. no overlap is to be applied.
-        if self.__last_frame == 0:
+        if self.__buffer_idx[1] == -1:
             nb_frames = self.__size
+
+        # Set the beginning position to read in the video
+        start_frame = self.__buffer_idx[1] + 1
+        self.seek(start_frame)
 
         # Launch and store the result of the reading
         result = self.__load_frames(nb_frames)
+        end_frame = self.tell() - 1
 
-        # Update the Buffer
-        # Delete the n"self.__size - self.__overlap"
-        # first images from the buffer and keep
-        # the n"self.__overlap" images in the Buffer
-        del self.__data[0:self.__size - self.__overlap]
-
-        # Add the images in the buffer
+        # Update the buffer and the frame indexes with the current result
+        delta = self.__size - self.__overlap
+        self.__data = self.__data[delta:]
+        self.__buffer_idx = (start_frame - len(self.__data), end_frame)
         self.__data.extend(result)
         result.clear()
 
@@ -245,9 +259,6 @@ class sppasVideoBuffer(sppasVideo):
         # Create the list to store the images
         images = list()
 
-        # Set the beginning of the video to the last frameID
-        self.seek(self.__last_frame)
-
         # Browse the video
         for i in range(nb_frames):
             # Grab the next frame. Stop if we reach the end of the video.
@@ -258,9 +269,6 @@ class sppasVideoBuffer(sppasVideo):
 
             # Add the image in the storage list
             images.append(image_array)
-
-        # Set the last frameID to the last frameID the loop goes to
-        self.__last_frame = self.tell()
 
         # Return the list of images
         return images

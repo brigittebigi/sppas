@@ -167,6 +167,7 @@ class TestVideoBuffer(unittest.TestCase):
         self.assertEqual(bv.get_size(), 10)
         self.assertEqual(bv.get_overlap(), 2)
         self.assertFalse(bv.video_capture())
+        self.assertEqual((-1, -1), bv.get_range())
 
         with self.assertRaises(ValueError):
             sppasVideoBuffer(size=10, overlap=10)
@@ -194,6 +195,7 @@ class TestVideoBuffer(unittest.TestCase):
         self.assertEqual(25, bv.get_framerate())
         self.assertEqual(0, bv.tell())
         self.assertEqual(1181, bv.get_nframes())
+        self.assertEqual((-1, -1), bv.get_range())
         self.assertEqual(960, bv.get_width())
         self.assertEqual(540, bv.get_height())
 
@@ -239,6 +241,7 @@ class TestVideoBuffer(unittest.TestCase):
         # no video. so no next buffer to fill in.
         bv.next()
         self.assertEqual(0, len(bv))
+        self.assertEqual((-1, -1), bv.get_range())
 
         # with a video file
         bv = sppasVideoBuffer(TestVideoBuffer.VIDEO, size=50, overlap=5)
@@ -247,6 +250,7 @@ class TestVideoBuffer(unittest.TestCase):
         bv.next()
         self.assertEqual(50, bv.tell())
         self.assertEqual(50, len(bv))
+        self.assertEqual((0, 49), bv.get_range())
         copied = list()
         for image in bv:
             self.assertIsInstance(image, np.ndarray)
@@ -255,6 +259,7 @@ class TestVideoBuffer(unittest.TestCase):
         # Fill in the second buffer of images. Test the overlapped images.
         bv.next()
         self.assertEqual(95, bv.tell())
+        self.assertEqual((45, 94), bv.get_range())
         self.assertEqual(50, len(bv))
         for i in range(5):
             self.assertTrue(np.array_equal(copied[45+i], bv[i]))
@@ -268,4 +273,5 @@ class TestVideoBuffer(unittest.TestCase):
         # we reached the end of the video
         self.assertEqual(1181, bv.tell())
         self.assertEqual(15, len(bv))
+        self.assertEqual((bv.get_nframes()-15, bv.get_nframes()-1), bv.get_range())
 

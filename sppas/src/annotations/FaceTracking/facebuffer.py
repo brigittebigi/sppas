@@ -55,8 +55,9 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    This class allows to use a buffer of images on a video to manage it
-    sequentially and to have a better control on it.
+    This class allows to use a buffer of images on a video and to estimate
+    coordinates of the faces in each of such images and the landmark sights
+    on each of the detected faces.
 
     """
 
@@ -85,12 +86,26 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         # the current buffer (list of list of sppasCoords).
         self.__landmarks = list()
 
+        # The list of persons the faces&landmarks are assigned
+        self.__persons = list()
+
+    # -----------------------------------------------------------------------
+
+    def reset(self):
+        """Reset the all information related to the buffer."""
+        sppasVideoBuffer.reset(self)
+        self.__faces = list()
+        self.__landmarks = list()
+        self.__persons = list()
+
+    # -----------------------------------------------------------------------
+    # Face detection & face landmark
     # -----------------------------------------------------------------------
 
     def load_fd_model(self, model, *args):
         """Instantiate face detector(s) from the given models.
 
-        Calling this method invalidates the existing detectors.
+        Calling this method invalidates the existing detectors and the buffer.
 
         :param model: (str) Default model filename
         :param args: Other models to load in order to create object detectors
@@ -98,11 +113,15 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
 
         """
         self.__fd.load_model(model, *args)
+        self.__fl.invalidate()
+        self.reset()
 
     # -----------------------------------------------------------------------
 
     def load_fl_model(self, model_fd, model_landmark, *args):
         """Initialize the face landmark recognizer.
+
+        Calling this method invalidates the existing detectors and the buffer.
 
         :param model_fd: (str) A filename of a model for face detection
         :param model_landmark: (str) Filename of a recognizer model (Kazemi, LBF, AAM).
@@ -111,6 +130,8 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
 
         """
         self.__fl.load_model(model_fd, model_landmark, *args)
+        self.__fd.invalidate()
+        self.reset()
 
     # -----------------------------------------------------------------------
 
@@ -161,8 +182,36 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     # -----------------------------------------------------------------------
 
     def get_detected_faces(self, buffer_index):
-        """"""
+        """Return the coordinates of the faces detected at the given index.
+
+        :param buffer_index: (int) Index in the current buffer
+        :return: (list of sppasCoords) Coordinates of the faces
+
+        """
         return self.__faces[buffer_index]
+
+    # -----------------------------------------------------------------------
+
+    def get_detected_landmarks(self, buffer_index):
+        """"""
+        return self.__landmarks[buffer_index]
+
+    # -----------------------------------------------------------------------
+
+    def get_detected_person(self, buffer_index):
+        """Return the name of the person detected at the given index.
+
+        :param buffer_index: (int) Index in the current buffer.
+
+        """
+        return self.__persons[buffer_index]
+
+    # -----------------------------------------------------------------------
+
+    def set_detected_person(self, buffer_index, name=None):
+        """"""
+        self.__persons[buffer_index] = name
+
 
 
 
