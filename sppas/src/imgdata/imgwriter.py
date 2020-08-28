@@ -205,25 +205,32 @@ class sppasImageWriter(object):
 
     """
 
-    # generate 10 visually distinct RGB colours
-    N = 10
-    COLORS = colors = {k: [] for k in 'rgb'}
-    for i in range(N):
-        temp = {k: randint(0, 255) for k in 'rgb'}
-        for k in temp:
-            while 1:
-                c = temp[k]
-                t = set(j for j in range(c - 15, c + 15) if 0 <= j <= 255)
-                if t.intersection(COLORS[k]):
-                    temp[k] = randint(0, 255)
-                else:
-                    break
-            COLORS[k].append(temp[k])
+    @staticmethod
+    def gen_colors(nb):
+        """Return a list of visually distinct colors.
+
+        :param nb: (int) A number of colors
+        :return: list of (r, g, b) values
+
+        """
+        colors = {k: [] for k in 'rgb'}
+        for i in range(nb):
+            temp = {k: randint(0, 255) for k in 'rgb'}
+            for k in temp:
+                while 1:
+                    c = temp[k]
+                    t = set(j for j in range(c - 15, c + 15) if 0 <= j <= 255)
+                    if t.intersection(colors[k]):
+                        temp[k] = randint(0, 255)
+                    else:
+                        break
+                colors[k].append(temp[k])
+        return colors
 
     # -----------------------------------------------------------------------
 
     def __init__(self):
-        """Create a new ImgWriter instance.
+        """Create a new sppasImageWriter instance.
 
         Write the given image in the given filename.
         Parts of the image can be extracted in separate image files and/or
@@ -233,6 +240,7 @@ class sppasImageWriter(object):
         """
         # Initialize the options manager
         self.options = ImageWriterOptions()
+        self.__colors = sppasImageWriter.gen_colors(10)
 
     # -----------------------------------------------------------------------
 
@@ -288,21 +296,74 @@ class sppasImageWriter(object):
         with codecs.open(out_csv_name, mode, encoding="utf-8") as f:
             for i, c1 in enumerate(coords):
                 if isinstance(c1, (list, tuple)) is False:
-                    self.__write_coords(img_name, f, c1, i)
+                    self.write_coords(f, img_name, i+1, c1)
                 else:
                     for j, c2 in enumerate(c1):
-                        self.__write_coords(img_name, f, c2, j)
+                        self.write_coords(f, img_name, j+1, c2)
+                f.write("\n")
 
     # -----------------------------------------------------------------------
 
-    def __write_coords(self, img_name, fd, coords, i):
-        fd.write("{:s};".format(img_name))
-        fd.write("{:d};".format(i + 1))
-        fd.write("{:d};".format(coords.x))
-        fd.write("{:d};".format(coords.y))
-        fd.write("{:d};".format(coords.w))
-        fd.write("{:d};".format(coords.h))
-        fd.write("{:f}\n".format(coords.get_confidence()))
+    def write_coords(self, fd, name, idx, coords, sep=";"):
+        """Write coordinates in the given stream.
+
+        :param fd: (Stream) File descriptor, String descriptor, stdout, etc
+        :param name: (str) A name to write as 1st column
+        :param idx: (int) An integer to write 2nd column
+        :param coords: (sppasCoordinates) Coordinates to write in other columns.
+        :param sep: (char) Character to separate columns
+
+        """
+        fd.write("{:s}{:s}".format(name, sep))
+        fd.write("{:d}{:s}".format(idx, sep))
+        fd.write("{:d}{:s}".format(coords.x, sep))
+        fd.write("{:d}{:s}".format(coords.y, sep))
+        fd.write("{:d}{:s}".format(coords.w, sep))
+        fd.write("{:d}{:s}".format(coords.h, sep))
+        fd.write("{:f}{:s}".format(coords.get_confidence(), sep))
+
+    # -----------------------------------------------------------------------
+
+    def tag_image(self, image, coords):
+        """Tag the image at the given coords.
+
+        :param image: (sppasImage) The image to write
+        :param coords: (list or list of list of sppasCoords) The coordinates of objects
+        :return: a copy of the image with colored squares at the given coords
+
+        """
+        if coords is None:
+            return image
+
+        # Make a copy of the image to tag it without changing the given image
+        img = sppasImage(input_array=image.copy())
+        w, h = img.size()
+        pen_width = int(float(w + h) / 500.)
+
+        # Add colors if we need more
+        if len(coords) > len(self.__colors):
+            nb = max(10, len(coords) - len(self.__colors) + 1)
+            new_colors = sppasImageWriter.gen_colors(nb)
+            self.__colors.update(new_colors)
+
+        # Add squares at given coordinates
+        for i, c in enumerate(coords):
+            if c is None:
+                continue
+
+            # Get the i-th color
+            n = len(self.__colors)
+            r = self.__colors['r'][i % n]
+            g = self.__colors['g'][i % n]
+            b = self.__colors['b'][i % n]
+
+            # Draw the square and
+            # the confidence inside the square if the coord is not a point
+            if isinstance(c, (list, tuple)) is False:
+                c = [c]
+            img = img.isurround(c, color=(r, g, b), thickness=pen_width, score=True)
+
+        return img
 
     # -----------------------------------------------------------------------
 
@@ -314,23 +375,15 @@ class sppasImageWriter(object):
         :param out_img_name: (str) The filename of the output image file
 
         """
-        # Make a copy of the image to tag it without changing the given image
-        img = sppasImage(input_array=image.copy())
-        w, h = img.size()
-        pen_width = int(float(w + h) / 500.)
+        # Tag the images with squares at the coords
+        img = self.tag_image(image, coords)
 
-        # Add squares at given coordinates
-        for i, c in enumerate(coords):
-            # Get the i-th color
-            r = sppasImageWriter.COLORS['r'][i % sppasImageWriter.N]
-            g = sppasImageWriter.COLORS['g'][i % sppasImageWriter.N]
-            b = sppasImageWriter.COLORS['b'][i % sppasImageWriter.N]
-            # Draw the square and
-            # the confidence inside the square if the coord is not a point
-            if isinstance(c, (list, tuple)) is False:
-                c = [c]
-            img = img.isurround(c, color=(r, g, b), thickness=pen_width, score=True)
-        # Save tagged image
+        # Resize the image, if requested
+        if self.options.get_width() > 0 or self.options.get_height() > 0:
+            img = img.iresize(self.options.get_width(),
+                              self.options.get_height())
+
+        # Save the tagged/resized image
         cv2.imwrite(out_img_name, img)
 
     # -----------------------------------------------------------------------
@@ -362,6 +415,3 @@ class sppasImageWriter(object):
 
             # Save the cropped image
             cv2.imwrite(out_iname, img)
-
-
-

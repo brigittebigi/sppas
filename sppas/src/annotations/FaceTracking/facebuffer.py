@@ -68,10 +68,8 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
                  size=sppasVideoBuffer.DEFAULT_BUFFER_SIZE):
         """Create a new sppasFacesVideoBuffer instance.
 
-        :param size: (int) Number if images of the buffer
-        :param overlap: (overlap) The number of images to keep
-        from the previous buffer
         :param video: (mp4, etc...) The video filename to browse
+        :param size: (int) Number if images of the buffer
 
         """
         super(sppasFacesVideoBuffer, self).__init__(video=None, size=size, overlap=0)
@@ -198,8 +196,8 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
             self.__faces.append([c.copy() for c in self.__fd])
             self.__fd.invalidate()
 
-        self.__landmarks = [tuple()]*len(self.__faces)
-        self.__persons = [None]*len(self.__faces)
+            self.__landmarks.append([None]*len(self.__faces[i]))
+            self.__persons.append([None]*len(self.__faces[i]))
 
     # -----------------------------------------------------------------------
 
@@ -246,6 +244,18 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
 
     # -----------------------------------------------------------------------
 
+    def set_default_detected_persons(self):
+        """Set a default person name to each detected face."""
+        self.__persons = list()
+        iter_images = self.__iter__()
+        for i in range(self.__len__()):
+            image = next(iter_images)
+            self.__persons.append(list())
+            for j in range(len(self.__faces[i])):
+                self.__persons[i].append(("X{:03d}".format(j), j))
+
+    # -----------------------------------------------------------------------
+
     def get_detected_faces(self, buffer_index):
         """Return the coordinates of the faces detected at the given index.
 
@@ -274,8 +284,8 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
 
     # -----------------------------------------------------------------------
 
-    def get_detected_person(self, buffer_index):
-        """Return the name of the person detected at the given index.
+    def get_detected_persons(self, buffer_index):
+        """Return the identifier of each detected face at the given image index.
 
         :param buffer_index: (int) Index in the current buffer.
         :return: The person defined at the index
@@ -288,8 +298,8 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
 
     # -----------------------------------------------------------------------
 
-    def set_detected_person(self, buffer_index, information=None):
-        """Set information about a person corresponding to a detected face.
+    def set_detected_persons(self, buffer_index, information=None):
+        """Set the identifier of each detected face at the given image index.
 
         The information can be None, the name of the person, a dict
         with key=name and value=probability or  anything else.

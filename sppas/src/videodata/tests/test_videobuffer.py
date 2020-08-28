@@ -247,10 +247,11 @@ class TestVideoBuffer(unittest.TestCase):
         bv = sppasVideoBuffer(TestVideoBuffer.VIDEO, size=50, overlap=5)
 
         # Fill in the first buffer of images
-        bv.next()
+        res = bv.next()
         self.assertEqual(50, bv.tell())
         self.assertEqual(50, len(bv))
         self.assertEqual((0, 49), bv.get_range())
+        self.assertTrue(res)  # we did not reached the end of the video
         copied = list()
         for image in bv:
             self.assertIsInstance(image, np.ndarray)
@@ -269,8 +270,9 @@ class TestVideoBuffer(unittest.TestCase):
         bv.seek_buffer(bv.get_nframes()-15)
         self.assertEqual(95, bv.tell())
         self.assertEqual(bv.get_nframes()-15, bv.tell_buffer())
-        bv.next()
+        res = bv.next()
         # we reached the end of the video
+        self.assertFalse(res)  # no next buffer can be read
         self.assertEqual(1181, bv.tell())
         self.assertEqual(15, len(bv))
         self.assertEqual((bv.get_nframes()-15, bv.get_nframes()-1), bv.get_range())

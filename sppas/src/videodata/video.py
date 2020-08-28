@@ -33,13 +33,12 @@
 """
 
 import numpy as np
-import logging
 import cv2
 
-from ..imgdata import sppasImage
-from ..exceptions import NegativeValueError
-from ..exceptions import IntervalRangeException
-from ..exceptions import RangeBoundsException
+from sppas.src.imgdata import sppasImage
+from sppas.src.exceptions import NegativeValueError
+from sppas.src.exceptions import IntervalRangeException
+from sppas.src.exceptions import RangeBoundsException
 
 from .videodataexc import VideoOpenError
 from .videodataexc import VideoBrowseError

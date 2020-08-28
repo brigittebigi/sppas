@@ -129,10 +129,22 @@ class TestFaceBuffer(unittest.TestCase):
             # print("* Image {:d}".format(i))
             faces = fvb.get_detected_faces(i)
             landmarks = fvb.get_detected_landmarks(i)
+            persons = fvb.get_detected_persons(i)
             self.assertEqual(len(faces), len(landmarks))
+            self.assertEqual(len(faces), len(persons))
             for x in range(len(faces)):
                 self.assertEqual(68, len(landmarks[x]))
+                self.assertIsNone(persons[x])
+
+        fvb.set_default_detected_persons()
+        for i in range(10):
+            all_persons = fvb.get_detected_persons(i)
+            self.assertIsInstance(all_persons, list)
+            self.assertEqual(len(fvb.get_detected_faces(i)), len(all_persons))
+            for j in range(len(all_persons)):
+                self.assertEqual(all_persons[j][1], j)
 
         fvb.next()
         with self.assertRaises(ValueError):
             fvb.get_detected_faces(3)
+

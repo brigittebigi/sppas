@@ -32,8 +32,8 @@
 
 """
 
-from ..exceptions import NegativeValueError
-from ..exceptions import IntervalRangeException
+from sppas.src.exceptions import NegativeValueError
+from sppas.src.exceptions import IntervalRangeException
 from .video import sppasVideo
 
 # ---------------------------------------------------------------------------
@@ -220,6 +220,8 @@ class sppasVideoBuffer(sppasVideo):
     def next(self):
         """Fill in the buffer with the next sequence of images of the video.
 
+        :return: False if we reached the end of the video
+
         """
         if self.video_capture() is False:
             return
@@ -237,14 +239,16 @@ class sppasVideoBuffer(sppasVideo):
 
         # Launch and store the result of the reading
         result = self.__load_frames(nb_frames)
-        end_frame = self.tell() - 1
+        next_frame = self.tell()
 
         # Update the buffer and the frame indexes with the current result
         delta = self.__size - self.__overlap
         self.__data = self.__data[delta:]
-        self.__buffer_idx = (start_frame - len(self.__data), end_frame)
+        self.__buffer_idx = (start_frame - len(self.__data), next_frame - 1)
         self.__data.extend(result)
         result.clear()
+
+        return next_frame != self.get_nframes()
 
     # -----------------------------------------------------------------------
     # Private

@@ -86,7 +86,7 @@ class FaceTracking(object):
     def set_reference_faces(self, known_faces=tuple()):
         """Set the list of images representing faces of known persons.
 
-        ***** UNUSED *****
+        ***** CURRENTLY UNUSED *****
 
         The given images can be a list with images to represents the faces
         or a dictionary with key=string and value=the image.
@@ -145,33 +145,51 @@ class FaceTracking(object):
     def __track_persons(self, video_buffer):
         """Compare given faces to the reference ones.
 
+        Assign a face index to each person of the buffer.
+
         :param video_buffer: (sppasFacesVideoBuffer)
 
         """
-        all_identified = list()
+        video_buffer.set_default_detected_persons()
         """
-        # Fill in the list with the appropriate coordinates
-        for faces in video_buffer:
+        Next step is, for each image of the video, to compare the already
+        known and unknown reference images to the detected faces, then:
+            - associate a face index to each recognized person,
+            - add un-recognized detected face to the list of unknown person,
+            - associate such faces to such new references. 
+            
+        Algorithm for ONE image at index idx in the buffer:
+        
+        # Create a list of images with the cropped faces
+        cropped_faces = list()
+        detected_coords = video_buffer.get_detected_faces(i)
+        for face_coords in detected_coords:
+            cropped_faces.append(image.icrop(face_coords))
+        
+        # Associate a face index to the user-defined persons, if recognized.
+        person_face = dict()
+        for person_id in self.__img_known_faces:
+            max_dist = 0.
+            max_index = 0
+            distances = list()
+            for detected_face in cropped_faces:
+                d = eval_distance(self.__img_known_faces[person_id], detected_face)
+                if d > max_dist:
+                    max_dist = d
+                    max_index = i
+                distances.append(d)
+            person_face[person_id] = (max_index, distances)
+            
+        # Associate a face index to the auto-added persons, if recognized.
+        # SAME CODE. replace img_known by img_unknown.
+                
+        # Check that each face is matching with only one person, not several ones
+        # in case of a face is associated to several persons, choose the one 
+        # with the best distance
+        
+        # Browse all faces/persons in video_buffer to save results
+        # Add not-found faces to our catalogue of unknown-faces
+        # Associate face/person to such un-recognized faces
 
-            identified = list()
-            # "faces" is a list of sppasCoords corresponding to a face in an image
-            # Identify the person of each of these faces
-            for i, coords in enumerate(faces):
-                identified = i
-
-            # Add unknown persons to the list
-
-            # Append the identified
-            all_identified.append(identified)
-
-        nb_persons = len(self.__img_known_faces) + len(self.__img_unknown_faces)
-        if self.__nb_faces != -1:
-            nb_persons = self.__nb_faces
-
-        # Fill in the persons with the identified
-        for i, faces in enumerate(all_faces):
-            identified = all_identified[i]
-            for x in range(len(identified)):
-                persons[i][identified[x]] = faces[x]
         """
 
