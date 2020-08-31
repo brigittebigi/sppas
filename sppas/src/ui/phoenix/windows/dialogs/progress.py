@@ -37,7 +37,6 @@
 import wx
 import time
 
-from sppas.src.config import sppasAppConfig
 from sppas.src.ui.progress import sppasBaseProgress
 
 # ---------------------------------------------------------------------------
@@ -155,6 +154,11 @@ class sppasProgressDialog(wx.GenericProgressDialog, sppasBaseProgress):
 
     # -----------------------------------------------------------------------
 
+    def close(self):
+        self.DestroyFadeOut()
+
+    # -----------------------------------------------------------------------
+
     def DestroyFadeOut(self):
         """Close the progress box."""
         self.timer2 = wx.Timer(self, -1)
@@ -221,5 +225,5 @@ class TestPanelProgressDialog(wx.Panel):
         time.sleep(1)
         self.progress.set_fraction(100)
 
-        self.progress.DestroyFadeOut()
+        self.progress.close()
 
