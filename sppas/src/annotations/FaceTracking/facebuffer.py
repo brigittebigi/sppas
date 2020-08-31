@@ -81,6 +81,8 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         # The list of coordinates of detected faces in each image of the
         # current buffer (list of list of sppasCoords).
         self.__faces = list()
+        self.__nbest = 0
+        self.__confidence = self.__fd.get_min_score()
 
         # The list of landmarks points of detected faces in each image of
         # the current buffer (list of list of sppasCoords).
@@ -115,8 +117,9 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         """Override. Fill in the buffer with the next images.
 
         """
-        sppasVideoBuffer.next(self)
+        ret = sppasVideoBuffer.next(self)
         self.__reset()
+        return ret
 
     # -----------------------------------------------------------------------
     # Face detection & face landmark
@@ -153,6 +156,31 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
 
     # -----------------------------------------------------------------------
 
+    def set_filter_best(self, value=-1):
+        """Force to detect at max the given number of faces.
+
+        :param value: (int) Number of faces to detect or -1 to not force.
+
+        """
+        self.__nbest = value
+
+    # -----------------------------------------------------------------------
+
+    def set_filter_confidence(self, value=0.2):
+        """Force to detect only the faces with a confidence score > value.
+
+        It means that any detected object with a score lesser than the given
+        one will be ignored. The score of detected faces are supposed to
+        range between 0. and 1.
+
+        :param value: (float) Value ranging [0., 1.]
+        :raise: ValueError
+
+        """
+        self.__confidence = value
+
+    # -----------------------------------------------------------------------
+
     def detect_buffer(self):
         """Search for faces and landmarks in the current images of the buffer.
 
@@ -162,7 +190,8 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
 
         """
         self.detect_faces_buffer()
-        self.detect_landmarks_buffer()
+        if self.__fl.get_nb_recognizers() > 0:
+            self.detect_landmarks_buffer()
 
     # -----------------------------------------------------------------------
 
@@ -189,11 +218,18 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         iter_images = self.__iter__()
         for i in range(self.__len__()):
             image = next(iter_images)
-
             # Perform face detection to detect all faces in the current image
             self.__fd.detect(image)
+            logging.debug(" ... {:d} faces detected".format(len(self.__fd)))
+            # Filter to keep the better ones
+            if self.__nbest != 0:
+                self.__fd.filter_best(self.__nbest)
+            self.__fd.filter_confidence(self.__confidence)
+            # Resize the detected face to the portrait, for further uses.
             self.__fd.to_portrait(image)
+            # Save results into the list
             self.__faces.append([c.copy() for c in self.__fd])
+            logging.debug(" ... {:d} faces after filter".format(len(self.__fd)))
             self.__fd.invalidate()
 
             self.__landmarks.append([None]*len(self.__faces[i]))
@@ -257,9 +293,9 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     # -----------------------------------------------------------------------
 
     def get_detected_faces(self, buffer_index):
-        """Return the coordinates of the faces detected at the given index.
+        """Return the coordinates of the faces detected at the given image index.
 
-        :param buffer_index: (int) Index in the current buffer
+        :param buffer_index: (int) Index of the image in the buffer
         :return: (list of sppasCoords) Coordinates of the faces
 
         """
@@ -271,9 +307,9 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     # -----------------------------------------------------------------------
 
     def get_detected_landmarks(self, buffer_index):
-        """Return the landmarks of the faces detected at the given index.
+        """Return the landmarks of the faces detected at the given image index.
 
-        :param buffer_index: (int) Index in the current buffer
+        :param buffer_index: (int) Index of the image in the buffer
         :return: (list of sppasCoords or list of list of sppasCoords) Coordinates of the face landmarks
 
         """
@@ -287,7 +323,7 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     def get_detected_persons(self, buffer_index):
         """Return the identifier of each detected face at the given image index.
 
-        :param buffer_index: (int) Index in the current buffer.
+        :param buffer_index: (int) Index of the image in the buffer
         :return: The person defined at the index
 
         """
@@ -325,7 +361,7 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         (begin, end) = self.get_range()
         if begin == -1 or end == -1:
             raise ValueError("Invalid index value: no buffer is loaded.")
-        if begin <= value <= end:
+        if value < self.get_size():
             return value
-        raise IndexRangeException(value, begin, end)
+        raise IndexRangeException(value, 0, self.get_size())
 

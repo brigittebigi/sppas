@@ -40,6 +40,7 @@ import numpy as np
 
 from sppas.src.exceptions import NegativeValueError
 from sppas.src.exceptions import sppasTypeError
+from ..FaceDetection import FaceDetection
 
 # ---------------------------------------------------------------------------
 
@@ -57,8 +58,6 @@ class FaceTracking(object):
 
     def __init__(self):
         """Create a new FaceTracker instance."""
-        # The expected number of faces. -1 means auto.
-        self.__nb_faces = -1
 
         # Not currently used:
         # A reference image to represent the face of each person
@@ -69,17 +68,6 @@ class FaceTracking(object):
     # -----------------------------------------------------------------------
     # Getters and setters
     # -----------------------------------------------------------------------
-
-    def set_nb_faces(self, value=-1):
-        """Force to detect at max the given number of faces.
-
-        :param value: (int) Number of faces to detect or -1 to not force.
-
-        """
-        value = int(value)
-        if value == 0 or value < -2:
-            raise NegativeValueError(value)
-        self.__nb_faces = value
 
     # -----------------------------------------------------------------------
 

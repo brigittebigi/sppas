@@ -67,6 +67,7 @@ from sppas.src.annotations.TextNorm import sppasTextNorm
 from sppas.src.annotations.TGA import sppasTGA
 from sppas.src.annotations.FaceDetection import sppasFaceDetection
 from sppas.src.annotations.FaceMark import sppasFaceMark
+from sppas.src.annotations.FaceTracking import sppasFaceTracking
 
 from .infotier import sppasMetaInfoTier
 from .log import sppasLog

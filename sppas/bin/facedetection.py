@@ -51,11 +51,11 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas import sg, annots, separators
+from sppas import sg, annots
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 
-from sppas.src.imgdata import extensions
+from sppas.src.imgdata import image_extensions
 from sppas.src.annotations import sppasFaceDetection
 from sppas.src.annotations import sppasParam
 from sppas.src.annotations import sppasAnnotationsManager
@@ -128,9 +128,9 @@ if __name__ == "__main__":
         "-e",
         metavar=".ext",
         default=annots.image_extension,
-        choices=extensions,
+        choices=image_extensions,
         help='Output file extension. One of: {:s}'
-             ''.format(" ".join(extensions)))
+             ''.format(" ".join(image_extensions)))
 
     # Add arguments from the options of the annotation
     # ------------------------------------------------

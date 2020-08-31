@@ -277,3 +277,29 @@ class TestVideoBuffer(unittest.TestCase):
         self.assertEqual(15, len(bv))
         self.assertEqual((bv.get_nframes()-15, bv.get_nframes()-1), bv.get_range())
 
+    # -----------------------------------------------------------------------
+
+    def test_next_loop(self):
+        # Loop through all the buffers
+        bv = sppasVideoBuffer(TestVideoBuffer.VIDEO, size=50, overlap=0)
+
+        read_next = 1
+        while bv.next() is True:
+            self.assertEqual(50*read_next, bv.tell())
+            self.assertEqual(50*read_next, bv.tell_buffer())
+            read_next += 1
+        self.assertEqual(24, read_next)
+        self.assertEqual(1181, bv.tell())
+
+    # -----------------------------------------------------------------------
+
+    def test_eval_max_buffer_size(self):
+        bv = sppasVideoBuffer(TestVideoBuffer.VIDEO, size=50, overlap=0)
+
+        w = bv.get_width()    # 960
+        h = bv.get_height()   # 540
+        nbytes = w * h * 3    # uint8 for r, g, and b
+        memory_max = 1024*1024*1024
+        buffer_max = memory_max // nbytes
+        print(buffer_max)
+

@@ -224,7 +224,7 @@ class sppasVideoBuffer(sppasVideo):
 
         """
         if self.video_capture() is False:
-            return
+            return False
 
         # Fix the number of frames to read
         nb_frames = self.__size - self.__overlap

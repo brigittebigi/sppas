@@ -30,7 +30,7 @@
 
         ---------------------------------------------------------------------
 
-    bin.facemark.py
+    bin.facetracking.py
     ~~~~~~~~~~~~~~~~~~~~
 
 :author:       Brigitte Bigi
@@ -38,7 +38,7 @@
 :contact:      contact@sppas.org
 :license:      GPL, v3
 :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
-:summary:      Automatic face landmark in an image of a single person.
+:summary:      Automatic detections of faces in a video.
 
 """
 
@@ -55,8 +55,8 @@ from sppas import sg, annots
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 
-from sppas.src.imgdata import image_extensions
-from sppas.src.annotations import sppasFaceMark
+from sppas.src.videodata import video_extensions
+from sppas.src.annotations.FaceTracking.sppasfacetrack import sppasFaceTrack
 from sppas.src.annotations import sppasParam
 from sppas.src.annotations import sppasAnnotationsManager
 
@@ -69,8 +69,8 @@ if __name__ == "__main__":
     # Fix initial annotation parameters
     # -----------------------------------------------------------------------
 
-    parameters = sppasParam(["facemark.json"])
-    ann_step_idx = parameters.activate_annotation("facemark")
+    parameters = sppasParam(["facetrack.json"])
+    ann_step_idx = parameters.activate_annotation("facetrack")
     ann_options = parameters.get_options(ann_step_idx)
 
     # -----------------------------------------------------------------------
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-i",
         metavar="file",
-        help='Input image.')
+        help='Input video.')
 
     group_io.add_argument(
         "-o",
@@ -122,20 +122,15 @@ if __name__ == "__main__":
         "-r",
         metavar="model",
         action='append',
-        help='Landmark model name (Kazemi, LBF or AAM)')
-
-    group_io.add_argument(
-        "-R",
-        metavar="model",
-        help='FaceDetection model name')
+        help='Model base name (at least a model for Face Detection)')
 
     group_io.add_argument(
         "-e",
         metavar=".ext",
         default=annots.image_extension,
-        choices=image_extensions,
+        choices=video_extensions,
         help='Output file extension. One of: {:s}'
-             ''.format(" ".join(image_extensions)))
+             ''.format(" ".join(video_extensions)))
 
     # Add arguments from the options of the annotation
     # ------------------------------------------------
@@ -187,7 +182,7 @@ if __name__ == "__main__":
 
     arguments = vars(args)
     for a in arguments:
-        if a not in ('i', 'o', 'r', 'R', 'e', 'I', 'quiet', 'log'):
+        if a not in ('i', 'o', 'r', 'e', 'I', 'quiet', 'log'):
             parameters.set_option_value(ann_step_idx, a, str(arguments[a]))
 
     if args.i:
@@ -199,20 +194,18 @@ if __name__ == "__main__":
             print("argparse.py: error: option -r is required with option -i")
             sys.exit(1)
 
-        if not args.R:
-            print("argparse.py: error: option -R is required with option -i")
-            sys.exit(1)
-
-        ann = sppasFaceMark(log=None)
-        ann.load_resources(args.R, args.r[0], *args.r[1:])
+        ann = sppasFaceTrack(log=None)
+        ann.load_resources(*args.r)
         ann.fix_options(parameters.get_options(ann_step_idx))
 
         if args.o:
             ann.run([args.i], output_file=args.o)
         else:
-            coords = ann.run([args.i])
-            for c in coords:
-                print(c)
+            img_faces = ann.run([args.i])
+            for i, faces in enumerate(img_faces):
+                print("Image {:d}:".format(i))
+                for c in faces:
+                    print(c)
 
     elif args.I:
 

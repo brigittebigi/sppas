@@ -85,10 +85,12 @@ class sppasVideoWriter(object):
 
     def set_options(self, csv=None, tag=None, crop=None,
                     width=None, height=None,
-                    video=False, folder=False):
+                    video=None, folder=None):
         self._img_writer.set_options(csv, tag, crop, width, height)
-        self._video = bool(video)
-        self._folder = bool(folder)
+        if video is not None:
+            self._video = bool(video)
+        if folder is not None:
+            self._folder = bool(folder)
 
     # -----------------------------------------------------------------------
 
@@ -129,8 +131,8 @@ class sppasVideoWriter(object):
         :param person_id: (str) Identifier of a specific person to write
 
         """
-        iter_images = self.__iter__()
-        for i in range(self.__len__()):
+        iter_images = video_buffer.__iter__()
+        for i in range(video_buffer.__len__()):
             image = next(iter_images)
             # Create the cv2.VideoWriter() if it wasn't already done.
             # An image is required to properly fix the video size.

@@ -34,10 +34,14 @@
 
 """
 
+import logging
 from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
+from sppas.src.exceptions import sppasError
 from sppas.src.videodata import video_extensions
 
+from ..FaceDetection import FaceDetection
+from ..FaceMark import FaceLandmark
 from ..annotationsexc import AnnotationOptionError
 from ..baseannot import sppasBaseAnnotation
 
@@ -74,26 +78,55 @@ class sppasFaceTrack(sppasBaseAnnotation):
         if cfg.dep_installed("facemark") is False:
             raise sppasEnableFeatureError("facemark")
 
-        if cfg.dep_installed("facetrack") is False:
-            raise sppasEnableFeatureError("facetrack")
-
         super(sppasFaceTrack, self).__init__("facetrack.json", log)
 
-        self.__video_buffer = sppasFacesVideoBuffer()
+        self.__video_buffer = sppasFacesVideoBuffer(size=10)
         self.__ft = FaceTracking()
         self.__video_writer = sppasVideoWriter()
 
     # -----------------------------------------------------------------------
 
-    def load_resources(self, model_fd, model_lbf, *args, **kwargs):
-        """Fix the model and proto files.
-
-        :param model_fd: (str) Model for face detection
-        :param model_lbf: (str) LBF model for landmark
+    def load_resources(self, *args, **kwargs):
+        """Fix models for face detection and face landmark.
 
         """
-        self.__video_buffer.load_fd_model(model_fd)
-        self.__video_buffer.load_fd_model(model_lbf)
+        # Load the models for Face Detection
+        models_fd = list()
+        for model_name in args:
+            try:
+                ff = FaceDetection()
+                ff.load_model(model_name)
+            except IOError:
+                pass
+            except sppasError:
+                pass
+            else:
+                models_fd.append(model_name)
+        if len(models_fd) == 0:
+            raise sppasError("At least a valid model is required.")
+        self.__video_buffer.load_fd_model(models_fd[0], *models_fd[1:])
+
+        # Load the models for Face Landmarks
+        models_fl = list()
+        for model_name in args:
+            if model_name not in models_fd:
+                try:
+                    ff = FaceLandmark()
+                    ff.load_model(models_fd[0], model_name)
+                except IOError:
+                    pass
+                except sppasError:
+                    pass
+                else:
+                    models_fl.append(model_name)
+
+        if len(models_fl) > 0:
+            self.__video_buffer.load_fl_model(models_fd[0], models_fl)
+
+        logging.debug("FaceTracking loaded {:d} models for face detection"
+                      "".format(len(models_fd)))
+        logging.debug("FaceTracking loaded {:d} models for face landmark"
+                      "".format(len(models_fl)))
 
     # -----------------------------------------------------------------------
     # Methods to fix options
@@ -108,13 +141,41 @@ class sppasFaceTrack(sppasBaseAnnotation):
         for opt in options:
 
             key = opt.get_key()
-            if key == "csv":
+            if key == "nbest":
+                self._options["nbest"] = opt.get_value()
+                self.__video_buffer.set_filter_best(opt.get_value())
+
+            elif key == "score":
+                self._options["score"] = opt.get_value()
+                self.__video_buffer.set_filter_confidence(opt.get_value())
+
+            elif key == "csv":
                 self._options["csv"] = opt.get_value()
                 self.__video_writer.set_options(csv=opt.get_value())
 
             elif key == "tag":
                 self._options["tag"] = opt.get_value()
                 self.__video_writer.set_options(tag=opt.get_value())
+
+            elif key == "crop":
+                self._options["crop"] = opt.get_value()
+                self.__video_writer.set_options(crop=opt.get_value())
+
+            elif key == "video":
+                self._options["video"] = opt.get_value()
+                self.__video_writer.set_options(video=opt.get_value())
+
+            elif key == "folder":
+                self._options["folder"] = opt.get_value()
+                self.__video_writer.set_options(folder=opt.get_value())
+
+            elif key == "width":
+                self._options["width"] = opt.get_value()
+                self.__video_writer.set_options(width=opt.get_value())
+
+            elif key == "height":
+                self._options["height"] = opt.get_value()
+                self.__video_writer.set_options(height=opt.get_value())
 
             elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
                 self._options[key] = opt.get_value()
@@ -132,32 +193,46 @@ class sppasFaceTrack(sppasBaseAnnotation):
         :param input_file: (list of str) (image)
         :param opt_input_file: (list of str) ignored
         :param output_file: (str) the output file name
-        :returns: (list of points) Coordinates of detected landmarks
+        :returns: (list of points) Coordinates of detected faces
 
         """
         # Get and open the video filename from the input
         video = input_file[0]
         self.__video_buffer.open(video)
         self.__video_writer.set_fps(self.__video_buffer.get_framerate())
+        bsize = self.__video_buffer.get_size()
+        self.logfile.print_message(" ... A video buffer contains {:d} images"
+                                   "".format(bsize))
 
         # Browse the video using the buffer of images
+        result = list()
         read_next = True
+        nb = 0
+
+        self.__video_writer.set_options(csv=None, tag=None, crop=None, width=None, height=None, video=None, folder=None)
+
         while read_next is True:
+            self.logfile.print_message("Read buffer number {:d}".format(nb))
             # fill-in the buffer with 'size'-images of the video
             read_next = self.__video_buffer.next()
             # face detection&landmarks on the current images of the buffer
             # and associate a face to a person
             self.__ft.detect_buffer(self.__video_buffer)
             # save the current results
-            self.__video_writer.write(self.__video_buffer,
-                                      output_file,
-                                      person=None,
-                                      pattern=self.get_pattern())
+            if output_file is not None:
+                self.__video_writer.write(self.__video_buffer,
+                                          output_file,
+                                          person="",
+                                          pattern=self.get_pattern())
+            for i in range(len(self.__video_buffer)):
+                faces = self.__video_buffer.get_detected_faces(i)
+                result.append(faces)
+            nb += 1
 
         self.__video_buffer.close()
         self.__video_buffer.reset()
         self.__video_writer.close()
-        return
+        return result
 
     # -----------------------------------------------------------------------
 

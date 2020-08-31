@@ -2,7 +2,7 @@
   "id": "facemark",
   "name": "Face Landmark",
   "descr": "Estimate face landmarks as a set o 68 points on an image of the portrait of a person",
-  "required": "",
+  "required": "facedetect",
   "api": "sppasFaceMark",
 
   "resources": [

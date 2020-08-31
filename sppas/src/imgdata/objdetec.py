@@ -290,6 +290,9 @@ class BaseObjectsDetector(object):
         :param confidence: (float) Minimum confidence score
 
         """
+        # No object was previously detected
+        if len(self._coords) == 0:
+            return None
         # check confidence value and select the best coordinates
         best = self.get_confidence(confidence)
         # apply only if requested n-best is less than actual size
@@ -798,10 +801,10 @@ class sppasImageObjectDetection(BaseObjectsDetector):
         for coord, score in reversed(sorted(detected_objects, key=lambda x: x[1])):
             self._coords.append(coord)
 
-        logging.debug(" ... All detected objects of the {:d} predictors:"
-                      "".format(len(self._detector)))
-        for coord in self._coords:
-            logging.debug(" ... ... {}".format(coord))
+        # logging.debug(" ... All detected objects of the {:d} predictors:"
+        #               "".format(len(self._detector)))
+        # for coord in self._coords:
+        #     logging.debug(" ... ... {}".format(coord))
 
     # -----------------------------------------------------------------------
 
@@ -833,7 +836,7 @@ class sppasImageObjectDetection(BaseObjectsDetector):
                         # overlapping another one and the other one has a
                         # bigger dimension, either w or h or both
                         if area_s > overlap and (coord.w < other.w or coord.h < other.h):
-                            c = other.get_confidence() + coord.get_confidence()
+                            c = min(1., other.get_confidence() + coord.get_confidence())
                             coord.set_confidence(0.)
                             other.set_confidence(c)
 

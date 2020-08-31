@@ -81,4 +81,15 @@ class TestConfiguration(unittest.TestCase):
         fnc = os.path.join(paths.samples, "faces", "BrigitteBigiSlovenie2016-face.jpg")
         cv2.imwrite(fnc, cropped)
 
+    # -----------------------------------------------------------------------
+
+    def test_memory_usage(self):
+        fn = os.path.join(paths.samples, "faces", "BrigitteBigiSlovenie2016.jpg")
+        img = cv2.imread(fn)
+        i1 = sppasImage(input_array=img)
+        self.assertEqual(803, i1.width)
+        self.assertEqual(1488, i1.height)
+
+        # Each (r,g,b) is 3 bytes (uint8)
+        self.assertEqual(803*1488*3, i1.nbytes)
 
