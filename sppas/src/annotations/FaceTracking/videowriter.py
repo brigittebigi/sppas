@@ -35,6 +35,8 @@
 
 """
 
+import os
+import codecs
 import cv2
 
 from sppas.src.imgdata import sppasImageWriter
@@ -103,32 +105,31 @@ class sppasVideoWriter(object):
 
     # -----------------------------------------------------------------------
 
-    def write(self, video_buffer, out_name, person=None, pattern=""):
+    def write(self, video_buffer, out_name,  pattern=""):
         """Save the image into file(s) depending on the options.
 
         Write all detected faces or only the one of a specific person.
 
         :param video_buffer: (sppasFacesVideoBuffer) The images and results to write
         :param out_name: (str) The output name for the folder and/or the video
-        :param person: (str) Identifier of a specific person to write
         :param pattern: (str) Pattern to add to a cropped image filename
 
         """
+        if out_name.endswith('.csv') is True:
+            out_name = out_name[:-4]
         if self._img_writer.options.csv is True:
-            out_csv_name = out_name + ".csv"
-            self.write_csv_coords(video_buffer, out_csv_name, person)
+            self.write_csv_coords(video_buffer, out_name + ".csv")
 
         if self._img_writer.options.tag is True:
-            self.write_tagged_video(video_buffer, out_name, person)
+            self.write_tagged_video(video_buffer, out_name)
 
     # -----------------------------------------------------------------------
 
-    def write_tagged_video(self, video_buffer, out_name, person_id):
+    def write_tagged_video(self, video_buffer, out_name):
         """Tag and save the video with colored squares at given coords.
 
         :param video_buffer: (sppasImage) The image to write
         :param out_name: (str) The filename of the output video file
-        :param person_id: (str) Identifier of a specific person to write
 
         """
         iter_images = video_buffer.__iter__()
@@ -140,7 +141,7 @@ class sppasVideoWriter(object):
                 self._tag_video_writer = self.__create_video_writer(out_name, "", image)
 
             self.__update_persons(video_buffer, i)
-            all_faces = video_buffer.get_detected_faces[i]
+            all_faces = video_buffer.get_detected_faces(i)
 
             # Create the list of coordinates ranked by person
             coords = list()
@@ -152,11 +153,7 @@ class sppasVideoWriter(object):
                     # this person is not in this image
                     coords.append(None)
                 else:
-                    if person_id is not None:
-                        if person_id == known_person_id:
-                            coords.append(all_faces[j])
-                    else:
-                        coords.append(all_faces[j])
+                    coords.append(all_faces[j])
 
             # Tag the images with squares at the coords
             img = self._img_writer.tag_image(image, coords)
@@ -166,7 +163,7 @@ class sppasVideoWriter(object):
 
     def __update_persons(self, video_buffer, idx):
         """Update the list of known persons from the detected ones at idx."""
-        all_persons = video_buffer.get_detected_person(idx)
+        all_persons = video_buffer.get_detected_persons(idx)
 
         # Sort the new person identifiers alphabetically
         persons_ids = sorted([p[0] for p in all_persons if p is not None])
@@ -197,7 +194,10 @@ class sppasVideoWriter(object):
         width, height = image.size()
 
         # Fix the video filename
-        filename = out_name + "_" + person_id + ".mpg"
+        if len(person_id) > 0:
+            filename = out_name + "_" + person_id + ".mpg"
+        else:
+            filename = out_name + ".mpg"
 
         # Create a writer and add it to our dict
         w = cv2.VideoWriter(
@@ -209,12 +209,40 @@ class sppasVideoWriter(object):
 
     # -----------------------------------------------------------------------
 
-    def write_csv_coords(self, video_buffer, out_csv_name, person):
+    def write_csv_coords(self, video_buffer, out_csv_name):
         """Write or append a list of coordinates in a CSV file.
 
         :param video_buffer: (sppasFacesVideoBuffer) The images and results to write
         :param out_csv_name: (str) The filename of the CSV file to write
-        :param person: (str) Identifier of a specific person to write
 
         """
-        pass
+        mode = "w"
+        if os.path.exists(out_csv_name) is True:
+            mode = "a+"
+        with codecs.open(out_csv_name, mode, encoding="utf-8") as fd:
+            iter_images = video_buffer.__iter__()
+            for i in range(video_buffer.__len__()):
+                image = next(iter_images)
+                begin_idx, end_idx = video_buffer.get_range()
+                img_name = "img_{:06d}".format(begin_idx + i)
+
+                # Get the results
+                faces = video_buffer.get_detected_faces(i)
+                persons = video_buffer.get_detected_persons(i)
+                landmarks = video_buffer.get_detected_landmarks(i)
+                for j in range(len(faces)):
+                    self._img_writer.write_coords(fd, img_name, j+1, faces[j], sep=";")
+                    if persons[j] is not None:
+                        fd.write("{:s}".format(persons[j][0]))
+                    else:
+                        fd.write("unk")
+                    fd.write(";")
+                    if isinstance(landmarks[j], (tuple, list)) is True:
+                        for coords in landmarks[j]:
+                            fd.write("{:d};".format(coords.x))
+                            fd.write("{:d};".format(coords.y))
+
+                    fd.write("\n")
+                if len(faces) == 0:
+                    fd.write("{:s};".format(img_name))
+                    fd.write("\n")

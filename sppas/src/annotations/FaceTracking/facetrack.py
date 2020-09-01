@@ -121,7 +121,8 @@ class FaceTracking(object):
         """
         # Determine the coordinates of all the detected faces.
         # They are ranked from the highest score to the lowest one.
-        video_buffer.detect_buffer()
+        video_buffer.detect_faces_buffer()
+        # Detection of landmarks is not enabled because it has to be debugged.
 
         # Assign a person to each detected face
         self.__track_persons(video_buffer)

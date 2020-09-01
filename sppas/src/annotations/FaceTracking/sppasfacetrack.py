@@ -121,7 +121,7 @@ class sppasFaceTrack(sppasBaseAnnotation):
                     models_fl.append(model_name)
 
         if len(models_fl) > 0:
-            self.__video_buffer.load_fl_model(models_fd[0], models_fl)
+            self.__video_buffer.load_fl_model(models_fd[0], *models_fl)
 
         logging.debug("FaceTracking loaded {:d} models for face detection"
                       "".format(len(models_fd)))
@@ -192,7 +192,7 @@ class sppasFaceTrack(sppasBaseAnnotation):
 
         :param input_file: (list of str) (image)
         :param opt_input_file: (list of str) ignored
-        :param output_file: (str) the output file name
+        :param output_file: (str) the output base name for files
         :returns: (list of points) Coordinates of detected faces
 
         """
@@ -222,7 +222,6 @@ class sppasFaceTrack(sppasBaseAnnotation):
             if output_file is not None:
                 self.__video_writer.write(self.__video_buffer,
                                           output_file,
-                                          person="",
                                           pattern=self.get_pattern())
             for i in range(len(self.__video_buffer)):
                 faces = self.__video_buffer.get_detected_faces(i)
