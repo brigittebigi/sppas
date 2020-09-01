@@ -209,7 +209,7 @@ class sppasANTX(sppasBaseIO):
         uri = root.tag[:root.tag.index('}')+1]
 
         # Create metadata
-        for child in tree.iter(tag=uri+'sppasAppConfig'):
+        for child in tree.iter(tag=uri+'Configuration'):
             self._parse_configuration(child, uri)
 
         # Create media
@@ -455,25 +455,25 @@ class sppasANTX(sppasBaseIO):
 
         # FileVersion
         sppasANTX._add_configuration(root,
-                                     self._map_meta["file_version"],
+                                     self._map_meta["FileVersion"],
                                      self.get_meta("file_version",
                                                    "1"))
 
         # Samplerate
         sppasANTX._add_configuration(root,
-                                     self._map_meta["media_sample_rate"],
+                                     self._map_meta["Samplerate"],
                                      self.get_meta("media_sample_rate",
                                                    "44100"))
 
         # Created
         sppasANTX._add_configuration(root,
-                                     self._map_meta["file_created_date"],
+                                     self._map_meta["Created"],
                                      self.get_meta("file_created_date",
                                                    now))
 
         # Modified
         sppasANTX._add_configuration(root,
-                                     self._map_meta["file_write_date"],
+                                     self._map_meta["Modified"],
                                      self.get_meta("file_write_date",
                                                    now))
 
