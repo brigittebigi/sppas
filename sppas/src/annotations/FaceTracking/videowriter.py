@@ -38,6 +38,7 @@
 import os
 import codecs
 import cv2
+import shutil
 
 from sppas.src.imgdata import sppasImageWriter
 
@@ -156,9 +157,6 @@ class sppasVideoWriter(object):
 
             # Update the list of known persons from the detected ones
             self.__update_persons(video_buffer, i)
-            # Create the list of coordinates ranked by person
-            # to ensure the colors are respected.
-            coords = self.__get_ccordinates(video_buffer, i)
 
             if self._img_writer.options.tag is True:
 
@@ -168,13 +166,21 @@ class sppasVideoWriter(object):
                     self._tag_video_writer = self.__create_video_writer(out_name, "", image)
 
                 # Tag the image with squares at the coords
-                img = self._img_writer.tag_image(image, coords)
+                img = self.__tag_persons(video_buffer, i, image)
                 self._tag_video_writer.write(img)
 
             if self._img_writer.options.crop is True:
-                for x, known_person_id in enumerate(self._person_video_writers):
-                    if coords[x] is not None:
-                        pass
+                pass
+
+    # -----------------------------------------------------------------------
+
+    def __tag_persons(self, video_buffer, idx, image):
+        # Create the list of coordinates ranked by person
+        # to ensure the colors are respected.
+        coords = self.__get_coordinates(video_buffer, idx)
+
+        # Tag the image with squares at the coords
+        return self._img_writer.tag_image(image, coords)
 
     # -----------------------------------------------------------------------
 
@@ -185,13 +191,45 @@ class sppasVideoWriter(object):
         :param out_name: (str) The folder name of the output image files
 
         """
+        # Create the directory with all results
+        if os.path.exists(out_name) is False:
+            os.mkdir(out_name)
+
+        # Create a folder to save results of this buffer
+        begin_idx, end_idx = video_buffer.get_range()
+        folder = os.path.join(out_name, "{:06d}".format(begin_idx))
+        if os.path.exists(folder) is True:
+            shutil.rmtree(folder)
+        os.mkdir(folder)
+
         iter_images = video_buffer.__iter__()
         for i in range(video_buffer.__len__()):
             image = next(iter_images)
+            img_name = "img_{:06d}".format(begin_idx + i)
+
+            # Update the list of known persons from the detected ones
+            self.__update_persons(video_buffer, i)
+
+            if self._img_writer.options.tag is True:
+                img = self.__tag_persons(video_buffer, i, image)
+                # Save the image
+                out_iname = os.path.join(folder, img_name + ".jpg")
+                cv2.imwrite(out_iname, img)
+
+            if self._img_writer.options.crop is True:
+                # Get the results
+                faces = video_buffer.get_detected_faces(i)
+                persons = video_buffer.get_detected_persons(i)
+                for j in range(len(faces)):
+                    coords = faces[j]
+                    if persons[j] is not None:
+                        name = persons[j][0]
+                    else:
+                        name = "unk"
 
     # -----------------------------------------------------------------------
     
-    def __get_ccordinates(self, video_buffer, i):
+    def __get_coordinates(self, video_buffer, i):
         """Return the list of detected faces ranked by person."""
         all_faces = video_buffer.get_detected_faces(i)
         coords = list()
@@ -265,16 +303,19 @@ class sppasVideoWriter(object):
         :param out_csv_name: (str) The filename of the CSV file to write
 
         """
+        begin_idx, end_idx = video_buffer.get_range()
         mode = "w"
         if os.path.exists(out_csv_name) is True:
             mode = "a+"
+
         with codecs.open(out_csv_name, mode, encoding="utf-8") as fd:
             iter_images = video_buffer.__iter__()
             for i in range(video_buffer.__len__()):
                 image = next(iter_images)
-                begin_idx, end_idx = video_buffer.get_range()
                 img_name = "img_{:06d}".format(begin_idx + i)
 
+                # Update the list of known persons from the detected ones
+                self.__update_persons(video_buffer, i)
                 # Get the results
                 faces = video_buffer.get_detected_faces(i)
                 persons = video_buffer.get_detected_persons(i)
