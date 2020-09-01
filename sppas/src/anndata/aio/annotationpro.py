@@ -576,10 +576,10 @@ class sppasANTX(sppasBaseIO):
         else:
             start = ann.get_location().get_best().get_begin().get_midpoint()
             duration = ann.get_location().get_best().duration().get_value()
-            duration *= float(self.get_meta('sample_rate', 44100))
+            duration *= float(self.get_meta('media_sample_rate', 44100))
             duration = max(int(duration), 1)
 
-        start *= float(self.get_meta('sample_rate', 44100))
+        start *= float(self.get_meta('media_sample_rate', 44100))
         child_id_start.text = str(int(start))
         child_id_dur.text = str(duration)
 

@@ -405,8 +405,8 @@ class sppasImageWriter(object):
                 fn = fn[:len(fn)-len(pattern)]
             out_iname = "{:s}_{:d}{:s}{:s}".format(fn, i+1, pattern, fe)
 
-            # Crop the image at the coordinates
-            img = image.icrop(c)
+            # Crop the image at the coordinates & resize
+            img = self.crop_and_size_image(image, c)
 
             # Resize the cropped image, if requested
             if self.options.get_width() > 0 or self.options.get_height() > 0:
@@ -415,3 +415,24 @@ class sppasImageWriter(object):
 
             # Save the cropped image
             cv2.imwrite(out_iname, img)
+
+    # -----------------------------------------------------------------------
+
+    def crop_and_size_image(self, image, coord):
+        """Crop the given image at the given coords and resize.
+
+        :param image: (sppasImage) The image to write
+        :param coord: (sppasCoords) The coordinates of the area to crop
+        :return: (sppasimage)
+
+        """
+        # Crop the image at the coordinates
+        img = image.icrop(coord)
+
+        # Resize the cropped image, if requested
+        if self.options.get_width() > 0 or self.options.get_height() > 0:
+            img = img.iresize(self.options.get_width(),
+                              self.options.get_height())
+
+        return img
+

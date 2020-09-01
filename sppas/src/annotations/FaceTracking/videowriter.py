@@ -99,16 +99,27 @@ class sppasVideoWriter(object):
     def close(self):
         """Close all currently used cv2.VideoWriter()."""
         if self._tag_video_writer is not None:
-            self._tag_video_writer.close()
+            self._tag_video_writer.release()
         for person_id in self._person_video_writers:
-            self._person_video_writers[person_id].close()
+            video_writer = self._person_video_writers[person_id]
+            if video_writer is not None:
+                video_writer.release()
 
     # -----------------------------------------------------------------------
 
-    def write(self, video_buffer, out_name,  pattern=""):
-        """Save the image into file(s) depending on the options.
+    def write(self, video_buffer, out_name, pattern=""):
+        """Save the result into file(s) depending on the options.
 
-        Write all detected faces or only the one of a specific person.
+        There are 3 main solutions to write the result of face tracking:
+
+        1. CSV: coordinates of the faces into a spreadsheet
+        2. video
+        3. folder with images
+
+        For 2 and 3, there are 2 possibilities:
+
+        1. tag: surround each detected face in the original image
+        2. crop: create one image for each detected face
 
         :param video_buffer: (sppasFacesVideoBuffer) The images and results to write
         :param out_name: (str) The output name for the folder and/or the video
@@ -117,16 +128,23 @@ class sppasVideoWriter(object):
         """
         if out_name.endswith('.csv') is True:
             out_name = out_name[:-4]
+
+        # Write results in CSV format
         if self._img_writer.options.csv is True:
             self.write_csv_coords(video_buffer, out_name + ".csv")
 
-        if self._img_writer.options.tag is True:
-            self.write_tagged_video(video_buffer, out_name)
+        # Write results in VIDEO format
+        if self._video is True:
+            self.write_video(video_buffer, out_name)
+
+        # Write results in IMAGE format
+        if self._folder is True:
+            self.write_folder(video_buffer, out_name)
 
     # -----------------------------------------------------------------------
 
-    def write_tagged_video(self, video_buffer, out_name):
-        """Tag and save the video with colored squares at given coords.
+    def write_video(self, video_buffer, out_name):
+        """Save the result in video format.
 
         :param video_buffer: (sppasImage) The image to write
         :param out_name: (str) The filename of the output video file
@@ -135,30 +153,60 @@ class sppasVideoWriter(object):
         iter_images = video_buffer.__iter__()
         for i in range(video_buffer.__len__()):
             image = next(iter_images)
-            # Create the cv2.VideoWriter() if it wasn't already done.
-            # An image is required to properly fix the video size.
-            if self._tag_video_writer is None:
-                self._tag_video_writer = self.__create_video_writer(out_name, "", image)
 
+            # Update the list of known persons from the detected ones
             self.__update_persons(video_buffer, i)
-            all_faces = video_buffer.get_detected_faces(i)
-
             # Create the list of coordinates ranked by person
-            coords = list()
-            for known_person_id in self._person_video_writers:
-                j = self.__get_person_index_from_id(
-                    video_buffer.get_detected_faces(i),
-                    known_person_id)
-                if j == -1:
-                    # this person is not in this image
-                    coords.append(None)
-                else:
-                    coords.append(all_faces[j])
+            # to ensure the colors are respected.
+            coords = self.__get_ccordinates(video_buffer, i)
 
-            # Tag the images with squares at the coords
-            img = self._img_writer.tag_image(image, coords)
-            self._tag_video_writer.write(img)
+            if self._img_writer.options.tag is True:
 
+                # Create the cv2.VideoWriter() if it wasn't already done.
+                # An image is required to properly fix the video size.
+                if self._tag_video_writer is None:
+                    self._tag_video_writer = self.__create_video_writer(out_name, "", image)
+
+                # Tag the image with squares at the coords
+                img = self._img_writer.tag_image(image, coords)
+                self._tag_video_writer.write(img)
+
+            if self._img_writer.options.crop is True:
+                for x, known_person_id in enumerate(self._person_video_writers):
+                    if coords[x] is not None:
+                        pass
+
+    # -----------------------------------------------------------------------
+
+    def write_folder(self, video_buffer, out_name):
+        """Save the result in image format into a folder.
+
+        :param video_buffer: (sppasImage) The image to write
+        :param out_name: (str) The folder name of the output image files
+
+        """
+        iter_images = video_buffer.__iter__()
+        for i in range(video_buffer.__len__()):
+            image = next(iter_images)
+
+    # -----------------------------------------------------------------------
+    
+    def __get_ccordinates(self, video_buffer, i):
+        """Return the list of detected faces ranked by person."""
+        all_faces = video_buffer.get_detected_faces(i)
+        coords = list()
+        for known_person_id in self._person_video_writers:
+            j = self.__get_person_index_from_id(
+                video_buffer.get_detected_persons(i),
+                known_person_id)
+            if j == -1:
+                # this person is not in this image
+                coords.append(None)
+            else:
+                coords.append(all_faces[j])
+        
+        return coords
+    
     # -----------------------------------------------------------------------
 
     def __update_persons(self, video_buffer, idx):
@@ -195,14 +243,15 @@ class sppasVideoWriter(object):
 
         # Fix the video filename
         if len(person_id) > 0:
-            filename = out_name + "_" + person_id + ".mpg"
+            filename = out_name + "_" + person_id + ".mp4"
         else:
-            filename = out_name + ".mpg"
+            filename = out_name + ".mp4"
 
         # Create a writer and add it to our dict
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # 'H', '2', '6', '4'
         w = cv2.VideoWriter(
             filename,
-            cv2.VideoWriter_fourcc(*'MJPG'),
+            fourcc,
             self._fps,
             (width, height))
         return w
