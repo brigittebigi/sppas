@@ -40,6 +40,8 @@ import numpy
 from sppas.src.exceptions import sppasIOError
 from sppas.src.exceptions import sppasTypeError
 from sppas.src.exceptions import sppasWriteError
+from sppas.src.exceptions import NegativeValueError
+
 from .coordinates import sppasCoords
 from .imgdataexc import ImageReadError
 
@@ -88,6 +90,12 @@ class sppasImage(numpy.ndarray):
         :Example:
             >>> img1 = Image(shape=(3,), input_array=img, filename="name")
             >>> assert(img1 == img)
+            >>> # get image size
+            >>> w, h = img1.size()
+            >>> # Assigning colors to each pixel
+            >>> for i in range(h):
+            >>>     for j in range(w):
+            >>>         img1[i, j] = [i%256, j%256, (i+j)%256]
 
         """
         # Priority is given to the given already created array
@@ -115,6 +123,48 @@ class sppasImage(numpy.ndarray):
 
     # -----------------------------------------------------------------------
 
+    @staticmethod
+    def blank_image(w, h):
+        """Create and return an image with black pixels only.
+
+        :param w: (int) Image width
+        :param h: (int) Image height
+        :return: (sppasImage)
+
+        """
+        if w < 0:
+            raise NegativeValueError(w)
+        if h < 0:
+            raise NegativeValueError(h)
+
+        t = (h, w, 3)  # To store pixels
+        # Creation of array
+        img = numpy.zeros(t, dtype=numpy.uint8)
+        # Return the matrix as an image
+        return sppasImage(input_array=img)
+
+    # -----------------------------------------------------------------------
+
+    def ired(self):
+        """Return a copy of the image in red-color."""
+        img_red = self.copy()
+        img_red[:, :, (1, 2)] = 0
+        return sppasImage(input_array=img_red)
+
+    def igreen(self):
+        """Return a copy of the image in green-color."""
+        img_green = self.copy()
+        img_green[:, :, (0, 2)] = 0
+        return sppasImage(input_array=img_green)
+
+    def iblue(self):
+        """Return a copy of the image in blue-color."""
+        img_blue = self.copy()
+        img_blue[:, :, (0, 1)] = 0
+        return sppasImage(input_array=img_blue)
+
+    # -----------------------------------------------------------------------
+
     def icrop(self, coordinate):
         """Return a cropped part of the image to given coordinates.
 
@@ -134,26 +184,27 @@ class sppasImage(numpy.ndarray):
 
     # ------------------------------------------------------------------------
 
-    def iresize(self, width=0, height=0):
-        """Return a new array with the specified width and height.
+    def get_proportional_size(self, width=0, height=0):
+        """Return the size of the image or a proportional size.
 
-        :param width: (int) The width to resize to (0=proportional to height)
-        :param height: (int) The width to resize to (0=proportional to width)
-        :return: (numpy.ndarray)
+        :param width: (int) Force the image to the width
+        :param height: (int) Force the image to the height
+        :return: (int, int) Width and height
 
         """
         if len(self) == 0:
-            return
+            return 0, 0
         width = self.__to_dtype(width)
         height = self.__to_dtype(height)
         if width < 0:
-            raise ValueError
+            raise NegativeValueError(width)
         if height < 0:
-            raise ValueError
-        if width+height == 0:
-            return self.copy()
+            raise NegativeValueError(height)
 
         (h, w) = self.shape[:2]
+        if width+height == 0:
+            return w, h
+
         prop_width = prop_height = 0
         propw = proph = 1.
         if width != 0:
@@ -167,6 +218,21 @@ class sppasImage(numpy.ndarray):
         if height == 0:
             prop_height = int(float(h) * propw)
 
+        return prop_width, prop_height
+
+    # ------------------------------------------------------------------------
+
+    def iresize(self, width=0, height=0):
+        """Return a new array with the specified width and height.
+
+        :param width: (int) The width to resize to (0=proportional to height)
+        :param height: (int) The width to resize to (0=proportional to width)
+        :return: (numpy.ndarray)
+
+        """
+        prop_width, prop_height = self.get_proportional_size(width, height)
+        if prop_width+prop_height == 0:
+            return self.copy()
         image = cv2.resize(self, (prop_width, prop_height),
                            interpolation=cv2.INTER_AREA)
         return image

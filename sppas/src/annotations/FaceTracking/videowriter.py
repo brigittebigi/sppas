@@ -39,8 +39,10 @@ import os
 import codecs
 import cv2
 import shutil
+import logging
 
 from sppas.src.imgdata import sppasImageWriter
+from sppas.src.imgdata import sppasImage
 
 # ---------------------------------------------------------------------------
 
@@ -140,7 +142,7 @@ class sppasVideoWriter(object):
 
         # Write results in IMAGE format
         if self._folder is True:
-            self.write_folder(video_buffer, out_name)
+            self.write_folder(video_buffer, out_name, pattern="")
 
     # -----------------------------------------------------------------------
 
@@ -154,9 +156,12 @@ class sppasVideoWriter(object):
         iter_images = video_buffer.__iter__()
         for i in range(video_buffer.__len__()):
             image = next(iter_images)
+            w, h = self.get_image_size(image)
 
             # Update the list of known persons from the detected ones
             self.__update_persons(video_buffer, i)
+            # Create the list of coordinates ranked by person
+            coords = self.__get_coordinates(video_buffer, i)
 
             if self._img_writer.options.tag is True:
 
@@ -165,30 +170,39 @@ class sppasVideoWriter(object):
                 if self._tag_video_writer is None:
                     self._tag_video_writer = self.__create_video_writer(out_name, "", image)
 
-                # Tag the image with squares at the coords
-                img = self.__tag_persons(video_buffer, i, image)
+                # Tag&write the image with squares at the coords
+                img = self._img_writer.tag_image(image, coords)
                 self._tag_video_writer.write(img)
 
             if self._img_writer.options.crop is True:
-                pass
+
+                # Browse through the persons and their coords to crop the image
+                for j, known_person_id in enumerate(self._person_video_writers):
+                    # Create the video writer of this person if necessary
+                    if self._person_video_writers[known_person_id] is None:
+                        self._person_video_writers[known_person_id] = \
+                            self.__create_video_writer(out_name, known_person_id, image, video_buffer)
+                    if coords[j] is not None:
+                        # Crop the given image to the coordinates
+                        img = image.icrop(coords[j])
+                        # Force to resize
+                        img = img.iresize(w, h)
+                    else:
+                        # This person is not in the image.
+                        # Create an empty image to add it into the video.
+                        img = sppasImage(0).blank_image(w, h)
+
+                    # Add the image to the video
+                    self._person_video_writers[known_person_id].write(img)
 
     # -----------------------------------------------------------------------
 
-    def __tag_persons(self, video_buffer, idx, image):
-        # Create the list of coordinates ranked by person
-        # to ensure the colors are respected.
-        coords = self.__get_coordinates(video_buffer, idx)
-
-        # Tag the image with squares at the coords
-        return self._img_writer.tag_image(image, coords)
-
-    # -----------------------------------------------------------------------
-
-    def write_folder(self, video_buffer, out_name):
+    def write_folder(self, video_buffer, out_name, pattern=""):
         """Save the result in image format into a folder.
 
         :param video_buffer: (sppasImage) The image to write
         :param out_name: (str) The folder name of the output image files
+        :param pattern: (str) Pattern to add to a cropped image filename
 
         """
         # Create the directory with all results
@@ -209,28 +223,36 @@ class sppasVideoWriter(object):
 
             # Update the list of known persons from the detected ones
             self.__update_persons(video_buffer, i)
+            # Create the list of coordinates ranked by person
+            # to ensure the colors are respected.
+            coords = self.__get_coordinates(video_buffer, i)
 
             if self._img_writer.options.tag is True:
-                img = self.__tag_persons(video_buffer, i, image)
-                # Save the image
+
+                # Tag&Save the image
+                img = self._img_writer.tag_image(image, coords)
                 out_iname = os.path.join(folder, img_name + ".jpg")
-                cv2.imwrite(out_iname, img)
+                img.write(out_iname)
 
             if self._img_writer.options.crop is True:
-                # Get the results
-                faces = video_buffer.get_detected_faces(i)
-                persons = video_buffer.get_detected_persons(i)
-                for j in range(len(faces)):
-                    coords = faces[j]
-                    if persons[j] is not None:
-                        name = persons[j][0]
-                    else:
-                        name = "unk"
+
+                # Browse through the persons and their coords to crop the image
+                for j, known_person_id in enumerate(self._person_video_writers):
+                    # Create the image filename
+                    iname = img_name + "_" + known_person_id + pattern + ".jpg"
+                    out_iname = os.path.join(folder, iname)
+
+                    if coords[j] is not None:
+                        # Crop the given image to the coordinates and
+                        # resize only if the option width or height is enabled
+                        img = self._img_writer.crop_and_size_image(image, coords[j])
+                        # Add the image to the folder
+                        img.write(out_iname)
 
     # -----------------------------------------------------------------------
     
     def __get_coordinates(self, video_buffer, i):
-        """Return the list of detected faces ranked by person."""
+        """Return the list of coordinates of detected faces ranked by person."""
         all_faces = video_buffer.get_detected_faces(i)
         coords = list()
         for known_person_id in self._person_video_writers:
@@ -242,7 +264,7 @@ class sppasVideoWriter(object):
                 coords.append(None)
             else:
                 coords.append(all_faces[j])
-        
+
         return coords
     
     # -----------------------------------------------------------------------
@@ -270,14 +292,10 @@ class sppasVideoWriter(object):
 
     # -----------------------------------------------------------------------
 
-    def __create_video_writer(self, out_name, person_id, image):
+    def __create_video_writer(self, out_name, person_id, image, video_buffer=None):
         """Create a cv2.VideoWriter() for a person."""
         # Fix width and height of the video
-        if self._img_writer.options.get_width() > 0 or self._img_writer.options.get_height() > 0:
-            image = image.iresize(
-                self._img_writer.options.get_width(),
-                self._img_writer.options.get_height())
-        width, height = image.size()
+        w, h = self.get_image_size(image)
 
         # Fix the video filename
         if len(person_id) > 0:
@@ -285,14 +303,30 @@ class sppasVideoWriter(object):
         else:
             filename = out_name + ".mp4"
 
+        logging.debug("Create a video writer {:s}. Size {:d}, {:d}"
+                      "".format(filename, w, h))
+
         # Create a writer and add it to our dict
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # 'H', '2', '6', '4'
-        w = cv2.VideoWriter(
-            filename,
-            fourcc,
-            self._fps,
-            (width, height))
-        return w
+        writer = cv2.VideoWriter(filename, fourcc, self._fps, (w, h))
+
+        # Add blank images if the buffer is not at the beginning of the video
+        if video_buffer is not None:
+            b, e = video_buffer.get_range()
+            img = sppasImage(0).blank_image(w, h)
+            for i in range(b-1):
+                writer.write(img)
+
+        return writer
+
+    # -----------------------------------------------------------------------
+    
+    def get_image_size(self, image):
+        """Return the size of the image depending on the image and options."""
+        return image.get_proportional_size(
+            width=self._img_writer.options.get_width(),
+            height=self._img_writer.options.get_height()
+        )
 
     # -----------------------------------------------------------------------
 

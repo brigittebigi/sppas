@@ -423,16 +423,15 @@ class sppasImageWriter(object):
 
         :param image: (sppasImage) The image to write
         :param coord: (sppasCoords) The coordinates of the area to crop
-        :return: (sppasimage)
+        :return: (sppasImage)
 
         """
         # Crop the image at the coordinates
         img = image.icrop(coord)
 
-        # Resize the cropped image, if requested
-        if self.options.get_width() > 0 or self.options.get_height() > 0:
-            img = img.iresize(self.options.get_width(),
-                              self.options.get_height())
+        # Resize the cropped image
+        img = img.iresize(self.options.get_width(),
+                          self.options.get_height())
 
         return img
 
