@@ -331,6 +331,7 @@ class sppasTextNorm(sppasBaseAnnotation):
         trs_output.set_meta('language_name_0', "Undetermined")
         trs_output.set_meta('language_url_0',
                             "https://iso639-3.sil.org/code/"+self.__normalizer.lang)
+        self.transfer_metadata(trs_input, trs_output)
 
         # Save in a file
         if output_file is not None:

@@ -420,13 +420,14 @@ class sppasAnnotationsManager(Thread):
     # -----------------------------------------------------------------------
 
     def __add_trs(self, trs, trs_inputfile):
-
+        """Add content of trs_inputfile to trs."""
         try:
             parser = sppasRW(trs_inputfile)
             trs_input = parser.read(trs_inputfile)
         except IOError:
             return 0
 
+        # Add tiers
         for tier in trs_input:
             already_in = False
             if trs.is_empty() is False:
@@ -436,6 +437,18 @@ class sppasAnnotationsManager(Thread):
                         already_in = True
             if already_in is False:
                 trs.append(tier)
+
+        # Add metadata
+        for key in trs_input.get_meta_keys():
+            if trs.get_meta(key, default=None) is None:
+                trs.set_meta(key, trs_input.get_meta(key))
+
+        # TODO: Add media in merged trs
+
+        # TODO: Add controlled vocab in merged trs
+
+        # TODO: Add hierarchy links in merged trs
+
         return 1
 
     # ------------------------------------------------------------------------

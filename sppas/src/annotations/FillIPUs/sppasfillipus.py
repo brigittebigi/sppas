@@ -246,6 +246,12 @@ class sppasFillIPUs(sppasBaseAnnotation):
         input_audio_filename = input_file[0]
         input_trans_filename = input_file[1]
 
+        # Get the framerate of the audio file
+        audio = sppas.src.audiodata.aio.open(input_file[0])
+        framerate = audio.get_framerate()
+        audio.close()
+
+        # Fill in the IPUs
         tier = self.convert(input_audio_filename, input_trans_filename)
         if tier is None:
             self.logfile.print_message(_info(1296), indent=2, status=-1)
@@ -253,8 +259,10 @@ class sppasFillIPUs(sppasBaseAnnotation):
 
         # Create the transcription to put the result
         trs_output = sppasTranscription(self.name)
+        trs_output.set_meta("media_sample_rate", str(framerate))
         trs_output.set_meta('fill_ipus_result_of', input_audio_filename)
         trs_output.set_meta('fill_ipus_result_of_trs', input_trans_filename)
+
         trs_output.append(tier)
 
         extm = os.path.splitext(input_audio_filename)[1].lower()[1:]

@@ -270,6 +270,7 @@ class sppasLPC(sppasBaseAnnotation):
         # Create the transcription result
         trs_output = sppasTranscription(self.name)
         trs_output.set_meta('lpc_result_of', input_file[0])
+        self.transfer_metadata(trs_input, trs_output)
 
         # Create the tier with the lpc syllables
         tier_lpc = self.convert(tier_input)
@@ -281,6 +282,7 @@ class sppasLPC(sppasBaseAnnotation):
         # Extra result: create a video with the keys
         if self._options['createvideo']:
             if len(input_file) > 1:
+                # TODO: Add sppasMedia into the trs_output
                 self.make_video(input_file[1], tier_keys)
             else:
                 self.logfile.print_message(

@@ -234,10 +234,6 @@ class sppasOtherRepet(sppasBaseRepet):
         :returns: (sppasTranscription)
 
         """
-        self.print_options()
-        self.print_diagnosis(input_file[0])
-        self.print_diagnosis(input_file[1])
-
         # Get the tier to be used
         parser = sppasRW(input_file[0])
         trs_input1 = parser.read()
@@ -259,6 +255,8 @@ class sppasOtherRepet(sppasBaseRepet):
         trs_output = sppasTranscription(self.name)
         trs_output.set_meta('other_repetition_result_of_src', input_file[0])
         trs_output.set_meta('other_repetition_result_of_echo', input_file[1])
+        self.transfer_metadata(trs_input1, trs_output)
+
         if len(self._word_strain) > 0:
             trs_output.append(tier_input1)
         if self._options['stopwords'] is True:

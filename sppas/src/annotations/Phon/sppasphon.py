@@ -307,6 +307,7 @@ class sppasPhon(sppasBaseAnnotation):
                             input_file[0])
         trs_output.set_meta('text_phonetization_dict',
                             self.__phonetizer.get_dict_filename())
+        self.transfer_metadata(trs_input, trs_output)
 
         # Save in a file
         if output_file is not None:

@@ -184,10 +184,6 @@ class sppasReOcc(sppasBaseAnnotation):
         :returns: (sppasTranscription)
 
         """
-        self.print_options()
-        self.print_diagnosis(input_file[0])
-        self.print_diagnosis(input_file[1])
-
         # Get the tier to be used
         parser1 = sppasRW(input_file[0])
         trs_input1 = parser1.read()
@@ -208,6 +204,7 @@ class sppasReOcc(sppasBaseAnnotation):
         trs_output = sppasTranscription(self.name)
         trs_output.set_meta('reoccurrences_result_of_src', input_file[0])
         trs_output.set_meta('reoccurrences_result_of_echo', input_file[1])
+        self.transfer_metadata(trs_input1, trs_output)
 
         for tier in new_tiers:
             trs_output.append(tier)

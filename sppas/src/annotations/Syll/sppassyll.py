@@ -300,6 +300,7 @@ class sppasSyll(sppasBaseAnnotation):
         # Create the transcription result
         trs_output = sppasTranscription(self.name)
         trs_output.set_meta('syllabification_result_of', input_file[0])
+        self.transfer_metadata(trs_input, trs_output)
 
         # Syllabify the tier
         if self._options['usesphons'] is True:

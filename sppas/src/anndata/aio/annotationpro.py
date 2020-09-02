@@ -71,6 +71,10 @@ from .aioutils import serialize_labels
 
 # ---------------------------------------------------------------------------
 
+DEFAULT_MEDIA_FRAMERATE = 44100
+
+# ---------------------------------------------------------------------------
+
 
 def pick_random_color(v1=0, v2=255):
     """Return a random RGB color."""
@@ -142,7 +146,7 @@ class sppasANTX(sppasBaseIO):
     # -----------------------------------------------------------------------
 
     @staticmethod
-    def make_point(midpoint, sample_rate=44100):
+    def make_point(midpoint, sample_rate=DEFAULT_MEDIA_FRAMERATE):
         """The localization is a frame value, so an integer."""
         try:
             midpoint = int(midpoint)
@@ -183,7 +187,7 @@ class sppasANTX(sppasBaseIO):
         self._accept_overlaps = False
 
         # Information that are both used by AnnotationPro and
-        # another software tool
+        # another software tool. A bidict() is a bi-directional dict.
         self._map_meta = bidict()
         self._map_meta['Id'] = 'id'
         self._map_meta['Created'] = 'file_created_date'
@@ -227,11 +231,11 @@ class sppasANTX(sppasBaseIO):
     # -----------------------------------------------------------------------
 
     def _parse_configuration(self, configuration_root, uri=""):
-        """Get the elements 'sppasAppConfig'.
+        """Get the elements 'Configuration'.
 
         Fill metadata of the sppasANTX instance.
 
-        :param configuration_root: (ET) sppasAppConfig root.
+        :param configuration_root: (ET) Configuration root.
         :param uri: (str)
 
         """
@@ -241,8 +245,10 @@ class sppasANTX(sppasBaseIO):
         if key is not None and value is not None:
             new_key = key.text.replace(uri, "")
             if value.text is not None:
-                self.set_meta(self._map_meta.get(new_key, new_key),
-                              value.text.replace(uri, ""))
+                meta_key = self._map_meta.get(new_key, new_key)
+                meta_value = value.text.replace(uri, "")
+                print("SET META: {:s} to {:s}".format(meta_key, meta_value))
+                self.set_meta(meta_key, meta_value)
 
     # -----------------------------------------------------------------------
 
@@ -268,7 +274,7 @@ class sppasANTX(sppasBaseIO):
             media.set_meta("id", media_id)
             media.set_meta('media_source', 'primary')
             media.set_meta("media_sample_rate",
-                           self.get_meta("media_sample_rate", "44100"))
+                           self.get_meta("media_sample_rate", str(DEFAULT_MEDIA_FRAMERATE)))
             self.elt_to_meta(audio_root, media, uri)
             self.add_media(media)
 
@@ -317,7 +323,7 @@ class sppasANTX(sppasBaseIO):
         except ValueError:
             raise AioFormatError("Segment id="+segment_id)
 
-        sample_rate = self.get_meta('media_sample_rate', '44100')
+        sample_rate = self.get_meta('media_sample_rate', str(DEFAULT_MEDIA_FRAMERATE))
         if annotation_root.find(uri + 'Duration').text == "0":
             localization = sppasANTX.make_point(begin, sample_rate)
         else:
@@ -443,7 +449,7 @@ class sppasANTX(sppasBaseIO):
     # -----------------------------------------------------------------------
 
     def _format_configuration(self, root):
-        """Add 'sppasAppConfig' into the ElementTree."""
+        """Add 'Configuration' into the ElementTree."""
         now = datetime.now().strftime("%Y-%M-%d %H:%M")
 
         # File format version
@@ -455,25 +461,25 @@ class sppasANTX(sppasBaseIO):
 
         # FileVersion
         sppasANTX._add_configuration(root,
-                                     self._map_meta["FileVersion"],
+                                     self._map_meta["file_version"],
                                      self.get_meta("file_version",
                                                    "1"))
 
         # Samplerate
         sppasANTX._add_configuration(root,
-                                     self._map_meta["Samplerate"],
+                                     self._map_meta["media_sample_rate"],
                                      self.get_meta("media_sample_rate",
-                                                   "44100"))
+                                                   str(DEFAULT_MEDIA_FRAMERATE)))
 
         # Created
         sppasANTX._add_configuration(root,
-                                     self._map_meta["Created"],
+                                     self._map_meta["file_created_date"],
                                      self.get_meta("file_created_date",
                                                    now))
 
         # Modified
         sppasANTX._add_configuration(root,
-                                     self._map_meta["Modified"],
+                                     self._map_meta["file_write_date"],
                                      self.get_meta("file_write_date",
                                                    now))
 
@@ -481,8 +487,8 @@ class sppasANTX(sppasBaseIO):
 
     @staticmethod
     def _add_configuration(root, key, value):
-        """Add a new 'sppasAppConfig' key/value element in root."""
-        conf_root = ET.SubElement(root, 'sppasAppConfig')
+        """Add a new 'Configuration' key/value element in root."""
+        conf_root = ET.SubElement(root, 'Configuration')
         child_key = ET.SubElement(conf_root, 'Key')
         child_key.text = key
         child_value = ET.SubElement(conf_root, 'Value')
@@ -576,10 +582,10 @@ class sppasANTX(sppasBaseIO):
         else:
             start = ann.get_location().get_best().get_begin().get_midpoint()
             duration = ann.get_location().get_best().duration().get_value()
-            duration *= float(self.get_meta('media_sample_rate', 44100))
+            duration *= float(self.get_meta('media_sample_rate', DEFAULT_MEDIA_FRAMERATE))
             duration = max(int(duration), 1)
 
-        start *= float(self.get_meta('media_sample_rate', 44100))
+        start *= float(self.get_meta('media_sample_rate', DEFAULT_MEDIA_FRAMERATE))
         child_id_start.text = str(int(start))
         child_id_dur.text = str(duration)
 

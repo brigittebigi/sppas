@@ -434,10 +434,6 @@ class sppasLexRep(sppasBaseRepet):
         :returns: (sppasTranscription)
 
         """
-        self.print_options()
-        self.print_diagnosis(input_file[0])
-        self.print_diagnosis(input_file[1])
-
         # Get the tier to be used
         parser = sppasRW(input_file[0])
         trs_input1 = parser.read()
@@ -457,6 +453,8 @@ class sppasLexRep(sppasBaseRepet):
         trs_output = sppasTranscription(self.name)
         trs_output.set_meta('speaker_lexrep_result_of_spk1', input_file[0])
         trs_output.set_meta('spkeaker_lexrep_result_of_spk2', input_file[1])
+        self.transfer_metadata(trs_input1, trs_output)
+
         if len(self._word_strain) > 0:
             tier_input1.set_name(tier_input1.get_name() + "-1")
             trs_output.append(tier_input1)

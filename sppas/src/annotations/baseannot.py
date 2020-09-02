@@ -346,6 +346,20 @@ class sppasBaseAnnotation(object):
 
     # -----------------------------------------------------------------------
 
+    @staticmethod
+    def transfer_metadata(from_trs, to_trs):
+        """Transfer the metadata from a sppasTranscription to another one.
+
+        The identifier is not copied and any already existing metadata is
+        not copied.
+
+        """
+        for key in from_trs.get_meta_keys():
+            if to_trs.get_meta(key, default=None) is None:
+                to_trs.set_meta(key, from_trs.get_meta(key))
+
+    # -----------------------------------------------------------------------
+
     def _split_inputs(self, input_files):
         """Return required and optional inputs from the input files.
 

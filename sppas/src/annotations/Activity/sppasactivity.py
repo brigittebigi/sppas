@@ -173,7 +173,10 @@ class sppasActivity(sppasBaseAnnotation):
         activity, duration = self.convert(tok_tier, tmin, tmax)
 
         trs_output = sppasTranscription(self.name)
+        trs_output.set_meta('token_activity_result_of', input_file[0])
+        self.transfer_metadata(trs_input, trs_output)
         trs_output.append(activity)
+
         # if duration is not None:
         #     try:
         #         trs_output.append(duration)

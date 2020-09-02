@@ -221,7 +221,6 @@ class sppasSelfRepet(sppasBaseRepet):
         # Get the tier to be used
         parser = sppasRW(input_file[0])
         trs_input = parser.read()
-
         tier_tokens = sppasFindTier.aligned_tokens(trs_input)
         tier_input = self.make_word_strain(tier_tokens)
 
@@ -231,6 +230,8 @@ class sppasSelfRepet(sppasBaseRepet):
         # Create the transcription result
         trs_output = sppasTranscription(self.name)
         trs_output.set_meta('self_repetition_result_of', input_file[0])
+        self.transfer_metadata(trs_input, trs_output)
+
         if len(self._word_strain) > 0:
             trs_output.append(tier_input)
         if self._options['stopwords'] is True:
