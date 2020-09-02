@@ -414,7 +414,8 @@ class sppasImageWriter(object):
                                   self.options.get_height())
 
             # Save the cropped image
-            cv2.imwrite(out_iname, img)
+            # cv2.imwrite(out_iname, img)
+            img.write(out_iname)
 
     # -----------------------------------------------------------------------
 
@@ -433,5 +434,5 @@ class sppasImageWriter(object):
         img = img.iresize(self.options.get_width(),
                           self.options.get_height())
 
-        return img
+        return sppasImage(input_array=img)
 

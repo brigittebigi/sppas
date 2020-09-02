@@ -215,6 +215,21 @@ class BaseObjectsDetector(object):
         self._detection(image)
         self._filter_overlapped()
 
+        # store separately the coords and their scores
+        detected = list()
+        for coord in self._coords:
+            c = coord.copy()
+            score = c.get_confidence()
+            detected.append((c, score))
+
+        # reset the list of coordinates
+        self._coords = list()
+
+        # sort by confidence score (the highest the better) and
+        # append into our list of coords
+        for coord, score in reversed(sorted(detected, key=lambda x: x[1])):
+            self._coords.append(coord)
+
     # -----------------------------------------------------------------------
 
     def get_best(self, nb=1):
@@ -843,3 +858,4 @@ class sppasImageObjectDetection(BaseObjectsDetector):
         # Finally, keep only detected objects if their score is higher then
         # the min ratio we fixed
         self._coords = [c for c in detected if c.get_confidence() > self.get_min_score()]
+
