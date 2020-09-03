@@ -155,7 +155,7 @@ class TestsppasWJSON(unittest.TestCase):
     def test__serialize_path(self):
         fp = FilePath(os.path.dirname(__file__))
         d = self.wkpjson._serialize_path(fp)
-        self.assertEqual(self.wkpjson._parse_path(d), fp)
+        self.assertEqual(self.wkpjson._parse_path(d, version=2), fp)
 
         # test the absolute path and the relative path
         self.assertEqual(d["id"], fp.get_id())
@@ -167,7 +167,7 @@ class TestsppasWJSON(unittest.TestCase):
         for fp in self.data.get_paths():
             for fr in fp:
                 d = self.wkpjson._serialize_root(fr)
-                self.assertEqual(self.wkpjson._parse_root(d, fp.get_id()), fr)
+                self.assertEqual(self.wkpjson._parse_root(d, fp.get_id(), 2), fr)
 
     # -----------------------------------------------------------------------
 
@@ -176,7 +176,7 @@ class TestsppasWJSON(unittest.TestCase):
             for fr in fp:
                 for fn in fr:
                     d = self.wkpjson._serialize_files(fn)
-                    self.assertEqual(self.wkpjson._parse_file(d, fp.get_id()), fn)
+                    self.assertEqual(self.wkpjson._parse_file(d, fp.get_id(), 2), fn)
 
     # -----------------------------------------------------------------------
 
@@ -191,7 +191,7 @@ class TestsppasWJSON(unittest.TestCase):
         p = os.path.join(sppas.paths.samples, 'samples-pol')
         fp = FilePath(p)
         d = self.wkpjson._serialize_path(fp)
-        new_path = self.wkpjson._parse_path(d)
+        new_path = self.wkpjson._parse_path(d, 2)
         fn = FileName(os.path.join(p, '0001.txt'))
         new_path.append(fn)
         self.assertEqual(new_path, fp)
@@ -205,7 +205,7 @@ class TestsppasWJSON(unittest.TestCase):
         # setting the relative path to an existing one
         d["rel"] = os.path.relpath(os.path.dirname(__file__))
 
-        new_path = self.wkpjson._parse_path(d)
+        new_path = self.wkpjson._parse_path(d, 2)
         self.assertEqual(new_path.get_id(), os.path.abspath(d["rel"]))
 
         # path changed so we can't add with the old path name
@@ -220,7 +220,7 @@ class TestsppasWJSON(unittest.TestCase):
         # wrong abspath, relpath
         fp = FilePath("/toto/samples-pol")
         d = self.wkpjson._serialize_path(fp)
-        new_path = self.wkpjson._parse_path(d)
+        new_path = self.wkpjson._parse_path(d, 2)
         self.assertEqual(new_path.get_state(), States().MISSING)
 
         with self.assertRaises(FilesMatchingValueError):
@@ -237,7 +237,7 @@ class TestsppasWJSON(unittest.TestCase):
         for fp in self.data.get_paths():
             for fr in fp:
                 d = self.wkpjson._serialize_root(fr)
-                self.assertEqual(self.wkpjson._parse_root(d, fp.get_id()), fr)
+                self.assertEqual(self.wkpjson._parse_root(d, fp.get_id(), 2), fr)
 
     # -----------------------------------------------------------------------
 
@@ -246,7 +246,7 @@ class TestsppasWJSON(unittest.TestCase):
             for fr in fp:
                 for fn in fr:
                     d = self.wkpjson._serialize_files(fn)
-                    self.assertEqual(self.wkpjson._parse_file(d, fp.get_id()), fn)
+                    self.assertEqual(self.wkpjson._parse_file(d, fp.get_id(), 2), fn)
 
     # -----------------------------------------------------------------------
 

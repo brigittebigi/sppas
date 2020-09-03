@@ -224,7 +224,7 @@ class sppasRMS(sppasBaseAnnotation):
 
         """
         # Get the tier with the intervals we'll estimate rms values
-        parser = sppasRW(input_file)
+        parser = sppasRW(input_file[1])
         trs_input = parser.read()
         tier = self.input_tier(trs_input)
 

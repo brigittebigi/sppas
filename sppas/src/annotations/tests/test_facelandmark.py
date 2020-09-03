@@ -74,7 +74,7 @@ class TestFaceLandmark(unittest.TestCase):
     def test_contains(self):
         fd = FaceLandmark()
         # access to the private list of landmarks and append a point
-        fd._FaceLandmark__landmarks.append(sppasCoords(124, 235))
+        fd._FaceLandmark__sights.append(sppasCoords(124, 235))
         # test with coordinates
         self.assertTrue(sppasCoords(124, 235) in fd)
         self.assertFalse(sppasCoords(24, 35) in fd)
@@ -87,7 +87,7 @@ class TestFaceLandmark(unittest.TestCase):
 
     def test_mark_nothing(self):
         fl = FaceLandmark()
-        fl.load_model(MODEL_DAT, NET)
+        fl.load_model(NET, MODEL_DAT)
         # Nothing detected... we still didn't asked for
 
         # The image we'll work on

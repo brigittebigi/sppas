@@ -87,13 +87,13 @@ class TestInstallerDeps(unittest.TestCase):
     def test_enable(self):
         """Return True if the feature is enabled."""
         y = self.__installer_deps.features_ids()
-        self.assertEqual(self.__installer_deps.enable(y[0]), True)
+        self.assertTrue(self.__installer_deps.enable(y[0]))
 
         y = self.__installer_deps.features_ids()
-        self.assertEqual(self.__installer_deps.enable(y[1]), False)
+        self.assertFalse(self.__installer_deps.enable(y[1]))
 
         y = self.__installer_deps.features_ids()
-        self.assertEqual(self.__installer_deps.enable(y[2]), True)
+        self.assertTrue(self.__installer_deps.enable(y[2]))
 
     # ---------------------------------------------------------------------------
 
@@ -101,9 +101,9 @@ class TestInstallerDeps(unittest.TestCase):
         """Return True if the feature is available."""
         y = self.__installer_deps.features_ids()
         if sys.platform == "win32":
-            self.assertEqual(self.__installer_deps.available(y[0]), True)
-            self.assertEqual(self.__installer_deps.available(y[1]), False)
-            self.assertEqual(self.__installer_deps.available(y[2]), True)
+            self.assertTrue(self.__installer_deps.available(y[0]))
+            self.assertFalse(self.__installer_deps.available(y[1]))
+            self.assertTrue(self.__installer_deps.available(y[2]))
 
     # ---------------------------------------------------------------------------
 
@@ -111,12 +111,12 @@ class TestInstallerDeps(unittest.TestCase):
         """Make a feature enabled."""
         y = self.__installer_deps.features_ids()
         self.__installer_deps.enable(y[0], True)
-        self.assertEqual(self.__installer_deps.enable(y[0]), True)
+        self.assertTrue(self.__installer_deps.enable(y[0]))
 
         if sys.platform != "darwin":
             self.__installer_deps.enable(y[1], True)
             y = self.__installer_deps.features_ids()
-            self.assertEqual(self.__installer_deps.enable(y[1]), False)
+            self.assertFalse(self.__installer_deps.enable(y[1]))
 
         # self.__installer_deps.enable(y[2], True)
         # y = self.__installer_deps.features_ids()
@@ -128,13 +128,13 @@ class TestInstallerDeps(unittest.TestCase):
         """Make a feature disabled."""
         y = self.__installer_deps.features_ids()
         self.__installer_deps.enable(y[0], False)
-        self.assertEqual(self.__installer_deps.enable(y[0]), False)
+        self.assertFalse(self.__installer_deps.enable(y[0]))
 
         self.__installer_deps.enable(y[1], False)
         y = self.__installer_deps.features_ids()
-        self.assertEqual(self.__installer_deps.enable(y[1]), False)
+        self.assertFalse(self.__installer_deps.enable(y[1]))
 
         self.__installer_deps.enable(y[2], False)
         y = self.__installer_deps.features_ids()
-        self.assertEqual(self.__installer_deps.enable(y[2]), False)
+        self.assertFalse(self.__installer_deps.enable(y[2]))
 

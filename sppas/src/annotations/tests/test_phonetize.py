@@ -53,10 +53,10 @@ from sppas.src.resources.dictpron import sppasDictPron
 from sppas.src.resources.mapping import sppasMapping
 from sppas.src.anndata import sppasRW
 
-from ..Phon.phonetize import sppasDictPhonetizer
-from ..Phon.dagphon import sppasDAGPhonetizer
-from ..Phon.phonunk import sppasPhonUnk
-from ..Phon.sppasphon import sppasPhon
+from sppas.src.annotations.Phon.phonetize import sppasDictPhonetizer
+from sppas.src.annotations.Phon.dagphon import sppasDAGPhonetizer
+from sppas.src.annotations.Phon.phonunk import sppasPhonUnk
+from sppas.src.annotations.Phon.sppasphon import sppasPhon
 
 # ---------------------------------------------------------------------------
 
@@ -265,16 +265,6 @@ class TestDAGPhon(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_decompose(self):
-        """... Create a decomposed phonetization from a string.
-         As follow:
-
-            >>> dag_phon.decompose("p1 p2|x2 p3|x3")
-            >>> p1-p2-p3|p1-p2-x3|p1-x2-p3|p1-x2-x3
-
-        The input string is converted into a DAG, then output corresponds
-        to all paths.
-
-        """
         self.assertEqual(set("a|b".split('|')),
                          set(self.dd.decompose("a", "b").split('|')))
 

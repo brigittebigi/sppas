@@ -71,9 +71,6 @@ class TestConfiguration(unittest.TestCase):
     def test_dep_installed(self):
         """Return True if a dependency is installed"""
         self.assertFalse(self.__configuration.dep_installed("aaaa"))
-
         if os.path.exists(self.__configuration.cfg_filename()) is True:
             self.assertTrue(self.__configuration.dep_installed("wxpython"))
             self.assertTrue(self.__configuration.dep_installed("julius"))
-        self.assertFalse(self.__configuration.dep_installed("first"))
-        self.assertFalse(self.__configuration.dep_installed("second"))

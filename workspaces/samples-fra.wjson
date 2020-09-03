@@ -5,23 +5,23 @@
     "id": "9c9b55d8-ed0f-4b40-bd86-4d5e124f96be",
     "paths": [
         {
-            "id": "D:\\Projets\\sppas\\samples\\samples-fra",
-            "rel": "D:\\Projets\\sppas\\samples\\samples-fra",
+            "id": "/E/bigi/Projets/sppas/samples/samples-fra",
+            "rel": "sppas/samples/samples-fra",
             "roots": [
                 {
                     "id": "AC track_0379",
                     "files": [
                         {
                             "id": "AC track_0379.PitchTier",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "AC track_0379.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "AC track_0379.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -36,11 +36,11 @@
                     "files": [
                         {
                             "id": "AG_\u00e9\u00e0\u00e7_0460.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "AG_\u00e9\u00e0\u00e7_0460.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -57,11 +57,11 @@
                     "files": [
                         {
                             "id": "BX_track_0451.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "BX_track_0451.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -73,11 +73,11 @@
                     "files": [
                         {
                             "id": "EB_track_0641.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "EB_track_0641.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -94,11 +94,11 @@
                     "files": [
                         {
                             "id": "F_F_B003-P8.TextGrid",
-                            "state": -1
+                            "state": 1
                         },
                         {
                             "id": "F_F_B003-P8.wav",
-                            "state": -1
+                            "state": 1
                         }
                     ],
                     "refids": [
@@ -106,7 +106,7 @@
                         "Spk-B003"
                     ],
                     "subjoin": {
-                        "expand": false
+                        "expand": true
                     }
                 },
                 {
@@ -114,15 +114,15 @@
                     "files": [
                         {
                             "id": "F_F_B003-P9.TextGrid",
-                            "state": -1
+                            "state": 1
                         },
                         {
                             "id": "F_F_B003-P9.hz",
-                            "state": -1
+                            "state": 1
                         },
                         {
                             "id": "F_F_B003-P9.wav",
-                            "state": -1
+                            "state": 1
                         }
                     ],
                     "refids": [
@@ -130,7 +130,7 @@
                         "Spk-B003"
                     ],
                     "subjoin": {
-                        "expand": false
+                        "expand": true
                     }
                 },
                 {
@@ -138,11 +138,11 @@
                     "files": [
                         {
                             "id": "F_F_C006-P6.TextGrid",
-                            "state": -1
+                            "state": 1
                         },
                         {
                             "id": "F_F_C006-P6.wav",
-                            "state": -1
+                            "state": 1
                         }
                     ],
                     "refids": [
@@ -150,7 +150,7 @@
                         "Spk-C006"
                     ],
                     "subjoin": {
-                        "expand": false
+                        "expand": true
                     }
                 },
                 {
@@ -158,11 +158,11 @@
                     "files": [
                         {
                             "id": "IM_track_0767.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "IM_track_0767.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -174,11 +174,11 @@
                     "files": [
                         {
                             "id": "MB_track_0674.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "MB_track_0674.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -190,11 +190,11 @@
                     "files": [
                         {
                             "id": "MG_track_0702.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "MG_track_0702.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -206,11 +206,11 @@
                     "files": [
                         {
                             "id": "ML_track_0597.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "ML_track_0597.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -222,11 +222,11 @@
                     "files": [
                         {
                             "id": "NH_track_636.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "NH_track_636.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -238,11 +238,11 @@
                     "files": [
                         {
                             "id": "SR_track_631.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "SR_track_631.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -259,11 +259,11 @@
                     "files": [
                         {
                             "id": "YM_track_0182.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "YM_track_0182.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -283,7 +283,9 @@
             "id": "Corpus-CID",
             "state": 0,
             "type": "STANDALONE",
-            "subjoin": null,
+            "subjoin": {
+                "expand": false
+            },
             "attributes": [
                 {
                     "id": "place",
@@ -309,7 +311,9 @@
             "id": "Corpus-AixOx",
             "state": 0,
             "type": "STANDALONE",
-            "subjoin": null,
+            "subjoin": {
+                "expand": false
+            },
             "attributes": [
                 {
                     "id": "place",
@@ -335,7 +339,9 @@
             "id": "Spk-EB",
             "state": 0,
             "type": "SPEAKER",
-            "subjoin": null,
+            "subjoin": {
+                "expand": false
+            },
             "attributes": [
                 {
                     "id": "gender",
@@ -355,7 +361,9 @@
             "id": "Spk-SR",
             "state": 0,
             "type": "SPEAKER",
-            "subjoin": null,
+            "subjoin": {
+                "expand": false
+            },
             "attributes": [
                 {
                     "id": "gender",
@@ -375,7 +383,9 @@
             "id": "Spk-YM",
             "state": 0,
             "type": "SPEAKER",
-            "subjoin": null,
+            "subjoin": {
+                "expand": false
+            },
             "attributes": [
                 {
                     "id": "gender",
@@ -395,7 +405,9 @@
             "id": "Spk-AG",
             "state": 0,
             "type": "SPEAKER",
-            "subjoin": null,
+            "subjoin": {
+                "expand": false
+            },
             "attributes": [
                 {
                     "id": "gender",
@@ -415,7 +427,9 @@
             "id": "Spk-B003",
             "state": 0,
             "type": "SPEAKER",
-            "subjoin": null,
+            "subjoin": {
+                "expand": false
+            },
             "attributes": [
                 {
                     "id": "gender",
@@ -435,7 +449,9 @@
             "id": "Spk-C006",
             "state": 0,
             "type": "SPEAKER",
-            "subjoin": null,
+            "subjoin": {
+                "expand": false
+            },
             "attributes": [
                 {
                     "id": "gender",
@@ -455,14 +471,18 @@
             "id": "Dlg-07",
             "state": 0,
             "type": "INTERACTION",
-            "subjoin": null,
+            "subjoin": {
+                "expand": false
+            },
             "attributes": []
         },
         {
             "id": "Dlg-08",
             "state": 0,
             "type": "INTERACTION",
-            "subjoin": null,
+            "subjoin": {
+                "expand": false
+            },
             "attributes": []
         }
     ]

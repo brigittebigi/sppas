@@ -352,7 +352,6 @@ class sppasImage(numpy.ndarray):
 
     # -----------------------------------------------------------------------
 
-    @property
     def size(self):
         h, w, _ = self.shape
         return w, h

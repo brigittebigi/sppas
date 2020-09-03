@@ -99,8 +99,8 @@ class TestImage(unittest.TestCase):
     def test_memory_usage(self):
         img = cv2.imread(TestImage.fn)
         i1 = sppasImage(input_array=img)
-        self.assertEqual(803, i1.width)
-        self.assertEqual(1488, i1.height)
+        self.assertEqual(1488, i1.width)
+        self.assertEqual(803, i1.height)
         self.assertEqual(3, i1.channel)
 
         # Each (r,g,b) is 3 bytes (uint8)

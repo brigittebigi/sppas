@@ -206,7 +206,6 @@ class sppasConvertPanel(sppasScrolledPanel):
         btn.SetLabelPosition(wx.RIGHT)
         btn.SetSpacing(sppasScrolledPanel.fix_size(8))
         btn.SetBorderWidth(2)
-        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(w, h))
 
         btn.SetName("convert")

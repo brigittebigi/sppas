@@ -300,8 +300,8 @@ class sppasActionAnnotatePanel(sppasPanel):
         p = sppasPanel(parent, style=wx.BORDER_NONE, name="show_report_panel")
         st = sppasStaticText(p, label=MSG_STEP_REPORT)
         btn_por = self.__create_select_annot_btn(p, MSG_BTN_REPORT)
-        btn_por.SetName("report_btn")
         btn_por.SetImage("report_clip")
+        btn_por.SetName("report_btn")
 
         s = wx.BoxSizer(wx.HORIZONTAL)
         border = sppasPanel.fix_size(10)
@@ -326,7 +326,6 @@ class sppasActionAnnotatePanel(sppasPanel):
         btn.SetLabelPosition(wx.RIGHT)
         btn.SetSpacing(12)
         btn.SetBorderColour(wx.Colour(128, 128, 128, 128))
-        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(w, h))
         return btn
 
