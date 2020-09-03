@@ -656,9 +656,8 @@ class sppasActionsInstallPanel(sppasPanel):
         btn.SetLabelPosition(wx.RIGHT)
         btn.SetFocusStyle(wx.PENSTYLE_SOLID)
         btn.SetFocusWidth(h//4)
-        btn.SetFocusColour(wx.Colour(128, 128, 128, 128))
+        btn.SetFocusColour(self.GetForegroundColour())
         btn.SetSpacing(sppasPanel.fix_size(h//2))
-        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(h*10, h*2))
 
         return btn
@@ -726,16 +725,16 @@ class sppasHomeInstallPanel(sppasPanel):
 
         sppas_logo = TextButton(self, label=sg.__url__, name="sppas_web")
         sppas_logo.SetMinSize(wx.Size(sppasPanel.fix_size(200), -1))
-        sppas_logo.SetBorderWidth(1)
+        sppas_logo.SetBorderWidth(0)
         sppas_logo.SetAlign(wx.ALIGN_CENTER)
 
         # Organize the title and message
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.AddStretchSpacer(1)
-        sizer.Add(st, 1, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, h)
-        sizer.Add(txt, 1, wx.EXPAND)
-        sizer.Add(sppas_logo, 1, wx.ALIGN_CENTER_HORIZONTAL)
-        sizer.AddStretchSpacer(2)
+        sizer.Add(st, 2, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, h)
+        sizer.Add(txt, 3, wx.EXPAND | wx.BOTTOM, h)
+        sizer.Add(sppas_logo, 0, wx.ALIGN_CENTER_HORIZONTAL)
+        sizer.AddStretchSpacer(1)
 
         self.SetSizer(sizer)
 

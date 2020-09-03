@@ -65,6 +65,9 @@ class sppasVideoBuffer(sppasVideodataError):
     pass
 
 
+video_extensions = tuple()
+
+
 # ---------------------------------------------------------------------------
 # Import the classes in case the "video" feature is enabled: opencv&numpy
 # are both installed and the automatic detections can work.

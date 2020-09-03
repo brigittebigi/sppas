@@ -320,7 +320,7 @@ class sppasTopFrame(wx.TopLevelWindow):
                 delta = -5
         self.delta = int(delta)
         self.timer2 = wx.Timer(self, -1)
-        self.timer2.Start(1)
+        self.timer2.Start(5)   # call the cycle out every 5 milliseconds
         self.Bind(wx.EVT_TIMER, self.__alpha_cycle_out, self.timer2)
 
     # -----------------------------------------------------------------------
