@@ -45,11 +45,12 @@ from ..image import sppasImage
 # ---------------------------------------------------------------------------
 
 
-class TestConfiguration(unittest.TestCase):
+class TestImage(unittest.TestCase):
+
+    fn = os.path.join(paths.samples, "faces", "BrigitteBigiSlovenie2016.jpg")
 
     def test_init(self):
-        fn = os.path.join(paths.samples, "faces", "BrigitteBigiSlovenie2016.jpg")
-        img = cv2.imread(fn)
+        img = cv2.imread(TestImage.fn)
         self.assertEqual(len(img), 803)
 
         i1 = sppasImage(input_array=img)
@@ -58,7 +59,7 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(len(img), len(i1))
         self.assertTrue(i1 == img)
 
-        i2 = sppasImage(filename=fn)
+        i2 = sppasImage(filename=TestImage.fn)
         self.assertIsInstance(i2, numpy.ndarray)
         self.assertIsInstance(i2, sppasImage)
         self.assertEqual(len(img), len(i2))
@@ -70,8 +71,7 @@ class TestConfiguration(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_crop(self):
-        fn = os.path.join(paths.samples, "faces", "BrigitteBigiSlovenie2016.jpg")
-        image = sppasImage(filename=fn)
+        image = sppasImage(filename=TestImage.fn)
         cropped = image.icrop(sppasCoords(886, 222, 177, 189))
         # The cropped image is 189 rows and 177 columns of pixels
         self.assertEqual(189, len(cropped))
@@ -80,15 +80,28 @@ class TestConfiguration(unittest.TestCase):
 
         fnc = os.path.join(paths.samples, "faces", "BrigitteBigiSlovenie2016-face.jpg")
         cv2.imwrite(fnc, cropped)
+        self.assertTrue(os.path.exists(fnc))
+        cropped_read = sppasImage(filename=fnc)
+        os.remove(fnc)
+
+        self.assertEqual(189, len(cropped_read))
+        for row in cropped_read:
+            self.assertEqual(len(row), 177)
+
+        # test if same shape, same elements values
+        self.assertTrue(numpy.array_equal(cropped, cropped_read))
+
+        # test if broadcastable shape, same elements values
+        self.assertTrue(numpy.array_equiv(cropped, cropped_read))
 
     # -----------------------------------------------------------------------
 
     def test_memory_usage(self):
-        fn = os.path.join(paths.samples, "faces", "BrigitteBigiSlovenie2016.jpg")
-        img = cv2.imread(fn)
+        img = cv2.imread(TestImage.fn)
         i1 = sppasImage(input_array=img)
         self.assertEqual(803, i1.width)
         self.assertEqual(1488, i1.height)
+        self.assertEqual(3, i1.channel)
 
         # Each (r,g,b) is 3 bytes (uint8)
         self.assertEqual(803*1488*3, i1.nbytes)

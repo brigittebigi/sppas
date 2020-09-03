@@ -49,7 +49,7 @@ from .imgdataexc import ImageReadError
 
 
 class sppasImage(numpy.ndarray):
-    """Manipulate images.
+    """Manipulate images represented by an ndarray.
 
     :author:       Brigitte Bigi, Florian Hocquet
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -67,6 +67,12 @@ class sppasImage(numpy.ndarray):
 
     An image of width=320 and height=200 is represented by len(img)=200;
     each of these 200 rows contains 320 lists of [r,g,b] values.
+
+    Important:
+    When the image file is read with the OpenCV function imread(),
+    the order of colors is BGR (blue, green, red), and the same with
+    imwrite.
+    This class is also based on BGR.
 
     """
 
@@ -88,7 +94,7 @@ class sppasImage(numpy.ndarray):
         :raise: IOError
 
         :Example:
-            >>> img1 = Image(shape=(3,), input_array=img, filename="name")
+            >>> img1 = sppasImage(shape=(3,), input_array=img, filename="name")
             >>> assert(img1 == img)
             >>> # get image size
             >>> w, h = img1.size()
@@ -144,25 +150,90 @@ class sppasImage(numpy.ndarray):
         return sppasImage(input_array=img)
 
     # -----------------------------------------------------------------------
+    # Modify colors
+    # -----------------------------------------------------------------------
 
-    def ired(self):
+    def ired(self, value=0):
         """Return a copy of the image in red-color."""
-        img_red = self.copy()
-        img_red[:, :, (1, 2)] = 0
-        return sppasImage(input_array=img_red)
+        value = int(value)
+        if value < 0:
+            value = 0
+        value = value % 255
+        img = self.copy()
+        img[:, :, (0, 1)] = value
+        return sppasImage(input_array=img)
 
-    def igreen(self):
+    def igreen(self, value=0):
         """Return a copy of the image in green-color."""
+        value = int(value)
+        if value < 0:
+            value = 0
+        value = value % 255
         img_green = self.copy()
-        img_green[:, :, (0, 2)] = 0
+        img_green[:, :, (0, 2)] = value
         return sppasImage(input_array=img_green)
 
-    def iblue(self):
+    def iblue(self, value=0):
         """Return a copy of the image in blue-color."""
-        img_blue = self.copy()
-        img_blue[:, :, (0, 1)] = 0
-        return sppasImage(input_array=img_blue)
+        value = int(value)
+        if value < 0:
+            value = 0
+        value = value % 255
+        img = self.copy()
+        img[:, :, (1, 2)] = value
+        return sppasImage(input_array=img)
 
+    def igray(self):
+        """Return a copy of the image in grayscale."""
+        # The formula is Y' = 0.2989 R + 0.5870 G + 0.1140 B
+        # Reminder: our image is BGR
+        img_gray = numpy.average(self, weights=[0.114, 0.587, 0.2989], axis=2)
+        return sppasImage(input_array=img_gray)
+
+    def inegative(self):
+        """Return a negative/positive color image."""
+        img = 255 - self
+        return sppasImage(input_array=img)
+
+    def ireduction(self, value=128):
+        """Apply a color-reduction.
+
+        :param value: (int) Reduction value in range(0, 255)
+
+        """
+        value = int(value)
+        if value < 0:
+            return self.copy()
+        coeff = value % 255
+        img = self // coeff * coeff
+        return sppasImage(input_array=img)
+
+    def ireduction_rgb(self, r_value=128, g_value=128, b_value=128):
+        img = self.copy()
+        img[:, :, (0, 1)] = img[:, :, (0, 1)] // r_value * r_value
+        img[:, :, (0, 2)] = img[:, :, (0, 2)] // g_value * g_value
+        img[:, :, (1, 2)] = img[:, :, (1, 2)] // b_value * b_value
+        return sppasImage(input_array=img)
+
+    def igamma(self, coeff=1.0):
+        """Return a copy of the image with lightness changed.
+
+        :param coeff: (float) Set a value inn range (0., 1.) to increase
+        lightness and a value > 1. to increase darkness.
+
+        """
+        if coeff < 0.:
+            coeff = 0.
+        img = 255.0 * (self / 255.0) ** coeff
+        return sppasImage(input_array=img)
+
+    def irgb(self):
+        """Return the image in RGB colors."""
+        img = self.copy()
+        return img[:, :, [2, 1, 0]]
+
+    # -----------------------------------------------------------------------
+    # Modify size
     # -----------------------------------------------------------------------
 
     def icrop(self, coordinate):
@@ -237,16 +308,67 @@ class sppasImage(numpy.ndarray):
                            interpolation=cv2.INTER_AREA)
         return image
 
+    # ------------------------------------------------------------------------
+
+    def irotate(self, angle, center=None, scale=1.0):
+        """Return a new array with the image rotated to the given angle.
+
+        :param angle: (float) Rotation angle in degrees.
+        :param center: (int) Center of the rotation in the source image.
+        :param scale: (float) Isotropic scale factor.
+
+        """
+        # grab the dimensions of the image
+        (h, w) = self.shape[:2]
+
+        # if the center is None, initialize it as the center of the image
+        if center is None:
+            center = (w // 2, h // 2)
+
+        # perform the rotation
+        matrix = cv2.getRotationMatrix2D(center, angle, scale)
+        return cv2.warpAffine(self, matrix, (w, h))
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def width(self):
+        _, w, _ = self.shape
+        return w
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def height(self):
+        h, _, _ = self.shape
+        return h
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def channel(self):
+        _, _, c = self.shape
+        return c
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def size(self):
+        h, w, _ = self.shape
+        return w, h
+
+    # -----------------------------------------------------------------------
+    # Tag the image
     # -----------------------------------------------------------------------
 
     def isurround(self, coords, color=(50, 100, 200), thickness=2, score=False):
-        """Return a new array with a square surrounding all the given coords.
+        """Return a new image with a square surrounding all the given coords.
 
         :param coords: (List of sppasCoords) Areas to surround
-        :param color: (int, int, int) Rectangle color or brightness (if grayscale image).
+        :param color: (int, int, int) Rectangle color
         :param thickness: (int) Thickness of lines that make up the rectangle. Negative values, like CV_FILLED , mean that the function has to draw a filled rectangle.
-        :param score: (bool) Add the confidence score
-        :return: (numpy.ndarray)
+        :param score: (bool) Add the confidence score of the coords
+        :return: (sppasImage)
 
         """
         img = self.copy()
@@ -322,43 +444,8 @@ class sppasImage(numpy.ndarray):
 
         cv2.rectangle(self, (x, y), (x + w, y + h), color, thickness)
 
-    # ----------------------------------------------------------------------------
-
-    def irotate(self, angle, center=None, scale=1.0):
-        """Return a new array with the image rotated to the given angle.
-
-        :param angle: (float) Rotation angle in degrees.
-        :param center: (int) Center of the rotation in the source image.
-        :param scale: (float) Isotropic scale factor.
-
-        """
-        # grab the dimensions of the image
-        (h, w) = self.shape[:2]
-
-        # if the center is None, initialize it as the center of the image
-        if center is None:
-            center = (w // 2, h // 2)
-
-        # perform the rotation
-        matrix = cv2.getRotationMatrix2D(center, angle, scale)
-        return cv2.warpAffine(self, matrix, (w, h))
-
     # -----------------------------------------------------------------------
-
-    @property
-    def width(self):
-        return self.shape[:2][0]
-
-    @property
-    def height(self):
-        return self.shape[:2][1]
-
-    # -----------------------------------------------------------------------
-
-    def size(self):
-        (h, w) = self.shape[:2]
-        return w, h
-
+    #
     # -----------------------------------------------------------------------
 
     def write(self, filename):
@@ -368,6 +455,8 @@ class sppasImage(numpy.ndarray):
             logging.error(str(e))
             sppasWriteError(filename)
 
+    # -----------------------------------------------------------------------
+    # Private
     # -----------------------------------------------------------------------
 
     def __to_dtype(self, value, dtype=int):
@@ -384,6 +473,7 @@ class sppasImage(numpy.ndarray):
     # -----------------------------------------------------------------------
 
     def __eq__(self, other):
+        """Allows to write img1 == img2."""
         if len(self) != len(other):
             return False
         for l1, l2 in zip(self, other):
@@ -398,6 +488,8 @@ class sppasImage(numpy.ndarray):
                 if r1 != r2 or g1 != g2 or b1 != b2:
                     return False
         return True
+
+    # -----------------------------------------------------------------------
 
     def __ne__(self, other):
         return not self.__eq__(other)
