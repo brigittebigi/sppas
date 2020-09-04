@@ -141,8 +141,8 @@ class PathsTreePanel(sppasPanel):
         tb.AddButton("files-add", FLS_ACT_ADD)
         tb.AddButton("files-remove", FLS_ACT_REM)
         tb.AddButton("files-delete", FLS_ACT_DEL)
-        btn = tb.AddButton("files-missing", FLS_ACT_MISS)
-        btn.Enable(False)
+        # btn = tb.AddButton("files-missing", FLS_ACT_MISS)
+        # btn.Enable(False)
         return tb
 
     # -----------------------------------------------------------------------

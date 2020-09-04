@@ -12,10 +12,6 @@
                     "id": "ENG_M15_ENG_T02",
                     "files": [
                         {
-                            "id": "ENG_M15_ENG_T02-intsint.textgrid",
-                            "state": 0
-                        },
-                        {
                             "id": "ENG_M15_ENG_T02.PitchTier",
                             "state": 0
                         },
@@ -28,7 +24,12 @@
                             "state": 0
                         }
                     ],
-                    "refids": []
+                    "refids": [
+                        "Corpus-AixOx"
+                    ],
+                    "subjoin": {
+                        "expand": false
+                    }
                 },
                 {
                     "id": "ENG_M15_ENG_T33",
@@ -42,81 +43,29 @@
                             "state": 0
                         }
                     ],
-                    "refids": []
-                },
-                {
-                    "id": "eng_T02",
-                    "files": [
-                        {
-                            "id": "eng_T02.txt",
-                            "state": 0
-                        }
+                    "refids": [
+                        "Corpus-AixOx"
                     ],
-                    "refids": []
-                },
-                {
-                    "id": "eng_T33",
-                    "files": [
-                        {
-                            "id": "eng_T33.txt",
-                            "state": 0
-                        }
-                    ],
-                    "refids": []
+                    "subjoin": {
+                        "expand": false
+                    }
                 },
                 {
                     "id": "oriana1",
                     "files": [
                         {
-                            "id": "oriana1-merge.antx",
-                            "state": 0
-                        },
-                        {
-                            "id": "oriana1-merge.xra",
-                            "state": 0
-                        },
-                        {
-                            "id": "oriana1-palign.antx",
-                            "state": 0
-                        },
-                        {
-                            "id": "oriana1-palign.xra",
-                            "state": 0
-                        },
-                        {
-                            "id": "oriana1-phon.antx",
-                            "state": 0
-                        },
-                        {
-                            "id": "oriana1-phon.xra",
-                            "state": 0
-                        },
-                        {
-                            "id": "oriana1-token.antx",
-                            "state": 0
-                        },
-                        {
-                            "id": "oriana1-token.xra",
-                            "state": 0
-                        },
-                        {
-                            "id": "oriana1.antx",
-                            "state": 0
-                        },
-                        {
                             "id": "oriana1.txt",
-                            "state": 0
+                            "state": 1
                         },
                         {
                             "id": "oriana1.wav",
-                            "state": 0
-                        },
-                        {
-                            "id": "oriana1.xra",
-                            "state": 0
+                            "state": 1
                         }
                     ],
-                    "refids": []
+                    "refids": [],
+                    "subjoin": {
+                        "expand": true
+                    }
                 },
                 {
                     "id": "oriana2",
@@ -126,7 +75,10 @@
                             "state": 0
                         }
                     ],
-                    "refids": []
+                    "refids": [],
+                    "subjoin": {
+                        "expand": false
+                    }
                 },
                 {
                     "id": "oriana3",
@@ -136,10 +88,40 @@
                             "state": 0
                         }
                     ],
-                    "refids": []
+                    "refids": [],
+                    "subjoin": {
+                        "expand": false
+                    }
                 }
             ]
         }
     ],
-    "catalogue": []
+    "catalogue": [
+        {
+            "id": "Corpus-AixOx",
+            "state": 0,
+            "type": "STANDALONE",
+            "subjoin": null,
+            "attributes": [
+                {
+                    "id": "place",
+                    "value": "Aix-en-Provence",
+                    "type": "str",
+                    "descr": "Place of recording"
+                },
+                {
+                    "id": "year",
+                    "value": "2011",
+                    "type": "int",
+                    "descr": ""
+                },
+                {
+                    "id": "repository",
+                    "value": "https://hdl.handle.net/11403/sldr000784",
+                    "type": "str",
+                    "descr": ""
+                }
+            ]
+        }
+    ]
 }
