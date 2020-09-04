@@ -5,8 +5,8 @@
     "id": "3b40b815-6b8a-4b63-8d18-d4618abeea06",
     "paths": [
         {
-            "id": "/E/bigi/Projets/sppas/samples/samples-eng",
-            "rel": "sppas/samples/samples-eng",
+            "id": "/Users/bigi/Projects/sppas/samples/samples-eng",
+            "rel": "samples/samples-eng",
             "roots": [
                 {
                     "id": "ENG_M15_ENG_T02",
@@ -17,7 +17,7 @@
                         },
                         {
                             "id": "ENG_M15_ENG_T02.TextGrid",
-                            "state": 0
+                            "state": -1
                         },
                         {
                             "id": "ENG_M15_ENG_T02.wav",

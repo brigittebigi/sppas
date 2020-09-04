@@ -67,6 +67,9 @@ class sppasAppConfig(object):
     """
 
     APP_CONFIG_FILENAME = ".app~"
+    DEFAULT_LOG_LEVEL = 15
+    DEFAULT_QUIET_LEVEL = 30
+    DEFAULT_SPLASH_DELAY = 3
 
     # -----------------------------------------------------------------------
 
@@ -83,9 +86,9 @@ class sppasAppConfig(object):
         super(sppasAppConfig, self).__init__()
 
         # Create a default configuration
-        self.__log_level = 15
-        self.__quiet_log_level = 30
-        self.__splash_delay = 3
+        self.__log_level = sppasAppConfig.DEFAULT_LOG_LEVEL
+        self.__quiet_log_level = sppasAppConfig.DEFAULT_QUIET_LEVEL
+        self.__splash_delay = sppasAppConfig.DEFAULT_SPLASH_DELAY
         self.__deps = dict()
 
         # Load the existing configuration file (if any)
@@ -172,9 +175,15 @@ class sppasAppConfig(object):
             with open(self.cfg_filename()) as cfg:
                 d = json.load(cfg)
 
-            self.__splash_delay = d.get("splash_delay", 3)
-            self.__log_level = d.get("log_level", 0)
-            self.__deps = d.get("deps", dict())
+                self.__splash_delay = d.get("splash_delay", sppasAppConfig.DEFAULT_SPLASH_DELAY)
+                self.__log_level = d.get("log_level", sppasAppConfig.DEFAULT_LOG_LEVEL)
+                self.__quiet_log_level = d.get("quiet_log_level", sppasAppConfig.DEFAULT_QUIET_LEVEL)
+
+                # Load the deps of the file without deleting the ones already in
+                # the dict: add or override the deps of the file to our dict.
+                deps = d.get("deps", dict())
+                for key in deps:
+                    self.__deps[key] = deps[key]
 
     # ------------------------------------------------------------------------
 
