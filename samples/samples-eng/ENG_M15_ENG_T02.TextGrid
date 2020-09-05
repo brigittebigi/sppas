@@ -1,0 +1,61 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 14.661979166666667 
+tiers? <exists> 
+size = 1 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "Transcription" 
+        xmin = 0 
+        xmax = 14.661979166666667 
+        intervals: size = 11 
+        intervals [1]:
+            xmin = 0 
+            xmax = 1.22 
+            text = "#" 
+        intervals [2]:
+            xmin = 1.22 
+            xmax = 2.88 
+            text = "I have a problem with my water softener." 
+        intervals [3]:
+            xmin = 2.88 
+            xmax = 3.36 
+            text = "#" 
+        intervals [4]:
+            xmin = 3.36 
+            xmax = 5.98 
+            text = "The water level is too high and the overflow keeps dripping.
+" 
+        intervals [5]:
+            xmin = 5.98 
+            xmax = 6.56 
+            text = "#" 
+        intervals [6]:
+            xmin = 6.56 
+            xmax = 9.084944286390355 
+            text = "Could you arrange to send an engineer on tuesday morning, please." 
+        intervals [7]:
+            xmin = 9.084944286390355 
+            xmax = 9.58 
+            text = "#" 
+        intervals [8]:
+            xmin = 9.58 
+            xmax = 11.064473216349723 
+            text = "It's the only day I can manage this week.
+" 
+        intervals [9]:
+            xmin = 11.064473216349723 
+            xmax = 11.7 
+            text = "#" 
+        intervals [10]:
+            xmin = 11.7 
+            xmax = 14.406654619025307 
+            text = "I'd be grateful if you could confirm the arrangement in writing.
+" 
+        intervals [11]:
+            xmin = 14.406654619025307 
+            xmax = 14.661979166666667 
+            text = "#" 

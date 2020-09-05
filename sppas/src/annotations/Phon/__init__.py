@@ -98,12 +98,13 @@ utterance. In the approach implemented in this package, phonetic variants
 are included in the result.
 
 """
+
 from .sppasphon import sppasPhon
 from .phonunk import sppasPhonUnk
 from .phonetize import sppasDictPhonetizer
 
-__all__ = [
+__all__ = (
     'sppasPhon',
     'sppasPhonUnk',
     'sppasDictPhonetizer'
-]
+)

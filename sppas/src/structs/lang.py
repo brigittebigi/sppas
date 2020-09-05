@@ -73,6 +73,7 @@ class sppasLangResource(object):
         self._rpath = ""
         self._rname = ""
         self._rext = ""
+        self._rlang = True   # is it a language resource?
 
         # The list of languages the resource can provide
         self.langlist = list()
@@ -91,6 +92,7 @@ class sppasLangResource(object):
         self._rpath = ""
         self._rname = ""
         self._rext = ""
+        self._rlang = True   # is that a language resource?
 
         self.langlist = []
         self.lang = ""
@@ -98,6 +100,12 @@ class sppasLangResource(object):
 
     # ------------------------------------------------------------------------
     # Getters
+    # ------------------------------------------------------------------------
+
+    def is_lang_resource(self):
+        """Return False if the given resource is not representing a language."""
+        return self._rlang
+
     # ------------------------------------------------------------------------
 
     def get_lang(self):
@@ -204,13 +212,14 @@ class sppasLangResource(object):
 
     # ------------------------------------------------------------------------
 
-    def set(self, rtype, rpath, rname="", rext=""):
+    def set(self, rtype, rpath, rname="", rext="", rlang=True):
         """Set resources then fix the list of available languages.
 
         :param rtype: (str) Resource type. One of: "file" or "directory"
         :param rpath: (str) Resource path
         :param rname: (str) Resource file name
         :param rext: (str)  Resource extension
+        :param rlang: (bool) Language-dependent resource
 
         """
         self.reset()
@@ -220,6 +229,7 @@ class sppasLangResource(object):
         self.set_path(rpath)
         self.set_filename(rname)
         self.set_extension(rext)
+        self._rlang = rlang
 
         directory = os.path.join(paths.resources, self._rpath)
 

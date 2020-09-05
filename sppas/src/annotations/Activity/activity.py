@@ -40,6 +40,7 @@ from sppas.src.anndata import sppasInterval
 from sppas.src.anndata import sppasLocation
 from sppas.src.anndata import sppasLabel, sppasTag
 from sppas.src.anndata.aio.aioutils import fill_gaps, unfill_gaps
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.utils.makeunicode import sppasUnicode
 
 # ---------------------------------------------------------------------------
@@ -102,7 +103,7 @@ class Activity(object):
         if annotation.is_labelled() is False:
             text_content = symbols.unk
         else:
-            text_content = annotation.serialize_labels()
+            text_content = serialize_labels(annotation.get_labels())
         return self._activities.get(text_content, "speech")
 
     # -----------------------------------------------------------------------

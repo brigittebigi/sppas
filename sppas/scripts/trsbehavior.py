@@ -51,6 +51,7 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.anndata import sppasTag, sppasLabel
 from sppas.src.anndata import sppasLocation, sppasInterval, sppasPoint
 from sppas.src.anndata import sppasRW
@@ -131,7 +132,7 @@ for i in range(start, finish):
             ann = tier[anni]
         else:
             ann = anns[0]
-        texts.append(ann.serialize_labels())
+        texts.append(serialize_labels(ann))
 
     # Append in new tier
     ti = sppasInterval(
@@ -156,7 +157,7 @@ for i in range(start, finish):
 
 synchro_tier = trs_input.create_tier("Synchronicity")
 for ann in behavior_tier:
-    text = ann.serialize_labels()
+    text = serialize_labels(ann.get_labels())
     if len(text) > 0:
         values = text.split(';')
         v1 = values[0].strip()

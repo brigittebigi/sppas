@@ -142,7 +142,8 @@ def serialize_labels(labels, separator="\n", empty="", alt=True):
         return empty
 
     if len(labels) == 1:
-        return labels[0].serialize(empty, alt)
+        label = labels[0]
+        return label.serialize(empty, alt)
 
     c = list()
     for label in labels:
@@ -359,7 +360,7 @@ def unfill_gaps(tier):
 
     for i, ann in enumerate(tier):
         if ann.label_is_filled() is True:
-            content = ann.serialize_labels()
+            content = serialize_labels(ann.get_labels())
             if len(content) > 0:
                 new_tier.append(ann.copy())
 
@@ -619,7 +620,7 @@ def unalign(aligned_tier, ipus_separators=(SIL_ORTHO, SIL_PHONO, 'dummy')):
     e = b
     l = ""
     for a in aligned_tier:
-        label = a.serialize_labels()
+        label = serialize_labels(a.get_labels())
         if label in ipus_separators or len(label) == 0:
             if e > b:
                 loc = sppasLocation(sppasInterval(b, e))

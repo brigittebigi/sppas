@@ -38,8 +38,8 @@ import os
 import wx
 import logging
 
-from sppas import paths
-from sppas import sppasAppConfig
+from sppas.src.config import paths
+from sppas.src.config import sppasAppConfig
 
 from sppas.src.plugins import sppasPluginsManager
 import sppas.src.audiodata.aio
@@ -55,7 +55,7 @@ from sppas.src.ui.phoenix.views.settings import Settings
 from sppas.src.ui.phoenix.views.tiersview import TiersView
 import sppas.src.ui.phoenix.views.statsview as statsview
 import sppas.src.ui.phoenix.views.tiersfilters as tiersfilters
-from sppas.src.ui.phoenix.windows.dialogs.metaedit import MetaDataEdit
+from src.ui.phoenix.views.metaedit import MetaDataEdit
 
 # ----------------------------------------------------------------------------
 # Tested Panels

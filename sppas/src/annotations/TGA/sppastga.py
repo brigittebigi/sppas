@@ -435,6 +435,7 @@ class sppasTGA(sppasBaseAnnotation):
         # Create the transcription result
         trs_output = sppasTranscription(self.name)
         trs_output.set_meta('tga_result_of', input_file[0])
+        self.transfer_metadata(trs_input, trs_output)
 
         # Estimate TGA on the tier
         trs_output = self.convert(tier_input)

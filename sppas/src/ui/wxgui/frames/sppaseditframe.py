@@ -129,7 +129,7 @@ class SppasEditFrame(ComponentFrame):
         """
         Open the Settings box.
 
-        Override the baseframe.OnSettings to add specific panels to
+        Override the baseframe.OnSettings to add specific anz_panels to
         the SettingsDialog().
 
         """

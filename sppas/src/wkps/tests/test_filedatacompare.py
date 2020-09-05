@@ -33,12 +33,13 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import unittest
 import os
 from random import randint
 
-from sppas import u
-from sppas.src.wkps import FileName, FileRoot, FilePath, FileReference, sppasAttribute
+from sppas.src.utils import u
+from sppas.src.wkps import FileName, FileRoot, FilePath, sppasCatReference, sppasRefAttribute
 from sppas.src.wkps.filedatacompare import sppasFileBaseCompare
 from sppas.src.wkps.filedatacompare import sppasFileNameCompare
 from sppas.src.wkps.filedatacompare import sppasFileExtCompare
@@ -237,8 +238,8 @@ class TestFileDataCompare(unittest.TestCase):
 class TestFileDataReferencesCompare(unittest.TestCase):
 
     def setUp(self):
-        self.micros = FileReference('microphone')
-        self.micros.append(sppasAttribute('mic1', 'Bird UM1', None, '最初のインタビューで使えていましたマイク'))
+        self.micros = sppasCatReference('microphone')
+        self.micros.append(sppasRefAttribute('mic1', 'Bird UM1', None, '最初のインタビューで使えていましたマイク'))
         self.micros.add('mic2', 'AKG D5')
         self.id_cmp = sppasFileRefCompare()
 

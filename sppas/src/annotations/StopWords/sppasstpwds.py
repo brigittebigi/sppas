@@ -36,8 +36,8 @@
 import logging
 import os
 
-from sppas import symbols
-from sppas import sppasUnicode
+from sppas.src.config import symbols
+from sppas.src.utils import sppasUnicode
 
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
@@ -151,19 +151,16 @@ class sppasStopWords(sppasBaseAnnotation):
 
     # ----------------------------------------------------------------------
 
-    def input_tier(self, input_file):
+    def input_tier(self, trs_input):
         """Return the input tier from the input file.
 
-        :param input_file: (str) Name of an annotated file
+        :param trs_input: (sppasTranscription)
 
         """
-        parser = sppasRW(input_file)
-        trs_input = parser.read()
-
         tier_spk = trs_input.find(self._options['tiername'], case_sensitive=False)
         if tier_spk is None:
-            logging.error("Tier with name '{:s}' not found in input file {:s}."
-                          "".format(self._options['tiername'], input_file))
+            logging.error("Tier with name '{:s}' not found in input file."
+                          "".format(self._options['tiername']))
             raise NoInputError
 
         return tier_spk
@@ -216,7 +213,9 @@ class sppasStopWords(sppasBaseAnnotation):
 
         """
         # Get the tier to be used
-        tier = self.input_tier(input_file[0])
+        parser = sppasRW(input_file)
+        trs_input = parser.read()
+        tier = self.input_tier(trs_input)
 
         # Detection
         stp_tier = self.make_stp_tier(tier)
@@ -224,6 +223,8 @@ class sppasStopWords(sppasBaseAnnotation):
         # Create the transcription result
         trs_output = sppasTranscription(self.name)
         trs_output.set_meta('stopwords_result_of', input_file[0])
+        self.transfer_metadata(trs_input, trs_output)
+
         trs_output.append(stp_tier)
 
         # Save in a file

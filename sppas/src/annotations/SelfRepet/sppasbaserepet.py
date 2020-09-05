@@ -35,13 +35,13 @@
 
 import os
 
-from sppas import IndexRangeException
-from sppas import symbols
+from sppas.src.config import symbols
+from sppas.src.exceptions import IndexRangeException
+from sppas.src.resources import sppasWordStrain
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasTag
 from sppas.src.anndata.aio.aioutils import serialize_labels
-from sppas.src.resources import sppasWordStrain
 
 from ..baseannot import sppasBaseAnnotation
 from ..annotationsexc import AnnotationOptionError
@@ -75,15 +75,16 @@ class sppasBaseRepet(sppasBaseAnnotation):
         :param log: (sppasLog) Human-readable logs.
 
         """
-        super(sppasBaseRepet, self).__init__(config, log)
-
-        self.max_span = 8
-
         # List of options to configure this automatic annotation
         self._options = dict()
         self._options['span'] = 3
         self._options['stopwords'] = True
 
+        # Option values can be overridden by those defined in the config file
+        super(sppasBaseRepet, self).__init__(config, log)
+
+        # Members
+        self.max_span = 8
         self._word_strain = sppasWordStrain()
         self._stop_words = StopWords()
 

@@ -39,7 +39,7 @@ import os
 import logging
 import traceback
 
-from sppas import NoDirectoryError
+from sppas.src.exceptions import NoDirectoryError
 from sppas.src.config import paths
 from sppas.src.config import annots
 from sppas.src.config import info
@@ -386,10 +386,12 @@ class sppasAlign(sppasBaseAnnotation):
 
         # Get the audio file (check it first)
         input_audio_filename = None
+        framerate = None
         if opt_input_file is not None and len(opt_input_file) > 0 and\
            opt_input_file[0] is not None:
             try:
                 audio = audioaio.open(opt_input_file[0])
+                framerate = audio.get_framerate()
                 audio.close()
                 input_audio_filename = opt_input_file[0]
             except Exception as e:
@@ -430,6 +432,11 @@ class sppasAlign(sppasBaseAnnotation):
                 tier_phn.set_media(media)
 
             trs_output = sppasTranscription(self.name)
+            if framerate is not None:
+                trs_output.set_meta("media_sample_rate", str(framerate))
+            trs_output.set_meta('audio_alignment_result_of', input_file[0])
+            self.transfer_metadata(trs_input, trs_output)
+
             trs_output.append(tier_phn)
             if tier_tok is not None:
                 tier_tok.set_media(media)

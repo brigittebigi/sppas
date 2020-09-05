@@ -117,13 +117,6 @@ if [ -z "$PYTHON" ]; then
     exit -1;
 fi
 
-if [ "$v" == "2" ]; then
-    echo "DEPRECATION: Python 2.7 reached the end of its life.";
-    echo "Please upgrade your Python to 3.x as Python 2.7 is no longer maintained.";
-    echo -e "No new bug reports, fixes, or changes will be made to SPPAS based";
-    echo "on Python 2, and Python 2 is no longer supported."
-fi
-
 # Get the name of the system
 unamestr=`uname | cut -f1 -d'_'`;
 
@@ -132,7 +125,6 @@ echo "  - Command: '$PYTHON' (version $v)";
 echo "  - System:  $unamestr";
 echo "  - Display:  $DISPLAY";
 echo "  - Location: $PROGRAM_DIR";
-echo "  - Program: sppas/bin/sppasgui.py";
 
 if [ "$unamestr" == "CYGWIN" ]; then
     if [ -z $DISPLAY ]; then
@@ -143,4 +135,15 @@ if [ "$unamestr" == "CYGWIN" ]; then
 fi
 
 echo "Run the Graphical User Interface...";
-$PYTHON $PROGRAM_DIR/sppas/bin/sppasgui.py
+
+if [ "$v" == "2" ]; then
+    echo "DEPRECATION: Python 2.7 reached the end of its life.";
+    echo "Please upgrade your Python to 3.x as Python 2.7 is no longer maintained.";
+    echo -e "No new bug reports, fixes, or changes will be made to SPPAS based";
+    echo "on Python 2, and Python 2 is no longer supported."
+    $PYTHON $PROGRAM_DIR/sppas/bin/sppasgui.py
+else
+    cd $PROGRAM_DIR
+    $PYTHON sppas
+fi
+

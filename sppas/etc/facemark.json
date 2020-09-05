@@ -1,0 +1,65 @@
+{
+  "id": "facemark",
+  "name": "Face Landmark",
+  "descr": "Estimate face landmarks as a set o 68 points on an image of the portrait of a person",
+  "required": "facedetect",
+  "api": "sppasFaceMark",
+
+  "resources": [
+    {
+      "path": "faces",
+      "type": "file",
+      "ext": "",
+      "name": "res10_300x300_ssd_iter_140000_fp16.caffemodel",
+      "lang": false
+    },
+    {
+      "path": "faces",
+      "type": "file",
+      "ext": "",
+      "name": "lbfmodel68.yaml",
+      "lang": false
+    },
+    {
+      "path": "faces",
+      "type": "file",
+      "ext": "",
+      "name": "kazemi_landmark.dat",
+      "lang": false
+    }
+  ],
+
+  "anntype": [
+    "STANDALONE"
+  ],
+
+  "outformat": "IMAGE",
+
+  "options": [
+    {
+      "id": "inputpattern",
+      "type": "str",
+      "value": "-face",
+      "text": "Input file pattern"
+    },
+    {
+      "id": "outputpattern",
+      "type": "str",
+      "value": "-mark",
+      "text": "Output file pattern"
+    },
+    {
+      "id": "csv",
+      "type": "bool",
+      "value": false,
+      "text": "Save landmark points in a CSV file"
+    },
+    {
+      "id": "tag",
+      "type": "bool",
+      "value": false,
+      "text": "Draw landmark points on the image"
+    }
+  ]
+}
+

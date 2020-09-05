@@ -51,36 +51,7 @@ class TestConfiguration(unittest.TestCase):
     def test_cfg_filename(self):
         # Return the name of the config file.
         y = self.__configuration.cfg_filename()
-        self.assertIn(".deps~", y)
-
-    # ---------------------------------------------------------------------------
-
-    def test_cfg_exist(self):
-        # Return if the config file exists or not.
-        y = os.path.exists(self.__configuration.cfg_filename())
-        self.assertEqual(y, self.__configuration.cfg_file_exists())
-
-    # ---------------------------------------------------------------------------
-
-    def test_load(self):
-        # Override. Load the configuration from a file.
-        self.__configuration.load()
-        if self.__configuration.cfg_file_exists() is True:
-            y = self.__configuration.get_deps()
-            self.assertEqual(y, ["wxpython", "brew", "julius"])
-        else:
-            y = self.__configuration.get_deps()
-            self.assertEqual(y, [])
-
-    # ---------------------------------------------------------------------------
-
-    def test_hide_unhide(self):
-        """Hide or unhide a file"""
-        y = self.__configuration.hide_unhide("deps", "-")
-        self.assertEqual(y, ".deps~")
-
-        y = self.__configuration.hide_unhide(".deps~", "-")
-        self.assertEqual(y, ".deps~")
+        self.assertIn(".app~", y)
 
     # ---------------------------------------------------------------------------
 
@@ -100,9 +71,6 @@ class TestConfiguration(unittest.TestCase):
     def test_dep_installed(self):
         """Return True if a dependency is installed"""
         self.assertFalse(self.__configuration.dep_installed("aaaa"))
-
-        if self.__configuration.cfg_file_exists() is True:
+        if os.path.exists(self.__configuration.cfg_filename()) is True:
             self.assertTrue(self.__configuration.dep_installed("wxpython"))
             self.assertTrue(self.__configuration.dep_installed("julius"))
-        self.assertFalse(self.__configuration.dep_installed("first"))
-        self.assertFalse(self.__configuration.dep_installed("second"))

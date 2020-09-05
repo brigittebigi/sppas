@@ -35,7 +35,7 @@ import os
 import wx
 import wx.lib.newevent
 
-from sppas import paths
+from sppas.src.config import paths
 from sppas.src.anndata import sppasRW
 from sppas.src.wkps import States, FileName, FileRoot, FilePath, sppasWorkspace
 from sppas.src.ui import sppasTrash
@@ -145,7 +145,7 @@ class FileAnnotIcon(object):
 # ---------------------------------------------------------------------------
 
 
-class FileTreeView(sppasScrolledPanel):
+class FileTreeViewPanel(sppasScrolledPanel):
     """A control to display data files in a tree-spreadsheet style.
 
     :author:       Brigitte Bigi
@@ -165,7 +165,7 @@ class FileTreeView(sppasScrolledPanel):
         :param name: (str)
 
         """
-        super(FileTreeView, self).__init__(parent, name=name)
+        super(FileTreeViewPanel, self).__init__(parent, name=name)
 
         # The workspace to display
         self.__data = sppasWorkspace()
@@ -288,7 +288,7 @@ class FileTreeView(sppasScrolledPanel):
                 sppasTrash().put_file_into(filename)
                 wx.LogMessage('{:s} moved into SPPAS Trash.'.format(filename))
             except Exception as e:
-                # Re-Add it into the data and the panels or not?????
+                # Re-Add it into the data and the anz_panels or not?????
                 wx.LogError("File {!s:s} can't be deleted due to the "
                             "following error: {:s}.".format(filename, str(e)))
 
@@ -331,7 +331,7 @@ class FileTreeView(sppasScrolledPanel):
             self.change_state(entry, States().LOCKED)
 
     # ------------------------------------------------------------------------
-    # Manage the data and their panels
+    # Manage the data and their anz_panels
     # ------------------------------------------------------------------------
 
     def add_folder(self, foldername, add_files=True):
@@ -404,7 +404,7 @@ class FileTreeView(sppasScrolledPanel):
             wx.LogWarning("File not added: {:s}".format(filename))
             return added
 
-        # add the entries into the panels
+        # add the entries into the anz_panels
         for fs in added_fs:
             if isinstance(fs, FileName):
                 wx.LogDebug("Added file to the data {:s}".format(fs.get_id()))
@@ -495,7 +495,7 @@ class FileTreeView(sppasScrolledPanel):
             self.__remove_folder_panel(fpid)
 
         # Add or update
-        for i, fp in enumerate(self.__data):
+        for i, fp in enumerate(self.__data.get_paths()):
             if fp.get_id() not in self.__fps:
                 p = self.__add_folder_panel(fp, i)
                 p.update(fp)
@@ -597,6 +597,8 @@ class FileTreeView(sppasScrolledPanel):
         panel = evt.GetEventObject()
         fs_id = panel.get_id()
         fs = self.__data.get_object(fs_id)
+        if fs is None:
+            return
         if fs.subjoined is None:
             fs.subjoined = dict()
         fs.subjoined['expand'] = panel.IsExpanded()
@@ -1060,11 +1062,11 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
     def set_refs(self, refs_list):
         """Display the given list of references.
 
-        :param refs_list: (list of FileReference)
+        :param refs_list: (list of sppasCatReference)
 
         """
         refstext = self.FindWindow("textctrl_refs")
-        # convert the list of FileReference instances into a string
+        # convert the list of sppasCatReference instances into a string
         refs_ids = [ref.id for ref in refs_list]
         txt = " ".join(sorted(refs_ids))
         if len(txt) > 0:
@@ -1327,14 +1329,12 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         self.notify(self.__frid)
 
 # ----------------------------------------------------------------------------
-# Panel tested by test_glob.py
-# ----------------------------------------------------------------------------
 
 
-class TestPanel(FileTreeView):
+class TestPanel(FileTreeViewPanel):
 
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent)
+        super(TestPanel, self).__init__(parent, "Files tree view")
 
         self.AddFiles([os.path.abspath(__file__)])
         self.AddFiles([os.path.join(paths.samples, "samples-fra")])

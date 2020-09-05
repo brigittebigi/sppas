@@ -49,9 +49,10 @@ Requires the following other packages:
 
 * config
 * utils
-* files
+* wkps
 
 """
+
 from .aio import aioutils
 from .aio.readwrite import sppasRW
 from .aio.readwrite import FileFormatProperty

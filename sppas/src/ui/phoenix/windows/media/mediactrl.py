@@ -41,12 +41,12 @@ import wx
 import wx.media
 import wx.lib.newevent
 
-from sppas import paths
+from sppas.src.config import paths
 from sppas.src.audiodata import sppasAudioPCM
 import sppas.src.audiodata.aio
 
 from sppas.src.ui.phoenix.windows.datactrls import sppasWaveformWindow
-from sppas.src.ui.phoenix.windows.panel import sppasPanel
+from sppas.src.ui.phoenix.windows.panels import sppasPanel
 from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
 
 # ---------------------------------------------------------------------------
@@ -476,7 +476,8 @@ class sppasMediaCtrl(sppasPanel):
         back_end = ""
         if wx.Platform == "__WXMSW__":
             # default is wx.media.MEDIABACKEND_DIRECTSHOW
-            back_end = wx.media.MEDIABACKEND_WMP10
+            # back_end = wx.media.MEDIABACKEND_WMP10
+            back_end = wx.media.MEDIABACKEND_DIRECTSHOW
         # elif wx.Platform == "__WXMAC__":
         #     back_end = wx.media.MEDIABACKEND_QUICKTIME
         #     it raises the NotImplementedError
@@ -751,8 +752,13 @@ class sppasMediaCtrl(sppasPanel):
     def Seek(self, offset, mode=wx.FromStart):
         """Seek to a position within the media.
 
-        Under MacOS, with AVPLAYER backend, the seek position must be
+        BUGS AND LIMITATIONS OF BACK-ENDS:
+
+        - Under MacOS, with AVPLAYER backend, the seek position must be
         X * 1000 ms. If not, it will be forced to it by the backend!
+
+        - Under Windows, with WMP10 backend, it seeks 1000 ms before the
+        requested position.
 
         :param offset: (wx.FileOffset)
         :param mode: (SeekMode)

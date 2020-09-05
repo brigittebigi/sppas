@@ -486,7 +486,7 @@ class sppasAnnotation(sppasMetaData):
         :returns: (str)
 
         """
-        warnings.warn("Use aioutils.serialize_labels() instead",
+        warnings.warn("Use serialize_labels(ann.get_labels()) of aioutils package instead",
                       DeprecationWarning)
 
         if len(self.__labels) == 0:

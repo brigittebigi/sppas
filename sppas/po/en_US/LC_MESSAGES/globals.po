@@ -15,61 +15,82 @@ msgstr ""
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Language: en_US\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 1.8.11\n"
 
-msgid ":ERROR 010: "
-msgstr "Expected a positive value. Got {value}."
+msgid ":ERROR 0001: "
+msgstr "The following error occurred: {message}."
 
-msgid ":ERROR 012: "
-msgstr "Min value {min_value} is bigger than max value {max_value}."
-
-msgid ":ERROR 014: "
-msgstr "List index {value} out of range [{min_value},{max_value}]"
-
-msgid ":ERROR 016: "
-msgstr "Value {value} out of range [{min_value},{max_value}]"
-
-msgid ":ERROR 100: "
+msgid ":ERROR 0100: "
 msgstr "{!s:s} is not of the expected type '{:s}'."
 
-msgid ":ERROR 110: "
-msgstr "Unknown extension for filename {:s}"
-
-msgid ":ERROR 112: "
-msgstr "The directory {dirname} does not exist."
-
-msgid ":ERROR 200: "
+msgid ":ERROR 0200: "
 msgstr "Invalid index value {:d}."
 
-msgid ":ERROR 250: "
-msgstr "Invalid key '{!s:s}' for data '{!s:s}'"
-
-msgid ":ERROR 300: "
+msgid ":ERROR 0300: "
 msgstr "Invalid value '{!s:s}' for '{!s:s}'."
 
-msgid ":ERROR 500: "
+msgid ":ERROR 0310: "
+msgstr "Expected a positive value. Got {value}."
+
+msgid ":ERROR 0320: "
+msgstr "Min value {min_value} is bigger than max value {max_value}."
+
+msgid ":ERROR 0340: "
+msgstr "List index {value} out of range [{min_value},{max_value}]."
+
+msgid ":ERROR 0330: "
+msgstr "Value {value} out of range [{min_value},{max_value}]."
+
+msgid ":ERROR 0400: "
+msgstr "Invalid key '{!s:s}' for data '{!s:s}'."
+
+msgid ":ERROR 0510: "
 msgstr "Installation failed with error: {error}"
 
-msgid ":INFO 510: "
-msgstr "Installation of '{name}'"
+msgid ":ERROR 0520: "
+msgstr "Feature {name} is not enabled; its installation should be processed first."
 
-msgid ":INFO 520: "
+msgid ":ERROR 0530: "
+msgstr "The package {package} can't be imported. The installation of the feature {name} should be processed first."
+
+msgid ":ERROR 0540: "
+msgstr "The package {package} is not up-to-date. The re-installation of the feature {name} should be processed first."
+
+msgid ":ERROR 0600: "
+msgstr "No such file or directory: {name}"
+
+msgid ":ERROR 0610: "
+msgstr "Unknown extension for filename {:s}."
+
+msgid ":ERROR 0620: "
+msgstr "The directory {dirname} does not exist."
+
+msgid ":ERROR 0650: "
+msgstr "File '{:s}' can't be open or read."
+
+msgid ":ERROR 0660: "
+msgstr "File '{:s}' can't be saved."
+
+msgid ":INFO 0510: "
+msgstr "Installation of '{name}'."
+
+msgid ":INFO 0520: "
 msgstr "'{name}' not available on your OS."
 
-msgid ":INFO 530: "
+msgid ":INFO 0530: "
 msgstr "Install of '{name}' is disabled."
 
-msgid ":INFO 540: "
+msgid ":INFO 0540: "
 msgstr "'{name}' is installed."
 
-msgid ":INFO 550: "
-msgstr "Installation of '{name}' failed"
+msgid ":INFO 0550: "
+msgstr "Installation of '{name}' failed."
 
-msgid ":INFO 560: "
-msgstr "Installation finished"
+msgid ":INFO 0560: "
+msgstr "Installation finished."
 
-msgid ":INFO 570: "
+msgid ":INFO 0570: "
 msgstr "'{name}' does not match any valid package."
 
-msgid ":INFO 580: "
+msgid ":INFO 0580: "
 msgstr "No system command is processed."

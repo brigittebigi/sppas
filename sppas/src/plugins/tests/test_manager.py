@@ -36,7 +36,7 @@
 import unittest
 import os
 
-from sppas import paths
+from sppas.src.config import paths
 from ..manager import sppasPluginsManager
 
 # ---------------------------------------------------------------------------
@@ -56,7 +56,7 @@ class TestPluginsManager(unittest.TestCase):
     def test_all(self):
 
         # some plugins are already installed in the package of SPPAS
-        plg = 6
+        plg = 8
         self.assertEqual(plg, len(self.manager.get_plugin_ids()))
 
         # Install a plugin

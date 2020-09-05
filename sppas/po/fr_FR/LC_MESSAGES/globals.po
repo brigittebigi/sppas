@@ -15,61 +15,76 @@ msgstr ""
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Language: en_US\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 1.8.11\n"
 
-msgid ":ERROR 010: "
-msgstr "Une valeur positive était attendue, alors que {value} a été donnée."
+msgid ":ERROR 0001: "
+msgstr "L'erreur suivante a été relevée: {message}."
 
-msgid ":ERROR 012: "
-msgstr "La valeur minimale donnée {min_value} est supérieur à la valeur maximale donnée {max_value}."
-
-msgid ":ERROR 014: "
-msgstr "L'index {value} est en dehors de l'intervalle [{min_value},{max_value}]."
-
-msgid ":ERROR 016: "
-msgstr "La valeur {value} est en dehors de l'intervalle [{min_value},{max_value}]."
-
-msgid ":ERROR 100: "
+msgid ":ERROR 0100: "
 msgstr "{!s:s} n'est pas du type attendu: '{:s}'."
 
-msgid ":ERROR 110: "
-msgstr "L'extension du fichier {:s} est inconnue"
-
-msgid ":ERROR 112: "
-msgstr "Le dossier {dirname} n'existe pas."
-
-msgid ":ERROR 200: "
+msgid ":ERROR 0200: "
 msgstr "Valeur d'index invalide: {:d}."
 
-msgid ":ERROR 250: "
-msgstr "Clé inconnue '{!s:s}' pour les données '{!s:s}'"
-
-msgid ":ERROR 300: "
+msgid ":ERROR 0300: "
 msgstr "La valeur '{!s:s}' est incorrecte pour '{!s:s}'."
 
-msgid ":ERROR 500: "
+msgid ":ERROR 0310: "
+msgstr "Une valeur positive était attendue, alors que {value} a été donnée."
+
+msgid ":ERROR 0320: "
+msgstr "La valeur minimale donnée {min_value} est supérieur à la valeur maximale donnée {max_value}."
+
+msgid ":ERROR 0340: "
+msgstr "L'index {value} est en dehors de l'intervalle [{min_value},{max_value}]."
+
+msgid ":ERROR 0330: "
+msgstr "La valeur {value} est en dehors de l'intervalle [{min_value},{max_value}]."
+
+msgid ":ERROR 0400: "
+msgstr "Clé inconnue '{!s:s}' pour les données '{!s:s}'"
+
+msgid ":ERROR 0510: "
 msgstr "L'installation a échouée avec l'erreur: {error}."
 
-msgid ":INFO 510: "
+msgid ":ERROR 0520: "
+msgstr "La fonctionnalité {name} n'est pas activée; son installation est requise avant de pouvoir l'utiliser."
+
+msgid ":ERROR 0530: "
+msgstr "Le package {package} n'a pas pu être importé. L'installation de la fonctionnalité {name} est requise pour pouvoir l'utiliser."
+
+msgid ":ERROR 0540: "
+msgstr "Le package {package} nécessite une mise à jour. Une ré-installation de la fonctionnalité {name} est requise pour pouvoir l'utiliser."
+
+msgid ":ERROR 0610: "
+msgstr "L'extension du fichier {:s} est inconnue"
+
+msgid ":ERROR 0620: "
+msgstr "Le dossier {dirname} n'existe pas."
+
+msgid ":ERROR 0650: "
+msgstr "Le fichier '{:s}' n'a pas pu être ouvert ou n'a pas pu être chargé."
+
+msgid ":INFO 0510: "
 msgstr "Installation de '{name}'"
 
-msgid ":INFO 520: "
+msgid ":INFO 0520: "
 msgstr "'{name}' n'est pas disponible pour votre système d'exploitation."
 
-msgid ":INFO 530: "
+msgid ":INFO 0530: "
 msgstr "L'installation de '{name}' est désactivée."
 
-msgid ":INFO 540: "
+msgid ":INFO 0540: "
 msgstr "'{name}' est installé."
 
-msgid ":INFO 550: "
+msgid ":INFO 0550: "
 msgstr "L'installation de '{name}' a échouée."
 
-msgid ":INFO 560: "
+msgid ":INFO 0560: "
 msgstr "Installation terminée"
 
 msgid ":INFO 570: "
 msgstr "'{name}' ne correspond à aucun package valide."
 
-msgid ":INFO 580: "
+msgid ":INFO 0580: "
 msgstr "Aucune commande système n'est nécessaire."

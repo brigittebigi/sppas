@@ -44,13 +44,13 @@ from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasTag
 from sppas.src.anndata.aio.aioutils import serialize_labels
 
-from .basedatactrl import sppasBaseDataWindow
+from .basedatactrl import sppasDataWindow
 from .pointctrl import sppasPointWindow
 
 # ---------------------------------------------------------------------------
 
 
-class sppasAnnotationWindow(sppasBaseDataWindow):
+class sppasAnnotationWindow(sppasDataWindow):
     """A window with a DC to draw a sppasAnnotation().
 
     :author:       Brigitte Bigi
@@ -137,6 +137,19 @@ class sppasAnnotationWindow(sppasBaseDataWindow):
 
     # -----------------------------------------------------------------------
 
+    @staticmethod
+    def GetTransparentBrush():
+        """Get a transparent brush.
+
+        :returns: (wx.Brush)
+
+        """
+        if wx.Platform == '__WXMAC__':
+            return wx.TRANSPARENT_BRUSH
+        return wx.Brush(wx.Colour(0, 0, 0, wx.ALPHA_TRANSPARENT), wx.BRUSHSTYLE_TRANSPARENT)
+
+    # -----------------------------------------------------------------------
+
     def DrawBackground(self, dc, gc):
         """Draw the background with a color or transparent."""
         w, h = self.GetClientSize()
@@ -156,7 +169,7 @@ class sppasAnnotationWindow(sppasBaseDataWindow):
         else:
             if self._bgcolor is not None:
                 # Fill in the content
-                c2 = self.GetHighlightedBackgroundColour()
+                c2 = self.GetHighlightedColour(self.GetBackgroundColour())
                 c1 = self._bgcolor
                 mid = h // 2
                 box_rect = wx.Rect(0, 0, w, mid)
@@ -275,7 +288,8 @@ class sppasAnnotationWindow(sppasBaseDataWindow):
 
     def _DrawEmptyContent(self, dc, gc):
         x, y, w, h = self.GetContentRect()
-        pen = wx.Pen(self.GetHighlightedBackgroundColour(), 1, wx.SOLID)
+        bg = self.GetHighlightedColour(self.GetBackgroundColour())
+        pen = wx.Pen(bg, 1, wx.SOLID)
         pen.SetCap(wx.CAP_BUTT)
         dc.SetPen(pen)
         dc.DrawRectangle(x, y, w, h)

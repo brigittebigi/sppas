@@ -39,19 +39,19 @@ import logging
 import wx
 from math import ceil, floor
 
-from sppas import paths
+from sppas.src.config import paths
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasAnnotation
 
-from ..panel import sppasPanel
-from .basedatactrl import sppasBaseDataWindow
+from ..panels import sppasPanel
+from .basedatactrl import sppasDataWindow
 from .annctrl import sppasAnnotationWindow
 
 # ---------------------------------------------------------------------------
 
 
-class sppasTierWindow(sppasBaseDataWindow):
+class sppasTierWindow(sppasDataWindow):
     """A window with a DC to draw a sppasTier().
 
     :author:       Brigitte Bigi

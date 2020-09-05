@@ -36,7 +36,7 @@
 
 import wx
 
-from ..panel import sppasPanel
+from ..panels import sppasPanel
 from ..text import sppasMessageText, sppasStaticText, sppasTextCtrl
 from .dialog import sppasDialog
 from .messages import sppasBaseMessageDialog
@@ -71,8 +71,6 @@ class sppasChoiceDialog(sppasBaseMessageDialog):
             title=title,
             style=wx.WANTS_CHARS | wx.TAB_TRAVERSAL | wx.ICON_QUESTION | wx.CAPTION | wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.STAY_ON_TOP,
             **kwargs)
-
-        self.Bind(wx.EVT_KEY_DOWN, self._on_key_down)
 
     # -----------------------------------------------------------------------
 
@@ -115,14 +113,13 @@ class sppasChoiceDialog(sppasBaseMessageDialog):
 
     # -----------------------------------------------------------------------
 
-    def _on_key_down(self, event):
-        """Process a key envent.
+    def _process_key_event(self, event):
+        """Process a key event.
 
         """
-        wx.LogDebug("Key event received.")
         if event.GetKeyCode() == 13:  # ENTER
             self.EndModal(wx.ID_CANCEL)
-        elif event.GetKeyCode() == 8:  # ESC
+        elif event.GetKeyCode() == 27:  # ESC
             self.EndModal(wx.ID_OK)
         else:
             event.Skip()
@@ -154,7 +151,7 @@ class sppasTextEntryDialog(sppasDialog):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
 
-    >>> dlg = sppasTextEntryDialog(parent, "The message", value="The default entry")
+    >>> dlg = sppasTextEntryDialog("The message", value="The default entry")
     >>> resp = dlg.ShowModal()
     >>> value = dlg.GetValue()
     >>>> dlg.DestroyFadeOut()
@@ -164,10 +161,8 @@ class sppasTextEntryDialog(sppasDialog):
     def __init__(self, message="", caption=wx.GetTextFromUserPromptStr, value=""):
         """Create a dialog with a text entry.
 
-        The dialog has a small title bar which does not appear in the taskbar
-        under WindowsInstaller or GTK+.
-
-        :param parent: (wx.Window)
+        :param message: (str)
+        :param value: (str) Default text value
 
         """
         super(sppasTextEntryDialog, self).__init__(
@@ -186,7 +181,7 @@ class sppasTextEntryDialog(sppasDialog):
         self.LayoutComponents()
         self.CenterOnParent()
         self.GetSizer().Fit(self)
-        self.FadeIn(deltaN=-10)
+        self.FadeIn()
 
     # -----------------------------------------------------------------------
     # Manage the text value
@@ -293,3 +288,52 @@ class LengthTextValidator(wx.Validator):
 
         text_ctrl.Refresh()
         return True
+
+# ----------------------------------------------------------------------------
+# Panels to test
+# ----------------------------------------------------------------------------
+
+
+class TestPanelEntriesDialog(wx.Panel):
+
+    def __init__(self, parent):
+        super(TestPanelEntriesDialog, self).__init__(
+            parent,
+            style=wx.BORDER_NONE | wx.WANTS_CHARS,
+            name="Test Entries Dialogs")
+
+        wx.Button(self, label="Choice (empty)", pos=(10, 10), size=(128, 64),
+                  name="btn_empty_choice")
+        wx.Button(self, label="Choice list", pos=(10, 210), size=(128, 64),
+                  name="btn_choice")
+        wx.Button(self, label="TextEntry", pos=(210, 10), size=(128, 64),
+                  name="btn_entry")
+        self.Bind(wx.EVT_BUTTON, self.process_event)
+
+    # -----------------------------------------------------------------------
+
+    def process_event(self, event):
+        obj = event.GetEventObject()
+        name = obj.GetName()
+
+        if name == "btn_empty_choice":
+            dlg = sppasChoiceDialog("An empty list of choices:")
+            response = dlg.ShowModal()
+            value = dlg.GetStringSelection()
+            dlg.Destroy()
+            wx.LogMessage("Response of dialog: {:d}. Selected: {:s}".format(response, value))
+
+        elif name == "btn_choice":
+            dlg = sppasChoiceDialog("An empty list of choices:", choices=["apples", "peers", "figs"])
+            response = dlg.ShowModal()
+            value = dlg.GetStringSelection()
+            dlg.DestroyFadeOut()
+            wx.LogMessage("Response of dialog: {:d}. Selected: {:s}".format(response, value))
+
+        elif name == "btn_entry":
+            dlg = sppasTextEntryDialog("A text to ask an entry:")
+            response = dlg.ShowModal()
+            entry = dlg.GetValue()
+            dlg.DestroyFadeOut()
+            wx.LogMessage("Response of dialog: {:d}. Text value: {:s}".format(response, entry))
+

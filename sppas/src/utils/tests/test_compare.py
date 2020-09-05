@@ -81,3 +81,25 @@ class TestCompare(unittest.TestCase):
         d1 = {1: "one", 2: "two"}
         d2 = {2: "TWO", 1: "ONE"}
         self.assertTrue(self.cmp.equals(d1, d2))
+
+    # -----------------------------------------------------------------------
+
+    def test_contains(self):
+        list1 = ["a", "b", "c", "d", "e", "f"]
+        list2 = ["c", "d", "e"]
+        list3 = [1, 21, 23]
+        list4 = []
+        tuple1 = ("b", "c", "d")
+        list5 = [("a", "b"), ("c", "d"), ("e", "f")]
+        list6 = [("c", "d")]
+        list7 = ["a", "b", "c", "z"]
+        list8 = ["b", "a"]
+
+        self.assertTrue(sppasCompare.contains(list1, list2))
+        self.assertFalse(sppasCompare.contains(list1, list3))
+        # /!\ an empty list is always contained in an other list
+        self.assertTrue(sppasCompare.contains(list1, list4))
+        self.assertTrue(sppasCompare.contains(list5, list6))
+        self.assertFalse(sppasCompare.contains(list1, tuple1))
+        self.assertFalse(sppasCompare.contains(list1, list7))
+        self.assertFalse(sppasCompare.contains(list1, list8))

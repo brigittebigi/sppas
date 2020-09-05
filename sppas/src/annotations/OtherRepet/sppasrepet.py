@@ -33,14 +33,14 @@
 
 """
 
-from sppas import symbols
-from sppas import sppasRW
-from sppas import sppasTranscription
-from sppas import sppasTier
-from sppas import sppasInterval
-from sppas import sppasLocation
-from sppas import sppasLabel
-from sppas import sppasTag
+from sppas.src.config import symbols
+from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasTranscription
+from sppas.src.anndata import sppasTier
+from sppas.src.anndata import sppasInterval
+from sppas.src.anndata import sppasLocation
+from sppas.src.anndata import sppasLabel
+from sppas.src.anndata import sppasTag
 
 from sppas.src.anndata.anndataexc import TierAddError
 from sppas.src.anndata.aio.aioutils import serialize_labels
@@ -123,7 +123,7 @@ class sppasOtherRepet(sppasBaseRepet):
         while tok_start_src < tok_end_src:
 
             # Build an array with the tokens
-            tokens1 = [inputtier1[i].serialize_labels()
+            tokens1 = [serialize_labels(inputtier1[i])
                        for i in range(tok_start_src, tok_end_src+1)]
             speaker1 = DataSpeaker(tokens1)
 
@@ -234,10 +234,6 @@ class sppasOtherRepet(sppasBaseRepet):
         :returns: (sppasTranscription)
 
         """
-        self.print_options()
-        self.print_diagnosis(input_file[0])
-        self.print_diagnosis(input_file[1])
-
         # Get the tier to be used
         parser = sppasRW(input_file[0])
         trs_input1 = parser.read()
@@ -259,6 +255,8 @@ class sppasOtherRepet(sppasBaseRepet):
         trs_output = sppasTranscription(self.name)
         trs_output.set_meta('other_repetition_result_of_src', input_file[0])
         trs_output.set_meta('other_repetition_result_of_echo', input_file[1])
+        self.transfer_metadata(trs_input1, trs_output)
+
         if len(self._word_strain) > 0:
             trs_output.append(tier_input1)
         if self._options['stopwords'] is True:

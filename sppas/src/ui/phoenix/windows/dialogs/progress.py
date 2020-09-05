@@ -37,7 +37,6 @@
 import wx
 import time
 
-from sppas import sppasAppConfig
 from sppas.src.ui.progress import sppasBaseProgress
 
 # ---------------------------------------------------------------------------
@@ -156,9 +155,14 @@ class sppasProgressDialog(wx.GenericProgressDialog, sppasBaseProgress):
     # -----------------------------------------------------------------------
 
     def close(self):
+        self.DestroyFadeOut()
+
+    # -----------------------------------------------------------------------
+
+    def DestroyFadeOut(self):
         """Close the progress box."""
         self.timer2 = wx.Timer(self, -1)
-        self.timer2.Start(1)
+        self.timer2.Start(5)
         self.Bind(wx.EVT_TIMER, self.__alpha_cycle_out, self.timer2)
 
     # ---------------------------------------------------------------------------
@@ -167,7 +171,7 @@ class sppasProgressDialog(wx.GenericProgressDialog, sppasBaseProgress):
 
     def __alpha_cycle_out(self, *args):
         """Fade-out opacity of the dialog."""
-        self.opacity_out -= 5
+        self.opacity_out -= 10
 
         if self.opacity_out > 0:
             self.SetTransparent(self.opacity_out)
@@ -178,39 +182,21 @@ class sppasProgressDialog(wx.GenericProgressDialog, sppasBaseProgress):
             wx.CallAfter(self.Destroy)
 
 # ----------------------------------------------------------------------------
-# App to test
+# Panels to test
 # ----------------------------------------------------------------------------
 
 
-class TestApp(wx.App):
+class TestPanelProgressDialog(wx.Panel):
 
-    def __init__(self):
-        """Create a customized application."""
-        # ensure the parent's __init__ is called with the args we want
-        wx.App.__init__(self,
-                        redirect=False,
-                        filename=None,
-                        useBestVisual=True,
-                        clearSigInt=True)
+    def __init__(self, parent):
+        super(TestPanelProgressDialog, self).__init__(
+            parent,
+            style=wx.BORDER_NONE | wx.WANTS_CHARS,
+            name="Test Progress Dialog")
 
-        # Fix language and translation
-        self.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
-        self.__cfg = sppasAppConfig()
-
-        # create the frame
-        self.frm = wx.Frame(None, title='Progress test', size=(256, 128), name="main")
-        self.SetTopWindow(self.frm)
-
-        # create a panel in the frame
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(wx.Button(self.frm, label="start"), 1, wx.EXPAND, 0)
-        self.frm.SetSizer(sizer)
-
+        wx.Button(self, label="Progress", pos=(10, 10), size=(128, 64),
+                  name="btn_confirm")
         self.Bind(wx.EVT_BUTTON, self._on_start)
-
-        # show result
-        self.frm.Show(True)
-
 
     def _on_start(self, event):
 
@@ -241,9 +227,3 @@ class TestApp(wx.App):
 
         self.progress.close()
 
-# ----------------------------------------------------------------------------
-
-
-if __name__ == "__main__":
-    app = TestApp()
-    app.MainLoop()

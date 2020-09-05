@@ -36,18 +36,19 @@
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    This is the main program to execute the Graphical User Interface of SPPAS.
+    This is the deprecated program to execute the Graphical User Interface of SPPAS.
 
 """
 
-import logging
+import os
 import traceback
 from argparse import ArgumentParser
 import sys
 import time
 from os import path, getcwd
+import subprocess
 
 PROGRAM = path.abspath(__file__)
 SPPAS = path.dirname(path.dirname(path.dirname(PROGRAM)))
@@ -73,47 +74,61 @@ def exit_error(msg="Unknown."):
 
 # ----------------------------------------------------------------------------
 
+
+def check_aligner():
+    """Test if one of julius/HVite is available.
+
+    :returns: False if none of them are available.
+
+    """
+    julius = True
+    hvite = True
+    try:
+        NULL = open(os.devnull, "r")
+        subprocess.call(['julius'], stdout=NULL, stderr=subprocess.STDOUT)
+    except OSError:
+        julius = False
+
+    try:
+        NULL = open(os.devnull, "r")
+        subprocess.call(['HVite'], stdout=NULL, stderr=subprocess.STDOUT)
+    except OSError:
+        hvite = False
+
+    return julius or hvite
+
+# ----------------------------------------------------------------------------
+
+
+if sys.version_info > (2, 8):
+    msg = "Python is not the right one for this [deprecated] program.\n"
+    msg += "This program requires version 2.7.\n"
+    if sys.version_info > (3, 5):
+        msg += "To execute SPPAS GUI for Python 3, launch: python -m sppas"
+    else:
+        msg += "The new SPPAS GUI is compatible with Python >3.6+."
+    exit_error(msg)
+    time.sleep(5)
+    sys.exit(-1)
+
 try:
     import wx
+    v = wx.version().split()[0][0]
+    if v != '3':
+        raise ImportError
 except ImportError:
-    exit_error("WxPython is not installed on your system\n."
-               "The Graphical User Interface of SPPAS can't work.")
+    exit_error("WxPython is not installed on your system or the version is"
+               "not the right one.\nThe Graphical User Interface can't work.")
 
 # ---------------------------------------------------------------------------
-# If Phoenix is installed...
-# ---------------------------------------------------------------------------
-
-v = wx.version().split()[0][0]
-if v == '4':
-    try:
-        from sppas.src.ui.phoenix.main_app import sppasApp
-    except:
-        exit_error("An unexpected error occurred.\n"
-                   "Verify the the installation of SPPAS and try again.\n"
-                   "The full error message is: %s" % traceback.format_exc())
-
-    # Create and run the wx application
-    app = sppasApp()
-    status = app.run()
-    if status != 0:
-        print("SPPAS exits with error status: {:d}"
-              "".format(status))
-    sys.exit(status)
-
-# ---------------------------------------------------------------------------
-# If wxPython3 is installed...
-# ---------------------------------------------------------------------------
-
 
 try:
+    from sppas.src.config import sppasLogSetup
     from sppas.src.ui.wxgui import SETTINGS_FILE
     from sppas.src.ui.wxgui.frames.mainframe import FrameSPPAS
-    from sppas.bin import check_aligner
     from sppas.src.ui.wxgui.dialogs.msgdialogs import ShowInformation
     from sppas.src.ui.wxgui.structs.prefs import Preferences_IO
     from sppas.src.ui.wxgui.structs.theme import sppasTheme
-    from sppas import sppasLogSetup  #, sppasLogFile
-    # from sppas import sppasAppConfig
 except Exception as e:
     print(str(e))
     exit_error("An unexpected error occurred.\n"

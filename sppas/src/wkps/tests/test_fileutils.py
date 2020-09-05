@@ -37,7 +37,7 @@
 import os
 import unittest
 
-from sppas import paths
+from sppas.src.config import paths
 from ..fileutils import sppasDirUtils, sppasFileUtils
 
 

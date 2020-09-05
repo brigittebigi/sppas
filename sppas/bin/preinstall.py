@@ -34,7 +34,7 @@
 :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 :summary:      Launch the installation of external features.
 
-Install these features before launching the SPPAS application to enable them.
+Launch this program at any time to add features to SPPAS.
 
 """
 
@@ -77,7 +77,7 @@ def exit_error(msg="Unknown."):
 
 
 def check_python():
-    """Check if the current python in use is the right one: 3.6+.
+    """Check if the python in use is the right one: 3.6+.
 
     Exit if it's not the case.
 
@@ -104,24 +104,6 @@ if __name__ == "__main__":
     # Fix initial sppasInstallerDeps parameters
     # -----------------------------------------------------------------------
     installer = sppasInstallerDeps()
-    cmd_features = list()
-    i = 0
-    x = 0
-
-    def search_feature(feature_identifier):
-        for fid in installer.features_ids():
-            if feature_identifier == fid:
-                return fid
-
-    def get_enables():
-        enables = "\n"
-        for fid in installer.features_ids():
-            enables += \
-                "(" + str(installer.description(fid)) + ", " + fid + ")"\
-                "available: " + str(installer.available(fid)) + "/ "\
-                "enable: " + str(installer.enable(fid)) + "\n"
-
-        return enables
 
     # ----------------------------------------------------------------------------
     # Verify and extract args:
@@ -129,8 +111,7 @@ if __name__ == "__main__":
 
     parser = ArgumentParser(
         usage="%(prog)s [action]",
-        description="PreInstall command interface.\n" +
-        get_enables(),
+        description="User command interface to enable SPPAS features.",
         epilog="This program is part of {:s} version {:s}. {:s}. Contact the "
                "author at: {:s}".format(sg.__name__, sg.__version__,
                                         sg.__copyright__, sg.__contact__),
@@ -144,29 +125,7 @@ if __name__ == "__main__":
     # Add arguments from the features of features.ini
     # -----------------------------------------------
 
-    group_p = parser.add_argument_group("Customizable actions:")
-
-    for fid in installer.features_ids():
-        x += 1
-        # a = "group_personalize" + str(x)
-        a = group_p.add_mutually_exclusive_group()
-        cmd_features.append(fid)
-        cmd_features.append("no" + fid)
-        a.add_argument(
-            "--" + fid,
-            action='store_true',
-            help="Enable feature '{name}': '{desc}'".format(
-                name=fid,
-                desc=installer.description(fid)))
-
-        a.add_argument(
-            "--no" + fid,
-            action='store_true',
-            help="Disable feature '{name}': '{desc}'".format(
-                name=fid,
-                desc=installer.description(fid)))
-
-    group_g = parser.add_argument_group("overall action")
+    group_g = parser.add_argument_group("Overall selections")
     group_ge = group_g.add_mutually_exclusive_group()
 
     group_ge.add_argument(
@@ -181,6 +140,16 @@ if __name__ == "__main__":
         action='store_true',
         help="Install all the features that are enabled by default.")
 
+    group_p = parser.add_argument_group("Customizable selections")
+
+    for fid in installer.features_ids():
+        group_p.add_argument(
+            "--" + fid,
+            action='store_true',
+            help="Enable feature '{name}': '{desc}'".format(
+                name=fid,
+                desc=installer.description(fid)))
+
     # Force to print help if no argument is given then parse
     # ------------------------------------------------------
 
@@ -188,18 +157,11 @@ if __name__ == "__main__":
         sys.argv.append('-h')
 
     args = parser.parse_args()
-
-    arguments = vars(args)
-    arguments_true = list()
-    for a in arguments:
-        if arguments[a] is True:
-            arguments_true.append(a)
-
-    if args.quiet and len(arguments_true) == 1:
+    if args.quiet and len(args) == 1:
         parser.print_usage()
         exit_error("{:s}: error: argument --quiet: not allowed alone."
                    "".format(os.path.basename(PROGRAM)))
-
+    p = None
     if not args.quiet:
         p = ProcessProgressTerminal()
         installer.set_progress(p)
@@ -225,23 +187,20 @@ if __name__ == "__main__":
             print(sg.__url__ + '\n')
             print('{:s}\n'.format(sep))
 
-    # enable all available features
-    if args.all:
+    # convert the Namespace into a dictionary
+    args_dict = vars(args)
+    if args_dict["all"] is True:
+        # enable all available features
         for fid in installer.features_ids():
             installer.enable(fid, True)
 
-    # Set the values of enable individually for each feature
-    for a in arguments_true:
-        if a in cmd_features:
-            if a.startswith("no") is False:
-                fid = search_feature(a)
+    elif args_dict["default"] is False:
+        # Set the values to enable individually each feature
+        for fid in installer.features_ids():
+            installer.enable(fid, False)
+            if args_dict[fid] is True:
                 if installer.available(fid) is True:
                     installer.enable(fid, True)
-            else:
-                a = a.replace("no", "")
-                fid = search_feature(a)
-                if installer.available(fid) is True:
-                    installer.enable(fid, False)
 
     # process the installation
     errors = installer.install()

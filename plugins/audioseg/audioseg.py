@@ -46,6 +46,7 @@ from sppas.src.anndata import sppasLocation
 from sppas.src.anndata import sppasInterval
 from sppas.src.anndata import sppasPoint
 from sppas.src.anndata import sppasRW
+from sppas.src.anndata.aio.aioutils import serialize_labels
 import sppas.src.audiodata.aio
 from sppas.src.audiodata.audio import sppasAudioPCM
 from sppas.src.annotations.searchtier import sppasFindTier
@@ -160,7 +161,7 @@ nb = 0
 for i, ann in enumerate(tier):
 
     # is a track? if yes, extract the text content!
-    text = ann.serialize_labels(separator="_", empty="", alt=False)
+    text = serialize_labels(ann.get_labels(), separator="_", empty="", alt=False)
     if len(text) == 0 or ann.get_best_tag().is_silence():
         continue
 

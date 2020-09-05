@@ -35,7 +35,6 @@
 
 import unittest
 
-from sppas.src.preinstall.feature import Feature
 from sppas.src.preinstall.features import Features
 
 # ---------------------------------------------------------------------------
@@ -45,7 +44,14 @@ class TestFeatures(unittest.TestCase):
 
     def setUp(self):
         self.__features = Features("req_win", "cmd_win")
-        self.__feature = Feature("feature")
+
+    # ---------------------------------------------------------------------------
+
+    def test_type(self):
+        self.assertEqual(self.__features.feature_type("video"), "deps")
+        self.assertEqual(self.__features.feature_type("julius"), "deps")
+        self.assertEqual(self.__features.feature_type("wxpython"), "deps")
+        self.assertEqual(self.__features.feature_type("toto"), None)
 
     # ---------------------------------------------------------------------------
 
@@ -59,7 +65,11 @@ class TestFeatures(unittest.TestCase):
     def test_get_ids(self):
         # Return the list of feature identifiers.
         y = self.__features.get_ids()
-        self.assertEqual(y, ["wxpython", "brew", "julius"])
+        self.assertTrue("wxpython" in y)
+        self.assertTrue("brew" in y)
+        self.assertTrue("julius" in y)
+        self.assertTrue("video" in y)
+        self.assertTrue("pol" in y)
 
     # ---------------------------------------------------------------------------
 
@@ -77,11 +87,17 @@ class TestFeatures(unittest.TestCase):
 
     def test_available(self):
         # Return True if the feature is available and/or set it.
+        y = self.__features.available("video")
+        self.assertEqual(y, True)
+
         y = self.__features.available("wxpython")
         self.assertEqual(y, True)
 
         self.__features.available("wxpython", False)
         y = self.__features.available("wxpython")
+        self.assertEqual(y, False)
+
+        y = self.__features.available("brew")
         self.assertEqual(y, False)
 
     # ---------------------------------------------------------------------------
@@ -136,12 +152,12 @@ class TestFeatures(unittest.TestCase):
         # Return a parsed version of the features.ini file.
         y = self.__features._Features__init_features()
 
-        self.assertEqual(y.sections(), ["wxpython", "brew", "julius"])
-        self.assertEqual(len(y.sections()), 3)
+        self.assertGreater(len(y.sections()), 20)
+        self.assertTrue("wxpython" in y.sections())
 
         self.assertEqual(y.get("wxpython", "pip"), "wxpython:>;4.0")
 
-        self.assertEqual(y.get("julius", "cmd_win"), "python3 ./juliusdownload.py")
+        self.assertTrue("juliusdownload.py" in y.get("julius", "cmd_win"))
 
     # ---------------------------------------------------------------------------
 
@@ -166,7 +182,7 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(y[2], "julius")
         self.assertEqual(self.__features.packages(y[2]), {})
         self.assertEqual(self.__features.pypi(y[2]), {})
-        self.assertEqual(self.__features.cmd(y[2]), "python3 ./juliusdownload.py")
+        self.assertTrue("juliusdownload.py" in self.__features.cmd(y[2]))
 
     # ---------------------------------------------------------------------------
 
@@ -206,7 +222,7 @@ class TestFeatures(unittest.TestCase):
     def test__len__(self):
         # Return the number of features.
         y = self.__features.__len__()
-        self.assertEqual(y, 3)
+        self.assertEqual(y, 23)
 
     # ---------------------------------------------------------------------------
 

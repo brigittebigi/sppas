@@ -1,0 +1,560 @@
+{
+    "wjson": "2.0",
+    "software": "SPPAS",
+    "version": "3.1",
+    "id": "9c9b55d8-ed0f-4b40-bd86-4d5e124f96be",
+    "paths": [
+            {
+            "id": "E:/bigi/Projets/sppas/samples/samples-eng",
+            "rel": "samples/samples-eng",
+            "roots": [
+                {
+                    "id": "ENG_M15_ENG_T02",
+                    "files": [
+                        {
+                            "id": "ENG_M15_ENG_T02.PitchTier",
+                            "state": 0
+                        },
+                        {
+                            "id": "ENG_M15_ENG_T02.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "ENG_M15_ENG_T02.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-AixOx"
+                    ],
+                    "subjoin": {
+                        "expand": false
+                    }
+                },
+                {
+                    "id": "ENG_M15_ENG_T33",
+                    "files": [
+                        {
+                            "id": "ENG_M15_ENG_T33.PitchTier",
+                            "state": 0
+                        },
+                        {
+                            "id": "ENG_M15_ENG_T33.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-AixOx"
+                    ],
+                    "subjoin": {
+                        "expand": false
+                    }
+                },
+                {
+                    "id": "oriana1",
+                    "files": [
+                        {
+                            "id": "oriana1.txt",
+                            "state": 1
+                        },
+                        {
+                            "id": "oriana1.wav",
+                            "state": 1
+                        }
+                    ],
+                    "refids": [],
+                    "subjoin": {
+                        "expand": true
+                    }
+                },
+                {
+                    "id": "oriana2",
+                    "files": [
+                        {
+                            "id": "oriana2.WAV",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [],
+                    "subjoin": {
+                        "expand": false
+                    }
+                },
+                {
+                    "id": "oriana3",
+                    "files": [
+                        {
+                            "id": "oriana3.wave",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [],
+                    "subjoin": {
+                        "expand": false
+                    }
+                }
+            ]
+        },
+        {
+            "id": "E:/bigi/Projets/sppas/samples/samples-fra",
+            "rel": "samples/samples-fra",
+            "roots": [
+                {
+                    "id": "AC track_0379",
+                    "files": [
+                        {
+                            "id": "AC track_0379.PitchTier",
+                            "state": 0
+                        },
+                        {
+                            "id": "AC track_0379.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "AC track_0379.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-CID"
+                    ],
+                    "subjoin": {
+                        "expand": false
+                    }
+                },
+                {
+                    "id": "AG_\u00e9\u00e0\u00e7_0460",
+                    "files": [
+                        {
+                            "id": "AG_\u00e9\u00e0\u00e7_0460.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "AG_\u00e9\u00e0\u00e7_0460.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-CID",
+                        "Spk-AG",
+                        "Dlg-08"
+                    ],
+                    "subjoin": {
+                        "expand": false
+                    }
+                },
+                {
+                    "id": "BX_track_0451",
+                    "files": [
+                        {
+                            "id": "BX_track_0451.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "BX_track_0451.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-CID"
+                    ]
+                },
+                {
+                    "id": "EB_track_0641",
+                    "files": [
+                        {
+                            "id": "EB_track_0641.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "EB_track_0641.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-CID",
+                        "Spk-EB",
+                        "Dlg-07"
+                    ],
+                    "subjoin": {
+                        "expand": false
+                    }
+                },
+                {
+                    "id": "F_F_B003-P8",
+                    "files": [
+                        {
+                            "id": "F_F_B003-P8.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "F_F_B003-P8.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-AixOx",
+                        "Spk-B003"
+                    ],
+                    "subjoin": {
+                        "expand": true
+                    }
+                },
+                {
+                    "id": "F_F_B003-P9",
+                    "files": [
+                        {
+                            "id": "F_F_B003-P9.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "F_F_B003-P9.hz",
+                            "state": 0
+                        },
+                        {
+                            "id": "F_F_B003-P9.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-AixOx",
+                        "Spk-B003"
+                    ],
+                    "subjoin": {
+                        "expand": true
+                    }
+                },
+                {
+                    "id": "F_F_C006-P6",
+                    "files": [
+                        {
+                            "id": "F_F_C006-P6.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "F_F_C006-P6.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-AixOx",
+                        "Spk-C006"
+                    ],
+                    "subjoin": {
+                        "expand": true
+                    }
+                },
+                {
+                    "id": "IM_track_0767",
+                    "files": [
+                        {
+                            "id": "IM_track_0767.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "IM_track_0767.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-CID"
+                    ]
+                },
+                {
+                    "id": "MB_track_0674",
+                    "files": [
+                        {
+                            "id": "MB_track_0674.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "MB_track_0674.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-CID"
+                    ]
+                },
+                {
+                    "id": "MG_track_0702",
+                    "files": [
+                        {
+                            "id": "MG_track_0702.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "MG_track_0702.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-CID"
+                    ]
+                },
+                {
+                    "id": "ML_track_0597",
+                    "files": [
+                        {
+                            "id": "ML_track_0597.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "ML_track_0597.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-CID"
+                    ]
+                },
+                {
+                    "id": "NH_track_636",
+                    "files": [
+                        {
+                            "id": "NH_track_636.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "NH_track_636.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-CID"
+                    ]
+                },
+                {
+                    "id": "SR_track_631",
+                    "files": [
+                        {
+                            "id": "SR_track_631.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "SR_track_631.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-CID",
+                        "Spk-SR",
+                        "Dlg-07"
+                    ],
+                    "subjoin": {
+                        "expand": false
+                    }
+                },
+                {
+                    "id": "YM_track_0182",
+                    "files": [
+                        {
+                            "id": "YM_track_0182.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "YM_track_0182.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-CID",
+                        "Spk-YM",
+                        "Dlg-08"
+                    ],
+                    "subjoin": {
+                        "expand": false
+                    }
+                }
+            ]
+        }
+    ],
+    "catalogue": [
+        {
+            "id": "Corpus-CID",
+            "state": 0,
+            "type": "STANDALONE",
+            "subjoin": null,
+            "attributes": [
+                {
+                    "id": "place",
+                    "value": "Aix-en-Provence",
+                    "type": "str",
+                    "descr": "Place of recording"
+                },
+                {
+                    "id": "year",
+                    "value": "2003",
+                    "type": "int",
+                    "descr": ""
+                },
+                {
+                    "id": "repository",
+                    "value": "https://hdl.handle.net/11403/sldr000720",
+                    "type": "str",
+                    "descr": ""
+                }
+            ]
+        },
+        {
+            "id": "Corpus-AixOx",
+            "state": 0,
+            "type": "STANDALONE",
+            "subjoin": null,
+            "attributes": [
+                {
+                    "id": "place",
+                    "value": "Aix-en-Provence",
+                    "type": "str",
+                    "descr": "Place of recording"
+                },
+                {
+                    "id": "year",
+                    "value": "2011",
+                    "type": "int",
+                    "descr": ""
+                },
+                {
+                    "id": "repository",
+                    "value": "https://hdl.handle.net/11403/sldr000784",
+                    "type": "str",
+                    "descr": ""
+                }
+            ]
+        },
+        {
+            "id": "Spk-EB",
+            "state": 0,
+            "type": "SPEAKER",
+            "subjoin": null,
+            "attributes": [
+                {
+                    "id": "gender",
+                    "value": "male",
+                    "type": "str",
+                    "descr": ""
+                },
+                {
+                    "id": "L1",
+                    "value": "fra",
+                    "type": "str",
+                    "descr": ""
+                }
+            ]
+        },
+        {
+            "id": "Spk-SR",
+            "state": 0,
+            "type": "SPEAKER",
+            "subjoin": null,
+            "attributes": [
+                {
+                    "id": "gender",
+                    "value": "male",
+                    "type": "str",
+                    "descr": ""
+                },
+                {
+                    "id": "L1",
+                    "value": "fra",
+                    "type": "str",
+                    "descr": ""
+                }
+            ]
+        },
+        {
+            "id": "Spk-YM",
+            "state": 0,
+            "type": "SPEAKER",
+            "subjoin": null,
+            "attributes": [
+                {
+                    "id": "gender",
+                    "value": "male",
+                    "type": "str",
+                    "descr": ""
+                },
+                {
+                    "id": "L1",
+                    "value": "fra",
+                    "type": "str",
+                    "descr": ""
+                }
+            ]
+        },
+        {
+            "id": "Spk-AG",
+            "state": 0,
+            "type": "SPEAKER",
+            "subjoin": null,
+            "attributes": [
+                {
+                    "id": "gender",
+                    "value": "male",
+                    "type": "str",
+                    "descr": ""
+                },
+                {
+                    "id": "L1",
+                    "value": "fra",
+                    "type": "str",
+                    "descr": ""
+                }
+            ]
+        },
+        {
+            "id": "Spk-B003",
+            "state": 0,
+            "type": "SPEAKER",
+            "subjoin": null,
+            "attributes": [
+                {
+                    "id": "gender",
+                    "value": "male",
+                    "type": "str",
+                    "descr": ""
+                },
+                {
+                    "id": "L1",
+                    "value": "fra",
+                    "type": "str",
+                    "descr": ""
+                }
+            ]
+        },
+        {
+            "id": "Spk-C006",
+            "state": 0,
+            "type": "SPEAKER",
+            "subjoin": null,
+            "attributes": [
+                {
+                    "id": "gender",
+                    "value": "female",
+                    "type": "str",
+                    "descr": ""
+                },
+                {
+                    "id": "L1",
+                    "value": "fra",
+                    "type": "str",
+                    "descr": ""
+                }
+            ]
+        },
+        {
+            "id": "Dlg-07",
+            "state": 0,
+            "type": "INTERACTION",
+            "subjoin": null,
+            "attributes": []
+        },
+        {
+            "id": "Dlg-08",
+            "state": 0,
+            "type": "INTERACTION",
+            "subjoin": null,
+            "attributes": []
+        }
+    ]
+}

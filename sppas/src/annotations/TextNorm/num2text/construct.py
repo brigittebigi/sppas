@@ -31,7 +31,7 @@
 
 """
 
-from sppas import sppasKeyError
+from sppas.src.exceptions import sppasKeyError
 
 from .num_base import sppasNumBase
 from .num_jpn import sppasNumJapanese

@@ -29,20 +29,22 @@
     src.wkps.fileref.py
     ~~~~~~~~~~~~~~~~~~~~
 
+    Define a sppasRefAttribute() and a sppasCatReference().
+
 """
 
-from sppas import sppasTypeError, sppasIndexError
-from sppas import annots
+from sppas.src.exceptions.exc import sppasTypeError, sppasIndexError
+from sppas.src.config import annots
 from sppas.src.utils.makeunicode import sppasUnicode
 
-from .filebase import FileBase, States
+from .filebase import FileBase
 from .wkpexc import AttributeIdValueError, AttributeTypeValueError
 from .wkpexc import FileAddValueError, FileRemoveValueError
 
 # ---------------------------------------------------------------------------
 
 
-class sppasAttribute(object):
+class sppasRefAttribute(object):
     """Represent any attribute with an id, a value, and a description.
 
     :author:       Barthélémy Drabczuk, Brigitte Bigi
@@ -56,7 +58,7 @@ class sppasAttribute(object):
     VALUE_TYPES = ('str', 'int', 'float', 'bool')
 
     def __init__(self, identifier, value=None, att_type=None, descr=None):
-        """Constructor of sppasAttribute.
+        """Constructor of sppasRefAttribute.
 
         :param identifier: (str) The identifier of the attribute
         :param value: (str) String representing the value of the attribute
@@ -100,7 +102,7 @@ class sppasAttribute(object):
         su = sppasUnicode(identifier)
         identifier = su.unicode()
 
-        if sppasAttribute.validate(identifier) is False:
+        if sppasRefAttribute.validate(identifier) is False:
             raise AttributeIdValueError(identifier)
 
         self.__id = identifier
@@ -160,12 +162,19 @@ class sppasAttribute(object):
         :raises: sppasTypeError
 
         """
-        if type_name in sppasAttribute.VALUE_TYPES:
+        if type_name in sppasRefAttribute.VALUE_TYPES:
             self.__valuetype = type_name
+            try:
+                self.get_typed_value()
+            except AttributeTypeValueError:
+                self.__valuetype = 'str'
+                raise
+
         elif type_name is None:
             self.__valuetype = 'str'
+
         else:
-            raise sppasTypeError(type_name, " ".join(sppasAttribute.VALUE_TYPES))
+            raise sppasTypeError(type_name, " ".join(sppasRefAttribute.VALUE_TYPES))
 
     # -----------------------------------------------------------------------
 
@@ -184,6 +193,8 @@ class sppasAttribute(object):
                 elif self.__valuetype == 'bool':
                     return self.__value.lower() == 'true'
             except ValueError:
+                raise AttributeTypeValueError(self.__value, self.__valuetype)
+            except TypeError:
                 raise AttributeTypeValueError(self.__value, self.__valuetype)
 
         return self.__value
@@ -244,7 +255,7 @@ class sppasAttribute(object):
         if other is None:
             return False
 
-        if isinstance(other, sppasAttribute) is False:
+        if isinstance(other, sppasRefAttribute) is False:
             return False
         if self.__id != other.get_id():
             return False
@@ -257,8 +268,8 @@ class sppasAttribute(object):
 # ---------------------------------------------------------------------------
 
 
-class FileReference(FileBase):
-    """Represent a reference of a catalog of a workspace.
+class sppasCatReference(FileBase):
+    """Represent a reference in the catalogue of a workspace.
 
     :author:       Barthélémy Drabczuk, Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -267,18 +278,18 @@ class FileReference(FileBase):
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     Reference is a dictionary with a name. Its keys are only alphanumerics
-    characters spaced with underscores and its values are all sppasAttribute
+    characters spaced with underscores and its values are all sppasRefAttribute
     objects.
 
     """
 
     def __init__(self, identifier):
-        """Constructor of the FileReference class.
+        """Constructor of the sppasCatReference class.
 
         :param identifier: (str) identifier for the object, the name of the reference
 
         """
-        super(FileReference, self).__init__(identifier)
+        super(sppasCatReference, self).__init__(identifier)
 
         self.__attributs = list()
         self.__type = annots.types[0]
@@ -291,8 +302,8 @@ class FileReference(FileBase):
     def att(self, identifier):
         """Return the attribute matching the given identifier or None.
 
-        :param identifier: (str) Id of a sppasAttribute
-        :return: sppasAttribute or None if the identifier does not match
+        :param identifier: (str) Id of a sppasRefAttribute
+        :return: sppasRefAttribute or None if the identifier does not match
         any attribute of this reference.
 
         """
@@ -309,25 +320,25 @@ class FileReference(FileBase):
     def add(self, identifier, value=None, att_type=None, descr=None):
         """Append an attribute into the reference.
 
-        :param identifier: (str) Id of a sppasAttribute
+        :param identifier: (str) Id of a sppasRefAttribute
         :param value: (any type)
         :param att_type: (str) One of 'str', 'bool', 'int', 'float'. Default is 'str'.
         :param descr: (str) A text to describe the attribute
         :raise: AttributeIdValueError
 
         """
-        self.append(sppasAttribute(identifier, value, att_type, descr))
+        self.append(sppasRefAttribute(identifier, value, att_type, descr))
 
     # ------------------------------------------------------------------------
 
     def append(self, att):
         """Append an attribute into a reference.
 
-        :param att: (sppasAttribute)
+        :param att: (sppasRefAttribute)
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
 
         if att in self:
             raise FileAddValueError(att.get_id())
@@ -339,11 +350,11 @@ class FileReference(FileBase):
     def pop(self, identifier):
         """Delete an attribute of this reference.
 
-        :param identifier: (str, sppasAttribute) the attribute or its id to delete
+        :param identifier: (str, sppasRefAttribute) the attribute or its id to delete
 
         """
         if identifier in self:
-            if isinstance(identifier, sppasAttribute) is False:
+            if isinstance(identifier, sppasRefAttribute) is False:
                 identifier = self.att(identifier)
             self.__attributs.remove(identifier)
         else:
@@ -413,12 +424,12 @@ class FileReference(FileBase):
     def __contains__(self, att):
         """Return true if self contains the given attribute/identifier.
 
-        :param att: (str or sppasAttribute)
+        :param att: (str or sppasRefAttribute)
 
         """
-        if isinstance(att, sppasAttribute) is False:
+        if isinstance(att, sppasRefAttribute) is False:
             try:
-                att = sppasAttribute(att)
+                att = sppasRefAttribute(att)
             except:
                 return False
 

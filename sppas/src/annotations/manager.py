@@ -39,6 +39,7 @@ import sys
 import os
 from threading import Thread
 
+from sppas.src.config import annots
 from sppas.src.wkps import sppasFileUtils
 from sppas.src.wkps import States
 from sppas.src.anndata import sppasTranscription, sppasRW
@@ -46,7 +47,27 @@ from sppas.src.anndata import sppasTranscription, sppasRW
 import sppas.src.audiodata.aio
 import sppas.src.anndata.aio
 
-from sppas.src.annotations import *
+from sppas.src.annotations.Activity import sppasActivity
+from sppas.src.annotations.Align import sppasAlign
+from sppas.src.annotations.FillIPUs import sppasFillIPUs
+from sppas.src.annotations.Intsint import sppasIntsint
+from sppas.src.annotations.LexMetric import sppasLexMetric
+from sppas.src.annotations.LPC import sppasLPC
+from sppas.src.annotations.Momel import sppasMomel
+from sppas.src.annotations.OtherRepet import sppasOtherRepet
+from sppas.src.annotations.Phon import sppasPhon
+from sppas.src.annotations.ReOccurrences import sppasReOcc
+from sppas.src.annotations.RMS import sppasRMS
+from sppas.src.annotations.SearchIPUs import sppasSearchIPUs
+from sppas.src.annotations.SelfRepet import sppasSelfRepet
+from sppas.src.annotations.SpkLexRep import sppasLexRep
+from sppas.src.annotations.StopWords import sppasStopWords
+from sppas.src.annotations.Syll import sppasSyll
+from sppas.src.annotations.TextNorm import sppasTextNorm
+from sppas.src.annotations.TGA import sppasTGA
+from sppas.src.annotations.FaceDetection import sppasFaceDetection
+from sppas.src.annotations.FaceMark import sppasFaceMark
+from sppas.src.annotations.FaceTracking import sppasFaceTracking
 
 from .infotier import sppasMetaInfoTier
 from .log import sppasLog
@@ -198,15 +219,30 @@ class sppasAnnotationsManager(Thread):
         step_idx = self._parameters.get_step_idx(annotation_key)
 
         # Create the instance and fix options
-        auto_annot = self._get_instance_name(annotation_key)(self._logfile)
+        try:
+            auto_annot = self._get_instance_name(annotation_key)(self._logfile)
+        except Exception as e:
+            self._parameters.disable_step(step_idx)
+            self._logfile.print_message(
+                "Annotation {} is disabled due to the following error: {}"
+                "".format(annotation_key, str(e)))
+            return None
+
         self._fix_ann_options(annotation_key, auto_annot)
 
         # Load language resources
         if self._progress:
             self._progress.set_text("Loading resources...")
         step = self._parameters.get_step(step_idx)
-        auto_annot.load_resources(*step.get_langresource(), 
-                                  lang=step.get_lang())
+        try:
+            auto_annot.load_resources(*step.get_langresource(),
+                                      lang=step.get_lang())
+        except Exception as e:
+            self._parameters.disable_step(step_idx)
+            self._logfile.print_message(
+                "Annotation {} is disabled due to the following error: {}"
+                "".format(annotation_key, str(e)))
+            return None
 
         return auto_annot
 
@@ -238,17 +274,23 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
+        step_idx = self._parameters.get_step_idx(annotation_key)
         a = self._create_ann_instance(annotation_key)
+        if a is None:
+            return 0
+
         files_to_process = self.get_annot_files(
             pattern=a.get_input_pattern(),
             extensions=a.get_input_extensions(),
             types=a.get_types())
+        if self._logfile:
+            self._logfile.print_message("Number of files to process: {}"
+                                        "".format(len(files_to_process)), indent=0)
+
         # logging.debug('{:d} files to process'.format(len(files_to_process)))
         # logging.debug(files_to_process)
-        out_files = a.batch_processing(
-            files_to_process,
-            self._progress,
-            self._parameters.get_output_format())
+        out_format = self._parameters.get_output_extension(step_idx)
+        out_files = a.batch_processing(files_to_process, self._progress, out_format)
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)
@@ -263,6 +305,7 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
+        step_idx = self._parameters.get_step_idx("fillipus")
         a = self._create_ann_instance("fillipus")
 
         files = list()
@@ -277,7 +320,7 @@ class sppasAnnotationsManager(Thread):
         out_files = a.batch_processing(
             files,
             self._progress,
-            self._parameters.get_output_format())
+            self._parameters.get_output_extension(step_idx))
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)
@@ -292,6 +335,7 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
+        step_idx = self._parameters.get_step_idx("rms")
         a = self._create_ann_instance("rms")
 
         # Required input file
@@ -316,7 +360,7 @@ class sppasAnnotationsManager(Thread):
         out_files = a.batch_processing(
             files,
             self._progress,
-            self._parameters.get_output_format())
+            self._parameters.get_output_extension(step_idx))
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)
@@ -334,6 +378,7 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
+        step_idx = self._parameters.get_step_idx("alignment")
         a = self._create_ann_instance("alignment")
 
         # Required input file is a phonetization
@@ -348,8 +393,9 @@ class sppasAnnotationsManager(Thread):
             base_f = base_f.replace(a.get_input_pattern(), "")
 
             # Get the tokens input file
-            extt = [a.get_opt_input_pattern() + self._parameters.get_output_format()]
-            for e in sppas.src.anndata.aio.extensions_out:
+            tokens_idx = self._parameters.get_step_idx("textnorm")
+            extt = list()
+            for e in self._parameters.get_output_extensions(tokens_idx):
                 extt.append(a.get_opt_input_pattern() + e)
             tok = sppasAnnotationsManager._get_filename(base_f, extt)
 
@@ -364,7 +410,7 @@ class sppasAnnotationsManager(Thread):
         out_files = a.batch_processing(
             files,
             self._progress,
-            self._parameters.get_output_format())
+            self._parameters.get_output_extension(step_idx))
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)
@@ -374,13 +420,14 @@ class sppasAnnotationsManager(Thread):
     # -----------------------------------------------------------------------
 
     def __add_trs(self, trs, trs_inputfile):
-
+        """Add content of trs_inputfile to trs."""
         try:
             parser = sppasRW(trs_inputfile)
             trs_input = parser.read(trs_inputfile)
         except IOError:
             return 0
 
+        # Add tiers
         for tier in trs_input:
             already_in = False
             if trs.is_empty() is False:
@@ -390,6 +437,18 @@ class sppasAnnotationsManager(Thread):
                         already_in = True
             if already_in is False:
                 trs.append(tier)
+
+        # Add metadata
+        for key in trs_input.get_meta_keys():
+            if trs.get_meta(key, default=None) is None:
+                trs.set_meta(key, trs_input.get_meta(key))
+
+        # TODO: Add media in merged trs
+
+        # TODO: Add controlled vocab in merged trs
+
+        # TODO: Add hierarchy links in merged trs
+
         return 1
 
     # ------------------------------------------------------------------------
@@ -405,7 +464,8 @@ class sppasAnnotationsManager(Thread):
             pattern="", extensions=sppas.src.audiodata.aio.extensions)
         total = len(filelist)
 
-        output_format = self._parameters.get_output_format()
+        # get the output extension of any annotation of type ANNOT.
+        output_format = self._parameters.get_output_extension(self._parameters.get_step_idx("alignment"))
 
         for i, f in enumerate(filelist):
 
@@ -416,7 +476,7 @@ class sppasAnnotationsManager(Thread):
 
             self._logfile.print_message("File: " + f, indent=0)
             if self._progress:
-                self._progress.set_text(os.path.basename(f)+" ("+str(i+1)+"/"+str(total)+")")
+                self._progress.set_text(os.path.basename(f) + " (" + str(i+1) + "/" + str(total)+")")
 
             # Add all files content in the same order than to annotate
             trs = sppasTranscription()
@@ -425,10 +485,14 @@ class sppasAnnotationsManager(Thread):
                 ann_key = self._parameters.get_step_key(s)
 
                 # create an instance of the annotation to get its pattern
-                a = self._get_instance_name(ann_key)()
-                pattern = a.get_pattern()
-                if len(pattern) > 0:
-                    nbfiles += self.__add_trs(trs, basef + pattern + output_format)
+                try:
+                    a = self._get_instance_name(ann_key)()
+                    pattern = a.get_pattern()
+                    if len(pattern) > 0:
+                        nbfiles += self.__add_trs(trs, basef + pattern + output_format)
+                except:
+                    # ignore annotations if the corresponding feature is not installed
+                    pass
 
             if nbfiles > 1:
                 try:
@@ -437,7 +501,7 @@ class sppasAnnotationsManager(Thread):
                         trs.get_min_loc().get_midpoint(),
                         trs.get_max_loc().get_midpoint())
                     trs.append(tier)
-                    out_file = basef + "-merge" + self._parameters.get_output_format()
+                    out_file = basef + "-merge" + output_format
                     parser = sppasRW(out_file)
                     parser.write(trs)
                     self._logfile.print_message(out_file, indent=1, status=0)
@@ -472,7 +536,8 @@ class sppasAnnotationsManager(Thread):
 
         # create a list with the pattern followed by each possible extension
         if len(pattern) > 0:
-            pat_ext = [pattern + self._parameters.get_output_format()]
+            # pat_ext = [pattern + self._parameters.get_output_format()]
+            pat_ext = list()
             for e in extensions:
                 pat_ext.append(pattern + e)
         else:
@@ -482,7 +547,6 @@ class sppasAnnotationsManager(Thread):
                 wkp.get_fileroot_from_state(States().AT_LEAST_ONE_CHECKED)
 
         for root in roots:
-
             new_file = sppasAnnotationsManager._get_filename(root.id, pat_ext)
             if new_file is None:
                 continue
@@ -490,19 +554,30 @@ class sppasAnnotationsManager(Thread):
             if len(types) == 0 or "STANDALONE" in types:
                 files.append(new_file)
             if "SPEAKER" in types:
-                logging.error("Annotations of type SPEAKER are not supported yet.")
-                pass
+                other_files = self.__matching_files(root, pat_ext, "SPEAKER")
+                for f in other_files:
+                    files.append((new_file, f))
             if "INTERACTION" in types:
-                for ref in root.get_references():
-                    if ref.get_type() == "INTERACTION":
-                        for fr in wkp.get_fileroot_with_ref(ref):
-                            if fr != root:
-                                other_file = sppasAnnotationsManager._get_filename(fr.id, pat_ext)
+                other_files = self.__matching_files(root, pat_ext, "INTERACTION")
+                for f in other_files:
+                    files.append((new_file, f))
 
-                                if other_file is not None:
-                                    files.append((new_file, other_file))
+        # Remove duplicated entries of the list and return it
+        return list(set(files))
 
-        return files
+    # ------------------------------------------------------------------------
+
+    def __matching_files(self, root, pat_ext, ann_type):
+        other_files = list()
+        wkp = self._parameters.get_workspace()
+        for ref in root.get_references():
+            if ref.get_type() == ann_type:
+                for fr in wkp.get_fileroot_with_ref(ref):
+                    if fr != root:
+                        other_file = sppasAnnotationsManager._get_filename(fr.id, pat_ext)
+                        if other_file is not None:
+                            other_files.append(other_file)
+        return other_files
 
     # ------------------------------------------------------------------------
 

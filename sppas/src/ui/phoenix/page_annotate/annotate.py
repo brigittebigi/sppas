@@ -42,8 +42,8 @@
 
 import wx
 
-from sppas import sppasTypeError
-from sppas import annots
+from sppas.src.exceptions import sppasTypeError
+from sppas.src.config import annots
 
 from sppas.src.annotations import sppasParam
 from sppas.src.wkps import States, sppasWorkspace
@@ -169,7 +169,7 @@ class sppasAnnotatePanel(sppasSimplebook):
     def _process_data_changed(self, event):
         """Process a change of data.
 
-        Set the data of the event to the other panels.
+        Set the data of the event to the other anz_panels.
 
         :param event: (wx.Event)
 
@@ -194,7 +194,7 @@ class sppasAnnotatePanel(sppasSimplebook):
         :param emitted: (wx.Window) The panel the data are coming from
 
         """
-        # Set the data to appropriate children panels
+        # Set the data to appropriate children anz_panels
         for panel in self.GetChildren():
             if emitted != panel:
                 try:

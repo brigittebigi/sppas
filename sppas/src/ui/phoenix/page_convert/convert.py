@@ -37,8 +37,8 @@
 import os
 import wx
 
-from sppas import msg
-from sppas.src.exc import sppasTypeError
+from sppas.src.config import msg
+from sppas.src.exceptions import sppasTypeError
 from sppas.src.utils import u
 from sppas.src.wkps import sppasWorkspace, States
 from sppas.src.anndata import sppasRW
@@ -206,7 +206,6 @@ class sppasConvertPanel(sppasScrolledPanel):
         btn.SetLabelPosition(wx.RIGHT)
         btn.SetSpacing(sppasScrolledPanel.fix_size(8))
         btn.SetBorderWidth(2)
-        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(w, h))
 
         btn.SetName("convert")
@@ -280,7 +279,7 @@ class sppasConvertPanel(sppasScrolledPanel):
     def _process_data_changed(self, event):
         """Process a change of data.
 
-        Set the data of the event to the other panels.
+        Set the data of the event to the other anz_panels.
 
         :param event: (wx.Event)
 

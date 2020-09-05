@@ -38,13 +38,13 @@ import wx
 import wx.lib.newevent
 
 from sppas.src.anndata import sppasPoint
-from ..basedraw import sppasBaseWindow
-from .basedatactrl import sppasBaseDataWindow
+from ..basewindow import sppasWindow
+from .basedatactrl import sppasDataWindow
 
 # ---------------------------------------------------------------------------
 
 
-class sppasPointWindow(sppasBaseDataWindow):
+class sppasPointWindow(sppasDataWindow):
     """A window with a DC to draw a sppasPoint().
 
     :author:       Brigitte Bigi
@@ -128,10 +128,10 @@ class sppasPointWindow(sppasBaseDataWindow):
 
         # If highlighted
         if self.HasFocus() is True:
-            c1 = self.GetHighlightedBackgroundColour()
+            c1 = self.GetHighlightedColour(self.GetBackgroundColour())
             c2 = self.GetPenForegroundColour()
         else:
-            c2 = self.GetHighlightedBackgroundColour()
+            c2 = self.GetHighlightedColour(self.GetBackgroundColour())
             c1 = self.GetPenForegroundColour()
 
         if w > 5:

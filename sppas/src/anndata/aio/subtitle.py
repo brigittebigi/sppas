@@ -62,7 +62,7 @@ Main differences from SubRip are:
 import codecs
 import datetime
 
-from sppas import sg
+from sppas.src.config import sg
 from sppas.src.utils import b
 from .basetrsio import sppasBaseIO
 from ..anndataexc import AnnDataTypeError
@@ -73,6 +73,7 @@ from ..ann.annlocation import sppasPoint
 from ..ann.annlocation import sppasInterval
 
 from .aioutils import format_labels
+from .aioutils import serialize_labels
 
 # ---------------------------------------------------------------------------
 
@@ -339,9 +340,8 @@ class sppasSubRip(sppasBaseSubtitles):
                 last = len(self[0])
                 for ann in self[0]:
 
-                    text = ann.serialize_labels(separator="\n",
-                                                empty="",
-                                                alt=True)
+                    text = serialize_labels(
+                        ann.get_labels(), separator="\n", empty="", alt=True)
 
                     # no label defined, or empty label -> no subtitle!
                     if len(text) == 0:
@@ -439,9 +439,8 @@ class sppasWebVTT(sppasBaseSubtitles):
                 last = len(self[0])
                 for ann in self[0]:
 
-                    text = ann.serialize_labels(separator="\n",
-                                                empty="",
-                                                alt=True)
+                    text = serialize_labels(ann.get_labels(),
+                        separator="\n", empty="", alt=True)
 
                     # no label defined, or empty label -> no subtitle!
                     if len(text) == 0:
@@ -610,9 +609,8 @@ class sppasSubViewer(sppasBaseSubtitles):
             if self.is_empty() is False:
                 for ann in self[0]:
 
-                    text = ann.serialize_labels(separator="[br]",
-                                                empty="",
-                                                alt=True)
+                    text = serialize_labels(ann.get_labels(),
+                                            separator="[br]", empty="", alt=True)
 
                     # no label defined, or empty label -> no subtitle!
                     if len(text) == 0:

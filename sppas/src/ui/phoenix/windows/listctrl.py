@@ -58,14 +58,14 @@ class sppasListCtrl(wx.ListCtrl):
 
     Known bug of wx.ListCtrl:
 
-    - If the list is defined as a page of a wx.Notebook, under WindowsInstaller only,
+    - If the list is the child of a page of a wx.Notebook, under Windows only,
       DeleteItem() returns the following error message:
       listctrl.cpp(2614) in wxListCtrl::MSWOnNotify(): invalid internal data pointer?
       It does not occur with the use of a simplebook, a choicebook, a listbook or a
       toolbook instead!
-    - Items can't be edited. The events (begin/end edit label) are never sent.
-      The wxDemo "ListCtrl_edit" does not work, clicking or double clicking
-      on items does.... nothing.
+    - Items can't be edited because the events (begin/end edit label) are
+      never sent. The wxDemo "ListCtrl_edit" does not work, clicking or double
+      clicking on items does.... nothing.
 
     Limitations:
 
@@ -386,6 +386,7 @@ class sppasListCtrl(wx.ListCtrl):
     def InsertItem(self, index, label):
         """Override. Create a row and insert label.
 
+        :param index: (int) Insert item at this position in the list.
         :param label: string or image index.
 
         Create a row.
@@ -397,7 +398,7 @@ class sppasListCtrl(wx.ListCtrl):
         if wx.ListCtrl.GetItemCount(self) == 0:
             if self._header > 0:
                 col_idx = sorted(list(self._colnames.keys()))
-                wx.ListCtrl.InsertItem(self, 0, self._colnames[col_idx[0]])
+                wx.ListCtrl.InsertItem(self, 0, label=self._colnames[col_idx[0]], imageIndex=-1)
                 col_idx.pop(0)
                 for idx in col_idx:
                     wx.ListCtrl.SetItem(self, 0, idx, self._colnames[idx])
@@ -859,9 +860,10 @@ class CheckListCtrl(sppasListCtrl):
 
     def __insert_checkboxes(self):
         info = wx.ListItem()
-        info.Mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
-        info.Image = -1
-        info.Align = wx.LIST_FORMAT_CENTRE
+        info.SetMask(wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT)
+        info.SetImage(-1)
+        info.SetAlign(wx.LIST_FORMAT_CENTRE)
+        info.SetText("")
         sppasListCtrl.InsertColumn(self, 0, info)
         sppasListCtrl.SetColumnWidth(self, 0, sppasListCtrl.fix_size(self.get_font_height()*2))
 
@@ -887,7 +889,7 @@ class CheckListCtrl(sppasListCtrl):
     def InsertItem(self, index, label):
         """Override. Create a row and insert label.
 
-        Create a row, add the line number, add content of the first column.
+        Create a row, add content of the first column.
         Shift the selection of items if necessary.
 
         """
@@ -1110,7 +1112,6 @@ class TestPanel(wx.Panel):
             checklist.SetItem(idx, 1, data[0])
             checklist.SetItem(idx, 2, data[1])
             # self.SetItemData(idx, key)
-
         # Adjust columns width
         checklist.SetColumnWidth(0, wx.LIST_AUTOSIZE)
         checklist.SetColumnWidth(1, wx.LIST_AUTOSIZE)

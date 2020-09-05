@@ -36,7 +36,7 @@
 import unittest
 import os
 
-from sppas import u
+from sppas.src.utils import u
 from ..plugin import sppasPluginParam
 
 # ---------------------------------------------------------------------------

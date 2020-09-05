@@ -1,13 +1,15 @@
 {
   "id": "alignment",
   "name": "Alignment",
-  "descr": "Time aligns the phonetization to audio, and also the tokenizetion if available.",
+  "descr": "Choose one of the pronunciation variants and performs the time-alignment of such phonemes to the related audio, and also the tokens if available.",
   "required": "phonetize",
   "api": "sppasAlign",
 
   "anntype": [
     "STANDALONE"
   ],
+
+  "outformat": "ANNOT",
 
   "resources": [
     {

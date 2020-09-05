@@ -50,6 +50,7 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasLabel, sppasTag
 
@@ -109,7 +110,7 @@ for ann_token in tier_token:
     beg = ann_token.get_lowest_localization()
     end = ann_token.get_highest_localization()
     ann_phons = tier_phon.find(beg, end)
-    content = "-".join(ann.serialize_labels() for ann in ann_phons)
+    content = "-".join(serialize_labels(ann.get_labels()) for ann in ann_phons)
 
     # Append in the new tier
     loc = ann_token.get_location().copy()

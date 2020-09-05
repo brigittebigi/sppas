@@ -81,24 +81,24 @@
 from sppas.src.structs import sppasBaseFilters
 from sppas.src.structs import sppasBaseSet
 
-from .fileref import sppasAttribute
+from .fileref import sppasRefAttribute
 from .filedatacompare import sppasFileBaseCompare
 from .filedatacompare import sppasFileNameCompare
 from .filedatacompare import sppasFileExtCompare
 from .filedatacompare import sppasFileRefCompare
-from .filedatacompare import sppasAttributeCompare
+from .filedatacompare import sppasRefAttributeCompare
 
 # ---------------------------------------------------------------------------
 
 
 class sppasFileDataFilters(sppasBaseFilters):
-    """This class implements the 'SPPAS file data filter system'.
+    """The 'SPPAS file data filter system'.
 
     :author:       Brigitte Bigi, Barthélémy Drabczuk
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     Search in file data.
 
@@ -150,7 +150,7 @@ class sppasFileDataFilters(sppasBaseFilters):
         data = sppasBaseSet()
 
         # search for the data to be returned:
-        for path in self.obj:
+        for path in self.obj.get_paths():
 
             is_matching = path.match(path_functions, logic_bool)
             if is_matching is True:
@@ -191,7 +191,7 @@ class sppasFileDataFilters(sppasBaseFilters):
         data = sppasBaseSet()
 
         # search for the data to be returned:
-        for path in self.obj:
+        for path in self.obj.get_paths():
             for root in path:
                 is_matching = root.match(path_functions, logic_bool)
                 if is_matching is True:
@@ -224,7 +224,7 @@ class sppasFileDataFilters(sppasBaseFilters):
         data = sppasBaseSet()
 
         # search for the data to be returned:
-        for path in self.obj:
+        for path in self.obj.get_paths():
             # append all files of the path
             for fr in path:
                 for fn in fr:
@@ -303,14 +303,14 @@ class sppasFileDataFilters(sppasBaseFilters):
     def ref(self, **kwargs):
         """Apply functions on all file properties of the object.
 
-        Each argument is made of a function name and its expected value.
-        Each function can be prefixed with 'not_', like in the next example.
+        Return any fileroot for which at least one of its references is
+        matching the filter.
 
         :Example:
 
-            >>> f.ref(startswith="toto", not_endswith="tutu", logic_bool="and")
-            >>> f.ref(startswith="toto") & f.ref(not_endswith="tutu")
-            >>> f.ref(startswith="toto") | f.ref(startswith="tutu")
+            >>> f.ref(startswith="toto", endswith="tutu", logic_bool="and")
+            >>> f.ref(startswith="toto") & f.ref(endswith="tutu")
+            >>> f.ref(startswith="toto") | f.ref(contains="tutu")
 
         :param kwargs: logic_bool/any sppasFileStateCompare() method.
         :returns: (sppasDataSet) Set of FileName() instances
@@ -328,9 +328,11 @@ class sppasFileDataFilters(sppasBaseFilters):
         data = sppasBaseSet()
 
         # search for the data to be returned:
-        for path in self.obj:
+        for path in self.obj.get_paths():
             # append all files of the path
             for fr in path:
+                # Find if one of the references of this root is matching one
+                # of the requested function
                 for ref in fr.references:
                     is_matching = ref.match(ref_functions, logic_bool)
                     if is_matching is True:
@@ -357,7 +359,7 @@ class sppasFileDataFilters(sppasBaseFilters):
         :returns: (sppasDataSet) Set of FileName() instances
 
         """
-        comparator = sppasAttributeCompare()
+        comparator = sppasRefAttributeCompare()
 
         # extract the information from the arguments
         sppasBaseFilters.test_args(comparator, **kwargs)
@@ -369,7 +371,7 @@ class sppasFileDataFilters(sppasBaseFilters):
         data = sppasBaseSet()
 
         # search for the data to be returned:
-        for fp in self.obj:
+        for fp in self.obj.get_paths():
             # does this root have references with all/any attributes matching the given ones?
             for fr in fp:
 
@@ -384,7 +386,7 @@ class sppasFileDataFilters(sppasBaseFilters):
                         for att in ref:
                             mm = False
                             try:
-                                searched = sppasAttribute(value[0], value[1], att.get_value_type())
+                                searched = sppasRefAttribute(value[0], value[1], att.get_value_type())
                                 if att.get_id() == searched.get_id():
                                     if logical_not is True:
                                         mm = not func(att, searched.get_typed_value())

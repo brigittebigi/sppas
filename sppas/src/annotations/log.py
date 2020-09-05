@@ -347,11 +347,6 @@ class sppasLog(object):
             self.print_stat_item(i)
         self.print_newline()
 
-        self.print_message(info(1040, "annotations") +
-                           ': ' +
-                           self.parameters.get_output_format())
-        self.print_newline()
-
     # ----------------------------------------------------------------------
 
     @staticmethod

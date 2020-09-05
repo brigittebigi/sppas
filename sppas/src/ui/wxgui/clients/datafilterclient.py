@@ -370,7 +370,7 @@ class DataFilter(wx.Panel):
     # -----------------------------------------------------------------------
 
     def Delete(self):
-        """Delete all checked tiers of all panels."""
+        """Delete all checked tiers of all anz_panels."""
 
         for i in range(self._filetrs.GetSize()):
             p = self._filetrs.GetObject(i)

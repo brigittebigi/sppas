@@ -54,6 +54,7 @@ For details, read the following reference:
 See also: <http://wwwhomes.uni-bielefeld.de/gibbon/TGA/>
 
 """
+
 from .timegroupanalysis import TimeGroupAnalysis
 from .sppastga import sppasTGA
 

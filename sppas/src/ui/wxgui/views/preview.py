@@ -37,6 +37,7 @@ import wx
 import wx.richtext
 from xml.etree import ElementTree as ET
 
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.anndata.aio.xra import sppasXRA
 from sppas.src.ui.wxgui.dialogs.basedialog import spBaseDialog
 from sppas.src.ui.wxgui.sp_icons import TIER_PREVIEW
@@ -221,7 +222,7 @@ class TierAsListPanel(BaseTierPanel):
                 labeli = 1
 
             # fix label
-            label_str = a.serialize_labels(separator=" - ")
+            label_str = serialize_labels(a.get_labels(), separator=" - ")
             tier_ctrl.SetStringItem(i, labeli, label_str)
 
             # customize label look

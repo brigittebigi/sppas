@@ -34,6 +34,54 @@
 
 """
 
+from .splitter import sppasSplitterWindow
+from .splitter import sppasMultiSplitterPanel
+
+from .listctrl import CheckListCtrl
+from .listctrl import SortListCtrl
+from .listctrl import LineListCtrl
+from .listctrl import sppasListCtrl
+
+from .image import sppasStaticBitmap
+
+from .text import sppasStaticText
+from .text import sppasSimpleText
+from .text import sppasMessageText
+from .text import sppasTitleText
+from .text import sppasTextCtrl
+from .text import NotEmptyTextValidator
+
+from .basedcwindow import sppasDCWindow
+from .basedcwindow import sppasWindowEvent
+
+# basewindow requires basedcwindow
+from .basewindow import WindowState
+from .basewindow import sppasWindow
+
+# line requires sppasDCWindow
+from .line import sppasStaticLine
+
+# frame requires sppasStaticLine
+from .frame import sppasTopFrame
+from .frame import sppasFrame
+
+# buttons package requires sppasWindow/WindowState
+from .buttons import BaseButton
+from .buttons import TextButton
+from .buttons import BitmapButton
+from .buttons import BitmapTextButton
+from .buttons import ToggleButton
+from .buttons import CheckButton
+from .buttons import RadioButton
+
+# panels package requires buttons
+from .panels import sppasPanel
+from .panels import sppasTransparentPanel
+from .panels import sppasImgBgPanel
+from .panels import sppasScrolledPanel
+from .panels import sppasCollapsiblePanel
+
+# dialogs package requires panels and buttons
 from .dialogs import sppasDialog
 from .dialogs import sppasChoiceDialog
 from .dialogs import sppasFileDialog
@@ -44,54 +92,22 @@ from .dialogs import Warn
 from .dialogs import Error
 from .dialogs import YesNoQuestion
 from .dialogs import sppasProgressDialog
-from .dialogs import sppasMetaData, MetaDataEdit
 
-from .line import sppasStaticLine
-
-from .button import TextButton
-from .button import BitmapTextButton
-from .button import CheckButton
-from .button import RadioButton
-from .button import ToggleButton
-from .button import sppasBitmapTextButton
-from .button import sppasTextButton
-from .button import sppasBitmapButton
-
+# buttonbox package requires panels and buttons
 from .buttonbox import sppasRadioBoxPanel
+from .buttonbox import sppasToggleBoxPanel
 
-from .text import sppasStaticText
-from .text import sppasSimpleText
-from .text import sppasMessageText
-from .text import sppasTitleText
-from .text import sppasTextCtrl
-from .text import NotEmptyTextValidator
+# toolbar requires panels, buttons and text
+from .toolbar import sppasToolbar
 
-from .image import sppasStaticBitmap
+# combobox requires panels, buttons and buttonbox
+from .combobox import sppasComboBox
 
 from .media import MediaType
 from .media import MediaEvents
 from .media import sppasMediaCtrl
 from .media import sppasPlayerControlsPanel
 from .media import sppasMultiPlayerPanel
-
-from .panel import sppasPanel
-from .panel import sppasTransparentPanel
-from .panel import sppasImgBgPanel
-from .panel import sppasScrolledPanel
-from .panel import sppasCollapsiblePanel
-
-from .splitter import sppasSplitterWindow
-from .splitter import sppasMultiSplitterPanel
-
-from .frame import sppasTopFrame
-from .frame import sppasFrame
-
-from .listctrl import CheckListCtrl
-from .listctrl import SortListCtrl
-from .listctrl import LineListCtrl
-from .listctrl import sppasListCtrl
-
-from .toolbar import sppasToolbar
 
 __all__ = (
     "sppasDialog",
@@ -104,11 +120,11 @@ __all__ = (
     "Error",
     "YesNoQuestion",
     "sppasStaticLine",
+    "WindowState",
+    "BaseButton",
     'TextButton',
     'BitmapTextButton',
-    'sppasBitmapTextButton',
-    "sppasTextButton",
-    "sppasBitmapButton",
+    "BitmapButton",
     "sppasRadioBoxPanel",
     "CheckButton",
     "RadioButton",
@@ -140,7 +156,5 @@ __all__ = (
     "sppasListCtrl",
     "LineListCtrl",
     "CheckListCtrl",
-    "SortListCtrl",
-    "sppasMetaData",
-    "MetaDataEdit"
+    "SortListCtrl"
 )

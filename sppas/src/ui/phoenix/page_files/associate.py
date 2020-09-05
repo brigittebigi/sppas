@@ -39,14 +39,13 @@
 import wx
 import wx.dataview
 
-from sppas import sppasTypeError
-from sppas import sg
+from sppas.src.config import sg
 from sppas.src.config import msg
+from sppas.src.exceptions import sppasTypeError
 from sppas.src.utils import u
 from sppas.src.wkps import sppasWorkspace
 from sppas.src.wkps import States
 from sppas.src.wkps import sppasFileDataFilters
-from sppas.src.wkps.wio.wjson import sppasWJSON
 
 from ..windows import Information, Error
 from ..windows import sppasStaticText, sppasTextCtrl
@@ -68,6 +67,11 @@ MSG_NO_CHECKED = u(msg("None of the files is matching the given filters.", "ui")
 
 ASS_ACT_CHECK_ERROR = \
     u(msg("Files can't be filtered due to the following error:\n{!s:s}", "ui"))
+
+TITLE_FILTER = msg("Define filters to check files", "ui")
+MSG_CANCEL = msg("Cancel", "ui")
+MSG_APPLY = msg("Apply", "ui")
+MSG_CASE = msg("Case sensitive", "ui")
 
 # ---------------------------------------------------------------------------
 
@@ -117,7 +121,6 @@ class AssociatePanel(sppasPanel):
         if isinstance(data, sppasWorkspace) is False:
             raise sppasTypeError("sppasWorkspace", type(data))
         self.__data = data
-        wx.LogDebug("Data {} in Associate Panel.".format(data.get_id()))
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -152,7 +155,6 @@ class AssociatePanel(sppasPanel):
         btn.SetFocusColour(wx.Colour(128, 128, 196, 128))   # violet
         btn.SetLabelPosition(wx.BOTTOM)
         btn.SetSpacing(sppasPanel.fix_size(4))
-        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(sppasPanel.fix_size(24),
                                sppasPanel.fix_size(24)))
         return btn
@@ -168,9 +170,6 @@ class AssociatePanel(sppasPanel):
         will be called.
 
         """
-        # The user pressed a key of its keyboard
-        self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
-
         # The user clicked (LeftDown - LeftUp) an action button
         self.Bind(wx.EVT_BUTTON, self._process_action)
 
@@ -185,13 +184,6 @@ class AssociatePanel(sppasPanel):
 
     # ------------------------------------------------------------------------
     # Callbacks to events
-    # ------------------------------------------------------------------------
-
-    def _process_key_event(self, event):
-        """Respond to a keypress event."""
-        key_code = event.GetKeyCode()
-        event.Skip()
-
     # ------------------------------------------------------------------------
 
     def _process_action(self, event):
@@ -382,8 +374,7 @@ class sppasFilesFilterDialog(sppasDialog):
             style=wx.DEFAULT_FRAME_STYLE)
 
         self.match_all = True
-        self.CreateHeader(title="Define filters to check files",
-                          icon_name="check_filter")
+        self.CreateHeader(title=TITLE_FILTER, icon_name="check_filter")
         self._create_content()
         self._create_buttons()
         self.Bind(wx.EVT_BUTTON, self._process_event)
@@ -391,7 +382,7 @@ class sppasFilesFilterDialog(sppasDialog):
         self.SetSize(wx.Size(480, 320))
         self.LayoutComponents()
         self.CenterOnParent()
-        self.FadeIn(deltaN=-8)
+        self.FadeIn()
 
     # -----------------------------------------------------------------------
     # Public methods
@@ -414,7 +405,7 @@ class sppasFilesFilterDialog(sppasDialog):
     def _create_content(self):
         """Create the content of the message dialog."""
         panel = sppasPanel(self, name="content")
-        tb = self.__create_toolbar(panel)
+        tb = sppasFilesFilterDialog.__create_toolbar(panel)
         self.listctrl = wx.dataview.DataViewListCtrl(panel, wx.ID_ANY)
         self.listctrl.AppendTextColumn("filter", width=80)
         self.listctrl.AppendTextColumn("function", width=90)
@@ -431,7 +422,8 @@ class sppasFilesFilterDialog(sppasDialog):
 
     # -----------------------------------------------------------------------
 
-    def __create_toolbar(self, parent):
+    @staticmethod
+    def __create_toolbar(parent):
         """Create the toolbar."""
         tb = sppasToolbar(parent)
         tb.set_focus_color(wx.Colour(196, 196, 96, 128))
@@ -453,9 +445,9 @@ class sppasFilesFilterDialog(sppasDialog):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # Create the buttons
-        cancel_btn = self.__create_action_button(panel, "Cancel", "cancel")
-        apply_or_btn = self.__create_action_button(panel, "Apply - OR", "window-apply")
-        apply_and_btn = self.__create_action_button(panel, "Apply - AND", "ok")
+        cancel_btn = self.__create_action_button(panel, MSG_CANCEL, "cancel")
+        apply_or_btn = self.__create_action_button(panel, MSG_APPLY + " - OR", "window-apply")
+        apply_and_btn = self.__create_action_button(panel, MSG_APPLY + " - AND", "ok")
         apply_and_btn.SetFocus()
 
         sizer.Add(cancel_btn, 1, wx.ALL | wx.EXPAND, 0)
@@ -504,7 +496,7 @@ class sppasFilesFilterDialog(sppasDialog):
             self.__append_filter("ref")
 
         elif event_name == "filter_att":
-            dlg = sppasAttributeFilterDialog(self)
+            dlg = sppasRefAttributeFilterDialog(self)
             response = dlg.ShowModal()
             if response == wx.ID_OK:
                 # Name of the method in sppasFileDataFilters,
@@ -661,7 +653,7 @@ class sppasStringFilterDialog(sppasDialog):
 # ---------------------------------------------------------------------------
 
 
-class sppasAttributeFilterDialog(sppasDialog):
+class sppasRefAttributeFilterDialog(sppasDialog):
     """Dialog to get a filter on an attribute.
 
     :author:       Brigitte Bigi
@@ -698,7 +690,7 @@ class sppasAttributeFilterDialog(sppasDialog):
         :param parent: (wx.Window)
 
         """
-        super(sppasAttributeFilterDialog, self).__init__(
+        super(sppasRefAttributeFilterDialog, self).__init__(
             parent=parent,
             title='{:s} filter'.format(sg.__name__),
             style=wx.DEFAULT_FRAME_STYLE)
@@ -754,7 +746,7 @@ class sppasAttributeFilterDialog(sppasDialog):
             value="",
             validator=IdentifierTextValidator())
 
-        choices = [row[0] for row in sppasAttributeFilterDialog.choices]
+        choices = [row[0] for row in sppasRefAttributeFilterDialog.choices]
         self.radiobox = sppasRadioBoxPanel(
             panel,
             choices=choices,
@@ -762,7 +754,7 @@ class sppasAttributeFilterDialog(sppasDialog):
             style=wx.RA_SPECIFY_COLS)
         self.radiobox.SetSelection(1)
         self.radiobox.Bind(wx.EVT_RADIOBOX, self._on_radiobox_checked)
-        self.checkbox = CheckButton(panel, label="Case sensitive")
+        self.checkbox = CheckButton(panel, label=MSG_CASE)
         self.checkbox.SetMinSize(wx.Size(-1, panel.get_font_height()*2))
         self.checkbox.SetFocusWidth(0)
         self.checkbox.SetValue(False)
@@ -784,7 +776,7 @@ class sppasAttributeFilterDialog(sppasDialog):
 
     def _on_radiobox_checked(self, event):
         value = self.radiobox.GetStringSelection()
-        if value in sppasAttributeFilterDialog.choices[10:]:
+        if value in sppasRefAttributeFilterDialog.choices[10:]:
             self.checkbox.SetValue(False)
             self.checkbox.Enable(False)
         else:

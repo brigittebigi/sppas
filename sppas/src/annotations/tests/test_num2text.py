@@ -2,10 +2,12 @@
 import os
 import unittest
 
-from sppas import sppasTypeError, sppasValueError, sppasDictRepl, paths
+from sppas.src.config import paths
+from sppas.src.exceptions import sppasTypeError, sppasValueError
+from sppas.src.utils.makeunicode import u
+from sppas.src.resources import sppasDictRepl
 from sppas.src.annotations.TextNorm.num2letter import sppasNum
 from sppas.src.annotations.TextNorm.num2text.construct import sppasNumConstructor
-from sppas.src.utils.makeunicode import u
 
 # ---------------------------------------------------------------------------
 

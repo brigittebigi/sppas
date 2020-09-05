@@ -33,13 +33,11 @@
 
 """
 
-import logging
-
-from sppas import sppasRW
-from sppas import sppasTranscription
-from sppas import sppasTier
-from sppas import sppasLabel
-from sppas import sppasTag
+from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasTranscription
+from sppas.src.anndata import sppasTier
+from sppas.src.anndata import sppasLabel
+from sppas.src.anndata import sppasTag
 
 from sppas.src.anndata.anndataexc import AnnDataTypeError
 from sppas.src.anndata.anndataexc import AnnDataEqError
@@ -164,8 +162,10 @@ class sppasIntsint(sppasBaseAnnotation):
 
         # Create the transcription result
         trs_output = sppasTranscription(self.name)
-        trs_output.append(tier_intsint)
         trs_output.set_meta('intsint_result_of', input_file[0])
+        self.transfer_metadata(trs_input, trs_output)
+
+        trs_output.append(tier_intsint)
 
         # Save in a file
         if output_file is not None:

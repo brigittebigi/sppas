@@ -33,6 +33,7 @@
 
 """
 
+from sppas.src.utils import b
 from .audioframes import sppasAudioFrames
 from .audiodataexc import IntervalError, SampleWidthError, FrameRateError
 
@@ -49,7 +50,7 @@ class sppasChannel(object):
     :copyright:    Copyright (C) 2011-2017  Brigitte Bigi
 
     """
-    def __init__(self, framerate=16000, sampwidth=2, frames=b""):
+    def __init__(self, framerate=16000, sampwidth=2, frames=b("")):
         """Create a sppasChannel instance.
 
         :param framerate: (int) The frame rate of this channel, in Hertz.
@@ -59,7 +60,7 @@ class sppasChannel(object):
         """
         self._framerate = 16000
         self._sampwidth = 2
-        self._frames = b""
+        self._frames = b("")
         self._position = 0
 
         self.set_framerate(framerate)
@@ -238,7 +239,7 @@ class sppasChannel(object):
             end = nframes
 
         if begin > nframes:
-            return sppasChannel(self._framerate, self._sampwidth, b"")
+            return sppasChannel(self._framerate, self._sampwidth, b(""))
         if begin < 0:
             begin = 0
 
@@ -279,7 +280,7 @@ class sppasChannel(object):
         :param position: (int)
 
         """
-        self._position = max(0, min(position, len(self._frames)/self._sampwidth))
+        self._position = max(0, min(position, len(self._frames)//self._sampwidth))
 
     # ------------------------------------------------------------------------
 

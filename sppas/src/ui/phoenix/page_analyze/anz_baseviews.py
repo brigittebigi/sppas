@@ -37,7 +37,7 @@
 import wx
 import os
 
-from sppas import msg
+from sppas.src.config import msg
 from sppas.src.utils import u
 
 from ..windows import sppasStaticLine
@@ -326,7 +326,7 @@ class BaseViewFilesPanel(sppasPanel):
         panel = self._show_file(None)
         panel.set_filename(name)
 
-        # Add to our list of name/panels
+        # Add to our list of name/anz_panels
         self._files[name] = panel
 
         self.Layout()
@@ -423,7 +423,7 @@ class BaseViewFilesPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _create_hline(self, parent):
-        """Create an horizontal line, used to separate the panels."""
+        """Create an horizontal line, used to separate the anz_panels."""
         line = sppasStaticLine(parent, orient=wx.LI_HORIZONTAL)
         line.SetMinSize(wx.Size(-1, 20))
         line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)

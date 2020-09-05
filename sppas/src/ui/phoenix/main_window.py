@@ -123,7 +123,7 @@ class sppasMainWindow(sppasDialog):
             name="sppas_main_dlg")
 
         # Members
-        self._init_infos()
+        delta = self._init_infos()
 
         # Create the log window of the application and show it.
         self.log_window = sppasLogWindow(self, sppasAppConfig().log_level)
@@ -136,7 +136,7 @@ class sppasMainWindow(sppasDialog):
         # Fix this frame properties
         self.Enable()
         self.CenterOnScreen(wx.BOTH)
-        self.FadeIn(deltaN=-4)
+        self.FadeIn(delta)
         self.Show(True)
 
     # ------------------------------------------------------------------------
@@ -148,6 +148,8 @@ class sppasMainWindow(sppasDialog):
 
         Set the title, the icon and the properties of the frame.
 
+        :return: Delta value to fade in the window
+
         """
         sppasDialog._init_infos(self)
 
@@ -157,12 +159,18 @@ class sppasMainWindow(sppasDialog):
         self.SetSize(wx.GetApp().settings.frame_size)
         self.SetName('{:s}'.format(sg.__name__))
 
+        try:
+            delta = wx.GetApp().settings.fade_in_delta
+        except AttributeError:
+            delta = -5
+        return delta
+
     # -----------------------------------------------------------------------
 
     def _create_content(self):
         """Create the content of the frame.
 
-        Content is made of a menu, an area for panels and action buttons.
+        Content is made of a menu, an area for anz_panels and action buttons.
 
         """
         # add a customized menu (instead of an header+toolbar)
@@ -276,7 +284,7 @@ class sppasMainWindow(sppasDialog):
     def _process_data_changed(self, event):
         """Process a change of data.
 
-        Set the data of the event to the other panels.
+        Set the data of the event to the other anz_panels.
 
         :param event: (wx.Event) An event with a sppasWorkspace()
 
@@ -290,7 +298,7 @@ class sppasMainWindow(sppasDialog):
                         "".format(emitted.GetName()))
             return
 
-        # Set the data to appropriate children panels
+        # Set the data to appropriate children anz_panels
         book = self.FindWindow('content')
         for i in range(book.GetPageCount()):
             page = book.GetPage(i)
@@ -324,21 +332,22 @@ class sppasMainWindow(sppasDialog):
             self.FindWindow("header").enable("page_files")
             self.show_page("page_files")
 
-        elif key_code == wx.WXK_LEFT and event.CmdDown():
-            self.show_next_page(direction=-1)
+        elif event.ControlDown() or event.CmdDown():
+            if key_code == wx.WXK_LEFT:
+                self.show_next_page(direction=-1)
 
-        elif key_code == wx.WXK_RIGHT and event.CmdDown():
-            self.show_next_page(direction=1)
+            elif key_code == wx.WXK_RIGHT:
+                self.show_next_page(direction=1)
 
-        elif key_code == wx.WXK_UP and event.CmdDown():
-            page_name = sppasMainWindow.pages[0]
-            self.FindWindow("header").enable(page_name)
-            self.show_page(page_name)
+            elif key_code == wx.WXK_UP:
+                page_name = sppasMainWindow.pages[0]
+                self.FindWindow("header").enable(page_name)
+                self.show_page(page_name)
 
-        elif key_code == wx.WXK_DOWN and event.CmdDown():
-            page_name = sppasMainWindow.pages[-1]
-            self.FindWindow("header").enable(page_name)
-            self.show_page(page_name)
+            elif key_code == wx.WXK_DOWN:
+                page_name = sppasMainWindow.pages[-1]
+                self.FindWindow("header").enable(page_name)
+                self.show_page(page_name)
 
         else:
             # Keeps on going the event to the current page of the book.
@@ -383,7 +392,11 @@ class sppasMainWindow(sppasDialog):
         if wx.Platform == "__WXMSW__":
             self.DestroyChildren()
 
-        self.DestroyFadeOut(deltaN=-6)
+        try:
+            delta = wx.GetApp().settings.fade_out_delta
+        except AttributeError:
+            delta = -10
+        self.DestroyFadeOut(delta)
 
         # Under Windows, for an unknown reason (?!), the wxapp.OnExit() is not
         # invoked if exit() is called directly after clicking the Exit button.
@@ -528,7 +541,6 @@ class sppasMenuPanel(sppasPanel):
         btn.SetFocusWidth(h//4)
         btn.SetFocusColour(wx.Colour(128, 128, 128, 128))
         btn.SetSpacing(sppasPanel.fix_size(h//2))
-        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(h*10, h*3))
 
         return btn
@@ -570,7 +582,6 @@ class sppasActionsPanel(sppasPanel):
         self.SetMinSize(wx.Size(-1, settings.action_height))
         sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        # exit_btn = sppasBitmapTextButton(self, MSG_ACTION_EXIT, "exit")
         exit_btn = self._create_button(MSG_ACTION_EXIT, "exit")
         about_btn = self._create_button(MSG_ACTION_ABOUT, "about")
         settings_btn = self._create_button(MSG_ACTION_SETTINGS, "settings")
@@ -599,7 +610,6 @@ class sppasActionsPanel(sppasPanel):
         btn.SetFocusWidth(h//4)
         btn.SetFocusColour(wx.Colour(128, 128, 128, 128))
         btn.SetSpacing(sppasPanel.fix_size(h//2))
-        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(h*10, h*2))
 
         return btn

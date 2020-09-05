@@ -34,11 +34,60 @@
 
 """
 
-from .tools import sppasSwissKnife
-from .main_settings import WxAppSettings
+from sppas.src.config import cfg
+from sppas.src.exceptions import sppasEnableFeatureError
+from sppas.src.exceptions import sppasPackageFeatureError
+from sppas.src.exceptions import sppasPackageUpdateFeatureError
+
+# Check if installation and feature configuration are matching...
+try:
+    import wx
+    if cfg.dep_installed("wxpython") is False:
+        # WxPython wasn't installed by the SPPAS setup.
+        cfg.set_dep("wxpython", True)
+except ImportError:
+    if cfg.dep_installed("wxpython") is True:
+        # Invalidate the feature because the package is not installed!
+        cfg.set_dep("wxpython", False)
+        class sppasWxError(object):
+            def __init__(self, *args, **kwargs):
+                raise sppasPackageFeatureError("wx", "wxpython")
+    else:
+        class sppasWxError(object):
+            def __init__(self, *args, **kwargs):
+                raise sppasEnableFeatureError("wxpython")
+
+# The feature "wxpython" is enabled. Check the version!
+if cfg.dep_installed("wxpython") is True:
+    v = wx.version().split()[0][0]
+    if v != '4':
+        # Invalidate the feature because the package is not up-to-date
+        cfg.set_dep("wxpython", False)
+
+        class sppasWxError(object):
+            def __init__(self, *args, **kwargs):
+                raise sppasPackageUpdateFeatureError("wx", "wxpython")
+
+# ---------------------------------------------------------------------------
+# Either import classes or define them in cases wxpython is valid or not.
+# ---------------------------------------------------------------------------
+
+
+if cfg.dep_installed("wxpython") is True:
+    from .install_app import sppasInstallApp
+    from .main_app import sppasApp
+
+else:
+
+    class sppasInstallApp(sppasWxError):
+        pass
+
+
+    class sppasApp(sppasWxError):
+        pass
 
 
 __all__ = (
-    'sppasSwissKnife',
-    'WxAppSettings',
+    'sppasInstallApp',
+    'sppasApp'
 )

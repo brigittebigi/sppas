@@ -214,7 +214,7 @@ class sppasLogWindow(wx.TopLevelWindow):
         # To fade-in and fade-out the opacity
         self.opacity_in = 0
         self.opacity_out = 255
-        self.deltaN = -3
+        self.delta = -5
 
         # Members
         self.handler = sppasHandlerToWx(self)
@@ -350,20 +350,20 @@ class sppasLogWindow(wx.TopLevelWindow):
         """Fade-in opacity."""
         self.SetTransparent(self.opacity_in)
         self.timer1 = wx.Timer(self, -1)
-        self.timer1.Start(1)
+        self.timer1.Start(5)
         self.Bind(wx.EVT_TIMER, self.__alpha_cycle_in, self.timer1)
 
     # ---------------------------------------------------------------------------
 
     def __alpha_cycle_in(self, *args):
         """Fade-in opacity of the dialog."""
-        self.opacity_in += self.deltaN
+        self.opacity_in += self.delta
         if self.opacity_in <= 0:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_in = 0
 
         if self.opacity_in >= 255:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_in = 255
             self.timer1.Stop()
 
@@ -504,7 +504,7 @@ class sppasLogWindow(wx.TopLevelWindow):
     # -----------------------------------------------------------------------
 
     def UpdateUI(self):
-        """Apply settings to all panels and refresh."""
+        """Apply settings to all anz_panels and refresh."""
         # apply new (or not) 'wx' values to content.
         p = self.FindWindow("content")
         p.SetBackgroundColour(wx.GetApp().settings.bg_color)
@@ -806,7 +806,6 @@ class sppasLogActionPanel(sppasPanel):
         btn.FocusWidth = h//4
         btn.FocusColour = wx.Colour(128, 128, 128, 128)
         btn.Spacing = sppasPanel.fix_size(h//2)
-        btn.BitmapColour = self.GetForegroundColour()
         btn.SetMinSize(wx.Size(h*10, h*2))
 
         return btn

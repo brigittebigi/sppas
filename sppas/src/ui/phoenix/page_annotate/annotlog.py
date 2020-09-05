@@ -37,9 +37,9 @@
 import wx
 import codecs
 
-from sppas import sg
-from sppas import msg
-from sppas import u
+from sppas.src.config import sg
+from sppas.src.config import msg
+from sppas.src.utils import u
 from sppas.src.annotations import sppasAnnotationsManager
 
 from sppas.src.config.logs import sppasLogFile
@@ -169,7 +169,6 @@ class sppasLogAnnotatePanel(sppasScrolledPanel):
 
         btn_back_top = BitmapTextButton(self, name="arrow_up")
         btn_back_top.SetFocusWidth(0)
-        btn_back_top.SetBitmapColour(self.GetForegroundColour())
         btn_back_top.SetMinSize(wx.Size(btn_size, btn_size))
 
         title = sppasStaticText(self, label="Procedure Outcome Report", name="title_text")

@@ -170,19 +170,16 @@ class sppasRMS(sppasBaseAnnotation):
 
     # ----------------------------------------------------------------------
 
-    def input_tier(self, input_file):
+    def input_tier(self, trs_input):
         """Return the input tier from the input file.
 
-        :param input_file: (str) Name of an annotated file
+        :param trs_input: (sppasTranscription)
 
         """
-        parser = sppasRW(input_file)
-        trs_input = parser.read()
-
         tier_spk = trs_input.find(self._options['tiername'], case_sensitive=False)
         if tier_spk is None:
-            logging.error("Tier with name '{:s}' not found in input file {:s}."
-                          "".format(self._options['tiername'], input_file))
+            logging.error("Tier with name '{:s}' not found in input file."
+                          "".format(self._options['tiername']))
             raise NoInputError
         if tier_spk.is_empty() is True:
             raise EmptyInputError(self._options['tiername'])
@@ -227,7 +224,9 @@ class sppasRMS(sppasBaseAnnotation):
 
         """
         # Get the tier with the intervals we'll estimate rms values
-        tier = self.input_tier(input_file[1])
+        parser = sppasRW(input_file[1])
+        trs_input = parser.read()
+        tier = self.input_tier(trs_input)
 
         # Get audio and the channel we'll work on
         channel = self.input_channel(input_file[0])
@@ -240,6 +239,8 @@ class sppasRMS(sppasBaseAnnotation):
         trs_output = sppasTranscription(self.name)
         trs_output.set_meta('rms_result_of_audio', input_file[0])
         trs_output.set_meta('rms_result_of_transcription', input_file[1])
+        self.transfer_metadata(trs_input, trs_output)
+
         extm = os.path.splitext(input_file[0])[1].lower()[1:]
         media = sppasMedia(os.path.abspath(input_file[0]),
                            mime_type="audio/"+extm)

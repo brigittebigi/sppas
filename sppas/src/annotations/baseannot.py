@@ -37,11 +37,11 @@ import logging
 import os
 import json
 
-import sppas.src.anndata.aio
 from sppas.src.config import annots
 from sppas.src.config import paths
 from sppas.src.config import info
 from sppas.src.wkps import sppasFileUtils
+from sppas.src.anndata import sppasRW
 
 from .annotationsexc import AnnotationOptionError
 from .diagnosis import sppasDiagnosis
@@ -82,7 +82,7 @@ class sppasBaseAnnotation(object):
             self.logfile = log
 
         # Declare members
-        self.__types = list()
+        self.__types = list()       # The annotation types (standalone, speaker...)
         self._options = dict()
         self.name = self.__class__.__name__
 
@@ -190,7 +190,13 @@ class sppasBaseAnnotation(object):
     @staticmethod
     def get_input_extensions():
         """Extensions that the annotation expects for its input filename."""
-        return sppas.src.anndata.aio.annotations_in
+        ext = ["."+e for e in sppasRW.extensions_in()]
+        if ".pitchtier" in ext:
+            ext.remove(".pitchtier")
+        if ".hz" in ext:
+            ext.remove(".hz")
+
+        return ext
 
     # -----------------------------------------------------------------------
 
@@ -279,7 +285,7 @@ class sppasBaseAnnotation(object):
     def batch_processing(self,
                          file_names,
                          progress=None,
-                         output_format=annots.extension):
+                         output_format=annots.annot_extension):
         """Perform the annotation on a bunch of files.
 
         The given list of inputs can be either:
@@ -337,6 +343,20 @@ class sppasBaseAnnotation(object):
                                                         total)))
 
         return files_processed_success
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def transfer_metadata(from_trs, to_trs):
+        """Transfer the metadata from a sppasTranscription to another one.
+
+        The identifier is not copied and any already existing metadata is
+        not copied.
+
+        """
+        for key in from_trs.get_meta_keys():
+            if to_trs.get_meta(key, default=None) is None:
+                to_trs.set_meta(key, from_trs.get_meta(key))
 
     # -----------------------------------------------------------------------
 

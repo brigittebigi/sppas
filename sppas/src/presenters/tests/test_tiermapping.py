@@ -41,6 +41,7 @@ from sppas.src.anndata import sppasTag, sppasLabel
 from sppas.src.anndata import sppasLocation, sppasInterval, sppasPoint
 from sppas.src.anndata import sppasAnnotation, sppasTier
 from sppas.src.anndata.aio import sppasTextGrid
+from sppas.src.anndata.aio.aioutils import serialize_labels
 
 from ..tiermapping import sppasMappingTier
 
@@ -246,12 +247,12 @@ class TestTierMapping(unittest.TestCase):
         # annotation with several labels serialized
         l = [sppasLabel(sppasTag("1")), sppasLabel(sppasTag("1"))]
         a.set_labels(l)
-        str_l = a.serialize_labels()
+        str_l = serialize_labels(a.get_labels())
         a.set_labels(sppasLabel(sppasTag(str_l)))
 
         l = [sppasLabel(sppasTag("un")), sppasLabel(sppasTag("un"))]
         b.set_labels(l)
-        str_l = b.serialize_labels()
+        str_l = serialize_labels(b.get_labels())
         b.set_labels(sppasLabel(sppasTag(str_l)))
 
         self.assertEqual(b, self.map.map_annotation(a))
@@ -261,13 +262,13 @@ class TestTierMapping(unittest.TestCase):
         # l = [sppasLabel([sppasTag("1"), sppasTag("2")]),
         #      sppasLabel([sppasTag("1"), sppasTag("2")])]
         # a.set_labels(l)
-        # str_l = a.serialize_labels()
+        # str_l = serialize_labels(a.get_labels())
         # a.set_labels(sppasLabel(sppasTag(str_l)))
         #
         # l = [sppasLabel([sppasTag("un"), sppasTag("deux")]),
         #      sppasLabel([sppasTag("un"), sppasTag("deux")])]
         # b.set_labels(l)
-        # str_l = b.serialize_labels()
+        # str_l = serialize_labels(b.get_labels())
         # b.set_labels(sppasLabel(sppasTag(str_l)))
         #
         # self.assertEqual(b, self.map.map_annotation(a))
@@ -299,7 +300,8 @@ class TestTierMapping(unittest.TestCase):
         self.assertEqual(len(t2), len(tI))
 
         for a1, a2 in zip(tI, self.tierI):
-            self.assertEqual(a2.serialize_labels(), a1.serialize_labels())
+            self.assertEqual(serialize_labels(a2.get_labels()),
+                             serialize_labels(a1.get_labels()))
 
     # -----------------------------------------------------------------------
 

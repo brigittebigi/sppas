@@ -39,8 +39,8 @@ import wx
 from sppas.src.config import msg
 from sppas.src.utils import u
 
+from ..panels import sppasPanel
 from ..text import sppasMessageText
-from ..panel import sppasPanel
 from .dialog import sppasDialog
 
 # ----------------------------------------------------------------------------
@@ -83,13 +83,26 @@ class sppasBaseMessageDialog(sppasDialog):
         self._create_content(message, **kwargs)
         self._create_buttons()
 
+        # Capture all key events
+        self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
+
         # Fix frame properties
         self.SetMinSize(wx.Size(sppasDialog.fix_size(256),
                                 sppasDialog.fix_size(164)))
         self.LayoutComponents()
         self.CenterOnParent()
         self.GetSizer().Fit(self)
-        self.FadeIn(deltaN=-5)
+        self.FadeIn()
+
+    # -----------------------------------------------------------------------
+
+    def _process_key_event(self, event):
+        """Process any kind of key events. To be overridden.
+
+        :param event: (wx.Event)
+
+        """
+        event.Skip()
 
     # -----------------------------------------------------------------------
 
@@ -153,7 +166,8 @@ class sppasYesNoDialog(sppasBaseMessageDialog):
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     wx.ID_YES or wx.ID_NO is returned if a button is clicked.
-    wx.ID_CANCEL is returned if the dialog is destroyed.
+    wx.ID_CANCEL is returned if the dialog is destroyed or if escape key is
+    pressed.
 
     >>> dialog = sppasYesNoDialog("Really exit?")
     >>> response = dialog.ShowModal()
@@ -163,10 +177,11 @@ class sppasYesNoDialog(sppasBaseMessageDialog):
 
     """
 
-    def __init__(self, message):
+    def __init__(self, message, title=None):
         super(sppasYesNoDialog, self).__init__(
             parent=None,
             message=message,
+            title=title,
             style=wx.YES_NO)
 
     # -----------------------------------------------------------------------
@@ -191,10 +206,28 @@ class sppasYesNoDialog(sppasBaseMessageDialog):
         else:
             event.Skip()
 
+    # -----------------------------------------------------------------------
+
+    def _process_key_event(self, event):
+        """Process a key event.
+
+        :param event: (wx.Event)
+
+        """
+        key_code = event.GetKeyCode()
+        if key_code == 78:
+            self.EndModal(wx.ID_NO)
+        elif key_code == 89:
+            self.EndModal(wx.ID_YES)
+        elif key_code == 27:
+            self.EndModal(wx.ID_CANCEL)
+        else:
+            event.Skip()
+
 # ---------------------------------------------------------------------------
 
 
-class sppasConfirm(sppasBaseMessageDialog):
+class sppasConfirmDialog(sppasBaseMessageDialog):
     """Create a message in a wx.Dialog to confirm an action after an error.
 
     :author:       Brigitte Bigi
@@ -206,7 +239,7 @@ class sppasConfirm(sppasBaseMessageDialog):
     wx.ID_YES is returned if 'yes' is clicked.
     wx.ID_CANCEL is returned if the dialog is destroyed or cancel is clicked.
 
-    >>> dialog = sppasConfirm("Confirm..."))
+    >>> dialog = sppasConfirmDialog("Confirm..."))
     >>> response = dialog.ShowModal()
     >>> dialog.Destroy()
     >>> if response == wx.ID_YES:
@@ -215,11 +248,16 @@ class sppasConfirm(sppasBaseMessageDialog):
     """
 
     def __init__(self, message, title=None):
-        super(sppasConfirm, self).__init__(
+        super(sppasConfirmDialog, self).__init__(
             parent=None,
             message=message,
             title=title,
             style=wx.ICON_ERROR)
+
+    # -----------------------------------------------------------------------
+
+    def cancel(self):
+        self.EndModal(wx.ID_CANCEL)
 
     # -----------------------------------------------------------------------
 
@@ -239,7 +277,23 @@ class sppasConfirm(sppasBaseMessageDialog):
         event_obj = event.GetEventObject()
         event_id = event_obj.GetId()
         if event_id == wx.ID_CANCEL:
-            self.EndModal(wx.ID_CANCEL)
+            self.cancel()
+        else:
+            event.Skip()
+
+    # -----------------------------------------------------------------------
+
+    def _process_key_event(self, event):
+        """Process a key event.
+
+        :param event: (wx.Event)
+
+        """
+        key_code = event.GetKeyCode()
+        if key_code == 27:
+            self.cancel()
+        elif key_code == 13:
+            self.EndModal(wx.ID_YES)
         else:
             event.Skip()
 
@@ -255,7 +309,8 @@ class sppasInformationDialog(sppasBaseMessageDialog):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    wx.ID_OK is returned when the button is clicked.
+    wx.ID_OK is returned when the button is clicked or ENTER key is pressed.
+    wx.ID_CANCEL is returned if the escape button is pressed.
 
     >>> dialog = sppasInformationDialog("you are here")
     >>> dialog.ShowModal()
@@ -271,9 +326,30 @@ class sppasInformationDialog(sppasBaseMessageDialog):
 
     # -----------------------------------------------------------------------
 
+    def cancel(self):
+        self.EndModal(wx.ID_CANCEL)
+
+    # -----------------------------------------------------------------------
+
     def _create_buttons(self):
         self.CreateActions([wx.ID_OK])
         self.SetAffirmativeId(wx.ID_OK)
+
+    # -----------------------------------------------------------------------
+
+    def _process_key_event(self, event):
+        """Process a key event.
+
+        :param event: (wx.Event)
+
+        """
+        key_code = event.GetKeyCode()
+        if key_code == 27:
+            self.cancel()
+        elif key_code == 13:
+            self.EndModal(wx.ID_OK)
+        else:
+            event.Skip()
 
 # ---------------------------------------------------------------------------
 
@@ -287,7 +363,8 @@ class sppasWarnDialog(sppasBaseMessageDialog):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    wx.ID_OK is returned when the button is clicked.
+    wx.ID_OK is returned when the button is clicked or ENTER key is pressed.
+    wx.ID_CANCEL is returned if ESC key is pressed.
 
     >>> dialog = sppasWarnDialog("there's something wrong...")
     >>> dialog.ShowModal()
@@ -307,6 +384,22 @@ class sppasWarnDialog(sppasBaseMessageDialog):
         self.CreateActions([wx.ID_OK])
         self.SetAffirmativeId(wx.ID_OK)
 
+    # -----------------------------------------------------------------------
+
+    def _process_key_event(self, event):
+        """Process a key event.
+
+        :param event: (wx.Event)
+
+        """
+        key_code = event.GetKeyCode()
+        if key_code == 27:
+            self.EndModal(wx.ID_CANCEL)
+        elif key_code == 13:
+            self.EndModal(wx.ID_OK)
+        else:
+            event.Skip()
+
 # ---------------------------------------------------------------------------
 
 
@@ -319,7 +412,8 @@ class sppasErrorDialog(sppasBaseMessageDialog):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    wx.ID_OK is returned if the button is clicked.
+    wx.ID_OK is returned when the button is clicked or ENTER key is pressed.
+    wx.ID_CANCEL is returned if ESC key is pressed.
 
     >>> dialog = sppasErrorDialog("an error occurred")
     >>> dialog.ShowModal()
@@ -339,6 +433,22 @@ class sppasErrorDialog(sppasBaseMessageDialog):
     def _create_buttons(self):
         self.CreateActions([wx.ID_OK])
         self.SetAffirmativeId(wx.ID_OK)
+
+    # -----------------------------------------------------------------------
+
+    def _process_key_event(self, event):
+        """Process a key event.
+
+        :param event: (wx.Event)
+
+        """
+        key_code = event.GetKeyCode()
+        if key_code == 27:
+            self.EndModal(wx.ID_CANCEL)
+        elif key_code == 13:
+            self.EndModal(wx.ID_OK)
+        else:
+            event.Skip()
 
 # ---------------------------------------------------------------------------
 # Ready-to-use functions to display messages
@@ -364,7 +474,7 @@ def YesNoQuestion(message):
     wx.LogMessage(message)
     dialog = sppasYesNoDialog(message)
     response = dialog.ShowModal()
-    dialog.Destroy()
+    dialog.DestroyFadeOut()
     wx.LogMessage("User clicked yes" if response == wx.ID_YES else "User clicked no")
     return response
 
@@ -389,16 +499,16 @@ def Confirm(message, title=None):
 
     """
     wx.LogMessage(message)
-    dialog = sppasConfirm(message, title)
+    dialog = sppasConfirmDialog(message, title)
     response = dialog.ShowModal()
-    dialog.Destroy()
+    dialog.DestroyFadeOut()
     wx.LogMessage("Confirmed by user." if response == wx.ID_YES else "User cancelled.")
     return response
 
 # ---------------------------------------------------------------------------
 
 
-def Error(message, title=None):
+def Error(message):
     """Display a error message.
 
     :author:       Brigitte Bigi
@@ -416,7 +526,7 @@ def Error(message, title=None):
     wx.LogError(message)
     dialog = sppasErrorDialog(message, title=None)
     response = dialog.ShowModal()
-    dialog.Destroy()
+    dialog.DestroyFadeOut()
     return response
 
 # ---------------------------------------------------------------------------
@@ -438,7 +548,7 @@ def Information(message):
     wx.LogMessage(message)
     dialog = sppasInformationDialog(message)
     response = dialog.ShowModal()
-    dialog.Destroy()
+    dialog.DestroyFadeOut()
     return response
 
 # ---------------------------------------------------------------------------
@@ -460,5 +570,53 @@ def Warn(message):
     wx.LogWarning(message)
     dialog = sppasWarnDialog(message)
     response = dialog.ShowModal()
-    dialog.Destroy()
+    dialog.DestroyFadeOut()
     return response
+
+# ----------------------------------------------------------------------------
+# Panels to test
+# ----------------------------------------------------------------------------
+
+
+class TestPanelMessageDialog(wx.Panel):
+
+    def __init__(self, parent):
+        super(TestPanelMessageDialog, self).__init__(
+            parent,
+            style=wx.BORDER_NONE | wx.WANTS_CHARS,
+            name="Test Message Dialogs")
+
+        wx.Button(self, label="Confirm", pos=(10, 10), size=(128, 64),
+                  name="btn_confirm")
+        wx.Button(self, label="Yes - No", pos=(210, 10), size=(128, 64),
+                  name="btn_yesno")
+        wx.Button(self, label="Information", pos=(10, 100), size=(128, 64),
+                  name="btn_info")
+        wx.Button(self, label="Warning", pos=(10, 200), size=(128, 64),
+                  name="btn_warn")
+        wx.Button(self, label="Error", pos=(210, 200), size=(128, 64),
+                  name="btn_error")
+        self.Bind(wx.EVT_BUTTON, self.process_event)
+
+    # -----------------------------------------------------------------------
+
+    def process_event(self, event):
+        obj = event.GetEventObject()
+        name = obj.GetName()
+
+        if name == "btn_confirm":
+            response = Confirm("Message to ask confirmation?")
+            wx.LogMessage("Response of confirm dialog: {:d}".format(response))
+        elif name == "btn_yesno":
+            response = YesNoQuestion("Message to ask a yes-no question?")
+            wx.LogMessage("Response of yes-no dialog: {:d}".format(response))
+        elif name == "btn_info":
+            response = Information("Message to inform...")
+            wx.LogMessage("Response of information dialog: {:d}".format(response))
+        elif name == "btn_warn":
+            response = Warn("Message to warn...")
+            wx.LogMessage("Response of warn dialog: {:d}".format(response))
+        elif name == "btn_error":
+            response = Error("Message of an error...")
+            wx.LogMessage("Response of error dialog: {:d}".format(response))
+

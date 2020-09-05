@@ -38,9 +38,9 @@ import wx
 import os
 import time
 
-from sppas import msg
-from sppas import u
-from sppas import sppasTypeError
+from sppas.src.config import msg
+from sppas.src.exceptions import sppasTypeError
+from sppas.src.utils import u
 from sppas.src.plugins import sppasPluginsManager
 from sppas.src.wkps import sppasWorkspace, States
 
@@ -52,7 +52,7 @@ from ..windows import sppasPanel
 from ..windows import sppasMessageText, sppasTitleText
 from ..windows import sppasStaticLine
 from ..windows import BitmapTextButton, TextButton
-from ..panels import sppasOptionsPanel
+from ..anz_panels import sppasOptionsPanel
 from ..views import AboutPlugin
 from ..main_events import DataChangedEvent
 
@@ -71,7 +71,7 @@ MSG_ABOUT = _("About")
 
 
 class sppasPluginsList(sppasScrolledPanel):
-    """Create the list of panels with plugins.
+    """Create the list of anz_panels with plugins.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -507,7 +507,7 @@ class sppasPluginConfigureDialog(sppasDialog):
         self.LayoutComponents()
         self.GetSizer().Fit(self)
         self.CenterOnParent()
-        self.FadeIn(deltaN=-8)
+        self.FadeIn()
 
     # -----------------------------------------------------------------------
 

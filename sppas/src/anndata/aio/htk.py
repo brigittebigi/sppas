@@ -54,6 +54,7 @@ from ..ann.annlabel import sppasTag
 
 from .basetrsio import sppasBaseIO
 from .aioutils import load
+from .aioutils import serialize_labels
 
 # ---------------------------------------------------------------------------
 
@@ -134,7 +135,8 @@ class sppasBaseHTK(sppasBaseIO):
         :returns: (str)
 
         """
-        text = ann.serialize_labels(separator=" ", empty="", alt=False)
+        text = serialize_labels(ann.get_labels(),
+                                separator=" ", empty="", alt=False)
 
         # no label defined, or empty label
         if len(text) == 0:

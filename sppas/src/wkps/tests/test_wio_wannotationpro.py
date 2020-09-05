@@ -76,7 +76,7 @@ class TestsppasWANT(unittest.TestCase):
         fname1 = FileName(os.path.join(sppas.paths.wkps, "annprowkp.ant"))
         fname2 = FileName(os.path.join(sppas.paths.wkps, "annprowkp1.ant"))
 
-        for fp in self.antw.get_all_files():
+        for fp in self.antw.get_paths():
             for fr in fp:
                 for fn in fr:
                     self.assertTrue(fn in [fname1, fname2])

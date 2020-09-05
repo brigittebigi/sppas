@@ -33,6 +33,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import re
 
 from sppas.src.config import symbols

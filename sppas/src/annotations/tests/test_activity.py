@@ -34,19 +34,13 @@ class TestActivity(unittest.TestCase):
     def test_get_tier(self):
         a = Activity()
         trs = sppasTranscription()
-        tmin = trs.get_min_loc()
-        tmax = trs.get_max_loc()
-
-        # No tokensTier
-        with self.assertRaises(IOError):
-            a.get_tier(trs, tmin, tmax)
 
         # Test with an empty Tokens tier
-        trs.create_tier('TokensAlign')
+        tier = trs.create_tier('TokensAlign')
         tmin = trs.get_min_loc()
         tmax = trs.get_max_loc()
 
-        tier = a.get_tier(trs, tmin, tmax)
+        tier = a.get_tier(tier, tmin, tmax)
         self.assertEqual(len(tier), 0)
 
         # now, test with a real TokensTier

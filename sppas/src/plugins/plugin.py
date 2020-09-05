@@ -43,7 +43,7 @@ import signal
 from subprocess import Popen
 
 from sppas.src.structs import sppasOption
-from sppas import IOExtensionException
+from sppas.src.exceptions import IOExtensionError
 
 from .pluginsexc import PluginConfigFileError
 from .pluginsexc import CommandExecError
@@ -148,7 +148,7 @@ class sppasPluginParam(object):
                 self._options.append(opt)
 
         else:
-            raise IOExtensionException(filename)
+            raise IOExtensionError(filename)
 
     # ------------------------------------------------------------------------
     # Getters

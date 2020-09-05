@@ -34,11 +34,8 @@
 
 """
 
-import logging
-
-from sppas import sppasTier, sppasLocation
-from sppas import sppasInterval, sppasPoint
-from sppas import sppasLabel, sppasTag
+from sppas.src.anndata import sppasTier
+from sppas.src.anndata import sppasLabel, sppasTag
 
 from sppas.src.structs import sppasBaseSet
 

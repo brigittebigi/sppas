@@ -12,6 +12,8 @@
     "STANDALONE"
   ],
 
+  "outformat": "ANNOT",
+
   "options": [
     {
       "id": "inputpattern",

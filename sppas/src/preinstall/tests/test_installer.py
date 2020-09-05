@@ -33,12 +33,18 @@
 
 """
 
+import os
 import unittest
 
-from sppas import sppasLogSetup
-from sppas.src.exc import InstallationError
-from sppas.src.preinstall.features import Features
-from sppas.src.preinstall.installer import Installer
+from sppas.src.config import sppasLogSetup
+from sppas.src.config import paths
+from sppas.src.exceptions import sppasInstallationError
+from ..features import Features
+from ..installer import Installer
+
+# ---------------------------------------------------------------------------
+
+DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 # ---------------------------------------------------------------------------
 
@@ -58,6 +64,29 @@ class TestInstaller(unittest.TestCase):
         lgs = sppasLogSetup(0)
         lgs.stream_handler()
         self.__installer = InstallerTest()
+
+    # ---------------------------------------------------------------------------
+
+    def test_download_resource(self):
+        with self.assertRaises(sppasInstallationError):
+            InstallerTest().install_resource("url", "toto.zip")
+
+        with self.assertRaises(sppasInstallationError):
+            InstallerTest().install_resource(DATA, "badtest.zip")
+
+        InstallerTest().install_resource(DATA, "test.zip")
+        downloaded = os.path.join(paths.resources, "test.zip")
+        installed = os.path.join(paths.resources, "faces", "test.txt")
+        self.assertTrue(os.path.exists(installed))
+        self.assertFalse(os.path.exists(downloaded))
+        os.remove(installed)
+
+    # ---------------------------------------------------------------------------
+
+    def test_type(self):
+        self.assertEqual(self.__installer.feature_type("video"), "deps")
+        self.assertEqual(self.__installer.feature_type("julius"), "deps")
+        self.assertEqual(self.__installer.feature_type("wxpython"), "deps")
 
     # ---------------------------------------------------------------------------
 
@@ -106,7 +135,7 @@ class TestInstaller(unittest.TestCase):
 
     def test_install_pypis(self):
         # Manage the installation of pip packages.
-        with self.assertRaises(InstallationError):
+        with self.assertRaises(sppasInstallationError):
             self.__installer._Installer__install_pypi("wxpythonnnn")
 
         # Wont raise exception and wont return error message
@@ -117,7 +146,7 @@ class TestInstaller(unittest.TestCase):
     def test_search_pypi(self):
         self.assertTrue(self.__installer._Installer__search_pypi("pip"))
         self.assertFalse(self.__installer._Installer__search_pypi("wxpythonnnnnn"))
-        with self.assertRaises(InstallationError):
+        with self.assertRaises(sppasInstallationError):
             self.assertFalse(self.__installer._Installer__search_pypi(4))
 
     # ---------------------------------------------------------------------------
@@ -167,9 +196,9 @@ class TestInstaller(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_update_pypi(self):
-        with self.assertRaises(InstallationError):
+        with self.assertRaises(sppasInstallationError):
             self.__installer._Installer__update_pypi("wxpythonnnn")
-        with self.assertRaises(InstallationError):
+        with self.assertRaises(sppasInstallationError):
             self.assertFalse(self.__installer._Installer__update_pypi(4))
 
         self.__installer._Installer__update_pypi("pip")

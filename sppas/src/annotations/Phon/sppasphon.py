@@ -39,11 +39,11 @@ from sppas.src.config import separators
 from sppas.src.config import annots
 from sppas.src.config import info
 
-from sppas import sppasRW
-from sppas import sppasTranscription
-from sppas import sppasTier
-from sppas import sppasLabel
-from sppas import sppasTag
+from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasTranscription
+from sppas.src.anndata import sppasTier
+from sppas.src.anndata import sppasLabel
+from sppas.src.anndata import sppasTag
 
 from sppas.src.resources import sppasDictPron
 from sppas.src.resources import sppasMapping
@@ -307,6 +307,7 @@ class sppasPhon(sppasBaseAnnotation):
                             input_file[0])
         trs_output.set_meta('text_phonetization_dict',
                             self.__phonetizer.get_dict_filename())
+        self.transfer_metadata(trs_input, trs_output)
 
         # Save in a file
         if output_file is not None:

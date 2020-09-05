@@ -34,9 +34,8 @@
 """
 
 import logging
-import os
 
-from sppas import sppasUnicode
+from sppas.src.utils import sppasUnicode
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 
@@ -117,19 +116,16 @@ class sppasLexMetric(sppasBaseAnnotation):
 
     # ----------------------------------------------------------------------
 
-    def input_tier(self, input_file):
+    def input_tier(self, trs_input):
         """Return the input tier from the input file.
 
-        :param input_file: (str) Name of an annotated file
+        :param trs_input: (sppasTranscription)
 
         """
-        parser = sppasRW(input_file)
-        trs_input = parser.read()
-
         tier_spk = trs_input.find(self._options['tiername'], case_sensitive=False)
         if tier_spk is None:
-            logging.error("Tier with name '{:s}' not found in input file {:s}."
-                          "".format(self._options['tiername'], input_file))
+            logging.error("Tier with name '{:s}' not found in input file."
+                          "".format(self._options['tiername']))
             raise NoInputError
 
         return tier_spk
@@ -148,7 +144,9 @@ class sppasLexMetric(sppasBaseAnnotation):
 
         """
         # Get the tier to be used
-        tier = self.input_tier(input_file[0])
+        parser = sppasRW(input_file)
+        trs_input = parser.read()
+        tier = self.input_tier(trs_input)
 
         # Detection
         ocrk = OccRank(tier)
@@ -157,6 +155,9 @@ class sppasLexMetric(sppasBaseAnnotation):
 
         # Create the transcription result
         trs_output = sppasTranscription(self.name)
+        trs_output.set_meta('token_lexmetric_result_of', input_file[0])
+        self.transfer_metadata(trs_input, trs_output)
+
         trs_output.append(occ_tier)
         trs_output.append(rank_tier)
 

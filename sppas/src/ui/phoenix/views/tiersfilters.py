@@ -47,7 +47,7 @@ except ImportError:
     import wx.lib.agw.floatspin as FS
     import wx.lib.agw.ultimatelistctrl as ulc
 
-from sppas import sg
+from sppas.src.config import sg
 from sppas.src.config import msg
 from sppas.src.utils import u
 
@@ -240,7 +240,7 @@ class sppasTiersSingleFilterDialog(sppasDialog):
         self.LayoutComponents()
         self.GetSizer().Fit(self)
         self.CenterOnParent()
-        self.FadeIn(deltaN=-8)
+        self.FadeIn()
 
     # -----------------------------------------------------------------------
     # Public methods
@@ -1244,7 +1244,7 @@ class sppasTiersRelationFilterDialog(sppasDialog):
         self.LayoutComponents()
         self.GetSizer().Fit(self)
         self.CenterOnParent()
-        self.FadeIn(deltaN=-8)
+        self.FadeIn()
 
     # -----------------------------------------------------------------------
     # Public methods

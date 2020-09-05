@@ -31,12 +31,6 @@
 
 """
 
-from sppas import sppasTier, sppasLocation
-from sppas import sppasInterval, sppasPoint
-from sppas import sppasLabel, sppasTag
-
-# ---------------------------------------------------------------------------
-
 
 class ReOccurences(object):
     """Manager for a set of re-occurrences annotations.

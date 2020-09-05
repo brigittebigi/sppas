@@ -38,13 +38,13 @@ from sppas.src.config import symbols
 from sppas.src.config import annots
 from sppas.src.config import info
 
-from sppas import sppasRW
-from sppas import sppasTranscription
-from sppas import sppasTier
-from sppas import sppasInterval
-from sppas import sppasLocation
-from sppas import sppasTag
-from sppas import sppasLabel
+from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasTranscription
+from sppas.src.anndata import sppasTier
+from sppas.src.anndata import sppasInterval
+from sppas.src.anndata import sppasLocation
+from sppas.src.anndata import sppasTag
+from sppas.src.anndata import sppasLabel
 
 from sppas.src.utils import sppasUnicode
 
@@ -300,6 +300,7 @@ class sppasSyll(sppasBaseAnnotation):
         # Create the transcription result
         trs_output = sppasTranscription(self.name)
         trs_output.set_meta('syllabification_result_of', input_file[0])
+        self.transfer_metadata(trs_input, trs_output)
 
         # Syllabify the tier
         if self._options['usesphons'] is True:

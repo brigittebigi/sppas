@@ -50,9 +50,9 @@ import os
 import random
 import wx
 
-from sppas import sppasTypeError
-from sppas import paths
-from sppas import msg
+from sppas.src.config import paths
+from sppas.src.config import msg
+from sppas.src.exceptions import sppasTypeError
 from sppas.src.utils import u
 from sppas.src.wkps import sppasWorkspace, States
 from sppas.src.anndata import sppasRW, FileFormatProperty
@@ -459,13 +459,13 @@ class sppasAnalyzePanel(sppasPanel):
 
     def _create_content(self):
         """Create the main content."""
-        # Create all the panels
+        # Create all the anz_panels
         tm = TabsManager(self, name="tabs")
         p = sppasPanel(self)
         tb = self.__create_toolbar(p)
         bk = sppasSimplebook(p, name="content")
 
-        # Organize all the panels, separated by 2px grey lines.
+        # Organize all the anz_panels, separated by 2px grey lines.
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(tb, 0, wx.EXPAND, 0)
         s.Add(bk, 1, wx.EXPAND, 0)
@@ -517,7 +517,7 @@ class sppasAnalyzePanel(sppasPanel):
     # ------------------------------------------------------------------------
 
     def __create_vline(self):
-        """Create a vertical line, used to separate the panels."""
+        """Create a vertical line, used to separate the anz_panels."""
         line = sppasStaticLine(self, orient=wx.LI_VERTICAL)
         line.SetMinSize(wx.Size(2, -1))
         line.SetSize(wx.Size(2, -1))
@@ -577,7 +577,7 @@ class sppasAnalyzePanel(sppasPanel):
     def _process_data_changed(self, event):
         """Process a change of data.
 
-        Set the data of the event to the other panels.
+        Set the data of the event to the other anz_panels.
 
         :param event: (wx.Event)
 

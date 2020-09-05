@@ -36,7 +36,7 @@
 
 import logging
 
-from sppas import sppasKeyError
+from sppas.src.exceptions import sppasKeyError
 
 from sppas.src.utils import u
 from sppas.src.structs import sppasBaseFilters

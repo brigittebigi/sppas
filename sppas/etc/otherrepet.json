@@ -9,6 +9,8 @@
     "INTERACTION"
   ],
 
+  "outformat": "ANNOT",
+
   "resources": [
     {
       "path": "vocab",

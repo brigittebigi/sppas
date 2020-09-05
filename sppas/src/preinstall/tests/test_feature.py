@@ -35,7 +35,7 @@
 
 import unittest
 
-from sppas.src.preinstall.feature import Feature
+from sppas.src.preinstall.feature import Feature, DepsFeature
 
 # ---------------------------------------------------------------------------
 
@@ -64,6 +64,11 @@ class TestFeature(unittest.TestCase):
         """Return the id of feature."""
         y = self.__feature.get_id()
         self.assertEqual(y, "feature")
+
+    # ---------------------------------------------------------------------------
+
+    def test_type(self):
+        self.assertEqual(self.__feature.get_type(), "")
 
     # ---------------------------------------------------------------------------
 
@@ -167,6 +172,19 @@ class TestFeature(unittest.TestCase):
         y = self.__feature.get_desc()
         self.assertIsInstance(y, str)
         self.assertEqual(y, "4")
+
+# ---------------------------------------------------------------------------
+
+
+class TestDepsFeature(unittest.TestCase):
+
+    def setUp(self):
+        self.__feature = DepsFeature("feature")
+
+    # ---------------------------------------------------------------------------
+
+    def test_type(self):
+        self.assertEqual(self.__feature.get_type(), "deps")
 
     # ---------------------------------------------------------------------------
 

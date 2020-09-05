@@ -33,7 +33,7 @@
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
 *****************************************************************************
 annotations: automatic annotations.
@@ -47,38 +47,47 @@ Requires the following other packages:
 
 * config
 * utils
-* files
+* exc
+* structs
+* wkps
+* resources
 * anndata
 * audiodata
-* resources
-* structs
+* imgdata    -- if "video" feature enabled
+* videodata  -- if "video" feature enabled
 
 """
 
-from .Momel import sppasMomel
-from .Intsint import sppasIntsint
-from .FillIPUs import sppasFillIPUs
-from .SearchIPUs import sppasSearchIPUs
-from .TextNorm import sppasTextNorm
-from .Phon import sppasPhon
-from .Syll import sppasSyll
-from .TGA import sppasTGA
-from .Align import sppasAlign
-from .SelfRepet import sppasSelfRepet
 from .Activity import sppasActivity
-from .RMS import sppasRMS
+from .Align import sppasAlign
+from .FillIPUs import sppasFillIPUs
+from .Intsint import sppasIntsint
+from .LexMetric import sppasLexMetric
+from .LPC import sppasLPC
+from .Momel import sppasMomel
 from .OtherRepet import sppasOtherRepet
+from .Phon import sppasPhon
 from .ReOccurrences import sppasReOcc
+from .RMS import sppasRMS
+from .SearchIPUs import sppasSearchIPUs
+from .SelfRepet import sppasSelfRepet
+from .SpkLexRep import sppasLexRep
 from .StopWords import StopWords
 from .StopWords import sppasStopWords
-from .LexMetric import sppasLexMetric
+from .Syll import sppasSyll
+from .TextNorm import sppasTextNorm
+from .TGA import sppasTGA
+from .FaceDetection import sppasFaceDetection
+from .FaceMark import sppasFaceMark
 
 from .searchtier import sppasFindTier
 from .param import sppasParam
 from .manager import sppasAnnotationsManager
 
+
 # ---------------------------------------------------------------------------
-#
+
+
 __all__ = (
     'sppasMomel',
     'sppasIntsint',
@@ -99,5 +108,9 @@ __all__ = (
     'sppasReOcc',
     'sppasFindTier',
     'sppasParam',
-    'sppasAnnotationsManager'
+    'sppasAnnotationsManager',
+    'sppasLexRep',
+    'sppasLPC',
+    'sppasFaceDetection',
+    'sppasFaceMark'
 )

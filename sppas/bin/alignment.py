@@ -50,14 +50,14 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas import sg, annots
+from sppas import sg
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 
-from sppas.src.anndata.aio import extensions_out
 from sppas.src.annotations import sppasAlign
 from sppas.src.annotations import sppasParam
 from sppas.src.annotations import sppasAnnotationsManager
+from sppas.src.anndata.aio.aioutils import serialize_labels
 
 if __name__ == "__main__":
 
@@ -68,6 +68,7 @@ if __name__ == "__main__":
     parameters = sppasParam(["alignment.json"])
     ann_step_idx = parameters.activate_annotation("alignment")
     ann_options = parameters.get_options(ann_step_idx)
+    extensions_out = parameters.get_output_extensions(ann_step_idx)
 
     # -----------------------------------------------------------------------
     # Verify and extract args:
@@ -144,7 +145,7 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-e",
         metavar=".ext",
-        default=annots.extension,
+        default=parameters.get_output_extension(ann_step_idx),
         choices=extensions_out,
         help='Output file extension. One of: {:s}'
              ''.format(" ".join(extensions_out)))
@@ -228,7 +229,7 @@ if __name__ == "__main__":
                     print("{} {} {:s}".format(
                         a.get_location().get_best().get_begin().get_midpoint(),
                         a.get_location().get_best().get_end().get_midpoint(),
-                        a.serialize_labels(" ")))
+                        serialize_labels(a.get_labels(), " ")))
 
     elif args.I:
 
@@ -245,7 +246,7 @@ if __name__ == "__main__":
 
         # Fix the output file extension and others
         parameters.set_lang(args.l)
-        parameters.set_output_format(args.e)
+        parameters.set_output_extension(args.e, parameters.get_outformat(ann_step_idx))
         parameters.set_report_filename(args.log)
 
         # Perform the annotation

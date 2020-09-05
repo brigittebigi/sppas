@@ -32,11 +32,11 @@
     src.annotations.Syll
     ~~~~~~~~~~~~~~~~~~~~~
 
-:author:       Brigitte Bigi
-:organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-:contact:      develop@sppas.org
-:license:      GPL, v3
-:copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
 
 The syllabification of phonemes is performed with a rule-based system.
 This RBS phoneme-to-syllable segmentation system is based on 2 main

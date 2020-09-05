@@ -141,6 +141,7 @@ from sppas import sg
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription, sppasTier
 from sppas.src.anndata import sppasLocation, sppasInterval
@@ -201,7 +202,7 @@ def is_silence(ann):
     :returns: (bool)
 
     """
-    stamp = ann.serialize_labels()
+    stamp = serialize_labels(ann.get_labels())
     if stamp == "#" or stamp == "silence" or "gpf_" in stamp:
         return True
     return False
@@ -225,7 +226,8 @@ def get_ann_infos(ann):
     """Return begin, end, serialized labels of an annotation."""
     begin = ann.get_location().get_best().get_begin().get_midpoint()
     end = ann.get_location().get_best().get_end().get_midpoint()
-    stamp = ref_ann.serialize_labels(separator=" ", empty="", alt=False)
+    stamp = serialize_labels(ref_ann.get_labels(),
+                             separator=" ", empty="", alt=False)
 
     return begin, end, stamp
 

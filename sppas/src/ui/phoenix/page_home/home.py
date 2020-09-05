@@ -29,20 +29,21 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_files.welcome.py
+    ui.phoenix.page_home.home.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    One of the main pages of the wx4-based GUI of SPPAS.
+
+    The workspace is not needed in this page. It simply display a welcome
+    message and links to the SPPAS web site.
 
 """
 
 import wx
-import webbrowser
 
-from sppas.src.config import sg
-
-from ..windows import sppasTitleText
-from ..windows import sppasMessageText
 from ..windows import sppasPanel
-from ..windows import BitmapTextButton
+from .welcome import sppasWelcomePanel
+from .links import sppasLinksPanel
 
 # ---------------------------------------------------------------------------
 
@@ -61,21 +62,25 @@ class sppasHomePanel(sppasPanel):
     def __init__(self, parent):
         super(sppasHomePanel, self).__init__(
             parent=parent,
-            name="page_home",
-            style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.TAB_TRAVERSAL
+            id=wx.ID_ANY,
+            pos=wx.DefaultPosition,
+            size=wx.DefaultSize,
+            style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.NO_FULL_REPAINT_ON_RESIZE,
+            name="page_home"
         )
         self._create_content()
-        self._setup_events()
 
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        # Capture keys to get access to links
+        self.Bind(wx.EVT_CHAR_HOOK, self._process_key_event)
 
-    # -----------------------------------------------------------------------
+        try:
+            self.SetBackgroundColour(wx.GetApp().settings.bg_color)
+            self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            self.SetFont(wx.GetApp().settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
-    def SetFont(self, font):
-        sppasPanel.SetFont(self, font)
-        self.FindWindow("title").SetFont(wx.GetApp().settings.header_text_font)
+        # Organize items and fix a size for each of them
         self.Layout()
 
     # ------------------------------------------------------------------------
@@ -89,67 +94,49 @@ class sppasHomePanel(sppasPanel):
 
     def _create_content(self):
         """Create the main content."""
-        h = self.get_font_height()
-        title = "{:s} - {:s}".format(sg.__name__, sg.__title__)
-        # Create a title
-        st = sppasTitleText(self, value=title)
-        st.SetName("title")
-        st.SetMinSize(wx.Size(len(title)*h*2, h*2))
-
-        # Create the welcome message
-        message = \
-            "SPPAS is a scientific computer software package developed " \
-            "by Brigitte Bigi, CNRS researcher at 'Laboratoire Parole et " \
-            "Langage', Aix-en-Provence, France.\n\n" \
-            "By using SPPAS, you agree to cite one of its references in your " \
-            "publications.\n\n" \
-            "This is the new version of the Graphical User Interface. " \
-            "You are invited to report problems or suggestions " \
-            "with the feedback form of the 'Log Window'.\n\n" \
-            "For any help when using SPPAS, see the tutorials on the web and " \
-            "the documentation included in the package."
-        txt = sppasMessageText(self, message)
-
-        sppas_logo = BitmapTextButton(self, name="sppas_colored")
-        sppas_logo.SetMinSize(wx.Size(sppasPanel.fix_size(64), -1))
-        sppas_logo.SetBorderWidth(0)
-        sppas_logo.SetLabelPosition(wx.TOP)
+        pw = sppasWelcomePanel(self)
+        pl = sppasLinksPanel(self, name="links_panel")
 
         # Organize the title and message
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.AddStretchSpacer(1)
-        sizer.Add(st, 1, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, h)
-        sizer.Add(txt, 1, wx.EXPAND)
-        sizer.Add(sppas_logo, 1, wx.ALIGN_CENTER_HORIZONTAL)
-        sizer.AddStretchSpacer(2)
+        sizer.Add(pw, 2, wx.EXPAND | wx.ALL, sppasPanel.fix_size(8))
+        sizer.Add(pl, 2, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, sppasPanel.fix_size(8))
+        sizer.AddStretchSpacer(1)
 
         self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
-    # Events management
-    # -----------------------------------------------------------------------
 
-    def _setup_events(self):
-        """Associate a handler function with the events.
-
-        It means that when an event occurs then the process handler function
-        will be called.
-
-        """
-        self.Bind(wx.EVT_BUTTON, self._process_event)
-
-    # -----------------------------------------------------------------------
-
-    def _process_event(self, event):
-        """Process any kind of events.
+    def _process_key_event(self, event):
+        """Process a key event.
 
         :param event: (wx.Event)
 
         """
-        event_obj = event.GetEventObject()
-        event_name = event_obj.GetName()
+        key_code = event.GetKeyCode()
 
-        if event_name == "sppas_colored":
-            webbrowser.open(sg.__url__)
-        else:
-            event.Skip()
+        if event.AltDown() is True:
+            if key_code == 66:      # alt+b Browse to the author home page
+                self.FindWindow("links_panel").author_btn.browse()
+
+            elif key_code == 68:    # alt+d Browse to the documentation page
+                self.FindWindow("links_panel").doc_btn.browse()
+
+            elif key_code == 72:    # alt+h Browse to SPPAS Home page
+                self.FindWindow("links_panel").home_btn.browse()
+
+            elif key_code == 81:    # alt+q Browse to the F.A.Q. page
+                self.FindWindow("links_panel").faq_btn.browse()
+
+            elif key_code == 84:    # alt+t Browse to tutorials page
+                self.FindWindow("links_panel").tuto_btn.browse()
+
+
+# ----------------------------------------------------------------------------
+
+
+class TestPanelHome(sppasHomePanel):
+    def __init__(self, parent):
+        super(TestPanelHome, self).__init__(parent)
+

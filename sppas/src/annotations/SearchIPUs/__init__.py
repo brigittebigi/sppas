@@ -38,7 +38,10 @@
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
 
+Search for Inter-Pausal Units in an audio file.
+
 """
+
 from .searchipus import SearchIPUs
 from .silences import sppasSilences
 from .sppassearchipus import sppasSearchIPUs

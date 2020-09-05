@@ -37,6 +37,9 @@
 import os
 
 from sppas.src.config import symbols
+from sppas.src.config import annots
+from sppas.src.config import info
+from sppas.src.utils import u
 
 import sppas.src.audiodata.aio
 from sppas.src.anndata import sppasTranscription
@@ -48,9 +51,6 @@ from sppas.src.anndata import sppasPoint
 from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasTag
 from sppas.src.anndata import sppasRW
-from sppas import annots
-from sppas import info
-from sppas import u
 
 from ..annotationsexc import AnnotationOptionError
 from ..baseannot import sppasBaseAnnotation
@@ -361,6 +361,7 @@ class sppasSearchIPUs(sppasBaseAnnotation):
         """
         # Get audio and the channel we'll work on
         audio_speech = sppas.src.audiodata.aio.open(input_file[0])
+        framerate = audio_speech.get_framerate()
         n = audio_speech.get_nchannels()
         if n != 1:
             raise IOError("An audio file with only one channel is expected. "
@@ -373,6 +374,7 @@ class sppasSearchIPUs(sppasBaseAnnotation):
 
         # Create the transcription to put the result
         trs_output = sppasTranscription(self.name)
+        trs_output.set_meta("media_sample_rate", str(framerate))
         trs_output.set_meta('search_ipus_result_of', input_file[0])
         trs_output.append(tier)
 

@@ -43,14 +43,14 @@ from sppas.src.config import paths
 from sppas.src.config import symbols
 from sppas.src.config import info
 
-from sppas import sppasDictRepl
-from sppas import sppasVocabulary
+from sppas.src.resources import sppasDictRepl
+from sppas.src.resources import sppasVocabulary
 
-from sppas import sppasRW
-from sppas import sppasTranscription
-from sppas import sppasTier
-from sppas import sppasLabel
-from sppas import sppasTag
+from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasTranscription
+from sppas.src.anndata import sppasTier
+from sppas.src.anndata import sppasLabel
+from sppas.src.anndata import sppasTag
 
 from ..baseannot import sppasBaseAnnotation
 from ..searchtier import sppasFindTier
@@ -331,6 +331,7 @@ class sppasTextNorm(sppasBaseAnnotation):
         trs_output.set_meta('language_name_0', "Undetermined")
         trs_output.set_meta('language_url_0',
                             "https://iso639-3.sil.org/code/"+self.__normalizer.lang)
+        self.transfer_metadata(trs_input, trs_output)
 
         # Save in a file
         if output_file is not None:

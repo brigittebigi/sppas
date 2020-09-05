@@ -37,10 +37,10 @@ import os
 import glob
 from datetime import datetime
 
-from sppas import sppasTypeError
-from sppas import sppasValueError
+from sppas.src.exceptions.exc import sppasTypeError
+from sppas.src.exceptions.exc import sppasValueError
 
-from .fileref import FileReference
+from .fileref import sppasCatReference
 from .wkpexc import FileRootValueError, FileOSError, PathTypeError, FilesMatchingValueError
 from .filebase import FileBase, States
 
@@ -71,15 +71,12 @@ class FileName(FileBase):
             2. extension (str) The extension of the file, or the mime type
             3. date (str) Time of the last modification
             4. size (str) Size of the file
+            5. state (int) State of the file
 
         :param identifier: (str) Full name of a file
-        :raise: FileOSError if identifier does not match an existing file
 
         """
         super(FileName, self).__init__(identifier)
-
-        # Properties of the file (protected)
-        # ----------------------------------
 
         # The name (no path, no extension)
         fn, ext = os.path.splitext(self.get_id())
@@ -99,25 +96,29 @@ class FileName(FileBase):
     # -----------------------------------------------------------------------
 
     def folder(self):
-        """Return the name of the directory of this file."""
+        """Return the name of the directory of this file (str)."""
         return os.path.dirname(self.id)
 
     # -----------------------------------------------------------------------
 
     def get_name(self):
-        """Return the short name of the file, ie without path nor extension."""
+        """Return the short name of the file (str).
+
+        The name is the filename without path nor extension.
+
+        """
         return self.__name
 
     # -----------------------------------------------------------------------
 
     def get_extension(self):
-        """Return the extension of the file."""
+        """Return the extension of the file in upper-cases (str)."""
         return self.__extension
 
     # -----------------------------------------------------------------------
 
     def get_mime(self):
-        """Return the mime type of the file."""
+        """Return the mime type of the file (str)."""
         m = mimetypes.guess_type(self.id)
         if m[0] is not None:
             return m[0]
@@ -156,7 +157,6 @@ class FileName(FileBase):
 
         :param value: (States)
         :returns: (bool) this filename state has changed or not
-        :raise: sppasTypeError
 
         """
         # The file is not existing
@@ -458,8 +458,8 @@ class FileRoot(FileBase):
         :returns: (bool)
 
         """
-        if isinstance(ref, FileReference) is False:
-            raise sppasTypeError(ref, 'FileReference')
+        if isinstance(ref, sppasCatReference) is False:
+            raise sppasTypeError(ref, 'sppasCatReference')
 
         if len(self.get_references()) == 0:
             return False
@@ -519,8 +519,8 @@ class FileRoot(FileBase):
         if isinstance(list_of_references, list):
             if len(list_of_references) > 0:
                 for reference in list_of_references:
-                    if isinstance(reference, FileReference) is False:
-                        raise sppasTypeError(reference, 'FileReference')
+                    if isinstance(reference, sppasCatReference) is False:
+                        raise sppasTypeError(reference, 'sppasCatReference')
 
             self.__references = list_of_references
         else:
@@ -703,9 +703,15 @@ class FilePath(FileBase):
         """Constructor of a FilePath.
 
         :param filepath: (str) Absolute or relative name of a folder
+        :raises: PathTypeError
 
         """
-        super(FilePath, self).__init__(os.path.abspath(filepath))
+        if os.path.exists(filepath) is False:
+            rel_path = os.path.abspath(filepath)
+            if os.path.exists(rel_path) is True:
+                filepath = rel_path
+        super(FilePath, self).__init__(filepath)
+
         if os.path.exists(filepath) is False:
             self._state = States().MISSING
         else:

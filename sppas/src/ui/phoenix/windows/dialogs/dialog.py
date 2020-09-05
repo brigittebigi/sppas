@@ -41,10 +41,10 @@ from sppas.src.config import msg
 from sppas.src.utils import u
 
 from sppas.src.ui.phoenix.tools import sppasSwissKnife
-from sppas.src.ui.phoenix.windows.button import BitmapTextButton
+from sppas.src.ui.phoenix.windows.buttons import BitmapTextButton
+from sppas.src.ui.phoenix.windows.panels import sppasPanel
 from sppas.src.ui.phoenix.windows.line import sppasStaticLine
 from sppas.src.ui.phoenix.windows.text import sppasTitleText
-from sppas.src.ui.phoenix.windows.panel import sppasPanel
 
 # ----------------------------------------------------------------------------
 
@@ -91,7 +91,7 @@ class sppasDialog(wx.Dialog):
             - at middle: "content"
             - at bottom: "actions"
 
-        Keys can only captured by the content panel.
+        Keys can only be captured by the content panel.
 
         """
         super(sppasDialog, self).__init__(*args, **kw)
@@ -101,7 +101,7 @@ class sppasDialog(wx.Dialog):
         # To fade-in and fade-out the opacity
         self.opacity_in = 0
         self.opacity_out = 255
-        self.deltaN = -10
+        self.delta = None
         self.timer1 = None
         self.timer2 = None
 
@@ -113,12 +113,14 @@ class sppasDialog(wx.Dialog):
         Set the title, the icon and the properties of the frame.
 
         """
-        settings = wx.GetApp().settings
-
         # colors & font
-        self.SetBackgroundColour(settings.bg_color)
-        self.SetForegroundColour(settings.fg_color)
-        self.SetFont(settings.text_font)
+        try:
+            settings = wx.GetApp().settings
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
+        except:
+            self.InheritAttributes()
 
         # Fix minimum frame size
         self.SetMinSize(wx.Size(sppasDialog.fix_size(320),
@@ -137,29 +139,39 @@ class sppasDialog(wx.Dialog):
     # Fade-in at start-up and Fade-out at close
     # -----------------------------------------------------------------------
 
-    def FadeIn(self, deltaN=-10):
+    def FadeIn(self, delta=None):
         """Fade-in opacity.
 
-        :param deltaN: (int)
+        :param delta: (int)
 
         """
-        self.deltaN = int(deltaN)
+        if delta is None:
+            try:
+                delta = wx.GetApp().settings.fade_in_delta
+            except AttributeError:
+                delta = -5
+        self.delta = int(delta)
         self.SetTransparent(self.opacity_in)
         self.timer1 = wx.Timer(self, -1)
-        self.timer1.Start(1)
+        self.timer1.Start(5)  # call the cycle in every 5 milliseconds
         self.Bind(wx.EVT_TIMER, self.__alpha_cycle_in, self.timer1)
 
     # -----------------------------------------------------------------------
 
-    def DestroyFadeOut(self, deltaN=-5):
+    def DestroyFadeOut(self, delta=None):
         """Destroy with a fade-out opacity.
 
-        :param deltaN: (int)
+        :param delta: (int)
 
         """
-        self.deltaN = int(deltaN)
+        if delta is None:
+            try:
+                delta = wx.GetApp().settings.fade_out_delta
+            except AttributeError:
+                delta = -5
+        self.delta = int(delta)
         self.timer2 = wx.Timer(self, -1)
-        self.timer2.Start(1)
+        self.timer2.Start(5)  # call the cycle out every 5 milliseconds
         self.Bind(wx.EVT_TIMER, self.__alpha_cycle_out, self.timer2)
 
     # -----------------------------------------------------------------------
@@ -238,7 +250,7 @@ class sppasDialog(wx.Dialog):
             static_bmp = BitmapTextButton(panel, name=icon_name)
             static_bmp.SetBorderWidth(0)
             static_bmp.SetFocusWidth(0)
-            static_bmp.SetMinSize(wx.Size(min_height, min_height))
+            static_bmp.SetMinSize(wx.Size(min_height - 2, min_height - 2))
             sizer.Add(static_bmp, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, spacing)
 
         txt = sppasTitleText(panel, value=title)
@@ -400,26 +412,32 @@ class sppasDialog(wx.Dialog):
     def UpdateUI(self):
         """Assign settings to self and children, then refresh."""
         # colors & font
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        try:
+            settings = wx.GetApp().settings
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
 
-        for w in self.GetChildren():
-            name = w.GetName()
-            if name == "header":
-                w.SetBackgroundColour(wx.GetApp().settings.header_bg_color)
-                w.SetForegroundColour(wx.GetApp().settings.header_fg_color)
-                w.SetFont(wx.GetApp().settings.header_text_font)
-            elif name == "actions":
-                w.SetBackgroundColour(wx.GetApp().settings.action_bg_color)
-                w.SetForegroundColour(wx.GetApp().settings.action_fg_color)
-                w.SetFont(wx.GetApp().settings.action_text_font)
-            else:
-                w.SetBackgroundColour(wx.GetApp().settings.bg_color)
-                w.SetForegroundColour(wx.GetApp().settings.fg_color)
-                w.SetFont(wx.GetApp().settings.text_font)
-            w.Layout()
-            w.Refresh()
+            for w in self.GetChildren():
+                name = w.GetName()
+                if name == "header":
+                    w.SetBackgroundColour(settings.header_bg_color)
+                    w.SetForegroundColour(settings.header_fg_color)
+                    w.SetFont(settings.header_text_font)
+                elif name == "actions":
+                    w.SetBackgroundColour(settings.action_bg_color)
+                    w.SetForegroundColour(settings.action_fg_color)
+                    w.SetFont(settings.action_text_font)
+                else:
+                    w.SetBackgroundColour(settings.bg_color)
+                    w.SetForegroundColour(settings.fg_color)
+                    w.SetFont(settings.text_font)
+                w.Layout()
+                w.Refresh()
+        except:
+            pass
+
+        # other incoming settings...
 
         self.Layout()
         self.Refresh()
@@ -447,7 +465,7 @@ class sppasDialog(wx.Dialog):
         btn.SetLabelPosition(wx.RIGHT)
         btn.SetBorderWidth(0)
         btn.SetFocusWidth(1)
-        btn.SetFocusColour(self.GetForegroundColour())
+        # btn.SetFocusColour(self.GetForegroundColour())
         btn.SetId(flag)
 
         if flag == wx.CANCEL:
@@ -469,13 +487,13 @@ class sppasDialog(wx.Dialog):
 
     def __alpha_cycle_in(self, *args):
         """Fade-in opacity of the dialog."""
-        self.opacity_in += self.deltaN
+        self.opacity_in += self.delta
         if self.opacity_in <= 0:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_in = 0
 
         if self.opacity_in >= 255:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_in = 255
             self.timer1.Stop()
 
@@ -485,15 +503,15 @@ class sppasDialog(wx.Dialog):
 
     def __alpha_cycle_out(self, *args):
         """Fade-out opacity of the dialog."""
-        self.opacity_out += self.deltaN
+        self.opacity_out += self.delta
         if self.opacity_out >= 255:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_out = 255
 
             self.timer2.Stop()
 
         if self.opacity_out <= 0:
-            self.deltaN = -self.deltaN
+            self.delta = -self.delta
             self.opacity_out = 0
             wx.CallAfter(self.Destroy)
 
@@ -518,8 +536,10 @@ class sppasDialog(wx.Dialog):
     # -----------------------------------------------------------------------
 
     def get_font_height(self):
-        font = self.GetFont()
+        try:
+            font = wx.GetApp().settings.text_font
+        except AttributeError:
+            font = self.GetFont()
         return int(float(font.GetPixelSize()[1]))
-
 
 

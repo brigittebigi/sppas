@@ -33,10 +33,11 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
 import unittest
 import os
 
-from sppas import paths
+from sppas.src.config import paths
 
 from ..SelfRepet.datastructs import DataRepetition
 from ..SelfRepet.datastructs import Entry
@@ -46,6 +47,7 @@ from ..SelfRepet.detectrepet import SelfRepetition
 from ..SelfRepet.sppasrepet import sppasSelfRepet
 
 # ---------------------------------------------------------------------------
+
 
 STOP_LIST = ["ah", "aller", "alors", "après", "avec", "avoir", "bon", "ce",
              "comme", "c'est", "dans", "de", "de+le", "dire", "donc", "eeh",
@@ -158,9 +160,9 @@ class TestDataSpeaker(unittest.TestCase):
         self.assertEqual(d.get_next_word(0), 2)
         self.assertEqual(d.get_next_word(1), 2)
 
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ValueError):
             d.get_next_word(-1)
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ValueError):
             d.get_next_word(3)
 
     # -----------------------------------------------------------------------
@@ -320,11 +322,11 @@ class TestsppasSelfRepet(unittest.TestCase):
 
     def test_set_options(self):
         s = sppasSelfRepet()
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ValueError):
             s.set_span(0)
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ValueError):
             s.set_span(30)
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ValueError):
             s.set_alpha(-2)
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ValueError):
             s.set_alpha(10)

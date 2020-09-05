@@ -38,7 +38,11 @@ import sys
 import os
 import logging
 
-from .installer import DebianInstaller, DnfInstaller, RpmInstaller, WindowsInstaller, MacOsInstaller
+from .installer import DebianInstaller
+from .installer import DnfInstaller
+from .installer import RpmInstaller
+from .installer import WindowsInstaller
+from .installer import MacOsInstaller
 
 # ---------------------------------------------------------------------------
 
@@ -103,9 +107,15 @@ class sppasInstallerDeps(object):
         self.__os = None
         self.__set_os()
         self.__installer = self.os()()
-        logging.info("System installer: {}".format(self.__installer.__class__.__name__))
+        logging.debug("InstallerDeps .......")
+        logging.info("System installer: {}"
+                     "".format(self.__installer.__class__.__name__))
+        logging.debug("InstallerDeps ok ****** 1")
         if progress is not None:
+            logging.debug("set progress")
             self.__installer.set_progress(progress)
+            logging.debug("set progress done")
+        logging.debug("InstallerDeps ok OK ok")
 
     # ------------------------------------------------------------------------
 
@@ -114,9 +124,35 @@ class sppasInstallerDeps(object):
 
     # ------------------------------------------------------------------------
 
-    def features_ids(self):
-        """Return the list of feature identifiers."""
-        return self.__installer.get_fids()
+    def features_ids(self, feat_type=None):
+        """Return the list of feature identifiers.
+
+        :param feat_type: (str) Only return features of the given type.
+        :returns: (list)
+
+        """
+        return self.__installer.get_fids(feat_type)
+
+    # ------------------------------------------------------------------------
+
+    def feature_type(self, feat_id):
+        """Return the feature type: deps, lang, annot.
+
+        :param feat_id: (str) Identifier of a feature
+        :return: (str) or None
+
+        """
+        return self.__installer.feature_type(feat_id)
+
+    # ------------------------------------------------------------------------
+
+    def brief(self, feat_id):
+        """Return the brief description of the feature.
+
+        :param feat_id: (str) Identifier of a feature
+
+        """
+        return self.__installer.brief(feat_id)
 
     # ------------------------------------------------------------------------
 

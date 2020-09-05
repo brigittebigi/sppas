@@ -38,6 +38,8 @@ import os
 import wx
 import logging
 import webbrowser
+import traceback
+import sys
 
 from sppas.src.config import sg, paths, cfg
 from sppas.src.config import msg, info, error
@@ -46,10 +48,11 @@ from sppas.src.preinstall import sppasInstallerDeps
 from .windows import sppasStaticLine
 from .windows import BitmapTextButton, TextButton
 from .windows import sppasPanel, sppasScrolledPanel, sppasImgBgPanel
-from .windows import sppasTitleText, sppasStaticText, sppasMessageText
+from .windows import sppasTitleText, sppasStaticText, sppasMessageText, sppasTextCtrl
 from .windows import CheckListCtrl
 from .windows.book import sppasSimplebook
-from .windows.dialogs import sppasDialog
+
+from .windows.frame import sppasTopFrame
 from .windows.dialogs import sppasProgressDialog
 
 from .windows import YesNoQuestion
@@ -80,6 +83,11 @@ INFO_SHARE = info(508, "install")
 INFO_INSTALL_FINISHED = info(560, "install")
 INFO_SEE_LOGS = info(512, "install")
 
+INFO_FEATURES_DEPS = info(514, "install")
+INFO_FEATURES_LANG = info(524, "install")
+INFO_FEATURES_ANNOT = info(534, "install")
+INFO_FEATURES_ALL = info(544, "install")
+
 # A short license text in case the file of the GPL can't be read.
 LICENSE = """
 SPPAS is free software; you can redistribute it and/or
@@ -101,7 +109,7 @@ Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 # -----------------------------------------------------------------------
 
 
-class sppasInstallWindow(sppasDialog):
+class sppasInstallWindow(sppasTopFrame):
     """Create the main frame of SPPAS.
 
     :author:       Brigitte Bigi
@@ -128,8 +136,9 @@ class sppasInstallWindow(sppasDialog):
     """
 
     # List of the page names of the main notebook
-    pages = ("page_home", "page_license", "page_features", "page_ready",
-             "page_terminate")
+    pages = ("page_home", "page_license",
+             "page_features_deps", "page_features_lang", "page_features_annot",
+             "page_ready", "page_terminate")
 
     def __init__(self):
         super(sppasInstallWindow, self).__init__(
@@ -146,7 +155,15 @@ class sppasInstallWindow(sppasDialog):
 
         # Members
         self._init_infos()
-        self.__installer = sppasInstallerDeps()
+        try:
+            self.__installer = sppasInstallerDeps()
+        except Exception as e:
+            logging.error("No installation will be performed. The installer "
+                          "wasn't created due to the following error: {}"
+                          "".format(str(e)))
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value, exc_traceback)))
+            self.__installer = None
 
         # Fix this frame content
         self._create_content()
@@ -156,7 +173,7 @@ class sppasInstallWindow(sppasDialog):
         # Fix this frame properties
         self.Enable()
         self.CenterOnScreen(wx.BOTH)
-        self.FadeIn(deltaN=-4)
+        self.FadeIn()
         self.Show(True)
 
     # ------------------------------------------------------------------------
@@ -169,7 +186,7 @@ class sppasInstallWindow(sppasDialog):
         Set the title, the icon and the properties of the frame.
 
         """
-        sppasDialog._init_infos(self)
+        sppasTopFrame._init_infos(self)
 
         # Fix some frame properties
         self.SetMinSize(wx.Size(sppasPanel.fix_size(320), sppasPanel.fix_size(200)))
@@ -184,7 +201,7 @@ class sppasInstallWindow(sppasDialog):
     def _create_content(self):
         """Create the content of the frame.
 
-        Content is made of a menu, an area for panels and action buttons.
+        Content is made of a menu, an area for anz_panels and action buttons.
 
         """
         # add a customized header
@@ -224,13 +241,15 @@ class sppasInstallWindow(sppasDialog):
         # 2nd: license agreement
         book.AddPage(sppasLicenseInstallPanel(book), text="")
 
-        # 3rd: select the features to be installed
-        book.AddPage(sppasFeaturesInstallPanel(book, installer=self.__installer), text="")
+        # 3rd-5th: select the features to be installed
+        book.AddPage(sppasFeaturesInstallDepsPanel(book, installer=self.__installer), text="")
+        book.AddPage(sppasFeaturesInstallLangPanel(book, installer=self.__installer), text="")
+        book.AddPage(sppasFeaturesInstallAnnotPanel(book, installer=self.__installer), text="")
 
-        # 4th: ready to process install
+        # 6th: ready to process install
         book.AddPage(sppasReadyInstallPanel(book), text="")
 
-        # 5th: ready to process install
+        # 7th: ready to process install
         book.AddPage(sppasTerminatedInstallPanel(book), text="")
 
         return book
@@ -361,7 +380,7 @@ class sppasInstallWindow(sppasDialog):
         # Terminate all frames
         if wx.Platform == "__WXMSW__":
             self.DestroyChildren()
-        self.DestroyFadeOut(deltaN=-6)
+        self.DestroyFadeOut()
 
     # -----------------------------------------------------------------------
 
@@ -637,9 +656,8 @@ class sppasActionsInstallPanel(sppasPanel):
         btn.SetLabelPosition(wx.RIGHT)
         btn.SetFocusStyle(wx.PENSTYLE_SOLID)
         btn.SetFocusWidth(h//4)
-        btn.SetFocusColour(wx.Colour(128, 128, 128, 128))
+        btn.SetFocusColour(self.GetForegroundColour())
         btn.SetSpacing(sppasPanel.fix_size(h//2))
-        btn.SetBitmapColour(self.GetForegroundColour())
         btn.SetMinSize(wx.Size(h*10, h*2))
 
         return btn
@@ -707,16 +725,16 @@ class sppasHomeInstallPanel(sppasPanel):
 
         sppas_logo = TextButton(self, label=sg.__url__, name="sppas_web")
         sppas_logo.SetMinSize(wx.Size(sppasPanel.fix_size(200), -1))
-        sppas_logo.SetBorderWidth(1)
-        sppas_logo.SetLabelPosition(wx.CENTER)
+        sppas_logo.SetBorderWidth(0)
+        sppas_logo.SetAlign(wx.ALIGN_CENTER)
 
         # Organize the title and message
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.AddStretchSpacer(1)
-        sizer.Add(st, 1, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, h)
-        sizer.Add(txt, 1, wx.EXPAND)
-        sizer.Add(sppas_logo, 1, wx.ALIGN_CENTER_HORIZONTAL)
-        sizer.AddStretchSpacer(2)
+        sizer.Add(st, 2, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, h)
+        sizer.Add(txt, 3, wx.EXPAND | wx.BOTTOM, h)
+        sizer.Add(sppas_logo, 0, wx.ALIGN_CENTER_HORIZONTAL)
+        sizer.AddStretchSpacer(1)
 
         self.SetSizer(sizer)
 
@@ -800,8 +818,8 @@ class sppasLicenseInstallPanel(sppasPanel):
 # ---------------------------------------------------------------------------
 
 
-class sppasFeaturesInstallPanel(sppasPanel):
-    """Create a panel to display a welcome message when installing.
+class sppasFeaturesInstallPanel(sppasScrolledPanel):
+    """Create a panel to select the features to enable.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -811,18 +829,19 @@ class sppasFeaturesInstallPanel(sppasPanel):
 
     """
 
-    def __init__(self, parent, installer=None):
+    def __init__(self, parent, name, installer=None, ft=None):
         super(sppasFeaturesInstallPanel, self).__init__(
-            parent=parent,
-            name="page_features",
+            parent=parent, name=name,
             style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.TAB_TRAVERSAL
         )
         self.__installer = installer
+        self._feat_type = ft
         self._create_content()
 
         self.SetBackgroundColour(wx.GetApp().settings.bg_color)
         self.SetForegroundColour(wx.GetApp().settings.fg_color)
         self.SetFont(wx.GetApp().settings.text_font)
+        self.SetupScrolling(scroll_x=True, scroll_y=True)
 
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_selected_item)
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_deselected_item)
@@ -837,27 +856,50 @@ class sppasFeaturesInstallPanel(sppasPanel):
             sppasStaticText(self, label="Error: no installer is defined")
             return
 
-        msg = sppasStaticText(self, label=INFO_FEATURES)
-        lst = self.__create_feats_list(self)
+        if self._feat_type == "deps":
+            msg1 = sppasStaticText(self, label=INFO_FEATURES_DEPS)
+        elif self._feat_type == "lang":
+            msg1 = sppasStaticText(self, label=INFO_FEATURES_LANG)
+        elif self._feat_type == "annot":
+            msg1 = sppasStaticText(self, label=INFO_FEATURES_ANNOT)
+        else:
+            msg1 = sppasStaticText(self, label=INFO_FEATURES_ALL)
+
+        msg2 = sppasStaticText(self, label=INFO_FEATURES)
+        lst, descr = self.__create_feats_list(self)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(msg, 0, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
-        sizer.Add(lst, 1, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
+        sizer.Add(msg1, 0, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
+        sizer.Add(msg2, 0, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
+        sizer.Add(lst, 0, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
+        sizer.Add(descr, 1, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
+
         self.SetSizer(sizer)
 
     def __create_feats_list(self, parent):
+        style = wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_RICH2 | wx.TE_AUTO_URL | wx.NO_BORDER
+        txtctrl = sppasTextCtrl(parent, style=style, name="descr_textctrl")
         lst = CheckListCtrl(parent,
                             style=wx.LC_REPORT | wx.LC_HRULES,
                             name="features_list")
         lst.AppendColumn(MSG_FEAT, wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(80))
         lst.AppendColumn(MSG_DESCR, wx.LIST_FORMAT_LEFT, width=sppasPanel.fix_size(380))
-        for fid in self.__installer.features_ids():
-            idx = lst.InsertItem(lst.GetItemCount(), fid)
-            lst.SetItem(idx, 1, self.__installer.description(fid))
-            if self.__installer.enable(fid) is True:
-                lst.Select(idx, on=True)
+        nb = 0
+        if self.__installer is not None:
+            for fid in self.__installer.features_ids(self._feat_type):
+                txtctrl.AppendText("\n" + fid + "\n")
+                txtctrl.AppendText(self.__installer.description(fid) + "\n")
+                idx = lst.InsertItem(lst.GetItemCount(), fid)
+                lst.SetItem(idx, 1, self.__installer.brief(fid))
+                if self.__installer.enable(fid) is True:
+                    lst.Select(idx, on=True)
+                nb += 1
 
-        return lst
+        if nb == 0:
+            idx = lst.InsertItem(lst.GetItemCount(), " --- ")
+            lst.SetItem(idx, 1, "No features of this type are defined")
+
+        return lst, txtctrl
 
     # ------------------------------------------------------------------------
 
@@ -870,14 +912,73 @@ class sppasFeaturesInstallPanel(sppasPanel):
     def _on_selected_item(self, evt):
         index = evt.GetIndex()
         fid = self.features_list.GetItemText(index, 1)
-        self.__installer.enable(fid, True)
+        if self.__installer is not None:
+            self.__installer.enable(fid, True)
         logging.info("Installation of feature {} enabled".format(fid))
 
     def _on_deselected_item(self, evt):
         index = evt.GetIndex()
         fid = self.features_list.GetItemText(index, 1)
-        self.__installer.enable(fid, False)
+        if self.__installer is not None:
+            self.__installer.enable(fid, False)
         logging.info("Installation of feature {} disabled".format(fid))
+
+# ---------------------------------------------------------------------------
+
+
+class sppasFeaturesInstallDepsPanel(sppasFeaturesInstallPanel):
+    """Create a panel to select the features of type deps to enable.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, installer=None):
+        super(sppasFeaturesInstallDepsPanel, self).__init__(
+            parent=parent, name="page_features_deps",
+            installer=installer, ft="deps")
+
+# ---------------------------------------------------------------------------
+
+
+class sppasFeaturesInstallLangPanel(sppasFeaturesInstallPanel):
+    """Create a panel to select the features of type lang to enable.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, installer=None):
+        super(sppasFeaturesInstallLangPanel, self).__init__(
+            parent=parent, name="page_features_lang",
+            installer=installer, ft="lang")
+
+# ---------------------------------------------------------------------------
+
+
+class sppasFeaturesInstallAnnotPanel(sppasFeaturesInstallPanel):
+    """Create a panel to select the features of type annot to enable.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent, installer=None):
+        super(sppasFeaturesInstallAnnotPanel, self).__init__(
+            parent=parent, name="page_features_annot",
+            installer=installer, ft="annot")
 
 # ---------------------------------------------------------------------------
 
@@ -961,5 +1062,4 @@ class sppasTerminatedInstallPanel(sppasPanel):
         sizer.Add(msg1, 1, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
         sizer.Add(msg2, 1, wx.ALL | wx.EXPAND, border=sppasPanel.fix_size(12))
         self.SetSizer(sizer)
-
 

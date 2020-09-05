@@ -33,11 +33,10 @@
 
 """
 
-from sppas import symbols
 from sppas.src.anndata import sppasTier
 from sppas.src.anndata import sppasTag
 from sppas.src.anndata import sppasLabel
-from sppas.src.exc import sppasTypeError
+from sppas.src.exceptions.exc import sppasTypeError
 from sppas.src.resources import sppasUnigram
 
 # ---------------------------------------------------------------------------

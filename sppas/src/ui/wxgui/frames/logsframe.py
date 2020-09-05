@@ -223,7 +223,7 @@ class sppasLogWindow(wx.Dialog):
     # ------------------------------------------------------------------------
 
     def _create_content(self):
-        """Organize all sub-panels into a main panel and return it."""
+        """Organize all sub-anz_panels into a main panel and return it."""
 
         sizer = wx.BoxSizer(wx.VERTICAL)
 

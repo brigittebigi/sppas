@@ -2,6 +2,7 @@
 
 from .about import About
 from .about import AboutPlugin
+from .metaedit import MetaDataEdit
 
 from .feedback import Feedback
 from .settings import Settings
@@ -12,6 +13,7 @@ from .tiersfilters import sppasTiersRelationFilterDialog
 from .audioroamer import AudioRoamer
 
 __all__ = (
+    "MetaDataEdit",
     'Feedback',
     'About',
     'AboutPlugin',

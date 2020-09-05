@@ -52,7 +52,7 @@ try:
 except ImportError:
     adv_import = False
 
-from sppas import sg, cfg
+from sppas.src.config import sg, cfg
 from .main_settings import WxAppSettings
 from .main_window import sppasMainWindow
 from .tools import sppasSwissKnife
@@ -249,9 +249,8 @@ class sppasApp(wx.App):
             logging.warning('The application has pending events.')
             self.DeletePendingEvents()
 
-        # Save settings and configuration
+        # Save settings
         self.settings.save()
-        cfg.save()
 
         # then it will exit. Nothing special to do. Return the exit status.
         return 0

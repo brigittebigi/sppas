@@ -55,6 +55,7 @@ from sppas import sg, annots
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.anndata.aio import extensions_out
 from sppas.src.annotations import sppasSyll
 from sppas.src.annotations import sppasParam
@@ -133,7 +134,7 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-e",
         metavar=".ext",
-        default=annots.extension,
+        default=annots.annot_extension,
         choices=extensions_out,
         help='Output file extension. One of: {:s}'
              ''.format(" ".join(extensions_out)))
@@ -214,7 +215,7 @@ if __name__ == "__main__":
                     print("{} {} {:s}".format(
                         a.get_location().get_best().get_begin().get_midpoint(),
                         a.get_location().get_best().get_end().get_midpoint(),
-                        a.serialize_labels(" ")))
+                        serialize_labels(a.get_labels(), " ")))
 
     elif args.I:
 
@@ -232,7 +233,7 @@ if __name__ == "__main__":
 
         # Fix the output file extension and others
         parameters.set_lang(args.l)
-        parameters.set_output_format(args.e)
+        parameters.set_output_extension(args.e, parameters.get_outformat(ann_step_idx))
         parameters.set_report_filename(args.log)
 
         # Perform the annotation

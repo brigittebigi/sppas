@@ -1,9 +1,0 @@
-Brigitte Bigi                           
-Copyright (C) 2011-2014  LPL Laboratory                
-Contact: brigite.bigi@gmail.com
-
-This model was constructed from the following corpus:
-http://veus.barcelonamedia.org/glissando/
-thanks to Juan-Maria Garrido 
-
-

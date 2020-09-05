@@ -263,3 +263,19 @@ class sppasCompare(object):
             return item1.lower() == item2.lower()
 
         return item1 == item2
+
+    # ----------------------------------------------------------------------
+
+    @staticmethod
+    def contains(list1, list2):
+        """Check if a list is contained in another one.
+
+        :param list1: (list)
+        :param list2: (list)
+        :returns: (bool)
+
+        """
+        for i in range(len(list1) - len(list2) + 1):
+            if list1[i:i + len(list2)] == list2:
+                return True
+        return False

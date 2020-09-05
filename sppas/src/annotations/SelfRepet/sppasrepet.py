@@ -33,14 +33,15 @@
 
 """
 
-from sppas import symbols
-from sppas import sppasRW
-from sppas import sppasTranscription
-from sppas import sppasTier
-from sppas import sppasInterval
-from sppas import sppasLocation
-from sppas import sppasLabel
-from sppas import sppasTag
+from sppas.src.config import symbols
+from sppas.src.anndata import sppasRW
+from sppas.src.anndata import sppasTranscription
+from sppas.src.anndata import sppasTier
+from sppas.src.anndata import sppasInterval
+from sppas.src.anndata import sppasLocation
+from sppas.src.anndata import sppasLabel
+from sppas.src.anndata import sppasTag
+from sppas.src.anndata.aio.aioutils import serialize_labels
 
 from ..searchtier import sppasFindTier
 from ..annotationsexc import EmptyOutputError
@@ -100,7 +101,7 @@ class sppasSelfRepet(sppasBaseRepet):
         """
         nb_breaks = 0
         for i in range(start, len(tier)):
-            if tier[i].serialize_labels() == SIL_ORTHO:
+            if serialize_labels(tier[i].get_labels()) == SIL_ORTHO:
                 nb_breaks += 1
                 if nb_breaks == span:
                     return i
@@ -141,7 +142,7 @@ class sppasSelfRepet(sppasBaseRepet):
         while tok_start < tok_end:
 
             # Build an array with the tokens
-            tokens = [tier[i].serialize_labels()
+            tokens = [serialize_labels(tier[i].get_labels())
                       for i in range(tok_start, tok_end+1)]
             speaker = DataSpeaker(tokens)
 
@@ -220,7 +221,6 @@ class sppasSelfRepet(sppasBaseRepet):
         # Get the tier to be used
         parser = sppasRW(input_file[0])
         trs_input = parser.read()
-
         tier_tokens = sppasFindTier.aligned_tokens(trs_input)
         tier_input = self.make_word_strain(tier_tokens)
 
@@ -230,6 +230,8 @@ class sppasSelfRepet(sppasBaseRepet):
         # Create the transcription result
         trs_output = sppasTranscription(self.name)
         trs_output.set_meta('self_repetition_result_of', input_file[0])
+        self.transfer_metadata(trs_input, trs_output)
+
         if len(self._word_strain) > 0:
             trs_output.append(tier_input)
         if self._options['stopwords'] is True:

@@ -182,7 +182,7 @@ class sppasWANT(sppasBaseWkpIO):
         uri = "{http://tempuri.org/WorkspaceDataSet.xsd}"
 
         # serializing the elements saved in subjoined in the FileName instance
-        for fp in self.get_all_files():
+        for fp in self.get_paths():
             for fr in fp:
                 for fn in fr:
                     workspace_item = ET.SubElement(root, "WorkspaceItem")

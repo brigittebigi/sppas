@@ -12,6 +12,8 @@
     "INTERACTION"
   ],
 
+  "outformat": "ANNOT",
+
   "options": [
     {
       "id": "inputpattern",

@@ -1,0 +1,75 @@
+# French translation for SPPAS
+# Copyright (c) 2011-2017 Brigitte Bigi
+# This file is distributed under the same license as the SPPAS package.
+# Brigitte Bigi <contact@sppas.org>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: SPPAS\n"
+"Report-Msgid-Bugs-To: contact@sppas.org\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: Brigitte Bigi <brigitte.bigi@gmail.com>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Language: fr_FR\n"
+"X-Generator: Poedit 2.0.6\n"
+
+msgid ":ERROR 2000: "
+msgstr "Aucun fichier audio n'a été défini."
+
+msgid ":ERROR 2005: "
+msgstr "Les fichiers audio d'extension {extension} ne sont pas supportés."
+
+msgid ":ERROR 2010: "
+msgstr "L'erreur suivante s'est produite à l'ouverture, la lecture ou l'écriture du fichier {filename} : {message}."
+
+msgid ":ERROR 2015: "
+msgstr "Le fichier audio {filename} est vide ou ses données sont corrompues."
+
+msgid ":ERROR 2020: "
+msgstr "Aucun canal d'index {number} dans le fichier audio."
+
+msgid ":ERROR 2025: "
+msgstr "De {value1} à {value2} ne constitue pas un intervale valide."
+
+msgid ":ERROR 2050: "
+msgstr "Aucun canal audio n'a été défini."
+
+msgid ":ERROR 2060: "
+msgstr "Les canaux n'ont pas les mêmes tailles d'échantillons."
+
+msgid ":ERROR 2061: "
+msgstr "Les canaux n'ont pas le même taux d'échantillonage."
+
+msgid ":ERROR 2062: "
+msgstr "Les canaux ne font pas la même taille."
+
+msgid ":ERROR 2070: "
+msgstr "La taille d'échantillon {value} est invalide. Il est attendu 1, 2 ou 4."
+
+msgid ":ERROR 2080: "
+msgstr "{value} n'est pas une valeur correcte de taux d'echantillonage."
+
+msgid ":ERROR 2610: "
+msgstr "Le fichier d'image {filename} n'a pas pu être lu par la bibliothèque opencv."
+
+msgid ":ERROR 2620: "
+msgstr "Le fichier d'image {filename} n'a pas pu être écrit par la bibliothèque opencv."
+
+msgid ":ERROR 2330: "
+msgstr "La valeur {} ne peut pas être supérieure à celle de l'image {} à laquelle elle se réfère."
+
+msgid ":ERROR 2332: "
+msgstr "The width value {} can't be superior to the width {} of the image."
+
+msgid ":ERROR 2334: "
+msgstr "The height value {} can't be superior to the height {} of the image."
+
+msgid ":ERROR 2336: "
+msgstr "The x-axis value {} can't be superior to the width {} of the image."
+
+msgid ":ERROR 2338: "
+msgstr "The y-axis value {} can't be superior to the height {} of the image."

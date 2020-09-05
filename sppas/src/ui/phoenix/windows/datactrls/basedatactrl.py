@@ -41,8 +41,8 @@ import wx
 import logging
 
 from ..winevents import sppasWindowEvent
-from ..basedraw import sppasBaseWindow
-from ..basedraw import WindowState
+from ..basewindow import sppasWindow
+from ..basewindow import WindowState
 
 # ---------------------------------------------------------------------------
 
@@ -96,7 +96,7 @@ class sppasWindowSelectedEvent(sppasWindowEvent):
 # ---------------------------------------------------------------------------
 
 
-class sppasBaseDataWindow(sppasBaseWindow):
+class sppasDataWindow(sppasWindow):
     """A base window with a DC to draw some data.
 
     :author:       Brigitte Bigi
@@ -127,7 +127,7 @@ class sppasBaseDataWindow(sppasBaseWindow):
 
         """
 
-        super(sppasBaseDataWindow, self).__init__(
+        super(sppasDataWindow, self).__init__(
             parent, id, pos, size, style, name)
         self._selected = False
         self._is_selectable = False
@@ -214,7 +214,7 @@ class sppasBaseDataWindow(sppasBaseWindow):
         if self.IsEnabled() is True:
             if self._is_selectable is True:
                 self._selected = not self._selected
-            super(sppasBaseDataWindow, self).OnMouseLeftDown(event)
+            super(sppasDataWindow, self).OnMouseLeftDown(event)
 
     # -----------------------------------------------------------------------
 
@@ -315,7 +315,7 @@ class TestPanel(wx.Panel):
         h = 80
         c = 10
         for i in range(1, 6):
-            btn = sppasBaseDataWindow(self, pos=(x, 10), size=(w, h))
+            btn = sppasDataWindow(self, pos=(x, 10), size=(w, h))
             btn.SetBorderWidth(i)
             btn.SetBorderColour(wx.Colour(c, c, c))
             btn.SetBorderStyle(st[i-1])
@@ -328,7 +328,7 @@ class TestPanel(wx.Panel):
         h = 80
         c = 10
         for i in range(1, 6):
-            btn = sppasBaseDataWindow(self, pos=(x, 100), size=(w, h))
+            btn = sppasDataWindow(self, pos=(x, 100), size=(w, h))
             btn.SetBorderWidth(1)
             btn.SetFocusWidth(i)
             btn.SetFocusColour(wx.Colour(c, c, c))
@@ -337,8 +337,8 @@ class TestPanel(wx.Panel):
             c += 40
             x += w + 10
 
-        vertical = sppasBaseDataWindow(self, pos=(10, 300), size=(50, 110))
+        vertical = sppasDataWindow(self, pos=(10, 300), size=(50, 110))
         vertical.SetBackgroundColour(wx.Colour(128, 255, 196))
 
-        btn = sppasBaseDataWindow(self, pos=(100, 300), size=(50, 110))
+        btn = sppasDataWindow(self, pos=(100, 300), size=(50, 110))
         btn.Enable(False)

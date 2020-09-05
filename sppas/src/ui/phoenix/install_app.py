@@ -42,13 +42,12 @@ Create and run the application with:
 
 """
 
-import traceback
 import wx
 import logging
 
-from sppas import sg, cfg
-from sppas import sppasLogSetup
-from sppas import sppasLogFile
+from sppas.src.config import sg, cfg
+from sppas.src.config import sppasLogSetup
+from sppas.src.config import sppasLogFile
 from .main_settings import WxAppSettings
 from .install_window import sppasInstallWindow
 
@@ -122,11 +121,11 @@ class sppasInstallApp(wx.App):
                     if ':' in msg:
                         msg = msg[:msg.index(":")]
                         error = int(msg)
-                except:
-                    logging.error(traceback.format_exc())
+                except Exception as e:
+                    logging.error(str(e))
                     pass
             else:
-                logging.error(traceback.format_exc())
+                logging.error(str(e))
             return error
 
         return 0

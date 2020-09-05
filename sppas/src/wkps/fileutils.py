@@ -36,43 +36,13 @@
 
 """
 
-import unittest
-import uuid
 import os
 import random
 import tempfile
 from datetime import date
 
 from sppas.src.utils import sppasUnicode
-from sppas import NoDirectoryError
-
-# ----------------------------------------------------------------------------
-
-
-class sppasGUID(object):
-    """Utility tool to generate an id.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
-    This class is a manager for GUID - globally unique identifier.
-
-    GUIDs are usually stored as 128-bit values, and are commonly
-    displayed as 32 hexadecimal digits with groups separated by hyphens,
-    such as {21EC2020-3AEA-4069-A2DD-08002B30309D}.
-
-    """
-
-    def __init__(self):
-        self.__guid = uuid.uuid4()
-
-    # ---------------------------------------------------------------------------
-
-    def get(self):
-        return str(self.__guid)
+from sppas.src.exceptions import NoDirectoryError
 
 # ----------------------------------------------------------------------------
 

@@ -72,8 +72,5 @@ if os.path.exists(os.path.join(julius_destination, "julius.exe")) is False:
                      "".format(dest=julius_destination))
     sys.stderr.write("You probably don't have administrative rights.")
     sys.exit(40)
-else:
-    # we don't need the exe file anymore
-    os.remove(os.path.join(SPPAS, "julius.exe"))
 
 sys.exit(0)

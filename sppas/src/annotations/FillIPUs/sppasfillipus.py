@@ -36,8 +36,11 @@
 
 import os
 
-import sppas.src.audiodata.aio
 from sppas.src.config import symbols
+from sppas.src.config import info
+from sppas.src.utils import u
+import sppas.src.audiodata.aio
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 from sppas.src.anndata import sppasMedia
@@ -45,8 +48,6 @@ from sppas.src.anndata import sppasLabel
 from sppas.src.anndata import sppasTag
 from sppas.src.config import annots
 import sppas.src.anndata.aio
-from sppas import info
-from sppas import u
 
 from ..SearchIPUs.sppassearchipus import sppasSearchIPUs
 from ..annotationsexc import AnnotationOptionError
@@ -199,7 +200,7 @@ class sppasFillIPUs(sppasBaseAnnotation):
             pass
         units = list()
         for a in trs[0]:
-            units.append(a.serialize_labels())
+            units.append(serialize_labels(a.get_labels()))
         ipus = [u for u in units if u != SIL_ORTHO]
 
         # Create the instance to fill in IPUs
@@ -245,6 +246,12 @@ class sppasFillIPUs(sppasBaseAnnotation):
         input_audio_filename = input_file[0]
         input_trans_filename = input_file[1]
 
+        # Get the framerate of the audio file
+        audio = sppas.src.audiodata.aio.open(input_file[0])
+        framerate = audio.get_framerate()
+        audio.close()
+
+        # Fill in the IPUs
         tier = self.convert(input_audio_filename, input_trans_filename)
         if tier is None:
             self.logfile.print_message(_info(1296), indent=2, status=-1)
@@ -252,8 +259,10 @@ class sppasFillIPUs(sppasBaseAnnotation):
 
         # Create the transcription to put the result
         trs_output = sppasTranscription(self.name)
+        trs_output.set_meta("media_sample_rate", str(framerate))
         trs_output.set_meta('fill_ipus_result_of', input_audio_filename)
         trs_output.set_meta('fill_ipus_result_of_trs', input_trans_filename)
+
         trs_output.append(tier)
 
         extm = os.path.splitext(input_audio_filename)[1].lower()[1:]

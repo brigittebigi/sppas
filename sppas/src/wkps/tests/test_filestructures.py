@@ -38,12 +38,12 @@ import unittest
 import os
 import sppas
 
-from sppas import paths
+from sppas.src.config import paths
 from sppas.src.wkps.filebase import FileBase, States
 from sppas.src.wkps.filestructure import FileName
 from sppas.src.wkps.filestructure import FileRoot
 from sppas.src.wkps.filestructure import FilePath
-from sppas.src.wkps.sppasWorkspace import sppasWorkspace
+from sppas.src.wkps.workspace import sppasWorkspace
 from sppas.src.wkps.wkpexc import FileOSError, PathTypeError
 
 # ---------------------------------------------------------------------------
@@ -178,21 +178,21 @@ class TestFileRoot(unittest.TestCase):
         wkp = sppasWorkspace()
         wkp.add_file(__file__)
 
-        for fp in wkp:
+        for fp in wkp.get_paths():
             for fr in fp:
                 modified = fr.set_state(States().CHECKED)
                 for fn in fp:
                     self.assertEqual(fn.state, States().CHECKED)
         self.assertGreater(len(modified), 0)
 
-        for fp in wkp:
+        for fp in wkp.get_paths():
             for fr in fp:
                 modified = fr.set_state(States().UNUSED)
                 for fn in fp:
                     self.assertEqual(fn.state, States().UNUSED)
         self.assertGreater(len(modified), 0)
 
-        for fp in wkp:
+        for fp in wkp.get_paths():
             for fr in fp:
                 modified = fr.set_state(States().MISSING)
                 for fn in fr:

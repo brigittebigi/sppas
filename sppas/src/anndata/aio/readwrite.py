@@ -37,7 +37,7 @@
 import os
 from collections import OrderedDict
 
-from sppas import IOExtensionException
+from sppas.src.exceptions import IOExtensionError
 from sppas.src.utils.makeunicode import u
 from sppas.src.utils.datatype import sppasTime
 
@@ -113,8 +113,34 @@ class sppasRW(object):
 
     @staticmethod
     def extensions():
-        """Return the list of supported extensions in lower case."""
+        """Return the whole list of supported extensions in lower case."""
         return list(sppasRW.TRANSCRIPTION_TYPES.keys())
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def extensions_in():
+        """Return the list of supported extensions if the reader exists."""
+        e = list()
+        for ext in list(sppasRW.TRANSCRIPTION_TYPES.keys()):
+            fp = FileFormatProperty(extension=ext)
+            if fp.get_reader() is True:
+                e.append(ext)
+
+        return e
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def extensions_out():
+        """Return the list of supported extensions if the writer exists."""
+        e = list()
+        for ext in list(sppasRW.TRANSCRIPTION_TYPES.keys()):
+            fp = FileFormatProperty(extension=ext)
+            if fp.get_writer() is True:
+                e.append(ext)
+
+        return e
 
     # -----------------------------------------------------------------------
 
@@ -154,7 +180,7 @@ class sppasRW(object):
         """
         try:
             trs = sppasRW.create_trs_from_extension(self.__filename)
-        except IOExtensionException:
+        except IOExtensionError:
             if heuristic is True:
                 trs = sppasRW.create_trs_from_heuristic(self.__filename)
             else:
@@ -201,7 +227,7 @@ class sppasRW(object):
         if extension in sppasRW.extensions():
             return sppasRW.TRANSCRIPTION_TYPES[extension]()
 
-        raise IOExtensionException(filename)
+        raise IOExtensionError(filename)
 
     # -----------------------------------------------------------------------
 

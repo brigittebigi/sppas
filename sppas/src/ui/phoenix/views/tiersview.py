@@ -46,7 +46,7 @@ from sppas.src.utils import u
 from ..windows.dialogs import sppasDialog
 from ..windows.dialogs import Information
 from ..windows.book import sppasNotebook
-from ..panels import sppasTierListCtrl
+from ..anz_panels.tierlist import sppasTierListCtrl
 
 # ---------------------------------------------------------------------------
 
@@ -94,7 +94,7 @@ class sppasTiersViewDialog(sppasDialog):
         self.LayoutComponents()
         self.GetSizer().Fit(self)
         self.CenterOnParent()
-        self.FadeIn(deltaN=-8)
+        self.FadeIn()
 
     # -----------------------------------------------------------------------
 

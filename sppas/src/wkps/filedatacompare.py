@@ -32,8 +32,7 @@
     wkps.filedatacompare.py
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Classes:
-    ========
+    This file includes:
 
         - sppasPathCompare() to search for a value in a path id
           (FilePath.id, FilePath.state, FilePath.expand)
@@ -47,47 +46,48 @@
         - sppasExtensionCompare() to search for a value in the extension of a
           file name (FileName.ext)
 
-        - sppasFileReferenceCompare()
+        - sppassppasCatReferenceCompare()
 
-        - sppasAttributeCompare()
+        - sppasRefAttributeCompare()
 
 """
 
 import re
 
-from sppas import sppasTypeError
+from sppas.src.exceptions import sppasTypeError
 
 from sppas.src.utils.makeunicode import text_type
 from sppas.src.structs import sppasBaseCompare
 
 from .filebase import FileBase
 from .filestructure import FilePath, FileName
-from .fileref import FileReference, sppasAttribute
+from .fileref import sppasCatReference, sppasRefAttribute
 from .filebase import States
 
 # ---------------------------------------------------------------------------
 
 
 class sppasFileBaseCompare(sppasBaseCompare):
-    """Comparison methods for FilePath.
+    """Comparison methods for any FileBase.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    :Example: Three different ways to compare a file data content to a given string
+    :Example:
+    Three different ways to compare a file data content to a given string
 
-    >>> tc = sppasFileBaseCompare()
-    >>> tc.exact(FilePath("c:\\Users"), u("c:\\Users"))
-    >>> tc.methods['exact'](FilePath("c:\\Users"), u("c:\\Users"))
-    >>> tc.get('exact')(FilePath("c:\\Users"), u("c:\\Users"))
+        >>> tc = sppasFileBaseCompare()
+        >>> tc.exact(FilePath("c:\\Users"), u("c:\\Users"))
+        >>> tc.methods['exact'](FilePath("c:\\Users"), u("c:\\Users"))
+        >>> tc.get('exact')(FilePath("c:\\Users"), u("c:\\Users"))
 
     """
 
     def __init__(self):
-        """Create a sppasPathCompare instance."""
+        """Create a sppasFileBaseCompare instance."""
         super(sppasFileBaseCompare, self).__init__()
 
         # Compare the id to a text value
@@ -333,9 +333,11 @@ class sppasFileStateCompare(sppasBaseCompare):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    :Example: Three different ways to compare a file data content to a given string
+    :Example: 
+    
+    Three different ways to compare a file data content to a given string
 
     >>> tc = sppasFileStateCompare()
     >>> tc.state(FileName("oriana1"), States().UNUSED)
@@ -370,7 +372,7 @@ class sppasFileNameCompare(sppasBaseCompare):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     :Example: Three different ways to compare a file data content to a given string
 
@@ -579,9 +581,10 @@ class sppasFileExtCompare(sppasBaseCompare):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    :Example: Three different ways to compare a file data content to a given string
+    :Example:
+    Three different ways to compare a file data content to a given string
 
     >>> tc = sppasFileExtCompare()
     >>> tc.exact(FileName("oriana1"), u("oriana1"))
@@ -782,20 +785,21 @@ class sppasFileExtCompare(sppasBaseCompare):
 
 
 class sppasFileRefCompare(sppasBaseCompare):
-    """Comparison methods for FileReference id.
+    """Comparison methods for sppasCatReference id.
 
     :author:       Barthélémy Drabczuk
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    :Example: Three different ways to compare a file data content to a given string
+    :Example:
+    Three different ways to compare a file data content to a given string
 
     >>> tc = sppasFileRefCompare()
-    >>> tc.exact(FileReference("mic"), u("mic"))
-    >>> tc.methods['exact'](FileReference("mic"), u("mic"))
-    >>> tc.get('exact')(FileReference("mic"), u("mic"))
+    >>> tc.exact(sppasCatReference("mic"), u("mic"))
+    >>> tc.methods['exact'](sppasCatReference("mic"), u("mic"))
+    >>> tc.get('exact')(sppasCatReference("mic"), u("mic"))
 
     """
 
@@ -822,13 +826,13 @@ class sppasFileRefCompare(sppasBaseCompare):
     def exact(cat, value):
         """Test if the id strictly matches value.
 
-        :param cat: (FileReference) 
+        :param cat: (sppasCatReference)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(cat, FileReference) is False:
+        if isinstance(cat, sppasCatReference) is False:
             raise sppasTypeError(cat, "Reference")
         if isinstance(value, text_type) is False:
             raise sppasTypeError(value, text_type)
@@ -842,13 +846,13 @@ class sppasFileRefCompare(sppasBaseCompare):
     def iexact(cat, value):
         """Test if the id matches value without case sensitive.
 
-        :param cat: (FileReference) 
+        :param cat: (sppasCatReference)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(cat, FileReference) is False:
+        if isinstance(cat, sppasCatReference) is False:
             raise sppasTypeError(cat, "Reference")
         if isinstance(value, text_type) is False:
             raise sppasTypeError(value, text_type)
@@ -861,13 +865,13 @@ class sppasFileRefCompare(sppasBaseCompare):
     def startswith(cat, value):
         """Test if the id starts with the characters of the value.
 
-        :param cat: (FileReference) 
+        :param cat: (sppasCatReference)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(cat, FileReference) is False:
+        if isinstance(cat, sppasCatReference) is False:
             raise sppasTypeError(cat, "Reference")
         if isinstance(value, text_type) is False:
             raise sppasTypeError(value, text_type)
@@ -880,13 +884,13 @@ class sppasFileRefCompare(sppasBaseCompare):
     def istartswith(cat, value):
         """Case-insensitive startswith.
 
-        :param cat: (FileReference) 
+        :param cat: (sppasCatReference)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(cat, FileReference) is False:
+        if isinstance(cat, sppasCatReference) is False:
             raise sppasTypeError(cat, "Reference")
         if isinstance(value, text_type) is False:
             raise sppasTypeError(value, text_type)
@@ -899,13 +903,13 @@ class sppasFileRefCompare(sppasBaseCompare):
     def endswith(cat, value):
         """Test if the id ends with the characters of the value.
 
-        :param cat: (FileReference) 
+        :param cat: (sppasCatReference)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(cat, FileReference) is False:
+        if isinstance(cat, sppasCatReference) is False:
             raise sppasTypeError(cat, "Reference")
         if isinstance(value, text_type) is False:
             raise sppasTypeError(value, text_type)
@@ -918,13 +922,13 @@ class sppasFileRefCompare(sppasBaseCompare):
     def iendswith(cat, value):
         """Case-insensitive endswith.
 
-        :param cat: (FileReference) 
+        :param cat: (sppasCatReference)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(cat, FileReference) is False:
+        if isinstance(cat, sppasCatReference) is False:
             raise sppasTypeError(cat, "Reference")
         if isinstance(value, text_type) is False:
             raise sppasTypeError(value, text_type)
@@ -937,13 +941,13 @@ class sppasFileRefCompare(sppasBaseCompare):
     def contains(cat, value):
         """Test if the id contains the value.
 
-        :param cat: (FileReference) 
+        :param cat: (sppasCatReference)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(cat, FileReference) is False:
+        if isinstance(cat, sppasCatReference) is False:
             raise sppasTypeError(cat, "Reference")
         if isinstance(value, text_type) is False:
             raise sppasTypeError(value, text_type)
@@ -956,13 +960,13 @@ class sppasFileRefCompare(sppasBaseCompare):
     def icontains(cat, value):
         """Case-insensitive contains.
 
-        :param cat: (FileReference) 
+        :param cat: (sppasCatReference)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(cat, FileReference) is False:
+        if isinstance(cat, sppasCatReference) is False:
             raise sppasTypeError(cat, "Reference")
         if isinstance(value, text_type) is False:
             raise sppasTypeError(value, text_type)
@@ -975,13 +979,13 @@ class sppasFileRefCompare(sppasBaseCompare):
     def regexp(cat, pattern):
         """Test if id matches pattern.
 
-        :param cat: (FileReference) 
+        :param cat: (sppasCatReference)
         :param pattern: (unicode) Pattern to search.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(cat, FileReference) is False:
+        if isinstance(cat, sppasCatReference) is False:
             raise sppasTypeError(cat, "FileName")
         text = cat.id
 
@@ -990,57 +994,57 @@ class sppasFileRefCompare(sppasBaseCompare):
 # ---------------------------------------------------------------------------
 
 
-class sppasAttributeCompare(sppasBaseCompare):
-    """Comparison methods for sppasAttribute.
+class sppasRefAttributeCompare(sppasBaseCompare):
+    """Comparison methods for sppasRefAttribute.
 
     :author:       Barthélémy Drabczuk
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
     def __init__(self):
-        """Create a sppassppasAttributeCompare instance."""
-        super(sppasAttributeCompare, self).__init__()
+        """Create a sppassppasRefAttributeCompare instance."""
+        super(sppasRefAttributeCompare, self).__init__()
 
         # Compare the value to a text value
-        self.methods['exact'] = sppasAttributeCompare.exact
-        self.methods['iexact'] = sppasAttributeCompare.iexact
-        self.methods['startswith'] = sppasAttributeCompare.startswith
-        self.methods['istartswith'] = sppasAttributeCompare.istartswith
-        self.methods['endswith'] = sppasAttributeCompare.endswith
-        self.methods['iendswith'] = sppasAttributeCompare.iendswith
-        self.methods['contains'] = sppasAttributeCompare.contains
-        self.methods['icontains'] = sppasAttributeCompare.icontains
-        self.methods['regexp'] = sppasAttributeCompare.regexp
+        self.methods['exact'] = sppasRefAttributeCompare.exact
+        self.methods['iexact'] = sppasRefAttributeCompare.iexact
+        self.methods['startswith'] = sppasRefAttributeCompare.startswith
+        self.methods['istartswith'] = sppasRefAttributeCompare.istartswith
+        self.methods['endswith'] = sppasRefAttributeCompare.endswith
+        self.methods['iendswith'] = sppasRefAttributeCompare.iendswith
+        self.methods['contains'] = sppasRefAttributeCompare.contains
+        self.methods['icontains'] = sppasRefAttributeCompare.icontains
+        self.methods['regexp'] = sppasRefAttributeCompare.regexp
 
         # Compare the value to a numeric value
-        self.methods['equal'] = sppasAttributeCompare.equals
-        self.methods['iequal'] = sppasAttributeCompare.iequals
-        self.methods['fequal'] = sppasAttributeCompare.fequals
-        self.methods['gt'] = sppasAttributeCompare.gt
-        self.methods['ge'] = sppasAttributeCompare.ge
-        self.methods['lt'] = sppasAttributeCompare.lt
-        self.methods['le'] = sppasAttributeCompare.le
+        self.methods['equal'] = sppasRefAttributeCompare.equals
+        self.methods['iequal'] = sppasRefAttributeCompare.iequals
+        self.methods['fequal'] = sppasRefAttributeCompare.fequals
+        self.methods['gt'] = sppasRefAttributeCompare.gt
+        self.methods['ge'] = sppasRefAttributeCompare.ge
+        self.methods['lt'] = sppasRefAttributeCompare.lt
+        self.methods['le'] = sppasRefAttributeCompare.le
 
     # -----------------------------------------------------------------------
-    # Reference sppasAttribute
+    # Reference sppasRefAttribute
     # -----------------------------------------------------------------------
 
     @staticmethod
     def exact(att, value):
         """Test if the attribute value strictly matches value.
 
-        :param att: (sppasAttribute) 
+        :param att: (sppasRefAttribute)
         :param value: (str) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if not isinstance(value, text_type):
             raise sppasTypeError(value, text_type)
 
@@ -1052,14 +1056,14 @@ class sppasAttributeCompare(sppasBaseCompare):
     def iexact(att, value):
         """Test if the att matches value without case sensitive.
 
-        :param att: (sppasAttribute) 
+        :param att: (sppasRefAttribute)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if not isinstance(value, text_type):
             raise sppasTypeError(value, text_type)
 
@@ -1071,14 +1075,14 @@ class sppasAttributeCompare(sppasBaseCompare):
     def startswith(att, value):
         """Test if the att starts with the characters of the value.
 
-        :param att: (sppasAttribute)
+        :param att: (sppasRefAttribute)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if not isinstance(value, text_type):
             raise sppasTypeError(value, text_type)
 
@@ -1090,14 +1094,14 @@ class sppasAttributeCompare(sppasBaseCompare):
     def istartswith(att, value):
         """Case-insensitive startswith.
 
-        :param att: (sppasAttribute) 
+        :param att: (sppasRefAttribute)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if not isinstance(value, text_type):
             raise sppasTypeError(value, text_type)
 
@@ -1109,14 +1113,14 @@ class sppasAttributeCompare(sppasBaseCompare):
     def endswith(att, value):
         """Test if the att ends with the characters of the value.
 
-        :param att: (sppasAttribute) 
+        :param att: (sppasRefAttribute)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if not isinstance(value, text_type):
             raise sppasTypeError(value, text_type)
 
@@ -1128,14 +1132,14 @@ class sppasAttributeCompare(sppasBaseCompare):
     def iendswith(att, value):
         """Case-insensitive endswith.
 
-        :param cat: (FileReference) 
+        :param cat: (sppasCatReference)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if not isinstance(value, text_type):
             raise sppasTypeError(value, text_type)
 
@@ -1147,14 +1151,14 @@ class sppasAttributeCompare(sppasBaseCompare):
     def contains(att, value):
         """Test if the att contains the value.
 
-        :param att: (sppasAttribute) 
+        :param att: (sppasRefAttribute)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if not isinstance(value, text_type):
             raise sppasTypeError(value, text_type)
 
@@ -1166,14 +1170,14 @@ class sppasAttributeCompare(sppasBaseCompare):
     def icontains(att, value):
         """Case-insensitive contains.
 
-        :param att: (sppasAttribute) 
+        :param att: (sppasRefAttribute)
         :param value: (unicode) Unicode string to be compared with.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if not isinstance(value, text_type):
             raise sppasTypeError(value, text_type)
 
@@ -1185,14 +1189,14 @@ class sppasAttributeCompare(sppasBaseCompare):
     def regexp(att, pattern):
         """Test if att matches pattern.
 
-        :param att: (sppasAttribute) 
+        :param att: (sppasRefAttribute)
         :param pattern: (unicode) Pattern to search.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         text = att.get_value()
 
         return True if re.match(pattern, text) else False
@@ -1203,14 +1207,14 @@ class sppasAttributeCompare(sppasBaseCompare):
     def equals(att, value):
         """Test if att equals the given value.
 
-        :param att: (sppasAttribute)
+        :param att: (sppasRefAttribute)
         :param value: (number) Pattern to search.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if isinstance(value, (int, float)) is False:
             raise sppasTypeError(value, "int, float")
 
@@ -1222,14 +1226,14 @@ class sppasAttributeCompare(sppasBaseCompare):
     def iequals(att, value):
         """Test if att equals the given value.
 
-        :param att: (sppasAttribute) 
+        :param att: (sppasRefAttribute)
         :param value: (number) Pattern to search.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if isinstance(value, int) is False:
             raise sppasTypeError(value, "int")
 
@@ -1241,15 +1245,15 @@ class sppasAttributeCompare(sppasBaseCompare):
     def fequals(att, value, precision=0.):
         """Test if att equals the given value.
 
-        :param att: (sppasAttribute) 
+        :param att: (sppasRefAttribute)
         :param value: (number) Pattern to search.
         :param precision: (number) Vagueness around the value
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if isinstance(value, float) is False:
             raise sppasTypeError(value, "float")
 
@@ -1261,14 +1265,14 @@ class sppasAttributeCompare(sppasBaseCompare):
     def gt(att, value):
         """Test if att is strictly greater than the given value.
 
-        :param att: (sppasAttribute) 
+        :param att: (sppasRefAttribute)
         :param value: (number) Pattern to search.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if isinstance(value, (int, float)) is False:
             raise sppasTypeError(value, "int, float")
 
@@ -1280,14 +1284,14 @@ class sppasAttributeCompare(sppasBaseCompare):
     def ge(att, value):
         """Test if att is greater than or equal to the given value.
 
-        :param att: (sppasAttribute) 
+        :param att: (sppasRefAttribute)
         :param value: (number) Pattern to search.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if isinstance(value, (int, float)) is False:
             raise sppasTypeError(value, "int, float")
 
@@ -1299,14 +1303,14 @@ class sppasAttributeCompare(sppasBaseCompare):
     def lt(att, value):
         """Test if att is less than the given value.
 
-        :param att: (sppasAttribute) 
+        :param att: (sppasRefAttribute)
         :param value: (number) Pattern to search.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if isinstance(value, (int, float)) is False:
             raise sppasTypeError(value, "int, float")
 
@@ -1318,14 +1322,14 @@ class sppasAttributeCompare(sppasBaseCompare):
     def le(att, value):
         """Test if att is less than or equal to the given value.
 
-        :param att: (sppasAttribute) 
+        :param att: (sppasRefAttribute)
         :param value: (number) Pattern to search.
         :returns: (bool)
         :raises: sppasTypeError
 
         """
-        if isinstance(att, sppasAttribute) is False:
-            raise sppasTypeError(att, "sppasAttribute")
+        if isinstance(att, sppasRefAttribute) is False:
+            raise sppasTypeError(att, "sppasRefAttribute")
         if isinstance(value, (int, float)) is False:
             raise sppasTypeError(value, "int, float")
 

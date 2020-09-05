@@ -63,7 +63,7 @@
     {
       "id": "rms",
       "config": "rms.json",
-      "cli": ""
+      "cli": "rms.py"
     },
 
     {
@@ -94,6 +94,24 @@
       "id": "reoccurrences",
       "config": "reoccurrences.json",
       "cli": "reoccurrences.py"
+    },
+
+    {
+      "id": "spklexrep",
+      "config": "lexrep.json",
+      "cli": "spklexrep.py"
+    },
+
+    {
+      "id": "facedetect",
+      "config": "facedetect.json",
+      "cli": "facedetection.py"
+    },
+
+    {
+      "id": "facemark",
+      "config": "facemark.json",
+      "cli": "facemark.py"
     }
   ],
 

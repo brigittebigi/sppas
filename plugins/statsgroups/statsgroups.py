@@ -59,6 +59,7 @@ sys.path.append(SPPAS)
 from sppas.src.ui import sppasTrash
 from sppas.src.wkps import FileRoot, FileName
 
+from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.anndata import sppasRW
 from sppas.src.anndata import sppasTranscription
 from sppas.src.anndata import sppasTier
@@ -177,7 +178,7 @@ def tga_to_tier(tga_result, timegroups, tier_name, tag_type="float"):
     tier = sppasTier(tier_name)
 
     for tg_ann in timegroups:
-        tg_label = tg_ann.serialize_labels()
+        tg_label = serialize_labels(tg_ann.get_labels())
         tag_value = tga_result[tg_label]
         if tag_type == "float":
             tag_value = round(tag_value, 5)
@@ -204,7 +205,7 @@ def tga_to_tiers_reglin(tga_result, timegroups):
     tierS = sppasTier('Slope')
 
     for tg_ann in timegroups:
-        tg_label = tg_ann.serialize_labels()
+        tg_label = serialize_labels(tg_ann.get_labels())
         loc = tg_ann.get_location().copy()
 
         tag_value_I = round(tga_result[tg_label][0], 5)

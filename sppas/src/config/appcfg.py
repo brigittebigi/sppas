@@ -53,7 +53,7 @@ from .settings import sppasPathSettings
 
 
 class sppasAppConfig(object):
-    """Configuration for any SPPAS Application.
+    """Configuration for SPPAS application.
 
         :author:       Florian Hocquet, Brigitte Bigi
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -61,22 +61,34 @@ class sppasAppConfig(object):
         :license:      GPL, v3
         :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
+    An instance of this class has to be created for any application using
+    the SPPAS API.
+
     """
+
+    APP_CONFIG_FILENAME = ".app~"
+    DEFAULT_LOG_LEVEL = 15
+    DEFAULT_QUIET_LEVEL = 30
+    DEFAULT_SPLASH_DELAY = 3
+
+    # -----------------------------------------------------------------------
 
     def __init__(self):
         """Create a new sppasAppConfig instance.
 
-            The configuration is set to its default values and updated
-            with the content of a configuration file (if existing).
-            The configuration is saved when this instance is deleted.
+        The configuration is set to its default values and updated
+        with the content of a configuration file (if existing).
+
+        The configuration is saved the 1st time this class is instantiated
+        and when this class is deleted.
 
         """
         super(sppasAppConfig, self).__init__()
 
         # Create a default configuration
-        self.__log_level = 0  # 15,
-        self.__quiet_log_level = 30
-        self.__splash_delay = 3
+        self.__log_level = sppasAppConfig.DEFAULT_LOG_LEVEL
+        self.__quiet_log_level = sppasAppConfig.DEFAULT_QUIET_LEVEL
+        self.__splash_delay = sppasAppConfig.DEFAULT_SPLASH_DELAY
         self.__deps = dict()
 
         # Load the existing configuration file (if any)
@@ -126,7 +138,7 @@ class sppasAppConfig(object):
     def set_splash_delay(self, value):
         """Set the delay to draw the splash.
 
-        :param value: (int) Delay ranges from 0 to 10 seconds.
+        :param value: (int) Delay ranging 0..10 seconds.
 
         """
         value = int(value)
@@ -144,75 +156,75 @@ class sppasAppConfig(object):
     def cfg_filename():
         """Return the name of the config file."""
         with sppasPathSettings() as paths:
-            cfg_filename = os.path.join(paths.basedir, ".deps~")
+            cfg_filename = os.path.join(paths.basedir,
+                                        sppasAppConfig.APP_CONFIG_FILENAME)
         return cfg_filename
-
-    # -----------------------------------------------------------------------
-
-    def cfg_file_exists(self):
-        """Return True if the config file exists."""
-        cfg = self.cfg_filename()
-        if cfg is None:
-            return False
-
-        return os.path.exists(cfg)
 
     # ------------------------------------------------------------------------
 
     def load(self):
-        """Load partly the configuration from a file."""
-        if self.cfg_file_exists() is True:
+        """Load the configuration from a file."""
+        cfg = self.cfg_filename()
+
+        if os.path.exists(cfg) is False:
+            # The file isn't existing. It's the first launch. Save it
+            # with the default values.
+            self.save()
+
+        else:
             with open(self.cfg_filename()) as cfg:
                 d = json.load(cfg)
-            self.__splash_delay = d.get("splash_delay", 3)
-            self.__log_level = d.get("log_level", 0)
-            self.__deps = d.get("deps", dict())
+
+                self.__splash_delay = d.get("splash_delay", sppasAppConfig.DEFAULT_SPLASH_DELAY)
+                self.__log_level = d.get("log_level", sppasAppConfig.DEFAULT_LOG_LEVEL)
+                self.__quiet_log_level = d.get("quiet_log_level", sppasAppConfig.DEFAULT_QUIET_LEVEL)
+
+                # Load the deps of the file without deleting the ones already in
+                # the dict: add or override the deps of the file to our dict.
+                deps = d.get("deps", dict())
+                for key in deps:
+                    self.__deps[key] = deps[key]
 
     # ------------------------------------------------------------------------
 
     def save(self):
-        """Save partly the dictionary into a file."""
+        """Save into a JSON file."""
         # Admin rights are needed to write in an hidden file.
         # So it's needed to switch the file in a normal mode
         # to modify it and then to hide back the file.
-        self.hide_unhide(".deps~", "-")
+        self.__hide(False)
         with open(self.cfg_filename(), "w") as f:
             d = dict()
             d["log_level"] = self.__log_level
             d["splash_delay"] = self.__splash_delay
             d["deps"] = self.__deps
             f.write(json.dumps(d, indent=2))
-        self.hide_unhide(".deps~", "+")
+
+        self.__hide(True)
 
     # ------------------------------------------------------------------------
 
-    def hide_unhide(self, filename, operator):
+    def __hide(self, value):
         """Hide or un-hide a file.
 
-        :param filename: (str)
-        :param operator: ()
+        :param value: (bool) Hide the config filename
 
         """
-        if filename.startswith(".") is False:
-            filename = "." + filename
-
-        if filename.endswith("~") is False:
-            filename = filename + "~"
-
+        filename = self.cfg_filename()
         system = sys.platform
-        with sppasPathSettings() as sp:
-            config = os.path.join(sp.basedir, filename)
         if system == "win32":
-            p = os.popen('attrib ' + operator + 'h ' + config)
+            oper = "+"
+            if value is False:
+                oper = "-"
+            p = os.popen('attrib ' + oper + 'h ' + filename)
             p.close()
-        return filename
 
     # ------------------------------------------------------------------------
     # Methods related to the list of dependencies for the features.
     # ------------------------------------------------------------------------
 
     def get_deps(self):
-        """Return the list of dependency features."""
+        """Return the list of dependency feature identifers."""
         return list(self.__deps.keys())
 
     # ------------------------------------------------------------------------

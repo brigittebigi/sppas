@@ -1,4 +1,0 @@
-                           Brigitte Bigi                           
-                Copyright (C) 2011  LPL Laboratory                
-                 Contact: brigite.bigi@lpl-aix.fr                
-              URL: http://www.lpl-aix.fr/~bigi/sppas/ 

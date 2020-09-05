@@ -89,9 +89,9 @@ from sppas import paths
 from sppas import sg
 
 from sppas.src.wkps import sppasWkps
-from sppas.src.wkps import FileReference, States, sppasAttribute
+from sppas.src.wkps import sppasCatReference, States, sppasRefAttribute
 from sppas.src.wkps.wkpexc import FileOSError
-from sppas.src.exc import sppasTypeError
+from sppas.src.exceptions.exc import sppasTypeError
 
 # ---------------------------------------------------------------------------
 
@@ -208,15 +208,15 @@ if __name__ == "__main__":
         help="dissociate reference(s) to file(s)."
     )
 
-    # Arguments for sppasAttributes
+    # Arguments for sppasRefAttributes
     # ------------------------------
 
-    group_att = parser.add_argument_group('sppasAttributes')
+    group_att = parser.add_argument_group('sppasRefAttributes')
 
     group_att.add_argument(
         "-att",
         metavar="create_attribute",
-        help="create a new sppasAttribute."
+        help="create a new sppasRefAttribute."
     )
 
     group_att.add_argument(
@@ -396,7 +396,7 @@ if __name__ == "__main__":
         # creating a new reference and setting its type if specified
         # otherwise set as STANDALONE by default
         if args.ar:
-            ref = FileReference(args.ar)
+            ref = sppasCatReference(args.ar)
             if args.tr:
                 ref.set_type(args.tr)
             if args.check:
@@ -430,12 +430,12 @@ if __name__ == "__main__":
                         if ref.get_state() == States().CHECKED:
                             print("{} dissociated with {} ".format(file, ref))
 
-        # sppasAttribute
+        # sppasRefAttribute
         # --------------
 
         # create a new attribute that we add to every checked references
         if args.att:
-            att = sppasAttribute(args.att)
+            att = sppasRefAttribute(args.att)
             for ref in refs:
                 if ref.get_state() == States().CHECKED:
                     ref.append(att)
@@ -453,7 +453,7 @@ if __name__ == "__main__":
 
         # set the type value
         if args.type:
-            if args.type not in sppasAttribute.VALUE_TYPES:
+            if args.type not in sppasRefAttribute.VALUE_TYPES:
                 raise ValueError("ERROR : {} is not a supported type ('str', 'int', 'float', 'bool')"
                                  .format(args.type))
             att.set_value_type(args.type)
