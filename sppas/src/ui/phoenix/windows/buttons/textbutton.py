@@ -181,8 +181,6 @@ class TestPanelTextButton(wx.Panel):
             style=wx.BORDER_NONE | wx.WANTS_CHARS,
             name="Test TextButton")
 
-        self.SetForegroundColour(wx.Colour(150, 160, 170))
-
         bgpbtn = wx.Button(self, label="BG-panel", pos=(10, 10), size=(64, 64), name="bgp_color")
         bgbbtn = wx.Button(self, label="BG-buttons", pos=(110, 10), size=(64, 64), name="bgb_color")
         fgbtn = wx.Button(self, label="FG", pos=(210, 10), size=(64, 64), name="font_color")

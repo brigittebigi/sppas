@@ -36,6 +36,7 @@
     
 """
 
+import random
 import wx
 
 from ...tools import sppasSwissKnife
@@ -356,34 +357,38 @@ class TestPanelBitmapTextButton(wx.Panel):
             style=wx.BORDER_NONE | wx.WANTS_CHARS,
             name="Test TextBitmapButton")
 
-        b1 = BitmapTextButton(self, label="sppas_64", pos=(10, 10), size=(50, 50))
-        #font = self.GetFont().MakeBold()
-        #b1.SetFont(font)
+        bgpbtn = wx.Button(self, label="BG-panel", pos=(10, 10), size=(64, 64), name="bgp_color")
+        bgbbtn = wx.Button(self, label="BG-buttons", pos=(110, 10), size=(64, 64), name="bgb_color")
+        fgbtn = wx.Button(self, label="FG", pos=(210, 10), size=(64, 64), name="font_color")
+        self.Bind(wx.EVT_BUTTON, self.on_bgp_color, bgpbtn)
+        self.Bind(wx.EVT_BUTTON, self.on_bgb_color, bgbbtn)
+        self.Bind(wx.EVT_BUTTON, self.on_fg_color, fgbtn)
 
-        b2 = BitmapTextButton(self, label="boldfont", pos=(70, 10), size=(100, 50))
-        # bold_font = wx.Font(15,                      # point size
-        #                     wx.FONTFAMILY_DEFAULT,   # family,
-        #                     wx.FONTSTYLE_NORMAL,     # style,
-        #                     wx.FONTWEIGHT_BOLD,      # weight,
-        #                     underline=False,
-        #                     faceName="Lucida sans",
-        #                     encoding=wx.FONTENCODING_SYSTEM)
-        # b2.SetFont(bold_font)
+        b1 = BitmapTextButton(self, label="button size is too small for this text",
+                              pos=(10, 100), size=(50, 50),
+                              name="sppas_64")
 
-        b3 = BitmapTextButton(self, label="sppas_colored", pos=(180, 10), size=(50, 50))
+        b2 = BitmapTextButton(self, label="toto",
+                              pos=(70, 100), size=(150, 50),
+                              name="sppas_32")
+
+        b3 = BitmapTextButton(self, label="sppas_colored",
+                              pos=(300, 100), size=(50, 50),
+                              name="sppas_colored")
         b3.SetBorderWidth(1)
         b3.SetLabel("RENAMED")
         b3.Refresh()
 
-        b4 = BitmapTextButton(self, label="Add", pos=(240, 10), size=(100, 50), name="add")
+        b4 = BitmapTextButton(self, label="Add", pos=(40, 200), size=(200, 50), name="add")
         b4.SetBorderWidth(2)
         b4.SetLabel("ADD")
         b4.SetLabelPosition(wx.RIGHT)
         b4.Refresh()
 
-        b5 = BitmapTextButton(self, label="Add", pos=(350, 10), size=(100, 50), name="add_lower")
+        b5 = BitmapTextButton(self, label="Add", pos=(350, 200), size=(100, 50), name="add_lower")
         b5.SetLabelPosition(wx.LEFT)
-        b6 = BitmapTextButton(self, label="Room for a tiny bitmap", pos=(460, 10), size=(150, 50), name="tiny")
+
+        b6 = BitmapTextButton(self, label="Room for a tiny bitmap", pos=(460, 200), size=(150, 50), name="tiny")
         b6.SetLabelPosition(wx.LEFT)
 
     # -----------------------------------------------------------------------
@@ -392,3 +397,39 @@ class TestPanelBitmapTextButton(wx.Panel):
         wx.Panel.SetForegroundColour(self, colour)
         for c in self.GetChildren():
             c.SetForegroundColour(colour)
+
+    # -----------------------------------------------------------------------
+
+    def on_bgp_color(self, event):
+        """Change BG color of the panel. It shouldn't change bg of buttons."""
+        self.SetBackgroundColour(wx.Colour(
+            random.randint(10, 250),
+            random.randint(10, 250),
+            random.randint(10, 250)
+        ))
+        self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def on_bgb_color(self, event):
+        """Change BG color of the buttons. A refresh is needed."""
+        for child in self.GetChildren():
+            if isinstance(child, TextButton):
+                child.SetBackgroundColour(wx.Colour(
+                    random.randint(10, 250),
+                    random.randint(10, 250),
+                    random.randint(10, 250)
+                    ))
+                child.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def on_fg_color(self, event):
+        color = wx.Colour(
+            random.randint(10, 250),
+            random.randint(10, 250),
+            random.randint(10, 250))
+        self.SetForegroundColour(color)
+        for c in self.GetChildren():
+            c.SetForegroundColour(color)
+        self.Refresh()

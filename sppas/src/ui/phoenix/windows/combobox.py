@@ -225,6 +225,7 @@ class sppasComboBox(sppasPanel):
         self._popup.tglbox.SetSelection(idx)
         s = self._popup.tglbox.GetStringSelection()
         self._txtbtn.SetLabel(s)
+        self._txtbtn.Refresh()
 
     # ------------------------------------------------------------------------
 
@@ -315,6 +316,7 @@ class sppasComboBox(sppasPanel):
         obj = event.GetEventObject()
         sel = obj.GetStringSelection()
         self._txtbtn.SetLabel(sel)
+        self._txtbtn.Refresh()
         self._popup.Hide()
         self.Notify()
 

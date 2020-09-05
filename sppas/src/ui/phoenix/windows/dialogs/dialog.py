@@ -465,7 +465,7 @@ class sppasDialog(wx.Dialog):
         btn.SetLabelPosition(wx.RIGHT)
         btn.SetBorderWidth(0)
         btn.SetFocusWidth(1)
-        btn.SetFocusColour(self.GetForegroundColour())
+        # btn.SetFocusColour(self.GetForegroundColour())
         btn.SetId(flag)
 
         if flag == wx.CANCEL:

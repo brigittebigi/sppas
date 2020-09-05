@@ -332,7 +332,6 @@ class TestPanelBaseButton(wx.Panel):
             style=wx.BORDER_NONE | wx.WANTS_CHARS,
             name="Test BaseButton")
 
-        self.SetForegroundColour(wx.Colour(150, 160, 170))
         st = [wx.PENSTYLE_SHORT_DASH,
               wx.PENSTYLE_LONG_DASH,
               wx.PENSTYLE_DOT_DASH,

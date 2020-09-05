@@ -4,8 +4,99 @@
     "version": "3.1",
     "id": "9c9b55d8-ed0f-4b40-bd86-4d5e124f96be",
     "paths": [
+            {
+            "id": "E:/bigi/Projets/sppas/samples/samples-eng",
+            "rel": "samples/samples-eng",
+            "roots": [
+                {
+                    "id": "ENG_M15_ENG_T02",
+                    "files": [
+                        {
+                            "id": "ENG_M15_ENG_T02.PitchTier",
+                            "state": 0
+                        },
+                        {
+                            "id": "ENG_M15_ENG_T02.TextGrid",
+                            "state": 0
+                        },
+                        {
+                            "id": "ENG_M15_ENG_T02.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-AixOx"
+                    ],
+                    "subjoin": {
+                        "expand": false
+                    }
+                },
+                {
+                    "id": "ENG_M15_ENG_T33",
+                    "files": [
+                        {
+                            "id": "ENG_M15_ENG_T33.PitchTier",
+                            "state": 0
+                        },
+                        {
+                            "id": "ENG_M15_ENG_T33.wav",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [
+                        "Corpus-AixOx"
+                    ],
+                    "subjoin": {
+                        "expand": false
+                    }
+                },
+                {
+                    "id": "oriana1",
+                    "files": [
+                        {
+                            "id": "oriana1.txt",
+                            "state": 1
+                        },
+                        {
+                            "id": "oriana1.wav",
+                            "state": 1
+                        }
+                    ],
+                    "refids": [],
+                    "subjoin": {
+                        "expand": true
+                    }
+                },
+                {
+                    "id": "oriana2",
+                    "files": [
+                        {
+                            "id": "oriana2.WAV",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [],
+                    "subjoin": {
+                        "expand": false
+                    }
+                },
+                {
+                    "id": "oriana3",
+                    "files": [
+                        {
+                            "id": "oriana3.wave",
+                            "state": 0
+                        }
+                    ],
+                    "refids": [],
+                    "subjoin": {
+                        "expand": false
+                    }
+                }
+            ]
+        },
         {
-            "id": "/E/bigi/Projets/sppas/samples/samples-fra",
+            "id": "E:/bigi/Projets/sppas/samples/samples-fra",
             "rel": "samples/samples-fra",
             "roots": [
                 {
@@ -13,15 +104,15 @@
                     "files": [
                         {
                             "id": "AC track_0379.PitchTier",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "AC track_0379.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "AC track_0379.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -36,11 +127,11 @@
                     "files": [
                         {
                             "id": "AG_\u00e9\u00e0\u00e7_0460.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "AG_\u00e9\u00e0\u00e7_0460.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -57,11 +148,11 @@
                     "files": [
                         {
                             "id": "BX_track_0451.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "BX_track_0451.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -73,11 +164,11 @@
                     "files": [
                         {
                             "id": "EB_track_0641.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "EB_track_0641.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -94,11 +185,11 @@
                     "files": [
                         {
                             "id": "F_F_B003-P8.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "F_F_B003-P8.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -114,15 +205,15 @@
                     "files": [
                         {
                             "id": "F_F_B003-P9.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "F_F_B003-P9.hz",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "F_F_B003-P9.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -138,11 +229,11 @@
                     "files": [
                         {
                             "id": "F_F_C006-P6.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "F_F_C006-P6.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -158,11 +249,11 @@
                     "files": [
                         {
                             "id": "IM_track_0767.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "IM_track_0767.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -174,11 +265,11 @@
                     "files": [
                         {
                             "id": "MB_track_0674.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "MB_track_0674.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -190,11 +281,11 @@
                     "files": [
                         {
                             "id": "MG_track_0702.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "MG_track_0702.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -206,11 +297,11 @@
                     "files": [
                         {
                             "id": "ML_track_0597.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "ML_track_0597.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -222,11 +313,11 @@
                     "files": [
                         {
                             "id": "NH_track_636.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "NH_track_636.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -238,11 +329,11 @@
                     "files": [
                         {
                             "id": "SR_track_631.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "SR_track_631.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
@@ -259,11 +350,11 @@
                     "files": [
                         {
                             "id": "YM_track_0182.TextGrid",
-                            "state": -1
+                            "state": 0
                         },
                         {
                             "id": "YM_track_0182.wav",
-                            "state": -1
+                            "state": 0
                         }
                     ],
                     "refids": [
