@@ -127,7 +127,7 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-e",
         metavar=".ext",
-        default=annots.image_extension,
+        default=annots.video_extension,
         choices=video_extensions,
         help='Output file extension. One of: {:s}'
              ''.format(" ".join(video_extensions)))

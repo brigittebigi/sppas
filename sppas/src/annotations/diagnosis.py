@@ -48,6 +48,7 @@ import sppas.src.videodata
 # ----------------------------------------------------------------------------
 
 anndata_ext = ["."+e for e in sppasRW.extensions_in()]
+videodata_ext = sppas.src.videodata.video_extensions
 imgdata_ext = sppas.src.imgdata.image_extensions
 audiodata_ext = sppas.src.audiodata.aio.extensions
 
@@ -97,6 +98,9 @@ class sppasDiagnosis:
 
         if ext.lower() in imgdata_ext:
             return sppasDiagnosis.check_img_file(filename)
+
+        if ext.lower() in videodata_ext:
+            return sppasDiagnosis.check_video_file(filename)
 
         message = info(1006, "annotations") + \
                   (info(1020, "annotations")).format(extension=ext)
@@ -229,7 +233,25 @@ class sppasDiagnosis:
 
         Are verified:
 
-            Nothing
+            opencv can open the file
+
+        :param filename: (string) name of the input file
+        :returns: tuple with (status identifier, message)
+
+        """
+        status = annots.ok
+        message = info(1000, "annotations")
+        return status, message
+
+    # ------------------------------------------------------------------------
+
+    @staticmethod
+    def check_video_file(filename):
+        """Check a video file.
+
+        Are verified:
+
+            opencv can open the file
 
         :param filename: (string) name of the input file
         :returns: tuple with (status identifier, message)

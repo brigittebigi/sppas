@@ -58,6 +58,7 @@ class sppasVideodataError(object):
 
 
 class sppasVideo(sppasVideodataError):
+    MAX_FPS = 240
     pass
 
 

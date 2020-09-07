@@ -31,7 +31,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Requires the "video" feature of SPPAS.
-    Write a video with the result of face detection and face landmark.
+    Write a video with the results of face detection and face landmark.
 
 """
 
@@ -41,8 +41,10 @@ import cv2
 import shutil
 import logging
 
+from sppas.src.exceptions import NegativeValueError, IntervalRangeException
 from sppas.src.imgdata import sppasImageWriter
 from sppas.src.imgdata import sppasImage
+from sppas.src.videodata import sppasVideo
 
 # ---------------------------------------------------------------------------
 
@@ -76,17 +78,25 @@ class sppasVideoWriter(object):
         # used if tag+video options
         self._tag_video_writer = None
 
-        # Added options
-        self._video = False
-        self._folder = False
-        self._fps = 25
+        # Added options compared to the image writer
+        self._video = False     # save results in video file(s)
+        self._folder = False    # save results as images in a folder
+        self._fps = 25          # default video framerate
 
     # -----------------------------------------------------------------------
 
     def set_fps(self, value):
-        self._fps = int(value)
+        """Fix the framerate of the output video.
 
-    # -----------------------------------------------------------------------
+        :param value: (int) frame per seconds
+
+        """
+        value = int(value)
+        if value < 0:
+            raise NegativeValueError(value)
+        if value > sppasVideo.MAX_FPS:
+            raise IntervalRangeException(value, 0, sppasVideo.MAX_FPS)
+        self._fps = value
 
     # -----------------------------------------------------------------------
 
@@ -173,8 +183,11 @@ class sppasVideoWriter(object):
         :param pattern: (str) Pattern to add to a cropped image filename
 
         """
-        if out_name.endswith('.csv') is True:
-            out_name = out_name[:-4]
+        fn, fe = os.path.splitext(out_name)
+        # if fn.endswith(pattern):
+        #     out_name = fn[:len(fn)-len(pattern)]
+        # else:
+        out_name = fn
 
         # Write results in CSV format
         if self._img_writer.options.csv is True:

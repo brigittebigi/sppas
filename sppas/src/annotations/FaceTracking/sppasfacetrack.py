@@ -385,21 +385,26 @@ class sppasFaceTrack(sppasBaseAnnotation):
         self.__video_buffer.open(video)
         self.__video_writer.set_fps(self.__video_buffer.get_framerate())
         bsize = self.__video_buffer.get_size()
-        # Print infos about the video in the report
+
+        # Print information about the video in the report
         if self.logfile:
+            self.logfile.print_message("Video information: {}"
+                                       "".format(input_file[0]),
+                                       indent=0)
             self.logfile.print_message(
                 "Video: {:.3f} seconds, {:d} fps, {:d}x{:d}".format(
                     self.__video_buffer.get_duration(),
                     self.__video_buffer.get_framerate(),
                     self.__video_buffer.get_width(),
                     self.__video_buffer.get_height()
-                ), indent=2)
+                ), indent=1)
             self.logfile.print_message(
                 "A video buffer contains {:d} images".format(bsize),
-                indent=2)
+                indent=1)
 
         result = self.detect(output_file)
 
+        # Quit properly
         self.__video_buffer.close()
         self.__video_buffer.reset()
         self.__video_writer.close()

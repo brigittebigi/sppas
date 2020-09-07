@@ -56,7 +56,7 @@ class FaceTracking(object):
         raise sppasEnableFeatureError("video")
 
 
-class sppasFaceTracking(object):
+class sppasFaceTrack(object):
     def __init__(self, *args, **kwargs):
         raise sppasEnableFeatureError("video")
 
@@ -69,9 +69,9 @@ class sppasFaceTracking(object):
 
 if cfg.dep_installed("video"):
     from .facetrack import FaceTracking
-    # from .sppasfacetracking import sppasFaceTracking
+    from .sppasfacetrack import sppasFaceTrack
 
 __all__ = (
-    'FaceTracking',
-    # 'sppasFaceTracking'
+    "FaceTracking",
+    "sppasFaceTrack"
 )

@@ -72,8 +72,13 @@ class sppasVideo(object):
     >>> # Get the current position
     >>> vid.tell()
 
-
     """
+
+    # Actually, I don't know what exactly is the max value of cv2.VideoWriter
+    # 1000 is the max my nvidia GE Force GT 80 accepts in its configuration
+    MAX_FPS = 1000
+
+    # -----------------------------------------------------------------------
 
     def __init__(self):
         """Create a sppasVideo. """
