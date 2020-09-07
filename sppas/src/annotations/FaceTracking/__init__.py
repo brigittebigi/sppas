@@ -41,6 +41,19 @@
 Track faces of a video.
 This package requires video feature, for opencv and numpy dependencies.
 
+TODO:
+
+1. Debug et completer VideoWriter:
+    1a. gestion du pattern comme pour les images (personne AVANT pattern)
+    1b. ajout colonne and export CSV avec numero du buffer
+
+2. FaceDetection: au moment de la fusion, faire le filtrage selon
+   overlap apres passage en portrait
+
+3. GUI:
+    3a. ajouter une icone pour les video et gestion des extensions dans FileManager
+    3b. titre de la fenetre des annotations: "Configurer..." -> "annot_configure"
+
 """
 
 from sppas.src.config import cfg

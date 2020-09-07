@@ -145,6 +145,7 @@ class sppasVideoWriter(object):
     def set_options(self, csv=None, tag=None, crop=None,
                     width=None, height=None,
                     video=None, folder=None):
+        """Set any/some/all of the options."""
         self._img_writer.set_options(csv, tag, crop, width, height)
         if video is not None:
             self._video = bool(video)
