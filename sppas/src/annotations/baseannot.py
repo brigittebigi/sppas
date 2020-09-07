@@ -40,6 +40,7 @@ import json
 from sppas.src.config import annots
 from sppas.src.config import paths
 from sppas.src.config import info
+from sppas.src.structs import sppasOption
 from sppas.src.wkps import sppasFileUtils
 from sppas.src.anndata import sppasRW
 
@@ -112,8 +113,13 @@ class sppasBaseAnnotation(object):
             dict_cfg = json.load(cfg)
 
         # Extract options
-        for opt in dict_cfg['options']:
-            self._options[opt['id']] = opt['value']
+        for new_option in dict_cfg['options']:
+            # Create a sppasOption() instance to convert into the right type
+            opt = sppasOption(new_option['id'])
+            opt.set_type(new_option['type'])
+            opt.set_value(str(new_option['value']))
+            # Add key and typed value to the dict of options
+            self._options[opt.get_key()] = opt.get_value()
 
         # Extract other members
         self.name = dict_cfg.get('name', self.__class__.__name__)

@@ -38,6 +38,7 @@ import logging
 from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
 from sppas.src.exceptions import sppasError
+from sppas.src.exceptions import sppasTypeError
 from sppas.src.videodata import video_extensions
 
 from ..FaceDetection import FaceDetection
@@ -157,7 +158,7 @@ class sppasFaceTrack(sppasBaseAnnotation):
                 self.set_out_video(opt.get_value())
 
             elif key == "folder":
-                self.set_out_folder(opt.get_value())
+                self.set_out_images(opt.get_value())
 
             elif key == "tag":
                 self.set_img_tag(opt.get_value())
@@ -295,6 +296,11 @@ class sppasFaceTrack(sppasBaseAnnotation):
         :param options: (bool) options priority
 
         """
+        if isinstance(video_buffer, sppasFacesVideoBuffer) is False:
+            raise sppasTypeError(video_buffer, "sppasFacesVideoBuffer")
+        if isinstance(video_writer, sppasVideoWriter) is False:
+            raise sppasTypeError(video_writer, "sppasVideoWriter")
+
         self.__video_buffer = video_buffer
         self.__video_writer = video_writer
 
@@ -302,16 +308,33 @@ class sppasFaceTrack(sppasBaseAnnotation):
             # Priority is given to the existing options:
             self.__video_buffer.set_filter_best(self._options["nbest"])
             self.__video_buffer.set_filter_confidence(self._options["score"])
+            self.__video_writer.set_options(
+                csv=self._options["csv"],
+                video=self._options["video"],
+                folder=self._options["folder"],
+                tag=self._options["tag"],
+                crop=self._options["crop"],
+                width=self._options["width"],
+                height=self._options["height"]
+            )
         else:
             # The existing options are overridden by the video configuration:
-            self._options["nbest"] = self.__video_buffer.get_
+            self._options["nbest"] = self.__video_buffer.get_filter_best()
+            self._options["score"] = self.__video_buffer.get_filter_confidence()
+            self._options["csv"] = self.__video_writer.get_csv_output()
+            self._options["video"] = self.__video_writer.get_video_output()
+            self._options["folder"] = self.__video_writer.get_folder_output()
+            self._options["tag"] = self.__video_writer.get_tag_output()
+            self._options["crop"] = self.__video_writer.get_crop_output()
+            self._options["width"] = self.__video_writer.get_output_width()
+            self._options["height"] = self.__video_writer.get_output_height()
 
     # -----------------------------------------------------------------------
     # Apply the annotation on a given file
     # -----------------------------------------------------------------------
 
-    def detect(self):
-        """Browse the video and store results
+    def detect(self, output_file=None):
+        """Browse the video and store results.
 
         """
         # Browse the video using the buffer of images
@@ -319,15 +342,21 @@ class sppasFaceTrack(sppasBaseAnnotation):
         read_next = True
         nb = 0
 
-        self.__video_writer.set_options(csv=None, tag=None, crop=None, width=None, height=None, video=None, folder=None)
+        # Cancel any previous result
+        self.__video_buffer.reset()
+        self.__video_buffer.seek_buffer(0)
 
         while read_next is True:
-            self.logfile.print_message("Read buffer number {:d}".format(nb))
+            if self.logfile is not None:
+                self.logfile.print_message("Read buffer number {:d}".format(nb))
+
             # fill-in the buffer with 'size'-images of the video
             read_next = self.__video_buffer.next()
+
             # face detection&landmarks on the current images of the buffer
             # and associate a face to a person
             self.__ft.detect_buffer(self.__video_buffer)
+
             # save the current results
             if output_file is not None:
                 self.__video_writer.write(self.__video_buffer,
@@ -337,6 +366,8 @@ class sppasFaceTrack(sppasBaseAnnotation):
                 faces = self.__video_buffer.get_detected_faces(i)
                 result.append(faces)
             nb += 1
+
+        return result
 
     # -----------------------------------------------------------------------
 
@@ -357,18 +388,17 @@ class sppasFaceTrack(sppasBaseAnnotation):
         # Print infos about the video in the report
         if self.logfile:
             self.logfile.print_message(
-                "Video: {:f} seconds, {:d} fps, {:d}x{:d}, FOURCC {:s}".format(
+                "Video: {:.3f} seconds, {:d} fps, {:d}x{:d}".format(
                     self.__video_buffer.get_duration(),
                     self.__video_buffer.get_framerate(),
                     self.__video_buffer.get_width(),
-                    self.__video_buffer.get_height(),
-                    self.__video_buffer.get_fourcc()
+                    self.__video_buffer.get_height()
                 ), indent=2)
             self.logfile.print_message(
                 "A video buffer contains {:d} images".format(bsize),
                 indent=2)
 
-        self.detect()
+        result = self.detect(output_file)
 
         self.__video_buffer.close()
         self.__video_buffer.reset()

@@ -255,7 +255,7 @@ class sppasVideo(object):
         """Return the FPS of the current video."""
         if self.__video is None:
             return 0
-        return self.__video.get(cv2.CAP_PROP_FPS)
+        return int(self.__video.get(cv2.CAP_PROP_FPS))
 
     # -----------------------------------------------------------------------
 
@@ -263,7 +263,7 @@ class sppasVideo(object):
         """Return the width of the frames in the video."""
         if self.__video is None:
             return 0
-        return self.__video.get(cv2.CAP_PROP_FRAME_WIDTH)
+        return int(self.__video.get(cv2.CAP_PROP_FRAME_WIDTH))
 
     # -----------------------------------------------------------------------
 
@@ -271,7 +271,7 @@ class sppasVideo(object):
         """Return the height of the frames in the video."""
         if self.__video is None:
             return 0
-        return self.__video.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        return int(self.__video.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     # -----------------------------------------------------------------------
 
@@ -280,18 +280,6 @@ class sppasVideo(object):
         if self.__video is None:
             return 0
         return int(self.__video.get(cv2.CAP_PROP_FRAME_COUNT))
-
-    # -----------------------------------------------------------------------
-
-    def get_fourcc(self):
-        """Return the FOURCC code of the video codec.
-
-        For details, see: https://www.fourcc.org/
-
-        """
-        if self.__video is None:
-            return ""
-        return self.__video.get(cv2.CAP_PROP_FOURCC)
 
     # -----------------------------------------------------------------------
     # Private

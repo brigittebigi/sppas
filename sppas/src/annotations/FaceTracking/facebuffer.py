@@ -173,6 +173,12 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
 
     # -----------------------------------------------------------------------
 
+    def get_filter_confidence(self):
+        """Return the min scores of faces to detect."""
+        return self.__confidence
+
+    # -----------------------------------------------------------------------
+
     def set_filter_confidence(self, value=0.2):
         """Force to detect only the faces with a confidence score > value.
 

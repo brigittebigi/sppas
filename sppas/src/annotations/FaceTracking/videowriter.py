@@ -88,6 +88,50 @@ class sppasVideoWriter(object):
 
     # -----------------------------------------------------------------------
 
+    # -----------------------------------------------------------------------
+
+    def get_csv_output(self):
+        """Return True if coordinates will be saved in a CSV file."""
+        return self._img_writer.options.get_csv_output()
+
+    # -----------------------------------------------------------------------
+
+    def get_video_output(self):
+        """Return True if results will be saved in a VIDEO file."""
+        return self._video
+
+    # -----------------------------------------------------------------------
+
+    def get_folder_output(self):
+        """Return True if results will be saved in a folder of image files."""
+        return self._folder
+
+    # -----------------------------------------------------------------------
+
+    def get_tag_output(self):
+        """Return True if faces of the images will be surrounded."""
+        return self._img_writer.options.get_tag_output()
+
+    # -----------------------------------------------------------------------
+
+    def get_crop_output(self):
+        """Return True if the option to crop faces is enabled."""
+        return self._img_writer.options.get_crop_output()
+
+    # -----------------------------------------------------------------------
+
+    def get_output_width(self):
+        """Return the width of the output image files."""
+        return self._img_writer.options.get_width()
+
+    # -----------------------------------------------------------------------
+
+    def get_output_height(self):
+        """Return the height of the outputs files."""
+        return self._img_writer.options.get_height()
+
+    # -----------------------------------------------------------------------
+
     def set_options(self, csv=None, tag=None, crop=None,
                     width=None, height=None,
                     video=None, folder=None):
@@ -153,6 +197,10 @@ class sppasVideoWriter(object):
         :param out_name: (str) The filename of the output video file
 
         """
+        if self._img_writer.options.tag is False and self._img_writer.options.crop is False:
+            logging.info("Video option enabled but no tag nor crop. Nothing to do.")
+            return
+
         iter_images = video_buffer.__iter__()
         for i in range(video_buffer.__len__()):
             image = next(iter_images)

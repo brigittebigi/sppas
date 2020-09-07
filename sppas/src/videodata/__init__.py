@@ -62,6 +62,8 @@ class sppasVideo(sppasVideodataError):
 
 
 class sppasVideoBuffer(sppasVideodataError):
+    DEFAULT_BUFFER_SIZE = 200
+    DEFAULT_BUFFER_OVERLAP = 0
     pass
 
 

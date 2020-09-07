@@ -95,7 +95,7 @@
     {
       "id": "tag",
       "type": "bool",
-      "value": true,
+      "value": false,
       "text": "Surround the detected faces in the outputs"
     },
     {
