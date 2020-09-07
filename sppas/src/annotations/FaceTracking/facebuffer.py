@@ -38,10 +38,10 @@
 
 import logging
 
-from sppas.src.videodata import sppasVideoBuffer
 from sppas.src.exceptions import NegativeValueError
 from sppas.src.exceptions import IndexRangeException
 from sppas.src.exceptions import sppasError
+from sppas.src.videodata import sppasVideoBuffer
 
 from ..FaceDetection import FaceDetection
 from ..FaceMark import FaceLandmark
@@ -88,10 +88,10 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         # the current buffer (list of list of sppasCoords).
         self.__landmarks = list()
 
-        # The list of persons the faces&landmarks are assigned
+        # The list of persons of the faces&landmarks
         self.__persons = list()
 
-        # Then, open the video
+        # Then, open the video, if any
         if video is not None:
             self.open(video)
 
@@ -105,6 +105,7 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     # -----------------------------------------------------------------------
 
     def __reset(self):
+        """Reset the data related to the face detection&landmark detections."""
         self.__faces = list()
         self.__landmarks = list()
         self.__persons = list()
@@ -114,7 +115,7 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     # -----------------------------------------------------------------------
 
     def next(self):
-        """Override. Fill in the buffer with the next images.
+        """Override. Fill in the buffer with the next images & reset results.
 
         """
         ret = sppasVideoBuffer.next(self)
@@ -128,7 +129,7 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     def load_fd_model(self, model, *args):
         """Instantiate face detector(s) from the given models.
 
-        Calling this method invalidates the existing detectors and the buffer.
+        Calling this method invalidates the existing detectors and the results.
 
         :param model: (str) Default model filename
         :param args: Other models to load in order to create object detectors
@@ -143,7 +144,7 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     def load_fl_model(self, model_fd, model_landmark, *args):
         """Initialize the face landmark recognizer.
 
-        Calling this method invalidates the existing detectors and the buffer.
+        Calling this method invalidates the existing detectors and the results.
 
         :param model_fd: (str) A filename of a model for face detection
         :param model_landmark: (str) Filename of a recognizer model (Kazemi, LBF, AAM).
@@ -153,6 +154,12 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         """
         self.__fl.load_model(model_fd, model_landmark, *args)
         self.__reset()
+
+    # -----------------------------------------------------------------------
+
+    def get_filter_best(self):
+        """Return the max nb of faces to detect."""
+        return self.__nbest
 
     # -----------------------------------------------------------------------
 

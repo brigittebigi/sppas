@@ -38,8 +38,11 @@ import unittest
 
 from sppas.src.config import paths
 from sppas.src.exceptions import sppasError
+from sppas.src.annotations.param import sppasParam
+from sppas.src.videodata import sppasVideoBuffer
 
 from ..FaceTracking.facebuffer import sppasFacesVideoBuffer
+from ..FaceTracking.sppasfacetrack import sppasFaceTrack
 
 # ---------------------------------------------------------------------------
 
@@ -58,6 +61,22 @@ HAAR2 = os.path.join(paths.resources, "faces", "haarcascade_frontalface_alt.xml"
 class TestFaceBuffer(unittest.TestCase):
 
     VIDEO = os.path.join(paths.samples, "faces", "video_sample.mp4")
+
+    # -----------------------------------------------------------------------
+
+    def test_subclassing(self):
+
+        class subclassVideoBuffer(sppasVideoBuffer):
+            def __init__(self, video=None,
+                         size=sppasVideoBuffer.DEFAULT_BUFFER_SIZE):
+                super(subclassVideoBuffer, self).__init__(video, size, overlap=0)
+
+        bv = subclassVideoBuffer()
+        self.assertEqual(bv.get_size(), sppasVideoBuffer.DEFAULT_BUFFER_SIZE)
+        self.assertEqual(bv.get_overlap(), sppasVideoBuffer.DEFAULT_BUFFER_OVERLAP)
+        self.assertFalse(bv.video_capture())
+        self.assertEqual(0, bv.get_framerate())
+        self.assertEqual(0, bv.tell())
 
     # -----------------------------------------------------------------------
 
@@ -147,4 +166,23 @@ class TestFaceBuffer(unittest.TestCase):
         fvb.next()
         with self.assertRaises(ValueError):
             fvb.get_detected_faces(3)
+
+# ---------------------------------------------------------------------------
+
+
+class TestSPPASFaceTracking(unittest.TestCase):
+
+    VIDEO = os.path.join(paths.samples, "faces", "video_sample.mp4")
+
+    # -----------------------------------------------------------------------
+
+    def test_options(self):
+        parameters = sppasParam(["facetrack.json"])
+        ann_step_idx = parameters.activate_annotation("facetrack")
+        ann_options = parameters.get_options(ann_step_idx)
+
+        for opt in ann_options:
+            key = opt.get_key()
+            if key == "nbest":
+                self.assert_equal(0, opt.get_value())
 

@@ -201,6 +201,28 @@ class TestVideoBuffer(unittest.TestCase):
 
     # -----------------------------------------------------------------------
 
+    def test_constant(self):
+        self.assertEqual(200, sppasVideoBuffer.DEFAULT_BUFFER_SIZE)
+        self.assertEqual(0, sppasVideoBuffer.DEFAULT_BUFFER_OVERLAP)
+
+    # -----------------------------------------------------------------------
+
+    def test_subclassing(self):
+
+        class subclassVideoBuffer(sppasVideoBuffer):
+            def __init__(self, video=None,
+                         size=sppasVideoBuffer.DEFAULT_BUFFER_SIZE):
+                super(subclassVideoBuffer, self).__init__(video, size, overlap=0)
+
+        bv = subclassVideoBuffer()
+        self.assertEqual(bv.get_size(), sppasVideoBuffer.DEFAULT_BUFFER_SIZE)
+        self.assertEqual(bv.get_overlap(), sppasVideoBuffer.DEFAULT_BUFFER_OVERLAP)
+        self.assertFalse(bv.video_capture())
+        self.assertEqual(0, bv.get_framerate())
+        self.assertEqual(0, bv.tell())
+
+    # -----------------------------------------------------------------------
+
     def test_buffer_size(self):
         bv = sppasVideoBuffer(TestVideoBuffer.VIDEO)
         self.assertEqual(bv.get_size(), sppasVideoBuffer.DEFAULT_BUFFER_SIZE)

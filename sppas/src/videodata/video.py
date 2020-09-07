@@ -196,6 +196,34 @@ class sppasVideo(object):
 
     # -----------------------------------------------------------------------
 
+    def video_capture(self):
+        """Return True if the video was properly initialized."""
+        return self.__video is not None
+
+    # -----------------------------------------------------------------------
+
+    def tell(self):
+        """Return the index of the current frame position."""
+        if self.__video is None:
+            return 0
+        return int(self.__video.get(cv2.CAP_PROP_POS_FRAMES))
+
+    # -----------------------------------------------------------------------
+
+    def seek(self, value):
+        """Set a new frame position in the video.
+
+        :param value: (int)
+        :raise: ValueError
+
+        """
+        value = self.check_frame(value)
+        success = self.__video.set(cv2.CAP_PROP_POS_FRAMES, value)
+        if success is False:
+            raise IOError("Seek is not supported by your platform for this video.")
+
+    # -----------------------------------------------------------------------
+
     def check_frame(self, value):
         """Raise an exception is the given value is an invalid frameID.
 
@@ -231,28 +259,6 @@ class sppasVideo(object):
 
     # -----------------------------------------------------------------------
 
-    def tell(self):
-        """Return the index of the current frame position."""
-        if self.__video is None:
-            return 0
-        return int(self.__video.get(cv2.CAP_PROP_POS_FRAMES))
-
-    # -----------------------------------------------------------------------
-
-    def seek(self, value):
-        """Set a new frame position in the video.
-
-        :param value: (int)
-        :raise: ValueError
-
-        """
-        value = self.check_frame(value)
-        success = self.__video.set(cv2.CAP_PROP_POS_FRAMES, value)
-        if success is False:
-            raise IOError("Seek is not supported by your platform for this video.")
-
-    # -----------------------------------------------------------------------
-
     def get_width(self):
         """Return the width of the frames in the video."""
         if self.__video is None:
@@ -277,10 +283,18 @@ class sppasVideo(object):
 
     # -----------------------------------------------------------------------
 
-    def video_capture(self):
-        """Return True if a video was properly initialized."""
-        return self.__video is not None
+    def get_fourcc(self):
+        """Return the FOURCC code of the video codec.
 
+        For details, see: https://www.fourcc.org/
+
+        """
+        if self.__video is None:
+            return ""
+        return self.__video.get(cv2.CAP_PROP_FOURCC)
+
+    # -----------------------------------------------------------------------
+    # Private
     # -----------------------------------------------------------------------
 
     @staticmethod
