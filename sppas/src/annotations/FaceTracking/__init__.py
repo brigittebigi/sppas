@@ -50,9 +50,6 @@ TODO:
 2. FaceDetection: au moment de la fusion, faire le filtrage selon
    overlap apres passage en portrait
 
-3. GUI:
-    3b. titre de la fenetre des annotations: "Configurer..." -> "annot_configure"
-
 """
 
 from sppas.src.config import cfg

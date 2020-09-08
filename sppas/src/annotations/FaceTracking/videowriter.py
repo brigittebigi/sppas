@@ -399,7 +399,11 @@ class sppasVideoWriter(object):
         :param out_csv_name: (str) The filename of the CSV file to write
 
         """
+        # Get information about the buffer
         begin_idx, end_idx = video_buffer.get_range()
+        buffer_nb = end_idx // video_buffer.get_size()
+
+        # Open or re-open the CSV file to append the new results
         mode = "w"
         if os.path.exists(out_csv_name) is True:
             mode = "a+"
@@ -412,11 +416,15 @@ class sppasVideoWriter(object):
 
                 # Update the list of known persons from the detected ones
                 self.__update_persons(video_buffer, i)
+
                 # Get the results
                 faces = video_buffer.get_detected_faces(i)
                 persons = video_buffer.get_detected_persons(i)
                 landmarks = video_buffer.get_detected_landmarks(i)
+
+                # Write the results
                 for j in range(len(faces)):
+                    fd.write("{:d};".format(buffer_nb))
                     self._img_writer.write_coords(fd, img_name, j+1, faces[j], sep=";")
                     if persons[j] is not None:
                         fd.write("{:s}".format(persons[j][0]))
