@@ -199,7 +199,7 @@ if __name__ == "__main__":
         ann.fix_options(parameters.get_options(ann_step_idx))
 
         if args.o:
-            ann.run([args.i], output_file=args.o)
+            ann.run([args.i], output=args.o)
         else:
             coords = ann.run([args.i])
             for c in coords:
@@ -217,7 +217,7 @@ if __name__ == "__main__":
 
         # Fix the output file extension and others
         parameters.set_report_filename(args.log)
-        parameters.set_output_extension(args.e, parameters.get_outformat(ann_step_idx))
+        parameters.set_output_extension(args.e, "IMAGE")
 
         # Perform the annotation
         process = sppasAnnotationsManager()

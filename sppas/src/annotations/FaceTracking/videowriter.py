@@ -42,15 +42,18 @@ import shutil
 import logging
 
 from sppas.src.exceptions import NegativeValueError, IntervalRangeException
+from sppas.src.exceptions import sppasExtensionWriteError
 from sppas.src.imgdata import sppasImageWriter
 from sppas.src.imgdata import sppasImage
 from sppas.src.videodata import sppasVideo
+from sppas.src.imgdata import image_extensions
+from sppas.src.videodata import video_extensions
 
 # ---------------------------------------------------------------------------
 
 
 class sppasVideoWriter(object):
-    """Write a video and optionally coordinates into files.
+    """Write a video, a set of images and/or coordinates into files.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -58,12 +61,22 @@ class sppasVideoWriter(object):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
+    There are 3 main solutions to write the result of face tracking:
+
+        1. CSV: coordinates of the faces into a spreadsheet
+        2. video
+        3. folder with images
+
+    For 2 and 3, there are 2 options - at least one has to be selected:
+
+        1. tag: surround each detected face in the original image
+        2. crop: create one image for each detected face
+
     """
 
     def __init__(self):
         """Create a new sppasVideoWriter instance.
 
-        Write the given video in the given filename.
         Parts of each image can be extracted in separate image files and/or
         surrounded on the given image.
         Output video and images can be resized.
@@ -82,6 +95,54 @@ class sppasVideoWriter(object):
         self._video = False     # save results in video file(s)
         self._folder = False    # save results as images in a folder
         self._fps = 25          # default video framerate
+
+        # Output file extensions
+        self.__video_ext = ".mp4"
+        self.__image_ext = ".jpg"
+
+    # -----------------------------------------------------------------------
+    # Getters and setters for the options
+    # -----------------------------------------------------------------------
+
+    def get_video_extension(self):
+        """Return the extension for video files."""
+        return self.__video_ext
+
+    # -----------------------------------------------------------------------
+
+    def set_video_extension(self, ext):
+        """Set the extension of video files."""
+        ext = str(ext)
+        if ext.startswith(".") is False:
+            ext = "." + ext
+        if ext not in video_extensions:
+            raise sppasExtensionWriteError(ext)
+
+        self.__video_ext = ext
+
+    # -----------------------------------------------------------------------
+
+    def get_image_extension(self):
+        """Return the extension for image files."""
+        return self.__image_ext
+
+    # -----------------------------------------------------------------------
+
+    def set_image_extension(self, ext):
+        """Set the extension of image files."""
+        ext = str(ext)
+        if ext.startswith(".") is False:
+            ext = "." + ext
+        if ext not in image_extensions:
+            raise sppasExtensionWriteError(ext)
+
+        self.__image_ext = ext
+
+    # -----------------------------------------------------------------------
+
+    def get_fps(self):
+        """Return the defined fps value to write video files."""
+        return self._fps
 
     # -----------------------------------------------------------------------
 
@@ -153,9 +214,25 @@ class sppasVideoWriter(object):
             self._folder = bool(folder)
 
     # -----------------------------------------------------------------------
+    # Write into CSV, VIDEO or IMAGES
+    # -----------------------------------------------------------------------
+
+    def get_image_size(self, image):
+        """Return the size of the image depending on the image and options."""
+        return image.get_proportional_size(
+            width=self._img_writer.options.get_width(),
+            height=self._img_writer.options.get_height()
+        )
+
+    # -----------------------------------------------------------------------
 
     def close(self):
-        """Close all currently used cv2.VideoWriter()."""
+        """Close all currently used cv2.VideoWriter().
+
+        It has to be invoked when writing buffers is finished in order to
+        release the video writers.
+
+        """
         if self._tag_video_writer is not None:
             self._tag_video_writer.release()
         for person_id in self._person_video_writers:
@@ -168,20 +245,9 @@ class sppasVideoWriter(object):
     def write(self, video_buffer, out_name, pattern=""):
         """Save the result into file(s) depending on the options.
 
-        There are 3 main solutions to write the result of face tracking:
-
-        1. CSV: coordinates of the faces into a spreadsheet
-        2. video
-        3. folder with images
-
-        For 2 and 3, there are 2 possibilities:
-
-        1. tag: surround each detected face in the original image
-        2. crop: create one image for each detected face
-
         :param video_buffer: (sppasFacesVideoBuffer) The images and results to write
         :param out_name: (str) The output name for the folder and/or the video
-        :param pattern: (str) Pattern to add to a cropped image filename
+        :param pattern: (str) Pattern to add to cropped image/video filename(s)
 
         """
         fn, fe = os.path.splitext(out_name)
@@ -196,23 +262,25 @@ class sppasVideoWriter(object):
 
         # Write results in VIDEO format
         if self._video is True:
-            self.write_video(video_buffer, out_name)
+            self.write_video(video_buffer, out_name, pattern)
 
         # Write results in IMAGE format
         if self._folder is True:
-            self.write_folder(video_buffer, out_name, pattern="")
+            self.write_folder(video_buffer, out_name, pattern)
 
     # -----------------------------------------------------------------------
 
-    def write_video(self, video_buffer, out_name):
+    def write_video(self, video_buffer, out_name, pattern):
         """Save the result in video format.
 
         :param video_buffer: (sppasImage) The image to write
         :param out_name: (str) The filename of the output video file
+        :param pattern: (str) Pattern to add to cropped video filename(s)
 
         """
         if self._img_writer.options.tag is False and self._img_writer.options.crop is False:
-            logging.info("Video option enabled but no tag nor crop. Nothing to do.")
+            logging.info("Video option is enabled but no tag nor crop. "
+                         "Nothing to do.")
             return
 
         iter_images = video_buffer.__iter__()
@@ -222,6 +290,7 @@ class sppasVideoWriter(object):
 
             # Update the list of known persons from the detected ones
             self.__update_persons(video_buffer, i)
+
             # Create the list of coordinates ranked by person
             coords = self.__get_coordinates(video_buffer, i)
 
@@ -243,7 +312,7 @@ class sppasVideoWriter(object):
                     # Create the video writer of this person if necessary
                     if self._person_video_writers[known_person_id] is None:
                         self._person_video_writers[known_person_id] = \
-                            self.__create_video_writer(out_name, known_person_id, image, video_buffer)
+                            self.__create_video_writer(out_name, known_person_id, image, video_buffer, pattern)
                     if coords[j] is not None:
                         # Crop the given image to the coordinates
                         img = image.icrop(coords[j])
@@ -281,7 +350,7 @@ class sppasVideoWriter(object):
         iter_images = video_buffer.__iter__()
         for i in range(video_buffer.__len__()):
             image = next(iter_images)
-            img_name = "img_{:06d}".format(begin_idx + i)
+            img_name = self.__image_name(begin_idx + i)
 
             # Update the list of known persons from the detected ones
             self.__update_persons(video_buffer, i)
@@ -293,7 +362,7 @@ class sppasVideoWriter(object):
 
                 # Tag&Save the image
                 img = self._img_writer.tag_image(image, coords)
-                out_iname = os.path.join(folder, img_name + ".jpg")
+                out_iname = os.path.join(folder, img_name + self.__image_ext)
                 img.write(out_iname)
 
             if self._img_writer.options.crop is True:
@@ -301,7 +370,7 @@ class sppasVideoWriter(object):
                 # Browse through the persons and their coords to crop the image
                 for j, known_person_id in enumerate(self._person_video_writers):
                     # Create the image filename
-                    iname = img_name + "_" + known_person_id + pattern + ".jpg"
+                    iname = img_name + "_" + known_person_id + pattern + self.__image_ext
                     out_iname = os.path.join(folder, iname)
 
                     if coords[j] is not None:
@@ -314,7 +383,7 @@ class sppasVideoWriter(object):
     # -----------------------------------------------------------------------
     
     def __get_coordinates(self, video_buffer, i):
-        """Return the list of coordinates of detected faces ranked by person."""
+        """Return the list of coords of detected faces ranked by person."""
         all_faces = video_buffer.get_detected_faces(i)
         coords = list()
         for known_person_id in self._person_video_writers:
@@ -354,23 +423,23 @@ class sppasVideoWriter(object):
 
     # -----------------------------------------------------------------------
 
-    def __create_video_writer(self, out_name, person_id, image, video_buffer=None):
+    def __create_video_writer(self, out_name, person_id, image, video_buffer=None, pattern=""):
         """Create a cv2.VideoWriter() for a person."""
         # Fix width and height of the video
         w, h = self.get_image_size(image)
 
         # Fix the video filename
-        if len(person_id) > 0:
-            filename = out_name + "_" + person_id + ".mp4"
-        else:
-            filename = out_name + ".mp4"
-
+        filename = self.__out_name_pattern(out_name, person_id, pattern) + self.__video_ext
         logging.debug("Create a video writer {:s}. Size {:d}, {:d}"
                       "".format(filename, w, h))
 
         # Create a writer and add it to our dict
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # 'H', '2', '6', '4'
         writer = cv2.VideoWriter(filename, fourcc, self._fps, (w, h))
+        if writer.isOpened() is False:
+            logging.error("OpenCV failed to open the VideoWriter for file {}"
+                          "".format(filename))
+            return None
 
         # Add blank images if the buffer is not at the beginning of the video
         if video_buffer is not None:
@@ -382,13 +451,17 @@ class sppasVideoWriter(object):
         return writer
 
     # -----------------------------------------------------------------------
-    
-    def get_image_size(self, image):
-        """Return the size of the image depending on the image and options."""
-        return image.get_proportional_size(
-            width=self._img_writer.options.get_width(),
-            height=self._img_writer.options.get_height()
-        )
+
+    @staticmethod
+    def __out_name_pattern(out_name, person_id, pattern):
+        """Return the filename. """
+        if len(pattern) > 0 and out_name.endswith(pattern):
+            # the out_name is already including the pattern
+            out_name = out_name[:len(out_name)-len(pattern)]
+        if len(person_id) == 0:
+            return "{:s}_{:s}".format(out_name, pattern)
+
+        return "{:s}_{:s}{:s}".format(out_name, person_id, pattern)
 
     # -----------------------------------------------------------------------
 
@@ -412,7 +485,7 @@ class sppasVideoWriter(object):
             iter_images = video_buffer.__iter__()
             for i in range(video_buffer.__len__()):
                 image = next(iter_images)
-                img_name = "img_{:06d}".format(begin_idx + i)
+                img_name = self.__image_name(begin_idx + i)
 
                 # Update the list of known persons from the detected ones
                 self.__update_persons(video_buffer, i)
@@ -440,3 +513,11 @@ class sppasVideoWriter(object):
                 if len(faces) == 0:
                     fd.write("{:s};".format(img_name))
                     fd.write("\n")
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def __image_name(idx):
+        """Return an image name from its index."""
+        return "img_{:06d}".format(idx)
+

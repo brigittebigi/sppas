@@ -186,7 +186,7 @@ if __name__ == "__main__":
         intsint = sppasIntsint(log=None)
         intsint.fix_options(parameters.get_options(ann_step_idx))
         if args.o:
-            intsint.run([args.i], output_file=args.o)
+            intsint.run([args.i], output=args.o)
         else:
             trs = intsint.run([args.i])
             for ann in trs[0]:
@@ -204,7 +204,7 @@ if __name__ == "__main__":
             parameters.add_to_workspace(os.path.abspath(f))
 
         # Fix the output file extension
-        parameters.set_output_extension(args.e, parameters.get_outformat(ann_step_idx))
+        parameters.set_output_extension(args.e, "ANNOT")
         parameters.set_report_filename(args.log)
 
         # Perform the annotation

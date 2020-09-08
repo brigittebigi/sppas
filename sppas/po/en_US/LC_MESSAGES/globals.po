@@ -71,6 +71,12 @@ msgstr "File '{:s}' can't be open or read."
 msgid ":ERROR 0660: "
 msgstr "File '{:s}' can't be saved."
 
+msgid ":ERROR 0670: "
+msgstr "Files with extension '{:s}' are not supported for reading."
+
+msgid ":ERROR 0680: "
+msgstr "Files with extension '{:s}' are not supported for writing."
+
 msgid ":INFO 0510: "
 msgstr "Installation of '{name}'."
 

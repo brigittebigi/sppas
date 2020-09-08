@@ -229,6 +229,7 @@ class sppasAnnotationsManager(Thread):
             return None
 
         self._fix_ann_options(annotation_key, auto_annot)
+        self._fix_ann_extensions(auto_annot)
 
         # Load language resources
         if self._progress:
@@ -267,6 +268,19 @@ class sppasAnnotationsManager(Thread):
 
     # -----------------------------------------------------------------------
 
+    def _fix_ann_extensions(self, auto_annot):
+        """Set the output extensions to an automatic annotation.
+
+        :param auto_annot: (BaseAnnotation)
+
+        """
+        for out_format in annots.outformat:
+            # Get extensions from the parameters and set to the annotation
+            ext = self._parameters.get_output_extension(out_format)
+            auto_annot.set_out_extension(ext, out_format)
+
+    # -----------------------------------------------------------------------
+
     def _run_annotation(self, annotation_key):
         """Execute the automatic annotation.
 
@@ -274,7 +288,7 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
-        step_idx = self._parameters.get_step_idx(annotation_key)
+        # step_idx = self._parameters.get_step_idx(annotation_key)
         a = self._create_ann_instance(annotation_key)
         if a is None:
             return 0
@@ -289,8 +303,7 @@ class sppasAnnotationsManager(Thread):
 
         # logging.debug('{:d} files to process'.format(len(files_to_process)))
         # logging.debug(files_to_process)
-        out_format = self._parameters.get_output_extension(step_idx)
-        out_files = a.batch_processing(files_to_process, self._progress, out_format)
+        out_files = a.batch_processing(files_to_process, self._progress)
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)

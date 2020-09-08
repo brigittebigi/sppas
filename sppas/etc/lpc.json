@@ -14,8 +14,6 @@
     }
   ],
 
-  "outformat": "ANNOT",
-
   "options": [
     {
       "id": "inputpattern",

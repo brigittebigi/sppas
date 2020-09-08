@@ -34,6 +34,7 @@
 
 """
 
+import os
 import logging
 
 from sppas.src.config import info, annots
@@ -51,6 +52,8 @@ from .activity import Activity
 
 MSG_EXTRA_TIER = (info(1270, "annotations"))
 
+# ---------------------------------------------------------------------------
+
 
 class sppasActivity(sppasBaseAnnotation):
     """SPPAS integration of the Activity generation.
@@ -59,7 +62,7 @@ class sppasActivity(sppasBaseAnnotation):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -150,14 +153,14 @@ class sppasActivity(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    def run(self, input_file, opt_input_file=None, output_file=None):
+    def run(self, input_file, opt_input_file=None, output=None):
         """Run the automatic annotation process on an input.
 
         Important: options could be changed!
 
         :param input_file: (list of str) (time-aligned tokens)
         :param opt_input_file: (list of str) Ignored.
-        :param output_file: (str) the output file name
+        :param output: (str) the output name - either filename or basename
         :returns: (sppasTranscription)
 
         """
@@ -185,7 +188,8 @@ class sppasActivity(sppasBaseAnnotation):
         #         logging.error('No hierarchy was created between activity and duration.')
 
         # Save results
-        if output_file is not None:
+        if output is not None:
+            output_file = self.fix_out_file_ext(output)
             parser = sppasRW(output_file)
             parser.write(trs_output)
 

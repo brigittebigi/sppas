@@ -325,12 +325,12 @@ class sppasMomel(sppasBaseAnnotation):
     # Apply the annotation on one given file
     # -----------------------------------------------------------------------
 
-    def run(self, input_file, opt_input_file=None, output_file=None):
+    def run(self, input_file, opt_input_file=None, output=None):
         """Run the automatic annotation process on an input.
 
         :param input_file: (list of str) pitch values
         :param opt_input_file: (list of str) ignored
-        :param output_file: (str) the output file name
+        :param output: (str) the output name
         :returns: (sppasTranscription)
 
         """
@@ -347,7 +347,8 @@ class sppasMomel(sppasBaseAnnotation):
         trs_output.append(anchors_tier)
         trs_output.set_meta('annotation_result_of', input_file[0])
 
-        if output_file is not None:
+        if output is not None:
+            output_file = self.fix_out_file_ext(output)
             parser = sppasRW(output_file)
             parser.write(trs_output)
 

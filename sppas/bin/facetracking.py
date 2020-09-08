@@ -56,6 +56,7 @@ from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 
 from sppas.src.videodata import video_extensions
+from sppas.src.imgdata import image_extensions
 from sppas.src.annotations.FaceTracking.sppasfacetrack import sppasFaceTrack
 from sppas.src.annotations import sppasParam
 from sppas.src.annotations import sppasAnnotationsManager
@@ -125,12 +126,20 @@ if __name__ == "__main__":
         help='Model base name (at least a model for Face Detection)')
 
     group_io.add_argument(
-        "-e",
+        "-ev",
         metavar=".ext",
         default=annots.video_extension,
         choices=video_extensions,
         help='Output file extension. One of: {:s}'
              ''.format(" ".join(video_extensions)))
+
+    group_io.add_argument(
+        "-ei",
+        metavar=".ext",
+        default=annots.image_extension,
+        choices=image_extensions,
+        help='Output file extension. One of: {:s}'
+             ''.format(" ".join(image_extensions)))
 
     # Add arguments from the options of the annotation
     # ------------------------------------------------
@@ -182,7 +191,7 @@ if __name__ == "__main__":
 
     arguments = vars(args)
     for a in arguments:
-        if a not in ('i', 'o', 'r', 'e', 'I', 'quiet', 'log'):
+        if a not in ('i', 'o', 'r', 'ei', 'ev', 'I', 'quiet', 'log'):
             parameters.set_option_value(ann_step_idx, a, str(arguments[a]))
 
     if args.i:
@@ -199,7 +208,7 @@ if __name__ == "__main__":
         ann.fix_options(parameters.get_options(ann_step_idx))
 
         if args.o:
-            ann.run([args.i], output_file=args.o)
+            ann.run([args.i], output=args.o)
         else:
             img_faces = ann.run([args.i])
             for i, faces in enumerate(img_faces):
@@ -219,7 +228,8 @@ if __name__ == "__main__":
 
         # Fix the output file extension and others
         parameters.set_report_filename(args.log)
-        parameters.set_output_extension(args.e, parameters.get_outformat(ann_step_idx))
+        parameters.set_output_extension(args.ev, "VIDEO")
+        parameters.set_output_extension(args.ei, "IMAGE")
 
         # Perform the annotation
         process = sppasAnnotationsManager()

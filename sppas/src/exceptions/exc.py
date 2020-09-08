@@ -360,7 +360,7 @@ class IndexRangeException(sppasValueError):
 class IOExtensionError(sppasIOError):
     """:ERROR 0610:.
 
-    Unknown extension for filename '{:s}'
+    Unknown extension for filename '{:s}'.
 
     """
 
@@ -405,7 +405,7 @@ class sppasOpenError(sppasIOError):
 # -----------------------------------------------------------------------
 
 
-class sppasWriteError(IOError):
+class sppasWriteError(sppasIOError):
     """:ERROR 0660:.
 
     File '{:s}' can't be saved.
@@ -415,5 +415,37 @@ class sppasWriteError(IOError):
     def __init__(self, filename):
         super(sppasWriteError, self).__init__("")
         self._status = 660
-        self.parameter = error(660) + \
-                         (error(660, "globals")).format(filename)
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(filename)
+
+# -----------------------------------------------------------------------
+
+
+class sppasExtensionReadError(sppasIOError):
+    """:ERROR 0670:.
+
+    Files with extension '{:s}' are not supported for reading.
+
+    """
+
+    def __init__(self, filename):
+        super(sppasExtensionReadError, self).__init__("")
+        self._status = 670
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(filename)
+
+# -----------------------------------------------------------------------
+
+
+class sppasExtensionWriteError(sppasIOError):
+    """:ERROR 0680:.
+
+    Files with extension '{:s}' are not supported for writing.
+
+    """
+
+    def __init__(self, filename):
+        super(sppasExtensionWriteError, self).__init__("")
+        self._status = 680
+        self.parameter = error(self._status) + \
+                         (error(self._status, "globals")).format(filename)

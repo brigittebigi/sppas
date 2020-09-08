@@ -213,9 +213,9 @@ if __name__ == "__main__":
 
         if args.o:
             if args.v:
-                ann.run([args.i, args.v], output_file=args.o)
+                ann.run([args.i, args.v], output=args.o)
             else:
-                ann.run([args.i], output_file=args.o)
+                ann.run([args.i], output=args.o)
         else:
             if args.v:
                 trs = ann.run([args.i, args.v])
@@ -248,7 +248,7 @@ if __name__ == "__main__":
 
         # Fix the output file extension and others
         parameters.set_lang(args.l)
-        parameters.set_output_extension(args.e, parameters.get_outformat(ann_step_idx))
+        parameters.set_output_extension(args.e, "ANNOT")
         parameters.set_report_filename(args.log)
 
         # Perform the annotation

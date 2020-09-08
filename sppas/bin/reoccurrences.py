@@ -166,7 +166,7 @@ if __name__ == "__main__":
         ann = sppasReOcc(log=None)
         ann.fix_options(parameters.get_options(ann_step_idx))
         if args.o:
-            ann.run([args.i, args.s], output_file=args.o)
+            ann.run([args.i, args.s], output=args.o)
         else:
             trs = ann.run([args.i, args.s])
             for tier in trs:

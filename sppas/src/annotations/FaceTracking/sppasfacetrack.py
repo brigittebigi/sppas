@@ -333,7 +333,7 @@ class sppasFaceTrack(sppasBaseAnnotation):
     # Apply the annotation on a given file
     # -----------------------------------------------------------------------
 
-    def detect(self, output_file=None):
+    def detect(self, output=None):
         """Browse the video and store results.
 
         """
@@ -358,9 +358,9 @@ class sppasFaceTrack(sppasBaseAnnotation):
             self.__ft.detect_buffer(self.__video_buffer)
 
             # save the current results
-            if output_file is not None:
+            if output is not None:
                 self.__video_writer.write(self.__video_buffer,
-                                          output_file,
+                                          output,
                                           pattern=self.get_pattern())
             for i in range(len(self.__video_buffer)):
                 faces = self.__video_buffer.get_detected_faces(i)
@@ -371,12 +371,12 @@ class sppasFaceTrack(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    def run(self, input_file, opt_input_file=None, output_file=None):
+    def run(self, input_file, opt_input_file=None, output=None):
         """Run the automatic annotation process on an input.
 
         :param input_file: (list of str) (image)
         :param opt_input_file: (list of str) ignored
-        :param output_file: (str) the output base name for files
+        :param output: (str) the output base name for files
         :returns: (list of points) Coordinates of detected faces
 
         """
@@ -402,7 +402,7 @@ class sppasFaceTrack(sppasBaseAnnotation):
                 "A video buffer contains {:d} images".format(bsize),
                 indent=1)
 
-        result = self.detect(output_file)
+        result = self.detect(output)
 
         # Quit properly
         self.__video_buffer.close()

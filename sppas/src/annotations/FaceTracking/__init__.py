@@ -44,8 +44,7 @@ This package requires video feature, for opencv and numpy dependencies.
 TODO:
 
 1. Debug et completer VideoWriter:
-    1a. gestion du pattern comme pour les images (personne AVANT pattern)
-    1b. ajout colonne and export CSV avec numero du buffer
+    gestion du pattern comme pour les images (personne AVANT pattern)
 
 2. FaceDetection: au moment de la fusion, faire le filtrage selon
    overlap apres passage en portrait

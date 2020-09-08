@@ -47,8 +47,6 @@
     "STANDALONE"
   ],
 
-  "outformat": "VIDEO",
-
   "options": [
     {
       "id": "inputpattern",

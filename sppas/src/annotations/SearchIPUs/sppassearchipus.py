@@ -392,7 +392,7 @@ class sppasSearchIPUs(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    def run_for_batch_processing(self, input_file, opt_input_file, output_format):
+    def run_for_batch_processing(self, input_file, opt_input_file):
         """Perform the annotation on a file.
 
         This method is called by 'batch_processing'. It fixes the name of the
@@ -402,13 +402,12 @@ class sppasSearchIPUs(sppasBaseAnnotation):
 
         :param input_file: (list of str) the required input
         :param opt_input_file: (list of str) the optional input
-        :param output_format: (str) Extension of the output file
         :returns: output file name or None
 
         """
         # Fix input/output file name
-        root_pattern = self.get_out_name(input_file[0], "")
-        out_name = root_pattern + output_format
+        root_pattern = self.get_out_name(input_file[0])
+        out_name = self.fix_out_file_ext(root_pattern)
 
         # Is there already an existing output file (in any format)!
         ext = []

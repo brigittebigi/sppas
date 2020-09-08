@@ -232,14 +232,14 @@ class sppasFillIPUs(sppasBaseAnnotation):
     # Apply the annotation on one or several given files
     # -----------------------------------------------------------------------
 
-    def run(self, input_file, opt_input_file=None, output_file=None):
+    def run(self, input_file, opt_input_file=None, output=None):
         """Run the automatic annotation process on an input.
 
         input_filename is a tuple (audio, raw transcription)
 
         :param input_file: (list of str) (audio, ortho)
         :param opt_input_file: (list of str) ignored
-        :param output_file: (str) the output file name
+        :param output: (str) the output file name
         :returns: (sppasTranscription)
 
         """
@@ -271,7 +271,8 @@ class sppasFillIPUs(sppasBaseAnnotation):
         tier.set_media(media)
 
         # Save in a file
-        if output_file is not None:
+        if output is not None:
+            output_file = self.fix_out_file_ext(output)
             parser = sppasRW(output_file)
             parser.write(trs_output)
 
@@ -279,7 +280,7 @@ class sppasFillIPUs(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    def run_for_batch_processing(self, input_file, opt_input_file, output_format):
+    def run_for_batch_processing(self, input_file, opt_input_file):
         """Perform the annotation on a file.
 
         This method is called by 'batch_processing'. It fixes the name of the
@@ -288,13 +289,13 @@ class sppasFillIPUs(sppasBaseAnnotation):
 
         :param input_file: (list of str) the required input
         :param opt_input_file: (list of str) the optional input
-        :param output_format: (str) Extension of the output file
         :returns: output file name or None
 
         """
         # Fix the output file name
-        root_pattern = self.get_out_name(input_file[0], "")
-        out_name = root_pattern + output_format
+        root_pattern = self.get_out_name(input_file[0])
+        out_name = self.fix_out_file_ext(root_pattern)
+        # out_name = root_pattern + output_format
 
         # Is there already an existing IPU-seg (in any format)!
         ext = []

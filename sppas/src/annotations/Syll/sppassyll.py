@@ -283,12 +283,12 @@ class sppasSyll(sppasBaseAnnotation):
     # Apply the annotation on one given file
     # -----------------------------------------------------------------------
 
-    def run(self, input_file, opt_input_file=None, output_file=None):
+    def run(self, input_file, opt_input_file=None, output=None):
         """Run the automatic annotation process on an input.
 
         :param input_file: (list of str) time-aligned phonemes
         :param opt_input_file: (list of str) ignored
-        :param output_file: (str) the output file name
+        :param output: (str) the output file name
         :returns: (sppasTranscription)
 
         """
@@ -329,8 +329,9 @@ class sppasSyll(sppasBaseAnnotation):
                     trs_output.append(t)
 
         # Save in a file
-        if output_file is not None:
+        if output is not None:
             if len(trs_output) > 0:
+                output_file = self.fix_out_file_ext(output)
                 parser = sppasRW(output_file)
                 parser.write(trs_output)
             else:

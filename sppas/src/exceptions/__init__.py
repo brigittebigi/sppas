@@ -65,6 +65,8 @@ from .exc import IOExtensionError         # 0610
 from .exc import NoDirectoryError         # 0620
 from .exc import sppasOpenError           # 0650
 from .exc import sppasWriteError          # 0660
+from .exc import sppasExtensionReadError  # 0670
+from .exc import sppasExtensionWriteError  # 0680
 
 # ---------------------------------------------------------------------------
 
@@ -87,5 +89,7 @@ __all__ = (
     "IOExtensionError",
     "NoDirectoryError",
     "sppasOpenError",
-    "sppasWriteError"
+    "sppasWriteError",
+    "sppasExtensionReadError",
+    "sppasExtensionWriteError"
 )
