@@ -484,13 +484,13 @@ class sppasAnnotationConfigureDialog(sppasDialog):
         """
         super(sppasAnnotationConfigureDialog, self).__init__(
             parent=parent,
-            title="annot_configure",
-            style=wx.DEFAULT_FRAME_STYLE | wx.DIALOG_NO_PARENT)
+            title=MSG_CONFIG,
+            style=wx.DEFAULT_FRAME_STYLE | wx.DIALOG_NO_PARENT,
+            name="annot_configure")
 
         self.annparam = annparam
 
-        self.CreateHeader(MSG_CONFIG + " {:s}".format(annparam.get_name()),
-                          "wizard-config")
+        self.CreateHeader("{:s}".format(annparam.get_name()), "wizard-config")
         self._create_content()
         self._create_buttons()
 

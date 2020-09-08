@@ -51,7 +51,6 @@ TODO:
    overlap apres passage en portrait
 
 3. GUI:
-    3a. ajouter une icone pour les video et gestion des extensions dans FileManager
     3b. titre de la fenetre des annotations: "Configurer..." -> "annot_configure"
 
 """
