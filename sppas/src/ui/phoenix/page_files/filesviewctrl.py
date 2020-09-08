@@ -39,6 +39,9 @@ from sppas.src.config import paths
 from sppas.src.anndata import sppasRW
 from sppas.src.wkps import States, FileName, FileRoot, FilePath, sppasWorkspace
 from sppas.src.ui import sppasTrash
+from sppas.src.videodata import video_extensions
+from sppas.src.imgdata import image_extensions
+from sppas.src.audiodata import audio_extensions
 
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
@@ -95,9 +98,16 @@ class FileAnnotIcon(object):
 
         """
         self.__exticon = dict()
-        self.__exticon['.WAV'] = "Audio"
-        self.__exticon['.WAVE'] = "Audio"
 
+        # Add multimedia extensions
+        for ext in audio_extensions:
+            self.__exticon[ext.upper()] = "audio"
+        for ext in image_extensions:
+            self.__exticon[ext.upper()] = "image"
+        for ext in video_extensions:
+            self.__exticon[ext.upper()] = "video"
+
+        # Add annotated files extensions
         for ext in sppasRW.TRANSCRIPTION_TYPES:
             software = sppasRW.TRANSCRIPTION_TYPES[ext]().software
             if ext.startswith(".") is False:
@@ -1206,7 +1216,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
             icon_name = STATES_ICON_NAMES[state]
             bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
             img = bitmap.ConvertToImage()
-            ColorizeImage(img, wx.BLACK, self.GetForegroundColour())
+            # ColorizeImage(img, wx.BLACK, self.GetForegroundColour())
             il.Add(wx.Bitmap(img))
             self.__ils.append(icon_name)
 
