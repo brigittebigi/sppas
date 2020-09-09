@@ -178,7 +178,7 @@ class sppasFaceDetection(sppasBaseAnnotation):
         # Save result as a list of coordinates (csv), a tagged image
         # and/or a list of images (face or portrait) in a folder
         if output is not None:
-            output_file = self.fix_out_file_ext(output)
+            output_file = self.fix_out_file_ext(output, out_format="IMAGE")
             self.__writer.write(image, coords, output_file, self.get_pattern())
             return [output_file]
 

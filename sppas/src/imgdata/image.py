@@ -306,7 +306,8 @@ class sppasImage(numpy.ndarray):
             return self.copy()
         image = cv2.resize(self, (prop_width, prop_height),
                            interpolation=cv2.INTER_AREA)
-        return image
+
+        return sppasImage(input_array=image)
 
     # ------------------------------------------------------------------------
 
@@ -327,7 +328,9 @@ class sppasImage(numpy.ndarray):
 
         # perform the rotation
         matrix = cv2.getRotationMatrix2D(center, angle, scale)
-        return cv2.warpAffine(self, matrix, (w, h))
+        rotated = cv2.warpAffine(self, matrix, (w, h))
+
+        return sppasImage(input_array=rotated)
 
     # -----------------------------------------------------------------------
 
@@ -380,6 +383,7 @@ class sppasImage(numpy.ndarray):
                 img.surround_coord(c, color, thickness, text)
             else:
                 img.surround_point(c, color, thickness)
+
         return img
 
     # -----------------------------------------------------------------------
@@ -451,7 +455,8 @@ class sppasImage(numpy.ndarray):
         try:
             cv2.imwrite(filename, self)
         except cv2.error as e:
-            logging.error(str(e))
+            logging.error("Error when writing file {}: {}"
+                          "".format(filename, str(e)))
             sppasWriteError(filename)
 
     # -----------------------------------------------------------------------

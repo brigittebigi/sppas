@@ -275,7 +275,7 @@ class sppasFillIPUs(sppasBaseAnnotation):
             output_file = self.fix_out_file_ext(output)
             parser = sppasRW(output_file)
             parser.write(trs_output)
-            return output_file
+            return [output_file]
 
         return trs_output
 
@@ -295,8 +295,6 @@ class sppasFillIPUs(sppasBaseAnnotation):
         """
         # Fix the output file name
         root_pattern = self.get_out_name(input_file[0])
-        out_name = self.fix_out_file_ext(root_pattern)
-        # out_name = root_pattern + output_format
 
         # Is there already an existing IPU-seg (in any format)!
         ext = []
@@ -308,11 +306,9 @@ class sppasFillIPUs(sppasBaseAnnotation):
         # it's existing... but not in the expected format: we convert!
         new_files = list()
         if exists_out_name is not None:
+            out_name = self.fix_out_file_ext(root_pattern)
             if exists_out_name.lower() == out_name.lower():
-                self.logfile.print_message(
-                    _info(1300).format(exists_out_name),
-                    indent=2, status=annots.info)
-                return None
+                return list()
 
             else:
                 try:
@@ -320,17 +316,14 @@ class sppasFillIPUs(sppasBaseAnnotation):
                     t = parser.read()
                     parser.set_filename(out_name)
                     parser.write(t)
-                    self.logfile.print_message(
-                        _info(1300).format(exists_out_name) +
-                        _info(1302).format(out_name),
-                        indent=2, status=annots.info)
-                    return out_name
+                    self.logfile.print_message(_info(1302).format(out_name), indent=2, status=annots.info)
+                    return [out_name]
                 except:
                     pass
         else:
             # Create annotation instance, fix options, run.
             try:
-                new_files = self.run(input_file, opt_input_file, out_name)
+                new_files = self.run(input_file, opt_input_file, root_pattern)
             except Exception as e:
                 self.logfile.print_message(
                     "{:s}\n".format(str(e)), indent=1, status=-1)

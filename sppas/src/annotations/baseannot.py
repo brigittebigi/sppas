@@ -165,8 +165,8 @@ class sppasBaseAnnotation(object):
         # If output exists, it is overridden
         if os.path.exists(output) and self.logfile is not None:
             self.logfile.print_message(
-                (info(1300, "annotations")).format(output) + " " +
-                info(1304, "annotations"), indent=2, status=annots.warning)
+                (info(1300, "annotations")).format(output),
+                indent=2, status=annots.warning)
 
         return output
 

@@ -409,7 +409,6 @@ class sppasSearchIPUs(sppasBaseAnnotation):
         """
         # Fix input/output file name
         root_pattern = self.get_out_name(input_file[0])
-        out_name = self.fix_out_file_ext(root_pattern)
 
         # Is there already an existing output file (in any format)!
         ext = []
@@ -420,11 +419,9 @@ class sppasSearchIPUs(sppasBaseAnnotation):
 
         # it's existing... but not in the expected format: convert!
         if exist_out_name is not None:
+            out_name = self.fix_out_file_ext(root_pattern)
             if exist_out_name.lower() == out_name.lower():
-                self.logfile.print_message(
-                    _info(1300).format(exist_out_name),
-                    indent=2, status=annots.info)
-                return None
+                return list()
 
             else:
                 try:
@@ -432,17 +429,14 @@ class sppasSearchIPUs(sppasBaseAnnotation):
                     t = parser.read()
                     parser.set_filename(out_name)
                     parser.write(t)
-                    self.logfile.print_message(
-                        _info(1300).format(exist_out_name) +
-                        _info(1302).format(out_name),
-                        indent=2, status=annots.warning)
-                    return out_name
+                    self.logfile.print_message(_info(1302).format(out_name), indent=2, status=annots.warning)
+                    return [out_name]
                 except:
                     pass
 
         try:
             # Execute annotation
-            new_files = self.run(input_file, opt_input_file, out_name)
+            new_files = self.run(input_file, opt_input_file, root_pattern)
         except Exception as e:
             new_files = list()
             self.logfile.print_message("{:s}\n".format(str(e)), indent=2, status=-1)

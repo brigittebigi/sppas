@@ -32,6 +32,7 @@
 
 """
 
+import logging
 from random import randint
 import codecs
 import cv2
@@ -384,7 +385,7 @@ class sppasImageWriter(object):
                               self.options.get_height())
 
         # Save the tagged/resized image
-        cv2.imwrite(out_img_name, img)
+        img.write(out_img_name)
 
     # -----------------------------------------------------------------------
 
@@ -414,7 +415,6 @@ class sppasImageWriter(object):
                                   self.options.get_height())
 
             # Save the cropped image
-            # cv2.imwrite(out_iname, img)
             img.write(out_iname)
 
     # -----------------------------------------------------------------------

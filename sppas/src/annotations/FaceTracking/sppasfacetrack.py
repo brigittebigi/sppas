@@ -336,6 +336,8 @@ class sppasFaceTrack(sppasBaseAnnotation):
     def detect(self, output=None):
         """Browse the video and store results.
 
+        It is supposed that the video is already opened.
+
         """
         # Browse the video using the buffer of images
         result = list()
@@ -383,8 +385,10 @@ class sppasFaceTrack(sppasBaseAnnotation):
         # Get and open the video filename from the input
         video = input_file[0]
         self.__video_buffer.open(video)
-        self.__video_writer.set_fps(self.__video_buffer.get_framerate())
         bsize = self.__video_buffer.get_size()
+        self.__video_writer.set_fps(self.__video_buffer.get_framerate())
+        self.__video_writer.set_image_extension(self._out_extensions["IMAGE"])
+        self.__video_writer.set_video_extension(self._out_extensions["VIDEO"])
 
         # Print information about the video in the report
         if self.logfile:

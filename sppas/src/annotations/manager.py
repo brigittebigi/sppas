@@ -288,7 +288,6 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
-        # step_idx = self._parameters.get_step_idx(annotation_key)
         a = self._create_ann_instance(annotation_key)
         if a is None:
             return 0
@@ -318,18 +317,18 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
-        step_idx = self._parameters.get_step_idx("fillipus")
         a = self._create_ann_instance("fillipus")
 
         files = list()
         audio_files = self.get_annot_files(
             pattern=a.get_input_pattern(),
-            extensions=sppas.src.audiodata.aio.extensions)
+            extensions=self._parameters.get_outformat_extensions("AUDIO"))
 
         for f in audio_files:
-            fn, _ = os.path.splitext(f)[0]
+            fn, _ = os.path.splitext(f)
             in_name = fn + ".txt"
             files.append((f, in_name))
+        logging.debug("{:d} files will be processed......".format(len(files)))
 
         out_files = a.batch_processing(files, self._progress)
 
@@ -346,7 +345,6 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
-        step_idx = self._parameters.get_step_idx("rms")
         a = self._create_ann_instance("rms")
 
         # Required input file
@@ -366,10 +364,7 @@ class sppasAnnotationsManager(Thread):
             # Append the 2 files
             files.append(((audio, f), []))
 
-        out_files = a.batch_processing(
-            files,
-            self._progress,
-            self._parameters.get_output_extension(step_idx))
+        out_files = a.batch_processing(files, self._progress)
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)
@@ -387,7 +382,6 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
-        step_idx = self._parameters.get_step_idx("alignment")
         a = self._create_ann_instance("alignment")
 
         # Required input file is a phonetization
@@ -403,7 +397,7 @@ class sppasAnnotationsManager(Thread):
 
             # Get the tokens input file
             extt = list()
-            for e in self._parameters.get_outformat_extensions("ANNOTS"):
+            for e in self._parameters.get_outformat_extensions("ANNOT"):
                 extt.append(a.get_opt_input_pattern() + e)
             tok = sppasAnnotationsManager._get_filename(base_f, extt)
 
