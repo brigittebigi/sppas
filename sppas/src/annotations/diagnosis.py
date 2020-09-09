@@ -47,10 +47,10 @@ import sppas.src.videodata
 
 # ----------------------------------------------------------------------------
 
-anndata_ext = ["."+e for e in sppasRW.extensions_in()]
-videodata_ext = sppas.src.videodata.video_extensions
-imgdata_ext = sppas.src.imgdata.image_extensions
-audiodata_ext = sppas.src.audiodata.aio.extensions
+anndata_ext = ["."+e.lower() for e in sppasRW.extensions_in()]
+videodata_ext = [e.lower() for e in sppas.src.videodata.video_extensions]
+imgdata_ext = [e.lower() for e in sppas.src.imgdata.image_extensions]
+audiodata_ext = [e.lower() for e in sppas.src.audiodata.aio.extensions]
 
 # ----------------------------------------------------------------------------
 

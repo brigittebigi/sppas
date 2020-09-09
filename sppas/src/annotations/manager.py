@@ -327,13 +327,11 @@ class sppasAnnotationsManager(Thread):
             extensions=sppas.src.audiodata.aio.extensions)
 
         for f in audio_files:
-            in_name = os.path.splitext(f)[0] + ".txt"
+            fn, _ = os.path.splitext(f)[0]
+            in_name = fn + ".txt"
             files.append((f, in_name))
 
-        out_files = a.batch_processing(
-            files,
-            self._progress,
-            self._parameters.get_output_extension(step_idx))
+        out_files = a.batch_processing(files, self._progress)
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)
@@ -363,9 +361,7 @@ class sppasAnnotationsManager(Thread):
             base_f = base_f.replace(a.get_input_pattern(), "")
 
             # Get the audio input file
-            audio = sppasAnnotationsManager._get_filename(
-                base_f,
-                sppas.src.audiodata.aio.extensions)
+            audio = sppasAnnotationsManager._get_filename(base_f, sppas.src.audiodata.aio.extensions)
 
             # Append the 2 files
             files.append(((audio, f), []))
@@ -406,9 +402,8 @@ class sppasAnnotationsManager(Thread):
             base_f = base_f.replace(a.get_input_pattern(), "")
 
             # Get the tokens input file
-            tokens_idx = self._parameters.get_step_idx("textnorm")
             extt = list()
-            for e in self._parameters.get_output_extensions(tokens_idx):
+            for e in self._parameters.get_outformat_extensions("ANNOTS"):
                 extt.append(a.get_opt_input_pattern() + e)
             tok = sppasAnnotationsManager._get_filename(base_f, extt)
 
@@ -420,10 +415,7 @@ class sppasAnnotationsManager(Thread):
             # Append all 3 files
             files.append(([f], (audio, tok)))
 
-        out_files = a.batch_processing(
-            files,
-            self._progress,
-            self._parameters.get_output_extension(step_idx))
+        out_files = a.batch_processing(files, self._progress)
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)

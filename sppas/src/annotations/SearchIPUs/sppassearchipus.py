@@ -350,12 +350,12 @@ class sppasSearchIPUs(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    def run(self, input_file, opt_input_file=None, output_file=None):
+    def run(self, input_file, opt_input_file=None, output=None):
         """Run the automatic annotation process on an input.
 
         :param input_file: (list of str) audio
         :param opt_input_file: (list of str) ignored
-        :param output_file: (str) the output file name
+        :param output: (str) the output file name
         :returns: (sppasTranscription)
 
         """
@@ -384,9 +384,11 @@ class sppasSearchIPUs(sppasBaseAnnotation):
         tier.set_media(media)
 
         # Save in a file
-        if output_file is not None:
+        if output is not None:
+            output_file = self.fix_out_file_ext(output)
             parser = sppasRW(output_file)
             parser.write(trs_output)
+            return [output_file]
 
         return trs_output
 
@@ -440,12 +442,12 @@ class sppasSearchIPUs(sppasBaseAnnotation):
 
         try:
             # Execute annotation
-            self.run(input_file, opt_input_file, out_name)
+            new_files = self.run(input_file, opt_input_file, out_name)
         except Exception as e:
-            out_name = None
+            new_files = list()
             self.logfile.print_message("{:s}\n".format(str(e)), indent=2, status=-1)
 
-        return out_name
+        return new_files
 
     # -----------------------------------------------------------------------
 

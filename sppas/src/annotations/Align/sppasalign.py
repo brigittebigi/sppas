@@ -465,20 +465,27 @@ class sppasAlign(sppasBaseAnnotation):
             raise
 
         # Save results
+        error = None
+        output_file = list()
+
         if output is not None:
             output_file = self.fix_out_file_ext(output)
             try:
                 # Save in a file
                 parser = sppasRW(output_file)
                 parser.write(trs_output)
-            except Exception:
-                if self._options['clean'] is True:
-                    shutil.rmtree(workdir)
-                raise
+            except Exception as e:
+                error = e
 
         # Remove the working directory we created
         if self._options['clean'] is True:
             shutil.rmtree(workdir)
+
+        if error is not None:
+            raise error
+
+        if output is not None:
+            return [output_file]
 
         return trs_output
 

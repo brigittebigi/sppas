@@ -377,7 +377,7 @@ class sppasFaceTrack(sppasBaseAnnotation):
         :param input_file: (list of str) (image)
         :param opt_input_file: (list of str) ignored
         :param output: (str) the output base name for files
-        :returns: (list of points) Coordinates of detected faces
+        :returns: (list of points) Coordinates of detected faces or filenames
 
         """
         # Get and open the video filename from the input
@@ -408,6 +408,9 @@ class sppasFaceTrack(sppasBaseAnnotation):
         self.__video_buffer.close()
         self.__video_buffer.reset()
         self.__video_writer.close()
+
+        if output is not None:
+            return []
         return result
 
     # -----------------------------------------------------------------------

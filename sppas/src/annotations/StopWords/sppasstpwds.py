@@ -233,6 +233,7 @@ class sppasStopWords(sppasBaseAnnotation):
             if len(trs_output) > 0:
                 parser = sppasRW(output_file)
                 parser.write(trs_output)
+                return [output_file]
             else:
                 raise EmptyOutputError
 

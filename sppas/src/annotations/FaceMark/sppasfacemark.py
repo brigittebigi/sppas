@@ -144,6 +144,7 @@ class sppasFaceMark(sppasBaseAnnotation):
         if output is not None:
             output_file = self.fix_out_file_ext(output)
             self.__writer.write(image, [coords], output_file, pattern="")
+            return output_file
 
         return coords
 

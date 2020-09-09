@@ -51,11 +51,10 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas import sg, annots, separators
+from sppas import sg, separators
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 
-from sppas.src.anndata.aio import extensions_out
 from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.annotations import sppasLPC
 from sppas.src.annotations.LPC.lpckeys import LPC
@@ -140,10 +139,10 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-e",
         metavar=".ext",
-        default=annots.annot_extension,
-        choices=extensions_out,
+        default=parameters.get_default_outformat_extension("ANNOT"),
+        choices=parameters.get_outformat_extensions("ANNOT"),
         help='Output file extension. One of: {:s}'
-             ''.format(" ".join(extensions_out)))
+             ''.format(" ".join(parameters.get_outformat_extensions("ANNOT"))))
 
     # Add arguments from the options of the annotation
     # ------------------------------------------------

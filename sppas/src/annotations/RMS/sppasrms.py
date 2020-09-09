@@ -255,7 +255,7 @@ class sppasRMS(sppasBaseAnnotation):
                 output_file = self.fix_out_file_ext(output)
                 parser = sppasRW(output_file)
                 parser.write(trs_output)
-                self.print_filename(output_file)
+                return [output_file]
             else:
                 raise EmptyOutputError
 

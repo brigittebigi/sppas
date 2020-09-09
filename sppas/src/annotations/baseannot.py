@@ -138,7 +138,7 @@ class sppasBaseAnnotation(object):
         if extension.startswith(".") is False:
             extension = "." + extension
 
-        if extension not in all_ext and out_format not in ("VIDEO", "IMAGE"):
+        if extension not in all_ext and len(all_ext) > 0:
             logging.error("Extension {} is not in the {} list."
                           "".format(extension, out_format))
             raise sppasExtensionWriteError(extension)
@@ -310,7 +310,7 @@ class sppasBaseAnnotation(object):
     # Perform automatic annotation:
     # -----------------------------------------------------------------------
 
-    def run(self, input_file, opt_input_file=None, output_file=None):
+    def run(self, input_file, opt_input_file=None, output=None):
         """Run the automatic annotation process on an input.
 
         Both the required and the optional inputs are a list of files
@@ -318,10 +318,14 @@ class sppasBaseAnnotation(object):
         There's no constraint on the filenames, neither for the inputs nor
         for the outputs.
 
+        Either returns the list of created files if the given output is not
+        none, or the created object (mainly a sppasTranscription) if no
+        output was given.
+
         :param input_file: (list of str) the required input(s)
         :param opt_input_file: (list of str) the optional input(s)
-        :param output_file: (str) the output name with or without extension
-        :returns: (sppasTranscription)
+        :param output: (str) the output name with or without extension
+        :returns: (sppasTranscription OR list of created file names)
 
         """
         raise NotImplementedError
@@ -350,14 +354,15 @@ class sppasBaseAnnotation(object):
 
         # Execute annotation
         try:
-            self.run(input_file, opt_input_file, out_name)
+            new_files = self.run(input_file, opt_input_file, out_name)
         except Exception as e:
-            out_name = None
-            self.logfile.print_message("{:s}\n".format(str(e)), indent=2, status=annots.error)
+            new_files = list()
+            self.logfile.print_message(
+                "{:s}\n".format(str(e)), indent=2, status=annots.error)
 
         # Restore the options before returning the result
         self._options = opt
-        return out_name
+        return new_files
 
     # -----------------------------------------------------------------------
 
@@ -402,13 +407,13 @@ class sppasBaseAnnotation(object):
                 progress.set_fraction(round(float(i)/float(total), 2))
                 progress.set_text("{!s:s}".format(*required_inputs))
 
-            out_name = self.run_for_batch_processing(required_inputs, optional_inputs)
-            if out_name is None:
+            out_names = self.run_for_batch_processing(required_inputs, optional_inputs)
+            if len(out_names) == 0:
                 self.logfile.print_message(
                     info(1306, "annotations"), indent=1, status=annots.info)
             else:
-                files_processed_success.append(out_name)
-                self.logfile.print_message(out_name, indent=1, status=annots.ok)
+                files_processed_success.extend(out_names)
+                self.logfile.print_message(out_names[0], indent=1, status=annots.ok)
             self.logfile.print_newline()
 
         # Indicate completed!

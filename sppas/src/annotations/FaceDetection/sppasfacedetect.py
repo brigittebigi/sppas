@@ -34,8 +34,6 @@
 
 """
 
-import logging
-import os
 from sppas.src.config import cfg
 from sppas.src.config import annots
 from sppas.src.exceptions import sppasEnableFeatureError
@@ -151,7 +149,7 @@ class sppasFaceDetection(sppasBaseAnnotation):
         :param input_file: (list of str) (image)
         :param opt_input_file: (list of str) ignored
         :param output: (str) the output name
-        :returns: (list of sppasCoords) Coordinates of detected faces
+        :returns: (list of sppasCoords) Coordinates of detected faces or filenames
 
         """
         # Get the image from the input
@@ -182,6 +180,7 @@ class sppasFaceDetection(sppasBaseAnnotation):
         if output is not None:
             output_file = self.fix_out_file_ext(output)
             self.__writer.write(image, coords, output_file, self.get_pattern())
+            return [output_file]
 
         return coords
 

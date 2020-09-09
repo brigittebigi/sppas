@@ -275,6 +275,7 @@ class sppasFillIPUs(sppasBaseAnnotation):
             output_file = self.fix_out_file_ext(output)
             parser = sppasRW(output_file)
             parser.write(trs_output)
+            return output_file
 
         return trs_output
 
@@ -305,6 +306,7 @@ class sppasFillIPUs(sppasBaseAnnotation):
         exists_out_name = sppasBaseAnnotation._get_filename(root_pattern, ext)
 
         # it's existing... but not in the expected format: we convert!
+        new_files = list()
         if exists_out_name is not None:
             if exists_out_name.lower() == out_name.lower():
                 self.logfile.print_message(
@@ -328,13 +330,12 @@ class sppasFillIPUs(sppasBaseAnnotation):
         else:
             # Create annotation instance, fix options, run.
             try:
-                self.run(input_file, opt_input_file, out_name)
+                new_files = self.run(input_file, opt_input_file, out_name)
             except Exception as e:
-                out_name = None
                 self.logfile.print_message(
                     "{:s}\n".format(str(e)), indent=1, status=-1)
 
-        return out_name
+        return new_files
 
     # -----------------------------------------------------------------------
 
