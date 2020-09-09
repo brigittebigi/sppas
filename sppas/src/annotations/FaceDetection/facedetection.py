@@ -107,7 +107,7 @@ class FaceDetection(sppasImageObjectDetection):
             # The scale is done without matter of the image size.
             shift_x, shift_y = c.scale(2.1)
             # the face is slightly at top, not exactly at the middle
-            shift_y = int(float(shift_y) / 1.5)
+            shift_y = int(float(shift_y) / 1.25)
             if image is None:
                 c.shift(shift_x, shift_y)
             else:

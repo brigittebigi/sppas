@@ -268,18 +268,26 @@ class sppasImageWriter(object):
         :param coords: (list or list of list of sppasCoords) The coordinates of objects
         :param out_img_name: (str) The filename of the output image file
         :param pattern: (str) Pattern to add to a cropped image filename
+        :return: List of created file names
 
         """
+        new_files = list()
         if self.options.csv is True:
             fn, fe = os.path.splitext(out_img_name)
             out_csv_name = fn + ".csv"
             self.write_csv_coords(coords, out_csv_name, out_img_name)
+            new_files.append(out_csv_name)
 
         if self.options.tag is True:
             self.write_tagged_img(image, coords, out_img_name)
+            new_files.append(out_img_name)
 
         if self.options.crop is True:
-            self.write_cropped_img(image, coords, out_img_name, pattern)
+            cropped_files = self.write_cropped_img(
+                image, coords, out_img_name, pattern)
+            new_files.extend(cropped_files)
+
+        return new_files
 
     # -----------------------------------------------------------------------
 
@@ -396,8 +404,10 @@ class sppasImageWriter(object):
         :param coords: (sppasCoords) The coordinates of objects
         :param out_img_name: (str) The filename of the output image files
         :param pattern: (str) Pattern to add to each file
+        :return: list of file names
 
         """
+        cropped_files = list()
         for i, c in enumerate(coords):
             # Fix the image filename
             fn, fe = os.path.splitext(out_img_name)
@@ -416,6 +426,9 @@ class sppasImageWriter(object):
 
             # Save the cropped image
             img.write(out_iname)
+            cropped_files.append(out_iname)
+
+        return cropped_files
 
     # -----------------------------------------------------------------------
 
