@@ -73,3 +73,15 @@ msgstr "The x-axis value {} can't be superior to the width {} of the image."
 
 msgid ":ERROR 2338: "
 msgstr "The y-axis value {} can't be superior to the height {} of the image."
+
+msgid ":ERROR 3610: "
+msgstr "La librairie OpenCV n'a pas réussi à ouvrir le fichier vidéo {filename}."
+
+msgid ":ERROR 3620: "
+msgstr "La librairie OpenCV n'a pas réussi à écrire dans le fichier vidéo {filename}."
+
+msgid ":ERROR 3630: "
+msgstr "La librairie OpenCV n'a pas pu lire la vidéo à partir du fichier {filename}."
+
+msgid ":ERROR 3640: "
+msgstr "Une autre vidéo a déjà ouvert et verrouillé le flux."

@@ -39,9 +39,9 @@ import unittest
 from sppas.src.config import paths
 from sppas.src.exceptions import sppasError
 from sppas.src.annotations.param import sppasParam
-from sppas.src.videodata import sppasVideoBuffer
+from sppas.src.videodata import sppasVideoReaderBuffer
 
-from ..FaceTracking.videowriter import sppasVideoWriter
+from ..FaceTracking.videowriter import sppasVideoCoordsWriter
 from ..FaceTracking.facebuffer import sppasFacesVideoBuffer
 from ..FaceTracking.sppasfacetrack import sppasFaceTrack
 
@@ -67,15 +67,15 @@ class TestFaceBuffer(unittest.TestCase):
 
     def test_subclassing(self):
 
-        class subclassVideoBuffer(sppasVideoBuffer):
+        class subclassVideoBuffer(sppasVideoReaderBuffer):
             def __init__(self, video=None,
-                         size=sppasVideoBuffer.DEFAULT_BUFFER_SIZE):
+                         size=sppasVideoReaderBuffer.DEFAULT_BUFFER_SIZE):
                 super(subclassVideoBuffer, self).__init__(video, size, overlap=0)
 
         bv = subclassVideoBuffer()
-        self.assertEqual(bv.get_size(), sppasVideoBuffer.DEFAULT_BUFFER_SIZE)
-        self.assertEqual(bv.get_overlap(), sppasVideoBuffer.DEFAULT_BUFFER_OVERLAP)
-        self.assertFalse(bv.video_capture())
+        self.assertEqual(bv.get_buffer_size(), sppasVideoReaderBuffer.DEFAULT_BUFFER_SIZE)
+        self.assertEqual(bv.get_buffer_overlap(), sppasVideoReaderBuffer.DEFAULT_BUFFER_OVERLAP)
+        self.assertFalse(bv.is_opened())
         self.assertEqual(0, bv.get_framerate())
         self.assertEqual(0, bv.tell())
 
@@ -107,7 +107,7 @@ class TestFaceBuffer(unittest.TestCase):
         fvb.next()
         self.assertEqual(10, len(fvb))
         self.assertEqual(10, fvb.tell())
-        self.assertEqual((0, 9), fvb.get_range())
+        self.assertEqual((0, 9), fvb.get_buffer_range())
         with self.assertRaises(ValueError):
             fvb.get_detected_faces(3)
 
@@ -133,7 +133,7 @@ class TestFaceBuffer(unittest.TestCase):
         fvb.next()
         self.assertEqual(10, len(fvb))
         self.assertEqual(10, fvb.tell())
-        self.assertEqual((0, 9), fvb.get_range())
+        self.assertEqual((0, 9), fvb.get_buffer_range())
 
         # Detect the face in the video
         fvb.load_fd_model(NET, HAAR1, HAAR2)
@@ -236,7 +236,7 @@ class TestSPPASFaceTracking(unittest.TestCase):
         # Set our custom video buffer and writer and configure them
         # with our options
         vb = sppasFacesVideoBuffer(video=None, size=10)
-        vw = sppasVideoWriter()
+        vw = sppasVideoCoordsWriter()
         ann.set_videos(vb, vw, options=True)
         self.assertEqual(3, ann.get_option("nbest"))
         self.assertEqual(0.5, ann.get_option("score"))
@@ -250,7 +250,7 @@ class TestSPPASFaceTracking(unittest.TestCase):
         # with their configuration
         vb = sppasFacesVideoBuffer(video=None, size=10)
         self.assertEqual(0.18, vb.get_filter_confidence())
-        vw = sppasVideoWriter()
+        vw = sppasVideoCoordsWriter()
         ann.set_videos(vb, vw, options=False)
         self.assertEqual(0, ann.get_option("nbest"))
         self.assertEqual(0.18, ann.get_option("score"))

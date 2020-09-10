@@ -42,12 +42,13 @@
 
 """
 
+from sppas.src.exceptions import sppasIOError
 from sppas.src.config import error
 
 # -----------------------------------------------------------------------
 
 
-class VideoOpenError(IOError):
+class VideoOpenError(sppasIOError):
     """:ERROR 3610:.
 
     Video of file {filename} can't be opened by opencv library.
@@ -55,15 +56,14 @@ class VideoOpenError(IOError):
     """
 
     def __init__(self, name):
-        self.parameter = error(3610) + (error(3610, "data")).format(filename=name)
-
-    def __str__(self):
-        return repr(self.parameter)
+        self._status = 3610
+        self.parameter = error(self._status) + \
+                         (error(self._status, "data")).format(filename=name)
 
 # -----------------------------------------------------------------------
 
 
-class VideoWriteError(IOError):
+class VideoWriteError(sppasIOError):
     """:ERROR 3620:.
 
     Video of file {filename} can't be written by opencv library.
@@ -71,15 +71,14 @@ class VideoWriteError(IOError):
     """
 
     def __init__(self, name):
-        self.parameter = error(3620) + (error(3620, "data")).format(filename=name)
-
-    def __str__(self):
-        return repr(self.parameter)
+        self._status = 3620
+        self.parameter = error(self._status) + \
+                         (error(self._status, "data")).format(filename=name)
 
 # -----------------------------------------------------------------------
 
 
-class VideoBrowseError(IOError):
+class VideoBrowseError(sppasIOError):
     """:ERROR 3630:.
 
     Video of file {filename} can't be read by OpenCV library.
@@ -87,7 +86,23 @@ class VideoBrowseError(IOError):
     """
 
     def __init__(self, name):
-        self.parameter = error(3630) + (error(3630, "data")).format(filename=name)
+        self._status = 3630
+        self.parameter = error(self._status) + \
+                         (error(self._status, "data")).format(filename=name)
 
-    def __str__(self):
-        return repr(self.parameter)
+
+# -----------------------------------------------------------------------
+
+
+class VideoLockError(sppasIOError):
+    """:ERROR 3640:.
+
+    A video has already locked the video stream.
+
+    """
+
+    def __init__(self):
+        self._status = 3640
+        self.parameter = error(self._status) + \
+                         (error(self._status, "data"))
+

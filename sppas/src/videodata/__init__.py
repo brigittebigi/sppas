@@ -45,10 +45,9 @@ when a class is instantiated.
 
 from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
+from sppas.src.exceptions import sppasPackageFeatureError
+from sppas.src.exceptions import sppasPackageUpdateFeatureError
 
-
-# ---------------------------------------------------------------------------
-# Define classes in case opencv&numpy are not installed.
 # ---------------------------------------------------------------------------
 
 
@@ -57,45 +56,66 @@ class sppasVideodataError(object):
         raise sppasEnableFeatureError("video")
 
 
-class sppasVideo(sppasVideodataError):
-    MAX_FPS = 240
-    pass
+# The feature "video" is enabled. Check if it's really correct!
+if cfg.dep_installed("video") is True:
+    v = '4'
+    try:
+        import cv2
+    except ImportError:
+        # Invalidate the feature because the package is not installed
+        cfg.set_dep("video", False)
 
+    else:
+        v = cv2.__version__.split(".")[0]
+        if v != '4':
+            # Invalidate the feature because the package is not up-to-date
+            cfg.set_dep("video", False)
 
-class sppasVideoBuffer(sppasVideodataError):
-    DEFAULT_BUFFER_SIZE = 200
-    DEFAULT_BUFFER_OVERLAP = 0
-    pass
+    class sppasVideoDataError(object):
+        def __init__(self, *args, **kwargs):
+            if v != '4':
+                raise sppasPackageUpdateFeatureError("cv2", "video")
+            else:
+                raise sppasPackageFeatureError("cv2", "video")
 
-
-video_extensions = tuple()
-
+else:
+    # The feature "video" is not enabled or unknown.
+    cfg.set_dep("video", False)
 
 # ---------------------------------------------------------------------------
-# Import the classes in case the "video" feature is enabled: opencv&numpy
-# are both installed and the automatic detections can work.
-# ---------------------------------------------------------------------------
 
 
-if cfg.dep_installed("video"):
-    from .video import sppasVideo
-    from .videobuffer import sppasVideoBuffer
+if cfg.dep_installed("video") is True:
+    from .video import sppasVideoReader
+    from .video import sppasVideoWriter
+    from .videobuffer import sppasVideoReaderBuffer
 
-    def opencv_extensions():
-        """Return the list of supported file extensions in lower case.
+else:
+    # Define classes in case opencv&numpy are not installed.
 
-        TODO: make the full list of supported video file extensions
+    class sppasVideoWriter(sppasVideodataError):
+        MAX_FPS = 0
+        FOURCC = dict()
+        RESOLUTIONS = dict()
 
-        """
-        return (".mp4", ".avi")
 
-    video_extensions = opencv_extensions()
+    class sppasVideoReader(sppasVideodataError):
+        pass
+
+
+    class sppasVideoBuffer(sppasVideodataError):
+        DEFAULT_BUFFER_SIZE = 200
+        DEFAULT_BUFFER_OVERLAP = 0
+        pass
+
+video_extensions = tuple(sppasVideoWriter.FOURCC.keys())
 
 # ---------------------------------------------------------------------------
 
 __all__ = (
-    "sppasVideo",
-    "sppasVideoBuffer",
+    "sppasVideoReader",
+    "sppasVideoWriter",
+    "sppasVideoReaderBuffer",
     "video_extensions",
 )
 

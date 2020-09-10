@@ -48,7 +48,7 @@ from ..baseannot import sppasBaseAnnotation
 
 from .facebuffer import sppasFacesVideoBuffer
 from .facetrack import FaceTracking
-from .videowriter import sppasVideoWriter
+from .videowriter import sppasVideoCoordsWriter
 
 # ---------------------------------------------------------------------------
 
@@ -83,7 +83,7 @@ class sppasFaceTrack(sppasBaseAnnotation):
 
         # The objects to store the input data and the results
         self.__video_buffer = sppasFacesVideoBuffer(size=10)
-        self.__video_writer = sppasVideoWriter()
+        self.__video_writer = sppasVideoCoordsWriter()
 
         # The detector
         self.__ft = FaceTracking()
@@ -291,15 +291,15 @@ class sppasFaceTrack(sppasBaseAnnotation):
         -options=False: The options of this class are changed to match the
         configuration of the video buffer and writer.
 
-        :param video_buffer: (sppasVideoBuffer)
-        :param video_writer: (sppasVideoWriter)
+        :param video_buffer: (sppasVideoReaderBuffer)
+        :param video_writer: (sppasVideoCoordsWriter)
         :param options: (bool) options priority
 
         """
         if isinstance(video_buffer, sppasFacesVideoBuffer) is False:
             raise sppasTypeError(video_buffer, "sppasFacesVideoBuffer")
-        if isinstance(video_writer, sppasVideoWriter) is False:
-            raise sppasTypeError(video_writer, "sppasVideoWriter")
+        if isinstance(video_writer, sppasVideoCoordsWriter) is False:
+            raise sppasTypeError(video_writer, "sppasVideoCoordsWriter")
 
         self.__video_buffer = video_buffer
         self.__video_writer = video_writer

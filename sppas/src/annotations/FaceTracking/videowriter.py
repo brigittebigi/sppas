@@ -46,14 +46,14 @@ from sppas.src.exceptions import sppasExtensionWriteError
 from sppas.src.config import annots
 from sppas.src.imgdata import sppasImageCoordsWriter
 from sppas.src.imgdata import sppasImage
-from sppas.src.videodata import sppasVideo
+from sppas.src.videodata import sppasVideoReader
 from sppas.src.imgdata import image_extensions
 from sppas.src.videodata import video_extensions
 
 # ---------------------------------------------------------------------------
 
 
-class sppasVideoWriter(object):
+class sppasVideoCoordsWriter(object):
     """Write a video, a set of images and/or coordinates into files.
 
     :author:       Brigitte Bigi
@@ -76,7 +76,7 @@ class sppasVideoWriter(object):
     """
 
     def __init__(self):
-        """Create a new sppasVideoWriter instance.
+        """Create a new sppasVideoCoordsWriter instance.
 
         Parts of each image can be extracted in separate image files and/or
         surrounded on the given image.
@@ -156,8 +156,8 @@ class sppasVideoWriter(object):
         value = int(value)
         if value < 0:
             raise NegativeValueError(value)
-        if value > sppasVideo.MAX_FPS:
-            raise IntervalRangeException(value, 0, sppasVideo.MAX_FPS)
+        if value > sppasVideoReader.MAX_FPS:
+            raise IntervalRangeException(value, 0, sppasVideoReader.MAX_FPS)
         self._fps = value
 
     # -----------------------------------------------------------------------

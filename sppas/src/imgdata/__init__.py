@@ -54,6 +54,11 @@ from .coordinates import sppasCoords
 # ---------------------------------------------------------------------------
 
 
+class sppasImageDataError(object):
+    def __init__(self, *args, **kwargs):
+        raise sppasEnableFeatureError("video")
+
+
 # The feature "video" is enabled. Check if it's really correct!
 if cfg.dep_installed("video") is True:
     v = '4'
@@ -79,10 +84,6 @@ if cfg.dep_installed("video") is True:
 else:
     # The feature "video" is not enabled or unknown.
     cfg.set_dep("video", False)
-
-    class sppasImageDataError(object):
-        def __init__(self, *args, **kwargs):
-            raise sppasEnableFeatureError("video")
 
 
 # ---------------------------------------------------------------------------

@@ -41,7 +41,7 @@ import logging
 from sppas.src.exceptions import NegativeValueError
 from sppas.src.exceptions import IndexRangeException
 from sppas.src.exceptions import sppasError
-from sppas.src.videodata import sppasVideoBuffer
+from sppas.src.videodata import sppasVideoReaderBuffer
 
 from ..FaceDetection import FaceDetection
 from ..FaceMark import FaceLandmark
@@ -49,7 +49,7 @@ from ..FaceMark import FaceLandmark
 # ---------------------------------------------------------------------------
 
 
-class sppasFacesVideoBuffer(sppasVideoBuffer):
+class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
     """Class to manage a video with a buffer of images and annotation results.
 
     :author:       Brigitte Bigi
@@ -65,7 +65,7 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     """
 
     def __init__(self, video=None,
-                 size=sppasVideoBuffer.DEFAULT_BUFFER_SIZE):
+                 size=sppasVideoReaderBuffer.DEFAULT_BUFFER_SIZE):
         """Create a new sppasFacesVideoBuffer instance.
 
         :param video: (mp4, etc...) The video filename to browse
@@ -99,7 +99,7 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
 
     def reset(self):
         """Override. Reset all the info related to the buffer content."""
-        sppasVideoBuffer.reset(self)
+        sppasVideoReaderBuffer.reset(self)
         self.__reset()
 
     # -----------------------------------------------------------------------
@@ -118,7 +118,7 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         """Override. Fill in the buffer with the next images & reset results.
 
         """
-        ret = sppasVideoBuffer.next(self)
+        ret = sppasVideoReaderBuffer.next(self)
         self.__reset()
         return ret
 
@@ -371,10 +371,10 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         value = int(value)
         if value < 0:
             raise NegativeValueError(value)
-        (begin, end) = self.get_range()
+        (begin, end) = self.get_buffer_range()
         if begin == -1 or end == -1:
             raise ValueError("Invalid index value: no buffer is loaded.")
-        if value < self.get_size():
+        if value < self.get_buffer_size():
             return value
-        raise IndexRangeException(value, 0, self.get_size())
+        raise IndexRangeException(value, 0, self.get_buffer_size())
 
