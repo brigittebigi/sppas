@@ -101,12 +101,10 @@ class sppasFaceMark(sppasBaseAnnotation):
 
             key = opt.get_key()
             if key == "csv":
-                self._options["csv"] = opt.get_value()
-                self.__writer.set_options(csv=opt.get_value())
+                self.set_out_csv(opt.get_value())
 
             elif key == "tag":
-                self._options["tag"] = opt.get_value()
-                self.__writer.set_options(tag=opt.get_value())
+                self.set_img_tag(opt.get_value())
 
             elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
                 self._options[key] = opt.get_value()
@@ -118,6 +116,26 @@ class sppasFaceMark(sppasBaseAnnotation):
     # Getters and Setters
     # -----------------------------------------------------------------------
 
+    def set_out_csv(self, out_csv=False):
+        """The result includes a CSV file.
+
+        :param out_csv: (bool) Create a CSV file with the coordinates
+
+        """
+        self.__writer.set_options(csv=out_csv)
+        self._options["csv"] = out_csv
+
+    # ----------------------------------------------------------------------
+
+    def set_img_tag(self, value=True):
+        """Draw the landmark points to the image.
+
+        :param value: (bool) Tag the images
+
+        """
+        self.__writer.set_options(tag=value)
+        self._options["tag"] = value
+
     # ----------------------------------------------------------------------
     # Apply the annotation on a given file
     # -----------------------------------------------------------------------
@@ -125,10 +143,10 @@ class sppasFaceMark(sppasBaseAnnotation):
     def run(self, input_file, opt_input_file=None, output=None):
         """Run the automatic annotation process on an input.
 
-        :param input_file: (list of str) (image)
+        :param input_file: (list of str) Inout file is an image
         :param opt_input_file: (list of str) ignored
         :param output: (str) the output file name
-        :returns: (list of points) Coordinates of detected landmarks
+        :returns: (list of points or filenames) Coordinates of detected sights
 
         """
         # Get the image from the input
@@ -137,14 +155,14 @@ class sppasFaceMark(sppasBaseAnnotation):
         # Search for coordinates of faces
         self.__fl.mark(image)
 
-        # Make the output list of coordinates
+        # Get the output list of coordinates
         coords = [c.copy() for c in self.__fl]
 
         # Save result as a list of coordinates (csv) and/or a tagged image
         if output is not None:
-            output_file = self.fix_out_file_ext(output)
-            self.__writer.write(image, [coords], output_file, pattern="")
-            return output_file
+            output_file = self.fix_out_file_ext(output, out_format="IMAGE")
+            new_files = self.__writer.write(image, [coords], output_file, pattern="")
+            return new_files
 
         return coords
 

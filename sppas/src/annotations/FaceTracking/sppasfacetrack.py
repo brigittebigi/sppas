@@ -336,7 +336,12 @@ class sppasFaceTrack(sppasBaseAnnotation):
     def detect(self, output=None):
         """Browse the video and store results.
 
-        It is supposed that the video is already opened.
+        It is supposed that the video is already opened and it is not
+        released when detect is finished.
+
+        :param output: (str) Base name for the output
+        :return: (list) Either the coordinates of all detected faces or
+        the list of all created file names
 
         """
         # Browse the video using the buffer of images
@@ -359,14 +364,15 @@ class sppasFaceTrack(sppasBaseAnnotation):
             # and associate a face to a person
             self.__ft.detect_buffer(self.__video_buffer)
 
-            # save the current results
+            # save the current results: file names or list of face coordinates
             if output is not None:
-                self.__video_writer.write(self.__video_buffer,
-                                          output,
-                                          pattern=self.get_pattern())
-            for i in range(len(self.__video_buffer)):
-                faces = self.__video_buffer.get_detected_faces(i)
-                result.append(faces)
+                new_files = self.__video_writer.write(
+                    self.__video_buffer, output, pattern=self.get_pattern())
+                result.extend(new_files)
+            else:
+                for i in range(len(self.__video_buffer)):
+                    faces = self.__video_buffer.get_detected_faces(i)
+                    result.append(faces)
             nb += 1
 
         return result
@@ -379,7 +385,8 @@ class sppasFaceTrack(sppasBaseAnnotation):
         :param input_file: (list of str) (image)
         :param opt_input_file: (list of str) ignored
         :param output: (str) the output base name for files
-        :returns: (list of points) Coordinates of detected faces or filenames
+        :returns: (list) Either the list of list of detected faces or the list
+        of all created files.
 
         """
         # Get and open the video filename from the input
@@ -406,6 +413,7 @@ class sppasFaceTrack(sppasBaseAnnotation):
                 "A video buffer contains {:d} images".format(bsize),
                 indent=1)
 
+        # Detect all faces on all images of the video and assign a person
         result = self.detect(output)
 
         # Quit properly
@@ -413,8 +421,6 @@ class sppasFaceTrack(sppasBaseAnnotation):
         self.__video_buffer.reset()
         self.__video_writer.close()
 
-        if output is not None:
-            return []
         return result
 
     # -----------------------------------------------------------------------

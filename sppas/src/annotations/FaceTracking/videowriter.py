@@ -43,6 +43,7 @@ import logging
 
 from sppas.src.exceptions import NegativeValueError, IntervalRangeException
 from sppas.src.exceptions import sppasExtensionWriteError
+from sppas.src.config import annots
 from sppas.src.imgdata import sppasImageWriter
 from sppas.src.imgdata import sppasImage
 from sppas.src.videodata import sppasVideo
@@ -96,9 +97,9 @@ class sppasVideoWriter(object):
         self._folder = False    # save results as images in a folder
         self._fps = 25          # default video framerate
 
-        # Output file extensions
-        self.__video_ext = ".mp4"
-        self.__image_ext = ".jpg"
+        # Output file extensions are initially set to SPPAS default values
+        self.__video_ext = annots.video_extension
+        self.__image_ext = annots.image_extension
 
     # -----------------------------------------------------------------------
     # Getters and setters for the options
@@ -245,28 +246,45 @@ class sppasVideoWriter(object):
     def write(self, video_buffer, out_name, pattern=""):
         """Save the result into file(s) depending on the options.
 
+        The out_name is a base name, its extension is ignored and replaced by
+        the one(s) defined in this class.
+
         :param video_buffer: (sppasFacesVideoBuffer) The images and results to write
         :param out_name: (str) The output name for the folder and/or the video
         :param pattern: (str) Pattern to add to cropped image/video filename(s)
+        :return: list of newly created file names
 
         """
-        fn, fe = os.path.splitext(out_name)
-        # if fn.endswith(pattern):
-        #     out_name = fn[:len(fn)-len(pattern)]
-        # else:
+        new_files = list()
+
+        # Remove any existing extension, and ignore it!
+        fn, _ = os.path.splitext(out_name)
         out_name = fn
 
         # Write results in CSV format
         if self._img_writer.options.csv is True:
-            self.write_csv_coords(video_buffer, out_name + ".csv")
+            out_csv_name = out_name + ".csv"
+            self.write_csv_coords(video_buffer, out_csv_name)
+            new_files.append(out_csv_name)
 
         # Write results in VIDEO format
         if self._video is True:
-            self.write_video(video_buffer, out_name, pattern)
+            new_video_files = self.write_video(video_buffer, out_name, pattern)
+            if len(new_video_files) > 1:
+                logging.info("{:d} video files created".format(len(new_video_files)))
+            new_files.extend(new_video_files)
 
         # Write results in IMAGE format
         if self._folder is True:
-            self.write_folder(video_buffer, out_name, pattern)
+            new_image_files = self.write_folder(video_buffer, out_name, pattern)
+            if len(new_image_files) > 1:
+                logging.info("{:d} image files created".format(len(new_image_files)))
+            # Too many files are created, they can't be added to the GUI...
+            # TODO: Find a solution in the GUI to deal with a huge nb of files
+            # then un-comment the next line
+            # new_files.extend(new_image_files)
+
+        return new_files
 
     # -----------------------------------------------------------------------
 
@@ -276,12 +294,14 @@ class sppasVideoWriter(object):
         :param video_buffer: (sppasImage) The image to write
         :param out_name: (str) The filename of the output video file
         :param pattern: (str) Pattern to add to cropped video filename(s)
+        :return: list of newly created video file names
 
         """
+        new_files = list()
         if self._img_writer.options.tag is False and self._img_writer.options.crop is False:
             logging.info("Video option is enabled but no tag nor crop. "
                          "Nothing to do.")
-            return
+            return new_files
 
         iter_images = video_buffer.__iter__()
         for i in range(video_buffer.__len__()):
@@ -299,7 +319,8 @@ class sppasVideoWriter(object):
                 # Create the cv2.VideoWriter() if it wasn't already done.
                 # An image is required to properly fix the video size.
                 if self._tag_video_writer is None:
-                    self._tag_video_writer = self.__create_video_writer(out_name, "", image)
+                    self._tag_video_writer, fn = self.__create_video_writer(out_name, "", image)
+                    new_files.append(fn)
 
                 # Tag&write the image with squares at the coords
                 img = self._img_writer.tag_image(image, coords)
@@ -311,8 +332,8 @@ class sppasVideoWriter(object):
                 for j, known_person_id in enumerate(self._person_video_writers):
                     # Create the video writer of this person if necessary
                     if self._person_video_writers[known_person_id] is None:
-                        self._person_video_writers[known_person_id] = \
-                            self.__create_video_writer(out_name, known_person_id, image, video_buffer, pattern)
+                        self._person_video_writers[known_person_id], fn = self.__create_video_writer(out_name, known_person_id, image, video_buffer, pattern)
+                        new_files.append(fn)
                     if coords[j] is not None:
                         # Crop the given image to the coordinates
                         img = image.icrop(coords[j])
@@ -326,6 +347,8 @@ class sppasVideoWriter(object):
                     # Add the image to the video
                     self._person_video_writers[known_person_id].write(img)
 
+        return new_files
+
     # -----------------------------------------------------------------------
 
     def write_folder(self, video_buffer, out_name, pattern=""):
@@ -336,6 +359,7 @@ class sppasVideoWriter(object):
         :param pattern: (str) Pattern to add to a cropped image filename
 
         """
+        new_files = list()
         # Create the directory with all results
         if os.path.exists(out_name) is False:
             os.mkdir(out_name)
@@ -364,6 +388,7 @@ class sppasVideoWriter(object):
                 img = self._img_writer.tag_image(image, coords)
                 out_iname = os.path.join(folder, img_name + self.__image_ext)
                 img.write(out_iname)
+                new_files.append(out_iname)
 
             if self._img_writer.options.crop is True:
 
@@ -379,6 +404,9 @@ class sppasVideoWriter(object):
                         img = self._img_writer.crop_and_size_image(image, coords[j])
                         # Add the image to the folder
                         img.write(out_iname)
+                        new_files.append(out_iname)
+
+        return new_files
 
     # -----------------------------------------------------------------------
     
@@ -448,7 +476,7 @@ class sppasVideoWriter(object):
             for i in range(b-1):
                 writer.write(img)
 
-        return writer
+        return writer, filename
 
     # -----------------------------------------------------------------------
 
@@ -458,8 +486,9 @@ class sppasVideoWriter(object):
         if len(pattern) > 0 and out_name.endswith(pattern):
             # the out_name is already including the pattern
             out_name = out_name[:len(out_name)-len(pattern)]
+
         if len(person_id) == 0:
-            return "{:s}_{:s}".format(out_name, pattern)
+            return "{:s}{:s}".format(out_name, pattern)
 
         return "{:s}_{:s}{:s}".format(out_name, person_id, pattern)
 
