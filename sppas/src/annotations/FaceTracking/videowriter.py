@@ -44,7 +44,7 @@ import logging
 from sppas.src.exceptions import NegativeValueError, IntervalRangeException
 from sppas.src.exceptions import sppasExtensionWriteError
 from sppas.src.config import annots
-from sppas.src.imgdata import sppasImageWriter
+from sppas.src.imgdata import sppasImageCoordsWriter
 from sppas.src.imgdata import sppasImage
 from sppas.src.videodata import sppasVideo
 from sppas.src.imgdata import image_extensions
@@ -84,7 +84,7 @@ class sppasVideoWriter(object):
 
         """
         # Manage options and write images if needed
-        self._img_writer = sppasImageWriter()
+        self._img_writer = sppasImageCoordsWriter()
         # A dict with key=person identifier
         # if crop+video options then value is the cv2.VideoWriter()
         self._person_video_writers = dict()

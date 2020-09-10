@@ -48,8 +48,10 @@ from sppas.src.exceptions import sppasEnableFeatureError
 from sppas.src.exceptions import sppasPackageFeatureError
 from sppas.src.exceptions import sppasPackageUpdateFeatureError
 
-# Store the rectangle and a score of an image
+# Store the rectangle and a score of an image. No external dependency.
 from .coordinates import sppasCoords
+
+# ---------------------------------------------------------------------------
 
 
 # The feature "video" is enabled. Check if it's really correct!
@@ -84,7 +86,7 @@ else:
 
 
 # ---------------------------------------------------------------------------
-# Either import classes or define them in cases opencv is valid or not.
+# Either import classes or define them
 # ---------------------------------------------------------------------------
 
 image_extensions = list()
@@ -93,7 +95,7 @@ if cfg.dep_installed("video") is True:
     # Subclass of numpy.ndarray to manipulate images
     from .image import sppasImage
     # Write image and coordinates
-    from .imgwriter import sppasImageWriter
+    from .imgwriter import sppasImageCoordsWriter
     # Automatically detect objects in an image
     from .objdetec import HaarCascadeDetector
     from .objdetec import NeuralNetDetector
@@ -111,7 +113,7 @@ if cfg.dep_installed("video") is True:
             TIFF files - *.tiff, *.tif (see the Notes section)
 
         """
-        return (".jpg", ".bmp", ".dib", ".jpeg", ".jpe", ".jp2", ".png",
+        return (".png", ".jpg", ".bmp", ".dib", ".jpeg", ".jpe", ".jp2",
                 ".pbm", ".pgm", ".sr", ".ras", ".tiff", ".tif")
 
     image_extensions.extend(opencv_extensions())
@@ -122,7 +124,7 @@ else:
         pass
 
 
-    class sppasImageWriter(sppasImageDataError):
+    class sppasImageCoordsWriter(sppasImageDataError):
         pass
 
 
@@ -143,7 +145,7 @@ else:
 __all__ = (
     "sppasCoords",
     "sppasImage",
-    "sppasImageWriter",
+    "sppasImageCoordsWriter",
     "image_extensions",
     "HaarCascadeDetector",
     "NeuralNetDetector",

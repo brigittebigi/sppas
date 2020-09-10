@@ -37,7 +37,7 @@
 from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
 from sppas.src.imgdata import sppasImage
-from sppas.src.imgdata import sppasImageWriter
+from sppas.src.imgdata import sppasImageCoordsWriter
 from sppas.src.imgdata import image_extensions
 
 from ..annotationsexc import AnnotationOptionError
@@ -73,7 +73,7 @@ class sppasFaceMark(sppasBaseAnnotation):
 
         super(sppasFaceMark, self).__init__("facemark.json", log)
         self.__fl = FaceLandmark()
-        self.__writer = sppasImageWriter()
+        self.__writer = sppasImageCoordsWriter()
 
     # -----------------------------------------------------------------------
 

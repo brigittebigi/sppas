@@ -35,7 +35,6 @@
 import logging
 from random import randint
 import codecs
-import cv2
 import os
 
 from .coordinates import sppasCoords
@@ -44,8 +43,8 @@ from .image import sppasImage
 # ---------------------------------------------------------------------------
 
 
-class ImageWriterOptions(object):
-    """Class to manage options of a writer.
+class ImageCoordsWriterOptions(object):
+    """Class to manage options of an image writer.
 
     :author:       Florian Hocquet, Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -53,7 +52,7 @@ class ImageWriterOptions(object):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    Fix options to write an image and a set of coordinates:
+    Store the options to write an image and a set of coordinates:
 
     - write coordinates in a CSV file;
     - write the image with coordinates tagged by a square;
@@ -195,7 +194,7 @@ class ImageWriterOptions(object):
 # ---------------------------------------------------------------------------
 
 
-class sppasImageWriter(object):
+class sppasImageCoordsWriter(object):
     """Write an image and optionally coordinates into files.
 
     :author:       Florian Hocquet, Brigitte Bigi
@@ -231,7 +230,7 @@ class sppasImageWriter(object):
     # -----------------------------------------------------------------------
 
     def __init__(self):
-        """Create a new sppasImageWriter instance.
+        """Create a new sppasImageCoordsWriter instance.
 
         Write the given image in the given filename.
         Parts of the image can be extracted in separate image files and/or
@@ -240,8 +239,8 @@ class sppasImageWriter(object):
 
         """
         # Initialize the options manager
-        self.options = ImageWriterOptions()
-        self.__colors = sppasImageWriter.gen_colors(10)
+        self.options = ImageCoordsWriterOptions()
+        self.__colors = sppasImageCoordsWriter.gen_colors(10)
 
     # -----------------------------------------------------------------------
 
@@ -352,7 +351,7 @@ class sppasImageWriter(object):
         # Add colors if we need more
         if len(coords) > len(self.__colors):
             nb = max(10, len(coords) - len(self.__colors) + 1)
-            new_colors = sppasImageWriter.gen_colors(nb)
+            new_colors = sppasImageCoordsWriter.gen_colors(nb)
             self.__colors.update(new_colors)
 
         # Add squares at given coordinates

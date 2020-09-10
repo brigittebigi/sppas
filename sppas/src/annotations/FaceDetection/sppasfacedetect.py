@@ -40,7 +40,7 @@ from sppas.src.exceptions import sppasEnableFeatureError
 
 from sppas.src.imgdata import image_extensions
 from sppas.src.imgdata import sppasImage
-from sppas.src.imgdata import sppasImageWriter
+from sppas.src.imgdata import sppasImageCoordsWriter
 
 from ..annotationsexc import AnnotationOptionError
 from ..baseannot import sppasBaseAnnotation
@@ -74,7 +74,7 @@ class sppasFaceDetection(sppasBaseAnnotation):
 
         super(sppasFaceDetection, self).__init__("facedetect.json", log)
         self.__fd = FaceDetection()
-        self.__writer = sppasImageWriter()
+        self.__writer = sppasImageCoordsWriter()
 
     # -----------------------------------------------------------------------
 

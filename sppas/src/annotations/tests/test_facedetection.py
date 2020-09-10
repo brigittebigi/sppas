@@ -40,7 +40,7 @@ import numpy as np
 from sppas.src.config import paths
 from sppas.src.imgdata import sppasCoords
 from sppas.src.imgdata import sppasImage
-from sppas.src.imgdata import sppasImageWriter
+from sppas.src.imgdata import sppasImageCoordsWriter
 
 from sppas.src.imgdata import HaarCascadeDetector
 from sppas.src.imgdata import NeuralNetDetector
@@ -185,7 +185,7 @@ class TestFaceDetection(unittest.TestCase):
         fd = FaceDetection()
         fn = os.path.join(DATA, "montage.png")
         img = sppasImage(filename=fn)
-        w = sppasImageWriter()
+        w = sppasImageCoordsWriter()
         w.set_options(tag=True)
 
         fd.load_model(HAAR3, HAAR1, HAAR2, NET)
@@ -257,7 +257,7 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
         fd = FaceDetection()
         fn = os.path.join(DATA, "montage.png")   # 3 faces should be found
         img = sppasImage(filename=fn)
-        w = sppasImageWriter()
+        w = sppasImageCoordsWriter()
         w.set_options(tag=True)
 
         # With the profile model
@@ -319,7 +319,7 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
         fd.load_model(HAAR1, HAAR2, HAAR3)
         fd.detect(img)
 
-        w = sppasImageWriter()
+        w = sppasImageCoordsWriter()
         w.set_options(tag=True)
         fn = os.path.join(DATA, "montage-faces.png")
         w.write(img, [c.copy() for c in fd], fn)
@@ -419,7 +419,7 @@ class TestDNNFaceDetection(unittest.TestCase):
         fd.detect(img)
         coords = [c.copy() for c in fd]
 
-        w = sppasImageWriter()
+        w = sppasImageCoordsWriter()
         w.set_options(tag=True)
         fn = os.path.join(DATA, "montage-dnnfaces.png")
         w.write(img, coords, fn)
