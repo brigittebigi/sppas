@@ -70,6 +70,52 @@ class TestImage(unittest.TestCase):
 
     # -----------------------------------------------------------------------
 
+    def test_size(self):
+        img = sppasImage(filename=TestImage.fn)
+        self.assertEqual(1488, img.width)
+        self.assertEqual(803, img.height)
+        self.assertEqual(3, img.channel)
+        self.assertEqual((1488, 803), img.size())
+        self.assertEqual((744, 401), img.center)
+
+    # -----------------------------------------------------------------------
+
+    def test_memory_usage(self):
+        img = cv2.imread(TestImage.fn)
+        i1 = sppasImage(input_array=img)
+        self.assertEqual(1488, i1.width)
+        self.assertEqual(803, i1.height)
+        self.assertEqual(3, i1.channel)
+
+        # Each (r,g,b) is 3 bytes (uint8)
+        self.assertEqual(803*1488*3, i1.nbytes)
+
+    # -----------------------------------------------------------------------
+
+    def test_blank(self):
+        blank = sppasImage(0).blank_image(100, 200)
+        self.assertEqual(100, blank.width)
+        self.assertEqual(200, blank.height)
+        self.assertEqual(3, blank.channel)
+
+        img = sppasImage(filename=TestImage.fn)
+        blank = img.blank_image()
+        self.assertEqual(1488, blank.width)
+        self.assertEqual(803, blank.height)
+        self.assertEqual(3, blank.channel)
+
+        blank = img.blank_image(w=1000)
+        self.assertEqual(1000, blank.width)
+        self.assertEqual(803, blank.height)
+        self.assertEqual(3, blank.channel)
+
+        blank = img.blank_image(h=1000)
+        self.assertEqual(1488, blank.width)
+        self.assertEqual(1000, blank.height)
+        self.assertEqual(3, blank.channel)
+
+    # -----------------------------------------------------------------------
+
     def test_crop(self):
         image = sppasImage(filename=TestImage.fn)
         cropped = image.icrop(sppasCoords(886, 222, 177, 189))
@@ -93,16 +139,3 @@ class TestImage(unittest.TestCase):
 
         # test if broadcastable shape, same elements values
         self.assertTrue(numpy.array_equiv(cropped, cropped_read))
-
-    # -----------------------------------------------------------------------
-
-    def test_memory_usage(self):
-        img = cv2.imread(TestImage.fn)
-        i1 = sppasImage(input_array=img)
-        self.assertEqual(1488, i1.width)
-        self.assertEqual(803, i1.height)
-        self.assertEqual(3, i1.channel)
-
-        # Each (r,g,b) is 3 bytes (uint8)
-        self.assertEqual(803*1488*3, i1.nbytes)
-

@@ -337,12 +337,12 @@ class sppasVideoCoordsWriter(object):
                     if coords[j] is not None:
                         # Crop the given image to the coordinates
                         img = image.icrop(coords[j])
-                        # Force to resize
+                        # Force to resize. TODO: RESIZE IN THE VIDEOWRITER, not here.
                         img = img.iresize(w, h)
                     else:
                         # This person is not in the image.
                         # Create an empty image to add it into the video.
-                        img = sppasImage(0).blank_image(w, h)
+                        img = image.blank_image()
 
                     # Add the image to the video
                     self._person_video_writers[known_person_id].write(img)
@@ -472,7 +472,7 @@ class sppasVideoCoordsWriter(object):
         # Add blank images if the buffer is not at the beginning of the video
         if video_buffer is not None:
             b, e = video_buffer.get_range()
-            img = sppasImage(0).blank_image(w, h)
+            img = image.blank_image()
             for i in range(b-1):
                 writer.write(img)
 

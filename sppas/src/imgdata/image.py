@@ -39,11 +39,11 @@ import numpy
 
 from sppas.src.exceptions import sppasIOError
 from sppas.src.exceptions import sppasTypeError
-from sppas.src.exceptions import sppasWriteError
 from sppas.src.exceptions import NegativeValueError
 
 from .coordinates import sppasCoords
 from .imgdataexc import ImageReadError
+from .imgdataexc import ImageWriteError
 
 # ----------------------------------------------------------------------------
 
@@ -66,7 +66,7 @@ class sppasImage(numpy.ndarray):
         >>> img3 = sppasImage(input_array=img1)
 
     An image of width=320 and height=200 is represented by len(img)=200;
-    each of these 200 rows contains 320 lists of [r,g,b] values.
+    each of these 200 rows contains 320 lists of [b,g,r] values.
 
     Important:
     When the image file is read with the OpenCV function imread(),
@@ -129,12 +129,46 @@ class sppasImage(numpy.ndarray):
 
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def blank_image(w, h):
+    @property
+    def width(self):
+        _, w, _ = self.shape
+        return w
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def height(self):
+        h, _, _ = self.shape
+        return h
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def channel(self):
+        _, _, c = self.shape
+        return c
+
+    # -----------------------------------------------------------------------
+    
+    @property
+    def center(self):
+        """Return the position (x, y) of the center of the image."""
+        (w, h) = self.size()
+        return w // 2, h // 2
+
+    # -----------------------------------------------------------------------
+
+    def size(self):
+        h, w, _ = self.shape
+        return w, h
+
+    # -----------------------------------------------------------------------
+
+    def blank_image(self, w=0, h=0):
         """Create and return an image with black pixels only.
 
-        :param w: (int) Image width
-        :param h: (int) Image height
+        :param w: (int) Image width. 0 means to use the current image width.
+        :param h: (int) Image height. 0 means to use the current height.
         :return: (sppasImage)
 
         """
@@ -142,10 +176,16 @@ class sppasImage(numpy.ndarray):
             raise NegativeValueError(w)
         if h < 0:
             raise NegativeValueError(h)
+        if w == 0:
+            w = self.width
+        if h == 0:
+            h = self.height
 
-        t = (h, w, 3)  # To store pixels
+        # To store pixels
+        t = (h, w, 3)
         # Creation of array
         img = numpy.zeros(t, dtype=numpy.uint8)
+
         # Return the matrix as an image
         return sppasImage(input_array=img)
 
@@ -154,34 +194,49 @@ class sppasImage(numpy.ndarray):
     # -----------------------------------------------------------------------
 
     def ired(self, value=0):
-        """Return a copy of the image in red-color."""
+        """Return a copy of the image in red-color.
+        
+        :param value: (int) Fixed red value ranging (0, 255)
+        :return: (sppasImage)
+        
+        """
         value = int(value)
-        if value < 0:
-            value = 0
         value = value % 255
         img = self.copy()
         img[:, :, (0, 1)] = value
         return sppasImage(input_array=img)
 
+    # -----------------------------------------------------------------------
+    
     def igreen(self, value=0):
-        """Return a copy of the image in green-color."""
+        """Return a copy of the image in green-color.
+        
+        :param value: (int) Fixed green value ranging (0, 255)
+        :return: (sppasImage)
+        
+        """
         value = int(value)
-        if value < 0:
-            value = 0
         value = value % 255
         img_green = self.copy()
         img_green[:, :, (0, 2)] = value
         return sppasImage(input_array=img_green)
 
+    # -----------------------------------------------------------------------
+
     def iblue(self, value=0):
-        """Return a copy of the image in blue-color."""
+        """Return a copy of the image in blue-color.
+        
+        :param value: (int) Fixed blue value ranging (0, 255)
+        :return: (sppasImage)
+        
+        """
         value = int(value)
-        if value < 0:
-            value = 0
         value = value % 255
         img = self.copy()
         img[:, :, (1, 2)] = value
         return sppasImage(input_array=img)
+
+    # -----------------------------------------------------------------------
 
     def igray(self):
         """Return a copy of the image in grayscale."""
@@ -190,15 +245,20 @@ class sppasImage(numpy.ndarray):
         img_gray = numpy.average(self, weights=[0.114, 0.587, 0.2989], axis=2)
         return sppasImage(input_array=img_gray)
 
+    # -----------------------------------------------------------------------
+
     def inegative(self):
         """Return a negative/positive color image."""
         img = 255 - self
         return sppasImage(input_array=img)
 
+    # -----------------------------------------------------------------------
+
     def ireduction(self, value=128):
         """Apply a color-reduction.
 
         :param value: (int) Reduction value in range(0, 255)
+        :return: (sppasImage)
 
         """
         value = int(value)
@@ -208,18 +268,14 @@ class sppasImage(numpy.ndarray):
         img = self // coeff * coeff
         return sppasImage(input_array=img)
 
-    def ireduction_rgb(self, r_value=128, g_value=128, b_value=128):
-        img = self.copy()
-        img[:, :, (0, 1)] = img[:, :, (0, 1)] // r_value * r_value
-        img[:, :, (0, 2)] = img[:, :, (0, 2)] // g_value * g_value
-        img[:, :, (1, 2)] = img[:, :, (1, 2)] // b_value * b_value
-        return sppasImage(input_array=img)
+    # -----------------------------------------------------------------------
 
     def igamma(self, coeff=1.0):
         """Return a copy of the image with lightness changed.
 
         :param coeff: (float) Set a value inn range (0., 1.) to increase
         lightness and a value > 1. to increase darkness.
+        :return: (sppasImage)
 
         """
         if coeff < 0.:
@@ -227,8 +283,10 @@ class sppasImage(numpy.ndarray):
         img = 255.0 * (self / 255.0) ** coeff
         return sppasImage(input_array=img)
 
+    # -----------------------------------------------------------------------
+
     def irgb(self):
-        """Return the image in RGB colors."""
+        """Return an (numpy.ndarray) representing the image in RGB colors."""
         img = self.copy()
         return img[:, :, [2, 1, 0]]
 
@@ -236,22 +294,168 @@ class sppasImage(numpy.ndarray):
     # Modify size
     # -----------------------------------------------------------------------
 
-    def icrop(self, coordinate):
+    def icrop(self, coord):
         """Return a cropped part of the image to given coordinates.
 
-        :param coordinate: (sppasCoords) crop to these x, y, w, h values.
-        :return: (numpy.ndarray)
+        :param coord: (sppasCoords) crop to these x, y, w, h values.
+        :return: (sppasImage)
 
         """
-        if isinstance(coordinate, sppasCoords) is False:
-            raise sppasTypeError(coordinate, "sppasCoords")
-        x1 = coordinate.x
-        x2 = coordinate.x + coordinate.w
-        y1 = coordinate.y
-        y2 = coordinate.y + coordinate.h
+        coord = self.__to_coords(coord)
+        x1 = coord.x
+        x2 = coord.x + coord.w
+        y1 = coord.y
+        y2 = coord.y + coord.h
         cropped = self[y1:y2, x1:x2]
 
         return sppasImage(input_array=cropped)
+
+    # ------------------------------------------------------------------------
+
+    def iresize(self, width=0, height=0):
+        """Return a new array with the specified width and height.
+
+        :param width: (int) The width to resize to (0=proportional to height)
+        :param height: (int) The height to resize to (0=proportional to width)
+        :return: (sppasImage)
+
+        """
+        prop_width, prop_height = self.get_proportional_size(width, height)
+        if prop_width+prop_height == 0:
+            return self.copy()
+
+        # Choose the interpolation method
+        dif = self.height if self.height > self.width else self.width
+        interpol = cv2.INTER_AREA if dif > (width + height) // 2 else cv2.INTER_CUBIC
+
+        image = cv2.resize(self, (prop_width, prop_height), interpolation=interpol)
+
+        return sppasImage(input_array=image)
+
+    # ------------------------------------------------------------------------
+
+    def izoom(self, width, height):
+        """Resize and crop the image to zoom it to the given size.
+
+        Keep the original aspect ratio of the image, crop if necessary.
+
+        :param width: (int) The width to resize to
+        :param height: (int) The height to resize to
+        :return: (sppasImage)
+
+        """
+        aspect_ratio = int(100. * float(self.width) / float(self.height)) / 100.
+        res_aspect_ratio = int(100. * float(width) / float(height)) / 100.
+
+        if aspect_ratio > res_aspect_ratio:
+            img_w = int(aspect_ratio * float(height))
+            img_h = height
+            img = self.iresize(img_w, img_h)
+            x1 = int((float(img_w - width)) / 2.)
+            x2 = x1 + width
+            img = img[:, x1:x2, :]
+
+        elif aspect_ratio < res_aspect_ratio:
+            img_w = width
+            img_h = int(float(width) / aspect_ratio)
+            img = self.iresize(img_w, img_h)
+            y1 = int(float(img_h - height) / 2.)
+            y2 = y1 + height
+            img = img[y1:y2, :, :]
+
+        else:
+            # aspect_ratio == res_aspect_ratio:
+            img = self.iresize(width, height)
+
+        return sppasImage(input_array=img)
+
+    # ------------------------------------------------------------------------
+
+    def icenter(self, width, height):
+        """Center the image into a blank image of the given size.
+
+        Keep the original aspect ratio of the image, crop if necessary or
+        add a black border all around.
+
+        :param width: (int) The width to resize to
+        :param height: (int) The height to resize to
+        :return: (sppasImage)
+
+        """
+        # Crop the image if the expected width/height are smaller
+        coord = sppasCoords(0, 0, width, height)
+        if self.width > width:
+            # the image width must be cropped
+            coord.x = (self.width - width) // 2
+        if self.height > height:
+            # the image width must be cropped
+            coord.y = (self.height - height) // 2
+        img = self.icrop(coord)
+
+        # Create a blank image of the expected width and height
+        mask = self.blank_image(width, height)
+
+        # Fix the position of the image into the mask
+        x_pos = (width - img.width) // 2
+        y_pos = (height - img.height) // 2
+
+        # Replace (BGR) values of the mask by the ones of the image
+        mask[y_pos:y_pos + img.height, x_pos:x_pos + img.width, :] = img[:img.height, :img.width, :]
+
+        return sppasImage(input_array=mask)
+
+    # ------------------------------------------------------------------------
+
+    def iextend(self, width, height):
+        """Scale the image to match the given size, keeping aspect ratio.
+
+        Keep the original aspect ratio of the image, add a black border.
+
+        :param width: (int) The width to resize to
+        :param height: (int) The height to resize to
+        :return: (sppasImage)
+
+        """
+        aspect_ratio = int(100. * float(self.width) / float(self.height)) / 100.
+        res_aspect_ratio = int(100. * float(width) / float(height)) / 100.
+
+        if aspect_ratio == res_aspect_ratio:
+            return self.iresize(width, height)
+
+        if aspect_ratio > res_aspect_ratio:
+            coeff = float(width) / float(self.width)
+            img = self.iresize(width, int(coeff * float(self.height)))
+
+        else:
+            coeff = float(height) / float(self.height)
+            img = self.iresize(int(coeff * float(self.width)), height)
+
+        # Add a black border where it's missing
+        return img.icenter(width, height)
+
+    # ------------------------------------------------------------------------
+
+    def irotate(self, angle, center=None, scale=1.0):
+        """Return a new array with the image rotated to the given angle.
+
+        :param angle: (float) Rotation angle in degrees.
+        :param center: (int) Center of the rotation in the source image.
+        :param scale: (float) Isotropic scale factor.
+        :return: (sppasImage)
+
+        """
+        # grab the dimensions of the image
+        (h, w) = self.shape[:2]
+
+        # if the center is None, initialize it as the center of the image
+        if center is None:
+            center = (w // 2, h // 2)
+
+        # perform the rotation
+        matrix = cv2.getRotationMatrix2D(center, angle, scale)
+        rotated = cv2.warpAffine(self, matrix, (w, h))
+
+        return sppasImage(input_array=rotated)
 
     # ------------------------------------------------------------------------
 
@@ -291,74 +495,6 @@ class sppasImage(numpy.ndarray):
 
         return prop_width, prop_height
 
-    # ------------------------------------------------------------------------
-
-    def iresize(self, width=0, height=0):
-        """Return a new array with the specified width and height.
-
-        :param width: (int) The width to resize to (0=proportional to height)
-        :param height: (int) The width to resize to (0=proportional to width)
-        :return: (numpy.ndarray)
-
-        """
-        prop_width, prop_height = self.get_proportional_size(width, height)
-        if prop_width+prop_height == 0:
-            return self.copy()
-        image = cv2.resize(self, (prop_width, prop_height),
-                           interpolation=cv2.INTER_AREA)
-
-        return sppasImage(input_array=image)
-
-    # ------------------------------------------------------------------------
-
-    def irotate(self, angle, center=None, scale=1.0):
-        """Return a new array with the image rotated to the given angle.
-
-        :param angle: (float) Rotation angle in degrees.
-        :param center: (int) Center of the rotation in the source image.
-        :param scale: (float) Isotropic scale factor.
-
-        """
-        # grab the dimensions of the image
-        (h, w) = self.shape[:2]
-
-        # if the center is None, initialize it as the center of the image
-        if center is None:
-            center = (w // 2, h // 2)
-
-        # perform the rotation
-        matrix = cv2.getRotationMatrix2D(center, angle, scale)
-        rotated = cv2.warpAffine(self, matrix, (w, h))
-
-        return sppasImage(input_array=rotated)
-
-    # -----------------------------------------------------------------------
-
-    @property
-    def width(self):
-        _, w, _ = self.shape
-        return w
-
-    # -----------------------------------------------------------------------
-
-    @property
-    def height(self):
-        h, _, _ = self.shape
-        return h
-
-    # -----------------------------------------------------------------------
-
-    @property
-    def channel(self):
-        _, _, c = self.shape
-        return c
-
-    # -----------------------------------------------------------------------
-
-    def size(self):
-        h, w, _ = self.shape
-        return w, h
-
     # -----------------------------------------------------------------------
     # Tag the image
     # -----------------------------------------------------------------------
@@ -375,6 +511,7 @@ class sppasImage(numpy.ndarray):
         """
         img = self.copy()
         for c in coords:
+            c = self.__to_coords(c)
             if c.w > 0 and c.h > 0:
                 # Draw the square and eventually the confidence inside the square
                 text = ""
@@ -397,14 +534,7 @@ class sppasImage(numpy.ndarray):
         :param text: (str) Add text
 
         """
-        if isinstance(coord, sppasCoords) is False:
-            if isinstance(coord, (tuple, list)) and len(coord) >= 4:
-                try:
-                    coord = sppasCoords(coord[0], coord[1], coord[2], coord[3])
-                except:
-                    pass
-        if isinstance(coord, sppasCoords) is False:
-            sppasTypeError(coord, "sppasCoords")
+        coord = self.__to_coords(coord)
 
         cv2.rectangle(self,
                       (coord.x, coord.y),
@@ -448,19 +578,43 @@ class sppasImage(numpy.ndarray):
         cv2.rectangle(self, (x, y), (x + w, y + h), color, thickness)
 
     # -----------------------------------------------------------------------
-    #
+    # Save image on disk
     # -----------------------------------------------------------------------
 
     def write(self, filename):
+        """Write the image in to given filename."""
         try:
             cv2.imwrite(filename, self)
         except cv2.error as e:
             logging.error("Error when writing file {}: {}"
                           "".format(filename, str(e)))
-            sppasWriteError(filename)
+            ImageWriteError(filename)
 
     # -----------------------------------------------------------------------
     # Private
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def __to_coords(coord):
+        """Check the given coord and return as a sppasCoords instance."""
+        if isinstance(coord, sppasCoords) is False:
+            if isinstance(coord, (tuple, list)) is True:
+                if len(coord) == 3:
+                    try:
+                        coord = sppasCoords(coord[0], coord[1], coord[2], 1.0)
+                    except:
+                        pass
+                elif len(coord) >= 4:
+                    try:
+                        coord = sppasCoords(coord[0], coord[1], coord[2], coord[3])
+                    except:
+                        pass
+
+        if isinstance(coord, sppasCoords) is False:
+            sppasTypeError(coord, "sppasCoords")
+
+        return coord
+
     # -----------------------------------------------------------------------
 
     def __to_dtype(self, value, dtype=int):
@@ -474,6 +628,8 @@ class sppasImage(numpy.ndarray):
 
         return value
 
+    # -----------------------------------------------------------------------
+    # Overloads
     # -----------------------------------------------------------------------
 
     def __eq__(self, other):
