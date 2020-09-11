@@ -222,12 +222,10 @@ class TestVideoBuffer(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_eval_max_buffer_size(self):
-        bv = sppasVideoReaderBuffer(TestVideoBuffer.VIDEO, size=50, overlap=0)
+        bv = sppasVideoReaderBuffer(None, size=-1, overlap=0)
+        self.assertEqual(86, bv.get_buffer_size())
 
-        w = bv.get_width()    # 960
-        h = bv.get_height()   # 540
-        nbytes = w * h * 3    # uint8 for r, g, and b
-        memory_max = 1024*1024*1024
-        buffer_max = memory_max // nbytes
-        print(buffer_max)
+        bv = sppasVideoReaderBuffer(TestVideoBuffer.VIDEO, size=-1, overlap=0)
+        self.assertEqual(345, bv.get_buffer_size())
+
 

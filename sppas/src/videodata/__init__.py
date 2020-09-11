@@ -104,8 +104,9 @@ else:
 
 
     class sppasVideoBuffer(sppasVideodataError):
-        DEFAULT_BUFFER_SIZE = 200
+        DEFAULT_BUFFER_SIZE = 0
         DEFAULT_BUFFER_OVERLAP = 0
+        MAX_MEMORY_SIZE = 0
         pass
 
 video_extensions = tuple(sppasVideoWriter.FOURCC.keys())

@@ -41,7 +41,7 @@ from sppas.src.exceptions import sppasError
 from sppas.src.annotations.param import sppasParam
 from sppas.src.videodata import sppasVideoReaderBuffer
 
-from ..FaceTracking.videowriter import sppasVideoCoordsWriter
+from ..FaceTracking.videotrackwriter import sppasVideoCoordsWriter
 from ..FaceTracking.facebuffer import sppasFacesVideoBuffer
 from ..FaceTracking.sppasfacetrack import sppasFaceTrack
 

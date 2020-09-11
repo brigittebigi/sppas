@@ -27,7 +27,7 @@
 
         ---------------------------------------------------------------------
 
-    src.annotations.FaceTracking.videowriter.py
+    src.annotations.FaceTracking.videotrackwriter.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Requires the "video" feature of SPPAS.
@@ -41,14 +41,13 @@ import cv2
 import shutil
 import logging
 
+from sppas.src.config import annots
 from sppas.src.exceptions import NegativeValueError, IntervalRangeException
 from sppas.src.exceptions import sppasExtensionWriteError
-from sppas.src.config import annots
 from sppas.src.imgdata import sppasImageCoordsWriter
-from sppas.src.imgdata import sppasImage
-from sppas.src.videodata import sppasVideoReader
 from sppas.src.imgdata import image_extensions
 from sppas.src.videodata import video_extensions
+from sppas.src.videodata import sppasVideoWriter
 
 # ---------------------------------------------------------------------------
 
@@ -86,10 +85,9 @@ class sppasVideoCoordsWriter(object):
         # Manage options and write images if needed
         self._img_writer = sppasImageCoordsWriter()
         # A dict with key=person identifier
-        # if crop+video options then value is the cv2.VideoWriter()
+        # if crop+video options then value is a sppasVideoWriter()
         self._person_video_writers = dict()
-        # A cv2.VideoWriter() for the tagged video
-        # used if tag+video options
+        # A sppasVideoWriter() for the tagged video - if tag+video options.
         self._tag_video_writer = None
 
         # Added options compared to the image writer
@@ -151,13 +149,12 @@ class sppasVideoCoordsWriter(object):
         """Fix the framerate of the output video.
 
         :param value: (int) frame per seconds
+        :raise: NegativeValueError, IntervalRangeError
 
         """
-        value = int(value)
-        if value < 0:
-            raise NegativeValueError(value)
-        if value > sppasVideoReader.MAX_FPS:
-            raise IntervalRangeException(value, 0, sppasVideoReader.MAX_FPS)
+        # if the value isn't correct, sppasVideoWriter() will raise an exc.
+        w = sppasVideoWriter()
+        w.set_fps(value)
         self._fps = value
 
     # -----------------------------------------------------------------------
@@ -228,18 +225,18 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def close(self):
-        """Close all currently used cv2.VideoWriter().
+        """Close all currently used sppasVideoWriter().
 
         It has to be invoked when writing buffers is finished in order to
         release the video writers.
 
         """
         if self._tag_video_writer is not None:
-            self._tag_video_writer.release()
+            self._tag_video_writer.close()
         for person_id in self._person_video_writers:
             video_writer = self._person_video_writers[person_id]
             if video_writer is not None:
-                video_writer.release()
+                video_writer.close()
 
     # -----------------------------------------------------------------------
 
@@ -316,7 +313,7 @@ class sppasVideoCoordsWriter(object):
 
             if self._img_writer.options.tag is True:
 
-                # Create the cv2.VideoWriter() if it wasn't already done.
+                # Create the sppasVideoWriter() if it wasn't already done.
                 # An image is required to properly fix the video size.
                 if self._tag_video_writer is None:
                     self._tag_video_writer, fn = self.__create_video_writer(out_name, "", image)
@@ -330,15 +327,13 @@ class sppasVideoCoordsWriter(object):
 
                 # Browse through the persons and their coords to crop the image
                 for j, known_person_id in enumerate(self._person_video_writers):
-                    # Create the video writer of this person if necessary
+                    # Create the sppasVideoWriter of this person if necessary
                     if self._person_video_writers[known_person_id] is None:
                         self._person_video_writers[known_person_id], fn = self.__create_video_writer(out_name, known_person_id, image, video_buffer, pattern)
                         new_files.append(fn)
                     if coords[j] is not None:
                         # Crop the given image to the coordinates
                         img = image.icrop(coords[j])
-                        # Force to resize. TODO: RESIZE IN THE VIDEOWRITER, not here.
-                        img = img.iresize(w, h)
                     else:
                         # This person is not in the image.
                         # Create an empty image to add it into the video.
@@ -365,7 +360,7 @@ class sppasVideoCoordsWriter(object):
             os.mkdir(out_name)
 
         # Create a folder to save results of this buffer
-        begin_idx, end_idx = video_buffer.get_range()
+        begin_idx, end_idx = video_buffer.get_buffer_range()
         folder = os.path.join(out_name, "{:06d}".format(begin_idx))
         if os.path.exists(folder) is True:
             shutil.rmtree(folder)
@@ -452,7 +447,7 @@ class sppasVideoCoordsWriter(object):
     # -----------------------------------------------------------------------
 
     def __create_video_writer(self, out_name, person_id, image, video_buffer=None, pattern=""):
-        """Create a cv2.VideoWriter() for a person."""
+        """Create a sppasVideoWriter() for a person."""
         # Fix width and height of the video
         w, h = self.get_image_size(image)
 
@@ -462,16 +457,20 @@ class sppasVideoCoordsWriter(object):
                       "".format(filename, w, h))
 
         # Create a writer and add it to our dict
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # 'H', '2', '6', '4'
-        writer = cv2.VideoWriter(filename, fourcc, self._fps, (w, h))
-        if writer.isOpened() is False:
-            logging.error("OpenCV failed to open the VideoWriter for file {}"
-                          "".format(filename))
+        try:
+            writer = sppasVideoWriter()
+            writer.set_size(w, h)
+            writer.set_fps(self._fps)
+            writer.set_aspect("extend")
+            writer.open(filename)
+        except Exception as e:
+            logging.error("OpenCV failed to open the VideoWriter for file "
+                          "{}: {}".format(filename, str(e)))
             return None
 
         # Add blank images if the buffer is not at the beginning of the video
         if video_buffer is not None:
-            b, e = video_buffer.get_range()
+            b, e = video_buffer.get_buffer_range()
             img = image.blank_image()
             for i in range(b-1):
                 writer.write(img)
@@ -502,8 +501,8 @@ class sppasVideoCoordsWriter(object):
 
         """
         # Get information about the buffer
-        begin_idx, end_idx = video_buffer.get_range()
-        buffer_nb = end_idx // video_buffer.get_size()
+        begin_idx, end_idx = video_buffer.get_buffer_range()
+        buffer_nb = end_idx // video_buffer.get_buffer_size()
 
         # Open or re-open the CSV file to append the new results
         mode = "w"

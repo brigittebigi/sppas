@@ -66,13 +66,16 @@ class sppasVideoReaderBuffer(sppasVideoReader):
 
     DEFAULT_BUFFER_SIZE = 200
     DEFAULT_BUFFER_OVERLAP = 0
+    MAX_MEMORY_SIZE = 1024*1024*512
+
+    # -----------------------------------------------------------------------
 
     def __init__(self, video=None,
-                 size=DEFAULT_BUFFER_SIZE,
+                 size=-1,
                  overlap=DEFAULT_BUFFER_OVERLAP):
         """Create a new sppasVideoReaderBuffer instance.
 
-        :param size: (int) Number if images of the buffer
+        :param size: (int) Number of images of the buffer or -1 for auto
         :param overlap: (overlap) The number of images to keep
         from the previous buffer
         :param video: (mp4, etc...) The video filename to browse
@@ -95,6 +98,8 @@ class sppasVideoReaderBuffer(sppasVideoReader):
         # Initialization of the video
         if video is not None:
             self.open(video)
+            if size == -1:
+                self.set_buffer_size(size)
 
     # -----------------------------------------------------------------------
 
@@ -133,21 +138,36 @@ class sppasVideoReaderBuffer(sppasVideoReader):
 
     # -----------------------------------------------------------------------
 
-    def set_buffer_size(self, value):
+    def set_buffer_size(self, value=-1):
         """Set the size of the buffer.
 
         The new value is applied to the next buffer, it won't affect the
         currently in-use data.
+        A value of -1 will fix automatically the buffer to use
+        MAX_MEMORY_SIZE Gb of RAM.
 
         :param value: (int) The new size of the buffer.
         :raise: ValueError
 
         """
         value = int(value)
+        if value == -1:
+            if self.is_opened() is False:
+                w, h = 1920, 1080
+            else:
+                w, h = self.get_width(), self.get_height()
+            nbytes = w * h * 3  # uint8 for r, g, and b
+            value = sppasVideoReaderBuffer.MAX_MEMORY_SIZE // nbytes
+            if self.is_opened() is True and value > self.get_nframes():
+                value = self.get_nframes()
+
         if value <= 0:
             raise NegativeValueError(value)
+
+        # The size of the buffer can't be larger than the video size
         if self.is_opened() is True and value > self.get_nframes():
-            raise IntervalRangeException(value, 1, self.get_nframes())
+            value = self.get_nframes()
+            # raise IntervalRangeException(value, 1, self.get_nframes())
 
         if self.__overlap >= value:
             raise ValueError("The already defined overlap value {:d} can't be "

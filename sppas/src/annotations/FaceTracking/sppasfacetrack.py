@@ -48,7 +48,7 @@ from ..baseannot import sppasBaseAnnotation
 
 from .facebuffer import sppasFacesVideoBuffer
 from .facetrack import FaceTracking
-from .videowriter import sppasVideoCoordsWriter
+from .videotrackwriter import sppasVideoCoordsWriter
 
 # ---------------------------------------------------------------------------
 
@@ -82,7 +82,7 @@ class sppasFaceTrack(sppasBaseAnnotation):
         super(sppasFaceTrack, self).__init__("facetrack.json", log)
 
         # The objects to store the input data and the results
-        self.__video_buffer = sppasFacesVideoBuffer(size=10)
+        self.__video_buffer = sppasFacesVideoBuffer(size=-1)
         self.__video_writer = sppasVideoCoordsWriter()
 
         # The detector
@@ -392,7 +392,7 @@ class sppasFaceTrack(sppasBaseAnnotation):
         # Get and open the video filename from the input
         video = input_file[0]
         self.__video_buffer.open(video)
-        bsize = self.__video_buffer.get_size()
+        bsize = self.__video_buffer.get_buffer_size()
         self.__video_writer.set_fps(self.__video_buffer.get_framerate())
         self.__video_writer.set_image_extension(self._out_extensions["IMAGE"])
         self.__video_writer.set_video_extension(self._out_extensions["VIDEO"])

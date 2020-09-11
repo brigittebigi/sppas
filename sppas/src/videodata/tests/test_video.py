@@ -38,6 +38,7 @@ import os
 import numpy as np
 
 from sppas.src.config import paths
+from sppas.src.imgdata import sppasImage
 
 from ..video import sppasVideoReader
 from ..video import sppasVideoWriter
@@ -156,6 +157,8 @@ class TestVideoWriter(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_open(self):
+        if os.path.exists(TestVideoWriter.VIDEO):
+            os.remove(TestVideoWriter.VIDEO)
         bv = sppasVideoWriter()
 
         # invalid file
@@ -171,7 +174,7 @@ class TestVideoWriter(unittest.TestCase):
 
         self.assertEqual(25, bv.get_framerate())
         self.assertEqual(704, bv.get_width())
-        self.assertEqual(576, bv.get_height())
+        self.assertEqual(528, bv.get_height())
         self.assertEqual(0, bv.get_nframes())
         self.assertEqual(0., bv.get_duration())
 
@@ -208,7 +211,7 @@ class TestVideoWriter(unittest.TestCase):
         bv = sppasVideoWriter()
         w, h = bv.get_size()
         self.assertEqual(704, w)
-        self.assertEqual(576, h)
+        self.assertEqual(528, h)
         self.assertEqual(25, bv.get_framerate())
 
         bv.set_resolution("HD")
@@ -221,5 +224,44 @@ class TestVideoWriter(unittest.TestCase):
 
     # -----------------------------------------------------------------------
 
+    def test_aspect(self):
+        bv = sppasVideoWriter()
+        self.assertEqual(2, bv.get_aspect())
+        self.assertEqual(2, bv.get_aspect(True))
+        self.assertEqual("extend", bv.get_aspect(False))
+
+        bv.set_aspect(3)
+        self.assertEqual(3, bv.get_aspect())
+        self.assertEqual(3, bv.get_aspect(True))
+        self.assertEqual("zoom", bv.get_aspect(False))
+
+        bv.set_aspect("center")
+        self.assertEqual(0, bv.get_aspect())
+        self.assertEqual(0, bv.get_aspect(True))
+        self.assertEqual("center", bv.get_aspect(False))
+
+        with self.assertRaises(KeyError):
+            bv.set_aspect("toto")
+        with self.assertRaises(KeyError):
+            bv.set_aspect(-1)
+
+    # -----------------------------------------------------------------------
+
     def test_write(self):
-        pass
+        if os.path.exists(TestVideoWriter.VIDEO):
+            os.remove(TestVideoWriter.VIDEO)
+        bv = sppasVideoWriter()
+        img = sppasImage().blank_image(1920, 1080)
+
+        with self.assertRaises(Exception):
+            bv.write(img)
+
+        bv.open(TestVideoWriter.VIDEO)
+        for i in range(10):
+            bv.write(img)
+        bv.close()
+
+        self.assertTrue(os.path.exists(TestVideoWriter.VIDEO))
+        os.remove(TestVideoWriter.VIDEO)
+
+        # How to really test it??? the aspect of images; etc
