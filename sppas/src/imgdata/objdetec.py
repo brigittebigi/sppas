@@ -91,8 +91,8 @@ class BaseObjectsDetector(object):
 
     """
 
-    DEFAULT_MIN_RATIO = 0.05
-    DEFAULT_MIN_SCORE = 0.18
+    DEFAULT_MIN_RATIO = 0.05   # Min object area is 5% of the image
+    DEFAULT_MIN_SCORE = 0.18   # Min value of the normalized confidence score
 
     # -----------------------------------------------------------------------
 
@@ -113,6 +113,12 @@ class BaseObjectsDetector(object):
         # It is supposed that the confidence scores of detected objects is
         # ranging [0., 1.]
         self.__min_score = BaseObjectsDetector.DEFAULT_MIN_SCORE
+
+    # -----------------------------------------------------------------------
+
+    def invalidate(self):
+        """Invalidate current list of detected object coordinates."""
+        self._coords = list()
 
     # -----------------------------------------------------------------------
 
@@ -169,69 +175,6 @@ class BaseObjectsDetector(object):
 
     # -----------------------------------------------------------------------
 
-    def load_model(self, model, *args):
-        """Load at least a model to instantiate a detector.
-
-        :param model: Filename of a model (DNN, HaarCascade, ...)
-        :raise: IOError if model is not loaded.
-
-        """
-        if model.endswith(self._extension) is False:
-            raise IOExtensionError(model)
-
-        if os.path.exists(model) is False:
-            raise sppasIOError(model)
-
-        # Create and load the model
-        self._set_detector(model)
-
-    # -----------------------------------------------------------------------
-
-    def invalidate(self):
-        """Invalidate current list of detected object coordinates."""
-        self._coords = list()
-
-    # -----------------------------------------------------------------------
-
-    def detect(self, image):
-        """Determine the coordinates of all the detected objects.
-
-        :param image: (sppasImage or numpy.ndarray)
-
-        """
-        # Invalidate current list of coordinates
-        self.invalidate()
-
-        # Convert image to sppasImage if necessary
-        if isinstance(image, numpy.ndarray) is True:
-            image = sppasImage(input_array=image)
-        if isinstance(image, sppasImage) is False:
-            raise sppasTypeError("image", "sppasImage")
-
-        # Verify if a model is instantiated
-        if self._detector is None:
-            raise sppasError(ERR_MODEL_MISS)
-
-        self._detection(image)
-        self._filter_overlapped()
-
-        # store separately the coords and their scores
-        detected = list()
-        for coord in self._coords:
-            c = coord.copy()
-            score = c.get_confidence()
-            detected.append((c, score))
-
-        # reset the list of coordinates
-        self._coords = list()
-
-        # sort by confidence score (the highest the better) and
-        # append into our list of coords
-        for coord, score in reversed(sorted(detected, key=lambda x: x[1])):
-            self._coords.append(coord)
-
-    # -----------------------------------------------------------------------
-
     def get_best(self, nb=1):
         """Return a copy of the coordinates with the n-best scores.
 
@@ -280,6 +223,83 @@ class BaseObjectsDetector(object):
 
     # -----------------------------------------------------------------------
 
+    def load_model(self, model, *args):
+        """Load at least a model to instantiate a detector.
+
+        :param model: Filename of a model (DNN, HaarCascade, ...)
+        :raise: IOError if model is not loaded.
+
+        """
+        if model.endswith(self._extension) is False:
+            raise IOExtensionError(model)
+
+        if os.path.exists(model) is False:
+            raise sppasIOError(model)
+
+        # Create and load the model
+        self._set_detector(model)
+
+    # -----------------------------------------------------------------------
+
+    def detect(self, image):
+        """Determine the coordinates of all the detected objects.
+
+        :param image: (sppasImage or numpy.ndarray)
+
+        """
+        # Invalidate current list of coordinates
+        self.invalidate()
+
+        # Convert image to sppasImage if necessary
+        if isinstance(image, numpy.ndarray) is True:
+            image = sppasImage(input_array=image)
+        if isinstance(image, sppasImage) is False:
+            raise sppasTypeError("image", "sppasImage")
+
+        # Verify if a model is instantiated
+        if self._detector is None:
+            raise sppasError(ERR_MODEL_MISS)
+
+        # Detect all objects, without filtering nor sorting.
+        # Actually, the "min_ratio" filter is applied by some detectors, so
+        # we applied it to all of them - to be consistent.
+        self._detection(image)
+
+        # Filter and sort by confidence scores
+        self.filter_confidence(self.get_min_score())
+        self.sort_by_score()
+
+        try:
+            self.filter_overlapped()
+            self.sort_by_score()
+        except NotImplementedError:
+            pass
+
+    # -----------------------------------------------------------------------
+
+    def sort_by_score(self):
+        """Sort the detected objects by their confidence score.
+
+        The highest the better.
+
+        """
+        # store separately the coords and their scores
+        detected = list()
+        for coord in self._coords:
+            c = coord.copy()
+            score = c.get_confidence()
+            detected.append((c, score))
+
+        # reset the list of coordinates
+        self._coords = list()
+
+        # sort by confidence score (the highest the better) and
+        # append into our list of coords
+        for coord, score in reversed(sorted(detected, key=lambda x: x[1])):
+            self._coords.append(coord)
+
+    # -----------------------------------------------------------------------
+
     def filter_best(self, nb=1):
         """Filter the coordinates to select only the n-best scores.
 
@@ -308,8 +328,10 @@ class BaseObjectsDetector(object):
         # No object was previously detected
         if len(self._coords) == 0:
             return None
+
         # check confidence value and select the best coordinates
         best = self.get_confidence(confidence)
+
         # apply only if requested n-best is less than actual size
         if len(best) < len(self._coords):
             self._coords = best
@@ -350,7 +372,7 @@ class BaseObjectsDetector(object):
     # -----------------------------------------------------------------------
 
     def _detection(self, image):
-        """Really determine the coordinates of the detected objects.
+        """Determine the coordinates of the detected objects.
 
         To be overridden.
 
@@ -359,7 +381,7 @@ class BaseObjectsDetector(object):
 
     # -----------------------------------------------------------------------
 
-    def _filter_overlapped(self, overlap=50.):
+    def filter_overlapped(self, overlap=50.):
         """Remove overlapping detected objects.
 
         To be overridden.
@@ -432,6 +454,7 @@ class HaarCascadeDetector(BaseObjectsDetector):
     a threshold size to filter too small objects.
 
     """
+
     def __init__(self):
         super(HaarCascadeDetector, self).__init__()
         self._extension = ".xml"
@@ -454,7 +477,7 @@ class HaarCascadeDetector(BaseObjectsDetector):
     # -----------------------------------------------------------------------
 
     def _detection(self, image):
-        """Really determine the coordinates of the detected objects.
+        """Determine the coordinates of the detected objects.
 
         :param image: (sppasImage or numpy.ndarray)
 
@@ -470,16 +493,11 @@ class HaarCascadeDetector(BaseObjectsDetector):
         scores = self.normalize_weights([d[0] for d in detections[2]])
 
         # convert the detected positions into a list of sppasCoords
-        detected_objects = list()
         for rect, score in zip(detections[0], scores):
             coords = sppasCoords(rect[0], rect[1], rect[2], rect[3])
-            # Enable the condition as soon as weight are normalized into scores
-            if score > self.get_min_score():
-                detected_objects.append((coords, score))
-
-        # sort by confidence score (the highest the better)
-        for coords, score in reversed(sorted(detected_objects, key=lambda x: x[1])):
             coords.set_confidence(score)
+            # Enable the condition as soon as weight are normalized into scores
+            # if score > self.get_min_score():
             self._coords.append(coords)
 
     # -----------------------------------------------------------------------
@@ -490,7 +508,7 @@ class HaarCascadeDetector(BaseObjectsDetector):
         This classifier already delete overlapped detections and too small
         detected objects. Returned detections are a tuple with 3 values:
             - a list of N-list of rectangles;
-            - a list of N times the value 20 (???);
+            - a list of N times the same int value (why???);
             - a list of N weight values.
 
         :return: (numpy arrays)
@@ -586,7 +604,7 @@ class NeuralNetDetector(BaseObjectsDetector):
     # -----------------------------------------------------------------------
 
     def _detection(self, image):
-        """Really determine the coordinates of the detected objects.
+        """Determine the coordinates of the detected objects.
 
         :param image: (sppasImage or numpy.ndarray)
 
@@ -605,22 +623,20 @@ class NeuralNetDetector(BaseObjectsDetector):
             # Sets the confidence score of the current object
             confidence = detections[0, 0, i, 2]
 
-            # Filter out weak detections:
-            # 1. by ensuring the `confidence` is greater than a minimum
-            #    empirically fixed confidence.
-            # 2. by ignoring too small objects, ie less than 5% of the image size
-            if confidence > self.get_min_score():
-                new_coords = self.__to_coords(detections, i, w, h, confidence)
-                if new_coords.w > int(float(w) * self.get_min_ratio()) and new_coords.h > int(
-                        float(w) * self.get_min_ratio()):
-                    self._coords.append(new_coords)
+            # Filter out weak detections by ignoring too small objects,
+            # i.e. less than 5% of the image size.
+            new_coords = self.__to_coords(detections, i, w, h, confidence)
+            if new_coords.w > int(float(w) * self.get_min_ratio()) and new_coords.h > int(
+                    float(h) * self.get_min_ratio()):
+                self._coords.append(new_coords)
 
     # -----------------------------------------------------------------------
 
-    def _filter_overlapped(self, overlap=50.):
+    def filter_overlapped(self, overlap=50.):
         """Remove overlapping detected objects.
 
-        :param overlap: (float) Minimum percentage of the overlapped area to invalidate a detected object.
+        :param overlap: (float) Minimum percentage of the overlapped area
+        to invalidate a detected object.
 
         """
         selected = [c for c in self._coords]
@@ -684,6 +700,12 @@ class NeuralNetDetector(BaseObjectsDetector):
 
         x, y, w, h = startX, startY, endX - startX, endY - startY
 
+        # check if values are correct
+        if x < 0:
+            x = 0
+        if y < 0:
+            y = 0
+
         # Then creates a sppasCoords object with these values
         return sppasCoords(x, y, w, h, confidence)
 
@@ -701,45 +723,48 @@ class sppasImageObjectDetection(BaseObjectsDetector):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    This class allows to analyze an image in order to detect faces. It
-    stores a list of sppasCoords() for each detected face.
+    This class allows to analyze an image in order to detect objects. It
+    stores a list of sppasCoords() for each detected object.
 
     :Example:
 
         >>> f = sppasImageObjectDetection()
         >>> f.load_model(filename1, filename2...)
-        >>> # Detect all the faces in an image
+        >>> # Detect all the objects in an image
         >>> f.detect(sppasImage(filename="image path"))
-        >>> # Get number of detected faces
+        >>> # Get number of detected objects
         >>> len(f)
-        >>> # Browse through the detected face coordinates:
+        >>> # Browse through the detected object coordinates:
         >>> for c in f:
         >>>     print(c)
         >>> # Get the detected object with the highest score
         >>> f.get_best()
-        >>> # Get the 2 faces with the highest scores
+        >>> # Get the 2 objects with the highest scores
         >>> f.get_best(2)
-        >>> # Get detected faces with a confidence score greater than 0.9
+        >>> # Get detected objects with a confidence score greater than 0.9
         >>> f.get_confidence(0.9)
 
     Contrariwise to the base class, this class allows multiple models
-    in order to launch multiple detections and to combine results.
+    in order to launch multiple detections and to combine their results.
 
     """
 
+    # List of implemented detectors and expected file extension of the model.
     DETECTORS = dict()
     DETECTORS[HaarCascadeDetector().get_extension().lower()] = HaarCascadeDetector
     DETECTORS[NeuralNetDetector().get_extension().lower()] = NeuralNetDetector
 
+    # -----------------------------------------------------------------------
+
     def __init__(self):
-        """Create a new FaceDetection instance."""
+        """Create a new ImageObjectDetection instance."""
         super(sppasImageObjectDetection, self).__init__()
         self._extension = ""
 
     # -----------------------------------------------------------------------
 
     def get_nb_recognizers(self):
-        """Return the number of initialized face recognizers."""
+        """Return the number of initialized object recognizers."""
         if self._detector is None:
             return 0
         return len(self._detector)
@@ -785,7 +810,8 @@ class sppasImageObjectDetection(BaseObjectsDetector):
         Only the extension of the filename is used.
 
         :param filename: (str)
-        :returns: BaseObjectsDetector
+        :return: BaseObjectsDetector
+        :raise: IOError
 
         """
         extension = os.path.splitext(filename)[1]
@@ -800,21 +826,16 @@ class sppasImageObjectDetection(BaseObjectsDetector):
     def _detection(self, image):
         """Determine the coordinates of all the detected objects.
 
+        No filter nor sort is applied. Results are "as it".
+
         :param image: (sppasImage or numpy.ndarray)
 
         """
-        # list of tuple (coord, score).
-        # The score allows to sort the list.
-        detected_objects = list()
         for i in range(len(self._detector)):
             self._detector[i].detect(image)
             # Add detected objects to our list
             for coord in self._detector[i]:
-                detected_objects.append((coord, coord.get_confidence()))
-
-        # sort by confidence score (the highest the better)
-        for coord, score in reversed(sorted(detected_objects, key=lambda x: x[1])):
-            self._coords.append(coord)
+                self._coords.append(coord)
 
         # logging.debug(" ... All detected objects of the {:d} predictors:"
         #               "".format(len(self._detector)))
@@ -823,16 +844,24 @@ class sppasImageObjectDetection(BaseObjectsDetector):
 
     # -----------------------------------------------------------------------
 
-    def _filter_overlapped(self, overlap=50.):
-        """Remove overlapping detected objects and to small scores.
+    def filter_overlapped(self, overlap=50., norm_score=True):
+        """Remove overlapping detected objects and too small scores.
+
+        :param overlap: (float) Minimum percentage of overlapped area to invalidate an object
+        :param norm_score: (bool) Normalize the score of the detected objects by the number of detectors
 
         """
-        # Divide the score by the number of detectors
+        overlap = float(overlap)
+        if overlap < 0. or overlap > 100.:
+            raise IntervalRangeException(overlap, 0., 100.)
+
+        # **** NO: Divide the score by the number of detectors
         detected = list()
         for coord in self._coords:
             c = coord.copy()
             score = c.get_confidence()
-            c.set_confidence(score / float(len(self._detector)))
+            if norm_score is True:
+                c.set_confidence(score / float(len(self._detector)))
             detected.append(c)
 
         # Reduce the list of detected objects by selecting overlapping
@@ -849,13 +878,21 @@ class sppasImageObjectDetection(BaseObjectsDetector):
                         area_o, area_s = coord.overlap(other)
                         # reject this object if more than 50% of its area is
                         # overlapping another one and the other one has a
-                        # bigger dimension, either w or h or both
+                        # significant bigger dimension, either w or h or both
                         if area_s > overlap and (coord.w < other.w or coord.h < other.h):
                             c = min(1., other.get_confidence() + coord.get_confidence())
                             coord.set_confidence(0.)
                             other.set_confidence(c)
 
+        # Select results for norm_score = True or False
+        selected = list()
+        for c in detected:
+            if c.get_confidence() > 1.:
+                c.set_confidence(1.)
+            if c.get_confidence() > 0:
+                selected.append(c)
+
         # Finally, keep only detected objects if their score is higher then
-        # the min ratio we fixed
-        self._coords = [c for c in detected if c.get_confidence() > self.get_min_score()]
+        # the min score we fixed
+        self._coords = [c for c in selected if c.get_confidence() > self.get_min_score()]
 
