@@ -233,10 +233,14 @@ class sppasVideoCoordsWriter(object):
         """
         if self._tag_video_writer is not None:
             self._tag_video_writer.close()
+            self._tag_video_writer = None
+
         for person_id in self._person_video_writers:
             video_writer = self._person_video_writers[person_id]
             if video_writer is not None:
                 video_writer.close()
+            self._person_video_writers[person_id] = None
+        self._person_video_writers = dict()
 
     # -----------------------------------------------------------------------
 
@@ -303,7 +307,7 @@ class sppasVideoCoordsWriter(object):
         iter_images = video_buffer.__iter__()
         for i in range(video_buffer.__len__()):
             image = next(iter_images)
-            w, h = self.get_image_size(image)
+            b, _ = video_buffer.get_buffer_range()
 
             # Update the list of known persons from the detected ones
             self.__update_persons(video_buffer, i)
@@ -331,6 +335,9 @@ class sppasVideoCoordsWriter(object):
                     if self._person_video_writers[known_person_id] is None:
                         self._person_video_writers[known_person_id], fn = self.__create_video_writer(out_name, known_person_id, image, video_buffer, pattern)
                         new_files.append(fn)
+                        img = image.blank_image()
+                        for x in range(b + i):
+                            self._person_video_writers[known_person_id].write(img)
                     if coords[j] is not None:
                         # Crop the given image to the coordinates
                         img = image.icrop(coords[j])
@@ -467,13 +474,6 @@ class sppasVideoCoordsWriter(object):
             logging.error("OpenCV failed to open the VideoWriter for file "
                           "{}: {}".format(filename, str(e)))
             return None
-
-        # Add blank images if the buffer is not at the beginning of the video
-        if video_buffer is not None:
-            b, e = video_buffer.get_buffer_range()
-            img = image.blank_image()
-            for i in range(b-1):
-                writer.write(img)
 
         return writer, filename
 

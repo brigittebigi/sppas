@@ -415,10 +415,7 @@ class sppasFaceTrack(sppasBaseAnnotation):
 
         # Detect all faces on all images of the video and assign a person
         result = self.detect(output)
-
-        # Quit properly
         self.__video_buffer.close()
-        self.__video_buffer.reset()
         self.__video_writer.close()
 
         return result

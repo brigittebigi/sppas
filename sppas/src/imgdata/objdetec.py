@@ -847,6 +847,8 @@ class sppasImageObjectDetection(BaseObjectsDetector):
     def filter_overlapped(self, overlap=50., norm_score=True):
         """Remove overlapping detected objects and too small scores.
 
+        It is supposed that the scores are already sorted by scores.
+
         :param overlap: (float) Minimum percentage of overlapped area to invalidate an object
         :param norm_score: (bool) Normalize the score of the detected objects by the number of detectors
 
@@ -871,28 +873,38 @@ class sppasImageObjectDetection(BaseObjectsDetector):
         for i, coord in enumerate(detected):
             # does this coord is overlapping some other ones?
             for j, other in enumerate(detected):
-                if i != j and coord.intersection_area(other) > 0:
-                    # if we did not already cancelled the other coordinates
-                    if other.get_confidence() > 0.:
-                        # how much are they overlapping?
-                        area_o, area_s = coord.overlap(other)
-                        # reject this object if more than 50% of its area is
-                        # overlapping another one and the other one has a
-                        # significant bigger dimension, either w or h or both
-                        if area_s > overlap and (coord.w < other.w or coord.h < other.h):
-                            c = min(1., other.get_confidence() + coord.get_confidence())
-                            coord.set_confidence(0.)
-                            other.set_confidence(c)
+                # if we did not already cancelled the other coordinates
+                if other.get_confidence() == 0. or i == j:
+                    continue
+                # if i and j are overlapping
+                if coord.intersection_area(other) > 0:
+                    # how much are they overlapping?
+                    area_o, area_s = coord.overlap(other)
+                    # reject j object if more than 50% of its area is
+                    # overlapping i. (normally i has a better score)
+                    if area_o > overlap:
+                        c = min(1., other.get_confidence() + coord.get_confidence())
+                        coord.set_confidence(c)
+                        other.set_confidence(0.)
+                    """
+                    # reject "i" object if more than 50% of its area is
+                    # overlapping "j" and "j" has a significant bigger 
+                    # dimension, either w or h or both
+                    if area_s > overlap and (coord.w < other.w or coord.h < other.h):
+                        c = min(1., other.get_confidence() + coord.get_confidence())
+                        coord.set_confidence(0.)
+                        other.set_confidence(c)
+                    """
 
         # Select results for norm_score = True or False
-        selected = list()
-        for c in detected:
-            if c.get_confidence() > 1.:
-                c.set_confidence(1.)
-            if c.get_confidence() > 0:
-                selected.append(c)
+        # selected = list()
+        # for c in detected:
+        #     if c.get_confidence() > 1.:
+        #         c.set_confidence(1.)
+        #     if c.get_confidence() > 0:
+        #         selected.append(c)
 
         # Finally, keep only detected objects if their score is higher then
         # the min score we fixed
-        self._coords = [c for c in selected if c.get_confidence() > self.get_min_score()]
+        self._coords = [c for c in detected if c.get_confidence() > self.get_min_score()]
 
