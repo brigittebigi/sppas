@@ -355,7 +355,7 @@ class sppasFaceTrack(sppasBaseAnnotation):
 
         while read_next is True:
             if self.logfile is not None:
-                self.logfile.print_message("Read buffer number {:d}".format(nb))
+                self.logfile.print_message("Read buffer number {:d}".format(nb+1))
 
             # fill-in the buffer with 'size'-images of the video
             read_next = self.__video_buffer.next()
@@ -414,9 +414,18 @@ class sppasFaceTrack(sppasBaseAnnotation):
                 indent=1)
 
         # Detect all faces on all images of the video and assign a person
-        result = self.detect(output)
-        self.__video_buffer.close()
-        self.__video_writer.close()
+        try:
+            result = self.detect(output)
+        except Exception as e:
+            import traceback
+            self.__video_buffer.close()
+            self.__video_writer.close()
+            logging.error(str(e))
+            print(traceback.format_exc())
+            raise
+        else:
+            self.__video_buffer.close()
+            self.__video_writer.close()
 
         return result
 

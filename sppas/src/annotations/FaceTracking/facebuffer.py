@@ -235,7 +235,6 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
             image = next(iter_images)
             # Perform face detection to detect all faces in the current image
             self.__fd.detect(image)
-            logging.debug(" ... {:d} faces detected".format(len(self.__fd)))
             # Filter to keep the better ones
             if self.__nbest != 0:
                 self.__fd.filter_best(self.__nbest)
@@ -244,7 +243,6 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
             self.__fd.to_portrait(image)
             # Save results into the list
             self.__faces.append([c.copy() for c in self.__fd])
-            logging.debug(" ... {:d} faces after filter".format(len(self.__fd)))
             self.__fd.invalidate()
 
             self.__landmarks.append([None]*len(self.__faces[i]))
@@ -380,7 +378,8 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
         if len(self.__faces) != self.__len__():
             raise ValueError("No person was defined for the detected faces "
                              "of the image {} of the buffer".format(buffer_index))
-        coords = sppasCoords.to_coords(coords)
+        if coords is not None:
+            coords = sppasCoords.to_coords(coords)
 
         # Search for the face index of the person and set the coords
         found = False
@@ -390,12 +389,14 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
                     found = True
                     face_idx = person[1]
                     self.__faces[buffer_index][face_idx] = coords
+                    break
 
-        if found is False:
+        if found is False and coords is not None:
             # Append coordinates and information of this person to the lists
             self.__faces[buffer_index].append(coords)
             face_idx = len(self.__faces[buffer_index]) - 1
             self.__persons[buffer_index].append((person_id, face_idx))
+            self.__landmarks[buffer_index].append(None)
 
     # -----------------------------------------------------------------------
 
@@ -437,6 +438,74 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
                 person_ids[person_id].append(coord)
 
         return person_ids
+
+    # -----------------------------------------------------------------------
+    # Post-analysis of detected faces of persons
+    # -----------------------------------------------------------------------
+
+    def fill_in_holes(self):
+        """Fill in the holes of coordinates of detected persons.
+
+        When a person is detected both at a image i-2 and at image i but
+        not at image i-1, fill in the face coordinates with the middle.
+
+        A person can't disappear furtively!!!
+
+        """
+        person_coords = self.coords_by_person()
+        for person_id in person_coords:
+            coords = person_coords[person_id]
+            for i in range(2, self.__len__()):
+                # hole = 1 image without a person but previous and next are ok.
+                if coords[i-2] is not None and coords[i-1] is None and coords[i] is not None:
+                    # estimate the middle point
+                    x = coords[i-2].x + ((coords[i].x - coords[i-2].x) // 2)
+                    y = coords[i-2].y + ((coords[i].y - coords[i-2].y) // 2)
+                    # estimate the intermediate size
+                    w = (coords[i-2].w + coords[i].w) // 2
+                    h = (coords[i-2].h + coords[i].h) // 2
+                    # create and set a sppasCoord for this non-detected face
+                    c = sppasCoords(x, y, w, h, self.__confidence)
+                    self.set_person_coords(i-1, person_id, c)
+
+    # -----------------------------------------------------------------------
+
+    def remove_isolated(self):
+        """Remove coordinates of a detected person in an isolated image.
+
+        When a person is detected both at a image i-1 but not at both
+        image i and image i-2, cancel its face coordinates.
+
+        A person can't appear furtively!!!
+
+        """
+        person_coords = self.coords_by_person()
+        for person_id in person_coords:
+            coords = person_coords[person_id]
+            for i in range(2, self.__len__()):
+                if coords[i-2] is None and coords[i-1] is not None:
+                    if coords[i] is None:
+                        self.set_person_coords(i-1, person_id, None)
+                        coords[i-1] = None
+                    else:
+                        if i+1 < self.__len__() and coords[i+1] is None:
+                            self.set_person_coords(i - 1, person_id, None)
+                            self.set_person_coords(i, person_id, None)
+                            coords[i - 1] = None
+                            coords[i] = None
+
+    # -----------------------------------------------------------------------
+
+    def remove_rare(self, thresold=0.01):
+        """Remove coordinates of all rarely detected persons.
+
+        :param thresold: (float) Min percent of images a person should appear
+
+        """
+        person_coords = self.coords_by_person()
+        for person_id in person_coords:
+            coords = person_coords[person_id]
+            # do I have also to remove the person?
 
     # -----------------------------------------------------------------------
     # Private

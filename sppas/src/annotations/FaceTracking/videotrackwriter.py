@@ -510,9 +510,7 @@ class sppasVideoCoordsWriter(object):
             mode = "a+"
 
         with codecs.open(out_csv_name, mode, encoding="utf-8") as fd:
-            iter_images = video_buffer.__iter__()
             for i in range(video_buffer.__len__()):
-                image = next(iter_images)
                 img_name = self.__image_name(begin_idx + i)
 
                 # Update the list of known persons from the detected ones
@@ -526,16 +524,18 @@ class sppasVideoCoordsWriter(object):
                 # Write the results
                 for j in range(len(faces)):
                     fd.write("{:d};".format(buffer_nb))
-                    self._img_writer.write_coords(fd, img_name, j+1, faces[j], sep=";")
-                    if persons[j] is not None:
-                        fd.write("{:s}".format(persons[j][0]))
-                    else:
-                        fd.write("unk")
-                    fd.write(";")
-                    if isinstance(landmarks[j], (tuple, list)) is True:
-                        for coords in landmarks[j]:
-                            fd.write("{:d};".format(coords.x))
-                            fd.write("{:d};".format(coords.y))
+                    # a face can be None if its coords were invalidated by the FaceTrack
+                    if faces[j] is not None:
+                        self._img_writer.write_coords(fd, img_name, j+1, faces[j], sep=";")
+                        if persons[j] is not None:
+                            fd.write("{:s}".format(persons[j][0]))
+                        else:
+                            fd.write("unk")
+                        fd.write(";")
+                        if isinstance(landmarks[j], (tuple, list)) is True:
+                            for coords in landmarks[j]:
+                                fd.write("{:d};".format(coords.x))
+                                fd.write("{:d};".format(coords.y))
 
                     fd.write("\n")
                 if len(faces) == 0:
