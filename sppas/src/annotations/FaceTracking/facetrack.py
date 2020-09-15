@@ -40,6 +40,10 @@ import numpy as np
 
 from sppas.src.exceptions import NegativeValueError
 from sppas.src.exceptions import sppasTypeError
+from sppas.src.calculus import slope_intercept
+from sppas.src.calculus import linear_fct
+from sppas.src.calculus import tansey_linear_regression
+
 from ..FaceDetection import FaceDetection
 
 # ---------------------------------------------------------------------------
@@ -127,6 +131,9 @@ class FaceTracking(object):
         # Assign a person to each detected face
         self.__track_persons(video_buffer)
 
+        # Smooth the trajectory of the coordinates
+        self.__smooth_coords(video_buffer)
+
     # -----------------------------------------------------------------------
     # Private
     # -----------------------------------------------------------------------
@@ -181,4 +188,39 @@ class FaceTracking(object):
         # Associate face/person to such un-recognized faces
 
         """
+    # -----------------------------------------------------------------------
 
+    def __smooth_coords(self, video_buffer):
+        """Smooth the trajectory of the detected coordinates of each person.
+
+        :param video_buffer: (sppasFacesVideoBuffer)
+
+        """
+        return
+        if len(video_buffer) <= 2:
+            return
+
+        person_coords = video_buffer.get_coords_by_person()
+
+        # For each detected person, smooth the trajectory of the coordinates
+        for person_id in person_coords:
+            coords = person_coords[person_id]
+            cache = list()
+            cache.append(person_coords[person_id][0])
+            cache.append(person_coords[person_id][1])
+            for i in range(2, len(video_buffer)):
+                cache.append(person_coords[person_id][i])
+                # Predict x of p2
+                p1 = (cache[0].y, cache[0].x)
+                p3 = (cache[2].y, cache[2].x)
+                a, b = slope_intercept(p1, p3)
+                x = linear_fct(cache[1].y, a, b)
+
+                # Predict y of p2
+                p1 = (cache[0].x, cache[0].y)
+                p3 = (cache[2].x, cache[2].y)
+                a, b = slope_intercept(p1, p3)
+                y = linear_fct(cache[1].x, a, b)
+
+
+                cache.pop(0)

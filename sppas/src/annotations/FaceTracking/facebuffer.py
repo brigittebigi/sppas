@@ -41,6 +41,8 @@ import logging
 from sppas.src.exceptions import NegativeValueError
 from sppas.src.exceptions import IndexRangeException
 from sppas.src.exceptions import sppasError
+from sppas.src.imgdata import sppasCoords
+from sppas.src.imgdata import sppasImage
 from sppas.src.videodata import sppasVideoReaderBuffer
 
 from ..FaceDetection import FaceDetection
@@ -296,9 +298,7 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
     def set_default_detected_persons(self):
         """Set a default person name to each detected face."""
         self.__persons = list()
-        iter_images = self.__iter__()
         for i in range(self.__len__()):
-            image = next(iter_images)
             self.__persons.append(list())
             for j in range(len(self.__faces[i])):
                 self.__persons[i].append(("X{:03d}".format(j), j))
@@ -350,17 +350,93 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
     def set_detected_persons(self, buffer_index, information=None):
         """Set the identifier of each detected face at the given image index.
 
-        The information can be None, the name of the person, a dict
-        with key=name and value=probability or  anything else.
+        The information can be None, or a list of tuples with the name of
+        the person, and the index of his detected face.
 
-        :param buffer_index: (int) Index in the current buffer.
-        :param information: (any type)
+        :param buffer_index: (int) Index of the image in the current buffer.
+        :param information: (None or tuple)
 
         """
         buffer_index = self.__check_buffer_index(buffer_index)
         if len(self.__faces) != self.__len__():
-            raise ValueError("No person was defined on the faces of the images of the buffer")
+            raise ValueError("No person was defined for the detected faces "
+                             "of the image {} of the buffer".format(buffer_index))
         self.__persons[buffer_index] = information
+
+    # -----------------------------------------------------------------------
+
+    def set_person_coords(self, buffer_index, person_id, coords):
+        """Set the face coordinates of a person at the given image index.
+
+        If the person was not detected, it is appended to the lists then, it
+        is not guaranteed that the detected faces are sorted by scores.
+
+        :param buffer_index: (int) Index of the image in the current buffer.
+        :param person_id: (str) Identifier string of a person
+        :param coords: (sppasCoords) Coordinates of the face of a person
+
+        """
+        buffer_index = self.__check_buffer_index(buffer_index)
+        if len(self.__faces) != self.__len__():
+            raise ValueError("No person was defined for the detected faces "
+                             "of the image {} of the buffer".format(buffer_index))
+        coords = sppasCoords.to_coords(coords)
+
+        # Search for the face index of the person and set the coords
+        found = False
+        for person in self.__persons[buffer_index]:
+            if person is not None:
+                if person_id == person[0]:
+                    found = True
+                    face_idx = person[1]
+                    self.__faces[buffer_index][face_idx] = coords
+
+        if found is False:
+            # Append coordinates and information of this person to the lists
+            self.__faces[buffer_index].append(coords)
+            face_idx = len(self.__faces[buffer_index]) - 1
+            self.__persons[buffer_index].append((person_id, face_idx))
+
+    # -----------------------------------------------------------------------
+
+    def coords_by_person(self):
+        """Return dict of person ids with the list of their coords.
+
+        When a person was not detected at a given image, None is used.
+
+        :return: (dict)
+
+        """
+        # key= person identifier,
+        # value = list of coords (one for each image, or none if no detected)
+        person_ids = dict()
+
+        # Make the list of person identifiers
+        for i in range(self.__len__()):
+            all_img_persons = self.__persons[i]
+            for person in all_img_persons:
+                if person is not None:
+                    person_id = person[0]
+                    if person_id not in person_ids:
+                        person_ids[person_id] = list()
+
+        # Fill in the dict with the detected coordinates or none
+        for i in range(self.__len__()):
+
+            all_img_persons = self.__persons[i]
+            # Browse through the persons and their coords
+            for j, person_id in enumerate(person_ids):
+                coord = None
+                # Search the face matching this person
+                for person in all_img_persons:
+                    if person_id == person[0]:
+                        face_idx = person[1]
+                        coord = self.__faces[i][face_idx]
+                        break
+                # coord is either None or the face coordinates
+                person_ids[person_id].append(coord)
+
+        return person_ids
 
     # -----------------------------------------------------------------------
     # Private

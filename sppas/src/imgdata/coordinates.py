@@ -86,7 +86,7 @@ class sppasCoords(object):
 
     # -----------------------------------------------------------------------
 
-    def __init__(self, x=0, y=0, w=0, h=0,confidence=None):
+    def __init__(self, x=0, y=0, w=0, h=0, confidence=None):
         """Create a new sppasCoords instance.
 
         Allows to represent a point (x,y), or a size(w,h) or both, with an
@@ -117,6 +117,44 @@ class sppasCoords(object):
 
     # -----------------------------------------------------------------------
 
+    @staticmethod
+    def to_coords(coord):
+        """Check the given coord and return it as a sppasCoords instance."""
+        if isinstance(coord, sppasCoords) is False:
+            if isinstance(coord, (tuple, list)) is True:
+                if len(coord) == 2:
+                    try:
+                        # Given coordinates are representing a point
+                        coord = sppasCoords(coord[0], coord[1], w=0, h=0)
+                    except:
+                        pass
+                elif len(coord) == 3:
+                    try:
+                        # Given coordinates are representing a point with a score
+                        coord = sppasCoords(coord[0], coord[1], 0, 0, coord[2])
+                    except:
+                        pass
+                elif len(coord) == 4:
+                    try:
+                        # Given coordinates are representing an area (point+size)
+                        coord = sppasCoords(coord[0], coord[1], coord[2], coord[3])
+                    except:
+                        pass
+                elif len(coord) > 4:
+                    try:
+                        # Given coordinates are representing an area (point+size)
+                        # with a confidence score
+                        coord = sppasCoords(coord[0], coord[1], coord[2], coord[3], coord[4])
+                    except:
+                        pass
+
+        if isinstance(coord, sppasCoords) is False:
+            raise sppasTypeError(coord, "sppasCoords")
+
+        return coord
+
+    # -----------------------------------------------------------------------
+
     def get_confidence(self):
         """Return the confidence value (float)."""
         if self.__confidence is None:
@@ -135,7 +173,7 @@ class sppasCoords(object):
         if value is None:
             self.__confidence = None
         else:
-            value = self.__to_dtype(value, dtype=float)
+            value = self.to_dtype(value, dtype=float)
             if value < 0. or value > 1.:
                 raise IntervalRangeException(value, 0, 1)
             self.__confidence = value
@@ -155,7 +193,7 @@ class sppasCoords(object):
         :raise: TypeError, ValueError
 
         """
-        value = self.__to_dtype(value)
+        value = self.to_dtype(value)
         if value < 0 or value > sppasCoords.MAX_W:
             raise IntervalRangeException(value, 0, sppasCoords.MAX_W)
         self.__x = value
@@ -175,7 +213,7 @@ class sppasCoords(object):
         :raise: TypeError, ValueError
 
         """
-        value = self.__to_dtype(value)
+        value = self.to_dtype(value)
         if value < 0 or value > sppasCoords.MAX_H:
             raise IntervalRangeException(value, 0, sppasCoords.MAX_H)
         self.__y = value
@@ -195,7 +233,7 @@ class sppasCoords(object):
         :raise: TypeError, ValueError
 
         """
-        value = self.__to_dtype(value)
+        value = self.to_dtype(value)
         if value < 0 or value > sppasCoords.MAX_W:
             raise IntervalRangeException(value, 0, sppasCoords.MAX_W)
         self.__w = value
@@ -215,14 +253,15 @@ class sppasCoords(object):
         :raise: TypeError, ValueError
 
         """
-        value = self.__to_dtype(value)
+        value = self.to_dtype(value)
         if value < 0 or value > sppasCoords.MAX_H:
             raise IntervalRangeException(value, 0, sppasCoords.MAX_H)
         self.__h = value
 
     # -----------------------------------------------------------------------
 
-    def __to_dtype(self, value, dtype=int):
+    @staticmethod
+    def to_dtype(value, dtype=int):
         """Convert a value to int or raise the appropriate exception."""
         try:
             v = dtype(value)
@@ -260,7 +299,7 @@ class sppasCoords(object):
         :raise: TypeError, ScaleWidthError, ScaleHeightError
 
         """
-        coeff = self.__to_dtype(coeff, dtype=float)
+        coeff = self.to_dtype(coeff, dtype=float)
         new_w = int(float(self.__w) * coeff)
         new_h = int(float(self.__h) * coeff)
 
@@ -290,8 +329,8 @@ class sppasCoords(object):
 
         """
         # Check and convert given values
-        x_value = self.__to_dtype(x_value)
-        y_value = self.__to_dtype(y_value)
+        x_value = self.to_dtype(x_value)
+        y_value = self.to_dtype(y_value)
 
         new_x = self.__x + x_value
         if new_x < 0:

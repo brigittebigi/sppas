@@ -28,7 +28,7 @@
 
         ---------------------------------------------------------------------
 
-    src.annotations.tests.test_facetracking.py
+    src.annotations.tests.test_facetrack.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -125,10 +125,14 @@ class TestFaceBuffer(unittest.TestCase):
         vb = sppasFacesVideoBuffer(video=None, size=10)
         self.assertEqual(0, vb.get_filter_best())
         self.assertEqual(0.18, vb.get_filter_confidence())
+        with self.assertRaises(ValueError):
+            vb.set_detected_persons(0, list())
+        with self.assertRaises(ValueError):
+            vb.set_person_coords(0, "X000", list())
 
     # -----------------------------------------------------------------------
 
-    def test_detect(self):
+    def test_detect_getters(self):
         fvb = sppasFacesVideoBuffer(video=TestFaceBuffer.VIDEO, size=10)
         fvb.next()
         self.assertEqual(10, len(fvb))
@@ -174,6 +178,98 @@ class TestFaceBuffer(unittest.TestCase):
         fvb.next()
         with self.assertRaises(ValueError):
             fvb.get_detected_faces(3)
+
+        fvb.close()
+
+    # -----------------------------------------------------------------------
+
+    def test_detect_setters(self):
+        fvb = sppasFacesVideoBuffer(video=TestFaceBuffer.VIDEO, size=10)
+        fvb.load_fd_model(NET, HAAR1, HAAR2)
+        fvb.next()
+        fvb.detect_faces_buffer()
+
+        # wrong buffer index
+        with self.assertRaises(ValueError):
+            fvb.set_person_coords(20, "X000", list())
+
+        # wrong sppasCoords type
+        with self.assertRaises(TypeError):
+            fvb.set_person_coords(5, "X000", 'bla bla')
+
+        # detect faces of the buffer
+        all_faces = fvb.get_detected_faces(5)
+        all_persons = fvb.get_detected_persons(5)
+        self.assertEqual(len(all_faces), 1)  # 1 face is detected
+        self.assertEqual(345, all_faces[0].x)
+        self.assertEqual(50, all_faces[0].y)
+        self.assertEqual(262, all_faces[0].w)
+        self.assertEqual(262, all_faces[0].h)
+        self.assertIsNone(all_persons[0])    # no person is assigned to the face
+
+        # set a person_id to each detected face
+        fvb.set_default_detected_persons()
+        all_persons = fvb.get_detected_persons(5)
+        self.assertEqual(("X000", 0), all_persons[0])
+
+        # something normal... change coords of the detected person
+        fvb.set_person_coords(5, "X000", (150, 160, 200, 210, 0.4))
+        self.assertEqual(150, all_faces[0].x)
+        self.assertEqual(160, all_faces[0].y)
+        self.assertEqual(200, all_faces[0].w)
+        self.assertEqual(210, all_faces[0].h)
+
+        # something normal... add coords for a non-detected person
+        fvb.set_person_coords(5, "toto", (400, 410, 200, 210, 0.2))
+        all_faces = fvb.get_detected_faces(5)
+        self.assertEqual(len(all_faces), 2)  # 1 face is detected + added one
+        self.assertEqual(150, all_faces[0].x)
+        self.assertEqual(160, all_faces[0].y)
+        self.assertEqual(200, all_faces[0].w)
+        self.assertEqual(210, all_faces[0].h)
+        self.assertEqual(400, all_faces[1].x)
+        self.assertEqual(410, all_faces[1].y)
+        self.assertEqual(200, all_faces[1].w)
+        self.assertEqual(210, all_faces[1].h)
+        all_persons = fvb.get_detected_persons(5)
+        self.assertEqual(len(all_persons), 2)  # 1 person is detected + added one
+
+        fvb.close()
+
+    # -----------------------------------------------------------------------
+
+    def test_detect_setters(self):
+        fvb = sppasFacesVideoBuffer(video=TestFaceBuffer.VIDEO, size=10)
+        fvb.load_fd_model(NET, HAAR1, HAAR2)
+        fvb.next()
+        fvb.detect_faces_buffer()
+        fvb.set_default_detected_persons()
+
+        person_coords = fvb.coords_by_person()
+        self.assertEqual(1, len(person_coords))
+        self.assertTrue("X000" in person_coords)
+        self.assertEqual(10, len(person_coords["X000"]))
+        self.assertTrue(person_coords["X000"][4].x in range(340, 350))
+        self.assertTrue(person_coords["X000"][4].y in range(49, 51))
+        self.assertTrue(person_coords["X000"][4].w in range(260, 270))
+        self.assertTrue(person_coords["X000"][4].h in range(260, 270))
+
+        fvb.set_person_coords(4, "toto", (400, 410, 200, 210, 0.2))
+        person_coords = fvb.coords_by_person()
+        self.assertEqual(2, len(person_coords))
+        self.assertTrue("X000" in person_coords)
+        self.assertTrue("toto" in person_coords)
+        self.assertEqual(10, len(person_coords["X000"]))
+        self.assertEqual(10, len(person_coords["toto"]))
+
+        for i in range(0, 4):
+            self.assertIsNone(person_coords["toto"][i])
+        for i in range(5, 10):
+            self.assertIsNone(person_coords["toto"][i])
+        self.assertEqual(400, person_coords["toto"][4].x)
+        self.assertEqual(410, person_coords["toto"][4].y)
+
+        fvb.close()
 
 # ---------------------------------------------------------------------------
 

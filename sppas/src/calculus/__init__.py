@@ -51,7 +51,7 @@ from .scoring.kappa import sppasKappa
 from .scoring.ubpa import ubpa
 
 from .geometry.distances import squared_euclidian, euclidian, manathan, minkowski, chi_squared
-from .geometry.linear_fct import linear_fct, linear_values, slope, intercept
+from .geometry.linear_fct import linear_fct, ylinear_fct, linear_values, slope, intercept, slope_intercept
 from .stats.central import fsum, fmult, fmin, fmax, fmean, fgeometricmean, fharmonicmean
 from .stats.frequency import freq, percent, percentile, quantile
 from .stats.linregress import tga_linear_regression, tansey_linear_regression
@@ -71,9 +71,11 @@ __all__ = (
     "minkowski",
     "chi_squared",
     "linear_fct",
+    "ylinear_fct",
     "linear_values",
     "slope",
     "intercept",
+    "slope_intercept",
     "fsum",
     "fmult",
     "fmin",

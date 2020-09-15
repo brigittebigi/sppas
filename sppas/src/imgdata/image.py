@@ -301,7 +301,7 @@ class sppasImage(numpy.ndarray):
         :return: (sppasImage)
 
         """
-        coord = self.__to_coords(coord)
+        coord = sppasCoords.to_coords(coord)
         x1 = coord.x
         x2 = coord.x + coord.w
         y1 = coord.y
@@ -469,8 +469,8 @@ class sppasImage(numpy.ndarray):
         """
         if len(self) == 0:
             return 0, 0
-        width = self.__to_dtype(width)
-        height = self.__to_dtype(height)
+        width = sppasCoords.to_dtype(width)
+        height = sppasCoords.to_dtype(height)
         if width < 0:
             raise NegativeValueError(width)
         if height < 0:
@@ -511,7 +511,7 @@ class sppasImage(numpy.ndarray):
         """
         img = self.copy()
         for c in coords:
-            c = self.__to_coords(c)
+            c = sppasCoords.to_coords(c)
             if c.w > 0 and c.h > 0:
                 # Draw the square and eventually the confidence inside the square
                 text = ""
@@ -534,7 +534,7 @@ class sppasImage(numpy.ndarray):
         :param text: (str) Add text
 
         """
-        coord = self.__to_coords(coord)
+        coord = sppasCoords.to_coords(coord)
 
         cv2.rectangle(self,
                       (coord.x, coord.y),
@@ -589,44 +589,6 @@ class sppasImage(numpy.ndarray):
             logging.error("Error when writing file {}: {}"
                           "".format(filename, str(e)))
             ImageWriteError(filename)
-
-    # -----------------------------------------------------------------------
-    # Private
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def __to_coords(coord):
-        """Check the given coord and return as a sppasCoords instance."""
-        if isinstance(coord, sppasCoords) is False:
-            if isinstance(coord, (tuple, list)) is True:
-                if len(coord) == 3:
-                    try:
-                        coord = sppasCoords(coord[0], coord[1], coord[2], 1.0)
-                    except:
-                        pass
-                elif len(coord) >= 4:
-                    try:
-                        coord = sppasCoords(coord[0], coord[1], coord[2], coord[3])
-                    except:
-                        pass
-
-        if isinstance(coord, sppasCoords) is False:
-            sppasTypeError(coord, "sppasCoords")
-
-        return coord
-
-    # -----------------------------------------------------------------------
-
-    def __to_dtype(self, value, dtype=int):
-        """Convert a value to int or raise the appropriate exception."""
-        try:
-            value = dtype(value)
-            if isinstance(value, dtype) is False:
-                raise sppasTypeError(value, str(dtype))
-        except ValueError:
-            raise sppasTypeError(value, str(dtype))
-
-        return value
 
     # -----------------------------------------------------------------------
     # Overloads

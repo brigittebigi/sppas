@@ -46,6 +46,7 @@ The equation y = ax + b is referred to as the slope-intercept form of a
 linear equation.
 
 """
+
 import math
 
 # ---------------------------------------------------------------------------
@@ -124,6 +125,22 @@ def linear_fct(x, a, b):
     a = float(a)
     b = float(b)
     return (a * x) + b
+
+# ---------------------------------------------------------------------------
+
+
+def ylinear_fct(y, a, b):
+    """Return x of the linear function y = ax + b.
+
+    :param y: (float) Y-coord
+    :param a: (float) slope
+    :param b: (float) intercept
+
+    """
+    y = float(y)
+    a = float(a)
+    b = float(b)
+    return (y - b) / a
 
 # ---------------------------------------------------------------------------
 
