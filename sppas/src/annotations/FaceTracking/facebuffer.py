@@ -44,6 +44,7 @@ from sppas.src.exceptions import sppasError
 from sppas.src.imgdata import sppasCoords
 from sppas.src.imgdata import sppasImage
 from sppas.src.videodata import sppasVideoReaderBuffer
+import sppas.src.calculus as calculus
 
 from ..FaceDetection import FaceDetection
 from ..FaceMark import FaceLandmark
@@ -371,15 +372,14 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
 
         :param buffer_index: (int) Index of the image in the current buffer.
         :param person_id: (str) Identifier string of a person
-        :param coords: (sppasCoords) Coordinates of the face of a person
+        :param coords: (sppasCoords) New coordinates of the face of a person
 
         """
         buffer_index = self.__check_buffer_index(buffer_index)
         if len(self.__faces) != self.__len__():
             raise ValueError("No person was defined for the detected faces "
                              "of the image {} of the buffer".format(buffer_index))
-        if coords is not None:
-            coords = sppasCoords.to_coords(coords)
+        coords = sppasCoords.to_coords(coords)
 
         # Search for the face index of the person and set the coords
         found = False
@@ -388,10 +388,16 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
                 if person_id == person[0]:
                     found = True
                     face_idx = person[1]
-                    self.__faces[buffer_index][face_idx] = coords
+                    if face_idx is not None:
+                        self.__faces[buffer_index][face_idx] = coords
+                    else:
+                        raise sppasError(
+                            "Impossible to set new face coordinates."
+                            "Person {} is not associated to a face."
+                            "".format(person_id))
                     break
 
-        if found is False and coords is not None:
+        if found is False:
             # Append coordinates and information of this person to the lists
             self.__faces[buffer_index].append(coords)
             face_idx = len(self.__faces[buffer_index]) - 1
@@ -424,7 +430,7 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
         # Fill in the dict with the detected coordinates or none
         for i in range(self.__len__()):
 
-            all_img_persons = self.__persons[i]
+            all_img_persons = [p for p in self.__persons[i] if p is not None]
             # Browse through the persons and their coords
             for j, person_id in enumerate(person_ids):
                 coord = None
@@ -432,7 +438,8 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
                 for person in all_img_persons:
                     if person_id == person[0]:
                         face_idx = person[1]
-                        coord = self.__faces[i][face_idx]
+                        if face_idx is not None:
+                            coord = self.__faces[i][face_idx]
                         break
                 # coord is either None or the face coordinates
                 person_ids[person_id].append(coord)
@@ -471,10 +478,10 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
     # -----------------------------------------------------------------------
 
     def remove_isolated(self):
-        """Remove coordinates of a detected person in an isolated image.
+        """Dissociate coordinates of a detected person in an isolated image.
 
         When a person is detected both at a image i-1 but not at both
-        image i and image i-2, cancel its face coordinates.
+        image i and image i-2, cancel its link to the face coordinates.
 
         A person can't appear furtively!!!
 
@@ -485,27 +492,79 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
             for i in range(2, self.__len__()):
                 if coords[i-2] is None and coords[i-1] is not None:
                     if coords[i] is None:
-                        self.set_person_coords(i-1, person_id, None)
+                        self.__dissociate_person_face(person_id, i-1)
                         coords[i-1] = None
                     else:
                         if i+1 < self.__len__() and coords[i+1] is None:
-                            self.set_person_coords(i - 1, person_id, None)
-                            self.set_person_coords(i, person_id, None)
-                            coords[i - 1] = None
+                            self.__dissociate_person_face(person_id, i-1)
+                            self.__dissociate_person_face(person_id, i)
+                            coords[i-1] = None
                             coords[i] = None
 
     # -----------------------------------------------------------------------
 
-    def remove_rare(self, thresold=0.01):
-        """Remove coordinates of all rarely detected persons.
+    def __dissociate_person_face(self, person_id, image_idx):
+        """Dissociate the person to its assigned face at given image.
 
-        :param thresold: (float) Min percent of images a person should appear
+        :param person_id: (str)
+        :param image_idx: (int)
 
         """
+        for i, person in enumerate(self.__persons[image_idx]):
+            if person[0] == person_id:
+                self.__persons[image_idx][i] = None
+
+    # -----------------------------------------------------------------------
+
+    def remove_rare_persons(self):
+        """Remove coordinates of all rarely detected persons. """
+        # No analysis is possible with a too small buffer
+        if self.get_buffer_size() < self.get_framerate():
+            return
+
+        # Create a list with the person identifiers to be removed
+        remove_persons = list()
         person_coords = self.coords_by_person()
         for person_id in person_coords:
             coords = person_coords[person_id]
-            # do I have also to remove the person?
+
+            # Estimate the number of times the person is detected/non-detected
+            states = list()
+            nb_face = 0
+            nb_none = 0
+            for i in range(self.__len__()):
+                if coords[i] is None:
+                    nb_none += 1
+                    states.append(False)
+                else:
+                    nb_face += 1
+                    states.append(True)
+
+            # Consider to remove the person if detected faces are occurring
+            # less than 10% of the buffer images
+            percent_face = float(nb_face) / float(nb_face + nb_none) * 100.
+            scattered = False
+            if percent_face < 15.:
+                # Are they continuous or scattered?
+                # Estimate the 3-grams of detected/non detected states
+                ngrams = calculus.symbols_to_items(states, 4)
+                if (True, True, True, True) in ngrams:
+                    ngrams_of_faces = ngrams[(True, True, True, True)]
+                    # the nb of possible sequences of face->face->face->face is nb_face-3
+                    ratio = float(ngrams_of_faces) / (nb_face - 3)
+                    if ratio < 0.25:
+                        scattered = True
+                else:
+                    scattered = True
+
+            if scattered is True:
+                remove_persons.append(person_id)
+
+        # Remove the un-relevant persons
+        for i in range(self.__len__()):
+            for person in reversed(self.__persons[i]):
+                if person is not None and person[0] in remove_persons:
+                    self.__dissociate_person_face(person[0], i)
 
     # -----------------------------------------------------------------------
     # Private

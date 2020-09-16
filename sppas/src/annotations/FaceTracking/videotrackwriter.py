@@ -524,18 +524,16 @@ class sppasVideoCoordsWriter(object):
                 # Write the results
                 for j in range(len(faces)):
                     fd.write("{:d};".format(buffer_nb))
-                    # a face can be None if its coords were invalidated by the FaceTrack
-                    if faces[j] is not None:
-                        self._img_writer.write_coords(fd, img_name, j+1, faces[j], sep=";")
-                        if persons[j] is not None:
-                            fd.write("{:s}".format(persons[j][0]))
-                        else:
-                            fd.write("unk")
-                        fd.write(";")
-                        if isinstance(landmarks[j], (tuple, list)) is True:
-                            for coords in landmarks[j]:
-                                fd.write("{:d};".format(coords.x))
-                                fd.write("{:d};".format(coords.y))
+                    self._img_writer.write_coords(fd, img_name, j+1, faces[j], sep=";")
+                    if persons[j] is not None:
+                        fd.write("{:s}".format(persons[j][0]))
+                    else:
+                        fd.write("undeterminated")
+                    fd.write(";")
+                    if isinstance(landmarks[j], (tuple, list)) is True:
+                        for coords in landmarks[j]:
+                            fd.write("{:d};".format(coords.x))
+                            fd.write("{:d};".format(coords.y))
 
                     fd.write("\n")
                 if len(faces) == 0:

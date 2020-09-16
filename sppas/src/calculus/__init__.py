@@ -60,7 +60,8 @@ from .stats.moment import lmoment, lvariation, lskew, lkurtosis
 from .stats.variability import lvariance, lstdev, lz, rPVI, nPVI
 from .infotheory import sppasKullbackLeibler
 from .infotheory import sppasEntropy
-from .infotheory.utilit import find_ngrams
+from .infotheory import find_ngrams
+from .infotheory import symbols_to_items
 
 __all__ = (
     "sppasDescriptiveStatistics",
@@ -104,5 +105,6 @@ __all__ = (
     "ubpa",
     "sppasKullbackLeibler",
     "sppasEntropy",
-    "find_ngrams"
+    "find_ngrams",
+    "symbols_to_items"
 )

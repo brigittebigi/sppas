@@ -135,7 +135,7 @@ class FaceTracking(object):
 
         # Remove un-relevant detected faces and fill-in holes
         video_buffer.remove_isolated()
-        video_buffer.remove_rare()
+        video_buffer.remove_rare_persons()
         video_buffer.fill_in_holes()
 
         # Smooth the trajectory of the coordinates
@@ -143,6 +143,21 @@ class FaceTracking(object):
 
     # -----------------------------------------------------------------------
     # Private
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def __get_cropped_faces(video_buffer, image, idx):
+        """Return the list of cropped face images detected at given index.
+
+        RESIZE IMAGES TO 64x64.
+
+        """
+        cropped_faces = list()
+        detected_coords = video_buffer.get_detected_faces(idx)
+        for face_coords in detected_coords:
+            cropped_faces.append(image.icrop(face_coords))
+        return cropped_faces
+
     # -----------------------------------------------------------------------
 
     def __track_persons(self, video_buffer):
@@ -154,6 +169,20 @@ class FaceTracking(object):
 
         """
         video_buffer.set_default_detected_persons()
+        iter_image = video_buffer.__iter__()
+        prev_image = next(iter_image)
+        prev_cropped = self.__get_cropped_faces(video_buffer, prev_image, 0)
+        prev_persons = [str(x) for x in range(len(prev_cropped))]
+        persons = [prev_persons]
+
+        for i in range(video_buffer.__len__()):
+            image = next(iter_image)
+
+            # Create a list of images with the cropped faces
+            cropped = self.__get_cropped_faces(video_buffer, image, i)
+
+            # Compare previous faces to the current ones
+
         """
         Next step is, for each image of the video, to compare the already
         known and unknown reference images to the detected faces, then:
@@ -161,13 +190,6 @@ class FaceTracking(object):
             - add un-recognized detected face to the list of unknown person,
             - associate such faces to such new references. 
             
-        Algorithm for ONE image at index idx in the buffer:
-        
-        # Create a list of images with the cropped faces
-        cropped_faces = list()
-        detected_coords = video_buffer.get_detected_faces(i)
-        for face_coords in detected_coords:
-            cropped_faces.append(image.icrop(face_coords))
         
         # Associate a face index to the user-defined persons, if recognized.
         person_face = dict()
