@@ -127,11 +127,10 @@ if __name__ == "__main__":
     # ------------------------------------------------
 
     for i in range(parameters.get_step_numbers()):
-        if parameters.get_outformat(i) == "ANNOT":
-            parser.add_argument(
-                "--" + parameters.get_step_key(i),
-                action='store_true',
-                help="Activate " + parameters.get_step_name(i))
+        parser.add_argument(
+            "--" + parameters.get_step_key(i),
+            action='store_true',
+            help="Activate " + parameters.get_step_name(i))
 
     parser.add_argument(
         "--merge",
@@ -210,7 +209,7 @@ if __name__ == "__main__":
     print("")
 
     # Get others from arguments
-    # -------------------------------
+    # -------------------------
 
     parameters.set_lang(args.l)
     parameters.set_output_extension(args.e, "ANNOT")

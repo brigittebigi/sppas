@@ -34,8 +34,8 @@
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-Global imports and some settings for external use.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Main source package of SPPAS software tool
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Import all packages except those of the UI.
 
@@ -43,16 +43,17 @@ Import all packages except those of the UI.
 
 import os
 import sys
+
 try:
-    reload  # Python 2.7
-except NameError:
+    from importlib import reload  # Python 3.4+
+except ImportError:
     try:
-        from importlib import reload  # Python 3.4+
-    except ImportError:
+        reload  # Python 2.7
+    except NameError:
         from imp import reload  # Python 3.0 - 3.3
 
-sppasDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, sppasDir)
+sppas_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, sppas_dir)
 
 from sppas.src.config import *
 from sppas.src.exceptions import *

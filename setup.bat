@@ -73,7 +73,7 @@ if %ERRORLEVEL% EQU 0 (
         ) else (
 
             color 04
-            echo This setup failed to install wxpython automatically.
+            echo The setup failed to install wxpython automatically.
             echo See http://www.sppas.org/installation.html to do it manually.
 
         )
@@ -82,7 +82,7 @@ if %ERRORLEVEL% EQU 0 (
 
         color 4E
         echo Python version 3 is not an internal command of your operating system.
-        echo Install it first with the Windows Store or from http://www.python.org.
+        echo Install it first either from the Windows Store or from http://www.python.org.
 
     )
 )

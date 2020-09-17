@@ -38,7 +38,10 @@
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    This is the deprecated program to execute the Graphical User Interface of SPPAS.
+    This is the deprecated program to execute the
+    Graphical User Interface of SPPAS with Python 2.7 and WxPython 3.0.
+
+    This program will be removed of the SPPAS package in May, 2021.
 
 """
 
@@ -118,7 +121,8 @@ try:
         raise ImportError
 except ImportError:
     exit_error("WxPython is not installed on your system or the version is"
-               "not the right one.\nThe Graphical User Interface can't work.")
+               "not the right one.\nThe Graphical User Interface can't work."
+               "SPPAS can be used with the Command-Line User Interface.")
 
 # ---------------------------------------------------------------------------
 
@@ -174,7 +178,7 @@ if prefsIO.Read() is False:
 # Tests
 if v == '2':
     message = "The version of WxPython is too old.\n" \
-              "The Graphical User Interface will not display properly.\n"
+              "The Graphical User Interface could not display properly.\n"
     ShowInformation(None, prefsIO, message, style=wx.ICON_WARNING)
 
 if check_aligner() is False:

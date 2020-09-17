@@ -527,7 +527,7 @@ class sppasAnnotationsManager(Thread):
         :param pattern: (str) The pattern to search in the inputs
         :param extensions: (str) The extension to search for
         :param types: (list of str) The types to search in the references of the workspace
-        :returns: List of filenames matching pattern and extensions
+        :returns: List of file names matching pattern and extensions
 
         """
         files = list()
