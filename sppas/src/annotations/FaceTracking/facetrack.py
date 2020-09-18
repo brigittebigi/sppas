@@ -42,6 +42,7 @@ import numpy as np
 from sppas.src.exceptions import NegativeValueError
 from sppas.src.exceptions import sppasTypeError
 from sppas.src.imgdata import sppasCoords
+from sppas.src.imgdata import sppasImageCompare
 from sppas.src.calculus import slope_intercept
 from sppas.src.calculus import linear_fct
 from sppas.src.calculus import tansey_linear_regression
@@ -149,8 +150,6 @@ class FaceTracking(object):
     def __get_cropped_faces(video_buffer, image, idx):
         """Return the list of cropped face images detected at given index.
 
-        RESIZE IMAGES TO 64x64.
-
         """
         cropped_faces = list()
         detected_coords = video_buffer.get_detected_faces(idx)
@@ -161,9 +160,7 @@ class FaceTracking(object):
     # -----------------------------------------------------------------------
 
     def __track_persons(self, video_buffer):
-        """Compare given faces to the reference ones.
-
-        Assign a face index to each person of the buffer.
+        """Associate a person to each of the detected faces.
 
         :param video_buffer: (sppasFacesVideoBuffer)
 
@@ -181,7 +178,9 @@ class FaceTracking(object):
             # Create a list of images with the cropped faces
             cropped = self.__get_cropped_faces(video_buffer, image, i)
 
-            # Compare previous faces to the current ones
+            # Compare current faces to the previous ones
+            for i, cropped_img in enumerate(cropped):
+                scores_i = self.__img_similarity(cropped_img, prev_cropped)
 
         """
         Next step is, for each image of the video, to compare the already
@@ -217,6 +216,25 @@ class FaceTracking(object):
         # Associate face/person to such un-recognized faces
 
         """
+
+    # -----------------------------------------------------------------------
+
+    def __scores_img_similarity(self, ref_img, compare_imgs):
+        """Evaluate a score to know how similar images are.
+
+        :param ref_img: (sppasImage)
+        :param compare_imgs: (list of sppasImage)
+
+        """
+        scores = list()
+        for hyp_img in compare_imgs:
+            cmp = sppasImageCompare(ref_img, hyp_img)
+            print(cmp.compare_areas())
+            print(cmp.compare_sizes())
+            print(cmp.compare_with_mse())
+            print(cmp.score())
+            scores.append(cmp.score())
+        return scores
 
     # -----------------------------------------------------------------------
 

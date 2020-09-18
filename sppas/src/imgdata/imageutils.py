@@ -36,127 +36,154 @@ import cv2
 import numpy
 
 from .coordinates import sppasCoords
+from .image import sppasImage
 
 # ----------------------------------------------------------------------------
 
 
-def crops(image, coordinates):
-    """Return a list of cropped images(numpy.ndarray objects).
+class sppasImageCompare(object):
+    """Very basic scoring to compare images.
 
-    :param image: (numpy.ndarray) The image to be cropped.
-    :param coordinates: (list) List of sppasCoords object.
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    """
-    list_cropped = list()
-    for c in coordinates:
-        if isinstance(c, sppasCoords) is False:
-            raise TypeError
-        cropped = image[c.get_y():c.get_y() + c.get_h(), c.get_x():c.get_x() + c.get_w()]
-        list_cropped.append(cropped)
-    return list_cropped
+    How to quantify difference between two images?
 
-# ----------------------------------------------------------------------------
-
-
-def surrond_square(image, coordinate, number):
-    """Surround the elements of "image" with squares.
-
-    :param image: (numpy.ndarray) The image to be processed.
-    :param coordinate: (list) sppasCoords object.
-    :param number: (int) value of R and G (the color of the square).
-    :returns: An image(numpy.ndarray object).
+    - Are images of the same area and dimension?
+    - Is lightness/contrast the same? Is color information important?
 
     """
-    number = int(number)
-    if isinstance(number, int) is False:
-        raise TypeError
-    if isinstance(coordinate, sppasCoords) is False:
-        raise TypeError
-    cv2.rectangle(image, (coordinate.get_x(), coordinate.get_y()), (coordinate.get_x() +
-                                                                    coordinate.get_w(),
-                                                                    coordinate.get_y() + coordinate.get_h()),
-                  (number, number * 2, 200), 2)
-    return image
 
-# ----------------------------------------------------------------------------
+    def __init__(self, img1, img2):
+        # if img1.shape != img2.shape:
+        #    raise Exception("Can't compare images: shapes must be identical")
+        self.__img1 = img1
+        self.__img2 = img2
 
+    # -----------------------------------------------------------------------
 
-def resize(image, width, height):
-    """Return a list of cropped images(numpy.ndarray objects).
+    def score(self):
+        """Mix various comparison scores to return a single one."""
+        # image dimensions
+        s1 = self.compare_areas()
+        s2 = self.compare_sizes()
+        # image lightness and colors
+        s3 = self.compare_with_mse()
 
-    :param image: (numpy.ndarray) The image to be resized.
-    :param width: (int) The width you want to resize to.
-    :param height: (int) The width you want to resize to.
+        return (0.25 * s1) + (0.25 * s2) + (0.5 * s3)
 
-    """
-    if len(image) == 0:
-        return
-    if width < 0:
-        raise ValueError
-    if height < 0:
-        raise ValueError
-    image = cv2.resize(image, (width, height), interpolation=cv2.INTER_AREA)
-    return image
+    # -----------------------------------------------------------------------
 
-# -----------------------------------------------------------------------
+    def compare_areas(self):
+        """Return a score on how image areas are similar.
 
+        :return: (float) value between 0. and 1.
 
-def portrait(coords, coeff=2.4):
-    """Transform face coordinates to a portrait coordinates.
+        """
+        w1, h1 = self.__img1.size()
+        w2, h2 = self.__img2.size()
+        area1 = w1 * h1
+        area2 = w2 * h2
+        min_area = min(area1, area2)
+        max_area = max(area1, area2)
+        if max_area < 2:
+            return 0.
 
-    :param coords: (sppasCoords) The coordinates of the face.
-    :param coeff: (float) The coefficient of the scale.
+        return float(min_area) / float(max_area)
 
-    """
-    if isinstance(coords, sppasCoords) is False:
-        raise TypeError
+    # -----------------------------------------------------------------------
 
-    # Extend the image with a coeff equal to 2.4
-    result = coords.scale(coeff)
+    def compare_sizes(self):
+        """Return a score on how image sizes are similar.
 
-    # Reframe the image on the face
-    coords.shift(result, -30)
+        :return: (float) value between 0. and 1.
 
-# ----------------------------------------------------------------------------
+        """
+        w1, h1 = self.__img1.size()
+        w2, h2 = self.__img2.size()
+        w_min = min(w1, w2)
+        w_max = max(w1, w2)
+        h_min = min(h1, h2)
+        h_max = max(h1, h2)
 
+        w_ratio = 0.
+        if w_max > 2:
+            w_ratio = float(w_min) / float(w_max)
 
-def draw_points(image, x, y, number):
-    """Surround the elements of "image" with squares.
+        h_ratio = 0.
+        if h_max > 2:
+            h_ratio = float(h_min) / float(h_max)
 
-    :param image: (numpy.ndarray) The image to be processed.
-    :param x: (list) The x-axis value for the draw.
-    :param y: (list) The y-axis value for the draw.
-    :param number: (int) value of R and G (the color of the draw).
+        return (w_ratio + h_ratio) / 2.
 
-    """
-    x = int(x)
-    if isinstance(x, int) is False:
-        raise TypeError
-    y = int(y)
-    if isinstance(y, int) is False:
-        raise TypeError
+    # -----------------------------------------------------------------------
 
-    # Draw circle on the coordinate
-    cv2.circle(image, (x, y), 3, (number, number * 2, 200), -1)
+    def compare_with_mse(self):
+        r1 = sppasImageCompare(self.__img1, self.__img2.ired()).mse()
+        r2 = sppasImageCompare(self.__img1.ired(), self.__img2).mse()
+        b1 = sppasImageCompare(self.__img1, self.__img2.iblue()).mse()
+        b2 = sppasImageCompare(self.__img1.iblue(), self.__img2).mse()
+        g1 = sppasImageCompare(self.__img1, self.__img2.igreen()).mse()
+        g2 = sppasImageCompare(self.__img1.igreen(), self.__img2).mse()
+        total = r1+r2+b1+b2+g1+g2
+        mini = min((r1, r2, b1, b2, g1, g2))
+        if round(total, 2) == 0.:
+            return 1.
 
-# ----------------------------------------------------------------------------
+        return min(1., max(0., 1. - (self.mse() / mini)))
 
+    # -----------------------------------------------------------------------
 
-def rotate(image, angle, center=None, scale=1.0):
-    # grab the dimensions of the image
-    (h, w) = image.shape[:2]
+    def mse(self):
+        """Return the Mean Squared Error between the two images.
 
-    # if the center is None, initialize it as the center of
-    # the image
-    if center is None:
-        center = (w // 2, h // 2)
+        :return: (float) The lower the error, the more similar the images are
 
-    # perform the rotation
-    matrix = cv2.getRotationMatrix2D(center, angle, scale)
-    rotated = cv2.warpAffine(image, matrix, (w, h))
+        """
+        # convert the images to grayscale
+        img1_gray = self.__img1.igray()
+        img2_gray = self.__img2.igray()
 
-    # return the rotated image
-    return rotated
+        # resize to get both images the same size
+        w1, h1 = self.__img1.size()
+        w2, h2 = self.__img2.size()
+        img1 = img1_gray.iresize(width=min(w1, w2), height=min(h1, h2))
+        img2 = img2_gray.iresize(width=min(w1, w2), height=min(h1, h2))
+
+        # the 'Mean Squared Error' between the two images is the
+        # sum of the squared difference between the two images
+        err = numpy.sum((img1.astype("float") - img2.astype("float")) ** 2)
+        err /= float(img1.shape[0] * img2.shape[1])
+
+        # return the MSE, the lower the error, the more "similar"
+        # the two images are
+        return float(err)
+
+    # -----------------------------------------------------------------------
+
+    def kld(self):
+        """Return the Kullback-Leibler Distance between the two images.
+
+        :return: (float) The lower the distance, the more similar the images are
+
+        """
+        # convert the images to grayscale
+        img1_gray = self.__img1.igray()
+        img2_gray = self.__img2.igray()
+
+        # resize to get both images the same size
+        w1, h1 = self.__img1.size()
+        w2, h2 = self.__img2.size()
+        img1 = img1_gray.iresize(width=min(w1, w2), height=min(h1, h2))
+        img2 = img2_gray.iresize(width=min(w1, w2), height=min(h1, h2))
+
+        # histograms for the images
+        hist1, bin_edges1 = numpy.histogram(img1, bins=range(256))
+        hist2, bin_edges2 = numpy.histogram(img2, bins=range(256))
+
 
 # ----------------------------------------------------------------------------
 
@@ -209,7 +236,7 @@ def overlay(back_image, over_image, x, y, w, h):
     h_im, w_im = back_image.shape[:2]
 
     # Resize the image to overlay to the appropriate size
-    over = resize(over_image, w, h)
+    over = over_image.iresize(w, h)
     cols, rows = over.shape[:2]
     x = int(x - rows * 0.6)
 

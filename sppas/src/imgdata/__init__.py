@@ -95,6 +95,7 @@ image_extensions = list()
 if cfg.dep_installed("video") is True:
     # Subclass of numpy.ndarray to manipulate images
     from .image import sppasImage
+    from .imageutils import sppasImageCompare
     # Write image and coordinates
     from .imgwriter import sppasImageCoordsWriter
     # Automatically detect objects in an image
@@ -125,6 +126,10 @@ else:
         pass
 
 
+    class sppasImageCompare(sppasImageDataError):
+        pass
+
+
     class sppasImageCoordsWriter(sppasImageDataError):
         pass
 
@@ -146,6 +151,7 @@ else:
 __all__ = (
     "sppasCoords",
     "sppasImage",
+    "sppasImageCompare",
     "sppasImageCoordsWriter",
     "image_extensions",
     "HaarCascadeDetector",

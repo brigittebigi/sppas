@@ -131,14 +131,14 @@ class sppasImage(numpy.ndarray):
 
     @property
     def width(self):
-        _, w, _ = self.shape
+        w = self.shape[1]
         return w
 
     # -----------------------------------------------------------------------
 
     @property
     def height(self):
-        h, _, _ = self.shape
+        h = self.shape[0]
         return h
 
     # -----------------------------------------------------------------------
