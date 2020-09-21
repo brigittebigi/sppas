@@ -34,6 +34,8 @@
 
 """
 
+from collections import Counter
+
 from ..calculusexc import EmptyError, InsideIntervalError
 from ..calculusexc import SumProbabilityError, ProbabilityError
 from .utilit import log2
@@ -200,7 +202,7 @@ class sppasKullbackLeibler(object):
 
         if len(self._model) > 0:
             # Find the minimum...
-            pmin = round(min(p for p in self._model.values()), 6)
+            pmin = min(p for p in self._model.values())
             if eps > pmin/2.:
                 eps = pmin/3.
 
@@ -252,20 +254,28 @@ class sppasKullbackLeibler(object):
 
         """
         dist = 0.
+        n = len(self._observations)
 
-        # Estimates the distance using each of the n-grams
-        for x in self._observations:
+        # Convert the list of observed events to a dict with value=count
+        obs_dict = Counter(self._observations)
+        for x in obs_dict:
+            # get the observation proba
             proba_model = self._epsilon
             if x in self._model:
                 proba_model = alpha * self._model[x]
-            proba_ngram = beta * (float(self._observations.count(x)) /
-                                  float(len(self._observations)))
-            d = (proba_model - proba_ngram) * log2(proba_model / proba_ngram)
-            dist += d
+            count_obs = obs_dict[x]
+            proba_obs = beta * (float(count_obs) / float(n))
+
+            # evaluate the contribution ot the distance between
+            # the observation proba and the model proba
+            d = (proba_model - proba_obs) * log2(proba_model / proba_obs)
+
+            # this observation contributes 'count_obs' times to the KLD
+            dist += (d * count_obs)
 
         # Estimates the distance using n-grams in the model
         for x in self._model:
-            if x not in self._observations:
+            if x not in obs_dict:
                 proba_model = alpha * self._model[x]
                 dist += ((proba_model - self._epsilon) *
                          log2(proba_model / self._epsilon))

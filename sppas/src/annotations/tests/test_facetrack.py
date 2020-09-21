@@ -40,10 +40,13 @@ from sppas.src.config import paths
 from sppas.src.exceptions import sppasError
 from sppas.src.annotations.param import sppasParam
 from sppas.src.videodata import sppasVideoReaderBuffer
+from sppas.src.imgdata import sppasImageCoordsWriter, sppasImage
 
 from ..FaceTracking.videotrackwriter import sppasVideoCoordsWriter
 from ..FaceTracking.facebuffer import sppasFacesVideoBuffer
 from ..FaceTracking.sppasfacetrack import sppasFaceTrack
+from ..FaceTracking.facetrack import FaceRecognition
+from ..FaceDetection.facedetection import FaceDetection
 
 # ---------------------------------------------------------------------------
 
@@ -238,7 +241,7 @@ class TestFaceBuffer(unittest.TestCase):
 
     # -----------------------------------------------------------------------
 
-    def test_detect_setters(self):
+    def test_detect_set_persons(self):
         fvb = sppasFacesVideoBuffer(video=TestFaceBuffer.VIDEO, size=10)
         fvb.load_fd_model(NET, HAAR1, HAAR2)
         fvb.next()
@@ -270,6 +273,85 @@ class TestFaceBuffer(unittest.TestCase):
         self.assertEqual(410, person_coords["toto"][4].y)
 
         fvb.close()
+
+# ---------------------------------------------------------------------------
+
+
+class TestFaceRecognition(unittest.TestCase):
+
+    PHOTO1 = "/E/Photos/BientotQuadra1.jpg"
+    PHOTO2 = "/E/Photos/BientotQuadra2.jpg"
+
+    def test_score_img_similarity(self):
+        # Detect persons of photo 1
+        img1 = sppasImage(filename=TestFaceRecognition.PHOTO1)
+        fd = FaceDetection()
+        fd.load_model(NET, HAAR1, HAAR2)
+        fd.detect(img1)
+        fd.to_portrait(img1)
+
+        fn = os.path.join(DATA, "BientotQuadra1-face.png")
+        w = sppasImageCoordsWriter()
+        w.set_options(tag=True)
+        w.write(img1, [c.copy() for c in fd], fn)
+        self.assertEqual(7, len(fd))
+        persons = dict()
+        persons["lea"] = img1.icrop(fd[0])
+        persons["beatrice"] = img1.icrop(fd[1])
+        persons["gael"] = img1.icrop(fd[2])
+        persons["myriam"] = img1.icrop(fd[3])
+        persons["roselyne"] = img1.icrop(fd[4])
+        persons["brigitte"] = img1.icrop(fd[5])
+        persons["franck"] = img1.icrop(fd[6])
+
+        # Detect persons of photo 2
+        img2 = sppasImage(filename=TestFaceRecognition.PHOTO2)
+        fd = FaceDetection()
+        fd.load_model(NET, HAAR1, HAAR2)
+        fd.detect(img2)
+        fd.to_portrait(img2)
+
+        fn = os.path.join(DATA, "BientotQuadra2-face.png")
+        w = sppasImageCoordsWriter()
+        w.set_options(tag=True)
+        w.write(img2, [c.copy() for c in fd], fn)
+        self.assertEqual(7, len(fd))
+        img_faces = [img2.icrop(fd[i]) for i in range(len(fd))]
+
+        # So, now we have portraits of the known persons and
+        # their portrait in a new image. Can we match the persons?
+        fr = FaceRecognition(persons)
+
+        # in img_faces, beatrice is at index 0.
+        d = fr.scores_img_similarity(img_faces[0])
+        ds = sorted(d.items(), key=lambda x: x[1], reverse=True)
+        self.assertEqual("beatrice", ds[0][0])
+
+        d = fr.scores_img_similarity(img_faces[1])
+        ds = sorted(d.items(), key=lambda x: x[1], reverse=True)
+        self.assertEqual("myriam", ds[0][0])
+
+        d = fr.scores_img_similarity(img_faces[2])
+        ds = sorted(d.items(), key=lambda x: x[1], reverse=True)
+        self.assertEqual("roselyne", ds[0][0])
+
+        # Recognition error ********************** : brigitte expected
+        d = fr.scores_img_similarity(img_faces[3])
+        ds = sorted(d.items(), key=lambda x: x[1], reverse=True)
+        self.assertEqual("beatrice", ds[0][0])
+        self.assertEqual("brigitte", ds[1][0])
+
+        d = fr.scores_img_similarity(img_faces[4])
+        ds = sorted(d.items(), key=lambda x: x[1], reverse=True)
+        self.assertEqual("franck", ds[0][0])
+
+        d = fr.scores_img_similarity(img_faces[5])
+        ds = sorted(d.items(), key=lambda x: x[1], reverse=True)
+        self.assertEqual("gael", ds[0][0])
+
+        d = fr.scores_img_similarity(img_faces[6])
+        ds = sorted(d.items(), key=lambda x: x[1], reverse=True)
+        self.assertEqual("lea", ds[0][0])
 
 # ---------------------------------------------------------------------------
 

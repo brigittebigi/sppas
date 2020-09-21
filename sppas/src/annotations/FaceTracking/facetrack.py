@@ -65,16 +65,20 @@ class FaceTracking(object):
 
     def __init__(self):
         """Create a new FaceTracker instance."""
+        self.__track_ia = False
 
         # Not currently used:
         # A reference image to represent the face of each person
         # key=a name or any other identifier, value=sppasImage
-        self.__img_known_faces = dict()      # user-defined persons
-        self.__img_unknown_faces = dict()    # detected unknown persons
+        self.__img_known_faces = dict()
 
     # -----------------------------------------------------------------------
     # Getters and setters
     # -----------------------------------------------------------------------
+
+    def invalidate(self):
+        """Invalidate the list of all automatically added faces."""
+        self.__img_known_faces = list()
 
     # -----------------------------------------------------------------------
 
@@ -85,6 +89,7 @@ class FaceTracking(object):
 
         The given images can be a list with images to represents the faces
         or a dictionary with key=string and value=the image.
+
         :param known_faces: (list of sppasImage or dict)
 
         """
@@ -107,16 +112,10 @@ class FaceTracking(object):
 
         self.__img_known_faces = dict()
         for key, value in zip(names, faces):
-            self.__img_unknown_faces[key] = value
+            self.__img_known_faces[key] = value
 
     # -----------------------------------------------------------------------
     # Automatic detection of the faces in a video
-    # -----------------------------------------------------------------------
-
-    def invalidate(self):
-        """Invalidate the list of all automatically added faces."""
-        self.__img_unknown_faces = list()
-
     # -----------------------------------------------------------------------
 
     def detect_buffer(self, video_buffer):
@@ -132,7 +131,10 @@ class FaceTracking(object):
         # Detection of landmarks is not enabled because it has to be debugged.
 
         # Assign a person to each detected face
-        self.__track_persons(video_buffer)
+        if self.__track_ia is True:
+            self.__track_persons(video_buffer)
+        else:
+            video_buffer.set_default_detected_persons()
 
         # Remove un-relevant detected faces and fill-in holes
         video_buffer.remove_isolated()
@@ -165,7 +167,6 @@ class FaceTracking(object):
         :param video_buffer: (sppasFacesVideoBuffer)
 
         """
-        video_buffer.set_default_detected_persons()
         iter_image = video_buffer.__iter__()
         prev_image = next(iter_image)
         prev_cropped = self.__get_cropped_faces(video_buffer, prev_image, 0)
@@ -180,7 +181,8 @@ class FaceTracking(object):
 
             # Compare current faces to the previous ones
             for i, cropped_img in enumerate(cropped):
-                scores_i = self.__img_similarity(cropped_img, prev_cropped)
+                scores_i = self.__scores_img_similarity(cropped_img, prev_cropped)
+                # person_i = the person with the best score
 
         """
         Next step is, for each image of the video, to compare the already
@@ -234,6 +236,7 @@ class FaceTracking(object):
             print(cmp.compare_with_mse())
             print(cmp.score())
             scores.append(cmp.score())
+
         return scores
 
     # -----------------------------------------------------------------------
@@ -272,3 +275,46 @@ class FaceTracking(object):
                 y = linear_fct(cache[1].x, a, b)
 
                 cache.pop(0)
+
+# ---------------------------------------------------------------------------
+
+
+class FaceRecognition(object):
+
+    def __init__(self, known_persons):
+        """
+
+        :param known_persons: (dict) key=name; value=image
+
+        """
+        self.__known_persons = known_persons
+
+    # -----------------------------------------------------------------------
+
+    def identify(self, image):
+        """Return who, among the known person, is in the given image."""
+        pass
+
+    # -----------------------------------------------------------------------
+
+    def scores_img_similarity(self, image):
+        """Evaluate a score to know how similar the known images are.
+
+        :param image: (sppasImage) The image to compare with
+        :return: dict key=person_id, value=score
+
+        """
+        scores = dict()
+        for ref_name in self.__known_persons:
+            ref_img = self.__known_persons[ref_name]
+            cmp = sppasImageCompare(image, ref_img)
+            print("areas: {}".format(cmp.compare_areas()))
+            print("sizes: {}".format(cmp.compare_sizes()))
+            print("mse:   {}".format(cmp.compare_with_mse()))
+            print("kld:   {}".format(cmp.compare_with_kld()))
+            print(" -> combined: {}".format(cmp.score()))
+            scores[ref_name] = cmp.score()
+        return scores
+
+    # -----------------------------------------------------------------------
+

@@ -163,3 +163,20 @@ class TestImageCompare(unittest.TestCase):
         img1 = sppasImage(filename=TestImageCompare.IMAGE1)
         img2 = img1.igamma(1.5)
         self.assertEqual(0.29, round(sppasImageCompare(img1, img2).compare_with_mse(), 2))
+
+    def test_compare_with_kld(self):
+        img1 = sppasImage(filename=TestImageCompare.IMAGE1)
+        img2 = sppasImage(filename=TestImageCompare.IMAGE2)
+
+        # Identical images:
+        result = sppasImageCompare(img1, img1).compare_with_kld()
+        self.assertGreater(result, 0.95)
+        result = sppasImageCompare(img2, img2).compare_with_kld()
+        self.assertGreater(result, 0.95)
+
+        # Different images:
+        result1 = sppasImageCompare(img1, img2).compare_with_kld()
+        result2 = sppasImageCompare(img2, img1).compare_with_kld()
+        self.assertEqual(result1, result2)
+        self.assertLess(result1, 0.5)
+
