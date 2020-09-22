@@ -171,12 +171,19 @@ class TestImageCompare(unittest.TestCase):
         # Identical images:
         result = sppasImageCompare(img1, img1).compare_with_kld()
         self.assertGreater(result, 0.95)
+        print("* img1 vs img1: {}".format(result))
         result = sppasImageCompare(img2, img2).compare_with_kld()
         self.assertGreater(result, 0.95)
+        print("* img2 vs img2: {}".format(result))
 
         # Different images:
         result1 = sppasImageCompare(img1, img2).compare_with_kld()
+        print("* img1 vs img2: {}".format(result1))
         result2 = sppasImageCompare(img2, img1).compare_with_kld()
         self.assertEqual(result1, result2)
         self.assertLess(result1, 0.5)
 
+        result = sppasImageCompare(img1, img1.inegative()).compare_with_kld()
+        print("* img1 vs neg-img1: {}".format(result))
+        result = sppasImageCompare(img2, img2.inegative()).compare_with_kld()
+        print("* img2 vs neg-img2: {}".format(result))

@@ -295,7 +295,9 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
     # -----------------------------------------------------------------------
 
     def set_default_detected_persons(self):
-        """Set a default person name to each detected face."""
+        """Set a default person name to each detected face.
+
+        """
         self.__persons = list()
         for i in range(self.__len__()):
             self.__persons.append(list())

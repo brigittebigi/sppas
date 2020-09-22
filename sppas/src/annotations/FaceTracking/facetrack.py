@@ -157,7 +157,7 @@ class FaceTracking(object):
         detected_coords = video_buffer.get_detected_faces(idx)
         for face_coords in detected_coords:
             cropped_faces.append(image.icrop(face_coords))
-        return cropped_faces
+        return cropped_faces, detected_coords
 
     # -----------------------------------------------------------------------
 
@@ -169,46 +169,42 @@ class FaceTracking(object):
         """
         iter_image = video_buffer.__iter__()
         prev_image = next(iter_image)
-        prev_cropped = self.__get_cropped_faces(video_buffer, prev_image, 0)
-        prev_persons = [str(x) for x in range(len(prev_cropped))]
+        prev_cropped_img, prev_cropped_coords = self.__get_cropped_faces(video_buffer, prev_image, 0)
+
+        # INSTEAD of the following: compare buffer with known persons
+        prev_persons = [(str(x), i) for i, x in enumerate(range(len(prev_cropped_img)))]
         persons = [prev_persons]
 
+        # Compare each set of detected faces to the previous ones
         for i in range(video_buffer.__len__()):
             image = next(iter_image)
 
             # Create a list of images with the cropped faces
-            cropped = self.__get_cropped_faces(video_buffer, image, i)
+            cropped_img, cropped_coords = self.__get_cropped_faces(video_buffer, image, i)
+            cur_persons = [None]*len(cropped_img)
 
             # Compare current faces to the previous ones
-            for i, cropped_img in enumerate(cropped):
-                scores_i = self.__scores_img_similarity(cropped_img, prev_cropped)
-                # person_i = the person with the best score
+            all_scores = list()  # list of list of scores
+            for j, cropped_img in enumerate(cropped_img):
+                scores_j = self._scores_img_similarity(
+                    cropped_img, prev_cropped_img,
+                    cropped_coords[i], prev_cropped_coords
+                    )
+                all_scores.append(scores_j)
+
+            # Analyse scores to associate a face to a person
+            best_face_idx = self._get_best_scores(all_scores)
+            for j in range(len(best_face_idx)):
+                best_idx = best_face_idx[j]
+                cur_persons[j] = ("name", best_idx)
 
         """
         Next step is, for each image of the video, to compare the already
-        known and unknown reference images to the detected faces, then:
+        known reference images to the detected faces, then:
             - associate a face index to each recognized person,
             - add un-recognized detected face to the list of unknown person,
             - associate such faces to such new references. 
-            
-        
-        # Associate a face index to the user-defined persons, if recognized.
-        person_face = dict()
-        for person_id in self.__img_known_faces:
-            max_dist = 0.
-            max_index = 0
-            distances = list()
-            for detected_face in cropped_faces:
-                d = eval_distance(self.__img_known_faces[person_id], detected_face)
-                if d > max_dist:
-                    max_dist = d
-                    max_index = i
-                distances.append(d)
-            person_face[person_id] = (max_index, distances)
-            
-        # Associate a face index to the auto-added persons, if recognized.
-        # SAME CODE. replace img_known by img_unknown.
-                
+      
         # Check that each face is matching with only one person, not several ones
         # in case of a face is associated to several persons, choose the one 
         # with the best distance
@@ -221,25 +217,105 @@ class FaceTracking(object):
 
     # -----------------------------------------------------------------------
 
-    def __scores_img_similarity(self, ref_img, compare_imgs):
+    def _scores_img_similarity(self, ref_img, compare_imgs, ref_coords=None, compare_coords=None):
         """Evaluate a score to know how similar images are.
 
         :param ref_img: (sppasImage)
         :param compare_imgs: (list of sppasImage)
+        :param ref_coords: (sppasCoord)
+        :param compare_coords: (list of sppasCoord)
 
         """
+        if compare_coords is None:
+            compare_coords = [None]*len(compare_imgs)
+        if len(compare_imgs) != len(compare_coords):
+            raise Exception
+
         scores = list()
-        for hyp_img in compare_imgs:
-            cmp = sppasImageCompare(ref_img, hyp_img)
-            print(cmp.compare_areas())
-            print(cmp.compare_sizes())
-            print(cmp.compare_with_mse())
-            print(cmp.score())
+        for hyp_img, hyp_coords in zip(compare_imgs, compare_coords):
+            cmp = sppasImageCompare(ref_img, hyp_img, ref_coords, hyp_coords)
             scores.append(cmp.score())
 
         return scores
 
     # -----------------------------------------------------------------------
+
+    def _get_best_scores(self, all_scores):
+        """Return a list with the index of the best score for each list of scores.
+
+        :param all_scores: (list of list of scores)
+        :return: (list) index of the best score or -1 if no score is better than the others
+
+        """
+        best = list()
+        for scores in all_scores:
+            best_index = -1
+            second_best = -1
+            delta_best = 0.
+            if len(scores) == 1:
+                if scores[0] > 0.5:
+                    best_index = 0
+
+            else:
+                # sort the scores: the higher the better
+                sorted_scores = list(reversed(sorted(scores)))
+
+                # Evaluate the average delta among 2 consecutive scores
+                s_prev = sorted_scores[0]
+                sum_delta = 0.
+                for i in range(1, len(scores)):
+                    s_cur = sorted_scores[i]
+                    sum_delta += (s_prev - s_cur)
+                    s_prev = s_cur
+                avg_delta_score = sum_delta / float(len(scores) - 1)
+
+                # Evaluate the dist between the best and the second best
+                best_index = scores.index(sorted_scores[0])
+                second_best = scores.index(sorted_scores[1])
+                delta_best = sorted_scores[0] - sorted_scores[1]
+                if delta_best < avg_delta_score:
+                    # the best is not significantly better than the 2nd best
+                    delta_best = 0
+
+            best.append((best_index, delta_best, second_best))
+
+        # Search for conflicts, if any.
+        # Store conflicts to not modify 'best' on the fly.
+        conflicts = list()
+        for i in range(len(best)):
+            # does this index is somewhere later on in the best?
+            for j in range(i+1, len(best)):
+                if best[i][0] == best[j][0]:
+                    # we have a conflict
+                    conflicts.append((i, j))
+
+        # Replace the best by the 2nd best when conflicts
+        for (i, j) in conflicts:
+            if best[i][1] > best[j][1]:
+                best[j] = (best[j][2], 0, -1)
+            else:
+                best[i] = (best[i][2], 0, -1)
+
+        # Search for conflicts, if any.
+        # Store conflicts to not modify 'best' on the fly.
+        conflicts = list()
+        for i in range(len(best)):
+            # does this index is somewhere later on in the best?
+            for j in range(i+1, len(best)):
+                if best[i][0] == best[j][0]:
+                    # we have a conflict
+                    conflicts.append((i, j))
+
+        # Cancel the worse candidate of conflicts
+        for (i, j) in conflicts:
+            if best[i][1] > best[j][1]:
+                best[j] = (-1, 0, -1)
+            else:
+                best[i] = (-1, 0, -1)
+
+        return [b[0] for b in best]
+
+# -----------------------------------------------------------------------
 
     def __smooth_coords(self, video_buffer):
         """Smooth the trajectory of the detected coordinates of each person.

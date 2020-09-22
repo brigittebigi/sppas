@@ -34,7 +34,6 @@
 
 import cv2
 import numpy
-import math
 
 from sppas.src.calculus import sppasKullbackLeibler
 
@@ -73,6 +72,7 @@ class sppasImageCompare(object):
     def score(self):
         """Mix various comparison scores to return a single one."""
         # image dimensions
+        s1 = self.compare_areas()
         s2 = self.compare_sizes()
         # image lightness and colors
         s3 = self.compare_with_mse()
@@ -80,43 +80,26 @@ class sppasImageCompare(object):
         # image coordinates (if any)
         s5 = self.compare_coords()
         if s5 == -1:
-            s1 = self.compare_areas()
-            return (0.2 * s1) + (0.2 * s2) + (0.45 * s3) + (0.15 * s4)
+            return (0.2 * s1) + (0.2 * s2) + (0.4 * s3) + (0.2 * s4)
 
-        return (0.2 * s5) + (0.2 * s2) + (0.45 * s3) + (0.15 * s4)
+        return (0.1 * s1) + (0.1 * s2) + (0.3 * s5) + (0.4 * s3) + (0.1 * s4)
 
     # -----------------------------------------------------------------------
 
     def compare_coords(self):
+        """Return a score on how image coordinates are similar.
+
+        :return: (float) value between 0. and 1. The highest the closer.
+
+        """
         if self.__coords1 is None or self.__coords2 is None:
             return -1
 
-        # top-left corner move
-        a = math.fabs(self.__coords1.x - self.__coords2.x)
-        b = math.fabs(self.__coords1.y - self.__coords2.y)
-        p1 = self.pythagorean(a, b)
+        area1 = self.__coords1.area()
+        area2 = self.__coords2.area()
+        intersec = self.__coords1.intersection_area(self.__coords2)
 
-        # top-right corner move
-        top_right_x1 = self.__coords1.x + self.__coords1.w
-        top_right_x2 = self.__coords2.x + self.__coords2.w
-        a = math.fabs(top_right_x1 - top_right_x2)
-        p2 = self.pythagorean(a, b)
-
-        # bottom-left move
-        bottom_left_y1 = self.__coords1.y + self.__coords1.h
-        bottom_left_y2 = self.__coords2.y + self.__coords2.h
-        a = math.fabs(bottom_left_y1 - bottom_left_y2)
-        p3 = self.pythagorean(a, b)
-
-        # bottom-right movement
-
-        return -1
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def pythagorean(a, b):
-        return math.sqrt((a * a) + (b * b))
+        return intersec / (area1 + area2)
 
     # -----------------------------------------------------------------------
 
@@ -165,6 +148,11 @@ class sppasImageCompare(object):
     # -----------------------------------------------------------------------
 
     def compare_with_mse(self):
+        """Return a score to compare images with the Mean Squared Error.
+
+        :return: (float) value between 0. and 1.
+
+        """
         r1 = sppasImageCompare(self.__img1, self.__img2.ired()).mse()
         r2 = sppasImageCompare(self.__img1.ired(), self.__img2).mse()
         b1 = sppasImageCompare(self.__img1, self.__img2.iblue()).mse()
@@ -208,16 +196,22 @@ class sppasImageCompare(object):
     # -----------------------------------------------------------------------
 
     def compare_with_kld(self):
+        """Return a score to compare images with the Kullback-Leibler Dist.
 
+        :return: (float) value between 0. and 1.
+
+        """
         # resize to get both images the same size
         w1, h1 = self.__img1.size()
         w2, h2 = self.__img2.size()
-        img1 = self.__img1.iresize(width=min(w1, w2), height=min(h1, h2))
-        img2 = self.__img2.iresize(width=min(w1, w2), height=min(h1, h2))
-        w, h = img1.size()
+        w = max(w1, w2)
+        h = max(h1, h2)
 
-        img1 = img1 // 16
-        img2 = img2 // 16
+        # smooth color values
+        img1 = self.__img1 // 8
+        img2 = self.__img2 // 8
+
+        # convert (r, g, b) to a single int value and put them into a list
         rgb1 = self.img_to_rgb_values(img1)
         rgb2 = self.img_to_rgb_values(img2)
         obs1 = rgb1.tolist()
@@ -232,7 +226,7 @@ class sppasImageCompare(object):
 
         model = self.img_to_rgb_dict(rgb1)
         kl = sppasKullbackLeibler(model=model)
-        kl.set_epsilon(1.0 / (2. * float(w * h * 2)))
+        kl.set_epsilon(1.0 / (float(w * h * 2)))
 
         # Fix the "observations": negative value of img1
         kl.set_observations(neg_obs1)
@@ -243,7 +237,7 @@ class sppasImageCompare(object):
 
         model = self.img_to_rgb_dict(rgb2)
         kl = sppasKullbackLeibler(model=model)
-        kl.set_epsilon(1.0 / (2. * float(w * h * 2)))
+        kl.set_epsilon(1.0 / (float(w * h * 2)))
 
         kl.set_observations(neg_obs2)
         dist_max2 = kl.eval_kld()
@@ -302,7 +296,11 @@ class sppasImageCompare(object):
 
     @staticmethod
     def img_to_rgb_values(img):
-        """Return a numpy.array representing a unique value of the colors."""
+        """Return a numpy.array representing a unique value of the colors.
+
+        :param img: (sppasImage)
+
+        """
         b = numpy.array(img[:, :, 0], dtype=int).reshape(-1)
         g = numpy.array(img[:, :, 1], dtype=int).reshape(-1)
         g = g * 0xFF

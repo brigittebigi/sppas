@@ -46,6 +46,7 @@ from ..FaceTracking.videotrackwriter import sppasVideoCoordsWriter
 from ..FaceTracking.facebuffer import sppasFacesVideoBuffer
 from ..FaceTracking.sppasfacetrack import sppasFaceTrack
 from ..FaceTracking.facetrack import FaceRecognition
+from ..FaceTracking.facetrack import FaceTracking
 from ..FaceDetection.facedetection import FaceDetection
 
 # ---------------------------------------------------------------------------
@@ -282,45 +283,49 @@ class TestFaceRecognition(unittest.TestCase):
     PHOTO1 = "/E/Photos/BientotQuadra1.jpg"
     PHOTO2 = "/E/Photos/BientotQuadra2.jpg"
 
-    def test_score_img_similarity(self):
+    def setUp(self):
         # Detect persons of photo 1
-        img1 = sppasImage(filename=TestFaceRecognition.PHOTO1)
+        self.img1 = sppasImage(filename=TestFaceRecognition.PHOTO1)
         fd = FaceDetection()
         fd.load_model(NET, HAAR1, HAAR2)
-        fd.detect(img1)
-        fd.to_portrait(img1)
+        fd.detect(self.img1)
+        fd.to_portrait(self.img1)
+        self.coords1 = [x.copy() for x in fd]
+        self.assertEqual(7, len(self.coords1))
 
         fn = os.path.join(DATA, "BientotQuadra1-face.png")
         w = sppasImageCoordsWriter()
         w.set_options(tag=True)
-        w.write(img1, [c.copy() for c in fd], fn)
-        self.assertEqual(7, len(fd))
-        persons = dict()
-        persons["lea"] = img1.icrop(fd[0])
-        persons["beatrice"] = img1.icrop(fd[1])
-        persons["gael"] = img1.icrop(fd[2])
-        persons["myriam"] = img1.icrop(fd[3])
-        persons["roselyne"] = img1.icrop(fd[4])
-        persons["brigitte"] = img1.icrop(fd[5])
-        persons["franck"] = img1.icrop(fd[6])
+        w.write(self.img1, self.coords1, fn)
+        self.persons = dict()
+        self.persons["lea"] = self.img1.icrop(fd[0])
+        self.persons["beatrice"] = self.img1.icrop(fd[1])
+        self.persons["gael"] = self.img1.icrop(fd[2])
+        self.persons["myriam"] = self.img1.icrop(fd[3])
+        self.persons["roselyne"] = self.img1.icrop(fd[4])
+        self.persons["brigitte"] = self.img1.icrop(fd[5])
+        self.persons["franck"] = self.img1.icrop(fd[6])
 
         # Detect persons of photo 2
-        img2 = sppasImage(filename=TestFaceRecognition.PHOTO2)
+        self.img2 = sppasImage(filename=TestFaceRecognition.PHOTO2)
         fd = FaceDetection()
         fd.load_model(NET, HAAR1, HAAR2)
-        fd.detect(img2)
-        fd.to_portrait(img2)
+        fd.detect(self.img2)
+        fd.to_portrait(self.img2)
+        self.coords2 = [x.copy() for x in fd]
+        self.assertEqual(7, len(self.coords2))
 
         fn = os.path.join(DATA, "BientotQuadra2-face.png")
         w = sppasImageCoordsWriter()
         w.set_options(tag=True)
-        w.write(img2, [c.copy() for c in fd], fn)
-        self.assertEqual(7, len(fd))
-        img_faces = [img2.icrop(fd[i]) for i in range(len(fd))]
+        w.write(self.img2, self.coords2, fn)
+
+    def test_score_img_similarity_fr(self):
+        img_faces = [self.img2.icrop(c) for c in self.coords2]
 
         # So, now we have portraits of the known persons and
         # their portrait in a new image. Can we match the persons?
-        fr = FaceRecognition(persons)
+        fr = FaceRecognition(self.persons)
 
         # in img_faces, beatrice is at index 0.
         d = fr.scores_img_similarity(img_faces[0])
@@ -336,6 +341,7 @@ class TestFaceRecognition(unittest.TestCase):
         self.assertEqual("roselyne", ds[0][0])
 
         # Recognition error ********************** : brigitte expected
+        # brigitte detected at index 5 in image1 and at index 3 in image2
         d = fr.scores_img_similarity(img_faces[3])
         ds = sorted(d.items(), key=lambda x: x[1], reverse=True)
         self.assertEqual("beatrice", ds[0][0])
@@ -352,6 +358,56 @@ class TestFaceRecognition(unittest.TestCase):
         d = fr.scores_img_similarity(img_faces[6])
         ds = sorted(d.items(), key=lambda x: x[1], reverse=True)
         self.assertEqual("lea", ds[0][0])
+
+    # -----------------------------------------------------------------------
+
+    def test_score_img_similarity_ft(self):
+        img2_faces = [self.img2.icrop(c) for c in self.coords2]
+
+        ft = FaceTracking()
+        # in img2_faces, beatrice is at index 0.
+        scores = ft._scores_img_similarity(
+            img2_faces[0],           # detected portrait of beatrice in image2
+            self.persons.values(),   # all detected portraits in image1
+            ref_coords=self.coords2[0],      # coords of beatrice in image2
+            compare_coords=self.coords1)     # all detected coords in image1
+        d = dict()
+        for p, s in zip(self.persons, scores):
+            d[p] = s
+        ds = sorted(d.items(), key=lambda x: x[1], reverse=True)
+        self.assertEqual("beatrice", ds[0][0])
+
+        # in img2_faces, brigitte is at index 3. BUT NOT RECOGNIZED
+        scores = ft._scores_img_similarity(
+            img2_faces[3],  # detected portrait of brigitte in image2
+            self.persons.values(),  # all detected portraits in image1
+            ref_coords=self.coords2[3],  # coords of brigitte in image2
+            compare_coords=self.coords1)  # all detected coords in image1
+        d = dict()
+        for p, s in zip(self.persons, scores):
+            d[p] = s
+        ds = sorted(d.items(), key=lambda x: x[1], reverse=True)
+        self.assertEqual("beatrice", ds[0][0])
+        self.assertEqual("brigitte", ds[1][0])
+
+    # -----------------------------------------------------------------------
+
+    def test_get_best_scores(self):
+        img2_faces = [self.img2.icrop(c) for c in self.coords2]
+
+        ft = FaceTracking()
+        all_scores = list()
+        for i in range(len(img2_faces)):
+            scores_i = ft._scores_img_similarity(
+                img2_faces[i],           # i-th detected portrait in image2
+                self.persons.values(),   # all detected portraits in image1
+                ref_coords=self.coords2[i],    # i-th coords in image2
+                compare_coords=self.coords1)   # all detected coords in image1
+            all_scores.append(scores_i)
+            print(scores_i)
+
+        best_scores = ft._get_best_scores(all_scores)
+        print(best_scores)
 
 # ---------------------------------------------------------------------------
 
