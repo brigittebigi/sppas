@@ -196,24 +196,14 @@ class FaceTracking(object):
             best_face_idx = self._get_best_scores(all_scores)
             for j in range(len(best_face_idx)):
                 best_idx = best_face_idx[j]
-                cur_persons[j] = ("name", best_idx)
+                best_name = prev_persons[best_idx][0]
+                # set to the list of persons
+                cur_persons[j] = (best_name, best_idx)
 
-        """
-        Next step is, for each image of the video, to compare the already
-        known reference images to the detected faces, then:
-            - associate a face index to each recognized person,
-            - add un-recognized detected face to the list of unknown person,
-            - associate such faces to such new references. 
-      
-        # Check that each face is matching with only one person, not several ones
-        # in case of a face is associated to several persons, choose the one 
-        # with the best distance
-        
-        # Browse all faces/persons in video_buffer to save results
-        # Add not-found faces to our catalogue of unknown-faces
-        # Associate face/person to such un-recognized faces
+            # what about detected faces without a person
+            # faire pareil qu'au dessus mais avec les images des "known persons" qui n'ont pas ete identifies
 
-        """
+        # update the known person images with their last portrait in the buffer
 
     # -----------------------------------------------------------------------
 
@@ -241,24 +231,32 @@ class FaceTracking(object):
     # -----------------------------------------------------------------------
 
     def _get_best_scores(self, all_scores):
-        """Return a list with the index of the best score for each list of scores.
+        """Search for the index of the best score for each list of scores.
 
         :param all_scores: (list of list of scores)
-        :return: (list) index of the best score or -1 if no score is better than the others
+        :return: (list) index of the best score of each list or -1
 
         """
+        # Make a list of tuple(best index, delta score, second best index)
         best = list()
         for scores in all_scores:
-            best_index = -1
-            second_best = -1
-            delta_best = 0.
+            best_index = -1     # index of the best score in scores
+            second_best = -1    # index of the second best score in scores
+            delta_best = 0.     # score difference between best and second best
             if len(scores) == 1:
-                if scores[0] > 0.5:
+                if scores[0] > 0.4:
                     best_index = 0
 
             else:
                 # sort the scores: the higher the better
                 sorted_scores = list(reversed(sorted(scores)))
+                if scores.index(sorted_scores[0]) > 0.4:
+                    best_index = scores.index(sorted_scores[0])
+                if scores.index(sorted_scores[1]) > 0.4:
+                    second_best = scores.index(sorted_scores[1])
+
+                # Evaluate the delta between the best and the second best
+                delta_best = sorted_scores[0] - sorted_scores[1]
 
                 # Evaluate the average delta among 2 consecutive scores
                 s_prev = sorted_scores[0]
@@ -269,18 +267,15 @@ class FaceTracking(object):
                     s_prev = s_cur
                 avg_delta_score = sum_delta / float(len(scores) - 1)
 
-                # Evaluate the dist between the best and the second best
-                best_index = scores.index(sorted_scores[0])
-                second_best = scores.index(sorted_scores[1])
-                delta_best = sorted_scores[0] - sorted_scores[1]
+                # Assign a delta only if it makes sense
                 if delta_best < avg_delta_score:
-                    # the best is not significantly better than the 2nd best
+                    # the 1st best is not significantly better than the 2nd best
                     delta_best = 0
 
             best.append((best_index, delta_best, second_best))
 
         # Search for conflicts, if any.
-        # Store conflicts to not modify 'best' on the fly.
+        # Store conflicts to not modify 'best' list on the fly.
         conflicts = list()
         for i in range(len(best)):
             # does this index is somewhere later on in the best?
@@ -296,14 +291,14 @@ class FaceTracking(object):
             else:
                 best[i] = (best[i][2], 0, -1)
 
-        # Search for conflicts, if any.
+        # re-Search for conflicts, if any.
         # Store conflicts to not modify 'best' on the fly.
         conflicts = list()
         for i in range(len(best)):
             # does this index is somewhere later on in the best?
             for j in range(i+1, len(best)):
                 if best[i][0] == best[j][0]:
-                    # we have a conflict
+                    # we have again a conflict
                     conflicts.append((i, j))
 
         # Cancel the worse candidate of conflicts
@@ -315,7 +310,7 @@ class FaceTracking(object):
 
         return [b[0] for b in best]
 
-# -----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def __smooth_coords(self, video_buffer):
         """Smooth the trajectory of the detected coordinates of each person.
