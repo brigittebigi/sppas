@@ -482,7 +482,7 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
     def remove_isolated(self):
         """Dissociate coordinates of a detected person in an isolated image.
 
-        When a person is detected both at a image i-1 but not at both
+        When a person is detected at a image i-1 but not at both
         image i and image i-2, cancel its link to the face coordinates.
 
         A person can't appear furtively!!!
@@ -513,8 +513,10 @@ class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
 
         """
         for i, person in enumerate(self.__persons[image_idx]):
-            if person[0] == person_id:
-                self.__persons[image_idx][i] = None
+            # if it wasn't already dissociated
+            if person is not None:
+                if person[0] == person_id:
+                    self.__persons[image_idx][i] = None
 
     # -----------------------------------------------------------------------
 

@@ -67,18 +67,43 @@ class FaceTracking(object):
         """Create a new FaceTracker instance."""
         self.__track_ia = False
 
-        # Not currently used:
-        # A reference image to represent the face of each person
-        # key=a name or any other identifier, value=sppasImage
-        self.__img_known_faces = dict()
+        # A reference image to represent the portrait/face of each already
+        # identified person. List of tuple(person_id, sppasImage)
+        self.__img_known_persons = list()
+
+        # Store information about the previously analyzed buffer
+        # i.e. the detected faces and persons of the last image.
+        self.__prev_faces = list()
+        self.__prev_persons = list()
 
     # -----------------------------------------------------------------------
     # Getters and setters
     # -----------------------------------------------------------------------
 
+    def enable_tracker(self, value=True):
+        """Enable or disable the automatic face tracking.
+
+        When disabled, an identifier is associated to each detected face of
+        an image, without any guarantee that it corresponds to the same
+        person as in the other images. [very fast]
+
+        When enabled, an identifier is associated to each detected face and
+        it should match a person. Then, when the same person is detected in
+        several images, its identifier is assigned to all its faces. [very
+        very very slow]
+
+        :param value: (bool)
+
+        """
+        self.__track_ia = bool(value)
+
+    # -----------------------------------------------------------------------
+
     def invalidate(self):
         """Invalidate the list of all automatically added faces."""
-        self.__img_known_faces = list()
+        self.__img_known_persons = list()
+        self.__prev_faces = list()
+        self.__prev_persons = list()
 
     # -----------------------------------------------------------------------
 
@@ -110,9 +135,9 @@ class FaceTracking(object):
         else:
             raise sppasTypeError(known_faces, "dict, list, tuple")
 
-        self.__img_known_faces = dict()
+        self.__img_known_persons = list()
         for key, value in zip(names, faces):
-            self.__img_known_faces[key] = value
+            self.__img_known_persons.append((key, value))
 
     # -----------------------------------------------------------------------
     # Automatic detection of the faces in a video
@@ -132,7 +157,7 @@ class FaceTracking(object):
 
         # Assign a person to each detected face
         if self.__track_ia is True:
-            self.__track_persons(video_buffer)
+            self._track_persons(video_buffer)
         else:
             video_buffer.set_default_detected_persons()
 
@@ -149,61 +174,124 @@ class FaceTracking(object):
     # -----------------------------------------------------------------------
 
     @staticmethod
-    def __get_cropped_faces(video_buffer, image, idx):
-        """Return the list of cropped face images detected at given index.
-
-        """
+    def __get_cropped_images(image, coords):
+        """Return the list of cropped images of the given coords. """
         cropped_faces = list()
-        detected_coords = video_buffer.get_detected_faces(idx)
-        for face_coords in detected_coords:
-            cropped_faces.append(image.icrop(face_coords))
-        return cropped_faces, detected_coords
+        for face_coord in coords:
+            cropped_faces.append(image.icrop(face_coord))
+        return cropped_faces
 
     # -----------------------------------------------------------------------
 
-    def __track_persons(self, video_buffer):
+    def _track_persons(self, video_buffer):
         """Associate a person to each of the detected faces.
 
         :param video_buffer: (sppasFacesVideoBuffer)
 
         """
         iter_image = video_buffer.__iter__()
-        prev_image = next(iter_image)
-        prev_cropped_img, prev_cropped_coords = self.__get_cropped_faces(video_buffer, prev_image, 0)
+        start_i = 0
+        
+        # No previous image was analyzed. Use the 1st of this buffer.
+        if len(self.__prev_faces) == 0:
+            self._create_initial_image_data(video_buffer)
+            start_i = 1
+            next(iter_image)
 
-        # INSTEAD of the following: compare buffer with known persons
-        prev_persons = [(str(x), i) for i, x in enumerate(range(len(prev_cropped_img)))]
-        persons = [prev_persons]
-
-        # Compare each set of detected faces to the previous ones
-        for i in range(video_buffer.__len__()):
+        # Compare each list of detected faces of the current image to the ones
+        # of the previous image to find who are the persons of the current img.
+        for i in range(start_i, video_buffer.__len__()):
+            print("* Image {}".format(i))
             image = next(iter_image)
 
-            # Create a list of images with the cropped faces
-            cropped_img, cropped_coords = self.__get_cropped_faces(video_buffer, image, i)
-            cur_persons = [None]*len(cropped_img)
+            # Create the list of images with the cropped faces of previous img
+            print("  - prev image detected len={}".format(len(self.__prev_persons)))
+            prev_img = list()
+            for p in self.__prev_persons:
+                print("      -> prev image person={}".format(p[0]))
+                if p is None:
+                    prev_img.append(image.inegative())
+                for (pid, img) in self.__img_known_persons:
+                    if pid == p[0]:
+                        prev_img.append(img)
+                        break
+            assert(len(self.__prev_persons) == len(prev_img))
+
+            # Create a list of images with the cropped faces of current img
+            current_faces = video_buffer.get_detected_faces(i)
+            current_img = self.__get_cropped_images(image, current_faces)
+            print("  - current image detected len={}".format(len(current_img)))
 
             # Compare current faces to the previous ones
-            all_scores = list()  # list of list of scores
-            for j, cropped_img in enumerate(cropped_img):
-                scores_j = self._scores_img_similarity(
-                    cropped_img, prev_cropped_img,
-                    cropped_coords[i], prev_cropped_coords
-                    )
-                all_scores.append(scores_j)
+            print("  - compare cur to prev:")
+            prev_img_scores = list()    # list of list of scores
+            known_img_scores = list()   # list of list of scores
+            for j, cropped_img in enumerate(current_img):
+                scores1_j = self._scores_img_similarity(cropped_img, prev_img, current_faces[j], self.__prev_faces)
+                print("    -> prev {}: {}".format(j, scores1_j))
+                prev_img_scores.append(scores1_j)
+                scores2_j = self._scores_img_similarity(cropped_img, [img for pid, img in self.__img_known_persons])
+                known_img_scores.append(scores2_j)
+                print("    -> prev {}: {}".format(j, scores2_j))
 
             # Analyse scores to associate a face to a person
-            best_face_idx = self._get_best_scores(all_scores)
-            for j in range(len(best_face_idx)):
-                best_idx = best_face_idx[j]
-                best_name = prev_persons[best_idx][0]
+            # The returned index is one of the person in the previous image
+            best_person_idx_prev = self._get_best_scores(prev_img_scores)
+            best_person_idx_known = self._get_best_scores(known_img_scores)
+            identified = list()
+            for j in range(len(current_img)):
+                idx = best_person_idx_known[j]
+                if idx != -1:
+                    identified.append(self.__img_known_persons[idx][0])
+
+            print("  - bests prev: {}".format(best_person_idx_prev))
+            print("  - bests known: {}".format(best_person_idx_known))
+            current_persons = list()
+            for j in range(len(current_img)):
+                best_name = None
+                idx = best_person_idx_known[j]
+                if idx != -1:
+                    best_name = self.__img_known_persons[idx][0]
+                else:
+                    idx = best_person_idx_prev[j]
+                    if idx != -1:
+                        # this face is identified as a person in the known persons
+                        best_name = self.__prev_persons[idx][0]
+                        if best_name in identified:
+                            best_name = None
+
+                if best_name is None:
+                    # Create a new person name and associated image
+                    best_name = "X{:03d}".format(len(self.__img_known_persons))
+                    self.__img_known_persons.append((best_name, current_img[j]))
+
                 # set to the list of persons
-                cur_persons[j] = (best_name, best_idx)
+                current_persons.append((best_name, j))
+                print("   -> best name={}".format(best_name))
 
-            # what about detected faces without a person
-            # faire pareil qu'au dessus mais avec les images des "known persons" qui n'ont pas ete identifies
+            self.__prev_faces = current_faces
+            self.__prev_persons = current_persons
+            video_buffer.set_detected_persons(i, current_persons)
 
-        # update the known person images with their last portrait in the buffer
+    # -----------------------------------------------------------------------
+    
+    def _create_initial_image_data(self, video_buffer):
+        """Fill in the prev members with the 1st image of the buffer."""
+        self.invalidate()
+        image = video_buffer[0]
+        
+        # Store the list of coords with the detected faces
+        self.__prev_faces = video_buffer.get_detected_faces(0)
+        
+        # Create an initial list of images with the cropped faces
+        prev_img = self.__get_cropped_images(image, self.__prev_faces)
+        # Create the list of person names matching the detected faces
+        for i in range(len(self.__prev_faces)):
+            person_name = "X{:03d}".format(i)
+            self.__prev_persons.append((person_name, i))
+            self.__img_known_persons.append((person_name, prev_img[i]))
+
+        video_buffer.set_detected_persons(0, self.__prev_persons)
 
     # -----------------------------------------------------------------------
 
@@ -243,34 +331,38 @@ class FaceTracking(object):
             best_index = -1     # index of the best score in scores
             second_best = -1    # index of the second best score in scores
             delta_best = 0.     # score difference between best and second best
-            if len(scores) == 1:
-                if scores[0] > 0.4:
+            if len(scores) == 0:
+                pass
+
+            elif len(scores) == 1:
+                if scores[0] > 0.2:
                     best_index = 0
 
             else:
                 # sort the scores: the higher the better
                 sorted_scores = list(reversed(sorted(scores)))
-                if scores.index(sorted_scores[0]) > 0.4:
+                if sorted_scores[0] > 0.2:
                     best_index = scores.index(sorted_scores[0])
-                if scores.index(sorted_scores[1]) > 0.4:
+                if sorted_scores[1] > 0.2:
                     second_best = scores.index(sorted_scores[1])
 
                 # Evaluate the delta between the best and the second best
                 delta_best = sorted_scores[0] - sorted_scores[1]
 
-                # Evaluate the average delta among 2 consecutive scores
-                s_prev = sorted_scores[0]
-                sum_delta = 0.
-                for i in range(1, len(scores)):
-                    s_cur = sorted_scores[i]
-                    sum_delta += (s_prev - s_cur)
-                    s_prev = s_cur
-                avg_delta_score = sum_delta / float(len(scores) - 1)
+                if len(scores) > 2:
+                    # Evaluate the average delta among 2 consecutive scores
+                    s_prev = sorted_scores[0]
+                    sum_delta = 0.
+                    for i in range(1, len(scores)):
+                        s_cur = sorted_scores[i]
+                        sum_delta += (s_prev - s_cur)
+                        s_prev = s_cur
+                    avg_delta_score = sum_delta / float(len(scores) - 1)
 
-                # Assign a delta only if it makes sense
-                if delta_best < avg_delta_score:
-                    # the 1st best is not significantly better than the 2nd best
-                    delta_best = 0
+                    # Assign a delta only if it makes sense
+                    if delta_best < avg_delta_score:
+                        # the 1st best is not significantly better than the 2nd best
+                        delta_best = 0
 
             best.append((best_index, delta_best, second_best))
 

@@ -70,7 +70,11 @@ class sppasImageCompare(object):
     # -----------------------------------------------------------------------
 
     def score(self):
-        """Mix various comparison scores to return a single one."""
+        """Mix all comparison scores to return a single one.
+
+        Linear interpolation with empirically fixed weights.
+
+        """
         # image dimensions
         s1 = self.compare_areas()
         s2 = self.compare_sizes()
@@ -201,7 +205,6 @@ class sppasImageCompare(object):
         :return: (float) value between 0. and 1.
 
         """
-        # resize to get both images the same size
         w1, h1 = self.__img1.size()
         w2, h2 = self.__img2.size()
         w = max(w1, w2)
@@ -224,24 +227,29 @@ class sppasImageCompare(object):
         neg_obs1 = neg_rgb1.tolist()
         neg_obs2 = neg_rgb2.tolist()
 
+        # Consider that image1 is the model
         model = self.img_to_rgb_dict(rgb1)
         kl = sppasKullbackLeibler(model=model)
         kl.set_epsilon(1.0 / (float(w * h * 2)))
 
-        # Fix the "observations": negative value of img1
+        # Fix the "observations": negative values of img1
         kl.set_observations(neg_obs1)
         dist_max1 = kl.eval_kld()
 
+        # Fix the "observations": values of img2
         kl.set_observations(obs2)
         dist1 = kl.eval_kld()
 
+        # Consider that image2 is the model
         model = self.img_to_rgb_dict(rgb2)
         kl = sppasKullbackLeibler(model=model)
         kl.set_epsilon(1.0 / (float(w * h * 2)))
 
+        # Fix the "observations": negative values of img2
         kl.set_observations(neg_obs2)
         dist_max2 = kl.eval_kld()
 
+        # Fix the "observations": values of img1
         kl.set_observations(obs1)
         dist2 = kl.eval_kld()
 

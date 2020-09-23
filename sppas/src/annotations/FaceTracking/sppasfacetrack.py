@@ -151,6 +151,9 @@ class sppasFaceTrack(sppasBaseAnnotation):
             elif key == "score":
                 self.set_min_score(opt.get_value())
 
+            elif key == "track":
+                self.set_auto_track(opt.get_value())
+
             elif key == "csv":
                 self.set_out_csv(opt.get_value())
 
@@ -201,6 +204,18 @@ class sppasFaceTrack(sppasBaseAnnotation):
         """
         self.__video_buffer.set_filter_confidence(value)
         self._options["score"] = value
+
+    # -----------------------------------------------------------------------
+
+    def set_auto_track(self, value):
+        """Automatically track persons.
+
+        :param value: (bool)
+
+        """
+        value = bool(value)
+        self.__ft.enable_tracker(value)
+        self._options["track"] = value
 
     # -----------------------------------------------------------------------
 

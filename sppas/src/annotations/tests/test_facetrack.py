@@ -396,6 +396,16 @@ class TestFaceRecognition(unittest.TestCase):
         img2_faces = [self.img2.icrop(c) for c in self.coords2]
 
         ft = FaceTracking()
+
+        # if we detected several persons in image 1 but only one in image 2
+        scores = ft._scores_img_similarity(
+            img2_faces[0],  # i-th detected portrait in image2
+            self.persons.values(),  # all detected portraits in image1
+            ref_coords=self.coords2[0],  # i-th coords in image2
+            compare_coords=self.coords1)  # all detected coords in image1
+        best_scores = ft._get_best_scores([scores])
+        self.assertEqual([1], best_scores)
+
         all_scores = list()
         for i in range(len(img2_faces)):
             scores_i = ft._scores_img_similarity(
@@ -404,10 +414,40 @@ class TestFaceRecognition(unittest.TestCase):
                 ref_coords=self.coords2[i],    # i-th coords in image2
                 compare_coords=self.coords1)   # all detected coords in image1
             all_scores.append(scores_i)
-            print(scores_i)
 
         best_scores = ft._get_best_scores(all_scores)
-        print(best_scores)
+        self.assertEqual([1, 3, 4, 5, 6, 2, 0], best_scores)
+
+# ---------------------------------------------------------------------------
+
+
+class TestFaceTracking(unittest.TestCase):
+
+    VIDEO = os.path.join(paths.samples, "faces", "video_sample.mp4")
+
+    # -----------------------------------------------------------------------
+
+    def test_create_initial_image_data(self):
+        fvb = sppasFacesVideoBuffer(video=TestFaceBuffer.VIDEO, size=20)
+        fvb.load_fd_model(NET, HAAR1, HAAR2)
+        fvb.next()
+        fvb.detect_faces_buffer()
+        # 1 face is detected in the 1st image (344, 49) (264, 264): 0.504026
+        self.assertEqual(1, len(fvb.get_detected_faces(0)))
+        self.assertEqual(1, len(fvb.get_detected_persons(0)))
+        # but no person is defined.
+        self.assertIsNone(fvb.get_detected_persons(0)[0])
+
+        ft = FaceTracking()
+        ft._create_initial_image_data(fvb)
+        # now we expect that the 1st image has 1 associated person
+        persons = fvb.get_detected_persons(0)
+        self.assertEqual(1, len(persons))
+        self.assertEqual("X000", persons[0][0])
+        self.assertEqual(0, persons[0][1])
+
+        ft.invalidate()
+        ft._track_persons(fvb)
 
 # ---------------------------------------------------------------------------
 

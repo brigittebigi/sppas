@@ -73,6 +73,12 @@
       "text": "Minimum confidence score to select detected faces"
     },
     {
+      "id": "track",
+      "type": "bool",
+      "value": false,
+      "text": "Associate an identifier to each detected face that matches a person [VERY SLOW]"
+    },
+    {
       "id": "csv",
       "type": "bool",
       "value": false,
