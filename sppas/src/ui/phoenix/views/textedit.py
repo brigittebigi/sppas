@@ -47,7 +47,6 @@ from sppas.src.config import msg
 from sppas.src.config import paths
 from sppas.src.utils import u
 
-from sppas.src.ui.phoenix.windows import Error
 from sppas.src.ui.phoenix.windows import sppasDialog
 from sppas.src.ui.phoenix.windows import sppasPanel
 from sppas.src.ui.phoenix.windows import sppasToolbar

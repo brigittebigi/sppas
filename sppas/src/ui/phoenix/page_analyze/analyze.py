@@ -70,7 +70,6 @@ from ..windows.book import sppasSimplebook
 from ..windows import sppasToolbar
 
 from .anz_tabs import TabsManager
-from .anz_textviews import TextViewFilesPanel
 from .anz_listviews import ListViewFilesPanel
 from .anz_timeviews import TimeViewFilesPanel
 from .anz_defaultviews import DefaultViewFilesPanel
@@ -85,7 +84,6 @@ def _(message):
 
 VIEW_TITLE = _("Views: ")
 VIEW_LIST = _("Detailed list")
-VIEW_TEXT = _("Text editor")
 VIEW_TIME = _("Multi-Player")
 CLOSE = _("Close")
 
@@ -158,8 +156,7 @@ class sppasAnalyzePanel(sppasPanel):
 
     VIEWS = {
         "data-view-list": VIEW_LIST,
-        "data-view-timeline": VIEW_TIME,
-        "data-view-text": VIEW_TEXT
+        "data-view-timeline": VIEW_TIME
     }
 
     # ------------------------------------------------------------------------
@@ -693,10 +690,7 @@ class sppasAnalyzePanel(sppasPanel):
         """
         book = self.FindWindow("content")
 
-        if view_name == "data-view-text":
-            new_page = TextViewFilesPanel(book, name="new_page", files=files)
-
-        elif view_name == "data-view-list":
+        if view_name == "data-view-list":
             new_page = ListViewFilesPanel(book, name="new_page", files=files)
 
         elif view_name == "data-view-timeline":
