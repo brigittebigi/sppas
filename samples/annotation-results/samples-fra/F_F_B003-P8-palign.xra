@@ -204,7 +204,7 @@
 		<Annotation id="4abedebd-4733-48f0-8a04-520e4eb25a32">
 			<Location>
 				<Interval>
-					<Begin midpoint="3.347101" radius="0.005" />
+					<Begin midpoint="3.3471" radius="0.005" />
 					<End midpoint="3.477101" radius="0.005" />
 				</Interval>
 			</Location>
@@ -237,8 +237,8 @@
 		<Annotation id="b6c4-4fc4-b2c2-09c12d74e6b2">
 			<Location>
 				<Interval>
-					<Begin midpoint="3.557101" radius="0.005" />
-					<End midpoint="3.627101" radius="0.005" />
+					<Begin midpoint="3.5571" radius="0.005" />
+					<End midpoint="3.6271" radius="0.005" />
 				</Interval>
 			</Location>
 			<Label>

@@ -40,6 +40,7 @@ import codecs
 import wx
 import os
 import logging
+import wx.lib.newevent
 
 from sppas.src.config import sg
 from sppas.src.config import msg
@@ -56,6 +57,12 @@ from sppas.src.ui.phoenix.windows.book import sppasNotebook
 # ---------------------------------------------------------------------------
 
 MSG_HEADER_TEXT = u(msg("TextView", "ui"))
+
+# ---------------------------------------------------------------------------
+# Event to be used when the editor closed one or more files.
+# The event must contain 1 member: the 'files'.
+CloseEditEvent, EVT_CLOSE_EDIT = wx.lib.newevent.NewEvent()
+CloseEditCommandEvent, EVT_CLOSE_EDIT_COMMAND = wx.lib.newevent.NewCommandEvent()
 
 # ----------------------------------------------------------------------------
 
@@ -97,7 +104,7 @@ class sppasTextEditDialog(sppasDialog):
         self.Bind(wx.EVT_BUTTON, self._process_button_clicked)
 
         self.LayoutComponents()
-        self.CenterOnParent()
+        # self.CenterOnParent()
         self.GetSizer().Fit(self)
         self.FadeIn()
 
@@ -112,6 +119,17 @@ class sppasTextEditDialog(sppasDialog):
         panel = sppasEditorPanel(self._book, filename)
         tab_title = os.path.basename(filename)
         self._book.AddPage(panel, tab_title, select=True, imageId=wx.NO_IMAGE)
+
+    # -----------------------------------------------------------------------
+
+    def is_loaded(self, filename):
+        """Return True if the given filename was loaded."""
+        for i in range(self._book.GetPageCount()):
+            panel = self._book.GetPage(i)
+            if panel.get_filename() == filename:
+                return panel.is_loaded()
+
+        return False
 
     # -----------------------------------------------------------------------
 
@@ -179,15 +197,52 @@ class sppasTextEditDialog(sppasDialog):
     def _process_button_clicked(self, event):
         evt_object = event.GetEventObject()
         evt_name = evt_object.GetName()
+        event_id = evt_object.GetId()
 
         if evt_name == "save_as":
             p = self._page
             if p is not None:
                 p.save()
+
         elif evt_name == "save_all":
             self.save_all()
+
+        elif event_id == wx.ID_OK:
+            self.exit(save=True)
+
+        elif event_id in (wx.ID_CANCEL, wx.ID_CLOSE):
+            self.exit(save=False)
+
         else:
             event.Skip()
+
+    # -----------------------------------------------------------------------
+
+    def Notify(self, filenames):
+        evt = CloseEditEvent(files=filenames)
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
+    # -----------------------------------------------------------------------
+
+    def exit(self, save=True):
+        """Save files of the frame and end."""
+        filenames = list()
+        for i in range(self._book.GetPageCount()):
+            panel = self._book.GetPage(i)
+            filenames.append(panel.get_filename())
+        self.Notify(filenames)
+
+        if save is True:
+            wx.BeginBusyCursor()
+            self.save_all()
+            wx.EndBusyCursor()
+
+        try:
+            delta = wx.GetApp().settings.fade_out_delta
+        except AttributeError:
+            delta = -10
+        self.DestroyFadeOut(delta)
 
 # ----------------------------------------------------------------------------
 
@@ -205,11 +260,6 @@ class sppasEditorPanel(sppasPanel):
 
     def __init__(self, parent, filename, name="editor_panel"):
 
-        # We wont create this panel if the file can't be loaded...
-        self._dirty = False
-        self._valid = False
-        self._filename = filename
-
         super(sppasEditorPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
@@ -218,9 +268,13 @@ class sppasEditorPanel(sppasPanel):
             style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.BORDER_NONE,
             name=name)
 
+        # Members related to the file (modified, readable, name)
+        self._dirty = False
+        self._valid = False
+        self._filename = filename
+
         # Create the GUI
         self._create_content()
-        self.Bind(wx.EVT_TEXT, self._process_text_changed)
 
         # Look&feel
         try:
@@ -231,14 +285,25 @@ class sppasEditorPanel(sppasPanel):
         except AttributeError:
             self.InheritAttributes()
 
+        self.Bind(wx.EVT_TEXT, self._process_text_changed)
         self.SetAutoLayout(True)
         self.Layout()
+
+        # it seems that the ext_text was called at creation, so
+        # dirty moved to true... it's needed to switch it back to false...
+        self._dirty = False
 
     # ------------------------------------------------------------------------
 
     def is_modified(self):
         """Return True if the content of the file has changed."""
         return self._dirty
+
+    # ------------------------------------------------------------------------
+
+    def is_loaded(self):
+        """Return True if the content of the file was properly loaded."""
+        return self._valid
 
     # -----------------------------------------------------------------------
 
@@ -331,32 +396,6 @@ class sppasEditorPanel(sppasPanel):
     def _process_text_changed(self, evt):
         self._dirty = True
 
-# -------------------------------------------------------------------------
-
-
-def TextEditor(parent, filenames=None):
-    """Display a dialog to edit a sppasTranscription.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
-    :param parent: (wx.Window)
-    :param filenames: (list of str)
-    :returns: the response
-
-    wx.ID_CANCEL is returned if the dialog is destroyed without saving.
-
-    """
-    dialog = sppasTextEditDialog(parent, filenames)
-    response = dialog.ShowModal()
-    if response == wx.ID_OK:
-        dialog.save_all()
-    dialog.Destroy()
-    return response
-
 # ----------------------------------------------------------------------------
 # Panel that can be tested
 # ----------------------------------------------------------------------------
@@ -382,4 +421,5 @@ class TestPanel(sppasPanel):
                           "F_F_B003-P9-palign.xra")
         f3 = os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav")
 
-        TextEditor(self, [f1, f2, f3])
+        t = sppasTextEditDialog(self, [f1, f2, f3])
+        t.Show()

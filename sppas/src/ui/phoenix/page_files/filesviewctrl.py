@@ -51,6 +51,7 @@ from ..windows.image import ColorizeImage
 from ..windows import sppasListCtrl
 from ..tools import sppasSwissKnife
 from ..main_events import DataChangedEvent
+from ..views import sppasTextEditDialog, EVT_CLOSE_EDIT
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when an item is clicked.
@@ -304,6 +305,25 @@ class FileTreeViewPanel(sppasScrolledPanel):
 
     # ------------------------------------------------------------------------
 
+    def EditCheckedFiles(self):
+        """Edit all checked files in a text editor."""
+        checked_fn = self.GetCheckedFiles()
+        checked_files = [fn.id for fn in checked_fn]
+
+        editor = sppasTextEditDialog(self, checked_files)
+        nb_loaded = 0
+        for fn, filename in zip(checked_fn, checked_files):
+            if editor.is_loaded(filename) is True:
+                nb_loaded += 1
+                self.change_state(fn, States().LOCKED)
+
+        if nb_loaded > 0:
+            self.Notify()
+
+        editor.Show()
+
+    # ------------------------------------------------------------------------
+
     def GetCheckedFiles(self):
         """Return the list of checked files.
 
@@ -550,6 +570,7 @@ class FileTreeViewPanel(sppasScrolledPanel):
         self.Bind(EVT_ITEM_CLICKED, self._process_item_clicked)
 
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged)
+        self.Bind(EVT_CLOSE_EDIT, self._process_editor_closed)
 
     # ------------------------------------------------------------------------
 
@@ -579,6 +600,26 @@ class FileTreeViewPanel(sppasScrolledPanel):
                 panel = self.__get_path_panel(fs)
                 if panel is not None:
                     panel.change_state(fs.get_id(), fs.get_state())
+
+    # ------------------------------------------------------------------------
+
+    def _process_editor_closed(self, event):
+        """Process an event: the editor dialog was closed.
+
+        :param event: (wx.Event)
+
+        """
+        filenames = event.files
+        if isinstance(filenames, (list, tuple)) is False:
+            filenames = [filenames]
+
+        for filename in filenames:
+            filebase = self.__data.get_object(filename)
+            cur_state = filebase.get_state()
+            if cur_state == States().LOCKED:
+                self.change_state(filebase, States().CHECKED)
+
+        self.Notify()
 
     # ------------------------------------------------------------------------
 
