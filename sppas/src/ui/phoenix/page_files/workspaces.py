@@ -144,6 +144,15 @@ class WorkspacesPanel(sppasPanel):
         self.Layout()
 
     # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        """Override. """
+        wx.Panel.SetForegroundColour(self, colour)
+        for c in self.GetChildren():
+            if c.GetName() != "hline":
+                c.SetForegroundColour(colour)
+
+    # -----------------------------------------------------------------------
     # Public methods to access the data saved in the workspace files
     # -----------------------------------------------------------------------
 
@@ -207,10 +216,11 @@ class WorkspacesPanel(sppasPanel):
 
     def __create_hline(self):
         """Create an horizontal line, used to separate the anz_panels."""
-        line = sppasStaticLine(self, orient=wx.LI_HORIZONTAL)
+        line = sppasStaticLine(self, orient=wx.LI_HORIZONTAL, name="hline")
         line.SetMinSize(wx.Size(-1, 20))
         line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
         line.SetDepth(1)
+        line.SetForegroundColour(self.HIGHLIGHT_COLOUR)
         return line
 
     # -----------------------------------------------------------------------

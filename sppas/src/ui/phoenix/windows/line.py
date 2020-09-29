@@ -79,7 +79,6 @@ class sppasStaticLine(sppasDCWindow):
             self.SetForegroundColour(wx.GetApp().settings.fg_color)
             # only fg needed. bg of the parent. no need of a font.
         except:
-            wx.LogWarning('No settings to construct sppasStaticLine.')
             pass
 
         # Members of the base class
