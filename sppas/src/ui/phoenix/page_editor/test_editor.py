@@ -40,6 +40,8 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
+import sppas.src.ui.phoenix.page_editor.baseview as baseview
+import sppas.src.ui.phoenix.page_editor.mediaview as mediaview
 import sppas.src.ui.phoenix.page_editor.editor as editor
 import sppas.src.ui.phoenix.page_editor.timedit as timeedit
 
@@ -56,6 +58,10 @@ class TestPanel(wx.Choicebook):
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
         # Make the bunch of test anz_panels for the choice book
+        p = baseview.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = mediaview.TestPanel(self)
+        self.AddPage(p, p.GetName())
         self.AddPage(editor.TestPanel(self), "Main Editor Page")
         p = timeedit.TestPanel(self)
         self.AddPage(p, p.GetName())

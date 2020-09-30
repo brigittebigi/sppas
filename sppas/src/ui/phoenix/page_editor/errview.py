@@ -44,7 +44,7 @@ from sppas.src.utils import u
 from ..windows import sppasPanel
 from ..windows import sppasTextCtrl
 
-from .baseview import sppasBaseViewPanel
+from .baseview import sppasFileViewPanel
 
 
 # ----------------------------------------------------------------------------
@@ -61,7 +61,7 @@ MSG_UNK = _("Unknown error.")
 # ---------------------------------------------------------------------------
 
 
-class ErrorViewPanel(sppasBaseViewPanel):
+class ErrorViewPanel(sppasFileViewPanel):
     """Display the content of a file into an editable TextCtrl.
 
     :author:       Brigitte Bigi

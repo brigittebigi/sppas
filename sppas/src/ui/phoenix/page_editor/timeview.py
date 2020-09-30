@@ -55,7 +55,7 @@ from ..windows import MediaEvents
 from ..windows.datactrls import sppasTierWindow
 from ..main_events import ViewEvent, EVT_VIEW
 
-from .baseview import sppasBaseViewPanel
+from .baseview import sppasFileViewPanel
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when an item is clicked.
@@ -71,7 +71,7 @@ WARNING_COLOUR = wx.Colour(240, 190, 45, 128)  # orange
 # ---------------------------------------------------------------------------
 
 
-class MediaTimeViewPanel(sppasBaseViewPanel):
+class MediaTimeViewPanel(sppasFileViewPanel):
     """A panel to display the content of an audio or a video.
 
     :author:       Brigitte Bigi
@@ -299,7 +299,7 @@ class MediaTimeViewPanel(sppasBaseViewPanel):
 # ---------------------------------------------------------------------------
 
 
-class TrsTimeViewPanel(sppasBaseViewPanel):
+class TrsTimeViewPanel(sppasFileViewPanel):
     """A panel to display the content of an annotated files in a timeline.
 
     :author:       Brigitte Bigi

@@ -68,10 +68,10 @@ class LabelPopup(wx.PopupWindow):
         self.SetSize((sz.width + border, sz.height + border))
         pnl.SetSize((sz.width + border, sz.height + border))
 
-        pnl.Bind(wx.EVT_LEFT_UP, self.OnMouseLeftUp)
-        pnl.Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
-        st.Bind(wx.EVT_LEFT_UP, self.OnMouseLeftUp)
-        st.Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
+        pnl.Bind(wx.EVT_LEFT_UP, self._on_mouse_up)
+        pnl.Bind(wx.EVT_RIGHT_UP, self._on_mouse_up)
+        st.Bind(wx.EVT_LEFT_UP, self._on_mouse_up)
+        st.Bind(wx.EVT_RIGHT_UP, self._on_mouse_up)
 
         wx.CallAfter(self.Refresh)
 
@@ -83,13 +83,7 @@ class LabelPopup(wx.PopupWindow):
 
     # -----------------------------------------------------------------------
 
-    def OnMouseLeftUp(self, evt):
-        self.Show(False)
-        wx.CallAfter(self.Destroy)
-
-    # -----------------------------------------------------------------------
-
-    def OnRightUp(self, evt):
+    def _on_mouse_up(self, evt):
         self.Show(False)
         wx.CallAfter(self.Destroy)
 
@@ -149,8 +143,6 @@ class sppasBaseRisePanel(sppasPanel):
         self._child_panel.SetSizer(wx.BoxSizer(wx.VERTICAL))
 
         # Bind the events
-        self.Bind(wx.EVT_BUTTON, self.OnButton)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
         self.SetInitialSize(size)
 
         self.Layout()
@@ -255,6 +247,29 @@ class sppasBaseRisePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def EnableButton(self, icon, value):
+        """Enable or disable a button of the tools panel.
+
+        :param icon: (str) Name of the .png file of the icon
+        :param value: (bool)
+
+        """
+        btn = self._tools_panel.FindWindow(icon)
+        if btn is None or btn == self._btn:
+            return
+        btn.Enable(value)
+
+    # -----------------------------------------------------------------------
+
+    def FindButton(self, icon):
+        """Return the button with the given icon name or None."""
+        for child in self._tools_panel.GetChildren():
+            if child.GetName() == icon and child != self._btn:
+                return child
+        return None
+
+    # -----------------------------------------------------------------------
+
     def Layout(self):
         """Do the layout."""
         raise NotImplementedError
@@ -291,6 +306,18 @@ class sppasBaseRisePanel(sppasPanel):
     # ------------------------------------------------------------------------
     # Event handlers
     # ------------------------------------------------------------------------
+
+    def _setup_events(self):
+        """Associate a handler function with the events."""
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+
+        # The user pressed a key of its keyboard
+        # self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
+
+        # The user clicked a button of the collapsible panel toolbar
+        self.Bind(wx.EVT_BUTTON, self.OnButton)
+
+    # -----------------------------------------------------------------------
 
     def OnButton(self, event):
         """Handle the wx.EVT_BUTTON event.
@@ -652,7 +679,6 @@ class sppasVerticalRisePanel(sppasBaseRisePanel):
         :param event: a CommandEvent event to be processed.
 
         """
-        print("BUTTON EVENT")
         evt_obj = event.GetEventObject()
         if evt_obj == self._btn:
             # Collapse the panel
@@ -667,8 +693,8 @@ class sppasVerticalRisePanel(sppasBaseRisePanel):
             # Show the popup right below or above the button
             # depending on available screen space...
             pos = evt_obj.ClientToScreen((0, 0))
-            sz = evt_obj.GetSize()
-            win.Position(pos, (0, sz[1]))
+            # the label popup will hide the button.
+            win.Position(pos, (0, 0))
             win.Show(True)
 
         else:
@@ -716,15 +742,6 @@ class sppasCollapsiblePanel(sppasHorizontalRisePanel):
 
     # -----------------------------------------------------------------------
 
-    def FindButton(self, icon):
-        """Return the button with the given icon name or None."""
-        for child in self._tools_panel.GetChildren():
-            if child.GetName() == icon:
-                return child
-        return None
-
-    # -----------------------------------------------------------------------
-
     def AddButton(self, icon, direction=-1):
         """Append or prepend a button into the toolbar.
 
@@ -747,20 +764,6 @@ class sppasCollapsiblePanel(sppasHorizontalRisePanel):
             self._tools_panel.GetSizer().Prepend(btn, 0, wx.LEFT | wx.RIGHT, 1)
 
         return btn
-
-    # -----------------------------------------------------------------------
-
-    def EnableButton(self, icon, value):
-        """Enable or disable a button.
-
-        :param icon: (str) Name of the .png file of the icon
-        :param value: (bool)
-
-        """
-        btn = self._tools_panel.FindWindow(icon)
-        if btn is None:
-            return
-        btn.Enable(value)
 
 # -----------------------------------------------------------------------
 
