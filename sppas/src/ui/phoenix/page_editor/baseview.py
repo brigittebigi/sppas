@@ -29,8 +29,10 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_analyze.baseview.py
+    ui.phoenix.page_edit.baseview.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    A base class for any object that displays the content of a file.
 
 """
 
@@ -43,18 +45,21 @@ from ..main_events import ViewEvent
 # ----------------------------------------------------------------------------
 
 
+# ----------------------------------------------------------------------------
+
+
 class sppasBaseViewPanel(sppasCollapsiblePanel):
-    """Panel to display the content of a file.
+    """Panel to display the content of a file in a time-view style.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
-    def __init__(self, parent, filename, name="baseview"):
+    def __init__(self, parent, filename, name="baseview_panel"):
 
         # We wont create this panel if the file can't be loaded...
         self._dirty = False
@@ -73,7 +78,6 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
             name=name)
 
         # Create the GUI
-        self._hicolor = self.GetForegroundColour()
         self._create_content()
         self._setup_events()
 
@@ -87,6 +91,26 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
             self.InheritAttributes()
 
         self.Layout()
+
+    # ------------------------------------------------------------------------
+    # About the file
+    # ------------------------------------------------------------------------
+
+    def get_filename(self):
+        """Return the filename this panel is displaying."""
+        return self._filename
+
+    # ------------------------------------------------------------------------
+
+    def set_filename(self, name):
+        """Set a new name to the file.
+
+        :param name: (str) Name of a file. It is not verified.
+
+        """
+        self._filename = name
+        self.SetLabel(name)
+        self._dirty = True
 
     # ------------------------------------------------------------------------
 
@@ -112,24 +136,6 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
 
     # ------------------------------------------------------------------------
 
-    def get_filename(self):
-        """Return the filename this panel is displaying."""
-        return self._filename
-
-    # ------------------------------------------------------------------------
-
-    def set_filename(self, name):
-        """Set a new name to the file.
-
-        :param name: (str) Name of a file. It is not verified.
-
-        """
-        self._filename = name
-        self.SetLabel(name)
-        self._dirty = True
-
-    # ------------------------------------------------------------------------
-
     def get_object(self):
         """Return the object created from the opened file."""
         return None
@@ -148,12 +154,6 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
         sppasCollapsiblePanel.SetFont(self, f)
         self.GetPane().SetFont(font)
         self.Layout()
-
-    # -----------------------------------------------------------------------
-
-    def SetHighLightColor(self, color):
-        """Set a color to highlight something."""
-        self._hicolor = color
 
     # -----------------------------------------------------------------------
     # Construct the GUI

@@ -317,21 +317,9 @@ class TrsTimeViewPanel(sppasBaseViewPanel):
     def __init__(self, parent, filename, name="listview-panel"):
         self._object = sppasTranscription("NewDocument")
         self._dirty = False
-        self._hicolor = wx.Colour(200, 200, 180)
 
         super(TrsTimeViewPanel, self).__init__(parent, filename, name)
         self.Bind(EVT_VIEW, self._process_view_event)
-
-    # -----------------------------------------------------------------------
-
-    def SetHighLightColor(self, color):
-        """Set a color to highlight the filename if selected."""
-        self._hicolor = color
-        if self._object.get_meta("selected", "False") == "True":
-            self.GetToolsPane().SetBackgroundColour(self._hicolor)
-        else:
-            self.GetToolsPane().SetBackgroundColour(self.GetBackgroundColour())
-        self.Refresh()
 
     # -----------------------------------------------------------------------
 

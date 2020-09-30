@@ -45,6 +45,7 @@ from sppas.src.utils import u
 import sppas.src.audiodata.aio
 import sppas.src.anndata
 
+from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasSplitterWindow
 from ..windows import sppasMultiPlayerPanel
@@ -142,7 +143,7 @@ class TimeViewType(object):
 # ----------------------------------------------------------------------------
 
 
-class TimeEditPanel(sppasScrolledPanel):
+class TimeEditPanel(sppasPanel):
     """Panel to display opened files and their content in a time-line style.
 
     :author:       Brigitte Bigi
@@ -286,9 +287,9 @@ class TimeEditPanel(sppasScrolledPanel):
                 return False
 
             # Destroy the panel and remove of the sizer
-            for i, child in enumerate(self.GetChildren()):
+            for i, child in enumerate(self.GetScrolledChildren()):
                 if child == panel:
-                    self.GetSizer().Remove(i)
+                    self.GetScrolledSizer().Remove(i)
                     break
                 for c in child.GetChildren():
                     if c == panel:
@@ -648,8 +649,8 @@ class TimeEditPanel(sppasScrolledPanel):
             self.save_file(fn)
 
         elif action == "close":
-            # If the closed page is a media, this media must be removed of the
-            # multimedia player control.
+            # If the closed page is a media, this media must be
+            # removed of the multimedia player control.
             if isinstance(panel, MediaTimeViewPanel):
                 self._player_controls_panel.remove_media(panel.GetPane())
             closed = self.close_page(fn)
