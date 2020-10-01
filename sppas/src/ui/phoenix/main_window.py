@@ -51,6 +51,7 @@ from .page_home import sppasHomePanel
 from .page_files import sppasFilesPanel
 from .page_annotate import sppasAnnotatePanel
 from .page_analyze import sppasAnalyzePanel
+from .page_editor import sppasEditorPanel
 from .page_convert import sppasConvertPanel
 from .page_plugins import sppasPluginsPanel
 
@@ -67,18 +68,21 @@ def _(message):
     return u(msg(message, "ui"))
 
 
-MSG_ACTION_HOME = _('Home')
-MSG_ACTION_FILES = _('Files')
-MSG_ACTION_ANNOTATE = _('Annotate')
-MSG_ACTION_ANALYZE = _('Analyze')
-MSG_ACTION_CONVERT = _('Convert')
-MSG_ACTION_PLUGINS = _('Plugins')
+MSG_CONFIRM = _("Confirm exit?")
 MSG_ACTION_EXIT = _('Exit')
 MSG_ACTION_ABOUT = _('About')
 MSG_ACTION_SETTINGS = _('Settings')
 MSG_ACTION_VIEWLOGS = _('View logs')
 
-MSG_CONFIRM = _("Confirm exit?")
+MENU_BUTTONS = {
+    "page_home": _("Home"),
+    "page_files": _("Files"),
+    "page_annotate": _("Annotate"),
+    "page_analyze": _("Analyze"),
+    "page_editor": _("Edit"),
+    "page_convert": _("Convert"),
+    "page_plugins": _("Plugins")
+}
 
 # -----------------------------------------------------------------------
 
@@ -109,10 +113,6 @@ class sppasMainWindow(sppasDialog):
 
     """
 
-    # List of the page names of the main notebook
-    pages = ("page_home", "page_files", "page_annotate", "page_analyze",
-             "page_convert", "page_plugins")
-
     def __init__(self):
         super(sppasMainWindow, self).__init__(
             parent=None,
@@ -129,6 +129,7 @@ class sppasMainWindow(sppasDialog):
         self.log_window = sppasLogWindow(self, sppasAppConfig().log_level)
 
         # Fix this frame content
+        self._pages = list()
         self._create_content()
         self._setup_events()
         self.UpdateUI()
@@ -173,20 +174,20 @@ class sppasMainWindow(sppasDialog):
         Content is made of a menu, an area for anz_panels and action buttons.
 
         """
-        # add a customized menu (instead of an header+toolbar)
-        menus = sppasMenuPanel(self)
-        self.SetHeader(menus)
-
         # The content of this main frame is organized in a book
         book = self._create_book()
         self.SetContent(book)
+
+        # add a customized menu (instead of an header+toolbar)
+        menus = sppasMenuPanel(self, self._pages)
+        menus.enable(self._pages[0])
+        self.SetHeader(menus)
 
         # add some action buttons
         actions = sppasActionsPanel(self)
         self.SetActions(actions)
 
         # organize the content and lays out.
-        menus.enable(sppasMainWindow.pages[0])
         self.LayoutComponents()
 
     # -----------------------------------------------------------------------
@@ -206,22 +207,39 @@ class sppasMainWindow(sppasDialog):
         book.SetEffectsTimeouts(150, 200)
 
         # 1st page: a panel with a welcome message
-        book.ShowNewPage(sppasHomePanel(book))
+        page = sppasHomePanel(book)
+        book.ShowNewPage(page)
+        self._pages.append(page.GetName())
 
         # 2nd: file browser
-        book.AddPage(sppasFilesPanel(book), text="")
+        page = sppasFilesPanel(book)
+        book.AddPage(page, text="")
+        self._pages.append(page.GetName())
 
         # 3rd: annotate automatically selected files
-        book.AddPage(sppasAnnotatePanel(book), text="")
+        page = sppasAnnotatePanel(book)
+        book.AddPage(page, text="")
+        self._pages.append(page.GetName())
 
-        # 4th: analyze selected files
-        book.AddPage(sppasAnalyzePanel(book), text="")
+        # 4th: analyze checked files
+        page = sppasAnalyzePanel(book) 
+        book.AddPage(page, text="")
+        self._pages.append(page.GetName())
 
-        # 5th: convert checked files
-        book.AddPage(sppasConvertPanel(book), text="")
+        # 5th: edit checked files
+        page = sppasEditorPanel(book) 
+        book.AddPage(page, text="")
+        self._pages.append(page.GetName())
 
-        # 6th: plugins
-        book.AddPage(sppasPluginsPanel(book), text="")
+        # 6th: convert checked files
+        page = sppasConvertPanel(book) 
+        book.AddPage(page, text="")
+        self._pages.append(page.GetName())
+
+        # 7th: plugins
+        page = sppasPluginsPanel(book)
+        book.AddPage(page, text="")
+        self._pages.append(page.GetName())
 
         return book
 
@@ -273,7 +291,7 @@ class sppasMainWindow(sppasDialog):
         elif event_name == "settings":
             self.on_settings()
 
-        elif event_name in sppasMainWindow.pages:
+        elif event_name in self._pages:
             self.show_page(event_name)
 
         else:
@@ -302,7 +320,7 @@ class sppasMainWindow(sppasDialog):
         book = self.FindWindow('content')
         for i in range(book.GetPageCount()):
             page = book.GetPage(i)
-            if emitted != page and page.GetName() in sppasMainWindow.pages:
+            if emitted != page and page.GetName() in self._pages:
                 page.set_data(wkp)
 
     # -----------------------------------------------------------------------
@@ -340,12 +358,12 @@ class sppasMainWindow(sppasDialog):
                 self.show_next_page(direction=1)
 
             elif key_code == wx.WXK_UP:
-                page_name = sppasMainWindow.pages[0]
+                page_name = self._pages[0]
                 self.FindWindow("header").enable(page_name)
                 self.show_page(page_name)
 
             elif key_code == wx.WXK_DOWN:
-                page_name = sppasMainWindow.pages[-1]
+                page_name = self._pages[-1]
                 self.FindWindow("header").enable(page_name)
                 self.show_page(page_name)
 
@@ -413,14 +431,13 @@ class sppasMainWindow(sppasDialog):
         """
         book = self.FindWindow("content")
         c = book.GetSelection()
-        wx.LogDebug("Current page index = {:d}".format(c))
         if direction > 0:
-            nextc = (c+1) % len(sppasMainWindow.pages)
+            nextc = (c+1) % len(self._pages)
         elif direction < 0:
-            nextc = (c-1) % len(sppasMainWindow.pages)
+            nextc = (c-1) % len(self._pages)
         else:
             return
-        next_page_name = sppasMainWindow.pages[nextc]
+        next_page_name = self._pages[nextc]
         self.FindWindow("header").enable(next_page_name)
         self.show_page(next_page_name)
 
@@ -439,7 +456,7 @@ class sppasMainWindow(sppasDialog):
         # Find the page number to switch on
         w = book.FindWindow(page_name)
         if w is None:
-            w = book.FindWindow("page_home")
+            w = book.FindWindow(self._pages[0])
         p = book.FindPage(w)
         if p == wx.NOT_FOUND:
             p = 0
@@ -478,38 +495,26 @@ class sppasMenuPanel(sppasPanel):
 
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, pages):
         super(sppasMenuPanel, self).__init__(
             parent=parent,
             style=wx.WANTS_CHARS | wx.TAB_TRAVERSAL | wx.NO_BORDER,
             name="header")
 
         self.SetMinSize(wx.Size(-1, wx.GetApp().settings.title_height))
+        self._pages = pages
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         bord = sppasPanel.fix_size(6)
 
-        sizer.AddStretchSpacer(2)
+        sizer.AddStretchSpacer(1)
+        
+        for button_name in pages:
+            btn_label = MENU_BUTTONS.get(button_name, "")
+            btn = self._create_button(btn_label, button_name)
+            sizer.Add(btn, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
 
-        home = self._create_button(MSG_ACTION_HOME, "page_home")
-        sizer.Add(home, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
-
-        files = self._create_button(MSG_ACTION_FILES, "page_files")
-        sizer.Add(files, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
-
-        annotate = self._create_button(MSG_ACTION_ANNOTATE, "page_annotate")
-        sizer.Add(annotate, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
-
-        analyze = self._create_button(MSG_ACTION_ANALYZE, "page_analyze")
-        sizer.Add(analyze, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
-
-        convert = self._create_button(MSG_ACTION_CONVERT, "page_convert")
-        sizer.Add(convert, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
-
-        plugins = self._create_button(MSG_ACTION_PLUGINS, "page_plugins")
-        sizer.Add(plugins, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
-
-        sizer.AddStretchSpacer(2)
+        sizer.AddStretchSpacer(1)
 
         self.Bind(wx.EVT_TOGGLEBUTTON, self.__on_tg_btn_event)
         self.SetSizer(sizer)
@@ -523,7 +528,7 @@ class sppasMenuPanel(sppasPanel):
 
         """
         # Disable all the buttons
-        for name in sppasMainWindow.pages:
+        for name in self._pages:
             self.FindWindow(name).SetValue(False)
         # Enable the expected one
         self.FindWindow(btn_name).SetValue(True)
@@ -552,7 +557,7 @@ class sppasMenuPanel(sppasPanel):
     def __on_tg_btn_event(self, event):
         event_obj = event.GetEventObject()
         event_name = event_obj.GetName()
-        if event_name in sppasMainWindow.pages:
+        if event_name in self._pages:
             self.enable(event_name)
         event.Skip()
 

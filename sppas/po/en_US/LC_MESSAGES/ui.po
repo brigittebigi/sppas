@@ -26,6 +26,9 @@ msgstr ""
 msgid "Analyze"
 msgstr ""
 
+msgid "Edit"
+msgstr ""
+
 msgid "Plugins"
 msgstr ""
 

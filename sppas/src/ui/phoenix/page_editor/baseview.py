@@ -74,7 +74,6 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
 
         # Create the GUI
         self._create_content()
-        self._setup_events()
 
         # Look&feel
         try:

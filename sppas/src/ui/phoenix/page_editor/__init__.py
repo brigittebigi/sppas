@@ -1,5 +1,5 @@
-from .editor import sppasEditPanel
+from .editor import sppasEditorPanel
 
 __all__ = (
-    "sppasEditPanel"
+    "sppasEditorPanel"
 )

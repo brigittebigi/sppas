@@ -93,8 +93,8 @@ class TrsViewPanel(sppasFileViewPanel):
             raise
 
         super(TrsViewPanel, self).__init__(parent, filename, name)
-
-        self.Bind(EVT_VIEW, self._process_view_event)
+        self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
+        self.Bind(EVT_VIEW, self.__process_view_event)
 
     # -----------------------------------------------------------------------
 
@@ -219,7 +219,7 @@ class TrsViewPanel(sppasFileViewPanel):
 
     # -----------------------------------------------------------------------
 
-    def _process_view_event(self, event):
+    def __process_view_event(self, event):
         """Process a click on a tier.
 
         :param event: (wx.Event)
@@ -229,8 +229,8 @@ class TrsViewPanel(sppasFileViewPanel):
 
     # -----------------------------------------------------------------------
 
-    def OnButton(self, event):
-        """Override.
+    def __process_tool_event(self, event):
+        """Process the button event of the tools.
 
         :param event: (wx.Event)
 
@@ -238,14 +238,7 @@ class TrsViewPanel(sppasFileViewPanel):
         obj = event.GetEventObject()
         name = obj.GetName()
 
-        if event.GetEventObject() == self._btn:
-            # Collapse the panel
-            self.Collapse(not self.IsCollapsed())
-            # Send the CollapsiblePaneEvent to the event handler
-            ev = wx.CollapsiblePaneEvent(self, self.GetId(), self.IsCollapsed())
-            self.GetEventHandler().ProcessEvent(ev)
-
-        elif name == "save":
+        if name == "save":
             self.save()
             # self.notify(action="save")
 

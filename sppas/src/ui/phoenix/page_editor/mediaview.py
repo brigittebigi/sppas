@@ -102,6 +102,7 @@ class MediaViewPanel(sppasFileViewPanel):
             raise
 
         super(MediaViewPanel, self).__init__(parent, filename, name)
+        self._setup_events()
 
         mc = self.GetPane()
         mc.Load(self._filename)
@@ -204,7 +205,7 @@ class MediaViewPanel(sppasFileViewPanel):
         will be called.
 
         """
-        sppasFileViewPanel._setup_events(self)
+        self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
 
         # Events related to the media
         self.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__process_media_loaded)
@@ -236,8 +237,8 @@ class MediaViewPanel(sppasFileViewPanel):
 
     # -----------------------------------------------------------------------
 
-    def OnButton(self, event):
-        """Override.
+    def __process_tool_event(self, event):
+        """Process a button event from the tools.
 
         :param event: (wx.Event)
 
@@ -245,14 +246,7 @@ class MediaViewPanel(sppasFileViewPanel):
         obj = event.GetEventObject()
         name = obj.GetName()
 
-        if event.GetEventObject() == self._btn:
-            # Collapse the panel
-            self.Collapse(not self.IsCollapsed())
-            # Send the CollapsiblePaneEvent to the event handler
-            ev = wx.CollapsiblePaneEvent(self, self.GetId(), self.IsCollapsed())
-            self.GetEventHandler().ProcessEvent(ev)
-
-        elif name == "zoom_in":
+        if name == "zoom_in":
             self.media_zoom(1)
 
         elif name == "zoom_out":

@@ -44,6 +44,8 @@ from .listctrl import sppasListCtrl
 
 from .image import sppasStaticBitmap
 
+from .popup import LabelPopup
+
 from .text import sppasStaticText
 from .text import sppasSimpleText
 from .text import sppasMessageText

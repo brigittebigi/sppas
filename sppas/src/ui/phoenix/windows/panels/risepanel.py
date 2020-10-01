@@ -40,52 +40,7 @@ import wx.lib.scrolledpanel as sc
 from ..buttons import BitmapButton
 from ..buttons import BitmapTextButton
 from .panel import sppasPanel
-
-# ---------------------------------------------------------------------------
-
-
-class LabelPopup(wx.PopupWindow):
-    """A popup window to display a simple text.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
-    """
-
-    def __init__(self, parent, style, label):
-        wx.PopupWindow.__init__(self, parent, style)
-        pnl = wx.Panel(self, name="main_panel")
-        pnl.SetBackgroundColour("YELLOW")
-        pnl.SetForegroundColour("BLACK")
-
-        border = sppasPanel.fix_size(10)
-
-        st = wx.StaticText(pnl, -1, label, pos=(border//2, border//2))
-        sz = st.GetBestSize()
-        self.SetSize((sz.width + border, sz.height + border))
-        pnl.SetSize((sz.width + border, sz.height + border))
-
-        pnl.Bind(wx.EVT_LEFT_UP, self._on_mouse_up)
-        pnl.Bind(wx.EVT_RIGHT_UP, self._on_mouse_up)
-        st.Bind(wx.EVT_LEFT_UP, self._on_mouse_up)
-        st.Bind(wx.EVT_RIGHT_UP, self._on_mouse_up)
-
-        wx.CallAfter(self.Refresh)
-
-    # -----------------------------------------------------------------------
-
-    @property
-    def _pnl(self):
-        return self.FindWindow("main_panel")
-
-    # -----------------------------------------------------------------------
-
-    def _on_mouse_up(self, evt):
-        self.Show(False)
-        wx.CallAfter(self.Destroy)
+from ..popup import LabelPopup
 
 # ---------------------------------------------------------------------------
 
@@ -144,6 +99,11 @@ class sppasBaseRisePanel(sppasPanel):
 
         # Bind the events
         self.SetInitialSize(size)
+
+        # Associate a handler function with the events.
+        self.Bind(wx.EVT_SIZE, self._process_size_event)
+        if self._btn is not None:
+            self._btn.Bind(wx.EVT_BUTTON, self._process_collapse_event)
 
         self.Layout()
 
@@ -247,6 +207,19 @@ class sppasBaseRisePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def AddButton(self, icon):
+        """Append a button into the toolbar.
+
+        :param icon: (str) Name of the .png file of the icon or None
+
+        """
+        btn = self._create_tool_button(icon, label=None)
+        self._tools_panel.GetSizer().Add(btn, 0, wx.TOP, 1)
+
+        return btn
+
+    # -----------------------------------------------------------------------
+
     def EnableButton(self, icon, value):
         """Enable or disable a button of the tools panel.
 
@@ -307,20 +280,8 @@ class sppasBaseRisePanel(sppasPanel):
     # Event handlers
     # ------------------------------------------------------------------------
 
-    def _setup_events(self):
-        """Associate a handler function with the events."""
-        self.Bind(wx.EVT_SIZE, self.OnSize)
-
-        # The user pressed a key of its keyboard
-        # self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
-
-        # The user clicked a button of the collapsible panel toolbar
-        self.Bind(wx.EVT_BUTTON, self.OnButton)
-
-    # -----------------------------------------------------------------------
-
-    def OnButton(self, event):
-        """Handle the wx.EVT_BUTTON event.
+    def _process_collapse_event(self, event):
+        """Handle the wx.EVT_BUTTON event of the collapse button.
 
         :param event: a CommandEvent event to be processed.
 
@@ -333,11 +294,12 @@ class sppasBaseRisePanel(sppasPanel):
             self.GetEventHandler().ProcessEvent(ev)
 
         else:
+            # we should never been here!
             event.Skip()
 
     # ------------------------------------------------------------------------
 
-    def OnSize(self, event):
+    def _process_size_event(self, event):
         """Handle the wx.EVT_SIZE event.
 
         :param event: a SizeEvent event to be processed.
@@ -350,7 +312,20 @@ class sppasBaseRisePanel(sppasPanel):
 
     def _create_toolbar(self):
         """Create a panel with tools, including the collapsible button."""
-        pass
+        raise NotImplementedError
+
+    # -----------------------------------------------------------------------
+
+    def _create_tool_button(self, icon, label=None):
+        raise NotImplementedError
+
+    # -----------------------------------------------------------------------
+
+    def _create_collapsible_button(self):
+        img_name = self._img_expanded
+        if self.IsCollapsed():
+            img_name = self._img_collapsed
+        return self._create_tool_button(img_name, label=None)
 
     # -----------------------------------------------------------------------
 
@@ -381,6 +356,7 @@ class sppasHorizontalRisePanel(sppasBaseRisePanel):
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
+
     def __init__(self, parent, id=wx.ID_ANY, label="", pos=wx.DefaultPosition,
                  size=wx.DefaultSize, style=0, name="collapsible_panel"):
         """Create a sppasHorizontalRisePanel.
@@ -502,32 +478,22 @@ class sppasHorizontalRisePanel(sppasBaseRisePanel):
 
     # -----------------------------------------------------------------------
 
-    def _create_collapsible_button(self):
-        img_name = self._img_expanded
-        if self.IsCollapsed():
-            img_name = self._img_collapsed
-
-        btn = BitmapTextButton(self._tools_panel, label=self._label, name=img_name)
-        btn.SetLabelPosition(wx.RIGHT)
+    def _create_tool_button(self, icon, label=None):
+        btn = BitmapButton(self._tools_panel, name=icon)
         btn.SetAlign(wx.ALIGN_CENTER)
-
-        btn.SetFocusStyle(wx.PENSTYLE_SOLID)
-        btn.SetFocusWidth(1)
-        # btn.SetFocusColour(self.GetForegroundColour())
-        btn.SetSpacing(sppasPanel.fix_size(4))
-        h = self.GetButtonHeight()
-        btn_w = sppasPanel.fix_size(h * 10)
-        btn_h = sppasPanel.fix_size(h)
-        btn.SetMinSize(wx.Size(btn_w, btn_h))
-        btn.SetSize(wx.Size(btn_w, btn_h))
-
+        btn.SetFocusWidth(0)
+        btn.SetSpacing(0)
+        btn.SetBorderWidth(0)
+        btn_h = self.GetButtonHeight()
+        btn.SetSize(wx.Size(btn_h, btn_h))
+        btn.SetMinSize(wx.Size(btn_h, btn_h))
         return btn
 
 # ---------------------------------------------------------------------------
 
 
 class sppasVerticalRisePanel(sppasBaseRisePanel):
-    """An horizontally oriented rise panel.
+    """A vertically oriented rise panel.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -553,19 +519,6 @@ class sppasVerticalRisePanel(sppasBaseRisePanel):
         """
         super(sppasVerticalRisePanel, self).__init__(
             parent, id, label, pos, size, style, name=name)
-
-    # -----------------------------------------------------------------------
-
-    def AddButton(self, icon):
-        """Append a button into the toolbar.
-
-        :param icon: (str) Name of the .png file of the icon or None
-
-        """
-        btn = self._create_tool_button(icon)
-        self._tools_panel.GetSizer().Add(btn, 0, wx.TOP, 1)
-
-        return btn
 
     # -----------------------------------------------------------------------
 
@@ -644,50 +597,38 @@ class sppasVerticalRisePanel(sppasBaseRisePanel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self._btn = self._create_collapsible_button()
         sizer.Add(self._btn, 0, wx.FIXED_MINSIZE, 0)
-        sizer.Add(self._create_tool_button("slashdot"), 0, wx.FIXED_MINSIZE | wx.TOP, 1)
+
+        label_btn = self._create_tool_button("slashdot")
+        label_btn.Bind(wx.EVT_BUTTON, self._process_label_event)
+        sizer.Add(label_btn, 0, wx.FIXED_MINSIZE | wx.TOP, 1)
+
         self._tools_panel.SetSizer(sizer)
         w = self.GetButtonWidth()
         self._tools_panel.SetMinSize(wx.Size(w, w))
 
     # -----------------------------------------------------------------------
 
-    def _create_collapsible_button(self):
-        img_name = self._img_expanded
-        if self.IsCollapsed():
-            img_name = self._img_collapsed
-        btn = self._create_tool_button(img_name)
-        return btn
-
-    # -----------------------------------------------------------------------
-
-    def _create_tool_button(self, icon):
+    def _create_tool_button(self, icon, label=None):
         btn = BitmapButton(self._tools_panel, name=icon)
         btn.SetAlign(wx.ALIGN_CENTER)
         btn.SetFocusWidth(0)
         btn.SetSpacing(0)
         btn.SetBorderWidth(0)
-        btn_w = self.GetButtonWidth()   # int(float(self.GetButtonWidth()) * 0.9)
+        btn_w = self.GetButtonWidth()
         btn.SetSize(wx.Size(btn_w, btn_w))
         btn.SetMinSize(wx.Size(btn_w, btn_w))
         return btn
 
     # ------------------------------------------------------------------------
 
-    def OnButton(self, event):
+    def _process_label_event(self, event):
         """Handle the wx.EVT_BUTTON event.
 
         :param event: a CommandEvent event to be processed.
 
         """
         evt_obj = event.GetEventObject()
-        if evt_obj == self._btn:
-            # Collapse the panel
-            self.Collapse(not self.IsCollapsed())
-            # Send the CollapsiblePaneEvent to the event handler
-            ev = wx.CollapsiblePaneEvent(self, self.GetId(), self.IsCollapsed())
-            self.GetEventHandler().ProcessEvent(ev)
-
-        elif evt_obj.GetName() == "slashdot":
+        if evt_obj.GetName() == "slashdot":
             # Open a "window" to show the label
             win = LabelPopup(self.GetTopLevelParent(), wx.SIMPLE_BORDER, self._label)
             # Show the popup right below or above the button
@@ -698,6 +639,7 @@ class sppasVerticalRisePanel(sppasBaseRisePanel):
             win.Show(True)
 
         else:
+            # we shouldn't be here
             event.Skip()
 
 # ---------------------------------------------------------------------------
@@ -731,8 +673,27 @@ class sppasCollapsiblePanel(sppasHorizontalRisePanel):
         """
         super(sppasCollapsiblePanel, self).__init__(
             parent, id, label, pos, size, style, name=name)
+        self._btn.SetLabel(label)
         self._btn.SetLabelPosition(wx.RIGHT)
         self._btn.SetAlign(wx.ALIGN_LEFT)
+
+    # -----------------------------------------------------------------------
+
+    def _create_tool_button(self, icon, label=None):
+        if label is None:
+            btn = BitmapButton(self._tools_panel, name=icon)
+        else:
+            btn = BitmapTextButton(self._tools_panel, label=label, name=icon)
+            btn.SetLabelPosition(wx.LEFT)
+
+        btn.SetAlign(wx.ALIGN_CENTER)
+        btn.SetFocusWidth(0)
+        btn.SetSpacing(0)
+        btn.SetBorderWidth(0)
+        btn_h = self.GetButtonHeight()
+        btn.SetSize(wx.Size(btn_h, btn_h))
+        btn.SetMinSize(wx.Size(btn_h, btn_h))
+        return btn
 
     # -----------------------------------------------------------------------
 
@@ -743,21 +704,13 @@ class sppasCollapsiblePanel(sppasHorizontalRisePanel):
     # -----------------------------------------------------------------------
 
     def AddButton(self, icon, direction=-1):
-        """Append or prepend a button into the toolbar.
+        """Override. Append or prepend a button into the toolbar.
 
         :param icon: (str) Name of the .png file of the icon or None
         :param direction: (int) Negative: at left, positive: at right.
 
         """
-        btn = BitmapTextButton(self._tools_panel, name=icon)
-        btn.SetAlign(wx.ALIGN_CENTER)
-        btn.SetFocusWidth(0)
-        btn.SetSpacing(0)
-        btn.SetBorderWidth(0)
-        btn_h = int(float(self.GetButtonHeight()) * 0.9)
-        btn_w = btn_h
-        btn.SetSize(wx.Size(btn_w, btn_h))
-        btn.SetMinSize(wx.Size(btn_w, btn_h))
+        btn = self._create_tool_button(icon)
         if direction >= 0:
             self._tools_panel.GetSizer().Add(btn, 0, wx.LEFT | wx.RIGHT, 1)
         else:
@@ -782,23 +735,24 @@ class TestPanelCollapsiblePanel(sc.ScrolledPanel):
         self.MakePanelContent(child_panel)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p1)
 
-        p2 = sppasCollapsiblePanel(self, label="SPPAS Collapsible Panel...")
-        p2.AddButton("folder", direction=1)
-        child_panel = p2.GetPane()
-        child_panel.SetBackgroundColour(wx.BLUE)
-        self.MakePanelContent(child_panel)
-        p2.Expand()
-        checkbox = p2.AddButton("choice_checkbox")
-        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p2)
-        checkbox.Bind(wx.EVT_BUTTON, self.OnCkeckedPanel)
-
-        p3 = sppasHorizontalRisePanel(self, label="SPPAS BaseRisePanel using SetPane...")
-        p3.SetExpandedIcon("arrow_combo")
-        child_panel = sppasPanel(p3)
+        p2 = sppasHorizontalRisePanel(self, label="this label should not be visible...")
+        p2.SetExpandedIcon("arrow_combo")
+        p2.SetBorder(0)
+        child_panel = sppasPanel(p2)
         child_panel.SetBackgroundColour(wx.YELLOW)
         self.MakePanelContent(child_panel)
-        p3.SetPane(child_panel)
+        p2.SetPane(child_panel)
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p2)
+
+        p3 = sppasCollapsiblePanel(self, label="SPPAS Collapsible Panel...")
+        p3.AddButton("folder", direction=1)
+        child_panel = p3.GetPane()
+        child_panel.SetBackgroundColour(wx.BLUE)
+        self.MakePanelContent(child_panel)
+        p3.Expand()
+        checkbox = p3.AddButton("choice_checkbox")
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p3)
+        checkbox.Bind(wx.EVT_BUTTON, self.OnCkeckedPanel)
 
         p4 = sppasCollapsiblePanel(self, label="this label should not be visible")
         p4.SetLabel("This text is readable")

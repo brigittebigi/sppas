@@ -70,7 +70,7 @@ CLOSE_CONFIRM = _("At least a file contains not saved work that will be "
 # ---------------------------------------------------------------------------
 
 
-class sppasEditPanel(sppasPanel):
+class sppasEditorPanel(sppasPanel):
     """Create a panel to view&edit the selected files.
 
     :author:       Brigitte Bigi
@@ -86,9 +86,9 @@ class sppasEditPanel(sppasPanel):
     # ------------------------------------------------------------------------
 
     def __init__(self, parent):
-        super(sppasEditPanel, self).__init__(
+        super(sppasEditorPanel, self).__init__(
             parent=parent,
-            name="page_edit",
+            name="page_editor",
             style=wx.BORDER_NONE
         )
 
@@ -267,7 +267,7 @@ class sppasEditPanel(sppasPanel):
 
         """
         tb = sppasToolbar(self, name="edit_toolbar")
-        tb.set_focus_color(sppasEditPanel.HIGHLIGHT_COLOUR)
+        tb.set_focus_color(sppasEditorPanel.HIGHLIGHT_COLOUR)
 
         tb.AddButton("open", MSG_OPEN)
         tb.AddButton("save_all", MSG_SAVE)
@@ -400,7 +400,7 @@ class sppasEditPanel(sppasPanel):
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(sppasEditPanel):
+class TestPanel(sppasEditorPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent)
