@@ -45,7 +45,7 @@ from sppas.src.config import paths
 from ..windows import sppasMediaCtrl
 from ..windows import MediaType
 from ..windows import MediaEvents
-from ..windows.datactrls import sppasTierWindow
+from ..windows import sppasScrolledPanel
 from ..main_events import ViewEvent, EVT_VIEW
 
 from .baseview import sppasFileViewPanel
@@ -83,7 +83,7 @@ class MediaViewPanel(sppasFileViewPanel):
 
     # -----------------------------------------------------------------------
 
-    def __init__(self, parent, filename, name="media_timeview_panel"):
+    def __init__(self, parent, filename, name="media_view_panel"):
         """Create a MediaTimeViewPanel.
 
         :param parent: (wx.Window) Parent window must NOT be none
@@ -185,7 +185,6 @@ class MediaViewPanel(sppasFileViewPanel):
         """Override. Create the content of the panel."""
         self.AddButton("zoom_in")
         self.AddButton("zoom_out")
-        self.AddButton("zoom")
         self.AddButton("close")
 
         mc = sppasMediaCtrl(self)
@@ -193,12 +192,6 @@ class MediaViewPanel(sppasFileViewPanel):
         self.media_zoom(0)  # 100% zoom = initial size
 
         self.Collapse()
-
-    # -----------------------------------------------------------------------
-
-    def get_object(self):
-        """Override. Return the sppasMediaCtrl."""
-        return self.GetPane()
 
     # -----------------------------------------------------------------------
     # Events management
@@ -249,12 +242,15 @@ class MediaViewPanel(sppasFileViewPanel):
         :param event: (wx.Event)
 
         """
-        sppasFileViewPanel.OnButton(self, event)
         obj = event.GetEventObject()
         name = obj.GetName()
 
-        if name == "zoom":
-            self.media_zoom(0)
+        if event.GetEventObject() == self._btn:
+            # Collapse the panel
+            self.Collapse(not self.IsCollapsed())
+            # Send the CollapsiblePaneEvent to the event handler
+            ev = wx.CollapsiblePaneEvent(self, self.GetId(), self.IsCollapsed())
+            self.GetEventHandler().ProcessEvent(ev)
 
         elif name == "zoom_in":
             self.media_zoom(1)
@@ -271,10 +267,52 @@ class MediaViewPanel(sppasFileViewPanel):
 # ---------------------------------------------------------------------------
 
 
-class TestPanel(MediaViewPanel):
-
-    FILENAME = os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
-
+class TestPanel(sppasScrolledPanel):
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent, TestPanel.FILENAME)
-        self.GetPane().SetDrawPeriod(0, 1000)
+        super(TestPanel, self).__init__(parent, name="Test MediaView")
+
+        p1 = MediaViewPanel(self, filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
+        p2 = MediaViewPanel(self, filename=os.path.join(paths.samples, "faces", "video_sample.mp4"))
+
+        p2.GetPane().SetDrawPeriod(2.300, 3.500)
+
+        s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(p2, 0, wx.EXPAND)
+        s.Add(p1, 0, wx.EXPAND)
+        self.SetSizer(s)
+        self.SetupScrolling(scroll_x=False, scroll_y=True)
+        self.Bind(MediaEvents.EVT_MEDIA_ACTION, self._process_media_action)
+        p1.Bind(MediaEvents.EVT_MEDIA_LOADED, self.OnMediaLoaded)
+
+    # -----------------------------------------------------------------------
+
+    def _process_media_action(self, event):
+        """Process an action event from the player.
+
+        An action on media files has to be performed.
+
+        :param event: (wx.Event)
+
+        """
+        name = event.action
+        value = event.value
+
+        if name == "loaded":
+            if value is True:
+                event.GetEventObject().GetPane().Play()
+
+        event.Skip()
+
+    # ----------------------------------------------------------------------
+
+    def OnMediaLoaded(self, evt):
+        media = evt.GetEventObject()
+        wx.LogDebug(str(media))
+        wx.LogDebug(media.GetFilename())
+
+        audio_prop = media.GetAudioProperties()
+        if audio_prop is not None:
+            audio_prop.EnableWaveform(True)
+            media.SetBestSize()
+
+        self.Layout()

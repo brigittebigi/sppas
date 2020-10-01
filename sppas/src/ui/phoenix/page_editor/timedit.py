@@ -56,8 +56,8 @@ from ..anz_panels import sppasTiersEditWindow
 from ..main_events import ViewEvent, EVT_VIEW
 
 from .errview import ErrorViewPanel
-from .timeview import MediaTimeViewPanel
-from .timeview import TrsTimeViewPanel
+from .mediaview import MediaViewPanel
+from .trsview import TrsViewPanel
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
@@ -257,7 +257,7 @@ class TimeEditPanel(sppasPanel):
         period = False
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsTimeViewPanel):
+            if isinstance(panel, TrsViewPanel):
                 start, end = panel.get_selected_period()
                 if start != 0 or end != 0:
                     period = True
@@ -278,6 +278,7 @@ class TimeEditPanel(sppasPanel):
         :return: (bool) The file was removed or not
 
         """
+        wx.LogDebug("Remove file {:s}".format(name))
         if force is True or self.is_modified(name) is False:
 
             # Remove of the object
@@ -285,6 +286,18 @@ class TimeEditPanel(sppasPanel):
             if panel is None:
                 wx.LogError("There's no file with name {:s}".format(name))
                 return False
+
+            wx.LogDebug("  -> remove panel {:s} {}".format(panel.GetName(), type(panel)))
+            # If the closed page is a media, this media must be
+            # removed of the multimedia player control.
+            if isinstance(panel, MediaViewPanel) is True:
+                self._player_controls_panel.remove_media(panel.GetPane())
+            # Remove the tiers of the annotations list view
+            elif isinstance(panel, TrsViewPanel) is True:
+                wx.LogDebug("  **** TRANSCRIPTION **** ")
+                all_tiers = panel.get_tier_list()
+                w = self.FindWindow("tiers_edit_splitter")
+                w.remove_tiers(name, all_tiers)
 
             # Destroy the panel and remove of the sizer
             for i, child in enumerate(self.GetScrolledChildren()):
@@ -345,7 +358,7 @@ class TimeEditPanel(sppasPanel):
         s, e = self._player_controls_panel.set_range(start, end)
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsTimeViewPanel):
+            if isinstance(panel, TrsViewPanel):
                 panel.set_draw_period(s, e)
 
         return s, e
@@ -420,6 +433,7 @@ class TimeEditPanel(sppasPanel):
         p1.AlwaysShowScrollbars(False, True)
         p1.SetSizer(sizer)
         p1.Bind(MediaEvents.EVT_MEDIA_ACTION, self._process_media_action)
+        p1.Bind(EVT_VIEW, self._process_view_event)
 
         # Window 2 of the splitter: edit view of annotated files
         p2 = sppasTiersEditWindow(splitter, name="tiers_edit_splitter")
@@ -481,16 +495,14 @@ class TimeEditPanel(sppasPanel):
         """
         with TimeViewType() as tt:
             if tt.guess_type(name) == tt.video:
-                panel = MediaTimeViewPanel(self.GetScrolledPanel(), filename=name)
+                panel = MediaViewPanel(self.GetScrolledPanel(), filename=name)
             elif tt.guess_type(name) == tt.audio:
-                panel = MediaTimeViewPanel(self.GetScrolledPanel(), filename=name)
+                panel = MediaViewPanel(self.GetScrolledPanel(), filename=name)
             elif tt.guess_type(name) == tt.transcription:
-                panel = TrsTimeViewPanel(self.GetScrolledPanel(), filename=name)
-                panel.SetHighLightColor(self._hicolor)
-                trs = panel.get_object()
-                if trs is not None:
-                    w = self.FindWindow("tiers_edit_splitter")
-                    w.add_tiers(name, trs.get_tier_list())
+                panel = TrsViewPanel(self.GetScrolledPanel(), filename=name)
+                all_tiers = panel.get_tier_list()
+                w = self.FindWindow("tiers_edit_splitter")
+                w.add_tiers(name, all_tiers)
                     # This is the first trs of the panel.
                     # if len(self._files) == 0:
                     #     tier_name = trs[0].get_name()
@@ -579,6 +591,9 @@ class TimeEditPanel(sppasPanel):
             self.notify(action="close", filename=filename)
             return True
 
+        # Take care of the new selected file/tier/annotation
+        # ?????
+
         return False
 
     # -----------------------------------------------------------------------
@@ -649,10 +664,6 @@ class TimeEditPanel(sppasPanel):
             self.save_file(fn)
 
         elif action == "close":
-            # If the closed page is a media, this media must be
-            # removed of the multimedia player control.
-            if isinstance(panel, MediaTimeViewPanel):
-                self._player_controls_panel.remove_media(panel.GetPane())
             closed = self.close_page(fn)
 
         elif action == "tier_selected":
@@ -735,7 +746,7 @@ class TimeEditPanel(sppasPanel):
 
     def OnCollapseChanged(self, evt=None):
         panel = evt.GetEventObject()
-        if isinstance(panel, MediaTimeViewPanel) is True:
+        if isinstance(panel, MediaViewPanel) is True:
             if panel.IsExpanded() is True:
                 # The panel was collapsed, and now it is expanded.
                 self._player_controls_panel.add_media(panel.GetPane())
@@ -756,13 +767,12 @@ class TimeEditPanel(sppasPanel):
         for filename in self._files:
             logging.debug(filename)
             panel = self._files[filename]
-            if isinstance(panel, TrsTimeViewPanel):
+            if isinstance(panel, TrsViewPanel):
                 logging.debug(" -> is a trs")
-                trs = panel.get_object()
-                if len(trs) > 0:
+                all_tiers = panel.get_tier_list()
+                if len(all_tiers) > 0:
                     # enable the tier into the panel of time tier views
-                    tier_name = trs[0].get_name()
-                    logging.debug(tier_name)
+                    tier_name = all_tiers[0].get_name()
 
                     # enable the tier into the notebook of list tier views
                     w = self.FindWindow("tiers_edit_splitter")
@@ -782,7 +792,7 @@ class TimeEditPanel(sppasPanel):
         """
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsTimeViewPanel):
+            if isinstance(panel, TrsViewPanel):
                 if filename != trs_filename:
                     panel.set_selected_tiername(None)
                     panel.set_selected_ann(-1)
@@ -799,7 +809,7 @@ class TimeEditPanel(sppasPanel):
         """
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsTimeViewPanel):
+            if isinstance(panel, TrsViewPanel):
                 self.GetScrolledPanel().ScrollChildIntoView(panel)
                 if filename == trs_filename:
                     if what == "select":

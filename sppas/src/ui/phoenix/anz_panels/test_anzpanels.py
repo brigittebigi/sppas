@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.tests.test_panels.py
+    src.ui.phoenix.tests.test_anzpanels.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -57,16 +57,10 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        self.SetBackgroundColour(wx.Colour(100, 100, 100))
-        self.SetForegroundColour(wx.Colour(0, 0, 10))
-
         # Make the bunch of test anz_panels for the choice book
-        self.AddPage(tiers.TestPanel(self), "Tiers edit window")
-        self.AddPage(tierlist.TestPanel(self), "Tierctrl list")
-        self.AddPage(ann.TestPanel(self), "Annotation edit panel")
-
-        op = option.TestPanel(self)
-        self.AddPage(op, op.GetName())
+        for program in (option, ann, tierlist, tiers):
+            p = program.TestPanel(self)
+            self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)

@@ -72,7 +72,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
     Known problems while playing a media during a given period of time:
 
-     - Under WindowsInstaller, if a period is given to be played, the sound is played
+     - Under Windows, if a period is given to be played, the sound is played
        after the end is reached (about 400ms).
 
     """

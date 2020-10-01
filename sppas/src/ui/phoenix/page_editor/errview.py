@@ -62,15 +62,13 @@ MSG_UNK = _("Unknown error.")
 
 
 class ErrorViewPanel(sppasFileViewPanel):
-    """Display the content of a file into an editable TextCtrl.
+    """Display an error message instead of the content of a file.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    The object does not create an object.
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
@@ -81,26 +79,10 @@ class ErrorViewPanel(sppasFileViewPanel):
     # Override from the parent
     # -----------------------------------------------------------------------
 
-    def load_text(self):
-        """Load the file content into an object.
-
-        Raise an exception if the file is not supported or can't be read.
-
-        """
-        pass
-
-    # ------------------------------------------------------------------------
-
     def _create_content(self):
         """Create the content of the panel."""
         self.AddButton("close")
-        self._create_child_panel()
-        self.Collapse(True)
 
-    # -----------------------------------------------------------------------
-
-    def _create_child_panel(self):
-        """Override. Create the child panel."""
         style = wx.NO_BORDER | wx.TE_MULTILINE | wx.TE_RICH | \
                 wx.TE_PROCESS_ENTER | wx.TE_BESTWRAP | wx.TE_NO_VSCROLL
         txtview = sppasTextCtrl(self, style=style)
@@ -129,3 +111,22 @@ class ErrorViewPanel(sppasFileViewPanel):
         nblines = len(error_message.split()) + 1
         view_height = float(self.get_font_height()) * 1.1 * nblines
         txtview.SetMinSize(wx.Size(sppasPanel.fix_size(420), view_height))
+
+# ---------------------------------------------------------------------------
+
+
+class TestPanel(sppasPanel):
+    def __init__(self, parent):
+        super(TestPanel, self).__init__(parent, name="Test Error View")
+
+        p1 = ErrorViewPanel(self, filename="Path/to/a/file.ext")
+        p2 = ErrorViewPanel(self, filename="Path to another file")
+
+        p1.set_error_message("This is an error message to explain why the"
+                             " file is not properly displayed.")
+
+        s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(p1, 0, wx.EXPAND)
+        s.Add(p2, 0, wx.EXPAND)
+        self.SetSizer(s)
+

@@ -200,7 +200,19 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :param tiers: (list of sppasTier)
 
         """
-        raise NotImplementedError
+        wx.LogDebug("===>>>> Remove {:d} tiers of {:s}".format(len(tiers), filename))
+        sel_tiername = self.__tiersbook.remove_tiers(filename, tiers)
+        self.__annpanel.set_ann(None)
+        self.__cur_page = self.__tiersbook.GetSelection()
+
+        if len(sel_tiername) > 0:
+            self.__cur_index = self.__tierctrl.GetFirstSelected()
+            if self.__cur_index == -1:
+                changed = self.set_selected_tiername(filename, sel_tiername)
+                if changed is True:
+                    self.__annotation_selected(self.__cur_index)
+
+        self.Layout()
 
     # -----------------------------------------------------------------------
     # Public methods to manage annotations
@@ -625,7 +637,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 class TestPanel(sppasPanel):
 
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent)
+        super(TestPanel, self).__init__(parent, name="Test Annot Tiers Editor")
 
         p = sppasTiersEditWindow(self)
         self.Bind(EVT_VIEW, self._process_view_event)

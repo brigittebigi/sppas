@@ -515,6 +515,33 @@ class sppasTiersbook(sppasChoicebook):
 
     # -----------------------------------------------------------------------
 
+    def remove_tiers(self, filename, tiers):
+        """Remove a set of tiers of the file.
+
+        If the selected tier is among the removed one, select another one.
+
+        :param filename: (str)
+        :param tiers: (list of sppasTier)
+        :return: selected tier name
+
+        """
+        wx.LogDebug("===>>>> Remove {:d} tiers of {:s}".format(len(tiers), filename))
+
+        tier_names = [tier.get_name() for tier in tiers]
+        for page_index in reversed(range(self.GetPageCount())):
+            page = self.GetPage(page_index)
+            if page.get_filename() == filename:
+                if page.get_tiername() in tier_names:
+                    self.DeletePage(page_index)
+
+        page_sel = self.GetSelection()
+        if page_sel == wx.NOT_FOUND:
+            return ""
+
+        return self.GetPage(page_sel).get_tiername()
+
+    # -----------------------------------------------------------------------
+
     @property
     def tierctrl(self):
         page_index = self.GetSelection()
@@ -533,7 +560,7 @@ class TestPanel(sppasPanel):
     """
 
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent)
+        super(TestPanel, self).__init__(parent, name="Test ListCtrl Tier View")
 
         # Create content
         self.__book = sppasTiersbook(self)

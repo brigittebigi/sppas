@@ -41,9 +41,11 @@ from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 import sppas.src.ui.phoenix.page_editor.baseview as baseview
+import sppas.src.ui.phoenix.page_editor.errview as errview
 import sppas.src.ui.phoenix.page_editor.mediaview as mediaview
-import sppas.src.ui.phoenix.page_editor.editor as editor
+import sppas.src.ui.phoenix.page_editor.trsview as trsview
 import sppas.src.ui.phoenix.page_editor.timedit as timeedit
+import sppas.src.ui.phoenix.page_editor.editor as editor
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -60,10 +62,16 @@ class TestPanel(wx.Choicebook):
         # Make the bunch of test anz_panels for the choice book
         p = baseview.TestPanel(self)
         self.AddPage(p, p.GetName())
+        p = errview.TestPanel(self)
+        self.AddPage(p, p.GetName())
         p = mediaview.TestPanel(self)
         self.AddPage(p, p.GetName())
-        self.AddPage(editor.TestPanel(self), "Main Editor Page")
+        p = trsview.TestPanel(self)
+        self.AddPage(p, p.GetName())
+
         p = timeedit.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = editor.TestPanel(self)
         self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)

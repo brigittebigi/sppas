@@ -525,7 +525,7 @@ class sppasAnnEditPanel(sppasPanel):
 class TestPanel(sppasPanel):
 
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent)
+        super(TestPanel, self).__init__(parent, name="Test Annotation Text Editor")
 
         f1 = os.path.join(paths.samples, "annotation-results",
                           "samples-fra", "F_F_B003-P8-phon.xra")

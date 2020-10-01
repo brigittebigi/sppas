@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_analyze.timeview.py
+    ui.phoenix.page_analyze.trsview.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -48,9 +48,6 @@ from sppas.src.anndata import sppasRW
 
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
-from ..windows import sppasCollapsiblePanel
-from ..windows import sppasMediaCtrl
-from ..windows import MediaType
 from ..windows import MediaEvents
 from ..windows.datactrls import sppasTierWindow
 from ..main_events import ViewEvent, EVT_VIEW
@@ -71,235 +68,7 @@ WARNING_COLOUR = wx.Colour(240, 190, 45, 128)  # orange
 # ---------------------------------------------------------------------------
 
 
-class MediaTimeViewPanel(sppasFileViewPanel):
-    """A panel to display the content of an audio or a video.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
-    The object of this class is a sppasMediaCtrl.
-    Can not be constructed if the file is not supported and/or if an error
-    occurred when opening or reading.
-    Send action 'loaded' with True or False value.
-
-    """
-
-    # -----------------------------------------------------------------------
-    # List of accepted percentages of zooming
-    ZOOMS = (25, 50, 75, 100, 125, 150, 200, 250, 300, 400)
-
-    # -----------------------------------------------------------------------
-
-    def __init__(self, parent, filename, name="media_timeview_panel"):
-        """Create a MediaTimeViewPanel.
-
-        :param parent: (wx.Window) Parent window must NOT be none
-        :param filename: (str) The name of the file of the media
-        :param name: (str) the widget name.
-
-        """
-        try:
-            # Before creating the media, check if the file type is supported.
-            media_type = sppasMediaCtrl.ExpectedMediaType(filename)
-            if media_type == MediaType().unknown:
-                raise TypeError("File {:s} is of an unknown type "
-                                "(no audio nor video).".format(filename))
-        except TypeError:
-            self.Destroy()
-            raise
-
-        self._object = None
-        super(MediaTimeViewPanel, self).__init__(parent, filename, name)
-
-        self.Bind(wx.EVT_BUTTON, self._process_event)
-        self.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__process_media_loaded)
-        self.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__process_media_not_loaded)
-
-        mc = self.GetPane()
-        mc.Load(self._filename)
-
-    # -----------------------------------------------------------------------
-    # Media management
-    # -----------------------------------------------------------------------
-
-    def GetMediaType(self):
-        return self.GetPane().GetMediaType()
-
-    # -----------------------------------------------------------------------
-
-    def media_playing(self):
-        """Return True if the embedded media is playing."""
-        return self.GetPane().IsPlaying()
-
-    # -----------------------------------------------------------------------
-
-    def media_paused(self):
-        """Return True if the embedded media is paused."""
-        return self.GetPane().IsPaused()
-
-    # -----------------------------------------------------------------------
-
-    def media_stopped(self):
-        """Return True if the embedded media is stopped."""
-        return self.GetPane().IsStopped()
-
-    # -----------------------------------------------------------------------
-
-    def media_loading(self):
-        """Return True if the embedded media is loading."""
-        return self.GetPane().IsLoading()
-
-    # -----------------------------------------------------------------------
-
-    def media_length(self):
-        """Return the duration of the media (milliseconds)."""
-        return self.GetPane().Length()
-
-    # -----------------------------------------------------------------------
-
-    def media_tell(self):
-        """Return the current position in time (milliseconds)."""
-        return self.GetPane().Tell()
-
-    # -----------------------------------------------------------------------
-
-    def media_zoom(self, direction):
-        """Zoom the media of the given panel.
-
-        :param direction: (int) -1 to zoom out, +1 to zoom in and 0 to reset
-        to the initial size.
-
-        """
-        if self.IsExpanded() is False:
-            return
-
-        if direction == 0:
-            self.GetPane().SetZoom(100)
-        else:
-            idx_zoom = MediaTimeViewPanel.ZOOMS.index(self._child_panel.GetZoom())
-            if direction < 0:
-                new_idx_zoom = max(0, idx_zoom-1)
-            else:
-                new_idx_zoom = min(len(MediaTimeViewPanel.ZOOMS)-1, idx_zoom+1)
-            self._child_panel.SetZoom(MediaTimeViewPanel.ZOOMS[new_idx_zoom])
-
-        # Adapt our size to the new media size and the parent updates its layout
-        self.Freeze()
-        self.InvalidateBestSize()
-        self.Thaw()
-        self.SetStateChange(self.GetBestSize())
-
-    # -----------------------------------------------------------------------
-    # Construct the GUI
-    # -----------------------------------------------------------------------
-
-    def _create_content(self):
-        """Override. Create the content of the panel."""
-        self.AddButton("zoom_in")
-        self.AddButton("zoom_out")
-        self.AddButton("zoom")
-        self.AddButton("close")
-        self._create_child_panel()
-        self.Collapse()
-
-    # -----------------------------------------------------------------------
-
-    def _create_child_panel(self):
-        """Override. Create the child panel."""
-        mc = sppasMediaCtrl(self)
-        self.SetPane(mc)
-        self.media_zoom(0)  # 100% zoom = initial size
-
-    # ------------------------------------------------------------------------
-
-    def load_text(self):
-        """Override. Load the file content into an object."""
-        pass
-
-    # -----------------------------------------------------------------------
-
-    def get_object(self):
-        """Override. Return the sppasMediaCtrl."""
-        return self.GetPane()
-
-    # -----------------------------------------------------------------------
-    # Events management
-    # -----------------------------------------------------------------------
-
-    def __process_media_loaded(self, event):
-        """Process the end of load of a media."""
-        # media = event.GetEventObject()
-        # media_size = media.DoGetBestSize()
-        # media.SetSize(media_size)
-        # self.Expand()
-        self.Collapse()
-
-        evt = MediaEvents.MediaActionEvent(action="loaded", value=True)
-        evt.SetEventObject(self)
-        wx.PostEvent(self.GetParent(), evt)
-
-    # -----------------------------------------------------------------------
-
-    def __process_media_not_loaded(self, event):
-        """Process the end of a failed load of a media."""
-        self.Collapse()
-
-        evt = MediaEvents.MediaActionEvent(action="loaded", value=False)
-        evt.SetEventObject(self)
-        wx.PostEvent(self.GetParent(), evt)
-
-    # -----------------------------------------------------------------------
-
-    def _process_event(self, event):
-        """
-        :param event: (wx.Event)
-
-        """
-        obj = event.GetEventObject()
-        name = obj.GetName()
-
-        if name == "zoom":
-            self.media_zoom(0)
-
-        elif name == "zoom_in":
-            self.media_zoom(1)
-
-        elif name == "zoom_out":
-            self.media_zoom(-1)
-
-        elif name == "close":
-            self.notify("close")
-
-        else:
-            event.Skip()
-
-    # ------------------------------------------------------------------------
-
-    def OnButton(self, event):
-        """Override. Handle the wx.EVT_BUTTON event.
-
-        :param event: a CommandEvent event to be processed.
-
-        """
-        sppasCollapsiblePanel.OnButton(self, event)
-        if self.IsExpanded() is False:
-            # The media was expanded, now it is collapsed.
-            self.EnableButton("zoom", False)
-            self.EnableButton("zoom_in", False)
-            self.EnableButton("zoom_out", False)
-        else:
-            self.EnableButton("zoom", True)
-            self.EnableButton("zoom_in", True)
-            self.EnableButton("zoom_out", True)
-        event.Skip()
-
-# ---------------------------------------------------------------------------
-
-
-class TrsTimeViewPanel(sppasFileViewPanel):
+class TrsViewPanel(sppasFileViewPanel):
     """A panel to display the content of an annotated files in a timeline.
 
     :author:       Brigitte Bigi
@@ -314,11 +83,17 @@ class TrsTimeViewPanel(sppasFileViewPanel):
 
     """
 
-    def __init__(self, parent, filename, name="listview-panel"):
-        self._object = sppasTranscription("NewDocument")
-        self._dirty = False
+    def __init__(self, parent, filename, name="trs_view_panel"):
+        try:
+            # Before creating the trs, check if the file is supported.
+            parser = sppasRW(filename)
+            self._trs = parser.read()
+        except TypeError:
+            self.Destroy()
+            raise
 
-        super(TrsTimeViewPanel, self).__init__(parent, filename, name)
+        super(TrsViewPanel, self).__init__(parent, filename, name)
+
         self.Bind(EVT_VIEW, self._process_view_event)
 
     # -----------------------------------------------------------------------
@@ -329,9 +104,15 @@ class TrsTimeViewPanel(sppasFileViewPanel):
 
     # -----------------------------------------------------------------------
 
+    def get_tier_list(self):
+        """Return the list of all tiers."""
+        return self._trs.get_tier_list()
+
+    # -----------------------------------------------------------------------
+
     def get_tiernames(self):
         """Return the list of all tier names."""
-        return [tier.get_name() for tier in self._object.get_tier_list()]
+        return [tier.get_name() for tier in self._trs.get_tier_list()]
 
     # -----------------------------------------------------------------------
 
@@ -381,7 +162,7 @@ class TrsTimeViewPanel(sppasFileViewPanel):
     # -----------------------------------------------------------------------
 
     def set_draw_period(self, start, end):
-        """Fix the time period to display.
+        """Fix the time period to display (milliseconds).
 
         :param start: (int)
         :param end: (int) Time in milliseconds
@@ -407,30 +188,6 @@ class TrsTimeViewPanel(sppasFileViewPanel):
     # Override from the parent
     # -----------------------------------------------------------------------
 
-    def get_object(self):
-        """Return the object created from the opened file.
-
-        :return: (sppasTranscription)
-
-        """
-        return self._object
-
-    # -----------------------------------------------------------------------
-
-    def load_text(self):
-        """Override. Load filename in a sppasBaseIO.
-
-        Add the appropriate metadata.
-        The tiers, medias and controlled vocab lists are collapsed if empty.
-
-        :raises: IOExtensionError
-
-        """
-        parser = sppasRW(self._filename)
-        self._object = parser.read()
-
-    # -----------------------------------------------------------------------
-
     def save(self, filename=None):
         """Save the displayed transcription into a file.
 
@@ -446,7 +203,7 @@ class TrsTimeViewPanel(sppasFileViewPanel):
             parser = sppasRW(filename)
 
         if parser is not None:
-            parser.write(self._object)
+            parser.write(self._trs)
             return True
         return False
 
@@ -457,13 +214,8 @@ class TrsTimeViewPanel(sppasFileViewPanel):
         self.AddButton("save")
         self.AddButton("close")
 
-        self._create_child_panel()
+        self.SetPane(TrsTimePanel(self, self._trs))
         self.Expand()
-
-    # -----------------------------------------------------------------------
-
-    def _create_child_panel(self):
-        self.SetPane(TrsTimePanel(self, self._object))
 
     # -----------------------------------------------------------------------
 
@@ -473,9 +225,35 @@ class TrsTimeViewPanel(sppasFileViewPanel):
         :param event: (wx.Event)
 
         """
-        evt = ViewEvent(action="tier_selected", value=self._filename)
-        evt.SetEventObject(self)
-        wx.PostEvent(self.GetParent(), evt)
+        self.notify(action="tier_selected")
+
+    # -----------------------------------------------------------------------
+
+    def OnButton(self, event):
+        """Override.
+
+        :param event: (wx.Event)
+
+        """
+        obj = event.GetEventObject()
+        name = obj.GetName()
+
+        if event.GetEventObject() == self._btn:
+            # Collapse the panel
+            self.Collapse(not self.IsCollapsed())
+            # Send the CollapsiblePaneEvent to the event handler
+            ev = wx.CollapsiblePaneEvent(self, self.GetId(), self.IsCollapsed())
+            self.GetEventHandler().ProcessEvent(ev)
+
+        elif name == "save":
+            self.save()
+            # self.notify(action="save")
+
+        elif name == "close":
+            self.notify(action="close")
+
+        else:
+            event.Skip()
 
 # ---------------------------------------------------------------------------
 
@@ -485,10 +263,21 @@ class TrsTimePanel(sppasPanel):
 
     """
 
-    def __init__(self, parent, transcription, name="trs_panel"):
+    def __init__(self, parent, transcription=None, name="trs_panel"):
         super(TrsTimePanel, self).__init__(parent, name=name)
         self.__trs = transcription
         self._create_content()
+
+    # -----------------------------------------------------------------------
+
+    def set_transcription(self, transcription):
+        """Fix the transcription object if it wasn't done when init.
+
+        """
+        if self.__trs is not None:
+            raise Exception("A sppasTranscription is already defined.")
+        if isinstance(transcription, sppasTranscription):
+            self.__trs = transcription
 
     # -----------------------------------------------------------------------
 
@@ -619,30 +408,17 @@ class TrsTimePanel(sppasPanel):
 
 class TestPanel(sppasScrolledPanel):
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent)
+        super(TestPanel, self).__init__(parent, name="Test Trs View")
 
-        p1 = MediaTimeViewPanel(self,
-             filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
-        # p1.GetPane().media_play()
-
-        p2 = TrsTimeViewPanel(self,
-             filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.TextGrid"))
-
-        p3 = TrsTimeViewPanel(self,
-                              filename=os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"))
-
-        p4 = MediaTimeViewPanel(self,
-            #filename="/E/Videos/Monsters_Inc.For_the_Birds.mpg")
-            filename="C:\\Users\\bigi\\Videos\\agay_2.mp4")
+        p2 = TrsViewPanel(self, filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.TextGrid"))
+        p3 = TrsViewPanel(self, filename=os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"))
 
         p3.set_draw_period(2300, 3500)
         p3.set_selected_tiername("PhonAlign")
 
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(p1, 0, wx.EXPAND)
         s.Add(p2, 0, wx.EXPAND)
         s.Add(p3, 0, wx.EXPAND)
-        s.Add(p4, 0, wx.EXPAND)
         self.SetSizer(s)
         self.SetupScrolling(scroll_x=False, scroll_y=True)
         self.Bind(MediaEvents.EVT_MEDIA_ACTION, self._process_media_action)

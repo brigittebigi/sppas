@@ -113,12 +113,6 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
         """Return True if the content of the file has changed."""
         return self._dirty
 
-    # ------------------------------------------------------------------------
-
-    def get_object(self):
-        """Return the object created from the opened file."""
-        return None
-
     # -----------------------------------------------------------------------
 
     def SetFont(self, font):
@@ -161,7 +155,8 @@ class TestPanel(sppasFileViewPanel):
     FILENAME = os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
 
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent, TestPanel.FILENAME)
+        super(TestPanel, self).__init__(parent, TestPanel.FILENAME,
+                                        name="Test BaseView")
         self.Collapse(False)
 
     def _create_content(self):

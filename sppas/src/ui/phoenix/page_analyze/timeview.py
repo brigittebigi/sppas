@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_analyze.timeview.py
+    ui.phoenix.page_analyze.trsview.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
