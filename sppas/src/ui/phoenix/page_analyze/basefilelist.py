@@ -29,27 +29,25 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_edit.baseview.py
+    ui.phoenix.page_analyze.basefilelist.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    A base class for any object that displays the content of a file.
 
 """
 
-import wx
 import os
+import wx
 
 from sppas.src.config import paths
 
 from ..windows.panels import sppasPanel
-from ..windows.panels import sppasVerticalRisePanel
+from ..windows.panels import sppasCollapsiblePanel
 from ..main_events import ViewEvent
 
 # ----------------------------------------------------------------------------
 
 
-class sppasFileViewPanel(sppasVerticalRisePanel):
-    """Panel to display the content of a file in a time-view style.
+class sppasFileSummaryPanel(sppasCollapsiblePanel):
+    """Panel to display a summary of the content of a file.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -59,8 +57,8 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
 
     """
 
-    def __init__(self, parent, filename, name="baseview_panel"):
-        super(sppasFileViewPanel, self).__init__(
+    def __init__(self, parent, filename, name="baselist_panel"):
+        super(sppasFileSummaryPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
@@ -86,8 +84,6 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
 
         self.Layout()
 
-    # ------------------------------------------------------------------------
-    # About the file
     # ------------------------------------------------------------------------
 
     def get_filename(self):
@@ -123,7 +119,7 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
                     wx.FONTWEIGHT_BOLD,
                     font.GetUnderlined(),
                     font.GetFaceName())
-        sppasVerticalRisePanel.SetFont(self, f)
+        sppasCollapsiblePanel.SetFont(self, f)
         self.GetPane().SetFont(font)
         self.Layout()
 
@@ -149,13 +145,13 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
 # ---------------------------------------------------------------------------
 
 
-class TestPanel(sppasFileViewPanel):
+class TestPanel(sppasFileSummaryPanel):
 
     FILENAME = os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, TestPanel.FILENAME,
-                                        name="Test BaseView")
+                                        name="Test Base File Summary View")
         self.Collapse(False)
 
     def _create_content(self):

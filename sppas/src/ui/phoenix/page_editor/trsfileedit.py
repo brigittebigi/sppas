@@ -29,12 +29,11 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_analyze.trsview.py
+    ui.phoenix.page_analyze.trsfileedit.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
-import logging
 import os
 import wx
 import wx.lib
@@ -42,8 +41,6 @@ import wx.media
 
 from sppas.src.config import paths
 from sppas.src.anndata import sppasTranscription
-from sppas.src.anndata import sppasTier
-from sppas.src.anndata import sppasAnnotation
 from sppas.src.anndata import sppasRW
 
 from ..windows import sppasPanel
@@ -52,18 +49,7 @@ from ..windows import MediaEvents
 from ..windows.datactrls import sppasTierWindow
 from ..main_events import ViewEvent, EVT_VIEW
 
-from .baseview import sppasFileViewPanel
-
-# ---------------------------------------------------------------------------
-# Internal use of an event, when an item is clicked.
-
-ItemClickedEvent, EVT_ITEM_CLICKED = wx.lib.newevent.NewEvent()
-ItemClickedCommandEvent, EVT_ITEM_CLICKED_COMMAND = wx.lib.newevent.NewCommandEvent()
-
-# ---------------------------------------------------------------------------
-
-ERROR_COLOUR = wx.Colour(220, 30, 10, 128)     # red
-WARNING_COLOUR = wx.Colour(240, 190, 45, 128)  # orange
+from .basefileedit import sppasFileViewPanel
 
 # ---------------------------------------------------------------------------
 
@@ -410,8 +396,8 @@ class TestPanel(sppasScrolledPanel):
         p3.set_selected_tiername("PhonAlign")
 
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(p2, 0, wx.EXPAND)
-        s.Add(p3, 0, wx.EXPAND)
+        s.Add(p2, 0, wx.EXPAND | wx.ALL, 10)
+        s.Add(p3, 0, wx.EXPAND | wx.ALL, 10)
         self.SetSizer(s)
         self.SetupScrolling(scroll_x=False, scroll_y=True)
         self.Bind(MediaEvents.EVT_MEDIA_ACTION, self._process_media_action)

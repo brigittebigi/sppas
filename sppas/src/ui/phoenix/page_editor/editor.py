@@ -51,7 +51,7 @@ from ..windows.dialogs import sppasProgressDialog
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 from ..main_events import EVT_VIEW
 
-from .timedit import TimeEditPanel
+from .fileseditview import TimeEditPanel
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:

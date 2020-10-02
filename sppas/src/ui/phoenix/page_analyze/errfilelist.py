@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_analyze.errview.py
+    ui.phoenix.page_analyze.errfileedit.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     ErrorViewPanel to display an error message instead of the content.
@@ -44,7 +44,7 @@ from sppas.src.utils import u
 from ..windows import sppasPanel
 from ..windows import sppasTextCtrl
 
-from .baseview import sppasFileViewPanel
+from .basefilelist import sppasFileSummaryPanel
 
 
 # ----------------------------------------------------------------------------
@@ -55,14 +55,14 @@ def _(message):
     return u(msg(message, "ui"))
 
 
-MSG_ERROR = _("The file {:s} can't be displayed by this view.")
+MSG_ERROR = _("The file {:s} can't be displayed by this tool.")
 MSG_UNK = _("Unknown error.")
 
 # ---------------------------------------------------------------------------
 
 
-class ErrorViewPanel(sppasFileViewPanel):
-    """Display an error message instead of the content of a file.
+class ErrorFileSummaryPanel(sppasFileSummaryPanel):
+    """Display an error message instead of the summary of a file.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -72,8 +72,10 @@ class ErrorViewPanel(sppasFileViewPanel):
 
     """
 
-    def __init__(self, parent, filename, name="errorview-panel"):
-        super(ErrorViewPanel, self).__init__(parent, filename, name)
+    def __init__(self, parent, filename, name="errlist_panel"):
+        super(ErrorFileSummaryPanel, self).__init__(parent, filename, name)
+        self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
+        self.Collapse(False)
 
     # -----------------------------------------------------------------------
     # Override from the parent
@@ -81,7 +83,7 @@ class ErrorViewPanel(sppasFileViewPanel):
 
     def _create_content(self):
         """Create the content of the panel."""
-        self.AddButton("close")
+        self.AddButton("close", direction=1)
 
         style = wx.NO_BORDER | wx.TE_MULTILINE | wx.TE_RICH | \
                 wx.TE_PROCESS_ENTER | wx.TE_BESTWRAP | wx.TE_NO_VSCROLL
@@ -112,6 +114,23 @@ class ErrorViewPanel(sppasFileViewPanel):
         view_height = float(self.get_font_height()) * 1.1 * nblines
         txtview.SetMinSize(wx.Size(sppasPanel.fix_size(420), view_height))
 
+    # -----------------------------------------------------------------------
+
+    def __process_tool_event(self, event):
+        """Process a button event from the tools.
+
+        :param event: (wx.Event)
+
+        """
+        obj = event.GetEventObject()
+        name = obj.GetName()
+
+        if name == "close":
+            self.notify("close")
+
+        else:
+            event.Skip()
+
 # ---------------------------------------------------------------------------
 
 
@@ -119,14 +138,14 @@ class TestPanel(sppasPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="Test Error View")
 
-        p1 = ErrorViewPanel(self, filename="Path/to/a/file.ext")
-        p2 = ErrorViewPanel(self, filename="Path to another file")
+        p1 = ErrorFileSummaryPanel(self, filename="Path/to/a/file.ext")
+        p2 = ErrorFileSummaryPanel(self, filename="Path to another file")
 
         p1.set_error_message("This is an error message to explain why the"
                              " file is not properly displayed.")
 
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(p1, 0, wx.EXPAND)
-        s.Add(p2, 0, wx.EXPAND)
+        s.Add(p1, 0, wx.EXPAND | wx.ALL, 10)
+        s.Add(p2, 0, wx.EXPAND | wx.ALL, 10)
         self.SetSizer(s)
 

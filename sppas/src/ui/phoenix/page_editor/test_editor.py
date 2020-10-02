@@ -40,11 +40,11 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
-import sppas.src.ui.phoenix.page_editor.baseview as baseview
-import sppas.src.ui.phoenix.page_editor.errview as errview
-import sppas.src.ui.phoenix.page_editor.mediaview as mediaview
-import sppas.src.ui.phoenix.page_editor.trsview as trsview
-import sppas.src.ui.phoenix.page_editor.timedit as timeedit
+import sppas.src.ui.phoenix.page_editor.basefileedit as baseview
+import sppas.src.ui.phoenix.page_editor.errfileedit as errview
+import sppas.src.ui.phoenix.page_editor.mediafileedit as mediaview
+import sppas.src.ui.phoenix.page_editor.trsfileedit as trsview
+import sppas.src.ui.phoenix.page_editor.fileseditview as timeedit
 import sppas.src.ui.phoenix.page_editor.editor as editor
 
 # ----------------------------------------------------------------------------

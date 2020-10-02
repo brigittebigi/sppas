@@ -29,12 +29,11 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_editor.mediaview.py
+    ui.phoenix.page_editor.mediafileedit.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
-import logging
 import os
 import wx
 import wx.lib
@@ -46,20 +45,8 @@ from ..windows import sppasMediaCtrl
 from ..windows import MediaType
 from ..windows import MediaEvents
 from ..windows import sppasScrolledPanel
-from ..main_events import ViewEvent, EVT_VIEW
 
-from .baseview import sppasFileViewPanel
-
-# ---------------------------------------------------------------------------
-# Internal use of an event, when an item is clicked.
-
-ItemClickedEvent, EVT_ITEM_CLICKED = wx.lib.newevent.NewEvent()
-ItemClickedCommandEvent, EVT_ITEM_CLICKED_COMMAND = wx.lib.newevent.NewCommandEvent()
-
-# ---------------------------------------------------------------------------
-
-ERROR_COLOUR = wx.Colour(220, 30, 10, 128)     # red
-WARNING_COLOUR = wx.Colour(240, 190, 45, 128)  # orange
+from .basefileedit import sppasFileViewPanel
 
 # ---------------------------------------------------------------------------
 
@@ -84,7 +71,7 @@ class MediaViewPanel(sppasFileViewPanel):
     # -----------------------------------------------------------------------
 
     def __init__(self, parent, filename, name="media_view_panel"):
-        """Create a MediaTimeViewPanel.
+        """Create a MediaViewPanel.
 
         :param parent: (wx.Window) Parent window must NOT be none
         :param filename: (str) The name of the file of the media
@@ -192,7 +179,7 @@ class MediaViewPanel(sppasFileViewPanel):
         self.SetPane(mc)
         self.media_zoom(0)  # 100% zoom = initial size
 
-        self.Collapse()
+        self.Collapse(True)
 
     # -----------------------------------------------------------------------
     # Events management
@@ -271,8 +258,8 @@ class TestPanel(sppasScrolledPanel):
         p2.GetPane().SetDrawPeriod(2.300, 3.500)
 
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(p2, 0, wx.EXPAND)
-        s.Add(p1, 0, wx.EXPAND)
+        s.Add(p2, 0, wx.EXPAND | wx.ALL, 10)
+        s.Add(p1, 0, wx.EXPAND | wx.ALL, 10)
         self.SetSizer(s)
         self.SetupScrolling(scroll_x=False, scroll_y=True)
         self.Bind(MediaEvents.EVT_MEDIA_ACTION, self._process_media_action)

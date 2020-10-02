@@ -55,9 +55,9 @@ from ..windows.dialogs import Confirm
 from ..anz_panels import sppasTiersEditWindow
 from ..main_events import ViewEvent, EVT_VIEW
 
-from .errview import ErrorViewPanel
-from .mediaview import MediaViewPanel
-from .trsview import TrsViewPanel
+from .errfileedit import ErrorViewPanel
+from .mediafileedit import MediaViewPanel
+from .trsfileedit import TrsViewPanel
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
@@ -493,22 +493,19 @@ class TimeEditPanel(sppasPanel):
         with TimeViewType() as tt:
             if tt.guess_type(name) == tt.video:
                 panel = MediaViewPanel(self.GetScrolledPanel(), filename=name)
+
             elif tt.guess_type(name) == tt.audio:
                 panel = MediaViewPanel(self.GetScrolledPanel(), filename=name)
+
             elif tt.guess_type(name) == tt.transcription:
                 panel = TrsViewPanel(self.GetScrolledPanel(), filename=name)
                 all_tiers = panel.get_tier_list()
                 w = self.FindWindow("tiers_edit_splitter")
                 w.add_tiers(name, all_tiers)
-                    # This is the first trs of the panel.
-                    # if len(self._files) == 0:
-                    #     tier_name = trs[0].get_name()
-                    #    selected = w.set_selected_tiername(name, tier_name)
-                    #     if selected is True:
-                    #         panel.set_selected_tiername(tier_name)
 
             elif tt.guess_type(name) == tt.unsupported:
                 raise IOError("File format not supported.")
+
             elif tt.guess_type(name) == tt.unknown:
                 raise TypeError("Unknown file format.")
 

@@ -739,7 +739,7 @@ class TestPanelCollapsiblePanel(sc.ScrolledPanel):
         p2.SetExpandedIcon("arrow_combo")
         p2.SetBorder(0)
         child_panel = sppasPanel(p2)
-        child_panel.SetBackgroundColour(wx.YELLOW)
+        p2.SetBackgroundColour(wx.YELLOW)
         self.MakePanelContent(child_panel)
         p2.SetPane(child_panel)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p2)

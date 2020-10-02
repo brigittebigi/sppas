@@ -29,41 +29,38 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_analyze.baseview.py
+    ui.phoenix.page_edit.basefileedit.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    A base class for any object that displays the content of a file.
 
 """
 
 import wx
+import os
 
-from ..windows import sppasCollapsiblePanel
+from sppas.src.config import paths
+
+from ..windows.panels import sppasPanel
+from ..windows.panels import sppasVerticalRisePanel
 from ..main_events import ViewEvent
-
 
 # ----------------------------------------------------------------------------
 
 
-class sppasBaseViewPanel(sppasCollapsiblePanel):
-    """Panel to display the content of a file.
+class sppasFileViewPanel(sppasVerticalRisePanel):
+    """Panel to view&edit the content of a file in a time-view style.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
-    def __init__(self, parent, filename, name="baseview"):
-
-        # We wont create this panel if the file can't be loaded...
-        self._dirty = False
-        self._filename = filename
-        if filename is not None:
-            # The file this panel is displaying is loaded into an object
-            self.load_text()
-
-        super(sppasBaseViewPanel, self).__init__(
+    def __init__(self, parent, filename, name="baseview_panel"):
+        super(sppasFileViewPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
@@ -72,10 +69,11 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
             style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.BORDER_NONE,
             name=name)
 
+        self._dirty = False
+        self._filename = filename
+
         # Create the GUI
-        self._hicolor = self.GetForegroundColour()
         self._create_content()
-        self._setup_events()
 
         # Look&feel
         try:
@@ -89,27 +87,7 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
         self.Layout()
 
     # ------------------------------------------------------------------------
-
-    def is_modified(self):
-        """Return True if the content of the file has changed."""
-        return self._dirty
-
-    # ------------------------------------------------------------------------
-
-    def load_text(self):
-        """Load the file content into an object.
-
-        Raise an exception if the file is not supported or can't be read.
-
-        """
-        raise NotImplementedError
-
-    # ------------------------------------------------------------------------
-
-    def save(self):
-        """Save the displayed text into a file."""
-        return False
-
+    # About the file
     # ------------------------------------------------------------------------
 
     def get_filename(self):
@@ -130,9 +108,9 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
 
     # ------------------------------------------------------------------------
 
-    def get_object(self):
-        """Return the object created from the opened file."""
-        return None
+    def is_modified(self):
+        """Return True if the content of the file has changed."""
+        return self._dirty
 
     # -----------------------------------------------------------------------
 
@@ -145,15 +123,9 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
                     wx.FONTWEIGHT_BOLD,
                     font.GetUnderlined(),
                     font.GetFaceName())
-        sppasCollapsiblePanel.SetFont(self, f)
+        sppasVerticalRisePanel.SetFont(self, f)
         self.GetPane().SetFont(font)
         self.Layout()
-
-    # -----------------------------------------------------------------------
-
-    def SetHighLightColor(self, color):
-        """Set a color to highlight something."""
-        self._hicolor = color
 
     # -----------------------------------------------------------------------
     # Construct the GUI
@@ -161,15 +133,6 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
 
     def _create_content(self):
         """Create the content of the panel."""
-        self.AddButton("save")
-        self.AddButton("close")
-        self._create_child_panel()
-        self.Collapse(True)
-
-    # -----------------------------------------------------------------------
-
-    def _create_child_panel(self):
-        """Override. Create the child panel."""
         raise NotImplementedError
 
     # -----------------------------------------------------------------------
@@ -183,52 +146,22 @@ class sppasBaseViewPanel(sppasCollapsiblePanel):
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
 
-    # -----------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
-    def _setup_events(self):
-        """Associate a handler function with the events.
 
-        It means that when an event occurs then the process handler function
-        will be called.
+class TestPanel(sppasFileViewPanel):
 
-        """
-        self.GetPane().Bind(wx.EVT_SIZE, self.OnSize)
+    FILENAME = os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
 
-        # The user pressed a key of its keyboard
-        # self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)
+    def __init__(self, parent):
+        super(TestPanel, self).__init__(parent, TestPanel.FILENAME,
+                                        name="Test BaseView")
+        self.Collapse(False)
 
-        # The user clicked a button of the collapsible panel toolbar
-        self.Bind(wx.EVT_BUTTON, self._process_event)
-
-    # -----------------------------------------------------------------------
-
-    def _process_event(self, event):
-        """Process any kind of event.
-
-        :param event: (wx.Event)
-
-        """
-        wx.LogDebug("{:s} received a button event.".format(self.GetName()))
-        event_obj = event.GetButtonObj()
-        event_name = event_obj.GetName()
-
-        if event_name == "close":
-            self.notify("close")
-
-        elif event_name == "save":
-            self.notify("save")
-
-        else:
-            event.Skip()
-
-    # ------------------------------------------------------------------------
-
-    def OnSize(self, event):
-        """Handle the wx.EVT_SIZE event.
-
-        :param event: a SizeEvent event to be processed.
-
-        """
-        # each time our size is changed, the child panel needs a resize.
-        self.Layout()
+    def _create_content(self):
+        panel = sppasPanel(self)
+        st = wx.StaticText(panel, -1, self.get_filename(), pos=(10, 100))
+        sz = st.GetBestSize()
+        panel.SetSize((sz.width + 20, sz.height + 20))
+        self.SetPane(panel)
 
