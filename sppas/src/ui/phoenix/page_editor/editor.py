@@ -49,6 +49,7 @@ from ..windows import sppasStaticLine
 from ..windows.dialogs import Confirm
 from ..windows.dialogs import sppasProgressDialog
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
+from ..main_events import EVT_VIEW
 
 from .timedit import TimeEditPanel
 
@@ -321,6 +322,9 @@ class sppasEditorPanel(sppasPanel):
         # The buttons in this page
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
+        # The view performed an action.
+        self.Bind(EVT_VIEW, self._process_view_event)
+
     # -----------------------------------------------------------------------
 
     def _process_key_event(self, event):
@@ -382,6 +386,33 @@ class sppasEditorPanel(sppasPanel):
 
         else:
             event.Skip()
+
+    # -----------------------------------------------------------------------
+
+    def _process_view_event(self, event):
+        """Process a view event: an action has to be performed.
+
+        :param event: (wx.Event)
+
+        """
+        wx.LogMessage("***** EDITOR RECEIVED VIEW EVENT *****")
+        try:
+            action = event.action
+            filename = event.filename
+        except Exception as e:
+            wx.LogError(str(e))
+            return
+
+        wx.LogMessage("***** action={}, filename={} ****".format(action, filename))
+        if action == "close":
+            # Unlock the closed file
+            fns = [self.__data.get_object(filename)]
+            try:
+                self.__data.unlock(fns)
+                self.notify()
+            except Exception as e:
+                wx.LogError(str(e))
+                return False
 
     # -----------------------------------------------------------------------
 

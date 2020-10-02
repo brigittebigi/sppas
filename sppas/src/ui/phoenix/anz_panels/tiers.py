@@ -200,7 +200,6 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :param tiers: (list of sppasTier)
 
         """
-        wx.LogDebug("===>>>> Remove {:d} tiers of {:s}".format(len(tiers), filename))
         sel_tiername = self.__tiersbook.remove_tiers(filename, tiers)
         self.__annpanel.set_ann(None)
         self.__cur_page = self.__tiersbook.GetSelection()

@@ -328,7 +328,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         toolbar = sppasToolbar(parent, name="subtoolbar2")
 
         # focus color of buttons performing an action on tiers
-        toolbar.set_focus_color(wx.Colour(255, 230, 180, 128))
+        toolbar.set_focus_color(wx.Colour(235, 200, 120, 128))
         toolbar.AddTitleText(MSG_ANNS, wx.Colour(255, 230, 180, 128))
 
         b = toolbar.AddButton("tier_radius", TIER_ACT_RADIUS)

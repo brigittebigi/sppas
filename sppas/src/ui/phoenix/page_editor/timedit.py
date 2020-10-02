@@ -278,7 +278,6 @@ class TimeEditPanel(sppasPanel):
         :return: (bool) The file was removed or not
 
         """
-        wx.LogDebug("Remove file {:s}".format(name))
         if force is True or self.is_modified(name) is False:
 
             # Remove of the object
@@ -287,14 +286,12 @@ class TimeEditPanel(sppasPanel):
                 wx.LogError("There's no file with name {:s}".format(name))
                 return False
 
-            wx.LogDebug("  -> remove panel {:s} {}".format(panel.GetName(), type(panel)))
             # If the closed page is a media, this media must be
             # removed of the multimedia player control.
             if isinstance(panel, MediaViewPanel) is True:
                 self._player_controls_panel.remove_media(panel.GetPane())
             # Remove the tiers of the annotations list view
             elif isinstance(panel, TrsViewPanel) is True:
-                wx.LogDebug("  **** TRANSCRIPTION **** ")
                 all_tiers = panel.get_tier_list()
                 w = self.FindWindow("tiers_edit_splitter")
                 w.remove_tiers(name, all_tiers)
@@ -607,6 +604,8 @@ class TimeEditPanel(sppasPanel):
         :param filename: (str) name of the file to perform the action
 
         """
+        wx.LogDebug("{:s} notifies its parent {:s} of action {:s} for filename {}."
+                    "".format(self.GetName(), self.GetParent().GetName(), action, filename))
         evt = ViewEvent(action=action, filename=filename)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)

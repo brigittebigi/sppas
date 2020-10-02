@@ -525,8 +525,6 @@ class sppasTiersbook(sppasChoicebook):
         :return: selected tier name
 
         """
-        wx.LogDebug("===>>>> Remove {:d} tiers of {:s}".format(len(tiers), filename))
-
         tier_names = [tier.get_name() for tier in tiers]
         for page_index in reversed(range(self.GetPageCount())):
             page = self.GetPage(page_index)
