@@ -65,6 +65,7 @@ def _(message):
     return u(msg(message, "ui"))
 
 
+MSG_FILES = _("Files: ")
 MSG_OPEN = _("Open files")
 MSG_CREATE = _("New file")
 MSG_SAVE = _("Save all")
@@ -75,31 +76,31 @@ CLOSE_CONFIRM = _("At least a file contains not saved work that will be "
 SAVE_ERROR = _(
     "Files can't be saved due to the following error: {:s}\n")
 
-MSG_CONFIRM = u(msg("Confirm?"))
-MSG_TIERS = u(msg("Tiers: "))
-MSG_ANNS = u(msg("Annotations: "))
-TIER_MSG_ASK_NAME = u(msg("New name of the checked tiers: "))
-TIER_MSG_ASK_REGEXP = u(msg("Check tiers with name matching: "))
-TIER_MSG_ASK_RADIUS = u(msg("Radius value of the checked tiers: "))
-TIER_ACT_METADATA = u(msg("Metadata"))
-TIER_ACT_CHECK = u(msg("Check"))
-TIER_ACT_UNCHECK = u(msg("Uncheck"))
-TIER_ACT_RENAME = u(msg("Rename"))
-TIER_ACT_DELETE = u(msg("Delete"))
-TIER_ACT_CUT = u(msg("Cut"))
-TIER_ACT_COPY = u(msg("Copy"))
-TIER_ACT_PASTE = u(msg("Paste"))
-TIER_ACT_DUPLICATE = u(msg("Duplicate"))
-TIER_ACT_MOVE_UP = u(msg("Move Up"))
-TIER_ACT_MOVE_DOWN = u(msg("Move Down"))
-TIER_ACT_RADIUS = u(msg("Radius"))
-TIER_ACT_ANN_VIEW = u(msg("View"))
-TIER_ACT_STAT_VIEW = u(msg("Statistics"))
-TIER_ACT_SINGLE_FILTER = u(msg("Single Filter"))
-TIER_ACT_RELATION_FILTER = u(msg("Relation Filter"))
+MSG_CONFIRM = _("Confirm?")
+MSG_TIERS = _("Tiers: ")
+MSG_ANNS = _("Annotations: ")
+TIER_MSG_ASK_NAME = _("New name of the checked tiers: ")
+TIER_MSG_ASK_REGEXP = _("Check tiers with name matching: ")
+TIER_MSG_ASK_RADIUS = _("Radius value of the checked tiers: ")
+TIER_ACT_METADATA = _("Metadata")
+TIER_ACT_CHECK = _("Check")
+TIER_ACT_UNCHECK = _("Uncheck")
+TIER_ACT_RENAME = _("Rename")
+TIER_ACT_DELETE = _("Delete")
+TIER_ACT_CUT = _("Cut")
+TIER_ACT_COPY = _("Copy")
+TIER_ACT_PASTE = _("Paste")
+TIER_ACT_DUPLICATE = _("Duplicate")
+TIER_ACT_MOVE_UP = _("Move Up")
+TIER_ACT_MOVE_DOWN = _("Move Down")
+TIER_ACT_RADIUS = _("Radius")
+TIER_ACT_ANN_VIEW = _("View")
+TIER_ACT_STAT_VIEW = _("Statistics")
+TIER_ACT_SINGLE_FILTER = _("Single Filter")
+TIER_ACT_RELATION_FILTER = _("Relation Filter")
 TIER_MSG_CONFIRM_DEL = \
-    u(msg("Are you sure to delete {:d} tiers of {:d} files? "
-          "The process is irreversible."))
+    _("Are you sure to delete {:d} tiers of {:d} files? "
+          "The process is irreversible.")
 
 # ---------------------------------------------------------------------------
 
@@ -180,7 +181,7 @@ class sppasAnalyzePanel(sppasPanel):
         """Override. """
         wx.Panel.SetFont(self, font)
         for c in self.GetChildren():
-            if c.GetName().endswith("toolbar"):
+            if c.GetName().endswith("toolbar") is False:
                 c.SetFont(font)
             else:
                 # a smaller font for the toolbar(s)
@@ -239,6 +240,7 @@ class sppasAnalyzePanel(sppasPanel):
         if success > 0:
             self._viewpanel.Layout()
             self._viewpanel.Refresh()
+            self.Refresh()
             wx.LogMessage("{:d} files opened.".format(success))
             self.notify()
 
@@ -361,9 +363,9 @@ class sppasAnalyzePanel(sppasPanel):
 
         """
         tb = sppasToolbar(self, name="files_anns_toolbar")
-        
+        tb.set_height(40)
         tb.set_focus_color(sppasAnalyzePanel.HIGHLIGHT_COLOUR)
-        tb.AddTitleText("Files: ", self.HIGHLIGHT_COLOUR, name="files")
+        tb.AddTitleText(MSG_FILES, self.HIGHLIGHT_COLOUR, name="files")
         
         tb.AddButton("open", MSG_OPEN)
         tb.AddButton("create", MSG_CREATE)
@@ -400,7 +402,7 @@ class sppasAnalyzePanel(sppasPanel):
     def _create_toolbar_two(self):
         """Create a toolbar for actions on tiers. """
         toolbar = sppasToolbar(self, name="tiers_toolbar")
-
+        toolbar.set_height(40)
         toolbar.set_focus_color(TIER_BG_COLOUR)
         toolbar.AddTitleText(MSG_TIERS, TIER_BG_COLOUR)
 
@@ -449,7 +451,6 @@ class sppasAnalyzePanel(sppasPanel):
         b.LabelPosition = wx.BOTTOM
         b.Spacing = 1
 
-        toolbar.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
         return toolbar
 
     # -----------------------------------------------------------------------
@@ -464,7 +465,19 @@ class sppasAnalyzePanel(sppasPanel):
         btn = event.GetEventObject()
         btn_name = btn.GetName()
 
-        if btn_name == "tags":
+        if btn_name == "open":
+            self.open_checked_files()
+
+        elif btn_name == "create":
+            self.create_file()
+
+        elif btn_name == "save_all":
+            self.save_files()
+
+        elif btn_name == "close":
+            self.close_files()
+
+        elif btn_name == "tags":
             self._viewpanel.metadata_tiers()
             
         elif btn_name == "tier_check":
@@ -615,8 +628,8 @@ class sppasAnalyzePanel(sppasPanel):
         self.Bind(EVT_DATA_CHANGED, self._process_data_changed)
 
         # The buttons in this page
-        self.Bind(wx.EVT_BUTTON, self._process_event)
-        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_event)
+        self.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_toolbar_event)
 
         # The view performed an action.
         self.Bind(EVT_VIEW, self._process_view_event)
@@ -661,32 +674,6 @@ class sppasAnalyzePanel(sppasPanel):
                         '.'.format(emitted.GetName()))
             return
         self.__data = data
-
-    # -----------------------------------------------------------------------
-
-    def _process_event(self, event):
-        """Process any kind of events.
-
-        :param event: (wx.Event)
-
-        """
-        event_obj = event.GetEventObject()
-        event_name = event_obj.GetName()
-
-        if event_name == "open":
-            self.open_checked_files()
-
-        elif event_name == "create":
-            self.create_file()
-
-        elif event_name == "save_all":
-            self.save_files()
-
-        elif event_name == "close":
-            self.close_files()
-
-        else:
-            event.Skip()
 
     # -----------------------------------------------------------------------
 

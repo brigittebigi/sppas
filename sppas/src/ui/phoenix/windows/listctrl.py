@@ -101,6 +101,10 @@ class sppasListCtrl(wx.ListCtrl):
 
         super(sppasListCtrl, self).__init__(
             parent, id, pos, size, style, validator, name)
+        if self.GetWindowStyleFlag() & wx.LC_HRULES:
+            self._altcolors = False
+        else:
+            self._altcolors = True
 
         try:
             settings = wx.GetApp().settings
@@ -132,6 +136,12 @@ class sppasListCtrl(wx.ListCtrl):
         style = self.GetWindowStyleFlag()
         style &= ~wx.LC_NO_HEADER
         self.SetWindowStyle(style)
+
+    # -----------------------------------------------------------------------
+
+    def SetAlternateRowColour(self, value=True):
+        """Override. Highlight one line over two with a different bg color."""
+        self._altcolors = bool(value)
 
     # -----------------------------------------------------------------------
 
@@ -327,7 +337,7 @@ class sppasListCtrl(wx.ListCtrl):
         """
         wx.Window.SetBackgroundColour(self, colour)
         self._bg_color = colour
-        if not self.GetWindowStyleFlag() & wx.LC_HRULES:
+        if self._altcolors is True:
             self.RecolorizeBackground(-1)
 
         if self.GetItemCount() > 0:
@@ -419,7 +429,7 @@ class sppasListCtrl(wx.ListCtrl):
             # is systematically selected but not under the other platforms.
             wx.ListCtrl.Select(self, 0, on=0)
 
-        if not self.GetWindowStyleFlag() & wx.LC_HRULES:
+        if self._altcolors is True:
             for i in range(index, self.GetItemCount()):
                 self.RecolorizeBackground(i)
 
@@ -436,7 +446,7 @@ class sppasListCtrl(wx.ListCtrl):
         """
         index += self._header
         wx.ListCtrl.SetItem(self, index, col, label, imageId)
-        if not self.GetWindowStyleFlag() & wx.LC_HRULES:
+        if self._altcolors is True:
             self.RecolorizeBackground(index-self._header)
 
     # ---------------------------------------------------------------------
@@ -460,7 +470,7 @@ class sppasListCtrl(wx.ListCtrl):
 
         wx.ListCtrl.DeleteItem(self, index)
 
-        if not self.GetWindowStyleFlag() & wx.LC_HRULES:
+        if self._altcolors is True:
             for i in range(index, self.GetItemCount()):
                 self.RecolorizeBackground(i)
 
@@ -550,7 +560,7 @@ class sppasListCtrl(wx.ListCtrl):
         if idx not in self._selected:
             self._selected.append(idx)
         font = self.GetFont()
-        bold = wx.Font(int(float(font.GetPointSize()) * 1.2),
+        bold = wx.Font(font.GetPointSize(),
                        font.GetFamily(),
                        font.GetStyle(),
                        wx.FONTWEIGHT_BOLD,  # weight,
@@ -1070,6 +1080,7 @@ class TestPanel(wx.Panel):
         listctrl.InsertColumn(0, "Artist")
         listctrl.InsertColumn(1, "Title")
         listctrl.InsertColumn(2, "Genre")
+        listctrl.SetAlternateRowColour(True)
 
         # Fill rows
         items = musicdata.items()
@@ -1097,8 +1108,10 @@ class TestPanel(wx.Panel):
         # ---------
 
         checklist = CheckListCtrl(self,
-                                  style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_SINGLE_SEL,
+                                  style=wx.LC_REPORT | wx.LC_SINGLE_SEL,
                                   name="checklist")
+
+        checklist.SetAlternateRowColour(False)
 
         # The simplest way to create columns
         checklist.AppendColumn("Artist")

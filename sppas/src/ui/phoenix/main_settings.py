@@ -172,16 +172,29 @@ class WxAppSettings(sppasBaseSettings):
 
     # -----------------------------------------------------------------------
 
+    def __get_font_pixelsize(self):
+        # No font defined? So use the default GUI font provided by the system
+        try:  # wx4
+            font = wx.SystemSettings().GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        except AttributeError:  # wx3
+            font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
+
+        return font.GetPixelSize()
+
+    # -----------------------------------------------------------------------
+
     def __text_font(self):
+        # pixelSize, family, flags=FONTFLAG_DEFAULT, faceName=””, encoding=FONTENCODING_DEFAULT
         s = self.__get_font_pointsize()
-        text_font = wx.Font(s,                      # point size
-                            wx.FONTFAMILY_DEFAULT,  # family,
-                            wx.FONTSTYLE_NORMAL,    # style,
-                            wx.FONTWEIGHT_NORMAL,   # weight,
+        text_font = wx.Font(s,
+                            wx.FONTFAMILY_DEFAULT,
+                            wx.FONTSTYLE_NORMAL,
+                            wx.FONTWEIGHT_NORMAL,
                             underline=False,
                             faceName="Lucida sans",
                             encoding=wx.FONTENCODING_SYSTEM)
         return text_font
+        # flags=wx.FONTFLAG_ANTIALIASED
 
     # -----------------------------------------------------------------------
 

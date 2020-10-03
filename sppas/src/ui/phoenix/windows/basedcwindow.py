@@ -693,8 +693,8 @@ class sppasDCWindow(wx.Window):
         gc.SetBackgroundMode(wx.TRANSPARENT)
 
         # Font
-        gc.SetFont(self.GetFont())
         dc.SetFont(self.GetFont())
+        gc.SetFont(self.GetFont())
 
         return dc, gc
 
