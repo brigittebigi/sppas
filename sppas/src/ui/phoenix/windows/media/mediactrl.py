@@ -834,12 +834,14 @@ class sppasMediaCtrl(sppasPanel):
         with MediaType() as mt:
             if self._mt == mt.audio and self._audio is not None:
                 h = self._audio.GetMinHeight()
+                # wx.LogDebug(" ## Audio returned a min height of {}".format(h))
 
             elif self._mt in (mt.unknown, mt.unsupported):
                 h = sppasMediaCtrl.MIN_HEIGHT
 
         # Apply the zoom coefficient
         h = int(float(h) * float(self._zoom) / 100.)
+        # wx.LogDebug(" ## Audio height with the zoom coeff is {}".format(h))
 
         return wx.Size(w, h)
 

@@ -40,11 +40,17 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
+import sppas.src.ui.phoenix.page_editor.annlabels as annlabels
+import sppas.src.ui.phoenix.page_editor.tiersbook as tiersbook
+import sppas.src.ui.phoenix.page_editor.tiersanns as tiersanns
+
 import sppas.src.ui.phoenix.page_editor.basefileedit as baseview
 import sppas.src.ui.phoenix.page_editor.errfileedit as errview
 import sppas.src.ui.phoenix.page_editor.mediafileedit as mediaview
 import sppas.src.ui.phoenix.page_editor.trsfileedit as trsview
-import sppas.src.ui.phoenix.page_editor.fileseditview as timeedit
+import sppas.src.ui.phoenix.page_editor.filesedit as filesview
+
+import sppas.src.ui.phoenix.page_editor.editorpanel as editorpanel
 import sppas.src.ui.phoenix.page_editor.editor as editor
 
 # ----------------------------------------------------------------------------
@@ -58,19 +64,30 @@ class TestPanel(wx.Choicebook):
             self,
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
+        #
+        # p = annlabels.TestPanel(self)
+        # self.AddPage(p, p.GetName())
+        # p = tiersbook.TestPanel(self)
+        # self.AddPage(p, p.GetName())
+        # p = tiersanns.TestPanel(self)
+        # self.AddPage(p, p.GetName())
+        #
+        # p = baseview.TestPanel(self)
+        # self.AddPage(p, p.GetName())
+        # p = errview.TestPanel(self)
+        # self.AddPage(p, p.GetName())
+        # p = mediaview.TestPanel(self)
+        # self.AddPage(p, p.GetName())
+        # p = trsview.TestPanel(self)
+        # self.AddPage(p, p.GetName())
+        """
+        p = filesview.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
-        # Make the bunch of test anz_panels for the choice book
-        p = baseview.TestPanel(self)
+        p = editorpanel.TestPanel(self)
         self.AddPage(p, p.GetName())
-        p = errview.TestPanel(self)
-        self.AddPage(p, p.GetName())
-        p = mediaview.TestPanel(self)
-        self.AddPage(p, p.GetName())
-        p = trsview.TestPanel(self)
-        self.AddPage(p, p.GetName())
+        """
 
-        p = timeedit.TestPanel(self)
-        self.AddPage(p, p.GetName())
         p = editor.TestPanel(self)
         self.AddPage(p, p.GetName())
 

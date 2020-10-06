@@ -100,12 +100,7 @@ TIER_ACT_SINGLE_FILTER = _("Single Filter")
 TIER_ACT_RELATION_FILTER = _("Relation Filter")
 TIER_MSG_CONFIRM_DEL = \
     _("Are you sure to delete {:d} tiers of {:d} files? "
-          "The process is irreversible.")
-
-# ---------------------------------------------------------------------------
-
-
-TIER_BG_COLOUR = wx.Colour(180, 230, 250, 128)
+      "The process is irreversible.")
 
 # ---------------------------------------------------------------------------
 
@@ -121,7 +116,9 @@ class sppasAnalyzePanel(sppasPanel):
 
     """
 
-    HIGHLIGHT_COLOUR = wx.Colour(228, 128, 128, 196)
+    FILES_COLOUR = wx.Colour(228, 128, 128, 196)
+    ANN_COLOUR = wx.Colour(200, 180, 120, 128)
+    TIER_COLOUR = wx.Colour(160, 220, 240, 128)
 
     # ------------------------------------------------------------------------
 
@@ -327,10 +324,11 @@ class sppasAnalyzePanel(sppasPanel):
 
     def _create_content(self):
         """Create the main content."""
-        main_sizer = wx.BoxSizer(wx.VERTICAL)
         # the view must be created before the toolbar
         content_panel = ListViewFilesPanel(self, name="listview_files_panel")
-        
+
+        # The toolbar of the Analyze page and the main sizer
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
         main_sizer.Add(self._create_toolbar_one(), 0, wx.EXPAND, 0)
         main_sizer.Add(self._create_toolbar_two(), 0, wx.EXPAND, 0)
         main_sizer.Add(self._create_hline(), 0, wx.EXPAND)
@@ -346,12 +344,12 @@ class sppasAnalyzePanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _create_hline(self):
-        """Create an horizontal line, used to separate the anz_panels."""
+        """Create an horizontal line, used to separate the toolbar."""
         line = sppasStaticLine(self, orient=wx.LI_HORIZONTAL, name="hline")
         line.SetMinSize(wx.Size(-1, 20))
         line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
         line.SetDepth(1)
-        line.SetForegroundColour(self.HIGHLIGHT_COLOUR)
+        line.SetForegroundColour(self.FILES_COLOUR)
         return line
 
     # -----------------------------------------------------------------------
@@ -363,9 +361,9 @@ class sppasAnalyzePanel(sppasPanel):
 
         """
         tb = sppasToolbar(self, name="files_anns_toolbar")
-        tb.set_height(40)
-        tb.set_focus_color(sppasAnalyzePanel.HIGHLIGHT_COLOUR)
-        tb.AddTitleText(MSG_FILES, self.HIGHLIGHT_COLOUR, name="files")
+        # tb.set_height(40)
+        tb.set_focus_color(sppasAnalyzePanel.FILES_COLOUR)
+        tb.AddTitleText(MSG_FILES, self.FILES_COLOUR, name="files")
         
         tb.AddButton("open", MSG_OPEN)
         tb.AddButton("create", MSG_CREATE)
@@ -373,7 +371,7 @@ class sppasAnalyzePanel(sppasPanel):
         tb.AddButton("close", MSG_CLOSE)
         tb.AddSpacer(1)
 
-        tb.AddTitleText(MSG_ANNS, wx.Colour(235, 200, 140, 128))
+        tb.AddTitleText(MSG_ANNS, sppasAnalyzePanel.ANN_COLOUR)
 
         b = tb.AddButton("tier_radius", TIER_ACT_RADIUS)
         b.LabelPosition = wx.BOTTOM
@@ -401,57 +399,57 @@ class sppasAnalyzePanel(sppasPanel):
 
     def _create_toolbar_two(self):
         """Create a toolbar for actions on tiers. """
-        toolbar = sppasToolbar(self, name="tiers_toolbar")
-        toolbar.set_height(40)
-        toolbar.set_focus_color(TIER_BG_COLOUR)
-        toolbar.AddTitleText(MSG_TIERS, TIER_BG_COLOUR)
+        tb = sppasToolbar(self, name="tiers_toolbar")
+        # tb.set_height(40)
+        tb.set_focus_color(sppasAnalyzePanel.TIER_COLOUR)
+        tb.AddTitleText(MSG_TIERS, sppasAnalyzePanel.TIER_COLOUR)
 
-        b = toolbar.AddButton("tags", TIER_ACT_METADATA)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b = tb.AddButton("tags", TIER_ACT_METADATA)
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
 
-        b = toolbar.AddButton("tier_check", TIER_ACT_CHECK)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b = tb.AddButton("tier_check", TIER_ACT_CHECK)
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
 
-        b = toolbar.AddButton("tier_uncheck", TIER_ACT_UNCHECK)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b = tb.AddButton("tier_uncheck", TIER_ACT_UNCHECK)
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
 
-        b = toolbar.AddButton("tier_rename", TIER_ACT_RENAME)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b = tb.AddButton("tier_rename", TIER_ACT_RENAME)
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
 
-        b = toolbar.AddButton("tier_delete", TIER_ACT_DELETE)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b = tb.AddButton("tier_delete", TIER_ACT_DELETE)
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
 
-        b = toolbar.AddButton("tier_cut", TIER_ACT_CUT)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b = tb.AddButton("tier_cut", TIER_ACT_CUT)
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
 
-        b = toolbar.AddButton("tier_copy", TIER_ACT_COPY)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b = tb.AddButton("tier_copy", TIER_ACT_COPY)
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
 
-        b = toolbar.AddButton("tier_paste", TIER_ACT_PASTE)
-        b.FocusColour = self._viewpanel.GetHighLightColor()
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b = tb.AddButton("tier_paste", TIER_ACT_PASTE)
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
+        b.SetFocusColour(self._viewpanel.GetHighLightColor())
 
-        b = toolbar.AddButton("tier_duplicate", TIER_ACT_DUPLICATE)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b = tb.AddButton("tier_duplicate", TIER_ACT_DUPLICATE)
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
 
-        b = toolbar.AddButton("tier_moveup", TIER_ACT_MOVE_UP)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b = tb.AddButton("tier_moveup", TIER_ACT_MOVE_UP)
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
 
-        b = toolbar.AddButton("tier_movedown", TIER_ACT_MOVE_DOWN)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b = tb.AddButton("tier_movedown", TIER_ACT_MOVE_DOWN)
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
 
-        return toolbar
+        return tb
 
     # -----------------------------------------------------------------------
 

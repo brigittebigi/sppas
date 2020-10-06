@@ -41,12 +41,13 @@ import wx.media
 
 from sppas.src.config import paths
 
-from ..windows import sppasMediaCtrl
-from ..windows import MediaType
-from ..windows import MediaEvents
+from ..windows.media import sppasMediaCtrl
+from ..windows.media import MediaType
+from ..windows.media import MediaEvents
 from ..windows import sppasScrolledPanel
 
 from .basefileedit import sppasFileViewPanel
+from .editorevent import EVT_TIME_VIEW
 
 # ---------------------------------------------------------------------------
 
@@ -61,6 +62,11 @@ class MediaViewPanel(sppasFileViewPanel):
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     The object embedded in this class is a sppasMediaCtrl.
+
+    Events emitted by this class is EVT_TIME_VIEW:
+        - action="close" to ask for closing the panel
+        - action="media_loaded", value=boolean to inform the file was
+        successfully or un-successfully loaded.
 
     """
 
@@ -90,6 +96,7 @@ class MediaViewPanel(sppasFileViewPanel):
 
         super(MediaViewPanel, self).__init__(parent, filename, name)
         self._setup_events()
+        self.Collapse()
 
         mc = self.GetPane()
         mc.Load(self._filename)
@@ -100,6 +107,9 @@ class MediaViewPanel(sppasFileViewPanel):
 
     def GetMediaType(self):
         return self.GetPane().GetMediaType()
+    
+    def GetAudioProperties(self):
+        return self.GetPane().GetAudioProperties()
 
     # -----------------------------------------------------------------------
 
@@ -152,18 +162,19 @@ class MediaViewPanel(sppasFileViewPanel):
         if direction == 0:
             self.GetPane().SetZoom(100)
         else:
-            idx_zoom = MediaViewPanel.ZOOMS.index(self._child_panel.GetZoom())
+            idx_zoom = MediaViewPanel.ZOOMS.index(self.GetPane().GetZoom())
             if direction < 0:
                 new_idx_zoom = max(0, idx_zoom-1)
             else:
                 new_idx_zoom = min(len(MediaViewPanel.ZOOMS)-1, idx_zoom+1)
-            self._child_panel.SetZoom(MediaViewPanel.ZOOMS[new_idx_zoom])
+            self.GetPane().SetZoom(MediaViewPanel.ZOOMS[new_idx_zoom])
 
         # Adapt our size to the new media size and the parent updates its layout
         self.Freeze()
         self.InvalidateBestSize()
         self.Thaw()
-        self.SetStateChange(self.GetBestSize())
+        best_size = self.GetBestSize()
+        self.SetStateChange(best_size)
 
     # -----------------------------------------------------------------------
     # Construct the GUI
@@ -179,8 +190,6 @@ class MediaViewPanel(sppasFileViewPanel):
         self.SetPane(mc)
         self.media_zoom(0)  # 100% zoom = initial size
 
-        self.Collapse(True)
-
     # -----------------------------------------------------------------------
     # Events management
     # -----------------------------------------------------------------------
@@ -194,7 +203,7 @@ class MediaViewPanel(sppasFileViewPanel):
         """
         self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
 
-        # Events related to the media
+        # Events related to the embedded media
         self.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__process_media_loaded)
         self.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__process_media_not_loaded)
 
@@ -202,25 +211,13 @@ class MediaViewPanel(sppasFileViewPanel):
 
     def __process_media_loaded(self, event):
         """Process the end of load of a media."""
-        # media = event.GetEventObject()
-        # media_size = media.DoGetBestSize()
-        # media.SetSize(media_size)
-        # self.Expand()
-        self.Collapse()
-
-        evt = MediaEvents.MediaActionEvent(action="loaded", value=True)
-        evt.SetEventObject(self)
-        wx.PostEvent(self.GetParent(), evt)
+        self.notify(action="media_loaded", value=True)
 
     # -----------------------------------------------------------------------
 
     def __process_media_not_loaded(self, event):
         """Process the end of a failed load of a media."""
-        self.Collapse()
-
-        evt = MediaEvents.MediaActionEvent(action="loaded", value=False)
-        evt.SetEventObject(self)
-        wx.PostEvent(self.GetParent(), evt)
+        self.notify(action="media_loaded", value=False)
 
     # -----------------------------------------------------------------------
 
@@ -235,9 +232,11 @@ class MediaViewPanel(sppasFileViewPanel):
 
         if name == "zoom_in":
             self.media_zoom(1)
+            self.notify("zoomed")
 
         elif name == "zoom_out":
             self.media_zoom(-1)
+            self.notify("zoomed")
 
         elif name == "close":
             self.notify("close")
@@ -254,46 +253,38 @@ class TestPanel(sppasScrolledPanel):
 
         p1 = MediaViewPanel(self, filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
         p2 = MediaViewPanel(self, filename=os.path.join(paths.samples, "faces", "video_sample.mp4"))
+        p3 = MediaViewPanel(self, filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"))
 
         p2.GetPane().SetDrawPeriod(2.300, 3.500)
 
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(p2, 0, wx.EXPAND | wx.ALL, 10)
-        s.Add(p1, 0, wx.EXPAND | wx.ALL, 10)
+        s.Add(p1, 0, wx.EXPAND | wx.TOP, 2)
+        s.Add(p2, 0, wx.EXPAND | wx.TOP, 2)
+        s.Add(p3, 0, wx.EXPAND | wx.TOP, 2)
         self.SetSizer(s)
         self.SetupScrolling(scroll_x=False, scroll_y=True)
-        self.Bind(MediaEvents.EVT_MEDIA_ACTION, self._process_media_action)
-        p1.Bind(MediaEvents.EVT_MEDIA_LOADED, self.OnMediaLoaded)
+        self.Bind(EVT_TIME_VIEW, self._process_action)
 
     # -----------------------------------------------------------------------
 
-    def _process_media_action(self, event):
-        """Process an action event from the player.
-
-        An action on media files has to be performed.
+    def _process_action(self, event):
+        """Process an action event from one of the media view panels.
 
         :param event: (wx.Event)
 
         """
-        name = event.action
+        panel = event.GetEventObject()
+        action = event.action
         value = event.value
+        wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
+                    "".format(self.GetName(), action, panel.get_filename(), str(value)))
 
-        if name == "loaded":
+        if action == "media_loaded":
             if value is True:
-                event.GetEventObject().GetPane().Play()
+                audio_prop = panel.GetAudioProperties()
+                if audio_prop is not None:
+                    audio_prop.EnableWaveform(True)
+                panel.Expand()
+                self.Layout()
 
         event.Skip()
-
-    # ----------------------------------------------------------------------
-
-    def OnMediaLoaded(self, evt):
-        media = evt.GetEventObject()
-        wx.LogDebug(str(media))
-        wx.LogDebug(media.GetFilename())
-
-        audio_prop = media.GetAudioProperties()
-        if audio_prop is not None:
-            audio_prop.EnableWaveform(True)
-            media.SetBestSize()
-
-        self.Layout()

@@ -54,7 +54,7 @@ class sppasPlayerControlsPanel(sppasPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
-    Four children anz_panels are to be created and organized into a BoxSizer:
+    Four children are to be created and organized into a BoxSizer:
         - widgets_panel: a panel, free to be used to add widgets
         - transport_panel: all buttons to play a media
         - volume_panel: a button to mute and a slider to adjust the volume
@@ -85,6 +85,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         super(sppasPlayerControlsPanel, self).__init__(
             parent, id, pos, size, style, name)
 
+        self._btn_size = sppasPanel.fix_size(32)
         self._create_content()
         self._setup_events()
 
@@ -107,6 +108,50 @@ class sppasPlayerControlsPanel(sppasPanel):
             wxwindow, 0, wx.ALIGN_CENTER | wx.ALL, sppasPanel.fix_size(2))
         self.widgets_panel.Show(True)
         return True
+
+    # -----------------------------------------------------------------------
+
+    def SetButtonWidth(self, value):
+        """Fix the width/height of the buttons.
+
+        The given value will be adjusted to a proportion of the font height.
+        Min is 12, max is 128.
+        The buttons are not updated.
+
+        """
+        self._btn_size = min(sppasPanel.fix_size(value), 128)
+        self._btn_size = max(self._btn_size, 12)
+
+        btn = self.FindWindow("media_rewind")
+        btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
+        btn = self.FindWindow("media_play")
+        btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
+        btn = self.FindWindow("media_forward")
+        btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
+        btn = self.FindWindow("media_stop")
+        btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
+        btn = self.FindWindow("media_repeat")
+        btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
+        btn = self.FindWindow("volume_mute")
+        btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
+
+        btn = self.FindWindow("volume_slider")
+        btn.SetMinSize(wx.Size(self._btn_size * 2, self._btn_size))
+
+    # -----------------------------------------------------------------------
+
+    def ShowSlider(self, value=True):
+        self._slider.Show(value)
+
+    # -----------------------------------------------------------------------
+
+    def ShowVolume(self, value=True):
+        self._volume_panel.Show(value)
+
+    # -----------------------------------------------------------------------
+
+    def ShowWidgets(self, value=True):
+        self.widgets_panel.Show(value)
 
     # -----------------------------------------------------------------------
 
@@ -237,8 +282,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         """
         btn.SetFocusWidth(1)
         btn.SetSpacing(0)
-        btn.SetMinSize(wx.Size(sppasPanel.fix_size(28),
-                               sppasPanel.fix_size(28)))
+        btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
         return btn
 
     # -----------------------------------------------------------------------
@@ -254,9 +298,9 @@ class sppasPlayerControlsPanel(sppasPanel):
         # Organize the anz_panels into the main sizer
         border = sppasPanel.fix_size(2)
         nav_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        nav_sizer.Add(panel1, 3, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
-        nav_sizer.Add(panel2, 5, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
-        nav_sizer.Add(panel3, 3, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.Add(panel1, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.Add(panel2, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.Add(panel3, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(slider, 0, wx.EXPAND | wx.ALL, border)
@@ -277,6 +321,13 @@ class sppasPlayerControlsPanel(sppasPanel):
     def _slider(self):
         """Return the slider to indicate offsets."""
         return self.FindWindow("seek_slider")
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def _volume_panel(self):
+        """Return the slider to indicate offsets."""
+        return self.FindWindow("volume_panel")
 
     # -----------------------------------------------------------------------
 
@@ -324,8 +375,6 @@ class sppasPlayerControlsPanel(sppasPanel):
         btn_play = BitmapTextButton(panel, name="media_play")
         self.SetButtonProperties(btn_play)
         btn_play.SetFocus()
-        btn_play.SetMinSize(wx.Size(sppasPanel.fix_size(32),
-                                    sppasPanel.fix_size(32)))
 
         btn_forward = BitmapTextButton(panel, name="media_forward")
         self.SetButtonProperties(btn_forward)
@@ -364,6 +413,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         slider.SetName("volume_slider")
         slider.SetValue(100)
         slider.SetRange(0, 100)
+        slider.SetMinSize(wx.Size(self._btn_size * 2, self._btn_size))
 
         border = sppasPanel.fix_size(2)
         sizer = wx.BoxSizer(wx.HORIZONTAL)

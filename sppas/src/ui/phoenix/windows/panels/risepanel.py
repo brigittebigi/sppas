@@ -207,19 +207,6 @@ class sppasBaseRisePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def AddButton(self, icon):
-        """Append a button into the toolbar.
-
-        :param icon: (str) Name of the .png file of the icon or None
-
-        """
-        btn = self._create_tool_button(icon, label=None)
-        self._tools_panel.GetSizer().Add(btn, 0, wx.TOP, 1)
-
-        return btn
-
-    # -----------------------------------------------------------------------
-
     def EnableButton(self, icon, value):
         """Enable or disable a button of the tools panel.
 
@@ -378,6 +365,19 @@ class sppasHorizontalRisePanel(sppasBaseRisePanel):
 
     # -----------------------------------------------------------------------
 
+    def AddButton(self, icon):
+        """Append a button into the toolbar.
+
+        :param icon: (str) Name of the .png file of the icon or None
+
+        """
+        btn = self._create_tool_button(icon, label=None)
+        self._tools_panel.GetSizer().Add(btn, 0, wx.TOP, 1)
+
+        return btn
+
+    # -----------------------------------------------------------------------
+
     def SetLabel(self, value):
         """Set a new label to the collapsible button.
 
@@ -440,14 +440,14 @@ class sppasHorizontalRisePanel(sppasBaseRisePanel):
     def Layout(self):
         """Do the layout.
 
-        There's a border at left, at right and between the tool/child panels
+        There's a border at left.
 
         """
         # we need to complete the creation first
         if not self._tools_panel or not self._child_panel:
             return False
 
-        w, h = self.GetSize()
+        w, h = self.GetClientSize()
         tw = w
         th = self.GetButtonHeight()
         # fix pos and size of the top panel with tools
@@ -522,6 +522,22 @@ class sppasVerticalRisePanel(sppasBaseRisePanel):
 
     # -----------------------------------------------------------------------
 
+    def AddButton(self, icon):
+        """Append a button into the toolbar.
+
+        :param icon: (str) Name of the .png file of the icon or None
+
+        """
+        btn = self._create_tool_button(icon, label=None)
+        sizer = self._tools_panel.GetSizer()
+        sizer.Add(btn, 0, wx.TOP, 1)
+        w = self.GetButtonWidth()
+        self._tools_panel.SetMinSize(wx.Size(w, w*sizer.GetItemCount()))
+
+        return btn
+
+    # -----------------------------------------------------------------------
+
     def GetButtonWidth(self):
         """Return the width of the buttons in the toolbar."""
         return int(float(self.get_font_height()) * 1.8)
@@ -538,6 +554,7 @@ class sppasVerticalRisePanel(sppasBaseRisePanel):
         min_w = tb_w
         min_h = tb_h
         self.SetMinSize(wx.Size(min_w, min_h))
+
         if size is None:
             size = wx.DefaultSize
         wx.Window.SetInitialSize(self, size)
@@ -567,17 +584,20 @@ class sppasVerticalRisePanel(sppasBaseRisePanel):
         if not self._tools_panel or not self._child_panel:
             return False
 
-        w, h = self.GetSize()
+        w, h = self.GetClientSize()
         tw = self.GetButtonWidth()
         th = self.GetButtonWidth()
 
         if self.IsExpanded():
-            th = h
+            sizer = self._tools_panel.GetSizer()
+            th *= sizer.GetItemCount()
+
+            th = max(h, th)
             # fix pos and size of the child window
             x = tw
             y = 0
             pw = w - x
-            ph = h - y
+            ph = th - y
             self._child_panel.SetSize(wx.Size(pw, ph))
             self._child_panel.SetPosition((x, y))
             self._child_panel.Show(True)
@@ -604,7 +624,7 @@ class sppasVerticalRisePanel(sppasBaseRisePanel):
 
         self._tools_panel.SetSizer(sizer)
         w = self.GetButtonWidth()
-        self._tools_panel.SetMinSize(wx.Size(w, w))
+        self._tools_panel.SetMinSize(wx.Size(w, w*2))
 
     # -----------------------------------------------------------------------
 

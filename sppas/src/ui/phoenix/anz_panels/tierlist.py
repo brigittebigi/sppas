@@ -105,7 +105,7 @@ class sppasTierListCtrl(LineListCtrl):
      - Metadata are serialized.
 
     Known bug of wx:
-    If the ListCtrl is embedded in a page of a notebook, under WindowsInstaller only,
+    If the ListCtrl is embedded in a page of a notebook, under Windows only,
     DeleteItem() returns the following error message:
     listctrl.cpp(2614) in wxListCtrl::MSWOnNotify(): invalid internal data pointer?
     A solution is to use a simplebook, a choicebook, a listbook or a
@@ -478,7 +478,7 @@ class sppasTiersbook(sppasChoicebook):
     def __init__(self, parent):
         super(sppasTiersbook, self).__init__(parent,
                                              style=wx.TAB_TRAVERSAL,
-                                             name="tiersbook")
+                                             name="tiers_book")
 
     # -----------------------------------------------------------------------
 
@@ -624,7 +624,6 @@ class TestPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _on_char(self, evt):
-        logging.debug("Test panel received key event.")
         kc = evt.GetKeyCode()
         char = chr(kc)
         if kc in (8, 127):

@@ -70,11 +70,14 @@ class ErrorViewPanel(sppasFileViewPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
+    List of events emitted by this class:
+        - EVT_LIST_VIEW with action="close" to ask for closing the panel
+
     """
 
-    def __init__(self, parent, filename, name="errorview-panel"):
+    def __init__(self, parent, filename, name="errfile_panel"):
         super(ErrorViewPanel, self).__init__(parent, filename, name)
-        self.Collapse(False)
+        self.Expand()
         self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
 
     # -----------------------------------------------------------------------
@@ -110,9 +113,11 @@ class ErrorViewPanel(sppasFileViewPanel):
         txtview.SetStyle(0, len(message), txtview.GetDefaultStyle())
 
         # Search for the height of the text
-        nblines = len(error_message.split()) + 1
+        nblines = len(error_message.split("\n")) + 1
         view_height = float(self.get_font_height()) * 1.1 * nblines
-        txtview.SetMinSize(wx.Size(sppasPanel.fix_size(420), view_height))
+
+        txtview.SetMinSize(wx.Size(sppasPanel.fix_size(420),
+                                   int(view_height) + 6))
 
     # -----------------------------------------------------------------------
 
@@ -145,7 +150,7 @@ class TestPanel(sppasPanel):
                              " file is not properly displayed.")
 
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(p1, 0, wx.EXPAND | wx.ALL, 10)
-        s.Add(p2, 0, wx.EXPAND | wx.ALL, 10)
+        s.Add(p1, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 2)
+        s.Add(p2, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 2)
         self.SetSizer(s)
 

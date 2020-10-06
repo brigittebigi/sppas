@@ -155,6 +155,7 @@ __all__ = (
     "sppasTopFrame",
     "sppasFrame",
     "sppasToolbar",
+    "sppasComboBox",
     "sppasListCtrl",
     "LineListCtrl",
     "CheckListCtrl",

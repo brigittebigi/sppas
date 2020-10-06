@@ -43,7 +43,8 @@ from sppas.src.config import paths
 
 from ..windows.panels import sppasPanel
 from ..windows.panels import sppasVerticalRisePanel
-from ..main_events import ViewEvent
+
+from .editorevent import TimeViewEvent
 
 # ----------------------------------------------------------------------------
 
@@ -139,10 +140,15 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
     # Events management
     # -----------------------------------------------------------------------
 
-    def notify(self, action):
-        wx.LogDebug("{:s} notifies its parent {:s} of action {:s}."
-                    "".format(self.GetName(), self.GetParent().GetName(), action))
-        evt = ViewEvent(action=action)
+    def notify(self, action, value=None):
+        """Notify the parent of a TimeViewEvent.
+
+        The parent can catch the event with EVT_TIME_VIEW.
+
+        """
+        # wx.LogDebug("{:s} notifies its parent {:s} of action {:s}."
+        #            "".format(self.GetName(), self.GetParent().GetName(), action))
+        evt = TimeViewEvent(action=action, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
 

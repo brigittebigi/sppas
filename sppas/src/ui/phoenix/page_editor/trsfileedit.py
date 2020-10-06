@@ -36,8 +36,7 @@
 
 import os
 import wx
-import wx.lib
-import wx.media
+import wx.lib.newevent
 
 from sppas.src.config import paths
 from sppas.src.anndata import sppasTranscription
@@ -45,11 +44,16 @@ from sppas.src.anndata import sppasRW
 
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
-from ..windows import MediaEvents
 from ..windows.datactrls import sppasTierWindow
-from ..main_events import ViewEvent, EVT_VIEW
 
+from .editorevent import EVT_TIME_VIEW
 from .basefileedit import sppasFileViewPanel
+
+# ---------------------------------------------------------------------------
+
+# Internal use of event.
+TrsEvent, EVT_TRS = wx.lib.newevent.NewEvent()
+TrsCommandEvent, EVT_TRS_COMMAND = wx.lib.newevent.NewCommandEvent()
 
 # ---------------------------------------------------------------------------
 
@@ -64,8 +68,15 @@ class TrsViewPanel(sppasFileViewPanel):
     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
     The object this class is displaying is a sppasTranscription.
-    Can not be constructed if the file is not supported and/or if an error
+
+    Can't be constructed if the file is not supported and/or if an error
     occurred when opening or reading.
+
+    Events emitted by this class is EVT_TIME_VIEW:
+
+       - action="close" to ask for closing the panel
+       - action="save" to ask for saving the file of the panel
+       - action="select_tier", value=name of the tier to be selected
 
     """
 
@@ -79,8 +90,8 @@ class TrsViewPanel(sppasFileViewPanel):
             raise
 
         super(TrsViewPanel, self).__init__(parent, filename, name)
-        self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
-        self.Bind(EVT_VIEW, self.__process_view_event)
+        self._setup_events()
+        self.Expand()
 
     # -----------------------------------------------------------------------
 
@@ -171,8 +182,6 @@ class TrsViewPanel(sppasFileViewPanel):
         return self.GetPane().get_selected_period()
 
     # -----------------------------------------------------------------------
-    # Override from the parent
-    # -----------------------------------------------------------------------
 
     def save(self, filename=None):
         """Save the displayed transcription into a file.
@@ -194,24 +203,43 @@ class TrsViewPanel(sppasFileViewPanel):
         return False
 
     # -----------------------------------------------------------------------
+    # Construct the GUI
+    # -----------------------------------------------------------------------
 
     def _create_content(self):
         """Override. Create the content of the panel."""
         self.AddButton("save")
         self.AddButton("close")
 
-        self.SetPane(TrsTimePanel(self, self._trs))
-        self.Expand()
+        tp = TrsTimePanel(self, self._trs)
+        self.SetPane(tp)
+
+    # -----------------------------------------------------------------------
+    # Events management
+    # -----------------------------------------------------------------------
+
+    def _setup_events(self):
+        """Associate a handler function with the events.
+
+        It means that when an event occurs then the process handler function
+        will be called.
+
+        """
+        self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
+
+        # Events related to the embedded transcription
+        self.Bind(EVT_TRS, self.__process_trs_event)
 
     # -----------------------------------------------------------------------
 
-    def __process_view_event(self, event):
-        """Process a click on a tier.
+    def __process_trs_event(self, event):
+        """Process an event from the embedded transcription.
 
         :param event: (wx.Event)
 
         """
-        self.notify(action="tier_selected")
+        # notify the parent with a TimeViewEvent. It adds the filename.
+        self.notify(action=event.action, value=event.value)
 
     # -----------------------------------------------------------------------
 
@@ -225,8 +253,8 @@ class TrsViewPanel(sppasFileViewPanel):
         name = obj.GetName()
 
         if name == "save":
-            self.save()
-            # self.notify(action="save")
+            # self.save()
+            self.notify(action="save")
 
         elif name == "close":
             self.notify(action="close")
@@ -239,6 +267,15 @@ class TrsViewPanel(sppasFileViewPanel):
 
 class TrsTimePanel(sppasPanel):
     """Display a transcription in a timeline view.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      contact@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
+
+    Event emitted by this class is TRS_EVENT with:
+        - action="select_tier", value=name of the tier to be selected
 
     """
 
@@ -357,30 +394,29 @@ class TrsTimePanel(sppasPanel):
         for tier in self.__trs:
             tier_ctrl = sppasTierWindow(self, data=tier)
             tier_ctrl.SetMinSize(wx.Size(-1, sppasPanel.fix_size(24)))
-            tier_ctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_data_selected)
+            tier_ctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_click)
 
             sizer.Add(tier_ctrl, 0, wx.EXPAND, 0)
         self.SetSizerAndFit(sizer)
 
     # -----------------------------------------------------------------------
 
-    def Notify(self):
+    def notify(self, action, value=None):
         """Sends a EVT_VIEW event to the listener (if any)."""
-        evt = ViewEvent(action="tier_selected")
+        evt = TrsEvent(action=action, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
 
     # -----------------------------------------------------------------------
 
-    def _process_data_selected(self, event):
+    def _process_tier_click(self, event):
         """Process a click on a tier.
 
         :param event: (wx.Event)
 
         """
         tier = event.GetObj()
-        self.set_selected_tiername(tier.get_name())
-        self.Notify()
+        self.notify(action="select_tier", value=tier.get_name())
 
 # ---------------------------------------------------------------------------
 
@@ -400,23 +436,24 @@ class TestPanel(sppasScrolledPanel):
         s.Add(p3, 0, wx.EXPAND | wx.ALL, 10)
         self.SetSizer(s)
         self.SetupScrolling(scroll_x=False, scroll_y=True)
-        self.Bind(MediaEvents.EVT_MEDIA_ACTION, self._process_media_action)
+
+        self.Bind(EVT_TIME_VIEW, self._process_action)
 
     # -----------------------------------------------------------------------
 
-    def _process_media_action(self, event):
-        """Process an action event from the player.
-
-        An action on media files has to be performed.
+    def _process_action(self, event):
+        """Process an action event from one of the trs panels.
 
         :param event: (wx.Event)
 
         """
-        name = event.action
+        panel = event.GetEventObject()
+        action = event.action
         value = event.value
+        wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
+                    "".format(self.GetName(), action, panel.get_filename(), str(value)))
 
-        if name == "loaded":
-            if value is True:
-                event.GetEventObject().get_object().Play()
+        if action == "select_tier":
+            panel.set_selected_tiername(value)
 
         event.Skip()

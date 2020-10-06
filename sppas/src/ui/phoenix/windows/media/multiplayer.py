@@ -201,6 +201,8 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         Notice that it sets only the slider and not the position in the media.
 
+        :param offset: (int) Time value in milliseconds
+
         """
         assert int(offset) >= 0
         if offset < self.start_pos or offset > self.end_pos:
@@ -254,13 +256,14 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
     # -----------------------------------------------------------------------
 
-    def add_media(self, media):
+    def add_media(self, media, filename=None):
         """Add a media into the list of media managed by this control.
 
         Re-evaluate our length, but do not set the range.
         Seek at the beginning of the range.
 
-        :param media:
+        :param media: ()
+        :param filename: (str)
         :return: (bool)
 
         """
