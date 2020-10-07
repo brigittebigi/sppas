@@ -49,6 +49,7 @@ from ..windows import sppasStaticLine
 from ..windows.dialogs import Confirm, Error
 from ..windows.dialogs import sppasProgressDialog
 from ..windows import sppasMultiPlayerPanel
+from ..windows.buttons import ToggleButton
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 
@@ -270,6 +271,9 @@ class sppasEditorPanel(sppasPanel):
 
         return closed
 
+        # Take care of the new selected file/tier/annotation
+        # ?????
+
     # ------------------------------------------------------------------------
 
     def __close_file(self, filename):
@@ -341,9 +345,9 @@ class sppasEditorPanel(sppasPanel):
         :return: (sppasToolbar)
 
         """
-        tb = sppasToolbar(self, name="files_anns_toolbar")
-        # tb.set_height(40)
+        tb = sppasToolbar(self, name="files_media_toolbar")
         tb.set_focus_color(sppasEditorPanel.FILES_COLOUR)
+        h = tb.get_height()
         tb.AddTitleText(MSG_FILES, self.FILES_COLOUR, name="files")
 
         tb.AddButton("open", MSG_OPEN)
@@ -352,9 +356,25 @@ class sppasEditorPanel(sppasPanel):
         tb.AddSpacer(1)
 
         tb.AddTitleText(MSG_MEDIA, sppasEditorPanel.MEDIA_COLOUR)
+
         player = sppasMultiPlayerPanel(tb, style=wx.BORDER_NONE, name="player_controls_panel")
+        player.ShowWidgets(True)
         player.ShowSlider(False)
-        player.SetButtonWidth(tb.get_height() - 2)
+        player.ShowVolume(True)
+        player.SetButtonWidth(h - 2)
+
+        si = ToggleButton(player.widgets_panel, name="sound_infos")
+        si.SetValue(True)
+        si.SetBorderWidth(1)
+        si.SetMinSize(wx.Size(h*2//3, h*2//3))
+        player.AddWidget(si)
+
+        sw = ToggleButton(player.widgets_panel, name="sound_wave_lines")
+        sw.SetValue(True)
+        sw.SetBorderWidth(1)
+        sw.SetMinSize(wx.Size(h*2//3, h*2//3))
+        player.AddWidget(sw)
+
         tb.AddWidget(player)
 
         return tb
@@ -363,7 +383,7 @@ class sppasEditorPanel(sppasPanel):
 
     def _create_toolbar_two(self):
         """Create a toolbar for actions on tiers. """
-        tb = sppasToolbar(self, name="tiers_toolbar")
+        tb = sppasToolbar(self, name="anns_toolbar")
         tb.set_height(24)   # default is 32
         tb.set_focus_color(sppasEditorPanel.ANN_COLOUR)
 
@@ -514,10 +534,10 @@ class sppasEditorPanel(sppasPanel):
 
     def __add_media(self, filename, media):
         audio_prop = media.GetAudioProperties()
-        # TODO: Set audio properties depending on the settings of the user...
         if audio_prop is not None:
-            audio_prop.EnableInfos(True)
-            audio_prop.EnableWaveform(True)
+            tb = self.FindWindow("files_media_toolbar")
+            audio_prop.EnableInfos(tb.get_button("sound_infos").GetValue())
+            audio_prop.EnableWaveform(tb.get_button("sound_wave_lines").GetValue())
             audio_prop.EnableSpectral(False)  # not implemented
             audio_prop.EnableLevel(False)     # not implemented
 
@@ -583,6 +603,12 @@ class sppasEditorPanel(sppasPanel):
                 self._editpanel.list_action_requested("edit_metadata")
             except Exception as e:
                 Error(str(e))
+
+        elif btn_name == "sound_infos":
+            self._editpanel.enable_media_infos(btn.GetValue())
+
+        elif btn_name == "sound_wave_lines":
+            self._editpanel.enable_media_waveform(btn.GetValue())
 
         else:
             event.Skip()

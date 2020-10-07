@@ -147,7 +147,7 @@ class EditorPanel(sppasSplitterWindow):
         self._listview.restore_ann()
 
     # -----------------------------------------------------------------------
-    # Actions to perform on the edited list of annotations
+    # Actions to perform on the listview in priority
     # -----------------------------------------------------------------------
 
     def list_action_requested(self, action_name):
@@ -217,6 +217,16 @@ class EditorPanel(sppasSplitterWindow):
             wx.LogError("unknown action name {:s}".format(action_name))
 
         return False
+
+    # -----------------------------------------------------------------------
+    # Actions to perform on the time view in priority
+    # -----------------------------------------------------------------------
+
+    def enable_media_infos(self, value):
+        self._timeview.enable_media_infos(value)
+
+    def enable_media_waveform(self, value):
+        self._timeview.enable_media_waveform(value)
 
     # -----------------------------------------------------------------------
     # Public methods to manage files and tiers

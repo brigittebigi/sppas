@@ -341,8 +341,9 @@ class sppasPlayerControlsPanel(sppasPanel):
     def __create_widgets_panel(self):
         """Return an empty panel with a wrap sizer."""
         panel = sppasPanel(self, name="widgets_panel")
-        sizer = wx.WrapSizer(orient=wx.VERTICAL)
-        panel.SetSizerAndFit(sizer)
+        ## sizer = wx.WrapSizer(orient=wx.VERTICAL)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        panel.SetSizer(sizer)
         return panel
 
     # -----------------------------------------------------------------------
@@ -384,6 +385,7 @@ class sppasPlayerControlsPanel(sppasPanel):
 
         btn_replay = ToggleButton(panel, name="media_repeat")
         btn_replay = self.SetButtonProperties(btn_replay)
+        btn_replay.SetBorderWidth(1)
 
         border = sppasPanel.fix_size(2)
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -407,6 +409,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         btn_mute = ToggleButton(panel, name="volume_mute")
         btn_mute.SetImage("volume_high")
         self.SetButtonProperties(btn_mute)
+        btn_mute.SetBorderWidth(1)
 
         # Labels of wx.Slider are not supported under MacOS.
         slider = wx.Slider(panel, style=wx.SL_HORIZONTAL | wx.SL_MIN_MAX_LABELS)

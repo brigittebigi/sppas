@@ -417,9 +417,6 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
             self.Refresh()
             return True
 
-        # Take care of the new selected file/tier/annotation
-        # ?????
-
         return False
 
     # -----------------------------------------------------------------------
