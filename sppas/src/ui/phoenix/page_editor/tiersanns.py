@@ -440,6 +440,17 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         return self.__tiersbook.GetPage(page_index)
 
     # -----------------------------------------------------------------------
+
+    def switch_ann_mode(self, mode):
+        """Change the annotation edit mode to the given one.
+
+        :param mode: (str) One of the accepted modes.
+        :return: (bool)
+
+        """
+        return self.__annctrl.switch_view(mode)
+
+    # -----------------------------------------------------------------------
     # Events management
     # -----------------------------------------------------------------------
 

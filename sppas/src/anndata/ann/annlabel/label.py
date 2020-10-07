@@ -66,7 +66,7 @@ class sppasLabel(object):
         """Create a new sppasLabel instance.
 
         :param tag: (sppasTag or list of sppasTag or None)
-        :param score: (float or list of float)
+        :param score: (float or list of float or None)
 
         """
         self.__tags = None
@@ -342,12 +342,8 @@ class sppasLabel(object):
     def serialize(self, empty="", alt=True):
         """Convert the label into a string, include or not alternative tags.
 
-        Use the "{ | }" system to serialize the alternative tags.
-        Scores of the tags are not returned.
-
-        :param empty: (str) The text to return if a tag is empty or not set.
-        :param alt: (bool) Include alternative tags
-        :returns: (str)
+        @DeprecationWarning
+        Use aioutils.serialize_label() instead.
 
         """
         if self.__tags is None:
@@ -373,10 +369,6 @@ class sppasLabel(object):
             else:
                 tag_contents.append(empty)
 
-        # if len(tag_contents) == 1:
-        #     return tag_contents[0]
-
-        # we return the alternative tags
         return "{" + "|".join(tag_contents) + "}"
 
     # -----------------------------------------------------------------------

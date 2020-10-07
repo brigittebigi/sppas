@@ -36,13 +36,14 @@
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    BNF to represent alternative tags:
+    BNF to represent tags of a label:
 
         ALTERNATE :== "{" TEXT ALT+ "}"
         ALT :== "|" TEXT
-        TEXT :== tag content | empty
+        TEXT :== string | string=SCORE
+        SCORE :== float
 
 """
 import codecs
@@ -128,7 +129,7 @@ def serialize_labels(labels, separator="\n", empty="", alt=True):
     """Create a text from a list of labels.
 
     Use the separator to split the text into labels.
-    Use the "{ | }" system to parse the alternative tags.
+    Use the "{ | }" system to parse the alternative tags and = for scores.
 
     :param labels: (list of sppasLabel)
     :param separator: (str) String separating labels
@@ -143,13 +144,58 @@ def serialize_labels(labels, separator="\n", empty="", alt=True):
 
     if len(labels) == 1:
         label = labels[0]
-        return label.serialize(empty, alt)
+        return serialize_label(label, empty, alt)
 
     c = list()
     for label in labels:
-        c.append(label.serialize(empty, alt))
+        c.append(serialize_label(label, empty, alt))
 
     return separator.join(c)
+
+# ---------------------------------------------------------------------------
+
+
+def serialize_label(label, empty="", alt=True):
+    """Convert the label into a string, include or not alternative tags.
+
+    Use the "{ | }" system to serialize the alternative tags.
+    Scores of the tags are not returned.
+
+    :param label: (sppasLabel)
+    :param empty: (str) The text to return if a tag is empty or not set.
+    :param alt: (bool) Include alternative tags
+    :returns: (str)
+
+    """
+    if label.is_tagged() is False:
+        return empty
+    if label.get_best() is None:
+        return empty
+
+    if alt is False or len(label) == 1:
+        best = label.get_best()
+        if best.is_empty():
+            return empty
+        return best.get_content()
+
+    # we store the alternative tags into a list.
+    # empty tags are replaced by the empty item.
+    tag_contents = list()
+    for tag, score in label:
+        content = tag.get_content()
+        if len(content) > 0:
+            if score is None:
+                tag_contents.append(content)
+            else:
+                tag_contents.append(content+"="+str(score))
+        else:
+            tag_contents.append(empty)
+
+    # if len(tag_contents) == 1:
+    #     return tag_contents[0]
+
+    # we return the alternative tags
+    return "{" + "|".join(tag_contents) + "}"
 
 # ---------------------------------------------------------------------------
 
@@ -162,8 +208,7 @@ def format_labels(text, separator="\n", empty="", tag_type="str"):
 
     :examples:
         text = "{le|les} {chat|chats}" is 2 labels with 2 tags each
-
-    TODO: text = "{le=0.6|les=0.4}" is a label with 2 tags and their score
+        text = "{le=0.6|les=0.4}" is a label with 2 tags and their score
 
     :param text: (str)
     :param separator: (str) String to separate labels.
@@ -194,8 +239,7 @@ def format_labels(text, separator="\n", empty="", tag_type="str"):
 def format_label(text, empty="", tag_type="str"):
     """Create a label from a text.
 
-    Use the "{ | }" system to parse the alternative tags.
-    # TODO: and = for scores.
+    Use the "{ | }" system to parse the alternative tags and = for scores.
 
     :param text: (str)
     :param empty: (str) The text representing an empty tag.
@@ -213,20 +257,46 @@ def format_label(text, empty="", tag_type="str"):
     if text.startswith(u('{')) and text.endswith(u('}')) and u('|') in text:
         text = text[1:-1]
         tag = list()
+        score = list()
         for content in text.split(u('|')):
             tag.append(format_tag(content, empty, tag_type))
+            score.append(format_score(content))
+
     else:
         tag = format_tag(text, empty, tag_type)
+        score = format_score(text)
 
-    return sppasLabel(tag)
+    return sppasLabel(tag, score)
+
+# ---------------------------------------------------------------------------
+
+
+def format_score(text):
+    """Return a score from a text.
+
+    :param text: (str) Unicode text
+    :returns: float or None
+
+    """
+    if len(text) == 0:
+        return None
+
+    score = None
+    if "=" in text:
+        tab = text.split("=")
+        try:
+            score = float(tab[1])
+        except:
+            pass
+
+    return score
+
 
 # ---------------------------------------------------------------------------
 
 
 def format_tag(text, empty="", tag_type="str"):
     """Return a tag from a text.
-
-    TODO: return a tag and its score
 
     :param text: (str) Unicode text
     :param empty: (str) The text representing an empty tag.
@@ -238,6 +308,18 @@ def format_tag(text, empty="", tag_type="str"):
     """
     if len(text) == 0:
         return sppasTag(empty, tag_type)
+
+    if "=" in text:
+        tab = text.split("=")
+        try:
+            float(tab[1])
+        except:
+            # the given text is in the format: text=text
+            pass
+        else:
+            # the given text is in the format: text=score
+            text = tab[0]
+
     return sppasTag(text, tag_type)
 
 # ---------------------------------------------------------------------------

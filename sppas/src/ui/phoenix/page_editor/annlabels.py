@@ -54,6 +54,7 @@ from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.anndata.aio.aioutils import format_labels
 
 from ..windows import sppasPanel
+from ..windows import sppasToolbar
 
 # ---------------------------------------------------------------------------
 
@@ -401,11 +402,46 @@ class TestPanel(sppasPanel):
         f1 = os.path.join(paths.samples, "annotation-results",
                           "samples-fra", "F_F_B003-P8-phon.xra")
 
-        p = sppasAnnLabelsCtrl(self, None)
-        s = wx.BoxSizer()
+        p = sppasAnnLabelsCtrl(self, None, name="ann_panel")
+        tb = sppasToolbar(self)
+        tb.AddSpacer(1)
+        tb.AddToggleButton("code_review", value=True, group_name="view_mode")
+        tb.AddToggleButton("code_xml", group_name="view_mode")
+        tb.AddToggleButton("code_json", group_name="view_mode")
+        tb.AddSpacer(1)
+        tb.AddButton("restore")
+        tb.AddSpacer(1)
+
+        s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(tb, 0, wx.EXPAND)
         s.Add(p, 1, wx.EXPAND)
         self.SetSizer(s)
 
         parser = sppasRW(f1)
         trs1 = parser.read()
         p.set_ann(trs1[0][1])
+
+        # The buttons of the toolbars
+        self.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_toolbar_event)
+
+    # -----------------------------------------------------------------------
+
+    def _process_toolbar_event(self, event):
+        """Process a button of the toolbar event.
+
+        :param event: (wx.Event)
+
+        """
+        wx.LogDebug("Toolbar Event received by {:s}".format(self.GetName()))
+        btn = event.GetEventObject()
+        btn_name = btn.GetName()
+
+        if btn_name in ("code_review", "code_xml", "code_json"):
+            self.FindWindow('ann_panel').switch_view(btn_name)
+
+        elif btn_name == "restore":
+            self.FindWindow("ann_panel").update()
+
+        else:
+            event.Skip()

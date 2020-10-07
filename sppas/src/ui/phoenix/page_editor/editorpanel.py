@@ -69,7 +69,6 @@ CLOSE_CONFIRM = _("The file contains not saved work that will be "
 
 
 class EditorPanel(sppasSplitterWindow):
-# class EditorPanel(sppasPanel):
     """Panel to display opened files and their content in a time-line style.
 
     :author:       Brigitte Bigi
@@ -123,6 +122,22 @@ class EditorPanel(sppasSplitterWindow):
             self.SetSashGravity(0.4)
 
         self.UpdateSize()
+
+    # -----------------------------------------------------------------------
+
+    def swap_annlist_panels(self):
+        """Swap the panels of the listview splitter."""
+        self._listview.swap_panels()
+
+    # -----------------------------------------------------------------------
+
+    def switch_ann_view(self, mode):
+        """Switch the annotation view to the given mode.
+
+        :param mode: (str) One of: code_review, code_xml, code_json
+
+        """
+        self._listview.switch_ann_mode(mode)
 
     # -----------------------------------------------------------------------
     # Public methods to manage files and tiers
@@ -205,10 +220,6 @@ class EditorPanel(sppasSplitterWindow):
         self.SetMinimumPaneSize(sppasPanel.fix_size(128))
         self.SplitHorizontally(w1, w2, sppasPanel.fix_size(h // 2))
         self.SetSashGravity(0.4)
-        # sizer = wx.BoxSizer(wx.VERTICAL)
-        # sizer.Add(w1, 1, wx.EXPAND)
-        # sizer.Add(w2, 2, wx.EXPAND)
-        # self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
     # A private/quick access to children windows

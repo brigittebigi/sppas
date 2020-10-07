@@ -42,6 +42,7 @@
     Includes tests of sppasLabel(), sppasTag(), sppasTagCompare().
 
 """
+
 import unittest
 
 from sppas.src.config import symbols
@@ -500,29 +501,3 @@ class TestLabel(unittest.TestCase):
 
         l.append(sppasTag("pata"))
         self.assertTrue(l.match([(t.endswith, u("ta"), False)]))
-
-    # -----------------------------------------------------------------------
-
-    def test_serialize(self):
-        """... Convert the label into a string."""
-
-        tag = sppasTag("")
-        label = sppasLabel(tag)
-        s = label.serialize()
-        self.assertEqual("", s)
-
-        tag = sppasTag("")
-        label = sppasLabel(tag)
-        s = label.serialize("IGNORE_TIME_SEGMENT_IN_SCORING")
-        self.assertEqual("IGNORE_TIME_SEGMENT_IN_SCORING", s)
-
-        tag = sppasTag("toto")
-        label = sppasLabel(tag)
-        s = label.serialize()
-        self.assertEqual("toto", s)
-
-        tag1 = sppasTag("uh")
-        tag2 = sppasTag("um")
-        label = sppasLabel([tag1, tag2])
-        s = label.serialize()
-        self.assertEqual("{uh|um}", s)

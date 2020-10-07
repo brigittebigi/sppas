@@ -363,6 +363,12 @@ class sppasEditorPanel(sppasPanel):
         tb = sppasToolbar(self, name="tiers_toolbar")
         tb.set_height(24)   # default is 32
         tb.set_focus_color(sppasEditorPanel.ANN_COLOUR)
+
+        bd1 = tb.AddButton("way_up_down")
+        bd1.SetFocusColour(wx.Colour(self.GetForegroundColour()))
+        bd2 = tb.AddButton("way_left_right")
+        bd2.SetFocusColour(wx.Colour(self.GetForegroundColour()))
+
         tb.AddTitleText(MSG_ANNS, sppasEditorPanel.ANN_COLOUR)
 
         bcs = tb.AddToggleButton("code_review", value=True, group_name="view_mode")
@@ -505,9 +511,9 @@ class sppasEditorPanel(sppasPanel):
 
     def __add_media(self, filename, media):
         audio_prop = media.GetAudioProperties()
-        # TODO: Set the audio properties depending on the settings of the user...
+        # TODO: Set audio properties depending on the settings of the user...
         if audio_prop is not None:
-            # audio_prop.EnableInfos(True)
+            audio_prop.EnableInfos(True)
             audio_prop.EnableWaveform(True)
             audio_prop.EnableSpectral(False)  # not implemented
             audio_prop.EnableLevel(False)     # not implemented
@@ -550,6 +556,18 @@ class sppasEditorPanel(sppasPanel):
 
         elif btn_name == "close":
             self.close_files()
+
+        elif btn_name == "way_up_down":
+            self._editpanel.swap_panels()
+
+        elif btn_name == "way_left_right":
+            self._editpanel.swap_annlist_panels()
+
+        elif btn_name in ("code_review", "code_xml", "code_json"):
+            self._editpanel.switch_ann_view(btn_name)
+
+        else:
+            event.Skip()
 
     # -----------------------------------------------------------------------
 
