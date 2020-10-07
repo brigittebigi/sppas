@@ -169,17 +169,14 @@ class TrsViewPanel(sppasFileViewPanel):
 
     # -----------------------------------------------------------------------
 
-    def get_selected_period(self):
-        """Return the time period of the currently selected annotation.
+    def set_select_period(self, start, end):
+        """Fix the time period to highlight (milliseconds).
 
-        :return: (int, int) Start and end values in milliseconds
+        :param start: (int)
+        :param end: (int) Time in milliseconds
 
         """
-        idx = self.GetPane().get_selected_ann()
-        if idx == -1:
-            return 0, 0
-
-        return self.GetPane().get_selected_period()
+        self.GetPane().SetSelectPeriod(start, end)
 
     # -----------------------------------------------------------------------
 
@@ -297,6 +294,40 @@ class TrsTimePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def get_draw_period(self):
+        for child in self.GetChildren():
+            s, e = child.GetDrawPeriod()
+            return int(s*1000.), int(e*1000.)
+        return 0, 0
+
+    # -----------------------------------------------------------------------
+
+    def set_draw_period(self, start, end):
+        """Period to display (in milliseconds)."""
+        for child in self.GetChildren():
+            child.SetDrawPeriod(
+                float(start) / 1000.,
+                float(end) / 1000.)
+
+    # -----------------------------------------------------------------------
+
+    def set_select_period(self, start, end):
+        raise NotImplementedError
+
+    # -----------------------------------------------------------------------
+
+    def get_select_period(self):
+        for child in self.GetChildren():
+            if child.IsSelected() is True:
+                period = child.get_selected_localization()
+                start = int(period[0] * 1000.)
+                end = int(period[1] * 1000.)
+                return start, end
+
+        return 0, 0
+
+    # -----------------------------------------------------------------------
+
     def get_selected_tiername(self):
         for child in self.GetChildren():
             if child.IsSelected() is True:
@@ -335,19 +366,8 @@ class TrsTimePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def get_selected_period(self):
-        for child in self.GetChildren():
-            if child.IsSelected() is True:
-                period = child.get_selected_localization()
-                start = int(period[0] * 1000.)
-                end = int(period[1] * 1000.)
-                return start, end
-
-        return 0, 0
-
-    # -----------------------------------------------------------------------
-
     def set_selected_ann(self, idx):
+        """An annotation was selected."""
         for child in self.GetChildren():
             if child.IsSelected() is True:
                 child.set_selected_ann(idx)
@@ -375,15 +395,6 @@ class TrsTimePanel(sppasPanel):
         for child in self.GetChildren():
             if child.IsSelected() is True:
                 child.create_ann(idx)
-
-    # -----------------------------------------------------------------------
-
-    def SetDrawPeriod(self, start, end):
-        """Period to display (in milliseconds)."""
-        for child in self.GetChildren():
-            child.SetDrawPeriod(
-                float(start) / 1000.,
-                float(end) / 1000.)
 
     # -----------------------------------------------------------------------
     # Construct the GUI

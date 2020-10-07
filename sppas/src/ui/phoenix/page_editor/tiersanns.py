@@ -43,6 +43,7 @@ from sppas.src.config import paths
 from sppas.src.utils import u
 from sppas.src.anndata import sppasRW
 
+from ..views.metaedit import MetaDataEdit
 from ..windows import sppasPanel
 from ..windows import sppasSplitterWindow
 from ..windows.dialogs import Confirm, Error
@@ -285,25 +286,34 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     # -----------------------------------------------------------------------
 
     def delete_annotation(self):
-        """Delete the currently selected annotation."""
+        """Delete the currently selected annotation.
+
+        :return: (int) Index of the deleted annotation. or -1.
+
+        """
+        deleted_idx = -1
         if self.__cur_index == -1:
-            return
-
-        try:
-            self.__tierctrl.delete_annotation(self.__cur_index)
-        except Exception as e:
-            Error("Annotation can't be deleted: {:s}".format(str(e)))
+            wx.LogWarning("No annotation is selected.")
         else:
-            # OK. The annotation was deleted is the listctrl.
-            ## self._notify(action="ann_deleted", value=self.__cur_index)
 
-            # new selected annotation
-            self.__cur_index = self.__tierctrl.GetFirstSelected()
-            if self.__cur_index != -1:
-                self.__annotation_selected(self.__cur_index)
+            try:
+                self.__tierctrl.delete_annotation(self.__cur_index)
+            except Exception as e:
+                Error("Annotation can't be deleted: {:s}".format(str(e)))
             else:
-                # clear the annotation editor if no new selected ann
-                self.__annctrl.set_ann(ann=None)
+                # OK. The annotation was deleted is the listctrl.
+                deleted_idx = self.__cur_index
+
+                # new selected annotation
+                self.__cur_index = self.__tierctrl.GetFirstSelected()
+                if self.__cur_index != -1:
+                    self.__annotation_selected(self.__cur_index)
+                    # NOTIFY
+                else:
+                    # clear the annotation editor if no new selected ann
+                    self.__annctrl.set_ann(ann=None)
+
+        return deleted_idx
 
     # -----------------------------------------------------------------------
 
@@ -311,25 +321,31 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         """Merge the currently selected annotation.
 
         :param direction: (int) Positive to merge with next, Negative with prev
+        :return: (int, int) Index of the deleted annotation, index of the modified one. or (-1, -1)
 
         """
+        delete_idx = -1
+        modified_idx = -1
         if self.__cur_index == -1:
-            return
-
-        try:
-            merged = self.__tierctrl.merge_annotation(self.__cur_index, direction)
-        except Exception as e:
-            Error("Annotation can't be merged: {:s}".format(str(e)))
+            wx.LogWarning("No annotation is selected.")
         else:
-            if merged is True:
-                # OK. The annotation was merged in the listctrl.
-                ## if direction > 0:
-                    ## self._notify(action="ann_deleted", value=self.__cur_index+1)
-                ##else:
-                    ## self._notify(action="ann_deleted", value=self.__cur_index-1)
-                ## self._notify(action="ann_modified", value=self.__cur_index)
-                ann = self.__tierctrl.get_selected_annotation()
-                self.__annctrl.set_ann(ann)
+
+            try:
+                merged = self.__tierctrl.merge_annotation(self.__cur_index, direction)
+            except Exception as e:
+                Error("Annotation can't be merged: {:s}".format(str(e)))
+            else:
+                if merged is True:
+                    # OK. The annotation was merged in the listctrl.
+                    if direction > 0:
+                        delete_idx = self.__cur_index + 1
+                    else:
+                        delete_idx = self.__cur_index - 1
+                    modified_idx = self.__cur_index
+                    ann = self.__tierctrl.get_selected_annotation()
+                    self.__annctrl.set_ann(ann)
+
+        return delete_idx, modified_idx
 
     # -----------------------------------------------------------------------
 
@@ -337,21 +353,27 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         """Split the currently selected annotation.
 
         :param direction: (int) Positive to transport labels to next
+        :return: (int, int) Index of the created annotation, index of the modified one. or (-1, -1)
 
         """
+        created_idx = -1
+        modified_idx = -1
         if self.__cur_index == -1:
-            return
-
-        try:
-            self.__tierctrl.split_annotation(self.__cur_index, direction)
-        except Exception as e:
-            Error("Annotation can't be split: {:s}".format(str(e)))
+            wx.LogWarning("No annotation is selected.")
         else:
-            # OK. The annotation was split in the listctrl.
-            ## self._notify(action="ann_created", value=self.__cur_index+1)
-            ## self._notify(action="ann_modified", value=self.__cur_index)
-            ann = self.__tierctrl.get_selected_annotation()
-            self.__annctrl.set_ann(ann)
+
+            try:
+                self.__tierctrl.split_annotation(self.__cur_index, direction)
+            except Exception as e:
+                Error("Annotation can't be split: {:s}".format(str(e)))
+            else:
+                # OK. The annotation was split in the listctrl.
+                created_idx = self.__cur_index + 1
+                modified_idx = self.__cur_index
+                ann = self.__tierctrl.get_selected_annotation()
+                self.__annctrl.set_ann(ann)
+
+        return created_idx, modified_idx
 
     # -----------------------------------------------------------------------
 
@@ -359,24 +381,40 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         """Add an annotation after/before the currently selected annotation.
 
         :param direction: (int) Positive add after. Negative to add before.
+        :return: (int) Index of the created annotation. or -1
 
         """
+        created_idx = -1
         if self.__cur_index == -1:
-            return
-
-        try:
-            added = self.__tierctrl.add_annotation(self.__cur_index, direction)
-        except Exception as e:
-            Error("Annotation can't be added: {:s}".format(str(e)))
+            wx.LogWarning("No annotation is selected.")
         else:
-            if added is True:
-                # OK. The annotation was added in the listctrl.
-                if direction > 0:
-                    pass
-                ##    self._notify(action="ann_created", value=self.__cur_index+1)
-                else:
-                ##    self._notify(action="ann_created", value=self.__cur_index)
-                    self.__cur_index += 1
+
+            try:
+                added = self.__tierctrl.add_annotation(self.__cur_index, direction)
+            except Exception as e:
+                Error("Annotation can't be added: {:s}".format(str(e)))
+            else:
+                if added is True:
+                    # OK. The annotation was added in the listctrl.
+                    if direction > 0:
+                        created_idx = self.__cur_index + 1
+                    else:
+                        created_idx = self.__cur_index
+                        self.__cur_index += 1
+
+        return created_idx
+
+    # -----------------------------------------------------------------------
+
+    def edit_annotation_metadata(self):
+        if self.__cur_index == -1:
+            wx.LogWarning("No annotation is selected.")
+        else:
+            ann = self.__tierctrl.get_selected_annotation()
+            MetaDataEdit(self, meta_object=[ann])
+            self.update()
+
+        return self.__cur_index
 
     # -----------------------------------------------------------------------
     # Construct the GUI
@@ -449,6 +487,12 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
         """
         return self.__annctrl.switch_view(mode)
+
+    # -----------------------------------------------------------------------
+
+    def restore_ann(self):
+        """Restore the original annotation."""
+        self.__annctrl.update()
 
     # -----------------------------------------------------------------------
     # Events management

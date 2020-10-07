@@ -200,19 +200,33 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
 
     # -----------------------------------------------------------------------
 
-    def set_selected_tiername(self, filename, tier_name):
-        """Change selected tier.
+    def is_trs(self, name):
+        """Return True if name is matching a sppasTranscription."""
+        if name not in self._files:
+            return False
+        if isinstance(self._files[name], TrsViewPanel):
+            return True
+        return False
 
-        :return: (bool)
+    # -----------------------------------------------------------------------
 
-        """
-        for fn in self._files:
-            panel = self._files[fn]
-            if isinstance(panel, TrsViewPanel) is True:
-                if fn == filename:
-                    panel.set_selected_tiername(tier_name)
-                else:
-                    panel.set_selected_tiername(None)
+    def is_media(self, name):
+        """Return True if name is matching a sppasMediaCtrl."""
+        if name not in self._files:
+            return False
+        if isinstance(self._files[name], MediaViewPanel):
+            return True
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def is_error(self, name):
+        """Return True if name is matching a non-opened file."""
+        if name not in self._files:
+            return False
+        if isinstance(self._files[name], ErrorViewPanel):
+            return True
+        return False
 
     # -----------------------------------------------------------------------
 
@@ -243,22 +257,16 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
 
     # -----------------------------------------------------------------------
 
-    def is_trs(self, name):
-        """Return True if name is matching a sppasTranscription."""
-        if name not in self._files:
-            return False
-        if isinstance(self._files[name], TrsViewPanel):
-            return True
-        return False
+    def set_offset_period(self, start, end):
+        """Fix the time range to play the media (milliseconds).
 
-    # -----------------------------------------------------------------------
+        """
+        for filename in self._files:
+            panel = self._files[filename]
+            if isinstance(panel, TrsViewPanel):
+                panel.set_draw_period(start, end)
 
-    def get_tier_list(self, name):
-        if name not in self._files:
-            return list()
-        if isinstance(self._files[name], TrsViewPanel):
-            return self._files[name].get_tier_list()
-        return list()
+        return start, end
 
     # -----------------------------------------------------------------------
     # Manage one file at a time
@@ -415,17 +423,63 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
         return False
 
     # -----------------------------------------------------------------------
+    # Methods to operate on a TrsViewPanel()
+    # -----------------------------------------------------------------------
 
-    def set_offset_period(self, start, end):
-        """Fix the time range to play the media (milliseconds).
+    def get_selected_tiername(self):
+        """Return the filename and the name of the currently selected tier."""
+        for fn in self._files:
+            panel = self._files[fn]
+            if isinstance(panel, TrsViewPanel) is True:
+                tn = panel.get_selected_tiername()
+                if tn is not None:
+                    return fn, tn
+        return None
+
+    # -----------------------------------------------------------------------
+
+    def set_selected_tiername(self, filename, tier_name):
+        """Change selected tier.
+
+        :return: (bool)
 
         """
-        for filename in self._files:
-            panel = self._files[filename]
-            if isinstance(panel, TrsViewPanel):
-                panel.set_draw_period(start, end)
+        for fn in self._files:
+            panel = self._files[fn]
+            if isinstance(panel, TrsViewPanel) is True:
+                if fn == filename:
+                    panel.set_selected_tiername(tier_name)
+                else:
+                    panel.set_selected_tiername(None)
 
-        return start, end
+    # -----------------------------------------------------------------------
+
+    def get_tier_list(self, name):
+        if name not in self._files:
+            return list()
+        if isinstance(self._files[name], TrsViewPanel):
+            return self._files[name].get_tier_list()
+        return list()
+
+    # -----------------------------------------------------------------------
+    # Methods to operate on a MediaViewPanel()
+    # -----------------------------------------------------------------------
+
+    def enable_media_infos(self, value=True):
+        for fn in self._files:
+            panel = self._files[fn]
+            if isinstance(panel, MediaViewPanel) is True:
+                audio_prop = panel.GetAudioProperties()
+                audio_prop.EnableInfos(bool(value))
+
+    # -----------------------------------------------------------------------
+
+    def enable_media_waveform(self, value=True):
+        for fn in self._files:
+            panel = self._files[fn]
+            if isinstance(panel, MediaViewPanel) is True:
+                audio_prop = panel.GetAudioProperties()
+                audio_prop.EnableWaveform(bool(value))
 
     # -----------------------------------------------------------------------
     # GUI creation
@@ -484,38 +538,6 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
             self.notify(action, filename, value)
 
         return
-
-        if action == "save":
-            self.save_file(filename)
-
-        elif action == "close":
-            closed = self.close_page(filename)
-
-        elif action == "select_tier":
-            panel = event.GetEventObject()
-            trs_filename = panel.get_filename()
-            tier_name = panel.get_selected_tiername()
-            self.__enable_tier(trs_filename, tier_name)
-
-        # not implemented yet: child trs panels don't allow to select an ann
-        elif action == "period_selected":
-            period = event.value
-            # start = int(period[0] * 1000.)
-            # end = int(period[1] * 1000.)
-            # self.set_offset_period(start, end)
-
-        elif action == "loaded":
-            if value is True:
-                panel = event.GetEventObject()
-                media = panel.GetPane()
-                self.notify_media(action="add_media", value=media)
-
-                audio_prop = media.GetAudioProperties()
-                if audio_prop is not None:
-                    audio_prop.EnableWaveform(True)
-                    media.SetBestSize()
-
-                panel.Expand()
 
     # -----------------------------------------------------------------------
 
@@ -630,7 +652,7 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
 
     # -----------------------------------------------------------------------
 
-    def __update_ann(self, trs_filename, idx, what="select"):
+    def update_ann(self, trs_filename, idx, what="select"):
         """Modify annotation into the scrolled panel only.
 
         """
@@ -648,9 +670,8 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
                     elif what == "create":
                         panel.create_ann(idx)
 
-                    start, end = panel.get_selected_period()
-                    ### self.set_offset_period(start, end)
-                    # # self.notify(action="period", filename=filename, value=(start, end))
+                    # start, end = panel.get_selected_period()
+                    # self.set_offset_period(start, end)
                     break
 
 # ----------------------------------------------------------------------------

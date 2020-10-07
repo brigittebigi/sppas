@@ -176,7 +176,12 @@ def serialize_label(label, empty="", alt=True):
         best = label.get_best()
         if best.is_empty():
             return empty
-        return best.get_content()
+        content = best.get_content()
+        score = label.get_score(best)
+        if score is None:
+            return content
+        else:
+            return content+"="+str(score)
 
     # we store the alternative tags into a list.
     # empty tags are replaced by the empty item.
@@ -190,9 +195,6 @@ def serialize_label(label, empty="", alt=True):
                 tag_contents.append(content+"="+str(score))
         else:
             tag_contents.append(empty)
-
-    # if len(tag_contents) == 1:
-    #     return tag_contents[0]
 
     # we return the alternative tags
     return "{" + "|".join(tag_contents) + "}"

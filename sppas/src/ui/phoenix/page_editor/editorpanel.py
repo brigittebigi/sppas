@@ -45,7 +45,6 @@ from sppas.src.utils import u
 
 from ..windows import sppasPanel
 from ..windows import sppasSplitterWindow
-from ..windows.dialogs import Error
 
 from .tiersanns import sppasTiersEditWindow
 from .filesedit import sppasTimeEditFilesPanel
@@ -130,6 +129,8 @@ class EditorPanel(sppasSplitterWindow):
         self._listview.swap_panels()
 
     # -----------------------------------------------------------------------
+    # Actions to perform on the edited annotation labels
+    # -----------------------------------------------------------------------
 
     def switch_ann_view(self, mode):
         """Switch the annotation view to the given mode.
@@ -138,6 +139,84 @@ class EditorPanel(sppasSplitterWindow):
 
         """
         self._listview.switch_ann_mode(mode)
+
+    # -----------------------------------------------------------------------
+
+    def restore_ann(self):
+        """Restore the original annotation."""
+        self._listview.restore_ann()
+
+    # -----------------------------------------------------------------------
+    # Actions to perform on the edited list of annotations
+    # -----------------------------------------------------------------------
+
+    def list_action_requested(self, action_name):
+        """Do an action on the listview and TODO:apply on the timeview.
+
+        :param action_name: (str)
+        :raise: exception if the action can't be performed
+
+        """
+        filename = self._listview.get_filename()
+        if filename is None:
+            wx.LogError("No file/tier selected")
+
+        elif action_name == "delete":
+            ann_del_idx = self._listview.delete_annotation()
+            if ann_del_idx != -1:
+                self._timeview.update_ann(filename, ann_del_idx, what="delete")
+                return True
+
+        elif action_name == "merge_previous":
+            ann_del_idx, ann_modif_idx = self._listview.merge_annotation(-1)
+            if ann_del_idx != -1:
+                self._timeview.update_ann(filename, ann_del_idx, what="delete")
+                self._timeview.update_ann(filename, ann_modif_idx, what="update")
+                return True
+
+        elif action_name == "merge_next":
+            ann_del_idx, ann_modif_idx = self._listview.merge_annotation(1)
+            if ann_del_idx != -1:
+                self._timeview.update_ann(filename, ann_del_idx, what="delete")
+                self._timeview.update_ann(filename, ann_modif_idx, what="update")
+                return True
+
+        elif action_name == "split":
+            ann_new_idx, ann_modif_idx = self._listview.split_annotation(-1)
+            if ann_new_idx != -1:
+                self._timeview.update_ann(filename, ann_new_idx, what="create")
+                self._timeview.update_ann(filename, ann_modif_idx, what="update")
+                return True
+
+        elif action_name == "split_next":
+            ann_new_idx, ann_modif_idx = self._listview.split_annotation(1)
+            if ann_new_idx != -1:
+                self._timeview.update_ann(filename, ann_new_idx, what="create")
+                self._timeview.update_ann(filename, ann_modif_idx, what="update")
+                return True
+
+        elif action_name == "add_before":
+            ann_new_idx = self._listview.add_annotation(-1)
+            if ann_new_idx != -1:
+                self._timeview.update_ann(filename, ann_new_idx, what="create")
+                return True
+
+        elif action_name == "add_after":
+            ann_new_idx = self._listview.add_annotation(1)
+            if ann_new_idx != -1:
+                self._timeview.update_ann(filename, ann_new_idx, what="create")
+                return True
+
+        elif action_name == "edit_metadata":
+            ann_idx = self._listview.edit_annotation_metadata()
+            if ann_idx != -1:
+                self._timeview.update_ann(filename, ann_idx, what="update")
+                return True
+
+        else:
+            wx.LogError("unknown action name {:s}".format(action_name))
+
+        return False
 
     # -----------------------------------------------------------------------
     # Public methods to manage files and tiers
@@ -199,7 +278,7 @@ class EditorPanel(sppasSplitterWindow):
             tiers = self._timeview.get_tier_list(name)
             self._listview.remove_tiers(name, tiers)
 
-        self.remove_file(name, force)
+        self._timeview.remove_file(name, force)
 
     # -----------------------------------------------------------------------
     # Construct the GUI

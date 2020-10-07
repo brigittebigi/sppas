@@ -46,10 +46,9 @@ from sppas.src.wkps import sppasWorkspace, States
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
 from ..windows import sppasStaticLine
-from ..windows.dialogs import Confirm
+from ..windows.dialogs import Confirm, Error
 from ..windows.dialogs import sppasProgressDialog
 from ..windows import sppasMultiPlayerPanel
-from ..windows import MediaEvents
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 
@@ -235,10 +234,12 @@ class sppasEditorPanel(sppasPanel):
         for filename in self._editpanel.get_files():
             s = self._editpanel.save_file(filename)
             if s is True:
-                saved += 1
+                saved.append(filename)
 
         if len(saved) > 0:
             wx.LogMessage("{:d} files saved.".format(saved))
+
+        return saved
 
     # ------------------------------------------------------------------------
 
@@ -266,6 +267,8 @@ class sppasEditorPanel(sppasPanel):
             self._editpanel.Layout()
             self.Refresh()
             self.notify()
+
+        return closed
 
     # ------------------------------------------------------------------------
 
@@ -565,6 +568,21 @@ class sppasEditorPanel(sppasPanel):
 
         elif btn_name in ("code_review", "code_xml", "code_json"):
             self._editpanel.switch_ann_view(btn_name)
+
+        elif btn_name == "restore":
+            self._editpanel.restore_ann()
+
+        elif btn_name.startswith("cell_"):
+            try:
+                self._editpanel.list_action_requested(btn_name[5:])
+            except Exception as e:
+                Error(str(e))
+
+        elif btn_name == "tags":
+            try:
+                self._editpanel.list_action_requested("edit_metadata")
+            except Exception as e:
+                Error(str(e))
 
         else:
             event.Skip()

@@ -106,6 +106,12 @@ class sppasTierWindow(sppasDataWindow):
 
     # -----------------------------------------------------------------------
 
+    def GetDrawPeriod(self):
+        """Return (begin, end) time values of the period to draw."""
+        return self.__period[0], self.__period[1]
+
+    # -----------------------------------------------------------------------
+
     def SetDrawPeriod(self, begin, end):
         """Set the period to draw."""
         if begin != self.__period[0] or end != self.__period[1]:
