@@ -318,7 +318,7 @@ class sppasInstallWindow(sppasTopFrame):
         key_code = event.GetKeyCode()
 
         if key_code == wx.WXK_F4 and event.AltDown() and wx.Platform == "__WXMSW__":
-            # ALT+F4 on WindowsInstaller to exit with confirmation
+            # ALT+F4 on Windows to exit with confirmation
             self.on_exit(event)
 
         elif key_code == 87 and event.ControlDown() and wx.Platform != "__WXMSW__":

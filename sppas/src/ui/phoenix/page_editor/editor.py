@@ -48,8 +48,6 @@ from ..windows import sppasToolbar
 from ..windows import sppasStaticLine
 from ..windows.dialogs import Confirm, Error
 from ..windows.dialogs import sppasProgressDialog
-from ..windows import sppasMultiPlayerPanel
-from ..windows.buttons import ToggleButton
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 
@@ -105,7 +103,6 @@ class sppasEditorPanel(sppasPanel):
 
     FILES_COLOUR = wx.Colour(228, 128, 128, 196)
     ANN_COLOUR = wx.Colour(200, 180, 120, 128)
-    MEDIA_COLOUR = wx.Colour(120, 220, 180, 128)
 
     # ------------------------------------------------------------------------
 
@@ -158,6 +155,18 @@ class sppasEditorPanel(sppasPanel):
         self.__data = data
 
     # -----------------------------------------------------------------------
+
+    def get_checked_filenames(self):
+        """Return the list of checked filenames in data."""
+        # Get the list of checked FileName() instances
+        checked = self.__data.get_filename_from_state(States().CHECKED)
+        if len(checked) == 0:
+            return list()
+
+        # Convert the list of FileName() instances into a list of filenames
+        return [f.get_id() for f in checked]
+
+    # -----------------------------------------------------------------------
     # Colours & Fonts
     # -----------------------------------------------------------------------
 
@@ -189,6 +198,8 @@ class sppasEditorPanel(sppasPanel):
             if "line" not in c.GetName():
                 c.SetForegroundColour(colour)
 
+    # -----------------------------------------------------------------------
+    # Manage the files
     # -----------------------------------------------------------------------
 
     def open_checked_files(self):
@@ -296,20 +307,6 @@ class sppasEditorPanel(sppasPanel):
 
         return removed
 
-    # -----------------------------------------------------------------------
-    # Actions on media
-    # -----------------------------------------------------------------------
-
-    def media_playing(self):
-        """Return the first panel we found playing, None instead."""
-        return self._player_controls_panel.media_playing()
-
-    # -----------------------------------------------------------------------
-
-    def media_paused(self):
-        """Return the first panel with a paused media or None."""
-        return self._player_controls_panel.media_paused()
-
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
     # ------------------------------------------------------------------------
@@ -333,10 +330,6 @@ class sppasEditorPanel(sppasPanel):
     def _editpanel(self):
         return self.FindWindow("editor_panel")
 
-    @property
-    def _player_controls_panel(self):
-        return self.FindWindow("player_controls_panel")
-
     # -----------------------------------------------------------------------
 
     def _create_toolbar_one(self):
@@ -347,50 +340,26 @@ class sppasEditorPanel(sppasPanel):
         """
         tb = sppasToolbar(self, name="files_media_toolbar")
         tb.set_focus_color(sppasEditorPanel.FILES_COLOUR)
-        h = tb.get_height()
         tb.AddTitleText(MSG_FILES, self.FILES_COLOUR, name="files")
 
         tb.AddButton("open", MSG_OPEN)
         tb.AddButton("save_all", MSG_SAVE)
         tb.AddButton("close", MSG_CLOSE)
-        tb.AddSpacer(1)
 
-        tb.AddTitleText(MSG_MEDIA, sppasEditorPanel.MEDIA_COLOUR)
-
-        player = sppasMultiPlayerPanel(tb, style=wx.BORDER_NONE, name="player_controls_panel")
-        player.ShowWidgets(True)
-        player.ShowSlider(False)
-        player.ShowVolume(True)
-        player.SetButtonWidth(h - 2)
-
-        si = ToggleButton(player.widgets_panel, name="sound_infos")
-        si.SetValue(True)
-        si.SetBorderWidth(1)
-        si.SetMinSize(wx.Size(h*2//3, h*2//3))
-        player.AddWidget(si)
-
-        sw = ToggleButton(player.widgets_panel, name="sound_wave_lines")
-        sw.SetValue(True)
-        sw.SetBorderWidth(1)
-        sw.SetMinSize(wx.Size(h*2//3, h*2//3))
-        player.AddWidget(sw)
-
-        tb.AddWidget(player)
+        bd1 = tb.AddButton("way_up_down")
+        bd1.SetFocusColour(wx.Colour(self.GetForegroundColour()))
+        bd2 = tb.AddButton("way_left_right")
+        bd2.SetFocusColour(wx.Colour(self.GetForegroundColour()))
 
         return tb
 
     # -----------------------------------------------------------------------
 
     def _create_toolbar_two(self):
-        """Create a toolbar for actions on tiers. """
+        """Create a toolbar for actions on annotations. """
         tb = sppasToolbar(self, name="anns_toolbar")
         tb.set_height(24)   # default is 32
         tb.set_focus_color(sppasEditorPanel.ANN_COLOUR)
-
-        bd1 = tb.AddButton("way_up_down")
-        bd1.SetFocusColour(wx.Colour(self.GetForegroundColour()))
-        bd2 = tb.AddButton("way_left_right")
-        bd2.SetFocusColour(wx.Colour(self.GetForegroundColour()))
 
         tb.AddTitleText(MSG_ANNS, sppasEditorPanel.ANN_COLOUR)
 
@@ -402,7 +371,9 @@ class sppasEditorPanel(sppasPanel):
         bcj.SetToolTip(LABEL_JSON)
         br = tb.AddButton("restore")
         br.SetToolTip(RESTORE)
-        tb.AddSpacer(1)
+
+        meta = tb.AddButton("tags")
+        meta.SetToolTip(METADATA)
 
         bd = tb.AddButton("cell_delete")
         bd.SetToolTip(DELETE)
@@ -418,11 +389,6 @@ class sppasEditorPanel(sppasPanel):
         bab.SetToolTip(ADD_BEFORE)
         baa = tb.AddButton("cell_add_after")
         baa.SetToolTip(ADD_AFTER)
-        tb.AddSpacer(1)
-
-        meta = tb.AddButton("tags")
-        meta.SetToolTip(METADATA)
-        tb.AddSpacer(1)
 
         return tb
 
@@ -431,26 +397,11 @@ class sppasEditorPanel(sppasPanel):
     def _create_hline(self):
         """Create an horizontal line, used to separate the anz_panels."""
         line = sppasStaticLine(self, orient=wx.LI_HORIZONTAL, name="hline")
-        line.SetMinSize(wx.Size(-1, 20))
+        line.SetMinSize(wx.Size(-1, sppasPanel.fix_size(8)))
         line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
         line.SetDepth(1)
         line.SetForegroundColour(self.FILES_COLOUR)
         return line
-
-    # -----------------------------------------------------------------------
-
-    def _set_btn_properties(self, btn):
-        """Set the properties of a button.
-
-        :param btn: (BaseButton of sppas)
-
-        """
-        btn.SetFocusColour(sppasEditorPanel.MEDIA_COLOUR)
-        btn.SetFocusWidth(1)
-        btn.SetSpacing(0)
-        btn.SetMinSize(wx.Size(sppasPanel.fix_size(38),
-                               sppasPanel.fix_size(38)))
-        return btn
 
     # -----------------------------------------------------------------------
     # Events management
@@ -489,75 +440,22 @@ class sppasEditorPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def _process_time_action(self, event):
-        """Process an action event from the time-line view.
+    def _process_data_changed(self, event):
+        """Process a change of data.
+
+        Set the data of the event to the other anz_panels.
 
         :param event: (wx.Event)
 
         """
-        panel = event.GetEventObject()
-        filename = event.filename
-        action = event.action
-        value = event.value
-        wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
-                    "".format(self.GetName(), action, filename, str(value)))
-        event.Skip()
-
-        if action == "close":
-            self.__close_file(filename)
-
-        elif action == "save":
-            self._editpanel.save_file(filename)
-
-        elif action == "media_loaded":
-            if value is not None:
-                panel.collapse_file(filename, False)
-                self.__add_media(filename, value)
-                # self.Layout()
-
-        elif action == "media_removed":
-            self._player_controls_panel.remove_media(value)
-        elif action == "media_collapsed":
-            self._player_controls_panel.remove_media(value)
-
-        elif action == "period":
-            start, end = value
-            # Set the period to the player. It will set to the media.
-            s, e = self._player_controls_panel.set_range(start, end)
-            self._editpanel.set_offset_period(s, e)
-            wx.LogDebug("Period: {:d} - {:d}".format(s, e))
-
-        else:
-            event.Skip()
-
-    # -----------------------------------------------------------------------
-
-    def __add_media(self, filename, media):
-        audio_prop = media.GetAudioProperties()
-        if audio_prop is not None:
-            tb = self.FindWindow("files_media_toolbar")
-            audio_prop.EnableInfos(tb.get_button("sound_infos").GetValue())
-            audio_prop.EnableWaveform(tb.get_button("sound_wave_lines").GetValue())
-            audio_prop.EnableSpectral(False)  # not implemented
-            audio_prop.EnableLevel(False)     # not implemented
-
-        self._player_controls_panel.add_media(media, filename)
-
-    # -----------------------------------------------------------------------
-
-    def _process_list_action(self, event):
-        """Process an action event from the list view.
-
-        :param event: (wx.Event)
-
-        """
-        panel = event.GetEventObject()
-        filename = event.filename
-        action = event.action
-        value = event.value
-        wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
-                    "".format(self.GetName(), action, filename, str(value)))
-        event.Skip()
+        emitted = event.GetEventObject()
+        try:
+            data = event.data
+        except AttributeError:
+            wx.LogError('Data were not sent in the event emitted by {:s}'
+                        '.'.format(emitted.GetName()))
+            return
+        self.__data = data
 
     # -----------------------------------------------------------------------
 
@@ -593,25 +491,54 @@ class sppasEditorPanel(sppasPanel):
             self._editpanel.restore_ann()
 
         elif btn_name.startswith("cell_"):
-            try:
-                self._editpanel.list_action_requested(btn_name[5:])
-            except Exception as e:
-                Error(str(e))
+            self.__edit_panel_action(what=btn_name[5:])
 
         elif btn_name == "tags":
-            try:
-                self._editpanel.list_action_requested("edit_metadata")
-            except Exception as e:
-                Error(str(e))
-
-        elif btn_name == "sound_infos":
-            self._editpanel.enable_media_infos(btn.GetValue())
-
-        elif btn_name == "sound_wave_lines":
-            self._editpanel.enable_media_waveform(btn.GetValue())
+            self.__edit_panel_action(what="edit_metadata")
 
         else:
             event.Skip()
+
+    # -----------------------------------------------------------------------
+
+    def _process_time_action(self, event):
+        """Process an action event from the time-line view.
+
+        :param event: (wx.Event)
+
+        """
+        panel = event.GetEventObject()
+        filename = event.filename
+        action = event.action
+        value = event.value
+        wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
+                    "".format(self.GetName(), action, filename, str(value)))
+        event.Skip()
+
+        if action == "close":
+            self.__close_file(filename)
+
+        elif action == "save":
+            self._editpanel.save_file(filename)
+
+        else:
+            event.Skip()
+
+    # -----------------------------------------------------------------------
+
+    def _process_list_action(self, event):
+        """Process an action event from the list view.
+
+        :param event: (wx.Event)
+
+        """
+        panel = event.GetEventObject()
+        filename = event.filename
+        action = event.action
+        value = event.value
+        wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
+                    "".format(self.GetName(), action, filename, str(value)))
+        event.Skip()
 
     # -----------------------------------------------------------------------
 
@@ -635,34 +562,11 @@ class sppasEditorPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def _process_data_changed(self, event):
-        """Process a change of data.
-
-        Set the data of the event to the other anz_panels.
-
-        :param event: (wx.Event)
-
-        """
-        emitted = event.GetEventObject()
+    def __edit_panel_action(self, what=""):
         try:
-            data = event.data
-        except AttributeError:
-            wx.LogError('Data were not sent in the event emitted by {:s}'
-                        '.'.format(emitted.GetName()))
-            return
-        self.__data = data
-
-    # -----------------------------------------------------------------------
-
-    def get_checked_filenames(self):
-        """Return the list of checked filenames in data."""
-        # Get the list of checked FileName() instances
-        checked = self.__data.get_filename_from_state(States().CHECKED)
-        if len(checked) == 0:
-            return list()
-
-        # Convert the list of FileName() instances into a list of filenames
-        return [f.get_id() for f in checked]
+            self._editpanel.list_action_requested(what)
+        except Exception as e:
+            Error(str(e))
 
 # ----------------------------------------------------------------------------
 # Panel for tests

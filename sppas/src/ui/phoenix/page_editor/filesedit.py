@@ -34,7 +34,6 @@
 
 """
 
-import logging
 import os
 import wx
 import mimetypes
@@ -48,6 +47,9 @@ import sppas.src.anndata
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows.dialogs import Confirm
+from ..windows import sppasMultiPlayerPanel
+from ..windows.panels import sppasVerticalRisePanel
+from ..windows.buttons import ToggleButton
 
 from .errfileedit import ErrorViewPanel
 from .mediafileedit import MediaViewPanel
@@ -138,7 +140,73 @@ class TimeFilesType(object):
 # ----------------------------------------------------------------------------
 
 
-class sppasTimeEditFilesPanel(sppasScrolledPanel):
+class PlayerRisePanel(sppasVerticalRisePanel):
+    """A panel embedding the multi-player.
+
+     :author:       Brigitte Bigi
+     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+     :contact:      contact@sppas.org
+     :license:      GPL, v3
+     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
+
+    """
+
+    MEDIA_COLOUR = wx.Colour(60, 60, 160, 128)
+
+    # -----------------------------------------------------------------------
+
+    def __init__(self, parent, name="player_rise_panel"):
+        """Create the panel to manage the media: play, volume, etc.
+
+        """
+        super(PlayerRisePanel, self).__init__(parent, name=name)
+
+        player = sppasMultiPlayerPanel(self, style=wx.BORDER_NONE, name="player_controls_panel")
+        player.SetFocusColour(PlayerRisePanel.MEDIA_COLOUR)
+        player.ShowWidgets(True)
+        player.ShowSlider(True)
+        player.ShowVolume(True)
+        player.SetButtonWidth(32)
+
+        h = sppasPanel.fix_size(32)
+        si = ToggleButton(player.widgets_panel, name="sound_infos")
+        si.SetValue(True)
+        si.SetBorderWidth(1)
+        si.SetFocusColour(PlayerRisePanel.MEDIA_COLOUR)
+        si.SetMinSize(wx.Size(h * 2 // 3, h * 2 // 3))
+        player.AddWidget(si)
+
+        sw = ToggleButton(player.widgets_panel, name="sound_wave_lines")
+        sw.SetValue(True)
+        sw.SetBorderWidth(1)
+        sw.SetFocusColour(PlayerRisePanel.MEDIA_COLOUR)
+        sw.SetMinSize(wx.Size(h * 2 // 3, h * 2 // 3))
+        player.AddWidget(sw)
+
+        self.SetPane(player)
+        self.Expand()
+
+    # -----------------------------------------------------------------------
+
+    def _create_toolbar(self):
+        """Create a panel with tools, including the collapsible button."""
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        # Create, disable and hide the button to collapse/expand.
+        self._btn = self._create_collapsible_button()
+        self._btn.Enable(False)
+        self._btn.Hide()
+        sizer.Add(self._btn, 0, wx.FIXED_MINSIZE, 0)
+        self._tools_panel.SetSizer(sizer)
+        w = self.GetButtonWidth()
+        # Fix the size of the tools,
+        # it's exactly the same than any other rise panel... so all panels are
+        # vertically aligned on screen.
+        self._tools_panel.SetMinSize(wx.Size(w, w*2))
+
+# ----------------------------------------------------------------------------
+
+
+class sppasTimeEditFilesPanel(sppasPanel):
     """Panel to display opened files and their content in a time-line style.
 
     :author:       Brigitte Bigi
@@ -172,11 +240,13 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
             style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
-        # To get an easy access to files and their panel
+        # To get an easy access to the opened files and their panel
         # (key=name, value=wx.SizerItem)
         self._files = dict()
 
         self._create_content()
+        self.Bind(wx.EVT_BUTTON, self._process_tool_event)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_tool_event)
         self.Bind(EVT_TIME_VIEW, self._process_time_event)
 
         # Look&feel
@@ -187,7 +257,6 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
         except AttributeError:
             self.InheritAttributes()
 
-        self.SetupScrolling(scroll_x=False, scroll_y=True)
         self.Layout()
 
     # -----------------------------------------------------------------------
@@ -269,21 +338,43 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
         return start, end
 
     # -----------------------------------------------------------------------
+
+    def media_playing(self):
+        """Return the first panel we found playing, None instead."""
+        return self._player_panel.media_playing()
+
+    # -----------------------------------------------------------------------
     # Manage one file at a time
     # -----------------------------------------------------------------------
 
     def collapse_file(self, name, value):
+        """Collapse or Expand the panel of a given file.
+
+        :param name: (str) Name of the file
+        :param value: (bool) True to collapse, False to expand.
+
+        """
         if name not in self._files:
             wx.LogError('Name {:s} is not in the list of files.')
             raise ValueError('Name {:s} is not in the list of files.')
         panel = self._files[name]
+
+        if isinstance(panel, MediaViewPanel) is True:
+            media = panel.GetPane()
+            if value is True:
+                # remove the media of the player
+                self._player_panel.remove_media(media)
+            else:
+                # add the media of the player
+                self._player_panel.add_media(media)
+
         panel.Collapse(value)
-        self.Layout()
+        self._scrolled_panel.Layout()
 
     # -----------------------------------------------------------------------
 
     def append_file(self, name):
-        """Add a file and display its content.
+        """Append a file and display its content.
 
         Do not refresh/layout the GUI.
 
@@ -300,7 +391,7 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
             panel = self._create_panel(name)
 
             border = sppasScrolledPanel.fix_size(4)
-            self.GetSizer().Add(panel, 0, wx.EXPAND | wx.RIGHT | wx.LEFT | wx.TOP, border)
+            self._sizer.Add(panel, 0, wx.EXPAND | wx.RIGHT | wx.LEFT | wx.TOP, border)
             self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
             self.Layout()
 
@@ -317,9 +408,8 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
                 if start != 0 or end != 0:
                     period = True
                     break
-
-        if period is False:
-            self.__select_first()
+        # update period
+        
         """
 
     # -----------------------------------------------------------------------
@@ -342,23 +432,15 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
                 wx.LogError("There's no file with name {:s}".format(name))
                 return False
 
-            """
             # If the closed page is a media, this media must be
             # removed of the multimedia player control.
             if isinstance(panel, MediaViewPanel) is True:
-                self._player_controls_panel.remove_media(panel.GetPane())
-
-            # Remove the tiers of the annotations list view
-            elif isinstance(panel, TrsViewPanel) is True:
-                all_tiers = panel.get_tier_list()
-                w = self.FindWindow("tiers_edit_splitter")
-                w.remove_tiers(name, all_tiers)
-            """
+                self._player_panel.remove_media(panel.GetPane())
 
             # Destroy the panel and remove of the sizer
             for i, child in enumerate(self.GetChildren()):
                 if child == panel:
-                    self.GetSizer().Remove(i)
+                    self._sizer.Remove(i)
                     break
             panel.Destroy()
 
@@ -423,14 +505,43 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
     # Methods to operate on a TrsViewPanel()
     # -----------------------------------------------------------------------
 
-    def get_selected_tiername(self):
-        """Return the filename and the name of the currently selected tier."""
+    def get_tier_list(self, name):
+        """Return the list of sppasTier() of the given file.
+
+        :param name: (str) Name of a file
+        :return: (list)
+
+        """
+        if name not in self._files:
+            return list()
+
+        if isinstance(self._files[name], TrsViewPanel):
+            return self._files[name].get_tier_list()
+
+        return list()
+
+    # -----------------------------------------------------------------------
+
+    def get_selected_filename(self):
+        """Return the filename of the currently selected tier."""
         for fn in self._files:
             panel = self._files[fn]
             if isinstance(panel, TrsViewPanel) is True:
                 tn = panel.get_selected_tiername()
                 if tn is not None:
-                    return fn, tn
+                    return fn
+
+        return None
+
+    # -----------------------------------------------------------------------
+
+    def get_selected_tiername(self):
+        """Return the name of the currently selected tier."""
+        fn = self.get_selected_filename()
+        if fn is not None:
+            panel = self._files[fn]
+            return panel.get_selected_tiername()
+
         return None
 
     # -----------------------------------------------------------------------
@@ -438,6 +549,8 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
     def set_selected_tiername(self, filename, tier_name):
         """Change selected tier.
 
+        :param filename: (str) Name of a file
+        :param tier_name: (str) Name of a tier
         :return: (bool)
 
         """
@@ -451,32 +564,57 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
 
     # -----------------------------------------------------------------------
 
-    def get_tier_list(self, name):
-        if name not in self._files:
-            return list()
-        if isinstance(self._files[name], TrsViewPanel):
-            return self._files[name].get_tier_list()
-        return list()
+    def get_selected_annotation(self):
+        """Return the index of the currently selected annotation.
+
+        :return: (int) Index or -1 if nor found.
+
+        """
+        fn = self.get_selected_filename()
+        if fn is not None:
+            panel = self._files[fn]
+            return panel.get_selected_ann()
+        return -1
+
+    # -----------------------------------------------------------------------
+
+    def set_selected_annotation(self, idx):
+        """Set the index of the selected annotation.
+
+        :param idx: Index or -1 to cancel the selection.
+
+        """
+        fn = self.get_selected_filename()
+        if fn is not None:
+            panel = self._files[fn]
+            panel.set_selected_ann(idx)
 
     # -----------------------------------------------------------------------
     # Methods to operate on a MediaViewPanel()
     # -----------------------------------------------------------------------
 
     def enable_media_infos(self, value=True):
+        """Enable or disable the view of the media information."""
         for fn in self._files:
             panel = self._files[fn]
             if isinstance(panel, MediaViewPanel) is True:
                 audio_prop = panel.GetAudioProperties()
                 audio_prop.EnableInfos(bool(value))
+                # panel.Layout()
+
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
     def enable_media_waveform(self, value=True):
+        """Enable or disable the view of the media waveform."""
         for fn in self._files:
             panel = self._files[fn]
             if isinstance(panel, MediaViewPanel) is True:
                 audio_prop = panel.GetAudioProperties()
                 audio_prop.EnableWaveform(bool(value))
+
+        self.Layout()
 
     # -----------------------------------------------------------------------
     # GUI creation
@@ -484,8 +622,35 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
 
     def _create_content(self):
         """Create the main content. """
+        w1 = PlayerRisePanel(self)
+        w2 = sppasScrolledPanel(self, name="scrolled_panel")
+        w2.SetupScrolling(scroll_x=False, scroll_y=True)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        w2.SetSizer(sizer)
+
+        # Fix size&layout
         main_sizer = wx.BoxSizer(wx.VERTICAL)
+        main_sizer.Add(w2, 1, wx.EXPAND, 0)
+        main_sizer.Add(w1, 0, wx.EXPAND | wx.TOP | wx.LEFT | wx.RIGHT, border=sppasPanel.fix_size(4))
         self.SetSizer(main_sizer)
+        # w, h = self.GetSize()
+        # self.SetMinimumPaneSize(sppasPanel.fix_size(32))
+        # self.SplitHorizontally(w1, w2, sppasPanel.fix_size(h // 2))
+        # self.SetSashGravity(0.2)
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def _scrolled_panel(self):
+        return self.FindWindow("scrolled_panel")
+
+    @property
+    def _sizer(self):
+        return self._scrolled_panel.GetSizer()
+
+    @property
+    def _player_panel(self):
+        return self.FindWindow("player_controls_panel")
 
     # -----------------------------------------------------------------------
     # Events management
@@ -498,6 +663,23 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
         evt = TimeViewEvent(action=action, filename=filename, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
+
+    # -----------------------------------------------------------------------
+
+    def _process_tool_event(self, event):
+        """Process a button event from the player.
+
+        :param event: (wx.Event)
+
+        """
+        btn = event.GetEventObject()
+        btn_name = btn.GetName()
+
+        if btn_name == "sound_infos":
+            self.enable_media_infos(btn.GetValue())
+
+        elif btn_name == "sound_wave_lines":
+            self.enable_media_waveform(btn.GetValue())
 
     # -----------------------------------------------------------------------
 
@@ -527,6 +709,8 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
             media = panel.GetPane()
             if value is True:
                 self.notify("media_loaded", filename, value=media)
+                self.__set_media_properties(media)
+                self.collapse_file(filename, False)
             else:
                 self.notify("media_loaded", filename, value=None)
 
@@ -543,10 +727,10 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
         if isinstance(panel, MediaViewPanel) is True:
             if panel.IsExpanded() is True:
                 # The panel was collapsed, and now it is expanded.
-                # self._player_controls_panel.add_media(panel.GetPane())
+                self._player_panel.add_media(panel.GetPane())
                 self.notify(action="media_collapsed", filename=panel.get_filename(), value=panel.GetPane())
             else:
-                # self._player_controls_panel.remove_media(panel.GetPane())
+                self._player_panel.remove_media(panel.GetPane())
                 self.notify(action="media_expanded", filename=panel.get_filename(), value=panel.GetPane())
 
         elif isinstance(panel, TrsViewPanel) is True:
@@ -563,7 +747,18 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
             else:
                 self.notify(action="error_expanded", filename=panel.get_filename(), value=None)
 
-        self.ScrollChildIntoView(panel)
+        self._scrolled_panel.ScrollChildIntoView(panel)
+        self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def __set_media_properties(self, media):
+        audio_prop = media.GetAudioProperties()
+        if audio_prop is not None:
+            audio_prop.EnableInfos(self.FindWindow("sound_infos").GetValue())
+            audio_prop.EnableWaveform(self.FindWindow("sound_wave_lines").GetValue())
+            audio_prop.EnableSpectral(False)  # not implemented
+            audio_prop.EnableLevel(False)     # not implemented
 
     # -----------------------------------------------------------------------
     # Private
@@ -583,13 +778,13 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
         try:
             with TimeFilesType() as tt:
                 if tt.guess_type(name) == tt.video:
-                    panel = MediaViewPanel(self, filename=name)
+                    panel = MediaViewPanel(self._scrolled_panel, filename=name)
 
                 elif tt.guess_type(name) == tt.audio:
-                    panel = MediaViewPanel(self, filename=name)
+                    panel = MediaViewPanel(self._scrolled_panel, filename=name)
 
                 elif tt.guess_type(name) == tt.transcription:
-                    panel = TrsViewPanel(self, filename=name)
+                    panel = TrsViewPanel(self._scrolled_panel, filename=name)
                     all_tiers = panel.get_tier_list()
                     self.notify(action="tiers_added", filename=name, value=all_tiers)
 
@@ -600,52 +795,10 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
                     raise IOError("Unknown file format.")
 
         except Exception as e:
-            panel = ErrorViewPanel(self, name)
+            panel = ErrorViewPanel(self._scrolled_panel, name)
             panel.set_error_message(str(e))
 
         return panel
-
-    # -----------------------------------------------------------------------
-
-    def __select_first(self):
-        """Select the first annotation of the first tier of the first file."""
-        logging.debug("Select the first ann of the first tier of the first file")
-        for filename in self._files:
-            logging.debug(filename)
-            panel = self._files[filename]
-            if isinstance(panel, TrsViewPanel):
-                logging.debug(" -> is a trs")
-                all_tiers = panel.get_tier_list()
-                if len(all_tiers) > 0:
-                    # enable the tier into the panel of time tier views
-                    tier_name = all_tiers[0].get_name()
-
-                    # enable the tier into the notebook of list tier views
-                    self.__enable_tier(filename, tier_name)
-                    wx.LogMessage("Tier {:s} selected, from file {:s}"
-                                  "".format(tier_name, filename))
-                    break
-
-    # -----------------------------------------------------------------------
-
-    def __enable_tier(self, trs_filename, tier_name):
-        """Disable the currently selected tier and enable the new one.
-
-        into the scrolled panel only.
-
-        """
-        for filename in self._files:
-            panel = self._files[filename]
-            if isinstance(panel, TrsViewPanel) is True:
-                if filename != trs_filename:
-                    panel.set_selected_tiername(None)
-                    panel.set_selected_ann(-1)
-                else:
-                    panel.set_selected_tiername(tier_name)
-                    start, end = panel.get_selected_period()
-                    ### self.set_offset_period(start, end)
-                    # #self.notify(action="period", filename=trs_filename, value=(start, end))
-                    # #self.notify(action="select", filename=trs_filename, value=tier_name)
 
     # -----------------------------------------------------------------------
 
@@ -656,7 +809,7 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
         for filename in self._files:
             panel = self._files[filename]
             if isinstance(panel, TrsViewPanel):
-                self.ScrollChildIntoView(panel)
+                self._scrolled_panel.ScrollChildIntoView(panel)
                 if filename == trs_filename:
                     if what == "select":
                         panel.set_selected_ann(idx)
@@ -667,8 +820,6 @@ class sppasTimeEditFilesPanel(sppasScrolledPanel):
                     elif what == "create":
                         panel.create_ann(idx)
 
-                    # start, end = panel.get_selected_period()
-                    # self.set_offset_period(start, end)
                     break
 
 # ----------------------------------------------------------------------------
@@ -695,12 +846,12 @@ class TestPanel(sppasPanel):
             name="Time Edit Panel")
 
         p = sppasTimeEditFilesPanel(self)
-        for filename in TestPanel.TEST_FILES:
-            p.append_file(filename)
-
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(p, 1, wx.EXPAND)
         self.SetSizer(s)
+
+        for filename in TestPanel.TEST_FILES:
+            p.append_file(filename)
 
         # the size won't be correct when collapsed. we need a layout.
         self.Bind(EVT_TIME_VIEW, self._process_action)
@@ -720,47 +871,25 @@ class TestPanel(sppasPanel):
         wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
                     "".format(self.GetName(), action, filename, str(value)))
 
-        if action == "select_tier":
-            panel.set_selected_tiername(value)
-
-        elif action == "save":
+        if action == "save":
             panel.save_file(filename)
 
         elif action == "close":
             closed = panel.close_file(filename)
             wx.LogDebug("Closed: {}".format(closed))
 
-        elif action == "media_loaded":
-            if value is None:
-                panel.collapse_file(filename, True)
-            else:
-                audio_prop = value.GetAudioProperties()
-                if audio_prop is not None:
-                    audio_prop.EnableWaveform(True)
-                panel.collapse_file(filename, False)
-            self.Layout()
-
-        elif action == "media_removed":
-            panel.collapse_file(filename, True)
-            self.Layout()
-
-        elif action == "media_collapsed":
-            self.Layout()
-
-        elif action == "media_expanded":
-            self.Layout()
-
-        elif action == "trs_collapsed":
-            self.Layout()
-
-        elif action == "trs_expanded":
-            self.Layout()
-
         elif action == "tiers_added":
             pass
 
-        elif action == "zoomed":
+        elif action == "select_tier":
+            pass
+
+        elif action in ("media_collapsed", "media_expanded", "trs_collapsed", "trs_expanded"):
             self.Layout()
+
+        elif action == "media_loaded":
+            if value is not None:
+                self.Layout()
 
         else:
             wx.LogDebug("* * *  UNKNOWN ACTION: skip event  * * *")

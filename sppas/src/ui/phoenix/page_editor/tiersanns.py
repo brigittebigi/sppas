@@ -164,8 +164,8 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                 self.__cur_index = 0
             ann = self.__tierctrl.get_selected_annotation()
             self.__annctrl.set_ann(ann)
-            ## self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
             self.__annotation_selected(self.__cur_index)
+            self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
 
         return self.__can_select
 
@@ -196,8 +196,8 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                         self.__cur_index = 0
                     ann = self.__tierctrl.get_selected_annotation()
                     self.__annctrl.set_ann(ann)
-                    ## self.notify(action="ann_selected", value=self.__cur_index)
                     self.__annotation_selected(self.__cur_index)
+                    self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
                     break
 
         return self.__can_select
@@ -223,9 +223,9 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             if self.__cur_index == -1:
                 changed = self.set_selected_tiername(filename, sel_tiername)
                 if changed is True:
-                    # self.__annotation_selected(self.__cur_index)
+                    self.__annotation_selected(self.__cur_index)
                     self.notify(action="select_tier", filename=filename, value=sel_tiername)
-                    # self.notify(action="ann_selected", filename=filename, value=self.__cur_index)
+                    self.notify(action="ann_selected", filename=filename, value=self.__cur_index)
 
         self.Layout()
 
@@ -246,13 +246,21 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             self.__cur_index = self.__tierctrl.GetFirstSelected()
             if self.__cur_index == -1:
                 changed = self.set_selected_tiername(filename, sel_tiername)
-                # if changed is True:
-                #     self.__annotation_selected(self.__cur_index)
+                if changed is True:
+                    self.__annotation_selected(self.__cur_index)
+                    self.notify(action="select_tier", filename=filename, value=sel_tiername)
+                    self.notify(action="ann_selected", filename=filename, value=self.__cur_index)
 
         self.Layout()
 
     # -----------------------------------------------------------------------
     # Public methods to manage annotations
+    # -----------------------------------------------------------------------
+
+    def get_selected_annotation(self):
+        """Return the index of the selected annotation, or -1."""
+        return self.__cur_index
+
     # -----------------------------------------------------------------------
 
     def set_selected_annotation(self, idx):
@@ -306,9 +314,9 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
                 # new selected annotation
                 self.__cur_index = self.__tierctrl.GetFirstSelected()
+                self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
                 if self.__cur_index != -1:
                     self.__annotation_selected(self.__cur_index)
-                    # NOTIFY
                 else:
                     # clear the annotation editor if no new selected ann
                     self.__annctrl.set_ann(ann=None)
@@ -344,6 +352,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                     modified_idx = self.__cur_index
                     ann = self.__tierctrl.get_selected_annotation()
                     self.__annctrl.set_ann(ann)
+                    # self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
 
         return delete_idx, modified_idx
 
@@ -372,6 +381,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                 modified_idx = self.__cur_index
                 ann = self.__tierctrl.get_selected_annotation()
                 self.__annctrl.set_ann(ann)
+                # self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
 
         return created_idx, modified_idx
 
@@ -401,6 +411,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                     else:
                         created_idx = self.__cur_index
                         self.__cur_index += 1
+                    # self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
 
         return created_idx
 
@@ -617,7 +628,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             self.__cur_index = idx
             self.__tierctrl.Select(idx, on=1)
 
-        ## self._notify(action="ann_selected", value=self.__cur_index)
+        self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
         return valid
 
     # -----------------------------------------------------------------------
@@ -633,7 +644,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         ann = self.__tierctrl.get_selected_annotation()
         self.__annctrl.set_ann(ann)
         self.__cur_index = idx
-        ## self._notify(action="ann_selected", value=self.__cur_index)
+        self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
 
     # -----------------------------------------------------------------------
 
@@ -674,7 +685,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             ann = self.__tierctrl.get_annotation(idx)
             self.__annctrl.set_ann(ann)
             # notify parent we modified the tier at index idx
-            ## self._notify(action="ann_modified", value=idx)
+            self.notify(action="ann_modified", filename=self.get_filename(), value=idx)
             return True
 
 # ---------------------------------------------------------------------------

@@ -83,6 +83,7 @@ class AudioViewProperties(object):
         self.__waveform = None
         self.__spectral = False
         self.__level = False
+        self.__samples = (0., 0., None)
 
         # The audio PCM
         try:
@@ -271,11 +272,18 @@ class AudioViewProperties(object):
         self.__waveform.SetPosition(pos)
         self.__waveform.SetSize(size)
 
-        nframes = int((end_time - start_time) * self.__audio.get_framerate())
-        self.__audio.seek(int(start_time * float(self.__audio.get_framerate())))
-        # read samples of all channels. Channel 0 is data[0]
-        data = self.__audio.read_samples(nframes)
-        self.__waveform.SetData([data[0], self.__audio.get_sampwidth()])
+        # If we have to draw the same data, there's no need to read them again
+        if start_time == self.__samples[0] and end_time == self.__samples[1]:
+            self.__waveform.SetData([self.__samples[2], self.__audio.get_sampwidth()])
+        else:
+            nframes = int((end_time - start_time) * self.__audio.get_framerate())
+            self.__audio.seek(int(start_time * float(self.__audio.get_framerate())))
+            # read samples of all channels. Channel 0 is data[0]
+            data = self.__audio.read_samples(nframes)
+            self.__waveform.SetData([data[0], self.__audio.get_sampwidth()])
+
+            # store data to eventually re-draw
+            self.__samples = (start_time, end_time, data[0])
 
 # ---------------------------------------------------------------------------
 

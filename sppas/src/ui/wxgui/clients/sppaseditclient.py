@@ -899,7 +899,7 @@ class MediaPanel(SndPlayer):
         # Allowed position
         try:
             (s, e) = self._display.GetPeriodValues()
-        except Exception:  # PyDeadObjectError (on WindowsInstaller only)
+        except Exception:  # PyDeadObjectError (on Windows only)
             self._timer.Stop()
             return
         try:

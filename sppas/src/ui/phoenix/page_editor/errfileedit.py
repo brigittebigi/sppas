@@ -109,7 +109,7 @@ class ErrorViewPanel(sppasFileViewPanel):
         txtview = self.GetPane()
         txtview.SetValue(message)
 
-        # required under WindowsInstaller
+        # required under Windows
         txtview.SetStyle(0, len(message), txtview.GetDefaultStyle())
 
         # Search for the height of the text

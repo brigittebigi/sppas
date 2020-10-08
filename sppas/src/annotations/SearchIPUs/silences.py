@@ -60,7 +60,7 @@ class sppasSilences(object):
 
         :param channel: (sppasChannel) the input channel
         :param win_len: (float) duration of a window
-        :param vagueness: (float) WindowsInstaller length to estimate the boundaries.
+        :param vagueness: (float) Windows length to estimate the boundaries.
 
         Maximum value of vagueness is win_len.
         The duration of a window (win_len) is relevant for the estimation
@@ -83,7 +83,7 @@ class sppasSilences(object):
     # -----------------------------------------------------------------------
 
     def set_vagueness(self, vagueness):
-        """WindowsInstaller length to estimate the boundaries.
+        """Windows length to estimate the boundaries.
 
         :param vagueness: (float) Maximum value of radius is win_len.
 

@@ -1043,7 +1043,7 @@ class DnfInstaller(Installer):
 
 
 class WindowsInstaller(Installer):
-    """An installer for Microsoft WindowsInstaller system.
+    """An installer for Microsoft Windows system.
 
         :author:       Florian Hocquet
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France

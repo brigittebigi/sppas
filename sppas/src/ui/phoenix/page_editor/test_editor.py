@@ -76,20 +76,18 @@ class TestPanel(wx.Choicebook):
         # self.AddPage(p, p.GetName())
         # p = errview.TestPanel(self)
         # self.AddPage(p, p.GetName())
-        # p = mediaview.TestPanel(self)
-        # self.AddPage(p, p.GetName())
+        p = mediaview.TestPanel(self)
+        self.AddPage(p, p.GetName())
         # p = trsview.TestPanel(self)
         # self.AddPage(p, p.GetName())
-        """
         p = filesview.TestPanel(self)
         self.AddPage(p, p.GetName())
 
         p = editorpanel.TestPanel(self)
         self.AddPage(p, p.GetName())
-        """
 
-        p = editor.TestPanel(self)
-        self.AddPage(p, p.GetName())
+        #p = editor.TestPanel(self)
+        #self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)

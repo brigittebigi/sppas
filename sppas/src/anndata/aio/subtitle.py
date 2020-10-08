@@ -36,7 +36,7 @@ SubViewer is a utility for adding and synchronizing subtitles to video
 content. It was created by David Dolinski in 1999.
 Precision in time is 10ms.
 
-SubRip is a free software program for WindowsInstaller which "rips" (extracts)
+SubRip is a free software program for Windows which "rips" (extracts)
 subtitles and their timings from video. It is free software, released
 under the GNU GPL. SubRip is also the name of the widely used and broadly
 compatible subtitle text file format created by this software.

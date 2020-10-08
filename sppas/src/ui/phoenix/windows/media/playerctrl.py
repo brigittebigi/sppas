@@ -86,6 +86,7 @@ class sppasPlayerControlsPanel(sppasPanel):
             parent, id, pos, size, style, name)
 
         self._btn_size = sppasPanel.fix_size(32)
+        self._focus_color = wx.Colour(128, 128, 128, 128)
         self._create_content()
         self._setup_events()
 
@@ -93,6 +94,17 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
     # Public methods, for the controls
+    # -----------------------------------------------------------------------
+
+    def SetFocusColour(self, colour):
+        self._focus_color = colour
+        self.FindWindow("media_play").SetFocusColour(colour)
+        self.FindWindow("media_stop").SetFocusColour(colour)
+        self.FindWindow("media_rewind").SetFocusColour(colour)
+        self.FindWindow("media_forward").SetFocusColour(colour)
+        self.FindWindow("media_repeat").SetFocusColour(colour)
+        self.FindWindow("volume_mute").SetFocusColour(colour)
+
     # -----------------------------------------------------------------------
 
     def AddWidget(self, wxwindow):
@@ -270,7 +282,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         """Return a color slightly different of the parent background one."""
         color = self.GetParent().GetBackgroundColour()
         r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
-        return wx.Colour(r, g, b, a).ChangeLightness(80)
+        return wx.Colour(r, g, b, a).ChangeLightness(85)
 
     # -----------------------------------------------------------------------
 
@@ -280,6 +292,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         :param btn: (BaseButton of sppas)
 
         """
+        btn.SetFocusColour(self._focus_color)
         btn.SetFocusWidth(1)
         btn.SetSpacing(0)
         btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
@@ -290,20 +303,22 @@ class sppasPlayerControlsPanel(sppasPanel):
     def _create_content(self):
         """Create the content of the panel."""
         # Create the main anz_panels
-        panel1 = self.__create_widgets_panel()
-        panel2 = self.__create_transport_panel()
-        panel3 = self.__create_volume_panel()
-        slider = self.__create_seek_slider_panel()
+        panel1 = self.__create_widgets_panel(self)
+        panel2 = self.__create_transport_panel(self)
+        panel3 = self.__create_volume_panel(self)
+        slider = self.__create_seek_slider_panel(self)
 
         # Organize the anz_panels into the main sizer
         border = sppasPanel.fix_size(2)
         nav_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        nav_sizer.AddStretchSpacer(1)
         nav_sizer.Add(panel1, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
         nav_sizer.Add(panel2, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
         nav_sizer.Add(panel3, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.AddStretchSpacer(1)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(slider, 0, wx.EXPAND | wx.ALL, border)
+        sizer.Add(slider, 0, wx.EXPAND, 0)
         sizer.Add(nav_sizer, 0, wx.EXPAND | wx.ALL, border)
 
         self.SetSizer(sizer)
@@ -338,40 +353,39 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def __create_widgets_panel(self):
+    def __create_widgets_panel(self, parent):
         """Return an empty panel with a wrap sizer."""
-        panel = sppasPanel(self, name="widgets_panel")
-        ## sizer = wx.WrapSizer(orient=wx.VERTICAL)
+        panel = sppasPanel(parent, name="widgets_panel")
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         panel.SetSizer(sizer)
         return panel
 
     # -----------------------------------------------------------------------
 
-    def __create_seek_slider_panel(self):
+    def __create_seek_slider_panel(self, parent):
         """Return a panel with a slider to indicate the position in time."""
-        panel = sppasPanel(self, name="seek_slider_panel")
+        panel = sppasPanel(parent, name="seek_slider_panel")
 
         # Labels of wx.Slider are not supported under MacOS.
-        slider = wx.Slider(self, style=wx.SL_HORIZONTAL | wx.SL_MIN_MAX_LABELS)
+        slider = wx.Slider(panel, style=wx.SL_HORIZONTAL | wx.SL_MIN_MAX_LABELS)
         slider.SetRange(0, 0)
         slider.SetValue(0)
         slider.SetName("seek_slider")
 
-        border = sppasPanel.fix_size(2)
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(slider, 1, wx.EXPAND | wx.ALL, border)
+        sizer.Add(slider, 1, wx.EXPAND, 0)
         panel.SetSizer(sizer)
         return panel
 
     # -----------------------------------------------------------------------
 
-    def __create_transport_panel(self):
+    def __create_transport_panel(self, parent):
         """Return a panel with the buttons to play/pause/stop the media."""
-        panel = sppasPanel(self, name="transport_panel")
+        panel = sppasPanel(parent, name="transport_panel")
 
         btn_rewind = BitmapTextButton(panel, name="media_rewind")
         self.SetButtonProperties(btn_rewind)
+        btn_rewind.SetMinSize(wx.Size(self._btn_size // 2, self._btn_size))
 
         btn_play = BitmapTextButton(panel, name="media_play")
         self.SetButtonProperties(btn_play)
@@ -379,6 +393,7 @@ class sppasPlayerControlsPanel(sppasPanel):
 
         btn_forward = BitmapTextButton(panel, name="media_forward")
         self.SetButtonProperties(btn_forward)
+        btn_forward.SetMinSize(wx.Size(self._btn_size // 2, self._btn_size))
 
         btn_stop = BitmapTextButton(panel, name="media_stop")
         self.SetButtonProperties(btn_stop)
@@ -402,9 +417,9 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def __create_volume_panel(self):
+    def __create_volume_panel(self, parent):
         """Return a panel with a slider for the volume and a mute button."""
-        panel = sppasPanel(self, name="volume_panel")
+        panel = sppasPanel(parent, name="volume_panel")
 
         btn_mute = ToggleButton(panel, name="volume_mute")
         btn_mute.SetImage("volume_high")

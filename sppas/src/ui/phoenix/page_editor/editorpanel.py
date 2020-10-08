@@ -151,7 +151,7 @@ class EditorPanel(sppasSplitterWindow):
     # -----------------------------------------------------------------------
 
     def list_action_requested(self, action_name):
-        """Do an action on the listview and TODO:apply on the timeview.
+        """Do an action on the listview and apply on the timeview.
 
         :param action_name: (str)
         :raise: exception if the action can't be performed
@@ -217,16 +217,6 @@ class EditorPanel(sppasSplitterWindow):
             wx.LogError("unknown action name {:s}".format(action_name))
 
         return False
-
-    # -----------------------------------------------------------------------
-    # Actions to perform on the time view in priority
-    # -----------------------------------------------------------------------
-
-    def enable_media_infos(self, value):
-        self._timeview.enable_media_infos(value)
-
-    def enable_media_waveform(self, value):
-        self._timeview.enable_media_waveform(value)
 
     # -----------------------------------------------------------------------
     # Public methods to manage files and tiers
@@ -334,25 +324,35 @@ class EditorPanel(sppasSplitterWindow):
         filename = event.filename
         action = event.action
         value = event.value
-        # wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
-        #            "".format(self.GetName(), action, filename, str(value)))
 
-        if action == "tiers_added":
-            self._listview.add_tiers(filename, value)
-
-        elif action == "select_tier":
+        if action == "select_tier":
             self._listview.set_selected_tiername(filename, value)
             self._timeview.set_selected_tiername(filename, value)
 
+        elif action == "tiers_added":
+            self._listview.add_tiers(filename, value)
+
         elif action in ("zoomed", "error_collapsed", "error_expanded"):
+            # we just need to layout ourself
             self.UpdateSize()
 
-        else:
+        elif action == "media_loaded":
+            if value is not None:
+                self.UpdateSize()
 
+        elif action == "ann_selected":
+            self._listview.set_selected_annotation(value)
+
+        else:
+            # we need to layout ourself and our parent could have to perform
+            # some change when panels are expanded/collapsed.
             if action in ("media_collapsed", "media_expanded", "trs_collapsed", "trs_expanded"):
                 self.UpdateSize()
 
-            wx.PostEvent(self.GetParent(), event)
+            if self.GetParent() is not None:
+                wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s} and notify its parent {}."
+                            "".format(self.GetName(), action, filename, str(value), self.GetParent().GetName()))
+                wx.PostEvent(self.GetParent(), event)
 
     # -----------------------------------------------------------------------
 
@@ -362,7 +362,7 @@ class EditorPanel(sppasSplitterWindow):
         :param event: (wx.Event)
 
         """
-        panel = event.GetEventObject()
+        # panel = event.GetEventObject()
         filename = event.filename
         action = event.action
         value = event.value
@@ -370,12 +370,17 @@ class EditorPanel(sppasSplitterWindow):
                     "".format(self.GetName(), action, filename, str(value)))
 
         if action == "ann_selected":
-            # self._listview.add_tiers(filename, value)
-            pass
+            self._timeview.set_selected_annotation(value)
+
+        elif action == "ann_modified":
+            self._timeview.update_ann(filename, value, what="update")
 
         elif action == "select_tier":
             self._listview.set_selected_tiername(filename, value)
             self._timeview.set_selected_tiername(filename, value)
+
+        else:
+            event.Skip()
 
 # ----------------------------------------------------------------------------
 # Panel for tests

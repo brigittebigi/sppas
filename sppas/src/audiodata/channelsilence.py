@@ -105,7 +105,7 @@ class sppasChannelSilence(object):
 
         :param pos: (int) Initial position of the silence
         :param threshold: (int) RMS threshold value for a silence
-        :param win_length: (float) WindowsInstaller duration to estimate the RMS
+        :param win_length: (float) Windows duration to estimate the RMS
         :param direction: (int)
         :returns: new position
 

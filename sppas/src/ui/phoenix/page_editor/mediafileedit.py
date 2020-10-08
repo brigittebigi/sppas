@@ -283,6 +283,7 @@ class TestPanel(sppasScrolledPanel):
             if value is True:
                 audio_prop = panel.GetAudioProperties()
                 if audio_prop is not None:
+                    audio_prop.EnableInfos(False)
                     audio_prop.EnableWaveform(True)
                 panel.Expand()
                 self.Layout()
