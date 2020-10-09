@@ -291,9 +291,6 @@ class sppasEditorPanel(sppasPanel):
         """Close and unlock the file in the data BUT do not notify parent.
 
         """
-        # If the closed page is a media, this media must be
-        # removed of the multimedia player control.
-        ### --->>>> self._player_controls_panel.remove_media(panel.GetPane())
         removed = self._editpanel.remove_file(filename, force=True)
         if removed is True:
             fns = [self.__data.get_object(filename)]

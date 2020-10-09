@@ -324,6 +324,8 @@ class EditorPanel(sppasSplitterWindow):
         filename = event.filename
         action = event.action
         value = event.value
+        wx.LogDebug("TIME EVENT. {:s} received an event action {:s} of file {:s} with value {:s}"
+                    "".format(self.GetName(), action, filename, str(value)))
 
         if action == "select_tier":
             self._listview.set_selected_tiername(filename, value)
@@ -366,7 +368,7 @@ class EditorPanel(sppasSplitterWindow):
         filename = event.filename
         action = event.action
         value = event.value
-        wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
+        wx.LogDebug("LIST EVENT. {:s} received an event action {:s} of file {:s} with value {:s}"
                     "".format(self.GetName(), action, filename, str(value)))
 
         if action == "ann_selected":

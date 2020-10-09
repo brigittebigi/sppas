@@ -214,18 +214,20 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :param tiers: (list of sppasTier)
 
         """
-        sel_tiername = self.__tiersbook.add_tiers(filename, tiers)
+        sel_changed = self.__tiersbook.add_tiers(filename, tiers)
         self.__cur_page = self.__tiersbook.GetSelection()
 
         # no tier was previously added and we added at least a non-empty one
-        if len(sel_tiername) > 0:
+        if sel_changed is True:
+            sel_filename = self.__tiersbook.get_selected_filename()
+            sel_tiername = self.__tiersbook.get_selected_tiername()
+            self.notify(action="select_tier", filename=sel_filename, value=sel_tiername)
             self.__cur_index = self.__tierctrl.GetFirstSelected()
             if self.__cur_index == -1:
                 changed = self.set_selected_tiername(filename, sel_tiername)
                 if changed is True:
                     self.__annotation_selected(self.__cur_index)
-                    self.notify(action="select_tier", filename=filename, value=sel_tiername)
-                    self.notify(action="ann_selected", filename=filename, value=self.__cur_index)
+                    self.notify(action="ann_selected", filename=sel_filename, value=self.__cur_index)
 
         self.Layout()
 
@@ -238,18 +240,28 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :param tiers: (list of sppasTier)
 
         """
-        sel_tiername = self.__tiersbook.remove_tiers(filename, tiers)
+        removed = self.__tiersbook.remove_tiers(filename, tiers)
         self.__annctrl.set_ann(None)
-        self.__cur_page = self.__tiersbook.GetSelection()
 
-        if len(sel_tiername) > 0:
-            self.__cur_index = self.__tierctrl.GetFirstSelected()
-            if self.__cur_index == -1:
-                changed = self.set_selected_tiername(filename, sel_tiername)
-                if changed is True:
-                    self.__annotation_selected(self.__cur_index)
-                    self.notify(action="select_tier", filename=filename, value=sel_tiername)
-                    self.notify(action="ann_selected", filename=filename, value=self.__cur_index)
+        # no remaining page in the book
+        self.__cur_page = self.__tiersbook.GetSelection()
+        if self.__cur_page == wx.NOT_FOUND:
+            self.__cur_index = -1
+
+        else:
+            # we have to update the selected file/tier/ann
+            if removed is True:
+                sel_filename = self.__tiersbook.get_selected_filename()
+                sel_tiername = self.__tiersbook.get_selected_tiername()
+                if sel_tiername is not None:
+                    self.notify(action="select_tier", filename=sel_filename, value=sel_tiername)
+
+                    self.__cur_index = self.__tierctrl.GetFirstSelected()
+                    if self.__cur_index == -1:
+                        changed = self.set_selected_tiername(filename, sel_tiername)
+                        if changed is True:
+                            self.__annotation_selected(self.__cur_index)
+                            self.notify(action="ann_selected", filename=sel_filename, value=self.__cur_index)
 
         self.Layout()
 
@@ -638,13 +650,27 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
         """
         if self.__tierctrl is None:
-            return 0, 0
+            self.__cur_index = -1
+            return False
+
+        wx.LogDebug(" in __annotation_selected. IDX = {:d}".format(idx))
+        wx.LogDebug(" in __annotation_selected. ITEM COUNT = {:d}".format(self.__tierctrl.GetItemCount()))
+
+        if self.__tierctrl.GetItemCount() == 0:
+            self.__cur_index = -1
+            return False
+
+        # On some platform, the listctrl does not support to not select an item
+        # so we have to force to select one.
+        if idx == -1:
+            idx = 0
 
         self.__tierctrl.Select(idx, on=1)
         ann = self.__tierctrl.get_selected_annotation()
         self.__annctrl.set_ann(ann)
         self.__cur_index = idx
         self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
+        return True
 
     # -----------------------------------------------------------------------
 
