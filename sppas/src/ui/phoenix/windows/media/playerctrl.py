@@ -313,7 +313,9 @@ class sppasPlayerControlsPanel(sppasPanel):
         nav_sizer = wx.BoxSizer(wx.HORIZONTAL)
         nav_sizer.AddStretchSpacer(1)
         nav_sizer.Add(panel1, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.AddStretchSpacer(1)
         nav_sizer.Add(panel2, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.AddStretchSpacer(1)
         nav_sizer.Add(panel3, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
         nav_sizer.AddStretchSpacer(1)
 
@@ -404,13 +406,11 @@ class sppasPlayerControlsPanel(sppasPanel):
 
         border = sppasPanel.fix_size(2)
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.AddStretchSpacer(1)
         sizer.Add(btn_rewind, 0, wx.ALL | wx.ALIGN_CENTER, border)
         sizer.Add(btn_play, 0, wx.ALL | wx.ALIGN_CENTER, border)
         sizer.Add(btn_forward, 0, wx.ALL | wx.ALIGN_CENTER, border)
         sizer.Add(btn_stop, 0, wx.ALL | wx.ALIGN_CENTER, border)
         sizer.Add(btn_replay, 0, wx.ALL | wx.ALIGN_CENTER, border)
-        sizer.AddStretchSpacer(1)
         panel.SetSizer(sizer)
 
         return panel
@@ -427,7 +427,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         btn_mute.SetBorderWidth(1)
 
         # Labels of wx.Slider are not supported under MacOS.
-        slider = wx.Slider(panel, style=wx.SL_HORIZONTAL | wx.SL_MIN_MAX_LABELS)
+        slider = wx.Slider(panel, style=wx.SL_HORIZONTAL)  # | wx.SL_MIN_MAX_LABELS)
         slider.SetName("volume_slider")
         slider.SetValue(100)
         slider.SetRange(0, 100)

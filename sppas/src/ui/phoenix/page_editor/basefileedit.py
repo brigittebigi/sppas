@@ -146,8 +146,9 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
         The parent can catch the event with EVT_TIME_VIEW.
 
         """
-        # wx.LogDebug("{:s} notifies its parent {:s} of action {:s}."
-        #            "".format(self.GetName(), self.GetParent().GetName(), action))
+        wx.LogDebug(
+            "{:s} notifies its parent {:s} of action {:s}."
+            "".format(self.GetName(), self.GetParent().GetName(), action))
         evt = TimeViewEvent(action=action, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)

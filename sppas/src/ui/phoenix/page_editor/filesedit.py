@@ -173,14 +173,14 @@ class PlayerRisePanel(sppasVerticalRisePanel):
         si.SetValue(True)
         si.SetBorderWidth(1)
         si.SetFocusColour(PlayerRisePanel.MEDIA_COLOUR)
-        si.SetMinSize(wx.Size(h * 2 // 3, h * 2 // 3))
+        si.SetMinSize(wx.Size(h, h))
         player.AddWidget(si)
 
         sw = ToggleButton(player.widgets_panel, name="sound_wave_lines")
         sw.SetValue(True)
         sw.SetBorderWidth(1)
         sw.SetFocusColour(PlayerRisePanel.MEDIA_COLOUR)
-        sw.SetMinSize(wx.Size(h * 2 // 3, h * 2 // 3))
+        sw.SetMinSize(wx.Size(h, h))
         player.AddWidget(sw)
 
         self.SetPane(player)
@@ -237,7 +237,7 @@ class sppasTimeEditFilesPanel(sppasPanel):
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,
             size=wx.DefaultSize,
-            style=wx.BORDER_NONE | wx.NO_FULL_REPAINT_ON_RESIZE,
+            style=wx.BORDER_SIMPLE | wx.NO_FULL_REPAINT_ON_RESIZE,
             name=name)
 
         # To get an easy access to the opened files and their panel
@@ -245,9 +245,9 @@ class sppasTimeEditFilesPanel(sppasPanel):
         self._files = dict()
 
         self._create_content()
-        self.Bind(wx.EVT_BUTTON, self._process_tool_event)
-        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_tool_event)
-        self.Bind(EVT_TIME_VIEW, self._process_time_event)
+        self._player_panel.Bind(wx.EVT_BUTTON, self._process_tool_event)
+        self._player_panel.Bind(wx.EVT_TOGGLEBUTTON, self._process_tool_event)
+        self._scrolled_panel.Bind(EVT_TIME_VIEW, self._process_time_event)
 
         # Look&feel
         try:
@@ -369,7 +369,7 @@ class sppasTimeEditFilesPanel(sppasPanel):
                 self._player_panel.add_media(media)
 
         panel.Collapse(value)
-        self._scrolled_panel.Layout()
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
@@ -600,7 +600,7 @@ class sppasTimeEditFilesPanel(sppasPanel):
             if isinstance(panel, MediaViewPanel) is True:
                 audio_prop = panel.GetAudioProperties()
                 audio_prop.EnableInfos(bool(value))
-                # panel.Layout()
+                panel.Layout()
 
         self.Layout()
 
@@ -681,6 +681,8 @@ class sppasTimeEditFilesPanel(sppasPanel):
         elif btn_name == "sound_wave_lines":
             self.enable_media_waveform(btn.GetValue())
 
+        event.Skip()
+
     # -----------------------------------------------------------------------
 
     def _process_time_event(self, event):
@@ -705,20 +707,10 @@ class sppasTimeEditFilesPanel(sppasPanel):
             return
 
         if action == "media_loaded":
-            panel = event.GetEventObject()
-            media = panel.GetPane()
-            if value is True:
-                self.notify("media_loaded", filename, value=media)
-                self.__set_media_properties(media)
-                self.collapse_file(filename, False)
-            else:
-                self.notify("media_loaded", filename, value=None)
+            self.media_loaded(panel, value)
 
-        else:
-            # Send the event to the parent.
-            self.notify(action, filename, value)
-
-        return
+        # Send the event to the parent (it will layout)
+        self.notify(action, filename, value)
 
     # -----------------------------------------------------------------------
 
@@ -747,18 +739,26 @@ class sppasTimeEditFilesPanel(sppasPanel):
             else:
                 self.notify(action="error_expanded", filename=panel.get_filename(), value=None)
 
-        self._scrolled_panel.ScrollChildIntoView(panel)
         self.Layout()
+        self._scrolled_panel.ScrollChildIntoView(panel)
 
     # -----------------------------------------------------------------------
 
-    def __set_media_properties(self, media):
-        audio_prop = media.GetAudioProperties()
-        if audio_prop is not None:
-            audio_prop.EnableInfos(self.FindWindow("sound_infos").GetValue())
-            audio_prop.EnableWaveform(self.FindWindow("sound_wave_lines").GetValue())
-            audio_prop.EnableSpectral(False)  # not implemented
-            audio_prop.EnableLevel(False)     # not implemented
+    def media_loaded(self, panel, value):
+        """Deal with the fact that a media was successfully loaded or not."""
+        filename = panel.get_filename()
+        media = panel.GetPane()
+        if value is True:
+            audio_prop = media.GetAudioProperties()
+            if audio_prop is not None:
+                audio_prop.EnableInfos(self.FindWindow("sound_infos").GetValue())
+                audio_prop.EnableWaveform(self.FindWindow("sound_wave_lines").GetValue())
+                audio_prop.EnableSpectral(False)  # not implemented
+                audio_prop.EnableLevel(False)  # not implemented
+
+        # if value=True: Add the media into the player, expand & layout
+        # if value=False: Collapse and layout
+        self.collapse_file(filename, not value)
 
     # -----------------------------------------------------------------------
     # Private
@@ -854,7 +854,7 @@ class TestPanel(sppasPanel):
             p.append_file(filename)
 
         # the size won't be correct when collapsed. we need a layout.
-        self.Bind(EVT_TIME_VIEW, self._process_action)
+        # self.Bind(EVT_TIME_VIEW, self._process_action)
 
     # -----------------------------------------------------------------------
 
@@ -887,9 +887,8 @@ class TestPanel(sppasPanel):
         elif action in ("media_collapsed", "media_expanded", "trs_collapsed", "trs_expanded"):
             self.Layout()
 
-        elif action == "media_loaded":
-            if value is not None:
-                self.Layout()
+        #elif action == "media_loaded":
+        #    self.Layout()
 
         else:
             wx.LogDebug("* * *  UNKNOWN ACTION: skip event  * * *")

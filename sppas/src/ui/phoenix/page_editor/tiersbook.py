@@ -68,7 +68,7 @@ class sppasTiersBook(sppasSimplebook):
     def __init__(self, parent, name="tiers_book"):
         super(sppasTiersBook, self).__init__(
             parent=parent,
-            style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS,
+            style=wx.BORDER_SIMPLE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS,
             name=name
         )
         self.SetEffectsTimeouts(150, 150)

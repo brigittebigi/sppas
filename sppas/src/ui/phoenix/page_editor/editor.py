@@ -282,9 +282,6 @@ class sppasEditorPanel(sppasPanel):
 
         return closed
 
-        # Take care of the new selected file/tier/annotation
-        # ?????
-
     # ------------------------------------------------------------------------
 
     def __close_file(self, filename):

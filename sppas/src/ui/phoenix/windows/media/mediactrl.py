@@ -117,6 +117,13 @@ class AudioViewProperties(object):
     framerate = property(fget=GetFramerate)
 
     # -----------------------------------------------------------------------
+
+    def GetDuration(self):
+        return self.__audio.get_duration()
+
+    duration = property(fget=GetDuration)
+
+    # -----------------------------------------------------------------------
     # Enable/Disable views
     # -----------------------------------------------------------------------
 
@@ -135,6 +142,7 @@ class AudioViewProperties(object):
         value = bool(value)
         if value is True and self.__audio.get_nchannels() > 0:
             self.__infos = True
+            return True
 
         self.__infos = False
         return False
