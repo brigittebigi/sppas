@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.basedraw.py
+    src.ui.phoenix.windows.basewindow.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Description

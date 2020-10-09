@@ -40,6 +40,7 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
+import sppas.src.ui.phoenix.page_editor.timeslider as timeslider
 import sppas.src.ui.phoenix.page_editor.annlabels as annlabels
 import sppas.src.ui.phoenix.page_editor.tiersbook as tiersbook
 import sppas.src.ui.phoenix.page_editor.tiersanns as tiersanns
@@ -65,29 +66,34 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        # p = annlabels.TestPanel(self)
-        # self.AddPage(p, p.GetName())
-        # p = tiersbook.TestPanel(self)
-        # self.AddPage(p, p.GetName())
-        # p = tiersanns.TestPanel(self)
-        # self.AddPage(p, p.GetName())
-        #
-        # p = baseview.TestPanel(self)
-        # self.AddPage(p, p.GetName())
-        # p = errview.TestPanel(self)
-        # self.AddPage(p, p.GetName())
-        #p = mediaview.TestPanel(self)
-        #self.AddPage(p, p.GetName())
-        # p = trsview.TestPanel(self)
-        # self.AddPage(p, p.GetName())
+        p = timeslider.TestPanel(self)
+        self.AddPage(p, p.GetName())
+
+        p = annlabels.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = tiersbook.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = tiersanns.TestPanel(self)
+        self.AddPage(p, p.GetName())
+
+        """
+        p = baseview.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = errview.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = mediaview.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = trsview.TestPanel(self)
+        self.AddPage(p, p.GetName())
         p = filesview.TestPanel(self)
         self.AddPage(p, p.GetName())
 
-        #p = editorpanel.TestPanel(self)
-        #self.AddPage(p, p.GetName())
+        p = editorpanel.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
         p = editor.TestPanel(self)
         self.AddPage(p, p.GetName())
+        """
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
