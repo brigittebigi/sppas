@@ -80,8 +80,8 @@ class TestPanel(wx.Choicebook):
         #self.AddPage(p, p.GetName())
         # p = trsview.TestPanel(self)
         # self.AddPage(p, p.GetName())
-        #p = filesview.TestPanel(self)
-        #self.AddPage(p, p.GetName())
+        p = filesview.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
         #p = editorpanel.TestPanel(self)
         #self.AddPage(p, p.GetName())

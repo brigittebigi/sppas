@@ -279,6 +279,8 @@ class EditorPanel(sppasSplitterWindow):
             self._listview.remove_tiers(name, tiers)
 
         self._timeview.remove_file(name, force)
+        self._timeview.Layout()
+        return True
 
     # -----------------------------------------------------------------------
     # Construct the GUI

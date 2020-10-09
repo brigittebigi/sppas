@@ -71,6 +71,8 @@ MSG_CLOSE = _("Close all")
 
 CLOSE_CONFIRM = _("At least a file contains not saved work that will be "
                   "lost. Are you sure you want to close?")
+CLOSE_FILE_CONFIRM = _("The file contains not saved work that will be lost."
+                       "Close anyway?")
 MSG_ANNS = _("Annotations: ")
 MSG_MEDIA = _("Media: ")
 
@@ -270,21 +272,19 @@ class sppasEditorPanel(sppasPanel):
 
         closed = list()
         for filename in self._editpanel.get_files():
-            is_closed = self.__close_file(filename)
+            is_closed = self.__remove_file(filename)
             if is_closed is True:
                 closed.append(is_closed)
 
         if len(closed) > 0:
             wx.LogMessage("{:d} files closed.".format(len(closed)))
-            self._editpanel.Layout()
-            self.Refresh()
             self.notify()
 
         return closed
 
     # ------------------------------------------------------------------------
 
-    def __close_file(self, filename):
+    def __remove_file(self, filename):
         """Close and unlock the file in the data BUT do not notify parent.
 
         """
@@ -294,12 +294,40 @@ class sppasEditorPanel(sppasPanel):
             # Unlock the closed file
             try:
                 self.__data.unlock(fns)
+                wx.LogDebug("File {:s} successfully closed and unlocked.".format(filename))
             except Exception as e:
                 self._editpanel.append_file(filename)
                 wx.LogError(str(e))
                 return False
 
         return removed
+
+    # ------------------------------------------------------------------------
+
+    def close_file(self, filename):
+        """Close and unlock the file in the data BUT do not notify parent.
+
+        """
+        if self._editpanel.is_modified(filename) is True:
+            wx.LogWarning("The file contains not saved changes.")
+            # Ask the user to confirm to close (and changes are lost)
+            response = Confirm(CLOSE_FILE_CONFIRM, MSG_CLOSE)
+            if response == wx.ID_CANCEL:
+                return
+
+        removed = self._editpanel.remove_file(filename, force=True)
+        if removed is True:
+            fns = [self.__data.get_object(filename)]
+            # Unlock the closed file
+            try:
+                self.__data.unlock(fns)
+                wx.LogDebug("File {:s} successfully closed and unlocked.".format(filename))
+            except Exception as e:
+                self._editpanel.append_file(filename)
+                wx.LogError(str(e))
+                return False
+
+            self.notify()
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -510,7 +538,7 @@ class sppasEditorPanel(sppasPanel):
         event.Skip()
 
         if action == "close":
-            self.__close_file(filename)
+            self.close_file(filename)
 
         elif action == "save":
             self._editpanel.save_file(filename)

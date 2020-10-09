@@ -474,34 +474,6 @@ class sppasTimeEditFilesPanel(sppasPanel):
         return saved
 
     # -----------------------------------------------------------------------
-
-    def close_file(self, filename):
-        """Close the panel matching the given filename.
-
-        :param filename: (str)
-        :return: (bool) The page was closed.
-
-        """
-        if filename not in self._files:
-            return False
-        panel = self._files[filename]
-
-        if panel.is_modified() is True:
-            wx.LogWarning("File contains not saved changes.")
-            # Ask the user to confirm to close (and changes are lost)
-            response = Confirm(CLOSE_CONFIRM, MSG_CLOSE)
-            if response == wx.ID_CANCEL:
-                return False
-
-        removed = self.remove_file(filename, force=True)
-        if removed is True:
-            self.Layout()
-            self.Refresh()
-            return True
-
-        return False
-
-    # -----------------------------------------------------------------------
     # Methods to operate on a TrsViewPanel()
     # -----------------------------------------------------------------------
 
@@ -599,8 +571,10 @@ class sppasTimeEditFilesPanel(sppasPanel):
             panel = self._files[fn]
             if isinstance(panel, MediaViewPanel) is True:
                 audio_prop = panel.GetAudioProperties()
-                audio_prop.EnableInfos(bool(value))
-                panel.Layout()
+                if audio_prop is not None:
+                    audio_prop.EnableInfos(bool(value))
+                    panel.Layout()
+                # video_prop = panel.GetVideoProperties()
 
         self.Layout()
 
@@ -612,7 +586,8 @@ class sppasTimeEditFilesPanel(sppasPanel):
             panel = self._files[fn]
             if isinstance(panel, MediaViewPanel) is True:
                 audio_prop = panel.GetAudioProperties()
-                audio_prop.EnableWaveform(bool(value))
+                if audio_prop is not None:
+                    audio_prop.EnableWaveform(bool(value))
 
         self.Layout()
 
@@ -658,8 +633,8 @@ class sppasTimeEditFilesPanel(sppasPanel):
 
     def notify(self, action, filename, value=None):
         """Notify the parent of an event."""
-        # wx.LogDebug("{:s} notifies its parent {:s} of action {:s}."
-        #             "".format(self.GetName(), self.GetParent().GetName(), action))
+        wx.LogDebug("{:s} notifies its parent {:s} of action {:s}."
+                    "".format(self.GetName(), self.GetParent().GetName(), action))
         evt = TimeViewEvent(action=action, filename=filename, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
@@ -854,7 +829,7 @@ class TestPanel(sppasPanel):
             p.append_file(filename)
 
         # the size won't be correct when collapsed. we need a layout.
-        # self.Bind(EVT_TIME_VIEW, self._process_action)
+        self.Bind(EVT_TIME_VIEW, self._process_action)
 
     # -----------------------------------------------------------------------
 
@@ -875,7 +850,8 @@ class TestPanel(sppasPanel):
             panel.save_file(filename)
 
         elif action == "close":
-            closed = panel.close_file(filename)
+            closed = panel.remove_file(filename)
+            self.Layout()
             wx.LogDebug("Closed: {}".format(closed))
 
         elif action == "tiers_added":
