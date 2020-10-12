@@ -40,6 +40,7 @@ from .bitmapbutton import BitmapButton
 from .bitmapbutton import BitmapTextButton
 from .togglebutton import ToggleButtonEvent
 from .togglebutton import ToggleButton
+from .togglebutton import ToggleTextButton
 from .checkbutton import CheckButton
 from .checkbutton import RadioButton
 
@@ -51,6 +52,7 @@ __all__ = (
     "BitmapButton",
     "BitmapTextButton",
     "ToggleButton",
+    "ToggleTextButton",
     "CheckButton",
     "RadioButton"
 )

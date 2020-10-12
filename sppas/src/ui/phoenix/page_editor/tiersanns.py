@@ -653,9 +653,6 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             self.__cur_index = -1
             return False
 
-        wx.LogDebug(" in __annotation_selected. IDX = {:d}".format(idx))
-        wx.LogDebug(" in __annotation_selected. ITEM COUNT = {:d}".format(self.__tierctrl.GetItemCount()))
-
         if self.__tierctrl.GetItemCount() == 0:
             self.__cur_index = -1
             return False

@@ -456,9 +456,9 @@ class sppasWindow(sppasDCWindow):
         y += self._horiz_border_width
         w -= (2 * self._vert_border_width)
         if self._focus_width > 0:
-            h -= ((2 * self._vert_border_width) + self._focus_width + self._focus_spacing)
+            h -= ((2 * self._horiz_border_width) + self._focus_width + self._focus_spacing)
         else:
-            h -= (2 * self._vert_border_width)
+            h -= (2 * self._horiz_border_width)
 
         return x, y, w, h
 

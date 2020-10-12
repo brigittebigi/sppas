@@ -73,6 +73,7 @@ from .buttons import TextButton
 from .buttons import BitmapButton
 from .buttons import BitmapTextButton
 from .buttons import ToggleButton
+from .buttons import ToggleTextButton
 from .buttons import CheckButton
 from .buttons import RadioButton
 

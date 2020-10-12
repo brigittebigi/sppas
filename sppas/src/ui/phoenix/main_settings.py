@@ -60,7 +60,7 @@ class WxAppSettings(sppasBaseSettings):
         """Create or load the dictionary of settings for the application."""
         super(WxAppSettings, self).__init__()
 
-        fh = self.__get_font_height()
+        fh = self.get_font_height()
         self.size_coeff = float(fh) / 10.
 
     # -----------------------------------------------------------------------
@@ -107,7 +107,7 @@ class WxAppSettings(sppasBaseSettings):
     def reset(self):
         """Fill the dictionary with the default values."""
 
-        font_height = self.__get_font_height()
+        font_height = self.get_font_height()
         self.size_coeff = float(font_height) / 10.
 
         self.__dict__ = dict(
@@ -150,7 +150,7 @@ class WxAppSettings(sppasBaseSettings):
     # Private
     # -----------------------------------------------------------------------
 
-    def __get_font_height(self):
+    def get_font_height(self):
         # No font defined? So use the default GUI font provided by the system
         try:  # wx4
             font = wx.SystemSettings().GetFont(wx.SYS_DEFAULT_GUI_FONT)
