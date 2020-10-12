@@ -87,6 +87,7 @@ class sppasSliderPanel(sppasDCWindow):
         self._horiz_border_width = 0
 
     # -----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def DrawContent(self, dc, gc):
         """Override."""
