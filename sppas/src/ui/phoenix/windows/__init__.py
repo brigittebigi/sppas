@@ -56,12 +56,13 @@ from .text import NotEmptyTextValidator
 from .basedcwindow import sppasDCWindow
 from .basedcwindow import sppasWindowEvent
 
-# basewindow requires basedcwindow
+# basewindow requires sppasDCWindow
 from .basewindow import WindowState
 from .basewindow import sppasWindow
 
-# line requires sppasDCWindow
+# line/slider requires sppasDCWindow
 from .line import sppasStaticLine
+from .slider import sppasSlider
 
 # frame requires sppasStaticLine
 from .frame import sppasTopFrame
@@ -113,6 +114,7 @@ from .media import sppasPlayerControlsPanel
 from .media import sppasMultiPlayerPanel
 
 __all__ = (
+    "sppasSlider",
     "sppasDialog",
     "sppasChoiceDialog",
     "sppasFileDialog",
