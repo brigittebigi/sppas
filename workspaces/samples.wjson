@@ -5,7 +5,7 @@
     "id": "9c9b55d8-ed0f-4b40-bd86-4d5e124f96be",
     "paths": [
         {
-            "id": "E:/bigi/Projets/sppas/samples/samples-eng",
+            "id": "/Users/bigi/Projects/sppas/samples/samples-eng",
             "rel": "../samples/samples-eng",
             "roots": [
                 {
@@ -55,11 +55,11 @@
                     "files": [
                         {
                             "id": "oriana1.txt",
-                            "state": 0
+                            "state": 1
                         },
                         {
                             "id": "oriana1.wav",
-                            "state": 0
+                            "state": 1
                         }
                     ],
                     "refids": [],
@@ -96,7 +96,7 @@
             ]
         },
         {
-            "id": "E:/bigi/Projets/sppas/samples/samples-fra",
+            "id": "/Users/bigi/Projects/sppas/samples/samples-fra",
             "rel": "../samples/samples-fra",
             "roots": [
                 {

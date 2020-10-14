@@ -307,6 +307,8 @@ class JuliusAligner(BaseAligner):
         line = p.communicate()
         try:
             msg = u(" ").join([u(l.strip()) for l in line if l is not None])
+            if msg.startswith("b'"):
+                msg = msg[2:-1]
             msg = msg.replace("enter filename->", "")
             msg = msg.replace("1 files processed", "")
             msg = msg.replace("..", "")
@@ -414,8 +416,8 @@ class JuliusAligner(BaseAligner):
                           "\n".format(added)
 
         for line in lines:
-            if (line.startswith("Error:") or line.startswith("ERROR:")) \
-                    and " line " not in line:
+            line = line.strip()
+            if line.lower().startswith("error:") and " line " not in line and line.endswith(".forward") is False:
                 message += "Julius failed to align the transcription with the audio file.\n"
                 error_lines += line
 
