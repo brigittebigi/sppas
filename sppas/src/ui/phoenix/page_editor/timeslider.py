@@ -38,7 +38,7 @@ import wx
 
 from ..windows import ToggleTextButton
 from ..windows import sppasPanel
-from ..windows import sppasDCWindow
+from ..windows import sppasSlider
 
 # ---------------------------------------------------------------------------
 
@@ -46,66 +46,6 @@ from ..windows import sppasDCWindow
 MSG_TOTAL_DURATION = "Total duration: "
 MSG_VISIBLE_DURATION = "Visible part: "
 SECONDS_UNIT = "seconds"
-
-# ----------------------------------------------------------------------------
-
-
-class sppasSliderPanel(sppasDCWindow):
-    """A window imitating a slider but with the same look on all platforms.
-
-     :author:       Brigitte Bigi
-     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-     :contact:      contact@sppas.org
-     :license:      GPL, v3
-     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
-
-    Non-interactive: show values but can't be moved with the mouse.
-
-    """
-
-    LABEL_COLOUR = wx.Colour(96, 96, 196, 200)
-    POINT_COLOUR = wx.Colour(128, 128, 196, 200)
-
-    # -----------------------------------------------------------------------
-
-    def __init__(self, parent, name="time_slider_panel"):
-        """Create a panel to display a value into a range.
-
-        """
-        super(sppasSliderPanel, self).__init__(
-            parent,
-            id=wx.ID_ANY,
-            pos=wx.DefaultPosition,
-            size=wx.DefaultSize,
-            style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.BORDER_NONE,
-            name=name)
-
-        self.__start = 0
-        self.__end = 0
-        self.__pos = 0
-        self._vert_border_width = 2
-        self._horiz_border_width = 0
-
-    # -----------------------------------------------------------------------
-
-    def DrawContent(self, dc, gc):
-        """Override."""
-        x, y, w, h = self.GetContentRect()
-
-        # Start label
-        label = str(self.__start)
-        tw, th = self.get_text_extend(dc, gc, label)
-        self.DrawLabel(label, dc, gc, 2, (h - th) // 2)
-
-        # End label
-        label = str(self.__end)
-        tw, th = self.get_text_extend(dc, gc, label)
-        self.DrawLabel(label, dc, gc, w - tw - 2, (h - th) // 2)
-
-        # Current position label
-        label = str(self.__pos)
-        tw, th = self.get_text_extend(dc, gc, label)
-        self.DrawLabel(label, dc, gc, (w - tw) // 2, (h - th) // 2)
 
 # ----------------------------------------------------------------------------
 
@@ -121,7 +61,8 @@ class TimeSliderPanel(sppasPanel):
 
     """
 
-    SELECTION_COLOUR = wx.Colour(160, 60, 60, 128)
+    SELECTION_COLOUR = wx.Colour(255, 190, 200, 196)
+    RANGE_LABELS_COLOUR = wx.Colour(30, 80, 210, 196)
 
     # -----------------------------------------------------------------------
 
@@ -402,11 +343,21 @@ class TimeSliderPanel(sppasPanel):
         for child in self.GetChildren():
             child.SetBackgroundColour(colour)
             for c in child.GetChildren():
-                print(c.GetName())
                 if c.GetName() == "selection_button":
-                    c.SetBackgroundColour(wx.Colour(255, 190, 200))
+                    c.SetBackgroundColour(TimeSliderPanel.SELECTION_COLOUR)
                 else:
                     c.SetBackgroundColour(colour)
+
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        """Override. """
+        wx.Panel.SetForegroundColour(self, colour)
+        for child in self.GetChildren():
+            if child is self._slider:
+                child.SetForegroundColour(TimeSliderPanel.RANGE_LABELS_COLOUR)
+            else:
+                child.SetForegroundColour(colour)
 
     # -----------------------------------------------------------------------
     # Construct the GUI
@@ -428,7 +379,7 @@ class TimeSliderPanel(sppasPanel):
         sizer_sel.Add(btn_after_sel, 0, wx.ALL, 0)
         panel_sel.SetSizer(sizer_sel)
 
-        slider = sppasSliderPanel(self, name="time_slider")
+        slider = sppasSlider(self, name="time_slider")
         height = self.get_font_height()
         slider.SetMinSize(wx.Size(-1, self.get_font_height()))
 
@@ -508,7 +459,10 @@ class TestPanel(sppasPanel):
             name="Time Edit Panel")
 
         p = TimeSliderPanel(self)
-        # p.set_duration(0.123456)
+        p.set_duration(12.123456)
+        p.set_visible_range(3.45, 7.08765)
+        p.set_selection_range(5.567, 6.87)
+        # p.enable_visible(True)
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(p, 1, wx.EXPAND)

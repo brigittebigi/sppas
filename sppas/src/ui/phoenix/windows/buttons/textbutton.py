@@ -135,12 +135,7 @@ class TextButton(BaseButton):
 
     def DrawContent(self, dc, gc):
         """Draw the button. """
-        x, y, w, h = self.GetClientRect()
-        x += self._vert_border_width
-        y += self._horiz_border_width
-        w -= (2 * self._vert_border_width)
-        h -= ((2 * self._horiz_border_width) + self._focus_width + 2)
-
+        x, y, w, h = self.GetContentRect()
         tw, th = self.get_text_extend(dc, gc, self._label)
         if tw < 6 or th < 6:
             return
