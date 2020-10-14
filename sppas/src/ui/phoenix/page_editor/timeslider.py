@@ -131,8 +131,7 @@ class TimeSliderPanel(sppasPanel):
 
         # Update the slider
         if self._btn_duration.GetValue() is True:
-            # self._slider.set_range(0., self.__duration)
-            pass
+            self._slider.set_range(0., self.__duration)
 
     duration = property(get_duration, set_duration)
 
@@ -159,8 +158,7 @@ class TimeSliderPanel(sppasPanel):
 
         # Update the slider
         if self._btn_visible.GetValue() is True:
-            # self._slider.set_range(self.__start_visible, self.__end_visible)
-            pass
+            self._slider.set_range(self.__start_visible, self.__end_visible)
 
     def get_visible_end(self):
         """Return end time value of the visible part."""
@@ -181,8 +179,7 @@ class TimeSliderPanel(sppasPanel):
 
         # Update the slider
         if self._btn_visible.GetValue() is True:
-            # self._slider.set_range(self.__start_visible, self.__end_visible)
-            pass
+            self._slider.set_range(self.__start_visible, self.__end_visible)
 
     def get_visible_range(self):
         """Return (start, end) time values of the visible part."""
@@ -210,8 +207,7 @@ class TimeSliderPanel(sppasPanel):
 
         # Update the slider
         if self._btn_visible.GetValue() is True:
-            # self._slider.set_range(self.__start_visible, self.__end_visible)
-            pass
+            self._slider.set_range(self.__start_visible, self.__end_visible)
 
     start_visible = property(get_visible_start, set_visible_start)
     end_visible = property(get_visible_end, set_visible_end)
@@ -232,7 +228,35 @@ class TimeSliderPanel(sppasPanel):
         if value < 0.:
             raise ValueError
 
+        # OK. The value can be assigned
         self.__start_selection = value
+
+        # If the selection is totally outside of the visible segment
+        if self.__start_selection >= self.__end_visible or self.__end_selection <= self.__start_visible:
+            # De-select the button
+            if self._btn_before.GetValue() is True:
+                self._btn_before.SetValue(False)
+                self._btn_visible.SetValue(True)
+            elif self._btn_selection.GetValue() is True:
+                self._btn_selection.SetValue(False)
+                self._btn_visible.SetValue(True)
+            elif self._btn_after.GetValue() is True:
+                self._btn_after.SetValue(False)
+                self._btn_visible.SetValue(True)
+            # Hide the selection buttons.
+            self._btn_before.Hide()
+            self._btn_selection.Hide()
+            self._btn_after.Hide()
+            return
+
+        # overlap. no before
+        if self.__start_selection <= self.__start_visible:
+            if self._btn_before.GetValue() is True:
+                self._btn_before.SetValue(False)
+                self._btn_visible.SetValue(True)
+            self._btn_before.Hide()
+            self._btn_selection.Show()
+
         dur_sel = self.__end_selection - value  # non si chevauchement
         """
         if self.__start_selection > self.__start_visible:
