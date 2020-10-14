@@ -187,10 +187,44 @@ class Installer(object):
         self.__pbar = None
         self.__pvalue = 0
         self._features = None
-        self.__python = "python3"
-        if shutil.which("python3") is None:
-            self.__python = "python"
-        logging.info("Python installer command: {}".format(self.__python))
+
+        self.__python = self.__search_python_cmd()
+        logging.info("... the python command used by the installer system is '{}'"
+                     "".format(self.__python))
+
+    # ------------------------------------------------------------------------
+
+    def __search_python_cmd(self):
+        """Search for a valid python command. Raise SystemError if not found."""
+        logging.info("Search for a 'python' command that this installer can launch...")
+        process = ProcessRunner()
+
+        command = "python -c 'import sys; print(sys.version_info.major)' "
+        try:
+            process.run(command)
+            out = process.out().replace("b'", "")
+            out = out.replace("'", "")
+            if len(out) == 1:
+                pyversion = int(out)
+                if pyversion == 3:
+                    return "python"
+        except:
+            pass
+
+        command = "python3 -c 'import sys; print(sys.version_info.major)' "
+        try:
+            process.run(command)
+            out = process.out().strip()
+            out = out.replace("b'", "")
+            out = out.replace("'", "")
+            if len(out) == 1:
+                pyversion = int(out)
+                if pyversion == 3:
+                    return "python3"
+        except:
+            pass
+
+        raise SystemError("No valid python command can be invoked by the installer system.")
 
     # ------------------------------------------------------------------------
     # Public methods
@@ -679,7 +713,24 @@ class Installer(object):
         :raises: sppasInstallationError
 
         """
+        err = ""
         try:
+            logging.info("Try to install {:s} for all users.".format(package))
+            command = self.__python + " -m pip install " + package + " --no-warn-script-location"
+            process = ProcessRunner()
+            process.run(command)
+            logging.info("Return code: {}".format(process.status()))
+            err = process.error()
+            stdout = process.out()
+
+            if len(stdout) > 3:
+                logging.info(stdout)
+
+        except Exception as e:
+            if len(err) > 3:
+                logging.error(err)
+            logging.error(str(e))
+            logging.info("So... Try to install {:s} only for the current user.".format(package))
             command = self.__python + " -m pip install " + package + " --user --no-warn-script-location"
             process = ProcessRunner()
             process.run(command)
@@ -689,8 +740,6 @@ class Installer(object):
 
             if len(stdout) > 3:
                 logging.info(stdout)
-        except Exception as e:
-            raise sppasInstallationError(str(e))
 
         if len(err) > 3:
             raise sppasInstallationError(err)

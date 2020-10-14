@@ -103,7 +103,7 @@ else:
         pass
 
 
-    class sppasVideoBuffer(sppasVideodataError):
+    class sppasVideoReaderBuffer(sppasVideodataError):
         DEFAULT_BUFFER_SIZE = 0
         DEFAULT_BUFFER_OVERLAP = 0
         MAX_MEMORY_SIZE = 0
