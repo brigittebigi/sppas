@@ -39,8 +39,8 @@ import wx
 
 from sppas.src.config import msg
 from sppas.src.config import paths
-from sppas.src.exceptions import sppasTypeError
 from sppas.src.utils import u
+from sppas.src.exceptions import sppasTypeError
 from sppas.src.wkps import sppasWorkspace, States
 
 from ..windows import sppasPanel

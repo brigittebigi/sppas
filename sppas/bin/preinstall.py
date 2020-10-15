@@ -27,7 +27,7 @@
     bin.preinstall.py
     ~~~~~~~~~~~~~~~~
 
-:author:       Florian Hocquet
+:author:       Florian Hocquet, Brigitte Bigi
 :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
 :contact:      contact@sppas.org
 :license:      GPL, v3
@@ -140,9 +140,26 @@ if __name__ == "__main__":
         action='store_true',
         help="Install all the features that are enabled by default.")
 
-    group_p = parser.add_argument_group("Customizable selections")
+    group_p = parser.add_argument_group("Programs selection:")
+    for fid in installer.features_ids("deps"):
+        group_p.add_argument(
+            "--" + fid,
+            action='store_true',
+            help="Enable feature '{name}': '{desc}'".format(
+                name=fid,
+                desc=installer.description(fid)))
 
-    for fid in installer.features_ids():
+    group_p = parser.add_argument_group("Languages selection:")
+    for fid in installer.features_ids("lang"):
+        group_p.add_argument(
+            "--" + fid,
+            action='store_true',
+            help="Enable feature '{name}': '{desc}'".format(
+                name=fid,
+                desc=installer.description(fid)))
+
+    group_p = parser.add_argument_group("Annotations selection:")
+    for fid in installer.features_ids("annot"):
         group_p.add_argument(
             "--" + fid,
             action='store_true',

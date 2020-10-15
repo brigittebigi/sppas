@@ -478,9 +478,6 @@ class sppasDialog(wx.Dialog):
         elif flag == wx.YES:
             self.SetAffirmativeId(wx.ID_YES)
 
-        elif flag == wx.OK:
-            pass
-
         return btn
 
     # ---------------------------------------------------------------------------

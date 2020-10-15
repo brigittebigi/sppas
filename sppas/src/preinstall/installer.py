@@ -324,13 +324,15 @@ class Installer(object):
 
     # ------------------------------------------------------------------------
 
-    def install(self):
-        """Process the installation."""
-        # Update pip before any installation.
-        self.update_pip()
+    def install(self, feat_type=None):
+        """Process the installation.
 
+        :param feat_type: (str) Install only features of the given type. None to install all.
+        :return: (list) Error messages.
+
+        """
         errors = list()
-        for fid in self._features.get_ids():
+        for fid in self._features.get_ids(feat_type):
             self.__pheader(self.__message("beginning_feature", fid))
 
             if self._features.available(fid) is False:
