@@ -49,6 +49,8 @@ import sppas.src.ui.phoenix.windows.slider as slider
 import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
 import sppas.src.ui.phoenix.windows.combobox as combobox
 import sppas.src.ui.phoenix.windows.listctrl as listctrl
+
+import sppas.src.ui.phoenix.windows.media.timeslider as timeslider
 import sppas.src.ui.phoenix.windows.media.mediactrl as media
 import sppas.src.ui.phoenix.windows.media.playerctrl as player
 import sppas.src.ui.phoenix.windows.media.multiplayer as multiplayer
@@ -70,6 +72,9 @@ class TestPanel(wx.Choicebook):
         self.AddPage(line.TestPanel(self), "Lines")
         self.AddPage(slider.TestPanel(self), "Slider")
         self.AddPage(basedraw.TestPanel(self), "Base Window")
+
+        p = timeslider.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
         self.AddPage(multiplayer.TestPanel(self), "Multi Media Player")
         self.AddPage(player.TestPanel(self), "Player Control")

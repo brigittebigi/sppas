@@ -40,6 +40,9 @@ import wx.media
 from ..buttons import ToggleButton
 from ..buttons import BitmapTextButton
 from ..panels import sppasPanel
+
+from ..slider import sppasSlider
+from .timeslider import TimeSliderPanel
 from .mediaevents import MediaEvents
 
 # ---------------------------------------------------------------------------
@@ -58,7 +61,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         - widgets_panel: a panel, free to be used to add widgets
         - transport_panel: all buttons to play a media
         - volume_panel: a button to mute and a slider to adjust the volume
-        - slider_panel: a wx.Slider
+        - slider_panel: a panel to indicate duration, selection, position...
 
     Any action of the user (click on a button, move a slider...) is sent to
     the parent by the event: EVT_MEDIA_ACTION.
@@ -255,7 +258,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         wx.Panel.SetBackgroundColour(self, colour)
         hi_color = self.GetHighlightedBackgroundColour()
 
-        for name in ("transport", "widgets", "volume", "seek_slider"):
+        for name in ("transport", "widgets", "volume", "slider"):
             w = self.FindWindow(name + "_panel")
             w.SetBackgroundColour(colour)
             for c in w.GetChildren():
@@ -270,7 +273,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         """Set the foreground of our panel to the given color."""
         wx.Panel.SetForegroundColour(self, colour)
 
-        for name in ("transport", "widgets", "volume", "seek_slider"):
+        for name in ("transport", "widgets", "volume", "slider"):
             w = self.FindWindow(name + "_panel")
             w.SetForegroundColour(colour)
             for c in w.GetChildren():
@@ -306,7 +309,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         panel1 = self.__create_widgets_panel(self)
         panel2 = self.__create_transport_panel(self)
         panel3 = self.__create_volume_panel(self)
-        slider = self.__create_seek_slider_panel(self)
+        slider = self.__create_slider_panel(self)
 
         # Organize the anz_panels into the main sizer
         border = sppasPanel.fix_size(2)
@@ -336,8 +339,8 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     @property
     def _slider(self):
-        """Return the slider to indicate offsets."""
-        return self.FindWindow("seek_slider")
+        """Return the slider to indicate offsets, duration, etc."""
+        return self.FindWindow("slider_panel")
 
     # -----------------------------------------------------------------------
 
@@ -364,20 +367,12 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def __create_seek_slider_panel(self, parent):
+    def __create_slider_panel(self, parent):
         """Return a panel with a slider to indicate the position in time."""
-        panel = sppasPanel(parent, name="seek_slider_panel")
-
-        # Labels of wx.Slider are not supported under MacOS.
-        slider = wx.Slider(panel, style=wx.SL_HORIZONTAL | wx.SL_MIN_MAX_LABELS)
-        slider.SetRange(0, 0)
-        slider.SetValue(0)
-        slider.SetName("seek_slider")
-
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(slider, 1, wx.EXPAND, 0)
-        panel.SetSizer(sizer)
-        return panel
+        # TODO: return TimeSliderPanel(parent, name="slider_panel")
+        s = sppasSlider(parent, name="slider_panel")
+        s.SetMinSize(wx.Size(-1, self.get_font_height()))
+        return s
 
     # -----------------------------------------------------------------------
 
@@ -475,8 +470,9 @@ class sppasPlayerControlsPanel(sppasPanel):
         self.Bind(wx.EVT_BUTTON, self._process_action)
         self.Bind(wx.EVT_TOGGLEBUTTON, self._process_action)
 
-        # The slider position has changed
-        self.Bind(wx.EVT_SLIDER, self._process_action)
+        # The slider position has changed.
+        # Currently not supported by the sppasSlider.
+        # self.Bind(wx.EVT_SLIDER, self._process_action)
 
     # -----------------------------------------------------------------------
 
@@ -507,8 +503,8 @@ class sppasPlayerControlsPanel(sppasPanel):
         elif name == "volume_slider":
             self.__action_volume(to_notify=False)
 
-        elif name == "seek_slider":
-            self.media_seek(obj.GetValue())
+        # elif name == "slider_panel":
+        #     self.media_seek(obj.GetValue())
 
         else:
             event.Skip()

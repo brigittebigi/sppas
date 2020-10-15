@@ -108,6 +108,13 @@ class sppasSlider(sppasDCWindow):
             self.__pos = self.__start
         if self.__pos > self.__end:
             self.__pos = self.__end
+
+        return self.__pos
+
+    # -----------------------------------------------------------------------
+
+    def get_pos(self):
+        """Return the current position in time."""
         return self.__pos
 
     # -----------------------------------------------------------------------

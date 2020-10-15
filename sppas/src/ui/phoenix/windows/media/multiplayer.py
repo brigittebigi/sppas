@@ -129,26 +129,31 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
     def get_start_pos(self):
         """Return the start position in time (milliseconds)."""
-        return self._slider.GetRange()[0]
+        s = self._slider.get_range()[0]
+        return int(s * 1000.)
 
     # -----------------------------------------------------------------------
 
     def get_end_pos(self):
         """Return the end position in time (milliseconds)."""
-        return self._slider.GetRange()[1]
+        e = self._slider.get_range()[1]
+        return int(e * 1000.)
 
     # -----------------------------------------------------------------------
 
     def get_pos(self):
         """Return the current position in time (milliseconds)."""
-        return self._slider.GetValue()
+        p = self._slider.get_pos()
+        return int(p * 1000.)
 
     # -----------------------------------------------------------------------
 
     def set_range(self, start=None, end=None):
-        """Fix period to be played (milliseconds).
+        """Fix the period to draw (milliseconds).
 
-        The slider range, its position and the media position are modified.
+        It is also the period to be played if the toggle button of the
+        visible part is selected. Then, the slider range, its position
+        and the media position are modified.
 
         It is not verified that given end value is not larger than the
         length: it allows to fix the range before the media are defined.
@@ -183,10 +188,16 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         # Move end to ensure a min range
         end = max(end, start + self.min_range)
 
-        self._slider.SetRange(start, end)
+        self._slider.set_range(float(start)/1000., float(end)/1000.)
         self._slider.Layout()
         self._slider.Refresh()
+
         self.media_seek(start)
+        # TODO when slider will be a TimeSliderPanel:
+        # s, _ = self._slider.get_range()
+        # s = int(s * 1000.)
+        # if s != self.get_pos():
+        #     self.media_seek(s)
 
         for m in self.__media:
             m.SetDrawPeriod(start, end)
@@ -210,7 +221,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
                         "" % (self.start_pos, self.end_pos, offset))
             raise IntervalRangeException(offset, self.start_pos, self.end_pos)
 
-        self._slider.SetValue(offset)
+        self._slider.set_pos(float(offset) / 1000.)
 
     # -----------------------------------------------------------------------
 
@@ -251,6 +262,15 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
             self._length = max(m.Length() for m in self.__media)
             # fix the largest range and seek at the beginning of the period
             self.set_range()
+            # TODO: when the slider will be a TimeSliderPanel
+            # self._slider.set_duration(1000. * float(self._length))
+            # self._slider.Layout()
+            # self._slider.Refresh()
+            # s, e = self._slider.get_range()
+            # s = 1000. * float(s)
+            # e = 1000. * float(e)
+            # if s != self.get_start_pos() or e != self.get_end_pos():
+            #     self.set_range(s, e)
 
         return len(self.__media)
 

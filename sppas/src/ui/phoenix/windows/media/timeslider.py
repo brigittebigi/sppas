@@ -36,9 +36,9 @@
 
 import wx
 
-from ..windows import ToggleTextButton
-from ..windows import sppasPanel
-from ..windows import sppasSlider
+from sppas.src.ui.phoenix.windows import ToggleTextButton
+from sppas.src.ui.phoenix.windows import sppasPanel
+from sppas.src.ui.phoenix.windows import sppasSlider
 
 # ---------------------------------------------------------------------------
 
@@ -103,6 +103,24 @@ class TimeSliderPanel(sppasPanel):
         self.Layout()
 
     # -----------------------------------------------------------------------
+
+    def get_range(self):
+        """Return the current range value of the slider."""
+        return self._slider.get_range()
+
+    # -----------------------------------------------------------------------
+
+    def get_pos(self):
+        """Return the current position value of the slider."""
+        return self._slider.get_pos()
+
+    # -----------------------------------------------------------------------
+
+    def set_pos(self, pos):
+        """Set the current position value of the slider."""
+        self._slider.set_pos(pos)
+
+    # -----------------------------------------------------------------------
     # Whole duration - i.e. the max value
     # -----------------------------------------------------------------------
 
@@ -130,8 +148,7 @@ class TimeSliderPanel(sppasPanel):
             self.set_visible_range(0., 0.)
 
         # Update the slider
-        if self._btn_duration.GetValue() is True:
-            self._slider.set_range(0., self.__duration)
+        self.__update_slider()
 
     duration = property(get_duration, set_duration)
 
@@ -157,8 +174,7 @@ class TimeSliderPanel(sppasPanel):
                                    "".format(MSG_VISIBLE_DURATION, str(dur), SECONDS_UNIT))
 
         # Update the slider
-        if self._btn_visible.GetValue() is True:
-            self._slider.set_range(self.__start_visible, self.__end_visible)
+        self.__update_slider()
 
     def get_visible_end(self):
         """Return end time value of the visible part."""
@@ -178,8 +194,7 @@ class TimeSliderPanel(sppasPanel):
                                    "".format(MSG_VISIBLE_DURATION, str(dur), SECONDS_UNIT))
 
         # Update the slider
-        if self._btn_visible.GetValue() is True:
-            self._slider.set_range(self.__start_visible, self.__end_visible)
+        self.__update_slider()
 
     def get_visible_range(self):
         """Return (start, end) time values of the visible part."""
@@ -190,7 +205,7 @@ class TimeSliderPanel(sppasPanel):
         start = float(start)
         end = float(end)
         if end > self.__duration:
-            raise ValueError
+            raise ValueError("set visible: given end {:f} > duration {:f}".format(start, self.__duration))
         if end < start:
             raise ValueError
         if start < 0.:
@@ -206,8 +221,7 @@ class TimeSliderPanel(sppasPanel):
             self._btn_visible.SetValue(False)
 
         # Update the slider
-        if self._btn_visible.GetValue() is True:
-            self._slider.set_range(self.__start_visible, self.__end_visible)
+        self.__update_slider()
 
     start_visible = property(get_visible_start, set_visible_start)
     end_visible = property(get_visible_end, set_visible_end)
@@ -285,15 +299,7 @@ class TimeSliderPanel(sppasPanel):
                 self._btn_visible.SetValue(True)
 
         # Update the slider
-        if self._btn_before.GetValue() is True:
-            # self._slider.set_range(self.__start_visible, self.__start_selection)
-            pass
-        elif self._btn_selection.GetValue() is True:
-            # self._slider.set_range(self.__start_selection, self.__end_selection)
-            pass
-        elif self._btn_after.GetValue() is True:
-            # self._slider.set_range(self.__end_selection, self.__end_visible)
-            pass
+        self.__update_slider()
 
     def get_selection_end(self):
         """Return end time value of the selected part."""
@@ -308,11 +314,7 @@ class TimeSliderPanel(sppasPanel):
             raise ValueError
 
         self.__end_selection = value
-        dur = value - self.__start_visible
-        if dur == 0.:
-            if self._btn_selection is True:
-                self._btn_selection.SetValue(False)
-                self._btn_selection.SetValue(False)
+        self.__update_slider()
 
     def get_selection_range(self):
         """Return (start, end) time values of the selected part."""
@@ -331,13 +333,13 @@ class TimeSliderPanel(sppasPanel):
 
         self.__start_selection = start
         self.__end_selection = end
-        dur = end - start
-        if dur == 0.:
-            if self._btn_selection is True:
-                self._btn_selection.SetValue(False)
-                self._btn_selection.SetValue(False)
+
+        self._btn_before.SetLabel(str(self.__start_selection - self.__start_visible))
+        self._btn_selection.SetLabel(str(self.__end_selection - self.__start_selection))
+        self._btn_after.SetLabel(str(self.__end_visible - self.__end_selection))
 
         # Update the slider
+        self.__update_slider()
 
     start_selection = property(get_selection_start, set_selection_start)
     end_selection = property(get_selection_end, set_selection_end)
@@ -398,9 +400,9 @@ class TimeSliderPanel(sppasPanel):
         btn_during_sel = self.__create_toggle_btn(panel_sel, "--", "selection_button")
         btn_after_sel = self.__create_toggle_btn(panel_sel, "--", "after_sel_button")
         sizer_sel = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_sel.Add(btn_before_sel, 0, wx.ALL, 0)
-        sizer_sel.Add(btn_during_sel, 0, wx.ALL, 0)
-        sizer_sel.Add(btn_after_sel, 0, wx.ALL, 0)
+        sizer_sel.Add(btn_before_sel, 1, wx.ALL, 0)
+        sizer_sel.Add(btn_during_sel, 1, wx.ALL, 0)
+        sizer_sel.Add(btn_after_sel, 1, wx.ALL, 0)
         panel_sel.SetSizer(sizer_sel)
 
         slider = sppasSlider(self, name="time_slider")
@@ -469,6 +471,32 @@ class TimeSliderPanel(sppasPanel):
                         c.SetValue(True)
                     else:
                         c.SetValue(False)
+        self.__update_slider()
+
+    # -----------------------------------------------------------------------
+
+    def __update_slider(self):
+        old_start, old_end = self._slider.get_range()
+        if self._btn_duration.GetValue() is True:
+            self._slider.set_range(0., self.__duration)
+        elif self._btn_visible.GetValue() is True:
+            self._slider.set_range(self.__start_visible, self.__end_visible)
+        elif self._btn_before.GetValue() is True:
+            self._slider.set_range(self.__start_visible, self.__start_selection)
+        elif self._btn_selection.GetValue() is True:
+            self._slider.set_range(self.__start_selection, self.__end_selection)
+        elif self._btn_after.GetValue() is True:
+            self._slider.set_range(self.__end_selection, self.__end_visible)
+
+        new_start, new_end = self._slider.get_range()
+        if old_start != new_start or old_end != new_end:
+            self._slider.Refresh()
+            try:
+                self.GetParent().set_range(
+                    int(1000. * new_start), int(1000. * new_end)
+                )
+            except AttributeError:
+                pass
 
 # ----------------------------------------------------------------------------
 # Panel for tests
