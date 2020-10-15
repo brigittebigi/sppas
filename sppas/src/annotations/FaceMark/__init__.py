@@ -67,12 +67,12 @@ class sppasFaceMark(object):
 # ---------------------------------------------------------------------------
 
 
-if cfg.dep_installed("video"):
+if cfg.feature_installed("video"):
     from .facelandmark import FaceLandmark
     from .sppasfacemark import sppasFaceMark
 
 
 __all__ = (
-    'FaceLandmark',
-    'sppasFaceMark'
+    "FaceLandmark",
+    "sppasFaceMark"
 )

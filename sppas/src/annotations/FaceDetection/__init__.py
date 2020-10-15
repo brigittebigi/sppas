@@ -67,11 +67,11 @@ class sppasFaceDetection(object):
 # ---------------------------------------------------------------------------
 
 
-if cfg.dep_installed("video"):
+if cfg.feature_installed("video"):
     from .facedetection import FaceDetection
     from .sppasfacedetect import sppasFaceDetection
 
 __all__ = (
-    'FaceDetection',
-    'sppasFaceDetection'
+    "FaceDetection",
+    "sppasFaceDetection"
 )

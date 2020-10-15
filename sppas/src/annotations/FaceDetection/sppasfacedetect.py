@@ -69,7 +69,7 @@ class sppasFaceDetection(sppasBaseAnnotation):
         :param log: (sppasLog) Human-readable logs.
 
         """
-        if cfg.dep_installed("facedetect") is False:
+        if cfg.feature_installed("facedetect") is False:
             raise sppasEnableFeatureError("facedetect")
 
         super(sppasFaceDetection, self).__init__("facedetect.json", log)

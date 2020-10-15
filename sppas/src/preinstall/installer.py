@@ -342,8 +342,8 @@ class Installer(object):
                 # force to add a package dependency into the .app~file.
                 # even if not enabled. it'll help manual edit of the file.
                 if self._features.feature_type(fid) == "deps":
-                    if cfg.dep_installed(fid) is False:
-                        cfg.set_dep(fid, False)
+                    if cfg.feature_installed(fid) is False:
+                        cfg.set_feature(fid, False)
                 self.__pmessage(self.__message("enable_false", fid))
 
             else:
@@ -355,7 +355,7 @@ class Installer(object):
                     self._features.enable(fid, False)
                     self.__pmessage(self.__message("install_failed", fid))
                     if self._features.feature_type(fid) == "deps":
-                        cfg.set_dep(fid, False)
+                        cfg.set_feature(fid, False)
                     errors.append(str(e))
                     logging.error(str(e))
 
@@ -369,7 +369,7 @@ class Installer(object):
 
                 else:
                     self._features.enable(fid, True)
-                    cfg.set_dep(fid, True)
+                    cfg.set_feature(fid, True)
                     self.__pmessage(self.__message("install_success", fid))
 
         cfg.save()

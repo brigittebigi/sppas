@@ -333,12 +333,12 @@ class Features(object):
         # Disable the installation of the already installed features, but
         # they are still available: they can be updated if selected.
         ids = self.get_ids()
-        for f in cfg.get_deps():
-            if f in ids:
-                self.enable(f, not cfg.dep_installed(f))
+        for fid in cfg.get_feature_ids():
+            if fid in ids:
+                self.enable(fid, not cfg.feature_installed(fid))
             else:
                 logging.error("The config file contains an unknown "
-                              "feature identifier {}".format(f))
+                              "feature identifier {}".format(fid))
 
     # ------------------------------------------------------------------------
 

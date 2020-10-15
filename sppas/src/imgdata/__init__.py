@@ -60,19 +60,19 @@ class sppasImageDataError(object):
 
 
 # The feature "video" is enabled. Check if it's really correct!
-if cfg.dep_installed("video") is True:
+if cfg.feature_installed("video") is True:
     v = '4'
     try:
         import cv2
     except ImportError:
         # Invalidate the feature because the package is not installed
-        cfg.set_dep("video", False)
+        cfg.set_feature("video", False)
 
     else:
         v = cv2.__version__.split(".")[0]
         if v != '4':
             # Invalidate the feature because the package is not up-to-date
-            cfg.set_dep("video", False)
+            cfg.set_feature("video", False)
 
     class sppasImageDataError(object):
         def __init__(self, *args, **kwargs):
@@ -83,7 +83,7 @@ if cfg.dep_installed("video") is True:
 
 else:
     # The feature "video" is not enabled or unknown.
-    cfg.set_dep("video", False)
+    cfg.set_feature("video", False)
 
 
 # ---------------------------------------------------------------------------
@@ -92,7 +92,7 @@ else:
 
 image_extensions = list()
 
-if cfg.dep_installed("video") is True:
+if cfg.feature_installed("video") is True:
     # Subclass of numpy.ndarray to manipulate images
     from .image import sppasImage
     from .imageutils import sppasImageCompare

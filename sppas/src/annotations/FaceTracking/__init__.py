@@ -75,7 +75,7 @@ class sppasFaceTrack(object):
 # ---------------------------------------------------------------------------
 
 
-if cfg.dep_installed("video"):
+if cfg.feature_installed("video"):
     from .facetrack import FaceTracking
     from .sppasfacetrack import sppasFaceTrack
 

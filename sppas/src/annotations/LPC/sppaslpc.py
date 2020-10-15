@@ -238,7 +238,7 @@ class sppasLPC(sppasBaseAnnotation):
         :param lpc_keys: (sppasTier) Codes of the C-V syllables
 
         """
-        if cfg.dep_installed("video") is True:
+        if cfg.feature_installed("video") is True:
             self.logfile.print_message("Creating a tagged video with the LPC key codes"
                                        " is not implemented yet.", status=annots.info)
             # self.logfile.print_message("Create the tagged video", status=annots.info)
