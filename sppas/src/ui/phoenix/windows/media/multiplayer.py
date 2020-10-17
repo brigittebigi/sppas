@@ -129,21 +129,24 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
     def get_start_pos(self):
         """Return the start position in time (milliseconds)."""
-        s = self._slider.get_range()[0]
+        # s = self._slider.get_range()[0]
+        s = self._slider.GetRange()[0]
         return int(s * 1000.)
 
     # -----------------------------------------------------------------------
 
     def get_end_pos(self):
         """Return the end position in time (milliseconds)."""
-        e = self._slider.get_range()[1]
+        # e = self._slider.get_range()[1]
+        e = self._slider.GetRange()[1]
         return int(e * 1000.)
 
     # -----------------------------------------------------------------------
 
     def get_pos(self):
         """Return the current position in time (milliseconds)."""
-        p = self._slider.get_pos()
+        # p = self._slider.get_pos()
+        p = self._slider.GetValue()
         return int(p * 1000.)
 
     # -----------------------------------------------------------------------
@@ -188,7 +191,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         # Move end to ensure a min range
         end = max(end, start + self.min_range)
 
-        self._slider.set_range(float(start)/1000., float(end)/1000.)
+        self._slider.SetRange(float(start)/1000., float(end)/1000.)
         self._slider.Layout()
         self._slider.Refresh()
 
@@ -221,7 +224,8 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
                         "" % (self.start_pos, self.end_pos, offset))
             raise IntervalRangeException(offset, self.start_pos, self.end_pos)
 
-        self._slider.set_pos(float(offset) / 1000.)
+        # self._slider.set_pos(float(offset) / 1000.)
+        self._slider.SetValue(float(offset) / 1000.)
 
     # -----------------------------------------------------------------------
 
@@ -279,7 +283,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     def add_media(self, media, filename=None):
         """Add a media into the list of media managed by this control.
 
-        Re-evaluate our length, but do not set the range.
+        Re-evaluate our length, and set the range.
         Seek at the beginning of the range.
 
         :param media: ()
@@ -292,13 +296,17 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         ok = self.__append_media(media)
         if ok is True:
+            wx.LogDebug("Media of file {} was added to the multi-player."
+                        "".format(str(filename)))
             # re-evaluate length
             self._length = max(m.Length() for m in self.__media)
 
             # seek the new media to the current position is not possible with
             # macOS AvPlayer backend which must seek to X*1000 ms...
             # we'll seek all the media at the current start pos.
-            self.media_seek(self.start_pos)
+            cur_start = self.start_pos
+            self.set_range()
+            self.media_seek(cur_start)
 
         return ok
 
@@ -315,6 +323,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
             return False
         media.Stop()
         self.__media.remove(media)
+        wx.LogDebug("Media was removed to the multi-player.")
 
         # re-evaluate length
         if len(self.__media) > 0:

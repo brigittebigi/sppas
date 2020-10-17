@@ -165,7 +165,7 @@ class TrsViewPanel(sppasFileViewPanel):
         :param end: (int) Time in milliseconds
 
         """
-        self.GetPane().SetDrawPeriod(start, end)
+        self.GetPane().set_draw_period(start, end)
 
     # -----------------------------------------------------------------------
 
@@ -176,7 +176,7 @@ class TrsViewPanel(sppasFileViewPanel):
         :param end: (int) Time in milliseconds
 
         """
-        self.GetPane().SetSelectPeriod(start, end)
+        self.GetPane().set_select_period(start, end)
 
     # -----------------------------------------------------------------------
 

@@ -370,8 +370,12 @@ class sppasPlayerControlsPanel(sppasPanel):
     def __create_slider_panel(self, parent):
         """Return a panel with a slider to indicate the position in time."""
         # TODO: return TimeSliderPanel(parent, name="slider_panel")
-        s = sppasSlider(parent, name="slider_panel")
+        # s = sppasSlider(parent, name="slider_panel")
+        s = wx.Slider(parent, name="slider_panel")
         s.SetMinSize(wx.Size(-1, self.get_font_height()))
+        s.SetRange(0, 0)
+        s.SetValue(0)
+
         return s
 
     # -----------------------------------------------------------------------
@@ -472,7 +476,7 @@ class sppasPlayerControlsPanel(sppasPanel):
 
         # The slider position has changed.
         # Currently not supported by the sppasSlider.
-        # self.Bind(wx.EVT_SLIDER, self._process_action)
+        self.Bind(wx.EVT_SLIDER, self._process_action)
 
     # -----------------------------------------------------------------------
 
@@ -503,8 +507,10 @@ class sppasPlayerControlsPanel(sppasPanel):
         elif name == "volume_slider":
             self.__action_volume(to_notify=False)
 
-        # elif name == "slider_panel":
-        #     self.media_seek(obj.GetValue())
+        elif name == "slider_panel":
+            # todo: notify parent to get authorization to seek...
+            # then it'll the parent to call the media_seek method.
+            self.media_seek(obj.GetValue())
 
         else:
             event.Skip()

@@ -186,6 +186,10 @@ class PlayerRisePanel(sppasVerticalRisePanel):
         self.SetPane(player)
         self.Expand()
 
+    @property
+    def player(self):
+        return self.FindWindow("player_controls_panel")
+
     # -----------------------------------------------------------------------
 
     def _create_toolbar(self):
@@ -245,8 +249,8 @@ class sppasTimeEditFilesPanel(sppasPanel):
         self._files = dict()
 
         self._create_content()
-        self._player_panel.Bind(wx.EVT_BUTTON, self._process_tool_event)
-        self._player_panel.Bind(wx.EVT_TOGGLEBUTTON, self._process_tool_event)
+        self._player.Bind(wx.EVT_BUTTON, self._process_tool_event)
+        self._player.Bind(wx.EVT_TOGGLEBUTTON, self._process_tool_event)
         self._scrolled_panel.Bind(EVT_TIME_VIEW, self._process_time_event)
 
         # Look&feel
@@ -341,7 +345,7 @@ class sppasTimeEditFilesPanel(sppasPanel):
 
     def media_playing(self):
         """Return the first panel we found playing, None instead."""
-        return self._player_panel.media_playing()
+        return self._player.media_playing()
 
     # -----------------------------------------------------------------------
     # Manage one file at a time
@@ -363,10 +367,10 @@ class sppasTimeEditFilesPanel(sppasPanel):
             media = panel.GetPane()
             if value is True:
                 # remove the media of the player
-                self._player_panel.remove_media(media)
+                self._player.remove_media(media)
             else:
                 # add the media of the player
-                self._player_panel.add_media(media)
+                self._player.add_media(media)  #, panel.get_filename())
 
         panel.Collapse(value)
         self.Layout()
@@ -398,20 +402,6 @@ class sppasTimeEditFilesPanel(sppasPanel):
             self._files[name] = panel
             return True
 
-        """
-        # Is there already a selected period?
-        period = False
-        for filename in self._files:
-            panel = self._files[filename]
-            if isinstance(panel, TrsViewPanel):
-                start, end = panel.get_selected_period()
-                if start != 0 or end != 0:
-                    period = True
-                    break
-        # update period
-        
-        """
-
     # -----------------------------------------------------------------------
 
     def remove_file(self, name, force=False):
@@ -435,7 +425,7 @@ class sppasTimeEditFilesPanel(sppasPanel):
             # If the closed page is a media, this media must be
             # removed of the multimedia player control.
             if isinstance(panel, MediaViewPanel) is True:
-                self._player_panel.remove_media(panel.GetPane())
+                self._player.remove_media(panel.GetPane())
 
             # Destroy the panel and remove of the sizer
             for i, child in enumerate(self.GetChildren()):
@@ -608,10 +598,6 @@ class sppasTimeEditFilesPanel(sppasPanel):
         main_sizer.Add(w2, 1, wx.EXPAND, 0)
         main_sizer.Add(w1, 0, wx.EXPAND | wx.TOP | wx.LEFT | wx.RIGHT, border=sppasPanel.fix_size(4))
         self.SetSizer(main_sizer)
-        # w, h = self.GetSize()
-        # self.SetMinimumPaneSize(sppasPanel.fix_size(32))
-        # self.SplitHorizontally(w1, w2, sppasPanel.fix_size(h // 2))
-        # self.SetSashGravity(0.2)
 
     # -----------------------------------------------------------------------
 
@@ -624,8 +610,9 @@ class sppasTimeEditFilesPanel(sppasPanel):
         return self._scrolled_panel.GetSizer()
 
     @property
-    def _player_panel(self):
-        return self.FindWindow("player_controls_panel")
+    def _player(self):
+        panel = self.FindWindow("player_controls_panel")
+        return panel
 
     # -----------------------------------------------------------------------
     # Events management
@@ -682,6 +669,7 @@ class sppasTimeEditFilesPanel(sppasPanel):
             return
 
         if action == "media_loaded":
+            wx.LogDebug("{:s} received a media_loaded event".format(self.GetName()))
             self.media_loaded(panel, value)
 
         # Send the event to the parent (it will layout)
@@ -694,10 +682,10 @@ class sppasTimeEditFilesPanel(sppasPanel):
         if isinstance(panel, MediaViewPanel) is True:
             if panel.IsExpanded() is True:
                 # The panel was collapsed, and now it is expanded.
-                self._player_panel.add_media(panel.GetPane())
+                self._player.add_media(panel.GetPane())
                 self.notify(action="media_collapsed", filename=panel.get_filename(), value=panel.GetPane())
             else:
-                self._player_panel.remove_media(panel.GetPane())
+                self._player.remove_media(panel.GetPane())
                 self.notify(action="media_expanded", filename=panel.get_filename(), value=panel.GetPane())
 
         elif isinstance(panel, TrsViewPanel) is True:

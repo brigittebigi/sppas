@@ -341,7 +341,7 @@ class EditorPanel(sppasSplitterWindow):
             self.UpdateSize()
 
         elif action == "media_loaded":
-            if value is not None:
+            if value is True:
                 self.UpdateSize()
 
         elif action == "ann_selected":
