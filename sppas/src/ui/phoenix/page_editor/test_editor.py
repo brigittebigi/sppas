@@ -66,7 +66,6 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        """
         p = annlabels.TestPanel(self)
         self.AddPage(p, p.GetName())
         p = tiersbook.TestPanel(self)
@@ -84,13 +83,12 @@ class TestPanel(wx.Choicebook):
         self.AddPage(p, p.GetName())
         p = filesview.TestPanel(self)
         self.AddPage(p, p.GetName())
-        """
 
         p = editorpanel.TestPanel(self)
         self.AddPage(p, p.GetName())
 
-        #p = editor.TestPanel(self)
-        #self.AddPage(p, p.GetName())
+        p = editor.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)

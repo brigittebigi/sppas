@@ -131,7 +131,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         """Return the start position in time (milliseconds)."""
         # s = self._slider.get_range()[0]
         s = self._slider.GetRange()[0]
-        return int(s * 1000.)
+        return s  # int(s * 1000.)
 
     # -----------------------------------------------------------------------
 
@@ -139,7 +139,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         """Return the end position in time (milliseconds)."""
         # e = self._slider.get_range()[1]
         e = self._slider.GetRange()[1]
-        return int(e * 1000.)
+        return e  #  int(e * 1000.)
 
     # -----------------------------------------------------------------------
 
@@ -147,7 +147,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         """Return the current position in time (milliseconds)."""
         # p = self._slider.get_pos()
         p = self._slider.GetValue()
-        return int(p * 1000.)
+        return p  # int(p * 1000.)
 
     # -----------------------------------------------------------------------
 
@@ -191,7 +191,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         # Move end to ensure a min range
         end = max(end, start + self.min_range)
 
-        self._slider.SetRange(float(start)/1000., float(end)/1000.)
+        self._slider.SetRange(start, end)
         self._slider.Layout()
         self._slider.Refresh()
 
@@ -219,13 +219,13 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         """
         assert int(offset) >= 0
-        if offset < self.start_pos or offset > self.end_pos:
+        if (offset+5) < self.start_pos or (offset+5) > self.end_pos:
             wx.LogError("Current range is [%d, %d], but requested offset is %d"
                         "" % (self.start_pos, self.end_pos, offset))
             raise IntervalRangeException(offset, self.start_pos, self.end_pos)
 
         # self._slider.set_pos(float(offset) / 1000.)
-        self._slider.SetValue(float(offset) / 1000.)
+        self._slider.SetValue(offset)
 
     # -----------------------------------------------------------------------
 
@@ -400,15 +400,14 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
             force_pause = True
 
         try:
-            wx.LogDebug("Media seek to position {}".format(offset))
+            # Debug("Media seek to position {}".format(offset))
             self.set_pos(offset)
             for m in self.__media:
                 m.Seek(offset)
-                wx.LogDebug(" -> tell after seek: {}".format(m.Tell()))
+                # wx.LogDebug(" -> tell after seek: {}".format(m.Tell()))
 
         except IntervalRangeException as e:
-            wx.LogDebug("Media seek error")
-            wx.LogError(str(e))
+            wx.LogError("Media seek error: {:s}".format(str(e)))
             return
 
         if force_pause is True:
@@ -534,7 +533,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         # Move the slider at the new position, except if out of range
         try:
-            wx.LogDebug("On timer. set position to {}".format(new_pos))
+            # wx.LogDebug("On timer. set position to {}".format(new_pos))
             self.set_pos(new_pos)
         except IntervalRangeException:
             self.stop()
@@ -561,7 +560,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         # check where the media really are in time
         values = [m.Tell() for m in self.__media]
-        wx.LogMessage(" ... Positions (ms) in the media: %s." % str(values))
+        # wx.LogDebugMessage Positions (ms) in the media: %s." % str(values))
         max_pos = max(values)
 
         # Cant re-synchronize under MacOS, either Seek:

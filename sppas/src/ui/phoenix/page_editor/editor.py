@@ -46,7 +46,7 @@ from sppas.src.wkps import sppasWorkspace, States
 from ..windows import sppasPanel
 from ..windows import sppasToolbar
 from ..windows import sppasStaticLine
-from ..windows.dialogs import Confirm, Error
+from ..windows.dialogs import Confirm, Error, Information
 from ..windows.dialogs import sppasProgressDialog
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
@@ -210,6 +210,7 @@ class sppasEditorPanel(sppasPanel):
         Lock the files that are successfully opened and notify parent.
 
         """
+        Information("This Editor is still under development. It can be used without any warranty.")
         # Add checked files to the page
         checked = self.__data.get_filename_from_state(States().CHECKED)
         success = 0
