@@ -117,8 +117,8 @@ class sppasAnalyzePanel(sppasPanel):
     """
 
     FILES_COLOUR = wx.Colour(228, 128, 128, 196)
-    ANN_COLOUR = wx.Colour(200, 180, 120, 128)
-    TIER_COLOUR = wx.Colour(160, 220, 240, 128)
+    ANN_COLOUR = wx.Colour(200, 180, 120, 196)
+    TIER_COLOUR = wx.Colour(160, 220, 240, 196)
 
     # ------------------------------------------------------------------------
 
@@ -237,9 +237,10 @@ class sppasAnalyzePanel(sppasPanel):
         if success > 0:
             self._viewpanel.Layout()
             self._viewpanel.Refresh()
-            self.Refresh()
             wx.LogMessage("{:d} files opened.".format(success))
             self.notify()
+        self.Layout()
+        self.Refresh()
 
     # ------------------------------------------------------------------------
 
@@ -374,24 +375,29 @@ class sppasAnalyzePanel(sppasPanel):
         tb.AddTitleText(MSG_ANNS, sppasAnalyzePanel.ANN_COLOUR)
 
         b = tb.AddButton("tier_radius", TIER_ACT_RADIUS)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
+        b.SetFocusColour(sppasAnalyzePanel.ANN_COLOUR)
 
         b = tb.AddButton("tier_ann_view", TIER_ACT_ANN_VIEW)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
+        b.SetFocusColour(sppasAnalyzePanel.ANN_COLOUR)
 
         b = tb.AddButton("tier_stat_view", TIER_ACT_STAT_VIEW)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
+        b.SetFocusColour(sppasAnalyzePanel.ANN_COLOUR)
 
         b = tb.AddButton("tier_filter_single", TIER_ACT_SINGLE_FILTER)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
+        b.SetFocusColour(sppasAnalyzePanel.ANN_COLOUR)
 
         b = tb.AddButton("tier_filter_relation", TIER_ACT_RELATION_FILTER)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
+        b.SetLabelPosition(wx.BOTTOM)
+        b.SetSpacing(1)
+        b.SetFocusColour(sppasAnalyzePanel.ANN_COLOUR)
 
         return tb
 

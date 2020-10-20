@@ -66,6 +66,7 @@ from .trslist import TrsSummaryPanel
 def _(message):
     return u(msg(message, "ui"))
 
+
 MSG_CLOSE = _("Close")
 
 CLOSE_CONFIRM = _("The file contains not saved work that will be "

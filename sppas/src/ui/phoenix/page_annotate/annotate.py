@@ -46,7 +46,6 @@ from sppas.src.config import msg
 from sppas.src.utils import u
 
 from ..windows.panels import sppasPanel
-from ..windows.dialogs import Information
 from ..windows import sppasToolbar
 from ..windows import sppasStaticLine
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
@@ -82,7 +81,7 @@ class sppasAnnotatePanel(sppasPanel):
 
     """
 
-    TOOLBAR_COLOUR = wx.Colour(128, 228, 128, 196)
+    TOOLBAR_COLOUR = wx.Colour(250, 120, 50, 196)
 
     # ------------------------------------------------------------------------
 
@@ -128,6 +127,15 @@ class sppasAnnotatePanel(sppasPanel):
 
         """
         self._annbook.set_data(data)
+
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        """Override. """
+        wx.Panel.SetForegroundColour(self, colour)
+        for c in self.GetChildren():
+            if c.GetName() != "hline":
+                c.SetForegroundColour(colour)
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.

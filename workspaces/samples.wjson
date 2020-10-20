@@ -1,12 +1,12 @@
 {
     "wjson": "2.0",
     "software": "SPPAS",
-    "version": "3.3-devel",
+    "version": "3.3",
     "id": "9c9b55d8-ed0f-4b40-bd86-4d5e124f96be",
     "paths": [
         {
             "id": "/Users/bigi/Projects/sppas/samples/samples-eng",
-            "rel": "../samples/samples-eng",
+            "rel": "./samples/samples-eng",
             "roots": [
                 {
                     "id": "ENG_M15_ENG_T02",
@@ -97,7 +97,7 @@
         },
         {
             "id": "/Users/bigi/Projects/sppas/samples/samples-fra",
-            "rel": "../samples/samples-fra",
+            "rel": "./samples/samples-fra",
             "roots": [
                 {
                     "id": "AC track_0379",

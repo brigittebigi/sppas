@@ -1,9 +1,9 @@
 .idea
 .idea/*
-.logs
-.logs/*
-.trash
-.trash/*
+logs
+logs/*
+trash
+trash/*
 .settings
 .uisettings
 .project

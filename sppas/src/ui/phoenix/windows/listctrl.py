@@ -90,6 +90,9 @@ class sppasListCtrl(wx.ListCtrl):
         :param name: (str) Window name.
 
         """
+        if style & wx.LC_VRULES:
+            style &= ~wx.LC_VRULES
+
         if style & wx.LC_EDIT_LABELS:
             style &= ~wx.LC_EDIT_LABELS
         if style & wx.LC_NO_HEADER:

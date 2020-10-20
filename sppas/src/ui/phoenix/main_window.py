@@ -84,6 +84,16 @@ MENU_BUTTONS = {
     "page_plugins": _("Plugins")
 }
 
+MENU_COLOURS = {
+    "page_home": wx.Colour(128, 128, 128, 196),
+    "page_files": wx.Colour(228, 128, 128, 196),
+    "page_annotate": wx.Colour(250, 120, 50, 196),
+    "page_analyze": wx.Colour(200, 180, 120, 196),
+    "page_editor": wx.Colour(240, 220, 205, 196),
+    "page_convert": wx.Colour(220, 40, 80, 196),
+    "page_plugins": wx.Colour(196, 128, 196, 196)
+}
+
 # -----------------------------------------------------------------------
 
 
@@ -139,6 +149,8 @@ class sppasMainWindow(sppasDialog):
         self.CenterOnScreen(wx.BOTH)
         self.FadeIn(delta)
         self.Show(True)
+        self.SetFocus()
+        self.Raise()
 
     # ------------------------------------------------------------------------
     # Private methods to create the GUI and initialize members
@@ -512,6 +524,9 @@ class sppasMenuPanel(sppasPanel):
         for button_name in pages:
             btn_label = MENU_BUTTONS.get(button_name, "")
             btn = self._create_button(btn_label, button_name)
+            colour = MENU_COLOURS.get(button_name, wx.Colour(128, 128, 128, 128))
+            btn.SetFocusColour(colour)
+            btn.SetBitmapColour(colour)
             sizer.Add(btn, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=bord)
 
         sizer.AddStretchSpacer(1)
@@ -544,7 +559,6 @@ class sppasMenuPanel(sppasPanel):
         btn.SetLabelPosition(wx.RIGHT)
         btn.SetFocusStyle(wx.PENSTYLE_SOLID)
         btn.SetFocusWidth(h//4)
-        btn.SetFocusColour(wx.Colour(128, 128, 128, 128))
         btn.SetSpacing(sppasPanel.fix_size(h//2))
         btn.SetMinSize(wx.Size(h*10, h*3))
 

@@ -489,9 +489,9 @@ class FileTreeViewPanel(sppasScrolledPanel):
         p.GetPane().Bind(EVT_ITEM_CLICKED, self._process_item_clicked)
 
         if idx == -1:
-            self.GetSizer().Add(p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(4))
+            self.GetSizer().Add(p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(6))
         else:
-            self.GetSizer().Insert(idx, p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(4))
+            self.GetSizer().Insert(idx, p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(6))
 
         self.__fps[fp.get_id()] = p
         return p
@@ -1212,8 +1212,9 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
 
     def __create_listctrl(self, parent):
         """Create a listctrl to display files."""
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL | wx.LC_HRULES
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL  # | wx.LC_HRULES
         lst = sppasListCtrl(parent, style=style, name="listctrl_files")
+        lst.SetAlternateRowColour(False)
 
         info = wx.ListItem()
         info.Mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT

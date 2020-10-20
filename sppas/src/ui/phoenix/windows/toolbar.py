@@ -279,7 +279,7 @@ class sppasToolbar(sppasPanel):
         if color is not None:
             st.SetForegroundColour(color)
             self.__fg.append(st)
-        self.GetSizer().Add(st, 0, align | wx.ALL, 6)
+        self.GetSizer().Add(st, 0, align | wx.ALL, 2)
 
         return st
 
@@ -291,7 +291,6 @@ class sppasToolbar(sppasPanel):
 
         :param text: (str)
         :param color: (wx.Colour)
-        :param align: (int) alignment style
         :param name: (str)
 
         """
@@ -307,7 +306,7 @@ class sppasToolbar(sppasPanel):
             align = wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL
         else:
             align = wx.ALIGN_LEFT | wx.ALL
-        self.GetSizer().Add(st, 0, align, 6)
+        self.GetSizer().Add(st, 0, align, 2)
 
         return st
 

@@ -342,6 +342,8 @@ class sppasComboBox(sppasPanel):
             self._popup.SetPosition(wx.Point(x, y+h))
             self._popup.Layout()
             self._popup.Show()
+            self._popup.SetFocus()
+            self._popup.Raise()
 
     # ------------------------------------------------------------------------
 
