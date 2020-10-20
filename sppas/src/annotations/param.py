@@ -91,6 +91,8 @@ class annotationParam(object):
         self.__resources = list()
         # The list of options
         self.__options = list()
+        # The references dict: key=id, value=url
+        self.__refs = dict()
 
         # Fix all members from a given config file
         if filename is not None:
@@ -123,6 +125,8 @@ class annotationParam(object):
             if self.__api is None:
                 self.__enabled = False
                 self.__invalid = True
+            if 'refs' in conf:
+                self.__refs = conf["refs"]
 
             for new_option in conf['options']:
                 opt = sppasOption(new_option['id'])
@@ -218,6 +222,18 @@ class annotationParam(object):
 
     # -----------------------------------------------------------------------
 
+    def get_reference_identifiers(self):
+        """Return the list of identifiers of the references."""
+        return list(self.__refs.keys())
+
+    # -----------------------------------------------------------------------
+
+    def get_reference_url(self, id_ref):
+        """Return the url of a given reference or an empty string."""
+        return self.__refs.get(id_ref, "")
+
+    # -----------------------------------------------------------------------
+
     def get_lang(self):
         """Return the language or an empty string or None."""
         if len(self.__resources) > 0:
@@ -292,7 +308,7 @@ class sppasParam(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     Parameters of a set of annotations.
 
@@ -634,4 +650,27 @@ class sppasParam(object):
         raise ValueError("{} not in supported formats of {}"
                          "".format(output_ext, output_format))
 
+    # -----------------------------------------------------------------------
+    # Annotation references: URL of the papers
+    # -----------------------------------------------------------------------
 
+    def get_ref_ids(self, step):
+        """Return a list of identifiers of the reference publications.
+
+        :param step: (int) Annotation index
+
+        """
+        step = self.__check_step(step)
+        return self.annotations[step].get_reference_identifiers()
+
+    # -----------------------------------------------------------------------
+
+    def get_ref_url(self, step, ref_id):
+        """Return the URL of the reference publication.
+
+        :param step: (int) Annotation index
+        :param ref_id: (str) Identifier of a reference
+
+        """
+        step = self.__check_step(step)
+        return self.annotations[step].get_reference_url(ref_id)

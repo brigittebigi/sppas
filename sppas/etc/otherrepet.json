@@ -49,5 +49,10 @@
       "value": 0.5,
       "text": "Coefficient to add data-specific stop-words"
     }
-  ]
+  ],
+
+  "refs": {
+    "bigi2014lrecor": "http://www.lrec-conf.org/proceedings/lrec2014/pdf/71_Paper.pdf"
+  }
+
 }

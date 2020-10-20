@@ -56,5 +56,11 @@
       "text": "Create tiers with number of tokens and duration of each IPU"
     }
 
-  ]
+  ],
+
+  "refs": {
+    "bigi2014lnai": "http://link.springer.com/chapter/10.1007/978-3-319-08958-4_42",
+    "fung2015ococosda": "http://www.lpl-aix.fr/~bigi/Doc/bigi2015ococosda.pdf"
+  }
+
 }

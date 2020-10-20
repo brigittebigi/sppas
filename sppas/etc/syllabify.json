@@ -56,5 +56,11 @@
       "text": "Create a tier with syllable classes"
     }
 
-  ]
+  ],
+    "refs": {
+    "bigi2010lrec": "https://hal.archives-ouvertes.fr/hal-01393609/document",
+    "bigi2014clic": "http://www.fileli.unipi.it/projects/clic/proceedings/vol1/CLICIT2014115.pdf",
+    "bigi2015ltc": "https://hal.archives-ouvertes.fr/hal-01455313/document"
+  }
+
 }

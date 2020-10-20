@@ -55,5 +55,14 @@
       "value": true,
       "text": "Remove working directory"
     }
-  ]
+  ],
+
+  "refs": {
+    "bigi2012lnai": "https://hal.archives-ouvertes.fr/hal-00983698/document",
+    "bigi2014apclc": "http://www.lpl-aix.fr/~bigi/Doc/bigi2014apclc-slides.pdf",
+    "bigi2014evalita": "http://www.lpl-aix.fr/~bigi/Doc/bigi2014evalita.pdf",
+    "bigi2018jep": "http://dx.doi.org/10.21437/JEP.2018-74",
+    "bigi2018linguagem": "http://www.periodicos.letras.ufmg.br/index.php/relin/article/view/13026"
+  }
+
 }
