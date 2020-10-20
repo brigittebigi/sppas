@@ -9,8 +9,6 @@
     "SPEAKER"
   ],
 
-  "outformat": "ANNOT",
-
   "resources": [
     {
       "path": "vocab",

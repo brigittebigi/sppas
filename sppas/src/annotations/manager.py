@@ -67,7 +67,7 @@ from sppas.src.annotations.TextNorm import sppasTextNorm
 from sppas.src.annotations.TGA import sppasTGA
 from sppas.src.annotations.FaceDetection import sppasFaceDetection
 from sppas.src.annotations.FaceMark import sppasFaceMark
-from sppas.src.annotations.FaceTracking import sppasFaceTracking
+from sppas.src.annotations.FaceTracking import sppasFaceTrack
 
 from .infotier import sppasMetaInfoTier
 from .log import sppasLog
@@ -229,6 +229,7 @@ class sppasAnnotationsManager(Thread):
             return None
 
         self._fix_ann_options(annotation_key, auto_annot)
+        self._fix_ann_extensions(auto_annot)
 
         # Load language resources
         if self._progress:
@@ -267,6 +268,19 @@ class sppasAnnotationsManager(Thread):
 
     # -----------------------------------------------------------------------
 
+    def _fix_ann_extensions(self, auto_annot):
+        """Set the output extensions to an automatic annotation.
+
+        :param auto_annot: (BaseAnnotation)
+
+        """
+        for out_format in annots.outformat:
+            # Get extensions from the parameters and set to the annotation
+            ext = self._parameters.get_output_extension(out_format)
+            auto_annot.set_out_extension(ext, out_format)
+
+    # -----------------------------------------------------------------------
+
     def _run_annotation(self, annotation_key):
         """Execute the automatic annotation.
 
@@ -274,7 +288,6 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
-        step_idx = self._parameters.get_step_idx(annotation_key)
         a = self._create_ann_instance(annotation_key)
         if a is None:
             return 0
@@ -289,8 +302,7 @@ class sppasAnnotationsManager(Thread):
 
         # logging.debug('{:d} files to process'.format(len(files_to_process)))
         # logging.debug(files_to_process)
-        out_format = self._parameters.get_output_extension(step_idx)
-        out_files = a.batch_processing(files_to_process, self._progress, out_format)
+        out_files = a.batch_processing(files_to_process, self._progress)
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)
@@ -305,22 +317,20 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
-        step_idx = self._parameters.get_step_idx("fillipus")
         a = self._create_ann_instance("fillipus")
 
         files = list()
         audio_files = self.get_annot_files(
             pattern=a.get_input_pattern(),
-            extensions=sppas.src.audiodata.aio.extensions)
+            extensions=self._parameters.get_outformat_extensions("AUDIO"))
 
         for f in audio_files:
-            in_name = os.path.splitext(f)[0] + ".txt"
+            fn, _ = os.path.splitext(f)
+            in_name = fn + ".txt"
             files.append((f, in_name))
+        logging.debug("{:d} files will be processed......".format(len(files)))
 
-        out_files = a.batch_processing(
-            files,
-            self._progress,
-            self._parameters.get_output_extension(step_idx))
+        out_files = a.batch_processing(files, self._progress)
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)
@@ -335,7 +345,6 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
-        step_idx = self._parameters.get_step_idx("rms")
         a = self._create_ann_instance("rms")
 
         # Required input file
@@ -350,17 +359,12 @@ class sppasAnnotationsManager(Thread):
             base_f = base_f.replace(a.get_input_pattern(), "")
 
             # Get the audio input file
-            audio = sppasAnnotationsManager._get_filename(
-                base_f,
-                sppas.src.audiodata.aio.extensions)
+            audio = sppasAnnotationsManager._get_filename(base_f, sppas.src.audiodata.aio.extensions)
 
             # Append the 2 files
             files.append(((audio, f), []))
 
-        out_files = a.batch_processing(
-            files,
-            self._progress,
-            self._parameters.get_output_extension(step_idx))
+        out_files = a.batch_processing(files, self._progress)
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)
@@ -378,7 +382,6 @@ class sppasAnnotationsManager(Thread):
         :returns: number of files processed successfully
 
         """
-        step_idx = self._parameters.get_step_idx("alignment")
         a = self._create_ann_instance("alignment")
 
         # Required input file is a phonetization
@@ -393,9 +396,8 @@ class sppasAnnotationsManager(Thread):
             base_f = base_f.replace(a.get_input_pattern(), "")
 
             # Get the tokens input file
-            tokens_idx = self._parameters.get_step_idx("textnorm")
             extt = list()
-            for e in self._parameters.get_output_extensions(tokens_idx):
+            for e in self._parameters.get_outformat_extensions("ANNOT"):
                 extt.append(a.get_opt_input_pattern() + e)
             tok = sppasAnnotationsManager._get_filename(base_f, extt)
 
@@ -407,10 +409,7 @@ class sppasAnnotationsManager(Thread):
             # Append all 3 files
             files.append(([f], (audio, tok)))
 
-        out_files = a.batch_processing(
-            files,
-            self._progress,
-            self._parameters.get_output_extension(step_idx))
+        out_files = a.batch_processing(files, self._progress)
 
         self._parameters.add_to_workspace(out_files)
         return len(out_files)
@@ -528,7 +527,7 @@ class sppasAnnotationsManager(Thread):
         :param pattern: (str) The pattern to search in the inputs
         :param extensions: (str) The extension to search for
         :param types: (list of str) The types to search in the references of the workspace
-        :returns: List of filenames matching pattern and extensions
+        :returns: List of file names matching pattern and extensions
 
         """
         files = list()

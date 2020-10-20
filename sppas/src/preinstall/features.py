@@ -58,7 +58,7 @@ class Features(object):
 
     """
 
-    def __init__(self, req="", cmdos=""):
+    def __init__(self, req="", cmdos="", filename=None):
         """Create a new Features instance.
 
         A Features instance is a container for a list of features.
@@ -71,20 +71,35 @@ class Features(object):
         self.__req = req
         self.__cmdos = cmdos
         self.__features = list()
+        self.__filename = None
+        if filename is not None:
+            if os.path.exists(filename) and filename.endswith(".ini"):
+                self.__filename = filename
+
         self.set_features()
 
     # ------------------------------------------------------------------------
 
-    @staticmethod
-    def get_features_filename():
+    def get_features_filename(self):
         """Return the name of the file with the features descriptions."""
+        if self.__filename is not None:
+            return self.__filename
+
         return os.path.join(paths.etc, "features.ini")
 
     # ------------------------------------------------------------------------
 
-    def get_ids(self):
-        """Return the list of feature identifiers."""
-        return [f.get_id() for f in self.__features]
+    def get_ids(self, feat_type=None):
+        """Return the list of feature identifiers of the given type.
+
+        :param feat_type: (str) Feature type, or None to get all ids
+        :return: (list) Feature identifiers
+
+        """
+        if feat_type is None:
+            return [f.get_id() for f in self.__features]
+
+        return [f.get_id() for f in self.__features if f.get_type() == feat_type]
 
     # ------------------------------------------------------------------------
 
@@ -318,12 +333,12 @@ class Features(object):
         # Disable the installation of the already installed features, but
         # they are still available: they can be updated if selected.
         ids = self.get_ids()
-        for f in cfg.get_deps():
-            if f in ids:
-                self.enable(f, not cfg.dep_installed(f))
+        for fid in cfg.get_feature_ids():
+            if fid in ids:
+                self.enable(fid, not cfg.feature_installed(fid))
             else:
                 logging.error("The config file contains an unknown "
-                              "feature identifier {}".format(f))
+                              "feature identifier {}".format(fid))
 
     # ------------------------------------------------------------------------
 

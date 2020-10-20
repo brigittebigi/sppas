@@ -35,7 +35,7 @@
 
         - log_level
         - splash_delay
-        - deps dictionary
+        - features dictionary
 
     Un-modifiable values are:
 
@@ -89,7 +89,7 @@ class sppasAppConfig(object):
         self.__log_level = sppasAppConfig.DEFAULT_LOG_LEVEL
         self.__quiet_log_level = sppasAppConfig.DEFAULT_QUIET_LEVEL
         self.__splash_delay = sppasAppConfig.DEFAULT_SPLASH_DELAY
-        self.__deps = dict()
+        self.__feat_ids = dict()
 
         # Load the existing configuration file (if any)
         self.load()
@@ -107,6 +107,7 @@ class sppasAppConfig(object):
     # -----------------------------------------------------------------------
 
     def get_log_level(self):
+        """Return the level for logging messages, ranging 0-50."""
         return self.__log_level
 
     def set_log_level(self, value):
@@ -128,11 +129,13 @@ class sppasAppConfig(object):
 
     @property
     def quiet_log_level(self):
+        """Return the level for only critical/error messages."""
         return self.__quiet_log_level
 
     # -----------------------------------------------------------------------
 
     def get_splash_delay(self):
+        """Return the delay the splash will be displayed (in seconds)."""
         return self.__splash_delay
 
     def set_splash_delay(self, value):
@@ -181,23 +184,23 @@ class sppasAppConfig(object):
 
                 # Load the deps of the file without deleting the ones already in
                 # the dict: add or override the deps of the file to our dict.
-                deps = d.get("deps", dict())
+                deps = d.get("features", dict())
                 for key in deps:
-                    self.__deps[key] = deps[key]
+                    self.__feat_ids[key] = deps[key]
 
     # ------------------------------------------------------------------------
 
     def save(self):
         """Save into a JSON file."""
-        # Admin rights are needed to write in an hidden file.
-        # So it's needed to switch the file in a normal mode
-        # to modify it and then to hide back the file.
+        # Admin rights are needed to write in an hidden file. So it's needed
+        # to switch the file in a normal mode in order to modify it and then
+        # to hide back the file.
         self.__hide(False)
         with open(self.cfg_filename(), "w") as f:
             d = dict()
             d["log_level"] = self.__log_level
             d["splash_delay"] = self.__splash_delay
-            d["deps"] = self.__deps
+            d["features"] = self.__feat_ids
             f.write(json.dumps(d, indent=2))
 
         self.__hide(True)
@@ -220,29 +223,29 @@ class sppasAppConfig(object):
             p.close()
 
     # ------------------------------------------------------------------------
-    # Methods related to the list of dependencies for the features.
+    # Methods related to the list of available features.
     # ------------------------------------------------------------------------
 
-    def get_deps(self):
-        """Return the list of dependency feature identifers."""
-        return list(self.__deps.keys())
+    def get_feature_ids(self):
+        """Return the list of feature identifiers currently known."""
+        return list(self.__feat_ids.keys())
 
     # ------------------------------------------------------------------------
 
-    def dep_installed(self, key):
-        """Return True if a dependency was successfully installed by SPPAS.
+    def feature_installed(self, key):
+        """Return True if a feature was successfully installed by SPPAS.
 
         :param key: (str) Identifier of a feature.
 
         """
-        if key not in self.__deps:
+        if key not in self.__feat_ids:
             return False
-        return self.__deps[key]
+        return self.__feat_ids[key]
 
     # ------------------------------------------------------------------------
 
-    def set_dep(self, key, value):
-        """Add or update a dependency feature.
+    def set_feature(self, key, value):
+        """Add or update a feature.
 
         This change is set to the current dict but is not saved in the
         configuration file.
@@ -251,5 +254,5 @@ class sppasAppConfig(object):
         :param value: (bool) Installed or disabled
 
         """
-        self.__deps[key] = bool(value)
+        self.__feat_ids[key] = bool(value)
 

@@ -34,15 +34,13 @@
 
 """
 
-import logging
-import os
 from sppas.src.config import cfg
 from sppas.src.config import annots
 from sppas.src.exceptions import sppasEnableFeatureError
 
 from sppas.src.imgdata import image_extensions
 from sppas.src.imgdata import sppasImage
-from sppas.src.imgdata import sppasImageWriter
+from sppas.src.imgdata import sppasImageCoordsWriter
 
 from ..annotationsexc import AnnotationOptionError
 from ..baseannot import sppasBaseAnnotation
@@ -71,12 +69,12 @@ class sppasFaceDetection(sppasBaseAnnotation):
         :param log: (sppasLog) Human-readable logs.
 
         """
-        if cfg.dep_installed("facedetect") is False:
+        if cfg.feature_installed("facedetect") is False:
             raise sppasEnableFeatureError("facedetect")
 
         super(sppasFaceDetection, self).__init__("facedetect.json", log)
         self.__fd = FaceDetection()
-        self.__writer = sppasImageWriter()
+        self.__writer = sppasImageCoordsWriter()
 
     # -----------------------------------------------------------------------
 
@@ -145,13 +143,13 @@ class sppasFaceDetection(sppasBaseAnnotation):
     # Apply the annotation on a given file
     # -----------------------------------------------------------------------
 
-    def run(self, input_file, opt_input_file=None, output_file=None):
+    def run(self, input_file, opt_input_file=None, output=None):
         """Run the automatic annotation process on an input.
 
         :param input_file: (list of str) (image)
         :param opt_input_file: (list of str) ignored
-        :param output_file: (str) the output file name
-        :returns: (list of sppasCoords) Coordinates of detected faces
+        :param output: (str) the output name
+        :returns: (list of sppasCoords) Coordinates of detected faces or filenames
 
         """
         # Get the image from the input
@@ -179,8 +177,10 @@ class sppasFaceDetection(sppasBaseAnnotation):
 
         # Save result as a list of coordinates (csv), a tagged image
         # and/or a list of images (face or portrait) in a folder
-        if output_file is not None:
-            self.__writer.write(image, coords, output_file, self.get_pattern())
+        if output is not None:
+            output_file = self.fix_out_file_ext(output, out_format="IMAGE")
+            new_files = self.__writer.write(image, coords, output_file, self.get_pattern())
+            return new_files
 
         return coords
 

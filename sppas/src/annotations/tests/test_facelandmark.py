@@ -38,7 +38,7 @@ import unittest
 
 from sppas.src.config import paths
 from sppas.src.imgdata import sppasImage
-from sppas.src.imgdata import sppasImageWriter
+from sppas.src.imgdata import sppasImageCoordsWriter
 from sppas.src.imgdata import sppasCoords
 from ..FaceDetection import FaceDetection
 from ..FaceMark.facelandmark import FaceLandmark
@@ -114,7 +114,7 @@ class TestFaceLandmark(unittest.TestCase):
         fl.mark(img)
 
         fn = os.path.join(DATA, "BrigitteBigiSlovenie2016-mark.jpg")
-        w = sppasImageWriter()
+        w = sppasImageCoordsWriter()
         w.set_options(tag=True)
         w.write(img, [[c for c in fl]], fn)
 
@@ -134,7 +134,7 @@ class TestFaceLandmark(unittest.TestCase):
         self.assertEqual(len(fd), 3)
         fd.to_portrait(img)
 
-        w = sppasImageWriter()
+        w = sppasImageCoordsWriter()
         w.set_options(tag=True)
         faces = list()       # list of coords
         for i, coord in enumerate(fd):

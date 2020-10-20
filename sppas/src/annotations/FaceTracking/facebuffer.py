@@ -38,10 +38,13 @@
 
 import logging
 
-from sppas.src.videodata import sppasVideoBuffer
 from sppas.src.exceptions import NegativeValueError
 from sppas.src.exceptions import IndexRangeException
 from sppas.src.exceptions import sppasError
+from sppas.src.imgdata import sppasCoords
+from sppas.src.imgdata import sppasImage
+from sppas.src.videodata import sppasVideoReaderBuffer
+import sppas.src.calculus as calculus
 
 from ..FaceDetection import FaceDetection
 from ..FaceMark import FaceLandmark
@@ -49,7 +52,7 @@ from ..FaceMark import FaceLandmark
 # ---------------------------------------------------------------------------
 
 
-class sppasFacesVideoBuffer(sppasVideoBuffer):
+class sppasFacesVideoBuffer(sppasVideoReaderBuffer):
     """Class to manage a video with a buffer of images and annotation results.
 
     :author:       Brigitte Bigi
@@ -65,7 +68,7 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     """
 
     def __init__(self, video=None,
-                 size=sppasVideoBuffer.DEFAULT_BUFFER_SIZE):
+                 size=sppasVideoReaderBuffer.DEFAULT_BUFFER_SIZE):
         """Create a new sppasFacesVideoBuffer instance.
 
         :param video: (mp4, etc...) The video filename to browse
@@ -88,10 +91,10 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         # the current buffer (list of list of sppasCoords).
         self.__landmarks = list()
 
-        # The list of persons the faces&landmarks are assigned
+        # The list of persons of the faces&landmarks
         self.__persons = list()
 
-        # Then, open the video
+        # Then, open the video, if any
         if video is not None:
             self.open(video)
 
@@ -99,12 +102,13 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
 
     def reset(self):
         """Override. Reset all the info related to the buffer content."""
-        sppasVideoBuffer.reset(self)
+        sppasVideoReaderBuffer.reset(self)
         self.__reset()
 
     # -----------------------------------------------------------------------
 
     def __reset(self):
+        """Reset the data related to the face detection&landmark detections."""
         self.__faces = list()
         self.__landmarks = list()
         self.__persons = list()
@@ -114,10 +118,10 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     # -----------------------------------------------------------------------
 
     def next(self):
-        """Override. Fill in the buffer with the next images.
+        """Override. Fill in the buffer with the next images & reset results.
 
         """
-        ret = sppasVideoBuffer.next(self)
+        ret = sppasVideoReaderBuffer.next(self)
         self.__reset()
         return ret
 
@@ -128,7 +132,7 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     def load_fd_model(self, model, *args):
         """Instantiate face detector(s) from the given models.
 
-        Calling this method invalidates the existing detectors and the buffer.
+        Calling this method invalidates the existing detectors and the results.
 
         :param model: (str) Default model filename
         :param args: Other models to load in order to create object detectors
@@ -143,7 +147,7 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     def load_fl_model(self, model_fd, model_landmark, *args):
         """Initialize the face landmark recognizer.
 
-        Calling this method invalidates the existing detectors and the buffer.
+        Calling this method invalidates the existing detectors and the results.
 
         :param model_fd: (str) A filename of a model for face detection
         :param model_landmark: (str) Filename of a recognizer model (Kazemi, LBF, AAM).
@@ -156,6 +160,12 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
 
     # -----------------------------------------------------------------------
 
+    def get_filter_best(self):
+        """Return the max nb of faces to detect."""
+        return self.__nbest
+
+    # -----------------------------------------------------------------------
+
     def set_filter_best(self, value=-1):
         """Force to detect at max the given number of faces.
 
@@ -163,6 +173,12 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
 
         """
         self.__nbest = value
+
+    # -----------------------------------------------------------------------
+
+    def get_filter_confidence(self):
+        """Return the min scores of faces to detect."""
+        return self.__confidence
 
     # -----------------------------------------------------------------------
 
@@ -220,7 +236,6 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
             image = next(iter_images)
             # Perform face detection to detect all faces in the current image
             self.__fd.detect(image)
-            logging.debug(" ... {:d} faces detected".format(len(self.__fd)))
             # Filter to keep the better ones
             if self.__nbest != 0:
                 self.__fd.filter_best(self.__nbest)
@@ -229,7 +244,6 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
             self.__fd.to_portrait(image)
             # Save results into the list
             self.__faces.append([c.copy() for c in self.__fd])
-            logging.debug(" ... {:d} faces after filter".format(len(self.__fd)))
             self.__fd.invalidate()
 
             self.__landmarks.append([None]*len(self.__faces[i]))
@@ -281,11 +295,11 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     # -----------------------------------------------------------------------
 
     def set_default_detected_persons(self):
-        """Set a default person name to each detected face."""
+        """Set a default person name to each detected face.
+
+        """
         self.__persons = list()
-        iter_images = self.__iter__()
         for i in range(self.__len__()):
-            image = next(iter_images)
             self.__persons.append(list())
             for j in range(len(self.__faces[i])):
                 self.__persons[i].append(("X{:03d}".format(j), j))
@@ -337,17 +351,224 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
     def set_detected_persons(self, buffer_index, information=None):
         """Set the identifier of each detected face at the given image index.
 
-        The information can be None, the name of the person, a dict
-        with key=name and value=probability or  anything else.
+        The information can be None, or a list of tuples with the name of
+        the person, and the index of his detected face.
 
-        :param buffer_index: (int) Index in the current buffer.
-        :param information: (any type)
+        :param buffer_index: (int) Index of the image in the current buffer.
+        :param information: (None or tuple)
 
         """
         buffer_index = self.__check_buffer_index(buffer_index)
         if len(self.__faces) != self.__len__():
-            raise ValueError("No person was defined on the faces of the images of the buffer")
+            raise ValueError("No person was defined for the detected faces "
+                             "of the image {} of the buffer".format(buffer_index))
         self.__persons[buffer_index] = information
+
+    # -----------------------------------------------------------------------
+
+    def set_person_coords(self, buffer_index, person_id, coords):
+        """Set the face coordinates of a person at the given image index.
+
+        If the person was not detected, it is appended to the lists then, it
+        is not guaranteed that the detected faces are sorted by scores.
+
+        :param buffer_index: (int) Index of the image in the current buffer.
+        :param person_id: (str) Identifier string of a person
+        :param coords: (sppasCoords) New coordinates of the face of a person
+
+        """
+        buffer_index = self.__check_buffer_index(buffer_index)
+        if len(self.__faces) != self.__len__():
+            raise ValueError("No person was defined for the detected faces "
+                             "of the image {} of the buffer".format(buffer_index))
+        coords = sppasCoords.to_coords(coords)
+
+        # Search for the face index of the person and set the coords
+        found = False
+        for person in self.__persons[buffer_index]:
+            if person is not None:
+                if person_id == person[0]:
+                    found = True
+                    face_idx = person[1]
+                    if face_idx is not None:
+                        self.__faces[buffer_index][face_idx] = coords
+                    else:
+                        raise sppasError(
+                            "Impossible to set new face coordinates."
+                            "Person {} is not associated to a face."
+                            "".format(person_id))
+                    break
+
+        if found is False:
+            # Append coordinates and information of this person to the lists
+            self.__faces[buffer_index].append(coords)
+            face_idx = len(self.__faces[buffer_index]) - 1
+            self.__persons[buffer_index].append((person_id, face_idx))
+            self.__landmarks[buffer_index].append(None)
+
+    # -----------------------------------------------------------------------
+
+    def coords_by_person(self):
+        """Return dict of person ids with the list of their coords.
+
+        When a person was not detected at a given image, None is used.
+
+        :return: (dict)
+
+        """
+        # key= person identifier,
+        # value = list of coords (one for each image, or none if no detected)
+        person_ids = dict()
+
+        # Make the list of person identifiers
+        for i in range(self.__len__()):
+            all_img_persons = self.__persons[i]
+            for person in all_img_persons:
+                if person is not None:
+                    person_id = person[0]
+                    if person_id not in person_ids:
+                        person_ids[person_id] = list()
+
+        # Fill in the dict with the detected coordinates or none
+        for i in range(self.__len__()):
+
+            all_img_persons = [p for p in self.__persons[i] if p is not None]
+            # Browse through the persons and their coords
+            for j, person_id in enumerate(person_ids):
+                coord = None
+                # Search the face matching this person
+                for person in all_img_persons:
+                    if person_id == person[0]:
+                        face_idx = person[1]
+                        if face_idx is not None:
+                            coord = self.__faces[i][face_idx]
+                        break
+                # coord is either None or the face coordinates
+                person_ids[person_id].append(coord)
+
+        return person_ids
+
+    # -----------------------------------------------------------------------
+    # Post-analysis of detected faces of persons
+    # -----------------------------------------------------------------------
+
+    def fill_in_holes(self):
+        """Fill in the holes of coordinates of detected persons.
+
+        When a person is detected both at a image i-2 and at image i but
+        not at image i-1, fill in the face coordinates with the middle.
+
+        A person can't disappear furtively!!!
+
+        """
+        person_coords = self.coords_by_person()
+        for person_id in person_coords:
+            coords = person_coords[person_id]
+            for i in range(2, self.__len__()):
+                # hole = 1 image without a person but previous and next are ok.
+                if coords[i-2] is not None and coords[i-1] is None and coords[i] is not None:
+                    # estimate the middle point
+                    x = coords[i-2].x + ((coords[i].x - coords[i-2].x) // 2)
+                    y = coords[i-2].y + ((coords[i].y - coords[i-2].y) // 2)
+                    # estimate the intermediate size
+                    w = (coords[i-2].w + coords[i].w) // 2
+                    h = (coords[i-2].h + coords[i].h) // 2
+                    # create and set a sppasCoord for this non-detected face
+                    c = sppasCoords(x, y, w, h, self.__confidence)
+                    self.set_person_coords(i-1, person_id, c)
+
+    # -----------------------------------------------------------------------
+
+    def remove_isolated(self):
+        """Dissociate coordinates of a detected person in an isolated image.
+
+        When a person is detected at a image i-1 but not at both
+        image i and image i-2, cancel its link to the face coordinates.
+
+        A person can't appear furtively!!!
+
+        """
+        person_coords = self.coords_by_person()
+        for person_id in person_coords:
+            coords = person_coords[person_id]
+            for i in range(2, self.__len__()):
+                if coords[i-2] is None and coords[i-1] is not None:
+                    if coords[i] is None:
+                        self.__dissociate_person_face(person_id, i-1)
+                        coords[i-1] = None
+                    else:
+                        if i+1 < self.__len__() and coords[i+1] is None:
+                            self.__dissociate_person_face(person_id, i-1)
+                            self.__dissociate_person_face(person_id, i)
+                            coords[i-1] = None
+                            coords[i] = None
+
+    # -----------------------------------------------------------------------
+
+    def __dissociate_person_face(self, person_id, image_idx):
+        """Dissociate the person to its assigned face at given image.
+
+        :param person_id: (str)
+        :param image_idx: (int)
+
+        """
+        for i, person in enumerate(self.__persons[image_idx]):
+            # if it wasn't already dissociated
+            if person is not None:
+                if person[0] == person_id:
+                    self.__persons[image_idx][i] = None
+
+    # -----------------------------------------------------------------------
+
+    def remove_rare_persons(self):
+        """Remove coordinates of all rarely detected persons. """
+        # No analysis is possible with a too small buffer
+        if self.get_buffer_size() < self.get_framerate():
+            return
+
+        # Create a list with the person identifiers to be removed
+        remove_persons = list()
+        person_coords = self.coords_by_person()
+        for person_id in person_coords:
+            coords = person_coords[person_id]
+
+            # Estimate the number of times the person is detected/non-detected
+            states = list()
+            nb_face = 0
+            nb_none = 0
+            for i in range(self.__len__()):
+                if coords[i] is None:
+                    nb_none += 1
+                    states.append(False)
+                else:
+                    nb_face += 1
+                    states.append(True)
+
+            # Consider to remove the person if detected faces are occurring
+            # less than 10% of the buffer images
+            percent_face = float(nb_face) / float(nb_face + nb_none) * 100.
+            scattered = False
+            if percent_face < 15.:
+                # Are they continuous or scattered?
+                # Estimate the 3-grams of detected/non detected states
+                ngrams = calculus.symbols_to_items(states, 4)
+                if (True, True, True, True) in ngrams:
+                    ngrams_of_faces = ngrams[(True, True, True, True)]
+                    # the nb of possible sequences of face->face->face->face is nb_face-3
+                    ratio = float(ngrams_of_faces) / (nb_face - 3)
+                    if ratio < 0.25:
+                        scattered = True
+                else:
+                    scattered = True
+
+            if scattered is True:
+                remove_persons.append(person_id)
+
+        # Remove the un-relevant persons
+        for i in range(self.__len__()):
+            for person in reversed(self.__persons[i]):
+                if person is not None and person[0] in remove_persons:
+                    self.__dissociate_person_face(person[0], i)
 
     # -----------------------------------------------------------------------
     # Private
@@ -358,10 +579,10 @@ class sppasFacesVideoBuffer(sppasVideoBuffer):
         value = int(value)
         if value < 0:
             raise NegativeValueError(value)
-        (begin, end) = self.get_range()
+        (begin, end) = self.get_buffer_range()
         if begin == -1 or end == -1:
             raise ValueError("Invalid index value: no buffer is loaded.")
-        if value < self.get_size():
+        if value < self.get_buffer_size():
             return value
-        raise IndexRangeException(value, 0, self.get_size())
+        raise IndexRangeException(value, 0, self.get_buffer_size())
 

@@ -247,7 +247,6 @@ class sppasANTX(sppasBaseIO):
             if value.text is not None:
                 meta_key = self._map_meta.get(new_key, new_key)
                 meta_value = value.text.replace(uri, "")
-                print("SET META: {:s} to {:s}".format(meta_key, meta_value))
                 self.set_meta(meta_key, meta_value)
 
     # -----------------------------------------------------------------------

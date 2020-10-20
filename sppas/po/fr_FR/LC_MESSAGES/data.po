@@ -11,11 +11,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
-"Last-Translator: Brigitte Bigi <brigitte.bigi@gmail.com>\n"
+"Last-Translator: Brigitte Bigi <develop@sppas.org>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Language: fr_FR\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 2.2.1\n"
 
 msgid ":ERROR 2000: "
 msgstr "Aucun fichier audio n'a été défini."
@@ -73,3 +73,15 @@ msgstr "The x-axis value {} can't be superior to the width {} of the image."
 
 msgid ":ERROR 2338: "
 msgstr "The y-axis value {} can't be superior to the height {} of the image."
+
+msgid ":ERROR 3610: "
+msgstr "La librairie OpenCV n'a pas réussi à ouvrir le fichier vidéo {filename}."
+
+msgid ":ERROR 3620: "
+msgstr "La librairie OpenCV n'a pas réussi à écrire dans le fichier vidéo {filename}."
+
+msgid ":ERROR 3630: "
+msgstr "La librairie OpenCV n'a pas pu lire la vidéo à partir du fichier {filename}."
+
+msgid ":ERROR 3640: "
+msgstr "Une autre vidéo a déjà ouvert et verrouillé le flux."

@@ -40,8 +40,14 @@ import json
 from sppas.src.config import annots
 from sppas.src.config import paths
 from sppas.src.config import info
+from sppas.src.exceptions import sppasError
+from sppas.src.exceptions import sppasExtensionWriteError
+from sppas.src.structs import sppasOption
 from sppas.src.wkps import sppasFileUtils
 from sppas.src.anndata import sppasRW
+from sppas.src.imgdata import image_extensions
+from sppas.src.audiodata import audio_extensions
+from sppas.src.videodata import video_extensions
 
 from .annotationsexc import AnnotationOptionError
 from .diagnosis import sppasDiagnosis
@@ -57,14 +63,13 @@ class sppasBaseAnnotation(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
 
     def __init__(self, config, log=None):
         """Base class for any SPPAS automatic annotation.
 
-        New in SPPAS 2.1 :
         Load default options/member values from a configuration file.
         This file must be in paths.etc
 
@@ -81,13 +86,140 @@ class sppasBaseAnnotation(object):
         else:
             self.logfile = log
 
-        # Declare members
-        self.__types = list()       # The annotation types (standalone, speaker...)
+        # The annotation types (standalone, speaker...)
+        self.__types = list()
+        # The options the annotation can support
         self._options = dict()
+        # The name of the annotation
         self.name = self.__class__.__name__
+
+        # New in SPPAS 3.3
+        self._out_extensions = dict()
+        self.set_default_out_extensions()
 
         # Then, fill in the values from a configuration file
         self.__load(config)
+
+    # -----------------------------------------------------------------------
+    # Input and output file name and/or file extension
+    # -----------------------------------------------------------------------
+
+    def set_default_out_extensions(self):
+        """Return the default output extension of each format.
+
+        The default extension of each format is defined in the config.
+
+        """
+        self._out_extensions["ANNOT"] = annots.annot_extension
+        self._out_extensions["IMAGE"] = annots.image_extension
+        self._out_extensions["VIDEO"] = annots.video_extension
+        self._out_extensions["AUDIO"] = annots.audio_extension
+
+    # -----------------------------------------------------------------------
+
+    def set_out_extension(self, extension, out_format="ANNOT"):
+        """Set the extension for a specific out format.
+
+        :param extension: (str) File extension for created files
+        :param out_format: (str) One of ANNOT, IMAGE, VIDEO, AUDIO
+
+        """
+        if out_format == "ANNOT":
+            all_ext = ["."+e for e in sppasRW.extensions_out()]
+        elif out_format == "AUDIO":
+            all_ext = audio_extensions
+        elif out_format == "VIDEO":
+            all_ext = video_extensions
+        elif out_format == "IMAGE":
+            all_ext = image_extensions
+        else:
+            raise sppasError("Unknown {} out format".format(out_format))
+
+        if extension.startswith(".") is False:
+            extension = "." + extension
+
+        if extension not in all_ext and len(all_ext) > 0:
+            logging.error("Extension {} is not in the {} list."
+                          "".format(extension, out_format))
+            raise sppasExtensionWriteError(extension)
+
+        self._out_extensions[out_format] = extension
+
+    # -----------------------------------------------------------------------
+
+    def fix_out_file_ext(self, output, out_format="ANNOT"):
+        """Return the output with an appropriate file extension.
+
+        If the output has already an extension, it is not changed.
+
+        :param output: (str) Base name or filename
+        :param out_format: (str) One of ANNOT, IMAGE, VIDEO, AUDIO
+        :return: (str) filename
+
+        """
+        _, fe = os.path.splitext(output)
+        if len(fe) == 0:
+            # No extension in the output.
+            output = output + self._out_extensions[out_format]
+
+        # If output exists, it is overridden
+        if os.path.exists(output) and self.logfile is not None:
+            self.logfile.print_message(
+                (info(1300, "annotations")).format(output),
+                indent=2, status=annots.warning)
+
+        return output
+
+    # -----------------------------------------------------------------------
+
+    def get_pattern(self):
+        """Pattern that the annotation uses for its output filename."""
+        return self._options.get("outputpattern", "")
+
+    def get_input_pattern(self):
+        """Pattern that the annotation expects for its input filename."""
+        return self._options.get("inputpattern", "")
+
+    def get_opt_input_pattern(self):
+        """Pattern that the annotation can optionally use as input."""
+        return self._options.get("inputoptpattern", "")
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def get_input_extensions():
+        """Extensions that the annotation expects for its input filename."""
+        ext = ["."+e for e in sppasRW.extensions_in()]
+        if ".pitchtier" in ext:
+            ext.remove(".pitchtier")
+        if ".hz" in ext:
+            ext.remove(".hz")
+
+        return ext
+
+    # -----------------------------------------------------------------------
+
+    def get_out_name(self, filename, output_format=""):
+        """Return the output filename from the input one.
+
+        Output filename is created from the given filename, the annotation
+        output pattern and the given output format (if any).
+
+        :param filename: (str) Name of the input file
+        :param output_format: (str) Extension of the output file
+        :returns: (str)
+
+        """
+        # remove the extension
+        fn, _ = os.path.splitext(filename)
+
+        # remove the existing pattern
+        r = self.get_input_pattern()
+        if len(r) > 0 and fn.endswith(r):
+            fn = fn[:-len(r)]
+
+        # add the annotation pattern and the extension
+        return fn + self.get_pattern() + output_format
 
     # -----------------------------------------------------------------------
     # Shared methods to fix options and to annotate
@@ -112,8 +244,13 @@ class sppasBaseAnnotation(object):
             dict_cfg = json.load(cfg)
 
         # Extract options
-        for opt in dict_cfg['options']:
-            self._options[opt['id']] = opt['value']
+        for new_option in dict_cfg['options']:
+            # Create a sppasOption() instance to convert into the right type
+            opt = sppasOption(new_option['id'])
+            opt.set_type(new_option['type'])
+            opt.set_value(str(new_option['value']))
+            # Add key and typed value to the dict of options
+            self._options[opt.get_key()] = opt.get_value()
 
         # Extract other members
         self.name = dict_cfg.get('name', self.__class__.__name__)
@@ -173,55 +310,7 @@ class sppasBaseAnnotation(object):
     # Perform automatic annotation:
     # -----------------------------------------------------------------------
 
-    def get_pattern(self):
-        """Pattern that the annotation uses for its output filename."""
-        return self._options.get("outputpattern", "")
-
-    def get_input_pattern(self):
-        """Pattern that the annotation expects for its input filename."""
-        return self._options.get("inputpattern", "")
-
-    def get_opt_input_pattern(self):
-        """Pattern that the annotation can optionally use as input."""
-        return self._options.get("inputoptpattern", "")
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def get_input_extensions():
-        """Extensions that the annotation expects for its input filename."""
-        ext = ["."+e for e in sppasRW.extensions_in()]
-        if ".pitchtier" in ext:
-            ext.remove(".pitchtier")
-        if ".hz" in ext:
-            ext.remove(".hz")
-
-        return ext
-
-    # -----------------------------------------------------------------------
-
-    def get_out_name(self, filename, output_format):
-        """Return the output filename from the input one.
-
-        :param filename: (str) Name of the input file
-        :param output_format: (str) Extension of the output file
-        :returns: (str)
-
-        """
-        # remove the extension
-        fn = os.path.splitext(filename)[0]
-
-        # remove the existing pattern
-        r = self.get_input_pattern()
-        if len(r) > 0 and fn.endswith(r):
-            fn = fn[:-len(r)]
-
-        # add this annotation pattern its extension
-        return fn + self.get_pattern() + output_format
-
-    # -----------------------------------------------------------------------
-
-    def run(self, input_file, opt_input_file=None, output_file=None):
+    def run(self, input_file, opt_input_file=None, output=None):
         """Run the automatic annotation process on an input.
 
         Both the required and the optional inputs are a list of files
@@ -229,10 +318,14 @@ class sppasBaseAnnotation(object):
         There's no constraint on the filenames, neither for the inputs nor
         for the outputs.
 
+        Either returns the list of created files if the given output is not
+        none, or the created object (mainly a sppasTranscription) if no
+        output was given.
+
         :param input_file: (list of str) the required input(s)
         :param opt_input_file: (list of str) the optional input(s)
-        :param output_file: (str) the output file name
-        :returns: (sppasTranscription)
+        :param output: (str) the output name with or without extension
+        :returns: (sppasTranscription OR list of created file names)
 
         """
         raise NotImplementedError
@@ -241,8 +334,7 @@ class sppasBaseAnnotation(object):
 
     def run_for_batch_processing(self,
                                  input_file,
-                                 opt_input_file,
-                                 output_format):
+                                 opt_input_file):
         """Perform the annotation on a file.
 
         This method is called by 'batch_processing'. It fixes the name of the
@@ -251,41 +343,32 @@ class sppasBaseAnnotation(object):
 
         :param input_file: (list of str) the required input(s)
         :param opt_input_file: (list of str) the optional input(s)
-        :param output_format: (str) Extension of the output file
         :returns: output file name or None
 
         """
         # Save a copy of the options ('run' could modify the current ones)
         opt = self._options.copy()
 
-        # Fix the output file name
-        out_name = self.get_out_name(input_file[0], output_format)
-
-        # If out_name exists, it is overridden
-        if os.path.exists(out_name):
-            self.logfile.print_message(
-                (info(1300, "annotations")).format(out_name) + " " +
-                info(1304, "annotations"), indent=2, status=annots.warning)
+        # Fix the output base name with the appropriate pattern
+        out_name = self.get_out_name(input_file[0])
 
         # Execute annotation
         try:
-            self.run(input_file, opt_input_file, out_name)
+            new_files = self.run(input_file, opt_input_file, out_name)
         except Exception as e:
-            out_name = None
+            new_files = list()
             self.logfile.print_message(
-                "{:s}\n".format(str(e)),
-                indent=2, status=annots.error)
+                "{:s}\n".format(str(e)), indent=2, status=annots.error)
 
         # Restore the options before returning the result
         self._options = opt
-        return out_name
+        return new_files
 
     # -----------------------------------------------------------------------
 
     def batch_processing(self,
                          file_names,
-                         progress=None,
-                         output_format=annots.annot_extension):
+                         progress=None):
         """Perform the annotation on a bunch of files.
 
         The given list of inputs can be either:
@@ -301,7 +384,6 @@ class sppasBaseAnnotation(object):
 
         :param file_names: (list) List of inputs
         :param progress: ProcessProgressTerminal() or ProcessProgressDialog()
-        :param output_format: (str)
         :returns: (list of str) List of created files
 
         """
@@ -325,16 +407,13 @@ class sppasBaseAnnotation(object):
                 progress.set_fraction(round(float(i)/float(total), 2))
                 progress.set_text("{!s:s}".format(*required_inputs))
 
-            out_name = self.run_for_batch_processing(required_inputs,
-                                                     optional_inputs,
-                                                     output_format)
-
-            if out_name is None:
+            out_names = self.run_for_batch_processing(required_inputs, optional_inputs)
+            if len(out_names) == 0:
                 self.logfile.print_message(
                     info(1306, "annotations"), indent=1, status=annots.info)
             else:
-                files_processed_success.append(out_name)
-                self.logfile.print_message(out_name, indent=1, status=annots.ok)
+                files_processed_success.extend(out_names)
+                self.logfile.print_message(out_names[0], indent=1, status=annots.ok)
             self.logfile.print_newline()
 
         # Indicate completed!

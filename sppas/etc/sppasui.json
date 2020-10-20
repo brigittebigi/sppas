@@ -112,7 +112,14 @@
       "id": "facemark",
       "config": "facemark.json",
       "cli": "facemark.py"
+    },
+
+    {
+      "id": "facetrack",
+      "config": "facetrack.json",
+      "cli": "facetracking.py"
     }
+
   ],
 
   "analyze": [

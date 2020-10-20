@@ -56,21 +56,19 @@ class TestConfiguration(unittest.TestCase):
     # ---------------------------------------------------------------------------
 
     def test_get_set_deps(self):
-        # Return(get_deps),
-        # add or modify(set_dep)
-        self.__configuration.set_dep("first", True)
-        y = self.__configuration.get_deps()
+        self.__configuration.set_feature("first", True)
+        y = self.__configuration.get_feature_ids()
         self.assertTrue("first" in y)
 
-        self.__configuration.set_dep("second", True)
-        y = self.__configuration.get_deps()
+        self.__configuration.set_feature("second", True)
+        y = self.__configuration.get_feature_ids()
         self.assertTrue("second" in y)
 
     # ---------------------------------------------------------------------------
 
-    def test_dep_installed(self):
+    def test_feature_installed(self):
         """Return True if a dependency is installed"""
-        self.assertFalse(self.__configuration.dep_installed("aaaa"))
+        self.assertFalse(self.__configuration.feature_installed("aaaa"))
         if os.path.exists(self.__configuration.cfg_filename()) is True:
-            self.assertTrue(self.__configuration.dep_installed("wxpython"))
-            self.assertTrue(self.__configuration.dep_installed("julius"))
+            self.assertTrue(self.__configuration.feature_installed("wxpython"))
+            self.assertTrue(self.__configuration.feature_installed("julius"))

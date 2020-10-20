@@ -107,15 +107,13 @@ class sppasInstallerDeps(object):
         self.__os = None
         self.__set_os()
         self.__installer = self.os()()
-        logging.debug("InstallerDeps .......")
         logging.info("System installer: {}"
                      "".format(self.__installer.__class__.__name__))
-        logging.debug("InstallerDeps ok ****** 1")
         if progress is not None:
-            logging.debug("set progress")
             self.__installer.set_progress(progress)
-            logging.debug("set progress done")
-        logging.debug("InstallerDeps ok OK ok")
+
+        # Update pip before any installation.
+        self.__installer.update_pip()
 
     # ------------------------------------------------------------------------
 
@@ -211,12 +209,12 @@ class sppasInstallerDeps(object):
 
     # ------------------------------------------------------------------------
 
-    def install(self):
+    def install(self, feat_type=None):
         """Launch the installation process.
 
         :return errors: (str) errors happening during installation.
 
         """
-        errors = self.__installer.install()
+        errors = self.__installer.install(feat_type)
         return errors
 

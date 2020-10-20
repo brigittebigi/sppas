@@ -51,11 +51,10 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas import sg, annots
+from sppas import sg
 from sppas import sppasLogSetup
 from sppas import sppasAppConfig
 
-from sppas.src.anndata.aio import extensions_out
 from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.annotations import sppasParam
 from sppas.src.annotations import sppasAnnotationsManager
@@ -135,10 +134,10 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-e",
         metavar=".ext",
-        default=annots.annot_extension,
-        choices=extensions_out,
+        default=parameters.get_default_outformat_extension("ANNOT"),
+        choices=parameters.get_outformat_extensions("ANNOT"),
         help='Output file extension. One of: {:s}'
-             ''.format(" ".join(extensions_out)))
+             ''.format(" ".join(parameters.get_outformat_extensions("ANNOT"))))
 
     # Add arguments from the options of the annotation
     # ------------------------------------------------
@@ -203,7 +202,7 @@ if __name__ == "__main__":
             ann.load_resources(args.r)
         ann.fix_options(parameters.get_options(ann_step_idx))
         if args.o:
-            ann.run([args.i], output_file=args.o)
+            ann.run([args.i], output=args.o)
         else:
             trs = ann.run([args.i])
             for a in trs[0]:
@@ -227,7 +226,7 @@ if __name__ == "__main__":
 
         # Fix the output file extension
         parameters.set_lang(args.l)
-        parameters.set_output_extension(args.e, parameters.get_outformat(ann_step_idx))
+        parameters.set_output_extension(args.e, "ANNOT")
         parameters.set_report_filename(args.log)
 
         # Perform the annotation

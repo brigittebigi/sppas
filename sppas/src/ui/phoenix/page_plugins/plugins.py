@@ -49,6 +49,7 @@ from ..windows import sppasToolbar
 from ..windows import Error, Information
 from ..windows import sppasChoiceDialog
 from ..windows import sppasFileDialog
+from ..windows import sppasStaticLine
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 
@@ -92,7 +93,7 @@ class sppasPluginsPanel(sppasPanel):
 
     """
 
-    HIGHLIGHT_COLOUR = wx.Colour(196, 128, 196, 196)
+    PLUGINS_COLOUR = wx.Colour(196, 128, 196, 196)
 
     def __init__(self, parent):
         super(sppasPluginsPanel, self).__init__(
@@ -131,6 +132,15 @@ class sppasPluginsPanel(sppasPanel):
         """
         self._pluginslist.set_data(data)
 
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        """Override. """
+        wx.Panel.SetForegroundColour(self, colour)
+        for c in self.GetChildren():
+            if c.GetName() != "hline":
+                c.SetForegroundColour(colour)
+
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
     # ------------------------------------------------------------------------
@@ -141,12 +151,24 @@ class sppasPluginsPanel(sppasPanel):
         fv = sppasPluginsList(self, name="pluginslist")
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(tb, proportion=0, flag=wx.EXPAND, border=0)
-        sizer.Add(fv, proportion=1, flag=wx.EXPAND, border=0)
+        sizer.Add(tb, 0, wx.EXPAND, border=0)
+        sizer.Add(self._create_hline(), 0, wx.EXPAND)
+        sizer.Add(fv, 1, wx.EXPAND, border=0)
         self.SetSizer(sizer)
 
         self.SetMinSize(wx.Size(sppasPanel.fix_size(320), sppasPanel.fix_size(200)))
         self.SetAutoLayout(True)
+
+    # -----------------------------------------------------------------------
+
+    def _create_hline(self):
+        """Create an horizontal line, used to separate the toolbar."""
+        line = sppasStaticLine(self, orient=wx.LI_HORIZONTAL, name="hline")
+        line.SetMinSize(wx.Size(-1, 20))
+        line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
+        line.SetDepth(1)
+        line.SetForegroundColour(self.PLUGINS_COLOUR)
+        return line
 
     # -----------------------------------------------------------------------
 
@@ -159,8 +181,8 @@ class sppasPluginsPanel(sppasPanel):
     def __create_toolbar(self):
         """Create the toolbar."""
         tb = sppasToolbar(self)
-        tb.set_focus_color(sppasPluginsPanel.HIGHLIGHT_COLOUR)
-        tb.AddTitleText(PGS_TITLE, sppasPluginsPanel.HIGHLIGHT_COLOUR)
+        tb.set_focus_color(sppasPluginsPanel.PLUGINS_COLOUR)
+        tb.AddTitleText(PGS_TITLE, sppasPluginsPanel.PLUGINS_COLOUR)
         tb.AddButton("plugin-import", PGS_ACT_ADD)
         tb.AddButton("plugin-delete", PGS_ACT_DEL)
         return tb

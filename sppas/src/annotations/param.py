@@ -84,9 +84,6 @@ class annotationParam(object):
         self.__api = None
         # The types this annotation can support
         self.__types = []
-        # The main output format type and the output extension
-        self.__out_format = annots.outformat[0]
-        self.__out_ext = self.get_default_out_extension()
         # The status of the annotation
         self.__enabled = False
         self.__invalid = False
@@ -122,8 +119,6 @@ class annotationParam(object):
             self.__name = msg(conf.get('name', ''), "annotations)")  # translate the name
             self.__descr = conf.get('descr', "")
             self.__types = conf.get('anntype', [annots.types[0]])
-            self.__out_format = conf.get('outformat', annots.outformat[0])
-            self.__out_ext = self.get_default_out_extension()
             self.__api = conf.get('api', None)
             if self.__api is None:
                 self.__enabled = False
@@ -202,67 +197,6 @@ class annotationParam(object):
     def get_types(self):
         """Return the list of types the annotation can support (list of str)."""
         return self.__types
-
-    # -----------------------------------------------------------------------
-
-    def get_default_out_extension(self):
-        """Return the default output extension this annotation can create."""
-        if self.__out_format == "ANNOT":
-            return annots.annot_extension
-        if self.__out_format == "IMAGE":
-            return annots.image_extension
-        if self.__out_format == "VIDEO":
-            return annots.video_extension
-        if self.__out_format == "AUDIO":
-            return annots.audio_extension
-
-        return ""
-
-    # -----------------------------------------------------------------------
-
-    def get_out_extension(self):
-        """Return the output extension this annotation will create."""
-        return self.__out_ext
-
-    # -----------------------------------------------------------------------
-
-    def get_out_format(self):
-        """Return the output type format of this annotation."""
-        return self.__out_format
-
-    # -----------------------------------------------------------------------
-
-    def get_out_extensions(self):
-        """Return the list of output extensions this annotation can support."""
-        if self.__out_format == "ANNOT":
-            return ["."+e for e in sppasRW.extensions_out()]
-        if self.__out_format == "IMAGE":
-            return image_extensions
-        if self.__out_format == "VIDEO":
-            return video_extensions
-        if self.__out_format == "AUDIO":
-            return audio_extensions
-
-        return list()
-
-    # -----------------------------------------------------------------------
-
-    def set_out_extension(self, ext):
-        """Set the output extension of the file this annotation will create.
-
-        :param ext: (str)
-        :return: Case-sensitive extension
-        :raise: ValueError if ext is not appropriate
-
-        """
-        for e in self.get_out_extensions():
-            if e.startswith(".") is False:
-                e = "." + e
-            if ext.lower() == e.lower():
-                self.__out_ext = e
-                return self.__out_ext
-
-        raise ValueError("{} not in supported formats {}".format(ext, self.get_out_extensions()))
 
     # -----------------------------------------------------------------------
 
@@ -380,6 +314,13 @@ class sppasParam(object):
         self.annotations = []
         self.load_annotations(annotation_keys)
 
+        # New in SPPAS 3.3
+        self._out_extensions = dict()
+        self._out_extensions["ANNOT"] = annots.annot_extension
+        self._out_extensions["IMAGE"] = annots.image_extension
+        self._out_extensions["VIDEO"] = annots.video_extension
+        self._out_extensions["AUDIO"] = annots.audio_extension
+
     # ------------------------------------------------------------------------
 
     def load_annotations(self, annotation_files=None):
@@ -404,7 +345,7 @@ class sppasParam(object):
         """Parse the sppasui.json file.
 
         Parse the file to get the list of annotations and parse the
-        corresponding "ini" file.
+        corresponding "json" file.
 
         """
         config = os.path.join(paths.etc, "sppasui.json")
@@ -427,10 +368,10 @@ class sppasParam(object):
         try:
             a = annotationParam(cfg_file)
             self.annotations.append(a)
-        except:
+        except Exception as e:
             a = None
-            logging.error('sppasAppConfig file {:s} not loaded.'
-                          ''.format(cfg_file))
+            logging.error('Configuration file {:s} not loaded: {}'
+                          ''.format(cfg_file, str(e)))
         return a
 
     # -----------------------------------------------------------------------
@@ -630,24 +571,6 @@ class sppasParam(object):
     # Annotation file output format
     # -----------------------------------------------------------------------
 
-    def get_output_extension(self, step):
-        """Return the output format of the annotation (extension)."""
-        return self.annotations[step].get_out_extension()
-
-    # -----------------------------------------------------------------------
-
-    def get_output_extensions(self, step):
-        """Return the list of supported extensions."""
-        return self.annotations[step].get_out_extensions()
-
-    # -----------------------------------------------------------------------
-
-    def get_outformat(self, step):
-        """Return the output format of the annotation."""
-        return self.annotations[step].get_out_format()
-
-    # -----------------------------------------------------------------------
-
     @staticmethod
     def get_outformat_extensions(out_format):
         """Return the list of output extensions an out_format can support."""
@@ -680,17 +603,35 @@ class sppasParam(object):
 
     # -----------------------------------------------------------------------
 
+    def get_output_extension(self, out_format):
+        """Return the output extension defined for an out_format."""
+        if out_format in annots.outformat:
+            return self._out_extensions[out_format]
+
+        return ""
+
+    # -----------------------------------------------------------------------
+
     def set_output_extension(self, output_ext, output_format):
         """Fix the output extension of all the annotations of a given out format.
 
         :param output_ext: (str) File extension (with or without a dot)
-        :param output_format: (str) Either annot, audio, video or image
+        :param output_format: (str) Either ANNOT, AUDIO, VIDEO OR IMAGE
+        :return: (str) the assigned extension
+        :raise: ValueError
 
         """
-        # Force to contain the dot
         if not output_ext.startswith("."):
             output_ext = "." + output_ext
 
-        for a in self.annotations:
-            if a.get_out_format() == output_format:
-                e = a.set_out_extension(output_ext)
+        for e in self.get_outformat_extensions(output_format):
+            if e.startswith(".") is False:
+                e = "." + e
+            if output_ext.lower() == e.lower():
+                self._out_extensions[output_format] = e
+                return e
+
+        raise ValueError("{} not in supported formats of {}"
+                         "".format(output_ext, output_format))
+
+

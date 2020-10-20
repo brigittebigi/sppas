@@ -32,9 +32,9 @@
 
 """
 
+import logging
 from random import randint
 import codecs
-import cv2
 import os
 
 from .coordinates import sppasCoords
@@ -43,8 +43,8 @@ from .image import sppasImage
 # ---------------------------------------------------------------------------
 
 
-class ImageWriterOptions(object):
-    """Class to manage options of a writer.
+class ImageCoordsWriterOptions(object):
+    """Class to manage options of an image writer.
 
     :author:       Florian Hocquet, Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -52,7 +52,7 @@ class ImageWriterOptions(object):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    Fix options to write an image and a set of coordinates:
+    Store the options to write an image and a set of coordinates:
 
     - write coordinates in a CSV file;
     - write the image with coordinates tagged by a square;
@@ -194,7 +194,7 @@ class ImageWriterOptions(object):
 # ---------------------------------------------------------------------------
 
 
-class sppasImageWriter(object):
+class sppasImageCoordsWriter(object):
     """Write an image and optionally coordinates into files.
 
     :author:       Florian Hocquet, Brigitte Bigi
@@ -230,7 +230,7 @@ class sppasImageWriter(object):
     # -----------------------------------------------------------------------
 
     def __init__(self):
-        """Create a new sppasImageWriter instance.
+        """Create a new sppasImageCoordsWriter instance.
 
         Write the given image in the given filename.
         Parts of the image can be extracted in separate image files and/or
@@ -239,8 +239,8 @@ class sppasImageWriter(object):
 
         """
         # Initialize the options manager
-        self.options = ImageWriterOptions()
-        self.__colors = sppasImageWriter.gen_colors(10)
+        self.options = ImageCoordsWriterOptions()
+        self.__colors = sppasImageCoordsWriter.gen_colors(10)
 
     # -----------------------------------------------------------------------
 
@@ -267,18 +267,26 @@ class sppasImageWriter(object):
         :param coords: (list or list of list of sppasCoords) The coordinates of objects
         :param out_img_name: (str) The filename of the output image file
         :param pattern: (str) Pattern to add to a cropped image filename
+        :return: List of created file names
 
         """
+        new_files = list()
         if self.options.csv is True:
             fn, fe = os.path.splitext(out_img_name)
             out_csv_name = fn + ".csv"
             self.write_csv_coords(coords, out_csv_name, out_img_name)
+            new_files.append(out_csv_name)
 
         if self.options.tag is True:
             self.write_tagged_img(image, coords, out_img_name)
+            new_files.append(out_img_name)
 
         if self.options.crop is True:
-            self.write_cropped_img(image, coords, out_img_name, pattern)
+            cropped_files = self.write_cropped_img(
+                image, coords, out_img_name, pattern)
+            new_files.extend(cropped_files)
+
+        return new_files
 
     # -----------------------------------------------------------------------
 
@@ -343,7 +351,7 @@ class sppasImageWriter(object):
         # Add colors if we need more
         if len(coords) > len(self.__colors):
             nb = max(10, len(coords) - len(self.__colors) + 1)
-            new_colors = sppasImageWriter.gen_colors(nb)
+            new_colors = sppasImageCoordsWriter.gen_colors(nb)
             self.__colors.update(new_colors)
 
         # Add squares at given coordinates
@@ -384,7 +392,7 @@ class sppasImageWriter(object):
                               self.options.get_height())
 
         # Save the tagged/resized image
-        cv2.imwrite(out_img_name, img)
+        img.write(out_img_name)
 
     # -----------------------------------------------------------------------
 
@@ -395,8 +403,10 @@ class sppasImageWriter(object):
         :param coords: (sppasCoords) The coordinates of objects
         :param out_img_name: (str) The filename of the output image files
         :param pattern: (str) Pattern to add to each file
+        :return: list of file names
 
         """
+        cropped_files = list()
         for i, c in enumerate(coords):
             # Fix the image filename
             fn, fe = os.path.splitext(out_img_name)
@@ -414,8 +424,10 @@ class sppasImageWriter(object):
                                   self.options.get_height())
 
             # Save the cropped image
-            # cv2.imwrite(out_iname, img)
             img.write(out_iname)
+            cropped_files.append(out_iname)
+
+        return cropped_files
 
     # -----------------------------------------------------------------------
 

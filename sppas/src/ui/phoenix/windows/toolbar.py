@@ -156,6 +156,30 @@ class sppasToolbar(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def AddWidget(self, wxwindow):
+        """Add a widget into the toolbar.
+
+        :param wxwindow: (wx.Window) Any window
+        :return: True if added, False if parent does not match.
+
+        """
+        if wxwindow.GetParent() is None:
+            # re-parent the widget
+            wxwindow.SetParent(self)
+        elif wxwindow.GetParent() != self:
+            return False
+
+        # Add the widget into the sizer
+        if self.GetSizer().GetOrientation() == wx.HORIZONTAL:
+            self.GetSizer().Add(wxwindow, 1, wx.LEFT | wx.RIGHT | wx.EXPAND, 2)
+        else:
+            self.GetSizer().Add(wxwindow, 1, wx.TOP | wx.BOTTOM | wx.EXPAND, 2)
+        self.Show(True)
+
+        return True
+
+    # -----------------------------------------------------------------------
+
     def AddTextButton(self, name="sppasButton", text=""):
         """Append a text button into the toolbar.
 
@@ -255,7 +279,7 @@ class sppasToolbar(sppasPanel):
         if color is not None:
             st.SetForegroundColour(color)
             self.__fg.append(st)
-        self.GetSizer().Add(st, 0, align | wx.ALL, 6)
+        self.GetSizer().Add(st, 0, align | wx.ALL, 2)
 
         return st
 
@@ -267,7 +291,6 @@ class sppasToolbar(sppasPanel):
 
         :param text: (str)
         :param color: (wx.Colour)
-        :param align: (int) alignment style
         :param name: (str)
 
         """
@@ -283,7 +306,7 @@ class sppasToolbar(sppasPanel):
             align = wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL
         else:
             align = wx.ALIGN_LEFT | wx.ALL
-        self.GetSizer().Add(st, 0, align, 6)
+        self.GetSizer().Add(st, 0, align, 2)
 
         return st
 
@@ -449,8 +472,20 @@ class TestPanel(wx.Panel):
         tbh.AddToggleButton("at", text="xxx", value=False, group_name="mail")
         tbh.AddToggleButton("gmail", text="yyy", value=True, group_name="mail")
 
+        # create a widget and add it to the toolbar
+        tbhh = sppasToolbar(self, orient=wx.HORIZONTAL)
+        tbhh.set_height(45)
+        doe = wx.Button(tbhh, label="wxButton")
+        returned = tbh.AddWidget(doe)
+        assert(returned is False)
+        returned = tbhh.AddWidget(doe)
+        assert(returned is True)
+        st = wx.StaticText(tbhh, label="wxStaticText")
+        tbhh.AddWidget(st)
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(tbh, 0, wx.EXPAND, 2)
+        sizer.Add(tbhh, 0, wx.EXPAND, 2)
         sizer.Add(sppasPanel(self), 1, wx.EXPAND, 2)
         self.SetSizer(sizer)
 

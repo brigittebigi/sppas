@@ -34,12 +34,12 @@
 
 from sppas.src.exceptions import NegativeValueError
 from sppas.src.exceptions import IntervalRangeException
-from .video import sppasVideo
+from .video import sppasVideoReader
 
 # ---------------------------------------------------------------------------
 
 
-class sppasVideoBuffer(sppasVideo):
+class sppasVideoReaderBuffer(sppasVideoReader):
     """Class to manage a video with a buffer of images.
 
     :author:       Florian Hocquet, Brigitte Bigi
@@ -54,7 +54,7 @@ class sppasVideoBuffer(sppasVideo):
     :Example:
 
     Initialize a VideoBuffer with a size of 100 images and overlap of 10:
-    >>> v = sppasVideoBuffer(video, 100, 10)
+    >>> v = sppasVideoReaderBuffer(video, 100, 10)
 
     Bufferize the next sequence of images of the video:
     >>> v.next()
@@ -66,25 +66,28 @@ class sppasVideoBuffer(sppasVideo):
 
     DEFAULT_BUFFER_SIZE = 200
     DEFAULT_BUFFER_OVERLAP = 0
+    MAX_MEMORY_SIZE = 1024*1024*512
+
+    # -----------------------------------------------------------------------
 
     def __init__(self, video=None,
-                 size=DEFAULT_BUFFER_SIZE,
+                 size=-1,
                  overlap=DEFAULT_BUFFER_OVERLAP):
-        """Create a new sppasVideoBuffer instance.
+        """Create a new sppasVideoReaderBuffer instance.
 
-        :param size: (int) Number if images of the buffer
+        :param size: (int) Number of images of the buffer or -1 for auto
         :param overlap: (overlap) The number of images to keep
         from the previous buffer
         :param video: (mp4, etc...) The video filename to browse
 
         """
-        super(sppasVideoBuffer, self).__init__()
+        super(sppasVideoReaderBuffer, self).__init__()
 
         # Initialization of the buffer size and buffer overlaps
-        self.__size = 0
+        self.__nb_img = 0
         self.__overlap = 0
-        self.set_size(size)
-        self.set_overlap(overlap)
+        self.set_buffer_size(size)
+        self.set_buffer_overlap(overlap)
 
         # List of images
         self.__data = list()
@@ -95,6 +98,8 @@ class sppasVideoBuffer(sppasVideo):
         # Initialization of the video
         if video is not None:
             self.open(video)
+            if size == -1:
+                self.set_buffer_size(size)
 
     # -----------------------------------------------------------------------
 
@@ -106,14 +111,14 @@ class sppasVideoBuffer(sppasVideo):
 
         """
         self.reset()
-        sppasVideo.open(self, video)
+        sppasVideoReader.open(self, video)
 
     # -----------------------------------------------------------------------
 
     def close(self):
         """Override. Release the flow taken by the reading of the video."""
         self.reset()
-        sppasVideo.close(self)
+        sppasVideoReader.close(self)
 
     # -----------------------------------------------------------------------
 
@@ -127,43 +132,58 @@ class sppasVideoBuffer(sppasVideo):
 
     # -----------------------------------------------------------------------
 
-    def get_size(self):
+    def get_buffer_size(self):
         """Return the defined size of the buffer."""
-        return self.__size
+        return self.__nb_img
 
     # -----------------------------------------------------------------------
 
-    def set_size(self, value):
+    def set_buffer_size(self, value=-1):
         """Set the size of the buffer.
 
         The new value is applied to the next buffer, it won't affect the
         currently in-use data.
+        A value of -1 will fix automatically the buffer to use
+        MAX_MEMORY_SIZE Gb of RAM.
 
         :param value: (int) The new size of the buffer.
         :raise: ValueError
 
         """
         value = int(value)
+        if value == -1:
+            if self.is_opened() is False:
+                w, h = 1920, 1080
+            else:
+                w, h = self.get_width(), self.get_height()
+            nbytes = w * h * 3  # uint8 for r, g, and b
+            value = sppasVideoReaderBuffer.MAX_MEMORY_SIZE // nbytes
+            if self.is_opened() is True and value > self.get_nframes():
+                value = self.get_nframes()
+
         if value <= 0:
             raise NegativeValueError(value)
-        if self.video_capture() is True and value > self.get_nframes():
-            raise IntervalRangeException(value, 1, self.get_nframes())
+
+        # The size of the buffer can't be larger than the video size
+        if self.is_opened() is True and value > self.get_nframes():
+            value = self.get_nframes()
+            # raise IntervalRangeException(value, 1, self.get_nframes())
 
         if self.__overlap >= value:
             raise ValueError("The already defined overlap value {:d} can't be "
                              "greater than the buffer size.")
 
-        self.__size = value
+        self.__nb_img = value
 
     # -----------------------------------------------------------------------
 
-    def get_overlap(self):
+    def get_buffer_overlap(self):
         """Return the overlap of the buffer."""
         return self.__overlap
 
     # -----------------------------------------------------------------------
 
-    def set_overlap(self, value):
+    def set_buffer_overlap(self, value):
         """Set the number of images to keep from the previous buffer.
 
         The new value is applied to the next buffer, it won't affect the
@@ -173,7 +193,7 @@ class sppasVideoBuffer(sppasVideo):
 
         """
         overlap = int(value)
-        if overlap >= self.__size or overlap < 0:
+        if overlap >= self.__nb_img or overlap < 0:
             raise ValueError
         self.__overlap = value
 
@@ -205,7 +225,7 @@ class sppasVideoBuffer(sppasVideo):
 
     # -----------------------------------------------------------------------
 
-    def get_range(self):
+    def get_buffer_range(self):
         """Return the indexes of the frames of the current buffer.
 
         :return: (tuple) start index, end index of the frames in the buffer
@@ -223,15 +243,15 @@ class sppasVideoBuffer(sppasVideo):
         :return: False if we reached the end of the video
 
         """
-        if self.video_capture() is False:
+        if self.is_opened() is False:
             return False
 
         # Fix the number of frames to read
-        nb_frames = self.__size - self.__overlap
+        nb_frames = self.__nb_img - self.__overlap
         # But if it's the first frame loading, we'll fill in the buffer of the
         # full size, i.e. no overlap is to be applied.
         if self.__buffer_idx[1] == -1:
-            nb_frames = self.__size
+            nb_frames = self.__nb_img
 
         # Set the beginning position to read in the video
         start_frame = self.__buffer_idx[1] + 1
@@ -242,7 +262,7 @@ class sppasVideoBuffer(sppasVideo):
         next_frame = self.tell()
 
         # Update the buffer and the frame indexes with the current result
-        delta = self.__size - self.__overlap
+        delta = self.__nb_img - self.__overlap
         self.__data = self.__data[delta:]
         self.__buffer_idx = (start_frame - len(self.__data), next_frame - 1)
         self.__data.extend(result)

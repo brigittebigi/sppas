@@ -36,10 +36,11 @@
 :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
 :contact:      contact@sppas.org
 :license:      GPL, v3
-:copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+:copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 :summary:      Other-Repetitions automatic annotation.
 
 """
+
 import sys
 import os
 from argparse import ArgumentParser
@@ -70,7 +71,6 @@ if __name__ == "__main__":
     parameters = sppasParam(["lexrep.json"])
     ann_step_idx = parameters.activate_annotation("spklexrep")
     ann_options = parameters.get_options(ann_step_idx)
-    extensions_out = parameters.get_output_extensions(ann_step_idx)
 
     # -----------------------------------------------------------------------
     # Verify and extract args:
@@ -94,41 +94,49 @@ if __name__ == "__main__":
     # ------------------------------------
 
     group_wkp = parser.add_argument_group('Files (auto)')
+
     group_wkp.add_argument(
         "-w",
         metavar="wkp",
         help='Workspace.')
+
     group_wkp.add_argument(
         "-l",
         metavar="lang",
         choices=parameters.get_langlist(ann_step_idx),
         help='Language code (iso8859-3). One of: {:s}.'
              ''.format(" ".join(parameters.get_langlist(ann_step_idx))))
+
     group_wkp.add_argument(
         "-e",
         metavar=".ext",
-        default=parameters.get_output_extension(ann_step_idx),
-        choices=extensions_out,
+        default=parameters.get_default_outformat_extension("ANNOT"),
+        choices=parameters.get_outformat_extensions("ANNOT"),
         help='Output file extension. One of: {:s}'
-             ''.format(" ".join(extensions_out)))
+             ''.format(" ".join(parameters.get_outformat_extensions("ANNOT"))))
+
     group_wkp.add_argument(
         "--log",
         metavar="file",
         help="File name for a Procedure Outcome Report (default: None)")
 
     group_io = parser.add_argument_group('Files (manual)')
+
     group_io.add_argument(
         "-i",
         metavar="file",
         help='Input file name with time-aligned tokens of speaker 1.')
+
     group_io.add_argument(
         "-s",
         metavar="file",
         help='Input file name with time-aligned tokens of speaker 2.')
+
     group_io.add_argument(
         "-o",
         metavar="file",
         help='Output file name with other-repetitions.')
+
     group_io.add_argument(
         "-r",
         help='List of stop-words')
@@ -194,7 +202,7 @@ if __name__ == "__main__":
         ann.load_resources(args.r)
         ann.fix_options(parameters.get_options(ann_step_idx))
         if args.o:
-            ann.run([args.i, args.s], output_file=args.o)
+            ann.run([args.i, args.s], output=args.o)
         else:
             trs = ann.run([args.i, args.s])
 
@@ -217,7 +225,7 @@ if __name__ == "__main__":
 
         # Fix the output file extension and others
         parameters.set_lang(args.l)
-        parameters.set_output_extension(args.e, parameters.get_outformat(ann_step_idx))
+        parameters.set_output_extension(args.e, "ANNOT")
         parameters.set_report_filename(args.log)
 
         # Perform the annotation

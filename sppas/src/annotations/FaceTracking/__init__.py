@@ -41,6 +41,14 @@
 Track faces of a video.
 This package requires video feature, for opencv and numpy dependencies.
 
+TODO:
+
+1. Debug et completer VideoWriter:
+    gestion du pattern comme pour les images (personne AVANT pattern)
+
+2. FaceDetection: au moment de la fusion, faire le filtrage selon
+   overlap apres passage en portrait
+
 """
 
 from sppas.src.config import cfg
@@ -56,7 +64,7 @@ class FaceTracking(object):
         raise sppasEnableFeatureError("video")
 
 
-class sppasFaceTracking(object):
+class sppasFaceTrack(object):
     def __init__(self, *args, **kwargs):
         raise sppasEnableFeatureError("video")
 
@@ -67,11 +75,11 @@ class sppasFaceTracking(object):
 # ---------------------------------------------------------------------------
 
 
-if cfg.dep_installed("video"):
+if cfg.feature_installed("video"):
     from .facetrack import FaceTracking
-    # from .sppasfacetracking import sppasFaceTracking
+    from .sppasfacetrack import sppasFaceTrack
 
 __all__ = (
-    'FaceTracking',
-    # 'sppasFaceTracking'
+    "FaceTracking",
+    "sppasFaceTrack"
 )

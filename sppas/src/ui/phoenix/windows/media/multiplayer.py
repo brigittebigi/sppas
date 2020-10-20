@@ -65,14 +65,14 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     Observed differences:
         - Linux (Gstreamer): about 2-3 ms
         - MacOS (AvPlayer): about 11-13 ms
-        - WindowsInstaller (Wmp10): to do
+        - Windows (Wmp10): to do
 
     Notice that media are not displayed by this panel and it is supposed that
     all the given media are already loaded.
 
     Known problems while playing a media during a given period of time:
 
-     - Under WindowsInstaller, if a period is given to be played, the sound is played
+     - Under Windows, if a period is given to be played, the sound is played
        after the end is reached (about 400ms).
 
     """
@@ -129,33 +129,41 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
     def get_start_pos(self):
         """Return the start position in time (milliseconds)."""
-        return self._slider.GetRange()[0]
+        # s = self._slider.get_range()[0]
+        s = self._slider.GetRange()[0]
+        return s  # int(s * 1000.)
 
     # -----------------------------------------------------------------------
 
     def get_end_pos(self):
         """Return the end position in time (milliseconds)."""
-        return self._slider.GetRange()[1]
+        # e = self._slider.get_range()[1]
+        e = self._slider.GetRange()[1]
+        return e  #  int(e * 1000.)
 
     # -----------------------------------------------------------------------
 
     def get_pos(self):
         """Return the current position in time (milliseconds)."""
-        return self._slider.GetValue()
+        # p = self._slider.get_pos()
+        p = self._slider.GetValue()
+        return p  # int(p * 1000.)
 
     # -----------------------------------------------------------------------
 
     def set_range(self, start=None, end=None):
-        """Fix period to be played (milliseconds).
+        """Fix the period to draw (milliseconds).
 
-        The slider range, its position and the media position are modified.
+        It is also the period to be played if the toggle button of the
+        visible part is selected. Then, the slider range, its position
+        and the media position are modified.
 
         It is not verified that given end value is not larger than the
         length: it allows to fix the range before the media are defined.
 
         In theory, this range would be as wanted, but some backends have
         serious limitations:
-        - Under WindowsInstaller, the end offset is not respected. It's continuing to
+        - Under Windows, the end offset is not respected. It's continuing to
         play about 400ms after the end offset.
         - Under MacOS, a period less than 1 sec is not played at all and it
         must start at X*1000 ms.
@@ -186,7 +194,13 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         self._slider.SetRange(start, end)
         self._slider.Layout()
         self._slider.Refresh()
+
         self.media_seek(start)
+        # TODO when slider will be a TimeSliderPanel:
+        # s, _ = self._slider.get_range()
+        # s = int(s * 1000.)
+        # if s != self.get_pos():
+        #     self.media_seek(s)
 
         for m in self.__media:
             m.SetDrawPeriod(start, end)
@@ -201,13 +215,16 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         Notice that it sets only the slider and not the position in the media.
 
+        :param offset: (int) Time value in milliseconds
+
         """
         assert int(offset) >= 0
-        if offset < self.start_pos or offset > self.end_pos:
+        if (offset+5) < self.start_pos or (offset+5) > self.end_pos:
             wx.LogError("Current range is [%d, %d], but requested offset is %d"
                         "" % (self.start_pos, self.end_pos, offset))
             raise IntervalRangeException(offset, self.start_pos, self.end_pos)
 
+        # self._slider.set_pos(float(offset) / 1000.)
         self._slider.SetValue(offset)
 
     # -----------------------------------------------------------------------
@@ -249,18 +266,28 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
             self._length = max(m.Length() for m in self.__media)
             # fix the largest range and seek at the beginning of the period
             self.set_range()
+            # TODO: when the slider will be a TimeSliderPanel
+            # self._slider.set_duration(1000. * float(self._length))
+            # self._slider.Layout()
+            # self._slider.Refresh()
+            # s, e = self._slider.get_range()
+            # s = 1000. * float(s)
+            # e = 1000. * float(e)
+            # if s != self.get_start_pos() or e != self.get_end_pos():
+            #     self.set_range(s, e)
 
         return len(self.__media)
 
     # -----------------------------------------------------------------------
 
-    def add_media(self, media):
+    def add_media(self, media, filename=None):
         """Add a media into the list of media managed by this control.
 
-        Re-evaluate our length, but do not set the range.
+        Re-evaluate our length, and set the range.
         Seek at the beginning of the range.
 
-        :param media:
+        :param media: ()
+        :param filename: (str)
         :return: (bool)
 
         """
@@ -269,13 +296,17 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         ok = self.__append_media(media)
         if ok is True:
+            wx.LogDebug("Media of file {} was added to the multi-player."
+                        "".format(str(filename)))
             # re-evaluate length
             self._length = max(m.Length() for m in self.__media)
 
             # seek the new media to the current position is not possible with
             # macOS AvPlayer backend which must seek to X*1000 ms...
             # we'll seek all the media at the current start pos.
-            self.media_seek(self.start_pos)
+            cur_start = self.start_pos
+            self.set_range()
+            self.media_seek(cur_start)
 
         return ok
 
@@ -292,6 +323,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
             return False
         media.Stop()
         self.__media.remove(media)
+        wx.LogDebug("Media was removed to the multi-player.")
 
         # re-evaluate length
         if len(self.__media) > 0:
@@ -368,15 +400,14 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
             force_pause = True
 
         try:
-            wx.LogDebug("Media seek to position {}".format(offset))
+            # Debug("Media seek to position {}".format(offset))
             self.set_pos(offset)
             for m in self.__media:
                 m.Seek(offset)
-                wx.LogDebug(" -> tell after seek: {}".format(m.Tell()))
+                # wx.LogDebug(" -> tell after seek: {}".format(m.Tell()))
 
         except IntervalRangeException as e:
-            wx.LogDebug("Media seek error")
-            wx.LogError(str(e))
+            wx.LogError("Media seek error: {:s}".format(str(e)))
             return
 
         if force_pause is True:
@@ -485,7 +516,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
         There's a delay (about 450-500ms) between the moment the timer
         started and the moment the media really starts to play.
 
-        Under WindowsInstaller:
+        Under Windows:
         The media is continuing to play after we requested it to stop
         (about 200ms-300ms).
 
@@ -502,7 +533,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         # Move the slider at the new position, except if out of range
         try:
-            wx.LogDebug("On timer. set position to {}".format(new_pos))
+            # wx.LogDebug("On timer. set position to {}".format(new_pos))
             self.set_pos(new_pos)
         except IntervalRangeException:
             self.stop()
@@ -529,7 +560,7 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
 
         # check where the media really are in time
         values = [m.Tell() for m in self.__media]
-        wx.LogMessage(" ... Positions (ms) in the media: %s." % str(values))
+        # wx.LogDebugMessage Positions (ms) in the media: %s." % str(values))
         max_pos = max(values)
 
         # Cant re-synchronize under MacOS, either Seek:
@@ -579,7 +610,8 @@ class sppasMultiPlayerPanel(sppasPlayerControlsPanel):
     def __media_audio_properties(self, media):
         audio_prop = media.GetAudioProperties()
         if audio_prop is not None:
-            # by default, show the waveform of audio files
+            # by default, show only the waveform of audio files
+            audio_prop.EnableInfos(False)
             audio_prop.EnableWaveform(True)
             w = audio_prop.get_waveform()
             # disable the border of the waveform

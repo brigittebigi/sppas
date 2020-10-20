@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.tests.test_panels.py
+    src.ui.phoenix.page_editor.test_editor.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -40,10 +40,19 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
-import sppas.src.ui.phoenix.anz_panels.option as option
-import sppas.src.ui.phoenix.anz_panels.ann as ann
-import sppas.src.ui.phoenix.anz_panels.tierlist as tierlist
-import sppas.src.ui.phoenix.anz_panels.tiers as tiers
+import sppas.src.ui.phoenix.page_editor.annlabels as annlabels
+import sppas.src.ui.phoenix.page_editor.tiersbook as tiersbook
+import sppas.src.ui.phoenix.page_editor.tiersanns as tiersanns
+
+import sppas.src.ui.phoenix.page_editor.basefileedit as baseview
+import sppas.src.ui.phoenix.page_editor.errfileedit as errview
+import sppas.src.ui.phoenix.page_editor.mediafileedit as mediaview
+import sppas.src.ui.phoenix.page_editor.trsfileedit as trsview
+import sppas.src.ui.phoenix.page_editor.filesedit as filesview
+
+import sppas.src.ui.phoenix.page_editor.editorpanel as editorpanel
+import sppas.src.ui.phoenix.page_editor.editor as editor
+
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -57,16 +66,29 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        self.SetBackgroundColour(wx.Colour(100, 100, 100))
-        self.SetForegroundColour(wx.Colour(0, 0, 10))
+        p = annlabels.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = tiersbook.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = tiersanns.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
-        # Make the bunch of test anz_panels for the choice book
-        self.AddPage(tiers.TestPanel(self), "Tiers edit window")
-        self.AddPage(tierlist.TestPanel(self), "Tierctrl list")
-        self.AddPage(ann.TestPanel(self), "Annotation edit panel")
+        p = baseview.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = errview.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = mediaview.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = trsview.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = filesview.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
-        op = option.TestPanel(self)
-        self.AddPage(op, op.GetName())
+        p = editorpanel.TestPanel(self)
+        self.AddPage(p, p.GetName())
+
+        p = editor.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
@@ -81,6 +103,7 @@ class TestPanel(wx.Choicebook):
 
         """
         key_code = event.GetKeyCode()
+        # logging.debug('Test panel received the key event {:d}'.format(key_code))
 
         # Keeps on going the event to the current page of the book.
         event.Skip()

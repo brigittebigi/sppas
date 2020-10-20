@@ -48,9 +48,12 @@ digits per second,
 from .entropy import sppasEntropy
 from .kullbackleibler import sppasKullbackLeibler
 from .perplexity import sppasPerplexity
+from .utilit import find_ngrams, symbols_to_items
 
 __all__ = [
         "sppasEntropy",
         "sppasKullbackLeibler",
-        "sppasPerplexity"
+        "sppasPerplexity",
+        "find_ngrams",
+        "symbols_to_items"
 ]

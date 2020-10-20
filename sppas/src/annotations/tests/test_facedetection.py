@@ -35,12 +35,11 @@
 
 import os
 import unittest
-import numpy as np
 
 from sppas.src.config import paths
 from sppas.src.imgdata import sppasCoords
 from sppas.src.imgdata import sppasImage
-from sppas.src.imgdata import sppasImageWriter
+from sppas.src.imgdata import sppasImageCoordsWriter
 
 from sppas.src.imgdata import HaarCascadeDetector
 from sppas.src.imgdata import NeuralNetDetector
@@ -94,7 +93,8 @@ class TestFaceDetection(unittest.TestCase):
         fd.invalidate()
         fd._coords.append(sppasCoords(200, 200, 150, 150))
         fd.to_portrait(img)
-        self.assertEqual(fd[0], sppasCoords(118, 146, 315, 315))
+        # x-axis is centered, y-axis is 1.25 at bottom
+        self.assertEqual(fd[0], sppasCoords(118, 135, 315, 315))
 
         # coords at top-left (can't fully shift x and y)
         fd.invalidate()
@@ -112,7 +112,7 @@ class TestFaceDetection(unittest.TestCase):
         fd.invalidate()
         fd._coords.append(sppasCoords(1546, 253, 276, 276))
         fd.to_portrait(img)
-        self.assertEqual(fd[0], [1053, 153, 579, 579])
+        self.assertEqual(fd[0], [1053, 133, 579, 579])
 
     # ------------------------------------------------------------------------
 
@@ -126,10 +126,10 @@ class TestFaceDetection(unittest.TestCase):
 
         self.assertFalse((0, 0, 97, 117) in fd)
         try:
-            # linux, python 3.6, opencv 4.?
+            # Linux, Python 3.6, opencv 4.4.0
             self.assertTrue(sppasCoords(927, 238, 97, 117) in fd)
         except AssertionError:
-            # windows10, python 3.8, opencv 4.2.0
+            # Windows10, Python 3.8, opencv 4.2.0
             self.assertTrue(sppasCoords(925, 239, 97, 117) in fd)
 
     # ------------------------------------------------------------------------
@@ -185,7 +185,7 @@ class TestFaceDetection(unittest.TestCase):
         fd = FaceDetection()
         fn = os.path.join(DATA, "montage.png")
         img = sppasImage(filename=fn)
-        w = sppasImageWriter()
+        w = sppasImageCoordsWriter()
         w.set_options(tag=True)
 
         fd.load_model(HAAR3, HAAR1, HAAR2, NET)
@@ -257,7 +257,7 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
         fd = FaceDetection()
         fn = os.path.join(DATA, "montage.png")   # 3 faces should be found
         img = sppasImage(filename=fn)
-        w = sppasImageWriter()
+        w = sppasImageCoordsWriter()
         w.set_options(tag=True)
 
         # With the profile model
@@ -266,9 +266,9 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
 
         # with the default min score
         fd.detect(img)
-        # coords = [c.copy() for c in fd]
-        # fn = os.path.join(DATA, "montage-haarprofilefaces.png")
-        # w.write(img, coords, fn)
+        coords = [c.copy() for c in fd]
+        fn = os.path.join(DATA, "montage-haarprofilefaces.png")
+        w.write(img, coords, fn)
         self.assertEqual(4, len(fd))
 
         # will detect the same because haar system is normalizing weights
@@ -285,41 +285,44 @@ class TestHaarCascadeFaceDetection(unittest.TestCase):
         fd.set_min_score(FaceDetection.DEFAULT_MIN_SCORE)
         fd.load_model(HAAR2)
         fd.detect(img)
-        # coords = [c.copy() for c in fd]
-        # fn = os.path.join(DATA, "montage-haarfrontfaces.png")
-        # w.write(img, coords, fn)
-        self.assertEqual(6, len(fd))
+        coords = [c.copy() for c in fd]
+        fn = os.path.join(DATA, "montage-haarfrontfaces1.png")
+        w.write(img, coords, fn)
+        self.assertEqual(5, len(fd))
 
         # With the frontal model 2
         # ------------------------
         fd.load_model(HAAR3)
         fd.detect(img)
+        coords = [c.copy() for c in fd]
+        fn = os.path.join(DATA, "montage-haarfrontfaces2.png")
+        w.write(img, coords, fn)
         self.assertEqual(2, len(fd))
 
         # With both models 1 & 2
         # ----------------------
         fd.load_model(HAAR1, HAAR2)
         fd.detect(img)
-        self.assertEqual(5, len(fd))
+        self.assertEqual(4, len(fd))
 
         # With both models 1 & 3
         # ----------------------
-        fd.load_model(HAAR1, HAAR2)
+        fd.load_model(HAAR1, HAAR3)
         fd.detect(img)
-        self.assertEqual(5, len(fd))
+        self.assertEqual(3, len(fd))
 
         # With both models 2 & 3
         # ----------------------
-        fd.load_model(HAAR1, HAAR2)
+        fd.load_model(HAAR3, HAAR2)
         fd.detect(img)
-        self.assertEqual(5, len(fd))
+        self.assertEqual(4, len(fd))
 
         # With all 3 models
         # ----------------------
         fd.load_model(HAAR1, HAAR2, HAAR3)
         fd.detect(img)
 
-        w = sppasImageWriter()
+        w = sppasImageCoordsWriter()
         w.set_options(tag=True)
         fn = os.path.join(DATA, "montage-faces.png")
         w.write(img, [c.copy() for c in fd], fn)
@@ -388,7 +391,7 @@ class TestDNNFaceDetection(unittest.TestCase):
         # --------------------------------------------------------
         fd.to_portrait(img)
         coords = fd.get_best()
-        self.assertTrue(coords in ([789, 153, 371, 405], [789, 154, 371, 396]))
+        self.assertTrue(coords in ([789, 139, 371, 405], [789, 140, 371, 396]))
         cropped = sppasImage(input_array=img.icrop(coords))
 
         fn_detected = os.path.join(DATA, "BrigitteBigiSlovenie2016-portrait.jpg")
@@ -419,7 +422,7 @@ class TestDNNFaceDetection(unittest.TestCase):
         fd.detect(img)
         coords = [c.copy() for c in fd]
 
-        w = sppasImageWriter()
+        w = sppasImageCoordsWriter()
         w.set_options(tag=True)
         fn = os.path.join(DATA, "montage-dnnfaces.png")
         w.write(img, coords, fn)

@@ -39,6 +39,9 @@ from sppas.src.config import paths
 from sppas.src.anndata import sppasRW
 from sppas.src.wkps import States, FileName, FileRoot, FilePath, sppasWorkspace
 from sppas.src.ui import sppasTrash
+from sppas.src.videodata import video_extensions
+from sppas.src.imgdata import image_extensions
+from sppas.src.audiodata import audio_extensions
 
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
@@ -48,6 +51,7 @@ from ..windows.image import ColorizeImage
 from ..windows import sppasListCtrl
 from ..tools import sppasSwissKnife
 from ..main_events import DataChangedEvent
+from ..views import sppasTextEditDialog, EVT_CLOSE_EDIT
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when an item is clicked.
@@ -95,9 +99,16 @@ class FileAnnotIcon(object):
 
         """
         self.__exticon = dict()
-        self.__exticon['.WAV'] = "Audio"
-        self.__exticon['.WAVE'] = "Audio"
 
+        # Add multimedia extensions
+        for ext in audio_extensions:
+            self.__exticon[ext.upper()] = "audio"
+        for ext in image_extensions:
+            self.__exticon[ext.upper()] = "image"
+        for ext in video_extensions:
+            self.__exticon[ext.upper()] = "video"
+
+        # Add annotated files extensions
         for ext in sppasRW.TRANSCRIPTION_TYPES:
             software = sppasRW.TRANSCRIPTION_TYPES[ext]().software
             if ext.startswith(".") is False:
@@ -294,6 +305,25 @@ class FileTreeViewPanel(sppasScrolledPanel):
 
     # ------------------------------------------------------------------------
 
+    def EditCheckedFiles(self):
+        """Edit all checked files in a text editor."""
+        checked_fn = self.GetCheckedFiles()
+        checked_files = [fn.id for fn in checked_fn]
+
+        editor = sppasTextEditDialog(self, checked_files)
+        nb_loaded = 0
+        for fn, filename in zip(checked_fn, checked_files):
+            if editor.is_loaded(filename) is True:
+                nb_loaded += 1
+                self.change_state(fn, States().LOCKED)
+
+        if nb_loaded > 0:
+            self.Notify()
+
+        editor.Show()
+
+    # ------------------------------------------------------------------------
+
     def GetCheckedFiles(self):
         """Return the list of checked files.
 
@@ -459,9 +489,9 @@ class FileTreeViewPanel(sppasScrolledPanel):
         p.GetPane().Bind(EVT_ITEM_CLICKED, self._process_item_clicked)
 
         if idx == -1:
-            self.GetSizer().Add(p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(4))
+            self.GetSizer().Add(p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(6))
         else:
-            self.GetSizer().Insert(idx, p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(4))
+            self.GetSizer().Insert(idx, p, 0, wx.EXPAND | wx.ALL, border=sppasPanel.fix_size(6))
 
         self.__fps[fp.get_id()] = p
         return p
@@ -540,6 +570,7 @@ class FileTreeViewPanel(sppasScrolledPanel):
         self.Bind(EVT_ITEM_CLICKED, self._process_item_clicked)
 
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged)
+        self.Bind(EVT_CLOSE_EDIT, self._process_editor_closed)
 
     # ------------------------------------------------------------------------
 
@@ -569,6 +600,26 @@ class FileTreeViewPanel(sppasScrolledPanel):
                 panel = self.__get_path_panel(fs)
                 if panel is not None:
                     panel.change_state(fs.get_id(), fs.get_state())
+
+    # ------------------------------------------------------------------------
+
+    def _process_editor_closed(self, event):
+        """Process an event: the editor dialog was closed.
+
+        :param event: (wx.Event)
+
+        """
+        filenames = event.files
+        if isinstance(filenames, (list, tuple)) is False:
+            filenames = [filenames]
+
+        for filename in filenames:
+            filebase = self.__data.get_object(filename)
+            cur_state = filebase.get_state()
+            if cur_state == States().LOCKED:
+                self.change_state(filebase, States().CHECKED)
+
+        self.Notify()
 
     # ------------------------------------------------------------------------
 
@@ -1161,8 +1212,9 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
 
     def __create_listctrl(self, parent):
         """Create a listctrl to display files."""
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL | wx.LC_HRULES
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL  # | wx.LC_HRULES
         lst = sppasListCtrl(parent, style=style, name="listctrl_files")
+        lst.SetAlternateRowColour(False)
 
         info = wx.ListItem()
         info.Mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
@@ -1206,7 +1258,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
             icon_name = STATES_ICON_NAMES[state]
             bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
             img = bitmap.ConvertToImage()
-            ColorizeImage(img, wx.BLACK, self.GetForegroundColour())
+            # ColorizeImage(img, wx.BLACK, self.GetForegroundColour())
             il.Add(wx.Bitmap(img))
             self.__ils.append(icon_name)
 

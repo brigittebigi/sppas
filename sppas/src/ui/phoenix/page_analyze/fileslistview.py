@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_analyze.anz_listviews.py
+    ui.phoenix.page_analyze.fileslistview.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -44,22 +44,21 @@ import sppas.src.anndata.aio
 from sppas.src.config import msg
 from sppas.src.utils import u
 
-from ..windows import sppasToolbar
-from ..windows import sppasPanel
+from ..windows.panels import sppasPanel
+from ..windows.panels import sppasScrolledPanel
 from ..windows.dialogs import sppasProgressDialog
 from ..windows.dialogs import sppasChoiceDialog
-from ..windows.dialogs import sppasTextEntryDialog
 from ..windows.dialogs import Confirm
 from ..views import MetaDataEdit
 from ..views import TiersView
 from ..views import StatsView
 from ..views import sppasTiersSingleFilterDialog
 from ..views import sppasTiersRelationFilterDialog
+from ..main_events import ViewEvent, EVT_VIEW
 
-from .anz_baseviews import BaseViewFilesPanel
-from .listview import AudioListViewPanel
-from .listview import TrsListViewPanel
-TIER_BG_COLOUR = wx.Colour(180, 230, 250, 128)
+from .errfilelist import ErrorFileSummaryPanel
+from .medialist import AudioSummaryPanel
+from .trslist import TrsSummaryPanel
 
 # ----------------------------------------------------------------------------
 
@@ -68,31 +67,10 @@ def _(message):
     return u(msg(message, "ui"))
 
 
-MSG_CONFIRM = u(msg("Confirm?"))
-MSG_TIERS = u(msg("Tiers: "))
-MSG_ANNS = u(msg("Annotations: "))
-TIER_MSG_ASK_NAME = u(msg("New name of the checked tiers: "))
-TIER_MSG_ASK_REGEXP = u(msg("Check tiers with name matching: "))
-TIER_MSG_ASK_RADIUS = u(msg("Radius value of the checked tiers: "))
-TIER_ACT_METADATA = u(msg("Metadata"))
-TIER_ACT_CHECK = u(msg("Check"))
-TIER_ACT_UNCHECK = u(msg("Uncheck"))
-TIER_ACT_RENAME = u(msg("Rename"))
-TIER_ACT_DELETE = u(msg("Delete"))
-TIER_ACT_CUT = u(msg("Cut"))
-TIER_ACT_COPY = u(msg("Copy"))
-TIER_ACT_PASTE = u(msg("Paste"))
-TIER_ACT_DUPLICATE = u(msg("Duplicate"))
-TIER_ACT_MOVE_UP = u(msg("Move Up"))
-TIER_ACT_MOVE_DOWN = u(msg("Move Down"))
-TIER_ACT_RADIUS = u(msg("Radius"))
-TIER_ACT_ANN_VIEW = u(msg("View"))
-TIER_ACT_STAT_VIEW = u(msg("Statistics"))
-TIER_ACT_SINGLE_FILTER = u(msg("Single Filter"))
-TIER_ACT_RELATION_FILTER = u(msg("Relation Filter"))
-TIER_MSG_CONFIRM_DEL = \
-    u(msg("Are you sure to delete {:d} tiers of {:d} files? "
-          "The process is irreversible."))
+MSG_CLOSE = _("Close")
+
+CLOSE_CONFIRM = _("The file contains not saved work that will be "
+                  "lost. Are you sure you want to close?")
 TIER_REL_WITH = u(msg("Name of the tier to be in relation with: "))
 
 # ----------------------------------------------------------------------------
@@ -167,8 +145,8 @@ class ListViewType(object):
 # ----------------------------------------------------------------------------
 
 
-class ListViewFilesPanel(BaseViewFilesPanel):
-    """Panel to display the list of opened files and their content.
+class ListViewFilesPanel(sppasScrolledPanel):
+    """Panel to display a list of files and a summary of their content.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -178,12 +156,32 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
     """
 
-    def __init__(self, parent, name="listviewfiles", files=tuple()):
-        super(ListViewFilesPanel, self).__init__(
-            parent,
-            name=name,
-            files=files)
+    def __init__(self, parent, name="summaryfiles_panel"):
+        super(ListViewFilesPanel, self).__init__(parent, name=name)
+
+        # The files of this panel (key=name, value=wx.SizerItem)
+        self._files = dict()
         self.__clipboard = list()
+        self._hicolor = wx.Colour(200, 200, 180)
+
+        self._create_content()
+
+        # Look&feel
+        try:
+            self.SetBackgroundColour(wx.GetApp().settings.bg_color)
+            self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            self.SetFont(wx.GetApp().settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
+
+        self.Layout()
+        self.SetupScrolling(scroll_x=True, scroll_y=True)
+
+    # -----------------------------------------------------------------------
+
+    def GetHighLightColor(self):
+        """Get the color to highlight buttons."""
+        return self._hicolor
 
     # -----------------------------------------------------------------------
 
@@ -200,23 +198,64 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
     # -----------------------------------------------------------------------
 
-    def can_edit(self):
-        """Return True if this view can edit/save the file content.
+    def SetBackgroundColour(self, colour):
+        wx.Window.SetBackgroundColour(self, colour)
+        self.SetChildrenBackgroundColour()
 
-        Override base class.
+    # -----------------------------------------------------------------------
 
-        The methods 'is_modified' and 'save' should be implemented in the
-        view panel of each file.
-
-        """
-        return True
+    def SetChildrenBackgroundColour(self):
+        colour = self.GetBackgroundColour()
+        r, g, b = colour.Red(), colour.Green(), colour.Blue()
+        delta = 10
+        if (r + g + b) > 384:
+            cc = wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
+        else:
+            cc = wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
+        for c in self.GetChildren():
+            c.SetBackgroundColour(cc)
 
     # -----------------------------------------------------------------------
     # Manage the files
     # -----------------------------------------------------------------------
 
-    def _show_file(self, name):
-        """Create a ViewPanel to display a file.
+    def get_files(self):
+        """Return the list of filenames this panel is displaying."""
+        return list(self._files.keys())
+
+    # -----------------------------------------------------------------------
+
+    def is_modified(self, name=None):
+        """Return True if the content of the file has been changed.
+
+        :param name: (str) Name of a file. None for all files.
+
+        """
+        if name is not None:
+            page = self._files.get(name, None)
+            try:
+                changed = page.is_modified()
+                return changed
+            except:
+                return False
+
+        # All files
+        for name in self._files:
+            page = self._files.get(name, None)
+            try:
+                if page.is_modified() is True:
+                    return True
+            except:
+                pass
+
+        return False
+
+    # -----------------------------------------------------------------------
+    # Manage one file at a time
+    # -----------------------------------------------------------------------
+
+    def _add_file(self, name):
+        """Create a SummaryPanel to display a file.
 
         :param name: (str) Name of the file to view
         :return: wx.Window
@@ -224,196 +263,35 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         """
         if name is None:
             # In case we created a new file, it'll be a transcription!
-            panel = TrsListViewPanel(self.GetScrolledPanel(), filename=None)
+            panel = TrsSummaryPanel(self, filename=None)
             panel.SetHighLightColor(self._hicolor)
         else:
             with ListViewType() as tt:
                 if tt.GuessType(name) == tt.audio:
-                    panel = AudioListViewPanel(self.GetScrolledPanel(), filename=name)
+                    panel = AudioSummaryPanel(self, filename=name)
+
                 elif tt.GuessType(name) == tt.transcription:
-                    panel = TrsListViewPanel(self.GetScrolledPanel(), filename=name)
+                    panel = TrsSummaryPanel(self, filename=name)
                     panel.SetHighLightColor(self._hicolor)
+
                 elif tt.GuessType(name) == tt.unsupported:
                     raise IOError("File format not supported.")
+
                 elif tt.GuessType(name) == tt.unknown:
                     raise TypeError("Unknown file format.")
 
-        border = sppasPanel.fix_size(10)
-        self.GetScrolledSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.TOP | wx.BOTTOM, border)
-        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
-
         return panel
 
     # -----------------------------------------------------------------------
 
-    def _create_toolbar(self):
-        """Create the main toolbar.
-
-        :return: (sppasPanel, wx.Panel, sppasToolbar, ...)
-
-        """
-        panel = sppasPanel(self, name="toolbar_views")
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        tb1 = self._create_toolbar_tiers(panel)
-        tb1.SetMinSize(wx.Size(-1, panel.get_font_height()*4))
-        tb2 = self._create_toolbar_anns(panel)
-        tb2.SetMinSize(wx.Size(-1, panel.get_font_height()*4))
-        sizer.Add(tb1, 0, wx.ALIGN_LEFT | wx.EXPAND, 0)
-        sizer.Add(tb2, 0, wx.ALIGN_LEFT | wx.EXPAND, 0)
-        panel.SetSizerAndFit(sizer)
-        return panel
-
-    # -----------------------------------------------------------------------
-
-    def _create_toolbar_tiers(self, parent):
-        """Create a toolbar for actions on tiers. """
-        toolbar = sppasToolbar(parent, name="subtoolbar1")
-
-        # focus color of buttons performing an action on tiers
-        toolbar.set_focus_color(TIER_BG_COLOUR)
-        toolbar.AddTitleText(MSG_TIERS, TIER_BG_COLOUR)
-
-        b = toolbar.AddButton("tags", TIER_ACT_METADATA)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        b = toolbar.AddButton("tier_check", TIER_ACT_CHECK)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        b = toolbar.AddButton("tier_uncheck", TIER_ACT_UNCHECK)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        b = toolbar.AddButton("tier_rename", TIER_ACT_RENAME)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        b = toolbar.AddButton("tier_delete", TIER_ACT_DELETE)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        b = toolbar.AddButton("tier_cut", TIER_ACT_CUT)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        b = toolbar.AddButton("tier_copy", TIER_ACT_COPY)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        b = toolbar.AddButton("tier_paste", TIER_ACT_PASTE)
-        b.FocusColour = self._hicolor
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        b = toolbar.AddButton("tier_duplicate", TIER_ACT_DUPLICATE)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        b = toolbar.AddButton("tier_moveup", TIER_ACT_MOVE_UP)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        b = toolbar.AddButton("tier_movedown", TIER_ACT_MOVE_DOWN)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        toolbar.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
-        return toolbar
-
-    # -----------------------------------------------------------------------
-
-    def _create_toolbar_anns(self, parent):
-        """Create a toolbar for actions on annotations of tiers. """
-        toolbar = sppasToolbar(parent, name="subtoolbar2")
-
-        # focus color of buttons performing an action on tiers
-        toolbar.set_focus_color(wx.Colour(255, 230, 180, 128))
-        toolbar.AddTitleText(MSG_ANNS, wx.Colour(255, 230, 180, 128))
-
-        b = toolbar.AddButton("tier_radius", TIER_ACT_RADIUS)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        b = toolbar.AddButton("tier_ann_view", TIER_ACT_ANN_VIEW)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        b = toolbar.AddButton("tier_stat_view", TIER_ACT_STAT_VIEW)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        b = toolbar.AddButton("tier_filter_single", TIER_ACT_SINGLE_FILTER)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        b = toolbar.AddButton("tier_filter_relation", TIER_ACT_RELATION_FILTER)
-        b.LabelPosition = wx.BOTTOM
-        b.Spacing = 1
-
-        toolbar.AddSpacer(5)
-
-        toolbar.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
-        return toolbar
-
-    # -----------------------------------------------------------------------
-
-    def _process_toolbar_event(self, event):
-        """Process a button of the toolbar event.
-
-        :param event: (wx.Event)
-
-        """
-        wx.LogDebug("Toolbar Event received by {:s}".format(self.GetName()))
-        btn = event.GetEventObject()
-        btn_name = btn.GetName()
-
-        if btn_name == "tags":
-            self.metadata_tiers()
-        elif btn_name == "tier_check":
-            self.check_tiers()
-        elif btn_name == "tier_uncheck":
-            self.uncheck_tiers()
-        elif btn_name == "tier_rename":
-            self.rename_tiers()
-        elif btn_name == "tier_delete":
-            self.delete_tiers()
-        elif btn_name == "tier_cut":
-            self.cut_tiers()
-        elif btn_name == "tier_copy":
-            self.copy_tiers()
-        elif btn_name == "tier_paste":
-            self.paste_tiers()
-        elif btn_name == "tier_duplicate":
-            self.duplicate_tiers()
-        elif btn_name == "tier_moveup":
-            self.move_tiers(up=True)
-        elif btn_name == "tier_movedown":
-            self.move_tiers(up=False)
-        elif btn_name == "tier_radius":
-            self.radius_tiers()
-        elif btn_name == "tier_stat_view":
-            self.view_stats_tiers()
-        elif btn_name == "tier_ann_view":
-            self.view_anns_tiers()
-        elif btn_name == "tier_filter_single":
-            self.single_filter_tiers()
-        elif btn_name == "tier_filter_relation":
-            self.relation_filter_tiers()
-
-        else:
-            event.Skip()
-
-    # -----------------------------------------------------------------------
-
-    def __get_checked_nb(self):
+    def get_checked_nb(self):
         """Return the number of checked files and checked tiers."""
         nbf = 0
         nbt = 0
         # How many checked tiers into how many files
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
+            if isinstance(panel, TrsSummaryPanel):
                 nb_checks = panel.get_nb_checked_tier()
                 if nb_checks > 0:
                     nbf += 1
@@ -428,26 +306,18 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         tiers = list()
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
+            if isinstance(panel, TrsSummaryPanel):
                 tiers.extend(panel.get_checked_tier())
 
         MetaDataEdit(self, tiers)
 
     # -----------------------------------------------------------------------
 
-    def check_tiers(self):
-        """Ask for a name and check tiers."""
-        dlg = sppasTextEntryDialog(
-            TIER_MSG_ASK_REGEXP, caption=TIER_ACT_CHECK, value="")
-        if dlg.ShowModal() == wx.ID_CANCEL:
-            wx.LogMessage("Check: cancelled.")
-            return
-        tier_name = dlg.GetValue()
-        dlg.Destroy()
-
+    def check_tiers(self, tier_name):
+        """Check tiers of the given name."""
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
+            if isinstance(panel, TrsSummaryPanel):
                 try:
                     panel.check_tier(tier_name)
                 except Exception as e:
@@ -460,29 +330,16 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         """Uncheck tiers."""
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
+            if isinstance(panel, TrsSummaryPanel):
                 panel.uncheck_tier()
 
     # -----------------------------------------------------------------------
 
-    def rename_tiers(self):
-        """Ask for a new name and set it to the checked tiers."""
-        nbf, nbt = self.__get_checked_nb()
-        if nbt == 0:
-            wx.LogWarning("Rename: no tier checked.")
-            return
-
-        dlg = sppasTextEntryDialog(
-            TIER_MSG_ASK_NAME, caption=TIER_ACT_RENAME, value="")
-        if dlg.ShowModal() == wx.ID_CANCEL:
-            wx.LogMessage("Rename: cancelled.")
-            return
-        tier_name = dlg.GetValue()
-        dlg.Destroy()
-
+    def rename_tiers(self, tier_name):
+        """Set the given name to the checked tiers."""
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
+            if isinstance(panel, TrsSummaryPanel):
                 panel.rename_tier(tier_name)
                 # if the panel is not a ListView (an ErrorView for example)
                 # the method 'rename_tier' is not defined.
@@ -491,20 +348,9 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
     def delete_tiers(self):
         """Ask confirmation then delete the checked tiers."""
-        nbf, nbt = self.__get_checked_nb()
-        if nbt == 0:
-            wx.LogWarning("Delete: no tier checked.")
-            return
-
-        if nbt > 0:
-            # User must confirm to really delete
-            response = Confirm(TIER_MSG_CONFIRM_DEL.format(nbt, nbf), MSG_CONFIRM)
-            if response == wx.ID_CANCEL:
-                return
-
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
+            if isinstance(panel, TrsSummaryPanel):
                 panel.delete_tier()
 
     # -----------------------------------------------------------------------
@@ -512,15 +358,10 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     def cut_tiers(self):
         """Move checked tiers to the clipboard."""
         self.__clipboard = list()
-        nbf, nbt = self.__get_checked_nb()
-        if nbt == 0:
-            wx.LogWarning("Cut: no tier checked.")
-            return
-
         cut = 0
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
+            if isinstance(panel, TrsSummaryPanel):
                 tiers = panel.cut_tier()
                 if len(tiers) > 0:
                     self.__clipboard.extend(tiers)
@@ -535,14 +376,10 @@ class ListViewFilesPanel(BaseViewFilesPanel):
     def copy_tiers(self):
         """Copy checked tiers to the clipboard."""
         self.__clipboard = list()
-        nbf, nbt = self.__get_checked_nb()
-        if nbt == 0:
-            wx.LogWarning("Copy: no tier checked.")
-            return
 
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
+            if isinstance(panel, TrsSummaryPanel):
                 tiers = panel.copy_tier()
                 if len(tiers) > 0:
                     self.__clipboard.extend(tiers)
@@ -554,7 +391,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         paste = 0
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
+            if isinstance(panel, TrsSummaryPanel):
                 if panel.is_selected() is True:
                     paste += panel.paste_tier(self.__clipboard)
 
@@ -566,15 +403,10 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
     def duplicate_tiers(self):
         """Duplicate checked tiers of the anz_panels."""
-        nbf, nbt = self.__get_checked_nb()
-        if nbt == 0:
-            wx.LogWarning("Duplicate: no tier checked.")
-            return
-
         copied = 0
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
+            if isinstance(panel, TrsSummaryPanel):
                 copied += panel.duplicate_tier()
 
         if copied > 0:
@@ -585,14 +417,9 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
     def move_tiers(self, up=True):
         """Move up or down checked tiers of the anz_panels."""
-        nbf, nbt = self.__get_checked_nb()
-        if nbt == 0:
-            wx.LogWarning("Move: no tier checked.")
-            return
-
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
+            if isinstance(panel, TrsSummaryPanel):
                 if up is True:
                     panel.move_up_tier()
                 else:
@@ -600,28 +427,15 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
     # -----------------------------------------------------------------------
 
-    def radius_tiers(self):
+    def radius_tiers(self, radius_str):
         """Ask for a radius value and set it to checked tiers."""
-        nbf, nbt = self.__get_checked_nb()
-        if nbt == 0:
-            wx.LogWarning("Radius: no tier checked.")
-            return
-
-        dlg = sppasTextEntryDialog(
-            TIER_MSG_ASK_RADIUS, caption=TIER_ACT_RADIUS, value="")
-        if dlg.ShowModal() == wx.ID_CANCEL:
-            wx.LogMessage("Radius: cancelled.")
-            return
-        radius_str = dlg.GetValue()
-        dlg.Destroy()
-
         try:
             r = float(radius_str)
             if (r-round(r, 0)) == 0.:
                 r = int(r)
             for filename in self._files:
                 panel = self._files[filename]
-                if isinstance(panel, TrsListViewPanel):
+                if isinstance(panel, TrsSummaryPanel):
                     panel.radius(r)
         except ValueError:
             wx.LogError("Radius: expected an appropriate number.")
@@ -630,15 +444,10 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
     def view_anns_tiers(self):
         """Open a dialog to view the content of the checked tiers."""
-        nbf, nbt = self.__get_checked_nb()
-        if nbt == 0:
-            wx.LogWarning("View anns: no tier checked.")
-            return
-
         tiers = list()
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
+            if isinstance(panel, TrsSummaryPanel):
                 tiers.extend(panel.get_checked_tier())
 
         TiersView(self, tiers)
@@ -647,15 +456,10 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
     def view_stats_tiers(self):
         """Open a dialog to view stats of annotations of the checked tiers."""
-        nbf, nbt = self.__get_checked_nb()
-        if nbt == 0:
-            wx.LogWarning("View stats: no tier checked.")
-            return
-
         tiers = dict()
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
+            if isinstance(panel, TrsSummaryPanel):
                 checked = panel.get_checked_tier()
                 if len(checked) > 0:
                     tiers[filename] = checked
@@ -666,11 +470,6 @@ class ListViewFilesPanel(BaseViewFilesPanel):
 
     def single_filter_tiers(self):
         """Open a dialog to define filters and apply on the checked tiers."""
-        nbf, nbt = self.__get_checked_nb()
-        if nbt == 0:
-            wx.LogWarning("Single filter: no tier checked.")
-            return
-
         filters = list()
         dlg = sppasTiersSingleFilterDialog(self)
         if dlg.ShowModal() in (wx.ID_OK, wx.ID_APPLY):
@@ -691,7 +490,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
             for i, filename in enumerate(self._files):
                 panel = self._files[filename]
                 progress.set_text(filename)
-                if isinstance(panel, TrsListViewPanel):
+                if isinstance(panel, TrsSummaryPanel):
                     filtered += panel.single_filter(filters, match_all, annot_format, tiername)
                 progress.set_fraction(int(100. * float((i+1)) / float(total)))
 
@@ -712,7 +511,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         all_tiernames = list()
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsListViewPanel):
+            if isinstance(panel, TrsSummaryPanel):
                 panel_tiers = panel.get_checked_tier()
                 if len(panel_tiers) > 0:
                     tiers.extend(panel_tiers)
@@ -753,7 +552,7 @@ class ListViewFilesPanel(BaseViewFilesPanel):
             for i, filename in enumerate(self._files):
                 panel = self._files[filename]
                 progress.set_text(filename)
-                if isinstance(panel, TrsListViewPanel):
+                if isinstance(panel, TrsSummaryPanel):
                     filtered += panel.relation_filter(
                         filters, y_tiername, annot_format, out_tiername)
                 progress.set_fraction(int(100. * float((i+1)) / float(total)))
@@ -765,6 +564,205 @@ class ListViewFilesPanel(BaseViewFilesPanel):
         if filtered > 0:
             wx.LogMessage("{:d} tiers created.".format(filtered))
             self.Layout()
+
+    # -----------------------------------------------------------------------
+    # Action on a file
+    # -----------------------------------------------------------------------
+
+    def create_file(self, name):
+        """Add a non-existing file with the given name."""
+        if name in self._files:
+            wx.LogError('Name {:s} is already in the list of files.')
+            raise ValueError('Name {:s} is already in the list of files.')
+        if os.path.exists(name) is True:
+            wx.LogError('Name {:s} is already an existing file. Not created.')
+            raise ValueError("Name {:s} is already existing.".format(name))
+
+        panel = TrsSummaryPanel(self, filename=name)
+        panel.SetHighLightColor(self._hicolor)
+
+        self._files[name] = panel
+
+        border = sppasPanel.fix_size(10)
+        self.SetChildrenBackgroundColour()
+        self.GetSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border)
+
+    # -----------------------------------------------------------------------
+
+    def append_file(self, name):
+        """Add a file and display its content.
+
+        Do not refresh/layout the GUI.
+
+        :param name: (str)
+        :raise: ValueError
+
+        """
+        if name in self._files:
+            wx.LogError('Name {:s} is already in the list of files.')
+            raise ValueError('Name {:s} is already in the list of files.')
+
+        try:
+            panel = self._add_file(name)
+        except Exception as e:
+            panel = ErrorFileSummaryPanel(self, name)
+            panel.set_error_message(str(e))
+
+        self._files[name] = panel
+
+        border = sppasPanel.fix_size(10)
+        self.SetChildrenBackgroundColour()
+        self.GetSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border)
+        # self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
+
+    # -----------------------------------------------------------------------
+
+    def remove_file(self, name, force=False):
+        """Remove a panel corresponding to the name of a file.
+
+        Do not refresh/layout the GUI.
+
+        :param name: (str)
+        :param force: (bool) Force to remove, even if a file is modified
+        :return: (bool) The file was removed or not
+
+        """
+        if force is True or self.is_modified(name) is False:
+
+            # Remove of the object
+            panel = self._files.get(name, None)
+            if panel is None:
+                wx.LogError("There's no file with name {:s}".format(name))
+                return False
+
+            # Destroy the panel and remove of the sizer
+            for i, child in enumerate(self.GetChildren()):
+                if child == panel:
+                    self.GetSizer().Remove(i)
+                    break
+
+            panel.Destroy()
+
+            # Delete of the list
+            self._files.pop(name)
+            return True
+
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def save_file(self, name):
+        """Save a file.
+
+        :param name: (str)
+        :return: (bool) The file was saved or not
+
+        """
+        panel = self._files.get(name, None)
+        saved = False
+        if panel.is_modified() is True:
+            try:
+                saved = panel.save()
+                if saved is True:
+                    wx.LogMessage("File {:s} saved successfully.".format(name))
+            except Exception as e:
+                saved = False
+                wx.LogError("Error while saving file {:s}: {:s}"
+                            "".format(name, str(e)))
+
+        return saved
+
+    # -----------------------------------------------------------------------
+    # GUI creation
+    # -----------------------------------------------------------------------
+
+    def _create_content(self):
+        """Create the main content. """
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(main_sizer)
+
+    # -----------------------------------------------------------------------
+
+    def close_page(self, filename):
+        """Close the page matching the given filename.
+
+        :param filename: (str)
+        :return: (bool) The page was closed.
+
+        """
+        if filename not in self._files:
+            return False
+        page = self._files[filename]
+
+        if page.is_modified() is True:
+            wx.LogWarning("File contains not saved changes.")
+            # Ask the user to confirm to close (and changes are lost)
+            response = Confirm(CLOSE_CONFIRM, MSG_CLOSE)
+            if response == wx.ID_CANCEL:
+                return False
+
+        removed = self.remove_file(filename, force=True)
+        if removed is True:
+            self.Layout()
+            self.Refresh()
+
+            # The parent will unlock the file in the workspace
+            self.notify(action="close", filename=filename)
+            return True
+
+        # Take care of the new selected file/tier/annotation
+        # ?????
+
+        return False
+
+    # -----------------------------------------------------------------------
+    # Events management
+    # -----------------------------------------------------------------------
+
+    def notify(self, action, filename):
+        """Notify the parent of a ViewEvent.
+
+        :param action: (str) the action to perform
+        :param filename: (str) name of the file to perform the action
+
+        """
+        wx.LogDebug("{:s} notifies its parent {:s} of action {:s} for filename {}."
+                    "".format(self.GetName(), self.GetParent().GetName(), action, filename))
+        evt = ViewEvent(action=action, filename=filename)
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
+    # -----------------------------------------------------------------------
+
+    def _process_view_event(self, event):
+        """Process a view event: an action has to be performed.
+
+        :param event: (wx.Event)
+
+        """
+        try:
+            panel = event.GetEventObject()
+            panel_name = panel.GetName()
+
+            action = event.action
+            fn = None
+            for filename in self._files:
+                p = self._files[filename]
+                if p == panel:
+                    fn = filename
+                    break
+            if fn is None:
+                raise Exception("Unknown {:s} panel in ViewEvent."
+                                "".format(panel_name))
+        except Exception as e:
+            wx.LogError(str(e))
+            return
+
+        if action == "save":
+            self.save_file(fn)
+
+        elif action == "close":
+            closed = self.close_page(fn)
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
@@ -782,7 +780,9 @@ class TestPanel(ListViewFilesPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(
             parent,
-            name="TestPanel-anz_baseviews",
-            files=TestPanel.TEST_FILES)
-        self.create_file(os.path.join(paths.samples, "F_F_B003-P8.xxx"))
+            name="Test Summary Files Panel")
+        for filename in TestPanel.TEST_FILES:
+            self.append_file(filename)
+        self.Layout()
+        self.Refresh()
 

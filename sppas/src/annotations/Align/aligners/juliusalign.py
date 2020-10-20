@@ -47,7 +47,7 @@ states, or phones. Standard formats are adopted to cope with other free
 modeling toolkit such as HTK, CMU-Cam SLM toolkit, etc.
 
 The main platform is Linux and other Unix workstations, and also works on
-WindowsInstaller. Most recent version is developed on Linux and WindowsInstaller (cygwin /
+Windows. Most recent version is developed on Linux and Windows (cygwin /
 mingw), and also has Microsoft SAPI version. Julius is distributed with
 open license together with source codes.
 
@@ -307,6 +307,8 @@ class JuliusAligner(BaseAligner):
         line = p.communicate()
         try:
             msg = u(" ").join([u(l.strip()) for l in line if l is not None])
+            if msg.startswith("b'"):
+                msg = msg[2:-1]
             msg = msg.replace("enter filename->", "")
             msg = msg.replace("1 files processed", "")
             msg = msg.replace("..", "")
@@ -414,8 +416,8 @@ class JuliusAligner(BaseAligner):
                           "\n".format(added)
 
         for line in lines:
-            if (line.startswith("Error:") or line.startswith("ERROR:")) \
-                    and " line " not in line:
+            line = line.strip()
+            if line.lower().startswith("error:") and " line " not in line and line.endswith(".forward") is False:
                 message += "Julius failed to align the transcription with the audio file.\n"
                 error_lines += line
 

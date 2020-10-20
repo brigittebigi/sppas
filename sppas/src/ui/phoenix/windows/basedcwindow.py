@@ -135,6 +135,7 @@ class sppasDCWindow(wx.Window):
             wx.Window.SetForegroundColour(self, settings.fg_color)
             wx.Window.SetBackgroundColour(self, settings.bg_color)
             wx.Window.SetFont(self, settings.text_font)
+            self._min_height = settings.get_font_height()
         except AttributeError:
             self.InheritAttributes()
 
@@ -693,8 +694,8 @@ class sppasDCWindow(wx.Window):
         gc.SetBackgroundMode(wx.TRANSPARENT)
 
         # Font
-        gc.SetFont(self.GetFont())
         dc.SetFont(self.GetFont())
+        gc.SetFont(self.GetFont())
 
         return dc, gc
 
@@ -794,6 +795,18 @@ class sppasDCWindow(wx.Window):
     def DrawContent(self, dc, gc):
         """To be overridden."""
         pass
+
+    # -----------------------------------------------------------------------
+
+    def GetContentRect(self):
+        """Return Rect and Size to draw the content."""
+        x, y, w, h = self.GetClientRect()
+        x += self._vert_border_width
+        y += self._horiz_border_width
+        w -= (2 * self._vert_border_width)
+        h -= (2 * self._horiz_border_width)
+
+        return x, y, w, h
 
     # -----------------------------------------------------------------------
     # Utilities

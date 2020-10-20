@@ -49,6 +49,9 @@ Requires the following other packages:
 from .audio import sppasAudioPCM
 from .audioframes import sppasAudioFrames
 from .channel import sppasChannel
+from .aio import extensions
+
+audio_extensions = extensions
 
 __all__ = (
     'sppasAudioPCM',

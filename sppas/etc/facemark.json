@@ -33,8 +33,6 @@
     "STANDALONE"
   ],
 
-  "outformat": "IMAGE",
-
   "options": [
     {
       "id": "inputpattern",
@@ -57,7 +55,7 @@
     {
       "id": "tag",
       "type": "bool",
-      "value": false,
+      "value": true,
       "text": "Draw landmark points on the image"
     }
   ]

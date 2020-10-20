@@ -42,7 +42,7 @@ import traceback
 import sys
 
 from sppas.src.config import sg, paths, cfg
-from sppas.src.config import msg, info, error
+from sppas.src.config import msg, info
 from sppas.src.preinstall import sppasInstallerDeps
 
 from .windows import sppasStaticLine
@@ -137,8 +137,7 @@ class sppasInstallWindow(sppasTopFrame):
 
     # List of the page names of the main notebook
     pages = ("page_home", "page_license",
-             "page_features_deps", "page_features_lang", "page_features_annot",
-             "page_ready", "page_terminate")
+             "page_features_deps", "page_ready", "page_terminate")
 
     def __init__(self):
         super(sppasInstallWindow, self).__init__(
@@ -243,8 +242,6 @@ class sppasInstallWindow(sppasTopFrame):
 
         # 3rd-5th: select the features to be installed
         book.AddPage(sppasFeaturesInstallDepsPanel(book, installer=self.__installer), text="")
-        book.AddPage(sppasFeaturesInstallLangPanel(book, installer=self.__installer), text="")
-        book.AddPage(sppasFeaturesInstallAnnotPanel(book, installer=self.__installer), text="")
 
         # 6th: ready to process install
         book.AddPage(sppasReadyInstallPanel(book), text="")
@@ -318,7 +315,7 @@ class sppasInstallWindow(sppasTopFrame):
         key_code = event.GetKeyCode()
 
         if key_code == wx.WXK_F4 and event.AltDown() and wx.Platform == "__WXMSW__":
-            # ALT+F4 on WindowsInstaller to exit with confirmation
+            # ALT+F4 on Windows to exit with confirmation
             self.on_exit(event)
 
         elif key_code == 87 and event.ControlDown() and wx.Platform != "__WXMSW__":
@@ -470,7 +467,7 @@ class sppasInstallWindow(sppasTopFrame):
         progress.set_new()
         wx.BeginBusyCursor()
         self.__installer.set_progress(progress)
-        errors = self.__installer.install()
+        errors = self.__installer.install("deps")
         wx.EndBusyCursor()
         progress.close()
 
@@ -941,44 +938,6 @@ class sppasFeaturesInstallDepsPanel(sppasFeaturesInstallPanel):
         super(sppasFeaturesInstallDepsPanel, self).__init__(
             parent=parent, name="page_features_deps",
             installer=installer, ft="deps")
-
-# ---------------------------------------------------------------------------
-
-
-class sppasFeaturesInstallLangPanel(sppasFeaturesInstallPanel):
-    """Create a panel to select the features of type lang to enable.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
-    """
-
-    def __init__(self, parent, installer=None):
-        super(sppasFeaturesInstallLangPanel, self).__init__(
-            parent=parent, name="page_features_lang",
-            installer=installer, ft="lang")
-
-# ---------------------------------------------------------------------------
-
-
-class sppasFeaturesInstallAnnotPanel(sppasFeaturesInstallPanel):
-    """Create a panel to select the features of type annot to enable.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
-    """
-
-    def __init__(self, parent, installer=None):
-        super(sppasFeaturesInstallAnnotPanel, self).__init__(
-            parent=parent, name="page_features_annot",
-            installer=installer, ft="annot")
 
 # ---------------------------------------------------------------------------
 

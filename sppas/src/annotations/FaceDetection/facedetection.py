@@ -32,7 +32,7 @@
 
     Requires the "video" feature of SPPAS.
     Automatic face detection, based on opencv HaarCascadeClassifier and
-    DNN.
+    Artificial Neural Networks.
 
 """
 
@@ -87,6 +87,42 @@ class FaceDetection(sppasImageObjectDetection):
 
     # -----------------------------------------------------------------------
 
+    def detect(self, image):
+        """Determine the coordinates of all the detected objects.
+
+        :param image: (sppasImage or numpy.ndarray)
+
+        """
+        # Launch the base method to detect objects, here objects are faces
+        sppasImageObjectDetection.detect(self, image)
+
+        # Overlapped faces are much rarer than overlapped objects:
+        # re-filter with overlapping portraits.
+
+        # Backup the current coords
+        backup_coords = dict()
+        for coord in self._coords:
+            portrait = self.eval_portrait(coord, image)
+            backup_coords[portrait] = coord
+
+        # Replace the original coords by the portrait
+        self._coords = list(backup_coords.keys())
+
+        # Filter the overlapping portraits but do not re-normalize the scores
+        # by the number of classifiers.
+        self.filter_overlapped(overlap=60., norm_score=False)
+        self.sort_by_score()
+
+        # re-assign the normal size
+        new_coords = list()
+        for portrait_coord in self._coords:
+            normal_coord = backup_coords[portrait_coord]
+            new_coords.append(normal_coord)
+
+        self._coords = new_coords
+
+    # -----------------------------------------------------------------------
+
     def to_portrait(self, image=None):
         """Scale coordinates of faces to a portrait size.
 
@@ -99,37 +135,54 @@ class FaceDetection(sppasImageObjectDetection):
         if len(self._coords) == 0:
             return
 
-        portraits = [c.copy() for c in self._coords]
+        portraits = list()
+        for coord in self._coords:
+            c = self.eval_portrait(coord, image)
+            portraits.append(c)
 
-        for c in portraits:
-            # Scale the image. Shift values indicate how to shift x,y to get
-            # the face exactly at the center of the new coordinates.
-            # The scale is done without matter of the image size.
-            shift_x, shift_y = c.scale(2.1)
-            # the face is slightly at top, not exactly at the middle
-            shift_y = int(float(shift_y) / 1.5)
-            if image is None:
-                c.shift(shift_x, shift_y)
-            else:
-
-                try:
-                    c.shift(shift_x, 0, image)
-                    shifted_x = True
-                except:
-                    shifted_x = False
-
-                try:
-                    c.shift(0, shift_y, image)
-                    shifted_y = True
-                except:
-                    shifted_y = False
-
-                w, h = image.size()
-                if c.x + c.w > w or shifted_x is False:
-                    c.x = max(0, w - c.w)
-
-                if c.y + c.h > h or shifted_y is False:
-                    c.y = max(0, h - c.h)
-
-        # no error occurred, all faces can be converted to their portrait
+        # no error occurred, all faces are converted to their portrait
         self._coords = portraits
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def eval_portrait(coordinate, image=None):
+        """Return the coordinates converted to the portrait scale.
+
+        :param coordinate: (sppasCoords)
+        :param image: (sppasImage) The original image.
+        :return: (sppasCoords)
+
+        """
+        coord = coordinate.copy()
+        # Scale the image. Shift values indicate how to shift x,y to get
+        # the face exactly at the center of the new coordinates.
+        # The scale is done without matter of the image size.
+        shift_x, shift_y = coord.scale(2.1)
+        # the face is slightly at top, not exactly at the middle
+        shift_y = int(float(shift_y) / 1.25)
+        if image is None:
+            coord.shift(shift_x, shift_y)
+        else:
+
+            try:
+                coord.shift(shift_x, 0, image)
+                shifted_x = True
+            except:
+                shifted_x = False
+
+            try:
+                coord.shift(0, shift_y, image)
+                shifted_y = True
+            except:
+                shifted_y = False
+
+            w, h = image.size()
+            if coord.x + coord.w > w or shifted_x is False:
+                coord.x = max(0, w - coord.w)
+
+            if coord.y + coord.h > h or shifted_y is False:
+                coord.y = max(0, h - coord.h)
+
+        return coord
+

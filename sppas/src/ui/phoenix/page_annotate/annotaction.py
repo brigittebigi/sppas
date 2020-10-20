@@ -527,7 +527,7 @@ class sppasActionAnnotatePanel(sppasPanel):
                 name = os.path.basename(report)
                 self._reports.switch_to_report(name)
                 self.btn_por.Enable(True)
-                self.btn_por.SetBorderColour(ReportsPanel.HIGHLIGHT_COLOR)
+                self.btn_por.SetBorderColour(ReportsPanel.REPORTS_COLOR)
 
 # ----------------------------------------------------------------------------
 # Panel to display the existing log reports
@@ -545,7 +545,7 @@ class ReportsPanel(sppasScrolledPanel):
 
     """
     
-    HIGHLIGHT_COLOR = wx.Colour(196, 196, 24, 128)
+    REPORTS_COLOR = wx.Colour(196, 196, 24, 128)
     
     # -----------------------------------------------------------------------
 
@@ -694,9 +694,9 @@ class ReportsPanel(sppasScrolledPanel):
 
     def __create_toolbar(self):
         tb = sppasToolbar(self, orient=wx.HORIZONTAL)
-        tb.set_focus_color(wx.Colour(196, 196, 24, 128))
+        tb.set_focus_color(wx.Colour(196, 196, 24, 196))
 
-        tb.AddTitleText(MSG_TITLE_REPORTS, color=ReportsPanel.HIGHLIGHT_COLOR)
+        tb.AddTitleText(MSG_TITLE_REPORTS, color=ReportsPanel.REPORTS_COLOR)
         del_checked = tb.AddButton("report_delete_checked", text=MSG_BTN_DEL_CHECK)
         self.__set_normal_btn_style(del_checked)
 
@@ -725,16 +725,16 @@ class ReportsPanel(sppasScrolledPanel):
         button.SetBorderWidth(0)
         button.SetBorderColour(self.GetForegroundColour())
         button.SetBorderStyle(wx.PENSTYLE_SOLID)
-        button.SetFocusColour(wx.Colour(128, 128, 128, 128))
+        button.SetFocusColour(ReportsPanel.REPORTS_COLOR)
 
     # -----------------------------------------------------------------------
 
     def __set_active_btn_style(self, button):
         """Set a highlight style to the button."""
         button.SetBorderWidth(1)
-        button.SetBorderColour(ReportsPanel.HIGHLIGHT_COLOR)
+        button.SetBorderColour(ReportsPanel.REPORTS_COLOR)
         button.SetBorderStyle(wx.PENSTYLE_SOLID)
-        button.SetFocusColour(self.GetForegroundColour())
+        button.SetFocusColour(ReportsPanel.REPORTS_COLOR)
 
     # -----------------------------------------------------------------------
     # Private methods

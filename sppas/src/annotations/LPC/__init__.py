@@ -69,9 +69,9 @@ class sppasLPC(object):
 # ---------------------------------------------------------------------------
 
 
-if cfg.dep_installed("video"):
+if cfg.feature_installed("video"):
     from .sppaslpc import sppasLPC
 
 __all__ = (
-    'sppasLPC'
+    "sppasLPC"
 )

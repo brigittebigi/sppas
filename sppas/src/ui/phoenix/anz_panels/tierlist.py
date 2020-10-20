@@ -105,7 +105,7 @@ class sppasTierListCtrl(LineListCtrl):
      - Metadata are serialized.
 
     Known bug of wx:
-    If the ListCtrl is embedded in a page of a notebook, under WindowsInstaller only,
+    If the ListCtrl is embedded in a page of a notebook, under Windows only,
     DeleteItem() returns the following error message:
     listctrl.cpp(2614) in wxListCtrl::MSWOnNotify(): invalid internal data pointer?
     A solution is to use a simplebook, a choicebook, a listbook or a
@@ -478,7 +478,7 @@ class sppasTiersbook(sppasChoicebook):
     def __init__(self, parent):
         super(sppasTiersbook, self).__init__(parent,
                                              style=wx.TAB_TRAVERSAL,
-                                             name="tiersbook")
+                                             name="tiers_book")
 
     # -----------------------------------------------------------------------
 
@@ -515,6 +515,31 @@ class sppasTiersbook(sppasChoicebook):
 
     # -----------------------------------------------------------------------
 
+    def remove_tiers(self, filename, tiers):
+        """Remove a set of tiers of the file.
+
+        If the selected tier is among the removed one, select another one.
+
+        :param filename: (str)
+        :param tiers: (list of sppasTier)
+        :return: selected tier name
+
+        """
+        tier_names = [tier.get_name() for tier in tiers]
+        for page_index in reversed(range(self.GetPageCount())):
+            page = self.GetPage(page_index)
+            if page.get_filename() == filename:
+                if page.get_tiername() in tier_names:
+                    self.DeletePage(page_index)
+
+        page_sel = self.GetSelection()
+        if page_sel == wx.NOT_FOUND:
+            return ""
+
+        return self.GetPage(page_sel).get_tiername()
+
+    # -----------------------------------------------------------------------
+
     @property
     def tierctrl(self):
         page_index = self.GetSelection()
@@ -533,7 +558,7 @@ class TestPanel(sppasPanel):
     """
 
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent)
+        super(TestPanel, self).__init__(parent, name="Test ListCtrl Tier View")
 
         # Create content
         self.__book = sppasTiersbook(self)
@@ -599,7 +624,6 @@ class TestPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _on_char(self, evt):
-        logging.debug("Test panel received key event.")
         kc = evt.GetKeyCode()
         char = chr(kc)
         if kc in (8, 127):

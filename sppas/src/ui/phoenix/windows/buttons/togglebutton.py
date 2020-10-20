@@ -42,6 +42,7 @@ from ..basewindow import WindowState
 from .basebutton import ButtonEvent
 from .basebutton import BaseButton
 from .bitmapbutton import BitmapTextButton
+from .textbutton import TextButton
 
 # ----------------------------------------------------------------------------
 
@@ -86,6 +87,136 @@ class ToggleButtonEvent(ButtonEvent):
 
         """
         return self.__isdown
+
+# ---------------------------------------------------------------------------
+
+
+class ToggleTextButton(TextButton):
+    """A toggle button with a label text only.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, parent,
+                 id=wx.ID_ANY,
+                 label=None,
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 name=wx.ButtonNameStr):
+        """Default class constructor."""
+        super(ToggleTextButton, self).__init__(
+            parent, id, label=label, pos=pos, size=size, name=name)
+        self._pressed = False
+
+    # -----------------------------------------------------------------------
+
+    def IsPressed(self):
+        """Return if button is pressed.
+
+        :returns: (bool)
+
+        """
+        return self._pressed
+
+    # -----------------------------------------------------------------------
+
+    def GetValue(self):
+        return self._pressed
+
+    # -----------------------------------------------------------------------
+
+    def SetValue(self, value):
+        if self._pressed != value:
+            self._pressed = value
+            if value:
+                self._set_state(WindowState().selected)
+            else:
+                self._set_state(WindowState().normal)
+            self.Refresh()
+
+    # -----------------------------------------------------------------------
+    # Override BaseButton
+    # -----------------------------------------------------------------------
+
+    def OnMouseLeftDown(self, event):
+        """Handle the wx.EVT_LEFT_DOWN event.
+
+        :param event: a wx.MouseEvent event to be processed.
+
+        """
+        if self.IsEnabled() is True:
+            self._pressed = not self._pressed
+            BaseButton.OnMouseLeftDown(self, event)
+
+    # -----------------------------------------------------------------------
+
+    def OnMouseLeftUp(self, event):
+        """Handle the wx.EVT_LEFT_UP event.
+
+        :param event: a wx.MouseEvent event to be processed.
+
+        """
+        if not self.IsEnabled():
+            return
+
+        # Mouse was down outside of the button (but is up inside)
+        if not self.HasCapture():
+            return
+
+        # Directs all mouse input to this window
+        self.ReleaseMouse()
+
+        # If the button was down when the mouse was released...
+        if self._state[1] == WindowState().selected:
+            self.Notify()
+
+            if self._pressed:
+                self._set_state(WindowState().selected)
+            else:
+                self._set_state(WindowState().focused)
+
+            # test self, in case the button was destroyed in the eventhandler
+            if self:
+                # self.Refresh()  # done in set_state
+                event.Skip()
+
+    # -----------------------------------------------------------------------
+
+    def OnMouseLeave(self, event):
+        """Handle the wx.EVT_LEAVE_WINDOW event.
+
+        :param event: a wx.MouseEvent event to be processed.
+
+        """
+        if self._pressed is True:
+            self._set_state(WindowState().selected)
+            return
+
+        if self._state[1] == WindowState().focused:
+            self._set_state(WindowState().normal)
+            self.Refresh()
+            event.Skip()
+
+        elif self._state[1] == WindowState().selected:
+            self._state[0] = WindowState().normal
+            self.Refresh()
+            event.Skip()
+
+        self._pressed = False
+
+    # -----------------------------------------------------------------------
+
+    def Notify(self):
+        """Sends a wx.EVT_TOGGLEBUTTON event to the listener (if any)."""
+        evt = ToggleButtonEvent(wx.wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, self.GetId())
+        evt.SetButtonObj(self)
+        evt.SetEventObject(self)
+        self.GetEventHandler().ProcessEvent(evt)
 
 # ---------------------------------------------------------------------------
 
@@ -234,8 +365,9 @@ class TestPanelToggleButton(wx.Panel):
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(ToggleButton(self), 1, wx.EXPAND, 0)
-        sizer.Add(ToggleButton(self), 1, wx.EXPAND, 0)
-        sizer.Add(ToggleButton(self), 1, wx.EXPAND, 0)
+        sizer.Add(ToggleButton(self, name="rotate_screen"), 1, wx.EXPAND, 0)
+        sizer.Add(ToggleTextButton(self, label=""), 1, wx.EXPAND, 0)
+        sizer.Add(ToggleTextButton(self, label="label"), 1, wx.EXPAND, 0)
         self.SetSizer(sizer)
         self.SetAutoLayout(True)
 

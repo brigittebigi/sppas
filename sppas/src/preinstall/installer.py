@@ -187,10 +187,44 @@ class Installer(object):
         self.__pbar = None
         self.__pvalue = 0
         self._features = None
-        self.__python = "python3"
-        if shutil.which("python3") is None:
-            self.__python = "python"
-        logging.info("Python installer command: {}".format(self.__python))
+
+        self.__python = self.__search_python_cmd()
+        logging.info("... the python command used by the installer system is '{}'"
+                     "".format(self.__python))
+
+    # ------------------------------------------------------------------------
+
+    def __search_python_cmd(self):
+        """Search for a valid python command. Raise SystemError if not found."""
+        logging.info("Search for a 'python' command that this installer can launch...")
+        process = ProcessRunner()
+
+        command = "python -c 'import sys; print(sys.version_info.major)' "
+        try:
+            process.run(command)
+            out = process.out().replace("b'", "")
+            out = out.replace("'", "")
+            if len(out) == 1:
+                pyversion = int(out)
+                if pyversion == 3:
+                    return "python"
+        except:
+            pass
+
+        command = "python3 -c 'import sys; print(sys.version_info.major)' "
+        try:
+            process.run(command)
+            out = process.out().strip()
+            out = out.replace("b'", "")
+            out = out.replace("'", "")
+            if len(out) == 1:
+                pyversion = int(out)
+                if pyversion == 3:
+                    return "python3"
+        except:
+            pass
+
+        raise SystemError("No valid python command can be invoked by the installer system.")
 
     # ------------------------------------------------------------------------
     # Public methods
@@ -290,13 +324,15 @@ class Installer(object):
 
     # ------------------------------------------------------------------------
 
-    def install(self):
-        """Process the installation."""
-        # Update pip before any installation.
-        self.update_pip()
+    def install(self, feat_type=None):
+        """Process the installation.
 
+        :param feat_type: (str) Install only features of the given type. None to install all.
+        :return: (list) Error messages.
+
+        """
         errors = list()
-        for fid in self._features.get_ids():
+        for fid in self._features.get_ids(feat_type):
             self.__pheader(self.__message("beginning_feature", fid))
 
             if self._features.available(fid) is False:
@@ -306,8 +342,8 @@ class Installer(object):
                 # force to add a package dependency into the .app~file.
                 # even if not enabled. it'll help manual edit of the file.
                 if self._features.feature_type(fid) == "deps":
-                    if cfg.dep_installed(fid) is False:
-                        cfg.set_dep(fid, False)
+                    if cfg.feature_installed(fid) is False:
+                        cfg.set_feature(fid, False)
                 self.__pmessage(self.__message("enable_false", fid))
 
             else:
@@ -319,7 +355,7 @@ class Installer(object):
                     self._features.enable(fid, False)
                     self.__pmessage(self.__message("install_failed", fid))
                     if self._features.feature_type(fid) == "deps":
-                        cfg.set_dep(fid, False)
+                        cfg.set_feature(fid, False)
                     errors.append(str(e))
                     logging.error(str(e))
 
@@ -333,7 +369,7 @@ class Installer(object):
 
                 else:
                     self._features.enable(fid, True)
-                    cfg.set_dep(fid, True)
+                    cfg.set_feature(fid, True)
                     self.__pmessage(self.__message("install_success", fid))
 
         cfg.save()
@@ -679,7 +715,24 @@ class Installer(object):
         :raises: sppasInstallationError
 
         """
+        err = ""
         try:
+            logging.info("Try to install {:s} for all users.".format(package))
+            command = self.__python + " -m pip install " + package + " --no-warn-script-location"
+            process = ProcessRunner()
+            process.run(command)
+            logging.info("Return code: {}".format(process.status()))
+            err = process.error()
+            stdout = process.out()
+
+            if len(stdout) > 3:
+                logging.info(stdout)
+
+        except Exception as e:
+            if len(err) > 3:
+                logging.error(err)
+            logging.error(str(e))
+            logging.info("So... Try to install {:s} only for the current user.".format(package))
             command = self.__python + " -m pip install " + package + " --user --no-warn-script-location"
             process = ProcessRunner()
             process.run(command)
@@ -689,8 +742,6 @@ class Installer(object):
 
             if len(stdout) > 3:
                 logging.info(stdout)
-        except Exception as e:
-            raise sppasInstallationError(str(e))
 
         if len(err) > 3:
             raise sppasInstallationError(err)
@@ -1043,7 +1094,7 @@ class DnfInstaller(Installer):
 
 
 class WindowsInstaller(Installer):
-    """An installer for Microsoft WindowsInstaller system.
+    """An installer for Microsoft Windows system.
 
         :author:       Florian Hocquet
         :organization: Laboratoire Parole et Langage, Aix-en-Provence, France

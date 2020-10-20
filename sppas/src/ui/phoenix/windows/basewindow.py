@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.basedraw.py
+    src.ui.phoenix.windows.basewindow.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Description
@@ -140,7 +140,7 @@ class sppasWindow(sppasDCWindow):
         self._default_focus_color = pc
         self._focus_color = self._default_focus_color
         self._focus_width = 1
-        self._focus_spacing = 3
+        self._focus_spacing = 2
         self._focus_style = wx.PENSTYLE_DOT
 
         self.Bind(wx.EVT_SET_FOCUS, self.OnGainFocus)
@@ -230,6 +230,10 @@ class sppasWindow(sppasDCWindow):
             value = h // 4
 
         self._focus_width = value
+        if self._focus_width == 0:
+            self._focus_spacing = 0
+        else:
+            self._focus_spacing = 2
 
     # -----------------------------------------------------------------------
 
@@ -455,10 +459,10 @@ class sppasWindow(sppasDCWindow):
         x += self._vert_border_width
         y += self._horiz_border_width
         w -= (2 * self._vert_border_width)
-        if self._focus_width > 0:
-            h -= ((2 * self._vert_border_width) + self._focus_width + self._focus_spacing)
-        else:
-            h -= (2 * self._vert_border_width)
+        # if self._focus_width > 0:
+        h -= ((2 * self._horiz_border_width) + self._focus_width + self._focus_spacing)
+        # else:
+        #     h -= (2 * self._horiz_border_width)
 
         return x, y, w, h
 

@@ -46,6 +46,7 @@ from sppas.src.ui.phoenix.windows.buttons.bitmapbutton import TestPanelBitmapBut
 from sppas.src.ui.phoenix.windows.buttons.bitmapbutton import TestPanelBitmapTextButton
 from sppas.src.ui.phoenix.windows.buttons.checkbutton import TestPanelCheckButton
 from sppas.src.ui.phoenix.windows.buttons.checkbutton import TestPanelRadioButton
+from sppas.src.ui.phoenix.windows.buttons.togglebutton import TestPanelToggleButton
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -77,6 +78,7 @@ class TestPanel(wx.Choicebook):
         panels.append(TestPanelBitmapTextButton(self))
         panels.append(TestPanelCheckButton(self))
         panels.append(TestPanelRadioButton(self))
+        panels.append(TestPanelToggleButton(self))
 
         # Add such anz_panels to pages of the choice book.
         for p in panels:

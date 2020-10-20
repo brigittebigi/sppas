@@ -46,7 +46,12 @@
     -------------------------------------------------------------------------
 
     By using SPPAS, you agree to cite a reference in your publications.
-    The main reference is the following:
+    The main references are the followings:
+
+        Brigitte Bigi, Christine Meunier (2018),
+        Automatic segmentation of spontaneous speech,
+        Revista de Estudos da Linguagem. International Thematic Issue: Speech Segmentation,
+        vol. 26, Number 4, ISBN e-ISSN 2237-2083.
 
         Brigitte BIGI (2015).
         SPPAS - Multi-lingual Approaches to the Automatic Annotation of Speech.

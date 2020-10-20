@@ -59,6 +59,7 @@ from sppas.src.annotations import sppasParam
 from sppas.src.annotations import sppasAnnotationsManager
 from sppas.src.anndata.aio.aioutils import serialize_labels
 
+
 if __name__ == "__main__":
 
     # -----------------------------------------------------------------------
@@ -68,7 +69,6 @@ if __name__ == "__main__":
     parameters = sppasParam(["alignment.json"])
     ann_step_idx = parameters.activate_annotation("alignment")
     ann_options = parameters.get_options(ann_step_idx)
-    extensions_out = parameters.get_output_extensions(ann_step_idx)
 
     # -----------------------------------------------------------------------
     # Verify and extract args:
@@ -145,10 +145,10 @@ if __name__ == "__main__":
     group_io.add_argument(
         "-e",
         metavar=".ext",
-        default=parameters.get_output_extension(ann_step_idx),
-        choices=extensions_out,
+        default=parameters.get_default_outformat_extension("ANNOT"),
+        choices=parameters.get_outformat_extensions("ANNOT"),
         help='Output file extension. One of: {:s}'
-             ''.format(" ".join(extensions_out)))
+             ''.format(" ".join(parameters.get_outformat_extensions("ANNOT"))))
 
     # Add arguments from the options of the annotation
     # ------------------------------------------------
@@ -246,7 +246,7 @@ if __name__ == "__main__":
 
         # Fix the output file extension and others
         parameters.set_lang(args.l)
-        parameters.set_output_extension(args.e, parameters.get_outformat(ann_step_idx))
+        parameters.set_output_extension(args.e, "ANNOT")
         parameters.set_report_filename(args.log)
 
         # Perform the annotation

@@ -11,11 +11,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
-"Last-Translator: Brigitte Bigi <brigitte.bigi@gmail.com>\n"
+"Last-Translator: Brigitte Bigi <develop@sppas.org>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Language: en_US\n"
-"X-Generator: Poedit 1.8.11\n"
+"X-Generator: Poedit 2.2.1\n"
 
 msgid ":ERROR 0001: "
 msgstr "L'erreur suivante a été relevée: {message}."
@@ -64,6 +64,12 @@ msgstr "Le dossier {dirname} n'existe pas."
 
 msgid ":ERROR 0650: "
 msgstr "Le fichier '{:s}' n'a pas pu être ouvert ou n'a pas pu être chargé."
+
+msgid ":ERROR 0670: "
+msgstr "Les fichiers avec l'extension '{:s}' ne peuvent pas être ouverts."
+
+msgid ":ERROR 0680: "
+msgstr "Les fichiers avec l'extension '{:s}' ne peuvent pas être enregistrés."
 
 msgid ":INFO 0510: "
 msgstr "Installation de '{name}'"

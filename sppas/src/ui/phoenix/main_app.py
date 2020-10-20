@@ -40,8 +40,8 @@ Create and run the application:
 
 """
 
+import os
 import traceback
-import time
 import wx
 import logging
 from os import path
@@ -90,15 +90,23 @@ class sppasApp(wx.App):
         wx.SystemOptions.SetOption("mac.window-plain-transition", 1)
         wx.SystemOptions.SetOption("msw.font.no-proof-quality", 0)
 
-        # Fix language and translation
-        lang = wx.LANGUAGE_DEFAULT
-        self.locale = wx.Locale(lang)
+        os.environ["LANG"] = "C"
+
+        # Fix wx language and translation. SPPAS won't use it but
+        # we have to fix it to not raise an exception under Windows.
+        self._locale = wx.Locale(wx.LANGUAGE_ENGLISH)
 
         # Fix logging. Notice that Settings will be fixed at 'run'.
         self.settings = None
         self._logging = None
         self.process_command_line_args()
         self.setup_python_logging()
+
+    # -----------------------------------------------------------------------
+
+    def InitLocale(self):
+        """Override."""
+        return
 
     # -----------------------------------------------------------------------
     # Methods to configure and starts the app
@@ -239,7 +247,7 @@ class sppasApp(wx.App):
         This method is invoked when the user:
 
             - clicks on the [X] button of the frame manager
-            - does "ALT-F4" (WindowsInstaller) or CTRL+X (Unix)
+            - does "ALT-F4" (Windows) or CTRL+X (Unix)
             - click on a custom 'exit' button
 
         In case of crash or SIGKILL (or bug!) this method is not invoked.

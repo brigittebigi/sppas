@@ -33,8 +33,6 @@
     "STANDALONE"
   ],
 
-  "outformat": "IMAGE",
-
   "options": [
     {
       "id": "inputpattern",

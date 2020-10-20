@@ -350,12 +350,12 @@ class sppasSearchIPUs(sppasBaseAnnotation):
 
     # -----------------------------------------------------------------------
 
-    def run(self, input_file, opt_input_file=None, output_file=None):
+    def run(self, input_file, opt_input_file=None, output=None):
         """Run the automatic annotation process on an input.
 
         :param input_file: (list of str) audio
         :param opt_input_file: (list of str) ignored
-        :param output_file: (str) the output file name
+        :param output: (str) the output file name
         :returns: (sppasTranscription)
 
         """
@@ -384,15 +384,17 @@ class sppasSearchIPUs(sppasBaseAnnotation):
         tier.set_media(media)
 
         # Save in a file
-        if output_file is not None:
+        if output is not None:
+            output_file = self.fix_out_file_ext(output)
             parser = sppasRW(output_file)
             parser.write(trs_output)
+            return [output_file]
 
         return trs_output
 
     # -----------------------------------------------------------------------
 
-    def run_for_batch_processing(self, input_file, opt_input_file, output_format):
+    def run_for_batch_processing(self, input_file, opt_input_file):
         """Perform the annotation on a file.
 
         This method is called by 'batch_processing'. It fixes the name of the
@@ -402,13 +404,11 @@ class sppasSearchIPUs(sppasBaseAnnotation):
 
         :param input_file: (list of str) the required input
         :param opt_input_file: (list of str) the optional input
-        :param output_format: (str) Extension of the output file
         :returns: output file name or None
 
         """
         # Fix input/output file name
-        root_pattern = self.get_out_name(input_file[0], "")
-        out_name = root_pattern + output_format
+        root_pattern = self.get_out_name(input_file[0])
 
         # Is there already an existing output file (in any format)!
         ext = []
@@ -419,11 +419,9 @@ class sppasSearchIPUs(sppasBaseAnnotation):
 
         # it's existing... but not in the expected format: convert!
         if exist_out_name is not None:
+            out_name = self.fix_out_file_ext(root_pattern)
             if exist_out_name.lower() == out_name.lower():
-                self.logfile.print_message(
-                    _info(1300).format(exist_out_name),
-                    indent=2, status=annots.info)
-                return None
+                return list()
 
             else:
                 try:
@@ -431,22 +429,19 @@ class sppasSearchIPUs(sppasBaseAnnotation):
                     t = parser.read()
                     parser.set_filename(out_name)
                     parser.write(t)
-                    self.logfile.print_message(
-                        _info(1300).format(exist_out_name) +
-                        _info(1302).format(out_name),
-                        indent=2, status=annots.warning)
-                    return out_name
+                    self.logfile.print_message(_info(1302).format(out_name), indent=2, status=annots.warning)
+                    return [out_name]
                 except:
                     pass
 
         try:
             # Execute annotation
-            self.run(input_file, opt_input_file, out_name)
+            new_files = self.run(input_file, opt_input_file, root_pattern)
         except Exception as e:
-            out_name = None
+            new_files = list()
             self.logfile.print_message("{:s}\n".format(str(e)), indent=2, status=-1)
 
-        return out_name
+        return new_files
 
     # -----------------------------------------------------------------------
 

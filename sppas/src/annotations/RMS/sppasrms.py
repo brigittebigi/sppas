@@ -211,7 +211,7 @@ class sppasRMS(sppasBaseAnnotation):
     # Apply the annotation on a given file
     # -----------------------------------------------------------------------
 
-    def run(self, input_file, opt_input_file=None, output_file=None):
+    def run(self, input_file, opt_input_file=None, output=None):
         """Run the automatic annotation process on an input.
 
         Input file is a tuple with 2 files:
@@ -219,7 +219,7 @@ class sppasRMS(sppasBaseAnnotation):
 
         :param input_file: (list of str) (audio, time-aligned items)
         :param opt_input_file: (list of str) ignored
-        :param output_file: (str) the output file name
+        :param output: (str) the output name
         :returns: (sppasTranscription)
 
         """
@@ -250,11 +250,12 @@ class sppasRMS(sppasBaseAnnotation):
             trs_output.append(tier)
 
         # Save in a file
-        if output_file is not None:
+        if output is not None:
             if len(trs_output) > 0:
+                output_file = self.fix_out_file_ext(output)
                 parser = sppasRW(output_file)
                 parser.write(trs_output)
-                self.print_filename(output_file)
+                return [output_file]
             else:
                 raise EmptyOutputError
 

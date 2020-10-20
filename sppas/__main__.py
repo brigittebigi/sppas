@@ -29,19 +29,19 @@
 
         ---------------------------------------------------------------------
 
-    __main__.py
+    src.__main__.py
     ~~~~~~~~~~~~~~~
 
     In Python, '__main__' is the name of the scope in which top-level code
     executes. Within SPPAS, it allows to launch the Graphical User Interface.
 
-To launch the GUI, this main file allows the followings 3 possibilities:
+To launch the GUI, this main file allows the followings 3 solutions:
 
 >>> python3 -m sppas
 >>> python3 sppas
 >>> python3 sppas/__main__.py
 
-In case of error, it will create a log file with the error message and
+In case of error, SPPAS will create a log file with the error message and
 display it.
 
 """
@@ -51,8 +51,8 @@ import os
 import webbrowser
 
 if __package__ is None or len(__package__) == 0:
-    dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    sys.path.insert(0, dir)
+    sppas_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, sppas_dir)
     __package__ = "sppas"
 
 from sppas.src.config import cfg
@@ -67,7 +67,7 @@ msg = ""
 
 if sys.version_info < (3, 6):
     msg = "The version of Python is not the right one. "\
-          "This GUI of SPPAS requires at least version 3.6."
+          "This GUI of SPPAS requires preferably version 3.8+."
 else:
     try:
         # Create and run the wx application

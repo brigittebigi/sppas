@@ -232,14 +232,14 @@ class sppasFillIPUs(sppasBaseAnnotation):
     # Apply the annotation on one or several given files
     # -----------------------------------------------------------------------
 
-    def run(self, input_file, opt_input_file=None, output_file=None):
+    def run(self, input_file, opt_input_file=None, output=None):
         """Run the automatic annotation process on an input.
 
         input_filename is a tuple (audio, raw transcription)
 
         :param input_file: (list of str) (audio, ortho)
         :param opt_input_file: (list of str) ignored
-        :param output_file: (str) the output file name
+        :param output: (str) the output file name
         :returns: (sppasTranscription)
 
         """
@@ -271,15 +271,17 @@ class sppasFillIPUs(sppasBaseAnnotation):
         tier.set_media(media)
 
         # Save in a file
-        if output_file is not None:
+        if output is not None:
+            output_file = self.fix_out_file_ext(output)
             parser = sppasRW(output_file)
             parser.write(trs_output)
+            return [output_file]
 
         return trs_output
 
     # -----------------------------------------------------------------------
 
-    def run_for_batch_processing(self, input_file, opt_input_file, output_format):
+    def run_for_batch_processing(self, input_file, opt_input_file):
         """Perform the annotation on a file.
 
         This method is called by 'batch_processing'. It fixes the name of the
@@ -288,13 +290,11 @@ class sppasFillIPUs(sppasBaseAnnotation):
 
         :param input_file: (list of str) the required input
         :param opt_input_file: (list of str) the optional input
-        :param output_format: (str) Extension of the output file
         :returns: output file name or None
 
         """
         # Fix the output file name
-        root_pattern = self.get_out_name(input_file[0], "")
-        out_name = root_pattern + output_format
+        root_pattern = self.get_out_name(input_file[0])
 
         # Is there already an existing IPU-seg (in any format)!
         ext = []
@@ -304,12 +304,11 @@ class sppasFillIPUs(sppasBaseAnnotation):
         exists_out_name = sppasBaseAnnotation._get_filename(root_pattern, ext)
 
         # it's existing... but not in the expected format: we convert!
+        new_files = list()
         if exists_out_name is not None:
+            out_name = self.fix_out_file_ext(root_pattern)
             if exists_out_name.lower() == out_name.lower():
-                self.logfile.print_message(
-                    _info(1300).format(exists_out_name),
-                    indent=2, status=annots.info)
-                return None
+                return list()
 
             else:
                 try:
@@ -317,23 +316,19 @@ class sppasFillIPUs(sppasBaseAnnotation):
                     t = parser.read()
                     parser.set_filename(out_name)
                     parser.write(t)
-                    self.logfile.print_message(
-                        _info(1300).format(exists_out_name) +
-                        _info(1302).format(out_name),
-                        indent=2, status=annots.info)
-                    return out_name
+                    self.logfile.print_message(_info(1302).format(out_name), indent=2, status=annots.info)
+                    return [out_name]
                 except:
                     pass
         else:
             # Create annotation instance, fix options, run.
             try:
-                self.run(input_file, opt_input_file, out_name)
+                new_files = self.run(input_file, opt_input_file, root_pattern)
             except Exception as e:
-                out_name = None
                 self.logfile.print_message(
                     "{:s}\n".format(str(e)), indent=1, status=-1)
 
-        return out_name
+        return new_files
 
     # -----------------------------------------------------------------------
 

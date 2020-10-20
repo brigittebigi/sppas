@@ -158,7 +158,7 @@ class sppasTextCtrl(wx.TextCtrl):
                  size=DefaultSize, style=0, validator=DefaultValidator,
                  name=TextCtrlNameStr)
 
-    Existing shortcuts in a textctrl (tested under WindowsInstaller):
+    Existing shortcuts in a textctrl (tested under Windows):
         - Ctrl+a - select all
         - Ctrl+c - copy
         - Ctrl+h - del previous char or selection

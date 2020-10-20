@@ -268,5 +268,27 @@ class TestCoordinates(unittest.TestCase):
         c = sppasCoords(143, 17, 150, 98, 0.998)
         self.assertEqual(str(c), "(143,17) (150,98): 0.998000")
 
+    # ------------------------------------------------------------------------
+
+    def test_to_coords(self):
+        c = sppasCoords.to_coords((143, 17))
+        self.assertEqual(str(c), "(143,17)")
+        c = sppasCoords.to_coords((143, 17, 0.123))
+        self.assertEqual(str(c), "(143,17): 0.123000")
+        c = sppasCoords.to_coords((143, 17, 150, 98))
+        self.assertEqual(str(c), "(143,17) (150,98)")
+        c = sppasCoords.to_coords((143, 17, 150, 98, 0.998))
+        self.assertEqual(str(c), "(143,17) (150,98): 0.998000")
+        c = sppasCoords.to_coords((143, 17, 150, 98, 0.998, 'a', 'b'))
+        self.assertEqual(str(c), "(143,17) (150,98): 0.998000")
+
+        with self.assertRaises(TypeError):
+            sppasCoords.to_coords("toto")
+
+        with self.assertRaises(TypeError):
+            sppasCoords.to_coords(("x", "y"))
+
+        with self.assertRaises(TypeError):
+            sppasCoords.to_coords(("3", "4"))
 
 

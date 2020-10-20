@@ -238,7 +238,7 @@ class sppasLPC(sppasBaseAnnotation):
         :param lpc_keys: (sppasTier) Codes of the C-V syllables
 
         """
-        if cfg.dep_installed("video") is True:
+        if cfg.feature_installed("video") is True:
             self.logfile.print_message("Creating a tagged video with the LPC key codes"
                                        " is not implemented yet.", status=annots.info)
             # self.logfile.print_message("Create the tagged video", status=annots.info)
@@ -253,12 +253,12 @@ class sppasLPC(sppasBaseAnnotation):
     # Apply the annotation on one given file
     # -----------------------------------------------------------------------
 
-    def run(self, input_file, opt_input_file=None, output_file=None):
+    def run(self, input_file, opt_input_file=None, output=None):
         """Run the automatic annotation process on an input.
 
         :param input_file: (list of str) time-aligned phonemes, video file
         :param opt_input_file: (list of str) ignored
-        :param output_file: (str) the output file name
+        :param output: (str) the output name
         :returns: (sppasTranscription)
 
         """
@@ -291,10 +291,12 @@ class sppasLPC(sppasBaseAnnotation):
                     "".format(input_file[0]), status=-1)
 
         # Save in a file
-        if output_file is not None:
+        if output is not None:
             if len(trs_output) > 0:
+                output_file = self.fix_out_file_ext(output)
                 parser = sppasRW(output_file)
                 parser.write(trs_output)
+                return [output_file]
             else:
                 raise EmptyOutputError
 

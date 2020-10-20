@@ -49,6 +49,9 @@ class TestLang(unittest.TestCase):
     def setUp(self):
         self.lr = sppasLangResource()
 
+    def test_constant(self):
+        self.assertEqual(2, len(sppasLangResource.RESOURCES_TYPES))
+
     def test_set(self):
         self.assertEqual(self.lr.get_lang(), "")
 

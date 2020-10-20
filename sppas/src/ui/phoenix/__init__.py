@@ -42,13 +42,14 @@ from sppas.src.exceptions import sppasPackageUpdateFeatureError
 # Check if installation and feature configuration are matching...
 try:
     import wx
-    if cfg.dep_installed("wxpython") is False:
+    if cfg.feature_installed("wxpython") is False:
         # WxPython wasn't installed by the SPPAS setup.
-        cfg.set_dep("wxpython", True)
+        cfg.set_feature("wxpython", True)
 except ImportError:
-    if cfg.dep_installed("wxpython") is True:
+    if cfg.feature_installed("wxpython") is True:
         # Invalidate the feature because the package is not installed!
-        cfg.set_dep("wxpython", False)
+        cfg.set_feature("wxpython", False)
+
         class sppasWxError(object):
             def __init__(self, *args, **kwargs):
                 raise sppasPackageFeatureError("wx", "wxpython")
@@ -58,11 +59,11 @@ except ImportError:
                 raise sppasEnableFeatureError("wxpython")
 
 # The feature "wxpython" is enabled. Check the version!
-if cfg.dep_installed("wxpython") is True:
+if cfg.feature_installed("wxpython") is True:
     v = wx.version().split()[0][0]
     if v != '4':
         # Invalidate the feature because the package is not up-to-date
-        cfg.set_dep("wxpython", False)
+        cfg.set_feature("wxpython", False)
 
         class sppasWxError(object):
             def __init__(self, *args, **kwargs):
@@ -73,7 +74,7 @@ if cfg.dep_installed("wxpython") is True:
 # ---------------------------------------------------------------------------
 
 
-if cfg.dep_installed("wxpython") is True:
+if cfg.feature_installed("wxpython") is True:
     from .install_app import sppasInstallApp
     from .main_app import sppasApp
 

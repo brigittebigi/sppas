@@ -34,7 +34,6 @@
 
 """
 
-import logging
 import wx
 import wx.lib.agw.floatspin
 
@@ -266,7 +265,7 @@ class sppasOptionsPanel(sppasScrolledPanel):
 
 class TestPanel(sppasOptionsPanel):
 
-    def __init__(self, parent):
+    def __init__(self, parent, name="Test Options Panel"):
 
         # Create a bunch of options to be displayed
         o1 = sppasOption("bool_test1", option_type="bool", option_value=False)

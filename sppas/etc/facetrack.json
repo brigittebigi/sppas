@@ -47,8 +47,6 @@
     "STANDALONE"
   ],
 
-  "outformat": "VIDEO",
-
   "options": [
     {
       "id": "inputpattern",
@@ -75,6 +73,12 @@
       "text": "Minimum confidence score to select detected faces"
     },
     {
+      "id": "track",
+      "type": "bool",
+      "value": false,
+      "text": "Associate an identifier to each detected face that matches a person [VERY SLOW]"
+    },
+    {
       "id": "csv",
       "type": "bool",
       "value": false,
@@ -95,7 +99,7 @@
     {
       "id": "tag",
       "type": "bool",
-      "value": true,
+      "value": false,
       "text": "Surround the detected faces in the outputs"
     },
     {

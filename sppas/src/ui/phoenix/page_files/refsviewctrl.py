@@ -95,9 +95,12 @@ class RefsTreeViewPanel(sppasScrolledPanel):
         self._setup_events()
 
         # Look&feel
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        try:
+            self.SetBackgroundColour(wx.GetApp().settings.bg_color)
+            self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            self.SetFont(wx.GetApp().settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
     # ------------------------------------------------------------------------
     # Public methods
@@ -583,8 +586,9 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
 
     def __create_listctrl(self, parent):
         """Create a listctrl to display attributes."""
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL | wx.LC_HRULES
+        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_SINGLE_SEL  # | wx.LC_HRULES
         lst = sppasListCtrl(parent, style=style, name="atts_listctrl")
+        lst.SetAlternateRowColour(False)
 
         lst.AppendColumn("identifier",
                          format=wx.LIST_FORMAT_LEFT,

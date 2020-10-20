@@ -55,6 +55,7 @@ FLS_TITLE = msg("Files: ", "ui")
 FLS_ACT_ADD = msg("Add", "ui")
 FLS_ACT_REM = msg("Remove checked", "ui")
 FLS_ACT_DEL = msg("Delete checked", "ui")
+FLS_ACT_EDIT = msg("Edit checked", "ui")
 FLS_ACT_MISS = msg("Edit missing", "ui")
 
 FLS_MSG_CONFIRM_DEL = msg("Are you sure you want to delete {:d} files?")
@@ -91,6 +92,15 @@ class PathsTreePanel(sppasPanel):
         self.SetMinSize(wx.Size(sppasPanel.fix_size(320), -1))
         self.SetAutoLayout(True)
         self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        """Override. """
+        wx.Panel.SetForegroundColour(self, colour)
+        for c in self.GetChildren():
+            if c.GetName() != "hline":
+                c.SetForegroundColour(colour)
 
     # -----------------------------------------------------------------------
     # Public methods to access the data
@@ -141,6 +151,7 @@ class PathsTreePanel(sppasPanel):
         tb.AddButton("files-add", FLS_ACT_ADD)
         tb.AddButton("files-remove", FLS_ACT_REM)
         tb.AddButton("files-delete", FLS_ACT_DEL)
+        tb.AddButton("files-edit", FLS_ACT_EDIT)
         # btn = tb.AddButton("files-missing", FLS_ACT_MISS)
         # btn.Enable(False)
         return tb
@@ -149,10 +160,11 @@ class PathsTreePanel(sppasPanel):
 
     def __create_hline(self):
         """Create an horizontal line, used to separate the anz_panels."""
-        line = sppasStaticLine(self, orient=wx.LI_HORIZONTAL)
+        line = sppasStaticLine(self, orient=wx.LI_HORIZONTAL, name="hline")
         line.SetMinSize(wx.Size(-1, 20))
         line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
         line.SetDepth(1)
+        line.SetForegroundColour(self.HIGHLIGHT_COLOUR)
         return line
 
     # -----------------------------------------------------------------------
@@ -209,6 +221,9 @@ class PathsTreePanel(sppasPanel):
 
         elif name == "files-delete":
             self.delete()
+
+        elif name == "files-edit":
+            self.edit()
 
         elif name == "files-missing":
             self.edit_missing()
@@ -271,6 +286,22 @@ class PathsTreePanel(sppasPanel):
                 self.notify()
         elif response == wx.ID_NO:
             wx.LogMessage('Response is no. No file deleted.')
+
+    # ------------------------------------------------------------------------
+
+    def edit(self):
+        """Open a dialog to edit checked files."""
+        data = self.get_data()
+        if data.is_empty():
+            wx.LogMessage('No files in data. Nothing to edit.')
+            return
+
+        checked_files = self._filestree.GetCheckedFiles()
+        if len(checked_files) == 0:
+            Information('None of the files are selected to be edited.')
+            return
+
+        self._filestree.EditCheckedFiles()
 
     # ------------------------------------------------------------------------
 

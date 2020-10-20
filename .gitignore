@@ -1,9 +1,9 @@
 .idea
 .idea/*
-.logs
-.logs/*
-.trash
-.trash/*
+logs
+logs/*
+trash
+trash/*
 .settings
 .uisettings
 .project
@@ -11,4 +11,4 @@
 *.pyc
 .DS_Store
 *.dump
-tierdlist.*
+tiedlist.*

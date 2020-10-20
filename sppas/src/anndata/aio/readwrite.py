@@ -78,42 +78,43 @@ class sppasRW(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     Readers and writers of annotated data.
 
     """
-    
+
+    # A dictionary to associate a file extension and a class to instantiate.
     TRANSCRIPTION_TYPES = OrderedDict()
-    TRANSCRIPTION_TYPES[sppasXRA().default_extension.lower()] = sppasXRA
-    TRANSCRIPTION_TYPES[sppasTextGrid().default_extension.lower()] = sppasTextGrid
-    TRANSCRIPTION_TYPES[sppasARFF().default_extension.lower()] = sppasARFF
-    TRANSCRIPTION_TYPES[sppasXRFF().default_extension.lower()] = sppasXRFF
-    TRANSCRIPTION_TYPES[sppasAnvil().default_extension.lower()] = sppasAnvil
-    TRANSCRIPTION_TYPES[sppasEAF().default_extension.lower()] = sppasEAF
-    TRANSCRIPTION_TYPES[sppasANT().default_extension.lower()] = sppasANT
-    TRANSCRIPTION_TYPES[sppasANTX().default_extension.lower()] = sppasANTX
-    TRANSCRIPTION_TYPES[sppasTRS().default_extension.lower()] = sppasTRS
-    TRANSCRIPTION_TYPES[sppasMRK().default_extension.lower()] = sppasMRK
-    TRANSCRIPTION_TYPES[sppasSignaix().default_extension.lower()] = sppasSignaix
-    TRANSCRIPTION_TYPES[sppasLab().default_extension.lower()] = sppasLab
-    TRANSCRIPTION_TYPES[sppasSubRip().default_extension.lower()] = sppasSubRip
-    TRANSCRIPTION_TYPES[sppasSubViewer().default_extension.lower()] = sppasSubViewer
-    TRANSCRIPTION_TYPES[sppasWebVTT().default_extension.lower()] = sppasWebVTT
-    TRANSCRIPTION_TYPES[sppasCTM().default_extension.lower()] = sppasCTM
-    TRANSCRIPTION_TYPES[sppasSTM().default_extension.lower()] = sppasSTM
-    TRANSCRIPTION_TYPES[sppasIntensityTier().default_extension.lower()] = sppasIntensityTier
-    TRANSCRIPTION_TYPES[sppasPitchTier().default_extension.lower()] = sppasPitchTier
-    TRANSCRIPTION_TYPES[sppasAudacity().default_extension.lower()] = sppasAudacity
-    TRANSCRIPTION_TYPES[sppasTDF().default_extension.lower()] = sppasTDF
-    TRANSCRIPTION_TYPES[sppasCSV().default_extension.lower()] = sppasCSV
-    TRANSCRIPTION_TYPES[sppasRawText().default_extension.lower()] = sppasRawText
+    TRANSCRIPTION_TYPES[sppasXRA().default_extension] = sppasXRA
+    TRANSCRIPTION_TYPES[sppasTextGrid().default_extension] = sppasTextGrid
+    TRANSCRIPTION_TYPES[sppasARFF().default_extension] = sppasARFF
+    TRANSCRIPTION_TYPES[sppasXRFF().default_extension] = sppasXRFF
+    TRANSCRIPTION_TYPES[sppasAnvil().default_extension] = sppasAnvil
+    TRANSCRIPTION_TYPES[sppasEAF().default_extension] = sppasEAF
+    TRANSCRIPTION_TYPES[sppasANT().default_extension] = sppasANT
+    TRANSCRIPTION_TYPES[sppasANTX().default_extension] = sppasANTX
+    TRANSCRIPTION_TYPES[sppasTRS().default_extension] = sppasTRS
+    TRANSCRIPTION_TYPES[sppasMRK().default_extension] = sppasMRK
+    TRANSCRIPTION_TYPES[sppasSignaix().default_extension] = sppasSignaix
+    TRANSCRIPTION_TYPES[sppasLab().default_extension] = sppasLab
+    TRANSCRIPTION_TYPES[sppasSubRip().default_extension] = sppasSubRip
+    TRANSCRIPTION_TYPES[sppasSubViewer().default_extension] = sppasSubViewer
+    TRANSCRIPTION_TYPES[sppasWebVTT().default_extension] = sppasWebVTT
+    TRANSCRIPTION_TYPES[sppasCTM().default_extension] = sppasCTM
+    TRANSCRIPTION_TYPES[sppasSTM().default_extension] = sppasSTM
+    TRANSCRIPTION_TYPES[sppasIntensityTier().default_extension] = sppasIntensityTier
+    TRANSCRIPTION_TYPES[sppasPitchTier().default_extension] = sppasPitchTier
+    TRANSCRIPTION_TYPES[sppasAudacity().default_extension] = sppasAudacity
+    TRANSCRIPTION_TYPES[sppasTDF().default_extension] = sppasTDF
+    TRANSCRIPTION_TYPES[sppasCSV().default_extension] = sppasCSV
+    TRANSCRIPTION_TYPES[sppasRawText().default_extension] = sppasRawText
 
     # -----------------------------------------------------------------------
 
     @staticmethod
     def extensions():
-        """Return the whole list of supported extensions in lower case."""
+        """Return the whole list of supported extensions (case sensitive)."""
         return list(sppasRW.TRANSCRIPTION_TYPES.keys())
 
     # -----------------------------------------------------------------------
@@ -223,9 +224,9 @@ class sppasRW(object):
 
         """
         extension = os.path.splitext(filename)[1][1:]
-        extension = extension.lower()
-        if extension in sppasRW.extensions():
-            return sppasRW.TRANSCRIPTION_TYPES[extension]()
+        for ext in sppasRW.TRANSCRIPTION_TYPES.keys():
+            if ext.lower() == extension.lower():
+                return sppasRW.TRANSCRIPTION_TYPES[ext]()
 
         raise IOExtensionError(filename)
 
@@ -286,7 +287,7 @@ class FileFormatProperty(object):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      contact@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
     """
 
@@ -299,8 +300,13 @@ class FileFormatProperty(object):
         self._extension = extension
         if extension.startswith(".") is False:
             self._extension = "." + extension
-        self._instance = sppasRW.TRANSCRIPTION_TYPES[extension.lower()]()
-        self._software = self._instance.software
+
+        self._instance = None
+        self._software = "Unknown"
+        for ext in sppasRW.TRANSCRIPTION_TYPES.keys():
+            if ext.lower() == extension.lower():
+                self._instance = sppasRW.TRANSCRIPTION_TYPES[ext]()
+                self._software = self._instance.software
 
         try:
             self._instance.read("")

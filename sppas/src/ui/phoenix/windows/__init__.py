@@ -44,6 +44,8 @@ from .listctrl import sppasListCtrl
 
 from .image import sppasStaticBitmap
 
+from .popup import LabelPopup
+
 from .text import sppasStaticText
 from .text import sppasSimpleText
 from .text import sppasMessageText
@@ -54,12 +56,13 @@ from .text import NotEmptyTextValidator
 from .basedcwindow import sppasDCWindow
 from .basedcwindow import sppasWindowEvent
 
-# basewindow requires basedcwindow
+# basewindow requires sppasDCWindow
 from .basewindow import WindowState
 from .basewindow import sppasWindow
 
-# line requires sppasDCWindow
+# line/slider requires sppasDCWindow
 from .line import sppasStaticLine
+from .slider import sppasSlider
 
 # frame requires sppasStaticLine
 from .frame import sppasTopFrame
@@ -71,6 +74,7 @@ from .buttons import TextButton
 from .buttons import BitmapButton
 from .buttons import BitmapTextButton
 from .buttons import ToggleButton
+from .buttons import ToggleTextButton
 from .buttons import CheckButton
 from .buttons import RadioButton
 
@@ -110,6 +114,7 @@ from .media import sppasPlayerControlsPanel
 from .media import sppasMultiPlayerPanel
 
 __all__ = (
+    "sppasSlider",
     "sppasDialog",
     "sppasChoiceDialog",
     "sppasFileDialog",
@@ -153,6 +158,7 @@ __all__ = (
     "sppasTopFrame",
     "sppasFrame",
     "sppasToolbar",
+    "sppasComboBox",
     "sppasListCtrl",
     "LineListCtrl",
     "CheckListCtrl",

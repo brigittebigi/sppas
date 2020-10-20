@@ -209,7 +209,8 @@ class sppasLogWindow(wx.TopLevelWindow):
         super(sppasLogWindow, self).__init__(
             parent=parent,
             title='{:s} Log'.format(sg.__name__),
-            style=wx.CAPTION | wx.RESIZE_BORDER)
+            style=wx.CAPTION | wx.RESIZE_BORDER,
+            name="log_toplevelwindow")
 
         # To fade-in and fade-out the opacity
         self.opacity_in = 0
@@ -563,6 +564,9 @@ class sppasLogTextCtrl(wx.LogTextCtrl):
         """
         if not self:
             return
+        if not self.textctrl:
+            return
+
         # Display time with the default color
         self.textctrl.SetDefaultStyle(self.textctrl.default)
         self.textctrl.write("{:s} ".format(sppasTime().now[:-6]))

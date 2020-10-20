@@ -160,3 +160,18 @@ class TestExceptions(unittest.TestCase):
             self.assertTrue(isinstance(e, NoDirectoryError))
             self.assertTrue("0620" in str(e))
             self.assertTrue(620, e.status)
+
+        try:
+            raise sppasExtensionReadError(".xyz")
+        except OSError as e:
+            self.assertTrue(isinstance(e, sppasExtensionReadError))
+            self.assertTrue("0670" in str(e))
+            self.assertTrue(670, e.status)
+
+        try:
+            raise sppasExtensionWriteError(".xyz")
+        except OSError as e:
+            self.assertTrue(isinstance(e, sppasExtensionWriteError))
+            self.assertTrue("0680" in str(e))
+            self.assertTrue(680, e.status)
+

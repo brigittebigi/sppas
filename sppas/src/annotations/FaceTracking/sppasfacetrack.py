@@ -38,6 +38,7 @@ import logging
 from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
 from sppas.src.exceptions import sppasError
+from sppas.src.exceptions import sppasTypeError
 from sppas.src.videodata import video_extensions
 
 from ..FaceDetection import FaceDetection
@@ -47,7 +48,7 @@ from ..baseannot import sppasBaseAnnotation
 
 from .facebuffer import sppasFacesVideoBuffer
 from .facetrack import FaceTracking
-from .videowriter import sppasVideoWriter
+from .videotrackwriter import sppasVideoCoordsWriter
 
 # ---------------------------------------------------------------------------
 
@@ -72,17 +73,20 @@ class sppasFaceTrack(sppasBaseAnnotation):
         :param log: (sppasLog) Human-readable logs.
 
         """
-        if cfg.dep_installed("facedetect") is False:
+        if cfg.feature_installed("facedetect") is False:
             raise sppasEnableFeatureError("facedetect")
 
-        if cfg.dep_installed("facemark") is False:
+        if cfg.feature_installed("facemark") is False:
             raise sppasEnableFeatureError("facemark")
 
         super(sppasFaceTrack, self).__init__("facetrack.json", log)
 
-        self.__video_buffer = sppasFacesVideoBuffer(size=10)
+        # The objects to store the input data and the results
+        self.__video_buffer = sppasFacesVideoBuffer(size=-1)
+        self.__video_writer = sppasVideoCoordsWriter()
+
+        # The detector
         self.__ft = FaceTracking()
-        self.__video_writer = sppasVideoWriter()
 
     # -----------------------------------------------------------------------
 
@@ -142,40 +146,34 @@ class sppasFaceTrack(sppasBaseAnnotation):
 
             key = opt.get_key()
             if key == "nbest":
-                self._options["nbest"] = opt.get_value()
-                self.__video_buffer.set_filter_best(opt.get_value())
+                self.set_max_faces(opt.get_value())
 
             elif key == "score":
-                self._options["score"] = opt.get_value()
-                self.__video_buffer.set_filter_confidence(opt.get_value())
+                self.set_min_score(opt.get_value())
+
+            elif key == "track":
+                self.set_auto_track(opt.get_value())
 
             elif key == "csv":
-                self._options["csv"] = opt.get_value()
-                self.__video_writer.set_options(csv=opt.get_value())
-
-            elif key == "tag":
-                self._options["tag"] = opt.get_value()
-                self.__video_writer.set_options(tag=opt.get_value())
-
-            elif key == "crop":
-                self._options["crop"] = opt.get_value()
-                self.__video_writer.set_options(crop=opt.get_value())
+                self.set_out_csv(opt.get_value())
 
             elif key == "video":
-                self._options["video"] = opt.get_value()
-                self.__video_writer.set_options(video=opt.get_value())
+                self.set_out_video(opt.get_value())
 
             elif key == "folder":
-                self._options["folder"] = opt.get_value()
-                self.__video_writer.set_options(folder=opt.get_value())
+                self.set_out_images(opt.get_value())
+
+            elif key == "tag":
+                self.set_img_tag(opt.get_value())
+
+            elif key == "crop":
+                self.set_img_crop(opt.get_value())
 
             elif key == "width":
-                self._options["width"] = opt.get_value()
-                self.__video_writer.set_options(width=opt.get_value())
+                self.set_img_width(opt.get_value())
 
             elif key == "height":
-                self._options["height"] = opt.get_value()
-                self.__video_writer.set_options(height=opt.get_value())
+                self.set_img_height(opt.get_value())
 
             elif key in ("inputpattern", "outputpattern", "inputoptpattern"):
                 self._options[key] = opt.get_value()
@@ -184,59 +182,272 @@ class sppasFaceTrack(sppasBaseAnnotation):
                 raise AnnotationOptionError(key)
 
     # ----------------------------------------------------------------------
+    # Getters and setters
+    # -----------------------------------------------------------------------
+
+    def set_max_faces(self, value):
+        """Fix the maximum number of faces the video contains.
+
+        :param value: (int) Number of persons
+
+        """
+        self.__video_buffer.set_filter_best(value)
+        self._options["nbest"] = value
+
+    # -----------------------------------------------------------------------
+
+    def set_min_score(self, value):
+        """Fix the minimum score to accept a face in the video.
+
+        :param value: (float) Min confidence score for face detection
+
+        """
+        self.__video_buffer.set_filter_confidence(value)
+        self._options["score"] = value
+
+    # -----------------------------------------------------------------------
+
+    def set_auto_track(self, value):
+        """Automatically track persons.
+
+        :param value: (bool)
+
+        """
+        value = bool(value)
+        self.__ft.enable_tracker(value)
+        self._options["track"] = value
+
+    # -----------------------------------------------------------------------
+
+    def set_out_csv(self, out_csv=False):
+        """The result includes a CSV file.
+
+        :param out_csv: (bool) Create a CSV file when detecting
+
+        """
+        self.__video_writer.set_options(csv=out_csv)
+        self._options["csv"] = out_csv
+
+    # -----------------------------------------------------------------------
+
+    def set_out_video(self, out_video=False):
+        """The result includes a VIDEO file.
+
+        :param out_video: (bool) Create a VIDEO file when detecting
+
+        """
+        self.__video_writer.set_options(video=out_video)
+        self._options["video"] = out_video
+
+    # -----------------------------------------------------------------------
+
+    def set_out_images(self, out_folder=False):
+        """The result includes a folder with image files.
+
+        :param out_folder: (bool) Create a folder with image files when detecting
+
+        """
+        self.__video_writer.set_options(folder=out_folder)
+        self._options["folder"] = out_folder
+
+    # -----------------------------------------------------------------------
+
+    def set_img_tag(self, value=True):
+        """Surround the faces with a square.
+
+        :param value: (bool) Tag the images
+
+        """
+        self.__video_writer.set_options(tag=value)
+        self._options["tag"] = value
+
+    # -----------------------------------------------------------------------
+
+    def set_img_crop(self, value=True):
+        """Create an image/video for each detected person.
+
+        :param value: (bool) Crop the images
+
+        """
+        self.__video_writer.set_options(crop=value)
+        self._options["crop"] = value
+
+    # -----------------------------------------------------------------------
+
+    def set_img_width(self, value):
+        """Width of the resulting images/video.
+
+        :param value: (int) Number of pixels
+
+        """
+        self.__video_writer.set_options(width=value)
+        self._options["width"] = value
+
+    # -----------------------------------------------------------------------
+
+    def set_img_height(self, value):
+        """Height of the resulting images/video.
+
+        :param value: (int) Number of pixel
+
+        """
+        self.__video_writer.set_options(height=value)
+        self._options["height"] = value
+
+    # -----------------------------------------------------------------------
+
+    def set_videos(self, video_buffer, video_writer, options=False):
+        """Assign a video buffer and a video writer.
+
+        Either:
+
+        -options=True: The configuration of the video buffer and writer is
+        changed to match the ones defined by the options of this class.
+        -options=False: The options of this class are changed to match the
+        configuration of the video buffer and writer.
+
+        :param video_buffer: (sppasVideoReaderBuffer)
+        :param video_writer: (sppasVideoCoordsWriter)
+        :param options: (bool) options priority
+
+        """
+        if isinstance(video_buffer, sppasFacesVideoBuffer) is False:
+            raise sppasTypeError(video_buffer, "sppasFacesVideoBuffer")
+        if isinstance(video_writer, sppasVideoCoordsWriter) is False:
+            raise sppasTypeError(video_writer, "sppasVideoCoordsWriter")
+
+        self.__video_buffer = video_buffer
+        self.__video_writer = video_writer
+
+        if options is True:
+            # Priority is given to the existing options:
+            self.__video_buffer.set_filter_best(self._options["nbest"])
+            self.__video_buffer.set_filter_confidence(self._options["score"])
+            self.__video_writer.set_options(
+                csv=self._options["csv"],
+                video=self._options["video"],
+                folder=self._options["folder"],
+                tag=self._options["tag"],
+                crop=self._options["crop"],
+                width=self._options["width"],
+                height=self._options["height"]
+            )
+        else:
+            # The existing options are overridden by the video configuration:
+            self._options["nbest"] = self.__video_buffer.get_filter_best()
+            self._options["score"] = self.__video_buffer.get_filter_confidence()
+            self._options["csv"] = self.__video_writer.get_csv_output()
+            self._options["video"] = self.__video_writer.get_video_output()
+            self._options["folder"] = self.__video_writer.get_folder_output()
+            self._options["tag"] = self.__video_writer.get_tag_output()
+            self._options["crop"] = self.__video_writer.get_crop_output()
+            self._options["width"] = self.__video_writer.get_output_width()
+            self._options["height"] = self.__video_writer.get_output_height()
+
+    # -----------------------------------------------------------------------
     # Apply the annotation on a given file
     # -----------------------------------------------------------------------
 
-    def run(self, input_file, opt_input_file=None, output_file=None):
-        """Run the automatic annotation process on an input.
+    def detect(self, output=None):
+        """Browse the video and store results.
 
-        :param input_file: (list of str) (image)
-        :param opt_input_file: (list of str) ignored
-        :param output_file: (str) the output base name for files
-        :returns: (list of points) Coordinates of detected faces
+        It is supposed that the video is already opened and it is not
+        released when detect is finished.
+
+        :param output: (str) Base name for the output
+        :return: (list) Either the coordinates of all detected faces or
+        the list of all created file names
 
         """
-        # Get and open the video filename from the input
-        video = input_file[0]
-        self.__video_buffer.open(video)
-        self.__video_writer.set_fps(self.__video_buffer.get_framerate())
-        bsize = self.__video_buffer.get_size()
-        self.logfile.print_message(" ... A video buffer contains {:d} images"
-                                   "".format(bsize))
-
         # Browse the video using the buffer of images
         result = list()
         read_next = True
         nb = 0
 
-        self.__video_writer.set_options(csv=None, tag=None, crop=None, width=None, height=None, video=None, folder=None)
+        # Cancel any previous result
+        self.__video_buffer.reset()
+        self.__video_buffer.seek_buffer(0)
 
         while read_next is True:
-            self.logfile.print_message("Read buffer number {:d}".format(nb))
+            if self.logfile is not None:
+                self.logfile.print_message("Read buffer number {:d}".format(nb+1))
+
             # fill-in the buffer with 'size'-images of the video
             read_next = self.__video_buffer.next()
+
             # face detection&landmarks on the current images of the buffer
             # and associate a face to a person
             self.__ft.detect_buffer(self.__video_buffer)
-            # save the current results
-            if output_file is not None:
-                self.__video_writer.write(self.__video_buffer,
-                                          output_file,
-                                          pattern=self.get_pattern())
-            for i in range(len(self.__video_buffer)):
-                faces = self.__video_buffer.get_detected_faces(i)
-                result.append(faces)
+
+            # save the current results: file names or list of face coordinates
+            if output is not None:
+                new_files = self.__video_writer.write(
+                    self.__video_buffer, output, pattern=self.get_pattern())
+                result.extend(new_files)
+            else:
+                for i in range(len(self.__video_buffer)):
+                    faces = self.__video_buffer.get_detected_faces(i)
+                    result.append(faces)
             nb += 1
 
-        self.__video_buffer.close()
-        self.__video_buffer.reset()
-        self.__video_writer.close()
+        return result
+
+    # -----------------------------------------------------------------------
+
+    def run(self, input_file, opt_input_file=None, output=None):
+        """Run the automatic annotation process on an input.
+
+        :param input_file: (list of str) (image)
+        :param opt_input_file: (list of str) ignored
+        :param output: (str) the output base name for files
+        :returns: (list) Either the list of list of detected faces or the list
+        of all created files.
+
+        """
+        # Get and open the video filename from the input
+        video = input_file[0]
+        self.__video_buffer.open(video)
+        bsize = self.__video_buffer.get_buffer_size()
+        self.__video_writer.set_fps(self.__video_buffer.get_framerate())
+        self.__video_writer.set_image_extension(self._out_extensions["IMAGE"])
+        self.__video_writer.set_video_extension(self._out_extensions["VIDEO"])
+
+        # Print information about the video in the report
+        if self.logfile:
+            self.logfile.print_message("Video information: {}"
+                                       "".format(input_file[0]),
+                                       indent=0)
+            self.logfile.print_message(
+                "Video: {:.3f} seconds, {:d} fps, {:d}x{:d}".format(
+                    self.__video_buffer.get_duration(),
+                    self.__video_buffer.get_framerate(),
+                    self.__video_buffer.get_width(),
+                    self.__video_buffer.get_height()
+                ), indent=1)
+            self.logfile.print_message(
+                "A video buffer contains {:d} images".format(bsize),
+                indent=1)
+
+        # Detect all faces on all images of the video and assign a person
+        try:
+            result = self.detect(output)
+        except Exception as e:
+            import traceback
+            self.__video_buffer.close()
+            self.__video_writer.close()
+            logging.error(str(e))
+            print(traceback.format_exc())
+            raise
+        else:
+            self.__video_buffer.close()
+            self.__video_writer.close()
+
         return result
 
     # -----------------------------------------------------------------------
 
     def get_pattern(self):
-        """Pattern this annotation uses in an output filename."""
+        """Pattern this annotation adds to the output filename."""
         return self._options.get("outputpattern", "-face")
 
     @staticmethod

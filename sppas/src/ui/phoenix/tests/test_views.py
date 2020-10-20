@@ -55,6 +55,8 @@ from sppas.src.ui.phoenix.views.settings import Settings
 from sppas.src.ui.phoenix.views.tiersview import TiersView
 import sppas.src.ui.phoenix.views.statsview as statsview
 import sppas.src.ui.phoenix.views.tiersfilters as tiersfilters
+import sppas.src.ui.phoenix.views.textedit as textedit
+
 from src.ui.phoenix.views.metaedit import MetaDataEdit
 
 # ----------------------------------------------------------------------------
@@ -93,6 +95,7 @@ class TestPanel(sppasPanel):
                          label="Metadata Edit", name="metadata_btn")
 
         tiersfilters.TestPanel(self, pos=(10, 300), size=(500, 70))
+        textedit.TestPanel(self, pos=(10, 400), size=(200, 70))
 
         self.Bind(wx.EVT_BUTTON, self._process_event)
 

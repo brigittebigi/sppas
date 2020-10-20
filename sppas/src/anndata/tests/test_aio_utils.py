@@ -54,7 +54,7 @@ from ..ann.annlabel import sppasTag
 from ..aio.aioutils import fill_gaps, check_gaps, unfill_gaps
 from ..aio.aioutils import merge_overlapping_annotations
 from ..aio.aioutils import load
-from ..aio.aioutils import format_labels
+from ..aio.aioutils import format_labels, serialize_labels
 
 # ---------------------------------------------------------------------------
 
@@ -82,6 +82,7 @@ class TestUtils(unittest.TestCase):
     def test_format_labels(self):
         """Convert a string into a list of labels."""
 
+        # Without score
         self.assertEqual([], format_labels(""))
 
         self.assertEqual([sppasLabel(sppasTag("toto"))],
@@ -95,6 +96,45 @@ class TestUtils(unittest.TestCase):
 
         self.assertEqual([sppasLabel(sppasTag("toto toto"))],
                          format_labels("toto\ntoto", separator=" "))
+
+        # With score
+        self.assertEqual([sppasLabel(sppasTag("toto"), 0.5)],
+                         format_labels("toto=0.5"))
+
+        self.assertEqual([sppasLabel(sppasTag("toto=x"))],
+                         format_labels("toto=x"))
+
+        self.assertEqual([sppasLabel([sppasTag("toto"), sppasTag("titi")], [0.6, 0.4])],
+                         format_labels("{toto=0.6|titi=0.4}"))
+
+    # -----------------------------------------------------------------------
+
+    def test_serialize_labels(self):
+        """... Convert the label into a string."""
+
+        label = sppasLabel(sppasTag(""))
+        s = serialize_labels([label])
+        self.assertEqual("", s)
+
+        label = sppasLabel(sppasTag("IGNORE_TIME_SEGMENT_IN_SCORING"))
+        s = serialize_labels([label])
+        self.assertEqual("IGNORE_TIME_SEGMENT_IN_SCORING", s)
+
+        label = sppasLabel(sppasTag("toto"))
+        s = serialize_labels([label])
+        self.assertEqual("toto", s)
+
+        tag1 = sppasTag("uh")
+        tag2 = sppasTag("um")
+        label = sppasLabel([tag1, tag2])
+        s = serialize_labels([label])
+        self.assertEqual("{uh|um}", s)
+
+        tag1 = sppasTag("uh")
+        tag2 = sppasTag("um")
+        label = sppasLabel([tag1, tag2], [0.6, 0.4])
+        s = serialize_labels([label])
+        self.assertEqual("{uh=0.6|um=0.4}", s)
 
     # -----------------------------------------------------------------------
 

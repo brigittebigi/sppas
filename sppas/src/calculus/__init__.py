@@ -51,7 +51,7 @@ from .scoring.kappa import sppasKappa
 from .scoring.ubpa import ubpa
 
 from .geometry.distances import squared_euclidian, euclidian, manathan, minkowski, chi_squared
-from .geometry.linear_fct import linear_fct, linear_values, slope, intercept
+from .geometry.linear_fct import linear_fct, ylinear_fct, linear_values, slope, intercept, slope_intercept
 from .stats.central import fsum, fmult, fmin, fmax, fmean, fgeometricmean, fharmonicmean
 from .stats.frequency import freq, percent, percentile, quantile
 from .stats.linregress import tga_linear_regression, tansey_linear_regression
@@ -60,7 +60,8 @@ from .stats.moment import lmoment, lvariation, lskew, lkurtosis
 from .stats.variability import lvariance, lstdev, lz, rPVI, nPVI
 from .infotheory import sppasKullbackLeibler
 from .infotheory import sppasEntropy
-from .infotheory.utilit import find_ngrams
+from .infotheory import find_ngrams
+from .infotheory import symbols_to_items
 
 __all__ = (
     "sppasDescriptiveStatistics",
@@ -71,9 +72,11 @@ __all__ = (
     "minkowski",
     "chi_squared",
     "linear_fct",
+    "ylinear_fct",
     "linear_values",
     "slope",
     "intercept",
+    "slope_intercept",
     "fsum",
     "fmult",
     "fmin",
@@ -102,5 +105,6 @@ __all__ = (
     "ubpa",
     "sppasKullbackLeibler",
     "sppasEntropy",
-    "find_ngrams"
+    "find_ngrams",
+    "symbols_to_items"
 )

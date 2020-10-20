@@ -68,7 +68,7 @@ class sppasTiersViewDialog(sppasDialog):
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     Returns wx.ID_OK if ShowModal().
 
@@ -85,9 +85,9 @@ class sppasTiersViewDialog(sppasDialog):
             parent=parent,
             title="Tiers View",
             style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.STAY_ON_TOP,
-            name="tiersview-dialog")
+            name="tiersview_dialog")
 
-        self.CreateHeader(MSG_HEADER_TIERSVIEW, "tier_ann_view")
+        # self.CreateHeader(MSG_HEADER_TIERSVIEW, "tier_ann_view")
         self._create_content(tiers)
         self.CreateActions([wx.ID_OK])
 
