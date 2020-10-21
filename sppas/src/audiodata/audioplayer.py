@@ -54,11 +54,13 @@ from .audio import sppasAudioPCM
 class sppasSimpleAudioPlayer(object):
     """An audio player based on simpleaudio library.
 
-    :author:       Nicolas Chazeau, Brigitte Bigi
+    :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    Can load, play and browse throw the audio stream of a given file.
 
     """
 
@@ -66,13 +68,12 @@ class sppasSimpleAudioPlayer(object):
         super(sppasSimpleAudioPlayer, self).__init__()
 
         self._ms = MediaState().unknown
-        self._filename = None   # duration of the media in milliseconds
-        self._audio = None
-        self._frames = b("")
+        self._filename = None   # name of the audio file
+        self._audio = None      # sppasAudioPCM() instance
+        self._frames = b("")    # loaded frames of the audio stream
         self._sa_play = None    # simpleaudio library PlayObject()
 
-        # a period to play the audio. Default: whole.
-        self._period = None
+        self._period = None     # a period to play the audio.
         self._time_value = None
 
     # -----------------------------------------------------------------------
@@ -83,7 +84,7 @@ class sppasSimpleAudioPlayer(object):
     # -----------------------------------------------------------------------
 
     def duration(self):
-        """Return the duration of the loaded audio."""
+        """Return the duration of the loaded audio (float)."""
         if self._filename is None:
             return 0.
         return self._audio.get_duration()
@@ -91,8 +92,9 @@ class sppasSimpleAudioPlayer(object):
     # -----------------------------------------------------------------------
 
     def reset(self):
+        """Re-initialize all known data."""
         self._ms = MediaState().unknown
-        self._filename = None    # duration of the media in milliseconds
+        self._filename = None
         self._audio = None
         self._frames = b("")
         self._sa_play = None
@@ -104,8 +106,8 @@ class sppasSimpleAudioPlayer(object):
     def load(self, filename):
         """Load the file that filename refers to.
 
-        :param filename: (str)
-        :return: (bool) Always returns False
+        :param filename: (str) Name of an audio file
+        :return: (bool) True if both successfully opened and loaded.
 
         """
         self.reset()
@@ -114,12 +116,11 @@ class sppasSimpleAudioPlayer(object):
             self._audio = sppas.src.audiodata.aio.open(filename)
             self._frames = self._audio.read_frames(self._audio.get_nframes())
             self._audio.rewind()
-            print("{:s}: {:d} loaded frames".format(filename, len(self._frames)))
             self._ms = MediaState().stopped
             return True
 
         except Exception as e:
-            logging.error("View of the audio file {:s} is un-available: "
+            logging.error("Error when opening or loading file {:s}: "
                           "{:s}".format(filename, str(e)))
             self._audio = sppasAudioPCM()
             self._ms = MediaState().unknown
@@ -166,28 +167,31 @@ class sppasSimpleAudioPlayer(object):
 
         with MediaState() as ms:
             if self._ms == ms.unknown:
-                logging.error("The media file {:s} can't be played for an unknown reason.".format(self._filename))
+                logging.error("The audio stream of {:s} can't be played for an unknown reason.".format(self._filename))
                 played = False
 
             elif self._ms == ms.loading:
-                logging.error("The media file {:s} can't be played: still loading".format(self._filename))
+                logging.error("The audio stream of {:s} can't be played: still loading".format(self._filename))
                 played = False
 
             elif self._ms == ms.playing:
-                logging.warning("Media file {:s} is already playing.".format(self._filename))
-                played = True
+                logging.warning("The audio stream of {:s} is already playing.".format(self._filename))
+                played = False
 
             else:  # stopped or paused
                 try:
+                    # Ask simpleaudio library to play a buffer of frames
                     self._sa_play = sa.play_buffer(
                         self.__extract_frames(),
                         self._audio.get_nchannels(),
                         self._audio.get_sampwidth(),
                         self._audio.get_framerate())
+                    # Check if the audio is really playing
                     played = self._sa_play.is_playing()
                 except Exception as e:
                     played = False
-                    logging.error(str(e))
+                    logging.error("An error occurred when attempted to play the audio stream of {:s}"
+                                  "with the simpleaudio library: {:s}".format(self._filename, str(e)))
 
                 if played is True:
                     self._ms = MediaState().playing

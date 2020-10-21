@@ -39,14 +39,11 @@
 import os
 import wx
 import threading
-import time
 
 from sppas.src.config import paths
 from sppas.src.config import MediaState
 
-import sppas.src.audiodata.aio
-from sppas.src.audiodata import sppasAudioPCM
-from sppas.src.audiodata.audioplayer import sppasSimpleAudioPlayer
+from sppas.src.audiodata import sppasSimpleAudioPlayer
 
 from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
 
@@ -61,6 +58,10 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     :contact:      develop@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    This class is inheriting of a Timer in order to update the position
+    in the stream and thus to implement the 'tell' method.
+    This class is using a thread to load the frames of the audio file.
 
     Events emitted by this class:
 
@@ -86,30 +87,12 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     def __init__(self, owner):
         """Create an instance of sppasAudioPlayer.
 
+        :param owner: (wx.Window) Owner of this class.
+
         """
-        sppasSimpleAudioPlayer.__init__(self)
         wx.Timer.__init__(self, owner)
-
-    # -----------------------------------------------------------------------
-
-    def __threading_load(self, filename):
-        """Really load the file that filename refers to.
-
-        Send an event when load is finished.
-
-        :param filename: (str)
-        :return: (bool) Always returns False
-
-        """
-        self._ms = MediaState().loading
-        value = sppasSimpleAudioPlayer.load(self, filename)
-        if value is True:
-            evt = MediaEvents.MediaLoadedEvent()
-        else:
-            evt = MediaEvents.MediaNotLoadedEvent()
-        evt.SetEventObject(self)
-        wx.PostEvent(self, evt)
-        self._ms = MediaState().stopped
+        sppasSimpleAudioPlayer.__init__(self)
+        self.__th = None
 
     # -----------------------------------------------------------------------
 
@@ -121,28 +104,36 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
 
         """
         # Create a Thread with a function with args
-        th = threading.Thread(target=self.__threading_load, args=(filename,))
+        self.__th = threading.Thread(target=self.__threading_load, args=(filename,))
         # Start the thread
-        th.start()
+        self.__th.start()
 
     # -----------------------------------------------------------------------
 
     def __del__(self):
         self.Stop()
-        self._audio.close()
+        try:
+            if self._audio is not None:
+                self._audio.close()
+            if self.__th is not None:
+                if self.__th.is_alive():
+                    del self.__th
+        except:
+            pass
 
     # -----------------------------------------------------------------------
 
     def reset(self):
-        sppasSimpleAudioPlayer.reset(self)
+        """Override. Re-initialize all known data."""
         self.Stop()
+        sppasSimpleAudioPlayer.reset(self)
 
     # -----------------------------------------------------------------------
 
     def play(self):
-        """Play the media.
+        """Override. Start to play the audio stream from the current position.
 
-        :return: (bool)
+        :return: (bool) True if the action of playing was performed
 
         """
         played = sppasSimpleAudioPlayer.play(self)
@@ -154,6 +145,11 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     # -----------------------------------------------------------------------
 
     def stop(self):
+        """Stop to play the audio.
+
+        :return: (bool) True if the action of stopping was performed
+
+        """
         stopped = sppasSimpleAudioPlayer.stop(self)
         if stopped is True:
             self.Stop()
@@ -172,16 +168,34 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     def Notify(self):
         """Override. Manage the current position in the audio stream."""
         if self._ms == MediaState().playing:
-
             # the audio stream is currently playing
             if self._sa_play.is_playing() is True:
                 self._reposition()
-                wx.Timer.Notify(self)
-
             # the audio stream reached the end of the stream and it stopped
             else:
                 self.stop()
-                wx.Timer.Notify(self)
+            # Send the wx.EVT_TIMER event
+            wx.Timer.Notify(self)
+
+    # -----------------------------------------------------------------------
+
+    def __threading_load(self, filename):
+        """Really load the file that filename refers to.
+
+        Send an event when load is finished.
+
+        :param filename: (str)
+
+        """
+        self._ms = MediaState().loading
+        value = sppasSimpleAudioPlayer.load(self, filename)
+        if value is True:
+            evt = MediaEvents.MediaLoadedEvent()
+        else:
+            evt = MediaEvents.MediaNotLoadedEvent()
+        evt.SetEventObject(self)
+        wx.PostEvent(self, evt)
+        self._ms = MediaState().stopped
 
 # ---------------------------------------------------------------------------
 
@@ -223,7 +237,7 @@ class TestPanel(wx.Panel):
         self.ap.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
         self.ap.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
         # Event received every 10ms (in theory) when the audio is playing
-        self.Bind(wx.EVT_TIMER, self._on_timer)
+        self.ap.Bind(wx.EVT_TIMER, self._on_timer)
 
         wx.CallAfter(self._do_load_file)
 

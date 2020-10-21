@@ -43,18 +43,70 @@ Requires the following other packages:
 
 * config
 * utils
+* exceptions
+
+Requires the following dependency to play audio:
+
+* simpleaudio - https://pypi.org/project/simpleaudio/
+
+If the audioplay feature is not enabled, the sppasEnableFeatureError() is
+raised the class sppasSimpleAudioPlayer() is instantiated.
 
 """
+
+from sppas.src.config import cfg
+from sppas.src.exceptions import sppasEnableFeatureError
+from sppas.src.exceptions import sppasPackageFeatureError
+
+# ---------------------------------------------------------------------------
+
+
+class sppasAudioPlayDataError(object):
+    def __init__(self, *args, **kwargs):
+        raise sppasEnableFeatureError("audioplay")
+
+
+# The feature "audioplay" is enabled. Check if it's really correct!
+if cfg.feature_installed("audioplay") is True:
+    try:
+        import simpleaudio
+    except ImportError:
+        # Invalidate the feature because the package is not installed
+        cfg.set_feature("simpleaudio", False)
+
+    class sppasAudioPlayDataError(object):
+        def __init__(self, *args, **kwargs):
+            raise sppasPackageFeatureError("simpleaudio", "audioplay")
+
+else:
+    # The feature "audioplay" is not enabled or unknown.
+    cfg.set_feature("audioplay", False)
+
+# ---------------------------------------------------------------------------
+# Either import classes or define them
+# ---------------------------------------------------------------------------
+
 
 from .audio import sppasAudioPCM
 from .audioframes import sppasAudioFrames
 from .channel import sppasChannel
 from .aio import extensions
 
+if cfg.feature_installed("audioplay") is True:
+    from .audioplayer import sppasSimpleAudioPlayer
+else:
+
+    class sppasSimpleAudioPlayer(sppasAudioPlayDataError):
+        pass
+
+# ---------------------------------------------------------------------------
+
+
 audio_extensions = extensions
 
 __all__ = (
-    'sppasAudioPCM',
+    "sppasAudioPCM",
     "sppasAudioFrames",
-    'sppasChannel'
+    "sppasChannel",
+    "sppasSimpleAudioPlayer"
 )
