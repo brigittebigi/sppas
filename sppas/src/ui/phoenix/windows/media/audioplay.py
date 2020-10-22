@@ -43,6 +43,7 @@ import threading
 
 from sppas.src.config import paths
 from sppas.src.config import MediaState
+from sppas.src.utils import b
 
 from sppas.src.audiodata import sppasSimpleAudioPlayer
 
@@ -82,17 +83,17 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     When the timer delay is fixed to 5ms, the observed delays are:
        - about 15 ms under Windows;
        - 6 ms under MacOS;
-       - 5 ms under Linux.
+       - 5.5 ms under Linux.
 
     When the timer delay is fixed to 1ms, the observed delays are:
        - about 15 ms under Windows;
        - 2 ms under MacOS;
-       - 1 ms under Linux.
+       - 1.3 ms under Linux.
 
     """
 
     # Delay in seconds to update the position value in the stream.
-    TIMER_DELAY = 0.005
+    TIMER_DELAY = 0.05
 
     # -----------------------------------------------------------------------
 
@@ -104,7 +105,33 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         """
         wx.Timer.__init__(self, owner)
         sppasSimpleAudioPlayer.__init__(self)
+
+        # A thread to load the frames of the audio
         self.__th = None
+
+        # A time period to play the audio stream. Default is whole.
+        self._period = None
+
+    # -----------------------------------------------------------------------
+
+    def set_period(self, start_time, end_time):
+        """Fix the range period of time to play.
+
+        :param start_time: (float) Time to start playing in seconds
+        :param end_time: (float) Time to stop playing in seconds
+
+        """
+        start_time = float(start_time)
+        end_time = float(end_time)
+        if end_time <= start_time:
+            raise ValueError("End can't be greater or equal than start")
+
+        self._period = (start_time, end_time)
+        if self._ms in (MediaState().playing, MediaState().paused):
+            self.stop()
+            self.play()
+            if self._ms == MediaState().paused:
+                self.pause()
 
     # -----------------------------------------------------------------------
 
@@ -116,35 +143,44 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
 
         """
         # Create a Thread with a function with args
-        self.__th = threading.Thread(target=self.__threading_load, args=(filename,))
+        self.__th = threading.Thread(target=self.__threading_load,
+                                     args=(filename,))
         # Start the thread
         self.__th.start()
 
     # -----------------------------------------------------------------------
 
     def __del__(self):
-        self.Stop()
-        try:
-            # The audio was not created if the init raised a FeatureException
-            if self._audio is not None:
-                self._audio.close()
-            if self.__th is not None:
-                if self.__th.is_alive():
-                    del self.__th
-        except:
-            pass
+        self.reset()
 
     # -----------------------------------------------------------------------
 
     def reset(self):
         """Override. Re-initialize all known data and stop the timer."""
         self.Stop()
-        sppasSimpleAudioPlayer.reset(self)
+        self._period = None
+        if self.__th is not None:
+            if self.__th.is_alive():
+                # Python does not implement a "stop()" method for threads
+                del self.__th
+                self.__th = None
+        try:
+            # The audio was not created if the init raised a FeatureException
+            sppasSimpleAudioPlayer.reset(self)
+        except:
+            pass
 
     # -----------------------------------------------------------------------
 
     def play(self):
-        """Override. Start to play the audio stream from the current position.
+        """Override. Start to play the audio stream.
+
+        Start playing only is the audio stream is currently stopped or
+        paused.
+
+        Start playing only if the defined period is inside or overlapping
+        this audio stream AND if the the current position is inside the
+        period.
 
         :return: (bool) True if the action of playing was started
 
@@ -200,6 +236,27 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
 
     # -----------------------------------------------------------------------
 
+    def _extract_frames(self):
+        """Override. Return the frames to play in the given period.
+
+        """
+        # Check if the current period is inside or overlapping this audio
+        if self._period[0] < self.duration():
+            # current position in time.
+            cur_time = self.tell()
+            # Check if the current position is inside the period
+            if self._period[0] <= cur_time <= self._period[1]:
+                start_time = max(self._period[0], cur_time)
+                end_time = min(self._period[1], self.duration())
+                # Convert the time (in seconds) into a position in the frames
+                start_pos = start_time * self._audio.get_framerate() * self._audio.get_sampwidth()
+                end_pos = end_time * self._audio.get_framerate() * self._audio.get_sampwidth()
+                return self._frames[int(start_pos):int(end_pos)]
+
+        return b("")
+
+    # -----------------------------------------------------------------------
+
     def __threading_load(self, filename):
         """Really load the file that filename refers to.
 
@@ -212,6 +269,8 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         value = sppasSimpleAudioPlayer.load(self, filename)
         if value is True:
             evt = MediaEvents.MediaLoadedEvent()
+            if self._period is None:
+                self._period = (0., self.duration())
         else:
             evt = MediaEvents.MediaNotLoadedEvent()
         evt.SetEventObject(self)
@@ -274,6 +333,10 @@ class TestPanel(wx.Panel):
         self.FindWindow("btn_play").Enable(True)
         duration = self.ap.duration()
         self.slider.SetRange(0, int(duration * 1000.))
+
+        # self.ap.set_period(10., 12.)
+        # self.ap.seek(10.)
+        # self.slider.SetRange(10000, 12000)
 
     # ----------------------------------------------------------------------
 

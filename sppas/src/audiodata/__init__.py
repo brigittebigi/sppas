@@ -33,7 +33,7 @@
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2018  Brigitte Bigi
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
 *****************************************************************************
 audiodata: management of digital audio data.
@@ -65,22 +65,23 @@ class sppasAudioPlayDataError(object):
     def __init__(self, *args, **kwargs):
         raise sppasEnableFeatureError("audioplay")
 
+# Test if simpleaudio library is available. It is the requirement of the
+# feature "audioplay".
+try:
+    import simpleaudio
+    cfg.set_feature("audioplay", True)
+    print("AUDIOPLAY OK")
+except ImportError:
+    # Invalidate the feature because the package is not installed
+    cfg.set_feature("audioplay", False)
+
 
 # The feature "audioplay" is enabled. Check if it's really correct!
 if cfg.feature_installed("audioplay") is True:
-    try:
-        import simpleaudio
-    except ImportError:
-        # Invalidate the feature because the package is not installed
-        cfg.set_feature("simpleaudio", False)
 
     class sppasAudioPlayDataError(object):
         def __init__(self, *args, **kwargs):
             raise sppasPackageFeatureError("simpleaudio", "audioplay")
-
-else:
-    # The feature "audioplay" is not enabled or unknown.
-    cfg.set_feature("audioplay", False)
 
 # ---------------------------------------------------------------------------
 # Either import classes or define them
