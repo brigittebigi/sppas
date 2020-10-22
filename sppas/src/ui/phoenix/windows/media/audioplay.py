@@ -32,7 +32,8 @@
     src.ui.phoenix.windows.media.audioplay.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Requires simpleaudio library to play the audio file stream.
+    Requires simpleaudio library to play the audio file stream. Raise a
+    FeatureException at init if 'audioplay' feature is not enabled.
 
 """
 
@@ -53,7 +54,7 @@ from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
 class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     """An audio player based on simpleaudio library and a timer.
 
-    :author:       Nicolas Chazeau, Brigitte Bigi
+    :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
     :contact:      develop@sppas.org
     :license:      GPL, v3
@@ -69,18 +70,29 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         - MediaEvents.EVT_MEDIA_LOADED when the frames were loaded
         - MediaEvents.EVT_MEDIA_NOT_LOADED when an error occurred
 
-    The timer delay is fixed to 10ms but I observed a real delay of:
-       - about 15 ms under Windows;
-       - about XX under MacOS;
-       - about 10 ms under Linux.
     The wx.Timer documentation indicates that its precision is
     platform-dependent, but in general will not be better than 1ms
     nor worse than 1s...
 
+    When the timer delay is fixed to 10ms, the observed delays are:
+       - about 15 ms under Windows;
+       - 10 ms under MacOS;
+       - 10 ms under Linux.
+
+    When the timer delay is fixed to 5ms, the observed delays are:
+       - about 15 ms under Windows;
+       - 6 ms under MacOS;
+       - 5 ms under Linux.
+
+    When the timer delay is fixed to 1ms, the observed delays are:
+       - about 15 ms under Windows;
+       - 2 ms under MacOS;
+       - 1 ms under Linux.
+
     """
 
     # Delay in seconds to update the position value in the stream.
-    TIMER_DELAY = 0.0010
+    TIMER_DELAY = 0.005
 
     # -----------------------------------------------------------------------
 
@@ -113,6 +125,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     def __del__(self):
         self.Stop()
         try:
+            # The audio was not created if the init raised a FeatureException
             if self._audio is not None:
                 self._audio.close()
             if self.__th is not None:
@@ -124,7 +137,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     # -----------------------------------------------------------------------
 
     def reset(self):
-        """Override. Re-initialize all known data."""
+        """Override. Re-initialize all known data and stop the timer."""
         self.Stop()
         sppasSimpleAudioPlayer.reset(self)
 
@@ -133,7 +146,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     def play(self):
         """Override. Start to play the audio stream from the current position.
 
-        :return: (bool) True if the action of playing was performed
+        :return: (bool) True if the action of playing was started
 
         """
         played = sppasSimpleAudioPlayer.play(self)
@@ -166,7 +179,12 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     # -----------------------------------------------------------------------
 
     def Notify(self):
-        """Override. Manage the current position in the audio stream."""
+        """Override. Notify the owner of the EVT_TIMER event.
+
+        Manage the current position in the audio stream.
+
+        """
+        # Nothing to do if we are not playing (probably paused).
         if self._ms == MediaState().playing:
             # the audio stream is currently playing
             if self._sa_play.is_playing() is True:
@@ -177,12 +195,15 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
             # Send the wx.EVT_TIMER event
             wx.Timer.Notify(self)
 
+        elif self._ms != MediaState().paused:
+            self.stop()
+
     # -----------------------------------------------------------------------
 
     def __threading_load(self, filename):
         """Really load the file that filename refers to.
 
-        Send an event when load is finished.
+        Send a media event when loading is finished.
 
         :param filename: (str)
 

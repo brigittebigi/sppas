@@ -196,6 +196,8 @@ class sppasSimpleAudioPlayer(object):
                 if played is True:
                     self._ms = MediaState().playing
                     self._time_value = datetime.datetime.now()
+                    self.delays = list()
+
                 else:
                     # An error occurred while we attempted to play
                     self._ms = MediaState().unknown
@@ -214,6 +216,8 @@ class sppasSimpleAudioPlayer(object):
             self._sa_play.stop()
             self._ms = MediaState().stopped
             self._audio.rewind()
+            s = sum(self.delays)
+            print("sum={} nb={} avg={}".format(s, len(self.delays), s/len(self.delays)))
             return True
         return False
 
@@ -287,6 +291,7 @@ class sppasSimpleAudioPlayer(object):
         # seek at the new position in the audio
         position = self._audio.tell() + int(n_frames)
         self._audio.seek(position)
+        self.delays.append(timer_delay)
 
     # -----------------------------------------------------------------------
 
