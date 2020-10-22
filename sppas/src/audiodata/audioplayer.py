@@ -78,7 +78,10 @@ class sppasSimpleAudioPlayer(object):
     # -----------------------------------------------------------------------
 
     def __del__(self):
-        self._audio.close()
+        try:
+            self._audio.close()
+        except:
+            pass
 
     # -----------------------------------------------------------------------
 
@@ -94,7 +97,9 @@ class sppasSimpleAudioPlayer(object):
         """Re-initialize all known data."""
         self._ms = MediaState().unknown
         self._filename = None
-        self._audio = None
+        if self._audio is not None:
+            self._audio.close()
+            self._audio = None
         self._frames = b("")
         self._sa_play = None
         self._time_value = None
@@ -123,6 +128,24 @@ class sppasSimpleAudioPlayer(object):
             self._audio = sppasAudioPCM()
             self._ms = MediaState().unknown
             return False
+
+    # -----------------------------------------------------------------------
+
+    def is_unknown(self):
+        """Return True if the media is unknown."""
+        if self._filename is None:
+            return False
+
+        return self._ms == MediaState().unknown
+
+    # -----------------------------------------------------------------------
+
+    def is_loading(self):
+        """Return True if the audio is still loading."""
+        if self._filename is None:
+            return False
+
+        return self._ms == MediaState().loading
 
     # -----------------------------------------------------------------------
 
@@ -255,6 +278,12 @@ class sppasSimpleAudioPlayer(object):
         :param time_pos: (float) Time in seconds
 
         """
+        time_pos = float(time_pos)
+        if time_pos < 0.:
+            time_pos = 0.
+        if time_pos > self.duration():
+            time_pos = self.duration()
+
         # how many frames this time position is representing since the beginning
         time_pos = float(time_pos)
         position = time_pos * self._audio.get_framerate()
@@ -266,15 +295,13 @@ class sppasSimpleAudioPlayer(object):
         # seek at the expected position
         try:
             self._audio.seek(int(position))
+            # continue playing if the seek was requested when playing
+            if was_playing is True:
+                self.play()
         except:
             # It can happen if we attempted to seek after the audio length
             self.stop()
             return False
-
-        else:
-            # continue playing if the seek was requested when playing
-            if was_playing is True:
-                self.play()
 
         return True
 

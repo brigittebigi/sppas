@@ -150,7 +150,7 @@ class sppasVideoReader(object):
 
     # -----------------------------------------------------------------------
 
-    def _read(self):
+    def read_frame(self, process_image=True):
         """Read a frame of the video.
 
         :return: (ndarray, None)
@@ -162,17 +162,20 @@ class sppasVideoReader(object):
         if img is None or success is False:
             return None
 
+        if process_image is False:
+            return img
         return sppasVideoReader._preprocess_image(img)
 
     # -----------------------------------------------------------------------
 
-    def read(self, from_pos=-1, to_pos=-1):
+    def read(self, from_pos=-1, to_pos=-1, process_image=True):
         """Browse a sequence of a video.
 
         If both from_pos and to_pos are -1, only one frame is read.
 
         :param from_pos: (int) frameID value to start reading. -1 means the current position.
         :param to_pos: (int) frameID value to stop reading. -1 means the last frame of the video.
+        :param process_image: (bool) convert the image to reduce size, uint8, etc
         :returns: None, an image or a list of images(numpy.ndarray).
 
         """
@@ -206,7 +209,7 @@ class sppasVideoReader(object):
 
         # Read as many frames as expected or as possible
         for i in range(to_pos-from_pos):
-            frame = self._read()
+            frame = self.read_frame(process_image)
             if frame is None:
                 break
             images.append(frame)

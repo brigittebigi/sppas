@@ -42,6 +42,7 @@ from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
 import sppas.src.ui.phoenix.windows.media.audioplay as audioplay
+import sppas.src.ui.phoenix.windows.media.videoplay as videoplay
 
 
 # ----------------------------------------------------------------------------
@@ -56,7 +57,7 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        p = audioplay.TestPanel(self)
+        p = videoplay.TestPanel(self)
         self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
