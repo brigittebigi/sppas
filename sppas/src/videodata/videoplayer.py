@@ -196,6 +196,9 @@ class sppasSimpleVideoPlayer(object):
 
             else:  # stopped or paused
                 self._ms = MediaState().playing
+                # A threaded play does not work under Linux. The following error occurs:
+                # QObject::killTimer: Timers cannot be stopped from another thread
+                # QBasicTimer::start: QBasicTimer can only be used with threads started with QThread
                 self._play()
                 played = True
 

@@ -41,13 +41,18 @@ import logging
 import os
 import wx
 import threading
+import cv2
+import datetime
+import time
 
 from sppas.src.config import paths
 from sppas.src.config import MediaState
 
 from sppas.src.videodata import sppasSimpleVideoPlayer
 
-from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
+from ..frame import sppasImageFrame
+
+from .mediaevents import MediaEvents
 
 # ---------------------------------------------------------------------------
 
@@ -250,6 +255,46 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
                 played = True
 
         return played
+
+    # -----------------------------------------------------------------------
+
+    def _play(self):
+        """Run the process of playing."""
+        cv2.namedWindow("window", cv2.WINDOW_NORMAL)
+        time_value = datetime.datetime.now()
+        time_delay = round(1. / self._video.get_framerate(), 3)
+
+        while self._video.is_opened():
+            # stop the loop.
+            # Either the stop() method was invoked or the reset() one.
+            if self._ms in (MediaState().stopped, MediaState().unknown):
+                break
+
+            elif self._ms == MediaState().playing:
+                # read the next frame from the file
+                frame = self._video.read_frame(process_image=False)
+                if frame is not None:
+                    cv2.imshow('window', frame)
+                    # Sleep as many time as required to get the appropriate read speed
+                    cur_time = datetime.datetime.now()
+                    delta = cur_time - time_value
+                    delta_seconds = delta.seconds + delta.microseconds / 1000000.
+                    waiting_time = round(time_delay - delta_seconds, 3)
+                    if waiting_time > 0:
+                        time.sleep(waiting_time)
+                    time_value = datetime.datetime.now()
+                else:
+                    # we reached the end of the file
+                    self.stop()
+
+            elif self._ms == MediaState().paused:
+                time.sleep(time_delay/4.)
+                time_value = datetime.datetime.now()
+
+            if cv2.waitKey(1) & 0xFF == 27:
+                self.stop()
+
+        cv2.destroyWindow("window")
 
     # -----------------------------------------------------------------------
 
