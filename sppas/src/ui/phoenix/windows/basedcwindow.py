@@ -42,6 +42,10 @@
 
 import wx
 import random
+import os.path
+import logging
+
+from sppas.src.config import paths   # paths is used in the TestPanel only
 
 # ---------------------------------------------------------------------------
 
@@ -832,6 +836,98 @@ class sppasDCWindow(wx.Window):
         #    gc.SetTextForeground(color)
         #    gc.DrawText(label, x, y)
 
+# ---------------------------------------------------------------------------
+
+
+class sppasImageDCWindow(sppasDCWindow):
+    """A window with a DC to draw an image as background.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    A very basic window. Can't have the focus.
+    Under Windows, when changing bg color, a refresh is needed to apply it.
+
+    """
+
+    def __init__(self, parent, id=-1,
+                 image=None,
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
+                 name="imgdcwindow"):
+        """Initialize a new sppasImageDCWindow instance.
+
+        :param parent: (wx.Window) Parent window.
+        :param id: (int) A value of -1 indicates a default value.
+        :param pos: (wx.Point) If the position (-1, -1) is specified
+                       then a default position is chosen.
+        :param size: (wx.Size) If the default size (-1, -1) is specified
+                       then a default size is chosen.
+        :param style: (int)
+        :param name: (str) Window name.
+
+        """
+        super(sppasImageDCWindow, self).__init__(parent, id, pos, size, style, name)
+        self._image = None
+        if image is not None:
+            self.SetBackgroundImage(image)
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundImage(self, img_filename=None):
+        """Set the image filename but do not refresh.
+
+        :param img_filename: (str) None to disable the BG image
+
+        """
+        if img_filename is not None and os.path.exists(img_filename) is True:
+            try:
+                self._image = wx.Image(img_filename, wx.BITMAP_TYPE_ANY)
+                return True
+            except Exception as e:
+                logging.error("Invalid image file {:s}: {:s}"
+                              "".format(img_filename, str(e)))
+                pass
+        self._image = None
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def DrawBackground(self, dc, gc):
+        """Override.
+
+        Draw the background with a color or transparent then add the image.
+
+        """
+        x, y, w, h = self.GetClientRect()
+        x += self._vert_border_width
+        y += self._horiz_border_width
+        w -= (2 * self._vert_border_width)
+        h -= (2 * self._horiz_border_width)
+
+        brush = self.GetBackgroundBrush()
+        if brush is not None:
+            dc.SetBackground(brush)
+            dc.Clear()
+
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.SetBrush(brush)
+        dc.DrawRoundedRectangle(
+            x, y, w, h,
+            (self._vert_border_width + self._horiz_border_width) // 2)
+
+        if self._image is not None:
+
+            img = self._image
+            img.Rescale(w, h, wx.IMAGE_QUALITY_HIGH)
+            bmp = wx.Bitmap(img, wx.BITMAP_TYPE_PNG)
+            print("draw the image")
+            dc.DrawBitmap(bmp, x, y)
+
 # ----------------------------------------------------------------------------
 # Panels to test
 # ----------------------------------------------------------------------------
@@ -842,9 +938,7 @@ class TestPanel(wx.Panel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(
             parent,
-            name="Test DCWindow")
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            name="sppasDCWindow & sppasImageDCWindow")
 
         bgpbtn = wx.Button(self, label="BG-panel", pos=(10, 10), size=(64, 64), name="bgp_color")
         bgbbtn = wx.Button(self, label="BG-buttons", pos=(110, 10), size=(64, 64), name="bgb_color")
@@ -924,6 +1018,38 @@ class TestPanel(wx.Panel):
         w12.Enable(False)
         w12.SetForegroundColour(wx.Colour(28, 200, 166))
         w12.SetBorderColour(wx.Colour(128, 100, 66))
+
+        wi1 = sppasImageDCWindow(self, pos=(10, 420), size=(50, 110), name="wi1")
+        wi1.Enable(True)
+        wi1.SetBackgroundColour(wx.Colour(28, 200, 166))
+        wi1.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.etc, "images", "bg6.png")
+        wi2 = sppasImageDCWindow(self, image=img, pos=(110, 420), size=(50, 110), name="wi2")
+        wi2.Enable(True)
+        wi2.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.etc, "images", "trbg1.png")
+        wi3 = sppasImageDCWindow(self, image=img, pos=(210, 420), size=(50, 110), name="wi3")
+        wi3.Enable(True)
+        wi3.SetBackgroundColour(wx.Colour(28, 200, 166))
+        wi3.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.etc, "images", "trbg1.png")
+        wi4 = sppasImageDCWindow(self, pos=(310, 420), size=(50, 110), name="wi4")
+        wi4.Enable(True)
+        wi4.SetBackgroundImage(img)
+        wi4.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.etc, "images", "trbg1.png")
+        wi5 = sppasImageDCWindow(self, pos=(410, 420), size=(50, 110), name="wi5")
+        wi5.Enable(False)
+        wi5.SetBackgroundImage(img)
+        wi5.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.samples, "faces", "BrigitteBigi_Aix2020.png")
+        wi6 = sppasImageDCWindow(self, pos=(510, 420), size=(120, 140), name="wi6")
+        wi6.SetBackgroundImage(img)
 
     # -----------------------------------------------------------------------
 

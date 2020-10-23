@@ -54,9 +54,10 @@ from .text import sppasTextCtrl
 from .text import NotEmptyTextValidator
 
 from .basedcwindow import sppasDCWindow
+from .basedcwindow import sppasImageDCWindow
 from .basedcwindow import sppasWindowEvent
 
-# basewindow requires sppasDCWindow
+# basewindow requires sppasImageDCWindow
 from .basewindow import WindowState
 from .basewindow import sppasWindow
 
@@ -114,6 +115,10 @@ from .media import sppasPlayerControlsPanel
 from .media import sppasMultiPlayerPanel
 
 __all__ = (
+    "sppasDCWindow",
+    "sppasImageDCWindow",
+    "sppasWindow",
+    "sppasWindowEvent",
     "sppasSlider",
     "sppasDialog",
     "sppasChoiceDialog",

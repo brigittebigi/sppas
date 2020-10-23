@@ -60,7 +60,10 @@
 
 """
 
+import os
 import wx
+
+from sppas.src.config import paths   # paths is used in the TestPanel only
 
 from ..basewindow import sppasWindow
 from ..basewindow import WindowState
@@ -330,7 +333,7 @@ class TestPanelBaseButton(wx.Panel):
         super(TestPanelBaseButton, self).__init__(
             parent,
             style=wx.BORDER_NONE | wx.WANTS_CHARS,
-            name="Test BaseButton")
+            name="BaseButton & BaseCheckButton")
 
         st = [wx.PENSTYLE_SHORT_DASH,
               wx.PENSTYLE_LONG_DASH,
@@ -393,6 +396,25 @@ class TestPanelBaseButton(wx.Panel):
         btn4.SetBorderWidth(1)
         btn4.SetBackgroundColour(wx.Colour(222, 222, 200))
         btn4.SetForegroundColour(wx.Colour(22, 22, 20))
+
+        img = os.path.join(paths.etc, "images", "bg6.png")
+        wi2 = BaseButton(self, pos=(10, 300), size=(50, 110), name="wi2")
+        wi2.Enable(True)
+        wi2.SetBackgroundImage(img)
+        wi2.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.etc, "images", "trbg1.png")
+        wi3 = BaseButton(self, pos=(110, 300), size=(100, 100), name="wi3")
+        wi3.Enable(True)
+        wi3.SetBackgroundColour(wx.Colour(28, 200, 166))
+        wi3.SetBackgroundImage(img)
+        wi3.SetBorderColour(wx.Colour(128, 100, 66))
+        wi3.SetBorderWidth(1)
+
+        img = os.path.join(paths.samples, "faces", "BrigitteBigi_Aix2020.png")
+        wi6 = BaseButton(self, pos=(310, 280), size=(120, 150), name="wi6")
+        wi6.SetBackgroundImage(img)
+        wi6.SetBorderWidth(1)
 
     # -----------------------------------------------------------------------
 

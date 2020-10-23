@@ -41,8 +41,8 @@ from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
-import sppas.src.ui.phoenix.windows.basedcwindow as dcwin
-import sppas.src.ui.phoenix.windows.basewindow as basedraw
+import sppas.src.ui.phoenix.windows.basedcwindow as basedcwindow
+import sppas.src.ui.phoenix.windows.basewindow as basewindow
 import sppas.src.ui.phoenix.windows.toolbar as toolbar
 import sppas.src.ui.phoenix.windows.line as line
 import sppas.src.ui.phoenix.windows.slider as slider
@@ -68,10 +68,11 @@ class TestPanel(wx.Choicebook):
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
         # Make the bunch of test anz_panels for the choice book
-        self.AddPage(dcwin.TestPanel(self), "Base DC Window")
+        self.AddPage(basedcwindow.TestPanel(self), "Base DC Window")
+        self.AddPage(basewindow.TestPanel(self), "Base Window")
+
         self.AddPage(line.TestPanel(self), "Lines")
         self.AddPage(slider.TestPanel(self), "Slider")
-        self.AddPage(basedraw.TestPanel(self), "Base Window")
 
         p = timeslider.TestPanel(self)
         self.AddPage(p, p.GetName())
