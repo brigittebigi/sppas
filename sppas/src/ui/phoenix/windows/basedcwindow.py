@@ -922,7 +922,7 @@ class sppasImageDCWindow(sppasDCWindow):
 
         if self._image is not None:
 
-            img = self._image
+            img = self._image.Copy()
             img.Rescale(w, h, wx.IMAGE_QUALITY_HIGH)
             bmp = wx.Bitmap(img, wx.BITMAP_TYPE_PNG)
             print("draw the image")

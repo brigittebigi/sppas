@@ -41,6 +41,7 @@ from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
+import sppas.src.ui.phoenix.windows.frame as frame
 import sppas.src.ui.phoenix.windows.basedcwindow as basedcwindow
 import sppas.src.ui.phoenix.windows.basewindow as basewindow
 import sppas.src.ui.phoenix.windows.toolbar as toolbar
@@ -67,7 +68,7 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        # Make the bunch of test anz_panels for the choice book
+        self.AddPage(frame.TestPanel(self), "Frame")
         self.AddPage(basedcwindow.TestPanel(self), "Base DC Window")
         self.AddPage(basewindow.TestPanel(self), "Base Window")
 

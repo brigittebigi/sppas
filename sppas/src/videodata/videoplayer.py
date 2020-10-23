@@ -195,6 +195,7 @@ class sppasSimpleVideoPlayer(object):
                                 "playing.".format(self._filename))
 
             else:  # stopped or paused
+                self._ms = MediaState().playing
                 self._play()
                 played = True
 
@@ -203,9 +204,8 @@ class sppasSimpleVideoPlayer(object):
     # -----------------------------------------------------------------------
 
     def _play(self):
-        """Run the process of playing in a thread."""
+        """Run the process of playing."""
         cv2.namedWindow("window", cv2.WINDOW_NORMAL)
-        self._ms = MediaState().playing
         time_value = datetime.datetime.now()
         time_delay = round(1. / self._video.get_framerate(), 3)
 
@@ -232,6 +232,10 @@ class sppasSimpleVideoPlayer(object):
                     # we reached the end of the file
                     self.stop()
 
+            elif self._ms == MediaState().paused:
+                time.sleep(time_delay/4.)
+                time_value = datetime.datetime.now()
+
             if cv2.waitKey(1) & 0xFF == 27:
                 self.stop()
 
@@ -245,7 +249,8 @@ class sppasSimpleVideoPlayer(object):
         :return: (bool) True if the action of stopping was performed
 
         """
-        self._ms = MediaState().stopped
+        if self._ms not in (MediaState().loading, MediaState().unknown):
+            self._ms = MediaState().stopped
 
     # -----------------------------------------------------------------------
 

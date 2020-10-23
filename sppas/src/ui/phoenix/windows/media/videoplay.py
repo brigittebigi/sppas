@@ -37,23 +37,17 @@
 
 """
 
+import logging
 import os
 import wx
 import threading
 
 from sppas.src.config import paths
 from sppas.src.config import MediaState
-from sppas.src.utils import b
 
 from sppas.src.videodata import sppasSimpleVideoPlayer
 
 from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
-
-# ---------------------------------------------------------------------------
-
-
-class sppasVideoFrame(wx.Frame):
-    pass
 
 # ---------------------------------------------------------------------------
 
@@ -93,7 +87,7 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
         wx.Timer.__init__(self, owner)
         sppasSimpleVideoPlayer.__init__(self)
 
-        # A thread to load the frames of the audio
+        # A thread to load or play the frames of the video
         self.__th = None
 
         # A time period to play the video stream. Default is whole.
@@ -201,6 +195,61 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
             return False
 
         return self._ms == MediaState().stopped
+
+    # -----------------------------------------------------------------------
+
+    def pause(self):
+        """Pause to play the video.
+
+        :return: (bool) True if the action of stopping was performed
+
+        """
+        if self._ms == MediaState().playing:
+            self._ms = MediaState().paused
+
+    # -----------------------------------------------------------------------
+
+    def play(self):
+        """Start to play the video stream from the current position.
+
+        Start playing only is the video stream is currently stopped or
+        paused.
+
+        :return: (bool) True if the action of playing was performed
+
+        """
+        if self._filename is None:
+            logging.error("No media file to play.")
+            return False
+
+        played = False
+        with MediaState() as ms:
+            if self._ms == ms.unknown:
+                logging.error("The video stream of {:s} can't be played for "
+                              "an unknown reason.".format(self._filename))
+
+            elif self._ms == ms.loading:
+                logging.error("The video stream of {:s} can't be played: "
+                              "still loading".format(self._filename))
+
+            elif self._ms == ms.playing:
+                logging.warning("The video stream of {:s} is already "
+                                "playing.".format(self._filename))
+
+            elif self._ms == ms.stopped:
+                self._ms = MediaState().playing
+                # Create a Thread with a function without args
+                self.__th = threading.Thread(target=self._play,
+                                             args=())
+                # Start the thread
+                self.__th.start()
+                played = True
+
+            elif self._ms == ms.paused:
+                self._ms = MediaState().playing
+                played = True
+
+        return played
 
     # -----------------------------------------------------------------------
 
