@@ -67,7 +67,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
 
     Events emitted by this class:
 
-        - wx.EVT_TIMER when the audio is playing
+        - wx.EVT_TIMER when the audio is playing every TIMER_DELAY seconds
         - MediaEvents.EVT_MEDIA_LOADED when the frames were loaded
         - MediaEvents.EVT_MEDIA_NOT_LOADED when an error occurred
 
@@ -93,7 +93,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     """
 
     # Delay in seconds to update the position value in the stream.
-    TIMER_DELAY = 0.05
+    TIMER_DELAY = 0.010
 
     # -----------------------------------------------------------------------
 
@@ -111,6 +111,28 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
 
         # A time period to play the audio stream. Default is whole.
         self._period = None
+
+    # -----------------------------------------------------------------------
+
+    def __del__(self):
+        self.reset()
+
+    # -----------------------------------------------------------------------
+
+    def reset(self):
+        """Override. Re-initialize all known data and stop the timer."""
+        self.Stop()
+        self._period = None
+        try:
+            if self.__th is not None:
+                if self.__th.is_alive():
+                    # Python does not implement a "stop()" method for threads
+                    del self.__th
+                    self.__th = None
+                # The audio was not created if the init raised a FeatureException
+                sppasSimpleAudioPlayer.reset(self)
+        except:
+            pass
 
     # -----------------------------------------------------------------------
 
@@ -147,28 +169,6 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
                                      args=(filename,))
         # Start the thread
         self.__th.start()
-
-    # -----------------------------------------------------------------------
-
-    def __del__(self):
-        self.reset()
-
-    # -----------------------------------------------------------------------
-
-    def reset(self):
-        """Override. Re-initialize all known data and stop the timer."""
-        self.Stop()
-        self._period = None
-        if self.__th is not None:
-            if self.__th.is_alive():
-                # Python does not implement a "stop()" method for threads
-                del self.__th
-                self.__th = None
-        try:
-            # The audio was not created if the init raised a FeatureException
-            sppasSimpleAudioPlayer.reset(self)
-        except:
-            pass
 
     # -----------------------------------------------------------------------
 
@@ -258,6 +258,8 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         elif self._ms != MediaState().paused:
             self.stop()
 
+    # -----------------------------------------------------------------------
+    # Private & Protected methods
     # -----------------------------------------------------------------------
 
     def _extract_frames(self):

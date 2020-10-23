@@ -599,6 +599,16 @@ class sppasImageFrame(wx.TopLevelWindow):
 
     # -----------------------------------------------------------------------
 
+    def SetBackgroundImageArray(self, image):
+        """Set the image, but do not refresh.
+
+        :param image: (sppasImage, np.array)
+
+        """
+        self.FindWindow("img_window").SetBackgroundImageArray(image)
+
+    # -----------------------------------------------------------------------
+
     def _create_content(self):
         wi = sppasImageDCWindow(self, name="img_window")
         wi.SetBorderWidth(0)
@@ -624,23 +634,21 @@ class TestPanel(wx.Panel):
 
         btn1 = wx.Button(self, label="Open frame", pos=(10, 10), size=(96, 64))
         btn2 = wx.Button(self, label="Close frame", pos=(120, 10), size=(96, 64))
+        self._img_frame = sppasImageFrame(
+            parent=self,   # if self is destroyed, the frame will be too
+            title="Frame with a background image",
+            image=TestPanel.img1,
+            style=wx.CAPTION | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT)
+        self._img_frame.SetBackgroundColour(wx.WHITE)
 
         self.Bind(wx.EVT_BUTTON, self._on_open_imgframe, btn1)
         self.Bind(wx.EVT_BUTTON, self._on_close_imgframe, btn2)
-        self._img_frame = None
         self._th = None
         self._stopped = True
 
     # -----------------------------------------------------------------------
 
     def _on_open_imgframe(self, event):
-        style = wx.CAPTION | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT
-        self._img_frame = sppasImageFrame(
-            parent=self,   # if self is destroyed, the frame will be too
-            title="Frame with a background image",
-            image=TestPanel.img1,
-            style=style)
-        self._img_frame.Layout()
         self._img_frame.Show()
         self._img_frame.SetBackgroundImage(TestPanel.img2)
         self._img_frame.Refresh()
@@ -653,8 +661,7 @@ class TestPanel(wx.Panel):
 
     def _on_close_imgframe(self, event):
         if self._img_frame is not None:
-            self._img_frame.Close()
-            self._img_frame = None
+            self._img_frame.Hide()
             del self._th
             self._th = None
             self._stopped = True

@@ -897,6 +897,27 @@ class sppasImageDCWindow(sppasDCWindow):
 
     # -----------------------------------------------------------------------
 
+    def SetBackgroundImageArray(self, img):
+        """Set the image from a numpy array but do not refresh.
+
+        :param img: (sppasImage) Numpy array of the image
+
+        """
+        try:
+            width = img.shape[1]
+            height = img.shape[0]
+            self._image = wx.Image(width, height)
+            self._image.SetData(img.tostring())
+            return True
+        except Exception as e:
+            logging.error("Invalid image array: {:s}"
+                          "".format(str(e)))
+            pass
+        self._image = None
+        return False
+
+    # -----------------------------------------------------------------------
+
     def DrawBackground(self, dc, gc):
         """Override.
 
@@ -925,7 +946,6 @@ class sppasImageDCWindow(sppasDCWindow):
             img = self._image.Copy()
             img.Rescale(w, h, wx.IMAGE_QUALITY_HIGH)
             bmp = wx.Bitmap(img, wx.BITMAP_TYPE_PNG)
-            print("draw the image")
             dc.DrawBitmap(bmp, x, y)
 
 # ----------------------------------------------------------------------------

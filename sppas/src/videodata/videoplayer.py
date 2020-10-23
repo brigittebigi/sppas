@@ -196,9 +196,14 @@ class sppasSimpleVideoPlayer(object):
 
             else:  # stopped or paused
                 self._ms = MediaState().playing
-                # A threaded play does not work under Linux. The following error occurs:
+                # A threaded play does not work under Linux & MacOS.
+                # Under Linux, the following error occurs:
                 # QObject::killTimer: Timers cannot be stopped from another thread
                 # QBasicTimer::start: QBasicTimer can only be used with threads started with QThread
+                # Under MacOS, the application is crashing, and exit with error 132.
+                # th = threading.Thread(target=self._play, args=())
+                # th.start()
+                # Instead... we play and wait to be stooped to return:
                 self._play()
                 played = True
 
@@ -254,6 +259,42 @@ class sppasSimpleVideoPlayer(object):
         """
         if self._ms not in (MediaState().loading, MediaState().unknown):
             self._ms = MediaState().stopped
+            self._video.seek(0)
+
+    # -----------------------------------------------------------------------
+
+    def seek(self, time_pos=0):
+        """Seek the video stream at the given position in time.
+
+        :param time_pos: (float) Time in seconds
+
+        """
+        time_pos = float(time_pos)
+        if time_pos < 0.:
+            time_pos = 0.
+        if time_pos > self.duration():
+            time_pos = self.duration()
+
+        # how many frames this time position is representing since the beginning
+        time_pos = float(time_pos)
+        position = time_pos * self._video.get_framerate()
+
+        was_playing = self.is_playing()
+        if was_playing is True:
+            self.pause()
+
+        # seek at the expected position
+        try:
+            self._video.seek(int(position))
+            # continue playing if the seek was requested when playing
+            if was_playing is True:
+                self.play()
+        except:
+            # It can happen if we attempted to seek after the audio length
+            self.stop()
+            return False
+
+        return True
 
     # -----------------------------------------------------------------------
 

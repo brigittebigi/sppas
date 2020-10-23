@@ -163,7 +163,7 @@ class sppasVideoReader(object):
             return None
 
         if process_image is False:
-            return img
+            return sppasImage(input_array=img)
         return sppasVideoReader._preprocess_image(img)
 
     # -----------------------------------------------------------------------
@@ -183,23 +183,22 @@ class sppasVideoReader(object):
             return None
 
         if from_pos == -1 and to_pos == -1:
-            from_pos = self.tell()
-            to_pos = from_pos + 1
+            return self.read_frame(process_image)
+
+        # Fix the position to stop reading the video
+        if to_pos == -1:
+            to_pos = self.get_nframes()
         else:
-            # Fix the position to start reading the video
-            if from_pos == -1:
-                from_pos = self.tell()
-            else:
-                from_pos = self.check_frame(from_pos)
+            to_pos = self.check_frame(to_pos)
 
-            # Fix the position to stop reading the video
-            if to_pos == -1:
-                to_pos = self.get_nframes()
-            else:
-                to_pos = self.check_frame(to_pos)
+        # Fix the position to start reading the video
+        if from_pos == -1:
+            from_pos = self.tell()
+        else:
+            from_pos = self.check_frame(from_pos)
 
-            if from_pos >= to_pos:
-                raise RangeBoundsException(from_pos, to_pos)
+        if from_pos >= to_pos:
+            raise RangeBoundsException(from_pos, to_pos)
 
         # Create the list to store the images
         images = list()
