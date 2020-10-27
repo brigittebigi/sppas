@@ -85,6 +85,11 @@ class sppasSimpleAudioPlayer(object):
 
     # -----------------------------------------------------------------------
 
+    def get_filename(self):
+        return self._filename
+
+    # -----------------------------------------------------------------------
+
     def duration(self):
         """Return the duration of the loaded audio (float)."""
         if self._filename is None:
@@ -304,6 +309,37 @@ class sppasSimpleAudioPlayer(object):
             return False
 
         return True
+
+    # -----------------------------------------------------------------------
+    # About the audio
+    # -----------------------------------------------------------------------
+
+    def get_nchannels(self):
+        """Return the number of channels."""
+        if self._audio is not None:
+            return self._audio.get_nchannels()
+        return 0
+
+    # -----------------------------------------------------------------------
+
+    def get_sampwidth(self):
+        if self._audio is not None:
+            return self._audio.get_sampwidth()
+        return 0
+
+    # -----------------------------------------------------------------------
+
+    def get_framerate(self):
+        if self._audio is not None:
+            return self._audio.get_framerate()
+        return 0
+
+    # -----------------------------------------------------------------------
+
+    def get_duration(self):
+        if self._audio is not None:
+            return self._audio.get_duration()
+        return 0.
 
     # -----------------------------------------------------------------------
     # Protected methods
