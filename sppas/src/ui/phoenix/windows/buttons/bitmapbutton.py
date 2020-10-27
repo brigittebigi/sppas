@@ -74,17 +74,21 @@ class BitmapTextButton(TextButton):
         :param name: the name of the bitmap.
 
         """
-        super(BitmapTextButton, self).__init__(parent, id, label, pos, size, name)
         self._spacing = 4
-        self._default_bitmapcolor = self.GetPenForegroundColour()
+        self._default_bitmapcolor =  wx.WHITE
         self._bitmapcolor = self._default_bitmapcolor
         self._labelpos = wx.CENTER
         self.img_margin = 0.2  # margin all around the image (20% of btn size)
+        super(BitmapTextButton, self).__init__(parent, id, label, pos, size, name)
 
         # The icon image
         self._image = None
         if name != wx.ButtonNameStr:
             self.SetImage(name)
+
+        # Update colors
+        self._default_bitmapcolor = self.GetPenForegroundColour()
+        self._bitmapcolor = self._default_bitmapcolor
 
     # ----------------------------------------------------------------------
 

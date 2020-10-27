@@ -43,6 +43,7 @@ when a class is instantiated.
 
 """
 
+import logging
 from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
 from sppas.src.exceptions import sppasPackageFeatureError
@@ -90,6 +91,7 @@ if cfg.feature_installed("video") is True:
     from .video import sppasVideoWriter
     from .videobuffer import sppasVideoReaderBuffer
     from .videoplayer import sppasSimpleVideoPlayer
+    logging.info("video feature enabled")
 
 else:
     # Define classes in case opencv&numpy are not installed.

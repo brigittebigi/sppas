@@ -132,12 +132,11 @@ class sppasWindow(sppasImageDCWindow):
         :param name:      Window name.
 
         """
-        image = None
         # The previous and the current states
         self._state = [WindowState().normal, WindowState().normal]
 
         super(sppasWindow, self).__init__(
-            parent, id, image, pos, size, style, name)
+            parent, id, None, pos, size, style, name)
 
         # Focus (True when mouse/keyboard is entered)
         pc = self.GetPenForegroundColour()

@@ -69,10 +69,10 @@ class TextButton(BaseButton):
         :param name: the name of the bitmap.
 
         """
-        super(TextButton, self).__init__(parent, id, pos, size, name)
-
         self._label = label
         self._align = wx.ALIGN_CENTER  # or ALIGN_LEFT or ALIGN_RIGHT
+
+        super(TextButton, self).__init__(parent, id, pos, size, name)
 
     # ------------------------------------------------------------------------
 

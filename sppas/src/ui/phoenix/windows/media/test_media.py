@@ -60,6 +60,9 @@ class TestPanel(wx.Choicebook):
         p = videoplay.TestPanel(self)
         self.AddPage(p, p.GetName())
 
+        #p = audioplay.TestPanel(self)
+        #self.AddPage(p, p.GetName())
+
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
         self.Bind(wx.EVT_KEY_DOWN, self._process_key_event)

@@ -521,7 +521,7 @@ class sppasTopFrame(wx.TopLevelWindow):
 
 
 class sppasImageFrame(wx.TopLevelWindow):
-    """A frames with only an image as background.
+    """A frame with only an image as background.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -643,42 +643,31 @@ class TestPanel(wx.Panel):
 
         self.Bind(wx.EVT_BUTTON, self._on_open_imgframe, btn1)
         self.Bind(wx.EVT_BUTTON, self._on_close_imgframe, btn2)
-        self._th = None
-        self._stopped = True
+
+        self.i = 0
+        self.timerObject = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.change_bitmap, self.timerObject)
 
     # -----------------------------------------------------------------------
 
     def _on_open_imgframe(self, event):
         self._img_frame.Show()
-        self._img_frame.SetBackgroundImage(TestPanel.img2)
-        self._img_frame.Refresh()
-        self._stopped = False
-        self._th = threading.Thread(target=self.changeBitmap, args=())
-        self._th.setDaemon(True)
-        self._th.start()
+        self.timerObject.Start(500)
 
     # -----------------------------------------------------------------------
 
     def _on_close_imgframe(self, event):
         if self._img_frame is not None:
             self._img_frame.Hide()
-            del self._th
-            self._th = None
-            self._stopped = True
+            self.i = 0
+            self.timerObject.Stop()
 
     # -----------------------------------------------------------------------
 
-    def changeBitmap(self):
-        i = 0
-        while True:
-            if self._stopped is True:
-                break
-            if i % 2 == 0:
-                self._img_frame.SetBackgroundImage(TestPanel.img1)
-            else:
-                self._img_frame.SetBackgroundImage(TestPanel.img2)
-            if i%1000 == 0:
-                i = 0
-            self._img_frame.Refresh()
-            time.sleep(1)
-            i += 1
+    def change_bitmap(self, evt):
+        if self.i % 2 == 0:
+            self._img_frame.SetBackgroundImage("/Users/bigi/Projects/sppas/sppas/etc/images/bg1.png")
+        else:
+            self._img_frame.SetBackgroundImage("/Users/bigi/Projects/sppas/sppas/etc/images/bg2.png")
+        self.i += 1
+        self._img_frame.Refresh()

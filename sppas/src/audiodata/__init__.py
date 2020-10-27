@@ -54,6 +54,8 @@ raised the class sppasSimpleAudioPlayer() is instantiated.
 
 """
 
+import logging
+
 from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
 from sppas.src.exceptions import sppasPackageFeatureError
@@ -70,7 +72,7 @@ class sppasAudioPlayDataError(object):
 try:
     import simpleaudio
     cfg.set_feature("audioplay", True)
-    print("AUDIOPLAY OK")
+    logging.info("audioplay feature enabled")
 except ImportError:
     # Invalidate the feature because the package is not installed
     cfg.set_feature("audioplay", False)

@@ -92,7 +92,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
 
     """
 
-    # Delay in seconds to update the position value in the stream.
+    # Delay in seconds to update the position value in the stream & to notify
     TIMER_DELAY = 0.010
 
     # -----------------------------------------------------------------------
