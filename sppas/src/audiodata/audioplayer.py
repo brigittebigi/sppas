@@ -90,14 +90,6 @@ class sppasSimpleAudioPlayer(object):
 
     # -----------------------------------------------------------------------
 
-    def duration(self):
-        """Return the duration of the loaded audio (float)."""
-        if self._filename is None:
-            return 0.
-        return self._audio.get_duration()
-
-    # -----------------------------------------------------------------------
-
     def reset(self):
         """Re-initialize all known data."""
         self._ms = MediaState().unknown
@@ -286,8 +278,8 @@ class sppasSimpleAudioPlayer(object):
         time_pos = float(time_pos)
         if time_pos < 0.:
             time_pos = 0.
-        if time_pos > self.duration():
-            time_pos = self.duration()
+        if time_pos > self.get_duration():
+            time_pos = self.get_duration()
 
         # how many frames this time position is representing since the beginning
         time_pos = float(time_pos)

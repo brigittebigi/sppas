@@ -218,8 +218,8 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         time_pos = float(time_pos)
         if time_pos < 0.:
             time_pos = 0.
-        if time_pos > self.duration():
-            time_pos = self.duration()
+        if time_pos > self.get_duration():
+            time_pos = self.get_duration()
         if time_pos > self._period[1]:
             time_pos = self._period[1]
         if time_pos < self._period[0]:
@@ -267,13 +267,13 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
 
         """
         # Check if the current period is inside or overlapping this audio
-        if self._period[0] < self.duration():
+        if self._period[0] < self.get_duration():
             # current position in time.
             cur_time = self.tell()
             # Check if the current position is inside the period
             if self._period[0] <= cur_time <= self._period[1]:
                 start_time = max(self._period[0], cur_time)
-                end_time = min(self._period[1], self.duration())
+                end_time = min(self._period[1], self.get_duration())
                 # Convert the time (in seconds) into a position in the frames
                 start_pos = start_time * self._audio.get_framerate() * self._audio.get_sampwidth()
                 end_pos = end_time * self._audio.get_framerate() * self._audio.get_sampwidth()
@@ -296,7 +296,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         if value is True:
             evt = MediaEvents.MediaLoadedEvent()
             if self._period is None:
-                self._period = (0., self.duration())
+                self._period = (0., self.get_duration())
         else:
             evt = MediaEvents.MediaNotLoadedEvent()
         evt.SetEventObject(self)
@@ -357,7 +357,7 @@ class TestPanel(wx.Panel):
     def __on_media_loaded(self, event):
         wx.LogDebug("Audio file loaded successfully")
         self.FindWindow("btn_play").Enable(True)
-        duration = self.ap.duration()
+        duration = self.ap.get_duration()
         self.slider.SetRange(0, int(duration * 1000.))
 
         # self.ap.set_period(10., 12.)

@@ -80,11 +80,39 @@ class sppasSimpleVideoPlayer(object):
 
     # -----------------------------------------------------------------------
 
-    def duration(self):
+    def get_filename(self):
+        return self._filename
+
+    # -----------------------------------------------------------------------
+
+    def get_duration(self):
         """Return the duration of the loaded video (float)."""
         if self._filename is None:
             return 0.
         return self._video.get_duration()
+
+    # -----------------------------------------------------------------------
+
+    def get_framerate(self):
+        if self._video is not None:
+            return self._video.get_framerate()
+        return 0
+
+    # -----------------------------------------------------------------------
+
+    def get_width(self):
+        """Return the width of the frames in the video."""
+        if self._video is None:
+            return 0
+        return self._video.get_width()
+
+    # -----------------------------------------------------------------------
+
+    def get_height(self):
+        """Return the height of the frames in the video."""
+        if self._video is None:
+            return 0
+        return self._video.get_height()
 
     # -----------------------------------------------------------------------
 
@@ -272,8 +300,8 @@ class sppasSimpleVideoPlayer(object):
         time_pos = float(time_pos)
         if time_pos < 0.:
             time_pos = 0.
-        if time_pos > self.duration():
-            time_pos = self.duration()
+        if time_pos > self.get_duration():
+            time_pos = self.get_duration()
 
         # how many frames this time position is representing since the beginning
         time_pos = float(time_pos)
