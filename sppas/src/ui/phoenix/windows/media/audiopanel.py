@@ -112,7 +112,6 @@ class sppasAudioPanel(sppasPanel):
 
         # Members
         self._mt = MediaType().audio
-        self._ms = MediaState().unknown
         self._zoom = 100.
         self.__audioplay = sppasAudioPlayer(self)
 
@@ -130,7 +129,17 @@ class sppasAudioPanel(sppasPanel):
         self.__audioplay.Bind(wx.EVT_TIMER, self.__on_timer)
 
     # -----------------------------------------------------------------------
-    # Play the audio
+
+    def media_type(self):
+        """Return the media type.
+
+        :return: (MediaType) The media type value
+
+        """
+        return self._mt
+
+    # -----------------------------------------------------------------------
+    # Play the audio - manage the private sppasAudioPlayer() instance.
     # -----------------------------------------------------------------------
 
     def get_filename(self):
@@ -159,6 +168,30 @@ class sppasAudioPanel(sppasPanel):
     def tell(self):
         return self.__audioplay.tell()
 
+    # -----------------------------------------------------------------------
+
+    def is_loading(self):
+        """Return True if the audio is still loading."""
+        return self.__audioplay.is_loading()
+
+    # -----------------------------------------------------------------------
+
+    def is_playing(self):
+        """Return True if the audio is playing."""
+        return self.__audioplay.is_playing()
+
+    # -----------------------------------------------------------------------
+
+    def is_paused(self):
+        """Return True if the audio is paused."""
+        return self.__audioplay.is_paused()
+
+    # -----------------------------------------------------------------------
+
+    def is_stopped(self):
+        """Return True if the audio is stopped."""
+        return self.__audioplay.is_stopped()
+
     # ----------------------------------------------------------------------
 
     def set_period(self, start, end):
@@ -169,10 +202,10 @@ class sppasAudioPanel(sppasPanel):
 
         """
         self.__audioplay.set_period(start, end)
-        # todo: set the period to the waveform panel
+        # todo: set the period to the waveform panel too
 
     # -----------------------------------------------------------------------
-    # Getters for audio infos
+    # Getters of the audio - the private sppasAudioPlayer() instance.
     # -----------------------------------------------------------------------
 
     def get_nchannels(self):
@@ -210,7 +243,7 @@ class sppasAudioPanel(sppasPanel):
     duration = property(fget=get_duration)
 
     # -----------------------------------------------------------------------
-    # Enable/Disable views
+    # Enable/Disable the views
     # -----------------------------------------------------------------------
 
     def show_infos(self, value):
@@ -321,7 +354,6 @@ class sppasAudioPanel(sppasPanel):
         :param value: (int) Percentage of zooming, in range 25 .. 400.
 
         """
-        print("set zoom percent to %f " % value)
         value = int(value)
         if value < 25.:
             value = 25.
@@ -330,16 +362,11 @@ class sppasAudioPanel(sppasPanel):
         self._zoom = value
 
         if self.__infos is not None:
-            print(" -> new infos height: %d" % self.get_infos_height())
             self.__infos.SetMinSize(wx.Size(-1, self.get_infos_height()))
         if self.__waveform is not None:
-            print(" -> new wave height: %d" % self.get_waveform_height())
             self.__waveform.SetMinSize(wx.Size(-1, self.get_waveform_height()))
 
-        print(" -> new PANEL height: %d" % self.get_min_height())
         self.SetMinSize(wx.Size(-1, self.get_min_height()))
-        # self.Layout()
-        # self.Refresh()
         self.SendSizeEventToParent()
 
     # -----------------------------------------------------------------------
@@ -360,9 +387,8 @@ class sppasAudioPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def __create_infos_panel(self):
-        st = wx.StaticText(self, id=-1, label="", name="infos_panel")
+        st = wx.StaticText(self, id=-1, label="No audio", name="infos_panel")
         st.SetMinSize(wx.Size(-1, self.get_infos_height()))
-
         return st
 
     # -----------------------------------------------------------------------
@@ -396,6 +422,26 @@ class sppasAudioPanel(sppasPanel):
 
     def __on_timer(self, event):
         wx.PostEvent(self.GetParent(), event)
+
+    # ----------------------------------------------------------------------
+    # Override Public methods of a wx.Window
+    # ----------------------------------------------------------------------
+
+    def Close(self, force=False):
+        """Close the panel."""
+        if self.__audioplay:
+            del self.__audioplay
+        wx.Window.DeletePendingEvents(self)
+        wx.Window.Close(self, force)
+
+    # ----------------------------------------------------------------------
+
+    def Destroy(self):
+        """Destroy the panel."""
+        if self.__audioplay:
+            del self.__audioplay
+        wx.Window.DeletePendingEvents(self)
+        wx.Window.Destroy(self)
 
 # ---------------------------------------------------------------------------
 

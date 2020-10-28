@@ -32,7 +32,8 @@
     src.ui.phoenix.windows.media.videopanel.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Requires opencv library to play the video file stream.
+    Requires opencv library to play the video file stream. Do not play the
+    audio streams embedded in the video: display only the frames.
 
 """
 
@@ -121,7 +122,17 @@ class sppasVideoPanel(sppasPanel):
         self.__videoplay.Bind(wx.EVT_TIMER, self.__on_timer)
 
     # -----------------------------------------------------------------------
-    # Play the audio
+
+    def media_type(self):
+        """Return the media type.
+
+        :return: (MediaType) The media type value
+
+        """
+        return self._mt
+
+    # -----------------------------------------------------------------------
+    # Play the video
     # -----------------------------------------------------------------------
 
     def get_filename(self):
@@ -235,7 +246,7 @@ class sppasVideoPanel(sppasPanel):
         return False
 
     # -----------------------------------------------------------------------
-    # Height of views
+    # Height of the views
     # -----------------------------------------------------------------------
 
     def get_infos_height(self):
@@ -269,7 +280,7 @@ class sppasVideoPanel(sppasPanel):
                 h += sppasVideoPanel.INFOS_HEIGHT
         if self.__film is not None:
             if self.__film.IsShown():
-                h += sppasVideoPanel.WAVEFORM_HEIGHT
+                h += sppasVideoPanel.FILM_HEIGHT
 
         # Apply the current zoom value
         h = int(float(h) * self._zoom / 100.)
@@ -298,7 +309,6 @@ class sppasVideoPanel(sppasPanel):
         :param value: (int) Percentage of zooming, in range 25 .. 400.
 
         """
-        print("set zoom percent to %f " % value)
         value = int(value)
         if value < 25.:
             value = 25.
@@ -307,13 +317,10 @@ class sppasVideoPanel(sppasPanel):
         self._zoom = value
 
         if self.__infos is not None:
-            print(" -> new infos height: %d" % self.get_infos_height())
             self.__infos.SetMinSize(wx.Size(-1, self.get_infos_height()))
         if self.__film is not None:
-            print(" -> new wave height: %d" % self.get_film_height())
             self.__film.SetMinSize(wx.Size(-1, self.get_film_height()))
 
-        print(" -> new PANEL height: %d" % self.get_min_height())
         self.SetMinSize(wx.Size(-1, self.get_min_height()))
         self.SendSizeEventToParent()
 
@@ -335,7 +342,7 @@ class sppasVideoPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def __create_infos_panel(self):
-        st = wx.StaticText(self, id=-1, label="", name="infos_panel")
+        st = wx.StaticText(self, id=-1, label="No video", name="infos_panel")
         st.SetMinSize(wx.Size(-1, self.get_infos_height()))
 
         return st
@@ -343,7 +350,7 @@ class sppasVideoPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def __create_film_panel(self):
-        wp = sppasPanel(self)  # sppasFilmWindow(self)
+        wp = sppasPanel(self)  # sppasFilmPanel(self)
         wp.SetMinSize(wx.Size(-1, self.get_film_height()))
         return wp
 
@@ -418,11 +425,10 @@ class TestPanel(wx.Panel):
         sizer.Add(self.vp, 0, wx.EXPAND, 4)
         self.SetSizer(sizer)
 
-        self.Bind(wx.EVT_TIMER, self._on_timer)
-
-        # Custom event to inform the media is loaded
+        # events
         self.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
         self.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
+        self.Bind(wx.EVT_TIMER, self._on_timer)
 
         wx.CallAfter(self.DoLoadFile)
 

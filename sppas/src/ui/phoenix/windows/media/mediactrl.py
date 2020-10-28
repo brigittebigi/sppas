@@ -32,6 +32,24 @@
     src.ui.phoenix.windows.media.mediactrl.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    DEPRECATED due to too many problems with the media back-ends under MacOS
+    and Windows. Only Gstreamer under Linux is really efficient.
+
+    sppasMediaCtrl is using a wx.media.MediaCtrl() instance.
+    The extended features are:
+
+        - display information;
+        - display of waveform if the media is an audio;
+        - a zoom (percentage) to fix the height of this panel and its media;
+        - works exactly the same on all platforms, except for Seek() ->
+
+       Under MacOS, if start position is set to a value other than X*1000 ms,
+       the backend will display an error message and will seek to the X*1000
+       position instead of the required one. Error message is:
+       Python[14410:729361] CMTimeMakeWithSeconds(2.870 seconds, timescale 1):
+       warning: error of -0.870 introduced due to very low timescale
+       (AvPlayer backend)
+
 """
 
 import logging
@@ -347,22 +365,6 @@ class sppasMediaCtrl(sppasPanel):
     :contact:      develop@sppas.org
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
-    sppasMediaCtrl is using the wx.media.MediaCtrl.
-    Extended features are:
-
-        - TODO: display of waveform/spectrogram/volume if the media is an audio;
-        - a zoom (percentage) to fix the height of this panel and its media;
-        - works exactly the same on all platforms, except for Seek().
-
-    Other known problems:
-
-     - Under MacOS, if start position is set to a value other than X*1000 ms,
-       the backend will display an error message and will seek to the X*1000
-       position instead of the required one. Error message is:
-       Python[14410:729361] CMTimeMakeWithSeconds(2.870 seconds, timescale 1):
-       warning: error of -0.870 introduced due to very low timescale
-       (AvPlayer backend)
 
     Events emitted by this class:
 

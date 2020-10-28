@@ -29,32 +29,34 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.media.playerctrl.py
+    src.ui.phoenix.windows.media.baseplaypanel.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    DEPRECATED due to too many problems with the media back-ends under MacOS
-    and Windows. Only Gstreamer under Linux is really efficient.
+    A base class panel to display buttons to manage the actions on the media
+    player. Some methods must be overridden to be able to play/pause/stop/...
 
-    A panel to display buttons to manage the actions on the media player.
-    Can play audio and video, based on our custom MediaCtrl which is
-    using the wx.Media players.
+    Can play audio and video, based on our customs audioplayer/videoplayer.
+    Requires the following libraries:
+
+     - simpleaudio, installed by the audioplay feature;
+     - opencv, installed by the videoplay feature.
 
 """
 
 import wx
-import wx.media
 
 from ..buttons import ToggleButton
 from ..buttons import BitmapTextButton
 from ..panels import sppasPanel
 
 from .mediaevents import MediaEvents
+from .timeslider import TimeSliderPanel
 
 # ---------------------------------------------------------------------------
 
 
 class sppasPlayerControlsPanel(sppasPanel):
-    """Create a panel with controls for managing media.
+    """Create a panel with controls to manage media.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -62,10 +64,9 @@ class sppasPlayerControlsPanel(sppasPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
-    Four children are to be created and organized into a BoxSizer:
-        - widgets_panel: a panel, free to be used to add widgets
+    Three children are to be created and organized into a BoxSizer:
+        - widgets_panel: a customizable panel, free to be used to add widgets
         - transport_panel: all buttons to play a media
-        - volume_panel: a button to mute and a slider to adjust the volume
         - slider_panel: a panel to indicate duration, selection, position...
 
     Any action of the user (click on a button, move a slider...) is sent to
@@ -111,7 +112,6 @@ class sppasPlayerControlsPanel(sppasPanel):
         self.FindWindow("media_rewind").SetFocusColour(colour)
         self.FindWindow("media_forward").SetFocusColour(colour)
         self.FindWindow("media_repeat").SetFocusColour(colour)
-        self.FindWindow("volume_mute").SetFocusColour(colour)
 
     # -----------------------------------------------------------------------
 
@@ -152,21 +152,11 @@ class sppasPlayerControlsPanel(sppasPanel):
         btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
         btn = self.FindWindow("media_repeat")
         btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
-        btn = self.FindWindow("volume_mute")
-        btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
-
-        btn = self.FindWindow("volume_slider")
-        btn.SetMinSize(wx.Size(self._btn_size * 2, self._btn_size))
 
     # -----------------------------------------------------------------------
 
     def ShowSlider(self, value=True):
         self._slider.Show(value)
-
-    # -----------------------------------------------------------------------
-
-    def ShowVolume(self, value=True):
-        self._volume_panel.Show(value)
 
     # -----------------------------------------------------------------------
 
@@ -217,7 +207,6 @@ class sppasPlayerControlsPanel(sppasPanel):
         else:
             btn.SetImage("media_play")
             btn.Refresh()
-
     # -----------------------------------------------------------------------
     # Public methods, for the media. To be overridden.
     # -----------------------------------------------------------------------
@@ -249,12 +238,6 @@ class sppasPlayerControlsPanel(sppasPanel):
         self.notify(action="seek", value=value)
 
     # -----------------------------------------------------------------------
-
-    def media_volume(self, value):
-        """To be overridden. Adjust volume to the given scale value."""
-        self.notify(action="volume", value=value)
-
-    # -----------------------------------------------------------------------
     # Construct the GUI
     # -----------------------------------------------------------------------
 
@@ -263,7 +246,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         wx.Panel.SetBackgroundColour(self, colour)
         hi_color = self.GetHighlightedBackgroundColour()
 
-        for name in ("transport", "widgets", "volume", "slider"):
+        for name in ("transport", "widgets", "slider"):
             w = self.FindWindow(name + "_panel")
             w.SetBackgroundColour(colour)
             for c in w.GetChildren():
@@ -278,7 +261,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         """Set the foreground of our panel to the given color."""
         wx.Panel.SetForegroundColour(self, colour)
 
-        for name in ("transport", "widgets", "volume", "slider"):
+        for name in ("transport", "widgets", "slider"):
             w = self.FindWindow(name + "_panel")
             w.SetForegroundColour(colour)
             for c in w.GetChildren():
@@ -313,7 +296,6 @@ class sppasPlayerControlsPanel(sppasPanel):
         # Create the main anz_panels
         panel1 = self.__create_widgets_panel(self)
         panel2 = self.__create_transport_panel(self)
-        panel3 = self.__create_volume_panel(self)
         slider = self.__create_slider_panel(self)
 
         # Organize the anz_panels into the main sizer
@@ -323,8 +305,6 @@ class sppasPlayerControlsPanel(sppasPanel):
         nav_sizer.Add(panel1, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
         nav_sizer.AddStretchSpacer(1)
         nav_sizer.Add(panel2, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
-        nav_sizer.AddStretchSpacer(1)
-        nav_sizer.Add(panel3, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
         nav_sizer.AddStretchSpacer(1)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -350,13 +330,6 @@ class sppasPlayerControlsPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     @property
-    def _volume_panel(self):
-        """Return the slider to indicate offsets."""
-        return self.FindWindow("volume_panel")
-
-    # -----------------------------------------------------------------------
-
-    @property
     def widgets_panel(self):
         """Return the panel to be customized."""
         return self.FindWindow("widgets_panel")
@@ -374,12 +347,12 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     def __create_slider_panel(self, parent):
         """Return a panel with a slider to indicate the position in time."""
-        # TODO: return TimeSliderPanel(parent, name="slider_panel")
+        slider = TimeSliderPanel(parent, name="slider_panel")
 
-        slider = wx.Slider(self, style=wx.SL_HORIZONTAL | wx.SL_LABELS)
-        slider.SetRange(0, 0)
-        slider.SetValue(0)
-        slider.SetName("slider_panel")
+        # slider = wx.Slider(self, style=wx.SL_HORIZONTAL | wx.SL_LABELS)
+        # slider.SetRange(0, 0)
+        # slider.SetValue(0)
+        # slider.SetName("slider_panel")
         slider.SetMinSize(wx.Size(-1, 3 * self.get_font_height()))
 
         return slider
@@ -421,32 +394,6 @@ class sppasPlayerControlsPanel(sppasPanel):
         return panel
 
     # -----------------------------------------------------------------------
-
-    def __create_volume_panel(self, parent):
-        """Return a panel with a slider for the volume and a mute button."""
-        panel = sppasPanel(parent, name="volume_panel")
-
-        btn_mute = ToggleButton(panel, name="volume_mute")
-        btn_mute.SetImage("volume_high")
-        self.SetButtonProperties(btn_mute)
-        btn_mute.SetBorderWidth(1)
-
-        # Labels of wx.Slider are not supported under MacOS.
-        slider = wx.Slider(panel, style=wx.SL_HORIZONTAL)  # | wx.SL_MIN_MAX_LABELS)
-        slider.SetName("volume_slider")
-        slider.SetValue(100)
-        slider.SetRange(0, 100)
-        slider.SetMinSize(wx.Size(self._btn_size * 2, self._btn_size))
-
-        border = sppasPanel.fix_size(2)
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(btn_mute, 0, wx.ALIGN_CENTER | wx.ALL, border)
-        sizer.Add(slider, 1, wx.EXPAND, border)
-        panel.SetSizer(sizer)
-
-        return panel
-
-    # -----------------------------------------------------------------------
     # Manage events
     # -----------------------------------------------------------------------
 
@@ -455,7 +402,6 @@ class sppasPlayerControlsPanel(sppasPanel):
 
         An action can be:
             - play/stop/rewind/forward, without value;
-            - volume, with a percentage value;
             - seek, the slider value (a percentage by default).
 
         :param action: (str) Name of the action to perform
@@ -507,12 +453,6 @@ class sppasPlayerControlsPanel(sppasPanel):
         elif name == "media_forward":
             self.media_forward()
 
-        elif name == "volume_mute":
-            self.__action_volume(to_notify=True)
-
-        elif name == "volume_slider":
-            self.__action_volume(to_notify=False)
-
         elif name == "slider_panel":
             # todo: notify parent to get authorization to seek...
             # then it'll the parent to call the media_seek method.
@@ -521,46 +461,12 @@ class sppasPlayerControlsPanel(sppasPanel):
         else:
             event.Skip()
 
-    # -----------------------------------------------------------------------
-
-    def __action_volume(self, to_notify=True):
-        """The toggle button to mute volume or the slider has changed.
-
-        :param to_notify: (bool) notify or not if toggle is pressed.
-
-        """
-        vol_panel = self.FindWindow("volume_panel")
-        mute_btn = vol_panel.FindWindow("volume_mute")
-        if mute_btn.IsPressed() is True:
-            if to_notify is True:
-                mute_btn.SetImage("volume_mute")
-                mute_btn.Refresh()
-                self.media_volume(0.)
-
-        else:
-            # get the volume value from the slider
-            slider = vol_panel.FindWindow("volume_slider")
-            volume = slider.GetValue()
-            if volume == 0:
-                mute_btn.SetImage("volume_off")
-            elif volume < 30:
-                mute_btn.SetImage("volume_low")
-            elif volume < 70:
-                mute_btn.SetImage("volume_medium")
-            else:
-                mute_btn.SetImage("volume_high")
-            mute_btn.Refresh()
-
-            # convert this percentage in a volume value ranging [0..1]
-            volume = float(volume) / 100.
-            self.media_volume(volume)
-
 # ---------------------------------------------------------------------------
 
 
 class TestPanel(sppasPanel):
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent)
+        super(TestPanel, self).__init__(parent, name="Base PlayControls Panel")
 
         p1 = sppasPlayerControlsPanel(self)
         btn1 = BitmapTextButton(p1.widgets_panel, name="way_up_down")

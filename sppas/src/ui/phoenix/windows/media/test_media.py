@@ -45,6 +45,7 @@ import sppas.src.ui.phoenix.windows.media.audioplay as audioplay
 import sppas.src.ui.phoenix.windows.media.videoplay as videoplay
 import sppas.src.ui.phoenix.windows.media.audiopanel as audiopanel
 import sppas.src.ui.phoenix.windows.media.videopanel as videopanel
+import sppas.src.ui.phoenix.windows.media.baseplaypanel as baseplaypanel
 
 
 # ----------------------------------------------------------------------------
@@ -69,6 +70,9 @@ class TestPanel(wx.Choicebook):
         self.AddPage(p, p.GetName())
 
         p = videopanel.TestPanel(self)
+        self.AddPage(p, p.GetName())
+
+        p = baseplaypanel.TestPanel(self)
         self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
