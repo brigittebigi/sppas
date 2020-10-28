@@ -44,6 +44,9 @@
 """
 
 import wx
+import os
+
+from sppas.src.config import paths  # used only in the Test Panel
 
 from ..buttons import ToggleButton
 from ..buttons import BitmapTextButton
@@ -51,6 +54,7 @@ from ..panels import sppasPanel
 
 from .mediaevents import MediaEvents
 from .timeslider import TimeSliderPanel
+from .audioplay import sppasAudioPlayer  # used only in the Test Panel
 
 # ---------------------------------------------------------------------------
 
@@ -464,22 +468,52 @@ class sppasPlayerControlsPanel(sppasPanel):
 # ---------------------------------------------------------------------------
 
 
-class TestPanel(sppasPanel):
+class TestPanel(sppasPlayerControlsPanel):
+
+    AUDIO = os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
+
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="Base PlayControls Panel")
 
-        p1 = sppasPlayerControlsPanel(self)
-        btn1 = BitmapTextButton(p1.widgets_panel, name="way_up_down")
-        p1.SetButtonProperties(btn1)
-        p1.AddWidget(btn1)
-        p1.Bind(MediaEvents.EVT_MEDIA_ACTION, self.process_action)
+        self.audio = sppasAudioPlayer(self)
+        self.audio.load(TestPanel.AUDIO)
 
-        s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(p1, 0, wx.EXPAND)
-        self.SetSizer(s)
-        self.SetBackgroundColour(wx.Colour(60, 60, 60))
-        self.SetForegroundColour(wx.Colour(225, 225, 225))
+        btn1 = BitmapTextButton(self.widgets_panel, name="way_up_down")
+        self.SetButtonProperties(btn1)
+        self.AddWidget(btn1)
 
-    def process_action(self, evt):
-        wx.LogDebug("Action received: {:s} with value={:s}"
-                    "".format(evt.action, str(evt.value)))
+    # -----------------------------------------------------------------------
+    # the methods to override...
+    # -----------------------------------------------------------------------
+
+    def play(self):
+        wx.LogDebug("Play")
+        self.audio.play()
+
+    # -----------------------------------------------------------------------
+
+    def stop(self):
+        self.audio.stop()
+
+    # -----------------------------------------------------------------------
+
+    def media_rewind(self):
+        """Seek media 10% earlier."""
+        d = self.audio.get_duration()
+        d /= 10.
+        cur = self.audio.tell()
+        self.audio.seek(cur - d)
+
+    # -----------------------------------------------------------------------
+
+    def media_forward(self):
+        """Seek media 10% later."""
+        d = self.audio.get_duration()
+        d /= 10.
+        cur = self.audio.tell()
+        self.audio.seek(cur + d)
+
+    # -----------------------------------------------------------------------
+
+    def media_seek(self, value):
+        self.audio.seek(value)

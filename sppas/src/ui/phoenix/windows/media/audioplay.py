@@ -275,9 +275,9 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
                 start_time = max(self._period[0], cur_time)
                 end_time = min(self._period[1], self.get_duration())
                 # Convert the time (in seconds) into a position in the frames
-                start_pos = start_time * self._audio.get_framerate() * self._audio.get_sampwidth()
-                end_pos = end_time * self._audio.get_framerate() * self._audio.get_sampwidth()
-                return self._frames[int(start_pos):int(end_pos)]
+                start_pos = int(start_time * float(self._audio.get_framerate())) * self._audio.get_sampwidth() * self._audio.get_nchannels()
+                end_pos = int(end_time * float(self._audio.get_framerate())) * self._audio.get_sampwidth() * self._audio.get_nchannels()
+                return self._frames[start_pos:end_pos]
 
         return b("")
 
