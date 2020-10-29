@@ -213,7 +213,7 @@ class sppasSimpleAudioPlayer(object):
                         # Check if the audio is really playing
                         played = self._sa_play.is_playing()
                     else:
-                        logging.warning("No frames to play in the given period"
+                        logging.warning("No frames to play in the given period "
                                         "for audio {:s}.".format(self._filename))
 
                 except Exception as e:
@@ -338,7 +338,11 @@ class sppasSimpleAudioPlayer(object):
     # -----------------------------------------------------------------------
 
     def _reposition(self):
-        """Seek at the current position in the stream using time_value."""
+        """Seek at the current position in the stream using time_value.
+
+        :return: (float) Time position in the stream (seconds)
+
+        """
         # update the current time value
         cur_time_value = datetime.datetime.now()
         time_delta = cur_time_value - self._time_value
@@ -354,9 +358,20 @@ class sppasSimpleAudioPlayer(object):
         position = self._audio.tell() + int(n_frames)
         self._audio.seek(position)
 
+        return self._time_value
+
     # -----------------------------------------------------------------------
 
     def _extract_frames(self):
         """Return the frames to play."""
-        cur_pos = self._audio.tell() * self._audio.get_sampwidth()
+        cur_pos = self._audio.tell() * self._audio.get_sampwidth() * self._audio.get_nchannels()
         return self._frames[cur_pos:]
+
+    # -----------------------------------------------------------------------
+
+    def _time_to_frames(self, time_value):
+        return int(time_value * float(self._audio.get_framerate())) * \
+               self._audio.get_sampwidth() * \
+               self._audio.get_nchannels()
+
+

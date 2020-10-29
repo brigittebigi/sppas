@@ -45,6 +45,7 @@
 
 import wx
 import os
+import datetime
 
 from sppas.src.config import paths  # used only in the Test Panel
 
@@ -211,6 +212,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         else:
             btn.SetImage("media_play")
             btn.Refresh()
+
     # -----------------------------------------------------------------------
     # Public methods, for the media. To be overridden.
     # -----------------------------------------------------------------------
@@ -470,17 +472,47 @@ class sppasPlayerControlsPanel(sppasPanel):
 
 class TestPanel(sppasPlayerControlsPanel):
 
-    AUDIO = os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
+    AUDIO = os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav")
+    SLIDER_UPDATE_DELAY = 0.100   # update the slider every 100ms only
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="Base PlayControls Panel")
 
         self.audio = sppasAudioPlayer(self)
-        self.audio.load(TestPanel.AUDIO)
+        self.prev_time = None
 
         btn1 = BitmapTextButton(self.widgets_panel, name="way_up_down")
         self.SetButtonProperties(btn1)
         self.AddWidget(btn1)
+
+        # Events
+        # Custom event to inform the media is loaded
+        self.audio.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
+        self.audio.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
+        # Event received every Xms when the audio is playing
+        self.audio.Bind(wx.EVT_TIMER, self._on_timer)
+
+        wx.CallAfter(self._do_load_file)
+
+    # ----------------------------------------------------------------------
+
+    def _do_load_file(self):
+        self.FindWindow("media_play").Enable(False)
+        self.audio.load(TestPanel.AUDIO)
+
+    # ----------------------------------------------------------------------
+
+    def __on_media_loaded(self, event):
+        wx.LogDebug("Audio file loaded successfully")
+        self.FindWindow("media_play").Enable(True)
+        # duration = self.audio.get_duration()
+        # self._slider.SetRange(0, int(duration * 1000.))
+
+    # ----------------------------------------------------------------------
+
+    def __on_media_not_loaded(self, event):
+        wx.LogError("Audio file not loaded")
+        # self._slider.SetRange(0, 0)
 
     # -----------------------------------------------------------------------
     # the methods to override...
@@ -488,32 +520,71 @@ class TestPanel(sppasPlayerControlsPanel):
 
     def play(self):
         wx.LogDebug("Play")
-        self.audio.play()
+        played = self.audio.play()
+        if played is True:
+            self.prev_time = datetime.datetime.now()
 
     # -----------------------------------------------------------------------
 
     def stop(self):
-        self.audio.stop()
+        wx.LogDebug("Stop")
+        if self.audio.is_stopped() is False:
+            self.audio.stop()
+        self.prev_time = None
+        self.DeletePendingEvents()
 
     # -----------------------------------------------------------------------
 
     def media_rewind(self):
         """Seek media 10% earlier."""
+        wx.LogDebug("Rewind")
         d = self.audio.get_duration()
         d /= 10.
         cur = self.audio.tell()
-        self.audio.seek(cur - d)
+        self.audio.seek(max(0., cur - d))
 
     # -----------------------------------------------------------------------
 
     def media_forward(self):
         """Seek media 10% later."""
-        d = self.audio.get_duration()
-        d /= 10.
+        wx.LogDebug("Forward")
+        duration = self.audio.get_duration()
+        d = duration / 10.
         cur = self.audio.tell()
-        self.audio.seek(cur + d)
+
+        position = cur + d
+        # if we reach the end of the stream
+        if position > duration:
+            if self.IsReplay() is True:
+                position = 0.  # restart from the beginning
+            else:
+                position = duration
+
+        self.audio.seek(position)
 
     # -----------------------------------------------------------------------
 
     def media_seek(self, value):
+        wx.LogDebug("Seek at {}".format(value))
         self.audio.seek(value)
+        # self._slider.Seek(value)
+
+    # ----------------------------------------------------------------------
+
+    def _on_timer(self, event):
+
+        if self.audio.is_stopped() is True:
+            self.stop()
+            if self.IsReplay() is True:
+                self.play()
+        else:
+            cur_time = datetime.datetime.now()
+            delta = cur_time - self.prev_time
+            delta_seconds = delta.seconds + delta.microseconds / 1000000.
+            if delta_seconds > TestPanel.SLIDER_UPDATE_DELAY:
+                self.prev_time = cur_time
+                time_pos = self.audio.tell()
+                # self._slider.SetValue(int(time_pos * 1000.))
+                wx.LogDebug("Update the slider at time {}".format(time_pos))
+
+        # event.Skip()

@@ -232,7 +232,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     def tell(self):
         """Return the current time position in the audio stream (float)."""
         offset = self._audio.tell()
-        return float(offset) / float(self._audio.get_framerate())
+        return float(offset * self._audio.get_nchannels()) / float(self._audio.get_framerate())
 
     # -----------------------------------------------------------------------
     # Manage events
@@ -275,8 +275,8 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
                 start_time = max(self._period[0], cur_time)
                 end_time = min(self._period[1], self.get_duration())
                 # Convert the time (in seconds) into a position in the frames
-                start_pos = int(start_time * float(self._audio.get_framerate())) * self._audio.get_sampwidth() * self._audio.get_nchannels()
-                end_pos = int(end_time * float(self._audio.get_framerate())) * self._audio.get_sampwidth() * self._audio.get_nchannels()
+                start_pos = self._time_to_frames(start_time)
+                end_pos = self._time_to_frames(end_time)
                 return self._frames[start_pos:end_pos]
 
         return b("")
@@ -309,7 +309,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
 class TestPanel(wx.Panel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(
-            parent, -1, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN, name="AudioPlayer")
+            parent, -1, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN, name="Audio Player")
 
         # The player!
         self.ap = sppasAudioPlayer(owner=self)
