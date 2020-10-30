@@ -39,13 +39,10 @@
 """
 
 import wx
+import os
 import wx.lib.scrolledpanel as sc
 
-from ...tools import sppasSwissKnife
-
-# ---------------------------------------------------------------------------
-
-DefaultImageName = "splash_transparent"
+from sppas.src.config import paths   # used only for the test
 
 # ---------------------------------------------------------------------------
 
@@ -215,7 +212,7 @@ class sppasTransparentPanel(sppasPanel):
 # ---------------------------------------------------------------------------
 
 
-class sppasImgBgPanel(sppasPanel):
+class sppasImagePanel(sppasPanel):
     """Create a panel with an optional image as background.
 
     :author:       Brigitte Bigi
@@ -227,45 +224,57 @@ class sppasImgBgPanel(sppasPanel):
     """
 
     def __init__(self, parent, id=wx.ID_ANY,
-                 img_name=DefaultImageName,
+                 image=None,
                  pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
                  style=0,
                  name="imgbg_panel"):
-        self._imgname = DefaultImageName
-        if img_name is None or len(img_name.strip()) == 0:
-            img_name = DefaultImageName
-        self.SetImageName(img_name)
-
-        super(sppasImgBgPanel, self).__init__(parent, id, pos, size, style, name)
+        self._image = None
+        super(sppasImagePanel, self).__init__(parent, id, pos, size, style, name)
         self.SetMinSize(wx.Size(sppasPanel.fix_size(384),
                                 sppasPanel.fix_size(128)))
+        if image is not None:
+            self.SetBackgroundImage(image)
 
         # Bind the events related to our window
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 
     # -----------------------------------------------------------------------
 
-    def GetImageName(self):
-        """Return the name of the background image."""
-        return self._imgname
+    def SetBackgroundImage(self, img_filename=None):
+        """Set the image filename but do not refresh.
+
+        :param img_filename: (str) None to disable the BG image
+
+        """
+        self._image = None
+        if img_filename is not None and os.path.exists(img_filename) is True:
+            try:
+                self._image = wx.Image(img_filename, wx.BITMAP_TYPE_ANY)
+                return True
+            except:
+                pass
+
+        return False
 
     # -----------------------------------------------------------------------
 
-    def SetImageName(self, name=""):
-        """Set the name of the image, must be one of the SPPAS images.
+    def SetBackgroundImageArray(self, img):
+        """Set the image from a numpy array but do not refresh.
 
-        :param name: (str) Name of the background image or empty string to
-        disable the background image.
+        :param img: (sppasImage) Numpy array of the image
 
         """
-        if name != "":
-            filename = sppasSwissKnife.get_image_filename(name)
-            if filename.endswith("default.png"):
-                wx.LogError("Image {:s} not found.".format(name))
-                return False
-        self._imgname = name
-        return True
+        try:
+            width = img.shape[1]
+            height = img.shape[0]
+            self._image = wx.Image(width, height)
+            self._image.SetData(img.tostring())
+            return True
+        except:
+            pass
+        self._image = None
+        return False
 
     # -----------------------------------------------------------------------
 
@@ -280,28 +289,30 @@ class sppasImgBgPanel(sppasPanel):
         :param evt: wx.EVT_ERASE_BACKGROUND
 
         """
-        if self._imgname != "":
-            # yanked from ColourDB.py
+        if isinstance(self._image, wx.Image) is True:
             dc = evt.GetDC()
-
             if not dc:
                 dc = wx.ClientDC(self)
             dc.Clear()
-
             w, h = self.GetClientSize()
-            img = sppasSwissKnife.get_image(self._imgname)
-            img.Rescale(w, h)
-            dc.DrawBitmap(wx.Bitmap(img), 0, 0)
+
+            img = self._image.Copy()
+            img.Rescale(w, h, wx.IMAGE_QUALITY_HIGH)
+            bmp = wx.Bitmap(img, wx.BITMAP_TYPE_PNG)
+            dc.DrawBitmap(bmp, 0, 0)
 
 # ---------------------------------------------------------------------------
 # Panel to test
 # ---------------------------------------------------------------------------
 
 
-class TestPanelPanels(sc.ScrolledPanel):
+class TestPanel(sc.ScrolledPanel):
+
+    img1 = os.path.join(paths.samples, "faces", "BrigitteBigi_Aix2020.png")
+    img2 = os.path.join(paths.etc, "images", "trbg1.png")
 
     def __init__(self, parent):
-        super(TestPanelPanels, self).__init__(
+        super(TestPanel, self).__init__(
             parent,
             style=wx.BORDER_NONE | wx.WANTS_CHARS | wx.HSCROLL | wx.VSCROLL,
             name="Test Panels")
@@ -313,13 +324,13 @@ class TestPanelPanels(sc.ScrolledPanel):
         self.MakePanelContent(p2)
 
         # No image defined. It's the default one.
-        p5 = sppasImgBgPanel(self, img_name="")
+        p5 = sppasImagePanel(self)
         self.MakePanelContent(p5)
         # bg transparent image defined.
-        p6 = sppasImgBgPanel(self, img_name="trbg1")
+        p6 = sppasImagePanel(self, image=TestPanel.img2)
         self.MakePanelContent(p6)
         # A bg image defined.
-        p7 = sppasImgBgPanel(self, img_name="bg2")
+        p7 = sppasImagePanel(self, image=TestPanel.img1)
         self.MakePanelContent(p7)
 
         sizer = wx.BoxSizer(wx.VERTICAL)

@@ -46,7 +46,7 @@ import os
 
 from sppas.src.config import paths
 from sppas.src.ui.phoenix.windows import ToggleTextButton
-from sppas.src.ui.phoenix.windows import sppasPanel
+from sppas.src.ui.phoenix.windows import sppasPanel, sppasImagePanel
 from sppas.src.ui.phoenix.windows import sppasSlider
 
 # ---------------------------------------------------------------------------
@@ -70,7 +70,8 @@ class ToggleSlider(ToggleTextButton):
 
     """
 
-    BG_IMAGE = os.path.join(paths.etc, "images", "bg_alu.png")
+    # BG_IMAGE = os.path.join(paths.etc, "images", "bg_alu.png")
+    BG_IMAGE = os.path.join(paths.etc, "images", "bg_brushed_metal.jpg")
 
     # -----------------------------------------------------------------------
 
@@ -366,7 +367,7 @@ class TimeSliderPanel(sppasPanel):
         btn_part = ToggleSlider(self, label="--", name="visible_part_button")
         btn_part.SetBorderWidth(0)
 
-        panel_sel = sppasPanel(self, name="selection_panel")
+        panel_sel = sppasImagePanel(self, image=ToggleSlider.BG_IMAGE, name="selection_panel")
         btn_before_sel = ToggleSlider(panel_sel, label="--", name="before_sel_button")
         btn_after_sel = ToggleSlider(panel_sel, label="--", name="after_sel_button")
 
@@ -425,6 +426,7 @@ class TimeSliderPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _process_toggle_event(self, event):
+        wx.LogDebug("Time Slider received toggle event")
         for child in self.GetChildren():
             if isinstance(child, ToggleTextButton) is True:
                 if child is event.GetEventObject():

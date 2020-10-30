@@ -40,7 +40,7 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
-from sppas.src.ui.phoenix.windows.panels.panel import TestPanelPanels
+import sppas.src.ui.phoenix.windows.panels.panel as panel
 from sppas.src.ui.phoenix.windows.panels.risepanel import TestPanelCollapsiblePanel
 
 # ----------------------------------------------------------------------------
@@ -67,7 +67,7 @@ class TestPanel(wx.Choicebook):
 
         # Make the bunch of test anz_panels
         panels = list()
-        panels.append(TestPanelPanels(self))
+        panels.append(panel.TestPanel(self))
         panels.append(TestPanelCollapsiblePanel(self))
 
         # Add such anz_panels to pages of the choice book.

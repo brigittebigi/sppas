@@ -47,7 +47,7 @@ from sppas.src.preinstall import sppasInstallerDeps
 
 from .windows import sppasStaticLine
 from .windows import BitmapTextButton, TextButton
-from .windows import sppasPanel, sppasScrolledPanel, sppasImgBgPanel
+from .windows import sppasPanel, sppasScrolledPanel, sppasImagePanel
 from .windows import sppasTitleText, sppasStaticText, sppasMessageText, sppasTextCtrl
 from .windows import CheckListCtrl
 from .windows.book import sppasSimplebook
@@ -519,8 +519,8 @@ class sppasHeaderInstallPanel(sppasPanel):
         min_height = int(float(wx.GetApp().settings.title_height)*0.8)
 
         # Under Windows the splash image is not transparent...
-        img_panel = sppasImgBgPanel(self, img_name="splash_transparent",
-                                    name="splash_header_panel")
+        img = os.path.join(paths.etc, "images", "splash.png")
+        img_panel = sppasImagePanel(self, image=img, name="splash_header_panel")
         img_panel.SetMinSize(wx.Size(-1, min_height))
 
         title_panel = self.__title_header()

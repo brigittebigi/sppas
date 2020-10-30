@@ -82,7 +82,7 @@ from .buttons import RadioButton
 # panels package requires buttons
 from .panels import sppasPanel
 from .panels import sppasTransparentPanel
-from .panels import sppasImgBgPanel
+from .panels import sppasImagePanel
 from .panels import sppasScrolledPanel
 from .panels import sppasCollapsiblePanel
 
@@ -156,7 +156,7 @@ __all__ = (
     "sppasProgressDialog",
     "sppasPanel",
     "sppasTransparentPanel",
-    "sppasImgBgPanel",
+    "sppasImagePanel",
     "sppasScrolledPanel",
     "sppasCollapsiblePanel",
     "sppasDialog",

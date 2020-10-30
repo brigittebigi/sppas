@@ -51,7 +51,7 @@ from sppas.src.config import paths  # used only in the Test Panel
 
 from ..buttons import ToggleButton
 from ..buttons import BitmapTextButton
-from ..panels import sppasPanel
+from ..panels import sppasImagePanel, sppasPanel
 
 from .mediaevents import MediaEvents
 from .timeslider import TimeSliderPanel
@@ -60,7 +60,7 @@ from .audioplay import sppasAudioPlayer  # used only in the Test Panel
 # ---------------------------------------------------------------------------
 
 
-class sppasPlayerControlsPanel(sppasPanel):
+class sppasPlayerControlsPanel(sppasImagePanel):
     """Create a panel with controls to manage media.
 
     :author:       Brigitte Bigi
@@ -82,6 +82,7 @@ class sppasPlayerControlsPanel(sppasPanel):
     """
 
     def __init__(self, parent, id=wx.ID_ANY,
+                 image=None,
                  pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
                  style=0,
@@ -96,8 +97,9 @@ class sppasPlayerControlsPanel(sppasPanel):
         :param name: (str) the widget name.
 
         """
+        wx.LogDebug("Player background image: {}".format(image))
         super(sppasPlayerControlsPanel, self).__init__(
-            parent, id, pos, size, style, name)
+            parent, id, image, pos, size, style, name)
 
         self._btn_size = sppasPanel.fix_size(32)
         self._focus_color = wx.Colour(128, 128, 128, 128)
@@ -302,7 +304,7 @@ class sppasPlayerControlsPanel(sppasPanel):
         # Create the main anz_panels
         panel1 = self.__create_widgets_panel(self)
         panel2 = self.__create_transport_panel(self)
-        slider = self.__create_slider_panel(self)
+        slider = TimeSliderPanel(self, name="slider_panel")
 
         # Organize the anz_panels into the main sizer
         border = sppasPanel.fix_size(2)
@@ -348,20 +350,6 @@ class sppasPlayerControlsPanel(sppasPanel):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         panel.SetSizer(sizer)
         return panel
-
-    # -----------------------------------------------------------------------
-
-    def __create_slider_panel(self, parent):
-        """Return a panel with a slider to indicate the position in time."""
-        slider = TimeSliderPanel(parent, name="slider_panel")
-
-        # slider = wx.Slider(self, style=wx.SL_HORIZONTAL | wx.SL_LABELS)
-        # slider.SetRange(0, 0)
-        # slider.SetValue(0)
-        # slider.SetName("slider_panel")
-        slider.SetMinSize(wx.Size(-1, 3 * self.get_font_height()))
-
-        return slider
 
     # -----------------------------------------------------------------------
 
@@ -460,8 +448,6 @@ class sppasPlayerControlsPanel(sppasPanel):
             self.media_forward()
 
         elif name == "slider_panel":
-            # todo: notify parent to get authorization to seek...
-            # then it'll the parent to call the media_seek method.
             self.media_seek(obj.GetValue())
 
         else:
@@ -470,13 +456,20 @@ class sppasPlayerControlsPanel(sppasPanel):
 # ---------------------------------------------------------------------------
 
 
-class TestPanel(sppasPlayerControlsPanel):
+class PlayerExamplePanel(sppasPlayerControlsPanel):
 
     AUDIO = os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav")
     SLIDER_UPDATE_DELAY = 0.100   # update the slider every 100ms only
+    BG_IMAGE = os.path.join(paths.etc, "images", "bg_brushed_metal.jpg")
+    # BG_IMAGE = os.path.join(paths.etc, "images", "bg_alu.png")
+
+    # ----------------------------------------------------------------------
 
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent, name="Base PlayControls Panel")
+        super(PlayerExamplePanel, self).__init__(
+            parent,
+            image=PlayerExamplePanel.BG_IMAGE,
+            name="play_panel")
 
         self.audio = sppasAudioPlayer(self)
         self.prev_time = None
@@ -492,13 +485,15 @@ class TestPanel(sppasPlayerControlsPanel):
         # Event received every Xms when the audio is playing
         self.audio.Bind(wx.EVT_TIMER, self._on_timer)
 
+        self._slider.Bind(wx.EVT_TOGGLEBUTTON, self._process_time_slider)
+
         wx.CallAfter(self._do_load_file)
 
     # ----------------------------------------------------------------------
 
     def _do_load_file(self):
         self.FindWindow("media_play").Enable(False)
-        self.audio.load(TestPanel.AUDIO)
+        self.audio.load(PlayerExamplePanel.AUDIO)
 
     # ----------------------------------------------------------------------
 
@@ -571,6 +566,13 @@ class TestPanel(sppasPlayerControlsPanel):
 
     # ----------------------------------------------------------------------
 
+    def _process_time_slider(self, event):
+        wx.LogDebug("Event received from the time_slider")
+        if self.audio.is_playing() is False:
+            event.Skip()
+
+    # ----------------------------------------------------------------------
+
     def _on_timer(self, event):
 
         if self.audio.is_stopped() is True:
@@ -581,10 +583,24 @@ class TestPanel(sppasPlayerControlsPanel):
             cur_time = datetime.datetime.now()
             delta = cur_time - self.prev_time
             delta_seconds = delta.seconds + delta.microseconds / 1000000.
-            if delta_seconds > TestPanel.SLIDER_UPDATE_DELAY:
+            if delta_seconds > PlayerExamplePanel.SLIDER_UPDATE_DELAY:
                 self.prev_time = cur_time
                 time_pos = self.audio.tell()
                 # self._slider.SetValue(int(time_pos * 1000.))
                 wx.LogDebug("Update the slider at time {}".format(time_pos))
 
         # event.Skip()
+
+# ---------------------------------------------------------------------------
+
+
+class TestPanel(sppasPanel):
+
+    def __init__(self, parent):
+        super(TestPanel, self).__init__(parent, name="PlayControls Panel")
+
+        panel = PlayerExamplePanel(self)
+        panel.SetMinSize(wx.Size(640, 120))
+        s = wx.BoxSizer()
+        s.Add(panel, 1, wx.EXPAND)
+        self.SetSizer(s)
