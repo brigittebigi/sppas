@@ -29,26 +29,25 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.line.py
+    src.ui.phoenix.windows.slider.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Description
-    ===========
-
-    This module implements various forms of generic lines, meaning that
-    they are not built on native controls but are self-drawn.
+    This module implements a slider that is not built on native controls
+    but is self-drawn.
 
 """
 
 import wx
+import os
 
-from .basedcwindow import sppasDCWindow
+from sppas.src.config import paths
+from .basedcwindow import sppasImageDCWindow
 from .panels import sppasPanel
 
 # ---------------------------------------------------------------------------
 
 
-class sppasSlider(sppasDCWindow):
+class sppasSlider(sppasImageDCWindow):
     """A window imitating a slider but with the same look on all platforms.
 
      :author:       Brigitte Bigi
@@ -67,12 +66,11 @@ class sppasSlider(sppasDCWindow):
 
     def __init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition,
                  size=wx.DefaultSize, style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.BORDER_NONE,
-                 name="time_slider_panel"):
-        """Create a panel to display a value into a range.
+                 name="slider_panel"):
+        """Create a self-drawn window to display a value into a range.
 
         """
-        super(sppasSlider, self).__init__(
-            parent, id, pos, size, style, name=name)
+        super(sppasSlider, self).__init__(parent, id, pos=pos, size=size, style=style, name=name)
 
         self.__start = 0
         self.__end = 0
@@ -87,6 +85,8 @@ class sppasSlider(sppasDCWindow):
         """Return the (start, end) values."""
         return self.__start, self.__end
 
+    # -----------------------------------------------------------------------
+
     def set_range(self, start, end):
         """Fix the range of values the slider is considering.
 
@@ -100,26 +100,27 @@ class sppasSlider(sppasDCWindow):
         start = float(start)
         end = float(end)
         if start > end:
-            raise ValueError
+            raise ValueError("Start {} can't be greater then end {}".format(start, end))
         self.__start = start
         self.__end = end
 
-        if self.__pos < self.__start:
-            self.__pos = self.__start
-        if self.__pos > self.__end:
-            self.__pos = self.__end
+        # question: do we have to adjust pos automatically??
+        # if self.__pos < self.__start:
+        #     self.__pos = self.__start
+        # if self.__pos > self.__end:
+        #     self.__pos = self.__end
 
         return self.__pos
 
     # -----------------------------------------------------------------------
 
-    def get_pos(self):
-        """Return the current position in time."""
+    def get_value(self):
+        """Return the current position value."""
         return self.__pos
 
     # -----------------------------------------------------------------------
 
-    def set_pos(self, pos):
+    def set_value(self, pos):
         """Fix the current position value.
 
         Do not refresh.
@@ -153,10 +154,6 @@ class sppasSlider(sppasDCWindow):
         tw, th = self.get_text_extend(dc, gc, label)
         self.DrawLabel(label, dc, gc, w - tw - 2, (h - th) // 2)
 
-        # Current position label
-        label = str(self.__pos)
-        tw, th = self.get_text_extend(dc, gc, label)
-
         # Vertical line indicating the proportional position
         total_dur = self.__end - self.__start
         pos_dur = self.__pos - self.__start
@@ -169,6 +166,9 @@ class sppasSlider(sppasDCWindow):
             gc.SetPen(pen)
             dc.DrawLine(pos_x, y, pos_x, y+h)
 
+        # Draw the value of the current position at left or at right
+        label = str(self.__pos)
+        tw, th = self.get_text_extend(dc, gc, label)
         if pos_x + tw < (w // 2):
             if pos_x > tw:
                 self.DrawLabel(label, dc, gc, pos_x + 1, (h - th) // 2)
@@ -183,6 +183,8 @@ class sppasSlider(sppasDCWindow):
 
 class TestPanel(sppasPanel):
 
+    img = os.path.join(paths.etc, "images", "bg1.png")
+
     def __init__(self, parent):
         super(TestPanel, self).__init__(
             parent,
@@ -191,16 +193,18 @@ class TestPanel(sppasPanel):
         s1 = sppasSlider(self, pos=(0, 0), size=wx.Size(120, 20), name="s1")
 
         s2 = sppasSlider(self, pos=(0, 50), size=wx.Size(120, 20), name="s2")
+        s2.SetForegroundColour(wx.Colour(208, 200, 166))
+        s2.SetBackgroundImage(TestPanel.img)
         s2.set_range(0, 10)
-        s2.set_pos(6)
+        s2.set_value(6)
 
         s3 = sppasSlider(self, style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.BORDER_SIMPLE, name="s3")
         s3.set_range(0, 3245)
-        s3.set_pos(4567)
+        s3.set_value(4567)
 
         s4 = sppasSlider(self, name="s4")
         s4.set_range(0, 345)
-        s4.set_pos(56)
+        s4.set_value(56)
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(s1, 0, wx.EXPAND)

@@ -150,8 +150,8 @@ class TestApp(wx.App):
         frm.SetSizer(sizer)
 
         # show result
-        frm.Layout()
         frm.Show()
+        frm.Layout()
 
     @staticmethod
     def setup_debug_logging():

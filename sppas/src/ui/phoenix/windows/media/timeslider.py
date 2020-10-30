@@ -32,10 +32,19 @@
     ui.phoenix.page_editor.timeslider.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    A selection bar to mimic the one into Praat software tool, allows to
+    indicate a moment in time and to select different periods of time, named:
+
+        - whole duration;
+        - visible part;
+        - selected part.
+
 """
 
 import wx
+import os
 
+from sppas.src.config import paths
 from sppas.src.ui.phoenix.windows import ToggleTextButton
 from sppas.src.ui.phoenix.windows import sppasPanel
 from sppas.src.ui.phoenix.windows import sppasSlider
@@ -50,6 +59,55 @@ SECONDS_UNIT = "seconds"
 # ----------------------------------------------------------------------------
 
 
+class ToggleSlider(ToggleTextButton):
+    """A toggle button with a specific design and properties.
+
+     :author:       Brigitte Bigi
+     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+     :contact:      contact@sppas.org
+     :license:      GPL, v3
+     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
+
+    """
+
+    BG_IMAGE = os.path.join(paths.etc, "images", "bg_alu.png")
+
+    # -----------------------------------------------------------------------
+
+    def __init__(self, parent,
+                 id=wx.ID_ANY,
+                 label="",
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 name=wx.ButtonNameStr):
+        """Default class constructor.
+
+        :param parent: the parent (required);
+        :param id: window identifier.
+        :param label: label text of the check button;
+        :param pos: the position;
+        :param size: the size;
+        :param name: the name of the bitmap.
+
+        """
+        super(ToggleSlider, self).__init__(parent, id, label, pos, size, name)
+        self.SetHorizBorderWidth(1)
+        self.SetFocusWidth(0)
+        self.SetValue(False)
+        self.SetMinSize(wx.Size(-1, self.get_font_height()))
+
+    # -----------------------------------------------------------------------
+
+    def SetValue(self, value):
+        ToggleTextButton.SetValue(self, value)
+        if self.GetValue() is True:
+            self.SetBackgroundImage(None)
+        else:
+            self.SetBackgroundImage(ToggleSlider.BG_IMAGE)
+
+# ----------------------------------------------------------------------------
+
+
 class TimeSliderPanel(sppasPanel):
     """A panel embedding information about time: start, end, selected, etc.
 
@@ -58,6 +116,13 @@ class TimeSliderPanel(sppasPanel):
      :contact:      contact@sppas.org
      :license:      GPL, v3
      :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
+
+    The range of the slider depends on the selected button. It's one of:
+        - from the beginning of the visible part to the beginning of the selection;
+        - the period during the selection;
+        - the period after the selection until the end of the visible part;
+        - the whole visible part;
+        - the whole period, from 0 to duration.
 
     """
 
@@ -79,16 +144,15 @@ class TimeSliderPanel(sppasPanel):
             name=name)
 
         # Members
+        self.__moment = 0.
         self.__duration = 0.
         self.__start_visible = 0.
         self.__end_visible = 0.
         self.__start_selection = 0.
         self.__end_selection = 0.
-        self.__moment = 0.
 
         # Create the GUI
         self._create_content()
-        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_toggle_event)
 
         # Look&feel
         try:
@@ -99,9 +163,16 @@ class TimeSliderPanel(sppasPanel):
         except AttributeError:
             self.InheritAttributes()
 
-        # Setting the duration will set all the other members
+        self.set_duration(0.)
+        self.__update_height()
+
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_toggle_event)
+
         self.Layout()
 
+    # -----------------------------------------------------------------------
+    # Slider
     # -----------------------------------------------------------------------
 
     def get_range(self):
@@ -110,15 +181,15 @@ class TimeSliderPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def get_pos(self):
+    def get_value(self):
         """Return the current position value of the slider."""
-        return self._slider.get_pos()
+        return self._slider.get_value()
 
     # -----------------------------------------------------------------------
 
-    def set_pos(self, pos):
+    def set_value(self, pos):
         """Set the current position value of the slider."""
-        self._slider.set_pos(pos)
+        self._slider.set_value(pos)
 
     # -----------------------------------------------------------------------
     # Whole duration - i.e. the max value
@@ -127,6 +198,8 @@ class TimeSliderPanel(sppasPanel):
     def get_duration(self):
         """Return the duration value (float)"""
         return self.__duration
+
+    # -----------------------------------------------------------------------
 
     def set_duration(self, value=0.):
         """Fix the duration value.
@@ -139,18 +212,15 @@ class TimeSliderPanel(sppasPanel):
             raise ValueError
 
         self.__duration = value
-        self._btn_duration.SetLabel("{:s} {:s} {:s}"
-                                    "".format(MSG_TOTAL_DURATION, str(value), SECONDS_UNIT))
+        self._btn_duration.SetLabel("{:s} {:s} {:s}".format(MSG_TOTAL_DURATION, self.__seconds_label(value), SECONDS_UNIT))
 
-        # Disable all other values. Enable duration toggle button.
+        # Disable all other buttons. Enable duration toggle button.
         if value == 0.:
             self._btn_duration.SetValue(True)
             self.set_visible_range(0., 0.)
 
         # Update the slider
         self.__update_slider()
-
-    duration = property(get_duration, set_duration)
 
     # -----------------------------------------------------------------------
     # Visible part - must be less than duration
@@ -160,45 +230,19 @@ class TimeSliderPanel(sppasPanel):
         """Return start time value of the visible part."""
         return self.__start_visible
 
-    def set_visible_start(self, value=0.):
-        """Set start time value of the visible part."""
-        value = float(value)
-        if value < self.__end_visible:
-            raise ValueError
-        if value < 0.:
-            raise ValueError
-
-        self.__start_visible = value
-        dur = self.__end_visible - value
-        self._btn_visible.SetLabel("{:s} {:s} {:s}"
-                                   "".format(MSG_VISIBLE_DURATION, str(dur), SECONDS_UNIT))
-
-        # Update the slider
-        self.__update_slider()
+    # -----------------------------------------------------------------------
 
     def get_visible_end(self):
         """Return end time value of the visible part."""
         return self.__end_visible
 
-    def set_visible_end(self, value=0.):
-        """Set end time value of the visible part."""
-        value = float(value)
-        if value > self.__start_visible:
-            raise ValueError
-        if value > self.__duration:
-            raise ValueError
-
-        self.__end_visible = value
-        dur = value - self.__start_visible
-        self._btn_visible.SetLabel("{:s} {:s} {:s}"
-                                   "".format(MSG_VISIBLE_DURATION, str(dur), SECONDS_UNIT))
-
-        # Update the slider
-        self.__update_slider()
+    # -----------------------------------------------------------------------
 
     def get_visible_range(self):
         """Return (start, end) time values of the visible part."""
         return self.__start_visible, self.__end_visible
+
+    # -----------------------------------------------------------------------
 
     def set_visible_range(self, start, end):
         """Set the visible time range."""
@@ -214,17 +258,14 @@ class TimeSliderPanel(sppasPanel):
         self.__start_visible = start
         self.__end_visible = end
         dur = end - start
-        self._btn_visible.SetLabel("{:s} {:s} {:s}"
-                                   "".format(MSG_VISIBLE_DURATION, str(dur), SECONDS_UNIT))
+        self._btn_visible.SetLabel("{:s} {:s} {:s}".format(MSG_VISIBLE_DURATION, self.__seconds_label(dur), SECONDS_UNIT))
         if dur == 0.:
             self._btn_duration.SetValue(True)
             self._btn_visible.SetValue(False)
 
-        # Update the slider
+        # Update others
+        self.__update_select_buttons()
         self.__update_slider()
-
-    start_visible = property(get_visible_start, set_visible_start)
-    end_visible = property(get_visible_end, set_visible_end)
 
     # -----------------------------------------------------------------------
     # Set selected part - must be less than duration
@@ -234,91 +275,19 @@ class TimeSliderPanel(sppasPanel):
         """Return start time value of the selected part."""
         return self.__start_selection
 
-    def set_selection_start(self, value=0.):
-        """Set start time value of the selection part."""
-        value = float(value)
-        if value < self.__end_selection:
-            raise ValueError
-        if value < 0.:
-            raise ValueError
-
-        # OK. The value can be assigned
-        self.__start_selection = value
-
-        # If the selection is totally outside of the visible segment
-        if self.__start_selection >= self.__end_visible or self.__end_selection <= self.__start_visible:
-            # De-select the button
-            if self._btn_before.GetValue() is True:
-                self._btn_before.SetValue(False)
-                self._btn_visible.SetValue(True)
-            elif self._btn_selection.GetValue() is True:
-                self._btn_selection.SetValue(False)
-                self._btn_visible.SetValue(True)
-            elif self._btn_after.GetValue() is True:
-                self._btn_after.SetValue(False)
-                self._btn_visible.SetValue(True)
-            # Hide the selection buttons.
-            self._btn_before.Hide()
-            self._btn_selection.Hide()
-            self._btn_after.Hide()
-            return
-
-        # overlap. no before
-        if self.__start_selection <= self.__start_visible:
-            if self._btn_before.GetValue() is True:
-                self._btn_before.SetValue(False)
-                self._btn_visible.SetValue(True)
-            self._btn_before.Hide()
-            self._btn_selection.Show()
-
-        dur_sel = self.__end_selection - value  # non si chevauchement
-        """
-        if self.__start_selection > self.__start_visible:
-            # The selection started after the visible part
-            dur_before = self.__start_selection - self.__start_visible
-            self._btn_before.SetLabel("{:s}".format(str(dur_before)))
-            self._btn_visible.Show(True)
-
-            dur_visible = self.__end_visible - self.__start_visible
-
-        else:
-            self._btn_before.SetLabel("--")
-            self._btn_visible.Show(False)
-            
-        dur_after = self.__end_visible - self.__end_selection
-
-        # Update selection toggle button
-        self._btn_selection.SetLabel("{:s}".format(str(dur_sel)))
-        self._btn_before.SetLabel("{:s}".format(str(dur_after)))
-        """
-
-        # Update the toggles
-        if dur_sel == 0.:
-            if self._btn_selection is True:
-                self._btn_selection.SetValue(False)
-                self._btn_visible.SetValue(True)
-
-        # Update the slider
-        self.__update_slider()
+    # -----------------------------------------------------------------------
 
     def get_selection_end(self):
         """Return end time value of the selected part."""
         return self.__end_selection
 
-    def set_selection_end(self, value=0.):
-        """Set end time value of the selection part."""
-        value = float(value)
-        if value > self.__start_selection:
-            raise ValueError
-        if value > self.__duration:
-            raise ValueError
-
-        self.__end_selection = value
-        self.__update_slider()
+    # -----------------------------------------------------------------------
 
     def get_selection_range(self):
         """Return (start, end) time values of the selected part."""
         return self.__start_selection, self.__end_selection
+
+    # -----------------------------------------------------------------------
 
     def set_selection_range(self, start, end):
         """Set the selected time range."""
@@ -333,24 +302,20 @@ class TimeSliderPanel(sppasPanel):
 
         self.__start_selection = start
         self.__end_selection = end
-
-        self._btn_before.SetLabel(str(self.__start_selection - self.__start_visible))
-        self._btn_selection.SetLabel(str(self.__end_selection - self.__start_selection))
-        self._btn_after.SetLabel(str(self.__end_visible - self.__end_selection))
+        self.__update_select_buttons()
 
         # Update the slider
         self.__update_slider()
 
-    start_selection = property(get_selection_start, set_selection_start)
-    end_selection = property(get_selection_end, set_selection_end)
-
+    # -----------------------------------------------------------------------
+    # Look&feel
     # -----------------------------------------------------------------------
 
     def SetFont(self, font):
         """Override. """
         wx.Panel.SetFont(self, font)
         for c in self.GetChildren():
-            f = wx.Font(int(font.GetPointSize() * 0.75),
+            f = wx.Font(int(font.GetPointSize() * 0.8),
                         wx.FONTFAMILY_SWISS,   # family,
                         wx.FONTSTYLE_NORMAL,   # style,
                         wx.FONTWEIGHT_BOLD,    # weight,
@@ -359,7 +324,7 @@ class TimeSliderPanel(sppasPanel):
                         encoding=wx.FONTENCODING_SYSTEM)
             c.SetFont(f)
 
-        self.Layout()
+        self.__update_height()
 
     # -----------------------------------------------------------------------
 
@@ -386,28 +351,39 @@ class TimeSliderPanel(sppasPanel):
                 child.SetForegroundColour(colour)
 
     # -----------------------------------------------------------------------
+
+    def OnSize(self, event):
+        self.__update_select_buttons()
+        event.Skip()
+
+    # -----------------------------------------------------------------------
     # Construct the GUI
     # -----------------------------------------------------------------------
 
     def _create_content(self):
         """Create the content of the panel."""
-        btn_dur = self.__create_toggle_btn(self, "--", "total_button")
-        btn_part = self.__create_toggle_btn(self, "--", "visible_part_button")
+        btn_dur = ToggleSlider(self, label="--", name="total_button")
+        btn_part = ToggleSlider(self, label="--", name="visible_part_button")
         btn_part.SetBorderWidth(0)
 
         panel_sel = sppasPanel(self, name="selection_panel")
-        btn_before_sel = self.__create_toggle_btn(panel_sel, "--", "before_sel_button")
-        btn_during_sel = self.__create_toggle_btn(panel_sel, "--", "selection_button")
-        btn_after_sel = self.__create_toggle_btn(panel_sel, "--", "after_sel_button")
+        btn_before_sel = ToggleSlider(panel_sel, label="--", name="before_sel_button")
+        btn_after_sel = ToggleSlider(panel_sel, label="--", name="after_sel_button")
+
+        btn_during_sel = ToggleTextButton(panel_sel, label="--", name="selection_button")
+        btn_during_sel.SetHorizBorderWidth(1)
+        btn_during_sel.SetFocusWidth(0)
+        btn_during_sel.SetValue(False)
+        btn_during_sel.SetMinSize(wx.Size(-1, self.get_font_height()))
+
         sizer_sel = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_sel.Add(btn_before_sel, 1, wx.ALL, 0)
-        sizer_sel.Add(btn_during_sel, 1, wx.ALL, 0)
-        sizer_sel.Add(btn_after_sel, 1, wx.ALL, 0)
+        sizer_sel.Add(btn_before_sel, 0, wx.ALL, 0)
+        sizer_sel.Add(btn_during_sel, 0, wx.ALL, 0)
+        sizer_sel.Add(btn_after_sel, 0, wx.ALL, 0)
         panel_sel.SetSizer(sizer_sel)
 
         slider = sppasSlider(self, name="time_slider")
-        height = self.get_font_height()
-        slider.SetMinSize(wx.Size(-1, self.get_font_height()))
+        slider.SetBackgroundImage(ToggleSlider.BG_IMAGE)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(slider, 0, wx.EXPAND, 0)
@@ -415,9 +391,6 @@ class TimeSliderPanel(sppasPanel):
         sizer.Add(btn_part, 0, wx.EXPAND, 0)
         sizer.Add(btn_dur, 0, wx.EXPAND, 0)
         self.SetSizer(sizer)
-        self.SetMinSize(wx.Size(-1, 4*height))
-
-        self.set_duration(0.)
 
     # -----------------------------------------------------------------------
 
@@ -442,19 +415,12 @@ class TimeSliderPanel(sppasPanel):
         return self.FindWindow("selection_button")
 
     @property
+    def _selection(self):
+        return self.FindWindow("selection_panel")
+
+    @property
     def _slider(self):
         return self.FindWindow("time_slider")
-
-    # -----------------------------------------------------------------------
-
-    def __create_toggle_btn(self, parent, label, name):
-        btn = ToggleTextButton(parent, label=label, name=name)
-        btn.SetBorderWidth(1)
-        btn.SetFocusWidth(0)
-        btn.SetValue(False)
-        btn.SetMinSize(wx.Size(-1, self.get_font_height()))
-
-        return btn
 
     # -----------------------------------------------------------------------
 
@@ -498,6 +464,85 @@ class TimeSliderPanel(sppasPanel):
             except AttributeError:
                 pass
 
+    # -----------------------------------------------------------------------
+
+    def __update_select_buttons(self):
+        w = self.GetSize().GetWidth()
+        self._selection.SetMinSize(wx.Size(w, self.get_font_height()))
+        visible_duration = self.__end_visible - self.__start_visible
+
+        # If the selection is totally outside of the visible segment
+        if self.__start_selection >= self.__end_visible or self.__end_selection <= self.__start_visible:
+            # De-select the button
+            if self._btn_before.GetValue() is True:
+                self._btn_before.SetValue(False)
+                self._btn_visible.SetValue(True)
+            elif self._btn_selection.GetValue() is True:
+                self._btn_selection.SetValue(False)
+                self._btn_visible.SetValue(True)
+            elif self._btn_after.GetValue() is True:
+                self._btn_after.SetValue(False)
+                self._btn_visible.SetValue(True)
+            # Hide the selection buttons.
+            self._btn_before.Hide()
+            self._btn_selection.Hide()
+            self._btn_after.Hide()
+            return
+
+        # The selection is inside or overlaps the visible segment
+        wb = wa = 0
+
+        # overlap at the beginning. no before button
+        before_duration = self.__start_selection - self.__start_visible
+        if before_duration <= 0.:
+            if self._btn_before.GetValue() is True:
+                self._btn_before.SetValue(False)
+                self._btn_visible.SetValue(True)
+            self._btn_before.Hide()
+            before_duration = 0.
+        else:
+            self._btn_before.Show()
+            wb = int(float(w) * before_duration / visible_duration)
+            self._btn_before.SetMinSize(wx.Size(wb, -1))
+
+        # overlap at the end. no after button
+        after_duration = self.__end_visible - self.__end_selection
+        if after_duration <= 0.:
+            if self._btn_after.GetValue() is True:
+                self._btn_after.SetValue(False)
+                self._btn_visible.SetValue(True)
+            self._btn_after.Hide()
+            after_duration = 0.
+        else:
+            self._btn_after.Show()
+            wa = int(float(w) * after_duration / visible_duration)
+            self._btn_after.SetMinSize(wx.Size(wa, -1))
+
+        # selection button
+        self._btn_selection.Show()
+        selection_duration = self.__end_selection - self.__start_selection
+        self._btn_selection.SetMinSize(wx.Size((w - wb - wa), -1))
+
+        # Fix labels
+        self._btn_before.SetLabel(self.__seconds_label(before_duration))
+        self._btn_selection.SetLabel(self.__seconds_label(selection_duration))
+        self._btn_after.SetLabel(self.__seconds_label(after_duration))
+
+    # -----------------------------------------------------------------------
+
+    def __update_height(self):
+        h = self.get_font_height()
+        self._selection.SetMinSize(wx.Size(-1, h))
+        self._slider.SetMinSize(wx.Size(-1, h))
+        self._btn_duration.SetMinSize(wx.Size(-1, h))
+        self._btn_visible.SetMinSize(wx.Size(-1, h))
+        self.SetMinSize(wx.Size(-1, 4*h))
+
+    # -----------------------------------------------------------------------
+
+    def __seconds_label(self, value):
+        return "{:.3f}".format(value)
+
 # ----------------------------------------------------------------------------
 # Panel for tests
 # ----------------------------------------------------------------------------
@@ -509,14 +554,17 @@ class TestPanel(sppasPanel):
         super(TestPanel, self).__init__(
             parent,
             name="Time Edit Panel")
+        self.SetMinSize(wx.Size(320, 20))
 
         p = TimeSliderPanel(self)
         p.set_duration(12.123456)
         p.set_visible_range(3.45, 7.08765)
         p.set_selection_range(5.567, 6.87)
+        p.set_value(6.)
         # p.enable_visible(True)
 
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(p, 1, wx.EXPAND)
+        s.Add(p, 0, wx.EXPAND)
         self.SetSizer(s)
 
+        self.Layout()

@@ -150,6 +150,8 @@ class sppasDCWindow(wx.Window):
             self._min_height = settings.get_font_height()
         except AttributeError:
             self.InheritAttributes()
+            self._min_height = self.get_font_height()
+
         self._border_color = self.GetForegroundColour()
 
         # Bind the events related to our window
@@ -826,6 +828,13 @@ class sppasDCWindow(wx.Window):
         if wx.Platform == '__WXGTK__':
             return dc.GetTextExtent(text)
         return gc.GetTextExtent(text)
+
+    # -----------------------------------------------------------------------
+
+    def get_font_height(self):
+        """Return the height of the in-use font."""
+        font = self.GetFont()
+        return int(float(font.GetPixelSize()[1]))
 
     # -----------------------------------------------------------------------
 

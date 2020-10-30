@@ -373,9 +373,7 @@ class sppasPlayerControlsPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def __create_slider_panel(self, parent):
-        """Return a panel with a slider to indicate the position in time."""
-        # TODO: return TimeSliderPanel(parent, name="slider_panel")
-
+        """Return a slider to indicate the position in time."""
         slider = wx.Slider(self, style=wx.SL_HORIZONTAL | wx.SL_LABELS)
         slider.SetRange(0, 0)
         slider.SetValue(0)

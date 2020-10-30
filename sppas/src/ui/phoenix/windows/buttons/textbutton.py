@@ -137,18 +137,22 @@ class TextButton(BaseButton):
         """Draw the button. """
         x, y, w, h = self.GetContentRect()
         tw, th = self.get_text_extend(dc, gc, self._label)
-        if tw < 6 or th < 6:
+
+        # min height to draw the label.
+        # we authorize the font to be 20% truncated in height
+        min_height = int(float(self.get_font_height()) * 0.8)
+        if tw < min_height or th < min_height:
             return
 
         if self._align == wx.ALIGN_LEFT:
-            self._draw_label(dc, gc, 1, (h - th) // 2)
+            self._draw_label(dc, gc, 1, ((h - th) // 2) + (2*self._horiz_border_width))
 
         elif self._align == wx.ALIGN_RIGHT:
-            self._draw_label(dc, gc, w - tw - 1, (h - th) // 2)
+            self._draw_label(dc, gc, w - tw - 1, ((h - th) // 2) + (2*self._horiz_border_width))
 
         else:
             # Center the text.
-            self._draw_label(dc, gc, (w - tw) // 2, (h - th) // 2)
+            self._draw_label(dc, gc, (w - tw) // 2, ((h - th) // 2) + (2*self._horiz_border_width))
 
     # -----------------------------------------------------------------------
 

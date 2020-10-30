@@ -109,9 +109,10 @@ class ToggleTextButton(TextButton):
                  size=wx.DefaultSize,
                  name=wx.ButtonNameStr):
         """Default class constructor."""
+        self._pressed = False
+
         super(ToggleTextButton, self).__init__(
             parent, id, label=label, pos=pos, size=size, name=name)
-        self._pressed = False
 
     # -----------------------------------------------------------------------
 
