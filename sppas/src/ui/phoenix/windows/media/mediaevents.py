@@ -20,3 +20,8 @@ class MediaEvents(object):
     # Not platform dependent: the event is sent whatever the backend used.
     MediaNotLoadedEvent, EVT_MEDIA_NOT_LOADED = wx.lib.newevent.NewEvent()
     MediaNotLoadedCommandEvent, EVT_MEDIA_NOT_LOADED_COMMAND = wx.lib.newevent.NewCommandEvent()
+
+    # -----------------------------------------------------------------------
+    # Event sent when the period on a media has changed.
+    MediaPeriodEvent, EVT_MEDIA_PERIOD = wx.lib.newevent.NewEvent()
+    MediaPeriodCommandEvent, EVT_MEDIA_PERIOD_COMMAND = wx.lib.newevent.NewCommandEvent()

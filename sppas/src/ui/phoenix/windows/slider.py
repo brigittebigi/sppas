@@ -145,29 +145,24 @@ class sppasSlider(sppasImageDCWindow):
         x, y, w, h = self.GetContentRect()
 
         # Start label
-        label = str(self.__start)
+        label = self.__seconds_label(self.__start)
         tw, th = self.get_text_extend(dc, gc, label)
         self.DrawLabel(label, dc, gc, 2, (h - th) // 2)
 
         # End label
-        label = str(self.__end)
+        label = self.__seconds_label(self.__end)
         tw, th = self.get_text_extend(dc, gc, label)
         self.DrawLabel(label, dc, gc, w - tw - 2, (h - th) // 2)
 
-        # Vertical line indicating the proportional position
+        # Draw the value of the current position at left or at right
+        pos_x = 0
         total_dur = self.__end - self.__start
         pos_dur = self.__pos - self.__start
-        pos_x = 0
         if total_dur > 0.:
             ratio = pos_dur / total_dur
             pos_x = w * ratio
-            pen = wx.Pen(sppasSlider.POINT_COLOUR, 1, wx.PENSTYLE_SOLID)
-            dc.SetPen(pen)
-            gc.SetPen(pen)
-            dc.DrawLine(pos_x, y, pos_x, y+h)
 
-        # Draw the value of the current position at left or at right
-        label = str(self.__pos)
+        label = self.__seconds_label(self.__pos)
         tw, th = self.get_text_extend(dc, gc, label)
         if pos_x + tw < (w // 2):
             if pos_x > tw:
@@ -175,6 +170,18 @@ class sppasSlider(sppasImageDCWindow):
         else:
             if pos_x < (w - tw):
                 self.DrawLabel(label, dc, gc, pos_x - tw - 1, (h - th) // 2)
+
+        # Vertical line indicating the proportional position
+        if total_dur > 0.:
+            pen = wx.Pen(sppasSlider.POINT_COLOUR, 1, wx.PENSTYLE_SOLID)
+            dc.SetPen(pen)
+            gc.SetPen(pen)
+            dc.DrawLine(pos_x, y, pos_x, y+h)
+
+    # -----------------------------------------------------------------------
+
+    def __seconds_label(self, value):
+        return "{:.3f}".format(value)
 
 # ----------------------------------------------------------------------------
 # Panel for tests

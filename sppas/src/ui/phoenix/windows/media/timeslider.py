@@ -49,6 +49,8 @@ from sppas.src.ui.phoenix.windows import ToggleTextButton
 from sppas.src.ui.phoenix.windows import sppasPanel, sppasImagePanel
 from sppas.src.ui.phoenix.windows import sppasSlider
 
+from .mediaevents import MediaEvents
+
 # ---------------------------------------------------------------------------
 
 
@@ -145,7 +147,6 @@ class TimeSliderPanel(sppasPanel):
             name=name)
 
         # Members
-        self.__moment = 0.
         self.__duration = 0.
         self.__start_visible = 0.
         self.__end_visible = 0.
@@ -154,6 +155,7 @@ class TimeSliderPanel(sppasPanel):
 
         # Create the GUI
         self._create_content()
+        self._setup_events()
 
         # Look&feel
         try:
@@ -166,9 +168,6 @@ class TimeSliderPanel(sppasPanel):
 
         self.set_duration(0.)
         self.__update_height()
-
-        self.Bind(wx.EVT_SIZE, self.OnSize)
-        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_toggle_event)
 
         self.Layout()
 
@@ -190,7 +189,17 @@ class TimeSliderPanel(sppasPanel):
 
     def set_value(self, pos):
         """Set the current position value of the slider."""
-        self._slider.set_value(pos)
+        pos = float(pos)
+        if pos < 0.:
+            return False
+        if pos > self.__duration:
+            return False
+        current = self._slider.get_value()
+        if current != pos:
+            self._slider.set_value(pos)
+            self._slider.Refresh()
+            return True
+        return False
 
     # -----------------------------------------------------------------------
     # Whole duration - i.e. the max value
@@ -425,7 +434,19 @@ class TimeSliderPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def _setup_events(self):
+        """Bind events."""
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+        self._btn_before.Bind(wx.EVT_TOGGLEBUTTON, self._process_toggle_event)
+        self._btn_selection.Bind(wx.EVT_TOGGLEBUTTON, self._process_toggle_event)
+        self._btn_after.Bind(wx.EVT_TOGGLEBUTTON, self._process_toggle_event)
+        self._btn_visible.Bind(wx.EVT_TOGGLEBUTTON, self._process_toggle_event)
+        self._btn_duration.Bind(wx.EVT_TOGGLEBUTTON, self._process_toggle_event)
+
+    # -----------------------------------------------------------------------
+
     def _process_toggle_event(self, event):
+        """Process a change of time range."""
         wx.LogDebug("Time Slider received toggle event")
         for child in self.GetChildren():
             if isinstance(child, ToggleTextButton) is True:
@@ -439,7 +460,12 @@ class TimeSliderPanel(sppasPanel):
                         c.SetValue(True)
                     else:
                         c.SetValue(False)
-        self.__update_slider()
+
+        modified = self.__update_slider()
+        if modified is True:
+            evt = MediaEvents.MediaPeriodEvent(period=self._slider.get_range())
+            evt.SetEventObject(self)
+            wx.PostEvent(self.GetParent(), evt)
 
     # -----------------------------------------------------------------------
 
@@ -459,12 +485,15 @@ class TimeSliderPanel(sppasPanel):
         new_start, new_end = self._slider.get_range()
         if old_start != new_start or old_end != new_end:
             self._slider.Refresh()
-            try:
-                self.GetParent().set_range(
-                    int(1000. * new_start), int(1000. * new_end)
-                )
-            except AttributeError:
-                pass
+            # try:
+            #     self.GetParent().set_range(
+            #         int(1000. * new_start), int(1000. * new_end)
+            #     )
+            # except AttributeError:
+            #     pass
+            return True
+        else:
+            return False
 
     # -----------------------------------------------------------------------
 
@@ -555,7 +584,7 @@ class TestPanel(sppasPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(
             parent,
-            name="Time Edit Panel")
+            name="Time Slider Panel")
         self.SetMinSize(wx.Size(320, 20))
 
         p = TimeSliderPanel(self)
@@ -569,4 +598,9 @@ class TestPanel(sppasPanel):
         s.Add(p, 0, wx.EXPAND)
         self.SetSizer(s)
 
+        self.Bind(MediaEvents.EVT_MEDIA_PERIOD, self._on_period_changed)
         self.Layout()
+
+    def _on_period_changed(self, event):
+        p = event.period
+        wx.LogDebug("Slider range from {} to {}".format(p[0], p[1]))

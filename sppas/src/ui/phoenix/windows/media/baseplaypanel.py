@@ -163,7 +163,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
     # -----------------------------------------------------------------------
 
     def ShowSlider(self, value=True):
-        self._slider.Show(value)
+        self._timeslider.Show(value)
 
     # -----------------------------------------------------------------------
 
@@ -331,7 +331,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
     # -----------------------------------------------------------------------
 
     @property
-    def _slider(self):
+    def _timeslider(self):
         """Return the slider to indicate offsets, duration, etc."""
         return self.FindWindow("slider_panel")
 
@@ -420,9 +420,11 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         self.Bind(wx.EVT_BUTTON, self._process_action)
         self.Bind(wx.EVT_TOGGLEBUTTON, self._process_action)
 
-        # The slider position has changed.
-        # Currently not supported by the sppasSlider.
+        # The slider position has changed. Currently not supported by the sppasSlider.
         self.Bind(wx.EVT_SLIDER, self._process_action)
+
+        # Event received when the period of the slider has changed
+        self.Bind(MediaEvents.EVT_MEDIA_PERIOD, self._on_period_changed)
 
     # -----------------------------------------------------------------------
 
@@ -452,6 +454,12 @@ class sppasPlayerControlsPanel(sppasImagePanel):
 
         else:
             event.Skip()
+
+    # ----------------------------------------------------------------------
+
+    def _on_period_changed(self, event):
+        p = event.period
+        wx.LogDebug("New slider range from {} to {}".format(p[0], p[1]))
 
 # ---------------------------------------------------------------------------
 
@@ -485,8 +493,6 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         # Event received every Xms when the audio is playing
         self.audio.Bind(wx.EVT_TIMER, self._on_timer)
 
-        self._slider.Bind(wx.EVT_TOGGLEBUTTON, self._process_time_slider)
-
         wx.CallAfter(self._do_load_file)
 
     # ----------------------------------------------------------------------
@@ -500,14 +506,14 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     def __on_media_loaded(self, event):
         wx.LogDebug("Audio file loaded successfully")
         self.FindWindow("media_play").Enable(True)
-        # duration = self.audio.get_duration()
-        # self._slider.SetRange(0, int(duration * 1000.))
+        duration = self.audio.get_duration()
+        self._timeslider.set_duration(duration)
 
     # ----------------------------------------------------------------------
 
     def __on_media_not_loaded(self, event):
         wx.LogError("Audio file not loaded")
-        # self._slider.SetRange(0, 0)
+        self._timeslider.set_duration(0.)
 
     # -----------------------------------------------------------------------
     # the methods to override...
@@ -528,6 +534,10 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         self.prev_time = None
         self.DeletePendingEvents()
 
+        # Put the slider exactly at the right time position
+        position = self.audio.tell()
+        self._timeslider.set_value(position)
+
     # -----------------------------------------------------------------------
 
     def media_rewind(self):
@@ -536,7 +546,9 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         d = self.audio.get_duration()
         d /= 10.
         cur = self.audio.tell()
+
         self.audio.seek(max(0., cur - d))
+        self._timeslider.set_value(max(0., cur - d))
 
     # -----------------------------------------------------------------------
 
@@ -556,20 +568,14 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
                 position = duration
 
         self.audio.seek(position)
+        self._timeslider.set_value(position)
 
     # -----------------------------------------------------------------------
 
     def media_seek(self, value):
         wx.LogDebug("Seek at {}".format(value))
         self.audio.seek(value)
-        # self._slider.Seek(value)
-
-    # ----------------------------------------------------------------------
-
-    def _process_time_slider(self, event):
-        wx.LogDebug("Event received from the time_slider")
-        if self.audio.is_playing() is False:
-            event.Skip()
+        self._timeslider.set_value(value)
 
     # ----------------------------------------------------------------------
 
@@ -586,8 +592,8 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
             if delta_seconds > PlayerExamplePanel.SLIDER_UPDATE_DELAY:
                 self.prev_time = cur_time
                 time_pos = self.audio.tell()
-                # self._slider.SetValue(int(time_pos * 1000.))
-                wx.LogDebug("Update the slider at time {}".format(time_pos))
+                self._timeslider.set_value(time_pos)
+                # wx.LogDebug("Update the slider at time {}".format(time_pos))
 
         # event.Skip()
 
