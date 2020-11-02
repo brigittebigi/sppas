@@ -143,6 +143,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         :param end_time: (float) Time to stop playing in seconds
 
         """
+        wx.LogDebug("set_period: {} {}".format(start_time, end_time))
         start_time = float(start_time)
         end_time = float(end_time)
         if end_time <= start_time:
@@ -276,18 +277,23 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         """Override. Return the frames to play in the given period.
 
         """
+        wx.LogDebug(" ... extract frame for the period: {} {}".format(self._period[0], self._period[1]))
         # Check if the current period is inside or overlapping this audio
         if self._period[0] < self.get_duration():
             # current position in time.
-            cur_time = self.tell()
+            # cur_time = self.tell()
+
             # Check if the current position is inside the period
-            if self._period[0] <= cur_time <= self._period[1]:
-                start_time = max(self._period[0], cur_time)
-                end_time = min(self._period[1], self.get_duration())
-                # Convert the time (in seconds) into a position in the frames
-                start_pos = self._time_to_frames(start_time)
-                end_pos = self._time_to_frames(end_time)
-                return self._frames[start_pos:end_pos]
+            # if self._period[0] <= cur_time <= self._period[1]:
+            # start_time = max(self._period[0], cur_time)
+            start_time = self._period[0]
+            end_time = min(self._period[1], self.get_duration())
+            # Convert the time (in seconds) into a position in the frames
+            start_pos = self._time_to_frames(start_time)
+            end_pos = self._time_to_frames(end_time)
+            return self._frames[start_pos:end_pos]
+        else:
+            wx.LogDebug("Period out of range -- duration: {}".format(self.get_duration()))
 
         return b("")
 

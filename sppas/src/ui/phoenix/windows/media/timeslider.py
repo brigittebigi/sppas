@@ -73,7 +73,7 @@ class ToggleSlider(ToggleTextButton):
     """
 
     # BG_IMAGE = os.path.join(paths.etc, "images", "bg_alu.png")
-    BG_IMAGE = os.path.join(paths.etc, "images", "bg_brushed_metal.jpg")
+    BG_IMAGE = os.path.join(paths.etc, "images", "bg_brushed_metal2.jpg")
 
     # -----------------------------------------------------------------------
 
@@ -456,7 +456,9 @@ class TimeSliderPanel(sppasPanel):
 
     def _process_toggle_event(self, event):
         """Process a change of time range."""
-        wx.LogDebug("Time Slider received toggle event")
+        obj = event.GetEventObject()
+        name = obj.GetName()
+        wx.LogDebug("Time Slider toggle pressed: {}".format(name))
         for child in self.GetChildren():
             if isinstance(child, ToggleTextButton) is True:
                 if child is event.GetEventObject():

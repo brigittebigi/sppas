@@ -50,7 +50,7 @@ import datetime
 from sppas.src.config import paths  # used only in the Test Panel
 
 from ..buttons import ToggleButton
-from ..buttons import BitmapTextButton
+from ..buttons import BitmapTextButton, BitmapButton
 from ..panels import sppasImagePanel, sppasPanel
 
 from .mediaevents import MediaEvents
@@ -71,13 +71,6 @@ class TogglePause(ToggleButton):
 
     """
 
-    # BG_IMAGE1 = os.path.join(paths.etc, "images", "bg_alu.png")
-    BG_IMAGE1 = os.path.join(paths.etc, "images", "bg1.png")
-    BG_IMAGE2 = os.path.join(paths.etc, "images", "trbg1.png")
-    # BG_IMAGE2 = os.path.join(paths.etc, "images", "bg_brushed_metal.jpg")
-
-    # -----------------------------------------------------------------------
-
     def __init__(self, parent,
                  id=wx.ID_ANY,
                  label="",
@@ -96,18 +89,55 @@ class TogglePause(ToggleButton):
 
         """
         super(TogglePause, self).__init__(parent, id, label, pos, size, "media_pause")
+        self.Enable(False)
         self.SetValue(False)
-        self.SetMinSize(wx.Size(-1, self.get_font_height()))
+
+# ---------------------------------------------------------------------------
+
+
+class PressPlay(BitmapButton):
+    """A toggle button with a specific design and properties.
+
+     :author:       Brigitte Bigi
+     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+     :contact:      contact@sppas.org
+     :license:      GPL, v3
+     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
+
+    """
+
+    COLOUR = wx.Colour(48, 96, 250)
+    # BG_IMAGE = os.path.join(paths.etc, "images", "bg_brushed_metal2.jpg")
 
     # -----------------------------------------------------------------------
 
-    def SetValue(self, value):
-        ToggleButton.SetValue(self, value)
-        return
-        if self.GetValue() is True:
-            self.SetBackgroundImage(TogglePause.BG_IMAGE1)
-        else:
-            self.SetBackgroundImage(TogglePause.BG_IMAGE2)
+    def __init__(self, parent,
+                 id=wx.ID_ANY,
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize):
+        """Default class constructor.
+
+        :param parent: the parent (required);
+        :param id: window identifier.
+        :param pos: the position;
+        :param size: the size.
+
+        The name of the button is "media_play" by default; use SetName()
+        to change it after creation.
+
+        """
+        super(PressPlay, self).__init__(parent, id, pos, size, "media_play")
+        self.Enable(False)
+        # self.SetBackgroundImage(PressPlay.BG_IMAGE)
+
+    # -----------------------------------------------------------------------
+    #
+    # def Enable(self, value):
+    #     BitmapButton.Enable(self, value)
+    #     if self.IsEnabled() is True:
+    #         self.SetForegroundColour(PressPlay.COLOUR)
+    #     else:
+    #         self.SetForegroundColour(self.GetParent().GetForegroundColour())
 
 # ---------------------------------------------------------------------------
 
@@ -447,9 +477,8 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         self.SetButtonProperties(btn_rewind)
         btn_rewind.SetMinSize(wx.Size(self._btn_size // 2, self._btn_size))
 
-        btn_play = BitmapTextButton(panel, name="media_play")
+        btn_play = PressPlay(panel)
         self.SetButtonProperties(btn_play)
-        btn_play.SetFocus()
 
         btn_pause = TogglePause(panel)
         self.SetButtonProperties(btn_pause)
@@ -460,6 +489,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
 
         btn_stop = BitmapTextButton(panel, name="media_stop")
         self.SetButtonProperties(btn_stop)
+        btn_stop.SetFocus()
 
         btn_replay = ToggleButton(panel, name="media_repeat")
         btn_replay = self.SetButtonProperties(btn_replay)
@@ -507,8 +537,11 @@ class sppasPlayerControlsPanel(sppasImagePanel):
 
         """
         # The user clicked (LeftDown - LeftUp) an action button of the toolbar
-        self.Bind(wx.EVT_BUTTON, self._process_action)
-        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_action)
+        self.FindWindow("media_play").Bind(wx.EVT_BUTTON, self._process_action)
+        self.FindWindow("media_stop").Bind(wx.EVT_BUTTON, self._process_action)
+        self.FindWindow("media_rewind").Bind(wx.EVT_BUTTON, self._process_action)
+        self.FindWindow("media_forward").Bind(wx.EVT_BUTTON, self._process_action)
+        self.FindWindow("media_pause").Bind(wx.EVT_TOGGLEBUTTON, self._process_action)
 
         # The slider position has changed. Currently not supported by the sppasSlider.
         self.Bind(wx.EVT_SLIDER, self._process_action)
@@ -526,6 +559,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         """
         obj = event.GetEventObject()
         name = obj.GetName()
+        wx.LogDebug("Action to perform: {}".format(name.replace("media_", "")))
 
         if name == "media_play":
             self.play()
@@ -542,17 +576,14 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         elif name == "media_forward":
             self.media_forward()
 
-        elif name == "slider_panel":
-            self.media_seek(obj.GetValue())
-
         else:
             event.Skip()
 
     # ----------------------------------------------------------------------
 
     def _on_period_changed(self, event):
+        """not implemented... in the scope of a evt_slider..."""
         p = event.period
-        wx.LogDebug("New slider range from {} to {}".format(p[0], p[1]))
         self.media_period(p[0], p[1])
 
 # ---------------------------------------------------------------------------
@@ -571,7 +602,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         super(PlayerExamplePanel, self).__init__(
             parent,
             image=PlayerExamplePanel.BG_IMAGE,
-            name="play_panel")
+            name="player_panel")
 
         self.audio = sppasAudioPlayer(self)
         self.prev_time = None
@@ -630,12 +661,14 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
     def __on_media_loaded(self, event):
         wx.LogDebug("Audio file loaded successfully")
-        self.FindWindow("media_play").Enable(True)
         duration = self.audio.get_duration()
         self._timeslider.set_duration(duration)
+        self.audio.set_period(0., duration)
+        self.FindWindow("media_play").Enable(True)
+        self.FindWindow("media_pause").Enable(True)
         # to test if it works, set a selection period and a visible period:
         self._timeslider.set_visible_range(3.45, 7.08765)
-        self._timeslider.set_selection_range(5.567, 6.87)
+        self._timeslider.set_selection_range(5.6, 6.8)
         self.Layout()
 
     # ----------------------------------------------------------------------
@@ -723,8 +756,9 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
             else:
                 position = duration
 
-        self.audio.seek(position)
-        self._timeslider.set_value(position)
+        changed = self.audio.seek(position)
+        if changed is True:
+            self._timeslider.set_value(self.audio.tell())
 
     # -----------------------------------------------------------------------
 

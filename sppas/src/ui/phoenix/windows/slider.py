@@ -60,7 +60,7 @@ class sppasSlider(sppasImageDCWindow):
 
     """
 
-    POINT_COLOUR = wx.Colour(128, 128, 196, 200)
+    POINT_COLOUR = wx.Colour(128, 128, 196)
 
     # -----------------------------------------------------------------------
 
@@ -76,7 +76,7 @@ class sppasSlider(sppasImageDCWindow):
         self.__end = 0
         self.__pos = 0
         self._vert_border_width = 0
-        self._horiz_border_width = 0
+        self._horiz_border_width = 1
         self._min_width = 48
 
     # -----------------------------------------------------------------------
