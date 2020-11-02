@@ -149,10 +149,20 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
             raise ValueError("End can't be greater or equal than start")
 
         self._period = (start_time, end_time)
-        if self._ms in (MediaState().playing, MediaState().paused):
-            self.stop()
+        cur_state = self._ms
+        cur_pos = self.tell()
+        # Stop playing (if any), and seek at the beginning of the period
+        self.stop()
+
+        # Restore the situation in which the audio was before stopping
+        if cur_state in (MediaState().playing, MediaState().paused):
+            if self._period[0] < cur_pos <= self._period[1]:
+                # Restore the previous position in time if it was inside
+                # the new period.
+                self.seek(cur_pos)
+            # Play again, then pause if it was the previous state.
             self.play()
-            if self._ms == MediaState().paused:
+            if cur_state == MediaState().paused:
                 self.pause()
 
     # -----------------------------------------------------------------------

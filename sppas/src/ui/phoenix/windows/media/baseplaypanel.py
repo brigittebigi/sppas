@@ -60,6 +60,58 @@ from .audioplay import sppasAudioPlayer  # used only in the Test Panel
 # ---------------------------------------------------------------------------
 
 
+class TogglePause(ToggleButton):
+    """A toggle button with a specific design and properties.
+
+     :author:       Brigitte Bigi
+     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+     :contact:      contact@sppas.org
+     :license:      GPL, v3
+     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
+
+    """
+
+    # BG_IMAGE1 = os.path.join(paths.etc, "images", "bg_alu.png")
+    BG_IMAGE1 = os.path.join(paths.etc, "images", "bg1.png")
+    BG_IMAGE2 = os.path.join(paths.etc, "images", "trbg1.png")
+    # BG_IMAGE2 = os.path.join(paths.etc, "images", "bg_brushed_metal.jpg")
+
+    # -----------------------------------------------------------------------
+
+    def __init__(self, parent,
+                 id=wx.ID_ANY,
+                 label="",
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize):
+        """Default class constructor.
+
+        :param parent: the parent (required);
+        :param id: window identifier.
+        :param label: label text of the check button;
+        :param pos: the position;
+        :param size: the size.
+
+        The name of the button is "media_pause" by default; use SetName()
+        to change it after creation.
+
+        """
+        super(TogglePause, self).__init__(parent, id, label, pos, size, "media_pause")
+        self.SetValue(False)
+        self.SetMinSize(wx.Size(-1, self.get_font_height()))
+
+    # -----------------------------------------------------------------------
+
+    def SetValue(self, value):
+        ToggleButton.SetValue(self, value)
+        return
+        if self.GetValue() is True:
+            self.SetBackgroundImage(TogglePause.BG_IMAGE1)
+        else:
+            self.SetBackgroundImage(TogglePause.BG_IMAGE2)
+
+# ---------------------------------------------------------------------------
+
+
 class sppasPlayerControlsPanel(sppasImagePanel):
     """Create a panel with controls to manage media.
 
@@ -115,6 +167,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
     def SetFocusColour(self, colour):
         self._focus_color = colour
         self.FindWindow("media_play").SetFocusColour(colour)
+        self.FindWindow("media_pause").SetFocusColour(colour)
         self.FindWindow("media_stop").SetFocusColour(colour)
         self.FindWindow("media_rewind").SetFocusColour(colour)
         self.FindWindow("media_forward").SetFocusColour(colour)
@@ -122,18 +175,34 @@ class sppasPlayerControlsPanel(sppasImagePanel):
 
     # -----------------------------------------------------------------------
 
-    def AddWidget(self, wxwindow):
+    def AddLeftWidget(self, wxwindow):
         """Add a widget into the customizable panel.
 
         :param wxwindow: (wx.Window)
         :return: True if added, False if parent does not match.
 
         """
-        if wxwindow.GetParent() != self.widgets_panel:
+        if wxwindow.GetParent() != self.widgets_left_panel:
             return False
-        self.widgets_panel.GetSizer().Add(
+        self.widgets_left_panel.GetSizer().Add(
             wxwindow, 0, wx.ALIGN_CENTER | wx.ALL, sppasPanel.fix_size(2))
-        self.widgets_panel.Show(True)
+        self.widgets_left_panel.Show(True)
+        return True
+
+    # -----------------------------------------------------------------------
+
+    def AddRightWidget(self, wxwindow):
+        """Add a widget into the customizable panel.
+
+        :param wxwindow: (wx.Window)
+        :return: True if added, False if parent does not match.
+
+        """
+        if wxwindow.GetParent() != self.widgets_right_panel:
+            return False
+        self.widgets_right_panel.GetSizer().Add(
+            wxwindow, 0, wx.ALIGN_CENTER | wx.ALL, sppasPanel.fix_size(2))
+        self.widgets_right_panel.Show(True)
         return True
 
     # -----------------------------------------------------------------------
@@ -143,22 +212,19 @@ class sppasPlayerControlsPanel(sppasImagePanel):
 
         The given value will be adjusted to a proportion of the font height.
         Min is 12, max is 128.
-        The buttons are not updated.
+        The buttons are not refreshed.
 
         """
         self._btn_size = min(sppasPanel.fix_size(value), 128)
         self._btn_size = max(self._btn_size, 12)
 
-        btn = self.FindWindow("media_rewind")
-        btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
-        btn = self.FindWindow("media_play")
-        btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
-        btn = self.FindWindow("media_forward")
-        btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
-        btn = self.FindWindow("media_stop")
-        btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
-        btn = self.FindWindow("media_repeat")
-        btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
+        for name in ("rewind", "forward"):
+            btn = self.FindWindow("media_"+name)
+            btn.SetMinSize(wx.Size(self._btn_size // 2, self._btn_size))
+
+        for name in ("play", "pause", "stop", "repeat"):
+            btn = self.FindWindow("media_" + name)
+            btn.SetMinSize(wx.Size(self._btn_size, self._btn_size))
 
     # -----------------------------------------------------------------------
 
@@ -167,8 +233,13 @@ class sppasPlayerControlsPanel(sppasImagePanel):
 
     # -----------------------------------------------------------------------
 
-    def ShowWidgets(self, value=True):
-        self.widgets_panel.Show(value)
+    def ShowLeftWidgets(self, value=True):
+        self.widgets_left_panel.Show(value)
+
+    # -----------------------------------------------------------------------
+
+    def ShowRightWidgets(self, value=True):
+        self.widgets_right_panel.Show(value)
 
     # -----------------------------------------------------------------------
 
@@ -200,31 +271,23 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         self._transport_panel.FindWindow("media_play").Enable(enable)
 
     # -----------------------------------------------------------------------
-
-    def Paused(self, value=False):
-        """Make the Play button in Play or Pause position.
-
-        :param value: (bool) True to make the button in Pause position
-
-        """
-        btn = self._transport_panel.FindWindow("media_play")
-        if value is True:
-            btn.SetImage("media_pause")
-            btn.Refresh()
-        else:
-            btn.SetImage("media_play")
-            btn.Refresh()
-
-    # -----------------------------------------------------------------------
     # Public methods, for the media. To be overridden.
     # -----------------------------------------------------------------------
 
     def play(self):
+        """To be overridden. Start playing media."""
         self.notify(action="play", value=None)
 
     # -----------------------------------------------------------------------
 
+    def pause(self):
+        """To be overridden. Pause in playing media."""
+        self.notify(action="pause", value=None)
+
+    # -----------------------------------------------------------------------
+
     def stop(self):
+        """To be overridden. Stop playing media."""
         self.notify(action="stop", value=None)
 
     # -----------------------------------------------------------------------
@@ -242,8 +305,14 @@ class sppasPlayerControlsPanel(sppasImagePanel):
     # -----------------------------------------------------------------------
 
     def media_seek(self, value):
-        """To be overridden. Seek media to the given offset value (ms)."""
+        """To be overridden. Seek media to the given time value."""
         self.notify(action="seek", value=value)
+
+    # -----------------------------------------------------------------------
+
+    def media_period(self, start, end):
+        """To be overridden. Set the time period of the media to the given range."""
+        self.notify(action="period", value=(start, end))
 
     # -----------------------------------------------------------------------
     # Construct the GUI
@@ -302,18 +371,19 @@ class sppasPlayerControlsPanel(sppasImagePanel):
     def _create_content(self):
         """Create the content of the panel."""
         # Create the main anz_panels
-        panel1 = self.__create_widgets_panel(self)
+        panel1 = self.__create_widgets_left_panel(self)
+        panel3 = self.__create_widgets_right_panel(self)
         panel2 = self.__create_transport_panel(self)
         slider = TimeSliderPanel(self, name="slider_panel")
 
         # Organize the anz_panels into the main sizer
         border = sppasPanel.fix_size(2)
         nav_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        nav_sizer.AddStretchSpacer(1)
         nav_sizer.Add(panel1, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
         nav_sizer.AddStretchSpacer(1)
         nav_sizer.Add(panel2, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
         nav_sizer.AddStretchSpacer(1)
+        nav_sizer.Add(panel3, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(slider, 0, wx.EXPAND, 0)
@@ -338,15 +408,31 @@ class sppasPlayerControlsPanel(sppasImagePanel):
     # -----------------------------------------------------------------------
 
     @property
-    def widgets_panel(self):
+    def widgets_left_panel(self):
         """Return the panel to be customized."""
-        return self.FindWindow("widgets_panel")
+        return self.FindWindow("widgets_left_panel")
 
     # -----------------------------------------------------------------------
 
-    def __create_widgets_panel(self, parent):
-        """Return an empty panel with a wrap sizer."""
-        panel = sppasPanel(parent, name="widgets_panel")
+    @property
+    def widgets_right_panel(self):
+        """Return the panel to be customized."""
+        return self.FindWindow("widgets_right_panel")
+
+    # -----------------------------------------------------------------------
+
+    def __create_widgets_left_panel(self, parent):
+        """Return an empty panel with a sizer."""
+        panel = sppasPanel(parent, name="widgets_left_panel")
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        panel.SetSizer(sizer)
+        return panel
+
+    # -----------------------------------------------------------------------
+
+    def __create_widgets_right_panel(self, parent):
+        """Return an empty panel with a sizer."""
+        panel = sppasPanel(parent, name="widgets_right_panel")
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         panel.SetSizer(sizer)
         return panel
@@ -365,6 +451,9 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         self.SetButtonProperties(btn_play)
         btn_play.SetFocus()
 
+        btn_pause = TogglePause(panel)
+        self.SetButtonProperties(btn_pause)
+
         btn_forward = BitmapTextButton(panel, name="media_forward")
         self.SetButtonProperties(btn_forward)
         btn_forward.SetMinSize(wx.Size(self._btn_size // 2, self._btn_size))
@@ -380,6 +469,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(btn_rewind, 0, wx.ALL | wx.ALIGN_CENTER, border)
         sizer.Add(btn_play, 0, wx.ALL | wx.ALIGN_CENTER, border)
+        sizer.Add(btn_pause, 0, wx.ALL | wx.ALIGN_CENTER, border)
         sizer.Add(btn_forward, 0, wx.ALL | wx.ALIGN_CENTER, border)
         sizer.Add(btn_stop, 0, wx.ALL | wx.ALIGN_CENTER, border)
         sizer.Add(btn_replay, 0, wx.ALL | wx.ALIGN_CENTER, border)
@@ -440,6 +530,9 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         if name == "media_play":
             self.play()
 
+        elif name == "media_pause":
+            self.pause()
+
         elif name == "media_stop":
             self.stop()
 
@@ -460,6 +553,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
     def _on_period_changed(self, event):
         p = event.period
         wx.LogDebug("New slider range from {} to {}".format(p[0], p[1]))
+        self.media_period(p[0], p[1])
 
 # ---------------------------------------------------------------------------
 
@@ -482,9 +576,40 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         self.audio = sppasAudioPlayer(self)
         self.prev_time = None
 
-        btn1 = BitmapTextButton(self.widgets_panel, name="way_up_down")
+        btn1 = BitmapTextButton(self.widgets_left_panel, name="scroll_left")
         self.SetButtonProperties(btn1)
-        self.AddWidget(btn1)
+        self.AddLeftWidget(btn1)
+        btn1.Bind(wx.EVT_BUTTON, self._on_set_visible)
+
+        btn3 = BitmapTextButton(self.widgets_left_panel, name="expand_false")
+        self.SetButtonProperties(btn3)
+        self.AddLeftWidget(btn3)
+        btn3.Bind(wx.EVT_BUTTON, self._on_set_visible)
+
+        btn4 = BitmapTextButton(self.widgets_left_panel, name="expand_true")
+        self.SetButtonProperties(btn4)
+        self.AddLeftWidget(btn4)
+        btn4.Bind(wx.EVT_BUTTON, self._on_set_visible)
+
+        btn7 = BitmapTextButton(self.widgets_left_panel, name="scroll_zoom_all")
+        self.SetButtonProperties(btn7)
+        self.AddLeftWidget(btn7)
+        btn7.Bind(wx.EVT_BUTTON, self._on_set_visible)
+
+        btn5 = BitmapTextButton(self.widgets_left_panel, name="scroll_to_selection")
+        self.SetButtonProperties(btn5)
+        self.AddLeftWidget(btn5)
+        btn5.Bind(wx.EVT_BUTTON, self._on_set_visible)
+
+        btn6 = BitmapTextButton(self.widgets_left_panel, name="scroll_zoom_selection")
+        self.SetButtonProperties(btn6)
+        self.AddLeftWidget(btn6)
+        btn6.Bind(wx.EVT_BUTTON, self._on_set_visible)
+
+        btn2 = BitmapTextButton(self.widgets_left_panel, name="scroll_right")
+        self.SetButtonProperties(btn2)
+        self.AddLeftWidget(btn2)
+        btn2.Bind(wx.EVT_BUTTON, self._on_set_visible)
 
         # Events
         # Custom event to inform the media is loaded
@@ -508,6 +633,10 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         self.FindWindow("media_play").Enable(True)
         duration = self.audio.get_duration()
         self._timeslider.set_duration(duration)
+        # to test if it works, set a selection period and a visible period:
+        self._timeslider.set_visible_range(3.45, 7.08765)
+        self._timeslider.set_selection_range(5.567, 6.87)
+        self.Layout()
 
     # ----------------------------------------------------------------------
 
@@ -521,9 +650,35 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
     def play(self):
         wx.LogDebug("Play")
-        played = self.audio.play()
-        if played is True:
-            self.prev_time = datetime.datetime.now()
+        if self.audio.is_playing() is False:
+            played = self.audio.play()
+            if played is True:
+                self.prev_time = datetime.datetime.now()
+                self.FindWindow("media_pause").SetValue(False)
+
+    # -----------------------------------------------------------------------
+
+    def pause(self):
+        pause_status = self.FindWindow("media_pause").GetValue()
+
+        # It was asked to pause
+        if pause_status is True:
+            # and the audio is not already paused
+            if self.audio.is_paused() is False:
+                paused = self.audio.pause()
+                if paused is not True:
+                    # but paused was not done in the audio
+                    self.FindWindow("media_pause").SetValue(False)
+                else:
+
+                    # Put the slider exactly at the right time position
+                    position = self.audio.tell()
+                    self._timeslider.set_value(position)
+
+        else:
+            # it was asked to end pausing
+            if self.audio.is_paused() is True:
+                self.play()
 
     # -----------------------------------------------------------------------
 
@@ -533,6 +688,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
             self.audio.stop()
         self.prev_time = None
         self.DeletePendingEvents()
+        self.FindWindow("media_pause").SetValue(False)
 
         # Put the slider exactly at the right time position
         position = self.audio.tell()
@@ -553,7 +709,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     # -----------------------------------------------------------------------
 
     def media_forward(self):
-        """Seek media 10% later."""
+        """Override. Seek media 10% later."""
         wx.LogDebug("Forward")
         duration = self.audio.get_duration()
         d = duration / 10.
@@ -573,9 +729,16 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     # -----------------------------------------------------------------------
 
     def media_seek(self, value):
+        """Override. Seek media at given time value."""
         wx.LogDebug("Seek at {}".format(value))
         self.audio.seek(value)
         self._timeslider.set_value(value)
+
+    # -----------------------------------------------------------------------
+
+    def media_period(self, start, end):
+        """Override. Set time period to media at given time range."""
+        self.audio.set_period(start, end)
 
     # ----------------------------------------------------------------------
 
@@ -585,7 +748,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
             self.stop()
             if self.IsReplay() is True:
                 self.play()
-        else:
+        elif self.audio.is_playing() is True:
             cur_time = datetime.datetime.now()
             delta = cur_time - self.prev_time
             delta_seconds = delta.seconds + delta.microseconds / 1000000.
@@ -596,6 +759,61 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
                 # wx.LogDebug("Update the slider at time {}".format(time_pos))
 
         # event.Skip()
+
+    # ----------------------------------------------------------------------
+
+    def _on_set_visible(self, event):
+        """Change the visible part.
+
+        Scroll the visible part, depending on its current duration:
+            - reduce of 50%
+            - increase of 100%
+            - shift 80% before
+            - shift 80% after
+
+        """
+        evt_obj = event.GetEventObject()
+        cur_period = self._timeslider.get_range()
+        start = self._timeslider.get_visible_start()
+        end = self._timeslider.get_visible_end()
+        dur = end - start
+        if evt_obj.GetName() == "expand_false":
+            shift = dur / 4.
+            self._timeslider.set_visible_range(start + shift, end - shift)
+        elif evt_obj.GetName() == "expand_true":
+            shift = dur / 2.
+            self._timeslider.set_visible_range(start - shift, end + shift)
+        elif evt_obj.GetName() == "scroll_left":
+            shift = 0.8 * dur
+            if start > 0.:
+                self._timeslider.set_visible_range(start - shift, end - shift)
+        elif evt_obj.GetName() == "scroll_right":
+            shift = 0.8 * dur
+            if end < self._timeslider.get_duration():
+                self._timeslider.set_visible_range(start + shift, end + shift)
+        elif evt_obj.GetName() == "scroll_to_selection":
+            sel_start = self._timeslider.get_selection_start()
+            sel_end = self._timeslider.get_selection_end()
+            sel_middle = sel_start + ((sel_end - sel_start) / 2.)
+            shift = dur / 2.
+            self._timeslider.set_visible_range(sel_middle - shift, sel_middle + shift)
+        elif evt_obj.GetName() == "scroll_zoom_selection":
+            sel_start = self._timeslider.get_selection_start()
+            sel_end = self._timeslider.get_selection_end()
+            self._timeslider.set_visible_range(sel_start, sel_end)
+        elif evt_obj.GetName() == "scroll_zoom_all":
+            end = self._timeslider.get_duration()
+            self._timeslider.set_visible_range(0., end)
+        else:
+            wx.LogError("Unknown visible action {}".format(evt_obj.GetName()))
+            return
+
+        self._timeslider.Layout()
+        self._timeslider.Refresh()
+
+        new_period = self._timeslider.get_range()
+        if new_period != cur_period:
+            self.audio.set_period(new_period[0], new_period[1])
 
 # ---------------------------------------------------------------------------
 

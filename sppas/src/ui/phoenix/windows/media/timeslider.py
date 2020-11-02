@@ -97,7 +97,6 @@ class ToggleSlider(ToggleTextButton):
         self.SetHorizBorderWidth(1)
         self.SetFocusWidth(0)
         self.SetValue(False)
-        self.SetMinSize(wx.Size(-1, self.get_font_height()))
 
     # -----------------------------------------------------------------------
 
@@ -168,8 +167,6 @@ class TimeSliderPanel(sppasPanel):
 
         self.set_duration(0.)
         self.__update_height()
-
-        self.Layout()
 
     # -----------------------------------------------------------------------
     # Slider
@@ -259,10 +256,12 @@ class TimeSliderPanel(sppasPanel):
         start = float(start)
         end = float(end)
         if end > self.__duration:
-            raise ValueError("set visible: given end {:f} > duration {:f}".format(start, self.__duration))
-        if end < start:
-            raise ValueError
+            end = self.__duration
+            # raise ValueError("set visible: given end {:f} > duration {:f}".format(start, self.__duration))
         if start < 0.:
+            start = 0.
+            # raise ValueError
+        if end < start:
             raise ValueError
 
         self.__start_visible = start
@@ -323,17 +322,28 @@ class TimeSliderPanel(sppasPanel):
 
     def SetFont(self, font):
         """Override. """
-        wx.Panel.SetFont(self, font)
+        # The font of this panel is used only to control its height
+        f = wx.Font(int(font.GetPointSize() * 1.4),
+                    wx.FONTFAMILY_SWISS,   # family,
+                    wx.FONTSTYLE_NORMAL,   # style,
+                    wx.FONTWEIGHT_BOLD,    # weight,
+                    underline=False,
+                    faceName=font.GetFaceName(),
+                    encoding=wx.FONTENCODING_SYSTEM)
+        wx.Panel.SetFont(self, f)
+
+        # The font that is displaying message is inside the children
         for c in self.GetChildren():
-            f = wx.Font(int(font.GetPointSize() * 0.8),
-                        wx.FONTFAMILY_SWISS,   # family,
-                        wx.FONTSTYLE_NORMAL,   # style,
-                        wx.FONTWEIGHT_BOLD,    # weight,
+            f = wx.Font(int(font.GetPointSize() * 0.9),
+                        font.GetFamily(),        # family,
+                        wx.FONTSTYLE_NORMAL,     # style,
+                        wx.FONTWEIGHT_NORMAL,    # weight,
                         underline=False,
                         faceName=font.GetFaceName(),
                         encoding=wx.FONTENCODING_SYSTEM)
             c.SetFont(f)
 
+        # Update height of each panel and layout
         self.__update_height()
 
     # -----------------------------------------------------------------------
@@ -384,12 +394,11 @@ class TimeSliderPanel(sppasPanel):
         btn_during_sel.SetHorizBorderWidth(1)
         btn_during_sel.SetFocusWidth(0)
         btn_during_sel.SetValue(False)
-        btn_during_sel.SetMinSize(wx.Size(-1, self.get_font_height()))
 
         sizer_sel = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_sel.Add(btn_before_sel, 0, wx.ALL, 0)
-        sizer_sel.Add(btn_during_sel, 0, wx.ALL, 0)
-        sizer_sel.Add(btn_after_sel, 0, wx.ALL, 0)
+        sizer_sel.Add(btn_before_sel, 0, wx.EXPAND)
+        sizer_sel.Add(btn_during_sel, 0, wx.EXPAND)
+        sizer_sel.Add(btn_after_sel, 0, wx.EXPAND)
         panel_sel.SetSizer(sizer_sel)
 
         slider = sppasSlider(self, name="time_slider")
@@ -485,12 +494,6 @@ class TimeSliderPanel(sppasPanel):
         new_start, new_end = self._slider.get_range()
         if old_start != new_start or old_end != new_end:
             self._slider.Refresh()
-            # try:
-            #     self.GetParent().set_range(
-            #         int(1000. * new_start), int(1000. * new_end)
-            #     )
-            # except AttributeError:
-            #     pass
             return True
         else:
             return False
@@ -499,7 +502,6 @@ class TimeSliderPanel(sppasPanel):
 
     def __update_select_buttons(self):
         w = self.GetSize().GetWidth()
-        self._selection.SetMinSize(wx.Size(w, self.get_font_height()))
         visible_duration = self.__end_visible - self.__start_visible
 
         # If the selection is totally outside of the visible segment
@@ -562,12 +564,14 @@ class TimeSliderPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def __update_height(self):
-        h = self.get_font_height()
+        h = self.GetFont().GetPointSize()
+
         self._selection.SetMinSize(wx.Size(-1, h))
         self._slider.SetMinSize(wx.Size(-1, h))
         self._btn_duration.SetMinSize(wx.Size(-1, h))
         self._btn_visible.SetMinSize(wx.Size(-1, h))
         self.SetMinSize(wx.Size(-1, 4*h))
+        self.Layout()
 
     # -----------------------------------------------------------------------
 
@@ -592,7 +596,6 @@ class TestPanel(sppasPanel):
         p.set_visible_range(3.45, 7.08765)
         p.set_selection_range(5.567, 6.87)
         p.set_value(6.)
-        # p.enable_visible(True)
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(p, 0, wx.EXPAND)
