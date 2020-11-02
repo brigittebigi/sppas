@@ -735,9 +735,11 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         d = self.audio.get_duration()
         d /= 10.
         cur = self.audio.tell()
+        period = self._timeslider.get_range()
 
-        self.audio.seek(max(0., cur - d))
-        self._timeslider.set_value(max(0., cur - d))
+        changed = self.audio.seek(max(period[0], cur - d))
+        if changed:
+            self._timeslider.set_value(self.audio.tell())
 
     # -----------------------------------------------------------------------
 
@@ -747,14 +749,12 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         duration = self.audio.get_duration()
         d = duration / 10.
         cur = self.audio.tell()
+        period = self._timeslider.get_range()
+        position = min(cur + d, period[1])
 
-        position = cur + d
-        # if we reach the end of the stream
-        if position > duration:
-            if self.IsReplay() is True:
-                position = 0.  # restart from the beginning
-            else:
-                position = duration
+        # if we reach the end of the stream for the given period
+        if position == period[1] and self.IsReplay() is True:
+            position = 0.  # restart from the beginning
 
         changed = self.audio.seek(position)
         if changed is True:

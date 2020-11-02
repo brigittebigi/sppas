@@ -274,24 +274,27 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     # -----------------------------------------------------------------------
 
     def _extract_frames(self):
-        """Override. Return the frames to play in the given period.
+        """Override. Return the frames to play in the given period from current.
+
+        Notice that the simpleplayer library only allows to play/stop.
+        Seek is not supported.
 
         """
         wx.LogDebug(" ... extract frame for the period: {} {}".format(self._period[0], self._period[1]))
         # Check if the current period is inside or overlapping this audio
         if self._period[0] < self.get_duration():
             # current position in time.
-            # cur_time = self.tell()
+            cur_time = self.tell()
 
             # Check if the current position is inside the period
             # if self._period[0] <= cur_time <= self._period[1]:
-            # start_time = max(self._period[0], cur_time)
-            start_time = self._period[0]
+            start_time = max(self._period[0], cur_time)
             end_time = min(self._period[1], self.get_duration())
-            # Convert the time (in seconds) into a position in the frames
-            start_pos = self._time_to_frames(start_time)
-            end_pos = self._time_to_frames(end_time)
-            return self._frames[start_pos:end_pos]
+            if start_time < end_time:
+                # Convert the time (in seconds) into a position in the frames
+                start_pos = self._time_to_frames(start_time)
+                end_pos = self._time_to_frames(end_time)
+                return self._frames[start_pos:end_pos]
         else:
             wx.LogDebug("Period out of range -- duration: {}".format(self.get_duration()))
 
