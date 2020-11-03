@@ -40,6 +40,8 @@
 import logging
 import simpleaudio as sa
 import datetime
+import threading
+import multiprocessing
 
 from sppas.src.config import MediaState
 from sppas.src.utils import b
@@ -224,12 +226,71 @@ class sppasSimpleAudioPlayer(object):
                 if played is True:
                     self._ms = MediaState().playing
                     self._time_value = datetime.datetime.now()
-
+                    print("Start playing {} at: {}".format(self._filename, self._time_value))
                 else:
                     # An error occurred while we attempted to play
                     self._ms = MediaState().unknown
 
         return played
+
+    # -----------------------------------------------------------------------
+
+    def prepare_to_play(self):
+        """return the frames to play."""
+        if self._filename is None:
+            logging.error("No media file to play.")
+            return False
+
+        frames = b('')
+        with MediaState() as ms:
+            if self._ms == ms.unknown:
+                logging.error("The audio stream of {:s} can't be played for "
+                              "an unknown reason.".format(self._filename))
+
+            elif self._ms == ms.loading:
+                logging.error("The audio stream of {:s} can't be played: "
+                              "still loading".format(self._filename))
+
+            elif self._ms == ms.playing:
+                logging.warning("The audio stream of {:s} is already "
+                                "playing.".format(self._filename))
+
+            else:  # stopped or paused
+                    # Ask simpleaudio library to play a buffer of frames
+                    frames = self._extract_frames()
+                    print(len(frames))
+                    if len(frames) > 0:
+                        return frames
+                    else:
+                        logging.warning("No frames to play in the given period "
+                                        "for audio {:s}.".format(self._filename))
+
+        return frames
+
+    # -----------------------------------------------------------------------
+
+    def play_frames(self, frames):
+        try:
+            self._sa_play = sa.play_buffer(
+                frames,
+                self._audio.get_nchannels(),
+                self._audio.get_sampwidth(),
+                self._audio.get_framerate())
+            # Check if the audio is really playing
+            played = self._sa_play.is_playing()
+
+            if played is True:
+                self._ms = MediaState().playing
+                self._time_value = datetime.datetime.now()
+                print("Start playing {} at: {}".format(self._filename, self._time_value))
+            else:
+                # An error occurred while we attempted to play
+                self._ms = MediaState().unknown
+
+        except Exception as e:
+            logging.error("An error occurred when attempted to play "
+                          "the audio stream of {:s} with the "
+                          "simpleaudio library: {:s}".format(self._filename, str(e)))
 
     # -----------------------------------------------------------------------
 
@@ -375,3 +436,291 @@ class sppasSimpleAudioPlayer(object):
                self._audio.get_nchannels()
 
 
+# ---------------------------------------------------------------------------
+
+
+class sppasMultiAudioPlayer(object):
+    """An audio player based on simpleaudio library.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    Can load, play and browse throw several audio streams of given files.
+
+    """
+
+    def __init__(self):
+        """Instantiate the multi audio player."""
+        # Key = sppasSimpleAudioPlayer / value = bool:enabled
+        self.__audios = dict()
+
+    # -----------------------------------------------------------------------
+
+    def load(self, filename):
+        """Add an audio into the list of audio managed by this control.
+
+        The new media is not disabled.
+
+        :param filename: (str)
+        :return: (bool)
+
+        """
+        new_audio = sppasSimpleAudioPlayer()
+        loaded = new_audio.load(filename)
+        if loaded is True:
+            self.__audios[new_audio] = False
+        return loaded
+
+    # -----------------------------------------------------------------------
+
+    def get_duration(self):
+        """Return the duration this player must consider (in seconds).
+
+        This estimation does not take into account the fact that an audio is
+        enabled or disabled. All audio are considered.
+
+        :return: (float)
+
+        """
+        if len(self.__audios) > 0:
+            return max(a.get_duration() for a in self.__audios)
+        else:
+            return 0.
+
+    # -----------------------------------------------------------------------
+
+    def exists(self, filename):
+        """Return True if the filename is matching an existing audio."""
+        for a in self.__audios:
+            if a.get_filename() == filename:
+                return True
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def is_enabled(self, filename=None):
+        """Return True if any audio or the one of the given filename is enabled."""
+        if filename is None:
+            return any([self.__audios[audio] for audio in self.__audios])
+
+        for audio in self.__audios:
+            if self.__audios[audio] is True and filename == audio.get_filename():
+                return True
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def enable(self, filename, value=True):
+        """Enable or disable the given audio.
+
+        When an audio is disabled, it can't be paused nor played. It can only
+        stay in the stopped state.
+
+        :param filename: (str)
+        :param value: (bool)
+        :return: (bool)
+
+        """
+        for a in self.__audios:
+            if a.get_filename() == filename:
+                self.__audios[a] = bool(value)
+                if a.is_playing():
+                    a.stop()
+
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def are_playing(self):
+        """Return True if all enabled audio are playing.
+
+        :return: (bool)
+
+        """
+        playing = [audio.is_playing() for audio in self.__audios if self.__audios[audio] is True]
+        if len(playing) == 0:
+            return False
+
+        # all([]) is True
+        return all(playing)
+
+    # -----------------------------------------------------------------------
+
+    def is_playing(self, filename=None):
+        """Return True if any audio or if the given audio is playing.
+
+        :param filename: (str)
+        :return: (bool)
+
+        """
+        if filename is None:
+            return any([audio.is_playing() for audio in self.__audios])
+
+        for audio in self.__audios:
+            if audio.is_playing() is True and filename == audio.get_filename():
+                return True
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def are_paused(self):
+        """Return True if all enabled audio are paused.
+
+        :return: (bool)
+
+        """
+        paused = [audio.is_paused() for audio in self.__audios if self.__audios[audio] is True]
+        if len(paused) == 0:
+            return False
+
+        # all([]) is True
+        return all(paused)
+
+    # -----------------------------------------------------------------------
+
+    def is_paused(self, filename=None):
+        """Return True if any audio or if the given audio is paused.
+
+        :param filename: (str)
+        :return: (bool)
+
+        """
+        if filename is None:
+            return any([audio.is_paused() for audio in self.__audios])
+
+        for audio in self.__audios:
+            if audio.is_paused() is True and filename == audio.get_filename():
+                return True
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def are_stopped(self):
+        """Return True if all enabled audio are stopped.
+
+        :return: (bool)
+
+        """
+        stopped = [audio.is_stopped() for audio in self.__audios if self.__audios[audio] is True]
+        if len(stopped) == 0:
+            return False
+
+        # all([]) is True
+        return all(stopped)
+
+    # -----------------------------------------------------------------------
+
+    def is_stopped(self, filename=None):
+        """Return True if any audio or if the given audio is stopped.
+
+        :param filename: (str)
+        :return: (bool)
+
+        """
+        if filename is None:
+            return any([audio.is_stopped() for audio in self.__audios])
+
+        for audio in self.__audios:
+            if audio.is_stopped() is True and filename == audio.get_filename():
+                return True
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def is_loading(self, filename=None):
+        """Return True if any audio or if the given audio is loading.
+
+        :param filename: (str)
+        :return: (bool)
+
+        """
+        if filename is None:
+            return any([audio.is_loading() for audio in self.__audios])
+
+        for audio in self.__audios:
+            if audio.is_loading() is True and filename == audio.get_filename():
+                return True
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def remove(self, filename):
+        """Remove a media of the list of media managed by this control.
+
+        :param filename: (str)
+        :return: (bool)
+
+        """
+        audio = None
+        for a in self.__audios:
+            if a.get_filename() == filename:
+                audio = a
+                break
+
+        if audio is not None:
+            audio.stop()
+            del self.__audios[audio]
+            return True
+
+        return False
+
+    # -----------------------------------------------------------------------
+    # Player
+    # -----------------------------------------------------------------------
+
+    def play(self):
+        """Start to play all the enabled audio streams from the current position.
+
+        Start playing only if the audio stream is currently stopped or
+        paused and if enabled.
+
+        :return: (bool) True if the action of playing was performed
+
+        """
+        for audio in self.__audios:
+            if self.__audios[audio] is True:
+                audio.play()
+
+    # -----------------------------------------------------------------------
+
+    def pause(self):
+        """Pause the media and notify parent."""
+        for audio in self.__audios:
+            if audio.is_playing():
+                audio.pause()
+
+    # -----------------------------------------------------------------------
+
+    def stop(self):
+        """Stop to play the audios."""
+        for audio in self.__audios:
+            if audio.is_playing():
+                audio.stop()
+
+    # -----------------------------------------------------------------------
+
+    def seek(self, value):
+        """Seek all audio to the given position in time.
+
+        :param value: (float) Time value in seconds.
+
+        """
+        force_pause = False
+        if self.is_playing() is not None:
+            self.pause()
+            force_pause = True
+
+        # Debug("Media seek to position {}".format(offset))
+        for audio in self.__audios:
+            audio.seek(value)
+
+        if force_pause is True:
+            self.play()
+
+    # -----------------------------------------------------------------------
+
+    def __len__(self):
+        return len(self.__audios)
