@@ -46,6 +46,7 @@
 import wx
 import os
 import datetime
+import wx.lib.gizmos as gizmos
 
 from sppas.src.config import paths  # used only in the Test Panel
 
@@ -406,7 +407,6 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         panel2 = self.__create_transport_panel(self)
         slider = TimeSliderPanel(self, name="slider_panel")
 
-        # Organize the anz_panels into the main sizer
         border = sppasPanel.fix_size(2)
         nav_sizer = wx.BoxSizer(wx.HORIZONTAL)
         nav_sizer.Add(panel1, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
@@ -415,6 +415,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         nav_sizer.AddStretchSpacer(1)
         nav_sizer.Add(panel3, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
 
+        # Organize the panels into the main sizer
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(slider, 0, wx.EXPAND, 0)
         sizer.Add(nav_sizer, 0, wx.EXPAND | wx.ALL, border)
@@ -592,7 +593,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
 class PlayerExamplePanel(sppasPlayerControlsPanel):
 
     AUDIO = os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav")
-    SLIDER_UPDATE_DELAY = 0.100   # update the slider every 100ms only
+    SLIDER_UPDATE_DELAY = 0.050   # update the slider every 100ms only
     BG_IMAGE = os.path.join(paths.etc, "images", "bg_brushed_metal.jpg")
     # BG_IMAGE = os.path.join(paths.etc, "images", "bg_alu.png")
 
@@ -641,6 +642,14 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         self.SetButtonProperties(btn2)
         self.AddLeftWidget(btn2)
         btn2.Bind(wx.EVT_BUTTON, self._on_set_visible)
+
+        led = gizmos.LEDNumberCtrl(self.widgets_left_panel, name="moment_led")
+        led.SetValue("0.000")
+        led.SetAlignment(gizmos.LED_ALIGN_RIGHT)
+        led.SetDrawFaded(True)
+        led.SetMinSize(wx.Size(self.get_font_height()*10, self.get_font_height()*3))
+        led.SetForegroundColour(wx.Colour(40, 90, 220))
+        self.AddLeftWidget(led)
 
         # Events
         # Custom event to inform the media is loaded
@@ -707,6 +716,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
                     # Put the slider exactly at the right time position
                     position = self.audio.tell()
                     self._timeslider.set_value(position)
+                    self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
 
         else:
             # it was asked to end pausing
@@ -726,6 +736,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         # Put the slider exactly at the right time position
         position = self.audio.tell()
         self._timeslider.set_value(position)
+        self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
 
     # -----------------------------------------------------------------------
 
@@ -739,7 +750,9 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
         changed = self.audio.seek(max(period[0], cur - d))
         if changed:
-            self._timeslider.set_value(self.audio.tell())
+            position = self.audio.tell()
+            self._timeslider.set_value(position)
+            self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
 
     # -----------------------------------------------------------------------
 
@@ -758,7 +771,9 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
         changed = self.audio.seek(position)
         if changed is True:
+            position = self.audio.tell()
             self._timeslider.set_value(self.audio.tell())
+            self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
 
     # -----------------------------------------------------------------------
 
@@ -767,6 +782,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         wx.LogDebug("Seek at {}".format(value))
         self.audio.seek(value)
         self._timeslider.set_value(value)
+        self.FindWindow("moment_led").SetValue("{:.3f}".format(value))
 
     # -----------------------------------------------------------------------
 
@@ -790,6 +806,8 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
                 self.prev_time = cur_time
                 time_pos = self.audio.tell()
                 self._timeslider.set_value(time_pos)
+                self.FindWindow("moment_led").SetValue("{:.3f}".format(time_pos))
+
                 # wx.LogDebug("Update the slider at time {}".format(time_pos))
 
         # event.Skip()

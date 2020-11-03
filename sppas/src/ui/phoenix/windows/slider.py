@@ -59,8 +59,9 @@ class sppasSlider(sppasImageDCWindow):
     Non-interactive: show values but can't be moved with the mouse.
 
     """
-
-    POINT_COLOUR = wx.Colour(128, 128, 196)
+    POINT_COLOUR1 = wx.Colour(10, 60, 190)
+    POINT_COLOUR2 = wx.Colour(40, 90, 220)
+    POINT_COLOUR3 = wx.Colour(75, 125, 255)
 
     # -----------------------------------------------------------------------
 
@@ -162,21 +163,31 @@ class sppasSlider(sppasImageDCWindow):
             ratio = pos_dur / total_dur
             pos_x = w * ratio
 
-        label = self.__seconds_label(self.__pos)
-        tw, th = self.get_text_extend(dc, gc, label)
-        if pos_x + tw < (w // 2):
-            if pos_x > tw:
-                self.DrawLabel(label, dc, gc, pos_x + 1, (h - th) // 2)
-        else:
-            if pos_x < (w - tw):
-                self.DrawLabel(label, dc, gc, pos_x - tw - 1, (h - th) // 2)
+        # label = self.__seconds_label(self.__pos)
+        # tw, th = self.get_text_extend(dc, gc, label)
+        # if pos_x + tw < (w // 2):
+        #     if pos_x > tw:
+        #         self.DrawLabel(label, dc, gc, pos_x + 1, (h - th) // 2)
+        # else:
+        #     if pos_x < (w - tw):
+        #         self.DrawLabel(label, dc, gc, pos_x - tw - 1, (h - th) // 2)
 
         # Vertical line indicating the proportional position
         if total_dur > 0.:
-            pen = wx.Pen(sppasSlider.POINT_COLOUR, 1, wx.PENSTYLE_SOLID)
+            pen = wx.Pen(sppasSlider.POINT_COLOUR3, 1, wx.PENSTYLE_SOLID)
             dc.SetPen(pen)
             gc.SetPen(pen)
             dc.DrawLine(pos_x, y, pos_x, y+h)
+            pen = wx.Pen(sppasSlider.POINT_COLOUR2, 1, wx.PENSTYLE_SOLID)
+            dc.SetPen(pen)
+            gc.SetPen(pen)
+            dc.DrawLine(pos_x+1, y, pos_x+1, y+h)
+            dc.DrawLine(pos_x-1, y, pos_x-1, y+h)
+            pen = wx.Pen(sppasSlider.POINT_COLOUR1, 1, wx.PENSTYLE_SOLID)
+            dc.SetPen(pen)
+            gc.SetPen(pen)
+            dc.DrawLine(pos_x+2, y, pos_x+2, y+h)
+            dc.DrawLine(pos_x-2, y, pos_x-2, y+h)
 
     # -----------------------------------------------------------------------
 

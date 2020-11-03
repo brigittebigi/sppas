@@ -146,4 +146,7 @@ class TestMultiPlayer(unittest.TestCase):
         mp.enable(sample_4)
         mp.play()
         time.sleep(3)
+        mp.pause()
+        mp.play()
+        time.sleep(3)
         mp.stop()

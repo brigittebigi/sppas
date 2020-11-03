@@ -32,7 +32,7 @@
     src.ui.phoenix.windows.media.audioplay.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Requires simpleaudio library to play the audio file stream. Raise a
+    Requires simpleaudio library to play the audio file streams. Raise a
     FeatureException at init if 'audioplay' feature is not enabled.
 
 """
@@ -42,17 +42,14 @@ import wx
 import threading
 
 from sppas.src.config import paths
-from sppas.src.config import MediaState
-from sppas.src.utils import b
-
-from sppas.src.audiodata import sppasSimpleAudioPlayer
+from sppas.src.audiodata import sppasMultiAudioPlayer
 
 from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
 
 # ---------------------------------------------------------------------------
 
 
-class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
+class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
     """An audio player based on simpleaudio library and a timer.
 
     :author:       Brigitte Bigi
@@ -104,9 +101,9 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
 
         """
         wx.Timer.__init__(self, owner)
-        sppasSimpleAudioPlayer.__init__(self)
+        sppasMultiAudioPlayer.__init__(self)
 
-        # A thread to load the frames of the audio
+        # A thread to load the frames of an audio
         self.__th = None
 
         # A time period to play the audio stream. Default is whole.
@@ -130,7 +127,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
                     del self.__th
                     self.__th = None
                 # The audio was not created if the init raised a FeatureException
-                sppasSimpleAudioPlayer.reset(self)
+                sppasMultiAudioPlayer.reset(self)
         except:
             pass
 
@@ -149,20 +146,21 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
             raise ValueError("End can't be greater or equal than start")
 
         self._period = (start_time, end_time)
-        cur_state = self._ms
+        cur_playing = self.is_playing()
+        cur_paused = self.is_paused()
         cur_pos = self.tell()
         # Stop playing (if any), and seek at the beginning of the period
         self.stop()
 
         # Restore the situation in which the audio was before stopping
-        if cur_state in (MediaState().playing, MediaState().paused):
+        if cur_playing is True or cur_paused is True:
             if self._period[0] < cur_pos <= self._period[1]:
                 # Restore the previous position in time if it was inside
                 # the new period.
                 self.seek(cur_pos)
             # Play again, then pause if it was the previous state.
             self.play()
-            if cur_state == MediaState().paused:
+            if cur_paused is True:
                 self.pause()
 
     # -----------------------------------------------------------------------
@@ -195,16 +193,15 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         :return: (bool) True if the action of playing was started
 
         """
+        played = False
         # current position in time.
         cur_time = self.tell()
 
         # Check if the current position is inside the period
-        # if self._period[0] <= cur_time <= self._period[1]:
         start_time = max(self._period[0], cur_time)
         end_time = min(self._period[1], self.get_duration())
-
         if start_time < end_time:
-            played = sppasSimpleAudioPlayer.play(self, start_time, end_time)
+            played = sppasMultiAudioPlayer.play(self, start_time, end_time)
             if played is True:
                 self.Start(int(sppasAudioPlayer.TIMER_DELAY * 1000.))
 
@@ -213,18 +210,16 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     # -----------------------------------------------------------------------
 
     def stop(self):
-        """Stop to play the audio.
+        """Stop to play the audios.
 
         :return: (bool) True if the action of stopping was performed
 
         """
-        if self._sa_play is not None:
-            self._sa_play.stop()
-            self._ms = MediaState().stopped
+        stopped = sppasMultiAudioPlayer.stop(self)
+        if stopped is True:
             self.seek(self._period[0])
             self.Stop()
-            return True
-        return False
+        return stopped
 
     # -----------------------------------------------------------------------
 
@@ -244,14 +239,23 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         if time_pos < self._period[0]:
             time_pos = self._period[0]
 
-        return sppasSimpleAudioPlayer.seek(self, time_pos)
+        return sppasMultiAudioPlayer.seek(self, time_pos)
 
     # -----------------------------------------------------------------------
 
     def tell(self):
         """Return the current time position in the audio stream (float)."""
-        offset = self._audio.tell()
-        return float(offset * self._audio.get_nchannels()) / float(self._audio.get_framerate())
+        if len(self._audios) > 0:
+            values = list()
+            for audio in self._audios:
+                # In theory, all media should return the same value...
+                offset = audio._audio.tell()
+                time_value = float(offset * audio.get_nchannels()) / float(audio.get_framerate())
+                values.append(time_value)
+            # return the earlier time
+            return min(values)
+
+        return 0
 
     # -----------------------------------------------------------------------
     # Manage events
@@ -264,43 +268,21 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
 
         """
         # Nothing to do if we are not playing (probably paused).
-        if self._ms == MediaState().playing:
+        if self.is_playing():
             # the audio stream is currently playing
-            if self._sa_play.is_playing() is True:
-                self._reposition()
+            for audio in self._audios:
+                audio._reposition()
             # the audio stream reached the end of the stream and it stopped
             else:
                 self.stop()
             # Send the wx.EVT_TIMER event
             wx.Timer.Notify(self)
 
-        elif self._ms != MediaState().paused:
+        elif self.is_paused() is False:
             self.stop()
 
     # -----------------------------------------------------------------------
     # Private & Protected methods
-    # -----------------------------------------------------------------------
-
-    def _extract_frames(self, from_time, to_time):
-        """Override. Return the frames to play in the given period from current.
-
-        Notice that the simpleplayer library only allows to play/stop.
-        Seek is not supported.
-
-        """
-        wx.LogDebug(" ... extract frame for the period: {} {}".format(from_time, to_time))
-        # Check if the current period is inside or overlapping this audio
-        end_time = min(to_time, self.get_duration())
-        if from_time < self.get_duration():
-            # Convert the time (in seconds) into a position in the frames
-            start_pos = self._time_to_frames(from_time)
-            end_pos = self._time_to_frames(end_time)
-            return self._frames[start_pos:end_pos]
-        else:
-            wx.LogDebug("Period out of range -- duration: {}".format(self.get_duration()))
-
-        return b("")
-
     # -----------------------------------------------------------------------
 
     def __threading_load(self, filename):
@@ -311,8 +293,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         :param filename: (str)
 
         """
-        self._ms = MediaState().loading
-        value = sppasSimpleAudioPlayer.load(self, filename)
+        value = sppasMultiAudioPlayer.load(self, filename)
         if value is True:
             evt = MediaEvents.MediaLoadedEvent()
             if self._period is None:
@@ -321,7 +302,6 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
             evt = MediaEvents.MediaNotLoadedEvent()
         evt.SetEventObject(self)
         wx.PostEvent(self, evt)
-        self._ms = MediaState().stopped
 
 # ---------------------------------------------------------------------------
 
@@ -329,7 +309,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
 class TestPanel(wx.Panel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(
-            parent, -1, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN, name="Audio Player")
+            parent, -1, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN, name="Multi Audio Player")
 
         # The player!
         self.ap = sppasAudioPlayer(owner=self)
@@ -379,7 +359,8 @@ class TestPanel(wx.Panel):
         self.FindWindow("btn_play").Enable(True)
         duration = self.ap.get_duration()
         self.slider.SetRange(0, int(duration * 1000.))
-
+        self.ap.enable(os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
+        
         # self.ap.set_period(10., 12.)
         # self.ap.seek(10.)
         # self.slider.SetRange(10000, 12000)
