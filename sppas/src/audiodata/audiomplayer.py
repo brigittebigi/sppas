@@ -65,6 +65,8 @@ class sppasMultiAudioPlayer(object):
         # Observed delays between 2 consecutive "play".
         # Used to synchronize files.
         self._all_delays = [0.01]
+        self.__from_time = 0.    # position (in seconds) to start playing
+        self.__to_time = 0.      # position (in seconds) of ending play
 
     # -----------------------------------------------------------------------
 
@@ -102,10 +104,15 @@ class sppasMultiAudioPlayer(object):
         :return: (float)
 
         """
+        dur = list()
         if len(self._audios) > 0:
-            return max(a.get_duration() for a in self._audios if a.is_unknown() is False)
-        else:
-            return 0.
+            for a in self._audios:
+                if a.is_unknown() is False and a.is_loading() is False:
+                    dur.append(a.get_duration())
+
+        if len(dur) > 0:
+            return max(dur)
+        return 0.
 
     # -----------------------------------------------------------------------
 
@@ -305,13 +312,18 @@ class sppasMultiAudioPlayer(object):
     # Player
     # -----------------------------------------------------------------------
 
-    def play(self, from_time=0., to_time=None):
-        """Start to play all the enabled audio streams from the current position.
+    def play(self):
+        self.play_interval()
+
+    # -----------------------------------------------------------------------
+
+    def play_interval(self, from_time=None, to_time=None):
+        """Start to play an interval of the enabled audio streams.
 
         Start playing only if the audio stream is currently stopped or
         paused and if enabled.
 
-        Under Windows and MacOS, the interval among 2 audio "play" is 11ms.
+        Under Windows and MacOS, the delay between 2 audio "play" is 11ms.
         Except the 1st one, the other audios will be 'in late' so we do not
         play during the elapsed time instead of playing the audio shifted!
         This problem can't be solved with:
@@ -319,11 +331,16 @@ class sppasMultiAudioPlayer(object):
         - multiprocessing because the elapsed time is only reduced to 4ms
         instead of 11ms, but the audios can't be eared!
 
+        :param from_time: (float) Start to play at this given time or at the current from time if None
+        :param to_time: (float) Stop to play at this given time or at the current end time if None
         :return: (bool) True if the action of playing was performed for at least one audio
 
         """
-        if to_time is None:
-            to_time = self.get_duration()
+        if from_time is not None:
+            self.__from_time = from_time
+        if to_time is not None:
+            self.__to_time = to_time
+
         started_time = None
         process_time = None
         shift = 0.
@@ -338,7 +355,7 @@ class sppasMultiAudioPlayer(object):
                     self._all_delays.append(delay)
                     shift += delay
 
-                played = audio.play(from_time + shift, to_time)
+                played = audio.play(self.__from_time + shift, self.__to_time)
                 if played is True:
                     nb_playing += 1
                     started_time = process_time
@@ -353,13 +370,16 @@ class sppasMultiAudioPlayer(object):
     # -----------------------------------------------------------------------
 
     def pause(self):
-        """Pause the media and notify parent."""
+        """Pause the audios."""
         paused = False
         for audio in self._audios:
             if audio.is_playing():
                 p = audio.pause()
-                if p is True:
+                if p is True and paused is False:
                     paused = True
+                    position = audio.audio_tell()
+                    self.__from_time = float(position) / float(audio.get_framerate())
+
         return paused
 
     # -----------------------------------------------------------------------
@@ -375,6 +395,9 @@ class sppasMultiAudioPlayer(object):
             s = audio.stop()
             if s is True:
                 stopped = True
+        if stopped is True:
+            self.__from_time = 0.
+            self.__to_time = self.get_duration()
         return stopped
 
     # -----------------------------------------------------------------------
@@ -386,15 +409,18 @@ class sppasMultiAudioPlayer(object):
 
         """
         force_pause = False
+        if self.is_paused() is True:
+            force_pause = True
         if self.is_playing() is True:
             self.pause()
             force_pause = True
 
         for audio in self._audios:
-            if audio.is_unknown() is False:
+            if audio.is_unknown() is False and audio.is_loading() is False:
                 audio.seek(value)
 
         if force_pause is True:
+            self.__from_time = value
             self.play()
 
     # -----------------------------------------------------------------------

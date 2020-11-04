@@ -62,7 +62,9 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
 
     This class is inheriting of a Timer in order to update the position
     in the stream and thus to implement the 'tell' method.
-    This class is using a thread to load the frames of the audio file.
+    This class is using threads to load the frames of the audio files.
+    It is also managing a period in time instead of considering the whole
+    duration (to seek, play, etc).
 
     Events emitted by this class:
 
@@ -105,11 +107,8 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
         wx.Timer.__init__(self, owner)
         sppasMultiAudioPlayer.__init__(self)
 
-        # Threads to load the frames of an audio
-        self.__th = list()
-
         # A time period to play the audio stream. Default is whole.
-        self._period = None
+        self._period = (0., 0.)
 
     # -----------------------------------------------------------------------
 
@@ -121,18 +120,19 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
     def reset(self):
         """Override. Re-initialize all known data and stop the timer."""
         self.Stop()
-        self._period = None
+        self._period = (0., 0.)
         try:
-            if len(self.__th) > 0:
-                for th in reversed(self.__th):
-                    if th.is_alive():
-                        # Python does not implement a "stop()" method for threads
-                        del th
-                    self.__th = list()
-                # The audio was not created if the init raised a FeatureException
-                sppasMultiAudioPlayer.reset(self)
+            # The audio was not created if the init raised a FeatureException
+            sppasMultiAudioPlayer.reset(self)
         except:
             pass
+
+    # -----------------------------------------------------------------------
+
+    def get_period(self):
+        """Return the currently defined period (start, end)."""
+        p0, p1 = self._period
+        return p0, p1
 
     # -----------------------------------------------------------------------
 
@@ -143,7 +143,6 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
         :param end_time: (float) Time to stop playing in seconds
 
         """
-        wx.LogDebug("$ $ $ $ $ $  Set period to {} {}".format(start_time, end_time))
         start_time = float(start_time)
         end_time = float(end_time)
         if end_time <= start_time:
@@ -172,41 +171,38 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
     def add_audio(self, filename):
         """Override. Load the files that filenames refers to.
 
-        The audio are disabled.
+        The event MediaLoaded or MediaNotLoaded is sent when the audio
+        finished to load. Loaded successfully or not, the audio is disabled.
 
         :param filename: (str) Name of a file or list of file names
         :return: (bool) Always returns False
 
         """
-        if isinstance(filename, (list, tuple)) is False:
-            filename = (filename,)
-
-        # Create threads with a target function of loading with name as args
-        new_th = list()
-        for name in filename:
-            th = threading.Thread(target=self.__threading_load, args=(name,))
-            new_th.append(th)
-
-        # Start the new threads
-        for th in new_th:
-            th.start()
-            self.__th.append(th)
-
-        # and obviously, do not join the threads!
+        if isinstance(filename, (list, tuple)) is True:
+            # Create threads with a target function of loading with name as args
+            new_th = list()
+            for name in filename:
+                print("Create a thread to load file")
+                th = threading.Thread(target=self.__load, args=(name,))
+                new_th.append(th)
+            # Start the new threads
+            for th in new_th:
+                th.start()
+        else:
+            self.__load(filename)
 
     # -----------------------------------------------------------------------
 
-    def play(self, from_time=0., to_time=None):
-        """Override. Start to play the audio streams.
+    def play(self):
+        """Start to play the audio streams.
 
-        ARGUMENTS ARE IGNORED.
+        Start playing only if the audio streams are currently stopped or
+        paused. Play in the range of the defined period.
 
-        Start playing only is the audio streams are currently stopped or
-        paused.
-
-        Start playing an audio only if the defined period is inside or
-        overlapping the audio stream AND if the the current position is
-        inside the period.
+        So, it starts playing an audio only if the defined period is inside
+        or overlapping the audio stream AND if the the current position is
+        inside the period. It stops at the end of the period or at the end
+        of the stream.
 
         :return: (bool) True if the action of playing was started
 
@@ -219,7 +215,7 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
         end_time = min(self._period[1], self.get_duration())
         if start_time < end_time:
 
-            played = sppasMultiAudioPlayer.play(self, start_time, end_time)
+            played = self.play_interval(start_time, end_time)
             if played is True:
                 # wx.Timer Start method needs milliseconds, not seconds.
                 self.Start(int(sppasAudioPlayer.TIMER_DELAY * 1000.))
@@ -308,7 +304,7 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
     # Private & Protected methods
     # -----------------------------------------------------------------------
 
-    def __threading_load(self, filename):
+    def __load(self, filename):
         """Really load and add the file that filename refers to.
 
         Send a media event when a loading is finished.
@@ -319,12 +315,11 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
         value = sppasMultiAudioPlayer.add_audio(self, filename)
         if value is True:
             evt = MediaEvents.MediaLoadedEvent(filename=filename)
-            if self._period is None:
-                self._period = (0., self.get_duration())
         else:
             evt = MediaEvents.MediaNotLoadedEvent(filename=filename)
         evt.SetEventObject(self)
         wx.PostEvent(self, evt)
+        return value
 
 # ---------------------------------------------------------------------------
 
@@ -390,6 +385,9 @@ class TestPanel(wx.Panel):
         self.FindWindow("btn_play").Enable(True)
         duration = self.ap.get_duration()
         self.slider.SetRange(0, int(duration * 1000.))
+        # the following line enters in an infinite loop with the message:
+        # In file /Users/robind/projects/bb2/dist-osx-py38/build/ext/wxWidgets/src/unix/threadpsx.cpp at line 370: 'pthread_mutex_[timed]lock()' failed with error 0x00000023 (Resource temporarily unavailable).
+        # self.ap.set_period(0., duration)
 
     # ----------------------------------------------------------------------
 
@@ -401,6 +399,8 @@ class TestPanel(wx.Panel):
 
     def _on_play_ap(self, event):
         wx.LogDebug("................PLAY EVENT RECEIVED..................")
+        duration = self.ap.get_duration()
+        self.ap.set_period(0., duration)
         self.ap.play()
 
     # ----------------------------------------------------------------------

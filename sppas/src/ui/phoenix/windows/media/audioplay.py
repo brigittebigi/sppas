@@ -283,7 +283,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     # -----------------------------------------------------------------------
 
     def _extract_frames(self, from_time, to_time):
-        """Override. Return the frames to play in the given period from current.
+        """Override. Return the frames to play in the given period.
 
         Notice that the simpleplayer library only allows to play/stop.
         Seek is not supported.
