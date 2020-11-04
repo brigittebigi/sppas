@@ -97,7 +97,7 @@ from .aio import extensions
 
 if cfg.feature_installed("audioplay") is True:
     from .audioplayer import sppasSimpleAudioPlayer
-    from .audioplayer import sppasMultiAudioPlayer
+    from .audiomplayer import sppasMultiAudioPlayer
 else:
 
     class sppasSimpleAudioPlayer(sppasAudioPlayDataError):

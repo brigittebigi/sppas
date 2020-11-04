@@ -35,6 +35,8 @@
     Requires simpleaudio library to play the audio file stream. Raise a
     FeatureException at init if 'audioplay' feature is not enabled.
 
+    A player to play a single audio file.
+
 """
 
 import os
@@ -44,7 +46,6 @@ import threading
 from sppas.src.config import paths
 from sppas.src.config import MediaState
 from sppas.src.utils import b
-
 from sppas.src.audiodata import sppasSimpleAudioPlayer
 
 from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
@@ -61,7 +62,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    This class is inheriting of a Timer in order to update the position
+    This class is inheriting a Timer in order to update the position
     in the stream and thus to implement the 'tell' method.
     This class is using a thread to load the frames of the audio file.
 
@@ -311,7 +312,6 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         :param filename: (str)
 
         """
-        self._ms = MediaState().loading
         value = sppasSimpleAudioPlayer.load(self, filename)
         if value is True:
             evt = MediaEvents.MediaLoadedEvent()

@@ -40,7 +40,6 @@ import os
 import wx
 
 from sppas.src.config import paths
-from sppas.src.config import MediaState
 
 from ..panels import sppasPanel
 from ..datactrls import sppasWaveformWindow

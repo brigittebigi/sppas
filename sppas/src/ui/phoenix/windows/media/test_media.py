@@ -64,7 +64,6 @@ class TestPanel(wx.Choicebook):
 
         p = audiomplay.TestPanel(self)
         self.AddPage(p, p.GetName())
-
         """
         p = audioplay.TestPanel(self)
         self.AddPage(p, p.GetName())
@@ -81,6 +80,7 @@ class TestPanel(wx.Choicebook):
         p = timeslider.TestPanel(self)
         self.AddPage(p, p.GetName())
         """
+
         p = baseplaypanel.TestPanel(self)
         self.AddPage(p, p.GetName())
 

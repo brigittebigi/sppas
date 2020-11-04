@@ -38,12 +38,13 @@ import os.path
 import time
 
 from sppas.src.config import paths
-from ..audioplayer import sppasSimpleAudioPlayer, sppasMultiAudioPlayer
+from ..audioplayer import sppasSimpleAudioPlayer
+from ..audiomplayer import sppasMultiAudioPlayer
 
 # ---------------------------------------------------------------------------
 
 sample_1 = os.path.join(paths.samples, "samples-eng", "oriana1.wav")
-sample_2 = os.path.join(paths.samples, "samples-eng", "oriana2.wav")
+sample_2 = os.path.join(paths.samples, "samples-eng", "oriana2.WAV")
 sample_3 = os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
 sample_4 = os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav")
 
@@ -57,31 +58,33 @@ class TestMultiPlayer(unittest.TestCase):
         mp = sppasMultiAudioPlayer()
         self.assertEqual(0, len(mp))
 
-        loaded = mp.load(sample_1)
+        loaded = mp.add_audio(sample_1)
         self.assertTrue(loaded)
         self.assertEqual(1, len(mp))
         self.assertTrue(mp.exists(sample_1))
         self.assertFalse(mp.exists(sample_2))
 
-        loaded = mp.load("toto.xxx")   # Error 2005 extension not supported
+        loaded = mp.add_audio("toto.xxx")   # Error 2005 extension not supported
         self.assertFalse(loaded)
-        self.assertEqual(1, len(mp))
-
-        loaded = mp.load("toto.wav")   # Error 2010
-        self.assertFalse(loaded)
-        self.assertEqual(1, len(mp))
-
-        loaded = mp.load(sample_2)
-        self.assertTrue(loaded)
         self.assertEqual(2, len(mp))
+        self.assertTrue(mp.is_unknown("toto.xxx"))
+
+        loaded = mp.add_audio("toto.wav")   # Error 2010
+        self.assertFalse(loaded)
+        self.assertEqual(3, len(mp))
+        self.assertTrue(mp.is_unknown("toto.wav"))
+
+        loaded = mp.add_audio(sample_2)
+        self.assertTrue(loaded)
+        self.assertEqual(4, len(mp))
         self.assertTrue(mp.exists(sample_2))
 
     # -----------------------------------------------------------------------
 
     def test_remove(self):
         mp = sppasMultiAudioPlayer()
-        mp.load(sample_1)
-        mp.load(sample_2)
+        mp.add_audio(sample_1)
+        mp.add_audio(sample_2)
         mp.remove(sample_2)
 
         self.assertEqual(1, len(mp))
@@ -92,8 +95,8 @@ class TestMultiPlayer(unittest.TestCase):
 
     def test_enable(self):
         mp = sppasMultiAudioPlayer()
-        mp.load(sample_1)
-        mp.load(sample_2)
+        mp.add_audio(sample_1)
+        mp.add_audio(sample_2)
 
         self.assertFalse(mp.is_enabled())
         self.assertFalse(mp.is_enabled(sample_1))
@@ -108,8 +111,8 @@ class TestMultiPlayer(unittest.TestCase):
 
     def test_playing(self):
         mp = sppasMultiAudioPlayer()
-        mp.load(sample_1)
-        mp.load(sample_2)
+        mp.add_audio(sample_1)
+        mp.add_audio(sample_2)
         self.assertFalse(mp.are_playing())
         self.assertFalse(mp.is_playing())
         self.assertFalse(mp.is_playing(sample_1))
@@ -128,18 +131,18 @@ class TestMultiPlayer(unittest.TestCase):
 
         mp = sppasMultiAudioPlayer()
         self.assertEqual(0., mp.get_duration())
-        mp.load(sample_1)
-        mp.load(sample_2)
+        mp.add_audio(sample_1)
+        mp.add_audio(sample_2)
         self.assertEqual(max(d1, d2), mp.get_duration())
 
     # -----------------------------------------------------------------------
 
     def test_player(self):
         mp = sppasMultiAudioPlayer()
-        mp.load(sample_1)
-        mp.load(sample_2)
-        mp.load(sample_3)
-        mp.load(sample_4)
+        mp.add_audio(sample_1)
+        mp.add_audio(sample_2)
+        mp.add_audio(sample_3)
+        mp.add_audio(sample_4)
         mp.enable(sample_1)
         mp.enable(sample_2)
         mp.enable(sample_3)

@@ -56,7 +56,7 @@ from ..panels import sppasImagePanel, sppasPanel
 
 from .mediaevents import MediaEvents
 from .timeslider import TimeSliderPanel
-from .audioplay import sppasAudioPlayer  # used only in the Test Panel
+from .audiomplay import sppasAudioPlayer  # used only in the Test Panel
 
 # ---------------------------------------------------------------------------
 
@@ -592,10 +592,8 @@ class sppasPlayerControlsPanel(sppasImagePanel):
 
 class PlayerExamplePanel(sppasPlayerControlsPanel):
 
-    AUDIO = os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav")
-    SLIDER_UPDATE_DELAY = 0.050   # update the slider every 100ms only
+    SLIDER_UPDATE_DELAY = 0.100
     BG_IMAGE = os.path.join(paths.etc, "images", "bg_brushed_metal.jpg")
-    # BG_IMAGE = os.path.join(paths.etc, "images", "bg_alu.png")
 
     # ----------------------------------------------------------------------
 
@@ -605,7 +603,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
             image=PlayerExamplePanel.BG_IMAGE,
             name="player_panel")
 
-        self.audio = sppasAudioPlayer(self)
+        self.amp = sppasAudioPlayer(self)  # Audio Multi Player - amp
         self.prev_time = None
 
         btn1 = BitmapTextButton(self.widgets_left_panel, name="scroll_left")
@@ -653,26 +651,32 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
         # Events
         # Custom event to inform the media is loaded
-        self.audio.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
-        self.audio.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
+        self.amp.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
+        self.amp.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
         # Event received every Xms when the audio is playing
-        self.audio.Bind(wx.EVT_TIMER, self._on_timer)
+        self.Bind(wx.EVT_TIMER, self._on_timer)
 
-        wx.CallAfter(self._do_load_file)
+        # wx.CallAfter(self.do_load_file)
 
     # ----------------------------------------------------------------------
 
-    def _do_load_file(self):
+    def do_load_file(self):
         self.FindWindow("media_play").Enable(False)
-        self.audio.load(PlayerExamplePanel.AUDIO)
+        self.amp.add_audio(
+            [os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"),
+             os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"),
+             os.path.join(paths.samples, "samples-eng", "oriana1.wav")])
+             #'toto.xxx'])
 
     # ----------------------------------------------------------------------
 
     def __on_media_loaded(self, event):
-        wx.LogDebug("Audio file loaded successfully")
-        duration = self.audio.get_duration()
+        filename = event.filename
+        wx.LogDebug("File {:s} loaded successfully".format(filename))
+        self.amp.enable(filename)
+        duration = self.amp.get_duration()
         self._timeslider.set_duration(duration)
-        self.audio.set_period(0., duration)
+        self.amp.set_period(0., duration)
         self.FindWindow("media_play").Enable(True)
         self.FindWindow("media_pause").Enable(True)
         # to test if it works, set a selection period and a visible period:
@@ -683,8 +687,9 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     # ----------------------------------------------------------------------
 
     def __on_media_not_loaded(self, event):
-        wx.LogError("Audio file not loaded")
-        self._timeslider.set_duration(0.)
+        filename = event.filename
+        wx.LogError("File {} not loaded".format(filename))
+        # self.amp.remove(filename)
 
     # -----------------------------------------------------------------------
     # the methods to override...
@@ -692,8 +697,8 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
     def play(self):
         wx.LogDebug("Play")
-        if self.audio.is_playing() is False:
-            played = self.audio.play()
+        if self.amp.is_playing() is False:
+            played = self.amp.play()
             if played is True:
                 self.prev_time = datetime.datetime.now()
                 self.FindWindow("media_pause").SetValue(False)
@@ -706,35 +711,34 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         # It was asked to pause
         if pause_status is True:
             # and the audio is not already paused
-            if self.audio.is_paused() is False:
-                paused = self.audio.pause()
+            if self.amp.is_paused() is False:
+                paused = self.amp.pause()
                 if paused is not True:
                     # but paused was not done in the audio
                     self.FindWindow("media_pause").SetValue(False)
                 else:
 
                     # Put the slider exactly at the right time position
-                    position = self.audio.tell()
+                    position = self.amp.tell()
                     self._timeslider.set_value(position)
                     self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
 
         else:
             # it was asked to end pausing
-            if self.audio.is_paused() is True:
+            if self.amp.is_paused() is True:
                 self.play()
 
     # -----------------------------------------------------------------------
 
     def stop(self):
         wx.LogDebug("Stop")
-        if self.audio.is_stopped() is False:
-            self.audio.stop()
+        self.amp.stop()
         self.prev_time = None
         self.DeletePendingEvents()
         self.FindWindow("media_pause").SetValue(False)
 
         # Put the slider exactly at the right time position
-        position = self.audio.tell()
+        position = self.amp.tell()
         self._timeslider.set_value(position)
         self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
 
@@ -743,14 +747,14 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     def media_rewind(self):
         """Seek media 10% earlier."""
         wx.LogDebug("Rewind")
-        d = self.audio.get_duration()
+        d = self.amp.get_duration()
         d /= 10.
-        cur = self.audio.tell()
+        cur = self.amp.tell()
         period = self._timeslider.get_range()
 
-        changed = self.audio.seek(max(period[0], cur - d))
+        changed = self.amp.seek(max(period[0], cur - d))
         if changed:
-            position = self.audio.tell()
+            position = self.amp.tell()
             self._timeslider.set_value(position)
             self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
 
@@ -759,9 +763,9 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     def media_forward(self):
         """Override. Seek media 10% later."""
         wx.LogDebug("Forward")
-        duration = self.audio.get_duration()
+        duration = self.amp.get_duration()
         d = duration / 10.
-        cur = self.audio.tell()
+        cur = self.amp.tell()
         period = self._timeslider.get_range()
         position = min(cur + d, period[1])
 
@@ -769,10 +773,10 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         if position == period[1] and self.IsReplay() is True:
             position = 0.  # restart from the beginning
 
-        changed = self.audio.seek(position)
+        changed = self.amp.seek(position)
         if changed is True:
-            position = self.audio.tell()
-            self._timeslider.set_value(self.audio.tell())
+            position = self.amp.tell()
+            self._timeslider.set_value(self.amp.tell())
             self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
 
     # -----------------------------------------------------------------------
@@ -780,7 +784,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     def media_seek(self, value):
         """Override. Seek media at given time value."""
         wx.LogDebug("Seek at {}".format(value))
-        self.audio.seek(value)
+        self.amp.seek(value)
         self._timeslider.set_value(value)
         self.FindWindow("moment_led").SetValue("{:.3f}".format(value))
 
@@ -788,27 +792,32 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
     def media_period(self, start, end):
         """Override. Set time period to media at given time range."""
-        self.audio.set_period(start, end)
+        self.amp.set_period(start, end)
+        value = self.amp.tell()
+        self._timeslider.set_value(value)
+        self.FindWindow("moment_led").SetValue("{:.3f}".format(value))
 
     # ----------------------------------------------------------------------
 
     def _on_timer(self, event):
 
-        if self.audio.is_stopped() is True:
-            self.stop()
-            if self.IsReplay() is True:
-                self.play()
-        elif self.audio.is_playing() is True:
+        # at least one audio is still playing
+        if self.amp.is_playing() is True:
             cur_time = datetime.datetime.now()
             delta = cur_time - self.prev_time
             delta_seconds = delta.seconds + delta.microseconds / 1000000.
             if delta_seconds > PlayerExamplePanel.SLIDER_UPDATE_DELAY:
                 self.prev_time = cur_time
-                time_pos = self.audio.tell()
+                time_pos = self.amp.tell()
                 self._timeslider.set_value(time_pos)
                 self.FindWindow("moment_led").SetValue("{:.3f}".format(time_pos))
 
-                # wx.LogDebug("Update the slider at time {}".format(time_pos))
+        # all enabled audio are now stopped
+        elif self.amp.are_stopped() is True:
+            print("all audio stopped. So stop...")
+            self.stop()
+            if self.IsReplay() is True:
+                self.play()
 
         # event.Skip()
 
@@ -865,7 +874,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
         new_period = self._timeslider.get_range()
         if new_period != cur_period:
-            self.audio.set_period(new_period[0], new_period[1])
+            self.amp.set_period(new_period[0], new_period[1])
 
 # ---------------------------------------------------------------------------
 
@@ -875,8 +884,15 @@ class TestPanel(sppasPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="PlayControls Panel")
 
+        button = wx.Button(self, -1, pos=(10, 10), size=(100, 50), label="LOAD", name="load_button")
         panel = PlayerExamplePanel(self)
         panel.SetMinSize(wx.Size(640, 120))
-        s = wx.BoxSizer()
+        s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(button, 0)
         s.Add(panel, 1, wx.EXPAND)
         self.SetSizer(s)
+        button.Bind(wx.EVT_BUTTON, self._on_load)
+
+    def _on_load(self, event):
+        self.FindWindow("player_panel").do_load_file()
+        self.FindWindow("load_button").Enable(False)
