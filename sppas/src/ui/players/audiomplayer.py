@@ -352,14 +352,15 @@ class sppasMultiAudioPlayer(object):
                     self._all_delays.append(delay)
                     shift += delay
 
-                played = audio.play(self.__from_time + shift, self.__to_time)
-                if played is True:
-                    nb_playing += 1
-                    started_time = process_time
-                    process_time = audio.get_time_value()
-                    if started_time is None:
-                        mean_delay = sum(self._all_delays) / float(len(self._all_delays))
-                        started_time = process_time - datetime.timedelta(seconds=mean_delay)
+                if audio.prepare_play(self.__from_time + shift, self.__to_time):
+                    played = audio.play()
+                    if played is True:
+                        nb_playing += 1
+                        started_time = process_time
+                        process_time = audio.get_time_value()
+                        if started_time is None:
+                            mean_delay = sum(self._all_delays) / float(len(self._all_delays))
+                            started_time = process_time - datetime.timedelta(seconds=mean_delay)
 
         logging.info(" ... {:d} audio files are playing".format(nb_playing))
         return nb_playing > 0

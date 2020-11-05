@@ -46,9 +46,6 @@ requires any other package but all other packages of SPPAS are requiring it!
 # Utility class to execute and read a subprocess. No external requirement.
 from .process import Process
 
-# Utility class to enum some states
-from .media import MediaState
-
 # The global settings. They need to be imported first: others need them.
 from .settings import sppasBaseSettings
 from .settings import sppasGlobalSettings
@@ -95,7 +92,6 @@ cfg = sppasAppConfig()
 # ---------------------------------------------------------------------------
 
 __all__ = (
-    "MediaState",
     "Process",
     "sppasBaseSettings",
     "sppasGlobalSettings",

@@ -326,7 +326,7 @@ class MediaState(object):
 
     :Example:
 
-        >>>with MediaState() as ms:
+        >>>with PlayerState() as ms:
         >>>    print(ms.playing)
 
     This class is a solution to mimic an 'Enum' but is compatible with both
@@ -616,7 +616,7 @@ class sppasMediaCtrl(sppasPanel):
     # -----------------------------------------------------------------------
 
     def GetState(self):
-        """Return the current MediaState() of the media."""
+        """Return the current PlayerState() of the media."""
         return self._ms
 
     # -----------------------------------------------------------------------

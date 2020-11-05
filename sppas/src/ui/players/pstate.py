@@ -29,13 +29,13 @@
 
         ---------------------------------------------------------------------
 
-    src.config.media.py
+    src.ui.players.pstate.py
     ~~~~~~~~~~~~~~~~~~~
 
 """
 
 
-class MediaState(object):
+class PlayerState(object):
     """Enum of all states of a media.
 
     :author:       Brigitte Bigi
@@ -46,7 +46,7 @@ class MediaState(object):
 
     :Example:
 
-        >>>with MediaState() as ms:
+        >>>with PlayerState() as ms:
         >>>    print(ms.playing)
 
     """

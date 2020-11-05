@@ -44,13 +44,14 @@ import cv2
 import datetime
 import time
 
-from sppas.src.config import MediaState
 from src.videodata.video import sppasVideoReader
+from .pstate import PlayerState
+from .baseplayer import sppasBasePlayer
 
 # ---------------------------------------------------------------------------
 
 
-class sppasSimpleVideoPlayer(object):
+class sppasSimpleVideoPlayer(sppasBasePlayer):
     """A video player based on opencv library.
 
     :author:       Brigitte Bigi
@@ -66,33 +67,22 @@ class sppasSimpleVideoPlayer(object):
     def __init__(self):
         super(sppasSimpleVideoPlayer, self).__init__()
 
-        self._ms = MediaState().unknown
-        self._filename = None    # name of the video file
-        self._video = None       # sppasVideoReader() embedding a cv2.VideoCapture()
-
     # -----------------------------------------------------------------------
 
     def __del__(self):
         try:
-            self._video.close()
+            self._media.close()
         except:
             pass
 
     # -----------------------------------------------------------------------
 
-    def get_filename(self):
-        return self._filename
-
-    # -----------------------------------------------------------------------
-
     def reset(self):
         """Re-initialize all known data."""
-        self._ms = MediaState().unknown
-        self._filename = None
-        if self._video is not None:
-            self._video.close()
-            self._video = None
-
+        if self._media is not None:
+            self._media.close()
+        sppasBasePlayer.reset(self)
+        
     # -----------------------------------------------------------------------
 
     def load(self, filename):
@@ -105,66 +95,21 @@ class sppasSimpleVideoPlayer(object):
         self.reset()
         try:
             self._filename = filename
-            self._video = sppasVideoReader()
-            self._video.open(filename)
-            self._ms = MediaState().stopped
+            self._media = sppasVideoReader()
+            self._media.open(filename)
+            self._ms = PlayerState().stopped
             return True
 
         except Exception as e:
             logging.error("Error when opening or loading file {:s}: "
                           "{:s}".format(filename, str(e)))
-            self._video = sppasVideoReader()
-            self._ms = MediaState().unknown
+            self._media = sppasVideoReader()
+            self._ms = PlayerState().unknown
             return False
 
     # -----------------------------------------------------------------------
 
-    def is_unknown(self):
-        """Return True if the media is unknown."""
-        if self._filename is None:
-            return False
-
-        return self._ms == MediaState().unknown
-
-    # -----------------------------------------------------------------------
-
-    def is_loading(self):
-        """Return True if the media is still loading."""
-        if self._filename is None:
-            return False
-
-        return self._ms == MediaState().loading
-
-    # -----------------------------------------------------------------------
-
-    def is_playing(self):
-        """Return True if the media is playing."""
-        if self._filename is None:
-            return False
-
-        return self._ms == MediaState().playing
-
-    # -----------------------------------------------------------------------
-
-    def is_paused(self):
-        """Return True if the media is paused."""
-        if self._filename is None:
-            return False
-
-        return self._ms == MediaState().paused
-
-    # -----------------------------------------------------------------------
-
-    def is_stopped(self):
-        """Return True if the media is stopped."""
-        if self._filename is None:
-            return False
-
-        return self._ms == MediaState().stopped
-
-    # -----------------------------------------------------------------------
-
-    def play(self):
+    def play(self, from_time=None, to_time=None):
         """Start to play the video stream from the current position.
 
         Start playing only is the video stream is currently stopped or
@@ -178,7 +123,7 @@ class sppasSimpleVideoPlayer(object):
             return False
 
         played = False
-        with MediaState() as ms:
+        with PlayerState() as ms:
             if self._ms == ms.unknown:
                 logging.error("The video stream of {:s} can't be played for "
                               "an unknown reason.".format(self._filename))
@@ -192,7 +137,7 @@ class sppasSimpleVideoPlayer(object):
                                 "playing.".format(self._filename))
 
             else:  # stopped or paused
-                self._ms = MediaState().playing
+                self._ms = PlayerState().playing
                 # A threaded play does not work under Linux & MacOS.
                 # Under Linux, the following error occurs:
                 # QObject::killTimer: Timers cannot be stopped from another thread
@@ -211,17 +156,17 @@ class sppasSimpleVideoPlayer(object):
         """Run the process of playing."""
         cv2.namedWindow("window", cv2.WINDOW_NORMAL)
         time_value = datetime.datetime.now()
-        time_delay = round(1. / self._video.get_framerate(), 3)
+        time_delay = round(1. / self._media.get_framerate(), 3)
 
-        while self._video.is_opened():
+        while self._media.is_opened():
             # stop the loop.
             # Either the stop() method was invoked or the reset() one.
-            if self._ms in (MediaState().stopped, MediaState().unknown):
+            if self._ms in (PlayerState().stopped, PlayerState().unknown):
                 break
 
-            elif self._ms == MediaState().playing:
+            elif self._ms == PlayerState().playing:
                 # read the next frame from the file
-                frame = self._video.read_frame(process_image=False)
+                frame = self._media.read_frame(process_image=False)
                 if frame is not None:
                     cv2.imshow('window', frame)
                     # Sleep as many time as required to get the appropriate read speed
@@ -236,7 +181,7 @@ class sppasSimpleVideoPlayer(object):
                     # we reached the end of the file
                     self.stop()
 
-            elif self._ms == MediaState().paused:
+            elif self._ms == PlayerState().paused:
                 time.sleep(time_delay/4.)
                 time_value = datetime.datetime.now()
 
@@ -254,9 +199,9 @@ class sppasSimpleVideoPlayer(object):
         :return: (bool) True if the action of stopping was performed
 
         """
-        if self._ms not in (MediaState().loading, MediaState().unknown):
-            self._ms = MediaState().stopped
-            self._video.seek(0)
+        if self._ms not in (PlayerState().loading, PlayerState().unknown):
+            self._ms = PlayerState().stopped
+            self._media.seek(0)
             return True
         return False
 
@@ -286,7 +231,7 @@ class sppasSimpleVideoPlayer(object):
 
         # how many frames this time position is representing since the beginning
         time_pos = float(time_pos)
-        position = time_pos * self._video.get_framerate()
+        position = time_pos * self._media.get_framerate()
 
         was_playing = self.is_playing()
         if was_playing is True:
@@ -294,7 +239,7 @@ class sppasSimpleVideoPlayer(object):
 
         # seek at the expected position
         try:
-            self._video.seek(int(position))
+            self._media.seek(int(position))
             # continue playing if the seek was requested when playing
             if was_playing is True:
                 self.play()
@@ -309,8 +254,8 @@ class sppasSimpleVideoPlayer(object):
 
     def tell(self):
         """Return the current time position in the video stream (float)."""
-        offset = self._video.tell()
-        return float(offset) / float(self._video.get_framerate())
+        offset = self._media.tell()
+        return float(offset) / float(self._media.get_framerate())
 
     # -----------------------------------------------------------------------
     # About the video
@@ -318,29 +263,29 @@ class sppasSimpleVideoPlayer(object):
 
     def get_duration(self):
         """Return the duration of the loaded video (float)."""
-        if self._filename is None:
+        if self._media is None:
             return 0.
-        return self._video.get_duration()
+        return self._media.get_duration()
 
     # -----------------------------------------------------------------------
 
     def get_framerate(self):
-        if self._video is not None:
-            return self._video.get_framerate()
+        if self._media is not None:
+            return self._media.get_framerate()
         return 0
 
     # -----------------------------------------------------------------------
 
     def get_width(self):
         """Return the width of the frames in the video."""
-        if self._video is None:
+        if self._media is None:
             return 0
-        return self._video.get_width()
+        return self._media.get_width()
 
     # -----------------------------------------------------------------------
 
     def get_height(self):
         """Return the height of the frames in the video."""
-        if self._video is None:
+        if self._media is None:
             return 0
-        return self._video.get_height()
+        return self._media.get_height()
