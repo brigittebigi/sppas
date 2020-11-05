@@ -82,7 +82,6 @@ class sppasSimpleAudioPlayer(sppasBasePlayer):
         super(sppasSimpleAudioPlayer, self).__init__()
 
         self._frames = b("")     # loaded frames of the audio stream
-        self.__time_value = None  # datetime of start playing
 
     # -----------------------------------------------------------------------
 
@@ -99,7 +98,7 @@ class sppasSimpleAudioPlayer(sppasBasePlayer):
         if self._media is not None:
             self._media.close()
         self._frames = b("")
-        self.__time_value = None
+        self._start_datenow = None
         self._from_time = 0.
         self._to_time = 0.
         sppasBasePlayer.reset(self)
@@ -133,54 +132,6 @@ class sppasSimpleAudioPlayer(sppasBasePlayer):
 
     # -----------------------------------------------------------------------
 
-    def play(self):
-        """Play the media into the currently defined range of time.
-
-        The method prepare_play() should be invoked first.
-
-        :return: (bool) True if the action of playing was performed
-
-        """
-        played = False
-        if self._ms in (PlayerState().paused, PlayerState().stopped):
-
-            try:
-                # Ask simpleaudio library to play a buffer of frames
-                frames = self._extract_frames()
-                if len(frames) > 0:
-                    self._player = sa.play_buffer(
-                        frames,
-                        self._media.get_nchannels(),
-                        self._media.get_sampwidth(),
-                        self._media.get_framerate())
-                    # Check if the audio is really playing
-                    played = self._player.is_playing()
-                else:
-                    logging.warning("No frames to play in the given period "
-                                    "for audio {:s}.".format(self._filename))
-
-            except Exception as e:
-                logging.error("An error occurred when attempted to play "
-                              "the audio stream of {:s} with the "
-                              "simpleaudio library: {:s}".format(self._filename, str(e)))
-
-            if played is True:
-                self._ms = PlayerState().playing
-                self.__time_value = datetime.datetime.now()
-            else:
-                # An error occurred while we attempted to play
-                self._ms = PlayerState().unknown
-
-        return played
-
-    # -----------------------------------------------------------------------
-
-    def get_time_value(self):
-        """Return the exact time the audio started to play."""
-        return self.__time_value
-
-    # -----------------------------------------------------------------------
-
     def stop(self):
         """Stop to play the audio and invalidate the time range.
 
@@ -193,6 +144,7 @@ class sppasSimpleAudioPlayer(sppasBasePlayer):
         if self._ms not in (PlayerState().unknown, PlayerState().loading):
             self._ms = PlayerState().stopped
             self._media.rewind()
+            self._start_datenow = None
             self._from_time = 0.
             self._to_time = self.get_duration()
             return True
@@ -209,12 +161,11 @@ class sppasSimpleAudioPlayer(sppasBasePlayer):
         """
         if self._player is not None:
             if self._player.is_playing():
-                # The simpleaudio library does not implement the 'pause'
-                # so we stop playing the PlayObject().
+                # stop playing
                 self._player.stop()
                 # seek at the exact moment we stopped to play
                 self._reposition()
-                # manage our state
+                # set our state
                 self._ms = PlayerState().paused
                 return True
 
@@ -305,35 +256,37 @@ class sppasSimpleAudioPlayer(sppasBasePlayer):
             self.stop()
 
     # -----------------------------------------------------------------------
-    # Protected methods
+    # Override base class
     # -----------------------------------------------------------------------
 
-    def _reposition(self):
-        """Seek the audio at the current position in the played stream.
-
-        The current position in the played stream is estimated using the
-        delay between the stored time value and now().
-
-        :return: (datetime) New time value
+    def _play_process(self):
+        """Launch the player. Fix the start time of playing.
 
         """
-        # update the current time value
-        cur_time_value = datetime.datetime.now()
-        time_delta = cur_time_value - self.__time_value
-        self.__time_value = cur_time_value
+        self._start_datenow = None
+        try:
+            # Ask simpleaudio library to play a buffer of frames
+            frames = self._extract_frames()
+            if len(frames) > 0:
+                self._player = sa.play_buffer(
+                    frames,
+                    self._media.get_nchannels(),
+                    self._media.get_sampwidth(),
+                    self._media.get_framerate())
+                # Check if the audio is really playing
+                if self._player.is_playing() is True:
+                    self._start_datenow = datetime.datetime.now()
+                    return True
+            else:
+                logging.warning("No frames to play in the given period "
+                                "for audio {:s}.".format(self._filename))
 
-        # eval the exact delay since the previous estimation
-        self._from_time = time_delta.total_seconds()
+        except Exception as e:
+            logging.error("An error occurred when attempted to play "
+                          "the audio stream of {:s} with the "
+                          "simpleaudio library: {:s}".format(self._filename, str(e)))
 
-        # how many frames this delay is representing
-        n_frames = self._from_time * self._media.get_framerate()
-
-        # seek at the new position in the audio
-        position = self._media.tell() + int(n_frames)
-        if position < self._media.get_nframes():
-            self._media.seek(position)
-
-        return self.__time_value
+        return False
 
     # -----------------------------------------------------------------------
 

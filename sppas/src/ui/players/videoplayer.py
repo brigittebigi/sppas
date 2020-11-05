@@ -43,6 +43,7 @@ import logging
 import cv2
 import datetime
 import time
+import threading
 
 from src.videodata.video import sppasVideoReader
 from .pstate import PlayerState
@@ -66,6 +67,7 @@ class sppasSimpleVideoPlayer(sppasBasePlayer):
 
     def __init__(self):
         super(sppasSimpleVideoPlayer, self).__init__()
+        # no self._player member. opencv is used to display frames.
 
     # -----------------------------------------------------------------------
 
@@ -109,7 +111,7 @@ class sppasSimpleVideoPlayer(sppasBasePlayer):
 
     # -----------------------------------------------------------------------
 
-    def play(self, from_time=None, to_time=None):
+    def play(self):
         """Start to play the video stream from the current position.
 
         Start playing only is the video stream is currently stopped or
@@ -118,41 +120,36 @@ class sppasSimpleVideoPlayer(sppasBasePlayer):
         :return: (bool) True if the action of playing was performed
 
         """
-        if self._filename is None:
-            logging.error("No media file to play.")
-            return False
+        if self._ms in (PlayerState().paused, PlayerState().stopped):
+            th = threading.Thread(target=self._play_process, args=())
+            self._ms = PlayerState().playing
+            self._start_datenow = datetime.datetime.now()
+            th.start()
+            return True
 
-        played = False
-        with PlayerState() as ms:
-            if self._ms == ms.unknown:
-                logging.error("The video stream of {:s} can't be played for "
-                              "an unknown reason.".format(self._filename))
-
-            elif self._ms == ms.loading:
-                logging.error("The video stream of {:s} can't be played: "
-                              "still loading".format(self._filename))
-
-            elif self._ms == ms.playing:
-                logging.warning("The video stream of {:s} is already "
-                                "playing.".format(self._filename))
-
-            else:  # stopped or paused
-                self._ms = PlayerState().playing
-                # A threaded play does not work under Linux & MacOS.
-                # Under Linux, the following error occurs:
-                # QObject::killTimer: Timers cannot be stopped from another thread
-                # QBasicTimer::start: QBasicTimer can only be used with threads started with QThread
-                # Under MacOS, the application is crashing, and exit with error 132.
-                # th = threading.Thread(target=self._play, args=())
-                # th.start()
-                # Instead... we play and wait to be stopped to return:
-                played = self.__play()
-
-        return played
+        return False
+        # ::::: at some time of the development, I had this problem :::::
+        # A threaded play does not work under Linux & MacOS.
+        # Under Linux, the following error occurs:
+        # QObject::killTimer: Timers cannot be stopped from another thread
+        # QBasicTimer::start: QBasicTimer can only be used with threads started with QThread
+        # Under MacOS, the application is crashing, and exit with error 132.
+        # Instead... we play and wait to be stopped to return:
 
     # -----------------------------------------------------------------------
 
-    def __play(self):
+    def pause(self):
+        """Pause to play the video.
+
+        :return: (bool) True if the action of stopping was performed
+
+        """
+        if self._ms == PlayerState().playing:
+            self._ms = PlayerState().paused
+
+    # -----------------------------------------------------------------------
+
+    def _play_process(self):
         """Run the process of playing."""
         cv2.namedWindow("window", cv2.WINDOW_NORMAL)
         time_value = datetime.datetime.now()
@@ -207,22 +204,15 @@ class sppasSimpleVideoPlayer(sppasBasePlayer):
 
     # -----------------------------------------------------------------------
 
-    def pause(self):
-        """Pause to play the audio.
-
-        :return: (bool) True if the action of pausing was performed
-
-        """
-        raise NotImplementedError
-
-    # -----------------------------------------------------------------------
-
     def seek(self, time_pos=0):
         """Seek the video stream at the given position in time.
 
         :param time_pos: (float) Time in seconds
 
         """
+        if self._ms in (PlayerState().unknown, PlayerState().loading):
+            return False
+
         time_pos = float(time_pos)
         if time_pos < 0.:
             time_pos = 0.
@@ -230,8 +220,10 @@ class sppasSimpleVideoPlayer(sppasBasePlayer):
             time_pos = self.get_duration()
 
         # how many frames this time position is representing since the beginning
-        time_pos = float(time_pos)
-        position = time_pos * self._media.get_framerate()
+        self._from_time = float(time_pos)
+        position = self._from_time * self._media.get_framerate()
+        if self._from_time >= self._to_time:
+            self.stop()
 
         was_playing = self.is_playing()
         if was_playing is True:

@@ -29,11 +29,14 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.media.videoplay.py
+    src.ui.phoenix.windows.media.wxvideoplay.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Requires opencv library to play the video file stream. Raise a
-    FeatureException at init if 'video' feature is not enabled.
+    src.ui.players.wxvideoplay.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    A player to play a single video file with tell and pause implemented and
+    events.
 
 """
 
@@ -45,13 +48,12 @@ import datetime
 import time
 
 from sppas.src.config import paths
-from sppas.src.config import MediaState
 
-from sppas.src.videodata import sppasSimpleVideoPlayer
+from src.ui.phoenix.windows.frame import sppasImageFrame
+from src.ui.phoenix.windows.media.mediaevents import MediaEvents
 
-from ..frame import sppasImageFrame
-
-from .mediaevents import MediaEvents
+from .videoplayer import sppasSimpleVideoPlayer
+from .pstate import PlayerState
 
 # ---------------------------------------------------------------------------
 
@@ -76,10 +78,13 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
         - MediaEvents.EVT_MEDIA_LOADED when the frames were loaded
         - MediaEvents.EVT_MEDIA_NOT_LOADED when an error occurred
 
+    Notice that it's not doable to use the wx.Timer event to display the
+    frames: the real timer delay is randomly close to the expected one...
+
     """
 
     # Delay in seconds to refresh the displayed video frame & to notify
-    TIMER_DELAY = 0.020
+    TIMER_DELAY = 0.040
 
     def __init__(self, owner):
         """Create an instance of sppasVideoPlayer.
@@ -91,14 +96,11 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
         sppasSimpleVideoPlayer.__init__(self)
 
         # The frame in which images of the video are sent
-        self._img_frame = sppasImageFrame(
+        self._player = sppasImageFrame(
             parent=owner,   # if owner is destroyed, the frame will be too
             title="Video",
             style=wx.CAPTION | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT)
-        self._img_frame.SetBackgroundColour(wx.WHITE)
-
-        # A thread to load or play the frames of the video
-        self.__th = None
+        self._player.SetBackgroundColour(wx.WHITE)
 
         # A time period to play the video stream. Default is whole.
         self._period = None
@@ -113,13 +115,8 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
     def reset(self):
         """Override. Re-initialize all known data and stop the timer."""
         self.Stop()
+        self._period = None
         try:
-            self._period = None
-            if self.__th is not None:
-                if self.__th.is_alive():
-                    # Python does not implement a "stop()" method for threads
-                    del self.__th
-                    self.__th = None
             # The audio was not created if the init raised a FeatureException
             sppasSimpleVideoPlayer.reset(self)
         except:
@@ -140,10 +137,20 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
             raise ValueError("End can't be greater or equal than start")
 
         self._period = (start_time, end_time)
-        if self._ms in (MediaState().playing, MediaState().paused):
-            self.stop()
+        cur_state = self._ms
+        cur_pos = self.tell()
+        # Stop playing (if any), and seek at the beginning of the period
+        self.stop()
+
+        # Restore the situation in which the audio was before stopping
+        if cur_state in (PlayerState().playing, PlayerState().paused):
+            if self._period[0] < cur_pos <= self._period[1]:
+                # Restore the previous position in time if it was inside
+                # the new period.
+                self.seek(cur_pos)
+            # Play again, then pause if it was the previous state.
             self.play()
-            if self._ms == MediaState().paused:
+            if cur_state == PlayerState().paused:
                 self.pause()
 
     # -----------------------------------------------------------------------
@@ -155,56 +162,16 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
         :return: (bool) Always returns False
 
         """
-        self._img_frame.SetTitle(filename)
-        # Create a Thread with a function with args
-        self.__th = threading.Thread(target=self.__threading_load, args=(filename,))
-        # Start the thread
-        self.__th.start()
-
-    # -----------------------------------------------------------------------
-
-    def is_unknown(self):
-        """Return True if the media is unknown."""
-        if self._filename is None:
-            return False
-
-        return self._ms == MediaState().unknown
-
-    # -----------------------------------------------------------------------
-
-    def is_loading(self):
-        """Return True if the media is still loading."""
-        if self._filename is None:
-            return False
-
-        return self._ms == MediaState().loading
-
-    # -----------------------------------------------------------------------
-
-    def is_playing(self):
-        """Return True if the media is playing."""
-        if self._filename is None:
-            return False
-
-        return self._ms == MediaState().playing
-
-    # -----------------------------------------------------------------------
-
-    def is_paused(self):
-        """Return True if the media is paused."""
-        if self._filename is None:
-            return False
-
-        return self._ms == MediaState().paused
-
-    # -----------------------------------------------------------------------
-
-    def is_stopped(self):
-        """Return True if the media is stopped."""
-        if self._filename is None:
-            return False
-
-        return self._ms == MediaState().stopped
+        value = sppasSimpleVideoPlayer.load(self, filename)
+        if value is True:
+            evt = MediaEvents.MediaLoadedEvent()
+            if self._period is None:
+                self._period = (0., self.get_duration())
+        else:
+            evt = MediaEvents.MediaNotLoadedEvent()
+        evt.SetEventObject(self)
+        wx.PostEvent(self, evt)
+        self._ms = PlayerState().stopped
 
     # -----------------------------------------------------------------------
 
@@ -217,56 +184,43 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
         :return: (bool) True if the action of playing was performed
 
         """
-        if self._filename is None:
-            logging.error("No media file to play.")
-            return False
-
         played = False
-        with MediaState() as ms:
-            if self._ms == ms.unknown:
-                logging.error("The video stream of {:s} can't be played for "
-                              "an unknown reason.".format(self._filename))
+        # current position in time.
+        cur_time = self.tell()
 
-            elif self._ms == ms.loading:
-                logging.error("The video stream of {:s} can't be played: "
-                              "still loading".format(self._filename))
+        # Check if the current position is inside the period
+        # if self._period[0] <= cur_time <= self._period[1]:
+        start_time = max(self._period[0], cur_time)
+        end_time = min(self._period[1], self.get_duration())
 
-            elif self._ms == ms.playing:
-                logging.warning("The video stream of {:s} is already "
-                                "playing.".format(self._filename))
-
-            elif self._ms == ms.stopped:
-                self._ms = MediaState().playing
-                self._img_frame.Show()
-                from_time, to_time = self.__get_from_to()
-                if from_time is not None:
-
-                    # Create a Thread with a function to play video in a toplevelwindow
-                    self.__th = threading.Thread(target=self.__threading_play, args=(from_time, to_time))
-                    self.__th.start()
-                    played = True
-                    self.Start(int(sppasVideoPlayer.TIMER_DELAY * 1000.))
-
-                else:
-                    # we are currently outside of the defined period
-                    played = False
-
-            elif self._ms == ms.paused:
-                self._ms = MediaState().playing
-                played = True
+        if start_time < end_time:
+            if self.prepare_play(start_time, end_time) is True:
+                th = threading.Thread(target=self._play_process, args=())
+                self._ms = PlayerState().playing
+                self.Start(int(sppasVideoPlayer.TIMER_DELAY * 1000.))
+                th.start()
 
         return played
 
     # -----------------------------------------------------------------------
 
     def pause(self):
-        """Pause to play the video.
+        """Pause to play the audio.
 
-        :return: (bool) True if the action of stopping was performed
+        :return: (bool) True if the action of pausing was performed
 
         """
-        if self._ms == MediaState().playing:
-            self._ms = MediaState().paused
+        if self._ms == PlayerState().playing:
+            # stop playing
+            self.Stop()
+            self._ms = PlayerState().stopped
+            # seek at the exact moment we stopped to play
+            self._from_time = self.tell()
+            # set our state
+            self._ms = PlayerState().paused
+            return True
+
+        return False
 
     # -----------------------------------------------------------------------
 
@@ -276,9 +230,10 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
         :return: (bool) True if the action of stopping was performed
 
         """
-        self._img_frame.Hide()
-        if self._ms not in (MediaState().loading, MediaState().unknown):
-            self._ms = MediaState().stopped
+        if self._player.IsShown():
+            self._player.Hide()
+            # self._player.stop()
+            self._ms = PlayerState().stopped
             self.seek(self._period[0])
             self.Stop()
             return True
@@ -306,84 +261,67 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
 
     # -----------------------------------------------------------------------
 
-    def __threading_play(self, from_time, to_time):
+    def _play_process(self):
         """Run the process of playing.
 
         It is expected that reading a frame, converting it to an image and
         displaying it in the video frame is faster than the duration of a
         frame (1. / fps).
-        If it's not the case, we should, sometimes, ignore a frame... not implemented!
+        If it's not the case, we should, sometimes, ignore a frame: not tested!
 
         """
-        self.seek(from_time)
-        time_value = datetime.datetime.now()
-        time_delay = round(1. / self._video.get_framerate(), 3)
+        self._player.Show()
+        # self.seek(self._period[0])
+        time_delay = round(1. / self._media.get_framerate(), 3)
+        min_sleep = time_delay / 4.
+
+        # the position to start and to stop playing
+        start_offset = self._media.tell()
+        end_offset = int(self._period[1] * float(self._media.get_framerate()))
 
         # the time when we started to play and the number of frames we displayed.
-        start_time_value = datetime.datetime.now()
-        print("Start time value={}".format(start_time_value))
         frm = 0
+        self._start_datenow = datetime.datetime.now()
 
-        while self._video.is_opened():
-            # stop the loop.
-            # Either the stop() method was invoked or the reset() one.
-            if self._ms in (MediaState().stopped, MediaState().unknown):
+        while self._media.is_opened():
+            if self._ms == PlayerState().playing:
+                # read the next frame from the file
+                frame = self._media.read_frame(process_image=False)
+                frm += 1
+                cur_offset = start_offset + frm
+
+                if frame is None or cur_offset > end_offset:
+                    # we reached the end of the file or the end of the period
+                    self.stop()
+                else:
+                    self._player.SetBackgroundImageArray(frame.irgb())
+
+                    expected_time = self._start_datenow + datetime.timedelta(seconds=(frm * time_delay))
+                    cur_time = datetime.datetime.now()
+                    delta = expected_time - cur_time
+                    delta_seconds = delta.seconds + delta.microseconds / 1000000.
+                    if delta_seconds > min_sleep:
+                        # I'm reading too fast, wait a little time.
+                        time.sleep(delta_seconds)
+
+                    elif delta_seconds > time_delay:
+                        # I'm reading too slow, I'm in late.
+                        self._media.seek(self._media.tell()+1)
+                        frm += 1
+                        logging.warning("Ignored frame at {:f} seconds"
+                                        "".format(float(cur_offset)*self._media.get_framerate()))
+
+            else:
+                # stop the loop at any other state than playing
                 break
 
-            elif self._ms == MediaState().playing:
-                # read the next frame from the file
-                frame = self._video.read_frame(process_image=False)
-                if frame is not None:
-                    self._img_frame.SetBackgroundImageArray(frame.irgb())
-                    # no effect under MacOS: self._img_frame.Refresh()
-
-                    cur_time_in_video = self.tell()
-                    if cur_time_in_video > to_time:
-                        self.stop()
-                    else:
-                        frm += 1
-
-                        expected_time = start_time_value + datetime.timedelta(seconds=((frm+1) * time_delay))
-                        # print(" - read {} frames. expected_time={}".format(frm, expected_time))
-
-                        cur_time = datetime.datetime.now()
-                        # print(" - observed time = {}".format(cur_time))
-
-                        if cur_time < expected_time:
-                            # I'm reading too fast. I've to wait.
-                            # Sleep as many time as required to get the appropriate read speed
-                            delta = cur_time - time_value
-                            delta_seconds = delta.seconds + delta.microseconds / 1000000.
-                            waiting_time = round((time_delay - delta_seconds), 4)
-                            if waiting_time > 0.005:
-                                time.sleep(waiting_time)
-                                # print("    ---> slept for {} seconds".format(waiting_time))
-                        else:
-                            pass
-                            # I'm reading too slow, I'm in late.
-                            #self._video.seek(self._video.tell()+2)
-                            #frm += 1
-                            #logging.warning("Ignored frame at time {}".format(cur_time_in_video))
-                            # print("$$$$$$$$$$$$$$$$$$$$ I'm in late $$$$$$$$$$$$$$$$$$$$$$$$")
-
-                else:
-                    # we reached the end of the file
-                    self.stop()
-
-                time_value = datetime.datetime.now()
-
-            elif self._ms == MediaState().paused:
-                time.sleep(time_delay/4.)
-                time_value = datetime.datetime.now()
-                start_time_value = datetime.datetime.now()
-                frm = 0
-
-        end_time_value = datetime.datetime.now()
-        print("Video duration: {}".format(self.get_duration()))
-        print("Reading time: ")
-        print(" - Play started at: {}".format(start_time_value))
-        print(" - Play finished at: {}".format(end_time_value))
-        print(" -> diff = {}".format((end_time_value-start_time_value).total_seconds()))
+        if start_offset == 0:
+            end_time_value = datetime.datetime.now()
+            wx.LogDebug("Video duration: {}".format(self.get_duration()))
+            wx.LogDebug(" - Play started at: {}".format(self._start_datenow))
+            wx.LogDebug(" - Play finished at: {}".format(end_time_value))
+            wx.LogDebug(" -> diff = {}".format((end_time_value-self._start_datenow).total_seconds()))
+        self._start_datenow = None
 
     # -----------------------------------------------------------------------
     # Manage events
@@ -396,61 +334,14 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
 
         """
         # Nothing to do if we are not playing (probably paused).
-        if self._ms == MediaState().playing:
+        if self._ms == PlayerState().playing:
             # Send the wx.EVT_TIMER event
             wx.Timer.Notify(self)
             # Refresh the video frame
             # Under MacOS, refreshing the frame inside the threading_play
             # instead of here does not have any effect... so we do it here
             # because it works... why?!
-            self._img_frame.Refresh()
-            print(" Refresh at {}".format(datetime.datetime.now()))
-
-    # -----------------------------------------------------------------------
-    # Private&Protected
-    # -----------------------------------------------------------------------
-
-    def __threading_load(self, filename):
-        """Really load the file that filename refers to.
-
-        Send a media event when loading is finished.
-
-        :param filename: (str)
-
-        """
-        self._ms = MediaState().loading
-        value = sppasSimpleVideoPlayer.load(self, filename)
-        if value is True:
-            evt = MediaEvents.MediaLoadedEvent()
-            if self._period is None:
-                self._period = (0., self.get_duration())
-        else:
-            evt = MediaEvents.MediaNotLoadedEvent()
-        evt.SetEventObject(self)
-        wx.PostEvent(self, evt)
-        self._ms = MediaState().stopped
-
-    # -----------------------------------------------------------------------
-
-    def __get_from_to(self):
-        """Return the (start, end) time values to play.
-
-        """
-        # Check if the current period is inside or overlapping this audio
-        if self._period[0] < self.get_duration():
-            # current position in time.
-            cur_time = self.tell()
-            # Check if the current position is inside the period
-            if self._period[0] <= cur_time <= self._period[1]:
-                start_time = max(self._period[0], cur_time)
-                end_time = min(self._period[1], self.get_duration())
-                return start_time, end_time
-                # Convert the time (in seconds) into a position in the frames
-                # start_pos = start_time * self._video.get_framerate()
-                # end_pos = end_time * self._video.get_framerate()
-                # return int(start_pos), int(end_pos)
-
-        return None, None
+            self._player.Refresh()
 
 # ---------------------------------------------------------------------------
 
@@ -492,7 +383,7 @@ class TestPanel(wx.Panel):
         self.ap.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
         self.ap.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
         # Event received every 10ms (in theory) when the audio is playing
-        self.ap.Bind(wx.EVT_TIMER, self._on_timer)
+        self.Bind(wx.EVT_TIMER, self._on_timer)
 
         wx.CallAfter(self._do_load_file)
 
@@ -504,7 +395,7 @@ class TestPanel(wx.Panel):
     # ----------------------------------------------------------------------
 
     def __on_media_loaded(self, event):
-        wx.LogDebug("Audio file loaded successfully")
+        wx.LogDebug("Video file loaded successfully")
         self.FindWindow("btn_play").Enable(True)
         duration = self.ap.get_duration()
         self.slider.SetRange(0, int(duration * 1000.))
@@ -516,7 +407,7 @@ class TestPanel(wx.Panel):
     # ----------------------------------------------------------------------
 
     def __on_media_not_loaded(self, event):
-        wx.LogError("Audio file not loaded")
+        wx.LogError("Video file not loaded")
         self.FindWindow("btn_play").Enable(False)
         self.slider.SetRange(0, 0)
 

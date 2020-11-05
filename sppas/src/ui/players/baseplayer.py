@@ -37,6 +37,7 @@
 """
 
 import logging
+import datetime
 
 from .pstate import PlayerState
 
@@ -70,8 +71,9 @@ class sppasBasePlayer(object):
 
         # The instance of the media player - when playing, and the boundaries
         self._player = None
-        self._from_time = 0.    # position (in seconds) to start playing
-        self._to_time = 0.      # position (in seconds) to stop playing
+        self._start_datenow = None  # datetime.now() of the last start playing
+        self._from_time = 0.        # position (in seconds) of start playing
+        self._to_time = 0.          # position (in seconds) to stop playing
 
     # -----------------------------------------------------------------------
     # State of this player
@@ -135,6 +137,12 @@ class sppasBasePlayer(object):
         return 0.
 
     # -----------------------------------------------------------------------
+
+    def get_time_value(self):
+        """Return the exact time the audio started to play or None."""
+        return self._start_datenow
+
+    # -----------------------------------------------------------------------
     # The methods to be overriden.
     # -----------------------------------------------------------------------
 
@@ -143,7 +151,7 @@ class sppasBasePlayer(object):
         self._ms = PlayerState().unknown
         self._filename = None
         self._media = None
-        self._player = None
+        self._start_datenow = None
         self._from_time = 0.    # position (in seconds) to start playing
         self._to_time = 0.      # position (in seconds) to stop playing
 
@@ -160,8 +168,15 @@ class sppasBasePlayer(object):
 
     # -----------------------------------------------------------------------
 
+    def invalidate(self):
+        """Invalidate the current range of time."""
+        self._from_time = 0.
+        self._to_time = self.get_duration()
+
+    # -----------------------------------------------------------------------
+
     def prepare_play(self, from_time=None, to_time=None):
-        """Prepare to play the media stream.
+        """Prepare to play the media stream: fix the period to play.
 
         :param from_time: (float) Start to play at this given time or at the current from time if None
         :param to_time: (float) Stop to play at this given time or at the current end time if None
@@ -208,21 +223,70 @@ class sppasBasePlayer(object):
         :return: (bool) True if the action of playing was performed
 
         """
-        raise NotImplementedError
+        played = False
+        if self._ms in (PlayerState().paused, PlayerState().stopped):
+            played = self._play_process()
+            if played is True:
+                self._ms = PlayerState().playing
+            else:
+                # An error occurred while we attempted to play
+                self._ms = PlayerState().unknown
+
+        return played
+
+    # -----------------------------------------------------------------------
+
+    def _play_process(self):
+        """Launch the player and fix the start time of playing. """
+        self._start_datenow = datetime.datetime.now()
+        return False
 
     # -----------------------------------------------------------------------
 
     def stop(self):
-        """Stop to play the audio.
+        """Stop to play the audio and invalidate the time range.
 
         :return: (bool) True if the action of stopping was performed
+
+        """
+        self._ms = PlayerState().stopped
+        self._start_datenow = None
+        raise NotImplementedError
+
+    # -----------------------------------------------------------------------
+
+    def pause(self):
+        """Pause to play the audio.
+
+        :return: (bool) True if the action of pausing was performed
 
         """
         raise NotImplementedError
 
     # -----------------------------------------------------------------------
 
-    def invalidate(self):
-        """Invalidate the current range of time."""
-        self._from_time = 0.
-        self._to_time = self.get_duration()
+    def _reposition(self):
+        """Seek the media at the current position in the played stream.
+
+        Needed if the player is different of the object stream...
+        The current position in the played stream is estimated using the
+        delay between the stored time value and now().
+
+        :return: (datetime) New time value
+
+        """
+        # update the current time value
+        cur_time_value = datetime.datetime.now()
+        time_delta = cur_time_value - self._start_datenow
+        self._start_datenow = cur_time_value
+
+        # eval the exact delay since the previous estimation
+        self._from_time = time_delta.total_seconds()
+
+        # how many frames this delay is representing
+        n_frames = self._from_time * self._media.get_framerate()
+
+        # seek at the new position in the media
+        position = self._media.tell() + int(n_frames)
+        if position < self._media.get_nframes():
+            self._media.seek(position)

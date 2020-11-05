@@ -38,12 +38,13 @@ import logging
 import datetime
 
 from src.ui.players.audioplayer import sppasSimpleAudioPlayer
+from src.ui.players.videoplayer import sppasSimpleVideoPlayer
 
 # ---------------------------------------------------------------------------
 
 
 class sppasMultiAudioPlayer(object):
-    """An audio player based on simpleaudio library.
+    """A player which can play several media synchronously.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -51,14 +52,14 @@ class sppasMultiAudioPlayer(object):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    Can load, play and browse throw several audio streams of given files.
+    Can load, play and browse throw several media streams of given files.
 
     """
 
     def __init__(self):
         """Instantiate the multi audio player."""
-        # Key = sppasSimpleAudioPlayer / value = bool:enabled
-        self._audios = dict()
+        # Key = the media player / value = bool:enabled
+        self._medias = dict()
         # Observed delays between 2 consecutive "play".
         # Used to synchronize files.
         self._all_delays = [0.01]
@@ -68,14 +69,14 @@ class sppasMultiAudioPlayer(object):
     # -----------------------------------------------------------------------
 
     def reset(self):
-        """Forget everything about audio."""
-        for audio in self._audios:
-            audio.reset()
+        """Forget everything about the media players."""
+        for mp in self._medias:
+            mp.reset()
 
     # -----------------------------------------------------------------------
 
     def add_audio(self, filename):
-        """Add an audio into the list of audio managed by this control.
+        """Add an audio into the list of media managed by this control.
 
         The new audio is disabled.
 
@@ -86,8 +87,26 @@ class sppasMultiAudioPlayer(object):
         if self.exists(filename):
             return False
         new_audio = sppasSimpleAudioPlayer()
-        self._audios[new_audio] = False
+        self._medias[new_audio] = False
         loaded = new_audio.load(filename)
+        return loaded
+
+    # -----------------------------------------------------------------------
+
+    def add_video(self, filename):
+        """Add a video into the list of media managed by this control.
+
+        The new video is disabled.
+
+        :param filename: (str)
+        :return: (bool)
+
+        """
+        if self.exists(filename):
+            return False
+        new_video = sppasSimpleVideoPlayer()
+        self._medias[new_video] = False
+        loaded = new_video.load(filename)
         return loaded
 
     # -----------------------------------------------------------------------
@@ -102,10 +121,10 @@ class sppasMultiAudioPlayer(object):
 
         """
         dur = list()
-        if len(self._audios) > 0:
-            for a in self._audios:
-                if a.is_unknown() is False and a.is_loading() is False:
-                    dur.append(a.get_duration())
+        if len(self._medias) > 0:
+            for mp in self._medias:
+                if mp.is_unknown() is False and mp.is_loading() is False:
+                    dur.append(mp.get_duration())
 
         if len(dur) > 0:
             return max(dur)
@@ -115,8 +134,8 @@ class sppasMultiAudioPlayer(object):
 
     def exists(self, filename):
         """Return True if the filename is matching an existing audio."""
-        for a in self._audios:
-            if a.get_filename() == filename:
+        for mp in self._medias:
+            if mp.get_filename() == filename:
                 return True
         return False
 
@@ -125,10 +144,10 @@ class sppasMultiAudioPlayer(object):
     def is_enabled(self, filename=None):
         """Return True if any audio or the one of the given filename is enabled."""
         if filename is None:
-            return any([self._audios[audio] for audio in self._audios])
+            return any([self._medias[audio] for audio in self._medias])
 
-        for audio in self._audios:
-            if self._audios[audio] is True and filename == audio.get_filename():
+        for mp in self._medias:
+            if self._medias[mp] is True and filename == mp.get_filename():
                 return True
         return False
 
@@ -145,23 +164,23 @@ class sppasMultiAudioPlayer(object):
         :return: (bool)
 
         """
-        for a in self._audios:
-            if a.get_filename() == filename:
-                self._audios[a] = bool(value)
-                if a.is_playing():
-                    a.stop()
+        for mp in self._medias:
+            if mp.get_filename() == filename:
+                self._medias[mp] = bool(value)
+                if mp.is_playing():
+                    mp.stop()
 
         return False
 
     # -----------------------------------------------------------------------
 
     def are_playing(self):
-        """Return True if all enabled audio are playing.
+        """Return True if all enabled media are playing.
 
         :return: (bool)
 
         """
-        playing = [audio.is_playing() for audio in self._audios if self._audios[audio] is True]
+        playing = [mp.is_playing() for mp in self._medias if self._medias[mp] is True]
         if len(playing) == 0:
             return False
 
@@ -171,29 +190,29 @@ class sppasMultiAudioPlayer(object):
     # -----------------------------------------------------------------------
 
     def is_playing(self, filename=None):
-        """Return True if any audio or if the given audio is playing.
+        """Return True if any media or if the given media is playing.
 
         :param filename: (str)
         :return: (bool)
 
         """
         if filename is None:
-            return any([audio.is_playing() for audio in self._audios])
+            return any([mp.is_playing() for mp in self._medias])
 
-        for audio in self._audios:
-            if audio.is_playing() is True and filename == audio.get_filename():
+        for mp in self._medias:
+            if mp.is_playing() is True and filename == mp.get_filename():
                 return True
         return False
 
     # -----------------------------------------------------------------------
 
     def are_paused(self):
-        """Return True if all enabled audio are paused.
+        """Return True if all enabled media are paused.
 
         :return: (bool)
 
         """
-        paused = [audio.is_paused() for audio in self._audios if self._audios[audio] is True]
+        paused = [mp.is_paused() for mp in self._medias if self._medias[mp] is True]
         if len(paused) == 0:
             return False
 
@@ -203,29 +222,29 @@ class sppasMultiAudioPlayer(object):
     # -----------------------------------------------------------------------
 
     def is_paused(self, filename=None):
-        """Return True if any audio or if the given audio is paused.
+        """Return True if any media or if the given media is paused.
 
         :param filename: (str)
         :return: (bool)
 
         """
         if filename is None:
-            return any([audio.is_paused() for audio in self._audios])
+            return any([mp.is_paused() for mp in self._medias])
 
-        for audio in self._audios:
-            if audio.is_paused() is True and filename == audio.get_filename():
+        for mp in self._medias:
+            if mp.is_paused() is True and filename == mp.get_filename():
                 return True
         return False
 
     # -----------------------------------------------------------------------
 
     def are_stopped(self):
-        """Return True if all enabled audio are stopped.
+        """Return True if all enabled media are stopped.
 
         :return: (bool)
 
         """
-        stopped = [audio.is_stopped() for audio in self._audios if self._audios[audio] is True]
+        stopped = [mp.is_stopped() for mp in self._medias if self._medias[mp] is True]
         if len(stopped) == 0:
             return False
 
@@ -235,34 +254,34 @@ class sppasMultiAudioPlayer(object):
     # -----------------------------------------------------------------------
 
     def is_stopped(self, filename=None):
-        """Return True if any audio or if the given audio is stopped.
+        """Return True if any audio or if the given media is stopped.
 
         :param filename: (str)
         :return: (bool)
 
         """
         if filename is None:
-            return any([audio.is_stopped() for audio in self._audios])
+            return any([mp.is_stopped() for mp in self._medias])
 
-        for audio in self._audios:
-            if audio.is_stopped() is True and filename == audio.get_filename():
+        for mp in self._medias:
+            if mp.is_stopped() is True and filename == mp.get_filename():
                 return True
         return False
 
     # -----------------------------------------------------------------------
 
     def is_loading(self, filename=None):
-        """Return True if any audio or if the given audio is loading.
+        """Return True if any audio or if the given media is loading.
 
         :param filename: (str)
         :return: (bool)
 
         """
         if filename is None:
-            return any([audio.is_loading() for audio in self._audios])
+            return any([mp.is_loading() for mp in self._medias])
 
-        for audio in self._audios:
-            if audio.is_loading() is True and filename == audio.get_filename():
+        for mp in self._medias:
+            if mp.is_loading() is True and filename == mp.get_filename():
                 return True
         return False
 
@@ -276,10 +295,10 @@ class sppasMultiAudioPlayer(object):
 
         """
         if filename is None:
-            return any([audio.is_unknown() for audio in self._audios])
+            return any([mp.is_unknown() for mp in self._medias])
 
-        for audio in self._audios:
-            if audio.is_unknown() is True and filename == audio.get_filename():
+        for mp in self._medias:
+            if mp.is_unknown() is True and filename == mp.get_filename():
                 return True
         return False
 
@@ -292,15 +311,15 @@ class sppasMultiAudioPlayer(object):
         :return: (bool)
 
         """
-        audio = None
-        for a in self._audios:
-            if a.get_filename() == filename:
-                audio = a
+        media_player = None
+        for mp in self._medias:
+            if mp.get_filename() == filename:
+                media_player = mp
                 break
 
-        if audio is not None:
-            audio.stop()
-            del self._audios[audio]
+        if media_player is not None:
+            media_player.stop()
+            del self._medias[media_player]
             return True
 
         return False
@@ -343,8 +362,8 @@ class sppasMultiAudioPlayer(object):
         shift = 0.
         nb_playing = 0
 
-        for audio in self._audios:
-            if self._audios[audio] is True:
+        for mp in self._medias:
+            if self._medias[mp] is True:
                 if started_time is not None and process_time is not None:
                     delta = process_time - started_time
                     delay = delta.seconds + delta.microseconds / 1000000.
@@ -352,12 +371,12 @@ class sppasMultiAudioPlayer(object):
                     self._all_delays.append(delay)
                     shift += delay
 
-                if audio.prepare_play(self.__from_time + shift, self.__to_time):
-                    played = audio.play()
+                if mp.prepare_play(self.__from_time + shift, self.__to_time):
+                    played = mp.play()
                     if played is True:
                         nb_playing += 1
                         started_time = process_time
-                        process_time = audio.get_time_value()
+                        process_time = mp.get_time_value()
                         if started_time is None:
                             mean_delay = sum(self._all_delays) / float(len(self._all_delays))
                             started_time = process_time - datetime.timedelta(seconds=mean_delay)
@@ -370,13 +389,13 @@ class sppasMultiAudioPlayer(object):
     def pause(self):
         """Pause the audios."""
         paused = False
-        for audio in self._audios:
-            if audio.is_playing():
-                p = audio.pause()
+        for mp in self._medias:
+            if mp.is_playing():
+                p = mp.pause()
                 if p is True and paused is False:
                     paused = True
-                    position = audio.audio_tell()
-                    self.__from_time = float(position) / float(audio.get_framerate())
+                    position = mp.audio_tell()
+                    self.__from_time = float(position) / float(mp.get_framerate())
 
         return paused
 
@@ -389,7 +408,7 @@ class sppasMultiAudioPlayer(object):
 
         """
         stopped = False
-        for audio in self._audios:
+        for audio in self._medias:
             s = audio.stop()
             if s is True:
                 stopped = True
@@ -413,7 +432,7 @@ class sppasMultiAudioPlayer(object):
             self.pause()
             force_pause = True
 
-        for audio in self._audios:
+        for audio in self._medias:
             if audio.is_unknown() is False and audio.is_loading() is False:
                 audio.seek(value)
 
@@ -424,4 +443,4 @@ class sppasMultiAudioPlayer(object):
     # -----------------------------------------------------------------------
 
     def __len__(self):
-        return len(self._audios)
+        return len(self._medias)

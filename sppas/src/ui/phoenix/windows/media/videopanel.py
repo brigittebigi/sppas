@@ -44,11 +44,10 @@ from sppas.src.config import paths
 from sppas.src.config import MediaState
 
 from ..panels import sppasPanel
-from ..datactrls import sppasWaveformWindow
 
 from .mediaevents import MediaEvents
 from .mediatype import MediaType
-from .videoplay import sppasVideoPlayer
+from src.ui.players.wxvideoplay import sppasVideoPlayer
 
 # ---------------------------------------------------------------------------
 

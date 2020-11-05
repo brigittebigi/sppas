@@ -29,8 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.media.wxaudioplay.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.players.wxaudioplay.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     A player to play a single audio file with tell and pause implemented and
     events.
@@ -195,12 +195,17 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         # if self._period[0] <= cur_time <= self._period[1]:
         start_time = max(self._period[0], cur_time)
         end_time = min(self._period[1], self.get_duration())
+        wx.LogDebug("Play from {} to {}".format(start_time, end_time))
 
         if start_time < end_time:
             if self.prepare_play(start_time, end_time) is True:
-                played = sppasSimpleAudioPlayer.play(self)
+                played = self._play_process()
                 if played is True:
+                    self._ms = PlayerState().playing
                     self.Start(int(sppasAudioPlayer.TIMER_DELAY * 1000.))
+            else:
+                # An error occurred while we attempted to play
+                self._ms = PlayerState().unknown
 
         return played
 

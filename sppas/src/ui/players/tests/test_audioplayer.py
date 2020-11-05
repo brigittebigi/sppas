@@ -28,7 +28,7 @@
 
         ---------------------------------------------------------------------
 
-    src.audiodata.tests.test_player.py
+    src.audiodata.tests.test_audioplayer.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
