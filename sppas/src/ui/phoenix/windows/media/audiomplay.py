@@ -44,9 +44,9 @@ import wx
 import threading
 
 from sppas.src.config import paths
-from sppas.src.audiodata import sppasMultiAudioPlayer
+from sppas.src.ui.players import sppasMultiAudioPlayer
 
-from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
+from .mediaevents import MediaEvents
 
 # ---------------------------------------------------------------------------
 

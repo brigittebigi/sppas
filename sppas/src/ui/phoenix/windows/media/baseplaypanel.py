@@ -591,18 +591,18 @@ class sppasPlayerControlsPanel(sppasImagePanel):
 
 class PlayerExamplePanel(sppasPlayerControlsPanel):
 
-    BG_IMAGE = os.path.join(paths.etc, "images", "bg_brushed_metal.jpg")
+    # BG_IMAGE = os.path.join(paths.etc, "images", "bg_brushed_metal.jpg")
 
     # ----------------------------------------------------------------------
 
     def __init__(self, parent):
         super(PlayerExamplePanel, self).__init__(
             parent,
-            image=PlayerExamplePanel.BG_IMAGE,
+            #image=PlayerExamplePanel.BG_IMAGE,
             name="player_panel")
 
         self.amp = sppasAudioPlayer(self)  # Audio Multi Player - amp
-        self.prev_time = None
+        # self.prev_time = None
 
         btn1 = BitmapTextButton(self.widgets_left_panel, name="scroll_left")
         self.SetButtonProperties(btn1)
@@ -687,8 +687,10 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
         duration = self.amp.get_duration()
         self._timeslider.set_duration(duration)
-        # the following line enters in an infinite loop with the message:
-        # In file /Users/robind/projects/bb2/dist-osx-py38/build/ext/wxWidgets/src/unix/threadpsx.cpp at line 370: 'pthread_mutex_[timed]lock()' failed with error 0x00000023 (Resource temporarily unavailable).
+        # Under MacOS, the following line enters in an infinite loop with the message:
+        #   In file /Users/robind/projects/bb2/dist-osx-py38/build/ext/wxWidgets/src/unix/threadpsx.cpp at line 370: 'pthread_mutex_[timed]lock()' failed with error 0x00000023 (Resource temporarily unavailable).
+        # Under Linux it crashes with the message:
+        #   pure virtual method called
         # self.amp.set_period(0., duration)
 
         # to test if it works, set a selection period and a visible period:
@@ -709,12 +711,12 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
     def play(self):
         wx.LogDebug("Play")
-        if self.amp.is_playing() is False:
+        if self.amp.is_playing() is False and self.amp.is_loading() is False:
             start, end = self._timeslider.get_range()
             self.amp.set_period(start, end)
             played = self.amp.play()
             if played is True:
-                self.prev_time = datetime.datetime.now()
+                # self.prev_time = datetime.datetime.now()
                 self.FindWindow("media_pause").SetValue(False)
 
     # -----------------------------------------------------------------------
@@ -747,7 +749,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     def stop(self):
         wx.LogDebug("Stop")
         self.amp.stop()
-        self.prev_time = None
+        # self.prev_time = None
         self.DeletePendingEvents()
         self.FindWindow("media_pause").SetValue(False)
 
@@ -819,7 +821,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
             # delta = cur_time - self.prev_time
             # delta_seconds = delta.seconds + delta.microseconds / 1000000.
             # if delta_seconds > self.delta_slider:
-            self.prev_time = cur_time
+            # self.prev_time = cur_time
             time_pos = self.amp.tell()
             self._timeslider.set_value(time_pos)
             self.FindWindow("moment_led").SetValue("{:.3f}".format(time_pos))

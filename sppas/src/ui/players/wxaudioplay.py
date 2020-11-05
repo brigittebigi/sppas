@@ -29,26 +29,23 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.media.audioplay.py
+    src.ui.phoenix.windows.media.wxaudioplay.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Requires simpleaudio library to play the audio file stream. Raise a
-    FeatureException at init if 'audioplay' feature is not enabled.
-
-    A player to play a single audio file.
+    A player to play a single audio file with tell and pause implemented and
+    events.
 
 """
 
 import os
 import wx
-import threading
 
 from sppas.src.config import paths
 from sppas.src.config import MediaState
-from sppas.src.utils import b
-from sppas.src.audiodata import sppasSimpleAudioPlayer
 
 from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
+
+from sppas.src.ui.players.audioplayer import sppasSimpleAudioPlayer
 
 # ---------------------------------------------------------------------------
 
@@ -64,7 +61,6 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
 
     This class is inheriting a Timer in order to update the position
     in the stream and thus to implement the 'tell' method.
-    This class is using a thread to load the frames of the audio file.
 
     Events emitted by this class:
 
@@ -107,9 +103,6 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         wx.Timer.__init__(self, owner)
         sppasSimpleAudioPlayer.__init__(self)
 
-        # A thread to load the frames of the audio
-        self.__th = None
-
         # A time period to play the audio stream. Default is whole.
         self._period = None
 
@@ -125,13 +118,8 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         self.Stop()
         self._period = None
         try:
-            if self.__th is not None:
-                if self.__th.is_alive():
-                    # Python does not implement a "stop()" method for threads
-                    del self.__th
-                    self.__th = None
-                # The audio was not created if the init raised a FeatureException
-                sppasSimpleAudioPlayer.reset(self)
+            # The audio was not created if the init raised a FeatureException
+            sppasSimpleAudioPlayer.reset(self)
         except:
             pass
 
@@ -169,17 +157,21 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
     # -----------------------------------------------------------------------
 
     def load(self, filename):
-        """Override. Load the file that filename refers to.
+        """Override. Load the file that filename refers to then send event.
 
         :param filename: (str)
-        :return: (bool) Always returns False
 
         """
-        # Create a Thread with a function with args
-        self.__th = threading.Thread(target=self.__threading_load,
-                                     args=(filename,))
-        # Start the thread
-        self.__th.start()
+        value = sppasSimpleAudioPlayer.load(self, filename)
+        if value is True:
+            evt = MediaEvents.MediaLoadedEvent()
+            if self._period is None:
+                self._period = (0., self.get_duration())
+        else:
+            evt = MediaEvents.MediaNotLoadedEvent()
+        evt.SetEventObject(self)
+        wx.PostEvent(self, evt)
+        self._ms = MediaState().stopped
 
     # -----------------------------------------------------------------------
 
@@ -196,6 +188,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         :return: (bool) True if the action of playing was started
 
         """
+        played = False
         # current position in time.
         cur_time = self.tell()
 
@@ -277,51 +270,6 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
 
         elif self._ms != MediaState().paused:
             self.stop()
-
-    # -----------------------------------------------------------------------
-    # Private & Protected methods
-    # -----------------------------------------------------------------------
-
-    def _extract_frames(self, from_time, to_time):
-        """Override. Return the frames to play in the given period.
-
-        Notice that the simpleplayer library only allows to play/stop.
-        Seek is not supported.
-
-        """
-        wx.LogDebug(" ... extract frame for the period: {} {}".format(from_time, to_time))
-        # Check if the current period is inside or overlapping this audio
-        end_time = min(to_time, self.get_duration())
-        if from_time < self.get_duration():
-            # Convert the time (in seconds) into a position in the frames
-            start_pos = self._time_to_frames(from_time)
-            end_pos = self._time_to_frames(end_time)
-            return self._frames[start_pos:end_pos]
-        else:
-            wx.LogDebug("Period out of range -- duration: {}".format(self.get_duration()))
-
-        return b("")
-
-    # -----------------------------------------------------------------------
-
-    def __threading_load(self, filename):
-        """Really load the file that filename refers to.
-
-        Send a media event when loading is finished.
-
-        :param filename: (str)
-
-        """
-        value = sppasSimpleAudioPlayer.load(self, filename)
-        if value is True:
-            evt = MediaEvents.MediaLoadedEvent()
-            if self._period is None:
-                self._period = (0., self.get_duration())
-        else:
-            evt = MediaEvents.MediaNotLoadedEvent()
-        evt.SetEventObject(self)
-        wx.PostEvent(self, evt)
-        self._ms = MediaState().stopped
 
 # ---------------------------------------------------------------------------
 

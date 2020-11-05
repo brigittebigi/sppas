@@ -43,7 +43,6 @@ when a class is instantiated.
 
 """
 
-import logging
 from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
 from sppas.src.exceptions import sppasPackageFeatureError
@@ -90,8 +89,6 @@ if cfg.feature_installed("video") is True:
     from .video import sppasVideoReader
     from .video import sppasVideoWriter
     from .videobuffer import sppasVideoReaderBuffer
-    from .videoplayer import sppasSimpleVideoPlayer
-    logging.info("video feature enabled")
 
 else:
     # Define classes in case opencv&numpy are not installed.
@@ -110,10 +107,6 @@ else:
         DEFAULT_BUFFER_SIZE = 0
         DEFAULT_BUFFER_OVERLAP = 0
         MAX_MEMORY_SIZE = 0
-        pass
-
-    class sppasSimpleVideoPlayer(sppasVideodataError):
-        QUEUE_SIZE = 128
         pass
 
 video_extensions = tuple(sppasVideoWriter.FOURCC.keys())

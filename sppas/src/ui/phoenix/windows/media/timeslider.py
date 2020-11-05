@@ -72,8 +72,7 @@ class ToggleSlider(ToggleTextButton):
 
     """
 
-    # BG_IMAGE = os.path.join(paths.etc, "images", "bg_alu.png")
-    BG_IMAGE = os.path.join(paths.etc, "images", "bg_brushed_metal2.jpg")
+    # BG_IMAGE = os.path.join(paths.etc, "images", "bg_brushed_metal2.jpg")
 
     # -----------------------------------------------------------------------
 
@@ -102,10 +101,10 @@ class ToggleSlider(ToggleTextButton):
 
     def SetValue(self, value):
         ToggleTextButton.SetValue(self, value)
-        if self.GetValue() is True:
-            self.SetBackgroundImage(None)
-        else:
-            self.SetBackgroundImage(ToggleSlider.BG_IMAGE)
+        # if self.GetValue() is True:
+        #     self.SetBackgroundImage(None)
+        # else:
+        #     self.SetBackgroundImage(ToggleSlider.BG_IMAGE)
 
 # ----------------------------------------------------------------------------
 
@@ -384,9 +383,8 @@ class TimeSliderPanel(sppasPanel):
         """Create the content of the panel."""
         btn_dur = ToggleSlider(self, label="--", name="total_button")
         btn_part = ToggleSlider(self, label="--", name="visible_part_button")
-        btn_part.SetBorderWidth(0)
 
-        panel_sel = sppasImagePanel(self, image=ToggleSlider.BG_IMAGE, name="selection_panel")
+        panel_sel = sppasImagePanel(self, name="selection_panel")
         btn_before_sel = ToggleSlider(panel_sel, label="--", name="before_sel_button")
         btn_after_sel = ToggleSlider(panel_sel, label="--", name="after_sel_button")
 
@@ -402,7 +400,7 @@ class TimeSliderPanel(sppasPanel):
         panel_sel.SetSizer(sizer_sel)
 
         slider = sppasSlider(self, name="time_slider")
-        slider.SetBackgroundImage(ToggleSlider.BG_IMAGE)
+        # slider.SetBackgroundImage(ToggleSlider.BG_IMAGE)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(slider, 0, wx.EXPAND, 0)

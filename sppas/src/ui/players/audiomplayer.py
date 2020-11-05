@@ -29,18 +29,15 @@
 
         ---------------------------------------------------------------------
 
-    src.audiodata.audiomplayer.py
+    src.ui.players.audiomplayer.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    A simple audio player based on simpleaudio library.
-    https://simpleaudio.readthedocs.io/en/latest/index.html
 
 """
 
 import logging
 import datetime
 
-from .audioplayer import sppasSimpleAudioPlayer
+from src.ui.players.audioplayer import sppasSimpleAudioPlayer
 
 # ---------------------------------------------------------------------------
 

@@ -46,7 +46,7 @@ from ..datactrls import sppasWaveformWindow
 
 from .mediaevents import MediaEvents
 from .mediatype import MediaType
-from .audioplay import sppasAudioPlayer
+from src.ui.players.wxaudioplay import sppasAudioPlayer
 
 # ---------------------------------------------------------------------------
 

@@ -48,7 +48,7 @@ from sppas.src.config import MediaState
 from sppas.src.utils import b
 
 import sppas.src.audiodata.aio
-from .audio import sppasAudioPCM
+from src.audiodata.audio import sppasAudioPCM
 
 # ---------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ class sppasSimpleAudioPlayer(object):
         self._frames = b("")     # loaded frames of the audio stream
         self._sa_play = None     # simpleaudio library PlayObject()
 
-        self._time_value = None  # datetime of start playing
+        self.__time_value = None  # datetime of start playing
         self.__from_time = 0.    # position (in seconds) to start playing
         self.__to_time = 0.      # position (in seconds) of ending play
 
@@ -103,14 +103,14 @@ class sppasSimpleAudioPlayer(object):
             self._audio = None
         self._frames = b("")
         self._sa_play = None
-        self._time_value = None
+        self.__time_value = None
         self.__from_time = 0.
         self.__to_time = 0.
 
     # -----------------------------------------------------------------------
 
     def load(self, filename):
-        """Load the file that filename refers to.
+        """Load all the frames of the file that filename refers to.
 
         :param filename: (str) Name of an audio file
         :return: (bool) True if both successfully opened and loaded.
@@ -216,32 +216,41 @@ class sppasSimpleAudioPlayer(object):
                                 "playing.".format(self._filename))
 
             else:  # stopped or paused
-                try:
-                    # Ask simpleaudio library to play a buffer of frames
-                    frames = self._extract_frames()
-                    if len(frames) > 0:
-                        self._sa_play = sa.play_buffer(
-                            frames,
-                            self._audio.get_nchannels(),
-                            self._audio.get_sampwidth(),
-                            self._audio.get_framerate())
-                        # Check if the audio is really playing
-                        played = self._sa_play.is_playing()
-                    else:
-                        logging.warning("No frames to play in the given period "
-                                        "for audio {:s}.".format(self._filename))
+                played = self.__play()
 
-                except Exception as e:
-                    logging.error("An error occurred when attempted to play "
-                                  "the audio stream of {:s} with the "
-                                  "simpleaudio library: {:s}".format(self._filename, str(e)))
+        return played
 
-                if played is True:
-                    self._ms = MediaState().playing
-                    self._time_value = datetime.datetime.now()
-                else:
-                    # An error occurred while we attempted to play
-                    self._ms = MediaState().unknown
+    # -----------------------------------------------------------------------
+
+    def __play(self):
+        """Run the process of playing."""
+        played = False
+        try:
+            # Ask simpleaudio library to play a buffer of frames
+            frames = self._extract_frames()
+            if len(frames) > 0:
+                self._sa_play = sa.play_buffer(
+                    frames,
+                    self._audio.get_nchannels(),
+                    self._audio.get_sampwidth(),
+                    self._audio.get_framerate())
+                # Check if the audio is really playing
+                played = self._sa_play.is_playing()
+            else:
+                logging.warning("No frames to play in the given period "
+                                "for audio {:s}.".format(self._filename))
+
+        except Exception as e:
+            logging.error("An error occurred when attempted to play "
+                          "the audio stream of {:s} with the "
+                          "simpleaudio library: {:s}".format(self._filename, str(e)))
+
+        if played is True:
+            self._ms = MediaState().playing
+            self.__time_value = datetime.datetime.now()
+        else:
+            # An error occurred while we attempted to play
+            self._ms = MediaState().unknown
 
         return played
 
@@ -249,7 +258,7 @@ class sppasSimpleAudioPlayer(object):
 
     def get_time_value(self):
         """Return the exact time the audio started to play."""
-        return self._time_value
+        return self.__time_value
 
     # -----------------------------------------------------------------------
 
@@ -391,8 +400,8 @@ class sppasSimpleAudioPlayer(object):
         """
         # update the current time value
         cur_time_value = datetime.datetime.now()
-        time_delta = cur_time_value - self._time_value
-        self._time_value = cur_time_value
+        time_delta = cur_time_value - self.__time_value
+        self.__time_value = cur_time_value
 
         # eval the exact delay since the previous estimation
         self.__from_time = time_delta.total_seconds()
@@ -405,7 +414,7 @@ class sppasSimpleAudioPlayer(object):
         if position < self._audio.get_nframes():
             self._audio.seek(position)
 
-        return self._time_value
+        return self.__time_value
 
     # -----------------------------------------------------------------------
 

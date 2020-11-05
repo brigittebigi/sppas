@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.tests.test_windows.py
+    src.ui.phoenix.players.test_wxplayers.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -41,7 +41,7 @@ from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
-import sppas.src.ui.phoenix.windows.media.baseplaypanel as baseplaypanel
+import sppas.src.ui.players.wxaudioplay as audioplay
 
 
 # ----------------------------------------------------------------------------
@@ -55,24 +55,8 @@ class TestPanel(wx.Choicebook):
             self,
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
-        """
-        p = audiomplay.TestPanel(self)
-        self.AddPage(p, p.GetName())
-        
-        p = videoplay.TestPanel(self)
-        self.AddPage(p, p.GetName())
 
-        p = audiopanel.TestPanel(self)
-        self.AddPage(p, p.GetName())
-
-        p = videopanel.TestPanel(self)
-        self.AddPage(p, p.GetName())
-
-        p = timeslider.TestPanel(self)
-        self.AddPage(p, p.GetName())
-        """
-
-        p = baseplaypanel.TestPanel(self)
+        p = audioplay.TestPanel(self)
         self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)

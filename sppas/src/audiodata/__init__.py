@@ -45,66 +45,13 @@ Requires the following other packages:
 * utils
 * exceptions
 
-Requires the following dependency to play audio:
-
-* simpleaudio - https://pypi.org/project/simpleaudio/
-
-If the audioplay feature is not enabled, the sppasEnableFeatureError() is
-raised the class sppasSimpleAudioPlayer() is instantiated.
-
 """
-
-import logging
-
-from sppas.src.config import cfg
-from sppas.src.exceptions import sppasEnableFeatureError
-from sppas.src.exceptions import sppasPackageFeatureError
-
-# ---------------------------------------------------------------------------
-
-
-class sppasAudioPlayDataError(object):
-    def __init__(self, *args, **kwargs):
-        raise sppasEnableFeatureError("audioplay")
-
-# Test if simpleaudio library is available. It is the requirement of the
-# feature "audioplay".
-try:
-    import simpleaudio
-    cfg.set_feature("audioplay", True)
-    logging.info("audioplay feature enabled")
-except ImportError:
-    # Invalidate the feature because the package is not installed
-    cfg.set_feature("audioplay", False)
-
-
-# The feature "audioplay" is enabled. Check if it's really correct!
-if cfg.feature_installed("audioplay") is True:
-
-    class sppasAudioPlayDataError(object):
-        def __init__(self, *args, **kwargs):
-            raise sppasPackageFeatureError("simpleaudio", "audioplay")
-
-# ---------------------------------------------------------------------------
-# Either import classes or define them
-# ---------------------------------------------------------------------------
 
 
 from .audio import sppasAudioPCM
 from .audioframes import sppasAudioFrames
 from .channel import sppasChannel
 from .aio import extensions
-
-if cfg.feature_installed("audioplay") is True:
-    from .audioplayer import sppasSimpleAudioPlayer
-    from .audiomplayer import sppasMultiAudioPlayer
-else:
-
-    class sppasSimpleAudioPlayer(sppasAudioPlayDataError):
-        pass
-
-    class sppasMultiAudioPlayer(sppasAudioPlayDataError):
-        pass
 
 # ---------------------------------------------------------------------------
 
@@ -114,6 +61,5 @@ audio_extensions = extensions
 __all__ = (
     "sppasAudioPCM",
     "sppasAudioFrames",
-    "sppasChannel",
-    "sppasMultiAudioPlayer"
+    "sppasChannel"
 )

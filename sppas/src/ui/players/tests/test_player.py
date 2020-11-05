@@ -38,6 +38,7 @@ import os.path
 import time
 
 from sppas.src.config import paths
+
 from ..audioplayer import sppasSimpleAudioPlayer
 from ..audiomplayer import sppasMultiAudioPlayer
 
@@ -147,9 +148,10 @@ class TestMultiPlayer(unittest.TestCase):
         mp.enable(sample_2)
         mp.enable(sample_3)
         mp.enable(sample_4)
-        mp.play()
+
+        mp.play_interval(1., 3.)
         time.sleep(3)
-        mp.pause()
-        mp.play()
+        mp.stop()
+        mp.play()  # will play the same period of time than the previous one
         time.sleep(3)
         mp.stop()
