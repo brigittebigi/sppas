@@ -29,8 +29,10 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.players.audiomplayer.py
+    src.ui.players.mmplayer.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Multi-media player: play several media really synchronously.
 
 """
 
@@ -38,12 +40,13 @@ import logging
 import datetime
 
 from sppas.src.ui.players.audioplayer import sppasSimpleAudioPlayer
-from sppas.src.ui.players.videoplayer import sppasSimpleVideoPlayer
+from sppas.src.ui.players.videoplayercv import sppasSimpleVideoPlayerCV
+from sppas.src.ui.players.videoplayerwx import sppasSimpleVideoPlayerWX
 
 # ---------------------------------------------------------------------------
 
 
-class sppasMultiAudioPlayer(object):
+class sppasMultiMediaPlayer(object):
     """A player which can play several media synchronously.
 
     :author:       Brigitte Bigi
@@ -57,7 +60,7 @@ class sppasMultiAudioPlayer(object):
     """
 
     def __init__(self):
-        """Instantiate the multi audio player."""
+        """Instantiate the multi media player."""
         # Key = the media player / value = bool:enabled
         self._medias = dict()
         # Observed delays between 2 consecutive "play".
@@ -104,7 +107,7 @@ class sppasMultiAudioPlayer(object):
         """
         if self.exists(filename):
             return False
-        new_video = sppasSimpleVideoPlayer()
+        new_video = sppasSimpleVideoPlayerWX()
         self._medias[new_video] = False
         loaded = new_video.load(filename)
         return loaded
@@ -379,6 +382,7 @@ class sppasMultiAudioPlayer(object):
                         process_time = mp.get_time_value()
                         if started_time is None:
                             mean_delay = sum(self._all_delays) / float(len(self._all_delays))
+                            print(mean_delay)
                             started_time = process_time - datetime.timedelta(seconds=mean_delay)
 
         logging.info(" ... {:d} audio files are playing".format(nb_playing))

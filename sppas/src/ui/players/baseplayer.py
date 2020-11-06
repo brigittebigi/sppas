@@ -30,7 +30,7 @@
         ---------------------------------------------------------------------
 
     src.ui.baseplayer.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~
 
     Base class to implement inherited audio/video players.
 
@@ -59,7 +59,6 @@ class sppasBasePlayer(object):
 
     def __init__(self):
         """A base class for any player."""
-
         # The state of the player: unknown, loading, playing, paused or stopped
         self._ms = PlayerState().unknown
 

@@ -49,13 +49,13 @@ from sppas.src.config import paths
 from sppas.src.ui.phoenix.windows.frame import sppasImageFrame
 from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
 
-from .videoplayer import sppasSimpleVideoPlayer
+from .videoplayercv import sppasSimpleVideoPlayerCV
 from .pstate import PlayerState
 
 # ---------------------------------------------------------------------------
 
 
-class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
+class sppasVideoPlayer(sppasSimpleVideoPlayerCV, wx.Timer):
     """A video player based on opencv library and a timer.
 
     :author:       Brigitte Bigi
@@ -90,7 +90,7 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
 
         """
         wx.Timer.__init__(self, owner)
-        sppasSimpleVideoPlayer.__init__(self)
+        sppasSimpleVideoPlayerCV.__init__(self)
 
         # The frame in which images of the video are sent
         self._player = sppasImageFrame(
@@ -116,7 +116,7 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
         self._period = None
         try:
             # The audio was not created if the init raised a FeatureException
-            sppasSimpleVideoPlayer.reset(self)
+            sppasSimpleVideoPlayerCV.reset(self)
         except:
             pass
 
@@ -160,7 +160,7 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
         :return: (bool) Always returns False
 
         """
-        value = sppasSimpleVideoPlayer.load(self, filename)
+        value = sppasSimpleVideoPlayerCV.load(self, filename)
         if value is True:
             evt = MediaEvents.MediaLoadedEvent()
             if self._period is None:
@@ -256,7 +256,7 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
         if time_pos < self._period[0]:
             time_pos = self._period[0]
 
-        return sppasSimpleVideoPlayer.seek(self, time_pos)
+        return sppasSimpleVideoPlayerCV.seek(self, time_pos)
 
     # -----------------------------------------------------------------------
 
@@ -309,7 +309,7 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
                     self._current_image = frame.irgb()
                     # must be done somewhere else:
                     # self._player.SetBackgroundImageArray(frame.irgb())
-                    # self.Refresh()
+                    # self._player.Refresh()
 
                     expected_time = self._start_datenow + datetime.timedelta(seconds=(frm * time_delay))
                     cur_time = datetime.datetime.now()

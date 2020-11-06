@@ -111,7 +111,7 @@ if cfg.feature_installed("video") is True:
 
 
 if cfg.feature_installed("audioplay") is True:
-    from .audiomplayer import sppasMultiAudioPlayer
+    from .mmplayer import sppasMultiMediaPlayer
 else:
 
     # Either the FeatureError or PackageError will be raised if the class
@@ -125,10 +125,16 @@ else:
 
 
 if cfg.feature_installed("video") is True:
-    from .videoplayer import sppasSimpleVideoPlayer
+    from .videoplayercv import sppasSimpleVideoPlayerCV
+
+    if cfg.feature_installed("wxpython") is True:
+        from .videoplayerwx import sppasSimpleVideoPlayerWX
+    else:
+        class sppasSimpleVideoPlayerWX(sppasVideoPlayerError):
+            pass
 else:
 
-    class sppasSimpleVideoPlayer(sppasVideoPlayerError):
+    class sppasSimpleVideoPlayerCV(sppasVideoPlayerError):
         QUEUE_SIZE = 128
         pass
 
@@ -138,5 +144,6 @@ else:
 __all__ = (
     "sppasSimpleAudioPlayer",
     "sppasMultiAudioPlayer",
-    "sppasSimpleVideoPlayer"
+    "sppasSimpleVideoPlayerCV",
+    "sppasSimpleVideoPlayerWX"
 )

@@ -52,7 +52,7 @@ from .baseplayer import sppasBasePlayer
 # ---------------------------------------------------------------------------
 
 
-class sppasSimpleVideoPlayer(sppasBasePlayer):
+class sppasSimpleVideoPlayerCV(sppasBasePlayer):
     """A video player based on opencv library.
 
     :author:       Brigitte Bigi
@@ -66,7 +66,7 @@ class sppasSimpleVideoPlayer(sppasBasePlayer):
     """
 
     def __init__(self):
-        super(sppasSimpleVideoPlayer, self).__init__()
+        super(sppasSimpleVideoPlayerCV, self).__init__()
         # no self._player member. opencv is used to display frames.
 
     # -----------------------------------------------------------------------
@@ -84,7 +84,7 @@ class sppasSimpleVideoPlayer(sppasBasePlayer):
         if self._media is not None:
             self._media.close()
         sppasBasePlayer.reset(self)
-        
+
     # -----------------------------------------------------------------------
 
     def load(self, filename):

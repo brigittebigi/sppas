@@ -38,11 +38,12 @@ import os.path
 
 from sppas.src.config import paths
 
-from ..videoplayer import sppasSimpleVideoPlayer
+from ..videoplayercv import sppasSimpleVideoPlayerCV
+from ..videoplayerwx import sppasSimpleVideoPlayerWX
 
 # ---------------------------------------------------------------------------
 
-sample_1 = os.path.join(paths.samples, "faces", "video_sample.mp4")
+sample_video = os.path.join(paths.samples, "faces", "video_sample.mp4")
 
 # ---------------------------------------------------------------------------
 
@@ -51,19 +52,26 @@ class TestVideoPlayer(unittest.TestCase):
 
     def test_load(self):
         """Test in loading multiple audio files."""
-        vp = sppasSimpleVideoPlayer()
+        vp = sppasSimpleVideoPlayerCV()
 
         loaded = vp.load("toto.xxx")   # Error 2005 extension not supported
         self.assertTrue(vp.get_filename(), "toto.xxx")
         self.assertFalse(loaded)
 
-        loaded = vp.load(sample_1)
-        self.assertTrue(vp.get_filename(), sample_1)
+        loaded = vp.load(sample_video)
+        self.assertTrue(vp.get_filename(), sample_video)
         self.assertTrue(loaded)
 
     # -----------------------------------------------------------------------
 
-    def test_player(self):
-        mp = sppasSimpleVideoPlayer()
-        mp.load(sample_1)
+    def test_player_cv(self):
+        mp = sppasSimpleVideoPlayerCV()
+        mp.load(sample_video)
+        mp.play()
+
+    # -----------------------------------------------------------------------
+
+    def test_player_wx(self):
+        mp = sppasSimpleVideoPlayerWX()
+        mp.load(sample_video)
         mp.play()

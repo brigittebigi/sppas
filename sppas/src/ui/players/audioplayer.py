@@ -126,7 +126,7 @@ class sppasSimpleAudioPlayer(sppasBasePlayer):
         except Exception as e:
             logging.error("Error when opening or loading file {:s}: "
                           "{:s}".format(filename, str(e)))
-            self._media = sppasAudioPCM()
+            self._media = None
             self._ms = PlayerState().unknown
             return False
 
