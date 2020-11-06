@@ -378,7 +378,7 @@ class sppasMultiAudioPlayer(object):
                 p = mp.pause()
                 if p is True and paused is False:
                     paused = True
-                    position = mp.audio_tell()
+                    position = mp.media_tell()
                     self.__from_time = float(position) / float(mp.get_framerate())
 
         return paused

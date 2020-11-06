@@ -250,6 +250,11 @@ class sppasSimpleVideoPlayer(sppasBasePlayer):
 
     # -----------------------------------------------------------------------
 
+    def media_tell(self):
+        return self._media.tell()
+
+    # -----------------------------------------------------------------------
+
     def tell(self):
         """Return the current time position in the video stream (float)."""
         offset = self._media.tell()

@@ -121,8 +121,8 @@ class sppasSimpleVideoPlayerWX(sppasSimpleVideoPlayer, wx.Timer):
         """
         loaded = sppasSimpleVideoPlayer.load(self, filename)
         if loaded is True:
-            self._player.SetBestSize(wx.Size(self._media.get_width(),
-                                             self._media.get_height()))
+            self._player.SetSize(wx.Size(self._media.get_width(),
+                                         self._media.get_height()))
         return loaded
 
     # -----------------------------------------------------------------------
@@ -196,6 +196,7 @@ class sppasSimpleVideoPlayerWX(sppasSimpleVideoPlayer, wx.Timer):
                 # Refresh the video frame
                 self._player.SetBackgroundImageArray(self._current_image)
                 self._player.Refresh()
+                print("PLAYER IMAGE REFRESH")
 
 # ---------------------------------------------------------------------------
 

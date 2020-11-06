@@ -264,6 +264,11 @@ class sppasBasePlayer(object):
 
     # -----------------------------------------------------------------------
 
+    def media_tell(self):
+        raise NotImplementedError
+
+    # -----------------------------------------------------------------------
+
     def _reposition(self):
         """Seek the media at the current position in the played stream.
 

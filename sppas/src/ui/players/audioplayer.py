@@ -213,7 +213,7 @@ class sppasSimpleAudioPlayer(sppasBasePlayer):
 
     # -----------------------------------------------------------------------
 
-    def audio_tell(self):
+    def media_tell(self):
         if self._ms not in (PlayerState().unknown, PlayerState().loading):
             return self._media.tell()
         return 0

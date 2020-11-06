@@ -44,14 +44,18 @@ import wx
 import threading
 
 from sppas.src.config import paths
-from sppas.src.ui.players import sppasMultiAudioPlayer
+# from sppas.src.ui.players import sppasMultiMediaPlayer
+from sppas.src.ui.players import sppasMultiMediaPlayer
+from sppas.src.ui.players import sppasSimpleAudioPlayer
+from sppas.src.ui.players import sppasSimpleVideoPlayer
+from sppas.src.ui.players import sppasSimpleVideoPlayerWX
 
 from .mediaevents import MediaEvents
 
 # ---------------------------------------------------------------------------
 
 
-class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
+class sppasAudioPlayer(sppasMultiMediaPlayer, wx.Timer):
     """An audio player based on simpleaudio library and a timer.
 
     :author:       Brigitte Bigi
@@ -105,7 +109,7 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
 
         """
         wx.Timer.__init__(self, owner)
-        sppasMultiAudioPlayer.__init__(self)
+        sppasMultiMediaPlayer.__init__(self)
 
         # A time period to play the audio stream. Default is whole.
         self._period = (0., 0.)
@@ -123,7 +127,7 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
         self._period = (0., 0.)
         try:
             # The audio was not created if the init raised a FeatureException
-            sppasMultiAudioPlayer.reset(self)
+            sppasMultiMediaPlayer.reset(self)
         except:
             pass
 
@@ -182,14 +186,36 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
             # Create threads with a target function of loading with name as args
             new_th = list()
             for name in filename:
-                print("Create a thread to load file")
                 th = threading.Thread(target=self.__load, args=(name,))
                 new_th.append(th)
             # Start the new threads
             for th in new_th:
                 th.start()
         else:
-            self.__load(filename)
+            self.__load_audio(filename)
+
+    # -----------------------------------------------------------------------
+
+    def add_video(self, filename, player=None):
+        """Add a video into the list of media managed by this control.
+
+        The new video is disabled.
+
+        :param filename: (str)
+        :return: (bool)
+
+        """
+        if isinstance(filename, (list, tuple)) is True:
+            # Create threads with a target function of loading with name as args
+            new_th = list()
+            for name in filename:
+                th = threading.Thread(target=self.__load_video, args=(name, player))
+                new_th.append(th)
+            # Start the new threads
+            for th in new_th:
+                th.start()
+        else:
+            self.__load_video(filename, player)
 
     # -----------------------------------------------------------------------
 
@@ -232,7 +258,7 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
         """
         self.Stop()
         self.DeletePendingEvents()
-        stopped = sppasMultiAudioPlayer.stop(self)
+        stopped = sppasMultiMediaPlayer.stop(self)
         self.seek(self._period[0])
         return stopped
 
@@ -254,20 +280,26 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
         if time_pos < self._period[0]:
             time_pos = self._period[0]
 
-        return sppasMultiAudioPlayer.seek(self, time_pos)
+        return sppasMultiMediaPlayer.seek(self, time_pos)
 
     # -----------------------------------------------------------------------
 
     def tell(self):
         """Return the current time position in the audio stream (float)."""
-        if len(self._audios) > 0:
+        if len(self._medias) > 0:
             values = list()
-            for audio in self._audios:
-                if audio.is_unknown() is False and audio.is_loading() is False:
+            for media in self._medias:
+                if media.is_unknown() is False and media.is_loading() is False:
+
                     # In theory, all media should return the same value...
-                    offset = audio._audio.tell()
-                    time_value = float(offset * audio.get_nchannels()) / float(audio.get_framerate())
-                    values.append(time_value)
+                    if isinstance(media, sppasSimpleVideoPlayer):
+                        time_value = media.tell()
+                        values.append(time_value)
+
+                    elif isinstance(media, sppasSimpleAudioPlayer):
+                        offset = media.media_tell()
+                        time_value = float(offset * media.get_nchannels()) / float(media.get_framerate())
+                        values.append(time_value)
             # return the earlier time
             return min(values)
 
@@ -285,14 +317,15 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
         """
         # Nothing to do if we are not playing (probably paused).
         if self.is_playing():
-            for audio in self._audios:
-                audio.update_playing()
+            for media in self._medias:
+                if isinstance(media, sppasSimpleAudioPlayer) is True:
+                    media.update_playing()
 
-                # the audio stream is currently playing
-                if audio.is_playing() is True:
-                    # seek the audio at the time of the player.
-                    # and stop if the audio reached its end.
-                    audio._reposition()
+                    # the audio stream is currently playing
+                    if media.is_playing() is True:
+                        # seek the audio at the time of the player.
+                        # and stop if the audio reached its end.
+                        media._reposition()
 
             # Send the wx.EVT_TIMER event
             wx.Timer.Notify(self)
@@ -304,7 +337,7 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
     # Private & Protected methods
     # -----------------------------------------------------------------------
 
-    def __load(self, filename):
+    def __load_audio(self, filename):
         """Really load and add the file that filename refers to.
 
         Send a media event when a loading is finished.
@@ -312,7 +345,7 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
         :param filename: (str)
 
         """
-        value = sppasMultiAudioPlayer.add_audio(self, filename)
+        value = sppasMultiMediaPlayer.add_audio(self, filename)
         if value is True:
             evt = MediaEvents.MediaLoadedEvent(filename=filename)
         else:
@@ -320,6 +353,30 @@ class sppasAudioPlayer(sppasMultiAudioPlayer, wx.Timer):
         evt.SetEventObject(self)
         wx.PostEvent(self, evt)
         return value
+
+    # -----------------------------------------------------------------------
+
+    def __load_video(self, filename, player):
+        """Really load and add the file that filename refers to.
+
+        Send a media event when a loading is finished.
+
+        :param filename: (str)
+
+        """
+        loaded = False
+        if self.exists(filename) is False:
+            new_video = sppasSimpleVideoPlayerWX(owner=self.GetOwner(), player=player)
+            self._medias[new_video] = False
+            loaded = new_video.load(filename)
+
+        if loaded is True:
+            evt = MediaEvents.MediaLoadedEvent(filename=filename)
+        else:
+            evt = MediaEvents.MediaNotLoadedEvent(filename=filename)
+        evt.SetEventObject(self)
+        wx.PostEvent(self, evt)
+        return loaded
 
 # ---------------------------------------------------------------------------
 
@@ -368,6 +425,13 @@ class TestPanel(wx.Panel):
     # ----------------------------------------------------------------------
 
     def _do_load_file(self):
+        m = sppasSimpleVideoPlayerWX(owner=self)
+        m.load(os.path.join(paths.samples, "faces", "video_sample.mp4"))
+        self.ap.add_media(m)
+        print(len(self.ap))
+        self.ap.enable(os.path.join(paths.samples, "faces", "video_sample.mp4"))
+        print(self.ap.get_duration())
+
         self.ap.add_audio(
             [os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"),
              os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"),
@@ -381,7 +445,7 @@ class TestPanel(wx.Panel):
     def __on_media_loaded(self, event):
         filename = event.filename
         self.ap.enable(filename)
-        wx.LogDebug("Audio file loaded successfully: {}".format(filename))
+        wx.LogDebug("File loaded successfully: {}".format(filename))
         self.FindWindow("btn_play").Enable(True)
         duration = self.ap.get_duration()
         self.slider.SetRange(0, int(duration * 1000.))
