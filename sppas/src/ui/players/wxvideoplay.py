@@ -49,13 +49,13 @@ from sppas.src.config import paths
 from sppas.src.ui.phoenix.windows.frame import sppasImageFrame
 from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
 
-from .videoplayercv import sppasSimpleVideoPlayerCV
+from .videoplayer import sppasSimpleVideoPlayer
 from .pstate import PlayerState
 
 # ---------------------------------------------------------------------------
 
 
-class sppasVideoPlayer(sppasSimpleVideoPlayerCV, wx.Timer):
+class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
     """A video player based on opencv library and a timer.
 
     :author:       Brigitte Bigi
@@ -90,7 +90,7 @@ class sppasVideoPlayer(sppasSimpleVideoPlayerCV, wx.Timer):
 
         """
         wx.Timer.__init__(self, owner)
-        sppasSimpleVideoPlayerCV.__init__(self)
+        sppasSimpleVideoPlayer.__init__(self)
 
         # The frame in which images of the video are sent
         self._player = sppasImageFrame(
@@ -98,7 +98,6 @@ class sppasVideoPlayer(sppasSimpleVideoPlayerCV, wx.Timer):
             title="Video",
             style=wx.CAPTION | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT)
         self._player.SetBackgroundColour(wx.WHITE)
-        self._current_image = None
 
         # A time period to play the video stream. Default is whole.
         self._period = None
@@ -116,7 +115,7 @@ class sppasVideoPlayer(sppasSimpleVideoPlayerCV, wx.Timer):
         self._period = None
         try:
             # The audio was not created if the init raised a FeatureException
-            sppasSimpleVideoPlayerCV.reset(self)
+            sppasSimpleVideoPlayer.reset(self)
         except:
             pass
 
@@ -160,7 +159,7 @@ class sppasVideoPlayer(sppasSimpleVideoPlayerCV, wx.Timer):
         :return: (bool) Always returns False
 
         """
-        value = sppasSimpleVideoPlayerCV.load(self, filename)
+        value = sppasSimpleVideoPlayer.load(self, filename)
         if value is True:
             evt = MediaEvents.MediaLoadedEvent()
             if self._period is None:
@@ -231,7 +230,6 @@ class sppasVideoPlayer(sppasSimpleVideoPlayerCV, wx.Timer):
         """
         if self._player.IsShown():
             self._player.Hide()
-            # self._player.stop()
             self._ms = PlayerState().stopped
             self.seek(self._period[0])
             self.Stop()
@@ -256,7 +254,7 @@ class sppasVideoPlayer(sppasSimpleVideoPlayerCV, wx.Timer):
         if time_pos < self._period[0]:
             time_pos = self._period[0]
 
-        return sppasSimpleVideoPlayerCV.seek(self, time_pos)
+        return sppasSimpleVideoPlayer.seek(self, time_pos)
 
     # -----------------------------------------------------------------------
 

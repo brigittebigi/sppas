@@ -29,10 +29,10 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.players.mmplayer.py
+    src.ui.players.audiomplayer.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Multi-media player: play several media really synchronously.
+    Multi-audio player: play several audio really synchronously.
 
 """
 
@@ -40,13 +40,12 @@ import logging
 import datetime
 
 from sppas.src.ui.players.audioplayer import sppasSimpleAudioPlayer
-from sppas.src.ui.players.videoplayer import sppasSimpleVideoPlayer
 
 # ---------------------------------------------------------------------------
 
 
-class sppasMultiMediaPlayer(object):
-    """A player which can play several media synchronously.
+class sppasMultiAudioPlayer(object):
+    """A player which can play several audio synchronously.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -54,12 +53,12 @@ class sppasMultiMediaPlayer(object):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    Can load, play and browse throw several media streams of given files.
+    Can load, play and browse throw several audio streams of given files.
 
     """
 
     def __init__(self):
-        """Instantiate the multi media player."""
+        """Instantiate the multi audio player."""
         # Key = the media player / value = bool:enabled
         self._medias = dict()
         # Observed delays between 2 consecutive "play".
@@ -91,24 +90,6 @@ class sppasMultiMediaPlayer(object):
         new_audio = sppasSimpleAudioPlayer()
         self._medias[new_audio] = False
         loaded = new_audio.load(filename)
-        return loaded
-
-    # -----------------------------------------------------------------------
-
-    def add_video(self, filename):
-        """Add a video into the list of media managed by this control.
-
-        The new video is disabled.
-
-        :param filename: (str)
-        :return: (bool)
-
-        """
-        if self.exists(filename):
-            return False
-        new_video = sppasSimpleVideoPlayer()
-        self._medias[new_video] = False
-        loaded = new_video.load(filename)
         return loaded
 
     # -----------------------------------------------------------------------
@@ -146,7 +127,7 @@ class sppasMultiMediaPlayer(object):
     def is_enabled(self, filename=None):
         """Return True if any audio or the one of the given filename is enabled."""
         if filename is None:
-            return any([self._medias[audio] for audio in self._medias])
+            return any([self._medias[mp] for mp in self._medias])
 
         for mp in self._medias:
             if self._medias[mp] is True and filename == mp.get_filename():
@@ -435,9 +416,9 @@ class sppasMultiMediaPlayer(object):
             self.pause()
             force_pause = True
 
-        for mp in self._medias:
-            if mp.is_unknown() is False and mp.is_loading() is False:
-                mp.seek(value)
+        for audio in self._medias:
+            if audio.is_unknown() is False and audio.is_loading() is False:
+                audio.seek(value)
 
         if force_pause is True:
             self.__from_time = value

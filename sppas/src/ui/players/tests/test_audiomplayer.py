@@ -40,11 +40,7 @@ import os.path
 from sppas.src.config import paths
 
 from ..audioplayer import sppasSimpleAudioPlayer
-from ..mmplayer import sppasMultiMediaPlayer
-
-# ---------------------------------------------------------------------------
-
-sample_video = os.path.join(paths.samples, "faces", "video_sample.mp4")
+from ..audiomplayer import sppasMultiAudioPlayer
 
 # ---------------------------------------------------------------------------
 
@@ -60,7 +56,7 @@ class TestMultiPlayer(unittest.TestCase):
 
     def test_load(self):
         """Test in loading multiple audio files."""
-        mp = sppasMultiMediaPlayer()
+        mp = sppasMultiAudioPlayer()
         self.assertEqual(0, len(mp))
 
         loaded = mp.add_audio(sample_1)
@@ -84,15 +80,10 @@ class TestMultiPlayer(unittest.TestCase):
         self.assertEqual(4, len(mp))
         self.assertTrue(mp.exists(sample_2))
 
-        loaded = mp.add_video(sample_video)
-        self.assertTrue(loaded)
-        self.assertEqual(5, len(mp))
-        self.assertTrue(mp.exists(sample_video))
-
     # -----------------------------------------------------------------------
 
     def test_remove(self):
-        mp = sppasMultiMediaPlayer()
+        mp = sppasMultiAudioPlayer()
         mp.add_audio(sample_1)
         mp.add_audio(sample_2)
         mp.remove(sample_2)
@@ -104,7 +95,7 @@ class TestMultiPlayer(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_enable(self):
-        mp = sppasMultiMediaPlayer()
+        mp = sppasMultiAudioPlayer()
         mp.add_audio(sample_1)
         mp.add_audio(sample_2)
 
@@ -120,7 +111,7 @@ class TestMultiPlayer(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_playing(self):
-        mp = sppasMultiMediaPlayer()
+        mp = sppasMultiAudioPlayer()
         mp.add_audio(sample_1)
         mp.add_audio(sample_2)
         self.assertFalse(mp.are_playing())
@@ -139,7 +130,7 @@ class TestMultiPlayer(unittest.TestCase):
         d2 = sp2.get_duration()
         del sp2
 
-        mp = sppasMultiMediaPlayer()
+        mp = sppasMultiAudioPlayer()
         self.assertEqual(0., mp.get_duration())
         mp.add_audio(sample_1)
         mp.add_audio(sample_2)
@@ -148,7 +139,7 @@ class TestMultiPlayer(unittest.TestCase):
     # -----------------------------------------------------------------------
 
     def test_player_audio(self):
-        mp = sppasMultiMediaPlayer()
+        mp = sppasMultiAudioPlayer()
         mp.add_audio(sample_1)
         mp.add_audio(sample_2)
         mp.add_audio(sample_3)
@@ -164,12 +155,3 @@ class TestMultiPlayer(unittest.TestCase):
         mp.play()  # will play the same period of time than the previous one
         time.sleep(3)
         mp.stop()
-
-    # -----------------------------------------------------------------------
-
-    def test_player_video(self):
-        mp = sppasMultiMediaPlayer()
-        mp.add_video(sample_video)
-        mp.enable(sample_video)
-        mp.play_interval(10., 13.)
-
