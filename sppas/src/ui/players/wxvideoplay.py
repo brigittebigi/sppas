@@ -32,6 +32,8 @@
     src.ui.players.wxvideoplay.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    Not used. Was developed only for tests.
+
     A player to play a single video file with tell and pause implemented and
     events.
 

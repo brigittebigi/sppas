@@ -32,6 +32,7 @@
     src.ui.players.wxaudioplay.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    Not used. Was developed only for tests.
     A player to play a single audio file with tell and pause implemented and
     events.
 

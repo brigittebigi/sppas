@@ -39,6 +39,7 @@
 import logging
 import datetime
 
+from sppas.src.ui.players.baseplayer import sppasBasePlayer
 from sppas.src.ui.players.audioplayer import sppasSimpleAudioPlayer
 from sppas.src.ui.players.videoplayer import sppasSimpleVideoPlayer
 
@@ -110,6 +111,21 @@ class sppasMultiMediaPlayer(object):
         self._medias[new_video] = False
         loaded = new_video.load(filename)
         return loaded
+
+    # -----------------------------------------------------------------------
+
+    def add_media(self, media):
+        """Add a media into the list of media managed by this control.
+
+        The new media is disabled.
+
+        :param media: (sppasBasePlayer)
+        :return: (bool)
+
+        """
+        if isinstance(media, sppasBasePlayer):
+            return False
+        self._medias[media] = False
 
     # -----------------------------------------------------------------------
 

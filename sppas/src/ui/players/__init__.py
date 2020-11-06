@@ -51,12 +51,19 @@ Requires the following dependency to play audio or video:
 * opencv - https://opencv.org/
 
 
+Either the FeatureError or PackageError will be raised if a class
+is instantiated, but no error is raised at the time of init/import.
+
 """
 
 from sppas.src.config import cfg
 from sppas.src.exceptions import sppasEnableFeatureError
 from sppas.src.exceptions import sppasPackageFeatureError
 
+from .pstate import PlayerState
+
+# ---------------------------------------------------------------------------
+# Update features & prepare base classes for exceptions
 # ---------------------------------------------------------------------------
 
 
@@ -111,20 +118,16 @@ if cfg.feature_installed("video") is True:
 
 
 if cfg.feature_installed("audioplay") is True:
-    from .mmplayer import sppasMultiMediaPlayer
+    from .audioplayer import sppasSimpleAudioPlayer
+    from .audiomplayer import sppasMultiAudioPlayer
 else:
-
-    # Either the FeatureError or PackageError will be raised if the class
-    # is instantiated, but no error is raised at the time of init/import.
 
     class sppasSimpleAudioPlayer(sppasAudioPlayerError):
         pass
 
-    class sppasMultiAudioPlayer(sppasAudioPlayerError):
-        pass
-
 
 if cfg.feature_installed("video") is True:
+    from .videoplayer import sppasSimpleVideoPlayer
     from .videoplayercv import sppasSimpleVideoPlayerCV
 
     if cfg.feature_installed("wxpython") is True:
@@ -134,16 +137,28 @@ if cfg.feature_installed("video") is True:
             pass
 else:
 
+    class sppasSimpleVideoPlayer(sppasVideoPlayerError):
+        pass
+
     class sppasSimpleVideoPlayerCV(sppasVideoPlayerError):
-        QUEUE_SIZE = 128
+        pass
+
+if cfg.feature_installed("audioplay") is True and cfg.feature_installed("video") is True:
+    from .mmplayer import sppasMultiMediaPlayer
+else:
+
+    class sppasMultiMediaPlayer(sppasVideoPlayerError):
         pass
 
 # ---------------------------------------------------------------------------
 
 
 __all__ = (
-    "sppasSimpleAudioPlayer",
-    "sppasMultiAudioPlayer",
-    "sppasSimpleVideoPlayerCV",
-    "sppasSimpleVideoPlayerWX"
+    "PlayerState",
+    "sppasSimpleAudioPlayer",       # play an audio file
+    "sppasMultiAudioPlayer",        # play several audio files synchronously
+    "sppasSimpleVideoPlayer",       # play a video but do not show it
+    "sppasSimpleVideoPlayerCV",     # play a video and show it with opencv
+    "sppasSimpleVideoPlayerWX",     # play a video and show it with a wx widget
+    "sppasMultiMediaPlayer"         # play a bunch of media synchronously
 )

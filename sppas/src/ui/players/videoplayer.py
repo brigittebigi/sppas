@@ -37,7 +37,6 @@
 """
 
 import logging
-import cv2
 import datetime
 import time
 import threading

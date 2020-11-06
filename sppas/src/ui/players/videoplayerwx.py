@@ -44,6 +44,7 @@ import wx
 
 from sppas.src.config import paths
 from sppas.src.ui.phoenix.windows.frame import sppasImageFrame
+from sppas.src.ui.phoenix.windows.basedcwindow import sppasImageDCWindow
 
 from .pstate import PlayerState
 from .videoplayer import sppasSimpleVideoPlayer
@@ -62,7 +63,7 @@ class sppasSimpleVideoPlayerWX(sppasSimpleVideoPlayer, wx.Timer):
 
     """
 
-    def __init__(self, owner):
+    def __init__(self, owner, player=None):
         """Create an instance of sppasVideoPlayer.
 
         :param owner: (wx.Window) Owner of this class.
@@ -71,15 +72,58 @@ class sppasSimpleVideoPlayerWX(sppasSimpleVideoPlayer, wx.Timer):
         wx.Timer.__init__(self, owner)
         sppasSimpleVideoPlayer.__init__(self)
 
-        # The frame in which images of the video are sent
-        self._player = sppasImageFrame(
-            parent=owner,   # if owner is destroyed, the frame will be too
-            title="Video",
-            style=wx.CAPTION | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT)
-        self._player.SetBackgroundColour(wx.WHITE)
+        if player is not None:
+            try:
+                player.SetBackgroundImageArray(os.path.join(paths.etc, "images", "mire.jpg"))
+                player.Show()
+                if player.IsShown():
+                    player.Hide()
+                player.Refresh()
+                self._player = player
+            except AttributeError:
+                wx.LogError("The given video player is not of a compatible "
+                            "type. A sppasDCWindows() was expected.")
+        if self._player is None:
+            # The frame in which images of the video are sent
+            self._player = sppasImageFrame(
+                parent=owner,   # if owner is destroyed, the frame will be too
+                title="Video",
+                style=wx.CAPTION | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT)
+            self._player.SetBackgroundColour(wx.WHITE)
 
         # The delay to set the player bg image while playing
-        self._timer_delay = 40  # in milliseconds
+        self._timer_delay = 40    # in milliseconds
+
+    # -----------------------------------------------------------------------
+
+    def __del__(self):
+        self.reset()
+
+    # -----------------------------------------------------------------------
+
+    def reset(self):
+        """Override. Re-initialize all known data and stop the timer."""
+        self.Stop()
+        try:
+            # The video was not created if the init raised a FeatureException
+            sppasSimpleVideoPlayer.reset(self)
+        except:
+            pass
+
+    # -----------------------------------------------------------------------
+
+    def load(self, filename):
+        """Open the file that filename refers to and load a buffer of frames.
+
+        :param filename: (str) Name of a video file
+        :return: (bool) True if successfully opened and loaded.
+
+        """
+        loaded = sppasSimpleVideoPlayer.load(self, filename)
+        if loaded is True:
+            self._player.SetBestSize(wx.Size(self._media.get_width(),
+                                             self._media.get_height()))
+        return loaded
 
     # -----------------------------------------------------------------------
 
@@ -161,22 +205,33 @@ class TestPanel(wx.Panel):
         super(TestPanel, self).__init__(
             parent, -1, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN, name="Simple VideoPlayer WX")
 
-        # The player!
-        self.ap = sppasSimpleVideoPlayerWX(owner=self)
-
         # Actions to perform with the player
-        btn2 = wx.Button(self, -1, "Play", name="btn_play")
+        btn_panel = wx.Panel(self, name='btn_panel')
+        btn2 = wx.Button(btn_panel, -1, "Play", name="btn_play")
         self.Bind(wx.EVT_BUTTON, self._on_play_ap, btn2)
-        btn3 = wx.Button(self, -1, "Pause")
+        btn3 = wx.Button(btn_panel, -1, "Pause")
         self.Bind(wx.EVT_BUTTON, self._on_pause_ap, btn3)
-        btn4 = wx.Button(self, -1, "Stop")
+        btn4 = wx.Button(btn_panel, -1, "Stop")
         self.Bind(wx.EVT_BUTTON, self._on_stop_ap, btn4)
         sizer = wx.BoxSizer()
         sizer.Add(btn2, 0, wx.ALL, 4)
         sizer.Add(btn3, 0, wx.ALL, 4)
         sizer.Add(btn4, 0, wx.ALL, 4)
+        btn_panel.SetSizer(sizer)
 
-        self.SetSizer(sizer)
+        img_panel = wx.Panel(self, name="img_panel")
+        wi = sppasImageDCWindow(img_panel, name="img_window")
+        wi.SetBorderWidth(2)
+        self.ap = sppasSimpleVideoPlayerWX(owner=self, player=wi)
+        sizer = wx.BoxSizer()
+        sizer.Add(wi, 1, wx.EXPAND)
+        img_panel.SetSizer(sizer)
+
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        main_sizer.Add(btn_panel, 0, wx.EXPAND)
+        main_sizer.Add(img_panel, 1, wx.EXPAND)
+        self.SetSizer(main_sizer)
+        self.Layout()
 
         wx.CallAfter(self._do_load_file)
 
@@ -184,6 +239,10 @@ class TestPanel(wx.Panel):
 
     def _do_load_file(self):
         self.ap.load(os.path.join(paths.samples, "faces", "video_sample.mp4"))
+        w = self.ap.get_width()
+        h = self.ap.get_height()
+        wx.LogDebug("Video size: {}x{}".format(w, h))
+        self.Refresh()
 
     # ----------------------------------------------------------------------
 
