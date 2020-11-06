@@ -29,9 +29,6 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.media.wxvideoplay.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
     src.ui.players.wxvideoplay.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -101,6 +98,7 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
             title="Video",
             style=wx.CAPTION | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT)
         self._player.SetBackgroundColour(wx.WHITE)
+        self._current_image = None
 
         # A time period to play the video stream. Default is whole.
         self._period = None
@@ -270,6 +268,19 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
         frame (1. / fps).
         If it's not the case, we should, sometimes, ignore a frame: not tested!
 
+        Important remark:
+        =================
+
+            ANY CHANGE TO THE PLAYING FRAME MUST BE DONE OUTSIDE THIS METHOD
+            IF THIS METHOD IS LAUNCHED AS A TARGET OF A THREAD. Because:
+
+            1- Under Windows, setting the bg img inside this thread makes the
+            app crashing and under the other systems, the frame alternates
+            with the expected image and a black background.
+
+            2- Moreover, under MacOS only, refreshing the frame inside this
+            thread does not have any effect.
+
         """
         # self.seek(self._period[0])
         time_delay = round(1. / self._media.get_framerate(), 3)
@@ -282,6 +293,7 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
         # the time when we started to play and the number of frames we displayed.
         frm = 0
         self._start_datenow = datetime.datetime.now()
+        self._current_image = None
 
         while self._media.is_opened():
             if self._ms == PlayerState().playing:
@@ -294,7 +306,10 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
                     # we reached the end of the file or the end of the period
                     self.stop()
                 else:
-                    self._player.SetBackgroundImageArray(frame.irgb())
+                    self._current_image = frame.irgb()
+                    # must be done somewhere else:
+                    # self._player.SetBackgroundImageArray(frame.irgb())
+                    # self.Refresh()
 
                     expected_time = self._start_datenow + datetime.timedelta(seconds=(frm * time_delay))
                     cur_time = datetime.datetime.now()
@@ -323,6 +338,7 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
             wx.LogDebug(" - Play finished at: {}".format(end_time_value))
             wx.LogDebug(" -> diff = {}".format((end_time_value-self._start_datenow).total_seconds()))
         self._start_datenow = None
+        self._current_image = None
 
     # -----------------------------------------------------------------------
     # Manage events
@@ -338,10 +354,10 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
         if self._ms == PlayerState().playing:
             # Send the wx.EVT_TIMER event
             wx.Timer.Notify(self)
-            # Refresh the video frame.
-            self._player.Refresh()
-            # Under MacOS, refreshing the frame inside the threading_play -
-            # like any other action on the player frame, does not have any effect.
+            if self._current_image is not None:
+                # Refresh the video frame
+                self._player.SetBackgroundImageArray(self._current_image)
+                self._player.Refresh()
 
 # ---------------------------------------------------------------------------
 

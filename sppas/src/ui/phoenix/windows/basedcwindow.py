@@ -40,14 +40,13 @@
 
 """
 
-import datetime
 import wx
 import random
 import os.path
 import logging
-import time
 
-from sppas.src.config import paths   # paths is used in the TestPanel only
+from sppas.src.config import paths        # used in the TestPanel only
+from sppas.src.imgdata import sppasImage  # used in the TestPanel only
 
 # ---------------------------------------------------------------------------
 
@@ -900,13 +899,16 @@ class sppasImageDCWindow(sppasDCWindow):
 
         """
         self._image = None
-        if img_filename is not None and os.path.exists(img_filename) is True:
-            try:
-                self._image = wx.Image(img_filename, wx.BITMAP_TYPE_ANY)
-                return True
-            except Exception as e:
-                logging.error("Invalid image file {:s}: {:s}"
-                              "".format(img_filename, str(e)))
+        if img_filename is not None:
+            if os.path.exists(img_filename) is True:
+                try:
+                    self._image = wx.Image(img_filename, wx.BITMAP_TYPE_ANY)
+                    return True
+                except Exception as e:
+                    logging.error("Invalid image file {:s}: {:s}".format(img_filename, str(e)))
+            else:
+                logging.error("The image file {:s} does not exist.".format(img_filename))
+
         return False
 
     # -----------------------------------------------------------------------
@@ -924,9 +926,8 @@ class sppasImageDCWindow(sppasDCWindow):
             self._image.SetData(img.tostring())
             return True
         except Exception as e:
-            logging.error("Invalid image array: {:s}"
-                          "".format(str(e)))
-            pass
+            logging.error("Invalid image array: {:s}".format(str(e)))
+
         self._image = None
         return False
 
@@ -968,6 +969,7 @@ class TestPanel(wx.Panel):
 
     img1 = os.path.join(paths.samples, "faces", "BrigitteBigi_Aix2020.png")
     img2 = os.path.join(paths.etc, "images", "trbg1.png")
+    img3 = os.path.join(paths.etc, "images", "bg1.png")
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(
@@ -1086,7 +1088,7 @@ class TestPanel(wx.Panel):
         self.i = 0
         self.timerObject = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.change_bitmap, self.timerObject)
-        self.timerObject.Start(500)
+        self.timerObject.Start(1000)
 
     # -----------------------------------------------------------------------
 
@@ -1128,9 +1130,14 @@ class TestPanel(wx.Panel):
 
     def change_bitmap(self, evt):
         img_btn = self.FindWindow("wi6")
+        if img_btn is None:
+            wx.LogError("Can't find the window with name wi6")
+            self.timerObject.Stop()
+            return
         if self.i % 2 == 0:
-            img_btn.SetBackgroundImage("/Users/bigi/Projects/sppas/sppas/etc/images/bg1.png")
+            img_btn.SetBackgroundImage(TestPanel.img2)
         else:
-            img_btn.SetBackgroundImage("/Users/bigi/Projects/sppas/sppas/etc/images/bg2.png")
+            sppas_img = sppasImage(filename=TestPanel.img3)
+            img_btn.SetBackgroundImageArray(sppas_img)
         self.i += 1
         img_btn.Refresh()

@@ -34,12 +34,12 @@
 
 """
 
-import threading
 import os
 import wx
-import time
 
-from sppas.src.config import sg, paths
+from sppas.src.config import sg
+from sppas.src.config import paths        # used in the TestPanel only
+from sppas.src.imgdata import sppasImage  # used in the TestPanel only
 
 from ..tools import sppasSwissKnife
 from .line import sppasStaticLine
@@ -625,7 +625,7 @@ class sppasImageFrame(wx.TopLevelWindow):
 class TestPanel(wx.Panel):
 
     img1 = os.path.join(paths.etc, "images", "trbg1.png")
-    img2 = os.path.join(paths.etc, "images", "trbg2.png")
+    img2 = os.path.join(paths.etc, "images", "bg2.png")
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(
@@ -652,22 +652,23 @@ class TestPanel(wx.Panel):
 
     def _on_open_imgframe(self, event):
         self._img_frame.Show()
-        self.timerObject.Start(500)
+        self.timerObject.Start(1000)
 
     # -----------------------------------------------------------------------
 
     def _on_close_imgframe(self, event):
-        if self._img_frame is not None:
-            self._img_frame.Hide()
-            self.i = 0
-            self.timerObject.Stop()
+        self.i = 0
+        self.timerObject.Stop()
+        self._img_frame.Hide()
 
     # -----------------------------------------------------------------------
 
     def change_bitmap(self, evt):
         if self.i % 2 == 0:
-            self._img_frame.SetBackgroundImage("/Users/bigi/Projects/sppas/sppas/etc/images/bg1.png")
+            self._img_frame.SetBackgroundImage(TestPanel.img2)
         else:
-            self._img_frame.SetBackgroundImage("/Users/bigi/Projects/sppas/sppas/etc/images/bg2.png")
+            sppas_img = sppasImage(filename=TestPanel.img1)
+            self._img_frame.SetBackgroundImageArray(sppas_img)
+
         self.i += 1
         self._img_frame.Refresh()

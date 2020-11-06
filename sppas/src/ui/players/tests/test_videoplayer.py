@@ -66,4 +66,4 @@ class TestVideoPlayer(unittest.TestCase):
     def test_player(self):
         mp = sppasSimpleVideoPlayer()
         mp.load(sample_1)
-        mp.play(sample_1)
+        mp.play()
