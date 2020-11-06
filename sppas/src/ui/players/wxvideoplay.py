@@ -49,8 +49,8 @@ import time
 
 from sppas.src.config import paths
 
-from src.ui.phoenix.windows.frame import sppasImageFrame
-from src.ui.phoenix.windows.media.mediaevents import MediaEvents
+from sppas.src.ui.phoenix.windows.frame import sppasImageFrame
+from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
 
 from .videoplayer import sppasSimpleVideoPlayer
 from .pstate import PlayerState
@@ -197,6 +197,7 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
             if self.prepare_play(start_time, end_time) is True:
                 th = threading.Thread(target=self._play_process, args=())
                 self._ms = PlayerState().playing
+                self._player.Show()
                 self.Start(int(sppasVideoPlayer.TIMER_DELAY * 1000.))
                 th.start()
 
@@ -270,7 +271,6 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
         If it's not the case, we should, sometimes, ignore a frame: not tested!
 
         """
-        self._player.Show()
         # self.seek(self._period[0])
         time_delay = round(1. / self._media.get_framerate(), 3)
         min_sleep = time_delay / 4.
@@ -305,14 +305,15 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
                         time.sleep(delta_seconds)
 
                     elif delta_seconds > time_delay:
-                        # I'm reading too slow, I'm in late.
-                        self._media.seek(self._media.tell()+1)
-                        frm += 1
-                        logging.warning("Ignored frame at {:f} seconds"
-                                        "".format(float(cur_offset)*self._media.get_framerate()))
+                        # I'm reading too slow, I'm in late. Go forward...
+                        nf = int(delta_seconds / time_delay)
+                        self._media.seek(self._media.tell() + nf)
+                        frm += nf
+                        logging.warning("Ignored {:d} frame just after {:f} seconds"
+                                        "".format(nf, float(cur_offset)*self._media.get_framerate()))
 
             else:
-                # stop the loop at any other state than playing
+                # stop the loop if any other state than playing
                 break
 
         if start_offset == 0:
@@ -333,15 +334,14 @@ class sppasVideoPlayer(sppasSimpleVideoPlayer, wx.Timer):
         Manage the current position in the audio stream.
 
         """
-        # Nothing to do if we are not playing (probably paused).
+        # Nothing to do if we are not playing
         if self._ms == PlayerState().playing:
             # Send the wx.EVT_TIMER event
             wx.Timer.Notify(self)
-            # Refresh the video frame
-            # Under MacOS, refreshing the frame inside the threading_play
-            # instead of here does not have any effect... so we do it here
-            # because it works... why?!
+            # Refresh the video frame.
             self._player.Refresh()
+            # Under MacOS, refreshing the frame inside the threading_play -
+            # like any other action on the player frame, does not have any effect.
 
 # ---------------------------------------------------------------------------
 

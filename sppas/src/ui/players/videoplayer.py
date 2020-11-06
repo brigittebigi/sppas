@@ -45,7 +45,7 @@ import datetime
 import time
 import threading
 
-from src.videodata.video import sppasVideoReader
+from sppas.src.videodata.video import sppasVideoReader
 from .pstate import PlayerState
 from .baseplayer import sppasBasePlayer
 

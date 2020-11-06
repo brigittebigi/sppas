@@ -37,8 +37,8 @@
 import logging
 import datetime
 
-from src.ui.players.audioplayer import sppasSimpleAudioPlayer
-from src.ui.players.videoplayer import sppasSimpleVideoPlayer
+from sppas.src.ui.players.audioplayer import sppasSimpleAudioPlayer
+from sppas.src.ui.players.videoplayer import sppasSimpleVideoPlayer
 
 # ---------------------------------------------------------------------------
 

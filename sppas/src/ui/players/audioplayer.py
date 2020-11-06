@@ -57,7 +57,7 @@ import datetime
 
 from sppas.src.utils import b
 import sppas.src.audiodata.aio
-from src.audiodata.audio import sppasAudioPCM
+from sppas.src.audiodata.audio import sppasAudioPCM
 
 from .baseplayer import sppasBasePlayer
 from .pstate import PlayerState
