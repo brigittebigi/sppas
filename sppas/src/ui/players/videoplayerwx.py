@@ -196,7 +196,6 @@ class sppasSimpleVideoPlayerWX(sppasSimpleVideoPlayer, wx.Timer):
                 # Refresh the video frame
                 self._player.SetBackgroundImageArray(self._current_image)
                 self._player.Refresh()
-                print("PLAYER IMAGE REFRESH")
 
 # ---------------------------------------------------------------------------
 

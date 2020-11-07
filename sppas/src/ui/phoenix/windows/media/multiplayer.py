@@ -32,6 +32,9 @@
     src.ui.phoenix.windows.media.multiplayer.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    DEPRECATED: too many problems with the media back-ends under MacOS
+    and Windows. Only Gstreamer under Linux is really efficient.
+
 """
 
 import os

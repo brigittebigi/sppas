@@ -30,9 +30,13 @@
         ---------------------------------------------------------------------
 
     src.ui.players.mmplayer.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Multi-media player: play several media really synchronously.
+    Video are not displayed but images are updated. This class must
+    be overridden to display videos in a GUI.
+
+    Requires simpleaudio to play the audio files and opencv to read the videos.
 
 """
 
@@ -132,8 +136,8 @@ class sppasMultiMediaPlayer(object):
     def get_duration(self):
         """Return the duration this player must consider (in seconds).
 
-        This estimation does not take into account the fact that an audio is
-        enabled or disabled. All audio are considered.
+        This estimation does not take into account the fact that a media is
+        enabled or disabled. All valid media are considered.
 
         :return: (float)
 
@@ -151,7 +155,12 @@ class sppasMultiMediaPlayer(object):
     # -----------------------------------------------------------------------
 
     def exists(self, filename):
-        """Return True if the filename is matching an existing audio."""
+        """Return True if the given filename is matching an existing media.
+
+        :param filename: (str)
+        :return: (bool)
+
+        """
         for mp in self._medias:
             if mp.get_filename() == filename:
                 return True
@@ -160,9 +169,14 @@ class sppasMultiMediaPlayer(object):
     # -----------------------------------------------------------------------
 
     def is_enabled(self, filename=None):
-        """Return True if any audio or the one of the given filename is enabled."""
+        """Return True if any media or the given one is enabled.
+
+        :param filename: (str)
+        :return: (bool)
+
+        """
         if filename is None:
-            return any([self._medias[audio] for audio in self._medias])
+            return any([self._medias[mp] for mp in self._medias])
 
         for mp in self._medias:
             if self._medias[mp] is True and filename == mp.get_filename():
@@ -172,9 +186,9 @@ class sppasMultiMediaPlayer(object):
     # -----------------------------------------------------------------------
 
     def enable(self, filename, value=True):
-        """Enable or disable the given audio.
+        """Enable or disable the given media.
 
-        When an audio is disabled, it can't be paused nor played. It can only
+        When a media is disabled, it can't be paused nor played. It can only
         stay in the stopped state.
 
         :param filename: (str)
@@ -272,7 +286,7 @@ class sppasMultiMediaPlayer(object):
     # -----------------------------------------------------------------------
 
     def is_stopped(self, filename=None):
-        """Return True if any audio or if the given media is stopped.
+        """Return True if any media or if the given one is stopped.
 
         :param filename: (str)
         :return: (bool)
@@ -289,7 +303,7 @@ class sppasMultiMediaPlayer(object):
     # -----------------------------------------------------------------------
 
     def is_loading(self, filename=None):
-        """Return True if any audio or if the given media is loading.
+        """Return True if any media or if the given one is loading.
 
         :param filename: (str)
         :return: (bool)
@@ -306,7 +320,7 @@ class sppasMultiMediaPlayer(object):
     # -----------------------------------------------------------------------
 
     def is_unknown(self, filename=None):
-        """Return True if any audio or if the given audio is unknown.
+        """Return True if any media or if the given one is unknown.
 
         :param filename: (str)
         :return: (bool)
@@ -347,27 +361,28 @@ class sppasMultiMediaPlayer(object):
     # -----------------------------------------------------------------------
 
     def play(self):
+        """Start to play the current interval or the whole streams."""
         self.play_interval()
 
     # -----------------------------------------------------------------------
 
     def play_interval(self, from_time=None, to_time=None):
-        """Start to play an interval of the enabled audio streams.
+        """Start to play an interval of the enabled media streams.
 
-        Start playing only if the audio stream is currently stopped or
+        Start playing only the media streams that are currently stopped or
         paused and if enabled.
 
-        Under Windows and MacOS, the delay between 2 audio "play" is 11ms.
-        Except the 1st one, the other audios will be 'in late' so we do not
-        play during the elapsed time instead of playing the audio shifted!
-        This problem can't be solved with:
-        - threading because of the GIL;
-        - multiprocessing because the elapsed time is only reduced to 4ms
-        instead of 11ms, but the audios can't be eared!
+        Under Windows and MacOS, the delay between 2 runs of "play" is 11ms.
+        Except the 1st one, the other medias will be 'in late' so we do not
+        play during the elapsed time instead of playing the media shifted!
+        This problem CANNOT be solved with:
+            - threading because of the GIL;
+            - multiprocessing because the elapsed time is only reduced to 4ms
+              instead of 11ms, but the audios can't be eared!
 
         :param from_time: (float) Start to play at this given time or at the current from time if None
         :param to_time: (float) Stop to play at this given time or at the current end time if None
-        :return: (bool) True if the action of playing was performed for at least one audio
+        :return: (bool) True if the action of playing was performed for at least one media
 
         """
         if from_time is not None:
@@ -385,7 +400,7 @@ class sppasMultiMediaPlayer(object):
                 if started_time is not None and process_time is not None:
                     delta = process_time - started_time
                     delay = delta.seconds + delta.microseconds / 1000000.
-                    logging.info(" ... Observed delay is {:.4f}".format(delay))
+                    logging.debug(" ... observed delay is {:.4f}".format(delay))
                     self._all_delays.append(delay)
                     shift += delay
 
@@ -400,13 +415,13 @@ class sppasMultiMediaPlayer(object):
                             print(mean_delay)
                             started_time = process_time - datetime.timedelta(seconds=mean_delay)
 
-        logging.info(" ... {:d} audio files are playing".format(nb_playing))
+        logging.debug(" ... {:d} media files are playing".format(nb_playing))
         return nb_playing > 0
 
     # -----------------------------------------------------------------------
 
     def pause(self):
-        """Pause the audios."""
+        """Pause the medias that are currently playing."""
         paused = False
         for mp in self._medias:
             if mp.is_playing():
@@ -421,14 +436,14 @@ class sppasMultiMediaPlayer(object):
     # -----------------------------------------------------------------------
 
     def stop(self):
-        """Stop to play the audios.
+        """Stop to play the medias.
 
-        :return: (bool) True if at least one audio was stopped.
+        :return: (bool) True if at least one media was stopped.
 
         """
         stopped = False
-        for audio in self._medias:
-            s = audio.stop()
+        for mp in self._medias:
+            s = mp.stop()
             if s is True:
                 stopped = True
         if stopped is True:
@@ -439,7 +454,7 @@ class sppasMultiMediaPlayer(object):
     # -----------------------------------------------------------------------
 
     def seek(self, value):
-        """Seek all audio to the given position in time.
+        """Seek all media streams to the given position in time.
 
         :param value: (float) Time value in seconds.
 

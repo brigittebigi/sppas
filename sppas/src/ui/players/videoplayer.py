@@ -173,19 +173,25 @@ class sppasSimpleVideoPlayer(sppasBasePlayer):
 
                     expected_time = self._start_datenow + datetime.timedelta(seconds=(frm * time_delay))
                     cur_time = datetime.datetime.now()
-                    delta = expected_time - cur_time
-                    delta_seconds = delta.seconds + delta.microseconds / 1000000.
-                    if delta_seconds > min_sleep:
+                    if cur_time < expected_time:
                         # I'm reading too fast, wait a little time.
-                        time.sleep(delta_seconds)
+                        delta = expected_time - cur_time
+                        delta_seconds = delta.seconds + delta.microseconds / 1000000.
+                        if delta_seconds > min_sleep:
+                            time.sleep(delta_seconds)
 
-                    elif delta_seconds > time_delay:
-                        # I'm reading too slow, I'm in late. Go forward...
-                        nf = int(delta_seconds / time_delay)
-                        self._media.seek(self._media.tell() + nf)
-                        frm += nf
-                        logging.warning("Ignored {:d} frame just after {:f} seconds"
-                                        "".format(nf, float(cur_offset) * self._media.get_framerate()))
+                    elif cur_time > expected_time:
+                        # I'm reading too slow, I'm in late.
+                        delta = cur_time - expected_time
+                        delta_seconds = delta.seconds + delta.microseconds / 1000000.
+
+                        if delta_seconds > time_delay:
+                            # in late of at least 1 frame
+                            nf = int(delta_seconds / time_delay)
+                            self._media.seek(self._media.tell() + nf)
+                            frm += nf
+                            logging.warning("Ignored {:d} frame just after {:f} seconds"
+                                            "".format(nf, float(cur_offset) * self._media.get_framerate()))
 
             else:
                 # stop the loop if any other state than playing

@@ -32,7 +32,7 @@
     src.ui.phoenix.windows.media.mediactrl.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    DEPRECATED due to too many problems with the media back-ends under MacOS
+    DEPRECATED: too many problems with the media back-ends under MacOS
     and Windows. Only Gstreamer under Linux is really efficient.
 
     sppasMediaCtrl is using a wx.media.MediaCtrl() instance.

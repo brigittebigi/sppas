@@ -44,7 +44,6 @@ import wx
 import threading
 
 from sppas.src.config import paths
-# from sppas.src.ui.players import sppasMultiMediaPlayer
 from sppas.src.ui.players import sppasMultiMediaPlayer
 from sppas.src.ui.players import sppasSimpleAudioPlayer
 from sppas.src.ui.players import sppasSimpleVideoPlayer
@@ -56,7 +55,7 @@ from .mediaevents import MediaEvents
 
 
 class sppasAudioPlayer(sppasMultiMediaPlayer, wx.Timer):
-    """An audio player based on simpleaudio library and a timer.
+    """A media player using a timer to control time when playing.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -65,7 +64,7 @@ class sppasAudioPlayer(sppasMultiMediaPlayer, wx.Timer):
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     This class is inheriting of a Timer in order to update the position
-    in the stream and thus to implement the 'tell' method.
+    in the audio stream and thus to implement the 'tell' method.
     This class is using threads to load the frames of the audio files.
     It is also managing a period in time instead of considering the whole
     duration (to seek, play, etc).
@@ -78,26 +77,31 @@ class sppasAudioPlayer(sppasMultiMediaPlayer, wx.Timer):
 
     The wx.Timer documentation indicates that its precision is
     platform-dependent, but in general will not be better than 1ms
-    nor worse than 1s...
+    nor worse than 1s... What I observed is that:
 
-    When the timer delay is fixed to 10ms, the observed delays are:
+    1. When the timer delay is fixed to 10ms, the observed delays are:
        - about 15 ms under Windows;
-       - 10-11 ms under MacOS;
-       - 10 ms under Linux.
+       - between 10.5 and 11 ms under MacOS;
+       - 10.1 ms under Linux.
 
-    When the timer delay is fixed to 5ms, the observed delays are:
+    2. When the timer delay is fixed to 5ms, the observed delays are:
        - about 15 ms under Windows;
        - 6 ms under MacOS;
        - 5.5 ms under Linux.
 
-    When the timer delay is fixed to 1ms, the observed delays are:
+    3. When the timer delay is fixed to 1ms, the observed delays are:
        - about 15 ms under Windows;
        - 2 ms under MacOS;
        - 1.3 ms under Linux.
 
+    4. Under Windows, the timer delay is always a multiple of 15 - exactly
+       like for the time.sleep() method. Under Linux&Mac, the delay is
+       always slightly higher than requested.
+
     """
 
     # Delay in seconds to update the position value in the stream & to notify
+    # A multiple of 15ms allows that all systems work more or less the same
     TIMER_DELAY = 0.015
 
     # -----------------------------------------------------------------------
@@ -186,7 +190,7 @@ class sppasAudioPlayer(sppasMultiMediaPlayer, wx.Timer):
             # Create threads with a target function of loading with name as args
             new_th = list()
             for name in filename:
-                th = threading.Thread(target=self.__load, args=(name,))
+                th = threading.Thread(target=self.__load_audio, args=(name,))
                 new_th.append(th)
             # Start the new threads
             for th in new_th:
@@ -425,13 +429,11 @@ class TestPanel(wx.Panel):
     # ----------------------------------------------------------------------
 
     def _do_load_file(self):
-        m = sppasSimpleVideoPlayerWX(owner=self)
-        m.load(os.path.join(paths.samples, "faces", "video_sample.mp4"))
-        self.ap.add_media(m)
-        print(len(self.ap))
-        self.ap.enable(os.path.join(paths.samples, "faces", "video_sample.mp4"))
-        print(self.ap.get_duration())
-
+        # m = sppasSimpleVideoPlayerWX(owner=self)
+        # m.load(os.path.join(paths.samples, "faces", "video_sample.mp4"))
+        # self.ap.add_media(m)
+        # self.ap.enable(os.path.join(paths.samples, "faces", "video_sample.mp4"))
+        self.ap.add_video(os.path.join(paths.samples, "faces", "video_sample.mp4"))
         self.ap.add_audio(
             [os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"),
              os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"),
