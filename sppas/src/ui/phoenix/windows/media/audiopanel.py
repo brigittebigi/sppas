@@ -40,13 +40,13 @@ import os
 import wx
 
 from sppas.src.config import paths
+from sppas.src.ui.players.wxaudioplay import sppasAudioPlayer
 
 from ..panels import sppasPanel
 from ..datactrls import sppasWaveformWindow
 
 from .mediaevents import MediaEvents
 from .mediatype import MediaType
-from src.ui.players.wxaudioplay import sppasAudioPlayer
 
 # ---------------------------------------------------------------------------
 

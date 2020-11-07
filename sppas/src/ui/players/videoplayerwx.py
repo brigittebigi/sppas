@@ -72,6 +72,9 @@ class sppasSimpleVideoPlayerWX(sppasSimpleVideoPlayer, wx.Timer):
         wx.Timer.__init__(self, owner)
         sppasSimpleVideoPlayer.__init__(self)
 
+        # The delay to set the player bg image while playing
+        self._timer_delay = 40    # in milliseconds
+
         if player is not None:
             try:
                 player.SetBackgroundImageArray(os.path.join(paths.etc, "images", "mire.jpg"))
@@ -83,6 +86,7 @@ class sppasSimpleVideoPlayerWX(sppasSimpleVideoPlayer, wx.Timer):
             except AttributeError:
                 wx.LogError("The given video player is not of a compatible "
                             "type. A sppasDCWindows() was expected.")
+
         if self._player is None:
             # The frame in which images of the video are sent
             self._player = sppasImageFrame(
@@ -90,9 +94,6 @@ class sppasSimpleVideoPlayerWX(sppasSimpleVideoPlayer, wx.Timer):
                 title="Video",
                 style=wx.CAPTION | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT)
             self._player.SetBackgroundColour(wx.WHITE)
-
-        # The delay to set the player bg image while playing
-        self._timer_delay = 40    # in milliseconds
 
     # -----------------------------------------------------------------------
 
@@ -120,9 +121,10 @@ class sppasSimpleVideoPlayerWX(sppasSimpleVideoPlayer, wx.Timer):
 
         """
         loaded = sppasSimpleVideoPlayer.load(self, filename)
-        if loaded is True:
-            self._player.SetSize(wx.Size(self._media.get_width(),
-                                         self._media.get_height()))
+        # The app will crash if load() is launch into a thread:
+        # if loaded is True:
+        #    self._player.SetSize(wx.Size(self._media.get_width(),
+        #                                 self._media.get_height()))
         return loaded
 
     # -----------------------------------------------------------------------
@@ -136,7 +138,8 @@ class sppasSimpleVideoPlayerWX(sppasSimpleVideoPlayer, wx.Timer):
         if self._ms in (PlayerState().paused, PlayerState().stopped):
             th = threading.Thread(target=self._play_process, args=())
             self._ms = PlayerState().playing
-            self._player.Show(True)
+            if self._player is not None:
+                self._player.Show(True)
             self._start_datenow = datetime.datetime.now()
             self.Start(self._timer_delay)
             th.start()
@@ -241,6 +244,7 @@ class TestPanel(wx.Panel):
         self.ap.load(os.path.join(paths.samples, "faces", "video_sample.mp4"))
         w = self.ap.get_width()
         h = self.ap.get_height()
+        self.FindWindow("img_window").SetSize(wx.Size(w, h))
         wx.LogDebug("Video size: {}x{}".format(w, h))
         self.Refresh()
 

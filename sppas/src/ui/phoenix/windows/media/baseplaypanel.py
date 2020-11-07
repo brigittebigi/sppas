@@ -53,10 +53,11 @@ from sppas.src.config import paths  # used only in the Test Panel
 from ..buttons import ToggleButton
 from ..buttons import BitmapTextButton, BitmapButton
 from ..panels import sppasImagePanel, sppasPanel
+from ..frame import sppasImageFrame
 
 from .mediaevents import MediaEvents
 from .timeslider import TimeSliderPanel
-from .audiomplay import sppasAudioPlayer  # used only in the Test Panel
+from .smmps import sppasMMPS  # used only in the Test Panel
 
 # ---------------------------------------------------------------------------
 
@@ -601,7 +602,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
             #image=PlayerExamplePanel.BG_IMAGE,
             name="player_panel")
 
-        self.amp = sppasAudioPlayer(self)  # Audio Multi Player - amp
+        self.smmps = sppasMMPS(self)  # the SPPAS Multi Media Player system
         # self.prev_time = None
 
         btn1 = BitmapTextButton(self.widgets_left_panel, name="scroll_left")
@@ -649,8 +650,8 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
         # Events
         # Custom event to inform the media is loaded
-        self.amp.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
-        self.amp.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
+        self.smmps.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
+        self.smmps.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
         # Event received every Xms when the audio is playing
         self.Bind(wx.EVT_TIMER, self._on_timer)
 
@@ -661,9 +662,21 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     def load_files(self, with_threads=True):
         self.FindWindow("media_play").Enable(False)
 
+        # Loading the videos with threads make the app crashing under MacOS:
+        # Python[31492:1498940] *** Terminating app due to uncaught exception
+        # 'NSInternalInconsistencyException', reason: 'NSWindow drag regions
+        # should only be invalidated on the Main Thread!'
+        player = sppasImageFrame(
+            parent=self,  # if parent is destroyed, the frame will be too
+            title="Video",
+            style=wx.CAPTION | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT)
+
+        self.smmps.add_video([os.path.join(paths.samples, "faces", "video_sample.mp4")],
+                             player)
+
         # To load files in parallel, with threads:
         if with_threads is True:
-            self.amp.add_audio(
+            self.smmps.add_audio(
                 [os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"),
                  os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"),
                  os.path.join(paths.samples, "samples-eng", "oriana1.wav"),
@@ -672,26 +685,26 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
         else:
             # To load files sequentially, without threads:
-            self.amp.add_audio(os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
-            self.amp.add_audio(os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"))
-            self.amp.add_audio(os.path.join(paths.samples, "samples-eng", "oriana1.wav"))
-            self.amp.add_audio(os.path.join(paths.samples, "samples-eng", "oriana2.WAV"))
+            self.smmps.add_audio(os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
+            self.smmps.add_audio(os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"))
+            self.smmps.add_audio(os.path.join(paths.samples, "samples-eng", "oriana1.wav"))
+            self.smmps.add_audio(os.path.join(paths.samples, "samples-eng", "oriana2.WAV"))
 
     # ----------------------------------------------------------------------
 
     def __on_media_loaded(self, event):
         filename = event.filename
-        self.amp.enable(filename)
+        self.smmps.enable(filename)
         self.FindWindow("media_play").Enable(True)
         self.FindWindow("media_pause").Enable(True)
 
-        duration = self.amp.get_duration()
+        duration = self.smmps.get_duration()
         self._timeslider.set_duration(duration)
         # Under MacOS, the following line enters in an infinite loop with the message:
         #   In file /Users/robind/projects/bb2/dist-osx-py38/build/ext/wxWidgets/src/unix/threadpsx.cpp at line 370: 'pthread_mutex_[timed]lock()' failed with error 0x00000023 (Resource temporarily unavailable).
         # Under Linux it crashes with the message:
         #   pure virtual method called
-        # self.amp.set_period(0., duration)
+        # self.smmps.set_period(0., duration)
 
         # to test if it works, set a selection period and a visible period:
         self._timeslider.set_visible_range(3.45, 7.08765)
@@ -703,7 +716,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     def __on_media_not_loaded(self, event):
         filename = event.filename
         wx.LogError("File {} not loaded".format(filename))
-        # self.amp.remove(filename)
+        # self.smmps.remove(filename)
 
     # -----------------------------------------------------------------------
     # the methods to override...
@@ -711,10 +724,10 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
     def play(self):
         wx.LogDebug("Play")
-        if self.amp.is_playing() is False and self.amp.is_loading() is False:
+        if self.smmps.is_playing() is False and self.smmps.is_loading() is False:
             start, end = self._timeslider.get_range()
-            self.amp.set_period(start, end)
-            played = self.amp.play()
+            self.smmps.set_period(start, end)
+            played = self.smmps.play()
             if played is True:
                 # self.prev_time = datetime.datetime.now()
                 self.FindWindow("media_pause").SetValue(False)
@@ -727,34 +740,34 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         # It was asked to pause
         if pause_status is True:
             # and the audio is not already paused
-            if self.amp.is_paused() is False:
-                paused = self.amp.pause()
+            if self.smmps.is_paused() is False:
+                paused = self.smmps.pause()
                 if paused is not True:
                     # but paused was not done in the audio
                     self.FindWindow("media_pause").SetValue(False)
                 else:
 
                     # Put the slider exactly at the right time position
-                    position = self.amp.tell()
+                    position = self.smmps.tell()
                     self._timeslider.set_value(position)
                     self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
 
         else:
             # it was asked to end pausing
-            if self.amp.is_paused() is True:
+            if self.smmps.is_paused() is True:
                 self.play()
 
     # -----------------------------------------------------------------------
 
     def stop(self):
         wx.LogDebug("Stop")
-        self.amp.stop()
+        self.smmps.stop()
         # self.prev_time = None
         self.DeletePendingEvents()
         self.FindWindow("media_pause").SetValue(False)
 
         # Put the slider exactly at the right time position
-        position = self.amp.tell()
+        position = self.smmps.tell()
         self._timeslider.set_value(position)
         self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
 
@@ -763,13 +776,13 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     def media_rewind(self):
         """Seek media 10% earlier."""
         wx.LogDebug("Rewind")
-        d = self.amp.get_duration()
+        d = self.smmps.get_duration()
         d /= 10.
-        cur = self.amp.tell()
+        cur = self.smmps.tell()
         period = self._timeslider.get_range()
 
-        self.amp.seek(max(period[0], cur - d))
-        position = self.amp.tell()
+        self.smmps.seek(max(period[0], cur - d))
+        position = self.smmps.tell()
         self._timeslider.set_value(position)
         self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
 
@@ -778,9 +791,9 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     def media_forward(self):
         """Override. Seek media 10% later."""
         wx.LogDebug("Forward")
-        duration = self.amp.get_duration()
+        duration = self.smmps.get_duration()
         d = duration / 10.
-        cur = self.amp.tell()
+        cur = self.smmps.tell()
         period = self._timeslider.get_range()
         position = min(cur + d, period[1])
 
@@ -788,8 +801,8 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         if position == period[1] and self.IsReplay() is True:
             position = 0.  # restart from the beginning
 
-        self.amp.seek(position)
-        position = self.amp.tell()
+        self.smmps.seek(position)
+        position = self.smmps.tell()
         self._timeslider.set_value(position)
         self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
 
@@ -798,7 +811,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     def media_seek(self, value):
         """Override. Seek media at given time value."""
         wx.LogDebug("Seek at {}".format(value))
-        self.amp.seek(value)
+        self.smmps.seek(value)
         self._timeslider.set_value(value)
         self.FindWindow("moment_led").SetValue("{:.3f}".format(value))
 
@@ -806,8 +819,8 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
     def media_period(self, start, end):
         """Override. Set time period to media at given time range."""
-        self.amp.set_period(start, end)
-        value = self.amp.tell()
+        self.smmps.set_period(start, end)
+        value = self.smmps.tell()
         self._timeslider.set_value(value)
         self.FindWindow("moment_led").SetValue("{:.3f}".format(value))
 
@@ -815,19 +828,19 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
     def _on_timer(self, event):
         # at least one audio is still playing
-        if self.amp.is_playing() is True:
+        if self.smmps.is_playing() is True:
             cur_time = datetime.datetime.now()
             # if we doesn't want to update the slider so frequently:
             # delta = cur_time - self.prev_time
             # delta_seconds = delta.seconds + delta.microseconds / 1000000.
             # if delta_seconds > self.delta_slider:
             # self.prev_time = cur_time
-            time_pos = self.amp.tell()
+            time_pos = self.smmps.tell()
             self._timeslider.set_value(time_pos)
             self.FindWindow("moment_led").SetValue("{:.3f}".format(time_pos))
 
         # all enabled audio are now stopped
-        elif self.amp.are_stopped() is True:
+        elif self.smmps.are_stopped() is True:
             self.stop()
             if self.IsReplay() is True:
                 self.play()
@@ -887,7 +900,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
         new_period = self._timeslider.get_range()
         if new_period != cur_period:
-            self.amp.set_period(new_period[0], new_period[1])
+            self.smmps.set_period(new_period[0], new_period[1])
 
 # ---------------------------------------------------------------------------
 
