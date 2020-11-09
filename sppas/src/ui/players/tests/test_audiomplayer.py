@@ -65,10 +65,10 @@ class TestMultiPlayer(unittest.TestCase):
         self.assertTrue(mp.exists(sample_1))
         self.assertFalse(mp.exists(sample_2))
 
-        loaded = mp.add_audio("toto.xxx")   # Error 2005 extension not supported
+        loaded = mp.add_audio("toto.audio")   # Error 2005 extension not supported
         self.assertFalse(loaded)
         self.assertEqual(2, len(mp))
-        self.assertTrue(mp.is_unknown("toto.xxx"))
+        self.assertTrue(mp.is_unknown("toto.audio"))
 
         loaded = mp.add_audio("toto.wav")   # Error 2010
         self.assertFalse(loaded)

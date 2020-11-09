@@ -121,7 +121,8 @@ class sppasSimpleVideoPlayerWX(sppasSimpleVideoPlayer, wx.Timer):
 
         """
         loaded = sppasSimpleVideoPlayer.load(self, filename)
-        # The app will crash if load() is launch into a thread:
+        # With the following, the app will crash if load() is launch into
+        # a thread - tested under MacOS only:
         # if loaded is True:
         #    self._player.SetSize(wx.Size(self._media.get_width(),
         #                                 self._media.get_height()))

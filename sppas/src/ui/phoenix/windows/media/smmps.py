@@ -39,16 +39,20 @@
 
     A player to play several audio files synchronously.
 
+    Limitations that will raise a Runtime error:
+
+        1. can't add a new media when playing or paused;
+        2. can't play if at least a media is loading.
+
 """
 
 import os
 import wx
 import threading
+import datetime
 
 from sppas.src.config import paths
 from sppas.src.ui.players import sppasMultiMediaPlayer
-from sppas.src.ui.players import sppasSimpleAudioPlayer
-from sppas.src.ui.players import sppasSimpleVideoPlayer
 from sppas.src.ui.players import sppasSimpleVideoPlayerWX
 
 from .mediaevents import MediaEvents
@@ -302,23 +306,17 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
     # -----------------------------------------------------------------------
 
     def tell(self):
-        """Return the current time position in the audio stream (float)."""
+        """Return the latest time position in the media streams (float)."""
         if len(self._medias) > 0:
             values = list()
-            for media in self._medias:
+            for media in reversed(self._medias):
                 if media.is_unknown() is False and media.is_loading() is False:
+                    values.append(media.tell())
+                    print(" -> tell {} {}".format(media.tell(), media.get_filename()))
 
-                    # In theory, all media should return the same value...
-                    if isinstance(media, sppasSimpleVideoPlayer):
-                        time_value = media.tell()
-                        values.append(time_value)
-
-                    elif isinstance(media, sppasSimpleAudioPlayer):
-                        offset = media.media_tell()
-                        time_value = float(offset * media.get_nchannels()) / float(media.get_framerate())
-                        values.append(time_value)
-            # return the earlier time
-            return min(values)
+            # In theory, all media should return the same value except
+            # when playing or paused after the max length of some media.
+            return max(values)
 
         return 0
 
@@ -335,14 +333,13 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
         # Nothing to do if we are not playing (probably paused).
         if self.is_playing():
             for media in self._medias:
-                if isinstance(media, sppasSimpleAudioPlayer) is True:
+                if media.is_audio() is True:
                     media.update_playing()
-
                     # the audio stream is currently playing
                     if media.is_playing() is True:
                         # seek the audio at the time of the player.
                         # and stop if the audio reached its end.
-                        media._reposition()
+                        media.reposition_stream()
 
             # Send the wx.EVT_TIMER event
             wx.Timer.Notify(self)
@@ -442,17 +439,21 @@ class TestPanel(wx.Panel):
     # ----------------------------------------------------------------------
 
     def _do_load_file(self):
-        # m = sppasSimpleVideoPlayerWX(owner=self)
-        # m.load(os.path.join(paths.samples, "faces", "video_sample.mp4"))
-        # self.ap.add_media(m)
-        # self.ap.enable(os.path.join(paths.samples, "faces", "video_sample.mp4"))
+        # Example to add&enable a media:
+        # >>> m = sppasSimpleVideoPlayerWX(owner=self)
+        # >>> m.load(os.path.join(paths.samples, "faces", "video_sample.mp4"))
+        # >>> if m.is_unknown() is False:
+        # >>>     self.ap.add_media(m)
+        # >>>     self.ap.enable(os.path.join(paths.samples, "faces", "video_sample.mp4"))
         self.ap.add_video(os.path.join(paths.samples, "faces", "video_sample.mp4"))
         self.ap.add_audio(
-            [os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"),
-             os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"),
-             os.path.join(paths.samples, "samples-eng", "oriana1.wav"),
-             os.path.join(paths.samples, "samples-eng", "oriana2.WAV"),
-             'toto.xxx']
+            [
+                "toto.xyz",
+                os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"),
+                os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"),
+                os.path.join(paths.samples, "samples-eng", "oriana1.wav"),
+                os.path.join(paths.samples, "samples-eng", "oriana2.WAV")
+            ]
         )
 
     # ----------------------------------------------------------------------
@@ -460,10 +461,11 @@ class TestPanel(wx.Panel):
     def __on_media_loaded(self, event):
         filename = event.filename
         self.ap.enable(filename)
-        wx.LogDebug("File loaded successfully: {}".format(filename))
+        wx.LogDebug("File loaded successfully: {}. Duration: {}".format(filename, self.ap.get_duration(filename)))
         self.FindWindow("btn_play").Enable(True)
         duration = self.ap.get_duration()
         self.slider.SetRange(0, int(duration * 1000.))
+
         # the following line enters in an infinite loop with the message:
         # In file /Users/robind/projects/bb2/dist-osx-py38/build/ext/wxWidgets/src/unix/threadpsx.cpp at line 370: 'pthread_mutex_[timed]lock()' failed with error 0x00000023 (Resource temporarily unavailable).
         # self.ap.set_period(0., duration)
@@ -472,7 +474,7 @@ class TestPanel(wx.Panel):
 
     def __on_media_not_loaded(self, event):
         filename = event.filename
-        wx.LogError("Audio file {} not loaded".format(filename))
+        wx.LogError("Media file {} not loaded".format(filename))
 
     # ----------------------------------------------------------------------
 
@@ -499,6 +501,7 @@ class TestPanel(wx.Panel):
 
     def _on_timer(self, event):
         time_pos = self.ap.tell()
+        print("On timer event received. Current pos = {}".format(time_pos))
         self.slider.SetValue(int(time_pos * 1000.))
         event.Skip()
 

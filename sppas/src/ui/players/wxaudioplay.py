@@ -267,7 +267,7 @@ class sppasAudioPlayer(sppasSimpleAudioPlayer, wx.Timer):
         if self._ms == PlayerState().playing:
             # the audio stream is currently playing
             if self._player.is_playing() is True:
-                self._reposition()
+                self.reposition_stream()
             # the audio stream reached the end of the stream and it stopped
             else:
                 self.stop()

@@ -57,10 +57,10 @@ import datetime
 
 from sppas.src.utils import b
 import sppas.src.audiodata.aio
-from sppas.src.audiodata.audio import sppasAudioPCM
 
 from .baseplayer import sppasBasePlayer
 from .pstate import PlayerState
+from .pstate import PlayerType
 
 # ---------------------------------------------------------------------------
 
@@ -74,14 +74,15 @@ class sppasSimpleAudioPlayer(sppasBasePlayer):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    Can load, play and browse throw the audio stream of a given file.
+    Can load/play/pause/stop/seek throw the audio stream of a given file.
 
     """
 
     def __init__(self):
         super(sppasSimpleAudioPlayer, self).__init__()
 
-        self._frames = b("")     # loaded frames of the audio stream
+        # loaded frames of the audio stream
+        self._frames = b("")
 
     # -----------------------------------------------------------------------
 
@@ -113,22 +114,33 @@ class sppasSimpleAudioPlayer(sppasBasePlayer):
 
         """
         self.reset()
+        self._filename = filename
         self._ms = PlayerState().loading
         try:
-            self._filename = filename
             self._media = sppas.src.audiodata.aio.open(filename)
-            self._frames = self._media.read_frames(self._media.get_nframes())
-            self._media.rewind()
-            self._ms = PlayerState().stopped
-            self._to_time = self.get_duration()
-            return True
-
         except Exception as e:
-            logging.error("Error when opening or loading file {:s}: "
+            logging.error("Error when opening file {:s}: "
                           "{:s}".format(filename, str(e)))
             self._media = None
             self._ms = PlayerState().unknown
-            return False
+            self._mt = PlayerType().unknown
+        else:
+            try:
+                self._frames = self._media.read_frames(self._media.get_nframes())
+                self._media.rewind()
+                self._ms = PlayerState().stopped
+                self._to_time = self.get_duration()
+                self._mt = PlayerType().audio
+                return True
+
+            except Exception as e:
+                logging.error("Error when loading data of file {:s}: "
+                              "{:s}".format(filename, str(e)))
+                self._media = None
+                self._ms = PlayerState().unknown
+                self._mt = PlayerType().unsupported
+
+        return False
 
     # -----------------------------------------------------------------------
 
@@ -164,7 +176,7 @@ class sppasSimpleAudioPlayer(sppasBasePlayer):
                 # stop playing
                 self._player.stop()
                 # seek at the exact moment we stopped to play
-                self._reposition()
+                self._update_now()
                 # set our state
                 self._ms = PlayerState().paused
                 return True
@@ -217,6 +229,23 @@ class sppasSimpleAudioPlayer(sppasBasePlayer):
         if self._ms not in (PlayerState().unknown, PlayerState().loading):
             return self._media.tell()
         return 0
+
+    # -----------------------------------------------------------------------
+
+    def tell(self):
+        """Return the current time position in the audio stream (float)."""
+        if self._ms in (PlayerState().unknown, PlayerState().loading):
+            return 0.
+
+        elif self._ms == PlayerState().playing:
+            cur_time_value = datetime.datetime.now()
+            time_delta = cur_time_value - self._start_datenow
+            delta = time_delta.total_seconds()
+            return self._from_time + delta
+
+        else:
+            offset = self._media.tell()
+            return float(offset) / float(self._media.get_framerate())
 
     # -----------------------------------------------------------------------
     # About the audio
@@ -312,3 +341,47 @@ class sppasSimpleAudioPlayer(sppasBasePlayer):
         return int(time_value * float(self._media.get_framerate())) * \
                self._media.get_sampwidth() * \
                self._media.get_nchannels()
+
+    # -----------------------------------------------------------------------
+
+    def _update_now(self):
+        """Consider that current time is the start of playing.
+
+        Needed if the player is different of the object stream...
+        The current position in the played stream is estimated using the
+        delay between the stored time value and now().
+
+        :return: (datetime) New time value
+
+        """
+        self.reposition_stream()
+        self._start_datenow = datetime.datetime.now()
+        self._from_time = self._media.tell() * self._media.get_framerate()
+
+    # -----------------------------------------------------------------------
+
+    def reposition_stream(self):
+        """Seek the media at the current position in the played stream.
+
+        Needed if the player is different of the object stream...
+        The current position in the played stream is estimated using the
+        delay between the stored time value and now().
+
+        :return: (int) New position or -1 if no change
+
+        """
+        if self._start_datenow is None:
+            return -1
+        cur_time_value = datetime.datetime.now()
+        time_delta = cur_time_value - self._start_datenow
+        delta = time_delta.total_seconds()
+
+        # how many frames this new time is representing
+        position = (self._from_time + delta) * float(self._media.get_framerate())
+
+        if position > self._media.get_nframes():
+            position = self._media.get_nframes()
+
+        # seek at the new position in the media
+        self._media.seek(int(position))
+        return position

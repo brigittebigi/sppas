@@ -33,10 +33,15 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Multi-media player: play several media really synchronously.
-    Video are not displayed but images are updated. This class must
+    Video streams are not displayed but images are updated. This class must
     be overridden to display videos in a GUI.
 
     Requires simpleaudio to play the audio files and opencv to read the videos.
+
+    Limitations that will raise a Runtime error:
+
+        1. can't add a new media when playing or paused;
+        2. can't play if at least a media is loading.
 
 """
 
@@ -91,6 +96,9 @@ class sppasMultiMediaPlayer(object):
         :return: (bool)
 
         """
+        if self.is_playing() or self.is_paused():
+            raise RuntimeError("Can't add audio: at least a media is still playing.")
+
         if self.exists(filename):
             return False
         new_audio = sppasSimpleAudioPlayer()
@@ -109,6 +117,9 @@ class sppasMultiMediaPlayer(object):
         :return: (bool)
 
         """
+        if self.is_playing() or self.is_paused():
+            raise RuntimeError("Can't add video: at least a media is still playing.")
+
         if self.exists(filename):
             return False
         new_video = sppasSimpleVideoPlayer()
@@ -127,29 +138,38 @@ class sppasMultiMediaPlayer(object):
         :return: (bool)
 
         """
+        if self.is_playing() or self.is_paused():
+            raise RuntimeError("Can't add media: at least a media is still playing.")
+
         if isinstance(media, sppasBasePlayer) is False:
             return False
         self._medias[media] = False
 
     # -----------------------------------------------------------------------
 
-    def get_duration(self):
+    def get_duration(self, filename=None):
         """Return the duration this player must consider (in seconds).
 
         This estimation does not take into account the fact that a media is
         enabled or disabled. All valid media are considered.
 
+        :param filename: (str) The media to get duration or None to get the max duration
         :return: (float)
 
         """
-        dur = list()
-        if len(self._medias) > 0:
-            for mp in self._medias:
-                if mp.is_unknown() is False and mp.is_loading() is False:
-                    dur.append(mp.get_duration())
+        if filename is None:
+            dur = list()
+            if len(self._medias) > 0:
+                for mp in self._medias:
+                    if mp.is_unknown() is False and mp.is_loading() is False:
+                        dur.append(mp.get_duration())
 
-        if len(dur) > 0:
-            return max(dur)
+            if len(dur) > 0:
+                return max(dur)
+
+        elif self.exists(filename) is True:
+            return self._get_media(filename).get_duration()
+
         return 0.
 
     # -----------------------------------------------------------------------
@@ -336,6 +356,40 @@ class sppasMultiMediaPlayer(object):
 
     # -----------------------------------------------------------------------
 
+    def is_audio(self, filename=None):
+        """Return True if any media or if the given one is an audio.
+
+        :param filename: (str)
+        :return: (bool)
+
+        """
+        if filename is None:
+            return any([mp.is_audio() for mp in self._medias])
+
+        for mp in self._medias:
+            if mp.is_audio() is True and filename == mp.get_filename():
+                return True
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def is_video(self, filename=None):
+        """Return True if any media or if the given one is a video.
+
+        :param filename: (str)
+        :return: (bool)
+
+        """
+        if filename is None:
+            return any([mp.is_video() for mp in self._medias])
+
+        for mp in self._medias:
+            if mp.is_video() is True and filename == mp.get_filename():
+                return True
+        return False
+
+    # -----------------------------------------------------------------------
+
     def remove(self, filename):
         """Remove a media of the list of media managed by this control.
 
@@ -385,18 +439,33 @@ class sppasMultiMediaPlayer(object):
         :return: (bool) True if the action of playing was performed for at least one media
 
         """
+        if self.is_loading():
+            raise RuntimeError("Can't play: at least a media is still loading.")
+
         if from_time is not None:
             self.__from_time = from_time
         if to_time is not None:
             self.__to_time = to_time
 
+        # start to play all videos
+        nb_playing = 0
         started_time = None
+        for mp in self._medias:
+            if self._medias[mp] is True and mp.is_video() is True:
+                if mp.prepare_play(self.__from_time, self.__to_time):
+                    played = mp.play()
+                    logging.debug("Start video at {}".format(datetime.datetime.now()))
+                    if played is True:
+                        nb_playing += 1
+                        if started_time is None:
+                            started_time = mp.get_time_value()
+
         process_time = None
         shift = 0.
-        nb_playing = 0
 
+        # start to play & synchronize all audios
         for mp in self._medias:
-            if self._medias[mp] is True:
+            if self._medias[mp] is True and mp.is_audio() is True:
                 if started_time is not None and process_time is not None:
                     delta = process_time - started_time
                     delay = delta.seconds + delta.microseconds / 1000000.
@@ -406,13 +475,14 @@ class sppasMultiMediaPlayer(object):
 
                 if mp.prepare_play(self.__from_time + shift, self.__to_time):
                     played = mp.play()
+                    logging.debug("Start audio at {} with shift = {}".format(datetime.datetime.now(), shift))
                     if played is True:
                         nb_playing += 1
                         started_time = process_time
                         process_time = mp.get_time_value()
                         if started_time is None:
                             mean_delay = sum(self._all_delays) / float(len(self._all_delays))
-                            print(mean_delay)
+                            logging.debug(" ... mean delay is {:.4f}".format(mean_delay))
                             started_time = process_time - datetime.timedelta(seconds=mean_delay)
 
         logging.debug(" ... {:d} media files are playing".format(nb_playing))
@@ -474,6 +544,19 @@ class sppasMultiMediaPlayer(object):
             self.__from_time = value
             self.play()
 
+    # -----------------------------------------------------------------------
+    # Private
+    # -----------------------------------------------------------------------
+
+    def _get_media(self, filename):
+        """Return the media matching the given filename."""
+        for mp in self._medias:
+            if filename == mp.get_filename():
+                return mp
+        raise KeyError
+
+    # -----------------------------------------------------------------------
+    # Overloads
     # -----------------------------------------------------------------------
 
     def __len__(self):

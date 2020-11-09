@@ -40,12 +40,13 @@ import logging
 import datetime
 
 from .pstate import PlayerState
+from .pstate import PlayerType
 
 # ---------------------------------------------------------------------------
 
 
 class sppasBasePlayer(object):
-    """An audio player based on simpleaudio library.
+    """A base class for any stream player.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -53,7 +54,7 @@ class sppasBasePlayer(object):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    Can load, play and browse throw the audio stream of a given file.
+    Can load, play and stop the data stream of a given file.
 
     """
 
@@ -61,6 +62,8 @@ class sppasBasePlayer(object):
         """A base class for any player."""
         # The state of the player: unknown, loading, playing, paused or stopped
         self._ms = PlayerState().unknown
+        # The type of the player: unknown, unsupported, audio, video...
+        self._mt = PlayerType().unknown
 
         # The name of the media file
         self._filename = None
@@ -88,7 +91,7 @@ class sppasBasePlayer(object):
     # -----------------------------------------------------------------------
 
     def is_loading(self):
-        """Return True if the audio is still loading."""
+        """Return True if the media is loading."""
         if self._filename is None:
             return False
 
@@ -97,7 +100,7 @@ class sppasBasePlayer(object):
     # -----------------------------------------------------------------------
 
     def is_playing(self):
-        """Return True if the audio is playing."""
+        """Return True if the media stream is playing."""
         if self._filename is None:
             return False
 
@@ -106,7 +109,7 @@ class sppasBasePlayer(object):
     # -----------------------------------------------------------------------
 
     def is_paused(self):
-        """Return True if the audio is paused."""
+        """Return True if the media is paused."""
         if self._filename is None:
             return False
 
@@ -115,11 +118,40 @@ class sppasBasePlayer(object):
     # -----------------------------------------------------------------------
 
     def is_stopped(self):
-        """Return True if the audio is stopped."""
+        """Return True if the media is stopped."""
         if self._filename is None:
             return False
 
         return self._ms == PlayerState().stopped
+
+    # -----------------------------------------------------------------------
+    # Type of this player
+    # -----------------------------------------------------------------------
+
+    def is_unsupported(self):
+        """Return True if the media type is known but unsupported."""
+        if self._filename is None:
+            return False
+
+        return self._mt == PlayerType().unsupported
+
+    # -----------------------------------------------------------------------
+
+    def is_audio(self):
+        """Return True if the media type is a valid audio."""
+        if self._filename is None:
+            return False
+
+        return self._mt == PlayerType().audio
+
+    # -----------------------------------------------------------------------
+
+    def is_video(self):
+        """Return True if the media type is a valid video."""
+        if self._filename is None:
+            return False
+
+        return self._mt == PlayerType().video
 
     # -----------------------------------------------------------------------
     # Getters
@@ -148,6 +180,7 @@ class sppasBasePlayer(object):
     def reset(self):
         """Re-initialize all known data."""
         self._ms = PlayerState().unknown
+        self._mt = PlayerType().unknown
         self._filename = None
         self._media = None
         self._start_datenow = None
@@ -266,31 +299,3 @@ class sppasBasePlayer(object):
 
     def media_tell(self):
         raise NotImplementedError
-
-    # -----------------------------------------------------------------------
-
-    def _reposition(self):
-        """Seek the media at the current position in the played stream.
-
-        Needed if the player is different of the object stream...
-        The current position in the played stream is estimated using the
-        delay between the stored time value and now().
-
-        :return: (datetime) New time value
-
-        """
-        # update the current time value
-        cur_time_value = datetime.datetime.now()
-        time_delta = cur_time_value - self._start_datenow
-        self._start_datenow = cur_time_value
-
-        # eval the exact delay since the previous estimation
-        self._from_time = time_delta.total_seconds()
-
-        # how many frames this delay is representing
-        n_frames = self._from_time * self._media.get_framerate()
-
-        # seek at the new position in the media
-        position = self._media.tell() + int(n_frames)
-        if position < self._media.get_nframes():
-            self._media.seek(position)

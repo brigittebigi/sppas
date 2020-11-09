@@ -42,8 +42,9 @@ import time
 import threading
 
 from sppas.src.videodata.video import sppasVideoReader
-from .pstate import PlayerState
 from .baseplayer import sppasBasePlayer
+from .pstate import PlayerState
+from .pstate import PlayerType
 
 # ---------------------------------------------------------------------------
 
@@ -92,18 +93,21 @@ class sppasSimpleVideoPlayer(sppasBasePlayer):
 
         """
         self.reset()
+        self._filename = filename
+        self._ms = PlayerState().loading
         try:
-            self._filename = filename
             self._media = sppasVideoReader()
             self._media.open(filename)
             self._ms = PlayerState().stopped
+            self._mt = PlayerType().video
             return True
 
         except Exception as e:
-            logging.error("Error when opening or loading file {:s}: "
+            logging.error("Error when opencv was opening file {:s}: "
                           "{:s}".format(filename, str(e)))
             self._media = sppasVideoReader()
             self._ms = PlayerState().unknown
+            self._mt = PlayerType().unknown
             return False
 
     # -----------------------------------------------------------------------

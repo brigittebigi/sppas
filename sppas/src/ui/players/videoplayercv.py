@@ -46,8 +46,9 @@ import time
 import threading
 
 from sppas.src.videodata.video import sppasVideoReader
-from .pstate import PlayerState
 from .baseplayer import sppasBasePlayer
+from .pstate import PlayerState
+from .pstate import PlayerType
 
 # ---------------------------------------------------------------------------
 
@@ -100,6 +101,7 @@ class sppasSimpleVideoPlayerCV(sppasBasePlayer):
             self._media = sppasVideoReader()
             self._media.open(filename)
             self._ms = PlayerState().stopped
+            self._mt = PlayerType().video
             return True
 
         except Exception as e:
@@ -107,6 +109,7 @@ class sppasSimpleVideoPlayerCV(sppasBasePlayer):
                           "{:s}".format(filename, str(e)))
             self._media = sppasVideoReader()
             self._ms = PlayerState().unknown
+            self._mt = PlayerType().unknown
             return False
 
     # -----------------------------------------------------------------------

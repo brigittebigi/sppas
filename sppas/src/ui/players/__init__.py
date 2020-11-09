@@ -61,6 +61,7 @@ from sppas.src.exceptions import sppasEnableFeatureError
 from sppas.src.exceptions import sppasPackageFeatureError
 
 from .pstate import PlayerState
+from .pstate import PlayerType
 
 # ---------------------------------------------------------------------------
 # Update features & prepare base classes for exceptions
@@ -155,6 +156,7 @@ else:
 
 __all__ = (
     "PlayerState",
+    "PlayerType",
     "sppasSimpleAudioPlayer",       # play an audio file
     "sppasMultiAudioPlayer",        # play several audio files synchronously
     "sppasSimpleVideoPlayer",       # play a video but do not show it

@@ -47,23 +47,30 @@ sample_1 = os.path.join(paths.samples, "samples-eng", "oriana1.wav")
 # ---------------------------------------------------------------------------
 
 
-class TestMultiPlayer(unittest.TestCase):
+class TestSimpleAudioPlayer(unittest.TestCase):
 
     def test_load(self):
         """Test in loading multiple audio files."""
         vp = sppasSimpleAudioPlayer()
 
-        loaded = vp.load("toto.xxx")   # Error 2005 extension not supported
-        self.assertTrue(vp.get_filename(), "toto.xxx")
+        loaded = vp.load("toto.aau")   # Error 2005 extension not supported
+        self.assertTrue(vp.get_filename(), "toto.aau")
         self.assertFalse(loaded)
+        self.assertTrue(vp.is_unknown())
+        self.assertFalse(vp.is_stopped())
+        self.assertFalse(vp.is_unsupported())
 
         loaded = vp.load(sample_1)
         self.assertTrue(vp.get_filename(), sample_1)
         self.assertTrue(loaded)
+        self.assertTrue(vp.is_audio())
+        self.assertFalse(vp.is_video())
 
     # -----------------------------------------------------------------------
 
-    def test_player_cv(self):
+    def test_player(self):
         mp = sppasSimpleAudioPlayer()
         mp.load(sample_1)
+        self.assertTrue(mp.is_audio())
+        self.assertTrue(mp.is_stopped())
         mp.play()
