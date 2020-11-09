@@ -49,7 +49,6 @@
 import os
 import wx
 import threading
-import datetime
 
 from sppas.src.config import paths
 from sppas.src.ui.players import sppasMultiMediaPlayer
@@ -157,28 +156,16 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
         :param end_time: (float) Time to stop playing in seconds
 
         """
+        if self.is_playing() or self.is_paused():
+            raise RuntimeError("The period can't be changed while playing or paused.")
+
         start_time = float(start_time)
         end_time = float(end_time)
         if end_time <= start_time:
             raise ValueError("End can't be greater or equal than start")
 
         self._period = (start_time, end_time)
-        cur_playing = self.is_playing()
-        cur_paused = self.is_paused()
-        cur_pos = self.tell()
-        # Stop playing (if any), and seek at the beginning of the period
-        self.stop()
-
-        # Restore the situation in which the audio was before stopping
-        if cur_playing is True or cur_paused is True:
-            if self._period[0] < cur_pos <= self._period[1]:
-                # Restore the previous position in time if it was inside
-                # the new period.
-                self.seek(cur_pos)
-            # Play again, then pause if it was the previous state.
-            self.play()
-            if cur_paused is True:
-                self.pause()
+        self.seek(self._period[0])
 
     # -----------------------------------------------------------------------
 
@@ -255,19 +242,26 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
 
         """
         played = False
-        # current position in time.
-        cur_time = self.tell()
+        if self.is_paused() is True:
+            played = self.play_interval()
+        else:
+            if self.is_playing() is False:
+                played = self.play_interval(self._period[0], self._period[1])
 
-        start_time = max(self._period[0], cur_time)
-        end_time = min(self._period[1], self.get_duration())
-        if start_time < end_time:
-
-            played = self.play_interval(start_time, end_time)
-            if played is True:
-                # wx.Timer Start method needs milliseconds, not seconds.
-                self.Start(int(sppasMMPS.TIMER_DELAY * 1000.))
+        if played is True:
+            # wx.Timer Start method needs milliseconds, not seconds.
+            self.Start(int(sppasMMPS.TIMER_DELAY * 1000.))
 
         return played
+
+    # -----------------------------------------------------------------------
+
+    def pause(self):
+        """Pause the medias that are currently playing."""
+        # Stop the timer
+        self.Stop()
+        paused = sppasMultiMediaPlayer.pause(self)
+        return paused
 
     # -----------------------------------------------------------------------
 
@@ -309,10 +303,9 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
         """Return the latest time position in the media streams (float)."""
         if len(self._medias) > 0:
             values = list()
-            for media in reversed(self._medias):
+            for media in reversed(list(self._medias.keys())):
                 if media.is_unknown() is False and media.is_loading() is False:
                     values.append(media.tell())
-                    print(" -> tell {} {}".format(media.tell(), media.get_filename()))
 
             # In theory, all media should return the same value except
             # when playing or paused after the max length of some media.
@@ -332,8 +325,9 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
         """
         # Nothing to do if we are not playing (probably paused).
         if self.is_playing():
+            # Use this timer to seek the audios
             for media in self._medias:
-                if media.is_audio() is True:
+                if media.is_playing() is True and media.is_audio() is True:
                     media.update_playing()
                     # the audio stream is currently playing
                     if media.is_playing() is True:
@@ -445,6 +439,7 @@ class TestPanel(wx.Panel):
         # >>> if m.is_unknown() is False:
         # >>>     self.ap.add_media(m)
         # >>>     self.ap.enable(os.path.join(paths.samples, "faces", "video_sample.mp4"))
+
         self.ap.add_video(os.path.join(paths.samples, "faces", "video_sample.mp4"))
         self.ap.add_audio(
             [
@@ -480,9 +475,11 @@ class TestPanel(wx.Panel):
 
     def _on_play_ap(self, event):
         wx.LogDebug("................PLAY EVENT RECEIVED..................")
-        duration = self.ap.get_duration()
-        self.ap.set_period(0., duration)
-        self.ap.play()
+        if self.ap.is_playing() is False:
+            if self.ap.is_paused() is False:
+                duration = self.ap.get_duration()
+                self.ap.set_period(0., duration)
+            self.ap.play()
 
     # ----------------------------------------------------------------------
 
@@ -501,7 +498,6 @@ class TestPanel(wx.Panel):
 
     def _on_timer(self, event):
         time_pos = self.ap.tell()
-        print("On timer event received. Current pos = {}".format(time_pos))
         self.slider.SetValue(int(time_pos * 1000.))
         event.Skip()
 

@@ -161,7 +161,8 @@ class sppasSimpleVideoPlayerWX(sppasSimpleVideoPlayer, wx.Timer):
             self.Stop()
             self._ms = PlayerState().stopped
             # seek at the exact moment we stopped to play
-            self._from_time = self.tell()
+            offset = self._media.tell()
+            self._from_time = float(offset) / float(self._media.get_framerate())
             # set our state
             self._ms = PlayerState().paused
             return True

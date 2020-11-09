@@ -220,7 +220,7 @@ class sppasSimpleVideoPlayer(sppasBasePlayer):
 
     # -----------------------------------------------------------------------
 
-    def seek(self, time_pos=0):
+    def seek(self, time_pos=0.):
         """Seek the video stream at the given position in time.
 
         :param time_pos: (float) Time in seconds
@@ -266,9 +266,20 @@ class sppasSimpleVideoPlayer(sppasBasePlayer):
     # -----------------------------------------------------------------------
 
     def tell(self):
-        """Return the current time position in the video stream (float)."""
+        """Return the current time position in the video stream (float).
+
+        :return: (float) The time at the middle of the current frame
+
+        """
+        # Time value at the end of the last read frame
         offset = self._media.tell()
-        return float(offset) / float(self._media.get_framerate())
+        if offset == 0:
+            return 0.
+        time_value = float(offset) / float(self._media.get_framerate())
+        # Duration of a frame
+        frame_duration = 1. / self._media.get_framerate()
+        # Time at the middle of the last read frame
+        return time_value - (frame_duration / 2.)
 
     # -----------------------------------------------------------------------
     # About the video

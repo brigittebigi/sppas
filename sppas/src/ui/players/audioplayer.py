@@ -354,9 +354,9 @@ class sppasSimpleAudioPlayer(sppasBasePlayer):
         :return: (datetime) New time value
 
         """
-        self.reposition_stream()
+        position = self.reposition_stream()
         self._start_datenow = datetime.datetime.now()
-        self._from_time = self._media.tell() * self._media.get_framerate()
+        self._from_time = position / float(self._media.get_framerate())
 
     # -----------------------------------------------------------------------
 

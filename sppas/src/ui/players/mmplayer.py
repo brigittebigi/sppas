@@ -454,7 +454,6 @@ class sppasMultiMediaPlayer(object):
             if self._medias[mp] is True and mp.is_video() is True:
                 if mp.prepare_play(self.__from_time, self.__to_time):
                     played = mp.play()
-                    logging.debug("Start video at {}".format(datetime.datetime.now()))
                     if played is True:
                         nb_playing += 1
                         if started_time is None:
@@ -475,7 +474,6 @@ class sppasMultiMediaPlayer(object):
 
                 if mp.prepare_play(self.__from_time + shift, self.__to_time):
                     played = mp.play()
-                    logging.debug("Start audio at {} with shift = {}".format(datetime.datetime.now(), shift))
                     if played is True:
                         nb_playing += 1
                         started_time = process_time
@@ -494,13 +492,11 @@ class sppasMultiMediaPlayer(object):
         """Pause the medias that are currently playing."""
         paused = False
         for mp in self._medias:
-            if mp.is_playing():
-                p = mp.pause()
-                if p is True and paused is False:
-                    paused = True
-                    position = mp.media_tell()
-                    self.__from_time = float(position) / float(mp.get_framerate())
-
+            p = mp.pause()
+            if p is True and paused is False:
+                paused = True
+                position = mp.media_tell()
+                self.__from_time = float(position) / float(mp.get_framerate())
         return paused
 
     # -----------------------------------------------------------------------

@@ -725,8 +725,9 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     def play(self):
         wx.LogDebug("Play")
         if self.smmps.is_playing() is False and self.smmps.is_loading() is False:
-            start, end = self._timeslider.get_range()
-            self.smmps.set_period(start, end)
+            if self.smmps.is_paused() is False:
+                start, end = self._timeslider.get_range()
+                self.smmps.set_period(start, end)
             played = self.smmps.play()
             if played is True:
                 # self.prev_time = datetime.datetime.now()
@@ -819,7 +820,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
 
     def media_period(self, start, end):
         """Override. Set time period to media at given time range."""
-        self.smmps.set_period(start, end)
+        # self.smmps.set_period(start, end)
         value = self.smmps.tell()
         self._timeslider.set_value(value)
         self.FindWindow("moment_led").SetValue("{:.3f}".format(value))
