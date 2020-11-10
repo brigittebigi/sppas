@@ -181,7 +181,6 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         :param name: (str) the widget name.
 
         """
-        wx.LogDebug("Player background image: {}".format(image))
         super(sppasPlayerControlsPanel, self).__init__(
             parent, id, image, pos, size, style, name)
 
@@ -652,7 +651,7 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
         # Custom event to inform the media is loaded
         self.smmps.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
         self.smmps.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
-        # Event received every Xms when the audio is playing
+        # Event received every X ms when the audio is playing
         self.Bind(wx.EVT_TIMER, self._on_timer)
 
         self.Layout()
@@ -830,8 +829,8 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     def _on_timer(self, event):
         # at least one audio is still playing
         if self.smmps.is_playing() is True:
-            cur_time = datetime.datetime.now()
             # if we doesn't want to update the slider so frequently:
+            # cur_time = datetime.datetime.now()
             # delta = cur_time - self.prev_time
             # delta_seconds = delta.seconds + delta.microseconds / 1000000.
             # if delta_seconds > self.delta_slider:

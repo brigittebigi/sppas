@@ -32,17 +32,24 @@
     src.ui.phoenix.windows.media.smmps.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    This is the SPPAS Multi Media Player System.
+    The SPPAS Multi Media Player System
+    ===================================
 
     Requires simpleaudio library to play the audio file streams. Raise a
     FeatureException at init if 'audioplay' feature is not enabled.
 
-    A player to play several audio files synchronously.
+    A player to play several media files really synchronously: during the
+    tests, the maximum time lag I observed was less than 15ms when playing
+    4 audios and 1 video.
 
-    Limitations that will raise a Runtime error:
+    Limitations:
+    =============
+
+    The followings will raise a Runtime error:
 
         1. can't add a new media when playing or paused;
-        2. can't play if at least a media is loading.
+        2. can't play if at least a media is loading;
+        3. can't set period if at least a media is paused or playing.
 
 """
 
@@ -126,7 +133,8 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
     # -----------------------------------------------------------------------
 
     def __del__(self):
-        self.reset()
+        if self.is_playing():
+            self.reset()
 
     # -----------------------------------------------------------------------
 
