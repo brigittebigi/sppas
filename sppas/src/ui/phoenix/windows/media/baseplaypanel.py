@@ -45,7 +45,6 @@
 
 import wx
 import os
-import datetime
 import wx.lib.gizmos as gizmos
 
 from sppas.src.config import paths  # used only in the Test Panel

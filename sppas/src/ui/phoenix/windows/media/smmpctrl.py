@@ -50,9 +50,8 @@ import wx.lib.gizmos as gizmos
 
 from sppas.src.config import paths  # used only in the Test Panel
 
-from ..buttons import ToggleButton
-from ..buttons import BitmapTextButton, BitmapButton
-from ..panels import sppasImagePanel, sppasPanel
+from ..buttons import BitmapTextButton
+from ..panels import sppasPanel
 from ..frame import sppasImageFrame
 
 from .mediaevents import MediaEvents
@@ -80,7 +79,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
                  size=wx.DefaultSize,
                  style=0,
                  name="smmpc_panel"):
-        """Create a sppasPlayerControlsPanel & sppasMMPS.
+        """Create a sppasPlayerControlsPanel embedding a sppasMMPS.
 
         :param parent: (wx.Window) Parent window must NOT be none
         :param id: (int) window identifier or -1
@@ -92,7 +91,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         """
         super().__init__(parent, id, image, pos, size, style, name)
 
-        self.__smmps = sppasMMPS(owner=parent)
+        self.__smmps = sppasMMPS(owner=self)
         self._create_mmpc_content()
         self._setup_mmpc_events()
 

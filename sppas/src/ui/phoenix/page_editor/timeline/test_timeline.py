@@ -30,7 +30,7 @@
         ---------------------------------------------------------------------
 
     src.ui.phoenix.page_editor.test_editor.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -40,13 +40,12 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
-import sppas.src.ui.phoenix.page_editor.annlabels as annlabels
-import sppas.src.ui.phoenix.page_editor.tiersbook as tiersbook
-import sppas.src.ui.phoenix.page_editor.tiersanns as tiersanns
+import sppas.src.ui.phoenix.page_editor.basefileedit as baseview
+import sppas.src.ui.phoenix.page_editor.errfileedit as errview
+import sppas.src.ui.phoenix.page_editor.trsfileedit as trsview
 
-import sppas.src.ui.phoenix.page_editor.editorpanel as editorpanel
-import sppas.src.ui.phoenix.page_editor.editor as editor
-
+# import sppas.src.ui.phoenix.page_editor.mediafileedit as mediaview
+# import sppas.src.ui.phoenix.page_editor.filesedit as filesview
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -60,18 +59,17 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        p = annlabels.TestPanel(self)
+        p = baseview.TestPanel(self)
         self.AddPage(p, p.GetName())
-        p = tiersbook.TestPanel(self)
+        p = errview.TestPanel(self)
         self.AddPage(p, p.GetName())
-        p = tiersanns.TestPanel(self)
+        p = trsview.TestPanel(self)
         self.AddPage(p, p.GetName())
+        # p = mediaview.TestPanel(self)
+        # self.AddPage(p, p.GetName())
 
-        p = editorpanel.TestPanel(self)
-        self.AddPage(p, p.GetName())
-
-        p = editor.TestPanel(self)
-        self.AddPage(p, p.GetName())
+        # p = filesview.TestPanel(self)
+        # self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
