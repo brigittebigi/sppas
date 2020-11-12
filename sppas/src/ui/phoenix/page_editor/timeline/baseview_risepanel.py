@@ -167,7 +167,7 @@ class TestPanel(sppasFileViewPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(
-            parent, TestPanel.FILENAME, name="BaseView Rise Panel")
+            parent, TestPanel.FILENAME, name="BaseView RisePanel")
         self.Collapse(False)
 
     def _create_content(self):

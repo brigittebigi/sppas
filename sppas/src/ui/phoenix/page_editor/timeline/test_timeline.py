@@ -29,8 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.page_editor.test_editor.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.page_editor.timeline.test_timeline.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -40,12 +40,13 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
-import sppas.src.ui.phoenix.page_editor.basefileedit as baseview
-import sppas.src.ui.phoenix.page_editor.errfileedit as errview
-import sppas.src.ui.phoenix.page_editor.trsfileedit as trsview
+import sppas.src.ui.phoenix.page_editor.timeline.baseview_risepanel as baseview
+import sppas.src.ui.phoenix.page_editor.timeline.errorview_risepanel as errview
+import sppas.src.ui.phoenix.page_editor.timeline.trsview_risepanel as trsview
+import sppas.src.ui.phoenix.page_editor.timeline.audioview_risepanel as audioview
+import sppas.src.ui.phoenix.page_editor.timeline.videoview_risepanel as videoview
 
-# import sppas.src.ui.phoenix.page_editor.mediafileedit as mediaview
-# import sppas.src.ui.phoenix.page_editor.filesedit as filesview
+import sppas.src.ui.phoenix.page_editor.timeline.timeline_panel as timepanel
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -65,11 +66,13 @@ class TestPanel(wx.Choicebook):
         self.AddPage(p, p.GetName())
         p = trsview.TestPanel(self)
         self.AddPage(p, p.GetName())
-        # p = mediaview.TestPanel(self)
-        # self.AddPage(p, p.GetName())
+        p = audioview.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = videoview.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
-        # p = filesview.TestPanel(self)
-        # self.AddPage(p, p.GetName())
+        p = timepanel.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)

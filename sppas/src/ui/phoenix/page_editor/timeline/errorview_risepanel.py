@@ -80,6 +80,7 @@ class ErrorViewPanel(sppasFileViewPanel):
         super(ErrorViewPanel, self).__init__(parent, filename, name)
         self.Expand()
         self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
+        self.SetBackgroundColour(wx.RED)
 
     # -----------------------------------------------------------------------
     # Override from the parent
@@ -142,7 +143,7 @@ class ErrorViewPanel(sppasFileViewPanel):
 
 class TestPanel(sppasPanel):
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent, name="Test Error View")
+        super(TestPanel, self).__init__(parent, name="ErrorView RisePanel")
 
         p1 = ErrorViewPanel(self, filename="Path/to/a/file.ext")
         p2 = ErrorViewPanel(self, filename="Path to another file")

@@ -147,6 +147,27 @@ class sppasMultiMediaPlayer(object):
 
     # -----------------------------------------------------------------------
 
+    def remove(self, filename):
+        """Remove a media of the list.
+
+        :param filename: (str) Name of the file of the media to be removed
+        :return: (bool)
+
+        """
+        if self.exists(filename) is False:
+            return False
+
+        media_obj = None
+        for mp in self._medias:
+            if mp.get_filename() == filename:
+                mp.stop()
+                media_obj = mp
+                break
+        del self._medias[media_obj]
+        return True
+
+    # -----------------------------------------------------------------------
+
     def get_duration(self, filename=None):
         """Return the duration this player must consider (in seconds).
 

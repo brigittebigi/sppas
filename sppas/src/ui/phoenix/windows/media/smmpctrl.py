@@ -320,6 +320,12 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         self.__smmps.enable(filename, value)
 
     # -----------------------------------------------------------------------
+
+    def remove(self, filename):
+        """Remove a file of the list of media."""
+        self.__smmps.remove(filename)
+
+    # -----------------------------------------------------------------------
     # Events
     # -----------------------------------------------------------------------
 
@@ -382,9 +388,11 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         self._timeslider.Layout()
         self._timeslider.Refresh()
 
+        # NOTIFY PARENT IF THE PERIOD CHANGED...
         # new_period = self._timeslider.get_range()
         # if new_period != cur_period:
-        #     self.set_period(new_period[0], new_period[1])
+            # self.set_period(new_period[0], new_period[1])
+            # self.notify()
 
     # ----------------------------------------------------------------------
 

@@ -448,7 +448,7 @@ class sppasAudioPanel(sppasPanel):
 class TestPanel(wx.Panel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(
-            parent, -1, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN, name="AudioPanel")
+            parent, -1, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN, name="Audio Panel")
 
         btn2 = wx.Button(self, -1, "Play", name="btn_play")
         btn2.Enable(False)

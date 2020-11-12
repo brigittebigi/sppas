@@ -245,8 +245,9 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         The buttons are not refreshed.
 
         """
-        self._btn_size = min(sppasPanel.fix_size(value), 128)
-        self._btn_size = max(self._btn_size, 12)
+        value = sppasPanel.fix_size(value)
+        self._btn_size = min(value, sppasPanel.fix_size(128))
+        self._btn_size = max(self._btn_size, sppasPanel.fix_size(12))
 
         for name in ("rewind", "forward"):
             btn = self.FindWindow("media_"+name)
@@ -416,10 +417,10 @@ class sppasPlayerControlsPanel(sppasImagePanel):
 
         # Organize the panels into the main sizer
         sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(nav_sizer, 0, wx.EXPAND, 0)
         sizer.Add(slider, 0, wx.EXPAND, 0)
-        sizer.Add(nav_sizer, 0, wx.EXPAND | wx.ALL, border)
 
-        self.SetSizer(sizer)
+        self.SetSizerAndFit(sizer)
 
     # -----------------------------------------------------------------------
 
