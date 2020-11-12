@@ -45,6 +45,7 @@ import sppas.src.ui.phoenix.page_editor.timeline.errorview_risepanel as errview
 import sppas.src.ui.phoenix.page_editor.timeline.trsview_risepanel as trsview
 import sppas.src.ui.phoenix.page_editor.timeline.audioview_risepanel as audioview
 import sppas.src.ui.phoenix.page_editor.timeline.videoview_risepanel as videoview
+import sppas.src.ui.phoenix.page_editor.timeline.smmpctrl_risepanel as smmpcview
 
 import sppas.src.ui.phoenix.page_editor.timeline.timeline_panel as timepanel
 
@@ -69,6 +70,8 @@ class TestPanel(wx.Choicebook):
         p = audioview.TestPanel(self)
         self.AddPage(p, p.GetName())
         p = videoview.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = smmpcview.TestPanel(self)
         self.AddPage(p, p.GetName())
 
         p = timepanel.TestPanel(self)

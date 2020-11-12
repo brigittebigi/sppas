@@ -238,7 +238,6 @@ class sppasEditorPanel(sppasPanel):
         if success > 0:
             self._editpanel.Layout()
             self._editpanel.Refresh()
-            wx.LogMessage("{:d} files opened.".format(success))
             self.notify()
 
     # ------------------------------------------------------------------------

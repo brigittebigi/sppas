@@ -69,18 +69,26 @@ class TrsViewPanel(sppasFileViewPanel):
     """
 
     def __init__(self, parent, filename, name="trsview_risepanel"):
-        try:
-            # Before creating the trs, check if the file is supported.
-            parser = sppasRW(filename)
-            self._trs = parser.read()
-        except TypeError:
-            self.Destroy()
-            raise
-
         super(TrsViewPanel, self).__init__(parent, filename, name)
         self._setup_events()
         self.Expand()
         self.SetBackgroundColour(wx.YELLOW)
+
+    # ------------------------------------------------------------------------
+
+    def load(self):
+        """Override. Load the content of the file.
+
+        The parent will have to layout.
+
+        """
+        try:
+            # Before creating the trs, check if the file is supported.
+            parser = sppasRW(self.get_filename())
+            trs = parser.read()
+            self.GetPane().set_transcription(trs)
+        except TypeError as e:
+            wx.LogError(str(e))
 
     # -----------------------------------------------------------------------
 
@@ -92,13 +100,13 @@ class TrsViewPanel(sppasFileViewPanel):
 
     def get_tier_list(self):
         """Return the list of all tiers."""
-        return self._trs.get_tier_list()
+        return self.GetPane().get_tier_list()
 
     # -----------------------------------------------------------------------
 
     def get_tiernames(self):
         """Return the list of all tier names."""
-        return [tier.get_name() for tier in self._trs.get_tier_list()]
+        return [tier.get_name() for tier in self.get_tier_list()]
 
     # -----------------------------------------------------------------------
 
@@ -179,13 +187,17 @@ class TrsViewPanel(sppasFileViewPanel):
         if filename is None and self._dirty is True:
             # the writer will increase the file version
             parser = sppasRW(self._filename)
-            self._dirty = False
         if filename is not None:
             parser = sppasRW(filename)
 
         if parser is not None:
-            parser.write(self._trs)
-            return True
+            try:
+                self.GetPane().write(parser)
+                self._dirty = False
+                return True
+            except Exception as e:
+                wx.LogError("File not saved: {:s}".format(str(e)))
+
         return False
 
     # -----------------------------------------------------------------------
@@ -197,7 +209,7 @@ class TrsViewPanel(sppasFileViewPanel):
         self.AddButton("save")
         self.AddButton("close")
 
-        tp = TranscriptionVista(self, self._trs)
+        tp = TranscriptionVista(self)
         self.SetPane(tp)
 
     # -----------------------------------------------------------------------
@@ -255,8 +267,8 @@ class TestPanel(sppasScrolledPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="TrsView RisePanel")
 
-        p2 = TrsViewPanel(self, filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.TextGrid"))
-        p3 = TrsViewPanel(self, filename=os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"))
+        p2 = TrsViewPanel(self, filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.TextGrid"), name="p1")
+        p3 = TrsViewPanel(self, filename=os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"), name="p2")
 
         p3.set_draw_period(2300, 3500)
         p3.set_selected_tiername("PhonAlign")
@@ -268,6 +280,14 @@ class TestPanel(sppasScrolledPanel):
         self.SetupScrolling(scroll_x=False, scroll_y=True)
 
         self.Bind(EVT_TIME_VIEW, self._process_action)
+        wx.CallAfter(self.load)
+
+    # -----------------------------------------------------------------------
+
+    def load(self):
+        self.FindWindow("p1").load()
+        self.FindWindow("p2").load()
+        self.Layout()
 
     # -----------------------------------------------------------------------
 

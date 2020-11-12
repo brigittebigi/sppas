@@ -354,7 +354,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         wx.Panel.SetBackgroundColour(self, colour)
         hi_color = self.GetHighlightedBackgroundColour()
 
-        for name in ("transport", "widgets", "slider"):
+        for name in ("transport", "widgets_left", "widgets_right", "slider"):
             w = self.FindWindow(name + "_panel")
             w.SetBackgroundColour(colour)
             for c in w.GetChildren():
@@ -369,7 +369,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         """Set the foreground of our panel to the given color."""
         wx.Panel.SetForegroundColour(self, colour)
 
-        for name in ("transport", "widgets", "slider"):
+        for name in ("transport", "widgets_left", "widgets_right", "slider"):
             w = self.FindWindow(name + "_panel")
             w.SetForegroundColour(colour)
             for c in w.GetChildren():

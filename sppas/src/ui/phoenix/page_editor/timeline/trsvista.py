@@ -34,9 +34,9 @@ class TranscriptionVista(sppasPanel):
 
     """
 
-    def __init__(self, parent, transcription=None, name="trsvista_panel"):
+    def __init__(self, parent, name="trsvista_panel"):
         super(TranscriptionVista, self).__init__(parent, name=name)
-        self.__trs = transcription
+        self.__trs = None
         self._create_content()
 
     # -----------------------------------------------------------------------
@@ -47,8 +47,22 @@ class TranscriptionVista(sppasPanel):
         """
         if self.__trs is not None:
             raise Exception("A sppasTranscription is already defined.")
+
         if isinstance(transcription, sppasTranscription):
             self.__trs = transcription
+            for tier in self.__trs:
+                self._add_tier_to_panel(tier)
+            self.SetMinSize(wx.Size(-1, len(self.__trs)*sppasPanel.fix_size(24)))
+
+    # -----------------------------------------------------------------------
+
+    def write_transcription(self, parser):
+        """Write the transcription object with the given parser.
+
+        :param parser: (sppasRW)
+
+        """
+        parser.write(self.__trs)
 
     # -----------------------------------------------------------------------
 
@@ -100,6 +114,9 @@ class TranscriptionVista(sppasPanel):
         :param tier_name: (str)
 
         """
+        if self.__trs is None:
+            return
+
         if tier_name is not None:
             assert tier_name in [t.get_name() for t in self.__trs]
 
@@ -112,6 +129,14 @@ class TranscriptionVista(sppasPanel):
                 child.SetBorderColour(wx.RED)
                 child.SetSelected(True)
                 child.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def get_tier_list(self):
+        """Return the list of tiers."""
+        if self.__trs is not None:
+            return self.__trs.get_tier_list()
+        return list()
 
     # -----------------------------------------------------------------------
 
@@ -155,18 +180,21 @@ class TranscriptionVista(sppasPanel):
                 child.create_ann(idx)
 
     # -----------------------------------------------------------------------
+
+    def _add_tier_to_panel(self, tier):
+        tier_ctrl = sppasTierWindow(self, data=tier)
+        tier_ctrl.SetMinSize(wx.Size(-1, sppasPanel.fix_size(24)))
+        tier_ctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_click)
+
+        self.GetSizer().Add(tier_ctrl, 0, wx.EXPAND, 0)
+
+    # -----------------------------------------------------------------------
     # Construct the GUI
     # -----------------------------------------------------------------------
 
     def _create_content(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
-        for tier in self.__trs:
-            tier_ctrl = sppasTierWindow(self, data=tier)
-            tier_ctrl.SetMinSize(wx.Size(-1, sppasPanel.fix_size(24)))
-            tier_ctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_click)
-
-            sizer.Add(tier_ctrl, 0, wx.EXPAND, 0)
-        self.SetSizerAndFit(sizer)
+        self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
 

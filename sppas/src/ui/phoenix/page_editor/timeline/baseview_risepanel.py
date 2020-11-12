@@ -92,8 +92,32 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
 
         self.Layout()
 
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        """Override."""
+        sppasVerticalRisePanel.SetBackgroundColour(self, colour)
+        self._tools_panel.SetBackgroundColour(self.GetHighlightedBackgroundColour())
+
+    # -----------------------------------------------------------------------
+
+    def GetHighlightedBackgroundColour(self):
+        color = self.GetBackgroundColour()
+        r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
+
+        delta = 15
+        if (r + g + b) > 384:
+            return wx.Colour(r, g, b, a).ChangeLightness(100 - delta)
+        return wx.Colour(r, g, b, a).ChangeLightness(100 + delta)
+
     # ------------------------------------------------------------------------
     # About the file
+    # ------------------------------------------------------------------------
+
+    def load(self):
+        """To be overridden. Load the content of the file."""
+        pass
+
     # ------------------------------------------------------------------------
 
     def get_filename(self):

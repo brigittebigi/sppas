@@ -291,13 +291,13 @@ class sppasTimelinePanel(sppasPanel):
         else:
             # Create the appropriate XXXXViewPanel
             panel = self._create_panel(name)
-
-            border = sppasScrolledPanel.fix_size(4)
-            self._sizer.Add(panel, 0, wx.EXPAND | wx.RIGHT | wx.LEFT | wx.TOP, border)
+            self._sizer.Add(panel, 0, wx.EXPAND, 0)  # no border at all
             self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._on_collapse_changed, panel)
             self.Layout()
 
             self._files[name] = panel
+            panel.load()
+
             return True
 
     # -----------------------------------------------------------------------
@@ -504,7 +504,7 @@ class sppasTimelinePanel(sppasPanel):
         # Fix size&layout
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         main_sizer.Add(smmpc, 0, wx.EXPAND | wx.BOTTOM | wx.LEFT | wx.RIGHT, border=sppasPanel.fix_size(4))
-        main_sizer.Add(scrolled, 1, wx.EXPAND, 0)
+        main_sizer.Add(scrolled, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border=sppasPanel.fix_size(4))
         self.SetSizer(main_sizer)
 
     # -----------------------------------------------------------------------
@@ -598,7 +598,7 @@ class sppasTimelinePanel(sppasPanel):
                     raise IOError(MSG_UNKNOWN)
 
         except Exception as e:
-            traceback.print_exc()
+            # traceback.print_exc()
             panel = ErrorViewPanel(self._scrolled_panel, name)
             panel.set_error_message(str(e))
 

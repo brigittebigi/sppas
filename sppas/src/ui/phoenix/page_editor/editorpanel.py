@@ -38,6 +38,7 @@
 
 import os
 import wx
+import threading
 
 from sppas.src.config import msg
 from sppas.src.config import paths
@@ -239,8 +240,9 @@ class EditorPanel(sppasSplitterWindow):
         """
         # If the file is a media, we'll receive an action "media_loaded"
         # If the file is a trs, we'll receive the action "tiers_added".
-        res = self._timeview.append_file(name)
-        return res
+        th = threading.Thread(target=self._timeview.append_file, args=(name,))
+        th.start()
+        # self._timeview.append_file(name)
 
     # -----------------------------------------------------------------------
 
@@ -340,9 +342,9 @@ class EditorPanel(sppasSplitterWindow):
             # we just need to layout ourself
             self.UpdateSize()
 
-        elif action == "media_loaded":
-            if value is True:
-                self.UpdateSize()
+        # elif action == "media_loaded":
+        #     if value is True:
+        #         self.UpdateSize()
 
         elif action == "ann_selected":
             self._listview.set_selected_annotation(value)
