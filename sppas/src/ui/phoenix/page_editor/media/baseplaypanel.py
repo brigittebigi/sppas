@@ -183,7 +183,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         super(sppasPlayerControlsPanel, self).__init__(
             parent, id, image, pos, size, style, name)
 
-        self._btn_size = sppasPanel.fix_size(32)
+        self._btn_size = sppasPanel.fix_size(24)
         self._focus_color = wx.Colour(128, 128, 128, 128)
         self._create_content()
         self._setup_events()

@@ -345,7 +345,7 @@ class TimeSliderPanel(sppasPanel):
     def SetFont(self, font):
         """Override. """
         # The font of this panel is used only to control its height
-        f = wx.Font(int(font.GetPointSize() * 1.5),
+        f = wx.Font(int(font.GetPointSize() * 1.6),
                     wx.FONTFAMILY_SWISS,   # family,
                     wx.FONTSTYLE_NORMAL,   # style,
                     wx.FONTWEIGHT_BOLD,    # weight,
@@ -356,7 +356,7 @@ class TimeSliderPanel(sppasPanel):
 
         # The font that is displaying message is inside the children
         for c in self.GetChildren():
-            f = wx.Font(int(font.GetPointSize() * 0.9),
+            f = wx.Font(int(float(font.GetPointSize()) * 1.0),
                         font.GetFamily(),        # family,
                         wx.FONTSTYLE_NORMAL,     # style,
                         wx.FONTWEIGHT_NORMAL,    # weight,
