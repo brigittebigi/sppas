@@ -42,7 +42,7 @@ import os
 import wx
 
 from sppas.src.config import paths
-from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
+from src.ui.phoenix.page_editor.media.mediaevents import MediaEvents
 
 from .audioplayer import sppasSimpleAudioPlayer
 from .pstate import PlayerState

@@ -50,9 +50,9 @@ import wx.lib.gizmos as gizmos
 
 from sppas.src.config import paths  # used only in the Test Panel
 
-from ..buttons import BitmapTextButton
-from ..panels import sppasPanel
-from ..frame import sppasImageFrame
+from sppas.src.ui.phoenix.windows.buttons import BitmapTextButton
+from sppas.src.ui.phoenix.windows.panels import sppasPanel
+from sppas.src.ui.phoenix.windows.frame import sppasImageFrame
 
 from .mediaevents import MediaEvents
 from .smmps import sppasMMPS
@@ -94,6 +94,63 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         self.__smmps = sppasMMPS(owner=self)
         self._create_mmpc_content()
         self._setup_mmpc_events()
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundColour(self, colour):
+        """Set the background of our panel to the given color or hi-color."""
+        wx.Panel.SetBackgroundColour(self, colour)
+        hi_color = self.GetHighlightedBackgroundColour()
+
+        for name in ("transport", "widgets_left", "widgets_right", "slider"):
+            w = self.FindWindow(name + "_panel")
+            w.SetBackgroundColour(colour)
+            for c in w.GetChildren():
+                if isinstance(c, BitmapTextButton) is True:
+                    c.SetBackgroundColour(hi_color)
+                else:
+                    c.SetBackgroundColour(colour)
+
+        # The led has its own color, whatever the given one.
+        self.led.SetBackgroundColour(wx.Colour(10, 10, 10))
+        self._set_led_fg_color()
+
+    # -----------------------------------------------------------------------
+
+    def SetForegroundColour(self, colour):
+        """Set the foreground of our panel to the given color."""
+        wx.Panel.SetForegroundColour(self, colour)
+
+        for name in ("transport", "widgets_left", "widgets_right", "slider"):
+            w = self.FindWindow(name + "_panel")
+            w.SetForegroundColour(colour)
+            for c in w.GetChildren():
+                if c != self.led:
+                    c.SetForegroundColour(colour)
+
+        # The led has its own color, whatever the given one.
+        self._set_led_fg_color()
+
+    # ----------------------------------------------------------------------
+
+    def _set_led_fg_color(self):
+        # The led has its own color, whatever the given one.
+        period = self._timeslider.get_range()
+        if period[0] == period[1]:
+            self.led.SetForegroundColour(self.GetBackgroundColour())
+        else:
+            if self._timeslider.is_selection():
+                self.led.SetForegroundColour(wx.Colour(250, 70, 110))
+            else:
+                self.led.SetForegroundColour(wx.Colour(30, 80, 210))
+
+    # -----------------------------------------------------------------------
+
+    def GetHighlightedBackgroundColour(self):
+        """Return a color slightly different of the parent background one."""
+        color = self.GetParent().GetBackgroundColour()
+        r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
+        return wx.Colour(r, g, b, a).ChangeLightness(85)
 
     # -----------------------------------------------------------------------
     # Manage the slider
@@ -153,8 +210,16 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         led.SetAlignment(gizmos.LED_ALIGN_RIGHT)
         led.SetDrawFaded(True)
         led.SetMinSize(wx.Size(self.get_font_height()*10, self.get_font_height()*3))
-        led.SetForegroundColour(wx.Colour(40, 90, 220))
         self.AddLeftWidget(led)
+        # The led has its own colors.
+        self.led.SetBackgroundColour(wx.Colour(10, 10, 10))
+        self.led.SetForegroundColour(wx.Colour(220, 40, 80))
+
+    # -----------------------------------------------------------------------
+
+    @property
+    def led(self):
+        return self.FindWindow("moment_led")
 
     # -----------------------------------------------------------------------
     # Overridden methods...
@@ -190,7 +255,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
                     # Put the slider exactly at the right time position
                     position = self.__smmps.tell()
                     self._timeslider.set_value(position)
-                    self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
+                    self.led.SetValue("{:.3f}".format(position))
 
         else:
             # it was asked to end pausing
@@ -209,7 +274,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         # Put the slider exactly at the right time position
         position = self.__smmps.tell()
         self._timeslider.set_value(position)
-        self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
+        self.led.SetValue("{:.3f}".format(position))
 
     # -----------------------------------------------------------------------
 
@@ -223,7 +288,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         self.__smmps.seek(max(period[0], cur - d))
         position = self.__smmps.tell()
         self._timeslider.set_value(position)
-        self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
+        self.led.SetValue("{:.3f}".format(position))
 
     # -----------------------------------------------------------------------
 
@@ -242,7 +307,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         self.__smmps.seek(position)
         position = self.__smmps.tell()
         self._timeslider.set_value(position)
-        self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
+        self.led.SetValue("{:.3f}".format(position))
 
     # -----------------------------------------------------------------------
 
@@ -250,7 +315,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         """Seek media at given time value inside the period."""
         self.__smmps.seek(value)
         self._timeslider.set_value(value)
-        self.FindWindow("moment_led").SetValue("{:.3f}".format(value))
+        self.led.SetValue("{:.3f}".format(value))
 
     # -----------------------------------------------------------------------
 
@@ -259,7 +324,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         # self.__smmps.set_period(start, end)
         value = self.__smmps.tell()
         self._timeslider.set_value(value)
-        self.FindWindow("moment_led").SetValue("{:.3f}".format(value))
+        self.led.SetValue("{:.3f}".format(value))
 
     # -----------------------------------------------------------------------
     # Multi Media Player
@@ -441,6 +506,15 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
 
     # ----------------------------------------------------------------------
 
+    def _on_period_changed(self, event):
+        """Override."""
+        print(" TIME SLIDER PERIOD CHANGED ")
+        p = event.period
+        self.media_period(p[0], p[1])
+        self._set_led_fg_color()
+
+    # ----------------------------------------------------------------------
+
     def __on_media_loaded(self, event):
         filename = event.filename
 
@@ -478,7 +552,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
             # self.prev_time = cur_time
             time_pos = self.__smmps.tell()
             self._timeslider.set_value(time_pos)
-            self.FindWindow("moment_led").SetValue("{:.3f}".format(time_pos))
+            self.led.SetValue("{:.3f}".format(time_pos))
 
         # all enabled audio are now stopped
         elif self.__smmps.are_stopped() is True:

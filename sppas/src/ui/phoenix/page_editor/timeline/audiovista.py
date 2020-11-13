@@ -34,14 +34,12 @@
 
 """
 
-import os
 import wx
 
-from sppas.src.config import paths
 from sppas.src.utils import b
 
 from sppas.src.ui.phoenix.windows.panels import sppasPanel
-from sppas.src.ui.phoenix.windows.datactrls import sppasWaveformWindow
+from ..datactrls import sppasWaveformWindow
 
 # ---------------------------------------------------------------------------
 

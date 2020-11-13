@@ -29,8 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.tests.test_windows.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.page_editor.datactrls.test_datactrls.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -40,13 +40,12 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
-# Tested files are the ones with a TestPanel class:
-import sppas.src.ui.phoenix.windows.media.smmps as smmps
-# A REFAIRE: import sppas.src.ui.phoenix.windows.media.audiopanel as audiopanel
-# A REFAIRE: import sppas.src.ui.phoenix.windows.media.videopanel as videopanel
-import sppas.src.ui.phoenix.windows.media.timeslider as timeslider
-import sppas.src.ui.phoenix.windows.media.baseplaypanel as baseplaypanel
-import sppas.src.ui.phoenix.windows.media.smmpctrl as smmpctrl
+import sppas.src.ui.phoenix.page_editor.datactrls.basedatactrl as basectrl
+import sppas.src.ui.phoenix.page_editor.datactrls.pointctrl as pointctrl
+import sppas.src.ui.phoenix.page_editor.datactrls.annctrl as annctrl
+import sppas.src.ui.phoenix.page_editor.datactrls.tierctrl as tierctrl
+
+import sppas.src.ui.phoenix.page_editor.datactrls.waveform as waveform
 
 
 # ----------------------------------------------------------------------------
@@ -61,22 +60,19 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        #p = smmps.TestPanel(self)
-        #self.AddPage(p, p.GetName())
+        p = basectrl.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
-        # p = audiopanel.TestPanel(self)
-        # self.AddPage(p, p.GetName())
-        #
-        # p = videopanel.TestPanel(self)
-        # self.AddPage(p, p.GetName())
+        p = pointctrl.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
-        #p = timeslider.TestPanel(self)
-        #self.AddPage(p, p.GetName())
+        p = annctrl.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
-        #p = baseplaypanel.TestPanel(self)
-        #self.AddPage(p, p.GetName())
+        p = tierctrl.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
-        p = smmpctrl.TestPanel(self)
+        p = waveform.TestPanel(self)
         self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
@@ -92,6 +88,7 @@ class TestPanel(wx.Choicebook):
 
         """
         key_code = event.GetKeyCode()
+        # logging.debug('Test panel received the key event {:d}'.format(key_code))
 
         # Keeps on going the event to the current page of the book.
         event.Skip()
@@ -127,7 +124,7 @@ class TestApp(wx.App):
                         clearSigInt=True)
 
         # create the frame
-        frm = wx.Frame(None, title='Test frame', size=wx.Size(900, 600))
+        frm = wx.Frame(None, title='Test frame', size=wx.Size(800, 600))
         frm.SetMinSize(wx.Size(640, 480))
         self.SetTopWindow(frm)
 

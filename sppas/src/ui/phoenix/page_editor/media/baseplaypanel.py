@@ -49,10 +49,10 @@ import wx.lib.gizmos as gizmos
 
 from sppas.src.config import paths  # used only in the Test Panel
 
-from ..buttons import ToggleButton
-from ..buttons import BitmapTextButton, BitmapButton
-from ..panels import sppasImagePanel, sppasPanel
-from ..frame import sppasImageFrame
+from sppas.src.ui.phoenix.windows.buttons import ToggleButton
+from sppas.src.ui.phoenix.windows.buttons import BitmapTextButton, BitmapButton
+from sppas.src.ui.phoenix.windows.panels import sppasImagePanel, sppasPanel
+from sppas.src.ui.phoenix.windows.frame import sppasImageFrame
 
 from .mediaevents import MediaEvents
 from .timeslider import TimeSliderPanel
@@ -347,42 +347,6 @@ class sppasPlayerControlsPanel(sppasImagePanel):
 
     # -----------------------------------------------------------------------
     # Construct the GUI
-    # -----------------------------------------------------------------------
-
-    def SetBackgroundColour(self, colour):
-        """Set the background of our panel to the given color or hi-color."""
-        wx.Panel.SetBackgroundColour(self, colour)
-        hi_color = self.GetHighlightedBackgroundColour()
-
-        for name in ("transport", "widgets_left", "widgets_right", "slider"):
-            w = self.FindWindow(name + "_panel")
-            w.SetBackgroundColour(colour)
-            for c in w.GetChildren():
-                if isinstance(c, BitmapTextButton) is True:
-                    c.SetBackgroundColour(hi_color)
-                else:
-                    c.SetBackgroundColour(colour)
-
-    # -----------------------------------------------------------------------
-
-    def SetForegroundColour(self, colour):
-        """Set the foreground of our panel to the given color."""
-        wx.Panel.SetForegroundColour(self, colour)
-
-        for name in ("transport", "widgets_left", "widgets_right", "slider"):
-            w = self.FindWindow(name + "_panel")
-            w.SetForegroundColour(colour)
-            for c in w.GetChildren():
-                c.SetForegroundColour(colour)
-
-    # -----------------------------------------------------------------------
-
-    def GetHighlightedBackgroundColour(self):
-        """Return a color slightly different of the parent background one."""
-        color = self.GetParent().GetBackgroundColour()
-        r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
-        return wx.Colour(r, g, b, a).ChangeLightness(85)
-
     # -----------------------------------------------------------------------
 
     def SetButtonProperties(self, btn):

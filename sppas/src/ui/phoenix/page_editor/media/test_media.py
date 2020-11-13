@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.tests.test_glob.py
+    src.ui.phoenix.tests.test_windows.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -41,11 +41,13 @@ from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
-import src.ui.phoenix.page_editor.datactrls.basedatactrl as basedatactrl
-import src.ui.phoenix.page_editor.datactrls.pointctrl as pointctrl
-import src.ui.phoenix.page_editor.datactrls.annctrl as annctrl
-import src.ui.phoenix.page_editor.datactrls.tierctrl as tierctrl
-import src.ui.phoenix.page_editor.datactrls.waveform as waveform
+import sppas.src.ui.phoenix.page_editor.media.timeslider as timeslider
+import sppas.src.ui.phoenix.page_editor.media.baseplaypanel as baseplaypanel
+import sppas.src.ui.phoenix.page_editor.media.audiopanel as audiopanel
+import sppas.src.ui.phoenix.page_editor.media.videopanel as videopanel
+import sppas.src.ui.phoenix.page_editor.media.smmps as smmps
+import sppas.src.ui.phoenix.page_editor.media.smmpctrl as smmpctrl
+
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -59,19 +61,22 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        self.SetBackgroundColour(wx.Colour(100, 100, 100))
-        self.SetForegroundColour(wx.Colour(0, 0, 10))
+        p = audiopanel.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
-        # Make the bunch of test anz_panels for the choice book
-        p = tierctrl.TestPanel(self)
+        p = videopanel.TestPanel(self)
         self.AddPage(p, p.GetName())
-        p = annctrl.TestPanel(self)
+
+        p = timeslider.TestPanel(self)
         self.AddPage(p, p.GetName())
-        p = pointctrl.TestPanel(self)
+
+        p = baseplaypanel.TestPanel(self)
         self.AddPage(p, p.GetName())
-        p = basedatactrl.TestPanel(self)
+
+        p = smmps.TestPanel(self)
         self.AddPage(p, p.GetName())
-        p = waveform.TestPanel(self)
+
+        p = smmpctrl.TestPanel(self)
         self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)

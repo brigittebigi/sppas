@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.datactrls.basedatactrl.py
+    src.ui.phoenix.page_editor.datactrls.basedatactrl.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     A base class for all windows used to draw data SPPAS can manage (waveform,
@@ -40,9 +40,9 @@
 import wx
 import logging
 
-from ..winevents import sppasWindowEvent
-from ..basewindow import sppasWindow
-from ..basewindow import WindowState
+from sppas.src.ui.phoenix.windows.winevents import sppasWindowEvent
+from sppas.src.ui.phoenix.windows.basewindow import sppasWindow
+from sppas.src.ui.phoenix.windows.basewindow import WindowState
 
 # ---------------------------------------------------------------------------
 

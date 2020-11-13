@@ -41,13 +41,11 @@ import os
 import wx
 
 from sppas.src.config import paths
-from sppas.src.config import MediaState
 
-from ..panels import sppasPanel
+from sppas.src.ui.phoenix.windows.panels import sppasPanel
+from sppas.src.ui.players.wxvideoplay import sppasVideoPlayer
 
-from .mediaevents import MediaEvents
-from .mediatype import MediaType
-from src.ui.players.wxvideoplay import sppasVideoPlayer
+from ..media import MediaEvents
 
 # ---------------------------------------------------------------------------
 
@@ -104,8 +102,6 @@ class sppasVideoPanel(sppasPanel):
             name=name)
 
         # Members
-        self._mt = MediaType().video
-        self._ms = MediaState().unknown
         self._zoom = 100.
         self.__videoplay = sppasVideoPlayer(self)
 
@@ -119,16 +115,6 @@ class sppasVideoPanel(sppasPanel):
         self.__videoplay.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
         self.__videoplay.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
         self.__videoplay.Bind(wx.EVT_TIMER, self.__on_timer)
-
-    # -----------------------------------------------------------------------
-
-    def media_type(self):
-        """Return the media type.
-
-        :return: (MediaType) The media type value
-
-        """
-        return self._mt
 
     # -----------------------------------------------------------------------
     # Play the video

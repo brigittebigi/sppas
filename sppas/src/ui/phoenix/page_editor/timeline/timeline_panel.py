@@ -45,8 +45,9 @@ from sppas.src.anndata import sppasRW
 
 from sppas.src.ui.phoenix.windows import sppasPanel
 from sppas.src.ui.phoenix.windows import sppasScrolledPanel
-from sppas.src.ui.phoenix.windows.media import MediaEvents
 from sppas.src.ui.players.pstate import PlayerType
+
+from ..media import MediaEvents
 
 from .smmpctrl_risepanel import SMMPCPanel
 from .errorview_risepanel import ErrorViewPanel

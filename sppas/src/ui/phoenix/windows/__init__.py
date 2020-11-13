@@ -108,12 +108,6 @@ from .toolbar import sppasToolbar
 # combobox requires panels, buttons and buttonbox
 from .combobox import sppasComboBox
 
-from .media import MediaType
-from .media import MediaEvents
-from .media import sppasMediaCtrl
-from .media import sppasPlayerControlsPanel
-from .media import sppasMultiPlayerPanel
-
 __all__ = (
     "sppasDCWindow",
     "sppasImageDCWindow",
@@ -139,11 +133,6 @@ __all__ = (
     "CheckButton",
     "RadioButton",
     "ToggleButton",
-    "sppasMediaCtrl",
-    "MediaType",
-    "MediaEvents",
-    "sppasPlayerControlsPanel",
-    "sppasMultiPlayerPanel",
     "sppasSplitterWindow",
     "sppasMultiSplitterPanel",
     "sppasStaticText",

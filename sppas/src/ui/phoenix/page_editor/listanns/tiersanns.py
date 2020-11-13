@@ -43,12 +43,12 @@ from sppas.src.config import paths
 from sppas.src.utils import u
 from sppas.src.anndata import sppasRW
 
-from src.ui.phoenix.views.metaedit import MetaDataEdit
-from src.ui.phoenix.windows import sppasPanel
-from src.ui.phoenix.windows import sppasSplitterWindow
-from src.ui.phoenix.windows.dialogs import Confirm, Error
-from src.ui.phoenix.windows import sppasComboBox
-from src.ui.phoenix.windows import sppasToolbar
+from sppas.src.ui.phoenix.views.metaedit import MetaDataEdit
+from sppas.src.ui.phoenix.windows.panels import sppasPanel
+from sppas.src.ui.phoenix.windows.splitter import sppasSplitterWindow
+from sppas.src.ui.phoenix.windows.dialogs import Confirm, Error
+from sppas.src.ui.phoenix.windows.combobox import sppasComboBox
+from sppas.src.ui.phoenix.windows.toolbar import sppasToolbar
 
 from .listevents import ListannsViewEvent
 from .annlabels import sppasAnnLabelsCtrl

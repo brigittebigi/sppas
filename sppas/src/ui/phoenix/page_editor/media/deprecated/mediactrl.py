@@ -63,10 +63,10 @@ from sppas.src.config import paths
 from sppas.src.audiodata import sppasAudioPCM
 import sppas.src.audiodata.aio
 
-from sppas.src.ui.phoenix.windows.datactrls import sppasWaveformWindow
+from sppas.src.ui.phoenix.page_editor.datactrls import sppasWaveformWindow
 from sppas.src.ui.phoenix.windows.panels import sppasPanel
-from sppas.src.ui.phoenix.windows.media.mediaevents import MediaEvents
-from sppas.src.ui.phoenix.windows.media.mediatype import MediaType
+from src.ui.phoenix.page_editor.media.mediaevents import MediaEvents
+from src.ui.phoenix.page_editor.media.deprecated import MediaType
 
 # ---------------------------------------------------------------------------
 

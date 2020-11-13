@@ -1,14 +1,12 @@
-
-import os
 import wx
 import wx.lib.newevent
 
-from sppas.src.config import paths
 from sppas.src.anndata import sppasTranscription
 
-from sppas.src.ui.phoenix.windows import sppasPanel
-from sppas.src.ui.phoenix.windows import sppasScrolledPanel
-from sppas.src.ui.phoenix.windows.datactrls import sppasTierWindow
+from sppas.src.ui.phoenix.windows.panels import sppasPanel
+from sppas.src.ui.phoenix.windows.panels import sppasScrolledPanel
+
+from ..datactrls import sppasTierWindow
 
 # ---------------------------------------------------------------------------
 

@@ -42,12 +42,10 @@
 """
 
 import wx
-import os
 
-from sppas.src.config import paths
-from sppas.src.ui.phoenix.windows import ToggleTextButton
-from sppas.src.ui.phoenix.windows import sppasPanel, sppasImagePanel
-from sppas.src.ui.phoenix.windows import sppasSlider
+from sppas.src.ui.phoenix.windows.buttons import ToggleTextButton
+from sppas.src.ui.phoenix.windows.panels import sppasPanel, sppasImagePanel
+from sppas.src.ui.phoenix.windows.slider import sppasSlider
 
 from .mediaevents import MediaEvents
 
@@ -72,6 +70,9 @@ class ToggleSlider(ToggleTextButton):
 
     """
 
+    # Foreground of the pressed toggle is blue if pressed
+    FG_TRUE_COLOUR = wx.Colour(30, 80, 210)
+
     # BG_IMAGE = os.path.join(paths.etc, "images", "bg_brushed_metal2.jpg")
 
     # -----------------------------------------------------------------------
@@ -93,18 +94,22 @@ class ToggleSlider(ToggleTextButton):
 
         """
         super(ToggleSlider, self).__init__(parent, id, label, pos, size, name)
+        ToggleTextButton.SetValue(self, False)
+        self._fg_false_colour = self.GetForegroundColour()
         self.SetHorizBorderWidth(1)
         self.SetFocusWidth(0)
-        self.SetValue(False)
 
     # -----------------------------------------------------------------------
 
     def SetValue(self, value):
         ToggleTextButton.SetValue(self, value)
-        # if self.GetValue() is True:
-        #     self.SetBackgroundImage(None)
-        # else:
-        #     self.SetBackgroundImage(ToggleSlider.BG_IMAGE)
+        if self.GetValue() is True:
+            # self.SetBackgroundImage(None)
+            self._fg_false_colour = self.GetForegroundColour()
+            wx.Window.SetForegroundColour(self, ToggleSlider.FG_TRUE_COLOUR)
+        else:
+            # self.SetBackgroundImage(ToggleSlider.BG_IMAGE)
+            self.SetForegroundColour(self._fg_false_colour)
 
 # ----------------------------------------------------------------------------
 
@@ -127,8 +132,8 @@ class TimeSliderPanel(sppasPanel):
 
     """
 
-    SELECTION_COLOUR = wx.Colour(255, 190, 200, 196)
-    RANGE_LABELS_COLOUR = wx.Colour(30, 80, 210, 196)
+    # Background of the selection is always pink
+    SELECTION_COLOUR = wx.Colour(250, 70, 110)
 
     # -----------------------------------------------------------------------
 
@@ -164,8 +169,25 @@ class TimeSliderPanel(sppasPanel):
         except AttributeError:
             self.InheritAttributes()
 
-        self.set_duration(0.)
         self.__update_height()
+
+    # -----------------------------------------------------------------------
+
+    def is_selection(self):
+        """Return True if the toggle button of the selection is pressed."""
+        return self._btn_selection.GetValue()
+
+    # -----------------------------------------------------------------------
+
+    def is_visible(self):
+        """Return True if the toggle button of the selection is pressed."""
+        return self._btn_visible.GetValue()
+
+    # -----------------------------------------------------------------------
+
+    def is_duration(self):
+        """Return True if the toggle button of the selection is pressed."""
+        return self._btn_duration.GetValue()
 
     # -----------------------------------------------------------------------
     # Slider
@@ -224,6 +246,7 @@ class TimeSliderPanel(sppasPanel):
         if value == 0.:
             self._btn_duration.SetValue(True)
             self.set_visible_range(0., 0.)
+        self._btn_duration.Refresh()
 
         # Update the slider
         self.__update_slider()
@@ -322,7 +345,7 @@ class TimeSliderPanel(sppasPanel):
     def SetFont(self, font):
         """Override. """
         # The font of this panel is used only to control its height
-        f = wx.Font(int(font.GetPointSize() * 1.4),
+        f = wx.Font(int(font.GetPointSize() * 1.5),
                     wx.FONTFAMILY_SWISS,   # family,
                     wx.FONTSTYLE_NORMAL,   # style,
                     wx.FONTWEIGHT_BOLD,    # weight,
@@ -365,7 +388,10 @@ class TimeSliderPanel(sppasPanel):
         wx.Panel.SetForegroundColour(self, colour)
         for child in self.GetChildren():
             if child is self._slider:
-                child.SetForegroundColour(TimeSliderPanel.RANGE_LABELS_COLOUR)
+                if self.is_selection():
+                    child.SetForegroundColour(TimeSliderPanel.SELECTION_COLOUR)
+                else:
+                    child.SetForegroundColour(ToggleSlider.FG_TRUE_COLOUR)
             else:
                 child.SetForegroundColour(colour)
 

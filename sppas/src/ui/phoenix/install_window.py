@@ -45,17 +45,15 @@ from sppas.src.config import sg, paths, cfg
 from sppas.src.config import msg, info
 from sppas.src.preinstall import sppasInstallerDeps
 
-from .windows import sppasStaticLine
-from .windows import BitmapTextButton, TextButton
-from .windows import sppasPanel, sppasScrolledPanel, sppasImagePanel
-from .windows import sppasTitleText, sppasStaticText, sppasMessageText, sppasTextCtrl
-from .windows import CheckListCtrl
+from .windows.line import sppasStaticLine
+from .windows.buttons import BitmapTextButton, TextButton
+from .windows.panels import sppasPanel, sppasScrolledPanel, sppasImagePanel
+from .windows.text import sppasTitleText, sppasStaticText, sppasMessageText, sppasTextCtrl
+from .windows.listctrl import CheckListCtrl
 from .windows.book import sppasSimplebook
-
 from .windows.frame import sppasTopFrame
 from .windows.dialogs import sppasProgressDialog
-
-from .windows import YesNoQuestion
+from .windows.dialogs import YesNoQuestion
 from .main_log import sppasLogWindow
 
 # ---------------------------------------------------------------------------

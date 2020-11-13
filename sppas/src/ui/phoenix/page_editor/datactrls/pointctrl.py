@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.datactrls.pointctrl.py
+    src.ui.phoenix.page_edirot.datactrls.pointctrl.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -38,7 +38,7 @@ import wx
 import wx.lib.newevent
 
 from sppas.src.anndata import sppasPoint
-from ..basewindow import sppasWindow
+
 from .basedatactrl import sppasDataWindow
 
 # ---------------------------------------------------------------------------

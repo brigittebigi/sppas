@@ -42,11 +42,10 @@ import wx
 from sppas.src.config import paths
 from sppas.src.ui.players.wxaudioplay import sppasAudioPlayer
 
-from ..panels import sppasPanel
-from ..datactrls import sppasWaveformWindow
+from sppas.src.ui.phoenix.windows.panels import sppasPanel
 
+from ..datactrls import sppasWaveformWindow
 from .mediaevents import MediaEvents
-from .mediatype import MediaType
 
 # ---------------------------------------------------------------------------
 
@@ -110,7 +109,6 @@ class sppasAudioPanel(sppasPanel):
             name=name)
 
         # Members
-        self._mt = MediaType().audio
         self._zoom = 100.
         self.__audioplay = sppasAudioPlayer(self)
 
@@ -126,16 +124,6 @@ class sppasAudioPanel(sppasPanel):
         self.__audioplay.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
         self.__audioplay.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
         self.__audioplay.Bind(wx.EVT_TIMER, self.__on_timer)
-
-    # -----------------------------------------------------------------------
-
-    def media_type(self):
-        """Return the media type.
-
-        :return: (MediaType) The media type value
-
-        """
-        return self._mt
 
     # -----------------------------------------------------------------------
     # Play the audio - manage the private sppasAudioPlayer() instance.

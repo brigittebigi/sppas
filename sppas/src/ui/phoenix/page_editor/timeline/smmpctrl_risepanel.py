@@ -34,11 +34,14 @@
 
 """
 
+import os
 import wx
 
-from sppas.src.ui.phoenix.windows.panels import sppasPanel
+from sppas.src.config import paths
+from sppas.src.ui.phoenix.windows.panels import sppasPanel, sppasImagePanel
 from sppas.src.ui.phoenix.windows.panels import sppasVerticalRisePanel
-from sppas.src.ui.phoenix.windows.media import sppasMMPCtrl
+
+from ..media import sppasMMPCtrl
 
 # ----------------------------------------------------------------------------
 
@@ -55,10 +58,6 @@ class SMMPCPanel(sppasVerticalRisePanel):
     Create exactly the same rise panel with the same borders than any other
     rise panel of the timeline view... so all panels - including this one,
     will be vertically aligned on screen.
-
-    Events emitted by this class:
-
-        - EVT_TIME_VIEW
 
     """
 
@@ -135,11 +134,63 @@ class SMMPCPanel(sppasVerticalRisePanel):
 class TestPanel(sppasPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="MultiMediaPlayerControl RisePanel")
-
-        panel = SMMPCPanel(self)
-        # panel.SetBackgroundColour(wx.LIGHT_GREY)
+        button1 = wx.Button(self, -1, size=(120, 50), label="Threading LOAD", name="load_button_1")
+        button2 = wx.Button(self, -1, size=(120, 50), label="Sequential LOAD", name="load_button_2")
+        panel = SMMPCPanel(self, "smmpc_risepanel")
+        player = sppasImagePanel(self, name="player_panel")
 
         s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(button1, 0, wx.ALL, 8)
+        s.Add(button2, 0, wx.ALL, 8)
         s.Add(panel, 0, wx.EXPAND, 0)
+        s.Add(player, 1, wx.EXPAND, 0)
         self.SetSizer(s)
+
+        button1.Bind(wx.EVT_BUTTON, self._on_load_1)
+        button2.Bind(wx.EVT_BUTTON, self._on_load_2)
+
+    # ----------------------------------------------------------------------
+
+    @property
+    def smmc(self):
+        return self.FindWindow("smmpc_risepanel").GetPane()
+
+    # ----------------------------------------------------------------------
+
+    def _on_load_1(self, event):
+        self.load_files(with_threads=True)
+
+    # ----------------------------------------------------------------------
+
+    def _on_load_2(self, event):
+        self.load_files(with_threads=False)
+
+    # ----------------------------------------------------------------------
+
+    def load_files(self, with_threads=True):
+        self.FindWindow("load_button_1").Enable(False)
+        self.FindWindow("media_play").Enable(False)
+
+        # Loading the videos with threads make the app crashing under MacOS:
+        # Python[31492:1498940] *** Terminating app due to uncaught exception
+        # 'NSInternalInconsistencyException', reason: 'NSWindow drag regions
+        # should only be invalidated on the Main Thread!'
+        player = self.FindWindow("player_panel")
+        self.smmc.add_video([os.path.join(paths.samples, "faces", "video_sample.mp4")], player)
+
+        # To load files in parallel, with threads:
+        if with_threads is True:
+            self.smmc.add_audio(
+                [os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"),
+                 os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"),
+                 os.path.join(paths.samples, "samples-eng", "oriana1.wav"),
+                 os.path.join(paths.samples, "samples-eng", "oriana2.WAV"),
+                 ])
+
+        else:
+            # To load files sequentially, without threads:
+            self.smmc.add_audio(os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
+            self.smmc.add_audio(os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"))
+            self.smmc.add_audio(os.path.join(paths.samples, "samples-eng", "oriana1.wav"))
+            self.smmc.add_audio(os.path.join(paths.samples, "samples-eng", "oriana2.WAV"))
 
