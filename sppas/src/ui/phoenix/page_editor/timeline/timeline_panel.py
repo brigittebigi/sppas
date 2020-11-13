@@ -612,7 +612,11 @@ class sppasTimelinePanel(sppasPanel):
 
     def _on_collapse_changed(self, evt=None):
         panel = evt.GetEventObject()
+        self._collapse_changed(panel)
 
+    # ----------------------------------------------------------------------
+
+    def _collapse_changed(self, panel):
         # Update our layout - the sizer needs to get new sizes
         self.Layout()
         self._scrolled_panel.ScrollChildIntoView(panel)
@@ -652,12 +656,17 @@ class sppasTimelinePanel(sppasPanel):
                 width=self.smmpc.get_video_width(filename),
                 height=self.smmpc.get_video_height(filename)
             )
+        panel.Expand()
+        self._collapse_changed(panel)
 
     # ----------------------------------------------------------------------
 
     def __on_media_not_loaded(self, event):
         filename = event.filename
         wx.LogError("Media file {} not loaded".format(filename))
+        panel = self._files[filename]
+        panel.Collapse()
+        self._collapse_changed(panel)
 
     # -----------------------------------------------------------------------
     # Private
