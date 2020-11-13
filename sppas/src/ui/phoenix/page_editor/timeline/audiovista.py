@@ -38,9 +38,21 @@ import os
 import wx
 
 from sppas.src.config import paths
+from sppas.src.utils import b
 
 from sppas.src.ui.phoenix.windows.panels import sppasPanel
 from sppas.src.ui.phoenix.windows.datactrls import sppasWaveformWindow
+
+# ---------------------------------------------------------------------------
+
+
+class AudioData(object):
+    def __init__(self):
+        self.sampwidth = 0
+        self.nchannels = 0
+        self.framerate = 0
+        self.duration = 0.
+        self.frames = b("")
 
 # ---------------------------------------------------------------------------
 
@@ -96,6 +108,9 @@ class sppasAudioVista(sppasPanel):
             style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
             name=name)
 
+        # The information we need about the audio, no more!
+        self.__audio = AudioData()
+
         # All possible views
         self.__infos = None
         self.__waveform = None
@@ -106,6 +121,23 @@ class sppasAudioVista(sppasPanel):
         self._zoom = 100.
 
         self._create_content()
+
+    # -----------------------------------------------------------------------
+
+    def set_audio_data(self, nchannels=None, sampwidth=None, framerate=None, duration=None, frames=None):
+        """Set all or any of the data we need about the audio."""
+        if nchannels is not None:
+            self.__audio.nchannels = int(nchannels)
+        if sampwidth is not None:
+            self.__audio.sampwidth = int(sampwidth)
+        if framerate is not None:
+            self.__audio.framerate = int(framerate)
+        if duration is not None:
+            self.__audio.duration = float(duration)
+        if frames is not None:
+            self.__audio.frames = frames
+
+        self.__set_infos()
 
     # -----------------------------------------------------------------------
     # Enable/Disable the views
@@ -154,19 +186,26 @@ class sppasAudioVista(sppasPanel):
     # -----------------------------------------------------------------------
 
     def get_infos_height(self):
-        """Return the height required to draw the audio information."""
-        h = int(float(sppasAudioVista.INFOS_HEIGHT) * self._zoom / 100.)
+        """Return the height required to draw the audio information.
+
+        This height does not depend on the zoom level.
+        It depends only on the font height.
+
+        """
         try:
-            # make this height proportional
-            h = sppasPanel.fix_size(h)
+            # make this height proportional to the font
+            return sppasPanel.fix_size(sppasAudioVista.INFOS_HEIGHT)
         except AttributeError:
-            pass
-        return h
+            return sppasAudioVista.INFOS_HEIGHT
 
     # -----------------------------------------------------------------------
 
     def get_waveform_height(self):
-        """Return the height required to draw the Waveform."""
+        """Return the height required to draw the Waveform.
+
+        This height depends on both the zoom level and the font height.
+
+        """
         h = int(float(sppasAudioVista.WAVEFORM_HEIGHT) * self._zoom / 100.)
         try:
             h = sppasPanel.fix_size(h)
@@ -243,8 +282,8 @@ class sppasAudioVista(sppasPanel):
         s = wx.BoxSizer(wx.VERTICAL)
         self.__infos = self.__create_infos_panel()
         self.__waveform = self.__create_waveform_panel()
-        s.Add(self.__infos, 1, wx.EXPAND, border=0)
-        s.Add(self.__waveform, 1, wx.EXPAND, border=0)
+        s.Add(self.__infos, 0, wx.EXPAND, border=0)
+        s.Add(self.__waveform, 0, wx.EXPAND, border=0)
         self.SetSizer(s)
         self.SetAutoLayout(True)
         self.SetMinSize(wx.Size(-1, self.get_min_height()))
@@ -266,11 +305,10 @@ class sppasAudioVista(sppasPanel):
     # -----------------------------------------------------------------------
 
     def __set_infos(self):
-        audio_prop = "to do.... get audio properties"
-        # audio_prop = str(self.get_sampwidth()*16) + " bits, " + \
-        #              str(self.get_framerate()) + " Hz, " + \
-        #              "%.3f" % self.get_duration() + " seconds, " +  \
-        #              str(self.get_nchannels()) + " channel "
+        audio_prop = str(self.__audio.sampwidth*16) + " bits, " + \
+                     str(self.__audio.framerate) + " Hz, " + \
+                     "%.3f" % self.__audio.duration + " seconds, " +  \
+                     str(self.__audio.nchannels) + " channel "
 
         self.FindWindow("infos_panel").SetLabel(audio_prop)
         self.FindWindow("infos_panel").Refresh()

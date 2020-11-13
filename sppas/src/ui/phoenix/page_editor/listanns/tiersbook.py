@@ -29,8 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.page_editor.tiersbook.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.page_editor.listanns.tiersbook.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -41,10 +41,10 @@ import wx.lib.newevent
 from sppas.src.config import paths
 from sppas.src.anndata import sppasRW
 
-from ..windows.book import sppasSimplebook
-from ..windows.panels import sppasPanel
-from ..anz_panels.tierlist import sppasTierListCtrl
-from ..windows import sppasComboBox
+from sppas.src.ui.phoenix.anz_panels.tierlist import sppasTierListCtrl
+from sppas.src.ui.phoenix.windows.book import sppasSimplebook
+from sppas.src.ui.phoenix.windows.panels import sppasPanel
+from sppas.src.ui.phoenix.windows import sppasComboBox
 
 # ---------------------------------------------------------------------------
 

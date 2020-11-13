@@ -44,6 +44,16 @@ from sppas.src.ui.phoenix.windows.panels import sppasPanel
 # ---------------------------------------------------------------------------
 
 
+class VideoData(object):
+    def __init__(self):
+        self.framerate = 0
+        self.duration = 0.
+        self.width = 0
+        self.height = 0
+
+# ---------------------------------------------------------------------------
+
+
 class sppasVideoVista(sppasPanel):
     """Create a panel to display a summary of a video.
 
@@ -93,6 +103,9 @@ class sppasVideoVista(sppasPanel):
             style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
             name=name)
 
+        # The information we need about the audio, no more!
+        self.__video = VideoData()
+
         # All possible views
         self.__infos = None
         self.__film = None
@@ -101,6 +114,21 @@ class sppasVideoVista(sppasPanel):
         self._zoom = 100.
 
         self._create_content()
+
+    # -----------------------------------------------------------------------
+
+    def set_video_data(self,  framerate=None, duration=None, width=None, height=None):
+        """Set all or any of the data we need about the video."""
+        if framerate is not None:
+            self.__video.framerate = int(framerate)
+        if duration is not None:
+            self.__video.duration = float(duration)
+        if width is not None:
+            self.__video.width = width
+        if height is not None:
+            self.__video.height = height
+
+        self.__set_infos()
 
     # -----------------------------------------------------------------------
     # Enable/Disable views
@@ -148,13 +176,11 @@ class sppasVideoVista(sppasPanel):
 
     def get_infos_height(self):
         """Return the height required to draw the video information."""
-        h = int(float(sppasVideoVista.INFOS_HEIGHT) * self._zoom / 100.)
         try:
-            # make this height proportional
-            h = sppasPanel.fix_size(h)
+            # make this height proportional to the font
+            return sppasPanel.fix_size(sppasVideoVista.INFOS_HEIGHT)
         except AttributeError:
-            pass
-        return h
+            return sppasVideoVista.INFOS_HEIGHT
 
     # -----------------------------------------------------------------------
 
@@ -174,19 +200,10 @@ class sppasVideoVista(sppasPanel):
         h = 0
         if self.__infos is not None:
             if self.__infos.IsShown():
-                h += sppasVideoVista.INFOS_HEIGHT
+                h += self.get_infos_height()
         if self.__film is not None:
             if self.__film.IsShown():
-                h += sppasVideoVista.FILM_HEIGHT
-
-        # Apply the current zoom value
-        h = int(float(h) * self._zoom / 100.)
-
-        try:
-            # make this height proportional
-            h = sppasPanel.fix_size(h)
-        except AttributeError:
-            pass
+                h += self.get_film_height()
 
         return h
 
@@ -230,10 +247,10 @@ class sppasVideoVista(sppasPanel):
         """Construct our panel, made only of the media control."""
         s = wx.BoxSizer(wx.VERTICAL)
         self.__infos = self.__create_infos_panel()
-        self.__waveform = self.__create_film_panel()
-        s.Add(self.__infos, 1, wx.EXPAND, border=0)
-        s.Add(self.__waveform, 1, wx.EXPAND, border=0)
-        self.SetSizer(s)
+        self.__film = self.__create_film_panel()
+        s.Add(self.__infos, 0, wx.EXPAND, border=0)
+        s.Add(self.__film, 0, wx.EXPAND, border=0)
+        self.SetSizerAndFit(s)
         self.SetAutoLayout(True)
         self.SetMinSize(wx.Size(-1, self.get_min_height()))
 
@@ -242,7 +259,6 @@ class sppasVideoVista(sppasPanel):
     def __create_infos_panel(self):
         st = wx.StaticText(self, id=-1, label="No video", name="infos_panel")
         st.SetMinSize(wx.Size(-1, self.get_infos_height()))
-
         return st
 
     # -----------------------------------------------------------------------
@@ -255,11 +271,10 @@ class sppasVideoVista(sppasPanel):
     # -----------------------------------------------------------------------
 
     def __set_infos(self):
-        video_prop = "todo... infos of the video"
-        # video_prop = str(self.get_framerate()) + " fps, " + \
-        #              "%.3f" % self.get_duration() + " seconds, " +  \
-        #              str(self.get_width()) + "x" + \
-        #              str(self.get_height())
+        video_prop = str(self.__video.framerate) + " fps, " + \
+                     "%.3f" % self.__video.duration + " seconds, " +  \
+                     str(self.__video.width) + "x" + \
+                     str(self.__video.height)
 
         self.FindWindow("infos_panel").SetLabel(video_prop)
         self.FindWindow("infos_panel").Refresh()

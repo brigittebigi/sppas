@@ -562,6 +562,54 @@ class sppasMultiMediaPlayer(object):
             self.play()
 
     # -----------------------------------------------------------------------
+    # About the audio
+    # -----------------------------------------------------------------------
+
+    def get_nchannels(self, filename):
+        """Return the number of channels."""
+        for mp in self._medias:
+            if mp.is_audio() is True and filename == mp.get_filename():
+                return mp.get_nchannels()
+        return 0
+
+    # -----------------------------------------------------------------------
+
+    def get_sampwidth(self, filename):
+        for mp in self._medias:
+            if mp.is_audio() is True and filename == mp.get_filename():
+                return mp.get_sampwidth()
+        return 0
+
+    # -----------------------------------------------------------------------
+
+    def get_framerate(self, filename):
+        for mp in self._medias:
+            if (mp.is_audio() is True or mp.is_video() is True) and filename == mp.get_filename():
+                return mp.get_framerate()
+        return 0
+
+    # -----------------------------------------------------------------------
+
+    def get_frames(self, filename):
+        raise NotImplementedError
+
+    # -----------------------------------------------------------------------
+    # About the video
+    # -----------------------------------------------------------------------
+
+    def get_video_width(self, filename):
+        for mp in self._medias:
+            if mp.is_video() is True and filename == mp.get_filename():
+                return mp.get_width()
+        return 0
+
+    def get_video_height(self, filename):
+        for mp in self._medias:
+            if mp.is_video() is True and filename == mp.get_filename():
+                return mp.get_height()
+        return 0
+
+    # -----------------------------------------------------------------------
     # Private
     # -----------------------------------------------------------------------
 

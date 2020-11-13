@@ -326,6 +326,51 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         self.__smmps.remove(filename)
 
     # -----------------------------------------------------------------------
+
+    def get_duration(self, filename=None):
+        """Return the duration this player must consider (in seconds)."""
+        return self.__smmps.get_duration(filename)
+
+    def exists(self, filename):
+        """Return True if the given filename is matching an existing media."""
+        return self.__smmps.exists(filename)
+
+    def is_enabled(self, filename=None):
+        """Return True if any media or the given one is enabled."""
+        return self.__smmps.is_enabled(filename)
+
+    def is_unknown(self, filename=None):
+        """Return True if any media or if the given one is unknown."""
+        return self.__smmps.is_unknown(filename)
+
+    def is_audio(self, filename=None):
+        """Return True if any media or if the given one is an audio."""
+        return self.__smmps.is_audio(filename)
+
+    def is_video(self, filename=None):
+        """Return True if any media or if the given one is a video."""
+        return self.__smmps.is_video(filename)
+
+    def get_nchannels(self, filename):
+        """Return the number of channels."""
+        return self.__smmps.get_nchannels(filename)
+
+    def get_sampwidth(self, filename):
+        return self.__smmps.get_sampwidth(filename)
+
+    def get_framerate(self, filename):
+        return self.__smmps.get_framerate(filename)
+
+    def get_frames(self, filename):
+        raise NotImplementedError
+
+    def get_video_width(self, filename):
+        return self.__smmps.get_video_width(filename)
+
+    def get_video_height(self, filename):
+        return self.__smmps.get_video_height(filename)
+
+    # -----------------------------------------------------------------------
     # Events
     # -----------------------------------------------------------------------
 
@@ -398,6 +443,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
 
     def __on_media_loaded(self, event):
         filename = event.filename
+
         self.__smmps.enable(filename)
         self.FindWindow("media_play").Enable(True)
         self.FindWindow("media_pause").Enable(True)
@@ -409,6 +455,8 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         # Under Linux it crashes with the message:
         #   pure virtual method called
         # self.set_period(0., duration)
+
+        wx.PostEvent(self.GetParent(), event)
 
     # ----------------------------------------------------------------------
 

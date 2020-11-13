@@ -52,8 +52,8 @@ from ..windows.dialogs import sppasProgressDialog
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 
 from .editorpanel import EditorPanel
-from .editorevent import EVT_TIME_VIEW
-from .editorevent import EVT_LIST_VIEW
+from .timeline import EVT_TIMELINE_VIEW
+from .listanns import EVT_LISTANNS_VIEW
 
 
 # ---------------------------------------------------------------------------
@@ -456,9 +456,9 @@ class sppasEditorPanel(sppasPanel):
         self.Bind(wx.EVT_TOGGLEBUTTON, self._process_toolbar_event)
 
         # The event emitted by the sppasTimeEditFilesPanel
-        self.Bind(EVT_TIME_VIEW, self._process_time_action)
+        self.Bind(EVT_TIMELINE_VIEW, self._process_time_action)
         # The event emitted by the sppasTiersEditWindow
-        self.Bind(EVT_LIST_VIEW, self._process_list_action)
+        self.Bind(EVT_LISTANNS_VIEW, self._process_list_action)
 
     # -----------------------------------------------------------------------
 

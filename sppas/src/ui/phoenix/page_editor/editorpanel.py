@@ -38,7 +38,6 @@
 
 import os
 import wx
-import threading
 
 from sppas.src.config import msg
 from sppas.src.config import paths
@@ -47,10 +46,10 @@ from sppas.src.utils import u
 from ..windows import sppasPanel
 from ..windows import sppasSplitterWindow
 
-from .tiersanns import sppasTiersEditWindow
-from .filesedit import sppasTimeEditFilesPanel
-from .editorevent import EVT_TIME_VIEW
-from .editorevent import EVT_LIST_VIEW
+from .listanns.tiersanns import sppasTiersEditWindow
+from .listanns import EVT_LISTANNS_VIEW
+from .timeline import sppasTimelinePanel
+from .timeline import EVT_TIMELINE_VIEW
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
@@ -91,9 +90,9 @@ class EditorPanel(sppasSplitterWindow):
         self._create_content()
 
         # The event emitted by the sppasTimeEditFilesPanel
-        self.Bind(EVT_TIME_VIEW, self._process_time_action)
+        self.Bind(EVT_TIMELINE_VIEW, self._process_timeline_action)
         # The event emitted by the sppasTiersEditWindow
-        self.Bind(EVT_LIST_VIEW, self._process_list_action)
+        self.Bind(EVT_LISTANNS_VIEW, self._process_listanns_action)
 
         # Look&feel
         try:
@@ -240,9 +239,7 @@ class EditorPanel(sppasSplitterWindow):
         """
         # If the file is a media, we'll receive an action "media_loaded"
         # If the file is a trs, we'll receive the action "tiers_added".
-        th = threading.Thread(target=self._timeview.append_file, args=(name,))
-        th.start()
-        # self._timeview.append_file(name)
+        self._timeview.append_file(name)
 
     # -----------------------------------------------------------------------
 
@@ -296,7 +293,7 @@ class EditorPanel(sppasSplitterWindow):
 
         """
         w1 = sppasTiersEditWindow(self, orient=wx.HORIZONTAL, name="tiersanns_panel")
-        w2 = sppasTimeEditFilesPanel(self, name="timeline_panel")
+        w2 = sppasTimelinePanel(self, name="timeline_panel")
 
         # Fix size&layout
         w, h = self.GetSize()
@@ -318,17 +315,16 @@ class EditorPanel(sppasSplitterWindow):
 
     # -----------------------------------------------------------------------
 
-    def _process_time_action(self, event):
+    def _process_timeline_action(self, event):
         """Process an action event from one of the trs panels.
 
         :param event: (wx.Event)
 
         """
-        panel = event.GetEventObject()
         filename = event.filename
         action = event.action
         value = event.value
-        wx.LogDebug("TIME EVENT. {:s} received an event action {:s} of file {:s} with value {:s}"
+        wx.LogDebug("TIMELINE EVENT. {} received an event action {} of file {} with value {}"
                     "".format(self.GetName(), action, filename, str(value)))
 
         if action == "select_tier":
@@ -338,31 +334,17 @@ class EditorPanel(sppasSplitterWindow):
         elif action == "tiers_added":
             self._listview.add_tiers(filename, value)
 
-        elif action in ("zoomed", "error_collapsed", "error_expanded"):
-            # we just need to layout ourself
-            self.UpdateSize()
-
-        # elif action == "media_loaded":
-        #     if value is True:
-        #         self.UpdateSize()
-
         elif action == "ann_selected":
             self._listview.set_selected_annotation(value)
 
         else:
-            # we need to layout ourself and our parent could have to perform
-            # some change when panels are expanded/collapsed.
-            if action in ("media_collapsed", "media_expanded", "trs_collapsed", "trs_expanded"):
-                self.UpdateSize()
-
-            if self.GetParent() is not None:
-                wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s} and notify its parent {}."
-                            "".format(self.GetName(), action, filename, str(value), self.GetParent().GetName()))
-                wx.PostEvent(self.GetParent(), event)
+            # we just need to layout ourself
+            self.UpdateSize()
+            event.Skip()
 
     # -----------------------------------------------------------------------
 
-    def _process_list_action(self, event):
+    def _process_listanns_action(self, event):
         """Process an action event from the list view.
 
         :param event: (wx.Event)
@@ -372,7 +354,7 @@ class EditorPanel(sppasSplitterWindow):
         filename = event.filename
         action = event.action
         value = event.value
-        wx.LogDebug("LIST EVENT. {:s} received an event action {:s} of file {:s} with value {:s}"
+        wx.LogDebug("LISTANNS EVENT. {} received an event action {} of file {} with value {}"
                     "".format(self.GetName(), action, filename, str(value)))
 
         if action == "ann_selected":

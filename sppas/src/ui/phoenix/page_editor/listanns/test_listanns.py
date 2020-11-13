@@ -29,8 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.page_editor.test_editor.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.page_editor.listanns.test_listanns.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -40,8 +40,9 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
-import sppas.src.ui.phoenix.page_editor.editorpanel as editorpanel
-import sppas.src.ui.phoenix.page_editor.editor as editor
+import sppas.src.ui.phoenix.page_editor.listanns.annlabels as annlabels
+import sppas.src.ui.phoenix.page_editor.listanns.tiersbook as tiersbook
+import sppas.src.ui.phoenix.page_editor.listanns.tiersanns as tiersanns
 
 
 # ----------------------------------------------------------------------------
@@ -56,10 +57,11 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        #p = editorpanel.TestPanel(self)
-        #self.AddPage(p, p.GetName())
-
-        p = editor.TestPanel(self)
+        p = annlabels.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = tiersbook.TestPanel(self)
+        self.AddPage(p, p.GetName())
+        p = tiersanns.TestPanel(self)
         self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)

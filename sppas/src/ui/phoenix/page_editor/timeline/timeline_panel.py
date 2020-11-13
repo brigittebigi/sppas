@@ -37,7 +37,6 @@
 import os
 import wx
 import mimetypes
-import traceback
 
 from sppas.src.config import paths  # only for the test
 from sppas.src.config import msg
@@ -46,6 +45,7 @@ from sppas.src.anndata import sppasRW
 
 from sppas.src.ui.phoenix.windows import sppasPanel
 from sppas.src.ui.phoenix.windows import sppasScrolledPanel
+from sppas.src.ui.phoenix.windows.media import MediaEvents
 from sppas.src.ui.players.pstate import PlayerType
 
 from .smmpctrl_risepanel import SMMPCPanel
@@ -53,6 +53,7 @@ from .errorview_risepanel import ErrorViewPanel
 from .trsview_risepanel import TrsViewPanel
 from .audioview_risepanel import AudioViewPanel
 from .videoview_risepanel import VideoViewPanel
+from .timeevents import EVT_TIMELINE_VIEW, TimelineViewEvent
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
@@ -152,19 +153,12 @@ class sppasTimelinePanel(sppasPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
-    The event emitted by this view is TimeViewEvent with:
+    The event emitted by this view is TimelineViewEvent with:
 
         - action="close" and filename to ask for closing the panel
         - action="save" and filename to ask for saving the file of the panel
-
-        - action="media_collapsed" with the filename and value=the mediactrl object
-        - action="media_expanded" with the filename and value=the mediactrl object
-        - action="media_removed" with the filename and value=the mediactrl object
-
-        - action="trs_collapsed" with the filename and value=the list of sppasTier instances
-        - action="trs_expanded" with the filename and value=the list of sppasTier instances
-        - action="tiers_added" with the filename and value=list of sppasTier instances
-        - action="select_tier" with the filename and value=name of the tier
+        - action="collapsed" with the filename and value=the object
+        - action="expanded" with the filename and value=the object
 
     """
 
@@ -182,9 +176,9 @@ class sppasTimelinePanel(sppasPanel):
         self._files = dict()
 
         self._create_content()
-        #self._player.Bind(wx.EVT_BUTTON, self._process_tool_event)
-        #self._player.Bind(wx.EVT_TOGGLEBUTTON, self._process_tool_event)
-        #self._scrolled_panel.Bind(EVT_TIME_VIEW, self._process_time_event)
+        self.smmpc.Bind(wx.EVT_BUTTON, self._process_tool_event)
+        self.smmpc.Bind(wx.EVT_TOGGLEBUTTON, self._process_tool_event)
+        self._scrolled_panel.Bind(EVT_TIMELINE_VIEW, self._process_time_event)
 
         # Look&feel
         try:
@@ -193,6 +187,10 @@ class sppasTimelinePanel(sppasPanel):
             self.SetFont(wx.GetApp().settings.text_font)
         except AttributeError:
             self.InheritAttributes()
+
+        # Custom event to known a media is loaded
+        self.FindWindow("smmpc_risepanel").Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
+        self.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
 
         self.Layout()
 
@@ -296,7 +294,21 @@ class sppasTimelinePanel(sppasPanel):
             self.Layout()
 
             self._files[name] = panel
-            panel.load()
+
+            # For transcription, each panel is managing the content of a file
+            if isinstance(panel, TrsViewPanel):
+                panel.load()
+                all_tiers = panel.get_tier_list()
+                self.notify(action="tiers_added", filename=name, value=all_tiers)
+
+            # For media, it's the SMMPC that is managing all files.
+            # It's easier to manage media files this way particularly
+            # because we need to play synchronously...
+            elif isinstance(panel, AudioViewPanel):
+                self.smmpc.add_audio(name)
+
+            elif isinstance(panel, VideoViewPanel):
+                self.smmpc.add_video(name)
 
             return True
 
@@ -453,12 +465,23 @@ class sppasTimelinePanel(sppasPanel):
     # Methods to operate on an AudioViewPanel()
     # -----------------------------------------------------------------------
 
-    def enable_audio_waveform(self, value=True):
-        """Enable or disable the view of the media waveform."""
+    def enable_audio_infos(self, value=True):
+        """Enable or disable the view of the audio information."""
         for fn in self._files:
             panel = self._files[fn]
             if isinstance(panel, AudioViewPanel) is True:
-                panel.show_waveform(bool(value))
+                panel.GetPane().show_infos(bool(value))
+
+        self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def enable_audio_waveform(self, value=True):
+        """Enable or disable the view of the audio waveform."""
+        for fn in self._files:
+            panel = self._files[fn]
+            if isinstance(panel, AudioViewPanel) is True:
+                panel.GetPane().show_waveform(bool(value))
 
         self.Layout()
 
@@ -466,26 +489,23 @@ class sppasTimelinePanel(sppasPanel):
     # Methods to operate on a VideoViewPanel()
     # -----------------------------------------------------------------------
 
-    def enable_video_film(self, value=True):
-        """Enable or disable the view of the media waveform."""
+    def enable_video_infos(self, value=True):
+        """Enable or disable the view of the video information."""
         for fn in self._files:
             panel = self._files[fn]
             if isinstance(panel, VideoViewPanel) is True:
-                panel.show_film(bool(value))
+                panel.GetPane().show_infos(bool(value))
 
         self.Layout()
 
     # -----------------------------------------------------------------------
-    # Methods to operate on either an AudioViewPanel or a VideoViewPanel()
-    # -----------------------------------------------------------------------
 
-    def enable_media_infos(self, value=True):
-        """Enable or disable the view of the media information."""
+    def enable_video_film(self, value=True):
+        """Enable or disable the view of the video film."""
         for fn in self._files:
             panel = self._files[fn]
-            if isinstance(panel, (AudioViewPanel, VideoViewPanel)) is True:
-                panel.show_infos(bool(value))
-                panel.Layout()
+            if isinstance(panel, VideoViewPanel) is True:
+                panel.GetPane().show_film(bool(value))
 
         self.Layout()
 
@@ -519,6 +539,7 @@ class sppasTimelinePanel(sppasPanel):
 
     @property
     def smmpc(self):
+        """Return the SPPAS Multi Media Player Ctrl."""
         return self.FindWindow("smmpc_risepanel").GetPane()
 
     # -----------------------------------------------------------------------
@@ -529,39 +550,113 @@ class sppasTimelinePanel(sppasPanel):
         """Notify the parent of an event."""
         wx.LogDebug("{:s} notifies its parent {:s} of action {:s}."
                     "".format(self.GetName(), self.GetParent().GetName(), action))
-        # evt = TimeViewEvent(action=action, filename=filename, value=value)
-        # evt.SetEventObject(self)
-        # wx.PostEvent(self.GetParent(), evt)
+        evt = TimelineViewEvent(action=action, filename=filename, value=value)
+        evt.SetEventObject(self)
+        wx.PostEvent(self.GetParent(), evt)
+
+    # -----------------------------------------------------------------------
+
+    def _process_time_event(self, event):
+        """Process a time view event.
+
+        A child emitted this event to inform an action occurred or to ask
+        for an action.
+
+        :param event: (wx.Event)
+
+        """
+        try:
+            panel = event.GetEventObject()
+            action = event.action
+            value = event.value
+            filename = panel.get_filename()
+            if filename not in self._files:
+                raise Exception("An unknown panel {:s} emitted an EVT_TIMELINE_VIEW."
+                                "".format(filename))
+        except Exception as e:
+            wx.LogError(str(e))
+            return
+
+        # Send the event to the parent, including the filename
+        self.notify(action, filename, value)
+
+    # -----------------------------------------------------------------------
+
+    def _process_tool_event(self, event):
+        """Process a button event from the player.
+
+        Not implemented yet: the smmpc does not include such tool buttons.
+
+        :param event: (wx.Event)
+
+        """
+        btn = event.GetEventObject()
+        btn_name = btn.GetName()
+
+        if btn_name == "sound_infos":
+            self.enable_audio_infos(btn.GetValue())
+
+        elif btn_name == "sound_wave_lines":
+            self.enable_audio_waveform(btn.GetValue())
+
+        elif btn_name == "video_infos":
+            self.enable_video_infos(btn.GetValue())
+
+        elif btn_name == "video_film":
+            self.enable_video_film(btn.GetValue())
+
+        event.Skip()
 
     # -----------------------------------------------------------------------
 
     def _on_collapse_changed(self, evt=None):
         panel = evt.GetEventObject()
-        if isinstance(panel, (AudioViewPanel, VideoViewPanel)) is True:
-            if panel.IsExpanded() is True:
-                # The panel was collapsed, and now it is expanded.
-                self.smmpc.enable(panel.get_filename(), value=True)
-                self.notify(action="media_collapsed", filename=panel.get_filename(), value=panel.GetPane())
-            else:
-                self.smmpc.enable(panel.get_filename(), value=False)
-                self.notify(action="media_expanded", filename=panel.get_filename(), value=panel.GetPane())
 
-        elif isinstance(panel, TrsViewPanel) is True:
-            if panel.IsExpanded() is True:
-                # The panel was collapsed, and now it is expanded.
-                self.notify(action="trs_collapsed", filename=panel.get_filename(), value=panel.get_tier_list())
-            else:
-                self.notify(action="trs_expanded", filename=panel.get_filename(), value=panel.get_tier_list())
-
-        elif isinstance(panel, ErrorViewPanel) is True:
-            if panel.IsExpanded() is True:
-                # The panel was collapsed, and now it is expanded.
-                self.notify(action="error_collapsed", filename=panel.get_filename(), value=None)
-            else:
-                self.notify(action="error_expanded", filename=panel.get_filename(), value=None)
-
+        # Update our layout - the sizer needs to get new sizes
         self.Layout()
         self._scrolled_panel.ScrollChildIntoView(panel)
+
+        # Enable or disable the media into the SMMPC
+        if isinstance(panel, (AudioViewPanel, VideoViewPanel)) is True:
+            self.smmpc.enable(panel.get_filename(), value=panel.IsExpanded())
+
+        # Notify parent: at least, it needs to layout
+        if panel.IsExpanded() is True:
+            action = "expanded"
+        else:
+            action = "collapsed"
+        self.notify(action, filename=panel.get_filename(), value=panel.GetPane())
+
+    # ----------------------------------------------------------------------
+
+    def __on_media_loaded(self, event):
+        filename = event.filename
+        panel = self._files[filename]
+
+        if self.smmpc.is_audio(filename):
+            wx.LogMessage("Audio loaded successfully: {}".format(filename))
+            panel.GetPane().set_audio_data(
+                nchannels=self.smmpc.get_nchannels(filename),
+                sampwidth=self.smmpc.get_sampwidth(filename),
+                framerate=self.smmpc.get_framerate(filename),
+                duration=self.smmpc.get_duration(filename),
+                frames=None
+            )
+
+        elif self.smmpc.is_video(filename):
+            wx.LogMessage("Video loaded successfully: {}".format(filename))
+            panel.GetPane().set_video_data(
+                framerate=self.smmpc.get_framerate(filename),
+                duration=self.smmpc.get_duration(filename),
+                width=self.smmpc.get_video_width(filename),
+                height=self.smmpc.get_video_height(filename)
+            )
+
+    # ----------------------------------------------------------------------
+
+    def __on_media_not_loaded(self, event):
+        filename = event.filename
+        wx.LogError("Media file {} not loaded".format(filename))
 
     # -----------------------------------------------------------------------
     # Private
@@ -588,8 +683,6 @@ class sppasTimelinePanel(sppasPanel):
 
                 elif tt.guess_type(name) == tt.transcription:
                     panel = TrsViewPanel(self._scrolled_panel, filename=name)
-                    all_tiers = panel.get_tier_list()
-                    self.notify(action="tiers_added", filename=name, value=all_tiers)
 
                 elif tt.guess_type(name) == tt.unsupported:
                     raise IOError(MSG_UNSUPPORTED)
@@ -653,7 +746,7 @@ class TestPanel(sppasPanel):
             p.append_file(filename)
 
         # the size won't be correct when collapsed. we need a layout.
-        # self.Bind(EVT_TIME_VIEW, self._process_action)
+        self.Bind(EVT_TIMELINE_VIEW, self._process_action)
 
     # -----------------------------------------------------------------------
 
@@ -676,7 +769,6 @@ class TestPanel(sppasPanel):
         elif action == "close":
             closed = panel.remove_file(filename)
             self.Layout()
-            wx.LogDebug("Closed: {}".format(closed))
 
         elif action == "tiers_added":
             pass
@@ -684,11 +776,8 @@ class TestPanel(sppasPanel):
         elif action == "select_tier":
             pass
 
-        elif action in ("media_collapsed", "media_expanded", "trs_collapsed", "trs_expanded"):
+        elif action in ("collapsed", "expanded"):
             self.Layout()
-
-        #elif action == "media_loaded":
-        #    self.Layout()
 
         else:
             wx.LogDebug("* * *  UNKNOWN ACTION: skip event  * * *")

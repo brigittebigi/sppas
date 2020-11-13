@@ -199,7 +199,7 @@ class TranscriptionVista(sppasPanel):
     # -----------------------------------------------------------------------
 
     def notify(self, action, value=None):
-        """Sends a EVT_VIEW event to the listener (if any)."""
+        """Send a EVT_TIMELINE_VIEW event to the listener (if any)."""
         evt = TrsEvent(action=action, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)

@@ -42,7 +42,7 @@ from sppas.src.anndata import sppasRW
 
 from sppas.src.ui.phoenix.windows import sppasScrolledPanel
 
-from ..editorevent import EVT_TIME_VIEW
+from .timeevents import EVT_TIMELINE_VIEW
 from .baseview_risepanel import sppasFileViewPanel
 from .trsvista import TranscriptionVista, EVT_TRS
 
@@ -87,7 +87,7 @@ class TrsViewPanel(sppasFileViewPanel):
             parser = sppasRW(self.get_filename())
             trs = parser.read()
             self.GetPane().set_transcription(trs)
-        except TypeError as e:
+        except Exception as e:
             wx.LogError(str(e))
 
     # -----------------------------------------------------------------------
@@ -236,7 +236,6 @@ class TrsViewPanel(sppasFileViewPanel):
         :param event: (wx.Event)
 
         """
-        # notify the parent with a TimeViewEvent. It adds the filename.
         self.notify(action=event.action, value=event.value)
 
     # -----------------------------------------------------------------------
@@ -279,7 +278,7 @@ class TestPanel(sppasScrolledPanel):
         self.SetSizer(s)
         self.SetupScrolling(scroll_x=False, scroll_y=True)
 
-        self.Bind(EVT_TIME_VIEW, self._process_action)
+        self.Bind(EVT_TIMELINE_VIEW, self._process_action)
         wx.CallAfter(self.load)
 
     # -----------------------------------------------------------------------

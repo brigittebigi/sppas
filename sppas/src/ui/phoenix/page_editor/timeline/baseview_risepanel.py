@@ -45,7 +45,7 @@ from sppas.src.config import paths
 from sppas.src.ui.phoenix.windows.panels import sppasPanel
 from sppas.src.ui.phoenix.windows.panels import sppasVerticalRisePanel
 
-from ..editorevent import TimeViewEvent
+from .timeevents import TimelineViewEvent
 
 # ----------------------------------------------------------------------------
 
@@ -114,12 +114,6 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
     # About the file
     # ------------------------------------------------------------------------
 
-    def load(self):
-        """To be overridden. Load the content of the file."""
-        pass
-
-    # ------------------------------------------------------------------------
-
     def get_filename(self):
         """Return the filename this panel is displaying."""
         return self._filename
@@ -170,15 +164,15 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
     # -----------------------------------------------------------------------
 
     def notify(self, action, value=None):
-        """Notify the parent of a TimeViewEvent.
+        """Notify the parent of a TimelineViewEvent.
 
-        The parent can catch the event with EVT_TIME_VIEW.
+        The parent can catch the event with EVT_TIMELINE_VIEW.
 
         """
         wx.LogDebug(
             "{:s} notifies its parent {:s} of action {:s}."
             "".format(self.GetName(), self.GetParent().GetName(), action))
-        evt = TimeViewEvent(action=action, value=value)
+        evt = TimelineViewEvent(action=action, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
 

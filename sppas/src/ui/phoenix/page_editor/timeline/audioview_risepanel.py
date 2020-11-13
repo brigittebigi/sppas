@@ -42,7 +42,6 @@ from sppas.src.config import paths
 
 from sppas.src.ui.phoenix.windows import sppasScrolledPanel
 
-from ..editorevent import EVT_TIME_VIEW
 from .baseview_risepanel import sppasFileViewPanel
 from .audiovista import sppasAudioVista
 
@@ -81,16 +80,6 @@ class AudioViewPanel(sppasFileViewPanel):
         :param name: (str) the widget name.
 
         """
-        # try:
-        #     # Before creating the media, check if the file type is supported.
-        #     media_type = sppasMediaCtrl.ExpectedMediaType(filename)
-        #     if media_type == MediaType().unknown:
-        #         raise TypeError("File {:s} is of an unknown type "
-        #                         "(no audio nor video).".format(filename))
-        # except TypeError:
-        #     self.Destroy()
-        #     raise
-
         super(AudioViewPanel, self).__init__(parent, filename, name)
         self._setup_events()
         self.Collapse()

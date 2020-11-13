@@ -29,8 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.page_editor.tiersanns.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.page_editor.listanns.tiersanns.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -43,14 +43,14 @@ from sppas.src.config import paths
 from sppas.src.utils import u
 from sppas.src.anndata import sppasRW
 
-from ..views.metaedit import MetaDataEdit
-from ..windows import sppasPanel
-from ..windows import sppasSplitterWindow
-from ..windows.dialogs import Confirm, Error
-from ..windows import sppasComboBox
-from ..windows import sppasToolbar
+from src.ui.phoenix.views.metaedit import MetaDataEdit
+from src.ui.phoenix.windows import sppasPanel
+from src.ui.phoenix.windows import sppasSplitterWindow
+from src.ui.phoenix.windows.dialogs import Confirm, Error
+from src.ui.phoenix.windows import sppasComboBox
+from src.ui.phoenix.windows import sppasToolbar
 
-from .editorevent import ListViewEvent
+from .listevents import ListannsViewEvent
 from .annlabels import sppasAnnLabelsCtrl
 from .tiersbook import sppasTiersBook
 
@@ -529,9 +529,9 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :param value: (any) Any value to attach to the event/action
 
         """
-        # wx.LogDebug("{:s} notifies its parent {:s} of action {:s}."
-        #             "".format(self.GetName(), self.GetParent().GetName(), action))
-        evt = ListViewEvent(action=action, filename=filename, value=value)
+        wx.LogDebug("{:s} notifies its parent {:s} of action {:s}."
+                    "".format(self.GetName(), self.GetParent().GetName(), action))
+        evt = ListannsViewEvent(action=action, filename=filename, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
         wx.LogDebug("Notify parent {:s} of view event".format(

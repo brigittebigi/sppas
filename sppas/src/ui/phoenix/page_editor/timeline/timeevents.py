@@ -26,18 +26,12 @@
         This banner notice must not be removed.
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.page_editor.editorevent.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.page_editor.timeline.timeevents.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
 import wx.lib.newevent
 
-
-# Internal use of events by classes displaying files in a list-style
-ListViewEvent, EVT_LIST_VIEW = wx.lib.newevent.NewEvent()
-ListViewCommandEvent, EVT_LIST_VIEW_COMMAND = wx.lib.newevent.NewCommandEvent()
-
-# Internal use of events by classes displaying files in a timeline-style
-TimeViewEvent, EVT_TIME_VIEW = wx.lib.newevent.NewEvent()
-TimeViewCommandEvent, EVT_TIME_VIEW_COMMAND = wx.lib.newevent.NewCommandEvent()
+TimelineViewEvent, EVT_TIMELINE_VIEW = wx.lib.newevent.NewEvent()
+TimelineViewCommandEvent, EVT_TIMELINE_VIEW_COMMAND = wx.lib.newevent.NewCommandEvent()

@@ -29,8 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.page_editor.annlabels.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.page_editor.listanns.annlabels.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Editor for the list of sppasLabel() instances of a sppasAnnotation().
     The given sppasAnnotation() instance is not modified. When a change is
@@ -53,8 +53,8 @@ from sppas.src.anndata.aio.xra import sppasJRA
 from sppas.src.anndata.aio.aioutils import serialize_labels
 from sppas.src.anndata.aio.aioutils import format_labels
 
-from ..windows import sppasPanel
-from ..windows import sppasToolbar
+from sppas.src.ui.phoenix.windows import sppasPanel
+from sppas.src.ui.phoenix.windows import sppasToolbar
 
 # ---------------------------------------------------------------------------
 

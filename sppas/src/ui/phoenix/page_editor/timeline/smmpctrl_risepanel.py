@@ -111,21 +111,6 @@ class SMMPCPanel(sppasVerticalRisePanel):
     # Events management
     # -----------------------------------------------------------------------
 
-    def notify(self, action, value=None):
-        """Notify the parent of a TimeViewEvent.
-
-        The parent can catch the event with EVT_TIME_VIEW.
-
-        """
-        wx.LogDebug(
-            "{:s} notifies its parent {:s} of action {:s}."
-            "".format(self.GetName(), self.GetParent().GetName(), action))
-        # evt = TimeViewEvent(action=action, value=value)
-        # evt.SetEventObject(self)
-        # wx.PostEvent(self.GetParent(), evt)
-
-    # -----------------------------------------------------------------------
-
     def _create_toolbar(self):
         """Override in order to disable the collapsible button.
 
