@@ -227,14 +227,22 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
 
     def play(self):
         """Start playing all the enabled media."""
+        played = False
         if self.__smmps.is_playing() is False and self.__smmps.is_loading() is False:
             if self.__smmps.is_paused() is False:
                 start, end = self._timeslider.get_range()
-                self.__smmps.set_period(start, end)
+                try:
+                    self.__smmps.set_period(start, end)
+                except ValueError as e:
+                    wx.LogError(str(e))
+                    return False
+
             played = self.__smmps.play()
             if played is True:
                 # self.prev_time = datetime.datetime.now()
                 self.FindWindow("media_pause").SetValue(False)
+
+        return played
 
     # -----------------------------------------------------------------------
 
@@ -508,7 +516,6 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
 
     def _on_period_changed(self, event):
         """Override."""
-        print(" TIME SLIDER PERIOD CHANGED ")
         p = event.period
         self.media_period(p[0], p[1])
         self._set_led_fg_color()

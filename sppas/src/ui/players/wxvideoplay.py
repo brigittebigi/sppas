@@ -49,7 +49,7 @@ import time
 from sppas.src.config import paths
 
 from sppas.src.ui.phoenix.windows.frame import sppasImageFrame
-from src.ui.phoenix.page_editor.media.mediaevents import MediaEvents
+from sppas.src.ui.phoenix.page_editor.media.mediaevents import MediaEvents
 
 from .videoplayer import sppasSimpleVideoPlayer
 from .pstate import PlayerState

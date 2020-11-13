@@ -170,7 +170,8 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
         start_time = float(start_time)
         end_time = float(end_time)
         if end_time <= start_time:
-            raise ValueError("End can't be greater or equal than start")
+            raise ValueError("Invalid period of time: {:f} {:f}"
+                             "".format(start_time, end_time))
 
         self._period = (start_time, end_time)
         self.seek(self._period[0])
