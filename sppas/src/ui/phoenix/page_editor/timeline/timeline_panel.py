@@ -36,19 +36,17 @@
 
 import os
 import wx
-import mimetypes
 
 from sppas.src.config import paths  # only for the test
 from sppas.src.config import msg
 from sppas.src.utils import u
-from sppas.src.anndata import sppasRW
 
 from sppas.src.ui.phoenix.windows import sppasPanel
 from sppas.src.ui.phoenix.windows import sppasScrolledPanel
-from sppas.src.ui.players.pstate import PlayerType
 
 from ..media import MediaEvents
 
+from .timedatatype import TimelineType
 from .smmpctrl_risepanel import SMMPCPanel
 from .errorview_risepanel import ErrorViewPanel
 from .trsview_risepanel import TrsViewPanel
@@ -65,82 +63,10 @@ def _(message):
 
 
 MSG_CLOSE = _("Close")
-MSG_UNSUPPORTED = _("File format not supported.")
 MSG_UNKNOWN = _("Unknown file format.")
 
 CLOSE_CONFIRM = _("The file contains not saved work that will be "
                   "lost. Are you sure you want to close?")
-
-# ---------------------------------------------------------------------------
-
-
-class TimelineType(object):
-    """Enum all types of supported data by the timeline viewers.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
-
-    :Example:
-
-        >>>with TimelineType() as tt:
-        >>>    print(tt.audio)
-
-    This class is a solution to mimic an 'Enum' but is compatible with both
-    Python 2.7 and Python 3+.
-
-    """
-
-    def __init__(self):
-        """Create the dictionary."""
-        with PlayerType() as pt:
-            self.__dict__ = dict(
-                unknown=pt.unknown,
-                unsupported=pt.unsupported,
-                audio=pt.audio,
-                video=pt.video,
-                transcription=10
-            )
-
-    # -----------------------------------------------------------------------
-
-    def __enter__(self):
-        return self
-
-    # -----------------------------------------------------------------------
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        pass
-
-    # -----------------------------------------------------------------------
-
-    def guess_type(self, filename):
-        """Return the expected media type of the given filename.
-
-        :return: (MediaType) Integer value of the media type
-
-        """
-        mime_type = "unknown"
-        if filename is not None:
-            m = mimetypes.guess_type(filename)
-            if m[0] is not None:
-                mime_type = m[0]
-
-        if "video" in mime_type:
-            return self.video
-
-        if "audio" in mime_type:
-            return self.audio
-
-        fn, fe = os.path.splitext(filename)
-        if fe.startswith("."):
-            fe = fe[1:]
-        if fe.lower() in [e.lower() for e in sppasRW(None).extensions()]:
-            return self.transcription
-
-        return self.unknown
 
 # ----------------------------------------------------------------------------
 
@@ -173,15 +99,20 @@ class sppasTimelinePanel(sppasPanel):
             name=name)
 
         # To get an easy access to the opened files and their panel
-        # (key=name, value=wx.SizerItem)
+        # (key=filename, value=wx.SizerItem)
         self._files = dict()
 
+        # Create a scrolled panel and a multi media player control system
         self._create_content()
+
+        # Setup the events
         self.smmpc.Bind(wx.EVT_BUTTON, self._process_tool_event)
         self.smmpc.Bind(wx.EVT_TOGGLEBUTTON, self._process_tool_event)
         self._scrolled_panel.Bind(EVT_TIMELINE_VIEW, self._process_time_event)
+        self.FindWindow("smmpc_risepanel").Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
+        self.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
 
-        # Look&feel
+        # Colors and font
         try:
             self.SetBackgroundColour(wx.GetApp().settings.bg_color)
             self.SetForegroundColour(wx.GetApp().settings.fg_color)
@@ -189,11 +120,7 @@ class sppasTimelinePanel(sppasPanel):
         except AttributeError:
             self.InheritAttributes()
 
-        # Custom event to known a media is loaded
-        self.FindWindow("smmpc_risepanel").Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
-        self.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
-
-        self.Layout()
+        # self.Layout()
 
     # -----------------------------------------------------------------------
     # Manage the set of files
@@ -209,9 +136,7 @@ class sppasTimelinePanel(sppasPanel):
         """Return True if name is a transcription file."""
         if name not in self._files:
             return False
-        if isinstance(self._files[name], TrsViewPanel):
-            return True
-        return False
+        return self._files[name].is_trs()
 
     # -----------------------------------------------------------------------
 
@@ -219,9 +144,7 @@ class sppasTimelinePanel(sppasPanel):
         """Return True if name is an audio file."""
         if name not in self._files:
             return False
-        if isinstance(self._files[name], AudioViewPanel):
-            return True
-        return False
+        return self._files[name].is_audio()
 
     # -----------------------------------------------------------------------
 
@@ -229,9 +152,7 @@ class sppasTimelinePanel(sppasPanel):
         """Return True if name is a video file."""
         if name not in self._files:
             return False
-        if isinstance(self._files[name], VideoViewPanel):
-            return True
-        return False
+        return self._files[name].is_video()
 
     # -----------------------------------------------------------------------
 
@@ -239,9 +160,7 @@ class sppasTimelinePanel(sppasPanel):
         """Return True if name is matching a non-opened file."""
         if name not in self._files:
             return False
-        if isinstance(self._files[name], ErrorViewPanel):
-            return True
-        return False
+        return self._files[name].is_unknown()
 
     # -----------------------------------------------------------------------
 
@@ -279,6 +198,10 @@ class sppasTimelinePanel(sppasPanel):
 
         Do not refresh/layout the GUI.
 
+        If the file is a media, its panel will emit action "media_loaded" in
+        an event that we'll capture and re-send to the parent.
+        If the file is a trs, we'll emit the action "tiers_added" in an event.
+
         :param name: (str)
         :raise: ValueError
 
@@ -288,7 +211,7 @@ class sppasTimelinePanel(sppasPanel):
             return False
 
         else:
-            # Create the appropriate XXXXViewPanel
+            # Create the appropriate XxxxViewPanel
             panel = self._create_panel(name)
             self._sizer.Add(panel, 0, wx.EXPAND, 0)  # no border at all
             self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._on_collapse_changed, panel)
@@ -297,7 +220,7 @@ class sppasTimelinePanel(sppasPanel):
             self._files[name] = panel
 
             # For transcription, each panel is managing the content of a file
-            if isinstance(panel, TrsViewPanel):
+            if panel.is_trs():
                 panel.load()
                 all_tiers = panel.get_tier_list()
                 self.notify(action="tiers_added", filename=name, value=all_tiers)
@@ -305,10 +228,10 @@ class sppasTimelinePanel(sppasPanel):
             # For media, it's the SMMPC that is managing all files.
             # It's easier to manage media files this way particularly
             # because we need to play synchronously...
-            elif isinstance(panel, AudioViewPanel):
+            elif panel.is_audio():
                 self.smmpc.add_audio(name)
 
-            elif isinstance(panel, VideoViewPanel):
+            elif panel.is_video():
                 self.smmpc.add_video(name)
 
             return True
@@ -335,7 +258,7 @@ class sppasTimelinePanel(sppasPanel):
 
             # If the closed page is a media, this media must be
             # removed of the multimedia player control.
-            if isinstance(panel, (AudioViewPanel, VideoViewPanel)) is True:
+            if panel.is_audio() is True or panel.is_video() is True:
                 self.smmpc.remove(name)
 
             # Destroy the panel and remove of the sizer
@@ -388,7 +311,7 @@ class sppasTimelinePanel(sppasPanel):
         if name not in self._files:
             return list()
 
-        if isinstance(self._files[name], TrsViewPanel):
+        if self._files[name].is_trs() is True:
             return self._files[name].get_tier_list()
 
         return list()
@@ -399,7 +322,7 @@ class sppasTimelinePanel(sppasPanel):
         """Return the filename of the currently selected tier."""
         for fn in self._files:
             panel = self._files[fn]
-            if isinstance(panel, TrsViewPanel) is True:
+            if panel.is_trs() is True:
                 tn = panel.get_selected_tiername()
                 if tn is not None:
                     return fn
@@ -429,7 +352,7 @@ class sppasTimelinePanel(sppasPanel):
         """
         for fn in self._files:
             panel = self._files[fn]
-            if isinstance(panel, TrsViewPanel) is True:
+            if panel.is_trs() is True:
                 if fn == filename:
                     panel.set_selected_tiername(tier_name)
                 else:
@@ -470,7 +393,7 @@ class sppasTimelinePanel(sppasPanel):
         """Enable or disable the view of the audio information."""
         for fn in self._files:
             panel = self._files[fn]
-            if isinstance(panel, AudioViewPanel) is True:
+            if panel.is_audio() is True:
                 panel.GetPane().show_infos(bool(value))
 
         self.Layout()
@@ -481,7 +404,7 @@ class sppasTimelinePanel(sppasPanel):
         """Enable or disable the view of the audio waveform."""
         for fn in self._files:
             panel = self._files[fn]
-            if isinstance(panel, AudioViewPanel) is True:
+            if panel.is_audio() is True:
                 panel.GetPane().show_waveform(bool(value))
 
         self.Layout()
@@ -494,7 +417,7 @@ class sppasTimelinePanel(sppasPanel):
         """Enable or disable the view of the video information."""
         for fn in self._files:
             panel = self._files[fn]
-            if isinstance(panel, VideoViewPanel) is True:
+            if panel.is_video() is True:
                 panel.GetPane().show_infos(bool(value))
 
         self.Layout()
@@ -505,7 +428,7 @@ class sppasTimelinePanel(sppasPanel):
         """Enable or disable the view of the video film."""
         for fn in self._files:
             panel = self._files[fn]
-            if isinstance(panel, VideoViewPanel) is True:
+            if panel.is_video() is True:
                 panel.GetPane().show_film(bool(value))
 
         self.Layout()
@@ -622,7 +545,7 @@ class sppasTimelinePanel(sppasPanel):
         self._scrolled_panel.ScrollChildIntoView(panel)
 
         # Enable or disable the media into the SMMPC
-        if isinstance(panel, (AudioViewPanel, VideoViewPanel)) is True:
+        if panel.is_audio() is True or panel.is_video() is True:
             self.smmpc.enable(panel.get_filename(), value=panel.IsExpanded())
 
         # Notify parent: at least, it needs to layout
@@ -675,10 +598,6 @@ class sppasTimelinePanel(sppasPanel):
     def _create_panel(self, name):
         """Create a view rise panel to display a file.
 
-        If the file is a media, its panel will emit action "media_loaded" in
-        an event that we'll capture and re-send to the parent.
-        If the file is a trs, we'll emit the action "tiers_added" in an event.
-
         :param name: (str) Name of the file to view
         :return: wx.Window
 
@@ -693,9 +612,6 @@ class sppasTimelinePanel(sppasPanel):
 
                 elif tt.guess_type(name) == tt.transcription:
                     panel = TrsViewPanel(self._scrolled_panel, filename=name)
-
-                elif tt.guess_type(name) == tt.unsupported:
-                    raise IOError(MSG_UNSUPPORTED)
 
                 elif tt.guess_type(name) == tt.unknown:
                     raise IOError(MSG_UNKNOWN)
@@ -715,7 +631,7 @@ class sppasTimelinePanel(sppasPanel):
         """
         for filename in self._files:
             panel = self._files[filename]
-            if isinstance(panel, TrsViewPanel):
+            if panel.is_trs():
                 self._scrolled_panel.ScrollChildIntoView(panel)
                 if filename == trs_filename:
                     if what == "select":

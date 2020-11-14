@@ -45,6 +45,7 @@ from sppas.src.config import paths
 from sppas.src.ui.phoenix.windows.panels import sppasPanel
 from sppas.src.ui.phoenix.windows.panels import sppasVerticalRisePanel
 
+from .timedatatype import TimelineType
 from .timeevents import TimelineViewEvent
 
 # ----------------------------------------------------------------------------
@@ -61,7 +62,7 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
 
     Events emitted by this class:
 
-        - EVT_TIME_VIEW
+        - EVT_TIMELINE_VIEW
 
     """
 
@@ -75,6 +76,7 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
             style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.BORDER_NONE,
             name=name)
 
+        self._ft = TimelineType().unknown
         self._dirty = False
         self._filename = filename
 
@@ -114,6 +116,23 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
     # About the file
     # ------------------------------------------------------------------------
 
+    def is_unknown(self):
+        return self._ft == TimelineType().unknown
+
+    def is_audio(self):
+        return self._ft == TimelineType().audio
+
+    def is_video(self):
+        return self._ft == TimelineType().video
+
+    def is_trs(self):
+        return self._ft == TimelineType().trs
+
+    def is_image(self):
+        return self._ft == TimelineType().image
+
+    # ------------------------------------------------------------------------
+
     def get_filename(self):
         """Return the filename this panel is displaying."""
         return self._filename
@@ -135,21 +154,6 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
     def is_modified(self):
         """Return True if the content of the file has changed."""
         return self._dirty
-
-    # -----------------------------------------------------------------------
-
-    def SetFont(self, font):
-        """Override."""
-        # The name of the file is Bold
-        f = wx.Font(font.GetPointSize(),
-                    font.GetFamily(),
-                    font.GetStyle(),
-                    wx.FONTWEIGHT_BOLD,
-                    font.GetUnderlined(),
-                    font.GetFaceName())
-        sppasVerticalRisePanel.SetFont(self, f)
-        self.GetPane().SetFont(font)
-        self.Layout()
 
     # -----------------------------------------------------------------------
     # Construct the GUI

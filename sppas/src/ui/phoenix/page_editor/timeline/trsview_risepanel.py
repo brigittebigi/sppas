@@ -42,6 +42,7 @@ from sppas.src.anndata import sppasRW
 
 from sppas.src.ui.phoenix.windows import sppasScrolledPanel
 
+from .timedatatype import TimelineType
 from .timeevents import EVT_TIMELINE_VIEW
 from .baseview_risepanel import sppasFileViewPanel
 from .trsvista import TranscriptionVista, EVT_TRS
@@ -70,6 +71,7 @@ class TrsViewPanel(sppasFileViewPanel):
 
     def __init__(self, parent, filename, name="trsview_risepanel"):
         super(TrsViewPanel, self).__init__(parent, filename, name)
+        self._ft = TimelineType().trs
         self._setup_events()
         self.Expand()
         self.SetBackgroundColour(wx.YELLOW)

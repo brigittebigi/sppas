@@ -42,6 +42,7 @@ from sppas.src.config import paths
 
 from sppas.src.ui.phoenix.windows import sppasScrolledPanel
 
+from .timedatatype import TimelineType
 from .baseview_risepanel import sppasFileViewPanel
 from .videovista import sppasVideoVista
 
@@ -80,6 +81,7 @@ class VideoViewPanel(sppasFileViewPanel):
 
         """
         super(VideoViewPanel, self).__init__(parent, filename, name)
+        self._ft = TimelineType().video
         self._setup_events()
         self.Collapse()
         self.SetBackgroundColour(wx.GREEN)

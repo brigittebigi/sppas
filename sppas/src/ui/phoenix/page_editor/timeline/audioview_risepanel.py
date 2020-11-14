@@ -42,6 +42,7 @@ from sppas.src.config import paths
 
 from sppas.src.ui.phoenix.windows import sppasScrolledPanel
 
+from .timedatatype import TimelineType
 from .baseview_risepanel import sppasFileViewPanel
 from .audiovista import sppasAudioVista
 
@@ -81,6 +82,7 @@ class AudioViewPanel(sppasFileViewPanel):
 
         """
         super(AudioViewPanel, self).__init__(parent, filename, name)
+        self._ft = TimelineType().audio
         self._setup_events()
         self.Collapse()
         self.SetBackgroundColour(wx.BLUE)
