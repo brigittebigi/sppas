@@ -30,7 +30,7 @@
         ---------------------------------------------------------------------
 
     src.ui.phoenix.windows.datactrls.waveform.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     A window to draw the amplitude of a fragment of a channel.
 
@@ -42,6 +42,7 @@ import wx
 from sppas.src.config import paths
 from sppas.src.audiodata.aio import open as audio_open
 from sppas.src.audiodata import sppasAudioFrames
+from sppas.src.audiodata.audioconvert import sppasAudioConverter
 
 from .basedatactrl import sppasDataWindow
 
@@ -62,14 +63,12 @@ class sppasWaveformWindow(sppasDataWindow):
     def __init__(self, parent, id=-1,
                  pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
-                 data=None,
                  style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
                  name="waveform"):
         """Initialize a new sppasWaveformWindow instance.
 
         :param parent: Parent window. Must not be None.
         :param id:     A value of -1 indicates a default value.
-        :param data:   a list of samples
         :param pos:    If the position (-1, -1) is specified
                        then a default position is chosen.
         :param size:   If the default size (-1, -1) is specified
@@ -92,7 +91,8 @@ class sppasWaveformWindow(sppasDataWindow):
         self._pen_width = 1
         self._draw_style = "lines"
 
-        self.SetData(data)
+        # The list of frames
+        self._frames = list()
 
     # -----------------------------------------------------------------------
     # How the waveform will look...
@@ -126,26 +126,33 @@ class sppasWaveformWindow(sppasDataWindow):
     # Samples to draw
     # -----------------------------------------------------------------------
 
-    def SetData(self, data):
+    def SetData(self, frames, sampwidth, nchannels):
         """Override. Set new data content.
 
         :param data: (list of samples, samples width)
 
         """
-        if data is None:
+        #
+        if frames is None:
             self._data = None
             self._data_max = 0
             self._data_min = 0
             self._sampwidth = 0
             self.Refresh()
         else:
-            if data[0] != self._data or data[1] != self._sampwidth:
-                self._data = data[0]
-                self._sampwidth = data[1]
+            # Convert frames into samples (TEMPORARY SOLUTION)
+            data = sppasAudioConverter().unpack_data(frames, sampwidth, nchannels)
+            # get only samples of the 1st channel
+            data = data[0]
+
+            if data != self._data or self._sampwidth != self._sampwidth:
+                self._data = data
+                self._sampwidth = sampwidth
                 self.__reset_minmax()
 
-    def __reset_minmax(self):
+    # -----------------------------------------------------------------------
 
+    def __reset_minmax(self):
         self._data_max = sppasAudioFrames().get_maxval(self._sampwidth)
         self._data_min = -self._data_max
         if self._auto_scroll is True:
@@ -390,7 +397,8 @@ class TestPanel(wx.Panel):
         nframes = int((end_time - start_time) * self._audio.get_framerate())
         self._audio.seek(int(start_time * float(self._audio.get_framerate())))
         # read samples of all channels. Channel 0 is data[0]
-        data = self._audio.read_samples(nframes)
-        w = sppasWaveformWindow(self, data=(data[0], self._audio.get_sampwidth()))
+        data = self._audio.read_frames(nframes)
+        w = sppasWaveformWindow(self)
+        w.SetData(data, self._audio.get_sampwidth(), self._audio.get_nchannels())
         return w
 

@@ -165,6 +165,30 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
         return self._dirty
 
     # -----------------------------------------------------------------------
+    # Visible part
+    # -----------------------------------------------------------------------
+
+    def set_visible_period(self, start, end):
+        """Fix the period of time to display (seconds).
+
+        :param start: (int)
+        :param end: (int) Time in seconds
+
+        """
+        self.GetPane().set_visible_period(start, end)
+
+    # -----------------------------------------------------------------------
+
+    def set_selection_period(self, start, end):
+        """Fix a period of time to highlight (seconds).
+
+        :param start: (int)
+        :param end: (int) Time in seconds
+
+        """
+        self.GetPane().set_selection_period(start, end)
+
+    # -----------------------------------------------------------------------
     # Construct the GUI
     # -----------------------------------------------------------------------
 

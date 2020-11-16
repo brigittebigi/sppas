@@ -80,6 +80,8 @@ class TrsViewPanel(sppasFileViewPanel):
         self.SetRandomBackgroundColour()
 
     # ------------------------------------------------------------------------
+    # File management
+    # -----------------------------------------------------------------------
 
     def load(self):
         """Override. Load the content of the file.
@@ -95,6 +97,33 @@ class TrsViewPanel(sppasFileViewPanel):
         except Exception as e:
             wx.LogError(str(e))
 
+    # -----------------------------------------------------------------------
+
+    def save(self, filename=None):
+        """Save the displayed transcription into a file.
+
+        :param filename: (str) To be used to "save as..."
+
+        """
+        parser = None
+        if filename is None and self._dirty is True:
+            # the writer will increase the file version
+            parser = sppasRW(self._filename)
+        if filename is not None:
+            parser = sppasRW(filename)
+
+        if parser is not None:
+            try:
+                self.GetPane().write(parser)
+                self._dirty = False
+                return True
+            except Exception as e:
+                wx.LogError("File not saved: {:s}".format(str(e)))
+
+        return False
+
+    # -----------------------------------------------------------------------
+    # Annotations & Tiers
     # -----------------------------------------------------------------------
 
     def is_selected(self):
@@ -157,53 +186,6 @@ class TrsViewPanel(sppasFileViewPanel):
         """An annotation was created."""
         self._dirty = True
         return self.GetPane().create_ann(idx)
-
-    # -----------------------------------------------------------------------
-
-    def set_draw_period(self, start, end):
-        """Fix the time period to display (milliseconds).
-
-        :param start: (int)
-        :param end: (int) Time in milliseconds
-
-        """
-        self.GetPane().set_draw_period(start, end)
-
-    # -----------------------------------------------------------------------
-
-    def set_select_period(self, start, end):
-        """Fix the time period to highlight (milliseconds).
-
-        :param start: (int)
-        :param end: (int) Time in milliseconds
-
-        """
-        self.GetPane().set_select_period(start, end)
-
-    # -----------------------------------------------------------------------
-
-    def save(self, filename=None):
-        """Save the displayed transcription into a file.
-
-        :param filename: (str) To be used to "save as..."
-
-        """
-        parser = None
-        if filename is None and self._dirty is True:
-            # the writer will increase the file version
-            parser = sppasRW(self._filename)
-        if filename is not None:
-            parser = sppasRW(filename)
-
-        if parser is not None:
-            try:
-                self.GetPane().write(parser)
-                self._dirty = False
-                return True
-            except Exception as e:
-                wx.LogError("File not saved: {:s}".format(str(e)))
-
-        return False
 
     # -----------------------------------------------------------------------
     # Construct the GUI

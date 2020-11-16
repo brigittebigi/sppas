@@ -64,37 +64,15 @@ class TranscriptionVista(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def get_draw_period(self):
-        for child in self.GetChildren():
-            s, e = child.GetDrawPeriod()
-            return int(s * 1000.), int(e * 1000.)
-        return 0, 0
-
-    # -----------------------------------------------------------------------
-
-    def set_draw_period(self, start, end):
+    def set_visible_period(self, start, end):
         """Period to display (in milliseconds)."""
         for child in self.GetChildren():
-            child.SetDrawPeriod(
-                float(start) / 1000.,
-                float(end) / 1000.)
+            child.set_visible_period(start, end)
 
     # -----------------------------------------------------------------------
 
-    def set_select_period(self, start, end):
+    def set_selection_period(self, start, end):
         raise NotImplementedError
-
-    # -----------------------------------------------------------------------
-
-    def get_select_period(self):
-        for child in self.GetChildren():
-            if child.IsSelected() is True:
-                period = child.get_selected_localization()
-                start = int(period[0] * 1000.)
-                end = int(period[1] * 1000.)
-                return start, end
-
-        return 0, 0
 
     # -----------------------------------------------------------------------
 

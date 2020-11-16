@@ -103,7 +103,7 @@ class sppasVideoVista(sppasPanel):
             style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
             name=name)
 
-        # The information we need about the audio, no more!
+        # The information we need about the video, no more!
         self.__video = VideoData()
 
         # All possible views
@@ -117,7 +117,24 @@ class sppasVideoVista(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def set_video_data(self,  framerate=None, duration=None, width=None, height=None):
+    def set_visible_period(self, start, end):
+        """Set a period in time to draw the some of the views.
+
+        :param start: (float) Start time in seconds.
+        :param end: (float) End time in seconds.
+
+        """
+        # self.__film.SetData(...)
+        pass
+
+    # -----------------------------------------------------------------------
+
+    def set_selection_period(self, start, end):
+        raise NotImplementedError
+
+    # -----------------------------------------------------------------------
+
+    def set_video_data(self, framerate=None, duration=None, width=None, height=None):
         """Set all or any of the data we need about the video."""
         if framerate is not None:
             self.__video.framerate = int(framerate)

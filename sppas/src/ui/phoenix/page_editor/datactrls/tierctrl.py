@@ -87,8 +87,9 @@ class sppasTierWindow(sppasDataWindow):
         self._data = None
         if data is not None:
             self.SetData(data)
+
         self.__ann_idx = -1
-        self.__period = (0, 0)
+        self.__period = (0., 0.)
         self._pxsec = 0   # the number of pixels to represent 1 second of time
         self.__annctrls = dict()
 
@@ -102,22 +103,22 @@ class sppasTierWindow(sppasDataWindow):
 
     # -----------------------------------------------------------------------
 
-    def get_selected_ann(self):
-        return self.__ann_idx
-
-    # -----------------------------------------------------------------------
-
-    def GetDrawPeriod(self):
+    def get_visible_period(self):
         """Return (begin, end) time values of the period to draw."""
         return self.__period[0], self.__period[1]
 
     # -----------------------------------------------------------------------
 
-    def SetDrawPeriod(self, begin, end):
-        """Set the period to draw."""
+    def set_visible_period(self, begin, end):
+        """Set the period to draw (seconds)."""
         if begin != self.__period[0] or end != self.__period[1]:
             self.__period = (begin, end)
             self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def get_selected_ann(self):
+        return self.__ann_idx
 
     # -----------------------------------------------------------------------
 
@@ -300,9 +301,9 @@ class TestPanel(sppasPanel):
         trs = parser.read()
 
         self.p1 = sppasTierWindow(self, pos=(10, 10), size=(300, 24), data=trs[0])
-        self.p1.SetDrawPeriod(2.49, 3.49)
+        self.p1.set_visible_period(2.49, 3.49)
         self.p2 = sppasTierWindow(self, pos=(10, 100), size=(300, 48), data=trs[1])
-        self.p2.SetDrawPeriod(2.49, 3.49)
+        self.p2.set_visible_period(2.49, 3.49)
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(self.p1, 0, wx.EXPAND)

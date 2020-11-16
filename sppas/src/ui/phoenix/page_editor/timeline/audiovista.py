@@ -122,6 +122,33 @@ class sppasAudioVista(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def set_visible_period(self, start, end):
+        """Set a period in time to draw the some of the views.
+
+        :param start: (float) Start time in seconds.
+        :param end: (float) End time in seconds.
+
+        """
+        # Convert the time (in seconds) into a position in the frames
+        start_pos = self._time_to_frames(start)
+        end_pos = self._time_to_frames(end)
+        frames = self.__audio.frames[start_pos:end_pos]
+        self.__waveform.SetData(frames, self.__audio.sampwidth, self.__audio.nchannels)
+
+    # -----------------------------------------------------------------------
+
+    def set_selection_period(self, start, end):
+        raise NotImplementedError
+
+    # -----------------------------------------------------------------------
+
+    def _time_to_frames(self, time_value):
+        return int(time_value * float(self.__audio.framerate)) * \
+               self.__audio.sampwidth * \
+               self.__audio.nchannels
+
+    # -----------------------------------------------------------------------
+
     def set_audio_data(self, nchannels=None, sampwidth=None, framerate=None, duration=None, frames=None):
         """Set all or any of the data we need about the audio."""
         if nchannels is not None:
@@ -153,7 +180,7 @@ class sppasAudioVista(sppasPanel):
         if self.__infos is None:
             return
         value = bool(value)
-        if value is True:  # and self.__audioplay.get_nchannels() > 0:
+        if value is True:
             self.__infos.Show()
             return True
 
