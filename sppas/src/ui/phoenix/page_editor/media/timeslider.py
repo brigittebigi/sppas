@@ -42,7 +42,9 @@
 """
 
 import wx
+import os
 
+from sppas.src.config import paths
 from sppas.src.ui.phoenix.windows.buttons import ToggleTextButton
 from sppas.src.ui.phoenix.windows.panels import sppasPanel, sppasImagePanel
 from sppas.src.ui.phoenix.windows.slider import sppasSlider
@@ -101,6 +103,13 @@ class ToggleSlider(ToggleTextButton):
 
     # -----------------------------------------------------------------------
 
+    def SetBackgroundColour(self, colour):
+        ToggleTextButton.SetBackgroundColour(self, colour)
+        border_color = self.GetHighlightedColour(colour, 30)
+        self.SetBorderColour(border_color)
+
+    # -----------------------------------------------------------------------
+
     def SetValue(self, value):
         ToggleTextButton.SetValue(self, value)
         if self.GetValue() is True:
@@ -134,6 +143,9 @@ class TimeSliderPanel(sppasPanel):
 
     # Background of the selection is always pink
     SELECTION_COLOUR = wx.Colour(250, 70, 110)
+
+    # SLIDER INDICATOR BG
+    # BG_SLIDER_IMG = os.path.join(paths.etc, "images", "bg_slider.png")
 
     # -----------------------------------------------------------------------
 
@@ -426,13 +438,13 @@ class TimeSliderPanel(sppasPanel):
         panel_sel.SetSizer(sizer_sel)
 
         slider = sppasSlider(self, name="time_slider")
-        # slider.SetBackgroundImage(ToggleSlider.BG_IMAGE)
+        # slider.SetBackgroundImage(TimeSliderPanel.BG_SLIDER_IMG)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(slider, 0, wx.EXPAND, 0)
-        sizer.Add(panel_sel, 0, wx.EXPAND, 0)
-        sizer.Add(btn_part, 0, wx.EXPAND, 0)
         sizer.Add(btn_dur, 0, wx.EXPAND, 0)
+        sizer.Add(btn_part, 0, wx.EXPAND, 0)
+        sizer.Add(panel_sel, 0, wx.EXPAND, 0)
         self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------

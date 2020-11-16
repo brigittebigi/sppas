@@ -376,7 +376,7 @@ class sppasDCWindow(wx.Window):
         if self.IsEnabled() is True:
             return color
 
-        return self.GetHighlightedColour(color, 40)
+        return self.GetHighlightedColour(color, 30)
 
     # -----------------------------------------------------------------------
 
@@ -391,7 +391,7 @@ class sppasDCWindow(wx.Window):
         if self.IsEnabled() is True:
             return color
 
-        return self.GetHighlightedColour(color, 40)
+        return self.GetHighlightedColour(color, 30)
 
     # -----------------------------------------------------------------------
 
@@ -405,7 +405,7 @@ class sppasDCWindow(wx.Window):
         if self.IsEnabled() is True:
             return color
 
-        return self.GetHighlightedColour(color, 30)
+        return self.GetHighlightedColour(color, 20)
 
     # -----------------------------------------------------------------------
 
@@ -683,6 +683,19 @@ class sppasDCWindow(wx.Window):
         """
         bg_color = self.GetPenBackgroundColour()
         return wx.Brush(bg_color, wx.BRUSHSTYLE_SOLID)
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def GetTransparentBrush():
+        """Get a transparent brush.
+
+        :returns: (wx.Brush)
+
+        """
+        if wx.Platform == '__WXMAC__':
+            return wx.TRANSPARENT_BRUSH
+        return wx.Brush(wx.Colour(0, 0, 0, wx.ALPHA_TRANSPARENT), wx.BRUSHSTYLE_TRANSPARENT)
 
     # -----------------------------------------------------------------------
     # Draw methods (private)

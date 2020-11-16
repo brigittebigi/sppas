@@ -150,7 +150,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         """Return a color slightly different of the parent background one."""
         color = self.GetParent().GetBackgroundColour()
         r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
-        return wx.Colour(r, g, b, a).ChangeLightness(85)
+        return wx.Colour(r, g, b, a).ChangeLightness(95)
 
     # -----------------------------------------------------------------------
     # Manage the slider

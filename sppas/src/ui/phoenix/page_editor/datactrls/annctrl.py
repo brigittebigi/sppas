@@ -106,13 +106,6 @@ class sppasAnnotationWindow(sppasDataWindow):
 
         self.SetInitialSize(size)
 
-        try:
-            settings = wx.GetApp().settings
-            self._bgcolor = settings.bg_color
-        except AttributeError:
-            self.InheritAttributes()
-            self._bgcolor = self.GetTopLevelParent().GetBackgroundColour()
-
     # ------------------------------------------------------------------------
 
     def SetPxSec(self, value):
@@ -137,19 +130,6 @@ class sppasAnnotationWindow(sppasDataWindow):
 
     # -----------------------------------------------------------------------
 
-    @staticmethod
-    def GetTransparentBrush():
-        """Get a transparent brush.
-
-        :returns: (wx.Brush)
-
-        """
-        if wx.Platform == '__WXMAC__':
-            return wx.TRANSPARENT_BRUSH
-        return wx.Brush(wx.Colour(0, 0, 0, wx.ALPHA_TRANSPARENT), wx.BRUSHSTYLE_TRANSPARENT)
-
-    # -----------------------------------------------------------------------
-
     def DrawBackground(self, dc, gc):
         """Draw the background with a color or transparent."""
         w, h = self.GetClientSize()
@@ -163,22 +143,19 @@ class sppasAnnotationWindow(sppasDataWindow):
         dc.SetBrush(brush)
         dc.SetPen(wx.TRANSPARENT_PEN)
 
-        if self._data.is_labelled() is False:
-            # Draw a transparent rectangle...
-            dc.DrawRectangle(0, 0, w, h)
-        else:
-            if self._bgcolor is not None:
-                # Fill in the content
-                c2 = self.GetHighlightedColour(self.GetBackgroundColour())
-                c1 = self._bgcolor
-                mid = h // 2
-                box_rect = wx.Rect(0, 0, w, mid)
-                dc.GradientFillLinear(box_rect, c1, c2, wx.NORTH)
-                box_rect = wx.Rect(0, mid, w, h)
-                dc.GradientFillLinear(box_rect, c1, c2, wx.SOUTH)
-
-        dc.SetBrush(self.GetTransparentBrush())
-        gc.SetBrush(self.GetTransparentBrush())
+        dc.DrawRectangle(0, 0, w, h)
+        if self._data.is_labelled() is True:
+            # Fill in the content
+            c1 = self.GetBackgroundColour()
+            c2 = c1.ChangeLightness(50)
+            mid1 = h // 3
+            mid2 = h - (h // 3)
+            # top-mid1 gradient
+            box_rect = wx.Rect(0, 0, w, mid1)
+            dc.GradientFillLinear(box_rect, c2, c1, wx.SOUTH)
+            # bottom-mid1 gradient
+            box_rect = wx.Rect(0, mid2, w, mid1)
+            dc.GradientFillLinear(box_rect, c1, c2, wx.SOUTH)
 
     # -----------------------------------------------------------------------
 
@@ -192,7 +169,7 @@ class sppasAnnotationWindow(sppasDataWindow):
         """Override. """
         if self._data is None:
             return
-        self._DrawEmptyContent(dc, gc)
+        # self._DrawEmptyContent(dc, gc)
         if self._pxsec > 0:
             if self._data.location_is_point():
                 self._DrawPoint(dc, gc)
@@ -355,6 +332,7 @@ class TestPanel(wx.Panel):
         # pxsec = width / a1.duration
         p11.SetPxSec(100)
         p11.SetForegroundColour(wx.RED)
+        p11.SetBackgroundColour(wx.YELLOW)
         p11.Refresh()
 
         p12 = sppasAnnotationWindow(

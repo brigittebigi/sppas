@@ -256,7 +256,7 @@ class TestPanel(sppasScrolledPanel):
         p2 = TrsViewPanel(self, filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.TextGrid"), name="p1")
         p3 = TrsViewPanel(self, filename=os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"), name="p2")
 
-        p3.set_draw_period(2300, 3500)
+        p3.set_visible_period(2300, 3500)
         p3.set_selected_tiername("PhonAlign")
 
         s = wx.BoxSizer(wx.VERTICAL)

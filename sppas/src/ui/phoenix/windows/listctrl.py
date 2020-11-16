@@ -180,9 +180,9 @@ class sppasListCtrl(wx.ListCtrl):
         bg = self._bg_color
         r, g, b, a = bg.Red(), bg.Green(), bg.Blue(), bg.Alpha()
         if (r + g + b) > 384:
-            alt_bg = wx.Colour(r, g, b, a).ChangeLightness(92)
+            alt_bg = wx.Colour(r, g, b, a).ChangeLightness(95)
         else:
-            alt_bg = wx.Colour(r, g, b, a).ChangeLightness(108)
+            alt_bg = wx.Colour(r, g, b, a).ChangeLightness(105)
 
         if index == -1:
             for i in range(self._header, self.GetItemCount()):

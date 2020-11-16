@@ -244,6 +244,7 @@ class sppasTierWindow(sppasDataWindow):
             annctrl.Show()
         else:
             annctrl = sppasAnnotationWindow(self, pos=pos, size=size, data=ann)
+            annctrl.SetBackgroundColour(self.GetBackgroundColour())
             annctrl.SetPxSec(self._pxsec)
             annctrl.ShouldDrawPoints(draw_points)
             annctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_ann_selected)
@@ -302,12 +303,16 @@ class TestPanel(sppasPanel):
 
         self.p1 = sppasTierWindow(self, pos=(10, 10), size=(300, 24), data=trs[0])
         self.p1.set_visible_period(2.49, 3.49)
+        self.p1.SetBackgroundColour(wx.YELLOW)
         self.p2 = sppasTierWindow(self, pos=(10, 100), size=(300, 48), data=trs[1])
         self.p2.set_visible_period(2.49, 3.49)
+        self.p2.SetBackgroundColour(wx.LIGHT_GREY)
+        self.p3 = sppasTierWindow(self, pos=(10, 100), size=(300, 48), data=trs[1])
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(self.p1, 0, wx.EXPAND)
         s.Add(self.p2, 0, wx.EXPAND)
+        s.Add(self.p3, 0, wx.EXPAND)
         self.SetSizer(s)
         self.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_selected)
 
