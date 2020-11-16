@@ -74,7 +74,10 @@ class TrsViewPanel(sppasFileViewPanel):
         self._ft = TimelineType().trs
         self._setup_events()
         self.Expand()
-        self.SetBackgroundColour(wx.YELLOW)
+
+        self._rgb1 = (255, 255, 200)
+        self._rgb2 = (255, 245, 150)
+        self.SetRandomBackgroundColour()
 
     # ------------------------------------------------------------------------
 

@@ -84,7 +84,10 @@ class VideoViewPanel(sppasFileViewPanel):
         self._ft = TimelineType().video
         self._setup_events()
         self.Collapse()
-        self.SetBackgroundColour(wx.GREEN)
+
+        self._rgb1 = (230, 255, 200)
+        self._rgb2 = (200, 255, 150)
+        self.SetRandomBackgroundColour()
 
     # -----------------------------------------------------------------------
 

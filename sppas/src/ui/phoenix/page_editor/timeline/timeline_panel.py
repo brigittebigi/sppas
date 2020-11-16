@@ -610,7 +610,7 @@ class sppasTimelinePanel(sppasPanel):
                 elif tt.guess_type(name) == tt.audio:
                     panel = AudioViewPanel(self._scrolled_panel, filename=name)
 
-                elif tt.guess_type(name) == tt.transcription:
+                elif tt.guess_type(name) == tt.trs:
                     panel = TrsViewPanel(self._scrolled_panel, filename=name)
 
                 elif tt.guess_type(name) == tt.unknown:

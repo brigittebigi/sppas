@@ -39,6 +39,7 @@
 
 import wx
 import os
+import random
 
 from sppas.src.config import paths
 
@@ -80,6 +81,10 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
         self._dirty = False
         self._filename = filename
 
+        # Background color range
+        self._rgb1 = (255, 200, 200)
+        self._rgb2 = (255, 150, 150)
+
         # Create the GUI
         self._create_content()
 
@@ -96,9 +101,13 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
 
     # -----------------------------------------------------------------------
 
-    def SetBackgroundColour(self, colour):
-        """Override."""
-        sppasVerticalRisePanel.SetBackgroundColour(self, colour)
+    def SetRandomBackgroundColour(self):
+        """Set a background color into our range of rgb colors."""
+        r = random.randint(min(self._rgb1[0], self._rgb2[0]), max(self._rgb1[0], self._rgb2[0]))
+        g = random.randint(min(self._rgb1[1], self._rgb2[1]), max(self._rgb1[1], self._rgb2[1]))
+        b = random.randint(min(self._rgb1[2], self._rgb2[2]), max(self._rgb1[2], self._rgb2[2]))
+        color = wx.Colour(r, g, b)
+        sppasVerticalRisePanel.SetBackgroundColour(self, color)
         self._tools_panel.SetBackgroundColour(self.GetHighlightedBackgroundColour())
 
     # -----------------------------------------------------------------------

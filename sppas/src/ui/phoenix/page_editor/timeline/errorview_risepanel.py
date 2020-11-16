@@ -80,7 +80,7 @@ class ErrorViewPanel(sppasFileViewPanel):
         super(ErrorViewPanel, self).__init__(parent, filename, name)
         self.Expand()
         self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
-        self.SetBackgroundColour(wx.RED)
+        self.SetRandomBackgroundColour()
 
     # -----------------------------------------------------------------------
     # Override from the parent

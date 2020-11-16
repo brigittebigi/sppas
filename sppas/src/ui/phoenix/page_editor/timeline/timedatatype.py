@@ -108,6 +108,6 @@ class TimelineType(object):
         if fe.startswith("."):
             fe = fe[1:]
         if fe.lower() in [e.lower() for e in sppasRW(None).extensions()]:
-            return self.transcription
+            return self.trs
 
         return self.unknown

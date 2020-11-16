@@ -85,7 +85,10 @@ class AudioViewPanel(sppasFileViewPanel):
         self._ft = TimelineType().audio
         self._setup_events()
         self.Collapse()
-        self.SetBackgroundColour(wx.BLUE)
+
+        self._rgb1 = (200, 230, 255)
+        self._rgb2 = (150, 200, 255)
+        self.SetRandomBackgroundColour()
 
     # -----------------------------------------------------------------------
 
