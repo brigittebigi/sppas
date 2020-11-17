@@ -52,8 +52,7 @@ from ..windows.dialogs import sppasProgressDialog
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 
 from .editorpanel import EditorPanel
-from .timeline import EVT_TIMELINE_VIEW
-from .listanns import EVT_LISTANNS_VIEW
+from .timeline import EVT_TIMELINE_VIEW  # to close or save a file
 
 
 # ---------------------------------------------------------------------------
@@ -458,7 +457,7 @@ class sppasEditorPanel(sppasPanel):
         # The event emitted by the sppasTimeEditFilesPanel
         self.Bind(EVT_TIMELINE_VIEW, self._process_time_action)
         # The event emitted by the sppasTiersEditWindow
-        self.Bind(EVT_LISTANNS_VIEW, self._process_list_action)
+        # self.Bind(EVT_LISTANNS_VIEW, self._process_list_action)
 
     # -----------------------------------------------------------------------
 
@@ -545,22 +544,6 @@ class sppasEditorPanel(sppasPanel):
 
         else:
             event.Skip()
-
-    # -----------------------------------------------------------------------
-
-    def _process_list_action(self, event):
-        """Process an action event from the list view.
-
-        :param event: (wx.Event)
-
-        """
-        panel = event.GetEventObject()
-        filename = event.filename
-        action = event.action
-        value = event.value
-        wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
-                    "".format(self.GetName(), action, filename, str(value)))
-        event.Skip()
 
     # -----------------------------------------------------------------------
 

@@ -147,12 +147,12 @@ class sppasAnnotationWindow(sppasDataWindow):
         if self._data.is_labelled() is True:
             # Fill in the content
             c1 = self.GetBackgroundColour()
-            c2 = c1.ChangeLightness(50)
+            c2 = self.GetHighlightedColour(c1, 20)
             mid1 = h // 3
             mid2 = h - (h // 3)
             # top-mid1 gradient
             box_rect = wx.Rect(0, 0, w, mid1)
-            dc.GradientFillLinear(box_rect, c2, c1, wx.SOUTH)
+            dc.GradientFillLinear(box_rect, c1, c2, wx.NORTH)
             # bottom-mid1 gradient
             box_rect = wx.Rect(0, mid2, w, mid1)
             dc.GradientFillLinear(box_rect, c1, c2, wx.SOUTH)
@@ -219,6 +219,7 @@ class sppasAnnotationWindow(sppasDataWindow):
                 size=wx.Size(w, h),
                 name="pointctrl1"
             )
+            self._pointctrl1.SetBackgroundColour(self.GetBackgroundColour())
         else:
             self._pointctrl1.SetPosition(wx.Point(x, y))
             self._pointctrl1.SetSize(wx.Size(w, h))
@@ -234,6 +235,7 @@ class sppasAnnotationWindow(sppasDataWindow):
                 size=wx.Size(w, h),
                 name="pointctrl2"
             )
+            self._pointctrl2.SetBackgroundColour(self.GetBackgroundColour())
         else:
             self._pointctrl2.SetPosition(wx.Point(x, y))
             self._pointctrl2.SetSize(wx.Size(w, h))

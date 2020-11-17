@@ -74,9 +74,8 @@ class TrsViewPanel(sppasFileViewPanel):
         self._ft = TimelineType().trs
         self._setup_events()
         self.Expand()
-
-        self._rgb1 = (255, 255, 200)
-        self._rgb2 = (255, 245, 150)
+        self._rgb1 = (245, 240, 160)
+        self._rgb2 = (255, 255, 205)
         self.SetRandomBackgroundColour()
 
     # ------------------------------------------------------------------------
@@ -153,6 +152,12 @@ class TrsViewPanel(sppasFileViewPanel):
     def set_selected_tiername(self, tier_name):
         """Set the selected tier."""
         self.GetPane().set_selected_tiername(tier_name)
+
+    # -----------------------------------------------------------------------
+
+    def get_selected_localization(self):
+        """Return (begin, end) float time values rounded to ms."""
+        return self.GetPane().get_selected_localization()
 
     # -----------------------------------------------------------------------
 
@@ -253,11 +258,9 @@ class TestPanel(sppasScrolledPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="TrsView RisePanel")
 
-        p2 = TrsViewPanel(self, filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.TextGrid"), name="p1")
-        p3 = TrsViewPanel(self, filename=os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"), name="p2")
+        p2 = TrsViewPanel(self, filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.TextGrid"), name="p2")
 
-        p3.set_visible_period(2300, 3500)
-        p3.set_selected_tiername("PhonAlign")
+        p3 = TrsViewPanel(self, filename=os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"), name="p3")
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(p2, 0, wx.EXPAND | wx.ALL, 10)
@@ -271,8 +274,11 @@ class TestPanel(sppasScrolledPanel):
     # -----------------------------------------------------------------------
 
     def load(self):
-        self.FindWindow("p1").load()
         self.FindWindow("p2").load()
+        self.FindWindow("p3").load()
+        self.FindWindow("p3").set_visible_period(2.3, 3.5)
+        self.FindWindow("p3").set_selected_tiername("PhonAlign")
+
         self.Layout()
 
     # -----------------------------------------------------------------------

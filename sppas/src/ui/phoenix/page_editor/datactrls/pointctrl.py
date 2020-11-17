@@ -86,10 +86,6 @@ class sppasPointWindow(sppasDataWindow):
         self._vert_border_width = 0
         self._horiz_border_width = 0
         self._focus_width = 0
-        try:
-            self._bgcolor = wx.GetApp().settings.bg_color
-        except AttributeError:
-            self._bgcolor = self.GetParent().GetBackgroundColor()
 
         self.SetInitialSize(size)
 
@@ -127,12 +123,12 @@ class sppasPointWindow(sppasDataWindow):
         dc.SetBrush(brush)
 
         # If highlighted
-        if self.HasFocus() is True:
+        if self.HasFocus() is False:
             c1 = self.GetHighlightedColour(self.GetBackgroundColour())
             c2 = self.GetPenForegroundColour()
         else:
-            c2 = self.GetHighlightedColour(self.GetBackgroundColour())
             c1 = self.GetPenForegroundColour()
+            c2 = self.GetHighlightedColour(self.GetBackgroundColour())
 
         if w > 5:
             # Fill in the content

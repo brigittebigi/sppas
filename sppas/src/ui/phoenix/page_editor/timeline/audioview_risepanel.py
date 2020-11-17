@@ -86,8 +86,8 @@ class AudioViewPanel(sppasFileViewPanel):
         self._setup_events()
         self.Collapse()
 
-        self._rgb1 = (200, 230, 255)
-        self._rgb2 = (150, 200, 255)
+        self._rgb1 = (190, 205, 250)
+        self._rgb2 = (210, 215, 255)
         self.SetRandomBackgroundColour()
 
     # -----------------------------------------------------------------------

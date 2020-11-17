@@ -346,12 +346,14 @@ class sppasDCWindow(wx.Window):
         supported under Windows.
 
         :param color: (wx.Color)
-        :param delta: (int)
+        :param delta: (int) percentage of change
         :return: (wx.Colour)
 
         """
-        if delta > 50:
-            delta = 50
+        if delta < 10:
+            delta = 10
+        if delta > 90:
+            delta = 90
 
         # Change transparency. Wont have any effect under Windows.
         r = color.Red()
@@ -360,6 +362,9 @@ class sppasDCWindow(wx.Window):
         a = color.Alpha()
         if a > 128:
             a = max(64, a // 2)
+
+        if r + g + b > 384:
+            return wx.Colour(r, g, b, a).ChangeLightness(100 - delta)
 
         return wx.Colour(r, g, b, a).ChangeLightness(100 + delta)
 

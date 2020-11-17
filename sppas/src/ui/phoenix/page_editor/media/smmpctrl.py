@@ -140,7 +140,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
             self.led.SetForegroundColour(self.GetBackgroundColour())
         else:
             if self._timeslider.is_selection():
-                self.led.SetForegroundColour(wx.Colour(250, 70, 110))
+                self.led.SetForegroundColour(self._timeslider.SELECTION_COLOUR)
             else:
                 self.led.SetForegroundColour(wx.Colour(30, 80, 210))
 
@@ -156,13 +156,21 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
     # Manage the slider
     # -----------------------------------------------------------------------
 
+    def get_visible_range(self):
+        """Return the visible time range of the slider."""
+        return self._timeslider.get_visible_range()
+
     def set_visible_range(self, start, end):
         """Set the visible time range."""
         self._timeslider.set_visible_range(start, end)
 
+    def get_selection_range(self):
+        """Return the selection time range."""
+        return self._timeslider.get_selection_range()
+
     def set_selection_range(self, start, end):
         """Set the selection time range."""
-        self._timeslider.set_visible_range(start, end)
+        self._timeslider.set_selection_range(start, end)
 
     # -----------------------------------------------------------------------
     # Construct the panel
@@ -230,6 +238,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         played = False
         if self.__smmps.is_playing() is False and self.__smmps.is_loading() is False:
             if self.__smmps.is_paused() is False:
+                # get the period to play
                 start, end = self._timeslider.get_range()
                 try:
                     self.__smmps.set_period(start, end)
@@ -329,7 +338,11 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
 
     def media_period(self, start, end):
         """Override. Set time period to media at given time range."""
+        # no need to force to set the period to the media right now because
+        # the media will get the period when needed.
         # self.__smmps.set_period(start, end)
+
+        # but a change of period can imply a change of the moment value:
         value = self.__smmps.tell()
         self._timeslider.set_value(value)
         self.led.SetValue("{:.3f}".format(value))
@@ -506,16 +519,16 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         self._timeslider.Layout()
         self._timeslider.Refresh()
 
-        # NOTIFY PARENT IF THE PERIOD CHANGED...
-        # new_period = self._timeslider.get_range()
-        # if new_period != cur_period:
-            # self.set_period(new_period[0], new_period[1])
-            # self.notify()
+        # Notify the parent if the visible part has changed.
+        new_visible_start = self._timeslider.get_visible_start()
+        new_visible_end = self._timeslider.get_visible_end()
+        if new_visible_start != start or new_visible_end != end:
+            self.notify(action="visible", value=(new_visible_start, new_visible_end))
 
     # ----------------------------------------------------------------------
 
     def _on_period_changed(self, event):
-        """Override."""
+        """Override. Handle the event of a change of time range in the slider."""
         p = event.period
         self.media_period(p[0], p[1])
         self._set_led_fg_color()
@@ -529,8 +542,10 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         self.FindWindow("media_play").Enable(True)
         self.FindWindow("media_pause").Enable(True)
 
+        # Update the duration of the slider with the longest duration
         duration = self.__smmps.get_duration()
         self._timeslider.set_duration(duration)
+
         # Under MacOS, the following line enters in an infinite loop with the message:
         #   In file /Users/robind/projects/bb2/dist-osx-py38/build/ext/wxWidgets/src/unix/threadpsx.cpp at line 370: 'pthread_mutex_[timed]lock()' failed with error 0x00000023 (Resource temporarily unavailable).
         # Under Linux it crashes with the message:

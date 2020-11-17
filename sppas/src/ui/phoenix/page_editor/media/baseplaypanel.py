@@ -342,7 +342,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
     # -----------------------------------------------------------------------
 
     def media_period(self, start, end):
-        """To be overridden. Set the time period of the media to the given range."""
+        """To be overridden."""
         self.notify(action="period", value=(start, end))
 
     # -----------------------------------------------------------------------
@@ -547,6 +547,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
     # ----------------------------------------------------------------------
 
     def _on_period_changed(self, event):
+        """Handle the event of a change of time range in the slider."""
         p = event.period
         self.media_period(p[0], p[1])
 
@@ -782,8 +783,8 @@ class PlayerExamplePanel(sppasPlayerControlsPanel):
     # -----------------------------------------------------------------------
 
     def media_period(self, start, end):
-        """Override. Set time period to media at given time range."""
-        # self.smmps.set_period(start, end)
+        """Override. The slider changed the range of time."""
+        # as a consequence, the "moment" can have changed too.
         value = self.smmps.tell()
         self._timeslider.set_value(value)
         self.FindWindow("moment_led").SetValue("{:.3f}".format(value))

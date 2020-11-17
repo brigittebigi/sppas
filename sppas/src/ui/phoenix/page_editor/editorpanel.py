@@ -340,6 +340,8 @@ class EditorPanel(sppasSplitterWindow):
         else:
             # we just need to layout ourself
             self.UpdateSize()
+            # other actions (close, save) are ignored.
+            # They will be handled by the parent.
             event.Skip()
 
     # -----------------------------------------------------------------------

@@ -332,6 +332,8 @@ class sppasWaveformWindow(sppasDataWindow):
         Apply only if there are less data values than pixels to draw them.
 
         """
+        if len(self._data) == 0:
+            return
         y_center = y + (h // 2)
         xstep = round(float(w * 1.5) / float(len(self._data)))
         x += (xstep // 2)

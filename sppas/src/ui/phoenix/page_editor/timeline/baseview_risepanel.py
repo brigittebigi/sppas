@@ -91,35 +91,31 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
         # Look&feel
         try:
             settings = wx.GetApp().settings
-            self.SetBackgroundColour(settings.bg_color)
             self.SetForegroundColour(settings.fg_color)
             self.SetFont(settings.text_font)
         except AttributeError:
             self.InheritAttributes()
-
         self.Layout()
 
     # -----------------------------------------------------------------------
 
     def SetRandomBackgroundColour(self):
         """Set a background color into our range of rgb colors."""
+        # Fix the color of the background
         r = random.randint(min(self._rgb1[0], self._rgb2[0]), max(self._rgb1[0], self._rgb2[0]))
         g = random.randint(min(self._rgb1[1], self._rgb2[1]), max(self._rgb1[1], self._rgb2[1]))
         b = random.randint(min(self._rgb1[2], self._rgb2[2]), max(self._rgb1[2], self._rgb2[2]))
         color = wx.Colour(r, g, b)
-        sppasVerticalRisePanel.SetBackgroundColour(self, color)
-        self._tools_panel.SetBackgroundColour(self.GetHighlightedBackgroundColour())
 
-    # -----------------------------------------------------------------------
-
-    def GetHighlightedBackgroundColour(self):
-        color = self.GetBackgroundColour()
-        r, g, b, a = color.Red(), color.Green(), color.Blue(), color.Alpha()
-
-        delta = 15
         if (r + g + b) > 384:
-            return wx.Colour(r, g, b, a).ChangeLightness(100 - delta)
-        return wx.Colour(r, g, b, a).ChangeLightness(100 + delta)
+            hi_color = color.ChangeLightness(90)
+        else:
+            hi_color = color.ChangeLightness(110)
+
+        # Set the color to the panel itself and to its children
+        wx.Panel.SetBackgroundColour(self, color)
+        self._child_panel.SetBackgroundColour(color)
+        self._tools_panel.SetBackgroundColour(hi_color)
 
     # ------------------------------------------------------------------------
     # About the file
@@ -175,7 +171,10 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
         :param end: (int) Time in seconds
 
         """
-        self.GetPane().set_visible_period(start, end)
+        try:
+            self.GetPane().set_visible_period(start, end)
+        except AttributeError:
+            pass
 
     # -----------------------------------------------------------------------
 
@@ -186,7 +185,10 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
         :param end: (int) Time in seconds
 
         """
-        self.GetPane().set_selection_period(start, end)
+        try:
+            self.GetPane().set_selection_period(start, end)
+        except AttributeError:
+            pass
 
     # -----------------------------------------------------------------------
     # Construct the GUI

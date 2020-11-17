@@ -65,7 +65,7 @@ class TranscriptionVista(sppasPanel):
     # -----------------------------------------------------------------------
 
     def set_visible_period(self, start, end):
-        """Period to display (in milliseconds)."""
+        """Period to display (in seconds)."""
         for child in self.GetChildren():
             child.set_visible_period(start, end)
 
@@ -98,11 +98,11 @@ class TranscriptionVista(sppasPanel):
 
         for child in self.GetChildren():
             if child.IsSelected() is True:
-                child.SetBorderColour(self.GetForegroundColour())
+                child.SetBorderColour(self.GetBackgroundColour())
                 child.SetSelected(False)
                 child.Refresh()
             if child.get_tiername() == tier_name:
-                child.SetBorderColour(wx.RED)
+                child.SetBorderColour(wx.RED)  # border is visible only if selected
                 child.SetSelected(True)
                 child.Refresh()
 
@@ -116,7 +116,18 @@ class TranscriptionVista(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def get_selected_localization(self):
+        """Return begin and end time value (float) rounded to milliseconds."""
+        for child in self.GetChildren():
+            if child.IsSelected() is True:
+                return child.get_selected_localization()
+
+        return 0., 0.
+
+    # -----------------------------------------------------------------------
+
     def get_selected_ann(self):
+        """Return the index of the currently selected annotation or -1."""
         for child in self.GetChildren():
             if child.IsSelected() is True:
                 return child.get_selected_ann()
@@ -156,15 +167,6 @@ class TranscriptionVista(sppasPanel):
                 child.create_ann(idx)
 
     # -----------------------------------------------------------------------
-
-    def _add_tier_to_panel(self, tier):
-        tier_ctrl = sppasTierWindow(self, data=tier)
-        tier_ctrl.SetMinSize(wx.Size(-1, sppasPanel.fix_size(24)))
-        tier_ctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_click)
-
-        self.GetSizer().Add(tier_ctrl, 0, wx.EXPAND, 0)
-
-    # -----------------------------------------------------------------------
     # Construct the GUI
     # -----------------------------------------------------------------------
 
@@ -179,6 +181,18 @@ class TranscriptionVista(sppasPanel):
         evt = TrsEvent(action=action, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
+
+    # -----------------------------------------------------------------------
+
+    def _add_tier_to_panel(self, tier):
+        tier_ctrl = sppasTierWindow(self, data=tier)
+        tier_ctrl.SetBackgroundColour(self.GetBackgroundColour())
+        tier_ctrl.SetHorizBorderWidth(1)
+        tier_ctrl.SetBorderColour(self.GetBackgroundColour())  # border is visible only if selected
+        tier_ctrl.SetMinSize(wx.Size(-1, sppasPanel.fix_size(24)))
+        tier_ctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_click)
+
+        self.GetSizer().Add(tier_ctrl, 0, wx.EXPAND, 0)
 
     # -----------------------------------------------------------------------
 

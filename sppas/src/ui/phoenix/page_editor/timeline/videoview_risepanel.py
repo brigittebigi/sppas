@@ -85,8 +85,8 @@ class VideoViewPanel(sppasFileViewPanel):
         self._setup_events()
         self.Collapse()
 
-        self._rgb1 = (230, 255, 200)
-        self._rgb2 = (200, 255, 150)
+        self._rgb1 = (200, 255, 190)
+        self._rgb2 = (220, 255, 210)
         self.SetRandomBackgroundColour()
 
     # -----------------------------------------------------------------------

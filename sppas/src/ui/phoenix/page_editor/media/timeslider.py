@@ -142,7 +142,7 @@ class TimeSliderPanel(sppasPanel):
     """
 
     # Background of the selection is always pink
-    SELECTION_COLOUR = wx.Colour(250, 70, 110)
+    SELECTION_COLOUR = wx.Colour(250, 170, 180)
 
     # SLIDER INDICATOR BG
     # BG_SLIDER_IMG = os.path.join(paths.etc, "images", "bg_slider.png")
@@ -337,7 +337,8 @@ class TimeSliderPanel(sppasPanel):
         start = float(start)
         end = float(end)
         if end > self.__duration:
-            raise ValueError
+            raise ValueError("Given end value {} is greater than duration {}."
+                             "".format(end, self.__duration))
         if end < start:
             raise ValueError
         if start < 0.:

@@ -110,7 +110,8 @@ class sppasTimelinePanel(sppasPanel):
         self.smmpc.Bind(wx.EVT_TOGGLEBUTTON, self._process_tool_event)
         self._scrolled_panel.Bind(EVT_TIMELINE_VIEW, self._process_time_event)
         self.FindWindow("smmpc_risepanel").Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
-        self.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
+        self.FindWindow("smmpc_risepanel").Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
+        self.FindWindow("smmpc_risepanel").Bind(MediaEvents.EVT_MEDIA_ACTION, self.__on_media_action)
 
         # Colors and font
         try:
@@ -384,6 +385,14 @@ class sppasTimelinePanel(sppasPanel):
         if fn is not None:
             panel = self._files[fn]
             panel.set_selected_ann(idx)
+            # Update the SMMPC
+            s, e = panel.get_selected_localization()
+            # update the visible part
+            ### self._update_visible_range(s, e)
+            # set the selection to the player
+            s, e = panel.get_selected_localization()
+            self.smmpc.set_selection_range(s, e)
+            s, e = self.smmpc.get_selection_range()
 
     # -----------------------------------------------------------------------
     # Methods to operate on an AudioViewPanel()
@@ -582,6 +591,9 @@ class sppasTimelinePanel(sppasPanel):
         panel.Expand()
         self._collapse_changed(panel)
 
+        # If no visible part was defined, do it now!
+        self._update_visible_range()
+
     # ----------------------------------------------------------------------
 
     def __on_media_not_loaded(self, event):
@@ -590,6 +602,65 @@ class sppasTimelinePanel(sppasPanel):
         panel = self._files[filename]
         panel.Collapse()
         self._collapse_changed(panel)
+
+    # ----------------------------------------------------------------------
+
+    def __on_media_action(self, event):
+        """"""
+        if event.action == "visible":
+            s, e = event.value
+            for fn in self._files:
+                panel = self._files[fn]
+                panel.set_visible_period(s, e)
+
+    # ----------------------------------------------------------------------
+
+    def _update_visible_range(self, s=None, e=None):
+        """Update the visible range to be sure that s or e is inside."""
+        # no visible range was defined before
+        duration = self.smmpc.get_duration()
+        vd = self.smmpc.get_duration() / 10.
+
+        current_visible = self.smmpc.get_visible_range()
+        cs = current_visible[0]
+        ce = current_visible[1]
+        # no visible range was defined before... we'll do it now.
+        if cs+ce == 0.:
+            if s is None:
+                # no start time was given
+                if e is not None:
+                    # but a end time was given
+                    vs = max(0., e - vd)
+                    ve = min(duration, e + vd)
+                else:
+                    # and no end time too
+                    vs = 0.
+                    ve = vd
+            else:
+                # a start time was given
+                if e is None:
+                    # but no end time.
+                    vs = max(0., s - vd)
+                    ve = min(duration, s + vd)
+                # a end time was given too
+                else:
+                    vs = max(0., s - vd)
+                    ve = min(duration, e + vd)
+            self.smmpc.set_visible_range(vs, ve)
+            print("New visible range: {} {}".format(vs, ve))
+            for filename in self._files:
+                panel = self._files[filename]
+                panel.set_visible_period(vs, ve)
+
+        else:
+            # a visible range was defined before. check if s or e inside.
+            outside = True
+            if s is not None and cs < s < ce:
+                outside = False
+            if e is not None and cs < e < ce:
+                outside = False
+            if outside is True:
+                pass
 
     # -----------------------------------------------------------------------
     # Private

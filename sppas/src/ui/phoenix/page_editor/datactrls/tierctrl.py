@@ -98,7 +98,7 @@ class sppasTierWindow(sppasDataWindow):
         self._min_width = 256
         self._min_height = 4
         self._vert_border_width = 0
-        self._horiz_border_width = 1
+        self._horiz_border_width = 0
         self._focus_width = 0
 
     # -----------------------------------------------------------------------
@@ -118,6 +118,7 @@ class sppasTierWindow(sppasDataWindow):
     # -----------------------------------------------------------------------
 
     def get_selected_ann(self):
+        """Return the index of the currently selected annotation."""
         return self.__ann_idx
 
     # -----------------------------------------------------------------------
@@ -125,22 +126,10 @@ class sppasTierWindow(sppasDataWindow):
     def get_selected_localization(self):
         """Return begin and end time value (float)."""
         if self.__ann_idx == -1:
-            return 0, 0
+            return 0., 0.
         ann = self._data[self.__ann_idx]
-
-        start_point = ann.get_lowest_localization()
-        start = start_point.get_midpoint()
-        r = start_point.get_radius()
-        if r is not None:
-            start -= r
-        start = float(floor(start*100.)) / 100.
-
-        end_point = ann.get_highest_localization()
-        end = end_point.get_midpoint()
-        r = end_point.get_radius()
-        if r is not None:
-            end += r
-        end = float(ceil(end*100.)) / 100.
+        start = self.get_ann_begin(ann)
+        end = self.get_ann_end(ann)
 
         return start, end
 
@@ -176,11 +165,44 @@ class sppasTierWindow(sppasDataWindow):
 
     # -----------------------------------------------------------------------
 
+    @staticmethod
+    def get_ann_begin(ann):
+        """Return time rounded to inferior milliseconds."""
+        ann_begin = ann.get_lowest_localization()
+        value = ann_begin.get_midpoint()
+        r = ann_begin.get_radius()
+        if r is not None:
+            value -= r
+        return float(floor(value*1000.)) / 1000.
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def get_ann_end(ann):
+        """Return time rounded to superior milliseconds."""
+        ann_end = ann.get_highest_localization()
+        value = ann_end.get_midpoint()
+        r = ann_end.get_radius()
+        if r is not None:
+            value += r
+        return float(ceil(value*1000.)) / 1000.
+
+    # -----------------------------------------------------------------------
+    # GUI
+    # -----------------------------------------------------------------------
+
+    def DrawBackground(self, dc, gc):
+        pass
+
+    # -----------------------------------------------------------------------
+
     def DrawContent(self, dc, gc):
         x, y, w, h = self.GetContentRect()
         duration = float(self.__period[1]) - float(self.__period[0])
 
         if duration > 0.01 and self._data.is_interval() is True:
+
+            # Display the annotations of the given period
             self._pxsec = int(float(w) / duration)
             anns = self._data.find(self.__period[0], self.__period[1], overlaps=True)
             for ann in self.__annctrls:
@@ -188,7 +210,23 @@ class sppasTierWindow(sppasDataWindow):
                     self.__annctrls[ann].Hide()
             for ann in anns:
                 self._DrawAnnotation(ann, x, y, w, h)
+
         else:
+            # Do not display the annotations but the infos about the tier.
+
+            # Fill in the background
+            c1 = self.GetBackgroundColour()
+            c2 = c1.ChangeLightness(50)
+            mid1 = h // 3
+            mid2 = h - (h // 3)
+            # top-mid1 gradient
+            box_rect = wx.Rect(0, 1, w, mid1+1)
+            dc.GradientFillLinear(box_rect, c2, c1, wx.SOUTH)
+            # bottom-mid1 gradient
+            box_rect = wx.Rect(0, mid2, w, mid1+2)
+            dc.GradientFillLinear(box_rect, c1, c2, wx.SOUTH)
+
+            # Show infos
             tier_name = self._data.get_name()
             tw, th = self.get_text_extend(dc, gc, tier_name)
             self.draw_label(dc, gc, tier_name, x, y + ((h - th) // 2))
@@ -249,26 +287,6 @@ class sppasTierWindow(sppasDataWindow):
             annctrl.ShouldDrawPoints(draw_points)
             annctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_ann_selected)
             self.__annctrls[ann] = annctrl
-
-    # -----------------------------------------------------------------------
-
-    @staticmethod
-    def get_ann_begin(ann):
-        ann_begin = ann.get_lowest_localization()
-        value = ann_begin.get_midpoint()
-        r = ann_begin.get_radius()
-        if r is not None:
-            value -= r
-        return value
-
-    @staticmethod
-    def get_ann_end(ann):
-        ann_end = ann.get_highest_localization()
-        value = ann_end.get_midpoint()
-        r = ann_end.get_radius()
-        if r is not None:
-            value += r
-        return value
 
     # -----------------------------------------------------------------------
 
