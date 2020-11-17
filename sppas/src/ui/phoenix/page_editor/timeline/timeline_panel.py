@@ -721,7 +721,7 @@ class sppasTimelinePanel(sppasPanel):
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(sppasPanel):
+class TestPanel(wx.Panel):
     TEST_FILES = (
         os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"),
         os.path.join(paths.samples, "faces", "video_sample.mp4"),

@@ -41,6 +41,7 @@ from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
+import sppas.src.ui.phoenix.page_editor.media.tickslider as tickslider
 import sppas.src.ui.phoenix.page_editor.media.timeslider as timeslider
 import sppas.src.ui.phoenix.page_editor.media.baseplaypanel as baseplaypanel
 import sppas.src.ui.phoenix.page_editor.media.audiopanel as audiopanel
@@ -61,23 +62,26 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        p = audiopanel.TestPanel(self)
-        self.AddPage(p, p.GetName())
-
-        p = videopanel.TestPanel(self)
+        p = tickslider.TestPanel(self)
         self.AddPage(p, p.GetName())
 
         p = timeslider.TestPanel(self)
         self.AddPage(p, p.GetName())
-
-        p = baseplaypanel.TestPanel(self)
-        self.AddPage(p, p.GetName())
-
-        p = smmps.TestPanel(self)
-        self.AddPage(p, p.GetName())
-
-        p = smmpctrl.TestPanel(self)
-        self.AddPage(p, p.GetName())
+        #
+        # p = audiopanel.TestPanel(self)
+        # self.AddPage(p, p.GetName())
+        #
+        # p = videopanel.TestPanel(self)
+        # self.AddPage(p, p.GetName())
+        #
+        # p = baseplaypanel.TestPanel(self)
+        # self.AddPage(p, p.GetName())
+        #
+        # p = smmps.TestPanel(self)
+        # self.AddPage(p, p.GetName())
+        #
+        # p = smmpctrl.TestPanel(self)
+        # self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)

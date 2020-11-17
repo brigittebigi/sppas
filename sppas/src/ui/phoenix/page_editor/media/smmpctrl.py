@@ -217,7 +217,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         led.SetValue("0.000")
         led.SetAlignment(gizmos.LED_ALIGN_RIGHT)
         led.SetDrawFaded(True)
-        led.SetMinSize(wx.Size(self.get_font_height()*10, self.get_font_height()*3))
+        led.SetMinSize(wx.Size(self.get_font_height()*10, self._btn_size))
         self.AddLeftWidget(led)
         # The led has its own colors.
         self.led.SetBackgroundColour(wx.Colour(10, 10, 10))

@@ -48,6 +48,7 @@ from sppas.src.config import paths
 from sppas.src.ui.phoenix.windows.buttons import ToggleTextButton
 from sppas.src.ui.phoenix.windows.panels import sppasPanel, sppasImagePanel
 from sppas.src.ui.phoenix.windows.slider import sppasSlider
+from .tickslider import sppasTicksSlider
 
 from .mediaevents import MediaEvents
 
@@ -302,6 +303,7 @@ class TimeSliderPanel(sppasPanel):
         self.__end_visible = end
         dur = end - start
         self._btn_visible.SetLabel("{:s} {:s} {:s}".format(MSG_VISIBLE_DURATION, self.__seconds_label(dur), SECONDS_UNIT))
+        self._ruler.set_range(start, end)
         if dur == 0.:
             self._btn_duration.SetValue(True)
             self._btn_visible.SetValue(False)
@@ -347,6 +349,7 @@ class TimeSliderPanel(sppasPanel):
         self.__start_selection = start
         self.__end_selection = end
         self.__update_select_buttons()
+        self._selection.Layout()
 
         # Update the slider
         self.__update_slider()
@@ -358,10 +361,10 @@ class TimeSliderPanel(sppasPanel):
     def SetFont(self, font):
         """Override. """
         # The font of this panel is used only to control its height
-        f = wx.Font(int(font.GetPointSize() * 1.6),
+        f = wx.Font(int(float(font.GetPointSize()) * 1.2),
                     wx.FONTFAMILY_SWISS,   # family,
                     wx.FONTSTYLE_NORMAL,   # style,
-                    wx.FONTWEIGHT_BOLD,    # weight,
+                    wx.FONTWEIGHT_NORMAL,  # weight,
                     underline=False,
                     faceName=font.GetFaceName(),
                     encoding=wx.FONTENCODING_SYSTEM)
@@ -369,7 +372,7 @@ class TimeSliderPanel(sppasPanel):
 
         # The font that is displaying message is inside the children
         for c in self.GetChildren():
-            f = wx.Font(int(float(font.GetPointSize()) * 1.0),
+            f = wx.Font(int(float(font.GetPointSize()) * 0.8),
                         font.GetFamily(),        # family,
                         wx.FONTSTYLE_NORMAL,     # style,
                         wx.FONTWEIGHT_NORMAL,    # weight,
@@ -441,11 +444,14 @@ class TimeSliderPanel(sppasPanel):
         slider = sppasSlider(self, name="time_slider")
         # slider.SetBackgroundImage(TimeSliderPanel.BG_SLIDER_IMG)
 
+        ruler = sppasTicksSlider(self, name="time_ruler")
+
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(slider, 0, wx.EXPAND, 0)
+        sizer.Add(slider, 0, wx.EXPAND, 0)      # indicate the range of the current toggled
         sizer.Add(btn_dur, 0, wx.EXPAND, 0)
         sizer.Add(btn_part, 0, wx.EXPAND, 0)
         sizer.Add(panel_sel, 0, wx.EXPAND, 0)
+        sizer.Add(ruler, 0, wx.EXPAND, 0)       # a rule on the visible part
         self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
@@ -457,6 +463,10 @@ class TimeSliderPanel(sppasPanel):
     @property
     def _btn_visible(self):
         return self.FindWindow("visible_part_button")
+
+    @property
+    def _ruler(self):
+        return self.FindWindow("time_ruler")
 
     @property
     def _btn_before(self):
@@ -603,13 +613,14 @@ class TimeSliderPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def __update_height(self):
-        h = self.GetFont().GetPointSize()
+        h = self.GetFont().GetPixelSize()[1]
 
+        self._ruler.SetMinSize(wx.Size(-1, int(float(h)*1.2)))
         self._selection.SetMinSize(wx.Size(-1, h))
         self._slider.SetMinSize(wx.Size(-1, h))
         self._btn_duration.SetMinSize(wx.Size(-1, h))
         self._btn_visible.SetMinSize(wx.Size(-1, h))
-        self.SetMinSize(wx.Size(-1, 4*h))
+        self.SetMinSize(wx.Size(-1, int(5.2 * float(h))))
         self.Layout()
 
     # -----------------------------------------------------------------------
@@ -622,7 +633,7 @@ class TimeSliderPanel(sppasPanel):
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(sppasPanel):
+class TestPanel(wx.Panel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(

@@ -747,9 +747,9 @@ class RulerCtrl( spControl ):
             d = 0.0
 
         if self._minor >= 1.0:
-            s = "%d"%int(math.floor(d+0.5))
+            s = "%d" % int(math.floor(d+0.5))
         else:
-            s = (("%." + str(self._digits) + "f")%d).strip()
+            s = (("%." + str(self._digits) + "f") % d).strip()
 
         return s
 

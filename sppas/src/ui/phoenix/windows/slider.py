@@ -59,6 +59,7 @@ class sppasSlider(sppasImageDCWindow):
     Non-interactive: show values but can't be moved with the mouse.
 
     """
+
     POINT_COLOUR1 = wx.Colour(10, 60, 190)
     POINT_COLOUR2 = wx.Colour(40, 90, 220)
     POINT_COLOUR3 = wx.Colour(75, 125, 255)
@@ -72,9 +73,8 @@ class sppasSlider(sppasImageDCWindow):
 
         """
         super(sppasSlider, self).__init__(parent, id, pos=pos, size=size, style=style, name=name)
-
-        self.__start = 0
-        self.__end = 0
+        self._start = 0
+        self._end = 0
         self.__pos = 0
         self._vert_border_width = 0
         self._horiz_border_width = 1
@@ -84,7 +84,7 @@ class sppasSlider(sppasImageDCWindow):
 
     def get_range(self):
         """Return the (start, end) values."""
-        return self.__start, self.__end
+        return self._start, self._end
 
     # -----------------------------------------------------------------------
 
@@ -102,16 +102,14 @@ class sppasSlider(sppasImageDCWindow):
         end = float(end)
         if start > end:
             raise ValueError("Start {} can't be greater then end {}".format(start, end))
-        self.__start = start
-        self.__end = end
+        self._start = start
+        self._end = end
 
         # question: do we have to adjust pos automatically??
-        # if self.__pos < self.__start:
-        #     self.__pos = self.__start
-        # if self.__pos > self.__end:
-        #     self.__pos = self.__end
-
-        return self.__pos
+        # if self.__pos < self._start:
+        #     self.__pos = self._start
+        # if self.__pos > self._end:
+        #     self.__pos = self._end
 
     # -----------------------------------------------------------------------
 
@@ -133,44 +131,53 @@ class sppasSlider(sppasImageDCWindow):
         pos = float(pos)
         self.__pos = pos
 
-        if self.__pos < self.__start:
-            self.__pos = self.__start
-        if self.__pos > self.__end:
-            self.__pos = self.__end
+        if self.__pos < self._start:
+            self.__pos = self._start
+        if self.__pos > self._end:
+            self.__pos = self._end
         return self.__pos
+
+    # -----------------------------------------------------------------------
+
+    def formats_label(self, value):
+        return str(value)
 
     # -----------------------------------------------------------------------
 
     def DrawContent(self, dc, gc):
         """Override."""
+        self._DrawLabels(dc, gc)
+        self._DrawMoment(dc, gc)
+
+    # -----------------------------------------------------------------------
+
+    def _DrawLabels(self, dc, gc):
+        """Draw left-right values."""
         x, y, w, h = self.GetContentRect()
 
         # Start label
-        label = self.__seconds_label(self.__start)
+        label = self.formats_label(self._start)
         tw, th = self.get_text_extend(dc, gc, label)
         self.DrawLabel(label, dc, gc, 2, (h - th) // 2)
 
         # End label
-        label = self.__seconds_label(self.__end)
+        label = self.formats_label(self._end)
         tw, th = self.get_text_extend(dc, gc, label)
         self.DrawLabel(label, dc, gc, w - tw - 2, (h - th) // 2)
 
+    # -----------------------------------------------------------------------
+
+    def _DrawMoment(self, dc, gc):
+        """Draw a vertical line to indicate the current position."""
+        x, y, w, h = self.GetContentRect()
+
         # Draw the value of the current position at left or at right
         pos_x = 0
-        total_dur = self.__end - self.__start
-        pos_dur = self.__pos - self.__start
+        total_dur = self._end - self._start
+        pos_dur = self.__pos - self._start
         if total_dur > 0.:
             ratio = pos_dur / total_dur
             pos_x = w * ratio
-
-        # label = self.__seconds_label(self.__pos)
-        # tw, th = self.get_text_extend(dc, gc, label)
-        # if pos_x + tw < (w // 2):
-        #     if pos_x > tw:
-        #         self.DrawLabel(label, dc, gc, pos_x + 1, (h - th) // 2)
-        # else:
-        #     if pos_x < (w - tw):
-        #         self.DrawLabel(label, dc, gc, pos_x - tw - 1, (h - th) // 2)
 
         # Vertical line indicating the proportional position
         if total_dur > 0.:
@@ -189,17 +196,12 @@ class sppasSlider(sppasImageDCWindow):
             dc.DrawLine(pos_x+2, y, pos_x+2, y+h)
             dc.DrawLine(pos_x-2, y, pos_x-2, y+h)
 
-    # -----------------------------------------------------------------------
-
-    def __seconds_label(self, value):
-        return "{:.3f}".format(value)
-
 # ----------------------------------------------------------------------------
 # Panel for tests
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(sppasPanel):
+class TestPanel(wx.Panel):
 
     img = os.path.join(paths.etc, "images", "bg1.png")
 
