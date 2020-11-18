@@ -185,6 +185,30 @@ class TimeSliderPanel(sppasPanel):
         self.__update_height()
 
     # -----------------------------------------------------------------------
+    # Setters of the GUI
+    # -----------------------------------------------------------------------
+
+    def show_range(self, value=True):
+        """Show the currently selected range."""
+        if bool(value) is True:
+            self._slider.Show()
+        else:
+            self._slider.Hide()
+        self.__update_height()
+
+    # -----------------------------------------------------------------------
+
+    def show_rule(self, value=True):
+        """Show a ruler of the visible part."""
+        if bool(value) is True:
+            self._ruler.Show()
+        else:
+            self._ruler.Hide()
+        self.__update_height()
+
+    # -----------------------------------------------------------------------
+    # Toggle buttons value
+    # -----------------------------------------------------------------------
 
     def is_selection(self):
         """Return True if the toggle button of the selection is pressed."""
@@ -229,6 +253,8 @@ class TimeSliderPanel(sppasPanel):
         if current != pos:
             self._slider.set_value(pos)
             self._slider.Refresh()
+            self._ruler.set_value(pos)
+            self._ruler.Refresh()
             return True
         return False
 
@@ -615,12 +641,21 @@ class TimeSliderPanel(sppasPanel):
     def __update_height(self):
         h = self.GetFont().GetPixelSize()[1]
 
-        self._ruler.SetMinSize(wx.Size(-1, int(float(h)*1.2)))
         self._selection.SetMinSize(wx.Size(-1, h))
-        self._slider.SetMinSize(wx.Size(-1, h))
         self._btn_duration.SetMinSize(wx.Size(-1, h))
         self._btn_visible.SetMinSize(wx.Size(-1, h))
-        self.SetMinSize(wx.Size(-1, int(5.2 * float(h))))
+        panel_height = 3 * h
+
+        ruler_height = int(float(h)*1.2)
+        self._ruler.SetMinSize(wx.Size(-1, ruler_height))
+        if self._ruler.IsShown():
+            panel_height += ruler_height
+
+        self._slider.SetMinSize(wx.Size(-1, h))
+        if self._slider.IsShown():
+            panel_height += h
+
+        self.SetMinSize(wx.Size(-1, panel_height))
         self.Layout()
 
     # -----------------------------------------------------------------------
@@ -641,19 +676,40 @@ class TestPanel(wx.Panel):
             name="Time Slider Panel")
         self.SetMinSize(wx.Size(320, 20))
 
-        p = TimeSliderPanel(self)
+        btn1 = ToggleTextButton(self, label="Show/Hide slider")
+        btn1.SetMinSize(wx.Size(120, 32))
+        btn1.SetValue(True)
+        btn2 = ToggleTextButton(self, label="Show/Hide ruler")
+        btn2.SetMinSize(wx.Size(120, 32))
+        btn2.SetValue(True)
+
+        p = TimeSliderPanel(self, name="tsp1")
         p.set_duration(12.123456)
         p.set_visible_range(3.45, 7.08765)
         p.set_selection_range(5.567, 6.87)
         p.set_value(6.)
+        p.show_range(True)
+        p.show_rule(True)
 
         s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(btn1, 0, wx.ALL, 4)
+        s.Add(btn2, 0, wx.ALL, 4)
         s.Add(p, 0, wx.EXPAND)
         self.SetSizer(s)
 
         self.Bind(MediaEvents.EVT_MEDIA_PERIOD, self._on_period_changed)
+        btn1.Bind(wx.EVT_TOGGLEBUTTON, self._on_show_slider)
+        btn2.Bind(wx.EVT_TOGGLEBUTTON, self._on_show_ruler)
         self.Layout()
 
     def _on_period_changed(self, event):
         p = event.period
         wx.LogDebug("Slider range from {} to {}".format(p[0], p[1]))
+
+    def _on_show_slider(self, evt):
+        self.FindWindow("tsp1").show_range(evt.GetEventObject().GetValue())
+        self.Layout()
+
+    def _on_show_ruler(self, evt):
+        self.FindWindow("tsp1").show_rule(evt.GetEventObject().GetValue())
+        self.Layout()

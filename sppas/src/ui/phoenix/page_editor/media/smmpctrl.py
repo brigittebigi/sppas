@@ -153,11 +153,21 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         return wx.Colour(r, g, b, a).ChangeLightness(95)
 
     # -----------------------------------------------------------------------
-    # Manage the slider
+    # Manage the timeslider
     # -----------------------------------------------------------------------
 
+    def show_range(self, value=True):
+        """Show the indicator of the currently selected range of time. """
+        self._timeslider.show_range(value)
+        self.Layout()
+
+    def show_rule(self, value=True):
+        """Show the ruler of the current visible range of time. """
+        self._timeslider.show_rule(value)
+        self.Layout()
+
     def get_visible_range(self):
-        """Return the visible time range of the slider."""
+        """Return the visible time range."""
         return self._timeslider.get_visible_range()
 
     def set_visible_range(self, start, end):

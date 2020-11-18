@@ -449,6 +449,8 @@ class sppasTimelinePanel(sppasPanel):
     def _create_content(self):
         """Create the main content. """
         smmpc = SMMPCPanel(self, name="smmpc_risepanel")
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._on_collapse_smmpc_changed, smmpc)
+
         scrolled = sppasScrolledPanel(self, name="scrolled_panel")
         scrolled.SetupScrolling(scroll_x=False, scroll_y=True)
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -541,6 +543,15 @@ class sppasTimelinePanel(sppasPanel):
         event.Skip()
 
     # -----------------------------------------------------------------------
+
+    def _on_collapse_smmpc_changed(self, evt=None):
+        self.Layout()
+        self._scrolled_panel.ScrollChildIntoView(self.FindWindow("smmpc_risepanel"))
+        if self.FindWindow("smmpc_risepanel").IsExpanded() is True:
+            action = "expanded"
+        else:
+            action = "collapsed"
+        self.notify(action, filename="", value=None)
 
     def _on_collapse_changed(self, evt=None):
         panel = evt.GetEventObject()

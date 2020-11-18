@@ -40,6 +40,7 @@ import wx
 from sppas.src.config import paths
 from sppas.src.ui.phoenix.windows.panels import sppasPanel, sppasImagePanel
 from sppas.src.ui.phoenix.windows.panels import sppasVerticalRisePanel
+from sppas.src.ui.phoenix.windows.buttons import ToggleButton
 
 from ..media import sppasMMPCtrl
 
@@ -111,22 +112,48 @@ class SMMPCPanel(sppasVerticalRisePanel):
     # -----------------------------------------------------------------------
 
     def _create_toolbar(self):
-        """Override in order to disable the collapsible button.
+        """Override: disable the collapsible button and add custom ones.
 
         Create a panel with the collapsible button but without
         the slashdot button normally used to show a filename.
 
         """
         sizer = wx.BoxSizer(wx.VERTICAL)
+
         # Create, disable and hide the button to collapse/expand.
         self._btn = self._create_collapsible_button()
-        self._btn.Enable(False)
-        self._btn.Hide()
+        #self._btn.Enable(False)
+        #self._btn.Hide()
         sizer.Add(self._btn, 0, wx.FIXED_MINSIZE, 0)
-        self._tools_panel.SetSizer(sizer)
+
+        # Create custom button: show/hide the slider
+        btn1 = self._create_tool_togglebutton(icon="position")
+        btn1.Enable(True)
+        btn1.SetValue(True)
+        btn1.Show()
+        sizer.Add(btn1, 0, wx.FIXED_MINSIZE, 0)
+        btn1.Bind(wx.EVT_TOGGLEBUTTON, self._on_show_slider)
+
+        # Create custom button: show/hide the ruler
+        btn2 = self._create_tool_togglebutton(icon="ruler")
+        btn2.Enable(True)
+        btn2.SetValue(True)
+        btn2.Show()
+        sizer.Add(btn2, 0, wx.FIXED_MINSIZE, 0)
+        btn2.Bind(wx.EVT_TOGGLEBUTTON, self._on_show_ruler)
+
+        # Fix the size of the tools
         w = self.GetButtonWidth()
-        # Fix the size of the tools,
         self._tools_panel.SetMinSize(wx.Size(w, w*2))
+        self._tools_panel.SetSizer(sizer)
+
+    def _on_show_slider(self, evt):
+        self.GetPane().show_range(evt.GetEventObject().GetValue())
+        self.Layout()
+
+    def _on_show_ruler(self, evt):
+        self.GetPane().show_rule(evt.GetEventObject().GetValue())
+        self.Layout()
 
 # ----------------------------------------------------------------------------
 
