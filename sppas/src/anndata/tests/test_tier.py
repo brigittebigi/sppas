@@ -943,3 +943,64 @@ class TestTier(unittest.TestCase):
         self.assertEqual(tier.get_parent(), tier_copy.get_parent())
         self.assertEqual(tier.get_meta_keys(), tier_copy.get_meta_keys())
 
+    # -----------------------------------------------------------------------
+
+    def test_fit(self):
+        tier1 = sppasTier("t1")
+        loc1 = [sppasInterval(sppasPoint(0.), sppasPoint(0.5)),
+                sppasInterval(sppasPoint(1.5), sppasPoint(2.5)),
+                sppasInterval(sppasPoint(2.5), sppasPoint(3.5)),
+                sppasInterval(sppasPoint(5.5), sppasPoint(6.5)),
+                sppasInterval(sppasPoint(7.5), sppasPoint(8.5)),
+                sppasInterval(sppasPoint(10.), sppasPoint(11.)),
+                sppasInterval(sppasPoint(13.), sppasPoint(14.))
+                ]
+        for i, loc in enumerate(loc1):
+            tier1.create_annotation(sppasLocation(loc), sppasLabel(sppasTag("x"+str(i))))
+
+        tier2 = sppasTier("t2")
+        loc2 = [sppasInterval(sppasPoint(2.), sppasPoint(3.)),
+                sppasInterval(sppasPoint(5.), sppasPoint(9.)),
+                sppasInterval(sppasPoint(10.5), sppasPoint(11.5)),
+                sppasInterval(sppasPoint(12.), sppasPoint(13.))
+                ]
+        for i, loc in enumerate(loc2):
+            tier2.create_annotation(sppasLocation(loc), sppasLabel(sppasTag("y"+str(i))))
+
+        # Example:
+        #          0   1   2   3   4   5   6   7   8   9  10  11  12  13  14
+        # tier1:   |a|   |_b_|_c_|       |_d_|   |_e_|     |_f_|       |g|
+        # tier2:           |_w_|       |_______x_______|     |_y_| |_z_|
+
+        # tier1.fit(tier2) result is:
+        #                  |b|c|         |_d_|   |_e_|       |f|
+
+        # tier2.fit(tier1) result is:
+        #                  |w|w|         |_x_|   |_x_|       |y|
+
+        tx = tier1.fit(tier2)
+        self.assertEqual(5, len(tx))
+        self.assertEqual(sppasPoint(2.), tx[0].get_lowest_localization())
+        self.assertEqual(sppasPoint(2.5), tx[0].get_highest_localization())
+        self.assertEqual(sppasPoint(2.5), tx[1].get_lowest_localization())
+        self.assertEqual(sppasPoint(3.), tx[1].get_highest_localization())
+        self.assertEqual(sppasPoint(5.5), tx[2].get_lowest_localization())
+        self.assertEqual(sppasPoint(6.5), tx[2].get_highest_localization())
+        self.assertEqual(sppasPoint(7.5), tx[3].get_lowest_localization())
+        self.assertEqual(sppasPoint(8.5), tx[3].get_highest_localization())
+        self.assertEqual(sppasPoint(10.5), tx[4].get_lowest_localization())
+        self.assertEqual(sppasPoint(11.), tx[4].get_highest_localization())
+
+        ty = tier2.fit(tier1)
+        self.assertEqual(5, len(tx))  # initially, tier2 contains 4 intervals
+        self.assertEqual(sppasPoint(2.), ty[0].get_lowest_localization())
+        self.assertEqual(sppasPoint(2.5), ty[0].get_highest_localization())
+        self.assertEqual(sppasPoint(2.5), ty[1].get_lowest_localization())
+        self.assertEqual(sppasPoint(3.), ty[1].get_highest_localization())
+        self.assertEqual(sppasPoint(5.5), ty[2].get_lowest_localization())
+        self.assertEqual(sppasPoint(6.5), ty[2].get_highest_localization())
+        self.assertEqual(sppasPoint(7.5), ty[3].get_lowest_localization())
+        self.assertEqual(sppasPoint(8.5), ty[3].get_highest_localization())
+        self.assertEqual(sppasPoint(10.5), ty[4].get_lowest_localization())
+        self.assertEqual(sppasPoint(11.), ty[4].get_highest_localization())
+

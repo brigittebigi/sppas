@@ -184,8 +184,8 @@ class RelationFilterTier(object):
     def filter_tier(self, tier, tier_y, out_tiername="Filtered"):
         """Apply the filters on the given tier.
 
-        :param tier: (sppasTier)
-        :param tier_y: (sppasTier)
+        :param tier: (sppasTier) The tier to filter annotations
+        :param tier_y: (sppasTier) The tier to be in relation with
         :param out_tiername: (str) Name or the filtered tier
 
         """
@@ -198,10 +198,16 @@ class RelationFilterTier(object):
             **{self.__filters[1][i][0]: self.__filters[1][i][1] for i in range(len(self.__filters[1]))})
 
         # convert the set of annotations into a tier
-        filtered_tier = ann_set.to_tier(name=out_tiername,
-                                        annot_value=self.__annot_format)
+        ft = ann_set.to_tier(name=out_tiername, annot_value=self.__annot_format)
 
-        return filtered_tier
+        # If the filters contain the option "slice"...
+        for ann_y in tier:
+            b_y = ann_y.get_lowest_localization()
+            anns_x = ft.find(b_y, b_y)
+            if len(anns_x) == 1:
+                pass
+
+        return ft
 
 # ---------------------------------------------------------------------------
 
@@ -404,6 +410,12 @@ class sppasTierFilters(sppasBaseFilters):
             >>> f.rel(other_tier, "equals",
             >>>                   "overlaps",
             >>>                   "overlappedby", min_overlap=0.04)
+
+        kwargs can be:
+
+            - max_delay=value, used by before, after
+            - overlap_min=value, used by overlap, overlapped_by
+            - percent=boolean, used by overlap, overlapped_by to define the overlap_min is a percentage
 
         """
         comparator = sppasIntervalCompare()

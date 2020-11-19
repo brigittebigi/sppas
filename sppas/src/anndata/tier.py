@@ -226,7 +226,11 @@ class sppasTier(sppasMetaData):
     # -----------------------------------------------------------------------
 
     def copy(self):
-        """Return a deep copy of the tier (including 'id')."""
+        """Return a deep copy of the tier.
+
+        :return: (sppasTier) including the 'id'.
+
+        """
         new_tier = sppasTier(self.__name)
         my_parent = self.get_parent()
         self.set_parent(None)
@@ -266,8 +270,9 @@ class sppasTier(sppasMetaData):
     def create_annotation_before(self, idx):
         """Create and add a new annotation in the hole before idx.
 
-        :param idx: (int)
+        :param idx: (int) Index of an existing annotation
         :returns: sppasAnnotation
+        :raises AnnDataTypeError, AnnDataIndexError
 
         """
         if self.is_point():
@@ -296,8 +301,9 @@ class sppasTier(sppasMetaData):
     def create_annotation_after(self, idx):
         """Create and add a new annotation in the hole after idx.
 
-        :param idx: (int)
+        :param idx: (int) Index of an existing annotation
         :returns: sppasAnnotation
+        :raises AnnDataTypeError, AnnDataIndexError
 
         """
         if self.is_point():
@@ -405,7 +411,7 @@ class sppasTier(sppasMetaData):
     # -----------------------------------------------------------------------
 
     def remove(self, begin, end, overlaps=False):
-        """Remove intervals between begin and end.
+        """Remove annotation intervals between begin and end.
 
         :param begin: (sppasPoint)
         :param end: (sppasPoint)
@@ -486,7 +492,7 @@ class sppasTier(sppasMetaData):
         """Split annotation at the given index into 2 annotations.
 
         :param idx: (int) Index of the annotation to split.
-        :return: newly created annotation (at index idx+1)
+        :return: newly created annotation at index idx+1
 
         """
         if self.is_point() is True:
@@ -697,6 +703,18 @@ class sppasTier(sppasMetaData):
                 units.append(m)
 
         return units
+
+    # -----------------------------------------------------------------------
+
+    def set_radius(self, radius):
+        """Fix a radius value to all points of the tier.
+
+        :param radius: (int, float) New radius value
+        :raise: AnnDataTypeError, AnnDataNegValueError
+
+        """
+        for ann in self.__ann:
+            ann.get_location().set_radius(radius)
 
     # -----------------------------------------------------------------------
 
@@ -1207,18 +1225,6 @@ class sppasTier(sppasMetaData):
 
     # -----------------------------------------------------------------------
 
-    def set_radius(self, radius):
-        """Fix a radius value to all points of the tier.
-
-        :param radius: (int, float) New radius value
-        :raise: AnnDataTypeError, AnnDataNegValueError
-
-        """
-        for ann in self.__ann:
-            ann.get_location().set_radius(radius)
-
-    # -----------------------------------------------------------------------
-
     def export_to_intervals(self, separators):
         """Create a tier with the consecutive filled intervals.
 
@@ -1328,6 +1334,68 @@ class sppasTier(sppasMetaData):
             )
 
         return not_intervals
+
+    # -----------------------------------------------------------------------
+
+    def fit(self, other):
+        """Select then slice or extend annotations to fit in other tier.
+
+        Keep only the annotations of self that have some overlapping time
+        with the given other tier and slice or extend the localization of
+        such selected annotations to exactly match those of the other tier.
+
+        Example:
+
+                 0   1   2   3   4   5   6   7   8   9  10  11  12  13  14
+        tier1:         |_a_|_b_|       |_c_|   |_d_|     |_e_|       |f|
+        tier2:           |_w_|       |_______x_______|     |_y_| |_z_|
+
+        tier1.fit(tier2) result is:
+                         |a|b|         |_c_|   |_d_|       |e|
+
+        tier2.fit(tier1) result is:
+                         |w|w|         |_x_|   |_x_|       |y|
+
+        :param other: (sppasTier)
+        :return: (sppasTier)
+
+        """
+        ft = sppasTier(self.__name + "-inter-" + other.get_name())
+        for ann in other:
+            b = ann.get_lowest_localization()
+            e = ann.get_highest_localization()
+            found_anns = self.find(b, e, overlaps=True)
+
+            if len(found_anns) == 1:
+                # If there is only one annotation of self that is matching
+                # the annotation of other. fit result is [max begin ; min end]
+                bf = max(b, found_anns[0].get_lowest_localization())
+                ef = min(e, found_anns[0].get_highest_localization())
+                labels = [label.copy() for label in found_anns[0].get_labels()]
+
+                ft.create_annotation(sppasLocation(sppasInterval(bf.copy(), ef.copy())), labels)
+
+            elif len(found_anns) > 1:
+                # If there are annotations of self that are matching the
+                # annotation of other. first and last can be sliced or extended.
+                for i, ao in enumerate(found_anns):
+                    labels = [label.copy() for label in ao.get_labels()]
+                    if ao is found_anns[0]:
+                        bf = max(b, ao.get_lowest_localization())
+                        ft.create_annotation(
+                            sppasLocation(sppasInterval(bf.copy(), ao.get_highest_localization().copy()),
+                                          labels)
+                        )
+                    elif ao is found_anns[-1]:
+                        ef = min(e, ao.get_highest_localization())
+                        ft.create_annotation(
+                            sppasLocation(sppasInterval(ao.get_lowest_localization().copy(), ef.copy()),
+                                          labels)
+                        )
+                    else:
+                        ft.add(ao.copy())
+
+        return ft
 
     # -----------------------------------------------------------------------
     # Private

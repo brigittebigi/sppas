@@ -147,6 +147,8 @@ class SMMPCPanel(sppasVerticalRisePanel):
         self._tools_panel.SetMinSize(wx.Size(w, w*2))
         self._tools_panel.SetSizer(sizer)
 
+    # -----------------------------------------------------------------------
+
     def _on_show_slider(self, evt):
         self.GetPane().show_range(evt.GetEventObject().GetValue())
         self.Layout()
