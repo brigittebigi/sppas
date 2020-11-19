@@ -1341,7 +1341,7 @@ class sppasTier(sppasMetaData):
         """Select then slice or extend annotations to fit in other tier.
 
         Keep only the annotations of self that have some overlapping time
-        with the given other tier and slice or extend the localization of
+        with the given other tier and slice the localization of
         such selected annotations to exactly match those of the other tier.
 
         Example:

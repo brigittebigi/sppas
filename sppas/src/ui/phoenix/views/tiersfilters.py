@@ -71,7 +71,7 @@ def _(message):
 MSG_HEADER_TIERSFILTER = _("Filter annotations of tiers")
 
 MSG_TAG_FILTER = _("Filter on tags of annotations")
-MSG_LOC_FILTER =_("Filter on localization of annotations")
+MSG_LOC_FILTER = _("Filter on localization of annotations")
 MSG_DUR_FILTER = _("Filter on duration of annotations")
 
 MSG_LOC = _("The localization is:")
@@ -109,6 +109,7 @@ MSG_TO = _("ending at")
 MSG_VALUE = _("this value:")
 
 MSG_ANNOT_FORMAT = _("Replace the tag by the name of the filter")
+MSG_FIT = _("Keep only the intersection of X intervals with Y ones, i.e. fit the tiers.")
 MSG_NAME = _("Name")
 MSG_OPT = _("Option")
 
@@ -270,7 +271,7 @@ class sppasTiersSingleFilterDialog(sppasDialog):
 
     def _create_content(self):
         """Create the content of the message dialog."""
-        b = sppasPanel.fix_size(6)
+        b = sppasPanel.fix_size(4)
         panel = sppasPanel(self, name="content")
         tb = self.__create_toolbar(panel)
         lst = self.__create_list_filters(panel)
@@ -278,8 +279,8 @@ class sppasTiersSingleFilterDialog(sppasDialog):
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         st = sppasStaticText(panel, label="Name of the filtered tier:")
         nt = sppasTextCtrl(panel, value="Filtered", name="tiername_textctrl")
-        hbox.Add(st, 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, b)
-        hbox.Add(nt, 1, wx.EXPAND | wx.ALL, b)
+        hbox.Add(st, 1, wx.EXPAND | wx.ALL, b)
+        hbox.Add(nt, 2, wx.EXPAND | wx.ALL, b)
 
         an_box = CheckButton(panel, label=MSG_ANNOT_FORMAT)
         an_box.SetMinSize(wx.Size(-1, panel.get_font_height()*2))
@@ -290,7 +291,7 @@ class sppasTiersSingleFilterDialog(sppasDialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(tb, 0, wx.EXPAND, 0)
         sizer.Add(lst, 1, wx.EXPAND | wx.ALL, b)
-        sizer.Add(hbox, 0)
+        sizer.Add(hbox, 0, wx.EXPAND)
         sizer.Add(an_box, 0, wx.EXPAND | wx.ALL, b)
 
         panel.SetSizer(sizer)
@@ -1201,7 +1202,8 @@ class sppasTiersRelationFilterDialog(sppasDialog):
          'Non efficient',
          'Non efficient'),
         # finishes
-        ('X |---|\nY    |------|',
+        ('X       |---|\n'
+         'Y    |------|',
          'Non efficient',
          'Non efficient',
          'Non efficient'),
@@ -1277,6 +1279,13 @@ class sppasTiersRelationFilterDialog(sppasDialog):
         return w.GetValue()
 
     # -----------------------------------------------------------------------
+
+    def get_fit(self):
+        """Return True if the result tier must fit the Y tier."""
+        w = self.FindWindow("fit_checkbutton")
+        return w.GetValue()
+
+    # -----------------------------------------------------------------------
     # Construct the GUI
     # -----------------------------------------------------------------------
 
@@ -1290,10 +1299,10 @@ class sppasTiersRelationFilterDialog(sppasDialog):
 
         # The name of the filtered tier
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        st = sppasStaticText(panel, label="Name of the filtered tier:")
+        st = sppasStaticText(panel, label="Name of the filtered tier: ")
+        hbox.Add(st, 1, wx.EXPAND | wx.ALL, b)
         nt = sppasTextCtrl(panel, value="Filtered", name="tiername_textctrl")
-        hbox.Add(st, 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, b)
-        hbox.Add(nt, 1, wx.EXPAND | wx.ALL, b)
+        hbox.Add(nt, 3, wx.EXPAND | wx.ALL, b)
 
         # The annot_format option (replace label by the name of the relation)
         an_box = CheckButton(panel, label=MSG_ANNOT_FORMAT)
@@ -1302,10 +1311,17 @@ class sppasTiersRelationFilterDialog(sppasDialog):
         an_box.SetValue(False)
         an_box.SetName("annotformat_checkbutton")
 
+        fit_box = CheckButton(panel, label=MSG_FIT)
+        fit_box.SetMinSize(wx.Size(-1, panel.get_font_height()*2))
+        fit_box.SetFocusWidth(0)
+        fit_box.SetValue(False)
+        fit_box.SetName("fit_checkbutton")
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(lst, 1, wx.EXPAND | wx.ALL, b)
-        sizer.Add(hbox, 0)
+        sizer.Add(hbox, 0, wx.EXPAND)
         sizer.Add(an_box, 0, wx.EXPAND | wx.ALL, b)
+        sizer.Add(fit_box, 0, wx.EXPAND | wx.ALL, b)
 
         panel.SetSizer(sizer)
         panel.SetAutoLayout(True)

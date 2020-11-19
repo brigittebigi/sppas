@@ -167,17 +167,22 @@ class RelationFilterTier(object):
 
     functions = ("rel")
 
-    def __init__(self, filters, annot_format=False):
+    def __init__(self, filters, annot_format=False, fit=False):
         """Filter process of a tier.
+
+        "annot_format" has an impact on the labels of the ann results but
+        "fit" has an impact on their localizations.
 
         :param filters: (tuple) ([list of functions], [list of options])
         each option is a tuple with (name, value)
         :param annot_format: (bool) The annotation result contains the
         name of the filter (if True) or the original label (if False)
+        :param fit: (bool) The annotation result fits the other tier.
 
         """
         self.__filters = filters
         self.__annot_format = bool(annot_format)
+        self.__fit = bool(fit)
 
     # -----------------------------------------------------------------------
 
@@ -200,12 +205,9 @@ class RelationFilterTier(object):
         # convert the set of annotations into a tier
         ft = ann_set.to_tier(name=out_tiername, annot_value=self.__annot_format)
 
-        # If the filters contain the option "slice"...
-        for ann_y in tier:
-            b_y = ann_y.get_lowest_localization()
-            anns_x = ft.find(b_y, b_y)
-            if len(anns_x) == 1:
-                pass
+        # If the filters contain the option "fit"
+        if self.__fit:
+            return ft.fit(tier_y)
 
         return ft
 

@@ -538,6 +538,7 @@ class ListViewFilesPanel(sppasScrolledPanel):
             filters = dlg.get_filters()
             out_tiername = dlg.get_tiername()
             annot_format = dlg.get_annot_format()
+            fit_option = dlg.get_fit()
         dlg.Destroy()
 
         # Apply the filters on the checked tiers
@@ -554,7 +555,7 @@ class ListViewFilesPanel(sppasScrolledPanel):
                 progress.set_text(filename)
                 if isinstance(panel, TrsSummaryPanel):
                     filtered += panel.relation_filter(
-                        filters, y_tiername, annot_format, out_tiername)
+                        filters, y_tiername, annot_format, fit_option, out_tiername)
                 progress.set_fraction(int(100. * float((i+1)) / float(total)))
 
             wx.EndBusyCursor()

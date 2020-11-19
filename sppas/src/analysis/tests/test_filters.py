@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.anndata.tests.test_filter.py
+    src.anndata.tests.test_filters.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     :author:       Brigitte Bigi
@@ -381,6 +381,7 @@ class TestFilterRelationTier(unittest.TestCase):
     [10,11]     finishes      [8,11]
 
     """
+
     def setUp(self):
         self.tier = sppasTier("Tier")
         self.tier.create_annotation(sppasLocation(
@@ -608,6 +609,34 @@ class TestFilterTier(unittest.TestCase):
         parser = sppasRW(os.path.join(DATA, "grenelle.antx"))
         self.trs = parser.read(heuristic=False)
 
+        self.tier = sppasTier("Tier")
+        self.tier.create_annotation(sppasLocation(
+            sppasInterval(sppasPoint(0), sppasPoint(3))))
+        self.tier.create_annotation(sppasLocation(
+            sppasInterval(sppasPoint(3), sppasPoint(5))))
+        self.tier.create_annotation(sppasLocation(
+            sppasInterval(sppasPoint(5), sppasPoint(7))))
+        self.tier.create_annotation(sppasLocation(
+            sppasInterval(sppasPoint(7), sppasPoint(9))))
+        self.tier.create_annotation(sppasLocation(
+            sppasInterval(sppasPoint(9), sppasPoint(10))))
+        self.tier.create_annotation(sppasLocation(
+            sppasInterval(sppasPoint(10), sppasPoint(11))))
+
+        self.rtier = sppasTier("RelationTier")
+        self.rtier.create_annotation(sppasLocation(
+            sppasInterval(sppasPoint(0), sppasPoint(1))))
+        self.rtier.create_annotation(sppasLocation(
+            sppasInterval(sppasPoint(1), sppasPoint(2))))
+        self.rtier.create_annotation(sppasLocation(
+            sppasInterval(sppasPoint(2), sppasPoint(3))))
+        self.rtier.create_annotation(sppasLocation(
+            sppasInterval(sppasPoint(3), sppasPoint(5))))
+        self.rtier.create_annotation(sppasLocation(
+            sppasInterval(sppasPoint(5), sppasPoint(8))))
+        self.rtier.create_annotation(sppasLocation(
+            sppasInterval(sppasPoint(8), sppasPoint(11))))
+
     # -----------------------------------------------------------------------
 
     def test_tag(self):
@@ -638,3 +667,34 @@ class TestFilterTier(unittest.TestCase):
         # tier_y = self.trs.find('P-Syllables')
         # ft = RelationFilterTier((["starts"], []), annot_format=False)
         # self.assertEqual(len(ft.filter_tier(tier, tier_y)), len(tier_y))
+
+    # -----------------------------------------------------------------------
+
+    def test_options(self):
+        ft = RelationFilterTier((["overlappedby"], []), fit=False)
+        # [7,9] is overlapped by [5,8] => result is [7,9]
+        res1 = ft.filter_tier(self.tier, self.rtier)
+        self.assertEqual(1, len(res1))
+        self.assertEqual(7, res1[0].get_lowest_localization())
+        self.assertEqual(9, res1[0].get_highest_localization())
+
+        ft = RelationFilterTier((["overlappedby"], []), fit=True)
+        # [7,9] is overlapped by [5,8] => result is [7,8] and [8,9]
+        res2 = ft.filter_tier(self.tier, self.rtier)
+        self.assertEqual(2, len(res2))
+        self.assertEqual(7, res2[0].get_lowest_localization())
+        self.assertEqual(8, res2[0].get_highest_localization())
+        self.assertEqual(8, res2[1].get_lowest_localization())
+        self.assertEqual(9, res2[1].get_highest_localization())
+
+        rtier = sppasTier("RelationTier")
+        rtier.create_annotation(sppasLocation(
+            sppasInterval(sppasPoint(3), sppasPoint(5))))
+        rtier.create_annotation(sppasLocation(
+            sppasInterval(sppasPoint(5), sppasPoint(8))))
+        res3 = ft.filter_tier(self.tier, rtier)
+        self.assertEqual(1, len(res3))
+        self.assertEqual(7, res3[0].get_lowest_localization())
+        self.assertEqual(8, res3[0].get_highest_localization())
+
+

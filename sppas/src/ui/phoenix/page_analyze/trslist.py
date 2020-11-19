@@ -464,6 +464,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
     def relation_filter(self, filters,
                         y_tiername,
                         annot_format=False,
+                        fit_option=False,
                         out_tiername="Filtered"):
         """Apply 'rel' filters on the checked tiers.
 
@@ -483,7 +484,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
             return 0
 
         nb = 0
-        ft = RelationFilterTier(filters, annot_format)
+        ft = RelationFilterTier(filters, annot_format, fit=fit_option)
         for tier in self._trs.get_tier_list():
             if tier.get_meta("private_checked") == "True":
                 new_tier = ft.filter_tier(tier, y_tier, out_tiername)
