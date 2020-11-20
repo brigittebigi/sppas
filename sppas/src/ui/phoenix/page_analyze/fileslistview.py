@@ -176,6 +176,7 @@ class ListViewFilesPanel(sppasScrolledPanel):
 
         self.Layout()
         self.SetupScrolling(scroll_x=True, scroll_y=True)
+        self.Bind(EVT_VIEW, self._process_view_event)
 
     # -----------------------------------------------------------------------
 
