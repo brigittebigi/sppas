@@ -51,6 +51,7 @@ from ..windows.dialogs import Confirm, Error
 from ..windows.dialogs import sppasFileDialog
 from ..windows.dialogs import sppasProgressDialog
 from ..windows.dialogs import sppasTextEntryDialog
+from ..windows.dialogs import sppasFloatEntryDialog
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 from ..main_events import EVT_VIEW
@@ -569,14 +570,15 @@ class sppasAnalyzePanel(sppasPanel):
             if nbt == 0:
                 wx.LogWarning("Radius: no tier checked.")
                 return
-            dlg = sppasTextEntryDialog(
-                TIER_MSG_ASK_RADIUS, caption=TIER_ACT_RADIUS, value="")
+            dlg = sppasFloatEntryDialog(
+                TIER_MSG_ASK_RADIUS, caption=TIER_ACT_RADIUS,
+                value=0.01, min_value=0., max_value=0.2)
             if dlg.ShowModal() == wx.ID_CANCEL:
                 wx.LogMessage("Radius: cancelled.")
                 return
-            radius_str = dlg.GetValue()
+            radius = dlg.GetValue()
             dlg.Destroy()
-            self._viewpanel.radius_tiers(radius_str)
+            self._viewpanel.radius_tiers(radius)
         
         elif btn_name == "tier_stat_view":
             nbf, nbt = self._viewpanel.get_checked_nb()

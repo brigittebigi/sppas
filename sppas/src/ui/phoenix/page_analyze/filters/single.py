@@ -40,12 +40,6 @@
 
 import wx
 import wx.dataview
-try:
-    from agw import floatspin as FS
-    import agw.ultimatelistctrl as ulc
-except ImportError:
-    import wx.lib.agw.floatspin as FS
-    import wx.lib.agw.ultimatelistctrl as ulc
 
 from sppas.src.config import msg
 from sppas.src.utils import u

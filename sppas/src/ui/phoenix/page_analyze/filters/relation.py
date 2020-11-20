@@ -52,11 +52,8 @@ from sppas.src.utils import u
 
 from sppas.src.ui.phoenix.windows import sppasDialog
 from sppas.src.ui.phoenix.windows import sppasPanel
-from sppas.src.ui.phoenix.windows import sppasToolbar
-from sppas.src.ui.phoenix.windows import BitmapTextButton
 from sppas.src.ui.phoenix.windows import CheckButton
 from sppas.src.ui.phoenix.windows import sppasTextCtrl, sppasStaticText
-from sppas.src.ui.phoenix.windows.listctrl import sppasListCtrl
 
 # --------------------------------------------------------------------------
 

@@ -44,7 +44,7 @@ from .buttonbox import sppasToggleBoxPanel
 # ---------------------------------------------------------------------------
 
 
-class PopupToggleBox(wx.Dialog):
+class PopupToggleBox(wx.PopupWindow):
     """A dialog embedding a sppasToggleBoxPanel.
 
     :author:       Brigitte Bigi
@@ -60,13 +60,9 @@ class PopupToggleBox(wx.Dialog):
 
     def __init__(self, parent, choices, name="popup"):
         """Constructor"""
-        super(PopupToggleBox, self).__init__(
-            parent,
-            style=wx.WANTS_CHARS | wx.TAB_TRAVERSAL | wx.RESIZE_BORDER | wx.SIMPLE_BORDER,
-            name=name)
+        wx.PopupWindow.__init__(self, parent)
 
         sizer = wx.BoxSizer()
-
         tglbox = sppasToggleBoxPanel(self, choices=choices, majorDimension=1, name="togglebox")
         tglbox.SetVGap(0)
         tglbox.SetHGap(0)
@@ -183,7 +179,7 @@ class sppasComboBox(sppasPanel):
         txtbtn = TextButton(self, label=label, name="txtbtn")
         txtbtn.SetAlign(wx.ALIGN_LEFT)
         txtbtn.SetMinSize(wx.Size(-1, h))
-        txtbtn.Enable(False)
+        txtbtn.SetFocusWidth(0)
 
         arrowbtn = BitmapButton(self, name="arrow_combo")
         arrowbtn.SetMinSize(wx.Size(h, h))
