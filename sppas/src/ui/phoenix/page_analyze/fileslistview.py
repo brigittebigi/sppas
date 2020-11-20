@@ -52,10 +52,10 @@ from ..windows.dialogs import Confirm
 from ..views import MetaDataEdit
 from ..views import TiersView
 from ..views import StatsView
-from ..views import sppasTiersSingleFilterDialog
-from ..views import sppasTiersRelationFilterDialog
 from ..main_events import ViewEvent, EVT_VIEW
 
+from .filters.single import sppasTiersSingleFilterDialog
+from .filters.relation import sppasTiersRelationFilterDialog
 from .errfilelist import ErrorFileSummaryPanel
 from .medialist import AudioSummaryPanel
 from .trslist import TrsSummaryPanel
