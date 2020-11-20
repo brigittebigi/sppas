@@ -281,13 +281,13 @@ class sppasAnalyzePanel(sppasPanel):
 
     def save_files(self):
         """Save the files on disk."""
-        saved = list()
+        saved = 0
         for filename in self._viewpanel.get_files():
             s = self._viewpanel.save_file(filename)
             if s is True:
                 saved += 1
 
-        if len(saved) > 0:
+        if saved > 0:
             wx.LogMessage("{:d} files saved.".format(saved))
 
     # ------------------------------------------------------------------------

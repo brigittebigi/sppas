@@ -747,6 +747,8 @@ class TestRelationFilterTier(unittest.TestCase):
         ft2 = RelationFilterTier((["equals", "overlaps", "overlappedby", "starts", "startedby", "finishes", "finishedby", "contains", "during"], [("overlap_min", 0.04)]), fit=True)
         res2 = ft2.filter_tier(stier, ttier)
         self.assertEqual(15, len(res2))
+        for ann in res2:
+            print(ann)
 
         fit_tier = stier.fit(ttier)
         self.assertEqual(15, len(fit_tier))

@@ -1367,33 +1367,35 @@ class sppasTier(sppasMetaData):
             found_anns = self.find(b, e, overlaps=True)
 
             if len(found_anns) == 1:
+                labels = list()
+                for la in found_anns[0].get_labels():
+                    labels.append(la.copy())
                 # If there is only one annotation of self that is matching
                 # the annotation of other. fit result is [max begin ; min end]
                 bf = max(b, found_anns[0].get_lowest_localization())
                 ef = min(e, found_anns[0].get_highest_localization())
-                labels = [label.copy() for label in found_anns[0].get_labels()]
-
                 ft.create_annotation(sppasLocation(sppasInterval(bf.copy(), ef.copy())), labels)
 
             elif len(found_anns) > 1:
                 # If there are annotations of self that are matching the
-                # annotation of other. first and last can be sliced or extended.
+                # annotation of other. first and last can be sliced.
                 for i, ao in enumerate(found_anns):
-                    labels = [label.copy() for label in ao.get_labels()]
+                    labels = list()
+                    for la in ao.get_labels():
+                        labels.append(la.copy())
+
                     if ao is found_anns[0]:
                         bf = max(b, ao.get_lowest_localization())
-                        ft.create_annotation(
-                            sppasLocation(sppasInterval(bf.copy(), ao.get_highest_localization().copy()),
-                                          labels)
-                        )
+                        location = sppasLocation(sppasInterval(bf.copy(), ao.get_highest_localization().copy()))
+
                     elif ao is found_anns[-1]:
                         ef = min(e, ao.get_highest_localization())
-                        ft.create_annotation(
-                            sppasLocation(sppasInterval(ao.get_lowest_localization().copy(), ef.copy()),
-                                          labels)
-                        )
+                        location = sppasLocation(sppasInterval(ao.get_lowest_localization().copy(), ef.copy()))
+
                     else:
-                        ft.add(ao.copy())
+                        location = ao.get_location().copy()
+
+                    ft.create_annotation(location, labels)
 
         return ft
 
