@@ -230,7 +230,7 @@ class WxAppSettings(sppasBaseSettings):
         s = self.__get_font_pointsize()
 
         mono_font = wx.Font(s,    # point size
-                            wx.FONTFAMILY_MODERN,   # family,
+                            wx.FONTFAMILY_TELETYPE,   # family,
                             wx.FONTSTYLE_NORMAL,    # style,
                             wx.FONTWEIGHT_NORMAL,   # weight,
                             underline=False,

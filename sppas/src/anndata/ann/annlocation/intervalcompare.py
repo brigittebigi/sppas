@@ -427,12 +427,12 @@ class sppasIntervalCompare(sppasBaseCompare):
     # ---------------------------------------------------------------------------
 
     @staticmethod
-    def overlappedby(i1, i2, overlap_min=None, percent=False, **kwargs):
+    def overlappedby(i1, i2, overlapped_min=None, percent=False, **kwargs):
         """Return True if i1 overlapped by i2.
 
         :param i1:      |-------|
         :param i2:  |-------|
-        :param overlap_min: (int/float/sppasDuration) Minimum duration of the
+        :param overlapped_min: (int/float/sppasDuration) Minimum duration of the
             overlap between i1 and i2.
         :param percent: (bool) The min_dur parameter is a percentage of i1,
             instead of an absolute duration.
@@ -443,19 +443,19 @@ class sppasIntervalCompare(sppasBaseCompare):
         y1, y2 = sppasIntervalCompare._unpack(i2)
         is_overlap = y1 < x1 < y2 < x2
 
-        if is_overlap and overlap_min is not None:
+        if is_overlap and overlapped_min is not None:
             # create an interval of the overlap part.
             overlap_interval = sppasInterval(i1.get_begin(), i2.get_end())
             if percent is True:
-                if overlap_min < 0. or overlap_min > 100.:
-                    raise AnnDataValueError("min_dur/percentage", overlap_min)
+                if overlapped_min < 0. or overlapped_min > 100.:
+                    raise AnnDataValueError("min_dur/percentage", overlapped_min)
                 # relative duration (min_dur parameter represents a percentage of i1)
                 v, m = i1.duration().get_value(), i1.duration().get_margin()
-                duration = sppasDuration(v * float(overlap_min) / 100., m)
+                duration = sppasDuration(v * float(overlapped_min) / 100., m)
             else:
                 # absolute duration
                 # (min_dur parameter represents the minimum duration)
-                duration = overlap_min
+                duration = overlapped_min
             return overlap_interval.duration() >= duration
 
         return is_overlap
@@ -463,31 +463,25 @@ class sppasIntervalCompare(sppasBaseCompare):
     # ---------------------------------------------------------------------------
 
     @staticmethod
-    def overlappedby_equal(i1, i2, overlap_min=None, percent=False, **kwargs):
-        return sppasIntervalCompare.overlappedby(i1,
-                                                 i2,
-                                                 overlap_min,
-                                                 percent) and \
+    def overlappedby_equal(i1, i2, overlapped_min=None, percent=False, **kwargs):
+        return sppasIntervalCompare.overlappedby(i1, i2,
+                                                 overlapped_min, percent) and \
                i1.duration() == i2.duration()
 
     # ---------------------------------------------------------------------------
 
     @staticmethod
-    def overlappedby_greater(i1, i2, overlap_min=None, percent=False, **kwargs):
-        return sppasIntervalCompare.overlappedby(i1,
-                                                 i2,
-                                                 overlap_min,
-                                                 percent) and \
+    def overlappedby_greater(i1, i2, overlapped_min=None, percent=False, **kwargs):
+        return sppasIntervalCompare.overlappedby(i1, i2,
+                                                 overlap_min, percent) and \
                i1.duration() > i2.duration()
 
     # ---------------------------------------------------------------------------
 
     @staticmethod
-    def overlappedby_lower(i1, i2, overlap_min=None, percent=False, **kwargs):
-        return sppasIntervalCompare.overlappedby(i1,
-                                                 i2,
-                                                 overlap_min,
-                                                 percent) and \
+    def overlappedby_lower(i1, i2, overlapped_min=None, percent=False, **kwargs):
+        return sppasIntervalCompare.overlappedby(i1, i2,
+                                                 overlap_min, percent) and \
                i1.duration() < i2.duration()
 
     # ---------------------------------------------------------------------------

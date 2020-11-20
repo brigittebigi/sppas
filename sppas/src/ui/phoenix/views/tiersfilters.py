@@ -122,7 +122,7 @@ Relations = (
                ('meets', ' Meets', '', '', ''),
                ('metby', ' Met by', '', '', ''),
                ('overlaps', ' Overlaps', 'Min overlap\n in seconds: ', 0.030, 'overlap_min'),
-               ('overlappedby', ' Overlapped by', 'Min overlap\n in seconds: ', 0.030, 'overlap_min'),
+               ('overlappedby', ' Overlapped by', 'Min overlap\n in seconds: ', 0.030, 'overlapped_min'),
                ('starts', ' Starts', '', '', ''),
                ('startedby', ' Started by', '', '', ''),
                ('finishes', ' Finishes', '', '', ''),
@@ -133,7 +133,8 @@ Relations = (
 
 Illustrations = (
                # equals
-               ('X |-----|\nY |-----|',
+               ('X |-----|\n'
+                'Y |-----|',
                 'Non efficient',
                 'Non efficient',
                 'X |\nY |'),
@@ -168,32 +169,38 @@ Illustrations = (
                 'Non efficient',
                 'Non efficient'),
                # starts
-               ('X |---|\nY |-----|',
+               ('X |---|\n'
+                'Y |-------|',
                 'Non efficient',
                 'Non efficient',
                 'Non efficient'),
                # startedby
-               ('X |-----|\nY |---|',
+               ('X |-------|\n'
+                'Y |---|',
                 'Non efficient',
                 'Non efficient',
                 'Non efficient'),
                # finishes
-               ('X |---|\nY    |------|',
+               ('X       |---|\n'
+                'Y |---------|',
                 'Non efficient',
                 'Non efficient',
                 'Non efficient'),
                # finishedby
-               ('X |------|\nY    |---|',
+               ('X |--------|\n'
+                'Y      |---|',
                 'Non efficient',
                 'Non efficient',
                 'Non efficient'),
                # during
-               ('X    |---|\nY |------|',
+               ('X    |---|\n'
+                'Y |--------|',
                 'Non efficient',
                 'X      |\nY |------|',
                 'Non efficient'),
                # contains
-               ('X |------|\nY    |---|',
+               ('X |--------|\n'
+                'Y    |---|',
                 'X |-----|\nY     |',
                 'Non efficient',
                 'Non efficient'),
@@ -1249,6 +1256,19 @@ class sppasTiersRelationFilterDialog(sppasDialog):
         self.FadeIn()
 
     # -----------------------------------------------------------------------
+
+    def SetFont(self, font):
+        sppasDialog.SetFont(self, font)
+        w = self.FindWindow("listctrl")
+        mono_font = wx.Font(font.GetPointSize(),    # point size
+                            wx.FONTFAMILY_TELETYPE,  # family,
+                            wx.FONTSTYLE_NORMAL,   # style,
+                            wx.FONTWEIGHT_NORMAL,  # weight,
+                            underline=False,
+                            encoding=wx.FONTENCODING_SYSTEM)
+        w.SetFont(mono_font)
+
+    # -----------------------------------------------------------------------
     # Public methods
     # -----------------------------------------------------------------------
 
@@ -1338,23 +1358,6 @@ class AllensRelationsTable(ulc.UltimateListCtrl):
         ulc.UltimateListCtrl.__init__(self, parent, agwStyle=agw_style, *args, **kwargs)
         self._optionCtrlList = []
         self.InitUI()
-        try:
-            self.SetFont(wx.GetApp().settings.mono_font)
-        except:
-            mono_font = wx.Font(12,  # point size
-                                wx.FONTFAMILY_TELETYPE,  # family,
-                                wx.FONTSTYLE_NORMAL,   # style,
-                                wx.FONTWEIGHT_NORMAL,  # weight,
-                                underline=False,
-                                encoding=wx.FONTENCODING_SYSTEM)
-            self.SetFont(mono_font)
-
-    # -----------------------------------------------------------------------
-
-    def SetFont(self, font):
-        """Sets a new font size, but not the font itself."""
-        s = font.GetPointSize()
-        self.GetFont().SetPointSize(s)
 
     # -----------------------------------------------------------------------
 
@@ -1452,7 +1455,7 @@ class TestPanel(sppasPanel):
 
     def __init__(self, parent, pos=wx.DefaultPosition, size=wx.DefaultSize):
         super(TestPanel, self).__init__(parent, pos=pos, size=size,
-                                        name="TestPanel-tiersfilter")
+                                        name="Tiers Filter")
 
         btn_tag = wx.Button(self,
                             label="+ Tag filter",

@@ -163,6 +163,11 @@ class RelationFilterTier(object):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
+    Example:
+
+        >>> ft = RelationFilterTier((["overlaps", "overlappedby"], [("overlap_min", 0.04)]), fit=False)
+        >>> res_tier = ft.filter_tier(tier_x, tier_y)
+
     """
 
     functions = ("rel")
@@ -205,9 +210,10 @@ class RelationFilterTier(object):
         # convert the set of annotations into a tier
         ft = ann_set.to_tier(name=out_tiername, annot_value=self.__annot_format)
 
-        # If the filters contain the option "fit"
         if self.__fit:
-            return ft.fit(tier_y)
+            result = ft.fit(tier_y)
+            result.set_name(out_tiername)
+            return result
 
         return ft
 
@@ -409,14 +415,14 @@ class sppasTierFilters(sppasBaseFilters):
 
         :Example:
 
-            >>> f.rel(other_tier, "equals",
-            >>>                   "overlaps",
-            >>>                   "overlappedby", min_overlap=0.04)
+            >>> f.rel(other_tier, "equals", "overlaps", "overlappedby",
+            >>>       overlap_min=0.04, overlapped_min=0.02)
 
         kwargs can be:
 
             - max_delay=value, used by before, after
-            - overlap_min=value, used by overlap, overlapped_by
+            - overlap_min=value, used by overlap,
+            - overlapped_min=value, used by overlappedby
             - percent=boolean, used by overlap, overlapped_by to define the overlap_min is a percentage
 
         """

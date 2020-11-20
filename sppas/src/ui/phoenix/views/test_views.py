@@ -94,7 +94,7 @@ class TestPanel(sppasPanel):
                          pos=(10, 200), size=(180, 70),
                          label="Metadata Edit", name="metadata_btn")
 
-        tiersfilters.TestPanel(self, pos=(10, 300), size=(500, 70))
+        tiersfilters.TestPanel(self, pos=(100, 300), size=(500, 70))
         textedit.TestPanel(self, pos=(10, 400), size=(200, 70))
 
         self.Bind(wx.EVT_BUTTON, self._process_event)
