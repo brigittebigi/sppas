@@ -44,19 +44,13 @@
 """
 
 import wx
-import os
-import wx.lib.gizmos as gizmos
-
-from sppas.src.config import paths  # used only in the Test Panel
 
 from sppas.src.ui.phoenix.windows.buttons import ToggleButton
 from sppas.src.ui.phoenix.windows.buttons import BitmapTextButton, BitmapButton
 from sppas.src.ui.phoenix.windows.panels import sppasImagePanel, sppasPanel
-from sppas.src.ui.phoenix.windows.frame import sppasImageFrame
 
 from .mediaevents import MediaEvents
 from .timeslider import TimeSliderPanel
-from .smmps import sppasMMPS  # used only in the Test Panel
 
 # ---------------------------------------------------------------------------
 
@@ -365,23 +359,25 @@ class sppasPlayerControlsPanel(sppasImagePanel):
 
     def _create_content(self):
         """Create the content of the panel."""
-        # Create the main anz_panels
-        panel1 = self.__create_widgets_left_panel(self)
-        panel3 = self.__create_widgets_right_panel(self)
-        panel2 = self.__create_transport_panel(self)
-        slider = TimeSliderPanel(self, name="slider_panel")
+        nav_panel = sppasPanel(self, name="nav_panel")
+        panel1 = self.__create_widgets_left_panel(nav_panel)
+        panel3 = self.__create_widgets_right_panel(nav_panel)
+        panel2 = self.__create_transport_panel(nav_panel)
 
         border = sppasPanel.fix_size(2)
         nav_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        nav_sizer.Add(panel1, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.Add(panel1, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
         nav_sizer.AddStretchSpacer(1)
-        nav_sizer.Add(panel2, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.Add(panel2, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
         nav_sizer.AddStretchSpacer(1)
-        nav_sizer.Add(panel3, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.Add(panel3, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_panel.SetSizer(nav_sizer)
+
+        slider = TimeSliderPanel(self, name="slider_panel")
 
         # Organize the panels into the main sizer
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(nav_sizer, 0, wx.EXPAND, 0)
+        sizer.Add(nav_panel, 0, wx.EXPAND, 0)
         sizer.Add(slider, 0, wx.EXPAND, 0)
 
         self.SetSizerAndFit(sizer)
@@ -554,336 +550,13 @@ class sppasPlayerControlsPanel(sppasImagePanel):
 # ---------------------------------------------------------------------------
 
 
-class PlayerExamplePanel(sppasPlayerControlsPanel):
-
-    # BG_IMAGE = os.path.join(paths.etc, "images", "bg_brushed_metal.jpg")
-
-    # ----------------------------------------------------------------------
-
-    def __init__(self, parent):
-        super(PlayerExamplePanel, self).__init__(
-            parent,
-            #image=PlayerExamplePanel.BG_IMAGE,
-            name="player_panel")
-
-        self.smmps = sppasMMPS(self)  # the SPPAS Multi Media Player system
-        # self.prev_time = None
-
-        btn1 = BitmapTextButton(self.widgets_left_panel, name="scroll_left")
-        self.SetButtonProperties(btn1)
-        self.AddLeftWidget(btn1)
-        btn1.Bind(wx.EVT_BUTTON, self._on_set_visible)
-
-        btn3 = BitmapTextButton(self.widgets_left_panel, name="expand_false")
-        self.SetButtonProperties(btn3)
-        self.AddLeftWidget(btn3)
-        btn3.Bind(wx.EVT_BUTTON, self._on_set_visible)
-
-        btn4 = BitmapTextButton(self.widgets_left_panel, name="expand_true")
-        self.SetButtonProperties(btn4)
-        self.AddLeftWidget(btn4)
-        btn4.Bind(wx.EVT_BUTTON, self._on_set_visible)
-
-        btn7 = BitmapTextButton(self.widgets_left_panel, name="scroll_zoom_all")
-        self.SetButtonProperties(btn7)
-        self.AddLeftWidget(btn7)
-        btn7.Bind(wx.EVT_BUTTON, self._on_set_visible)
-
-        btn5 = BitmapTextButton(self.widgets_left_panel, name="scroll_to_selection")
-        self.SetButtonProperties(btn5)
-        self.AddLeftWidget(btn5)
-        btn5.Bind(wx.EVT_BUTTON, self._on_set_visible)
-
-        btn6 = BitmapTextButton(self.widgets_left_panel, name="scroll_zoom_selection")
-        self.SetButtonProperties(btn6)
-        self.AddLeftWidget(btn6)
-        btn6.Bind(wx.EVT_BUTTON, self._on_set_visible)
-
-        btn2 = BitmapTextButton(self.widgets_left_panel, name="scroll_right")
-        self.SetButtonProperties(btn2)
-        self.AddLeftWidget(btn2)
-        btn2.Bind(wx.EVT_BUTTON, self._on_set_visible)
-
-        led = gizmos.LEDNumberCtrl(self.widgets_left_panel, name="moment_led")
-        led.SetValue("0.000")
-        led.SetAlignment(gizmos.LED_ALIGN_RIGHT)
-        led.SetDrawFaded(True)
-        led.SetMinSize(wx.Size(self.get_font_height()*10, self.get_font_height()*3))
-        led.SetForegroundColour(wx.Colour(40, 90, 220))
-        self.AddLeftWidget(led)
-
-        # Events
-        # Custom event to inform the media is loaded
-        self.smmps.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
-        self.smmps.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
-        # Event received every X ms when the audio is playing
-        self.Bind(wx.EVT_TIMER, self._on_timer)
-
-        self.Layout()
-
-    # ----------------------------------------------------------------------
-
-    def load_files(self, with_threads=True):
-        self.FindWindow("media_play").Enable(False)
-
-        # Loading the videos with threads make the app crashing under MacOS:
-        # Python[31492:1498940] *** Terminating app due to uncaught exception
-        # 'NSInternalInconsistencyException', reason: 'NSWindow drag regions
-        # should only be invalidated on the Main Thread!'
-        player = sppasImageFrame(
-            parent=self,  # if parent is destroyed, the frame will be too
-            title="Video",
-            style=wx.CAPTION | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT)
-
-        self.smmps.add_video([os.path.join(paths.samples, "faces", "video_sample.mp4")],
-                             player)
-
-        # To load files in parallel, with threads:
-        if with_threads is True:
-            self.smmps.add_audio(
-                [os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"),
-                 os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"),
-                 os.path.join(paths.samples, "samples-eng", "oriana1.wav"),
-                 os.path.join(paths.samples, "samples-eng", "oriana2.WAV"),
-                 ])
-
-        else:
-            # To load files sequentially, without threads:
-            self.smmps.add_audio(os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"))
-            self.smmps.add_audio(os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"))
-            self.smmps.add_audio(os.path.join(paths.samples, "samples-eng", "oriana1.wav"))
-            self.smmps.add_audio(os.path.join(paths.samples, "samples-eng", "oriana2.WAV"))
-
-    # ----------------------------------------------------------------------
-
-    def __on_media_loaded(self, event):
-        filename = event.filename
-        self.smmps.enable(filename)
-        self.FindWindow("media_play").Enable(True)
-        self.FindWindow("media_pause").Enable(True)
-
-        duration = self.smmps.get_duration()
-        self._timeslider.set_duration(duration)
-        # Under MacOS, the following line enters in an infinite loop with the message:
-        #   In file /Users/robind/projects/bb2/dist-osx-py38/build/ext/wxWidgets/src/unix/threadpsx.cpp at line 370: 'pthread_mutex_[timed]lock()' failed with error 0x00000023 (Resource temporarily unavailable).
-        # Under Linux it crashes with the message:
-        #   pure virtual method called
-        # self.smmps.set_period(0., duration)
-
-        # to test if it works, set a selection period and a visible period:
-        self._timeslider.set_visible_range(3.45, 7.08765)
-        self._timeslider.set_selection_range(5.6, 6.8)
-        self.Layout()
-
-    # ----------------------------------------------------------------------
-
-    def __on_media_not_loaded(self, event):
-        filename = event.filename
-        wx.LogError("File {} not loaded".format(filename))
-        # self.smmps.remove(filename)
-
-    # -----------------------------------------------------------------------
-    # the methods to override...
-    # -----------------------------------------------------------------------
-
-    def play(self):
-        wx.LogDebug("Play")
-        if self.smmps.is_playing() is False and self.smmps.is_loading() is False:
-            if self.smmps.is_paused() is False:
-                start, end = self._timeslider.get_range()
-                self.smmps.set_period(start, end)
-            played = self.smmps.play()
-            if played is True:
-                # self.prev_time = datetime.datetime.now()
-                self.FindWindow("media_pause").SetValue(False)
-
-    # -----------------------------------------------------------------------
-
-    def pause(self):
-        pause_status = self.FindWindow("media_pause").GetValue()
-
-        # It was asked to pause
-        if pause_status is True:
-            # and the audio is not already paused
-            if self.smmps.is_paused() is False:
-                paused = self.smmps.pause()
-                if paused is not True:
-                    # but paused was not done in the audio
-                    self.FindWindow("media_pause").SetValue(False)
-                else:
-
-                    # Put the slider exactly at the right time position
-                    position = self.smmps.tell()
-                    self._timeslider.set_value(position)
-                    self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
-
-        else:
-            # it was asked to end pausing
-            if self.smmps.is_paused() is True:
-                self.play()
-
-    # -----------------------------------------------------------------------
-
-    def stop(self):
-        wx.LogDebug("Stop")
-        self.smmps.stop()
-        # self.prev_time = None
-        self.DeletePendingEvents()
-        self.FindWindow("media_pause").SetValue(False)
-
-        # Put the slider exactly at the right time position
-        position = self.smmps.tell()
-        self._timeslider.set_value(position)
-        self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
-
-    # -----------------------------------------------------------------------
-
-    def media_rewind(self):
-        """Seek media 10% earlier."""
-        wx.LogDebug("Rewind")
-        d = self.smmps.get_duration()
-        d /= 10.
-        cur = self.smmps.tell()
-        period = self._timeslider.get_range()
-
-        self.smmps.seek(max(period[0], cur - d))
-        position = self.smmps.tell()
-        self._timeslider.set_value(position)
-        self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
-
-    # -----------------------------------------------------------------------
-
-    def media_forward(self):
-        """Override. Seek media 10% later."""
-        wx.LogDebug("Forward")
-        duration = self.smmps.get_duration()
-        d = duration / 10.
-        cur = self.smmps.tell()
-        period = self._timeslider.get_range()
-        position = min(cur + d, period[1])
-
-        # if we reach the end of the stream for the given period
-        if position == period[1] and self.IsReplay() is True:
-            position = 0.  # restart from the beginning
-
-        self.smmps.seek(position)
-        position = self.smmps.tell()
-        self._timeslider.set_value(position)
-        self.FindWindow("moment_led").SetValue("{:.3f}".format(position))
-
-    # -----------------------------------------------------------------------
-
-    def media_seek(self, value):
-        """Override. Seek media at given time value."""
-        wx.LogDebug("Seek at {}".format(value))
-        self.smmps.seek(value)
-        self._timeslider.set_value(value)
-        self.FindWindow("moment_led").SetValue("{:.3f}".format(value))
-
-    # -----------------------------------------------------------------------
-
-    def media_period(self, start, end):
-        """Override. The slider changed the range of time."""
-        # as a consequence, the "moment" can have changed too.
-        value = self.smmps.tell()
-        self._timeslider.set_value(value)
-        self.FindWindow("moment_led").SetValue("{:.3f}".format(value))
-
-    # ----------------------------------------------------------------------
-
-    def _on_timer(self, event):
-        # at least one audio is still playing
-        if self.smmps.is_playing() is True:
-            # if we doesn't want to update the slider so frequently:
-            # cur_time = datetime.datetime.now()
-            # delta = cur_time - self.prev_time
-            # delta_seconds = delta.seconds + delta.microseconds / 1000000.
-            # if delta_seconds > self.delta_slider:
-            # self.prev_time = cur_time
-            time_pos = self.smmps.tell()
-            self._timeslider.set_value(time_pos)
-            self.FindWindow("moment_led").SetValue("{:.3f}".format(time_pos))
-
-        # all enabled audio are now stopped
-        elif self.smmps.are_stopped() is True:
-            self.stop()
-            if self.IsReplay() is True:
-                self.play()
-
-        # event.Skip()
-
-    # ----------------------------------------------------------------------
-
-    def _on_set_visible(self, event):
-        """Change the visible part.
-
-        Scroll the visible part, depending on its current duration:
-            - reduce of 50%
-            - increase of 100%
-            - shift 80% before
-            - shift 80% after
-
-        """
-        evt_obj = event.GetEventObject()
-        cur_period = self._timeslider.get_range()
-        start = self._timeslider.get_visible_start()
-        end = self._timeslider.get_visible_end()
-        dur = end - start
-        if evt_obj.GetName() == "expand_false":
-            shift = dur / 4.
-            self._timeslider.set_visible_range(start + shift, end - shift)
-        elif evt_obj.GetName() == "expand_true":
-            shift = dur / 2.
-            self._timeslider.set_visible_range(start - shift, end + shift)
-        elif evt_obj.GetName() == "scroll_left":
-            shift = 0.8 * dur
-            if start > 0.:
-                self._timeslider.set_visible_range(start - shift, end - shift)
-        elif evt_obj.GetName() == "scroll_right":
-            shift = 0.8 * dur
-            if end < self._timeslider.get_duration():
-                self._timeslider.set_visible_range(start + shift, end + shift)
-        elif evt_obj.GetName() == "scroll_to_selection":
-            sel_start = self._timeslider.get_selection_start()
-            sel_end = self._timeslider.get_selection_end()
-            sel_middle = sel_start + ((sel_end - sel_start) / 2.)
-            shift = dur / 2.
-            self._timeslider.set_visible_range(sel_middle - shift, sel_middle + shift)
-        elif evt_obj.GetName() == "scroll_zoom_selection":
-            sel_start = self._timeslider.get_selection_start()
-            sel_end = self._timeslider.get_selection_end()
-            self._timeslider.set_visible_range(sel_start, sel_end)
-        elif evt_obj.GetName() == "scroll_zoom_all":
-            end = self._timeslider.get_duration()
-            self._timeslider.set_visible_range(0., end)
-        else:
-            wx.LogError("Unknown visible action {}".format(evt_obj.GetName()))
-            return
-
-        self._timeslider.Layout()
-        self._timeslider.Refresh()
-
-        new_period = self._timeslider.get_range()
-        if new_period != cur_period:
-            self.smmps.set_period(new_period[0], new_period[1])
-
-# ---------------------------------------------------------------------------
-
-
 class TestPanel(sppasPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="PlayControls Panel")
 
-        button = wx.Button(self, -1, pos=(10, 10), size=(100, 50), label="LOAD", name="load_button")
-        panel = PlayerExamplePanel(self)
+        panel = sppasPlayerControlsPanel(self)
         panel.SetMinSize(wx.Size(640, 120))
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(button, 0)
         s.Add(panel, 1, wx.EXPAND)
         self.SetSizer(s)
-        button.Bind(wx.EVT_BUTTON, self._on_load)
-
-    def _on_load(self, event):
-        self.FindWindow("player_panel").load_files()
-        self.FindWindow("load_button").Enable(False)

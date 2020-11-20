@@ -74,7 +74,7 @@ class SMMPCPanel(sppasVerticalRisePanel):
 
         # Create the GUI
         mmpc = sppasMMPCtrl(self, name="smmpc_panel")
-        mmpc.SetButtonWidth(32)
+        mmpc.SetButtonWidth(24)
         self.SetPane(mmpc)
 
         # Look&feel

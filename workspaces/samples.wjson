@@ -6,7 +6,7 @@
     "paths": [
         {
             "id": "/Users/bigi/Projects/sppas/samples/samples-eng",
-            "rel": "../../../../../Users/bigi/Projects/sppas/samples/samples-eng",
+            "rel": "../../../../Users/bigi/Projects/sppas/samples/samples-eng",
             "roots": [
                 {
                     "id": "ENG_M15_ENG_T02",
@@ -97,7 +97,7 @@
         },
         {
             "id": "/Users/bigi/Projects/sppas/samples/samples-fra",
-            "rel": "../../../../../Users/bigi/Projects/sppas/samples/samples-fra",
+            "rel": "../../../../Users/bigi/Projects/sppas/samples/samples-fra",
             "roots": [
                 {
                     "id": "AC track_0379",

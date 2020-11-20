@@ -192,7 +192,14 @@ class sppasTierWindow(sppasDataWindow):
     # -----------------------------------------------------------------------
 
     def DrawBackground(self, dc, gc):
-        pass
+        x, y, w, h = self.GetContentRect()
+        brush = self.GetBackgroundBrush()
+        if brush is not None:
+            dc.SetBackground(brush)
+            dc.Clear()
+        dc.SetBrush(brush)
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.DrawRectangle(0, 0, w, h)
 
     # -----------------------------------------------------------------------
 
@@ -213,18 +220,6 @@ class sppasTierWindow(sppasDataWindow):
 
         else:
             # Do not display the annotations but the infos about the tier.
-
-            # Fill in the background
-            c1 = self.GetBackgroundColour()
-            c2 = c1.ChangeLightness(50)
-            mid1 = h // 3
-            mid2 = h - (h // 3)
-            # top-mid1 gradient
-            box_rect = wx.Rect(0, 1, w, mid1+1)
-            dc.GradientFillLinear(box_rect, c2, c1, wx.SOUTH)
-            # bottom-mid1 gradient
-            box_rect = wx.Rect(0, mid2, w, mid1+2)
-            dc.GradientFillLinear(box_rect, c1, c2, wx.SOUTH)
 
             # Show infos
             tier_name = self._data.get_name()
@@ -322,10 +317,13 @@ class TestPanel(sppasPanel):
         self.p1 = sppasTierWindow(self, pos=(10, 10), size=(300, 24), data=trs[0])
         self.p1.set_visible_period(2.49, 3.49)
         self.p1.SetBackgroundColour(wx.YELLOW)
+
         self.p2 = sppasTierWindow(self, pos=(10, 100), size=(300, 48), data=trs[1])
         self.p2.set_visible_period(2.49, 3.49)
         self.p2.SetBackgroundColour(wx.LIGHT_GREY)
+
         self.p3 = sppasTierWindow(self, pos=(10, 100), size=(300, 48), data=trs[1])
+        self.p3.SetBackgroundColour(wx.Colour(200, 240, 220))
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(self.p1, 0, wx.EXPAND)

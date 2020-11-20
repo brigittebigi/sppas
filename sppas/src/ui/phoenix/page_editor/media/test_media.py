@@ -67,21 +67,21 @@ class TestPanel(wx.Choicebook):
 
         p = timeslider.TestPanel(self)
         self.AddPage(p, p.GetName())
-        #
-        # p = audiopanel.TestPanel(self)
-        # self.AddPage(p, p.GetName())
-        #
-        # p = videopanel.TestPanel(self)
-        # self.AddPage(p, p.GetName())
-        #
-        # p = baseplaypanel.TestPanel(self)
-        # self.AddPage(p, p.GetName())
-        #
-        # p = smmps.TestPanel(self)
-        # self.AddPage(p, p.GetName())
-        #
-        # p = smmpctrl.TestPanel(self)
-        # self.AddPage(p, p.GetName())
+
+        p = audiopanel.TestPanel(self)
+        self.AddPage(p, p.GetName())
+
+        p = videopanel.TestPanel(self)
+        self.AddPage(p, p.GetName())
+
+        p = baseplaypanel.TestPanel(self)
+        self.AddPage(p, p.GetName())
+
+        p = smmps.TestPanel(self)
+        self.AddPage(p, p.GetName())
+
+        p = smmpctrl.TestPanel(self)
+        self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
