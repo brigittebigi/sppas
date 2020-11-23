@@ -75,7 +75,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
 
     """
 
-    def __init__(self, parent, filename, name="listview-panel"):
+    def __init__(self, parent, filename, name="trs_panel"):
         if os.path.exists(filename) is True:
             try:
                 # Before creating the trs, check if the file is supported.
@@ -91,25 +91,15 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
 
         super(TrsSummaryPanel, self).__init__(parent, filename, name)
         self._dirty = dirty
-        self._hicolor = wx.Colour(200, 200, 180)
         self.__set_metadata()
         self.__set_selected(self._trs.get_meta("private_selected"))
         self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
 
         self.Collapse(self.str_to_bool(self._trs.get_meta("private_collapsed")))
-
-    # -----------------------------------------------------------------------
-
-    def SetBackgroundColour(self, colour):
-        """Override."""
-        # set this bg color to all objects
-        wx.Panel.SetBackgroundColour(self, colour)
-        for c in self.GetChildren():
-            c.SetBackgroundColour(colour)
-
-        # but the tools can have a different one (when selected for example)
-        if self._trs.get_meta("private_selected", "False") == "True":
-            self.GetToolsPane().SetBackgroundColour(self._hicolor)
+        self._hicolor = wx.Colour(200, 200, 180)
+        self._rgb1 = (245, 240, 160)
+        self._rgb2 = (255, 255, 205)
+        self.SetRandomBackgroundColour()
 
     # -----------------------------------------------------------------------
 
@@ -119,7 +109,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
         if self._trs.get_meta("private_selected", "False") == "True":
             self.GetToolsPane().SetBackgroundColour(self._hicolor)
         else:
-            self.GetToolsPane().SetBackgroundColour(self.GetBackgroundColour())
+            self.GetToolsPane().SetBackgroundColour(self._tools_bg_color)
         self.Refresh()
 
     # -----------------------------------------------------------------------
@@ -665,7 +655,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
             if self._trs.get_meta("private_selected", "False") == "True":
                 self.GetToolsPane().SetBackgroundColour(self._hicolor)
             else:
-                self.GetToolsPane().SetBackgroundColour(self.GetBackgroundColour())
+                self.GetToolsPane().SetBackgroundColour(self._tools_bg_color)
 
             self.Refresh()
 
@@ -693,7 +683,6 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
             if vocab.get_meta("private_checked", None) is None:
                 vocab.set_meta("private_checked", "False")
 
-
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
 # ----------------------------------------------------------------------------
@@ -712,9 +701,8 @@ class TestPanel(wx.lib.scrolledpanel.ScrolledPanel):
         f3 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P9-palign.xra")
         p1 = TrsSummaryPanel(self, f1)
         p2 = TrsSummaryPanel(self, f2)
-        p2.SetBackgroundColour(wx.RED)
         p3 = TrsSummaryPanel(self, f3)
-        p3.SetBackgroundColour(wx.BLUE)
+
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p1)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p2)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p3)

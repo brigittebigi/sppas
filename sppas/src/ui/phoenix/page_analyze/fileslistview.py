@@ -160,7 +160,7 @@ class ListViewFilesPanel(sppasScrolledPanel):
     def __init__(self, parent, name="summaryfiles_panel"):
         super(ListViewFilesPanel, self).__init__(
             parent,
-            style=wx.BORDER_NONE | wx.ALWAYS_SHOW_SB | wx.HSCROLL | wx.VSCROLL,
+            style=wx.BORDER_NONE | wx.ALWAYS_SHOW_SB | wx.VSCROLL,
             name=name)
 
         # The files of this panel (key=name, value=wx.SizerItem)
@@ -172,13 +172,13 @@ class ListViewFilesPanel(sppasScrolledPanel):
 
         # Look&feel
         try:
-            self.SetBackgroundColour(wx.GetApp().settings.bg_color)
+            wx.Window.SetBackgroundColour(self, wx.GetApp().settings.bg_color)
             self.SetForegroundColour(wx.GetApp().settings.fg_color)
             self.SetFont(wx.GetApp().settings.text_font)
         except AttributeError:
             self.InheritAttributes()
 
-        self.SetupScrolling(scroll_x=True, scroll_y=True)
+        self.SetupScrolling(scroll_x=False, scroll_y=True)
         self.Bind(EVT_VIEW, self._process_view_event)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged)
 
@@ -205,20 +205,7 @@ class ListViewFilesPanel(sppasScrolledPanel):
 
     def SetBackgroundColour(self, colour):
         wx.Window.SetBackgroundColour(self, colour)
-        self.SetChildrenBackgroundColour()
-
-    # -----------------------------------------------------------------------
-
-    def SetChildrenBackgroundColour(self):
-        colour = self.GetBackgroundColour()
-        r, g, b = colour.Red(), colour.Green(), colour.Blue()
-        delta = 10
-        if (r + g + b) > 384:
-            cc = wx.Colour(r, g, b, 50).ChangeLightness(100 - delta)
-        else:
-            cc = wx.Colour(r, g, b, 50).ChangeLightness(100 + delta)
-        for c in self.GetChildren():
-            c.SetBackgroundColour(cc)
+        # do not propagate the bg to children
 
     # -----------------------------------------------------------------------
     # Manage the files
@@ -590,7 +577,6 @@ class ListViewFilesPanel(sppasScrolledPanel):
         self._files[name] = panel
 
         border = sppasPanel.fix_size(10)
-        self.SetChildrenBackgroundColour()
         self.GetSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border)
         self.Layout()
         self.ScrollChildIntoView(panel)
@@ -620,7 +606,6 @@ class ListViewFilesPanel(sppasScrolledPanel):
         self._files[name] = panel
 
         border = sppasPanel.fix_size(10)
-        self.SetChildrenBackgroundColour()
         self.GetSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border)
 
     # -----------------------------------------------------------------------
