@@ -60,7 +60,6 @@ from .errfilelist import ErrorFileSummaryPanel
 from .medialist import AudioSummaryPanel
 
 from .datalist.trsrisepanel import TrsSummaryPanel
-# from .trslist import TrsSummaryPanel
 
 # ----------------------------------------------------------------------------
 
