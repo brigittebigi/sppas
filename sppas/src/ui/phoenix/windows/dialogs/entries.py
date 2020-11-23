@@ -97,16 +97,17 @@ class sppasChoiceDialog(sppasBaseMessageDialog):
 
         p = sppasPanel(self)
         txt = sppasMessageText(p, message)
+
         choice = sppasComboBox(p, choices=c, name="choices")
         choice.SetMinSize(wx.Size(-1, sppasPanel.fix_size(self.get_font_height()*2)))
 
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(txt, 0, wx.ALL | wx.EXPAND, sppasPanel.fix_size(8))
+        s.Add(txt, 0, wx.ALL | wx.EXPAND, sppasPanel.fix_size(4))
         s.Add(choice, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, sppasPanel.fix_size(4))
 
-        h = p.get_font_height()
         p.SetSizer(s)
-        p.SetMinSize(wx.Size(-1, (len(c)+2) * h * 2))
+        # h = p.get_font_height()
+        # p.SetMinSize(wx.Size(-1, (len(c)+2) * h * 2))
         self.SetContent(p)
 
     # -----------------------------------------------------------------------
