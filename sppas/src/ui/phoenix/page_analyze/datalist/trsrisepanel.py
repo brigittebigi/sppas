@@ -182,7 +182,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
 
     def check_tier(self, name):
         """Check tier matching the given regexp. Uncheck the others."""
-        panel = self.FindWindow("tiers_panel")
+        panel = self.FindWindow("tiers_listctrl")
         for tier in self._trs.get_tier_list():
             is_matching = re.match(name, tier.get_name())
             if is_matching is not None:
@@ -200,7 +200,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
 
     def uncheck_tier(self):
         """Uncheck tiers."""
-        panel = self.FindWindow("tiers_panel")
+        panel = self.FindWindow("tiers_listctrl")
         for tier in self._trs.get_tier_list():
             if tier.get_meta("private_checked") == "True":
                 tier.set_meta("private_checked", "False")
@@ -217,7 +217,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
         """
         if len(new_name) == 0:
             new_name = None
-        panel = self.FindWindow("tiers_panel")
+        panel = self.FindWindow("tiers_listctrl")
         for tier in self._trs.get_tier_list():
             if tier.get_meta("private_checked") == "True":
                 old_name = tier.get_name()
@@ -237,7 +237,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
         :param tier_id: (str or None)
 
         """
-        panel = self.FindWindow("tiers_panel")
+        panel = self.FindWindow("tiers_listctrl")
         if tier_id is not None:
             tier = self._trs.find_id(tier_id)
             if tier is not None:
@@ -309,7 +309,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
 
         """
         added = 0
-        panel = self.FindWindow("tiers_panel")
+        panel = self.FindWindow("tiers_listctrl")
 
         # Append clipboard tiers to the transcription
         for tier in clipboard:
@@ -332,7 +332,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
 
     def duplicate_tier(self):
         """Duplicate the checked tiers."""
-        panel = self.FindWindow("tiers_panel")
+        panel = self.FindWindow("tiers_listctrl")
 
         nb = 0
         for tier in reversed(self._trs.get_tier_list()):
@@ -353,7 +353,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
 
     def move_up_tier(self):
         """Move up the checked tiers (except for the first one)."""
-        panel = self.FindWindow("tiers_panel")
+        panel = self.FindWindow("tiers_listctrl")
 
         for i, tier in enumerate(self._trs.get_tier_list()):
             if tier.get_meta("private_checked") == "True" and i > 0:
@@ -370,7 +370,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
 
     def move_down_tier(self):
         """Move down the checked tiers (except for the last one)."""
-        panel = self.FindWindow("tiers_panel")
+        panel = self.FindWindow("tiers_listctrl")
 
         i = len(self._trs.get_tier_list())
         for tier in reversed(self._trs.get_tier_list()):
@@ -432,7 +432,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
         :param out_tiername: (str)
 
         """
-        panel = self.FindWindow("tiers_panel")
+        panel = self.FindWindow("tiers_listctrl")
         nb = 0
 
         ft = SingleFilterTier(filters, annot_format, match_all)
@@ -462,7 +462,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
         :param out_tiername: (str)
 
         """
-        panel = self.FindWindow("tiers_panel")
+        panel = self.FindWindow("tiers_listctrl")
         if self.get_nb_checked_tier() == 0:
             return 0
         y_tier = self._trs.find(y_tiername)
@@ -525,10 +525,10 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
         child_panel = self.GetPane()
 
         # Display the list of tiers
-        tier_ctrl = TiersListCtrl(child_panel, self._trs.get_tier_list())
+        tier_ctrl = TiersListCtrl(child_panel, self._trs.get_tier_list(), name="tiers_listctrl")
 
         # Display the list of medias
-        media_ctrl = MediaListCtrl(child_panel, self._trs.get_media_list())
+        media_ctrl = MediaListCtrl(child_panel, self._trs.get_media_list(), name="media_listctrl")
         if isinstance(self._trs, sppasBaseIO) is False:
             media_ctrl.Hide()
         else:
@@ -536,7 +536,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
                 media_ctrl.Hide()
 
         # Display the list of controlled vocabulaties
-        vocab_ctrl = CtrlVocabListCtrl(child_panel, self._trs.get_ctrl_vocab_list())
+        vocab_ctrl = CtrlVocabListCtrl(child_panel, self._trs.get_ctrl_vocab_list(), name="vocab_listctrl")
         if isinstance(self._trs, sppasBaseIO) is False:
             vocab_ctrl.Hide()
         else:
@@ -625,7 +625,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
 
     def update(self):
         """Update the controls to match the data."""
-        panel = self.FindWindow("tiers_panel")
+        panel = self.FindWindow("tiers_listctrl")
         for i, tier in enumerate(self._trs.get_tier_list()):
             #self.__update_tier(tier, i)
             panel.add_item(tier)

@@ -55,11 +55,8 @@ class MediaListCtrl(BaseObjectListCtrl):
 
     """
 
-    def __init__(self, parent, objects):
-        super(MediaListCtrl, self).__init__(
-            parent,
-            objects,
-            name="medias_listctrl")
+    def __init__(self, parent, objects, name="media_listctrl"):
+        super(MediaListCtrl, self).__init__(parent, objects, name=name)
 
     # ------------------------------------------------------------------------
 

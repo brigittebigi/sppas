@@ -55,11 +55,8 @@ class TiersListCtrl(BaseObjectListCtrl):
 
     """
 
-    def __init__(self, parent, objects):
-        super(TiersListCtrl, self).__init__(
-            parent,
-            objects,
-            name="tiers_listctrl")
+    def __init__(self, parent, objects, name="tiers_listctrl"):
+        super(TiersListCtrl, self).__init__(parent, objects, name=name)
 
     # ------------------------------------------------------------------------
 

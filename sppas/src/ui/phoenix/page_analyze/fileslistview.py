@@ -344,6 +344,7 @@ class ListViewFilesPanel(sppasScrolledPanel):
             panel = self._files[filename]
             if isinstance(panel, TrsSummaryPanel):
                 panel.delete_tier()
+                self.Layout()
 
     # -----------------------------------------------------------------------
 

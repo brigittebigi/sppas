@@ -55,11 +55,8 @@ class CtrlVocabListCtrl(BaseObjectListCtrl):
 
     """
 
-    def __init__(self, parent, objects):
-        super(CtrlVocabListCtrl, self).__init__(
-            parent,
-            objects,
-            name="vocabs_listctrl")
+    def __init__(self, parent, objects, name="vocabs_listctrl"):
+        super(CtrlVocabListCtrl, self).__init__(parent, objects, name=name)
 
     # ------------------------------------------------------------------------
 
