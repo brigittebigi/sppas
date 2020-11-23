@@ -29,8 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.tests.test_analyze.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.page_analyze.filters.test_filters.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -40,12 +40,7 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
-# Tested files are the ones with a TestPanel class:
-import sppas.src.ui.phoenix.page_analyze.basefilelist as baselist
-import sppas.src.ui.phoenix.page_analyze.errfilelist as errlist
-import sppas.src.ui.phoenix.page_analyze.medialist as medialist
-import sppas.src.ui.phoenix.page_analyze.fileslistview as listview
-import sppas.src.ui.phoenix.page_analyze.analyze as analyze
+import sppas.src.ui.phoenix.page_analyze.datalist.trsrisepanel as trsrisepanel
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -59,17 +54,7 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        # Make the bunch of test anz_panels for the choice book
-        p = baselist.TestPanel(self)
-        self.AddPage(p, p.GetName())
-        p = errlist.TestPanel(self)
-        self.AddPage(p, p.GetName())
-        p = medialist.TestPanel(self)
-        self.AddPage(p, p.GetName())
-
-        p = listview.TestPanel(self)
-        self.AddPage(p, p.GetName())
-        p = analyze.TestPanel(self)
+        p = trsrisepanel.TestPanel(self)
         self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)

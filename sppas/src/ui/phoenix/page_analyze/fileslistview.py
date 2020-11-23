@@ -58,7 +58,9 @@ from .filters.single import sppasTiersSingleFilterDialog
 from .filters.relation import sppasTiersRelationFilterDialog
 from .errfilelist import ErrorFileSummaryPanel
 from .medialist import AudioSummaryPanel
-from .trslist import TrsSummaryPanel
+
+from .datalist.trsrisepanel import TrsSummaryPanel
+# from .trslist import TrsSummaryPanel
 
 # ----------------------------------------------------------------------------
 
@@ -157,7 +159,10 @@ class ListViewFilesPanel(sppasScrolledPanel):
     """
 
     def __init__(self, parent, name="summaryfiles_panel"):
-        super(ListViewFilesPanel, self).__init__(parent, name=name)
+        super(ListViewFilesPanel, self).__init__(
+            parent,
+            style=wx.BORDER_NONE | wx.ALWAYS_SHOW_SB | wx.HSCROLL | wx.VSCROLL,
+            name=name)
 
         # The files of this panel (key=name, value=wx.SizerItem)
         self._files = dict()
@@ -174,9 +179,9 @@ class ListViewFilesPanel(sppasScrolledPanel):
         except AttributeError:
             self.InheritAttributes()
 
-        self.Layout()
         self.SetupScrolling(scroll_x=True, scroll_y=True)
         self.Bind(EVT_VIEW, self._process_view_event)
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged)
 
     # -----------------------------------------------------------------------
 
@@ -588,6 +593,9 @@ class ListViewFilesPanel(sppasScrolledPanel):
         border = sppasPanel.fix_size(10)
         self.SetChildrenBackgroundColour()
         self.GetSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border)
+        self.Layout()
+        self.ScrollChildIntoView(panel)
+        self.Refresh()
 
     # -----------------------------------------------------------------------
 
@@ -615,7 +623,6 @@ class ListViewFilesPanel(sppasScrolledPanel):
         border = sppasPanel.fix_size(10)
         self.SetChildrenBackgroundColour()
         self.GetSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border)
-        # self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, panel)
 
     # -----------------------------------------------------------------------
 
@@ -666,6 +673,7 @@ class ListViewFilesPanel(sppasScrolledPanel):
             try:
                 saved = panel.save()
                 if saved is True:
+                    self.notify(action="saved", filename=name)
                     wx.LogMessage("File {:s} saved successfully.".format(name))
             except Exception as e:
                 saved = False
@@ -765,6 +773,13 @@ class ListViewFilesPanel(sppasScrolledPanel):
 
         elif action == "close":
             closed = self.close_page(fn)
+
+    # ------------------------------------------------------------------------
+
+    def OnCollapseChanged(self, evt=None):
+        """One of the child panel was collapsed/expanded."""
+        self.Layout()
+        self.SendSizeEventToParent()
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py

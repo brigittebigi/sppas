@@ -272,8 +272,8 @@ class sppasAnalyzePanel(sppasPanel):
                 else:
                     try:
                         self._viewpanel.create_file(filename)
-                        self._viewpanel.Layout()
-                        self._viewpanel.Refresh()
+                        #self._viewpanel.Layout()
+                        #self._viewpanel.Refresh()
                     except Exception as e:
                         Error(str(e))
         dlg.Destroy()

@@ -29,15 +29,17 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.page_analyze.trslist.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ui.phoenix.page_analyze.datalist.trsrisepanel.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    A class to display objects embedded into a sppasTranscription (see anndata).
 
 """
 
-import os
 import re
+import os
 import wx
-import wx.lib.newevent
+import wx.lib.scrolledpanel
 
 from sppas.src.config import paths
 from sppas.src.anndata import sppasRW
@@ -47,19 +49,14 @@ from sppas.src.anndata.anndataexc import TrsAddError
 from sppas.src.analysis.tierfilters import SingleFilterTier
 from sppas.src.analysis.tierfilters import RelationFilterTier
 
-from ..views import MetaDataEdit
-from ..windows.listctrl import CheckListCtrl, sppasListCtrl
-from ..windows.panels import sppasPanel
-from ..windows.panels import sppasScrolledPanel
-from ..windows.panels import sppasCollapsiblePanel
+from sppas.src.ui.phoenix.views import MetaDataEdit
 
-from .basefilelist import sppasFileSummaryPanel
+from ..basefilelist import sppasFileSummaryPanel
 
-# ---------------------------------------------------------------------------
-# Internal use of an event, when an item is clicked.
-
-ItemClickedEvent, EVT_ITEM_CLICKED = wx.lib.newevent.NewEvent()
-ItemClickedCommandEvent, EVT_ITEM_CLICKED_COMMAND = wx.lib.newevent.NewCommandEvent()
+from .baseobjlist import EVT_ITEM_CLICKED
+from .tierslist import TiersListCtrl
+from .mediaslist import MediaListCtrl
+from .vocabslist import CtrlVocabListCtrl
 
 # ---------------------------------------------------------------------------
 
@@ -110,7 +107,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
         for c in self.GetChildren():
             c.SetBackgroundColour(colour)
 
-        # but the tools can have a different one
+        # but the tools can have a different one (when selected for example)
         if self._trs.get_meta("private_selected", "False") == "True":
             self.GetToolsPane().SetBackgroundColour(self._hicolor)
 
@@ -537,34 +534,30 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
         """Override. Create the child panel."""
         child_panel = self.GetPane()
 
-        # todo: add hierarchy
+        # Display the list of tiers
+        tier_ctrl = TiersListCtrl(child_panel, self._trs.get_tier_list())
 
-        tier_ctrl = TiersCollapsiblePanel(child_panel, self._trs.get_tier_list())
-        tier_ctrl.Collapse(self.str_to_bool(self._trs.get_meta("private_tiers_collapsed")))
-        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, tier_ctrl)
-
-        media_ctrl = MediaCollapsiblePanel(child_panel, self._trs.get_media_list())
-        media_ctrl.Collapse(self.str_to_bool(self._trs.get_meta("private_media_collapsed")))
-        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, media_ctrl)
+        # Display the list of medias
+        media_ctrl = MediaListCtrl(child_panel, self._trs.get_media_list())
         if isinstance(self._trs, sppasBaseIO) is False:
             media_ctrl.Hide()
         else:
             if self._trs.media_support() is False:
                 media_ctrl.Hide()
 
-        vocab_ctrl = CtrlVocabCollapsiblePanel(child_panel, self._trs.get_ctrl_vocab_list())
-        vocab_ctrl.Collapse(self.str_to_bool(self._trs.get_meta("private_vocabs_collapsed")))
-        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, vocab_ctrl)
+        # Display the list of controlled vocabulaties
+        vocab_ctrl = CtrlVocabListCtrl(child_panel, self._trs.get_ctrl_vocab_list())
         if isinstance(self._trs, sppasBaseIO) is False:
             vocab_ctrl.Hide()
         else:
             if self._trs.ctrl_vocab_support() is False:
                 vocab_ctrl.Hide()
 
+        # todo: display the list of hierarchy links
         # hy_ctrl = self.__create_hyctrl()
 
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(tier_ctrl, 0, wx.EXPAND)
+        s.Add(tier_ctrl, 0, wx.EXPAND | wx.TOP, sppasFileSummaryPanel.fix_size(8))
         s.Add(media_ctrl, 0, wx.EXPAND)
         s.Add(vocab_ctrl, 0, wx.EXPAND)
         # s.Add(hy_ctrl, 0, wx.EXPAND)
@@ -582,7 +575,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
     def _process_item_clicked(self, event):
         """Process an action event: an item was clicked.
 
-        The sender of the event is a Collapsible Panel.
+        The sender of the event is a CheckListCtrl.
 
         :param event: (wx.Event)
 
@@ -624,27 +617,6 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
 
         elif name == "tags":
             MetaDataEdit(self, [self._trs])
-
-    # ------------------------------------------------------------------------
-
-    def OnCollapseChanged(self, evt=None):
-        """One of the list child panel was collapsed/expanded."""
-        panel = evt.GetEventObject()
-        if panel.GetName() == "tiers_panel":
-            self._trs.set_meta("private_tiers_expanded", str(panel.IsExpanded()))
-        elif panel.GetName() == "media-panel":
-            self._trs.set_meta("private_media_expanded", str(panel.IsExpanded()))
-        elif panel.GetName() == "vocabs-panel":
-            self._trs.set_meta("private_vocab_expanded", str(panel.IsExpanded()))
-        else:
-            # what else?
-            return
-
-        # the size of a child panel changed, we need to layout
-        self.Layout()
-        # the parent could have to layout too because our size changed
-        evt.SetEventObject(self)
-        wx.PostEvent(self.GetParent(), evt)
 
     # ------------------------------------------------------------------------
 
@@ -712,440 +684,28 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
         for tier in self._trs.get_tier_list():
             if tier.get_meta("private_checked", None) is None:
                 tier.set_meta("private_checked", "False")
-        self._trs.set_meta("private_tiers_collapsed", str(len(self._trs.get_tier_list()) == 0))
 
         for media in self._trs.get_media_list():
             if media.get_meta("private_checked", None) is None:
                 media.set_meta("private_checked", "False")
-        self._trs.set_meta("private_media_collapsed", str(len(self._trs.get_media_list()) == 0))
 
         for vocab in self._trs.get_ctrl_vocab_list():
             if vocab.get_meta("private_checked", None) is None:
                 vocab.set_meta("private_checked", "False")
-        self._trs.set_meta("private_vocabs_collapsed", str(len(self._trs.get_ctrl_vocab_list()) == 0))
 
-# ---------------------------------------------------------------------------
-# Content of a Trs
-# ---------------------------------------------------------------------------
-
-
-class BaseObjectCollapsiblePanel(sppasCollapsiblePanel):
-    """A panel to display a list of objects.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    def __init__(self, parent, objects, label="", name="objects-panel"):
-        super(BaseObjectCollapsiblePanel, self).__init__(
-            parent, label=label, name=name)
-
-        self._create_content()
-        self._create_columns()
-        # self._setup_events()
-
-        # For convenience, objects identifiers are stored into a list.
-        self._trss = list()
-
-        # Fill in the controls with the data
-        self.update(objects)
-
-    # -----------------------------------------------------------------------
-    # Public methods
-    # -----------------------------------------------------------------------
-
-    def SetFont(self, font):
-        """Override."""
-        sppasCollapsiblePanel.SetFont(self, font)
-
-        # The change of font implies to re-draw all proportional objects
-        self.__set_pane_size()
-        self.Layout()
-
-    # ----------------------------------------------------------------------
-
-    def add(self, obj, index=None):
-        """Add an object in the listctrl child panel.
-
-        :param obj:
-        :param index: Position of the object in the list. If None, append.
-
-        """
-        if obj.get_id() in self._trss:
-            return False
-
-        self.__add_item(obj, index)
-        return True
-
-    # ----------------------------------------------------------------------
-
-    def remove(self, identifier):
-        """Remove an item of the listctrl child panel.
-
-        :param identifier: (str)
-        :return: (bool)
-
-        """
-        if identifier not in self._trss:
-            return False
-
-        self.__remove_item(identifier)
-        return True
-
-    # ------------------------------------------------------------------------
-
-    def change_state(self, identifier, state):
-        """Update the state of the given identifier.
-
-        :param identifier: (str)
-        :param state: (str) True or False
-
-        """
-        idx = self._trss.index(identifier)
-        if state == "True":
-            self._listctrl.Select(idx, on=1)
-        else:
-            self._listctrl.Select(idx, on=0)
-
-    # ------------------------------------------------------------------------
-
-    def update(self, lst_obj):
-        """Update each object of a given list.
-
-        :param lst_obj: (list of sppasTier)
-
-        """
-        for obj in lst_obj:
-            if obj.get_id() not in self._trss:
-                self.__add_item(obj, index=None)
-            else:
-                #self.change_state(obj.get_id(), obj.get_state())
-                self.update_item(obj)
-
-    # ------------------------------------------------------------------------
-    # Construct the GUI
-    # ------------------------------------------------------------------------
-
-    def _create_content(self):
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER  # | wx.LC_SINGLE_SEL
-        lst = CheckListCtrl(self, style=style, name="listctrl")
-        lst.SetAlternateRowColour(False)
-        lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
-        self.SetPane(lst)
-
-    # ------------------------------------------------------------------------
-
-    @property
-    def _listctrl(self):
-        return self.FindWindow("listctrl")
-
-    # ------------------------------------------------------------------------
-
-    def _create_columns(self):
-        """Create the columns to display the objects."""
-        raise NotImplementedError
-
-    # ------------------------------------------------------------------------
-
-    def __set_pane_size(self):
-        """Fix the size of the child panel."""
-        pxh = self.get_font_height()
-        n = self._listctrl.GetItemCount()
-        h = int(pxh * 2.)
-        self._listctrl.SetMinSize(wx.Size(-1, n * h))
-        self._listctrl.SetMaxSize(wx.Size(-1, (n * h) + pxh))
-
-    # ------------------------------------------------------------------------
-    # Management the list of tiers
-    # ------------------------------------------------------------------------
-
-    def __add_item(self, obj, index=None):
-        """Append an object."""
-        if index is None or index < 0 or index > self._listctrl.GetItemCount():
-            # Append
-            index = self._listctrl.InsertItem(self._listctrl.GetItemCount(), "")
-        else:
-            # Insert
-            index = self._listctrl.InsertItem(index, "")
-
-        self._trss.insert(index, obj.get_id())
-        self.update_item(obj)
-
-        self.__set_pane_size()
-        self.Layout()
-
-    # ------------------------------------------------------------------------
-
-    def __remove_item(self, identifier):
-        """Remove an object of the listctrl."""
-        idx = self._trss.index(identifier)
-        self._listctrl.DeleteItem(idx)
-
-        self._trss.pop(idx)
-        self.__set_pane_size()
-        self.Layout()
-
-    # ------------------------------------------------------------------------
-
-    def update_item(self, obj):
-        """Update information of an object, except its state."""
-        raise NotImplementedError
-
-    # ------------------------------------------------------------------------
-    # Management of the events
-    # ------------------------------------------------------------------------
-
-    def notify(self, identifier):
-        """The parent has to be informed of a change of content."""
-        evt = ItemClickedEvent(id=identifier)
-        evt.SetEventObject(self)
-        wx.PostEvent(self.GetParent(), evt)
-
-    # ------------------------------------------------------------------------
-
-    def __item_selected(self, event):
-        index = event.GetIndex()  # self._listctrl.GetFirstSelected()
-        self._listctrl.Select(index, on=False)
-
-        # notify parent to decide what has to be done
-        self.notify(self._trss[index])
-
-# ---------------------------------------------------------------------------
-
-
-class CtrlVocabCollapsiblePanel(BaseObjectCollapsiblePanel):
-    """A panel to display a list of controlled vocabs.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    def __init__(self, parent, objects):
-        super(CtrlVocabCollapsiblePanel, self).__init__(
-            parent,
-            objects,
-            label="Controlled vocabularies",
-            name="vocabs-panel")
-
-    # ------------------------------------------------------------------------
-
-    def _create_content(self):
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER  # | wx.LC_SINGLE_SEL
-        lst = sppasListCtrl(self, style=style, name="listctrl")
-        lst.SetAlternateRowColour(False)
-        lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
-        self.SetPane(lst)
-
-    # ------------------------------------------------------------------------
-
-    def _create_columns(self):
-        """Create a listctrl to display the objects."""
-        self._listctrl.AppendColumn("name",
-                                    format=wx.LIST_FORMAT_LEFT,
-                                    width=sppasPanel.fix_size(200))
-        self._listctrl.AppendColumn("description",
-                                    format=wx.LIST_FORMAT_LEFT,
-                                    width=sppasPanel.fix_size(80))
-        self._listctrl.AppendColumn("id",
-                                    format=wx.LIST_FORMAT_LEFT,
-                                    width=sppasPanel.fix_size(220))
-
-    # ------------------------------------------------------------------------
-
-    def update_item(self, obj):
-        """Update information of an object, except its state."""
-        if obj.get_id() in self._trss:
-            index = self._trss.index(obj.get_id())
-            self._listctrl.SetItem(index, 0, obj.get_name())
-            self._listctrl.SetItem(index, 1, obj.get_description())
-            self._listctrl.SetItem(index, 2, obj.get_id())
-            self._listctrl.RefreshItem(index)
-
-    # ------------------------------------------------------------------------
-
-    def __item_selected(self, event):
-        index = event.GetIndex()
-        self._listctrl.Select(index, on=False)
-
-# ---------------------------------------------------------------------------
-
-
-class MediaCollapsiblePanel(BaseObjectCollapsiblePanel):
-    """A panel to display a list of media.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    def __init__(self, parent, objects):
-        super(MediaCollapsiblePanel, self).__init__(
-            parent,
-            objects,
-            label="Media",
-            name="media-panel")
-
-    # ------------------------------------------------------------------------
-
-    def _create_content(self):
-        style = wx.BORDER_NONE | wx.LC_REPORT | wx.LC_NO_HEADER   # | wx.LC_SINGLE_SEL
-        lst = sppasListCtrl(self, style=style, name="listctrl")
-        lst.SetAlternateRowColour(False)
-        lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__item_selected)
-        self.SetPane(lst)
-
-    # ------------------------------------------------------------------------
-
-    def _create_columns(self):
-        """Create a listctrl to display the objects."""
-        self._listctrl.AppendColumn("filename",
-                                    format=wx.LIST_FORMAT_LEFT,
-                                    width=sppasPanel.fix_size(300))
-        self._listctrl.AppendColumn("mimeheader",
-                                    format=wx.LIST_FORMAT_LEFT,
-                                    width=sppasPanel.fix_size(80))
-        self._listctrl.AppendColumn("id",
-                                    format=wx.LIST_FORMAT_LEFT,
-                                    width=sppasPanel.fix_size(220))
-
-    # ------------------------------------------------------------------------
-
-    def update_item(self, obj):
-        """Update information of an object, except its state."""
-        if obj.get_id() in self._trss:
-            index = self._trss.index(obj.get_id())
-            self._listctrl.SetItem(index, 0, obj.get_filename())
-            self._listctrl.SetItem(index, 1, obj.get_mime_type())
-            self._listctrl.SetItem(index, 2, obj.get_id())
-            self._listctrl.RefreshItem(index)
-
-    # ------------------------------------------------------------------------
-
-    def __item_selected(self, event):
-        index = event.GetIndex()
-        self._listctrl.Select(index, on=False)
-
-# ---------------------------------------------------------------------------
-
-
-class TiersCollapsiblePanel(BaseObjectCollapsiblePanel):
-    """A panel to display a list of tiers.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      contact@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    """
-
-    def __init__(self, parent, objects):
-        super(TiersCollapsiblePanel, self).__init__(
-            parent,
-            objects,
-            label="Tiers",
-            name="tiers_panel")
-
-    # ------------------------------------------------------------------------
-
-    def _create_columns(self):
-        """Create a listctrl to display the objects."""
-        self._listctrl.AppendColumn("name",
-                                    format=wx.LIST_FORMAT_LEFT,
-                                    width=sppasPanel.fix_size(160))
-        self._listctrl.AppendColumn("len",
-                                    format=wx.LIST_FORMAT_LEFT,
-                                    width=sppasPanel.fix_size(30))
-        self._listctrl.AppendColumn("loctype",
-                                    format=wx.LIST_FORMAT_LEFT,
-                                    width=sppasPanel.fix_size(50))
-        self._listctrl.AppendColumn("begin",
-                                    format=wx.LIST_FORMAT_LEFT,
-                                    width=sppasPanel.fix_size(40))
-        self._listctrl.AppendColumn("end",
-                                    format=wx.LIST_FORMAT_LEFT,
-                                    width=sppasPanel.fix_size(40))
-        self._listctrl.AppendColumn("tagtype",
-                                    format=wx.LIST_FORMAT_LEFT,
-                                    width=sppasPanel.fix_size(40))
-        self._listctrl.AppendColumn("tagged",
-                                    format=wx.LIST_FORMAT_LEFT,
-                                    width=sppasPanel.fix_size(30))
-        self._listctrl.AppendColumn("id",
-                                    format=wx.LIST_FORMAT_LEFT,
-                                    width=sppasPanel.fix_size(240))
-
-    # ------------------------------------------------------------------------
-
-    def update_item(self, obj):
-        """Update information of an object, except its state.
-
-        :param obj: (sppasTier)
-
-        """
-        if obj.is_point() is True:
-            tier_type = "Point"
-        elif obj.is_interval():
-            tier_type = "Interval"
-        elif obj.is_disjoint():
-            tier_type = "Disjoint"
-        else:  # probably an empty tier
-            tier_type = "Unknown"
-
-        if obj.is_empty() is True:
-            begin = " ... "
-            end = " ... "
-        else:
-            begin = str(obj.get_first_point().get_midpoint())
-            end = str(obj.get_last_point().get_midpoint())
-
-        if obj.is_string() is True:
-            tier_tag_type = "String"
-        elif obj.is_int() is True:
-            tier_tag_type = "Integer"
-        elif obj.is_float() is True:
-            tier_tag_type = "Float"
-        elif obj.is_bool() is True:
-            tier_tag_type = "Bool"
-        else:
-            tier_tag_type = "Unknown"
-
-        if obj.get_id() in self._trss:
-            index = self._trss.index(obj.get_id())
-            self._listctrl.SetItem(index, 0, obj.get_name())
-            self._listctrl.SetItem(index, 1, str(len(obj)))
-            self._listctrl.SetItem(index, 2, tier_type)
-            self._listctrl.SetItem(index, 3, begin)
-            self._listctrl.SetItem(index, 4, end)
-            self._listctrl.SetItem(index, 5, tier_tag_type)
-            self._listctrl.SetItem(index, 6, str(obj.get_nb_filled_labels()))
-            self._listctrl.SetItem(index, 7, obj.get_id())
-            self._listctrl.RefreshItem(index)
-
-            state = obj.get_meta("private_checked", "False")
-            if state == "True":
-                self._listctrl.Select(index, on=1)
 
 # ----------------------------------------------------------------------------
 # Panel tested by test_glob.py
 # ----------------------------------------------------------------------------
 
 
-class TestPanel(sppasScrolledPanel):
+class TestPanel(wx.lib.scrolledpanel.ScrolledPanel):
 
     def __init__(self, parent):
-        super(TestPanel, self).__init__(parent, name="Test Transcription Summary Panel")
+        super(TestPanel, self).__init__(
+            parent,
+            style=wx.BORDER_NONE | wx.ALWAYS_SHOW_SB | wx.HSCROLL | wx.VSCROLL,
+            name="Test Transcription Summary Panel")
 
         f1 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra")
         f2 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-salign.xra")
@@ -1173,3 +733,4 @@ class TestPanel(sppasScrolledPanel):
         panel = evt.GetEventObject()
         panel.SetFocus()
         self.Layout()
+
