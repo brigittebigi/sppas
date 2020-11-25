@@ -620,6 +620,8 @@ class sppasTimelinePanel(sppasPanel):
         """"""
         if event.action == "visible":
             s, e = event.value
+            wx.LogDebug("Visible part changed. New one is: {} {}".format(s, e))
+
             for fn in self._files:
                 panel = self._files[fn]
                 panel.set_visible_period(s, e)

@@ -42,6 +42,8 @@ GOTO EndHeader
 """
 :EndHeader
 
+
+
 @echo off
 color 0F
 SET PYTHONIOENCODING=UTF-8
@@ -51,17 +53,16 @@ set "params=%*"
 cd /d "%~dp0" && ( if exist "%temp%\getadmin.vbs" del "%temp%\getadmin.vbs" ) && fsutil dirty query %systemdrive% 1>nul 2>nul || (  echo Set UAC = CreateObject^("Shell.Application"^) : UAC.ShellExecute "cmd.exe", "/k cd ""%~sdp0"" && %~s0 %params%", "", "runas", 1 >> "%temp%\getadmin.vbs" && "%temp%\getadmin.vbs" && exit /B )
 
 
-REM Search for pythonw command, ie Python & WxPython are both installed
+REM Search for pythonw3 command, ie Python3 & WxPython are both installed
 WHERE pythonw3.exe >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
 
         color 1E
         start "" pythonw3.exe .\sppas\bin\preinstallgui.py
-        REM exit
 
 ) else (
 
-    REM Search for python command, ie Python is installed but not WxPython
+    REM Search for python3 command, ie Python3 is installed but not WxPython
     WHERE python3.exe >nul 2>nul
     if %ERRORLEVEL% EQU 0 (
 
@@ -80,13 +81,24 @@ if %ERRORLEVEL% EQU 0 (
 
     ) else (
 
-        color 4E
-        echo Python version 3 is not an internal command of your operating system.
-        echo Install it first either from the Windows Store or from http://www.python.org.
+        REM Search for python command, ie Python is installed.
+        WHERE python.exe >nul 2>nul
+        if %ERRORLEVEL% EQU 0 (
+        (
+            python.exe .\sppas\bin\checkpy.py
+            if %ERRORLEVEL% EQU 0 (
+                start "" python.exe .\sppas\bin\preinstall.py --wxpython
+                start "" python.exe .\sppas\bin\preinstallgui.py
+            )
 
+        ) else (
+            color 4E
+            echo Python version 3 is not an internal command of your operating system.
+            echo Install it first, preferably from the Windows Store.
+        )
     )
 )
 
-REM Close the windows whiwh was opened to get admin rights
+REM Close the windows which was opened to get admin rights
 exit
 
