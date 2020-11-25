@@ -332,9 +332,9 @@ class ListViewFilesPanel(sppasScrolledPanel):
         for filename in self._files:
             panel = self._files[filename]
             if isinstance(panel, TrsSummaryPanel):
-                panel.rename_tier(tier_name)
                 # if the panel is not a ListView (an ErrorView for example)
                 # the method 'rename_tier' is not defined.
+                panel.rename_tier(tier_name)
 
     # -----------------------------------------------------------------------
 
@@ -344,7 +344,8 @@ class ListViewFilesPanel(sppasScrolledPanel):
             panel = self._files[filename]
             if isinstance(panel, TrsSummaryPanel):
                 panel.delete_tier()
-                self.Layout()
+
+        # self.Layout()
 
     # -----------------------------------------------------------------------
 
@@ -362,7 +363,7 @@ class ListViewFilesPanel(sppasScrolledPanel):
 
         if cut > 0:
             wx.LogMessage("{:d} tiers cut.".format(cut))
-            self.Layout()
+            # self.Layout()
 
     # -----------------------------------------------------------------------
 
@@ -564,7 +565,11 @@ class ListViewFilesPanel(sppasScrolledPanel):
     # -----------------------------------------------------------------------
 
     def create_file(self, name):
-        """Add a non-existing file with the given name."""
+        """Add a non-existing file with the given name.
+
+        Do not refresh/layout the GUI.
+
+        """
         if name in self._files:
             wx.LogError('Name {:s} is already in the list of files.')
             raise ValueError('Name {:s} is already in the list of files.')
@@ -579,9 +584,6 @@ class ListViewFilesPanel(sppasScrolledPanel):
 
         border = sppasPanel.fix_size(10)
         self.GetSizer().Add(panel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border)
-        self.Layout()
-        self.ScrollChildIntoView(panel)
-        self.Refresh()
 
     # -----------------------------------------------------------------------
 
@@ -698,10 +700,7 @@ class ListViewFilesPanel(sppasScrolledPanel):
 
         removed = self.remove_file(filename, force=True)
         if removed is True:
-            self.Layout()
-            self.Refresh()
-
-            # The parent will unlock the file in the workspace
+            # The parent will unlock the file in the workspace & layout
             self.notify(action="close", filename=filename)
             return True
 

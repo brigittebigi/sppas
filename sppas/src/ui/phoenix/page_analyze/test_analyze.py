@@ -44,7 +44,7 @@ from sppas.src.ui.phoenix.main_settings import WxAppSettings
 import sppas.src.ui.phoenix.page_analyze.basefilelist as baselist
 import sppas.src.ui.phoenix.page_analyze.errfilelist as errlist
 import sppas.src.ui.phoenix.page_analyze.medialist as medialist
-import sppas.src.ui.phoenix.page_analyze.fileslistview as listview
+import sppas.src.ui.phoenix.page_analyze.analyze_panel as listview
 import sppas.src.ui.phoenix.page_analyze.analyze as analyze
 
 # ----------------------------------------------------------------------------

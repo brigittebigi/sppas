@@ -413,7 +413,7 @@ class sppasWebVTT(sppasBaseSubtitles):
         super(sppasWebVTT, self).__init__(name)
 
         self.default_extension = "vtt"
-        self.software = "HTML5"
+        self.software = "Subs for Web"
 
     # -----------------------------------------------------------------------
 
