@@ -52,13 +52,13 @@ REM Make sure we have admin right
 set "params=%*"
 cd /d "%~dp0" && ( if exist "%temp%\getadmin.vbs" del "%temp%\getadmin.vbs" ) && fsutil dirty query %systemdrive% 1>nul 2>nul || (  echo Set UAC = CreateObject^("Shell.Application"^) : UAC.ShellExecute "cmd.exe", "/k cd ""%~sdp0"" && %~s0 %params%", "", "runas", 1 >> "%temp%\getadmin.vbs" && "%temp%\getadmin.vbs" && exit /B )
 
-
 REM Search for pythonw3 command, ie Python3 & WxPython are both installed
 WHERE pythonw3.exe >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
 
         color 1E
         start "" pythonw3.exe .\sppas\bin\preinstallgui.py
+        exit
 
 ) else (
 
@@ -70,27 +70,26 @@ if %ERRORLEVEL% EQU 0 (
         start "" python3.exe .\sppas\bin\preinstall.py --wxpython
         if %ERRORLEVEL% EQU 0 (
             start "" python3.exe .\sppas\bin\preinstallgui.py
+            exit
 
         ) else (
-
             color 04
             echo The setup failed to install wxpython automatically.
             echo See http://www.sppas.org/installation.html to do it manually.
-
         )
 
     ) else (
-
+            echo Python version 3 is not an internal command of your operating system.
+            echo Install it first, preferably from the Windows Store.
         REM Search for python command, ie Python is installed.
         WHERE python.exe >nul 2>nul
         if %ERRORLEVEL% EQU 0 (
-        (
             python.exe .\sppas\bin\checkpy.py
             if %ERRORLEVEL% EQU 0 (
                 start "" python.exe .\sppas\bin\preinstall.py --wxpython
                 start "" python.exe .\sppas\bin\preinstallgui.py
+                exit
             )
-
         ) else (
             color 4E
             echo Python version 3 is not an internal command of your operating system.
@@ -99,6 +98,10 @@ if %ERRORLEVEL% EQU 0 (
     )
 )
 
+
 REM Close the windows which was opened to get admin rights
-exit
+timeout /t 10
+
+
+
 

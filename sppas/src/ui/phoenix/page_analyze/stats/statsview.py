@@ -44,14 +44,14 @@ from sppas.src.utils import u
 from sppas.src.anndata import sppasRW
 from sppas.src.analysis.tierstats import sppasTierStats
 
-from src.ui.phoenix.windows import Confirm
-from src.ui.phoenix.windows import sppasFileDialog
-from src.ui.phoenix.windows import sppasDialog
-from src.ui.phoenix.windows import sppasPanel
-from src.ui.phoenix.windows import sppasRadioBoxPanel
-from src.ui.phoenix.windows.book import sppasNotebook
-from src.ui.phoenix.windows.listctrl import SortListCtrl
-from src.ui.phoenix.windows import sppasComboBox
+from sppas.src.ui.phoenix.windows import Confirm
+from sppas.src.ui.phoenix.windows import sppasFileDialog
+from sppas.src.ui.phoenix.windows import sppasDialog
+from sppas.src.ui.phoenix.windows import sppasPanel
+from sppas.src.ui.phoenix.windows import sppasRadioBoxPanel
+from sppas.src.ui.phoenix.windows.book import sppasNotebook
+from sppas.src.ui.phoenix.windows.listctrl import SortListCtrl
+from sppas.src.ui.phoenix.windows import sppasComboBox
 
 # --------------------------------------------------------------------------
 

@@ -39,9 +39,9 @@
 
 import wx
 
-from src.ui.phoenix.windows.dialogs import sppasDialog
-from src.ui.phoenix.windows.book import sppasNotebook
-from src.ui.phoenix.panel_shared.tierlist import sppasTierListCtrl
+from sppas.src.ui.phoenix.windows.dialogs import sppasDialog
+from sppas.src.ui.phoenix.windows.book import sppasNotebook
+from sppas.src.ui.phoenix.panel_shared.tierlist import sppasTierListCtrl
 
 # ---------------------------------------------------------------------------
 

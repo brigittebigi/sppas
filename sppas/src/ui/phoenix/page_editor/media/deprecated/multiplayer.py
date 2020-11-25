@@ -45,10 +45,10 @@ from sppas.src.config import paths
 from sppas.src.exceptions.exc import IntervalRangeException
 
 from sppas.src.ui.phoenix.windows.panels import sppasPanel
-from src.ui.phoenix.page_editor.media.deprecated import sppasMediaCtrl
-from src.ui.phoenix.page_editor.media.deprecated import sppasPlayerControlsPanel
-from src.ui.phoenix.page_editor.media.mediaevents import MediaEvents
-from src.ui.phoenix.page_editor.media.deprecated import MediaType
+from sppas.src.ui.phoenix.page_editor.media.deprecated import sppasMediaCtrl
+from sppas.src.ui.phoenix.page_editor.media.deprecated import sppasPlayerControlsPanel
+from sppas.src.ui.phoenix.page_editor.media.mediaevents import MediaEvents
+from sppas.src.ui.phoenix.page_editor.media.deprecated import MediaType
 
 # ---------------------------------------------------------------------------
 

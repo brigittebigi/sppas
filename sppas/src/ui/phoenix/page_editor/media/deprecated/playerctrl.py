@@ -44,11 +44,11 @@
 import wx
 import wx.media
 
-from src.ui.phoenix.windows.buttons import ToggleButton
-from src.ui.phoenix.windows.buttons import BitmapTextButton
-from src.ui.phoenix.windows.panels import sppasPanel
+from sppas.src.ui.phoenix.windows.buttons import ToggleButton
+from sppas.src.ui.phoenix.windows.buttons import BitmapTextButton
+from sppas.src.ui.phoenix.windows.panels import sppasPanel
 
-from src.ui.phoenix.page_editor.media.mediaevents import MediaEvents
+from sppas.src.ui.phoenix.page_editor.media.mediaevents import MediaEvents
 
 # ---------------------------------------------------------------------------
 

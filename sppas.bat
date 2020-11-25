@@ -56,11 +56,9 @@ if %ERRORLEVEL% EQU 0 (
 
     WHERE python3.exe >nul 2>nul
     if %ERRORLEVEL% EQU 0 (
-
         color 1E
         start "" python3.exe -m sppas
         exit
-
     ) else (
 
         color 04
@@ -74,11 +72,18 @@ if %ERRORLEVEL% EQU 0 (
                 exit
             ) else (
 
-
+                REM Perhaps python3 was installed with name "python"
                 WHERE python.exe >nul 2>nul
                 if %ERRORLEVEL% EQU 0 (
-                    start "" python.exe .\sppas\bin\sppasgui.py
-                    exit
+                    python.exe .\sppas\bin\checkpy.py
+                    if %ERRORLEVEL% EQU 0 (
+                        start "" python.exe -m sppas
+                        exit
+                    ) else (
+                        start "" python.exe .\sppas\bin\sppasgui.py
+                        exit
+                    )
+
                 ) else (
                         color 4E
                         echo Python is not an internal command of your operating system.

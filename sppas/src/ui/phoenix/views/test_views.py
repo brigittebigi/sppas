@@ -49,7 +49,7 @@ from sppas.src.ui.phoenix.views.about import About
 from sppas.src.ui.phoenix.views.about import AboutPlugin
 from sppas.src.ui.phoenix.views.settings import Settings
 
-from src.ui.phoenix.views.metaedit import MetaDataEdit
+from sppas.src.ui.phoenix.views.metaedit import MetaDataEdit
 
 # ----------------------------------------------------------------------------
 # Tested Panels

@@ -50,13 +50,13 @@ from sppas.src.config import msg
 from sppas.src.config import sg
 from sppas.src.utils import u
 
-from src.ui.phoenix.windows import Error
-from src.ui.phoenix.windows import sppasFileDialog
-from src.ui.phoenix.windows import sppasDialog
-from src.ui.phoenix.windows import sppasStaticText, sppasTextCtrl
-from src.ui.phoenix.windows.book import sppasNotebook
-from src.ui.phoenix.windows import sppasPanel
-from src.ui.phoenix.windows import BitmapTextButton
+from sppas.src.ui.phoenix.windows import Error
+from sppas.src.ui.phoenix.windows import sppasFileDialog
+from sppas.src.ui.phoenix.windows import sppasDialog
+from sppas.src.ui.phoenix.windows import sppasStaticText, sppasTextCtrl
+from sppas.src.ui.phoenix.windows.book import sppasNotebook
+from sppas.src.ui.phoenix.windows import sppasPanel
+from sppas.src.ui.phoenix.windows import BitmapTextButton
 
 # --------------------------------------------------------------------------
 
