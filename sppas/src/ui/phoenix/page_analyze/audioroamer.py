@@ -50,13 +50,13 @@ from sppas.src.config import msg
 from sppas.src.config import sg
 from sppas.src.utils import u
 
-from ..windows import Error
-from ..windows import sppasFileDialog
-from ..windows import sppasDialog
-from ..windows import sppasStaticText, sppasTextCtrl
-from ..windows.book import sppasNotebook
-from ..windows import sppasPanel
-from ..windows import BitmapTextButton
+from src.ui.phoenix.windows import Error
+from src.ui.phoenix.windows import sppasFileDialog
+from src.ui.phoenix.windows import sppasDialog
+from src.ui.phoenix.windows import sppasStaticText, sppasTextCtrl
+from src.ui.phoenix.windows.book import sppasNotebook
+from src.ui.phoenix.windows import sppasPanel
+from src.ui.phoenix.windows import BitmapTextButton
 
 # --------------------------------------------------------------------------
 
@@ -814,28 +814,3 @@ class ChannelInfosPanel(sppasPanel):
         text = "-----------------------------------------------------------------"
         text += self.__newline()
         return text
-
-# ---------------------------------------------------------------------------
-
-
-def AudioRoamer(parent, audio):
-    """Open a dialog to display information about channels of an audio.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
-    :param parent: (wx.Window)
-    :param audio: (sppasAudioPCM)
-    :returns: wx.ID_OK
-
-    """
-    if isinstance(audio, sppasAudioPCM) is False:
-        wx.LogError("{} is not of type sppasAudioPCM".format(audio))
-
-    dialog = sppasAudioViewDialog(parent, audio)
-    response = dialog.ShowModal()
-    dialog.DestroyFadeOut()
-    return response

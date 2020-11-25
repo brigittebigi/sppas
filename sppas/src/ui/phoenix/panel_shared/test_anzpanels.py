@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.tests.test_glob.py
+    src.ui.phoenix.tests.test_anzpanels.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -40,12 +40,8 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
-# Tested files are the ones with a TestPanel class:
-import src.ui.phoenix.page_editor.datactrls.basedatactrl as basedatactrl
-import src.ui.phoenix.page_editor.datactrls.pointctrl as pointctrl
-import src.ui.phoenix.page_editor.datactrls.annctrl as annctrl
-import src.ui.phoenix.page_editor.datactrls.tierctrl as tierctrl
-import src.ui.phoenix.page_editor.datactrls.waveform as waveform
+import sppas.src.ui.phoenix.panel_shared.option as option
+import sppas.src.ui.phoenix.panel_shared.tierlist as tierlist
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -59,20 +55,10 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        self.SetBackgroundColour(wx.Colour(100, 100, 100))
-        self.SetForegroundColour(wx.Colour(0, 0, 10))
-
-        # Make the bunch of test anz_panels for the choice book
-        p = tierctrl.TestPanel(self)
-        self.AddPage(p, p.GetName())
-        p = annctrl.TestPanel(self)
-        self.AddPage(p, p.GetName())
-        p = pointctrl.TestPanel(self)
-        self.AddPage(p, p.GetName())
-        p = basedatactrl.TestPanel(self)
-        self.AddPage(p, p.GetName())
-        p = waveform.TestPanel(self)
-        self.AddPage(p, p.GetName())
+        # Make the bunch of test panels for the choice book
+        for program in (option, tierlist):
+            p = program.TestPanel(self)
+            self.AddPage(p, p.GetName())
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
@@ -122,7 +108,7 @@ class TestApp(wx.App):
                         clearSigInt=True)
 
         # create the frame
-        frm = wx.Frame(None, title='Test frame', size=wx.Size(900, 600))
+        frm = wx.Frame(None, title='Test frame', size=wx.Size(800, 600))
         frm.SetMinSize(wx.Size(640, 480))
         self.SetTopWindow(frm)
 

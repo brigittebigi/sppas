@@ -41,7 +41,7 @@ import wx.lib.newevent
 from sppas.src.config import paths
 from sppas.src.anndata import sppasRW
 
-from sppas.src.ui.phoenix.anz_panels.tierlist import sppasTierListCtrl
+from sppas.src.ui.phoenix.panel_shared.tierlist import sppasTierListCtrl
 from sppas.src.ui.phoenix.windows.book import sppasSimplebook
 from sppas.src.ui.phoenix.windows.panels import sppasPanel
 from sppas.src.ui.phoenix.windows import sppasComboBox

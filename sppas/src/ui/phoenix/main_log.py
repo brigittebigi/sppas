@@ -505,7 +505,7 @@ class sppasLogWindow(wx.TopLevelWindow):
     # -----------------------------------------------------------------------
 
     def UpdateUI(self):
-        """Apply settings to all anz_panels and refresh."""
+        """Apply settings to all content panels and refresh."""
         # apply new (or not) 'wx' values to content.
         p = self.FindWindow("content")
         p.SetBackgroundColour(wx.GetApp().settings.bg_color)

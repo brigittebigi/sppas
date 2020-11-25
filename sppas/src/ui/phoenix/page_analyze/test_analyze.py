@@ -44,7 +44,7 @@ from sppas.src.ui.phoenix.main_settings import WxAppSettings
 import sppas.src.ui.phoenix.page_analyze.basefilelist as baselist
 import sppas.src.ui.phoenix.page_analyze.errfilelist as errlist
 import sppas.src.ui.phoenix.page_analyze.medialist as medialist
-import sppas.src.ui.phoenix.page_analyze.analyze_panel as listview
+import sppas.src.ui.phoenix.page_analyze.analyzepanel as listview
 import sppas.src.ui.phoenix.page_analyze.analyze as analyze
 
 # ----------------------------------------------------------------------------
@@ -59,7 +59,7 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        # Make the bunch of test anz_panels for the choice book
+        # Make the bunch of test panels for the choice book
         p = baselist.TestPanel(self)
         self.AddPage(p, p.GetName())
         p = errlist.TestPanel(self)

@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.views.tiersview.py
+    src.ui.phoenix.page_analyze.tiersview.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Each tier is displayed in a ListCtrl.
@@ -39,24 +39,9 @@
 
 import wx
 
-from sppas.src.anndata import sppasTier
-from sppas.src.config import msg
-from sppas.src.utils import u
-
-from ..windows.dialogs import sppasDialog
-from ..windows.dialogs import Information
-from ..windows.book import sppasNotebook
-from ..anz_panels.tierlist import sppasTierListCtrl
-
-# ---------------------------------------------------------------------------
-
-
-def _(message):
-    return u(msg(message, "ui"))
-
-
-MSG_HEADER_TIERSVIEW = _("View annotations of tiers")
-MSG_NO_TIER = _("No tier to view.")
+from src.ui.phoenix.windows.dialogs import sppasDialog
+from src.ui.phoenix.windows.book import sppasNotebook
+from src.ui.phoenix.panel_shared.tierlist import sppasTierListCtrl
 
 # ---------------------------------------------------------------------------
 
@@ -74,7 +59,7 @@ class sppasTiersViewDialog(sppasDialog):
 
     """
 
-    def __init__(self, parent, tiers):
+    def __init__(self, parent, tiers, title="Tiers View"):
         """Create a dialog to display tiers.
 
         :param parent: (wx.Window)
@@ -83,11 +68,10 @@ class sppasTiersViewDialog(sppasDialog):
         """
         super(sppasTiersViewDialog, self).__init__(
             parent=parent,
-            title="Tiers View",
+            title=title,
             style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.MAXIMIZE_BOX | wx.STAY_ON_TOP,
             name="tiersview_dialog")
 
-        # self.CreateHeader(MSG_HEADER_TIERSVIEW, "tier_ann_view")
         self._create_content(tiers)
         self.CreateActions([wx.ID_OK])
 
@@ -106,35 +90,3 @@ class sppasTiersViewDialog(sppasDialog):
             page = sppasTierListCtrl(notebook, tier, "")
             notebook.AddPage(page, tier.get_name())
         self.SetContent(notebook)
-
-# ---------------------------------------------------------------------------
-
-
-def TiersView(parent, tiers):
-    """Open a dialog to display the content of a list of tiers.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    :param parent: (wx.Window)
-    :param tiers: (list of sppasTier)
-    :returns: wx.ID_OK
-
-    """
-    view = list()
-    for t in tiers:
-        if isinstance(t, sppasTier) is True:
-            view.append(t)
-        else:
-            wx.LogError("{} is not of type sppasTier".format(t))
-    if len(view) == 0:
-        Information(MSG_NO_TIER)
-        return wx.ID_OK
-
-    dialog = sppasTiersViewDialog(parent, view)
-    response = dialog.ShowModal()
-    dialog.DestroyFadeOut()
-    return response

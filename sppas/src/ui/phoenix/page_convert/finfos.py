@@ -248,7 +248,7 @@ class FormatsViewCtrl(sppasPanel):
         wx.PostEvent(self.GetParent(), evt)
 
 # ----------------------------------------------------------------------------
-# Panel tested by test_glob.py
+# Panel to test the class
 # ----------------------------------------------------------------------------
 
 

@@ -310,13 +310,13 @@ class sppasPlayerControlsPanel(sppasPanel):
 
     def _create_content(self):
         """Create the content of the panel."""
-        # Create the main anz_panels
+        # Create the main panels
         panel1 = self.__create_widgets_panel(self)
         panel2 = self.__create_transport_panel(self)
         panel3 = self.__create_volume_panel(self)
         slider = self.__create_slider_panel(self)
 
-        # Organize the anz_panels into the main sizer
+        # Organize the panels into the main sizer
         border = sppasPanel.fix_size(2)
         nav_sizer = wx.BoxSizer(wx.HORIZONTAL)
         nav_sizer.AddStretchSpacer(1)

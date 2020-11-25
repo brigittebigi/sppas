@@ -29,8 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.tests.test_glob.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.page_convert.test_convert.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
 
@@ -60,7 +60,7 @@ class TestPanel(wx.Choicebook):
         self.SetBackgroundColour(wx.Colour(100, 100, 100))
         self.SetForegroundColour(wx.Colour(0, 0, 10))
 
-        # Make the bunch of test anz_panels for the choice book
+        # Make the bunch of test panels for the choice book
 
         # page convert
         self.AddPage(finfos.TestPanel(self), "File formats info")

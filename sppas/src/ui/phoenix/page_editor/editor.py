@@ -416,7 +416,7 @@ class sppasEditorPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _create_hline(self):
-        """Create an horizontal line, used to separate the anz_panels."""
+        """Create an horizontal line, used to separate the panels."""
         line = sppasStaticLine(self, orient=wx.LI_HORIZONTAL, name="hline")
         line.SetMinSize(wx.Size(-1, sppasPanel.fix_size(8)))
         line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
@@ -464,7 +464,7 @@ class sppasEditorPanel(sppasPanel):
     def _process_data_changed(self, event):
         """Process a change of data.
 
-        Set the data of the event to the other anz_panels.
+        Set the data of the event to the other panels.
 
         :param event: (wx.Event)
 

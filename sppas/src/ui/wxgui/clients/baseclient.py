@@ -325,7 +325,7 @@ class BaseClient(wx.Window):
             page = self._notebook.GetPage(i)
             page.SetBackgroundColour( self._prefsIO.GetValue( 'M_BG_COLOUR' ) )
 
-        # Apply on all anz_panels
+        # Apply on all panels
         for i in range(self._xfiles.GetSize()):
             p = self._xfiles.GetObject(i)
             p.SetBackgroundColour( self._prefsIO.GetValue( 'M_BG_COLOUR' ) )

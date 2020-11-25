@@ -50,16 +50,18 @@ from ..windows.dialogs import sppasProgressDialog
 from ..windows.dialogs import sppasChoiceDialog
 from ..windows.dialogs import Confirm
 from ..views import MetaDataEdit
-from ..views import TiersView
-from ..views import StatsView
 from ..main_events import ViewEvent, EVT_VIEW
 
+# The dialogs which this page can open
 from .filters.single import sppasTiersSingleFilterDialog
 from .filters.relation import sppasTiersRelationFilterDialog
+from .stats.statsview import sppasStatsViewDialog
+from .tiersview import sppasTiersViewDialog
+
+# The panels inside this page
+from .datalist.trsrisepanel import TrsSummaryPanel
 from .errfilelist import ErrorFileSummaryPanel
 from .medialist import AudioSummaryPanel
-
-from .datalist.trsrisepanel import TrsSummaryPanel
 
 # ----------------------------------------------------------------------------
 
@@ -73,6 +75,7 @@ MSG_CLOSE = _("Close")
 CLOSE_CONFIRM = _("The file contains not saved work that will be "
                   "lost. Are you sure you want to close?")
 TIER_REL_WITH = u(msg("Name of the tier to be in relation with: "))
+MSG_VIEW_TIERS = _("View annotations of tiers into lists")
 
 # ----------------------------------------------------------------------------
 
@@ -196,7 +199,7 @@ class ListViewFilesPanel(sppasScrolledPanel):
         # set to toolbar
         btn = self.FindWindow("subtoolbar1").get_button("tier_paste")
         btn.SetFocusColour(color)
-        # set to the anz_panels
+        # set to the panels
         for filename in self._files:
             panel = self._files[filename]
             panel.SetHighLightColor(color)
@@ -381,7 +384,7 @@ class ListViewFilesPanel(sppasScrolledPanel):
     # -----------------------------------------------------------------------
 
     def paste_tiers(self):
-        """Paste tiers of the clipboard to the anz_panels."""
+        """Paste tiers of the clipboard to the panels."""
         paste = 0
         for filename in self._files:
             panel = self._files[filename]
@@ -396,7 +399,7 @@ class ListViewFilesPanel(sppasScrolledPanel):
     # -----------------------------------------------------------------------
 
     def duplicate_tiers(self):
-        """Duplicate checked tiers of the anz_panels."""
+        """Duplicate checked tiers of the panels."""
         copied = 0
         for filename in self._files:
             panel = self._files[filename]
@@ -410,7 +413,7 @@ class ListViewFilesPanel(sppasScrolledPanel):
     # -----------------------------------------------------------------------
 
     def move_tiers(self, up=True):
-        """Move up or down checked tiers of the anz_panels."""
+        """Move up or down checked tiers of the panels."""
         for filename in self._files:
             panel = self._files[filename]
             if isinstance(panel, TrsSummaryPanel):
@@ -444,7 +447,9 @@ class ListViewFilesPanel(sppasScrolledPanel):
             if isinstance(panel, TrsSummaryPanel):
                 tiers.extend(panel.get_checked_tier())
 
-        TiersView(self, tiers)
+        dialog = sppasTiersViewDialog(self, tiers, title=MSG_VIEW_TIERS)
+        dialog.ShowModal()
+        dialog.DestroyFadeOut()
 
     # -----------------------------------------------------------------------
 
@@ -458,7 +463,9 @@ class ListViewFilesPanel(sppasScrolledPanel):
                 if len(checked) > 0:
                     tiers[filename] = checked
 
-        StatsView(self, tiers)
+        dialog = sppasStatsViewDialog(self, tiers)
+        dialog.ShowModal()
+        dialog.DestroyFadeOut()
 
     # -----------------------------------------------------------------------
 
@@ -766,7 +773,7 @@ class ListViewFilesPanel(sppasScrolledPanel):
         self.SendSizeEventToParent()
 
 # ----------------------------------------------------------------------------
-# Panel tested by test_glob.py
+# Panel to test the class
 # ----------------------------------------------------------------------------
 
 

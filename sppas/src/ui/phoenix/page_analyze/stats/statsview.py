@@ -44,14 +44,14 @@ from sppas.src.utils import u
 from sppas.src.anndata import sppasRW
 from sppas.src.analysis.tierstats import sppasTierStats
 
-from ..windows import Confirm
-from ..windows import sppasFileDialog
-from ..windows import sppasDialog
-from ..windows import sppasPanel
-from ..windows import sppasRadioBoxPanel
-from ..windows.book import sppasNotebook
-from ..windows.listctrl import SortListCtrl
-from ..windows import sppasComboBox
+from src.ui.phoenix.windows import Confirm
+from src.ui.phoenix.windows import sppasFileDialog
+from src.ui.phoenix.windows import sppasDialog
+from src.ui.phoenix.windows import sppasPanel
+from src.ui.phoenix.windows import sppasRadioBoxPanel
+from src.ui.phoenix.windows.book import sppasNotebook
+from src.ui.phoenix.windows.listctrl import SortListCtrl
+from src.ui.phoenix.windows import sppasComboBox
 
 # --------------------------------------------------------------------------
 
@@ -602,28 +602,6 @@ class DetailedPanel(BaseStatPanel):
         self.statctrl.Refresh()
         self.Layout()
 
-# -------------------------------------------------------------------------
-
-
-def StatsView(parent, tiers):
-    """Display a dialog to display the stats of a list of tiers.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2019  Brigitte Bigi
-
-    :param parent: (wx.Window)
-    :param tiers: (list of sppasTier)
-    :returns: wx.ID_OK
-
-    """
-    dialog = sppasStatsViewDialog(parent, tiers)
-    response = dialog.ShowModal()
-    dialog.DestroyFadeOut()
-    return response
-
 # ----------------------------------------------------------------------------
 # Panel that can be tested
 # ----------------------------------------------------------------------------
@@ -652,4 +630,6 @@ class TestPanel(sppasPanel):
         tier1 = trs1.find("PhonAlign")
         tier2 = trs2.find("PhonAlign")
 
-        StatsView(self, tiers={f1: [tier1], f2: [tier2]})
+        dialog = sppasStatsViewDialog(self, tiers={f1: [tier1], f2: [tier2]})
+        dialog.ShowModal()
+        dialog.DestroyFadeOut()

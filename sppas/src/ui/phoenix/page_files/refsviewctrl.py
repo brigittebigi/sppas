@@ -245,7 +245,7 @@ class RefsTreeViewPanel(sppasScrolledPanel):
         return nb
 
     # ------------------------------------------------------------------------
-    # Manage the data and their anz_panels
+    # Manage the data and their panels
     # ------------------------------------------------------------------------
 
     def __add_ref_panel(self, ref):
@@ -688,7 +688,7 @@ class FileRefCollapsiblePanel(sppasCollapsiblePanel):
         self._attlist.Select(item_index, on=False)
 
 # ----------------------------------------------------------------------------
-# Panel tested by test_glob.py
+# Panel to test the class
 # ----------------------------------------------------------------------------
 
 

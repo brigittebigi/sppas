@@ -151,7 +151,7 @@ class IPUscribe(wx.Panel):
         self._sndname = None
         self._buttons = dict()
 
-        # a set of anz_panels:
+        # a set of panels:
         self._txtinfo = wx.StaticText(self,  -1, "", style=wx.ALIGN_LEFT)
         self._trsPanel = IPUscribeData(self, prefsIO)
         self._create_media()
@@ -405,7 +405,7 @@ class IPUscribe(wx.Panel):
         """Change font of all texts."""
 
         wx.Window.SetFont(self, font)
-        # Apply on all anz_panels
+        # Apply on all panels
         self._trsPanel.SetFont(font)
         self._mediaPanel.SetFont(font)
         self._navPanel.SetFont(font)
@@ -418,7 +418,7 @@ class IPUscribe(wx.Panel):
     # ----------------------------------------------------------------------
 
     def SetBackgroundColour(self, color):
-        """Change background of all anz_panels."""
+        """Change background of all panels."""
 
         wx.Window.SetBackgroundColour(self, color)
         # Apply as background on all anz_panels

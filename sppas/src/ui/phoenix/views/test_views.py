@@ -34,27 +34,20 @@
 
 """
 
-import os
 import wx
 import logging
 
-from sppas.src.config import paths
 from sppas.src.config import sppasAppConfig
 
 from sppas.src.plugins import sppasPluginsManager
-import sppas.src.audiodata.aio
 from sppas.src.anndata import sppasMetaData
 
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 from sppas.src.ui.phoenix.windows import sppasPanel
 
-from sppas.src.ui.phoenix.views.audioroamer import AudioRoamer
 from sppas.src.ui.phoenix.views.about import About
 from sppas.src.ui.phoenix.views.about import AboutPlugin
 from sppas.src.ui.phoenix.views.settings import Settings
-from sppas.src.ui.phoenix.views.tiersview import TiersView
-import sppas.src.ui.phoenix.views.statsview as statsview
-import sppas.src.ui.phoenix.views.textedit as textedit
 
 from src.ui.phoenix.views.metaedit import MetaDataEdit
 
@@ -64,8 +57,6 @@ from src.ui.phoenix.views.metaedit import MetaDataEdit
 
 
 class TestPanel(sppasPanel):
-
-    audio_test = os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="TestPanel-views")
@@ -80,20 +71,9 @@ class TestPanel(sppasPanel):
                          pos=(390, 10), size=(180, 70),
                          label="Settings", name="settings_btn")
 
-        btn5 = wx.Button(self,
-                         pos=(10, 100), size=(180, 70),
-                         label="Audio Roamer", name="audio_btn")
-        btn6 = wx.Button(self,
-                         pos=(200, 100), size=(180, 70),
-                         label="Tier View", name="tierview_btn")
-
-        statsview.TestPanel(self, pos=(390, 100), size=(180, 70))
-
         btn7 = wx.Button(self,
                          pos=(10, 200), size=(180, 70),
                          label="Metadata Edit", name="metadata_btn")
-
-        textedit.TestPanel(self, pos=(10, 400), size=(200, 70))
 
         self.Bind(wx.EVT_BUTTON, self._process_event)
 
@@ -118,18 +98,6 @@ class TestPanel(sppasPanel):
 
         elif event_name == "settings_btn":
             Settings(self)
-
-        elif event_name == "audio_btn":
-            _audio = sppas.src.audiodata.aio.open(TestPanel.audio_test)
-            AudioRoamer(self, _audio)
-            _audio.close()
-
-        elif event_name == "tierview_btn":
-            # TODO. Add a list of tiers to test TiersView
-            TiersView(self, [])
-
-        # elif event_name == "statview_btn":
-        #    StatsView(self, [])
 
         elif event_name == "metadata_btn":
             m1 = sppasMetaData()

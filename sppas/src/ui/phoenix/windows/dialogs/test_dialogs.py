@@ -50,7 +50,7 @@ from sppas.src.ui.phoenix.windows.dialogs.progress import TestPanelProgressDialo
 
 
 class TestPanel(wx.Choicebook):
-    """Choicebook to test a bunch of TestPanelXXX() anz_panels.
+    """Choicebook to test a bunch of TestPanelXXX() panels.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -66,13 +66,13 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        # Make the bunch of test anz_panels
+        # Make the bunch of test panels
         panels = list()
         panels.append(TestPanelMessageDialog(self))
         panels.append(TestPanelEntriesDialog(self))
         panels.append(TestPanelProgressDialog(self))
 
-        # Add such anz_panels to pages of the choice book.
+        # Add such panels to pages of the choice book.
         for p in panels:
             self.AddPage(p, p.GetName())
 

@@ -279,7 +279,7 @@ class sppasConvertPanel(sppasScrolledPanel):
     def _process_data_changed(self, event):
         """Process a change of data.
 
-        Set the data of the event to the other anz_panels.
+        Set the data of the event to the other panels.
 
         :param event: (wx.Event)
 
@@ -440,7 +440,7 @@ class sppasConvertPanel(sppasScrolledPanel):
         return [f.get_id() for f in checked]
 
 # ----------------------------------------------------------------------------
-# Panel tested by test_glob.py
+# Panel to test the class
 # ----------------------------------------------------------------------------
 
 

@@ -51,7 +51,8 @@ from ..windows.image import ColorizeImage
 from ..windows import sppasListCtrl
 from ..tools import sppasSwissKnife
 from ..main_events import DataChangedEvent
-from ..views import sppasTextEditDialog, EVT_CLOSE_EDIT
+
+from .textedit import sppasTextEditDialog, EVT_CLOSE_EDIT
 
 # ---------------------------------------------------------------------------
 # Internal use of an event, when an item is clicked.
@@ -299,7 +300,7 @@ class FileTreeViewPanel(sppasScrolledPanel):
                 sppasTrash().put_file_into(filename)
                 wx.LogMessage('{:s} moved into SPPAS Trash.'.format(filename))
             except Exception as e:
-                # Re-Add it into the data and the anz_panels or not?????
+                # Re-Add it into the data and the panels or not?????
                 wx.LogError("File {!s:s} can't be deleted due to the "
                             "following error: {:s}.".format(filename, str(e)))
 
@@ -361,7 +362,7 @@ class FileTreeViewPanel(sppasScrolledPanel):
             self.change_state(entry, States().LOCKED)
 
     # ------------------------------------------------------------------------
-    # Manage the data and their anz_panels
+    # Manage the data and their panels
     # ------------------------------------------------------------------------
 
     def add_folder(self, foldername, add_files=True):
@@ -434,7 +435,7 @@ class FileTreeViewPanel(sppasScrolledPanel):
             wx.LogWarning("File not added: {:s}".format(filename))
             return added
 
-        # add the entries into the anz_panels
+        # add the entries into the panels
         for fs in added_fs:
             if isinstance(fs, FileName):
                 wx.LogDebug("Added file to the data {:s}".format(fs.get_id()))
@@ -620,6 +621,9 @@ class FileTreeViewPanel(sppasScrolledPanel):
                 self.change_state(filebase, States().CHECKED)
 
         self.Notify()
+        textedit = event.GetEventObject()
+        if textedit:
+            textedit.Destroy()
 
     # ------------------------------------------------------------------------
 

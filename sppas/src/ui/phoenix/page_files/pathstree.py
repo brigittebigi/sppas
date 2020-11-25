@@ -159,7 +159,7 @@ class PathsTreePanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def __create_hline(self):
-        """Create an horizontal line, used to separate the anz_panels."""
+        """Create an horizontal line, used to separate the panels."""
         line = sppasStaticLine(self, orient=wx.LI_HORIZONTAL, name="hline")
         line.SetMinSize(wx.Size(-1, 20))
         line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)

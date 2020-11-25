@@ -684,7 +684,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
                 vocab.set_meta("private_checked", "False")
 
 # ----------------------------------------------------------------------------
-# Panel tested by test_glob.py
+# Panel to test the class
 # ----------------------------------------------------------------------------
 
 

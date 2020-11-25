@@ -56,7 +56,7 @@ from ..windows.dialogs import sppasFloatEntryDialog
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 from ..main_events import EVT_VIEW
 
-from .analyze_panel import ListViewFilesPanel
+from .analyzepanel import ListViewFilesPanel
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
@@ -706,7 +706,7 @@ class sppasAnalyzePanel(sppasPanel):
     def _process_data_changed(self, event):
         """Process a change of data.
 
-        Set the data of the event to the other anz_panels.
+        Set the data of the event to the other panels.
 
         :param event: (wx.Event)
 

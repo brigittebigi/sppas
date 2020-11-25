@@ -115,7 +115,7 @@ class sppasTextEditDialog(sppasDialog):
         :param filename: (str)
 
         """
-        panel = sppasEditorPanel(self._book, filename)
+        panel = sppasTextEditPanel(self._book, filename)
         tab_title = os.path.basename(filename)
         self._book.AddPage(panel, tab_title, select=True, imageId=wx.NO_IMAGE)
 
@@ -246,7 +246,7 @@ class sppasTextEditDialog(sppasDialog):
 # ----------------------------------------------------------------------------
 
 
-class sppasEditorPanel(sppasPanel):
+class sppasTextEditPanel(sppasPanel):
     """Panel to display the content of a file.
 
     :author:       Brigitte Bigi
@@ -259,7 +259,7 @@ class sppasEditorPanel(sppasPanel):
 
     def __init__(self, parent, filename, name="editor_panel"):
 
-        super(sppasEditorPanel, self).__init__(
+        super(sppasTextEditPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
             pos=wx.DefaultPosition,

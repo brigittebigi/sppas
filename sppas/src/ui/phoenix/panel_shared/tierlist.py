@@ -29,8 +29,13 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.anz_panels.tierlist.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.panel_shared.tierlist.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    The sppasTierListCtrl() defined in this file is used in both:
+
+    - page_analyze.tiersviews, and
+    - page_editor.listanns.tiersbook.
 
 """
 

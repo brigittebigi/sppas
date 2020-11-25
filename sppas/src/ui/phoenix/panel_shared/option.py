@@ -29,8 +29,13 @@
 
         ---------------------------------------------------------------------
 
-    ui.phoenix.anz_panels.option.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ui.phoenix.panel_shared.option.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    The class sppasOptionsPanel defined in this file is shared by:
+
+    - page_annotate.annotselect
+    - page_plugins.plug_list
 
 """
 
