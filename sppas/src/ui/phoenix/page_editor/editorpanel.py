@@ -297,7 +297,7 @@ class EditorPanel(sppasSplitterWindow):
 
         # Fix size&layout
         w, h = self.GetSize()
-        self.SetMinimumPaneSize(sppasPanel.fix_size(128))
+        self.SetMinimumPaneSize(sppasPanel.fix_size(100))
         self.SplitHorizontally(w1, w2, sppasPanel.fix_size(h // 2))
         self.SetSashGravity(0.4)
 

@@ -67,7 +67,7 @@ class sppasTierWindow(sppasDataWindow):
                  data=None,
                  pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
-                 name="annctrl"):
+                 name="tierctrl"):
         """Initialize a new sppasTierWindow instance.
 
         :param parent: Parent window. Must not be None.
@@ -322,7 +322,7 @@ class TestPanel(sppasPanel):
         self.p2.set_visible_period(2.49, 3.49)
         self.p2.SetBackgroundColour(wx.LIGHT_GREY)
 
-        self.p3 = sppasTierWindow(self, pos=(10, 100), size=(300, 48), data=trs[1])
+        self.p3 = sppasTierWindow(self, pos=(10, 100), size=(300, 64), data=trs[1])
         self.p3.SetBackgroundColour(wx.Colour(200, 240, 220))
 
         s = wx.BoxSizer(wx.VERTICAL)

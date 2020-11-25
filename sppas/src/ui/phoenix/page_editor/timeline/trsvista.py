@@ -39,6 +39,16 @@ class TranscriptionVista(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def SetFont(self, font):
+        """Override to keep the tier height proportional."""
+        wx.Panel.SetFont(self, font)
+        for tier_ctrl in self.GetChildren():
+            tier_ctrl.SetFont(font)
+            tier_ctrl.SetMinSize(wx.Size(-1, self.get_font_height() * 2))
+        self.Layout()
+
+    # -----------------------------------------------------------------------
+
     def set_transcription(self, transcription):
         """Fix the transcription object if it wasn't done when init.
 
@@ -50,7 +60,8 @@ class TranscriptionVista(sppasPanel):
             self.__trs = transcription
             for tier in self.__trs:
                 self._add_tier_to_panel(tier)
-            self.SetMinSize(wx.Size(-1, len(self.__trs)*sppasPanel.fix_size(24)))
+
+            self.SetMinSize(wx.Size(-1, len(self.__trs) * self.get_font_height() * 2))
 
     # -----------------------------------------------------------------------
 
@@ -189,7 +200,7 @@ class TranscriptionVista(sppasPanel):
         tier_ctrl.SetBackgroundColour(self.GetBackgroundColour())
         tier_ctrl.SetHorizBorderWidth(1)
         tier_ctrl.SetBorderColour(self.GetBackgroundColour())  # border is visible only if selected
-        tier_ctrl.SetMinSize(wx.Size(-1, sppasPanel.fix_size(24)))
+        tier_ctrl.SetMinSize(wx.Size(-1, self.get_font_height() * 2))
         tier_ctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_click)
 
         self.GetSizer().Add(tier_ctrl, 0, wx.EXPAND, 0)
