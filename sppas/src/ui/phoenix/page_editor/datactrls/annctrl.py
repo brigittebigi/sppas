@@ -61,6 +61,10 @@ class sppasAnnotationWindow(sppasDataWindow):
 
     """
 
+    SELECTION_BG_COLOUR = wx.Colour(250, 170, 180)
+
+    # -----------------------------------------------------------------------
+
     def __init__(self, parent, id=-1,
                  data=None,
                  pos=wx.DefaultPosition,
@@ -91,7 +95,7 @@ class sppasAnnotationWindow(sppasDataWindow):
             self.SetData(data)
 
         # Override parent members
-        self._is_selectable = False
+        self._is_selectable = True
         self._min_width = 1
         self._min_height = 4
         self._vert_border_width = 0
@@ -105,6 +109,36 @@ class sppasAnnotationWindow(sppasDataWindow):
         self.__should_draw_points = [True, True]
 
         self.SetInitialSize(size)
+
+    # -----------------------------------------------------------------------
+
+    def SetSelected(self, value):
+        """Override. Select or deselect the window except if not selectable.
+
+        :param value: (bool)
+
+        """
+        # Ok, do normal things to do if this ann is selected or de-selected
+        sppasDataWindow.SetSelected(self, value)
+
+        # and select or de-select its children points
+        if self._pointctrl1 is not None:
+            self._pointctrl1.SetSelected(self.IsSelected())
+
+        if self._pointctrl2 is not None:
+            self._pointctrl2.SetSelected(self.IsSelected())
+
+    # -----------------------------------------------------------------------
+
+    def Notify(self):
+        """Override."""
+        # select or de-select the children points
+        if self._pointctrl1 is not None:
+            self._pointctrl1.SetSelected(self.IsSelected())
+        if self._pointctrl2 is not None:
+            self._pointctrl2.SetSelected(self.IsSelected())
+
+        sppasDataWindow.Notify(self)
 
     # ------------------------------------------------------------------------
 
@@ -121,12 +155,26 @@ class sppasAnnotationWindow(sppasDataWindow):
     # -----------------------------------------------------------------------
 
     def SetVertBorderWidth(self, value):
-        """Set the width of the left/right borders.
+        """Override. Set the width of the left/right borders.
 
-        :param value: (int) Border size. Not applied if not appropriate.
+        :param value: (int) Border size. Not applied because not appropriate.
 
         """
         return
+
+    # -----------------------------------------------------------------------
+
+    def GetBackgroundBrush(self):
+        """Override. Get the brush for drawing the background of the window.
+
+        :returns: (wx.Brush)
+
+        """
+        if self.IsSelected():
+            bg_color = self.SELECTION_BG_COLOUR
+        else:
+            bg_color = self.GetPenBackgroundColour()
+        return wx.Brush(bg_color, wx.BRUSHSTYLE_SOLID)
 
     # -----------------------------------------------------------------------
 
@@ -144,18 +192,20 @@ class sppasAnnotationWindow(sppasDataWindow):
         dc.SetPen(wx.TRANSPARENT_PEN)
 
         dc.DrawRectangle(0, 0, w, h)
-        if self._data.is_labelled() is True:
-            # Fill in the content
-            c1 = self.GetBackgroundColour()
-            c2 = self.GetHighlightedColour(c1, 20)
-            mid1 = h // 3
-            mid2 = h - (h // 3)
-            # top-mid1 gradient
-            box_rect = wx.Rect(0, 0, w, mid1)
-            dc.GradientFillLinear(box_rect, c1, c2, wx.NORTH)
-            # bottom-mid1 gradient
-            box_rect = wx.Rect(0, mid2, w, mid1)
-            dc.GradientFillLinear(box_rect, c1, c2, wx.SOUTH)
+        # Fill in the content
+        if self.IsSelected():
+            c1 = self.SELECTION_BG_COLOUR
+        else:
+            c1 = self.GetPenBackgroundColour()
+        c2 = self.GetHighlightedColour(c1, 20)
+        mid1 = h // 3
+        mid2 = h - (h // 3)
+        # top-mid1 gradient
+        box_rect = wx.Rect(0, 0, w, mid1)
+        dc.GradientFillLinear(box_rect, c1, c2, wx.NORTH)
+        # bottom-mid1 gradient
+        box_rect = wx.Rect(0, mid2, w, mid1)
+        dc.GradientFillLinear(box_rect, c1, c2, wx.SOUTH)
 
     # -----------------------------------------------------------------------
 
@@ -220,6 +270,8 @@ class sppasAnnotationWindow(sppasDataWindow):
                 name="pointctrl1"
             )
             self._pointctrl1.SetBackgroundColour(self.GetBackgroundColour())
+            self._pointctrl1.SetSelectable(self._is_selectable)
+            self._pointctrl1.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._point1_selected)
         else:
             self._pointctrl1.SetPosition(wx.Point(x, y))
             self._pointctrl1.SetSize(wx.Size(w, h))
@@ -236,6 +288,9 @@ class sppasAnnotationWindow(sppasDataWindow):
                 name="pointctrl2"
             )
             self._pointctrl2.SetBackgroundColour(self.GetBackgroundColour())
+            self._pointctrl2.SetSelectable(self._is_selectable)
+            self._pointctrl2.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._point2_selected)
+
         else:
             self._pointctrl2.SetPosition(wx.Point(x, y))
             self._pointctrl2.SetSize(wx.Size(w, h))
@@ -302,6 +357,14 @@ class sppasAnnotationWindow(sppasDataWindow):
         """Return a duration from a given width."""
         return float(width) / float(self._pxsec)
 
+    # ------------------------------------------------------------------------
+
+    def _point1_selected(self, event):
+        self._pointctrl1.SetSelected(self.IsSelected())
+
+    def _point2_selected(self, event):
+        self._pointctrl2.SetSelected(self.IsSelected())
+
 # ----------------------------------------------------------------------------
 # Panels to test
 # ----------------------------------------------------------------------------
@@ -351,3 +414,12 @@ class TestPanel(wx.Panel):
             self, pos=(300, 200), size=(5, 100), data=a2)
         p22.SetPxSec(10)
         p22.Refresh()
+
+        self.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_left_click)
+
+    # -----------------------------------------------------------------------
+
+    def _process_left_click(self, event):
+        selected = event.GetSelected()
+        wx.LogDebug("Test AnnotationCtrl panel received a left-click event "
+                    "from {} with selected={}".format(event.GetObj().get_id(), selected))

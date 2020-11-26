@@ -26,6 +26,9 @@ class TranscriptionVista(sppasPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
+    Only one tier must be selected at a time and only one annotation can be
+    selected in the selected tier.
+
     Event emitted by this class is TRS_EVENT with:
 
         - action="select_tier", value=name of the tier to be selected
@@ -111,11 +114,9 @@ class TranscriptionVista(sppasPanel):
             if child.IsSelected() is True:
                 child.SetBorderColour(self.GetBackgroundColour())
                 child.SetSelected(False)
-                child.Refresh()
             if child.get_tiername() == tier_name:
                 child.SetBorderColour(wx.RED)  # border is visible only if selected
                 child.SetSelected(True)
-                child.Refresh()
 
     # -----------------------------------------------------------------------
 
@@ -188,7 +189,7 @@ class TranscriptionVista(sppasPanel):
     # -----------------------------------------------------------------------
 
     def notify(self, action, value=None):
-        """Send a EVT_TIMELINE_VIEW event to the listener (if any)."""
+        """Send a EVT_TRS event to the listener (if any)."""
         evt = TrsEvent(action=action, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
@@ -201,20 +202,29 @@ class TranscriptionVista(sppasPanel):
         tier_ctrl.SetHorizBorderWidth(1)
         tier_ctrl.SetBorderColour(self.GetBackgroundColour())  # border is visible only if selected
         tier_ctrl.SetMinSize(wx.Size(-1, self.get_font_height() * 2))
-        tier_ctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_click)
+        tier_ctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_selected)
 
         self.GetSizer().Add(tier_ctrl, 0, wx.EXPAND, 0)
 
     # -----------------------------------------------------------------------
 
-    def _process_tier_click(self, event):
-        """Process a click on a tier.
+    def _process_tier_selected(self, event):
+        """Process a click on a tier or an annotation of a tier.
 
         :param event: (wx.Event)
 
         """
-        tier = event.GetObj()
-        self.notify(action="select_tier", value=tier.get_name())
+        # Which tier was clicked?
+        tierctrl_click = event.GetEventObject()
+        tier_click = event.GetObj()
+
+        # Update selection: disable a previously selected tier
+        for child in self.GetChildren():
+            if child is not tierctrl_click and child.IsSelected():
+                child.SetSelected(False)
+                child.Refresh()
+
+        self.notify(action="tier_selected", value=tier_click.get_name())
 
 # ---------------------------------------------------------------------------
 

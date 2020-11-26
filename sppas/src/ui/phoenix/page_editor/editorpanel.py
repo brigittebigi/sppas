@@ -147,11 +147,13 @@ class EditorPanel(sppasSplitterWindow):
         self._listview.restore_ann()
 
     # -----------------------------------------------------------------------
-    # Actions to perform on the listview in priority
+    # Actions to perform on the listview in priority then on the timeview
     # -----------------------------------------------------------------------
 
-    def list_action_requested(self, action_name):
-        """Do an action on the listview and apply on the timeview.
+    def ann_action_requested(self, action_name):
+        """Perform an action on some annotations.
+
+        Apply on the listview first then apply on the timeview.
 
         :param action_name: (str)
         :raise: exception if the action can't be performed
@@ -316,7 +318,7 @@ class EditorPanel(sppasSplitterWindow):
     # -----------------------------------------------------------------------
 
     def _process_timeline_action(self, event):
-        """Process an action event from one of the trs panels.
+        """Process an action event from one of the timeline view child panel.
 
         :param event: (wx.Event)
 
@@ -327,20 +329,21 @@ class EditorPanel(sppasSplitterWindow):
         wx.LogDebug("TIMELINE EVENT. {} received an event action {} of file {} with value {}"
                     "".format(self.GetName(), action, filename, str(value)))
 
-        if action == "select_tier":
-            self._listview.set_selected_tiername(filename, value)
-            self._timeview.set_selected_tiername(filename, value)
+        if action == "tier_selected":
+            # value of the event is the name of the tier
+            ann_index = self._timeview.get_selected_annotation()
+            self._listview.set_selected_tiername(filename, value, ann_index)
 
         elif action == "tiers_added":
             self._listview.add_tiers(filename, value)
 
-        elif action == "ann_selected":
-            self._listview.set_selected_annotation(value)
+        elif action == "save":
+            self.save_file(filename)
 
         else:
             # we just need to layout ourself
             self.UpdateSize()
-            # other actions (close, save) are ignored.
+            # other actions (close) are ignored.
             # They will be handled by the parent.
             event.Skip()
 
@@ -366,8 +369,8 @@ class EditorPanel(sppasSplitterWindow):
             self._timeview.update_ann(filename, value, what="update")
 
         elif action == "select_tier":
-            self._listview.set_selected_tiername(filename, value)
             self._timeview.set_selected_tiername(filename, value)
+            # Set the selected annotation too
 
         else:
             event.Skip()

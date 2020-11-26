@@ -53,7 +53,13 @@ class sppasPointWindow(sppasDataWindow):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
+    By default, a point is not selectable.
+
     """
+
+    SELECTION_BG_COLOUR = wx.Colour(250, 170, 180)
+
+    # -----------------------------------------------------------------------
 
     def __init__(self, parent, id=-1,
                  data=None,
@@ -81,6 +87,7 @@ class sppasPointWindow(sppasDataWindow):
             self.SetData(data)
 
         # Override parent members
+        self._is_selectable = False
         self._min_width = 1
         self._min_height = 4
         self._vert_border_width = 0
@@ -115,8 +122,12 @@ class sppasPointWindow(sppasDataWindow):
         if self._data is None:
             return
         w, h = self.GetClientSize()
+        if self.IsSelected():
+            bg_color = self.SELECTION_BG_COLOUR
+        else:
+            bg_color = self.GetPenBackgroundColour()
 
-        brush = self.GetBackgroundBrush()
+        brush = wx.Brush(bg_color, wx.BRUSHSTYLE_SOLID)
         if brush is not None:
             dc.SetBackground(brush)
             dc.Clear()
@@ -124,11 +135,11 @@ class sppasPointWindow(sppasDataWindow):
 
         # If highlighted
         if self.HasFocus() is False:
-            c1 = self.GetHighlightedColour(self.GetBackgroundColour())
+            c1 = self.GetHighlightedColour(bg_color)
             c2 = self.GetPenForegroundColour()
         else:
             c1 = self.GetPenForegroundColour()
-            c2 = self.GetHighlightedColour(self.GetBackgroundColour())
+            c2 = self.GetHighlightedColour(bg_color)
 
         if w > 5:
             # Fill in the content
@@ -164,7 +175,21 @@ class TestPanel(wx.Panel):
             style=wx.BORDER_NONE | wx.WANTS_CHARS,
             name="Test PointCtrl")
 
-        p1 = sppasPointWindow(
-            self, pos=(50, 50), size=(20, 100), data=sppasPoint(2.3, 0.01))
-        p2 = sppasPointWindow(
-            self, pos=(150, 50), size=(5, 100), data=sppasPoint(3))
+        p1 = sppasPointWindow(self, pos=(50, 50), size=(20, 100), data=sppasPoint(2.3, 0.01), name="p1")
+        p1.SetSelectable(False)
+
+        p2 = sppasPointWindow(self, pos=(150, 50), size=(5, 100), data=sppasPoint(3), name="p2")
+        p2.SetSelectable(True)
+
+        p1.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_selected)
+        p2.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_selected)
+
+    # ----------------------------------------------------------------------------
+
+    def _process_selected(self, event):
+        wx.LogDebug("A point was clicked.")
+        pointctrl = event.GetEventObject()
+        point = event.GetObj()
+        selected = event.GetSelected()
+        wx.LogMessage("The pointctrl {:s} of the point {:s} was selected: {}"
+                      "".format(pointctrl.GetName(), point, selected))

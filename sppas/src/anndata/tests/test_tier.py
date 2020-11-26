@@ -945,6 +945,27 @@ class TestTier(unittest.TestCase):
 
     # -----------------------------------------------------------------------
 
+    def test_get_ann_index(self):
+        tier1 = sppasTier("t1")
+        loc1 = [sppasInterval(sppasPoint(0.), sppasPoint(0.5)),
+                sppasInterval(sppasPoint(1.5), sppasPoint(2.5)),
+                sppasInterval(sppasPoint(2.5), sppasPoint(3.5)),
+                sppasInterval(sppasPoint(5.5), sppasPoint(6.5)),
+                sppasInterval(sppasPoint(7.5), sppasPoint(8.5)),
+                sppasInterval(sppasPoint(10.), sppasPoint(11.)),
+                sppasInterval(sppasPoint(13.), sppasPoint(14.))
+                ]
+        for i, loc in enumerate(loc1):
+            tier1.create_annotation(sppasLocation(loc), sppasLabel(sppasTag("x"+str(i))))
+
+        self.assertEqual(-1, tier1.get_annotation_index(
+            sppasAnnotation(sppasLocation(sppasInterval(sppasPoint(0), sppasPoint(1))))))
+
+        a = tier1[3]
+        self.assertEqual(3, tier1.get_annotation_index(a))
+
+    # -----------------------------------------------------------------------
+
     def test_fit(self):
         tier1 = sppasTier("t1")
         loc1 = [sppasInterval(sppasPoint(0.), sppasPoint(0.5)),

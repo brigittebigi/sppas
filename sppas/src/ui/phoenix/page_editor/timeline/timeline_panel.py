@@ -87,6 +87,8 @@ class sppasTimelinePanel(sppasPanel):
         - action="collapsed" with the filename and value=the object
         - action="expanded" with the filename and value=the object
 
+        - tier_selected is received and emitted
+
     """
 
     def __init__(self, parent, name="timeline_panel"):
@@ -511,6 +513,12 @@ class sppasTimelinePanel(sppasPanel):
         except Exception as e:
             wx.LogError(str(e))
             return
+
+        if action == "tier_selected":
+            # a new tier was selected, or a new annotation in this tier
+            ann_idx = panel.get_selected_ann()
+            self.set_selected_tiername(filename, value)
+            self.set_selected_annotation(ann_idx)
 
         # Send the event to the parent, including the filename
         self.notify(action, filename, value)

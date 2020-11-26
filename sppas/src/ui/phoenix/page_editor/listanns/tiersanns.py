@@ -171,9 +171,12 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
     # -----------------------------------------------------------------------
 
-    def set_selected_tiername(self, filename, tier_name):
+    def set_selected_tiername(self, filename, tier_name, ann_index=-1):
         """Change page selection of the book to match given data.
 
+        :param filename: (str)
+        :param tier_name: (str) Name of the newly selected tier
+        :param ann_index: (int) The index of an annotation to select
         :return: (bool)
 
         """
@@ -190,14 +193,20 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                 if page.get_filename() == filename and page.get_tiername() == tier_name:
                     self.__tiersbook.show_page(i)
                     self.__cur_page = i
-                    listctrl = self.__tiersbook.GetPage(i)
-                    self.__cur_index = listctrl.GetFirstSelected()
-                    if self.__cur_index == -1:
-                        self.__cur_index = 0
-                    ann = self.__tierctrl.get_selected_annotation()
-                    self.__annctrl.set_ann(ann)
-                    self.__annotation_selected(self.__cur_index)
-                    self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
+
+                    # Then, select an annotation in the newly selected tier
+                    # Either get the given one, or the lastly selected one, or the first one.
+                    if ann_index != -1:
+                        self.set_selected_annotation(ann_index)
+                    else:
+                        listctrl = self.__tiersbook.GetPage(i)
+                        self.__cur_index = listctrl.GetFirstSelected()
+                        if self.__cur_index == -1:
+                            self.__cur_index = 0
+                        ann = self.__tierctrl.get_selected_annotation()
+                        self.__annctrl.set_ann(ann)
+                        self.__annotation_selected(self.__cur_index)
+                        self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
                     break
 
         return self.__can_select
@@ -292,7 +301,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
         if valid is True:
             self.__cur_index = idx
-            self.__annotation_selected(idx)
+            self.__annotation_selected(idx, to_notify=False)
 
     # -----------------------------------------------------------------------
 
@@ -645,7 +654,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
     # -----------------------------------------------------------------------
 
-    def __annotation_selected(self, idx):
+    def __annotation_selected(self, idx, to_notify=True):
         """Select the annotation of given index in our controls.
 
         """
@@ -666,7 +675,8 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         ann = self.__tierctrl.get_selected_annotation()
         self.__annctrl.set_ann(ann)
         self.__cur_index = idx
-        self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
+        if to_notify is True:
+            self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
         return True
 
     # -----------------------------------------------------------------------

@@ -359,7 +359,8 @@ class sppasEditorPanel(sppasPanel):
         :return: (sppasToolbar)
 
         """
-        tb = sppasToolbar(self, name="files_media_toolbar")
+        tb = sppasToolbar(self, name="files_toolbar")
+        tb.set_height(24)   # default is 32
         tb.set_focus_color(sppasEditorPanel.FILES_COLOUR)
         tb.AddTitleText(MSG_FILES, self.FILES_COLOUR, name="files")
 
@@ -454,9 +455,9 @@ class sppasEditorPanel(sppasPanel):
         self.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
         self.Bind(wx.EVT_TOGGLEBUTTON, self._process_toolbar_event)
 
-        # The event emitted by the sppasTimeEditFilesPanel
+        # The event emitted by the Timeline view
         self.Bind(EVT_TIMELINE_VIEW, self._process_time_action)
-        # The event emitted by the sppasTiersEditWindow
+        # The event emitted by the List view
         # self.Bind(EVT_LISTANNS_VIEW, self._process_list_action)
 
     # -----------------------------------------------------------------------
@@ -481,12 +482,11 @@ class sppasEditorPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _process_toolbar_event(self, event):
-        """Process a button of the toolbar event.
+        """Process a button event of one of the toolbars.
 
         :param event: (wx.Event)
 
         """
-        wx.LogDebug("Toolbar Event received by {:s}".format(self.GetName()))
         btn = event.GetEventObject()
         btn_name = btn.GetName()
 
@@ -512,10 +512,11 @@ class sppasEditorPanel(sppasPanel):
             self._editpanel.restore_ann()
 
         elif btn_name.startswith("cell_"):
-            self.__edit_panel_action(what=btn_name[5:])
+            # The action to perform is the name of the button, without "cell_"
+            self.__anns_action(what=btn_name[5:])
 
         elif btn_name == "tags":
-            self.__edit_panel_action(what="edit_metadata")
+            self.__anns_action(what="edit_metadata")
 
         else:
             event.Skip()
@@ -528,7 +529,6 @@ class sppasEditorPanel(sppasPanel):
         :param event: (wx.Event)
 
         """
-        panel = event.GetEventObject()
         filename = event.filename
         action = event.action
         value = event.value
@@ -538,9 +538,6 @@ class sppasEditorPanel(sppasPanel):
 
         if action == "close":
             self.close_file(filename)
-
-        elif action == "save":
-            self._editpanel.save_file(filename)
 
         else:
             event.Skip()
@@ -567,9 +564,9 @@ class sppasEditorPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def __edit_panel_action(self, what=""):
+    def __anns_action(self, what=""):
         try:
-            self._editpanel.list_action_requested(what)
+            self._editpanel.ann_action_requested(what)
         except Exception as e:
             Error(str(e))
 

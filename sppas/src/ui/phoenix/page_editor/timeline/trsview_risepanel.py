@@ -225,6 +225,9 @@ class TrsViewPanel(sppasFileViewPanel):
     def __process_trs_event(self, event):
         """Process an event from the embedded transcription.
 
+        This is a solution to convert the EVT_TRS received from a trsvista
+        into an EVT_TIMELINE_VIEW.
+
         :param event: (wx.Event)
 
         """

@@ -38,7 +38,6 @@
 """
 
 import wx
-import logging
 
 from sppas.src.ui.phoenix.windows.winevents import sppasWindowEvent
 from sppas.src.ui.phoenix.windows.basewindow import sppasWindow
@@ -105,6 +104,9 @@ class sppasDataWindow(sppasWindow):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
+    Event emitted by this class is sppasWindowSelectedEvent() which can be
+    captured with EVT_COMMAND_LEFT_CLICK.
+
     """
 
     def __init__(self, parent, id=-1,
@@ -126,9 +128,8 @@ class sppasDataWindow(sppasWindow):
         :param name:      Window name.
 
         """
+        super(sppasDataWindow, self).__init__(parent, id, pos, size, style, name)
 
-        super(sppasDataWindow, self).__init__(
-            parent, id, pos, size, style, name)
         self._selected = False
         self._is_selectable = False
         self._data = None
@@ -211,10 +212,15 @@ class sppasDataWindow(sppasWindow):
         :param event: a wx.MouseEvent event to be processed.
 
         """
-        if self.IsEnabled() is True:
-            if self._is_selectable is True:
-                self._selected = not self._selected
-            super(sppasDataWindow, self).OnMouseLeftDown(event)
+        if self.IsEnabled() is False:
+            return
+
+        # if self._is_selectable is True:
+        #     self._selected = not self._selected
+
+        # Direct all mouse inputs to this window
+        self.CaptureMouse()
+        self._set_state(WindowState().selected)
 
     # -----------------------------------------------------------------------
 
@@ -241,6 +247,7 @@ class sppasDataWindow(sppasWindow):
                 if self._is_selectable is False:
                     self._set_state(self._state[0])
                 else:
+                    self._selected = not self._selected
                     if self._selected is True:
                         self._set_state(WindowState().selected)
                     else:
@@ -282,7 +289,6 @@ class sppasDataWindow(sppasWindow):
     # -----------------------------------------------------------------------
 
     def Notify(self):
-        logging.debug("Notify parent of selected with command left click event.")
         evt = sppasWindowSelectedEvent(wx.wxEVT_COMMAND_LEFT_CLICK, self.GetId())
         evt.SetObj(self._data)
         evt.SetSelected(self._selected)

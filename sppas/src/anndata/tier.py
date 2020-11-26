@@ -1199,6 +1199,30 @@ class sppasTier(sppasMetaData):
         return None
 
     # -----------------------------------------------------------------------
+
+    def get_annotation_index(self, ann):
+        """Find an annotation.
+
+        :param ann: (sppasAnnotation)
+        :returns: (int) -1 if not found
+
+        """
+        if self.is_point():
+            return self.index(ann.get_highest_localization())
+
+        else:
+            i1 = self.lindex(ann.get_lowest_localization())
+            i2 = self.rindex(ann.get_highest_localization())
+            for i in range(i1, i2+1):
+                ai = self.__ann[i]
+                if ai is ann:
+                    return i
+                if ai.get_id() == ann.get_id():
+                    return i
+
+        return -1
+
+    # -----------------------------------------------------------------------
     # Utils
     # -----------------------------------------------------------------------
 

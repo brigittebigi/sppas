@@ -61,7 +61,15 @@ class sppasTierWindow(sppasDataWindow):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
+    Event emitted by this class is sppasWindowSelectedEvent() which can be
+    captured with EVT_COMMAND_LEFT_CLICK.
+    It is send when the tier or one of its annotation is clicked.
+
     """
+
+    SELECTION_COLOUR = wx.Colour(250, 30, 20)
+
+    # -----------------------------------------------------------------------
 
     def __init__(self, parent, id=-1,
                  data=None,
@@ -100,6 +108,35 @@ class sppasTierWindow(sppasDataWindow):
         self._vert_border_width = 0
         self._horiz_border_width = 0
         self._focus_width = 0
+
+    # -----------------------------------------------------------------------
+
+    def SetSelected(self, value):
+        """Override. Select or deselect the window except if not selectable.
+
+        :param value: (bool)
+
+        """
+        # Ok, do normal things to do if this ann is selected or de-selected
+        sppasDataWindow.SetSelected(self, value)
+
+        # and update its children annctrls
+        if self.IsSelected() is False:
+            self.SetBorderColour(self.GetBackgroundColour())
+            for ann in self.__annctrls:
+                self.__annctrls[ann].SetSelected(False)
+        else:
+            self.SetBorderColour(self.SELECTION_COLOUR)
+
+    # -----------------------------------------------------------------------
+
+    def Notify(self):
+        """Override."""
+        if self.IsSelected() is True:
+            sppasDataWindow.Notify(self)
+        else:
+            # Do not accept a self-deselection with the click.
+            self.SetSelected(True)
 
     # -----------------------------------------------------------------------
 
@@ -293,12 +330,38 @@ class sppasTierWindow(sppasDataWindow):
             return msg
 
         return "No data"
+
     # -----------------------------------------------------------------------
 
     def _process_ann_selected(self, event):
-        logging.debug("Tier {} received annotation selected event."
-                      "".format(self._data.get_name()))
-        self.Notify()
+        """An annotation was clicked.
+
+        """
+        # Which annotation was clicked?
+        annctrl_click = event.GetEventObject()
+        ann_click = event.GetObj()
+        sel_click = event.GetSelected()
+
+        # We'll forbid an annotation to self-deselect
+        if sel_click is False:
+            # the annotation was selected and it self-deselected by the click.
+            annctrl_click.SetSelected(True)
+
+        else:
+
+            # The currently selected ann has to be de-selected.
+            if self.__ann_idx != -1:
+                ann_sel = self._data[self.__ann_idx]
+                self.__annctrls[ann_sel].SetSelected(False)
+                self.__ann_idx = -1
+
+            # The current ann selection index must be updated
+            self.__ann_idx = self._data.get_annotation_index(ann_click)
+
+            # Notify the parent this tier/an annotation of this tier was selected
+            if self.IsSelected() is False:
+                self.SetSelected(sel_click)
+            self.Notify()
 
 # ---------------------------------------------------------------------------
 
@@ -330,21 +393,12 @@ class TestPanel(sppasPanel):
         s.Add(self.p2, 0, wx.EXPAND)
         s.Add(self.p3, 0, wx.EXPAND)
         self.SetSizer(s)
-        self.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_tier_selected)
+        self.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_selected)
 
     # -----------------------------------------------------------------------
 
-    def _process_tier_selected(self, event):
+    def _process_selected(self, event):
         tier = event.GetObj()
         value = event.GetSelected()
-        obj = event.GetEventObject()
-
-        print("Selected event received. Tier {} is selected {}"
-              "".format(tier.get_name(), value))
-        if obj.IsSelected() is False:
-            obj.SetSelected(True)
-            obj.SetForegroundColour(wx.RED)
-        else:
-            obj.SetSelected(False)
-            obj.SetForegroundColour(self.GetForegroundColour())
-
+        wx.LogDebug("Selected event received. Tier {} is selected {}"
+                    "".format(tier.get_name(), value))
