@@ -106,8 +106,9 @@ class sppasTierWindow(sppasDataWindow):
         self._min_width = 256
         self._min_height = 4
         self._vert_border_width = 0
-        self._horiz_border_width = 0
+        self._horiz_border_width = 1
         self._focus_width = 0
+        self.SetBorderColour(self.GetBackgroundColour())
 
     # -----------------------------------------------------------------------
 
@@ -124,7 +125,11 @@ class sppasTierWindow(sppasDataWindow):
         if self.IsSelected() is False:
             self.SetBorderColour(self.GetBackgroundColour())
             for ann in self.__annctrls:
-                self.__annctrls[ann].SetSelected(False)
+                if self.__annctrls[ann].IsSelected() is True:
+                    self.__annctrls[ann].SetSelected(False)
+                    self.__annctrls[ann].Refresh()
+                self.__ann_idx = -1
+
         else:
             self.SetBorderColour(self.SELECTION_COLOUR)
 
@@ -173,26 +178,44 @@ class sppasTierWindow(sppasDataWindow):
     # -----------------------------------------------------------------------
 
     def set_selected_ann(self, idx):
-        logging.debug("an annotation is selected : {}".format(idx))
+        if idx == self.__ann_idx:
+            return
+
+        # The currently selected ann has to be de-selected.
+        if self.__ann_idx != -1:
+            ann_sel = self._data[self.__ann_idx]
+            self.__annctrls[ann_sel].SetSelected(False)
+            self.__annctrls[ann_sel].Refresh()
+
+        # The current ann selection index must be updated
         self.__ann_idx = idx
-        self.Refresh()
+
+        # The newly selected annotation must be re-drawn to be highlighted.
+        if idx != -1:
+            # if the newly selected annotation was never drawn, it still hasn't an annctrl
+            ann = self._data[idx]
+            if ann not in self.__annctrls:
+                self.__create_annctrl(ann)
+            self.__annctrls[ann].SetSelected(True)
+            if self.IsSelected() is True:
+                self.__annctrls[ann].Refresh()
+
+            if self.IsSelected() is False:
+                self.SetSelected(True)
+                self.Refresh()
 
     # -----------------------------------------------------------------------
 
     def update_ann(self, idx):
         logging.debug("an annotation was modified : {}".format(idx))
-        self.Refresh()
+        ann = self._data[idx]
+        self.__annctrls[ann].Refresh()
 
     # -----------------------------------------------------------------------
 
     def delete_ann(self, idx):
         logging.debug("an annotation was deleted : {}".format(idx))
-        self.Refresh()
-
-    # -----------------------------------------------------------------------
-
-    def create_ann(self, idx):
-        logging.debug("an annotation was created : {}".format(idx))
+        # ??? how to destroy the corresponding annctrl ? the ann was deleted...
         self.Refresh()
 
     # -----------------------------------------------------------------------
@@ -305,20 +328,16 @@ class sppasTierWindow(sppasDataWindow):
             x_a = x + int((float(w) * delay) / d)
         pos = wx.Point(x_a, y)
         size = wx.Size(int(w_a), h)
-        if ann in self.__annctrls:
-            annctrl = self.__annctrls[ann]
-            annctrl.SetPxSec(self._pxsec)
-            annctrl.SetPosition(pos)
-            annctrl.SetSize(size)
-            annctrl.ShouldDrawPoints(draw_points)
-            annctrl.Show()
-        else:
-            annctrl = sppasAnnotationWindow(self, pos=pos, size=size, data=ann)
-            annctrl.SetBackgroundColour(self.GetBackgroundColour())
-            annctrl.SetPxSec(self._pxsec)
-            annctrl.ShouldDrawPoints(draw_points)
-            annctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_ann_selected)
-            self.__annctrls[ann] = annctrl
+
+        if ann not in self.__annctrls:
+            self.__create_annctrl(ann)
+
+        annctrl = self.__annctrls[ann]
+        annctrl.SetPxSec(self._pxsec)
+        annctrl.SetPosition(pos)
+        annctrl.SetSize(size)
+        annctrl.ShouldDrawPoints(draw_points)
+        annctrl.Show()
 
     # -----------------------------------------------------------------------
 
@@ -349,6 +368,10 @@ class sppasTierWindow(sppasDataWindow):
 
         else:
 
+            idx = self._data.get_annotation_index(ann_click)
+            self.set_selected_ann(idx)
+
+            """
             # The currently selected ann has to be de-selected.
             if self.__ann_idx != -1:
                 ann_sel = self._data[self.__ann_idx]
@@ -360,8 +383,18 @@ class sppasTierWindow(sppasDataWindow):
 
             # Notify the parent this tier/an annotation of this tier was selected
             if self.IsSelected() is False:
-                self.SetSelected(sel_click)
+                self.SetSelected(True)
+            """
             self.Notify()
+
+    # -----------------------------------------------------------------------
+
+    def __create_annctrl(self, ann):
+        annctrl = sppasAnnotationWindow(self, data=ann)
+        annctrl.SetBackgroundColour(self.GetBackgroundColour())
+        annctrl.SetPxSec(self._pxsec)
+        annctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_ann_selected)
+        self.__annctrls[ann] = annctrl
 
 # ---------------------------------------------------------------------------
 

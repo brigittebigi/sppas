@@ -313,6 +313,7 @@ class sppasTierListCtrl(LineListCtrl):
         else:
             self._tier.create_annotation_before(idx)
             self.SetItemAnnotation(idx)
+        return True
 
     # -----------------------------------------------------------------------
 

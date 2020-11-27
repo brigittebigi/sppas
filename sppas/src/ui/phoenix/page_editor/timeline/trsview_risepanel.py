@@ -260,12 +260,20 @@ class TrsViewPanel(sppasFileViewPanel):
 class TestPanel(sppasScrolledPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="TrsView RisePanel")
-
-        p2 = TrsViewPanel(self, filename=os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.TextGrid"), name="p2")
-
-        p3 = TrsViewPanel(self, filename=os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"), name="p3")
+        f1 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P9-palign.xra")
+        f2 = os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.TextGrid")
+        f3 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra")
+        self._files = dict()
+        p1 = TrsViewPanel(self, filename=f1, name="p1")
+        p2 = TrsViewPanel(self, filename=f2, name="p2")
+        p3 = TrsViewPanel(self, filename=f3, name="p3")
+        self._files[f1] = p1
+        self._files[f2] = p2
+        self._files[f3] = p3
+        self._selected = None
 
         s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(p1, 0, wx.EXPAND | wx.ALL, 10)
         s.Add(p2, 0, wx.EXPAND | wx.ALL, 10)
         s.Add(p3, 0, wx.EXPAND | wx.ALL, 10)
         self.SetSizer(s)
@@ -277,12 +285,65 @@ class TestPanel(sppasScrolledPanel):
     # -----------------------------------------------------------------------
 
     def load(self):
+        self.FindWindow("p1").load()
+        self.FindWindow("p1").set_visible_period(2.3, 3.5)
         self.FindWindow("p2").load()
         self.FindWindow("p3").load()
         self.FindWindow("p3").set_visible_period(2.3, 3.5)
         self.FindWindow("p3").set_selected_tiername("PhonAlign")
+        self._selected = self.FindWindow("p3").get_filename()
 
         self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def get_selected_filename(self):
+        """Return the filename of the currently selected tier."""
+        return self._selected
+
+    # -----------------------------------------------------------------------
+
+    def set_selected_tiername(self, filename, tier_name):
+        """Change selected tier.
+
+        :param filename: (str) Name of a file
+        :param tier_name: (str) Name of a tier
+        :return: (bool)
+
+        """
+        for fn in self._files:
+            panel = self._files[fn]
+            if panel.is_trs() is True:
+                if fn == filename:
+                    self._selected = filename
+                    panel.set_selected_tiername(tier_name)
+                else:
+                    panel.set_selected_tiername(None)
+
+    # -----------------------------------------------------------------------
+
+    def get_selected_annotation(self):
+        """Return the index of the currently selected annotation.
+
+        :return: (int) Index or -1 if nor found.
+
+        """
+        if self._selected is not None:
+            panel = self._files[self._selected]
+            return panel.get_selected_ann()
+        return -1
+
+    # -----------------------------------------------------------------------
+
+    def set_selected_annotation(self, idx):
+        """Set the index of the selected annotation.
+
+        :param idx: Index or -1 to cancel the selection.
+
+        """
+        if self._selected is not None:
+            panel = self._files[self._selected]
+            panel.set_selected_ann(idx)
 
     # -----------------------------------------------------------------------
 
@@ -293,12 +354,19 @@ class TestPanel(sppasScrolledPanel):
 
         """
         panel = event.GetEventObject()
+        filename = panel.get_filename()
+
         action = event.action
         value = event.value
         wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
                     "".format(self.GetName(), action, panel.get_filename(), str(value)))
 
-        if action == "select_tier":
-            panel.set_selected_tiername(value)
+        if action == "tier_selected":
 
-        event.Skip()
+            # a new tier was selected, or a new annotation in this tier
+            ann_idx = panel.get_selected_ann()
+            print(" - ann_idx={}".format(ann_idx))
+            self.set_selected_tiername(filename, value)
+            print("set selected tiername is finished.")
+            self.set_selected_annotation(ann_idx)
+            print("set selected annotation is finished. new idx={}".format(self.get_selected_annotation()))

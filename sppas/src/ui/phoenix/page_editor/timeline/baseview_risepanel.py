@@ -81,9 +81,9 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
         self._dirty = False
         self._filename = filename
 
-        # Background color range
-        self._rgb1 = (255, 200, 200)
-        self._rgb2 = (255, 150, 150)
+        # Default background color ranges
+        self._rgb1 = (150, 150, 150)
+        self._rgb2 = (220, 220, 220)
 
         # Create the GUI
         self._create_content()

@@ -173,10 +173,10 @@ class TranscriptionVista(sppasPanel):
     # -----------------------------------------------------------------------
 
     def create_ann(self, idx):
-        """An annotation was created."""
+        """An annotation was created. Create the corresponding control."""
         for child in self.GetChildren():
             if child.IsSelected() is True:
-                child.create_ann(idx)
+                child.Refresh()
 
     # -----------------------------------------------------------------------
     # Construct the GUI

@@ -140,7 +140,7 @@ class sppasAnnotationWindow(sppasDataWindow):
 
         sppasDataWindow.Notify(self)
 
-    # ------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def SetPxSec(self, value):
         """Fix the number of pixels to draw 1 second of time.
@@ -149,7 +149,6 @@ class sppasAnnotationWindow(sppasDataWindow):
 
         """
         value = int(value)
-        assert value > 0
         self._pxsec = value
 
     # -----------------------------------------------------------------------

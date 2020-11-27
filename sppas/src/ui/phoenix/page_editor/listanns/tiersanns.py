@@ -151,7 +151,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         # De-select the currently selected annotation.
         if self.__cur_index != -1:
             c = self.__cur_index
-            self.__can_select = self.__annotation_deselected(self.__cur_index)
+            self.__can_select = self.__annotation_deselected(self.__cur_index, to_notify=False)
             self.__tierctrl.Select(c, on=1)
 
         # Select requested tier (... and an annotation)
@@ -183,7 +183,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         # De-select the currently selected annotation.
         if self.__cur_index != -1:
             c = self.__cur_index
-            self.__can_select = self.__annotation_deselected(self.__cur_index)
+            self.__can_select = self.__annotation_deselected(self.__cur_index, to_notify=False)
             self.__tierctrl.Select(c, on=1)
 
         # Select requested tier (... and an annotation)
@@ -373,7 +373,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                     modified_idx = self.__cur_index
                     ann = self.__tierctrl.get_selected_annotation()
                     self.__annctrl.set_ann(ann)
-                    # self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
+                    self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
 
         return delete_idx, modified_idx
 
@@ -402,7 +402,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                 modified_idx = self.__cur_index
                 ann = self.__tierctrl.get_selected_annotation()
                 self.__annctrl.set_ann(ann)
-                # self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
+                self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
 
         return created_idx, modified_idx
 
@@ -415,24 +415,24 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :return: (int) Index of the created annotation. or -1
 
         """
-        created_idx = -1
         if self.__cur_index == -1:
             wx.LogWarning("No annotation is selected.")
-        else:
+            return -1
 
-            try:
-                added = self.__tierctrl.add_annotation(self.__cur_index, direction)
-            except Exception as e:
-                Error("Annotation can't be added: {:s}".format(str(e)))
+        created_idx = -1
+        try:
+            added = self.__tierctrl.add_annotation(self.__cur_index, direction)
+            if added is True:
+                # OK. The annotation was added in the listctrl.
+                if direction > 0:
+                    created_idx = self.__cur_index + 1
+                else:
+                    created_idx = self.__cur_index
             else:
-                if added is True:
-                    # OK. The annotation was added in the listctrl.
-                    if direction > 0:
-                        created_idx = self.__cur_index + 1
-                    else:
-                        created_idx = self.__cur_index
-                        self.__cur_index += 1
-                    # self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
+                print("add_annotation returned False")
+
+        except Exception as e:
+            Error("Annotation can't be added: {:s}".format(str(e)))
 
         return created_idx
 
@@ -629,7 +629,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     # Private
     # -----------------------------------------------------------------------
 
-    def __annotation_deselected(self, idx):
+    def __annotation_deselected(self, idx, to_notify=True):
         """De-select the annotation of given index in our controls.
 
         :return: True if annotation was de-selected.
@@ -649,7 +649,8 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             self.__cur_index = idx
             self.__tierctrl.Select(idx, on=1)
 
-        self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
+        if to_notify is True:
+            self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
         return valid
 
     # -----------------------------------------------------------------------

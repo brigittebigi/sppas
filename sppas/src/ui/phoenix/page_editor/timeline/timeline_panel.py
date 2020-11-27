@@ -103,6 +103,7 @@ class sppasTimelinePanel(sppasPanel):
         # To get an easy access to the opened files and their panel
         # (key=filename, value=wx.SizerItem)
         self._files = dict()
+        self._sel_file = None
 
         # Create a scrolled panel and a multi media player control system
         self._create_content()
@@ -252,6 +253,8 @@ class sppasTimelinePanel(sppasPanel):
 
         """
         if force is True or self.is_modified(name) is False:
+            if name == self._sel_file:
+                self._sel_file = None
 
             # Remove of the object
             panel = self._files.get(name, None)
@@ -323,22 +326,14 @@ class sppasTimelinePanel(sppasPanel):
 
     def get_selected_filename(self):
         """Return the filename of the currently selected tier."""
-        for fn in self._files:
-            panel = self._files[fn]
-            if panel.is_trs() is True:
-                tn = panel.get_selected_tiername()
-                if tn is not None:
-                    return fn
-
-        return None
+        return self._sel_file
 
     # -----------------------------------------------------------------------
 
     def get_selected_tiername(self):
         """Return the name of the currently selected tier."""
-        fn = self.get_selected_filename()
-        if fn is not None:
-            panel = self._files[fn]
+        if self._sel_file is not None:
+            panel = self._files[self._sel_file]
             return panel.get_selected_tiername()
 
         return None
@@ -357,6 +352,7 @@ class sppasTimelinePanel(sppasPanel):
             panel = self._files[fn]
             if panel.is_trs() is True:
                 if fn == filename:
+                    self._sel_file = fn
                     panel.set_selected_tiername(tier_name)
                 else:
                     panel.set_selected_tiername(None)
@@ -369,9 +365,8 @@ class sppasTimelinePanel(sppasPanel):
         :return: (int) Index or -1 if nor found.
 
         """
-        fn = self.get_selected_filename()
-        if fn is not None:
-            panel = self._files[fn]
+        if self._sel_file is not None:
+            panel = self._files[self._sel_file]
             return panel.get_selected_ann()
         return -1
 
@@ -383,9 +378,8 @@ class sppasTimelinePanel(sppasPanel):
         :param idx: Index or -1 to cancel the selection.
 
         """
-        fn = self.get_selected_filename()
-        if fn is not None:
-            panel = self._files[fn]
+        if self._sel_file is not None:
+            panel = self._files[self._sel_file]
             panel.set_selected_ann(idx)
             # Update the SMMPC
             s, e = panel.get_selected_localization()
@@ -668,7 +662,6 @@ class sppasTimelinePanel(sppasPanel):
                     vs = max(0., s - vd)
                     ve = min(duration, e + vd)
             self.smmpc.set_visible_range(vs, ve)
-            print("New visible range: {} {}".format(vs, ve))
             for filename in self._files:
                 panel = self._files[filename]
                 panel.set_visible_period(vs, ve)
@@ -747,6 +740,7 @@ class TestPanel(wx.Panel):
         os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav"),
         os.path.join(paths.samples, "faces", "video_sample.mp4"),
         os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra"),
+        os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P9-palign.xra"),
         os.path.join(paths.samples, "toto.xxx")
     )
 
@@ -789,10 +783,10 @@ class TestPanel(wx.Panel):
             self.Layout()
 
         elif action == "tiers_added":
-            pass
+            wx.LogDebug("Test Panel of Timeline received event 'tiers_added'")
 
-        elif action == "select_tier":
-            pass
+        elif action == "tier_selected":
+            wx.LogDebug("Test Panel of Timeline received event 'tier_selected'")
 
         elif action in ("collapsed", "expanded"):
             self.Layout()

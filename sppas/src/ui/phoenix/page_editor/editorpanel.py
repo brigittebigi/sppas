@@ -363,17 +363,17 @@ class EditorPanel(sppasSplitterWindow):
                     "".format(self.GetName(), action, filename, str(value)))
 
         if action == "ann_selected":
+            tier_name = self._listview.get_selected_tiername()
+            self._timeview.set_selected_tiername(filename, tier_name)
             self._timeview.set_selected_annotation(value)
 
         elif action == "ann_modified":
             self._timeview.update_ann(filename, value, what="update")
 
         elif action == "select_tier":
-            self._timeview.set_selected_tiername(filename, value)
-            # Set the selected annotation too
-
-        else:
-            event.Skip()
+            pass
+            # self._timeview.set_selected_tiername(filename, value)
+            # Set the selected annotation too?????
 
 # ----------------------------------------------------------------------------
 # Panel for tests

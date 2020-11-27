@@ -80,6 +80,10 @@ class ErrorViewPanel(sppasFileViewPanel):
         super(ErrorViewPanel, self).__init__(parent, filename, name)
         self.Expand()
         self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
+
+        # Background color range - orange to red.
+        self._rgb1 = (255, 100, 110)
+        self._rgb2 = (255, 150, 110)
         self.SetRandomBackgroundColour()
 
     # -----------------------------------------------------------------------
@@ -107,7 +111,7 @@ class ErrorViewPanel(sppasFileViewPanel):
         :param error_message: (str)
 
         """
-        message = MSG_ERROR.format(self._filename) + "\n" + error_message
+        message = "\n" + MSG_ERROR.format(self._filename) + "\n" + error_message
         txtview = self.GetPane()
         txtview.SetValue(message)
 
@@ -116,10 +120,9 @@ class ErrorViewPanel(sppasFileViewPanel):
 
         # Search for the height of the text
         nblines = len(error_message.split("\n")) + 1
-        view_height = float(self.get_font_height()) * 1.1 * nblines
+        view_height = self.get_font_height() * nblines
 
-        txtview.SetMinSize(wx.Size(sppasPanel.fix_size(420),
-                                   int(view_height) + 6))
+        txtview.SetMinSize(wx.Size(sppasPanel.fix_size(420), int(view_height) + 6))
 
     # -----------------------------------------------------------------------
 
@@ -147,6 +150,8 @@ class TestPanel(sppasPanel):
 
         p1 = ErrorViewPanel(self, filename="Path/to/a/file.ext")
         p2 = ErrorViewPanel(self, filename="Path to another file")
+        p3 = ErrorViewPanel(self, filename="Path to another file")
+        p4 = ErrorViewPanel(self, filename="Path to another file")
 
         p1.set_error_message("This is an error message to explain why the"
                              " file is not properly displayed.")
@@ -154,5 +159,7 @@ class TestPanel(sppasPanel):
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(p1, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 2)
         s.Add(p2, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 2)
+        s.Add(p3, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 2)
+        s.Add(p4, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 2)
         self.SetSizer(s)
 
