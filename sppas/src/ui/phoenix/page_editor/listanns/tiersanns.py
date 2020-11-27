@@ -644,7 +644,6 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             self.__tierctrl.Select(idx, on=1)
 
         if to_notify is True:
-            print(" ->> __annotation_deselected. notifies parent of new ann selected: {}".format(self.__cur_index))
             self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
         return valid
 
@@ -672,7 +671,6 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         self.__annctrl.set_ann(ann)
         self.__cur_index = idx
         if to_notify is True:
-            print(" ->> __annotation_selected. notifies parent of new ann selected: {}".format(self.__cur_index))
             self.notify(action="ann_selected", filename=self.get_filename(), value=self.__cur_index)
         return True
 

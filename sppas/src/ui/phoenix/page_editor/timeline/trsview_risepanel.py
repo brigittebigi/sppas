@@ -362,11 +362,7 @@ class TestPanel(sppasScrolledPanel):
                     "".format(self.GetName(), action, panel.get_filename(), str(value)))
 
         if action == "tier_selected":
-
             # a new tier was selected, or a new annotation in this tier
             ann_idx = panel.get_selected_ann()
-            print(" - ann_idx={}".format(ann_idx))
             self.set_selected_tiername(filename, value)
-            print("set selected tiername is finished.")
             self.set_selected_annotation(ann_idx)
-            print("set selected annotation is finished. new idx={}".format(self.get_selected_annotation()))

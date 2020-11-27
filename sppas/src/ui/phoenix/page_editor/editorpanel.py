@@ -361,8 +361,6 @@ class EditorPanel(sppasSplitterWindow):
 
         if action == "ann_selected":
             tier_name = self._listview.get_selected_tiername()
-            print("LISTANNS EVENT. {} received an event action {} of file {} with value {} - tiername={}"
-                  "".format(self.GetName(), action, filename, str(value), tier_name))
             self._timeview.set_selected_tiername(filename, tier_name)
             self._timeview.set_selected_annotation(value)
 

@@ -352,7 +352,7 @@ class sppasTimelinePanel(sppasPanel):
             panel = self._files[fn]
             if panel.is_trs() is True:
                 if fn == filename:
-                    print("New tier selected: {}".format(tier_name))
+                    wx.LogDebug("New tier selected: {}".format(tier_name))
                     self._sel_file = fn
                     panel.set_selected_tiername(tier_name)
                 else:
