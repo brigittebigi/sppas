@@ -352,6 +352,7 @@ class sppasTimelinePanel(sppasPanel):
             panel = self._files[fn]
             if panel.is_trs() is True:
                 if fn == filename:
+                    print("New tier selected: {}".format(tier_name))
                     self._sel_file = fn
                     panel.set_selected_tiername(tier_name)
                 else:
@@ -381,14 +382,12 @@ class sppasTimelinePanel(sppasPanel):
         if self._sel_file is not None:
             panel = self._files[self._sel_file]
             panel.set_selected_ann(idx)
-            # Update the SMMPC
-            s, e = panel.get_selected_localization()
-            # update the visible part
-            ### self._update_visible_range(s, e)
-            # set the selection to the player
+            # Update the SMMPC: set the selection to the timeslider
             s, e = panel.get_selected_localization()
             self.smmpc.set_selection_range(s, e)
-            s, e = self.smmpc.get_selection_range()
+        else:
+            wx.LogError("Can't select the annotation at index {}. "
+                        "No tier was previously selected.".format(idx))
 
     # -----------------------------------------------------------------------
     # Methods to operate on an AudioViewPanel()

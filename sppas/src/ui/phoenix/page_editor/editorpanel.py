@@ -239,8 +239,9 @@ class EditorPanel(sppasSplitterWindow):
         :raise: ValueError
 
         """
-        # If the file is a media, we'll receive an action "media_loaded"
-        # If the file is a trs, we'll receive the action "tiers_added".
+        # If the file is a media, we'll receive an action "media_loaded".
+        # If the file is a trs, we'll receive the action "tiers_added", then
+        # the tiers will be added to the listview.
         self._timeview.append_file(name)
 
     # -----------------------------------------------------------------------
@@ -326,8 +327,6 @@ class EditorPanel(sppasSplitterWindow):
         filename = event.filename
         action = event.action
         value = event.value
-        wx.LogDebug("TIMELINE EVENT. {} received an event action {} of file {} with value {}"
-                    "".format(self.GetName(), action, filename, str(value)))
 
         if action == "tier_selected":
             # value of the event is the name of the tier
@@ -359,11 +358,11 @@ class EditorPanel(sppasSplitterWindow):
         filename = event.filename
         action = event.action
         value = event.value
-        wx.LogDebug("LISTANNS EVENT. {} received an event action {} of file {} with value {}"
-                    "".format(self.GetName(), action, filename, str(value)))
 
         if action == "ann_selected":
             tier_name = self._listview.get_selected_tiername()
+            print("LISTANNS EVENT. {} received an event action {} of file {} with value {} - tiername={}"
+                  "".format(self.GetName(), action, filename, str(value), tier_name))
             self._timeview.set_selected_tiername(filename, tier_name)
             self._timeview.set_selected_annotation(value)
 
@@ -371,9 +370,7 @@ class EditorPanel(sppasSplitterWindow):
             self._timeview.update_ann(filename, value, what="update")
 
         elif action == "select_tier":
-            pass
-            # self._timeview.set_selected_tiername(filename, value)
-            # Set the selected annotation too?????
+            self._timeview.set_selected_tiername(filename, value)
 
 # ----------------------------------------------------------------------------
 # Panel for tests

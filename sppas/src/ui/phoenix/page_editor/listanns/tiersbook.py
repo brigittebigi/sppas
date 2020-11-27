@@ -94,13 +94,11 @@ class sppasTiersBook(sppasSimplebook):
         for tier in tiers:
             if len(tier) > 0:
                 page = sppasTierListCtrl(self, tier, filename, style=wx.BORDER_SIMPLE)
-
                 if sel_tier is None:
                     self.ShowNewPage(page)
                     sel_tier = True
                 else:
                     self.AddPage(page, "")
-
             else:
                 wx.LogError("Page not created. "
                             "No annotation in tier: {:s}".format(tier.get_name()))

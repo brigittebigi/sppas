@@ -579,10 +579,8 @@ class TestPanel(sppasPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="Editor Page")
-        f1 = os.path.join(paths.samples, "annotation-results", "samples-fra",
-                          "F_F_B003-P8-palign.xra")
-        f2 = os.path.join(paths.samples, "annotation-results", "samples-fra",
-                          "F_F_B003-P9-palign.xra")
+        f1 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra")
+        f2 = os.path.join(paths.samples, "annotation-results", "samples-fra",  "F_F_B003-P9-palign.xra")
         f3 = os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
 
         data = sppasWorkspace()
