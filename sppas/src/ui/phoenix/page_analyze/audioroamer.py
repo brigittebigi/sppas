@@ -295,7 +295,7 @@ class ChannelInfosPanel(sppasPanel):
                 pathname += ".wav"
 
         if os.path.exists(pathname):
-            Error(ERR_FILE_EXISTS.format(name=pathname), "Export error")
+            Error(ERR_FILE_EXISTS.format(name=pathname))
             return
 
         try:
@@ -307,7 +307,7 @@ class ChannelInfosPanel(sppasPanel):
             sppas.src.audiodata.aio.save(pathname, audio)
         except Exception as e:
             message = ACT_EXPORT_ERROR.format(name=pathname, err=str(e))
-            Error(message, "Export error")
+            Error(message)
         else:
             wx.LogMessage("File {:s} saved successfully".format(pathname))
 
@@ -334,7 +334,7 @@ class ChannelInfosPanel(sppasPanel):
                 fp.write(content)
         except Exception as e:
             message = ACT_EXPORT_ERROR.format(name=pathname, err=str(e))
-            Error(message, "Save error")
+            Error(message)
         else:
             wx.LogMessage("File {:s} saved successfully".format(pathname))
 

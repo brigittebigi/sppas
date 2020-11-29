@@ -46,6 +46,7 @@ import sppas.src.ui.phoenix.windows.baselabelwindow as labelwindow
 import sppas.src.ui.phoenix.windows.basewindow as basewindow
 import sppas.src.ui.phoenix.windows.toolbar as toolbar
 import sppas.src.ui.phoenix.windows.line as line
+import sppas.src.ui.phoenix.windows.label as label
 import sppas.src.ui.phoenix.windows.slider as slider
 import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
 import sppas.src.ui.phoenix.windows.combobox as combobox
@@ -66,7 +67,8 @@ class TestPanel(wx.Choicebook):
 
         self.AddPage(basedcwindow.TestPanel(self), "Base DC Window")
         self.AddPage(labelwindow.TestPanel(self), "Label Window")
-        self.AddPage(basewindow.TestPanel(self), "Base Window")
+        self.AddPage(label.TestPanel(self), "Header Window")
+        self.AddPage(basewindow.TestPanel(self), "Base Focused Window")
         self.AddPage(line.TestPanel(self), "Lines")
         self.AddPage(slider.TestPanel(self), "Slider")
         self.AddPage(toolbar.TestPanel(self), "Toolbar")

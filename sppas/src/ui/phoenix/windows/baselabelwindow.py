@@ -86,6 +86,22 @@ class sppasLabelWindow(sppasDCWindow):
         # Setup Initial Size
         self.SetBestSize(size)
 
+    # -----------------------------------------------------------------------
+
+    def SetHorizBorderWidth(self, value):
+        """Override. The min size needs to be re-estimated."""
+        sppasDCWindow.SetHorizBorderWidth(self, value)
+        self.SetBestSize()
+        self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def SetVertBorderWidth(self, value):
+        """Override. The min size needs to be re-estimated."""
+        sppasDCWindow.SetHorizBorderWidth(self, value)
+        self.SetBestSize()
+        self.Refresh()
+
     # ------------------------------------------------------------------------
 
     def SetFont(self, font):
@@ -172,7 +188,8 @@ class sppasLabelWindow(sppasDCWindow):
         dc.SetFont(self.GetFont())
         ret_width, ret_height = dc.GetTextExtent(self._label)
 
-        return wx.Size(ret_width, ret_height)
+        return wx.Size(ret_width + (2 * self._vert_border_width),
+                       ret_height + (2 * self._horiz_border_width))
 
     # -----------------------------------------------------------------------
 
@@ -188,14 +205,14 @@ class sppasLabelWindow(sppasDCWindow):
             return
 
         if self._align == wx.ALIGN_LEFT:
-            self._draw_label(dc, gc, 1, ((h - th) // 2) + (2*self._horiz_border_width))
+            self._draw_label(dc, gc, self._vert_border_width, ((h - th) // 2) + self._horiz_border_width)
 
         elif self._align == wx.ALIGN_RIGHT:
-            self._draw_label(dc, gc, w - tw - 1, ((h - th) // 2) + (2*self._horiz_border_width))
+            self._draw_label(dc, gc, w - tw - self._vert_border_width, ((h - th) // 2) + self._horiz_border_width)
 
         else:
             # Center the text.
-            self._draw_label(dc, gc, (w - tw) // 2, ((h - th) // 2) + (2*self._horiz_border_width))
+            self._draw_label(dc, gc, (w - tw) // 2, ((h - th) // 2) + self._horiz_border_width)
 
     # -----------------------------------------------------------------------
 
@@ -228,6 +245,7 @@ class TestPanel(wx.Panel):
         p1 = wx.Panel(self, name="p1")
         l1 = sppasLabelWindow(p1, label="A simple text no size by default.",
                               pos=(10, 10))
+        l1.SetHorizBorderWidth(2)
         l2 = sppasLabelWindow(p1, label="A simple text with a default size.",
                               pos=(10, 40), size=(200, 25))
         l3 = sppasLabelWindow(p1, label="Text with set font applied.",

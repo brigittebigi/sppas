@@ -760,7 +760,7 @@ class sppasDCWindow(wx.Window):
     # -----------------------------------------------------------------------
 
     def DrawBackground(self, dc, gc):
-        """Draw the background with a color or transparent."""
+        """Draw the background with a color."""
         w, h = self.GetClientSize()
 
         brush = self.GetBackgroundBrush()
@@ -770,50 +770,32 @@ class sppasDCWindow(wx.Window):
 
         dc.SetPen(wx.TRANSPARENT_PEN)
         dc.SetBrush(brush)
-        dc.DrawRoundedRectangle(
-            self._vert_border_width,
-            self._horiz_border_width,
-            w - (2 * self._vert_border_width),
-            h - (2 * self._horiz_border_width),
-            (self._vert_border_width + self._horiz_border_width) // 2)
+        dc.DrawRectangle(0, 0, w, h)
 
     # -----------------------------------------------------------------------
 
     def DrawBorder(self, dc, gc):
-        """Draw a gradient border with corners that appear slightly rounded.
+        """Draw a solid border.
 
         Notice that the transparency is not supported under Windows so that
         the borders don't have a gradient color!
 
         """
         w, h = self.GetClientSize()
-        border_color = self.GetPenBorderColour()
-        r = border_color.Red()
-        g = border_color.Green()
-        b = border_color.Blue()
-        a = border_color.Alpha()
+        pen = wx.Pen(self.GetPenBorderColour(), 1, self._border_style)
+        dc.SetPen(pen)
 
-        for i in reversed(range(self._vert_border_width)):
-            # gradient border color, using transparency.
-            alpha = max(a - (i * 25), 0)
-            pen = wx.Pen(wx.Colour(r, g, b, alpha), 1, self._border_style)
-            dc.SetPen(pen)
-
+        for i in range(self._vert_border_width):
             # left line
-            dc.DrawLine(i, self._horiz_border_width - i - 1, i, h - self._horiz_border_width + i + 1)
+            dc.DrawLine(i, 0, i, h)
             # right line
-            dc.DrawLine(w - i - 1, self._horiz_border_width - i - 1, w - i - 1, h - self._horiz_border_width + i + 1)
+            dc.DrawLine(w - i, 0, w - i, h)
 
-        for i in reversed(range(self._horiz_border_width)):
-            # gradient border color, using transparency
-            alpha = max(a - (i * 25), 0)
-            pen = wx.Pen(wx.Colour(r, g, b, alpha), 1, self._border_style)
-            dc.SetPen(pen)
-
+        for i in range(self._horiz_border_width):
             # upper line
-            dc.DrawLine(self._vert_border_width - i - 1, i, w - self._vert_border_width + i + 1, i)
+            dc.DrawLine(0, i, w, i)
             # bottom line
-            dc.DrawLine(self._vert_border_width - i - 1, h - i - 1, w - self._vert_border_width + i + 1, h - i - 1)
+            dc.DrawLine(0, h - i, w, h - i)
 
     # -----------------------------------------------------------------------
 

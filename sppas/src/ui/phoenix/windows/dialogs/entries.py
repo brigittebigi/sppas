@@ -106,8 +106,8 @@ class sppasChoiceDialog(sppasBaseMessageDialog):
         s.Add(choice, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, sppasPanel.fix_size(4))
 
         p.SetSizer(s)
-        # h = p.get_font_height()
-        # p.SetMinSize(wx.Size(-1, (len(c)+2) * h * 2))
+        h = p.get_font_height()
+        p.SetMinSize(wx.Size(-1, (len(c)+2) * h * 2))
         self.SetContent(p)
 
     # -----------------------------------------------------------------------
@@ -182,8 +182,8 @@ class sppasTextEntryDialog(sppasDialog):
         self._create_buttons()
 
         # Fix frame properties
-        self.SetMinSize(wx.Size(sppasDialog.fix_size(256),
-                                sppasDialog.fix_size(128)))
+        self.SetMinSize(wx.Size(sppasDialog.fix_size(320),
+                                sppasDialog.fix_size(200)))
         self.LayoutComponents()
         self.CenterOnParent()
         self.GetSizer().Fit(self)

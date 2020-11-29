@@ -42,9 +42,11 @@ from sppas.src.utils import u
 
 from sppas.src.ui.phoenix.tools import sppasSwissKnife
 from sppas.src.ui.phoenix.windows.buttons import BitmapTextButton
+from sppas.src.ui.phoenix.windows.buttons import BitmapButton
 from sppas.src.ui.phoenix.windows.panels import sppasPanel
 from sppas.src.ui.phoenix.windows.line import sppasStaticLine
 from sppas.src.ui.phoenix.windows.text import sppasTitleText
+from sppas.src.ui.phoenix.windows.label import sppasLabelHeader
 
 # ----------------------------------------------------------------------------
 
@@ -247,15 +249,15 @@ class sppasDialog(wx.Dialog):
 
         # Add the icon, at left, with its title
         if icon_name is not None:
-            static_bmp = BitmapTextButton(panel, name=icon_name)
+            static_bmp = BitmapButton(panel, name=icon_name)
             static_bmp.SetBorderWidth(0)
             static_bmp.SetFocusWidth(0)
             static_bmp.SetMinSize(wx.Size(min_height - 2, min_height - 2))
             sizer.Add(static_bmp, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, spacing)
 
-        txt = sppasTitleText(panel, value=title)
-        txt.SetMinSize(wx.Size(sppasPanel.fix_size(200), min_height))
-        sizer.Add(txt, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, spacing)
+        txt = sppasLabelHeader(panel, label=title)
+        txt.SetMinSize(txt.DoGetBestSize())
+        sizer.Add(txt, 1, wx.EXPAND)
 
         # This header panel properties
         panel.SetSizer(sizer)

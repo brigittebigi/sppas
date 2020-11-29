@@ -266,7 +266,7 @@ class WorkspacesPanel(sppasPanel):
 
         # Can't switch if locked files. Files must be closed first.
         if self.__data.has_locked_files():
-            Error(WKP_SWITCH_DISABLED, WKP_ERROR)
+            Error(WKP_SWITCH_DISABLED)
             # the workspace panel has to switch back to the current
             wkpslist.switch_to(event.from_wkp)
             return
@@ -369,7 +369,7 @@ class WorkspacesPanel(sppasPanel):
                 self._wkps_panel.import_from(pathname)
             except Exception as e:
                 message = WKP_ACT_IMPORT_ERROR.format(pathname, str(e))
-                Error(message, "Import error")
+                Error(message)
 
         dlg.Destroy()
 
@@ -411,7 +411,7 @@ class WorkspacesPanel(sppasPanel):
             self._wkps_panel.export_to(pathname)
         except Exception as e:
             message = WKP_ACT_EXPORT_ERROR.format(pathname, str(e))
-            Error(message, "Export error")
+            Error(message)
 
     # -----------------------------------------------------------------------
 
@@ -432,7 +432,7 @@ class WorkspacesPanel(sppasPanel):
                 self._wkps_panel.pin(wkp_name)
             except Exception as e:
                 message = WKP_MSG_PIN_ERROR.format(wkp_name, str(e))
-                Error(message, "Save error")
+                Error(message)
                 return
         else:
             wkp_name = self._wkps_panel.get_wkp_name()
@@ -442,7 +442,7 @@ class WorkspacesPanel(sppasPanel):
             self.notify()
         except Exception as e:
             message = WKP_ACT_SAVE_ERROR.format(wkp_name, str(e))
-            Error(message, "Save error")
+            Error(message)
 
     # -----------------------------------------------------------------------
 
@@ -465,7 +465,7 @@ class WorkspacesPanel(sppasPanel):
             self._wkps_panel.rename(new_name)
         except Exception as e:
             message = WKP_ACT_RENAME_ERROR.format(new_name, str(e))
-            Error(message, "Rename error")
+            Error(message)
 
 # ---------------------------------------------------------------------------
 # Panel to display the existing workspaces

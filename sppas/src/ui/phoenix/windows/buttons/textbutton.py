@@ -128,6 +128,9 @@ class TextButton(BaseButton):
         dc.SetFont(self.GetFont())
         ret_width, ret_height = dc.GetTextExtent(label)
 
+        ret_width += (2 * self._vert_border_width)
+        ret_height += (2 * self._horiz_border_width)
+
         width = int(max(ret_width, ret_height) * 1.5)
         return wx.Size(width, width)
 
@@ -145,14 +148,14 @@ class TextButton(BaseButton):
             return
 
         if self._align == wx.ALIGN_LEFT:
-            self._draw_label(dc, gc, 1, ((h - th) // 2) + (2*self._horiz_border_width))
+            self._draw_label(dc, gc, self._vert_border_width, ((h - th) // 2) + self._horiz_border_width)
 
         elif self._align == wx.ALIGN_RIGHT:
-            self._draw_label(dc, gc, w - tw - 1, ((h - th) // 2) + (2*self._horiz_border_width))
+            self._draw_label(dc, gc, w - tw - self._vert_border_width, ((h - th) // 2) + self._horiz_border_width)
 
         else:
             # Center the text.
-            self._draw_label(dc, gc, (w - tw) // 2, ((h - th) // 2) + (2*self._horiz_border_width))
+            self._draw_label(dc, gc, (w - tw) // 2, ((h - th) // 2) + self._horiz_border_width)
 
     # -----------------------------------------------------------------------
 
