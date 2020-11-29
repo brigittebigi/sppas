@@ -36,7 +36,7 @@
     ===========
 
     This module implements a base class used to draw our custom wx.window,
-    like for buttons, lines, etc.
+    like for buttons when it is needed that the focus follows mouse.
 
 """
 

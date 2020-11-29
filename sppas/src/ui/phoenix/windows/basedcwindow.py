@@ -29,8 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.basedraw.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.windows.basedcwindow.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Description
     ===========
@@ -106,9 +106,8 @@ class sppasDCWindow(wx.Window):
 
     A very basic window. Can't have the focus.
     In a previous version, the background was transparent by default but
-    it is not properly supported under Windows.
-
-    Under Windows, when changing bg color, a refresh is needed to apply it.
+    it is not properly supported under Windows. Moreover, also under
+    Windows, when changing bg color, a refresh is needed to apply it.
 
     """
 
@@ -137,10 +136,8 @@ class sppasDCWindow(wx.Window):
 
         super(sppasDCWindow, self).__init__(parent, id, pos, size, style, name)
 
-        # Size
+        # Size, colors and font
         self._min_width = 12
-        self._min_height = 12
-
         try:
             settings = wx.GetApp().settings
             wx.Window.SetForegroundColour(self, settings.fg_color)
@@ -150,7 +147,6 @@ class sppasDCWindow(wx.Window):
         except AttributeError:
             self.InheritAttributes()
             self._min_height = self.get_font_height()
-
         self._border_color = self.GetForegroundColour()
 
         # Bind the events related to our window
@@ -158,6 +154,7 @@ class sppasDCWindow(wx.Window):
         self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvents)
 
+        # So... no transparency, to have the same look on each platform
         self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
 
     # -----------------------------------------------------------------------
@@ -879,9 +876,7 @@ class sppasImageDCWindow(sppasDCWindow):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
-    A very basic window. Can't have the focus.
-    Under Windows, when changing bg color, a refresh is needed to apply it.
-    Does not look nice under Linux.
+    Does not look nice under Linux if the image has transparency.
 
     """
 

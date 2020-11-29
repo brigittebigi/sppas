@@ -41,8 +41,8 @@ from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
 # Tested files are the ones with a TestPanel class:
-import sppas.src.ui.phoenix.windows.frame as frame
 import sppas.src.ui.phoenix.windows.basedcwindow as basedcwindow
+import sppas.src.ui.phoenix.windows.baselabelwindow as labelwindow
 import sppas.src.ui.phoenix.windows.basewindow as basewindow
 import sppas.src.ui.phoenix.windows.toolbar as toolbar
 import sppas.src.ui.phoenix.windows.line as line
@@ -50,6 +50,7 @@ import sppas.src.ui.phoenix.windows.slider as slider
 import sppas.src.ui.phoenix.windows.buttonbox as buttonbox
 import sppas.src.ui.phoenix.windows.combobox as combobox
 import sppas.src.ui.phoenix.windows.listctrl as listctrl
+import sppas.src.ui.phoenix.windows.frame as frame
 
 # ----------------------------------------------------------------------------
 # Panel to test
@@ -63,8 +64,8 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        self.AddPage(frame.TestPanel(self), "Frame")
         self.AddPage(basedcwindow.TestPanel(self), "Base DC Window")
+        self.AddPage(labelwindow.TestPanel(self), "Label Window")
         self.AddPage(basewindow.TestPanel(self), "Base Window")
         self.AddPage(line.TestPanel(self), "Lines")
         self.AddPage(slider.TestPanel(self), "Slider")
@@ -72,6 +73,7 @@ class TestPanel(wx.Choicebook):
         self.AddPage(listctrl.TestPanel(self), "ListCtrl")
         self.AddPage(buttonbox.TestPanelRadioBox(self), "RadioBox & ToggleBox")
         self.AddPage(combobox.TestPanelComboBox(self), "ComboBox")
+        self.AddPage(frame.TestPanel(self), "Frame")
 
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
