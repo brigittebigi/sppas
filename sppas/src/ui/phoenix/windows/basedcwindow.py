@@ -785,17 +785,21 @@ class sppasDCWindow(wx.Window):
         pen = wx.Pen(self.GetPenBorderColour(), 1, self._border_style)
         dc.SetPen(pen)
 
+        shift = 0
+        if wx.Platform == "__WXMSW__":
+            shift = 1
+
         for i in range(self._vert_border_width):
             # left line
             dc.DrawLine(i, 0, i, h)
             # right line
-            dc.DrawLine(w - i, 0, w - i, h)
+            dc.DrawLine(w - i - shift, 0, w - i - shift, h)
 
         for i in range(self._horiz_border_width):
             # upper line
             dc.DrawLine(0, i, w, i)
             # bottom line
-            dc.DrawLine(0, h - i, w, h - i)
+            dc.DrawLine(0, h - i - shift, w, h - i - shift)
 
     # -----------------------------------------------------------------------
 

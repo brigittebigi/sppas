@@ -198,6 +198,22 @@ class TranscriptionVista(sppasPanel):
     # Construct the GUI
     # -----------------------------------------------------------------------
 
+    def show_tier_infos(self, value, tiername=None):
+        """Show information about a tier instead or the annotations.
+
+        :param value: (bool) True to show the information, False for the annotations.
+        :param tiername: (str) Name of a tier or None for all tiers
+
+        """
+        if self.__trs is None:
+            return
+        for child in self.GetChildren():
+            if tiername is None or tiername == child.get_tiername():
+                child.show_infos(value)
+                child.Refresh()
+
+    # -----------------------------------------------------------------------
+
     def _create_content(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)

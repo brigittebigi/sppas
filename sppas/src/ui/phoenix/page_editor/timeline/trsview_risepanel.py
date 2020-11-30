@@ -125,6 +125,17 @@ class TrsViewPanel(sppasFileViewPanel):
     # Annotations & Tiers
     # -----------------------------------------------------------------------
 
+    def show_tier_infos(self, value, tiername=None):
+        """Show information about a tier instead or the annotations.
+
+        :param value: (bool) True to show the information, False for the annotations.
+        :param tiername: (str) Name of a tier or None for all tiers
+
+        """
+        return self.GetPane().show_tier_infos(value, tiername)
+
+    # -----------------------------------------------------------------------
+
     def is_selected(self):
         """Return True is this file is selected."""
         return self.IsExpanded()
@@ -278,7 +289,12 @@ class TestPanel(sppasScrolledPanel):
         self._files[f3] = p3
         self._selected = None
 
+        btn = wx.Button(self, size=wx.Size(120, 40), label="Show info/ann")
+        btn.Bind(wx.EVT_BUTTON, self._switch_view)
+        self._show_info = True
+
         s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(btn, 0, wx.EXPAND)
         s.Add(p1, 0, wx.EXPAND | wx.ALL, 10)
         s.Add(p2, 0, wx.EXPAND | wx.ALL, 10)
         s.Add(p3, 0, wx.EXPAND | wx.ALL, 10)
@@ -372,3 +388,11 @@ class TestPanel(sppasScrolledPanel):
             ann_idx = panel.get_selected_ann()
             self.set_selected_tiername(filename, value)
             self.set_selected_annotation(ann_idx)
+
+    # -----------------------------------------------------------------------
+
+    def _switch_view(self, event):
+        self._show_info = not self._show_info
+        self.FindWindow("p1").show_tier_infos(self._show_info)
+        self.FindWindow("p2").show_tier_infos(self._show_info)
+        self.FindWindow("p3").show_tier_infos(self._show_info)

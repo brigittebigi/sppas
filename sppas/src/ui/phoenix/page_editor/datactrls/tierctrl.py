@@ -67,6 +67,7 @@ class sppasTierWindow(sppasDataWindow):
 
     """
 
+    TIER_HEIGHT = 20
     SELECTION_COLOUR = wx.Colour(250, 30, 20)
 
     # -----------------------------------------------------------------------
@@ -87,6 +88,10 @@ class sppasTierWindow(sppasDataWindow):
                        then a default size is chosen.
         :param name:   Window name.
 
+        Two possible views: the name of the tier with its number of
+        annotations or the annotations themselves. Change view with
+        show_infos(): True for the 1st, False for the 2nd.
+
         """
         style = wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE
         super(sppasTierWindow, self).__init__(
@@ -96,6 +101,7 @@ class sppasTierWindow(sppasDataWindow):
         if data is not None:
             self.SetData(data)
 
+        self.__infos = True
         self.__ann_idx = -1
         self.__period = (0., 0.)
         self._pxsec = 0   # the number of pixels to represent 1 second of time
@@ -109,6 +115,20 @@ class sppasTierWindow(sppasDataWindow):
         self._horiz_border_width = 1
         self._focus_width = 0
         self.SetBorderColour(self.GetBackgroundColour())
+
+    # -----------------------------------------------------------------------
+    # Switch the view
+    # -----------------------------------------------------------------------
+
+    def show_infos(self, value):
+        """Show the tier information or the annotations of the period.
+
+        Do not Refresh the tier.
+
+        :param value: (bool) True to show the information, False for the annotations.
+
+        """
+        self.__infos = bool(value)
 
     # -----------------------------------------------------------------------
 
@@ -267,7 +287,7 @@ class sppasTierWindow(sppasDataWindow):
         x, y, w, h = self.GetContentRect()
         duration = float(self.__period[1]) - float(self.__period[0])
 
-        if duration > 0.01 and self._data.is_interval() is True:
+        if self.__infos is False and duration > 0.01 and self._data.is_interval() is True:
 
             # Display the annotations of the given period
             self._pxsec = int(float(w) / duration)
@@ -280,7 +300,8 @@ class sppasTierWindow(sppasDataWindow):
 
         else:
             # Do not display the annotations but the infos about the tier.
-
+            for ann in self.__annctrls:
+                self.__annctrls[ann].Hide()
             # Show infos
             tier_name = self._data.get_name()
             tw, th = self.get_text_extend(dc, gc, tier_name)
@@ -410,18 +431,29 @@ class TestPanel(sppasPanel):
         parser = sppasRW(filename)
         trs = parser.read()
 
+        btn = wx.Button(self, size=wx.Size(120, 40), label="Show info/ann")
+        btn.Bind(wx.EVT_BUTTON, self._switch_view)
+        self._show_info = False
+
+        # show annotations, not information
         self.p1 = sppasTierWindow(self, pos=(10, 10), size=(300, 24), data=trs[0])
         self.p1.set_visible_period(2.49, 3.49)
         self.p1.SetBackgroundColour(wx.YELLOW)
+        self.p1.show_infos(False)
 
+        # show annotations, not information
         self.p2 = sppasTierWindow(self, pos=(10, 100), size=(300, 48), data=trs[1])
         self.p2.set_visible_period(2.49, 3.49)
         self.p2.SetBackgroundColour(wx.LIGHT_GREY)
+        self.p2.show_infos(False)
 
+        # show information, not annotations
         self.p3 = sppasTierWindow(self, pos=(10, 100), size=(300, 64), data=trs[1])
         self.p3.SetBackgroundColour(wx.Colour(200, 240, 220))
+        self.p2.show_infos(False)
 
         s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(btn, 0, wx.EXPAND)
         s.Add(self.p1, 0, wx.EXPAND)
         s.Add(self.p2, 0, wx.EXPAND)
         s.Add(self.p3, 0, wx.EXPAND)
@@ -435,3 +467,14 @@ class TestPanel(sppasPanel):
         value = event.GetSelected()
         wx.LogDebug("Selected event received. Tier {} is selected {}"
                     "".format(tier.get_name(), value))
+
+    # -----------------------------------------------------------------------
+
+    def _switch_view(self, event):
+        self._show_info = not self._show_info
+        self.p1.show_infos(self._show_info)
+        self.p2.show_infos(self._show_info)
+        self.p3.show_infos(self._show_info)
+        self.p1.Refresh()
+        self.p2.Refresh()
+        self.p3.Refresh()
