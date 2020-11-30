@@ -81,17 +81,8 @@ class sppasBasePlayer(object):
     # State of this player
     # -----------------------------------------------------------------------
 
-    def is_unknown(self):
-        """Return True if the media is unknown."""
-        if self._filename is None:
-            return False
-
-        return self._ms == PlayerState().unknown
-
-    # -----------------------------------------------------------------------
-
     def is_loading(self):
-        """Return True if the media is loading."""
+        """Return True if the media state is loading."""
         if self._filename is None:
             return False
 
@@ -100,7 +91,7 @@ class sppasBasePlayer(object):
     # -----------------------------------------------------------------------
 
     def is_playing(self):
-        """Return True if the media stream is playing."""
+        """Return True if the media state is playing."""
         if self._filename is None:
             return False
 
@@ -109,7 +100,7 @@ class sppasBasePlayer(object):
     # -----------------------------------------------------------------------
 
     def is_paused(self):
-        """Return True if the media is paused."""
+        """Return True if the media state is paused."""
         if self._filename is None:
             return False
 
@@ -118,7 +109,7 @@ class sppasBasePlayer(object):
     # -----------------------------------------------------------------------
 
     def is_stopped(self):
-        """Return True if the media is stopped."""
+        """Return True if the media state is stopped."""
         if self._filename is None:
             return False
 
@@ -126,6 +117,15 @@ class sppasBasePlayer(object):
 
     # -----------------------------------------------------------------------
     # Type of this player
+    # -----------------------------------------------------------------------
+
+    def is_unknown(self):
+        """Return True if the media type is unknown."""
+        if self._filename is None:
+            return False
+
+        return self._mt == PlayerType().unknown
+
     # -----------------------------------------------------------------------
 
     def is_unsupported(self):
@@ -226,8 +226,9 @@ class sppasBasePlayer(object):
 
             with PlayerState() as ms:
                 if self._ms == ms.unknown:
-                    logging.error("The media stream of {:s} can't be played for "
-                                  "an unknown reason.".format(self._filename))
+                    if self._mt not in (PlayerType().unknown, PlayerType().unsupported):
+                        logging.error("The media stream of {:s} can't be played for "
+                                      "an unknown reason.".format(self._filename))
 
                 elif self._ms == ms.loading:
                     logging.error("The media stream of {:s} can't be played; "

@@ -42,7 +42,7 @@
 """
 
 import wx
-import os
+import logging
 
 from sppas.src.config import paths
 from sppas.src.ui.phoenix.windows.buttons import ToggleTextButton
@@ -281,6 +281,16 @@ class TimeSliderPanel(sppasPanel):
         self.__duration = value
         self._btn_duration.SetLabel("{:s} {:s} {:s}".format(MSG_TOTAL_DURATION, self.__seconds_label(value), SECONDS_UNIT))
 
+        # if other values are out of duration range, they need update.
+        if self.__end_visible > value:
+            self.__end_visible = value
+        if self.__end_selection > value:
+            self.__end_selection = value
+        if self.__start_visible > value:
+            self.__start_visible = value
+        if self.__start_selection > value:
+            self.__start_selection = value
+
         # Disable all other buttons. Enable duration toggle button.
         if value == 0.:
             self._btn_duration.SetValue(True)
@@ -316,14 +326,16 @@ class TimeSliderPanel(sppasPanel):
         """Set the visible time range."""
         start = float(start)
         end = float(end)
-        if end > self.__duration:
-            end = self.__duration
-            # raise ValueError("set visible: given end {:f} > duration {:f}".format(start, self.__duration))
         if start < 0.:
             start = 0.
-            # raise ValueError
         if end < start:
             raise ValueError
+
+        if end > self.__duration:
+            logging.warning(
+                "Given end visible value {} is greater than duration {}. "
+                "Duration is updated.".format(end, self.__duration))
+            self.__duration = end
 
         self.__start_visible = start
         self.__end_visible = end
@@ -364,13 +376,16 @@ class TimeSliderPanel(sppasPanel):
         """Set the selected time range."""
         start = float(start)
         end = float(end)
-        if end > self.__duration:
-            raise ValueError("Given end value {} is greater than duration {}."
-                             "".format(end, self.__duration))
         if end < start:
             raise ValueError
         if start < 0.:
             raise ValueError
+
+        if end > self.__duration:
+            logging.warning(
+                "Given end selection value {} is greater than duration {}. "
+                "Duration is updated.".format(end, self.__duration))
+            self.__duration = end
 
         self.__start_selection = start
         self.__end_selection = end

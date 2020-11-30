@@ -57,7 +57,7 @@ class SMMPCPanel(sppasVerticalRisePanel):
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     Create exactly the same rise panel with the same borders than any other
-    rise panel of the timeline view... so all panels - including this one,
+    rise panel of the timeline view... All panels - including this one,
     will be vertically aligned on screen.
 
     """
@@ -126,7 +126,7 @@ class SMMPCPanel(sppasVerticalRisePanel):
         #self._btn.Hide()
         sizer.Add(self._btn, 0, wx.FIXED_MINSIZE, 0)
 
-        # Create custom button: show/hide the slider
+        # Create a custom button: show/hide the slider
         btn1 = self._create_tool_togglebutton(icon="position")
         btn1.Enable(True)
         btn1.SetValue(True)
@@ -134,7 +134,7 @@ class SMMPCPanel(sppasVerticalRisePanel):
         sizer.Add(btn1, 0, wx.FIXED_MINSIZE, 0)
         btn1.Bind(wx.EVT_TOGGLEBUTTON, self._on_show_slider)
 
-        # Create custom button: show/hide the ruler
+        # Create a custom button: show/hide the ruler
         btn2 = self._create_tool_togglebutton(icon="ruler")
         btn2.Enable(True)
         btn2.SetValue(True)
@@ -144,7 +144,7 @@ class SMMPCPanel(sppasVerticalRisePanel):
 
         # Fix the size of the tools
         w = self.GetButtonWidth()
-        self._tools_panel.SetMinSize(wx.Size(w, w*2))
+        self._tools_panel.SetMinSize(wx.Size(w, w*3))
         self._tools_panel.SetSizer(sizer)
 
     # -----------------------------------------------------------------------

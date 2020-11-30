@@ -78,6 +78,22 @@ class TranscriptionVista(sppasPanel):
 
     # -----------------------------------------------------------------------
 
+    def get_duration(self):
+        """Return the duration of the transcription."""
+        if self.__trs is not None:
+            max_point = self.__trs.get_max_loc()
+            if max_point is not None:
+                midpoint = max_point.get_midpoint()
+                radius = max_point.get_radius()
+                if radius is None:
+                    return midpoint
+                else:
+                    return midpoint + radius
+
+        return 0.
+
+    # -----------------------------------------------------------------------
+
     def set_visible_period(self, start, end):
         """Period to display (in seconds)."""
         for child in self.GetChildren():

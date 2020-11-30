@@ -33,10 +33,15 @@
 videodata: management of video files
 *****************************************************************************
 
-Requires the following other packages:
+Requires the following other internal packages:
 
 * config
 * exceptions
+
+Requires the following other external libraries:
+
+* opencv
+* numpy
 
 If the video feature is not enabled, the sppasEnableFeatureError() is raised
 when a class is instantiated.
@@ -55,21 +60,25 @@ class sppasVideodataError(object):
     def __init__(self, *args, **kwargs):
         raise sppasEnableFeatureError("video")
 
+# ---------------------------------------------------------------------------
 
-# The feature "video" is enabled. Check if it's really correct!
+
+try:
+    import cv2
+    import numpy
+    cfg.set_feature("video", True)
+except ImportError:
+    # Invalidate the feature because the package is not installed
+    cfg.set_feature("video", False)
+
+
+# The feature "video" is enabled: cv2 is installed.
+# Check version.
 if cfg.feature_installed("video") is True:
-    v = '4'
-    try:
-        import cv2
-    except ImportError:
-        # Invalidate the feature because the package is not installed
+    v = cv2.__version__.split(".")[0]
+    if v != '4':
+        # Invalidate the feature because the package is not up-to-date
         cfg.set_feature("video", False)
-
-    else:
-        v = cv2.__version__.split(".")[0]
-        if v != '4':
-            # Invalidate the feature because the package is not up-to-date
-            cfg.set_feature("video", False)
 
     class sppasVideoDataError(object):
         def __init__(self, *args, **kwargs):
@@ -78,9 +87,6 @@ if cfg.feature_installed("video") is True:
             else:
                 raise sppasPackageFeatureError("cv2", "video")
 
-else:
-    # The feature "video" is not enabled or unknown.
-    cfg.set_feature("video", False)
 
 # ---------------------------------------------------------------------------
 

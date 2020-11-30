@@ -389,6 +389,18 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
 
     # -----------------------------------------------------------------------
 
+    def add_unsupported(self, filename, duration):
+        """Add a file into the list managed by this control.
+
+        :param filename: (str) A filename or a list of file names
+        :param duration: (float) Duration of this file
+        :return: (bool)
+
+        """
+        self.__smmps.add_unsupported(filename, duration)
+
+    # -----------------------------------------------------------------------
+
     def add_media(self, media):
         """Add a media into the list of media managed by this control.
 
@@ -653,3 +665,5 @@ class TestPanel(sppasPanel):
             self.smmc.add_audio(os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"))
             self.smmc.add_audio(os.path.join(paths.samples, "samples-eng", "oriana1.wav"))
             self.smmc.add_audio(os.path.join(paths.samples, "samples-eng", "oriana2.WAV"))
+
+        self.smmc.add_unsupported("a filename of a file", 65.)

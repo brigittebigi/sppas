@@ -131,6 +131,12 @@ class TrsViewPanel(sppasFileViewPanel):
 
     # -----------------------------------------------------------------------
 
+    def get_duration(self):
+        """Return the duration of the transcription."""
+        return self.GetPane().get_duration()
+
+    # -----------------------------------------------------------------------
+
     def get_tier_list(self):
         """Return the list of all tiers."""
         return self.GetPane().get_tier_list()

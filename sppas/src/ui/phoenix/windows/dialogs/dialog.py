@@ -360,7 +360,7 @@ class sppasDialog(wx.Dialog):
 
     # ------------------------------------------------------------------------
 
-    def HorizLine(self, parent, depth=2):
+    def HorizLine(self, parent, depth=1):
         """Return an horizontal static line."""
         nid = wx.NewId()
         line = sppasStaticLine(parent, nid, orient=wx.LI_HORIZONTAL,
@@ -383,7 +383,6 @@ class sppasDialog(wx.Dialog):
         header = self.FindWindow("header")
         if header is not None:
             sizer.Add(header, 0, wx.EXPAND, 0)
-            sizer.Add(self.HorizLine(self), 0, wx.ALL | wx.EXPAND, 0)
 
         # Add content
         content = self.FindWindow("content")
@@ -395,8 +394,7 @@ class sppasDialog(wx.Dialog):
         # Add action buttons
         actions = self.FindWindow("actions")
         if actions is not None:
-            sizer.Add(self.HorizLine(self), 0, wx.ALL | wx.EXPAND, 0)
-            # proportion is 0 to ask the sizer to never hide the buttons
+            # proportion is 0 to tell the sizer to never hide the buttons
             sizer.Add(actions, 0, wx.EXPAND, 0)
 
         # Since Layout doesn't happen until there is a size event, you will

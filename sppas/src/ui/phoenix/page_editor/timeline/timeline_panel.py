@@ -223,9 +223,11 @@ class sppasTimelinePanel(sppasPanel):
 
             self._files[name] = panel
 
-            # For transcription, each panel is managing the content of a file
+            # For transcription, each panel is managing the content of a file but
+            # the SMMPC needs to know the duration of the transcription.
             if panel.is_trs():
                 panel.load()
+                self.smmpc.add_unsupported(name, panel.get_duration())
                 all_tiers = panel.get_tier_list()
                 self.notify(action="tiers_added", filename=name, value=all_tiers)
 
@@ -262,10 +264,8 @@ class sppasTimelinePanel(sppasPanel):
                 wx.LogError("There's no file with name {:s}".format(name))
                 return False
 
-            # If the closed page is a media, this media must be
-            # removed of the multimedia player control.
-            if panel.is_audio() is True or panel.is_video() is True:
-                self.smmpc.remove(name)
+            # this file must be removed of the multimedia player control.
+            self.smmpc.remove(name)
 
             # Destroy the panel and remove of the sizer
             for i, child in enumerate(self.GetChildren()):

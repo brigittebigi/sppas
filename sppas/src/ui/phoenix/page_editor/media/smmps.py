@@ -60,8 +60,81 @@ import threading
 from sppas.src.config import paths
 from sppas.src.ui.players import sppasMultiMediaPlayer
 from sppas.src.ui.players import sppasSimpleVideoPlayerWX
+from sppas.src.ui.players import sppasBasePlayer, PlayerType
 
 from .mediaevents import MediaEvents
+
+# ---------------------------------------------------------------------------
+
+
+class sppasUndPlayer(sppasBasePlayer):
+    """A media player that simply store a filename and its duration.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self):
+        super(sppasUndPlayer, self).__init__()
+        self._duration = 0.
+
+    # -----------------------------------------------------------------------
+
+    def load(self, filename):
+        """Store the filename.
+
+        :param filename: (str) Name of a file
+        :return: (bool) True
+
+        """
+        self._filename = filename
+        self._mt = PlayerType().unsupported
+        return True
+
+    # -----------------------------------------------------------------------
+
+    def get_duration(self):
+        return self._duration
+
+    # -----------------------------------------------------------------------
+
+    def set_duration(self, value):
+        """Set the duration of the file."""
+        self._duration = value
+
+    # -----------------------------------------------------------------------
+
+    def stop(self):
+        """Stop to play.
+
+        :return: (bool) False
+
+        """
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def pause(self):
+        """Pause to play the audio.
+
+        :return: (bool) False
+
+        """
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def play(self):
+        """Start to play the audio stream.
+
+        :return: (bool) False
+
+        """
+        return False
 
 # ---------------------------------------------------------------------------
 
@@ -236,6 +309,21 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
 
     # -----------------------------------------------------------------------
 
+    def add_unsupported(self, filename, duration):
+        """Add a file into the list of media in order to add only its duration.
+
+        :param filename: (str)
+        :param duration: (float) Time value in seconds.
+
+        """
+        if self.exists(filename) is False:
+            fake_media = sppasUndPlayer()
+            fake_media.load(filename)
+            fake_media.set_duration(duration)
+            self._medias[fake_media] = False
+
+    # -----------------------------------------------------------------------
+
     def play(self):
         """Start to play the audio streams.
 
@@ -313,7 +401,7 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
         if len(self._medias) > 0:
             values = list()
             for media in reversed(list(self._medias.keys())):
-                if media.is_unknown() is False and media.is_loading() is False:
+                if media.is_unknown() is False and media.is_unsupported() is False and media.is_loading() is False:
                     values.append(media.tell())
 
             # In theory, all media should return the same value except
@@ -459,6 +547,7 @@ class TestPanel(wx.Panel):
                 os.path.join(paths.samples, "samples-eng", "oriana2.WAV")
             ]
         )
+        self.ap.add_unsupported("a filename of a file", 65.)
 
     # ----------------------------------------------------------------------
 

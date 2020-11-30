@@ -361,7 +361,7 @@ class sppasMultiMediaPlayer(object):
     # -----------------------------------------------------------------------
 
     def is_unknown(self, filename=None):
-        """Return True if any media or if the given one is unknown.
+        """Return True if any media type or if the given one is unknown.
 
         :param filename: (str)
         :return: (bool)
@@ -554,7 +554,7 @@ class sppasMultiMediaPlayer(object):
             force_pause = True
 
         for mp in self._medias:
-            if mp.is_unknown() is False and mp.is_loading() is False:
+            if mp.is_unknown() is False and mp.is_unsupported() is False and mp.is_loading() is False:
                 mp.seek(value)
 
         if force_pause is True:
