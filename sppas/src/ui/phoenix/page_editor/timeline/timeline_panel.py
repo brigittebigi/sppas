@@ -390,6 +390,21 @@ class sppasTimelinePanel(sppasPanel):
                         "No tier was previously selected.".format(idx))
 
     # -----------------------------------------------------------------------
+
+    def show_tier_infos(self, value):
+        """Show information about a tier instead or the annotations.
+
+        :param value: (bool) True to show the information, False for the annotations.
+
+        """
+        for fn in self._files:
+            panel = self._files[fn]
+            if panel.is_trs() is True:
+                panel.show_tier_infos(bool(value), tiername=None)
+
+        #self.Layout()
+
+    # -----------------------------------------------------------------------
     # Methods to operate on an AudioViewPanel()
     # -----------------------------------------------------------------------
 
@@ -626,6 +641,9 @@ class sppasTimelinePanel(sppasPanel):
             for fn in self._files:
                 panel = self._files[fn]
                 panel.set_visible_period(s, e)
+
+        elif event.action == "tiers_infos":
+            self.show_tier_infos(event.value)
 
     # ----------------------------------------------------------------------
 

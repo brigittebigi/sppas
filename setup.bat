@@ -52,25 +52,29 @@ REM Make sure we have admin right
 set "params=%*"
 cd /d "%~dp0" && ( if exist "%temp%\getadmin.vbs" del "%temp%\getadmin.vbs" ) && fsutil dirty query %systemdrive% 1>nul 2>nul || (  echo Set UAC = CreateObject^("Shell.Application"^) : UAC.ShellExecute "cmd.exe", "/k cd ""%~sdp0"" && %~s0 %params%", "", "runas", 1 >> "%temp%\getadmin.vbs" && "%temp%\getadmin.vbs" && exit /B )
 
-REM Search for pythonw3 command, ie Python3 & WxPython are both installed
+echo Search for python3w.exe command
 WHERE pythonw3.exe >nul 2>nul
-if %ERRORLEVEL% EQU 0 (
 
-        color 1E
-        start "" pythonw3.exe .\sppas\bin\preinstallgui.py
-        exit
+if %ERRORLEVEL% EQU 0 (
+    echo Command pythonw3.exe was found.
+    color 1E
+    start "" pythonw3.exe .\sppas\bin\preinstallgui.py
+    REM exit
 
 ) else (
+    echo Command pythonw3.exe was not found.
 
-    REM Search for python3 command, ie Python3 is installed but not WxPython
+    echo Search for python3.exe command
     WHERE python3.exe >nul 2>nul
-    if %ERRORLEVEL% EQU 0 (
 
+    if %ERRORLEVEL% EQU 0 (
+        echo Command python3.exe was found.
         color 1E
         start "" python3.exe .\sppas\bin\preinstall.py --wxpython
         if %ERRORLEVEL% EQU 0 (
+            echo Launch preinstall GUI script
             start "" python3.exe .\sppas\bin\preinstallgui.py
-            exit
+            REM exit
 
         ) else (
             color 04
@@ -79,20 +83,30 @@ if %ERRORLEVEL% EQU 0 (
         )
 
     ) else (
-            echo Python version 3 is not an internal command of your operating system.
-            echo Install it first, preferably from the Windows Store.
-        REM Search for python command, ie Python is installed.
+        echo Command python3.exe was not found.
+
+        echo Search for python.exe command
         WHERE python.exe >nul 2>nul
         if %ERRORLEVEL% EQU 0 (
+
+            echo Command python.exe was found.
+            echo Launch checkpy script
+
             python.exe .\sppas\bin\checkpy.py
             if %ERRORLEVEL% EQU 0 (
+                echo Launch preinstall script to install wx. Please wait...
                 start "" python.exe .\sppas\bin\preinstall.py --wxpython
+                echo Launch preinstall GUI script
                 start "" python.exe .\sppas\bin\preinstallgui.py
-                exit
+                REM exit
+            ) else (
+                echo ... but this program requires Python version 3.
             )
+
         ) else (
+            echo Command python.exe was not found.
             color 4E
-            echo Python version 3 is not an internal command of your operating system.
+            echo Python is not an internal command of your operating system.
             echo Install it first, preferably from the Windows Store.
         )
     )
@@ -100,8 +114,4 @@ if %ERRORLEVEL% EQU 0 (
 
 
 REM Close the windows which was opened to get admin rights
-timeout /t 10
-
-
-
-
+timeout /t 20

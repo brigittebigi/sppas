@@ -50,7 +50,9 @@ import wx.lib.gizmos as gizmos
 
 from sppas.src.config import paths  # used only in the Test Panel
 
+from sppas.src.ui.phoenix.windows.buttons import BitmapButton
 from sppas.src.ui.phoenix.windows.buttons import BitmapTextButton
+from sppas.src.ui.phoenix.windows.buttons import ToggleButton
 from sppas.src.ui.phoenix.windows.panels import sppasPanel
 from sppas.src.ui.phoenix.windows.frame import sppasImageFrame
 
@@ -188,37 +190,37 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
 
     def _create_mmpc_content(self):
         """Add widgets to the content of this panel."""
-        btn1 = BitmapTextButton(self.widgets_left_panel, name="scroll_left")
+        btn1 = BitmapButton(self.widgets_left_panel, name="scroll_left")
         self.SetButtonProperties(btn1)
         self.AddLeftWidget(btn1)
         btn1.Bind(wx.EVT_BUTTON, self._on_set_visible)
 
-        btn3 = BitmapTextButton(self.widgets_left_panel, name="expand_false")
+        btn3 = BitmapButton(self.widgets_left_panel, name="expand_false")
         self.SetButtonProperties(btn3)
         self.AddLeftWidget(btn3)
         btn3.Bind(wx.EVT_BUTTON, self._on_set_visible)
 
-        btn4 = BitmapTextButton(self.widgets_left_panel, name="expand_true")
+        btn4 = BitmapButton(self.widgets_left_panel, name="expand_true")
         self.SetButtonProperties(btn4)
         self.AddLeftWidget(btn4)
         btn4.Bind(wx.EVT_BUTTON, self._on_set_visible)
 
-        btn7 = BitmapTextButton(self.widgets_left_panel, name="scroll_zoom_all")
+        btn7 = BitmapButton(self.widgets_left_panel, name="scroll_zoom_all")
         self.SetButtonProperties(btn7)
         self.AddLeftWidget(btn7)
         btn7.Bind(wx.EVT_BUTTON, self._on_set_visible)
 
-        btn5 = BitmapTextButton(self.widgets_left_panel, name="scroll_to_selection")
+        btn5 = BitmapButton(self.widgets_left_panel, name="scroll_to_selection")
         self.SetButtonProperties(btn5)
         self.AddLeftWidget(btn5)
         btn5.Bind(wx.EVT_BUTTON, self._on_set_visible)
 
-        btn6 = BitmapTextButton(self.widgets_left_panel, name="scroll_zoom_selection")
+        btn6 = BitmapButton(self.widgets_left_panel, name="scroll_zoom_selection")
         self.SetButtonProperties(btn6)
         self.AddLeftWidget(btn6)
         btn6.Bind(wx.EVT_BUTTON, self._on_set_visible)
 
-        btn2 = BitmapTextButton(self.widgets_left_panel, name="scroll_right")
+        btn2 = BitmapButton(self.widgets_left_panel, name="scroll_right")
         self.SetButtonProperties(btn2)
         self.AddLeftWidget(btn2)
         btn2.Bind(wx.EVT_BUTTON, self._on_set_visible)
@@ -232,6 +234,12 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         # The led has its own colors.
         self.led.SetBackgroundColour(wx.Colour(10, 10, 10))
         self.led.SetForegroundColour(wx.Colour(220, 40, 80))
+
+        btnr1 = ToggleButton(self.widgets_right_panel, name="tier_infos")
+        btnr1.SetToolTip("Show annotations of tiers or information")
+        self.SetButtonProperties(btnr1)
+        self.AddRightWidget(btnr1)
+        btnr1.Bind(wx.EVT_TOGGLEBUTTON, self._on_set_visible)
 
     # -----------------------------------------------------------------------
 
@@ -507,33 +515,45 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         start = self._timeslider.get_visible_start()
         end = self._timeslider.get_visible_end()
         dur = end - start
+
         if evt_obj.GetName() == "expand_false":
             shift = dur / 4.
             self._timeslider.set_visible_range(start + shift, end - shift)
+
         elif evt_obj.GetName() == "expand_true":
             shift = dur / 2.
             self._timeslider.set_visible_range(start - shift, end + shift)
+
         elif evt_obj.GetName() == "scroll_left":
             shift = 0.8 * dur
             if start > 0.:
                 self._timeslider.set_visible_range(start - shift, end - shift)
+
         elif evt_obj.GetName() == "scroll_right":
             shift = 0.8 * dur
             if end < self._timeslider.get_duration():
                 self._timeslider.set_visible_range(start + shift, end + shift)
+
         elif evt_obj.GetName() == "scroll_to_selection":
             sel_start = self._timeslider.get_selection_start()
             sel_end = self._timeslider.get_selection_end()
             sel_middle = sel_start + ((sel_end - sel_start) / 2.)
             shift = dur / 2.
             self._timeslider.set_visible_range(sel_middle - shift, sel_middle + shift)
+
         elif evt_obj.GetName() == "scroll_zoom_selection":
             sel_start = self._timeslider.get_selection_start()
             sel_end = self._timeslider.get_selection_end()
             self._timeslider.set_visible_range(sel_start, sel_end)
+
         elif evt_obj.GetName() == "scroll_zoom_all":
             end = self._timeslider.get_duration()
             self._timeslider.set_visible_range(0., end)
+
+        elif evt_obj.GetName() == "tier_infos":
+            self.notify(action="tiers_infos", value=not evt_obj.GetValue())
+            return
+
         else:
             wx.LogError("Unknown visible action {}".format(evt_obj.GetName()))
             return
