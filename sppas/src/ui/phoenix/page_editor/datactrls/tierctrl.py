@@ -284,32 +284,52 @@ class sppasTierWindow(sppasDataWindow):
     # -----------------------------------------------------------------------
 
     def DrawContent(self, dc, gc):
+        """The content of a tier is either information or annotations."""
+        if self.__infos is False:
+            self.__DrawPeriodAnnotations(dc, gc)
+        else:
+            self.__DrawInfos(dc, gc)
+
+    # -----------------------------------------------------------------------
+
+    def __DrawPeriodAnnotations(self, dc, gc):
         x, y, w, h = self.GetContentRect()
         duration = float(self.__period[1]) - float(self.__period[0])
-
-        if self.__infos is False and duration > 0.01 and self._data.is_interval() is True:
-
+        if duration < 0.02:
+            wx.LogWarning("Period is not large enough to draw annotations.")
+            self.__DrawInfos(dc, gc)
+        elif self._data.is_interval() is False:
+            wx.LogWarning("Only interval tiers are supported to draw annotations.")
+            self.__DrawInfos(dc, gc)
+        else:
             # Display the annotations of the given period
             self._pxsec = int(float(w) / duration)
             anns = self._data.find(self.__period[0], self.__period[1], overlaps=True)
+            # Hide annotations out of the period
             for ann in self.__annctrls:
                 if ann not in anns:
                     self.__annctrls[ann].Hide()
+            # Show all annotations during the period
             for ann in anns:
                 self._DrawAnnotation(ann, x, y, w, h)
 
-        else:
-            # Do not display the annotations but the infos about the tier.
-            for ann in self.__annctrls:
-                self.__annctrls[ann].Hide()
-            # Show infos
-            tier_name = self._data.get_name()
-            tw, th = self.get_text_extend(dc, gc, tier_name)
-            self.draw_label(dc, gc, tier_name, x, y + ((h - th) // 2))
-            self.draw_label(dc, gc, str(len(self._data))+" annotations", x + 200, y + ((h - th) // 2))
-            if self.__ann_idx > -1:
-                self.draw_label(dc, gc, "(-- {:d} -- is selected)".format(self.__ann_idx+1),
-                                x + 400, y + ((h - th) // 2))
+    # -----------------------------------------------------------------------
+
+    def __DrawInfos(self, dc, gc):
+        x, y, w, h = self.GetContentRect()
+
+        # Do not display any of the annotations
+        for ann in self.__annctrls:
+            self.__annctrls[ann].Hide()
+
+        # Draw infos instead
+        tier_name = self._data.get_name()
+        tw, th = self.get_text_extend(dc, gc, tier_name)
+        self.draw_label(dc, gc, tier_name, x, y + ((h - th) // 2))
+        self.draw_label(dc, gc, str(len(self._data)) + " annotations", x + 200, y + ((h - th) // 2))
+        if self.__ann_idx > -1:
+            self.draw_label(dc, gc, "(-- {:d} -- is selected)".format(self.__ann_idx + 1),
+                            x + 400, y + ((h - th) // 2))
 
     # -----------------------------------------------------------------------
 

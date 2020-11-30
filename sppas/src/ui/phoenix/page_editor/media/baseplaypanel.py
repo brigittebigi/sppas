@@ -364,21 +364,35 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         panel3 = self.__create_widgets_right_panel(nav_panel)
         panel2 = self.__create_transport_panel(nav_panel)
 
-        border = sppasPanel.fix_size(2)
         nav_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        nav_sizer.Add(panel1, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.Add(panel1, 1, wx.EXPAND | wx.RIGHT, sppasPanel.fix_size(2))
         nav_sizer.AddStretchSpacer(1)
-        nav_sizer.Add(panel2, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.Add(panel2, 1, wx.EXPAND)
         nav_sizer.AddStretchSpacer(1)
-        nav_sizer.Add(panel3, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border)
+        nav_sizer.Add(panel3, 1, wx.EXPAND | wx.LEFT, sppasPanel.fix_size(2))
         nav_panel.SetSizer(nav_sizer)
 
         slider = TimeSliderPanel(self, name="slider_panel")
 
+        # Under MacOS and Linux, the scrollbar is transparent over a window, so
+        # its size won't change if it appear or disappear. BUT, under Windows,
+        # the scrollbar is drawn beside the window so its size (actually only
+        # the width) is changed!!!! If we want that our slider is vertically
+        # aligned with some other panels into a scrolled panel, we need to have
+        # a border at right.
+        border = 0
+        if wx.Platform == "__WXMSW__":
+            # get the width of a scrollbar
+            s = wx.ScrollBar(self, style=wx.SB_VERTICAL)
+            w, _ = s.GetSize()
+            s.Destroy()
+            # and use it for the border at right
+            border = w
+
         # Organize the panels into the main sizer
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(nav_panel, 0, wx.EXPAND, 0)
-        sizer.Add(slider, 0, wx.EXPAND, 0)
+        sizer.Add(nav_panel, 0, wx.EXPAND | wx.RIGHT, border)
+        sizer.Add(slider, 0, wx.EXPAND | wx.RIGHT, border)
 
         self.SetSizerAndFit(sizer)
 

@@ -228,6 +228,8 @@ class sppasTimelinePanel(sppasPanel):
             if panel.is_trs():
                 panel.load()
                 self.smmpc.add_unsupported(name, panel.get_duration())
+                s, e = self.smmpc.get_visible_range()
+                panel.set_visible_period(s, e)
                 all_tiers = panel.get_tier_list()
                 self.notify(action="tiers_added", filename=name, value=all_tiers)
 
@@ -402,8 +404,6 @@ class sppasTimelinePanel(sppasPanel):
             if panel.is_trs() is True:
                 panel.show_tier_infos(bool(value), tiername=None)
 
-        #self.Layout()
-
     # -----------------------------------------------------------------------
     # Methods to operate on an AudioViewPanel()
     # -----------------------------------------------------------------------
@@ -461,7 +461,9 @@ class sppasTimelinePanel(sppasPanel):
         smmpc = SMMPCPanel(self, name="smmpc_risepanel")
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._on_collapse_smmpc_changed, smmpc)
 
-        scrolled = sppasScrolledPanel(self, name="scrolled_panel")
+        scrolled = sppasScrolledPanel(self,
+                                      style=wx.VSCROLL | wx.ALWAYS_SHOW_SB | wx.BORDER_NONE,
+                                      name="scrolled_panel")
         scrolled.SetupScrolling(scroll_x=False, scroll_y=True)
         sizer = wx.BoxSizer(wx.VERTICAL)
         scrolled.SetSizer(sizer)
@@ -618,7 +620,7 @@ class sppasTimelinePanel(sppasPanel):
         panel.Expand()
         self._collapse_changed(panel)
 
-        # If no visible part was defined, do it now!
+        # If no visible part was defined, do it now! or update it.
         self._update_visible_range()
 
     # ----------------------------------------------------------------------
