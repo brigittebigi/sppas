@@ -359,6 +359,7 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
             self.ShowItem(i, show=showed[i])
 
         self.SetSelection(self.__selection)
+        self.SetSize(self.DoGetBestSize())
         self.Layout()
 
         return len(self._buttons) - 1
@@ -389,6 +390,7 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
             self.ShowItem(i, show=showed[i])
 
         self.SetSelection(self.__selection)
+        self.SetSize(self.DoGetBestSize())
         self.Layout()
 
     # ------------------------------------------------------------------------
@@ -525,8 +527,7 @@ class sppasToggleBoxPanel(sppasRadioBoxPanel):
                  majorDimension=0,
                  style=wx.RA_SPECIFY_COLS,
                  name=wx.RadioBoxNameStr):
-        super(sppasToggleBoxPanel, self).__init__(
-            parent, id, pos, size, choices, majorDimension, style, name)
+        super(sppasToggleBoxPanel, self).__init__(parent, id, pos, size, choices, majorDimension, style, name)
 
     # -----------------------------------------------------------------------
 

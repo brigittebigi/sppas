@@ -388,8 +388,8 @@ class sppasTimelinePanel(sppasPanel):
             s, e = panel.get_selected_localization()
             self.smmpc.set_selection_range(s, e)
         else:
-            wx.LogError("Can't select the annotation at index {}. "
-                        "No tier was previously selected.".format(idx))
+            wx.LogWarning("Can't select the annotation at index {}. "
+                          "No tier was previously selected.".format(idx))
 
     # -----------------------------------------------------------------------
 

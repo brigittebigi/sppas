@@ -101,6 +101,12 @@ class PopupToggleBox(wx.PopupWindow):
         wx.Dialog.SetFont(self, font)
         self.tglbox.SetFont(font)
 
+    # ------------------------------------------------------------------------
+
+    def UpdateSize(self):
+        size = self.tglbox.GetSize()
+        self.SetMinSize(size)
+
 # ---------------------------------------------------------------------------
 
 
@@ -297,12 +303,17 @@ class sppasComboBox(sppasPanel):
     # ------------------------------------------------------------------------
 
     def Append(self, string):
-        return self._popup.tglbox.Append(string)
+        """Append a new entry into the list."""
+        idx = self._popup.tglbox.Append(string)
+        self._popup.UpdateSize()
+        return idx
 
     # ------------------------------------------------------------------------
 
     def Delete(self, n):
+        """Remove entry at index n of the list."""
         self._popup.tglbox.Delete(n)
+        self._popup.UpdateSize()
 
     # ------------------------------------------------------------------------
     # Events management
@@ -378,10 +389,21 @@ class TestPanelComboBox(wx.Panel):
                            name="c3")
         c3.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
 
+        c4 = sppasComboBox(self,
+                           choices=list(),
+                           name="c4")
+        c4.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
+        c4.Append("Appended 1")
+        c4.Append("Appended 2")
+        c4.Append("Appended 3")
+        c4.Append("Appended 4")
+        c4.Delete(3)
+
         s = wx.BoxSizer(wx.HORIZONTAL)
         s.Add(c1, 0, wx.ALL, 2)
         s.Add(c2, 0, wx.ALL, 2)
         s.Add(c3, 0, wx.ALL, 2)
+        s.Add(c4, 0, wx.ALL, 2)
         self.SetSizer(s)
 
         self.Bind(wx.EVT_COMBOBOX, self._process_combobox)

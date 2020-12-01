@@ -93,6 +93,21 @@ MSG_META = _("Metadata")
 ERR_ANN_SET_LABELS = _("Invalid annotation labels.")
 MSG_CANCEL = _("Cancel changes or continue editing the annotation?")
 
+MSG_ANNS = _("Annotations: ")
+
+METADATA = _("Edit metadata of the annotation")
+RESTORE = _("Restore the label of the annotation")
+DELETE = _("Delete the annotation")
+MERGE_PREVIOUS = _("Merge with the previous annotation")
+MERGE_NEXT = _("Merge with the next annotation")
+SPLIT_ONE = _("Split annotation into 2 and put content to the first")
+SPLIT_TWO = _("Split annotation into 2 and put content to the second")
+ADD_BEFORE = _("Add an annotation in the hole before")
+ADD_AFTER = _("Add an annotation in the hole after")
+LABEL_TEXT = _("Edit label in TEXT mode")
+LABEL_XML = _("Edit label in XML mode")
+LABEL_JSON = _("Edit label in JSON mode")
+
 # ----------------------------------------------------------------------------
 
 
@@ -106,6 +121,8 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
 
     """
+
+    ANN_COLOUR = wx.Colour(200, 180, 120, 128)
 
     def __init__(self, parent, orient=wx.VERTICAL, name="tiers_edit_splitter"):
         super(sppasTiersEditWindow, self).__init__(parent, name=name)
@@ -166,6 +183,9 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             self.__annctrl.set_ann(ann)
             self.__annotation_selected(self.__cur_index, to_notify=True)
 
+        combo = self.FindWindow("tiers_combo")
+        combo.SetSelection(self.__tiersbook.GetSelection())
+
         return self.__can_select
 
     # -----------------------------------------------------------------------
@@ -207,6 +227,9 @@ class sppasTiersEditWindow(sppasSplitterWindow):
                         self.__annotation_selected(self.__cur_index, to_notify=True)
                     break
 
+        combo = self.FindWindow("tiers_combo")
+        combo.SetSelection(self.__tiersbook.GetSelection())
+
         return self.__can_select
 
     # -----------------------------------------------------------------------
@@ -221,8 +244,15 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         :param tiers: (list of sppasTier)
 
         """
+        # add tiers into the book
         sel_changed = self.__tiersbook.add_tiers(filename, tiers)
         self.__cur_page = self.__tiersbook.GetSelection()
+
+        # add tier names into the combo
+        combo = self.FindWindow("tiers_combo")
+        for tier in tiers:
+            combo.Append(tier.get_name())
+        combo.SetSelection(self.__tiersbook.GetSelection())
 
         # no tier was previously added and we added at least a non-empty one
         if sel_changed is True:
@@ -239,6 +269,18 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
     # -----------------------------------------------------------------------
 
+    def __synchro_combo(self):
+        """Delete and re-create the list of tiers of the combo to match the book."""
+        combo = self.FindWindow("tiers_combo")
+        for i in reversed(range(combo.GetCount())):
+            combo.Delete(i)
+        for i in range(self.__tiersbook.GetPageCount()):
+            page = self.__tiersbook.GetPage(i)
+            combo.Append(page.get_tiername())
+        combo.SetSelection(self.__tiersbook.GetSelection())
+
+    # -----------------------------------------------------------------------
+
     def remove_tiers(self, filename, tiers):
         """Remove a set of tiers of the file.
 
@@ -247,6 +289,8 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
         """
         removed = self.__tiersbook.remove_tiers(filename, tiers)
+        if removed is True:
+            self.__synchro_combo()
         self.__annctrl.set_ann(None)
 
         # no remaining page in the book
@@ -453,8 +497,17 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         - Window 2 of the splitter: an annotation editor.
 
         """
-        w1 = sppasAnnLabelsCtrl(self, ann=None, name="annlabels_textctrl")
+        w1 = sppasPanel(self)
         w2 = sppasTiersBook(self, name="tiers_book")
+
+        t1 = self.__create_toolbar1(w1)
+        t2 = self.__create_toolbar2(w1)
+        a = sppasAnnLabelsCtrl(w1, ann=None, name="annlabels_textctrl")
+        s = wx.BoxSizer(wx.VERTICAL)
+        s.Add(t1, 0, wx.EXPAND)
+        s.Add(t2, 0, wx.EXPAND)
+        s.Add(a, 1, wx.EXPAND)
+        w1.SetSizer(s)
 
         # Fix size&layout
         if self.__orient == wx.VERTICAL:
@@ -465,6 +518,61 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             self.SplitVertically(w1, w2, sppasPanel.fix_size(256))
 
         self.SetSashGravity(0.4)
+
+    # -----------------------------------------------------------------------
+
+    def __create_toolbar1(self, parent):
+        """Create a toolbar for actions on annotations. """
+        tb = sppasToolbar(parent, name="anns1_toolbar")
+        tb.set_height(24)   # default is 32
+        tb.set_focus_color(sppasTiersEditWindow.ANN_COLOUR)
+
+        bcs = tb.AddToggleButton("code_review", value=True, group_name="view_mode")
+        bcs.SetToolTip(LABEL_TEXT)
+        bcx = tb.AddToggleButton("code_xml", group_name="view_mode")
+        bcx.SetToolTip(LABEL_XML)
+        bcj = tb.AddToggleButton("code_json", group_name="view_mode")
+        bcj.SetToolTip(LABEL_JSON)
+        br = tb.AddButton("restore")
+        br.SetToolTip(RESTORE)
+
+        tb.AddSpacer(1)
+
+        c = sppasComboBox(tb, choices=list(), name="tiers_combo")
+        c.SetMinSize(wx.Size(sppasPanel.fix_size(100), sppasPanel.fix_size(16)))
+        c.SetMaxSize(wx.Size(sppasPanel.fix_size(100), sppasPanel.fix_size(16)))
+        c.Bind(wx.EVT_COMBOBOX, self._on_combotier_change)
+        tb.AddWidget(c)
+
+        return tb
+
+    # -----------------------------------------------------------------------
+
+    def __create_toolbar2(self, parent):
+        """Create a toolbar for actions on annotations. """
+        tb = sppasToolbar(parent, name="anns1_toolbar")
+        tb.set_height(24)  # default is 32
+        tb.set_focus_color(sppasTiersEditWindow.ANN_COLOUR)
+
+        meta = tb.AddButton("tags")
+        meta.SetToolTip(METADATA)
+
+        bd = tb.AddButton("cell_delete")
+        bd.SetToolTip(DELETE)
+        bmp = tb.AddButton("cell_merge_previous")
+        bmp.SetToolTip(MERGE_PREVIOUS)
+        bmn = tb.AddButton("cell_merge_next")
+        bmn.SetToolTip(MERGE_NEXT)
+        bsp = tb.AddButton("cell_split")
+        bsp.SetToolTip(SPLIT_ONE)
+        bsn = tb.AddButton("cell_split_next")
+        bsn.SetToolTip(SPLIT_TWO)
+        bab = tb.AddButton("cell_add_before")
+        bab.SetToolTip(ADD_BEFORE)
+        baa = tb.AddButton("cell_add_after")
+        baa.SetToolTip(ADD_AFTER)
+
+        return tb
 
     # -----------------------------------------------------------------------
 
@@ -537,8 +645,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         evt = ListannsViewEvent(action=action, filename=filename, value=value)
         evt.SetEventObject(self)
         wx.PostEvent(self.GetParent(), evt)
-        wx.LogDebug("Notify parent {:s} of view event".format(
-            self.GetParent().GetName()))
+        wx.LogDebug("Notify parent {:s} of view event".format(self.GetParent().GetName()))
 
     # -----------------------------------------------------------------------
 
@@ -546,11 +653,17 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         """Capture some of the events our controls are emitting.
 
         """
+        # Change of page -- the tier currently displayed into the list
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self._on_page_changing)
         self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self._on_page_changed)
 
+        # Change of annotation - the line selected into the current list
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_annotation_selected)
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self._on_annotation_deselected)
+
+        # Toolbar events
+        self.Bind(wx.EVT_BUTTON, self._process_event)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self._process_event)
 
     # -----------------------------------------------------------------------
 
@@ -574,7 +687,6 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         selected.
 
         """
-        wx.LogDebug("==> Received item selected with index {}".format(evt.GetIndex()))
         if self.__can_select is True:
             self.__annotation_selected(evt.GetIndex())
         else:
@@ -618,6 +730,67 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             self.__tierctrl.Select(self.__cur_index, on=1)
 
         page = self.__tiersbook.GetPage(self.__cur_page)
+
+    # -----------------------------------------------------------------------
+
+    def _on_combotier_change(self, event):
+        """Switch page..."""
+        combo = event.GetEventObject()
+        idx = combo.GetSelection()
+        self.set_selected_index(idx)
+
+    # -----------------------------------------------------------------------
+
+    def _process_event(self, event):
+        """Process any kind of event.
+
+        """
+        obj = event.GetEventObject()
+        name = obj.GetName()
+
+        if name == "tags":
+            self.edit_annotation_metadata()
+
+        elif name in ("code_review", "code_xml", "code_json"):
+            self.switch_ann_mode(name)
+
+        elif name == "restore":
+            self.restore_ann()
+
+        elif name == "cell_delete":
+            idx = self.delete_annotation()
+            self.notify(action="ann_delete", filename=self.get_filename(), value=idx)
+
+        elif name == "cell_merge_previous":
+            del_idx, modif_idx = self.merge_annotation(-1)
+            self.notify(action="ann_delete", filename=self.get_filename(), value=del_idx)
+            self.notify(action="ann_update", filename=self.get_filename(), value=modif_idx)
+
+        elif name == "cell_merge_next":
+            del_idx, modif_idx = self.merge_annotation(1)
+            self.notify(action="ann_delete", filename=self.get_filename(), value=del_idx)
+            self.notify(action="ann_update", filename=self.get_filename(), value=modif_idx)
+
+        elif name == "cell_split":
+            new_idx, modif_idx = self.split_annotation(0)
+            self.notify(action="ann_create", filename=self.get_filename(), value=new_idx)
+            self.notify(action="ann_update", filename=self.get_filename(), value=modif_idx)
+
+        elif name == "cell_split_next":
+            new_idx, modif_idx = self.split_annotation(1)
+            self.notify(action="ann_create", filename=self.get_filename(), value=new_idx)
+            self.notify(action="ann_update", filename=self.get_filename(), value=modif_idx)
+
+        elif name == "cell_add_before":
+            new_idx = self.add_annotation(-1)
+            self.notify(action="ann_create", filename=self.get_filename(), value=new_idx)
+
+        elif name == "cell_add_after":
+            new_idx = self.add_annotation(1)
+            self.notify(action="ann_create", filename=self.get_filename(), value=new_idx)
+
+        else:
+            event.Skip()
 
     # -----------------------------------------------------------------------
     # Private
@@ -713,7 +886,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
             ann = self.__tierctrl.get_annotation(idx)
             self.__annctrl.set_ann(ann)
             # notify parent we modified the tier at index idx
-            self.notify(action="ann_modified", filename=self.get_filename(), value=idx)
+            self.notify(action="ann_update", filename=self.get_filename(), value=idx)
             return True
 
 # ---------------------------------------------------------------------------
@@ -731,82 +904,27 @@ class TestPanel(sppasPanel):
 
         parser = sppasRW(f1)
         trs1 = parser.read()
+        p.add_tiers(f1, trs1.get_tier_list())
+
         parser.set_filename(f2)
         trs2 = parser.read()
-        p.add_tiers(f1, trs1.get_tier_list())
         p.add_tiers(f2, trs2.get_tier_list())
 
-        all_tiers = [t.get_name() for t in trs1.get_tier_list()]
-        for t in trs2.get_tier_list():
-            all_tiers.append(t.get_name())
+        p.remove_tiers(f1, trs1.get_tier_list())
+        p.add_tiers(f1, trs1.get_tier_list())
 
         t = sppasToolbar(self)
-        c = sppasComboBox(t, choices=all_tiers)
-        t.AddWidget(c)
         t.AddSpacer(1)
         t.AddButton("way_up_down")
-        t.AddSpacer(1)
-        bd = t.AddButton("cell_delete")
-        bmp = t.AddButton("cell_merge_previous")
-        bmn = t.AddButton("cell_merge_next")
-        bsp = t.AddButton("cell_split")
-        bsn = t.AddButton("cell_split_next")
-        bab = t.AddButton("cell_add_before")
-        baa = t.AddButton("cell_add_after")
         t.AddSpacer(1)
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(t, 0, wx.EXPAND)
         s.Add(p, 1, wx.EXPAND)
         self.SetSizer(s)
-        self.Bind(wx.EVT_BUTTON, self._process_btn_event)
-        c.Bind(wx.EVT_COMBOBOX, self._on_page_change)
-
-    # -----------------------------------------------------------------------
-
-    def _on_page_change(self, event):
-        """Switch page..."""
-        c = event.GetEventObject()
-        idx = c.GetSelection()
-        p = self.FindWindow("tiers_edit_splitter")
-        p.set_selected_index(idx)
 
     # -----------------------------------------------------------------------
 
     def _process_view_event(self, evt):
         logging.debug("Received action {} with value {}"
                       "".format(evt.action, str(evt.value)))
-
-    # -----------------------------------------------------------------------
-
-    def _process_btn_event(self, evt):
-        wx.LogDebug("Toolbar Event received by {:s}".format(self.GetName()))
-        btn = evt.GetEventObject()
-        btn_name = btn.GetName()
-
-        if btn_name == "way_up_down":
-            self.FindWindow("tiers_edit_splitter").swap_panels()
-
-        elif btn_name == "cell_delete":
-            self.FindWindow("tiers_edit_splitter").delete_annotation()
-
-        elif btn_name == "cell_merge_previous":
-            self.FindWindow("tiers_edit_splitter").merge_annotation(-1)
-
-        elif btn_name == "cell_merge_next":
-            self.FindWindow("tiers_edit_splitter").merge_annotation(1)
-
-        elif btn_name == "cell_split":
-            self.FindWindow("tiers_edit_splitter").split_annotation(0)
-
-        elif btn_name == "cell_split_next":
-            self.FindWindow("tiers_edit_splitter").split_annotation(1)
-
-        elif btn_name == "cell_add_before":
-            self.FindWindow("tiers_edit_splitter").add_annotation(-1)
-
-        elif btn_name == "cell_add_after":
-            self.FindWindow("tiers_edit_splitter").add_annotation(1)
-
-        else:
-            evt.Skip()

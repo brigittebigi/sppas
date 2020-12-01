@@ -100,7 +100,7 @@ class sppasTiersBook(sppasSimplebook):
                 else:
                     self.AddPage(page, "")
             else:
-                wx.LogError("Page not created. "
+                wx.LogError("List not created. "
                             "No annotation in tier: {:s}".format(tier.get_name()))
 
         return sel_tier
@@ -117,22 +117,16 @@ class sppasTiersBook(sppasSimplebook):
         :return: (bool) The page was changed
 
         """
-        wx.LogDebug(" = remove_tiers of the tierbook with {:s}".format(filename))
-        wx.LogDebug(" = the tierbook contains {:d} pages".format(self.GetPageCount()))
         tier_names = [tier.get_name() for tier in tiers]
         for page_index in reversed(range(self.GetPageCount())):
             page = self.GetPage(page_index)
             if page.get_filename() == filename:
                 if page.get_tiername() in tier_names:
-                    wx.LogDebug("Delete page of tier {:s} at index {:d}".format(page.get_tiername(), page_index))
                     self.DeletePage(page_index)
 
-        wx.LogDebug(" = the tierbook now contains {:d} pages".format(self.GetPageCount()))
         if self.GetPageCount() > 0:
             page_sel = self.GetSelection()
-            wx.LogDebug(" -> new page selection index: {}".format(page_sel))
             if page_sel != wx.NOT_FOUND:
-                wx.LogDebug(" -> new selected tier: {}".format(self.GetPage(page_sel).get_tiername()))
                 return True
 
         return False

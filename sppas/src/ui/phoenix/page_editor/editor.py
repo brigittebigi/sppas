@@ -72,21 +72,7 @@ CLOSE_CONFIRM = _("At least a file contains not saved work that will be "
                   "lost. Are you sure you want to close?")
 CLOSE_FILE_CONFIRM = _("The file contains not saved work that will be lost."
                        "Close anyway?")
-MSG_ANNS = _("Annotations: ")
 MSG_MEDIA = _("Media: ")
-
-METADATA = _("Edit metadata of the annotation")
-RESTORE = _("Restore the label of the annotation")
-DELETE = _("Delete the annotation")
-MERGE_PREVIOUS = _("Merge with the previous annotation")
-MERGE_NEXT = _("Merge with the next annotation")
-SPLIT_ONE = _("Split annotation into 2 and put content to the first")
-SPLIT_TWO = _("Split annotation into 2 and put content to the second")
-ADD_BEFORE = _("Add an annotation in the hole before")
-ADD_AFTER = _("Add an annotation in the hole after")
-LABEL_TEXT = _("Edit label in TEXT mode")
-LABEL_XML = _("Edit label in XML mode")
-LABEL_JSON = _("Edit label in JSON mode")
 
 # ---------------------------------------------------------------------------
 
@@ -339,8 +325,7 @@ class sppasEditorPanel(sppasPanel):
 
         # The toolbar & the main sizer
         main_sizer = wx.BoxSizer(wx.VERTICAL)
-        main_sizer.Add(self._create_toolbar_one(), 0, wx.EXPAND | wx.BOTTOM, 6)
-        main_sizer.Add(self._create_toolbar_two(), 0, wx.EXPAND, 0)
+        main_sizer.Add(self._create_toolbar(), 0, wx.EXPAND | wx.BOTTOM, 6)
         main_sizer.Add(self._create_hline(), 0, wx.EXPAND, 0)
         main_sizer.Add(main_panel, 1, wx.EXPAND, 0)
         self.SetSizer(main_sizer)
@@ -353,14 +338,13 @@ class sppasEditorPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def _create_toolbar_one(self):
+    def _create_toolbar(self):
         """Create the main toolbar.
 
         :return: (sppasToolbar)
 
         """
         tb = sppasToolbar(self, name="files_toolbar")
-        tb.set_height(24)   # default is 32
         tb.set_focus_color(sppasEditorPanel.FILES_COLOUR)
         tb.AddTitleText(MSG_FILES, self.FILES_COLOUR, name="files")
 
@@ -372,45 +356,6 @@ class sppasEditorPanel(sppasPanel):
         bd1.SetFocusColour(wx.Colour(self.GetForegroundColour()))
         bd2 = tb.AddButton("way_left_right")
         bd2.SetFocusColour(wx.Colour(self.GetForegroundColour()))
-
-        return tb
-
-    # -----------------------------------------------------------------------
-
-    def _create_toolbar_two(self):
-        """Create a toolbar for actions on annotations. """
-        tb = sppasToolbar(self, name="anns_toolbar")
-        tb.set_height(24)   # default is 32
-        tb.set_focus_color(sppasEditorPanel.ANN_COLOUR)
-
-        tb.AddTitleText(MSG_ANNS, sppasEditorPanel.ANN_COLOUR)
-
-        bcs = tb.AddToggleButton("code_review", value=True, group_name="view_mode")
-        bcs.SetToolTip(LABEL_TEXT)
-        bcx = tb.AddToggleButton("code_xml", group_name="view_mode")
-        bcx.SetToolTip(LABEL_XML)
-        bcj = tb.AddToggleButton("code_json", group_name="view_mode")
-        bcj.SetToolTip(LABEL_JSON)
-        br = tb.AddButton("restore")
-        br.SetToolTip(RESTORE)
-
-        meta = tb.AddButton("tags")
-        meta.SetToolTip(METADATA)
-
-        bd = tb.AddButton("cell_delete")
-        bd.SetToolTip(DELETE)
-        bmp = tb.AddButton("cell_merge_previous")
-        bmp.SetToolTip(MERGE_PREVIOUS)
-        bmn = tb.AddButton("cell_merge_next")
-        bmn.SetToolTip(MERGE_NEXT)
-        bsp = tb.AddButton("cell_split")
-        bsp.SetToolTip(SPLIT_ONE)
-        bsn = tb.AddButton("cell_split_next")
-        bsn.SetToolTip(SPLIT_TWO)
-        bab = tb.AddButton("cell_add_before")
-        bab.SetToolTip(ADD_BEFORE)
-        baa = tb.AddButton("cell_add_after")
-        baa.SetToolTip(ADD_AFTER)
 
         return tb
 
@@ -456,9 +401,7 @@ class sppasEditorPanel(sppasPanel):
         self.Bind(wx.EVT_TOGGLEBUTTON, self._process_toolbar_event)
 
         # The event emitted by the Timeline view
-        self.Bind(EVT_TIMELINE_VIEW, self._process_time_action)
-        # The event emitted by the List view
-        # self.Bind(EVT_LISTANNS_VIEW, self._process_list_action)
+        self._editpanel.Bind(EVT_TIMELINE_VIEW, self._process_time_action)
 
     # -----------------------------------------------------------------------
 
@@ -505,19 +448,6 @@ class sppasEditorPanel(sppasPanel):
         elif btn_name == "way_left_right":
             self._editpanel.swap_annlist_panels()
 
-        elif btn_name in ("code_review", "code_xml", "code_json"):
-            self._editpanel.switch_ann_view(btn_name)
-
-        elif btn_name == "restore":
-            self._editpanel.restore_ann()
-
-        elif btn_name.startswith("cell_"):
-            # The action to perform is the name of the button, without "cell_"
-            self.__anns_action(what=btn_name[5:])
-
-        elif btn_name == "tags":
-            self.__anns_action(what="edit_metadata")
-
         else:
             event.Skip()
 
@@ -534,7 +464,6 @@ class sppasEditorPanel(sppasPanel):
         value = event.value
         wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
                     "".format(self.GetName(), action, filename, str(value)))
-        event.Skip()
 
         if action == "close":
             self.close_file(filename)
@@ -561,14 +490,6 @@ class sppasEditorPanel(sppasPanel):
                 self.close_files()
 
         event.Skip()
-
-    # -----------------------------------------------------------------------
-
-    def __anns_action(self, what=""):
-        try:
-            self._editpanel.ann_action_requested(what)
-        except Exception as e:
-            Error(str(e))
 
 # ----------------------------------------------------------------------------
 # Panel for tests

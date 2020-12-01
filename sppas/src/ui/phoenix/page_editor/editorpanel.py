@@ -129,98 +129,6 @@ class EditorPanel(sppasSplitterWindow):
         self._listview.swap_panels()
 
     # -----------------------------------------------------------------------
-    # Actions to perform on the edited annotation labels
-    # -----------------------------------------------------------------------
-
-    def switch_ann_view(self, mode):
-        """Switch the annotation view to the given mode.
-
-        :param mode: (str) One of: code_review, code_xml, code_json
-
-        """
-        self._listview.switch_ann_mode(mode)
-
-    # -----------------------------------------------------------------------
-
-    def restore_ann(self):
-        """Restore the original annotation."""
-        self._listview.restore_ann()
-
-    # -----------------------------------------------------------------------
-    # Actions to perform on the listview in priority then on the timeview
-    # -----------------------------------------------------------------------
-
-    def ann_action_requested(self, action_name):
-        """Perform an action on some annotations.
-
-        Apply on the listview first then apply on the timeview.
-
-        :param action_name: (str)
-        :raise: exception if the action can't be performed
-
-        """
-        filename = self._listview.get_filename()
-        if filename is None:
-            wx.LogError("No file/tier selected")
-
-        elif action_name == "delete":
-            ann_del_idx = self._listview.delete_annotation()
-            if ann_del_idx != -1:
-                self._timeview.update_ann(filename, ann_del_idx, what="delete")
-                return True
-
-        elif action_name == "merge_previous":
-            ann_del_idx, ann_modif_idx = self._listview.merge_annotation(-1)
-            if ann_del_idx != -1:
-                self._timeview.update_ann(filename, ann_del_idx, what="delete")
-                self._timeview.update_ann(filename, ann_modif_idx, what="update")
-                return True
-
-        elif action_name == "merge_next":
-            ann_del_idx, ann_modif_idx = self._listview.merge_annotation(1)
-            if ann_del_idx != -1:
-                self._timeview.update_ann(filename, ann_del_idx, what="delete")
-                self._timeview.update_ann(filename, ann_modif_idx, what="update")
-                return True
-
-        elif action_name == "split":
-            ann_new_idx, ann_modif_idx = self._listview.split_annotation(-1)
-            if ann_new_idx != -1:
-                self._timeview.update_ann(filename, ann_new_idx, what="create")
-                self._timeview.update_ann(filename, ann_modif_idx, what="update")
-                return True
-
-        elif action_name == "split_next":
-            ann_new_idx, ann_modif_idx = self._listview.split_annotation(1)
-            if ann_new_idx != -1:
-                self._timeview.update_ann(filename, ann_new_idx, what="create")
-                self._timeview.update_ann(filename, ann_modif_idx, what="update")
-                return True
-
-        elif action_name == "add_before":
-            ann_new_idx = self._listview.add_annotation(-1)
-            if ann_new_idx != -1:
-                self._timeview.update_ann(filename, ann_new_idx, what="create")
-                return True
-
-        elif action_name == "add_after":
-            ann_new_idx = self._listview.add_annotation(1)
-            if ann_new_idx != -1:
-                self._timeview.update_ann(filename, ann_new_idx, what="create")
-                return True
-
-        elif action_name == "edit_metadata":
-            ann_idx = self._listview.edit_annotation_metadata()
-            if ann_idx != -1:
-                self._timeview.update_ann(filename, ann_idx, what="update")
-                return True
-
-        else:
-            wx.LogError("unknown action name {:s}".format(action_name))
-
-        return False
-
-    # -----------------------------------------------------------------------
     # Public methods to manage files and tiers
     # -----------------------------------------------------------------------
 
@@ -327,6 +235,8 @@ class EditorPanel(sppasSplitterWindow):
         filename = event.filename
         action = event.action
         value = event.value
+        wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
+                    "".format(self.GetName(), action, filename, str(value)))
 
         if action == "tier_selected":
             # value of the event is the name of the tier
@@ -364,7 +274,13 @@ class EditorPanel(sppasSplitterWindow):
             self._timeview.set_selected_tiername(filename, tier_name)
             self._timeview.set_selected_annotation(value)
 
-        elif action == "ann_modified":
+        elif action == "ann_create":
+            self._timeview.update_ann(filename, value, what="create")
+
+        elif action == "ann_delete":
+            self._timeview.update_ann(filename, value, what="delete")
+
+        elif action == "ann_update":
             self._timeview.update_ann(filename, value, what="update")
 
         elif action == "select_tier":
