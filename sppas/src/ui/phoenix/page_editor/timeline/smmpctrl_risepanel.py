@@ -74,7 +74,7 @@ class SMMPCPanel(sppasVerticalRisePanel):
 
         # Create the GUI
         mmpc = sppasMMPCtrl(self, name="smmpc_panel")
-        mmpc.SetButtonWidth(sppasPanel.fix_size(24))
+        mmpc.SetButtonWidth(24)
         self.SetPane(mmpc)
 
         # Look&feel
@@ -152,10 +152,12 @@ class SMMPCPanel(sppasVerticalRisePanel):
     def _on_show_slider(self, evt):
         self.GetPane().show_range(evt.GetEventObject().GetValue())
         self.Layout()
+        self.SendSizeEventToParent()
 
     def _on_show_ruler(self, evt):
         self.GetPane().show_rule(evt.GetEventObject().GetValue())
         self.Layout()
+        self.SendSizeEventToParent()
 
 # ----------------------------------------------------------------------------
 
@@ -163,6 +165,7 @@ class SMMPCPanel(sppasVerticalRisePanel):
 class TestPanel(sppasPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="MultiMediaPlayerControl RisePanel")
+
         button1 = wx.Button(self, -1, size=(120, 50), label="Threading LOAD", name="load_button_1")
         button2 = wx.Button(self, -1, size=(120, 50), label="Sequential LOAD", name="load_button_2")
         panel = SMMPCPanel(self, "smmpc_risepanel")

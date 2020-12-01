@@ -128,6 +128,8 @@ class AudioViewPanel(sppasFileViewPanel):
         self.AddButton("close")
 
         mc = sppasAudioVista(self)
+        mc.show_infos(True)
+        mc.show_waveform(False)
         self.SetPane(mc)
         self.media_zoom(0)  # 100% zoom = initial size
 

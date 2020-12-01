@@ -58,7 +58,7 @@ from sppas.src.ui.phoenix.windows.frame import sppasImageFrame
 
 from .mediaevents import MediaEvents
 from .smmps import sppasMMPS
-from .baseplaypanel import sppasPlayerControlsPanel
+from .playerctrlspanel import sppasPlayerControlsPanel
 
 # ---------------------------------------------------------------------------
 
@@ -79,7 +79,6 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
 
     def __init__(self, parent,
                  id=wx.ID_ANY,
-                 image=None,
                  pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
                  style=0,
@@ -94,7 +93,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         :param name: (str) the widget name.
 
         """
-        super().__init__(parent, id, image, pos, size, style, name)
+        super().__init__(parent, id, pos, size, style, name)
 
         self.__smmps = sppasMMPS(owner=self)
         self._create_mmpc_content()
@@ -164,12 +163,12 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
     def show_range(self, value=True):
         """Show the indicator of the currently selected range of time. """
         self._timeslider.show_range(value)
-        self.Layout()
+        self.SetMinSize(self.DoGetBestSize())
 
     def show_rule(self, value=True):
         """Show the ruler of the current visible range of time. """
         self._timeslider.show_rule(value)
-        self.Layout()
+        self.SetMinSize(self.DoGetBestSize())
 
     def get_visible_range(self):
         """Return the visible time range."""
@@ -243,6 +242,12 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         self.SetButtonProperties(btnr1)
         self.AddRightWidget(btnr1)
         btnr1.Bind(wx.EVT_TOGGLEBUTTON, self._on_set_visible)
+
+        btnr2 = ToggleButton(self.widgets_right_panel, name="sound_wave_lines")
+        btnr2.SetToolTip("Show waveform of audio files")
+        self.SetButtonProperties(btnr2)
+        self.AddRightWidget(btnr2)
+        btnr2.Bind(wx.EVT_TOGGLEBUTTON, self._on_set_visible)
 
     # -----------------------------------------------------------------------
 
@@ -504,13 +509,14 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
     # ----------------------------------------------------------------------
 
     def _on_set_visible(self, event):
-        """Change the visible part.
+        """Change the visible part or other visible contents.
 
         Scroll the visible part, depending on its current duration:
             - reduce of 50%
             - increase of 100%
             - shift 80% before
             - shift 80% after
+        Show or hide annotations, waveform...
 
         """
         evt_obj = event.GetEventObject()
@@ -555,6 +561,10 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
 
         elif evt_obj.GetName() == "tier_infos":
             self.notify(action="tiers_infos", value=not evt_obj.GetValue())
+            return
+
+        elif evt_obj.GetName() == "sound_wave_lines":
+            self.notify(action="audio_waveform", value=evt_obj.GetValue())
             return
 
         else:

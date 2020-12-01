@@ -32,7 +32,7 @@
     ui.phoenix.page_editor.timeslider.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    A selection bar to mimic the one into Praat software tool, allows to
+    A selection bar to mimic the one into Praat software tool; it allows to
     indicate a moment in time and to select different periods of time, named:
 
         - whole duration;
@@ -456,6 +456,7 @@ class TimeSliderPanel(sppasPanel):
 
     def OnSize(self, event):
         self.__update_select_buttons()
+        self.Refresh()
         event.Skip()
 
     # -----------------------------------------------------------------------

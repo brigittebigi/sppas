@@ -29,7 +29,7 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.media.baseplaypanel.py
+    src.ui.phoenix.windows.media.playerctrlspanel.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     A base class panel to display buttons to manage the actions on the media
@@ -47,7 +47,7 @@ import wx
 
 from sppas.src.ui.phoenix.windows.buttons import ToggleButton
 from sppas.src.ui.phoenix.windows.buttons import BitmapTextButton, BitmapButton
-from sppas.src.ui.phoenix.windows.panels import sppasImagePanel, sppasPanel
+from sppas.src.ui.phoenix.windows.panels import sppasPanel
 
 from .mediaevents import MediaEvents
 from .timeslider import TimeSliderPanel
@@ -137,7 +137,7 @@ class PressPlay(BitmapButton):
 # ---------------------------------------------------------------------------
 
 
-class sppasPlayerControlsPanel(sppasImagePanel):
+class sppasPlayerControlsPanel(sppasPanel):
     """Create a panel with controls to manage media.
 
     :author:       Brigitte Bigi
@@ -159,7 +159,6 @@ class sppasPlayerControlsPanel(sppasImagePanel):
     """
 
     def __init__(self, parent, id=wx.ID_ANY,
-                 image=None,
                  pos=wx.DefaultPosition,
                  size=wx.DefaultSize,
                  style=0,
@@ -175,7 +174,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
 
         """
         super(sppasPlayerControlsPanel, self).__init__(
-            parent, id, image, pos, size, style, name)
+            parent, id, pos, size, style, name)
 
         self._btn_size = sppasPanel.fix_size(24)
         self._focus_color = wx.Colour(128, 128, 128, 128)
@@ -370,7 +369,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         nav_sizer.Add(panel2, 1, wx.EXPAND)
         nav_sizer.AddStretchSpacer(1)
         nav_sizer.Add(panel3, 1, wx.EXPAND | wx.LEFT, sppasPanel.fix_size(2))
-        nav_panel.SetSizer(nav_sizer)
+        nav_panel.SetSizerAndFit(nav_sizer)
 
         slider = TimeSliderPanel(self, name="slider_panel")
 
@@ -394,7 +393,7 @@ class sppasPlayerControlsPanel(sppasImagePanel):
         sizer.Add(nav_panel, 0, wx.EXPAND | wx.RIGHT, border)
         sizer.Add(slider, 0, wx.EXPAND | wx.RIGHT, border)
 
-        self.SetSizerAndFit(sizer)
+        self.SetSizer(sizer)
 
     # -----------------------------------------------------------------------
 

@@ -217,7 +217,7 @@ class sppasTimelinePanel(sppasPanel):
         else:
             # Create the appropriate XxxxViewPanel
             panel = self._create_panel(name)
-            self._sizer.Add(panel, 0, wx.EXPAND, 0)  # no border at all
+            self._sizer.Add(panel, 0, wx.EXPAND | wx.BOTTOM, sppasPanel.fix_size(2))
             self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._on_collapse_changed, panel)
             self.Layout()
 
@@ -421,10 +421,19 @@ class sppasTimelinePanel(sppasPanel):
 
     def enable_audio_waveform(self, value=True):
         """Enable or disable the view of the audio waveform."""
+        value = bool(value)
         for fn in self._files:
             panel = self._files[fn]
             if panel.is_audio() is True:
-                panel.GetPane().show_waveform(bool(value))
+                panel.GetPane().show_waveform(value)
+                # Automatically enable infos if nothing else is enabled
+                if value is False:
+                    if panel.GetPane().infos_shown() is False:
+                        panel.GetPane().show_infos(True)
+                # and automatically disable infos if something else is enabled
+                else:
+                    if panel.GetPane().infos_shown() is True:
+                        panel.GetPane().show_infos(False)
 
         self.Layout()
 
@@ -471,8 +480,8 @@ class sppasTimelinePanel(sppasPanel):
 
         # Fix size&layout
         main_sizer = wx.BoxSizer(wx.VERTICAL)
-        main_sizer.Add(smmpc, 0, wx.EXPAND | wx.BOTTOM | wx.LEFT | wx.RIGHT, border=sppasPanel.fix_size(4))
-        main_sizer.Add(scrolled, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border=sppasPanel.fix_size(4))
+        main_sizer.Add(smmpc, 0, wx.EXPAND | wx.BOTTOM | wx.LEFT | wx.RIGHT, border=sppasPanel.fix_size(2))
+        main_sizer.Add(scrolled, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, border=sppasPanel.fix_size(2))
         self.SetSizer(main_sizer)
 
     # -----------------------------------------------------------------------
@@ -547,13 +556,7 @@ class sppasTimelinePanel(sppasPanel):
         btn = event.GetEventObject()
         btn_name = btn.GetName()
 
-        if btn_name == "sound_infos":
-            self.enable_audio_infos(btn.GetValue())
-
-        elif btn_name == "sound_wave_lines":
-            self.enable_audio_waveform(btn.GetValue())
-
-        elif btn_name == "video_infos":
+        if btn_name == "video_infos":
             self.enable_video_infos(btn.GetValue())
 
         elif btn_name == "video_film":
@@ -639,14 +642,15 @@ class sppasTimelinePanel(sppasPanel):
         """"""
         if event.action == "visible":
             s, e = event.value
-            wx.LogDebug("Visible part changed. New one is: {} {}".format(s, e))
-
             for fn in self._files:
                 panel = self._files[fn]
                 panel.set_visible_period(s, e)
 
         elif event.action == "tiers_infos":
             self.show_tier_infos(event.value)
+
+        elif event.action == "audio_waveform":
+            self.enable_audio_waveform(event.value)
 
     # ----------------------------------------------------------------------
 

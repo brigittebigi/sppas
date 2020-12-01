@@ -43,9 +43,7 @@ from sppas.src.ui.phoenix.main_settings import WxAppSettings
 # Tested files are the ones with a TestPanel class:
 import sppas.src.ui.phoenix.page_editor.media.tickslider as tickslider
 import sppas.src.ui.phoenix.page_editor.media.timeslider as timeslider
-import sppas.src.ui.phoenix.page_editor.media.baseplaypanel as baseplaypanel
-import sppas.src.ui.phoenix.page_editor.media.audiopanel as audiopanel
-import sppas.src.ui.phoenix.page_editor.media.videopanel as videopanel
+import sppas.src.ui.phoenix.page_editor.media.playerctrlspanel as baseplaypanel
 import sppas.src.ui.phoenix.page_editor.media.smmps as smmps
 import sppas.src.ui.phoenix.page_editor.media.smmpctrl as smmpctrl
 
@@ -66,12 +64,6 @@ class TestPanel(wx.Choicebook):
         self.AddPage(p, p.GetName())
 
         p = timeslider.TestPanel(self)
-        self.AddPage(p, p.GetName())
-
-        p = audiopanel.TestPanel(self)
-        self.AddPage(p, p.GetName())
-
-        p = videopanel.TestPanel(self)
         self.AddPage(p, p.GetName())
 
         p = baseplaypanel.TestPanel(self)

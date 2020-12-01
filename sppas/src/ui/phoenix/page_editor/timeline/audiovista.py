@@ -185,6 +185,7 @@ class sppasAudioVista(sppasPanel):
             return True
 
         self.__infos.Hide()
+        self.SetMinSize(wx.Size(-1, self.get_min_height()))
         return False
 
     # -----------------------------------------------------------------------
@@ -204,7 +205,16 @@ class sppasAudioVista(sppasPanel):
             return True
 
         self.__waveform.Hide()
+        self.SetMinSize(wx.Size(-1, self.get_min_height()))
         return False
+
+    # -----------------------------------------------------------------------
+
+    def infos_shown(self):
+        return self.__infos.IsShown()
+
+    def waveform_shown(self):
+        return self.__waveform.IsShown()
 
     # -----------------------------------------------------------------------
     # Height of views

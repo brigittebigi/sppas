@@ -29,11 +29,10 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.media.videopanel.py
+    src.ui.phoenix.windows.media.audiopanel.py
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Requires opencv library to play the video file stream. Do not play the
-    audio streams embedded in the video: display only the frames.
+    Requires simpleaudio library to play the audio file stream.
 
 """
 
@@ -41,17 +40,18 @@ import os
 import wx
 
 from sppas.src.config import paths
+from sppas.src.ui.players.wxaudioplay import sppasAudioPlayer
 
 from sppas.src.ui.phoenix.windows.panels import sppasPanel
-from sppas.src.ui.players.wxvideoplay import sppasVideoPlayer
 
-from ..media import MediaEvents
+from src.ui.phoenix.page_editor.datactrls import sppasWaveformWindow
+from src.ui.phoenix.page_editor.media.mediaevents import MediaEvents
 
 # ---------------------------------------------------------------------------
 
 
-class sppasVideoPanel(sppasPanel):
-    """Create a panel to play and display a video.
+class sppasAudioPanel(sppasPanel):
+    """Create a panel to play and display an audio.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -74,17 +74,24 @@ class sppasVideoPanel(sppasPanel):
     MIN_HEIGHT = 50
 
     # -----------------------------------------------------------------------
+    # Delays for loading media files
+    # LOAD_DELAY = 500
+    # MAX_LOAD_DELAY = 3000
+
+    # -----------------------------------------------------------------------
     # Default height of each element of this control
     INFOS_HEIGHT = 20
-    FILM_HEIGHT = 100
+    WAVEFORM_HEIGHT = 100
+    SPECTRAL_HEIGHT = 100
+    LEVEL_HEIGHT = 30
 
     # -----------------------------------------------------------------------
 
     def __init__(self, parent,
                  id=wx.ID_ANY,
                  pos=wx.DefaultPosition,
-                 name="video_panel"):
-        """Create an instance of sppasVideoPanel.
+                 name="audio_panel"):
+        """Create an instance of sppasAudioPanel.
 
         :param parent: (wx.Window) parent window. Must not be None;
         :param id: (int) window identifier. -1 indicates a default value;
@@ -94,57 +101,83 @@ class sppasVideoPanel(sppasPanel):
         :param name: (str) Name of the media panel.
 
         """
-        size = wx.Size(sppasVideoPanel.MIN_WIDTH,
-                       sppasVideoPanel.MIN_HEIGHT)
-        super(sppasVideoPanel, self).__init__(
+        size = wx.Size(sppasAudioPanel.MIN_WIDTH,
+                       sppasAudioPanel.MIN_HEIGHT)
+        super(sppasAudioPanel, self).__init__(
             parent, id, pos, size,
             style=wx.BORDER_NONE | wx.TRANSPARENT_WINDOW | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
             name=name)
 
         # Members
         self._zoom = 100.
-        self.__videoplay = sppasVideoPlayer(self)
+        self.__audioplay = sppasAudioPlayer(self)
 
         # All possible views
         self.__infos = None
-        self.__film = None
+        self.__waveform = None
+        self.__spectral = None
+        self.__level = None
 
         self._create_content()
 
         # Custom event to inform the media is loaded
-        self.__videoplay.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
-        self.__videoplay.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
-        self.__videoplay.Bind(wx.EVT_TIMER, self.__on_timer)
+        self.__audioplay.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
+        self.__audioplay.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
+        self.__audioplay.Bind(wx.EVT_TIMER, self.__on_timer)
 
     # -----------------------------------------------------------------------
-    # Play the video
+    # Play the audio - manage the private sppasAudioPlayer() instance.
     # -----------------------------------------------------------------------
 
     def get_filename(self):
         """Return the file associated to the media or None."""
-        return self.__videoplay.get_filename()
+        return self.__audioplay.get_filename()
 
     # -----------------------------------------------------------------------
 
     def load(self, filename):
-        self.__videoplay.load(filename)
+        self.__audioplay.load(filename)
 
     # -----------------------------------------------------------------------
 
     def play(self):
-        self.__videoplay.play()
+        self.__audioplay.play()
 
     def pause(self):
-        self.__videoplay.pause()
+        self.__audioplay.pause()
 
     def stop(self):
-        self.__videoplay.stop()
+        self.__audioplay.stop()
 
     def seek(self, value):
-        self.__videoplay.seek(value)
+        self.__audioplay.seek(value)
 
     def tell(self):
-        return self.__videoplay.tell()
+        return self.__audioplay.tell()
+
+    # -----------------------------------------------------------------------
+
+    def is_loading(self):
+        """Return True if the audio is still loading."""
+        return self.__audioplay.is_loading()
+
+    # -----------------------------------------------------------------------
+
+    def is_playing(self):
+        """Return True if the audio is playing."""
+        return self.__audioplay.is_playing()
+
+    # -----------------------------------------------------------------------
+
+    def is_paused(self):
+        """Return True if the audio is paused."""
+        return self.__audioplay.is_paused()
+
+    # -----------------------------------------------------------------------
+
+    def is_stopped(self):
+        """Return True if the audio is stopped."""
+        return self.__audioplay.is_stopped()
 
     # ----------------------------------------------------------------------
 
@@ -155,43 +188,49 @@ class sppasVideoPanel(sppasPanel):
         :param end_time: (float) Time to stop playing in seconds
 
         """
-        self.__videoplay.set_period(start, end)
-        # todo: set the period to the film panel
+        self.__audioplay.set_period(start, end)
+        # todo: set the period to the waveform panel too
 
-    # ----------------------------------------------------------------------
-    # Getters for video infos
+    # -----------------------------------------------------------------------
+    # Getters of the audio - the private sppasAudioPlayer() instance.
+    # -----------------------------------------------------------------------
+
+    def get_nchannels(self):
+        if self.__audioplay is None:
+            return 0
+        return self.__audioplay.get_nchannels()
+
+    nchannels = property(fget=get_nchannels)
+
+    # -----------------------------------------------------------------------
+
+    def get_sampwidth(self):
+        if self.__audioplay is None:
+            return 0
+        return self.__audioplay.get_sampwidth()
+
+    sampwidth = property(fget=get_sampwidth)
+
     # -----------------------------------------------------------------------
 
     def get_framerate(self):
-        if self.__videoplay is None:
+        if self.__audioplay is None:
             return 0
-        return self.__videoplay.get_framerate()
+        return self.__audioplay.get_framerate()
 
     framerate = property(fget=get_framerate)
 
     # -----------------------------------------------------------------------
 
     def get_duration(self):
-        if self.__videoplay is None:
+        if self.__audioplay is None:
             return 0.
-        return self.__videoplay.get_duration()
+        return self.__audioplay.get_duration()
 
     duration = property(fget=get_duration)
 
     # -----------------------------------------------------------------------
-
-    def get_width(self):
-        """Return the width of the frames in the video."""
-        return self.__videoplay.get_width()
-
-    # -----------------------------------------------------------------------
-
-    def get_height(self):
-        """Return the height of the frames in the video."""
-        return self.__videoplay.get_height()
-
-    # -----------------------------------------------------------------------
-    # Enable/Disable views
+    # Enable/Disable the views
     # -----------------------------------------------------------------------
 
     def show_infos(self, value):
@@ -206,7 +245,7 @@ class sppasVideoPanel(sppasPanel):
         if self.__infos is None:
             return
         value = bool(value)
-        if value is True:
+        if value is True and self.__audioplay.get_nchannels() > 0:
             self.__infos.Show()
             return True
 
@@ -215,28 +254,30 @@ class sppasVideoPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def show_film(self, value):
-        """Show or hide the film -  sequence of pictures of the video.
+    def show_waveform(self, value):
+        """Show or hide the waveform.
+
+        Can't be enabled if the audio has more than 1 channel.
 
         :param value: (bool)
         :return: (bool)
 
         """
         value = bool(value)
-        if value is True:
-            self.__film.Show()
+        if value is True and self.__audioplay.get_nchannels() == 1:
+            self.__waveform.Show()
             return True
 
-        self.__film.Hide()
+        self.__waveform.Hide()
         return False
 
     # -----------------------------------------------------------------------
-    # Height of the views
+    # Height of views
     # -----------------------------------------------------------------------
 
     def get_infos_height(self):
-        """Return the height required to draw the video information."""
-        h = int(float(sppasVideoPanel.INFOS_HEIGHT) * self._zoom / 100.)
+        """Return the height required to draw the audio information."""
+        h = int(float(sppasAudioPanel.INFOS_HEIGHT) * self._zoom / 100.)
         try:
             # make this height proportional
             h = sppasPanel.fix_size(h)
@@ -246,9 +287,9 @@ class sppasVideoPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def get_film_height(self):
-        """Return the height required to draw the film."""
-        h = int(float(sppasVideoPanel.FILM_HEIGHT) * self._zoom / 100.)
+    def get_waveform_height(self):
+        """Return the height required to draw the Waveform."""
+        h = int(float(sppasAudioPanel.WAVEFORM_HEIGHT) * self._zoom / 100.)
         try:
             h = sppasPanel.fix_size(h)
         except AttributeError:
@@ -262,10 +303,16 @@ class sppasVideoPanel(sppasPanel):
         h = 0
         if self.__infos is not None:
             if self.__infos.IsShown():
-                h += sppasVideoPanel.INFOS_HEIGHT
-        if self.__film is not None:
-            if self.__film.IsShown():
-                h += sppasVideoPanel.FILM_HEIGHT
+                h += sppasAudioPanel.INFOS_HEIGHT
+        if self.__waveform is not None:
+            if self.__waveform.IsShown():
+                h += sppasAudioPanel.WAVEFORM_HEIGHT
+        if self.__level is True:
+            if self.__level.IsShown():
+                h += sppasAudioPanel.LEVEL_HEIGHT
+        if self.__spectral is True:
+            if self.__spectral.IsShown():
+                h += sppasAudioPanel.SPECTRAL_HEIGHT
 
         # Apply the current zoom value
         h = int(float(h) * self._zoom / 100.)
@@ -303,8 +350,8 @@ class sppasVideoPanel(sppasPanel):
 
         if self.__infos is not None:
             self.__infos.SetMinSize(wx.Size(-1, self.get_infos_height()))
-        if self.__film is not None:
-            self.__film.SetMinSize(wx.Size(-1, self.get_film_height()))
+        if self.__waveform is not None:
+            self.__waveform.SetMinSize(wx.Size(-1, self.get_waveform_height()))
 
         self.SetMinSize(wx.Size(-1, self.get_min_height()))
         self.SendSizeEventToParent()
@@ -317,7 +364,7 @@ class sppasVideoPanel(sppasPanel):
         """Construct our panel, made only of the media control."""
         s = wx.BoxSizer(wx.VERTICAL)
         self.__infos = self.__create_infos_panel()
-        self.__waveform = self.__create_film_panel()
+        self.__waveform = self.__create_waveform_panel()
         s.Add(self.__infos, 1, wx.EXPAND, border=0)
         s.Add(self.__waveform, 1, wx.EXPAND, border=0)
         self.SetSizer(s)
@@ -327,25 +374,24 @@ class sppasVideoPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def __create_infos_panel(self):
-        st = wx.StaticText(self, id=-1, label="No video", name="infos_panel")
+        st = wx.StaticText(self, id=-1, label="No audio", name="infos_panel")
         st.SetMinSize(wx.Size(-1, self.get_infos_height()))
-
         return st
 
     # -----------------------------------------------------------------------
 
-    def __create_film_panel(self):
-        wp = sppasPanel(self)  # sppasFilmPanel(self)
-        wp.SetMinSize(wx.Size(-1, self.get_film_height()))
+    def __create_waveform_panel(self):
+        wp = sppasWaveformWindow(self)
+        wp.SetMinSize(wx.Size(-1, self.get_waveform_height()))
         return wp
 
     # -----------------------------------------------------------------------
 
     def __set_infos(self):
-        audio_prop = str(self.get_framerate()) + " fps, " + \
+        audio_prop = str(self.get_sampwidth()*16) + " bits, " + \
+                     str(self.get_framerate()) + " Hz, " + \
                      "%.3f" % self.get_duration() + " seconds, " +  \
-                     str(self.get_width()) + "x" + \
-                     str(self.get_height())
+                     str(self.get_nchannels()) + " channel "
 
         self.FindWindow("infos_panel").SetLabel(audio_prop)
         self.FindWindow("infos_panel").Refresh()
@@ -364,13 +410,33 @@ class sppasVideoPanel(sppasPanel):
     def __on_timer(self, event):
         wx.PostEvent(self.GetParent(), event)
 
+    # ----------------------------------------------------------------------
+    # Override Public methods of a wx.Window
+    # ----------------------------------------------------------------------
+
+    def Close(self, force=False):
+        """Close the panel."""
+        if self.__audioplay:
+            del self.__audioplay
+        wx.Window.DeletePendingEvents(self)
+        wx.Window.Close(self, force)
+
+    # ----------------------------------------------------------------------
+
+    def Destroy(self):
+        """Destroy the panel."""
+        if self.__audioplay:
+            del self.__audioplay
+        wx.Window.DeletePendingEvents(self)
+        wx.Window.Destroy(self)
+
 # ---------------------------------------------------------------------------
 
 
 class TestPanel(wx.Panel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(
-            parent, -1, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN, name="VideoPanel")
+            parent, -1, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN, name="Audio Panel")
 
         btn2 = wx.Button(self, -1, "Play", name="btn_play")
         btn2.Enable(False)
@@ -392,7 +458,7 @@ class TestPanel(wx.Panel):
         self.slider.SetMinSize(wx.Size(250, -1))
         self.Bind(wx.EVT_SLIDER, self._on_seek_slider, self.slider)
 
-        self.vp = sppasVideoPanel(self)
+        self.ap = sppasAudioPanel(self)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -407,13 +473,14 @@ class TestPanel(wx.Panel):
 
         sizer.Add(sp, 0, wx.EXPAND, 4)
         sizer.Add(self.slider, 0, wx.EXPAND, 4)
-        sizer.Add(self.vp, 0, wx.EXPAND, 4)
+        sizer.Add(self.ap, 0, wx.EXPAND, 4)
         self.SetSizer(sizer)
 
-        # events
+        self.Bind(wx.EVT_TIMER, self._on_timer)
+
+        # Custom event to inform the media is loaded
         self.Bind(MediaEvents.EVT_MEDIA_LOADED, self.__on_media_loaded)
         self.Bind(MediaEvents.EVT_MEDIA_NOT_LOADED, self.__on_media_not_loaded)
-        self.Bind(wx.EVT_TIMER, self._on_timer)
 
         wx.CallAfter(self.DoLoadFile)
 
@@ -421,7 +488,7 @@ class TestPanel(wx.Panel):
 
     def DoLoadFile(self):
         wx.LogDebug("Start loading audio...")
-        self.vp.load(os.path.join(paths.samples, "faces", "video_sample.mp4"))
+        self.ap.load(os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"))
         wx.LogDebug("audio loaded.")
 
     # ----------------------------------------------------------------------
@@ -439,65 +506,65 @@ class TestPanel(wx.Panel):
 
     def _on_seek_slider(self, event):
         time_pos_ms = self.slider.GetValue()
-        self.vp.seek(float(time_pos_ms) / 1000.)
+        self.ap.seek(float(time_pos_ms) / 1000.)
 
     # ----------------------------------------------------------------------
 
     def _on_play_ap(self, event):
-        self.vp.play()
+        self.ap.play()
 
     # ----------------------------------------------------------------------
 
     def _on_pause_ap(self, event):
-        self.vp.pause()
+        self.ap.pause()
 
     # ----------------------------------------------------------------------
 
     def _on_stop_ap(self, event):
-        self.vp.stop()
-        time_pos = self.vp.tell()
+        self.ap.stop()
+        time_pos = self.ap.tell()
         self.slider.SetValue(int(time_pos * 1000.))
 
     # ----------------------------------------------------------------------
 
     def _on_zoom_in(self, evt):
-        zoom = self.vp.get_zoom()
+        zoom = self.ap.get_zoom()
         zoom *= 1.25
-        self.vp.set_zoom(zoom)
+        self.ap.set_zoom(zoom)
 
     # ----------------------------------------------------------------------
 
     def _on_zoom_out(self, evt):
-        zoom = self.vp.get_zoom()
+        zoom = self.ap.get_zoom()
         zoom *= 0.75
-        self.vp.set_zoom(zoom)
+        self.ap.set_zoom(zoom)
 
     # ----------------------------------------------------------------------
 
     def _on_zoom(self, evt):
-        self.vp.set_zoom(100.)
+        self.ap.set_zoom(100.)
 
     # ----------------------------------------------------------------------
 
     def _on_timer(self, event):
-        time_pos = self.vp.tell()
+        time_pos = self.ap.tell()
         self.slider.SetValue(int(time_pos * 1000.))
         event.Skip()
 
     # ----------------------------------------------------------------------
 
     def __on_media_loaded(self, event):
-        wx.LogDebug("Video file loaded successfully")
+        wx.LogDebug("Audio file loaded successfully")
         self.FindWindow("btn_play").Enable(True)
-        self.slider.SetRange(0, int(self.vp.duration * 1000.))
+        self.slider.SetRange(0, int(self.ap.duration * 1000.))
 
-        # self.vp.set_period(10., 12.)
-        # self.vp.seek(10.)
+        # self.ap.set_period(10., 12.)
+        # self.ap.seek(10.)
         # self.slider.SetRange(10000, 12000)
 
     # ----------------------------------------------------------------------
 
     def __on_media_not_loaded(self, event):
-        wx.LogError("Video file not loaded")
+        wx.LogError("Audio file not loaded")
         self.FindWindow("btn_play").Enable(False)
         self.slider.SetRange(0, 0)

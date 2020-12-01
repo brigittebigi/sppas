@@ -180,7 +180,7 @@ class sppasBaseRisePanel(sppasPanel):
 
         # then display our changes
         self.Thaw()
-        self.SetStateChange(self.GetBestSize())
+        self.SetStateChange(self.DoGetBestSize())
 
     # -----------------------------------------------------------------------
 
@@ -582,7 +582,11 @@ class sppasVerticalRisePanel(sppasBaseRisePanel):
 
     def DoGetBestSize(self):
         """Get the size which best suits the window."""
-        tb_w, tb_h = self._tools_panel.GetSize()
+        if self.IsExpanded() is True:
+            tb_w, tb_h = self._tools_panel.DoGetBestSize()
+        else:
+            tb_w, tb_h = self._tools_panel.GetMinSize()
+
         best_w = tb_w
         best_h = tb_h
 
