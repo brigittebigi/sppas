@@ -112,7 +112,7 @@ class SMMPCPanel(sppasVerticalRisePanel):
     # -----------------------------------------------------------------------
 
     def _create_toolbar(self):
-        """Override: disable the collapsible button and add custom ones.
+        """Override. Add custom buttons.
 
         Create a panel with the collapsible button but without
         the slashdot button normally used to show a filename.
@@ -122,8 +122,8 @@ class SMMPCPanel(sppasVerticalRisePanel):
 
         # Create, disable and hide the button to collapse/expand.
         self._btn = self._create_collapsible_button()
-        #self._btn.Enable(False)
-        #self._btn.Hide()
+        # self._btn.Enable(False)
+        # self._btn.Hide()
         sizer.Add(self._btn, 0, wx.FIXED_MINSIZE, 0)
 
         # Create a custom button: show/hide the slider

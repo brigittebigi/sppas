@@ -72,6 +72,9 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
+    This class is inheriting a PlayerControl and embedding a SMMPS because
+    it failed to instantiate when it was inheriting both.
+
     """
 
     def __init__(self, parent,

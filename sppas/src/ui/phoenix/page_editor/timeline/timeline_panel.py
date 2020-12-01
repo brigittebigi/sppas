@@ -461,9 +461,10 @@ class sppasTimelinePanel(sppasPanel):
         smmpc = SMMPCPanel(self, name="smmpc_risepanel")
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._on_collapse_smmpc_changed, smmpc)
 
-        scrolled = sppasScrolledPanel(self,
-                                      style=wx.VSCROLL | wx.ALWAYS_SHOW_SB | wx.BORDER_NONE,
-                                      name="scrolled_panel")
+        # The use of Create is required under Linux if the style includes ALWAYS_SHOW_SB.
+        scrolled = sppasScrolledPanel(self)
+        scrolled.Create(self, style=wx.BORDER_NONE | wx.ALWAYS_SHOW_SB | wx.VSCROLL,
+                        name="scrolled_panel")
         scrolled.SetupScrolling(scroll_x=False, scroll_y=True)
         sizer = wx.BoxSizer(wx.VERTICAL)
         scrolled.SetSizer(sizer)

@@ -161,10 +161,11 @@ class ListViewFilesPanel(sppasScrolledPanel):
     """
 
     def __init__(self, parent, name="summaryfiles_panel"):
-        super(ListViewFilesPanel, self).__init__(
-            parent,
-            style=wx.BORDER_NONE | wx.ALWAYS_SHOW_SB | wx.VSCROLL,
-            name=name)
+        if wx.Platform == "__WXMSW__":
+            style = wx.BORDER_NONE | wx.ALWAYS_SHOW_SB | wx.VSCROLL
+        else:
+            style = wx.BORDER_NONE
+        super(ListViewFilesPanel, self).__init__(parent, style=style, name=name)
 
         # The files of this panel (key=name, value=wx.SizerItem)
         self._files = dict()
