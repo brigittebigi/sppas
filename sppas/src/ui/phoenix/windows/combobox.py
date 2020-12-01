@@ -316,6 +316,12 @@ class sppasComboBox(sppasPanel):
         self._popup.UpdateSize()
 
     # ------------------------------------------------------------------------
+
+    def DeleteAll(self):
+        self._popup.tglbox.DeleteAll()
+        self._popup.UpdateSize()
+
+    # ------------------------------------------------------------------------
     # Events management
     # ------------------------------------------------------------------------
 
@@ -384,26 +390,36 @@ class TestPanelComboBox(wx.Panel):
                            name="c2")
         c2.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
 
-        c3 = sppasComboBox(self,
-                           choices=[],
-                           name="c3")
+        c3 = sppasComboBox(self, choices=[], name="c3")
         c3.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
 
-        c4 = sppasComboBox(self,
-                           choices=list(),
-                           name="c4")
+        c4 = sppasComboBox(self, choices=list(), name="c4")
         c4.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
         c4.Append("Appended 1")
         c4.Append("Appended 2")
         c4.Append("Appended 3")
         c4.Append("Appended 4")
         c4.Delete(3)
+        c4.SetSelection(1)
+
+        c5 = sppasComboBox(self, choices=list(), name="c5")
+        c5.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
+        for i in range(5):
+            print("Append %d" % i)
+            c5.Append("Appended %d" % i)
+        c5.SetSelection(1)
+        for i in reversed(range(5)):
+            print("Delete %d" % i)
+            c5.Delete(i)
+        print(c5.GetCount())
+        c5.SetSelection(-1)
 
         s = wx.BoxSizer(wx.HORIZONTAL)
         s.Add(c1, 0, wx.ALL, 2)
         s.Add(c2, 0, wx.ALL, 2)
         s.Add(c3, 0, wx.ALL, 2)
         s.Add(c4, 0, wx.ALL, 2)
+        s.Add(c5, 0, wx.ALL, 2)
         self.SetSizer(s)
 
         self.Bind(wx.EVT_COMBOBOX, self._process_combobox)

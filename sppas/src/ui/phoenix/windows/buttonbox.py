@@ -367,6 +367,11 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
     # ------------------------------------------------------------------------
 
     def Delete(self, n):
+        """Delete the n-th entry.
+
+        Actually, destroy all buttons and re-create only the relevant ones.
+
+        """
         hgap = self.GetSizer().GetHGap()
         vgap = self.GetSizer().GetVGap()
         choices = self.GetItems()
@@ -390,6 +395,16 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
             self.ShowItem(i, show=showed[i])
 
         self.SetSelection(self.__selection)
+        self.SetSize(self.DoGetBestSize())
+        self.Layout()
+
+    # ------------------------------------------------------------------------
+
+    def DeleteAll(self):
+        for btn in self._buttons:
+            btn.Destroy()
+        self._buttons = list()
+        self.__selection = -1
         self.SetSize(self.DoGetBestSize())
         self.Layout()
 

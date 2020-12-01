@@ -272,8 +272,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
     def __synchro_combo(self):
         """Delete and re-create the list of tiers of the combo to match the book."""
         combo = self.FindWindow("tiers_combo")
-        for i in reversed(range(combo.GetCount())):
-            combo.Delete(i)
+        combo.DeleteAll()
         for i in range(self.__tiersbook.GetPageCount()):
             page = self.__tiersbook.GetPage(i)
             combo.Append(page.get_tiername())
@@ -289,8 +288,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
 
         """
         removed = self.__tiersbook.remove_tiers(filename, tiers)
-        if removed is True:
-            self.__synchro_combo()
+        self.__synchro_combo()
         self.__annctrl.set_ann(None)
 
         # no remaining page in the book
