@@ -164,7 +164,7 @@ class sppasAnnotationsPanel(sppasPanel):
             if self.__anntype in a.get_types():
                 pa = sppasEnableAnnotation(scrolled, a)
                 sizer_anns.Add(self.HorizLine(scrolled), 0, wx.EXPAND | wx.TOP | wx.RIGHT, btn_size // 8)
-                sizer_anns.Add(pa, 1, wx.EXPAND | wx.RIGHT, btn_size // 8)
+                sizer_anns.Add(pa, 0, wx.EXPAND | wx.RIGHT, btn_size // 8)
                 sizer_anns.Add(self.HorizLine(scrolled), 0, wx.EXPAND | wx.BOTTOM | wx.RIGHT, btn_size // 8)
         scrolled.SetSizer(sizer_anns)
         scrolled.SetupScrolling(scroll_x=True, scroll_y=True)

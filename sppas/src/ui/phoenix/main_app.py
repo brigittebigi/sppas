@@ -253,12 +253,12 @@ class sppasApp(wx.App):
         In case of crash or SIGKILL (or bug!) this method is not invoked.
 
         """
+        # Save settings
+        self.settings.save()
+
         if self.HasPendingEvents() is True:
             logging.warning('The application has pending events.')
             self.DeletePendingEvents()
-
-        # Save settings
-        self.settings.save()
 
         # then it will exit normally. Return the exit status 0 = normal.
         return 0

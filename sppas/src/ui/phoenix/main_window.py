@@ -418,10 +418,6 @@ class sppasMainWindow(sppasDialog):
         # Stop redirecting logging to this application log window
         self.log_window.redirect_logging(False)
 
-        # Terminate all frames
-        if wx.Platform == "__WXMSW__":
-            self.DestroyChildren()
-
         try:
             delta = wx.GetApp().settings.fade_out_delta
         except AttributeError:

@@ -98,6 +98,7 @@ class WxAppSettings(sppasBaseSettings):
             with open(filename, 'w') as fd:
                 json.dump(self.__serialize(), fd, indent=4,
                           separators=(',', ': '))
+            logging.info("Settings saved successfully in file {:s}".format(filename))
         except Exception as e:
             logging.error("Settings not saved: {:s}."
                           "".format(str(e)))
