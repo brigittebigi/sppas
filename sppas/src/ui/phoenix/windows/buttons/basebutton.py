@@ -211,6 +211,10 @@ class BaseButton(sppasWindow):
         b = border_color.Blue()
         a = border_color.Alpha()
 
+        shift = 1
+        if wx.Platform == "__WXMAC__":
+            shift = 0
+
         for i in reversed(range(self._vert_border_width)):
             # gradient border color, using transparency.
             alpha = max(a - (i * 25), 0)
@@ -218,9 +222,9 @@ class BaseButton(sppasWindow):
             dc.SetPen(pen)
 
             # left line
-            dc.DrawLine(i, self._horiz_border_width - i - 1, i, h - self._horiz_border_width + i + 1)
+            dc.DrawLine(i, self._horiz_border_width - i, i, h - self._horiz_border_width + i)
             # right line
-            dc.DrawLine(w - i, self._horiz_border_width - i - 1, w - i, h - self._horiz_border_width + i + 1)
+            dc.DrawLine(w - i - shift, self._horiz_border_width - i, w - i - shift, h - self._horiz_border_width + i)
 
         for i in reversed(range(self._horiz_border_width)):
             # gradient border color, using transparency
@@ -229,9 +233,9 @@ class BaseButton(sppasWindow):
             dc.SetPen(pen)
 
             # upper line
-            dc.DrawLine(self._vert_border_width - i - 1, i, w - self._vert_border_width + i + 1, i)
+            dc.DrawLine(self._vert_border_width - i, i, w - self._vert_border_width + i, i)
             # bottom line
-            dc.DrawLine(self._vert_border_width - i - 1, h - i, w - self._vert_border_width + i + 1, h - i)
+            dc.DrawLine(self._vert_border_width - i, h - i - shift, w - self._vert_border_width + i, h - i - shift)
 
 # ---------------------------------------------------------------------------
 

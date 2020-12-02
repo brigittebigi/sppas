@@ -663,7 +663,7 @@ class FileTreeViewPanel(sppasScrolledPanel):
 
             # Required for the parent to do properly its layout:
             # (i.e. estimate the height needed by each panel and refresh)
-            self.GetParent().SendSizeEvent()
+            self.SendSizeEventToParent()
 
         self.ScrollChildIntoView(panel)
 
@@ -703,9 +703,12 @@ class FilePathCollapsiblePanel(sppasCollapsiblePanel):
         self.__frs = dict()  # key=root.id, value=FileRootCollapsiblePanel
 
         # Look&feel
-        self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        try:
+            self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
+            self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            self.SetFont(wx.GetApp().settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
     # -----------------------------------------------------------------------
 
@@ -1000,9 +1003,12 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
         self.__fns = list()
 
         # Look&feel
-        self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
-        self.SetFont(wx.GetApp().settings.text_font)
+        try:
+            self.SetBackgroundColour(self.GetParent().GetBackgroundColour())
+            self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            self.SetFont(wx.GetApp().settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
 
         # Fill in the controls with the data
         self.update(fr)
@@ -1262,7 +1268,7 @@ class FileRootCollapsiblePanel(sppasCollapsiblePanel):
             icon_name = STATES_ICON_NAMES[state]
             bitmap = sppasSwissKnife.get_bmp_icon(icon_name, icon_size)
             img = bitmap.ConvertToImage()
-            # ColorizeImage(img, wx.BLACK, self.GetForegroundColour())
+            ColorizeImage(img, wx.BLACK, self.GetForegroundColour())
             il.Add(wx.Bitmap(img))
             self.__ils.append(icon_name)
 

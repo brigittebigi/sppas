@@ -786,7 +786,7 @@ class sppasDCWindow(wx.Window):
         dc.SetPen(pen)
 
         shift = 0
-        if wx.Platform == "__WXMSW__":
+        if wx.Platform != "__WXMAC__":
             shift = 1
 
         for i in range(self._vert_border_width):

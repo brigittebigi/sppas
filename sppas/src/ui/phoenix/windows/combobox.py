@@ -405,13 +405,10 @@ class TestPanelComboBox(wx.Panel):
         c5 = sppasComboBox(self, choices=list(), name="c5")
         c5.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
         for i in range(5):
-            print("Append %d" % i)
             c5.Append("Appended %d" % i)
         c5.SetSelection(1)
         for i in reversed(range(5)):
-            print("Delete %d" % i)
             c5.Delete(i)
-        print(c5.GetCount())
         c5.SetSelection(-1)
 
         s = wx.BoxSizer(wx.HORIZONTAL)
