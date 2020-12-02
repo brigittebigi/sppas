@@ -143,9 +143,11 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         if period[0] == period[1]:
             self.led.SetForegroundColour(self.GetBackgroundColour())
         else:
-            if self._timeslider.is_selection():
-                self.led.SetForegroundColour(self._timeslider.SELECTION_COLOUR)
+            if self._timeslider.is_selection() is True:
+                # pinky
+                self.led.SetForegroundColour(wx.Colour(220, 40, 80))
             else:
+                # blue like the toggled button
                 self.led.SetForegroundColour(wx.Colour(30, 80, 210))
 
     # -----------------------------------------------------------------------
@@ -587,6 +589,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         p = event.period
         self.media_period(p[0], p[1])
         self._set_led_fg_color()
+        self.led.Refresh()
 
     # ----------------------------------------------------------------------
 

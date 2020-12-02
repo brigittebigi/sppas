@@ -62,6 +62,7 @@ class sppasAnnotationWindow(sppasDataWindow):
     """
 
     SELECTION_BG_COLOUR = wx.Colour(250, 170, 180)
+    SELECTION_FG_COLOUR = wx.Colour(50, 70, 80)
 
     # -----------------------------------------------------------------------
 
@@ -301,8 +302,7 @@ class sppasAnnotationWindow(sppasDataWindow):
 
         # Draw label
         if w > fw:
-            label = serialize_labels(self._data.get_labels(),
-                                     separator=" ")
+            label = serialize_labels(self._data.get_labels(), separator=" ")
             tw, th = self.get_text_extend(dc, gc, label)
             if th > h:
                 label = "..."
@@ -316,6 +316,20 @@ class sppasAnnotationWindow(sppasDataWindow):
                     break
             if len(label) > 0:
                 self.draw_label(dc, gc, label, x + ((w - tw) // 2), y)
+
+    # -----------------------------------------------------------------------
+
+    def draw_label(self, dc, gc, label, x, y):
+        """Override to apply the right color."""
+        if self.IsSelected():
+            fg_color = self.SELECTION_FG_COLOUR
+        else:
+            fg_color = self.GetPenForegroundColour()
+        font = self.GetFont()
+        gc.SetFont(font)
+        dc.SetFont(font)
+        gc.SetTextForeground(fg_color)
+        gc.DrawText(label, x, y)
 
     # -----------------------------------------------------------------------
 

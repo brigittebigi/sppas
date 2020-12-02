@@ -142,8 +142,9 @@ class TimeSliderPanel(sppasPanel):
 
     """
 
-    # Background of the selection is always pink
-    SELECTION_COLOUR = wx.Colour(250, 170, 180)
+    # The selection has its own colors
+    SELECTION_BG_COLOUR = wx.Colour(250, 170, 180)
+    SELECTION_FG_COLOUR = wx.Colour(50, 70, 80)
 
     # SLIDER INDICATOR BG
     # BG_SLIDER_IMG = os.path.join(paths.etc, "images", "bg_slider.png")
@@ -434,7 +435,7 @@ class TimeSliderPanel(sppasPanel):
             child.SetBackgroundColour(colour)
             for c in child.GetChildren():
                 if c.GetName() == "selection_button":
-                    c.SetBackgroundColour(TimeSliderPanel.SELECTION_COLOUR)
+                    c.SetBackgroundColour(TimeSliderPanel.SELECTION_BG_COLOUR)
                 else:
                     c.SetBackgroundColour(colour)
 
@@ -444,13 +445,18 @@ class TimeSliderPanel(sppasPanel):
         """Override. """
         wx.Panel.SetForegroundColour(self, colour)
         for child in self.GetChildren():
-            if child is self._slider:
-                if self.is_selection():
-                    child.SetForegroundColour(TimeSliderPanel.SELECTION_COLOUR)
-                else:
-                    child.SetForegroundColour(ToggleSlider.FG_TRUE_COLOUR)
+            if isinstance(child, ToggleTextButton) is True and child.GetValue() is True:
+                child.SetForegroundColour(ToggleSlider.FG_TRUE_COLOUR)
             else:
                 child.SetForegroundColour(colour)
+                for c in child.GetChildren():
+                    if isinstance(child, ToggleTextButton) is True and child.GetValue() is True:
+                        child.SetForegroundColour(ToggleSlider.FG_TRUE_COLOUR)
+                    else:
+                        if c.GetName() == "selection_button":
+                            c.SetForegroundColour(TimeSliderPanel.SELECTION_FG_COLOUR)
+                        else:
+                            c.SetForegroundColour(colour)
 
     # -----------------------------------------------------------------------
 
@@ -563,6 +569,7 @@ class TimeSliderPanel(sppasPanel):
 
         modified = self.__update_slider()
         if modified is True:
+
             evt = MediaEvents.MediaPeriodEvent(period=self._slider.get_range())
             evt.SetEventObject(self)
             wx.PostEvent(self.GetParent(), evt)
