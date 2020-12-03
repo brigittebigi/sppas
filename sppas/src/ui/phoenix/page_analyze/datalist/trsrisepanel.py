@@ -99,7 +99,7 @@ class TrsSummaryPanel(sppasFileSummaryPanel):
         self._hicolor = wx.Colour(200, 200, 180)
         self._rgb1 = (245, 240, 160)
         self._rgb2 = (255, 255, 205)
-        self.SetRandomBackgroundColour()
+        self.SetRandomColours()
 
     # -----------------------------------------------------------------------
 

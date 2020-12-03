@@ -76,7 +76,7 @@ class ErrorFileSummaryPanel(sppasFileSummaryPanel):
         super(ErrorFileSummaryPanel, self).__init__(parent, filename, name)
         self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
         self.Collapse(False)
-        self.SetRandomBackgroundColour()
+        self.SetRandomColours()
 
     # -----------------------------------------------------------------------
     # Override from the parent

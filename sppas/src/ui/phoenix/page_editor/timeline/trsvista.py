@@ -231,6 +231,7 @@ class TranscriptionVista(sppasPanel):
     def _add_tier_to_panel(self, tier):
         tier_ctrl = sppasTierWindow(self, data=tier)
         tier_ctrl.SetBackgroundColour(self.GetBackgroundColour())
+        tier_ctrl.SetForegroundColour(self.GetForegroundColour())
         tier_ctrl.SetHorizBorderWidth(1)
         tier_ctrl.SetBorderColour(self.GetBackgroundColour())  # border is visible only if selected
         tier_ctrl.SetMinSize(wx.Size(-1, self.get_font_height() * 2))

@@ -88,7 +88,7 @@ class AudioViewPanel(sppasFileViewPanel):
 
         self._rgb1 = (190, 205, 250)
         self._rgb2 = (210, 215, 255)
-        self.SetRandomBackgroundColour()
+        self.SetRandomColours()
 
     # -----------------------------------------------------------------------
 
@@ -146,6 +146,8 @@ class AudioViewPanel(sppasFileViewPanel):
         self.AddButton("close")
 
         mc = sppasAudioVista(self)
+        mc.SetBackgroundColour(self.GetBackgroundColour())
+        mc.SetForegroundColour(self.GetForegroundColour())
         mc.show_infos(True)
         mc.show_waveform(False)
         self.SetPane(mc)

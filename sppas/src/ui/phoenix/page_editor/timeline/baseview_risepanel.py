@@ -91,7 +91,6 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
         # Look&feel
         try:
             settings = wx.GetApp().settings
-            self.SetForegroundColour(settings.fg_color)
             self.SetFont(settings.text_font)
         except AttributeError:
             self.InheritAttributes()
@@ -99,8 +98,8 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
 
     # -----------------------------------------------------------------------
 
-    def SetRandomBackgroundColour(self):
-        """Set a background color into our range of rgb colors."""
+    def SetRandomColours(self):
+        """Set background and foreground colors from our range of rgb colors."""
         # Fix the color of the background
         r = random.randint(min(self._rgb1[0], self._rgb2[0]), max(self._rgb1[0], self._rgb2[0]))
         g = random.randint(min(self._rgb1[1], self._rgb2[1]), max(self._rgb1[1], self._rgb2[1]))
@@ -112,10 +111,15 @@ class sppasFileViewPanel(sppasVerticalRisePanel):
         else:
             hi_color = color.ChangeLightness(110)
 
-        # Set the color to the panel itself and to its children
+        # Set the colors to the panel itself and to its children
         wx.Panel.SetBackgroundColour(self, color)
         self._child_panel.SetBackgroundColour(color)
         self._tools_panel.SetBackgroundColour(hi_color)
+
+        min_i = min(self._rgb1 + self._rgb2 + (150,))
+        fg = wx.Colour(r - min_i, g - min_i, b - min_i)
+        self._child_panel.SetForegroundColour(fg)
+        self._tools_panel.SetForegroundColour(fg)
 
     # ------------------------------------------------------------------------
     # About the file

@@ -87,7 +87,7 @@ class VideoViewPanel(sppasFileViewPanel):
 
         self._rgb1 = (200, 255, 190)
         self._rgb2 = (220, 255, 210)
-        self.SetRandomBackgroundColour()
+        self.SetRandomColours()
 
     # -----------------------------------------------------------------------
 

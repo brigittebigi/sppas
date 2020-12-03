@@ -100,7 +100,7 @@ class AudioSummaryPanel(sppasFileSummaryPanel):
         self.Expand()
         self._rgb1 = (190, 205, 250)
         self._rgb2 = (210, 215, 255)
-        self.SetRandomBackgroundColour()
+        self.SetRandomColours()
 
         self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
 

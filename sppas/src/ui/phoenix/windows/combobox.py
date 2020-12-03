@@ -346,14 +346,21 @@ class sppasComboBox(sppasPanel):
         if self._popup.IsShown() is True:
             self._popup.Hide()
         else:
-            (w, h) = self.GetClientSize()
-            # Get the absolute position of this panel
-            (x, y) = self.GetScreenPosition()
-            # Show the togglebox at an appropriate place
-            # SHOULD ESTIMATE IF ENOUGH ROOM AT BOTTOM AND DISPLAY AT TOP IF NOT...
+            # Show the togglebox at an appropriate place.
+            # Get all sizes (this toggle, screen and popup)
+            w, h = self.GetClientSize()
+            dw, dh = wx.DisplaySize()
             pw, ph = self._popup.tglbox.DoGetBestSize()
             self._popup.SetSize(wx.Size(w, ph))
-            self._popup.SetPosition(wx.Point(x, y+h))
+            # Get the absolute position of this toggle
+            x, y = self.GetScreenPosition()
+            if (y + h + ph) > dh:
+                # popup at top
+                self._popup.SetPosition(wx.Point(x, y - h))
+            else:
+                # popup at bottom
+                self._popup.SetPosition(wx.Point(x, y + h))
+
             self._popup.Layout()
             self._popup.Show()
             self._popup.SetFocus()
@@ -396,7 +403,7 @@ class TestPanelComboBox(wx.Panel):
 
         c4 = sppasComboBox(self, choices=list(), name="c4")
         c4.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
-        c4.Append("** A 1")
+        c4.Append("** A ** 1")
         c4.Append("** A 2")
         c4.Append("** A 3")
         c4.Append("** A 4")

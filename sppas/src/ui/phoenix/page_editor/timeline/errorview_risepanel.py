@@ -84,7 +84,7 @@ class ErrorViewPanel(sppasFileViewPanel):
         # Background color range - orange to red.
         self._rgb1 = (255, 100, 110)
         self._rgb2 = (255, 150, 110)
-        self.SetRandomBackgroundColour()
+        self.SetRandomColours()
 
     # -----------------------------------------------------------------------
     # Override from the parent

@@ -433,6 +433,7 @@ class sppasTierWindow(sppasDataWindow):
     def __create_annctrl(self, ann):
         annctrl = sppasAnnotationWindow(self, data=ann)
         annctrl.SetBackgroundColour(self.GetBackgroundColour())
+        annctrl.SetForegroundColour(self.GetForegroundColour())
         annctrl.SetPxSec(self._pxsec)
         annctrl.Bind(wx.EVT_COMMAND_LEFT_CLICK, self._process_ann_selected)
         self.__annctrls[ann] = annctrl
