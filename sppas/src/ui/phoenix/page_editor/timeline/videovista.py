@@ -265,6 +265,7 @@ class sppasVideoVista(sppasPanel):
         s = wx.BoxSizer(wx.VERTICAL)
         self.__infos = self.__create_infos_panel()
         self.__film = self.__create_film_panel()
+        self.__film.Hide()
         s.Add(self.__infos, 0, wx.EXPAND, border=0)
         s.Add(self.__film, 0, wx.EXPAND, border=0)
         self.SetSizerAndFit(s)
