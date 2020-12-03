@@ -640,11 +640,10 @@ class ListViewFilesPanel(sppasScrolledPanel):
                 return False
 
             # Destroy the panel and remove of the sizer
-            for i, child in enumerate(self.GetChildren()):
+            for child in self.GetChildren():
                 if child == panel:
-                    self.GetSizer().Remove(i)
+                    self.GetSizer().Detach(child)
                     break
-
             panel.Destroy()
 
             # Delete of the list
