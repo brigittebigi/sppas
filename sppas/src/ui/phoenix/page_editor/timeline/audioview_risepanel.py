@@ -120,6 +120,24 @@ class AudioViewPanel(sppasFileViewPanel):
         self.SetStateChange(best_size)
 
     # -----------------------------------------------------------------------
+
+    def show_waveform(self, value):
+        """Enable or disable the waveform.
+
+        If the waveform is enabled, the infos are automatically disabled.
+
+        """
+        self.GetPane().show_waveform(value)
+        # Automatically enable infos if nothing else is enabled
+        if value is False:
+            if self.GetPane().infos_shown() is False:
+                self.GetPane().show_infos(True)
+        # and automatically disable infos if something else is enabled
+        else:
+            if self.GetPane().infos_shown() is True:
+                self.GetPane().show_infos(False)
+
+    # -----------------------------------------------------------------------
     # Construct the GUI
     # -----------------------------------------------------------------------
 

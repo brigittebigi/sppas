@@ -172,7 +172,7 @@ class sppasTierWindow(sppasDataWindow):
     # -----------------------------------------------------------------------
 
     def set_visible_period(self, begin, end):
-        """Set the period to draw (seconds)."""
+        """Set the period to draw (seconds) and Refresh."""
         if begin != self.__period[0] or end != self.__period[1]:
             self.__period = (begin, end)
             self.Refresh()

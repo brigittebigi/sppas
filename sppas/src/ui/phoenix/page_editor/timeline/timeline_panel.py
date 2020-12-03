@@ -220,20 +220,19 @@ class sppasTimelinePanel(sppasPanel):
             self._sizer.Add(panel, 0, wx.EXPAND | wx.BOTTOM, sppasPanel.fix_size(2))
             self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._on_collapse_changed, panel)
             self.Layout()
-
             self._files[name] = panel
 
             # For transcription, each panel is managing the content of a file but
             # the SMMPC needs to know the duration of the transcription.
             if panel.is_trs():
                 panel.load()
+                panel.show_tier_infos(not self.smmpc.is_tiers_annotations())
                 self.smmpc.add_unsupported(name, panel.get_duration())
                 s, e = self.smmpc.get_visible_range()
                 panel.set_visible_period(s, e)
-                all_tiers = panel.get_tier_list()
-                self.notify(action="tiers_added", filename=name, value=all_tiers)
+                self.notify(action="tiers_added", filename=name, value=panel.get_tier_list())
 
-            # For media, it's the SMMPC that is managing all files.
+            # For media, the SMMPC is managing all files.
             # It's easier to manage media files this way particularly
             # because we need to play synchronously...
             elif panel.is_audio():
@@ -393,16 +392,16 @@ class sppasTimelinePanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def show_tier_infos(self, value):
-        """Show information about a tier instead or the annotations.
+    def show_tier_annotations(self, value):
+        """Show annotations of a tier instead or the information.
 
-        :param value: (bool) True to show the information, False for the annotations.
+        :param value: (bool) True to show the annotations, False for the information.
 
         """
         for fn in self._files:
             panel = self._files[fn]
             if panel.is_trs() is True:
-                panel.show_tier_infos(bool(value), tiername=None)
+                panel.show_tier_infos(not bool(value), tiername=None)
 
     # -----------------------------------------------------------------------
     # Methods to operate on an AudioViewPanel()
@@ -425,15 +424,7 @@ class sppasTimelinePanel(sppasPanel):
         for fn in self._files:
             panel = self._files[fn]
             if panel.is_audio() is True:
-                panel.GetPane().show_waveform(value)
-                # Automatically enable infos if nothing else is enabled
-                if value is False:
-                    if panel.GetPane().infos_shown() is False:
-                        panel.GetPane().show_infos(True)
-                # and automatically disable infos if something else is enabled
-                else:
-                    if panel.GetPane().infos_shown() is True:
-                        panel.GetPane().show_infos(False)
+                panel.show_waveform(value)
 
         self.Layout()
 
@@ -471,9 +462,13 @@ class sppasTimelinePanel(sppasPanel):
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._on_collapse_smmpc_changed, smmpc)
 
         # The use of Create is required under Linux if the style includes ALWAYS_SHOW_SB.
-        scrolled = sppasScrolledPanel(self)
-        scrolled.Create(self, style=wx.BORDER_NONE | wx.ALWAYS_SHOW_SB | wx.VSCROLL,
-                        name="scrolled_panel")
+        # scrolled = sppasScrolledPanel(self)
+        # scrolled.Create(self, style=wx.BORDER_NONE | wx.ALWAYS_SHOW_SB | wx.VSCROLL,
+        #                 name="scrolled_panel")
+        if wx.Platform == "__WXMSW__":
+            scrolled = sppasScrolledPanel(self, style=wx.BORDER_NONE | wx.ALWAYS_SHOW_SB | wx.VSCROLL, name="scrolled_panel")
+        else:
+            scrolled = sppasScrolledPanel(self, style=wx.BORDER_NONE, name="scrolled_panel")
         scrolled.SetupScrolling(scroll_x=False, scroll_y=True)
         sizer = wx.BoxSizer(wx.VERTICAL)
         scrolled.SetSizer(sizer)
@@ -605,6 +600,7 @@ class sppasTimelinePanel(sppasPanel):
 
         if self.smmpc.is_audio(filename):
             wx.LogMessage("Audio loaded successfully: {}".format(filename))
+            panel.show_waveform(self.smmpc.is_audios_waveform())
             panel.GetPane().set_audio_data(
                 nchannels=self.smmpc.get_nchannels(filename),
                 sampwidth=self.smmpc.get_sampwidth(filename),
@@ -631,7 +627,7 @@ class sppasTimelinePanel(sppasPanel):
 
     def __on_media_not_loaded(self, event):
         filename = event.filename
-        wx.LogError("Media file {} not loaded".format(filename))
+        wx.LogError("Failed to load media file {}".format(filename))
         panel = self._files[filename]
         panel.Collapse()
         self._collapse_changed(panel)
@@ -646,8 +642,8 @@ class sppasTimelinePanel(sppasPanel):
                 panel = self._files[fn]
                 panel.set_visible_period(s, e)
 
-        elif event.action == "tiers_infos":
-            self.show_tier_infos(event.value)
+        elif event.action == "tiers_annotations":
+            self.show_tier_annotations(event.value)
 
         elif event.action == "audio_waveform":
             self.enable_audio_waveform(event.value)

@@ -188,6 +188,14 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         """Set the selection time range."""
         self._timeslider.set_selection_range(start, end)
 
+    def is_tiers_annotations(self):
+        """Return true if the button to show tier annotations is toggled."""
+        return self.FindWindow("tier_infos").GetValue()
+
+    def is_audios_waveform(self):
+        """Return true if the button to show audio waveform is toggled."""
+        return self.FindWindow("sound_wave_lines").GetValue()
+
     # -----------------------------------------------------------------------
     # Construct the panel
     # -----------------------------------------------------------------------
@@ -562,10 +570,13 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
             self._timeslider.set_visible_range(0., end)
 
         elif evt_obj.GetName() == "tier_infos":
-            self.notify(action="tiers_infos", value=not evt_obj.GetValue())
+            # value = False = show infos
+            # value = True = show annotations
+            self.notify(action="tiers_annotations", value=evt_obj.GetValue())
             return
 
         elif evt_obj.GetName() == "sound_wave_lines":
+            # value = True = show waveform
             self.notify(action="audio_waveform", value=evt_obj.GetValue())
             return
 
