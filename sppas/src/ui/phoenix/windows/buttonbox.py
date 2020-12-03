@@ -91,8 +91,7 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
             expected_height = (r * int(float(self.get_font_height() * 1.8))) + (r * self.GetSizer().GetHGap())
             if c == 1:
                 min_height = min(expected_height,
-                    sppasPanel.fix_size(100)  # SHOULD BE DYNAMICALLY ESTIMATED
-                    )
+                                 sppasPanel.fix_size(100))  # SHOULD BE DYNAMICALLY ESTIMATED
             else:
                 min_height = expected_height
 
@@ -338,22 +337,22 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
     # ------------------------------------------------------------------------
 
     def Append(self, string):
-        hgap = self.GetSizer().GetHGap()
-        vgap = self.GetSizer().GetVGap()
         choices = self.GetItems()
         enabled = list()
         showed = list()
         for btn in self._buttons:
             enabled.append(btn.IsEnabled())
             showed.append(btn.IsShown())
-            btn.Destroy()
+        self.GetSizer().Clear(delete_windows=True)
         self._buttons = list()
 
         choices.append(string)
         enabled.append(True)
         showed.append(True)
 
-        self._create_content(choices, hgap, vgap)
+        rows, cols = self.get_rows_cols_counts(choices)
+        self._append_choices_to_sizer(choices, rows, cols)
+
         for i, btn in enumerate(self._buttons):
             btn.Enable(enabled[i])
             self.ShowItem(i, show=showed[i])
@@ -372,8 +371,6 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
         Actually, destroy all buttons and re-create only the relevant ones.
 
         """
-        hgap = self.GetSizer().GetHGap()
-        vgap = self.GetSizer().GetVGap()
         choices = self.GetItems()
         choices.pop(n)
         self._buttons.pop(n)
@@ -386,10 +383,12 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
         for btn in self._buttons:
             enabled.append(btn.IsEnabled())
             showed.append(btn.IsShown())
-            btn.Destroy()
+        self.GetSizer().Clear(delete_windows=True)
         self._buttons = list()
 
-        self._create_content(choices, hgap, vgap)
+        rows, cols = self.get_rows_cols_counts(choices)
+        self._append_choices_to_sizer(choices, rows, cols)
+
         for i, btn in enumerate(self._buttons):
             btn.Enable(enabled[i])
             self.ShowItem(i, show=showed[i])
@@ -438,8 +437,23 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
     def _create_content(self, choices, hgap=0, vgap=0):
         """Create the main content."""
         rows, cols = self.get_rows_cols_counts(choices)
-
         grid = wx.GridBagSizer(vgap=vgap, hgap=hgap)
+        self.SetSizer(grid)
+
+        self._append_choices_to_sizer(choices, rows, cols)
+
+        for c in range(cols):
+            grid.AddGrowableCol(c)
+        for r in range(rows):
+            grid.AddGrowableRow(r)
+
+        if len(choices) > 0:
+            self.SetSelection(0)
+
+    # -----------------------------------------------------------------------
+
+    def _append_choices_to_sizer(self, choices, rows, cols):
+        grid = self.GetSizer()
         if self._style == wx.RA_SPECIFY_COLS:
             for c in range(cols):
                 for r in range(rows):
@@ -459,16 +473,6 @@ class sppasRadioBoxPanel(sppasScrolledPanel):
                                                   name="button_%d_%d" % (r, c))
                         grid.Add(btn, pos=(r, c), flag=wx.EXPAND)
                         self._buttons.append(btn)
-
-        for c in range(cols):
-            grid.AddGrowableCol(c)
-
-        for r in range(rows):
-            grid.AddGrowableRow(r)
-
-        if len(choices) > 0:
-            self.SetSelection(0)
-        self.SetSizer(grid)
 
     # -----------------------------------------------------------------------
 

@@ -105,7 +105,7 @@ class PopupToggleBox(wx.PopupWindow):
 
     def UpdateSize(self):
         size = self.tglbox.GetSize()
-        self.SetMinSize(size)
+        self.SetSize(size)
 
 # ---------------------------------------------------------------------------
 
@@ -351,7 +351,8 @@ class sppasComboBox(sppasPanel):
             (x, y) = self.GetScreenPosition()
             # Show the togglebox at an appropriate place
             # SHOULD ESTIMATE IF ENOUGH ROOM AT BOTTOM AND DISPLAY AT TOP IF NOT...
-            self._popup.SetSize(wx.Size(w, -1))
+            pw, ph = self._popup.tglbox.DoGetBestSize()
+            self._popup.SetSize(wx.Size(w, ph))
             self._popup.SetPosition(wx.Point(x, y+h))
             self._popup.Layout()
             self._popup.Show()
@@ -395,11 +396,12 @@ class TestPanelComboBox(wx.Panel):
 
         c4 = sppasComboBox(self, choices=list(), name="c4")
         c4.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
-        c4.Append("Appended 1")
-        c4.Append("Appended 2")
-        c4.Append("Appended 3")
-        c4.Append("Appended 4")
+        c4.Append("** A 1")
+        c4.Append("** A 2")
+        c4.Append("** A 3")
+        c4.Append("** A 4")
         c4.Delete(3)
+        c4.Delete(1)
         c4.SetSelection(1)
 
         c5 = sppasComboBox(self, choices=list(), name="c5")
