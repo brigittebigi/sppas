@@ -444,19 +444,20 @@ class sppasTierListCtrl(LineListCtrl):
             self.SetItem(row, col, label_str)
 
             # customize label look
-            if label_str in ['#', 'sil', 'silence']:
-                self.SetItemTextColour(row, SILENCE_FG_COLOUR)
-                self.SetItemBackgroundColour(row, SILENCE_BG_COLOUR)
-            elif label_str in ['+', 'sp', 'pause']:
-                self.SetItemTextColour(row, SILENCE_FG_COLOUR)
-            elif label_str in ['@', '@@', 'lg', 'laugh', 'laughter']:
-                self.SetItemTextColour(row, LAUGH_FG_COLOUR)
-                self.SetItemBackgroundColour(row, LAUGH_BG_COLOUR)
-            elif label_str in ['*', 'gb', 'noise', 'dummy']:
-                self.SetItemTextColour(row, NOISE_FG_COLOUR)
-                self.SetItemBackgroundColour(row, NOISE_BG_COLOUR)
-            else:
-                self.SetItemTextColour(row, self.GetForegroundColour())
+            # if label_str in ['#', 'sil', 'silence']:
+            #     self.SetItemTextColour(row, SILENCE_FG_COLOUR)
+            #     self.SetItemBackgroundColour(row, SILENCE_BG_COLOUR)
+            # elif label_str in ['+', 'sp', 'pause']:
+            #     self.SetItemTextColour(row, SILENCE_FG_COLOUR)
+            # elif label_str in ['@', '@@', 'lg', 'laugh', 'laughter']:
+            #     self.SetItemTextColour(row, LAUGH_FG_COLOUR)
+            #     self.SetItemBackgroundColour(row, LAUGH_BG_COLOUR)
+            # elif label_str in ['*', 'gb', 'noise', 'dummy']:
+            #     self.SetItemTextColour(row, NOISE_FG_COLOUR)
+            #     self.SetItemBackgroundColour(row, NOISE_BG_COLOUR)
+            # else:
+            #     self.SetItemTextColour(row, self.GetForegroundColour())
+            self.SetItemTextColour(row, self.GetForegroundColour())
 
         else:
             self.SetItem(row, col, "")
