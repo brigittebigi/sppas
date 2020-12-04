@@ -672,7 +672,7 @@ class sppasTiersEditWindow(sppasSplitterWindow):
         the annotation of the tier.
 
         """
-        self.__can_select = self.__annotation_deselected(evt.GetIndex())
+        self.__can_select = self.__annotation_deselected(evt.GetIndex(), to_notify=False)
 
     # -----------------------------------------------------------------------
 

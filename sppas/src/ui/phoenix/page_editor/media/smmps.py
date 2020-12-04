@@ -206,8 +206,11 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
     # -----------------------------------------------------------------------
 
     def __del__(self):
-        if self.is_playing():
-            self.reset()
+        try:
+            if self.is_playing():
+                self.reset()
+        except AttributeError:
+            pass
 
     # -----------------------------------------------------------------------
 

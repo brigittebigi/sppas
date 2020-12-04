@@ -144,8 +144,8 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
             self.led.SetForegroundColour(self.GetBackgroundColour())
         else:
             if self._timeslider.is_selection() is True:
-                # pinky
-                self.led.SetForegroundColour(wx.Colour(220, 40, 80))
+                # pinky-red
+                self.led.SetForegroundColour(self._timeslider.SELECTION_FG_COLOUR)
             else:
                 # blue like the toggled button
                 self.led.SetForegroundColour(wx.Colour(30, 80, 210))
@@ -659,16 +659,19 @@ class TestPanel(sppasPanel):
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="SMMPS + Controls")
 
-        button1 = wx.Button(self, -1, pos=(10, 10), size=(100, 50), label="LOAD with threads", name="load_button_1")
+        button1 = wx.Button(self, -1, size=(100, 50), label="LOAD with threads", name="load_button_1")
+        button2 = wx.Button(self, -1, size=(100, 50), label="LOAD sequentially", name="load_button_2")
         self.smmc = sppasMMPCtrl(parent=self)
         self.smmc.SetMinSize(wx.Size(640, 120))
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(button1, 0, wx.ALL, 8)
+        s.Add(button2, 0, wx.ALL, 8)
         s.Add(self.smmc, 1, wx.EXPAND)
         self.SetSizer(s)
 
         button1.Bind(wx.EVT_BUTTON, self._on_load_1)
+        button2.Bind(wx.EVT_BUTTON, self._on_load_2)
 
     # ----------------------------------------------------------------------
 
@@ -712,5 +715,7 @@ class TestPanel(sppasPanel):
             self.smmc.add_audio(os.path.join(paths.samples, "samples-fra", "F_F_B003-P9.wav"))
             self.smmc.add_audio(os.path.join(paths.samples, "samples-eng", "oriana1.wav"))
             self.smmc.add_audio(os.path.join(paths.samples, "samples-eng", "oriana2.WAV"))
+            self.smmc.set_visible_range(1., 7.)
+            self.smmc.set_selection_range(2., 4.)
 
         self.smmc.add_unsupported("a filename of a file", 65.)

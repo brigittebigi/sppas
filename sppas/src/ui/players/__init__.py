@@ -78,6 +78,7 @@ class sppasVideoPlayerError(object):
     def __init__(self, *args, **kwargs):
         raise sppasEnableFeatureError("video")
 
+
 # Test if simpleaudio library is available. It is the requirement of the
 # feature "audioplay".
 try:
@@ -144,6 +145,10 @@ else:
 
     class sppasSimpleVideoPlayerCV(sppasVideoPlayerError):
         pass
+
+    class sppasSimpleVideoPlayerWX(sppasVideoPlayerError):
+        pass
+
 
 if cfg.feature_installed("audioplay") is True and cfg.feature_installed("video") is True:
     from .mmplayer import sppasMultiMediaPlayer
