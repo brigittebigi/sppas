@@ -44,5 +44,11 @@
       "text": "Phonetize from standard tokens instead of faked tokens"
     }
 
-  ]
+  ],
+
+  "refs": {
+    "bigi2012lrectrs": "http://lrec-conf.org/proceedings/lrec2012/pdf/1122_Paper.pdf",
+    "bigi2016lnai": "http://link.springer.com/chapter/10.1007%2F978-3-319-43808-5_30"
+  }
+
 }

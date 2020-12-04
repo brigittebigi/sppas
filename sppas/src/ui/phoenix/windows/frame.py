@@ -34,12 +34,16 @@
 
 """
 
+import os
 import wx
 
 from sppas.src.config import sg
+from sppas.src.config import paths        # used in the TestPanel only
+from sppas.src.imgdata import sppasImage  # used in the TestPanel only
 
 from ..tools import sppasSwissKnife
 from .line import sppasStaticLine
+from .basedcwindow import sppasImageDCWindow
 
 # ----------------------------------------------------------------------------
 
@@ -225,7 +229,6 @@ class sppasFrame(wx.Frame):
             obj_size = int(value)
         return obj_size
 
-
 # ----------------------------------------------------------------------------
 
 
@@ -245,8 +248,9 @@ class sppasTopFrame(wx.TopLevelWindow):
 
         Possible constructors:
 
-            - sppasFrame()
-            - sppasFrame(parent, id=ID_ANY, title="", pos=DefaultPosition,
+            - sppasTopFrame()
+            - sppasTopFrame(parent, id=ID_ANY, title="",
+                     pos=DefaultPosition,
                      size=DefaultSize, style=DEFAULT_DIALOG_STYLE,
                      name=DialogNameStr)
 
@@ -492,7 +496,7 @@ class sppasTopFrame(wx.TopLevelWindow):
     # -----------------------------------------------------------------------
 
     def UpdateUI(self):
-        """Apply settings to all anz_panels and refresh."""
+        """Apply settings to all panels and refresh."""
         # apply new (or not) 'wx' values to content.
         p = self.FindWindow("content")
         p.SetBackgroundColour(wx.GetApp().settings.bg_color)
@@ -512,3 +516,159 @@ class sppasTopFrame(wx.TopLevelWindow):
         p.SetFont(wx.GetApp().settings.action_text_font)
 
         self.Refresh()
+
+# ----------------------------------------------------------------------------
+
+
+class sppasImageFrame(wx.TopLevelWindow):
+    """A frame with only an image as background.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    """
+
+    def __init__(self, *args, **kw):
+        """Create a frame.
+
+        Possible constructors:
+
+            - sppasImageFrame()
+            - sppasImageFrame(parent, id=ID_ANY, title="",
+                     image=filename,
+                     pos=DefaultPosition,
+                     size=DefaultSize, style=DEFAULT_DIALOG_STYLE,
+                     name=DialogNameStr)
+
+        """
+        img_name = None
+        if "image" in kw:
+            img_name = kw["image"]
+            kw.pop("image")
+
+        super(sppasImageFrame, self).__init__(*args, **kw)
+        self._init_infos()
+        self._create_content()
+        self.SetBackgroundImage(img_name)
+
+        # Fix this frame properties
+        self.CenterOnScreen(wx.BOTH)
+        self.SetAutoLayout(True)
+
+    # -----------------------------------------------------------------------
+
+    def _init_infos(self):
+        """Initialize the main frame.
+
+        Set the title, the icon and the properties of the frame.
+
+        """
+        # Fix minimum frame size
+        self.SetMinSize(wx.Size(320, 200))
+
+        # Fix frame name
+        self.SetName('{:s}-{:d}'.format(sg.__name__, self.GetId()))
+
+        # icon
+        _icon = wx.Icon()
+        bmp = sppasSwissKnife.get_bmp_icon("sppas_64", height=64)
+        _icon.CopyFromBitmap(bmp)
+        self.SetIcon(_icon)
+
+        # colors & font
+        try:
+            settings = wx.GetApp().settings
+            self.SetBackgroundColour(settings.bg_color)
+            self.SetForegroundColour(settings.fg_color)
+            self.SetFont(settings.text_font)
+        except AttributeError:
+            self.InheritAttributes()
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundImage(self, filename=None):
+        """Set the image filename, but do not refresh.
+
+        :param filename: (str)
+
+        """
+        self.FindWindow("img_window").SetBackgroundImage(filename)
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundImageArray(self, image):
+        """Set the image, but do not refresh.
+
+        :param image: (sppasImage, np.array)
+
+        """
+        self.FindWindow("img_window").SetBackgroundImageArray(image)
+
+    # -----------------------------------------------------------------------
+
+    def _create_content(self):
+        wi = sppasImageDCWindow(self, name="img_window")
+        wi.SetBorderWidth(0)
+
+        sizer = wx.BoxSizer()
+        sizer.Add(wi, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+
+# ----------------------------------------------------------------------------
+# Panels to test
+# ----------------------------------------------------------------------------
+
+
+class TestPanel(wx.Panel):
+
+    img1 = os.path.join(paths.etc, "images", "trbg1.png")
+    img2 = os.path.join(paths.etc, "images", "bg2.png")
+
+    def __init__(self, parent):
+        super(TestPanel, self).__init__(
+            parent,
+            name="sppasImageFrame")
+
+        btn1 = wx.Button(self, label="Open frame", pos=(10, 10), size=(96, 64))
+        btn2 = wx.Button(self, label="Close frame", pos=(120, 10), size=(96, 64))
+        self._img_frame = sppasImageFrame(
+            parent=self,   # if self is destroyed, the frame will be too
+            title="Frame with a background image",
+            image=TestPanel.img1,
+            style=wx.CAPTION | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.DIALOG_NO_PARENT)
+        self._img_frame.SetBackgroundColour(wx.WHITE)
+
+        self.Bind(wx.EVT_BUTTON, self._on_open_imgframe, btn1)
+        self.Bind(wx.EVT_BUTTON, self._on_close_imgframe, btn2)
+
+        self.i = 0
+        self.timerObject = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.change_bitmap, self.timerObject)
+
+    # -----------------------------------------------------------------------
+
+    def _on_open_imgframe(self, event):
+        self._img_frame.Show()
+        self.timerObject.Start(1000)
+
+    # -----------------------------------------------------------------------
+
+    def _on_close_imgframe(self, event):
+        self.i = 0
+        self.timerObject.Stop()
+        self._img_frame.Hide()
+
+    # -----------------------------------------------------------------------
+
+    def change_bitmap(self, evt):
+        if self.i % 2 == 0:
+            self._img_frame.SetBackgroundImage(TestPanel.img2)
+        else:
+            sppas_img = sppasImage(filename=TestPanel.img1)
+            self._img_frame.SetBackgroundImageArray(sppas_img)
+
+        self.i += 1
+        self._img_frame.Refresh()

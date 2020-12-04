@@ -1,0 +1,36 @@
+// Page Editor of SPPAS.
+// --------------------
+
+[sppasEditorPanel| -files_toolbar;-anns_toolbar;-editor_panel| open_files();save_files();close_files();close_file(name)]
+
+[EditorPanel| -listview;-timeview| get_files();append_file(name);save_file(name);is_modified(name);remove_file(name);ann_action_requested()]
+
+[sppasTimelinePanel| +smmpc;-fileviewpanels]
+
+[SMMPCPanel| +smmpctrl]
+[sppasMMPCtrl| -smmps;-playerctrl]
+[sppasFileViewPanel|-filetype: enum;-filename:string;-dirty:bool]
+
+[sppasTiersEditWindow| -annlabelctrl;-tiersbook]
+
+// Chain elements
+
+[sppasEditorPanel]-1>[EditorPanel]
+[EditorPanel]-1>[sppasTiersEditWindow]
+[EditorPanel]-1>[sppasTimelinePanel]
+
+[sppasTimelinePanel]-1>[SMMPCPanel]
+[sppasTimelinePanel]0*>[sppasFileViewPanel]
+
+[SMMPCPanel]-1>[sppasMMPCtrl]
+[sppasMMPCtrl]-1>[sppasMMPS]
+[sppasMMPCtrl]+>[sppasPlayerControlsPanel]
+
+[sppasFileViewPanel]+>[AudioViewPanel]
+[sppasFileViewPanel]+>[VideoViewPanel]
+[sppasFileViewPanel]+>[TrsViewPanel]
+[sppasFileViewPanel]+>[ErrorViewPanel]
+
+[sppasMMPS]+>[sppasMultiMediaPlayer]
+[sppasMMPS]+>[wx.Timer]
+

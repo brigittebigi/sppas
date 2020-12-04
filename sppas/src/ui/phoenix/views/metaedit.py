@@ -242,7 +242,7 @@ class sppasMetaDataEditDialog(sppasDialog):
     # -----------------------------------------------------------------------
 
     def __create_vline(self, parent):
-        """Create an horizontal line, used to separate the anz_panels."""
+        """Create an horizontal line, used to separate the panels."""
         line = sppasStaticLine(parent, orient=wx.LI_VERTICAL)
         line.SetMinSize(wx.Size(5, -1))
         line.SetPenStyle(wx.PENSTYLE_SOLID)

@@ -9,6 +9,7 @@ from .messages import Warn
 from .messages import Error
 from .entries import sppasChoiceDialog
 from .entries import sppasTextEntryDialog
+from .entries import sppasFloatEntryDialog
 from .progress import sppasProgressDialog
 
 __all__ = (
@@ -21,5 +22,6 @@ __all__ = (
     'sppasFileDialog',
     'sppasChoiceDialog',
     "sppasTextEntryDialog",
+    "sppasFloatEntryDialog",
     "sppasProgressDialog",
 )

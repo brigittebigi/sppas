@@ -139,7 +139,7 @@ class InstallResourcesDialog(sppasDialog):
     def _create_content(self, resource_type):
         """Create the content of the frame.
 
-        Content is made of a menu, an area for anz_panels and action buttons.
+        Content is made of a menu, an area for panels and action buttons.
 
         """
         if resource_type == "lang":

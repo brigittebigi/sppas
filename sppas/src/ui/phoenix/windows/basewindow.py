@@ -36,15 +36,18 @@
     ===========
 
     This module implements a base class used to draw our custom wx.window,
-    like for buttons, lines, etc.
+    like for buttons when it is needed that the focus follows mouse.
 
 """
 
 import wx
 import random
 import logging
+import os
 
-from .basedcwindow import sppasDCWindow
+from sppas.src.config import paths   # paths is used in the TestPanel only
+
+from .basedcwindow import sppasImageDCWindow
 from .basedcwindow import sppasWindowEvent
 
 # ---------------------------------------------------------------------------
@@ -91,7 +94,7 @@ class WindowState(object):
 # ---------------------------------------------------------------------------
 
 
-class sppasWindow(sppasDCWindow):
+class sppasWindow(sppasImageDCWindow):
     """A base window with a DC to draw some data.
 
     :author:       Brigitte Bigi
@@ -133,14 +136,14 @@ class sppasWindow(sppasDCWindow):
         self._state = [WindowState().normal, WindowState().normal]
 
         super(sppasWindow, self).__init__(
-            parent, id, pos, size, style, name)
+            parent, id, None, pos, size, style, name)
 
         # Focus (True when mouse/keyboard is entered)
         pc = self.GetPenForegroundColour()
         self._default_focus_color = pc
         self._focus_color = self._default_focus_color
         self._focus_width = 1
-        self._focus_spacing = 2
+        self._focus_spacing = 1
         self._focus_style = wx.PENSTYLE_DOT
 
         self.Bind(wx.EVT_SET_FOCUS, self.OnGainFocus)
@@ -210,7 +213,7 @@ class sppasWindow(sppasDCWindow):
         """Overridden. Force this window to have the focus."""
         if self._state[1] != WindowState().selected:
             self._set_state(WindowState().focused)
-        super(sppasDCWindow, self).SetFocus()
+        super(sppasImageDCWindow, self).SetFocus()
 
     # ----------------------------------------------------------------------
 
@@ -233,7 +236,7 @@ class sppasWindow(sppasDCWindow):
         if self._focus_width == 0:
             self._focus_spacing = 0
         else:
-            self._focus_spacing = 2
+            self._focus_spacing = 1
 
     # -----------------------------------------------------------------------
 
@@ -621,6 +624,40 @@ class TestPanel(wx.Panel):
         w12.SetBackgroundColour(wx.Colour(28, 200, 166))
         w12.SetForegroundColour(wx.Colour(228, 200, 166))
         w12.SetBorderColour(wx.Colour(128, 100, 66))
+
+        wi1 = sppasWindow(self, pos=(10, 420), size=(50, 110), name="wi1")
+        wi1.Enable(True)
+        wi1.SetBackgroundColour(wx.Colour(28, 200, 166))
+        wi1.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.etc, "images", "bg6.png")
+        wi2 = sppasWindow(self, pos=(110, 420), size=(50, 110), name="wi2")
+        wi2.Enable(True)
+        wi2.SetBackgroundImage(img)
+        wi2.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.etc, "images", "trbg1.png")
+        wi3 = sppasWindow(self, pos=(210, 420), size=(50, 110), name="wi3")
+        wi3.Enable(True)
+        wi3.SetBackgroundColour(wx.Colour(28, 200, 166))
+        wi3.SetBackgroundImage(img)
+        wi3.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.etc, "images", "trbg1.png")
+        wi4 = sppasWindow(self, pos=(310, 420), size=(50, 110), name="wi4")
+        wi4.Enable(True)
+        wi4.SetBackgroundImage(img)
+        wi4.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.etc, "images", "trbg1.png")
+        wi5 = sppasWindow(self, pos=(410, 420), size=(50, 110), name="wi5")
+        wi5.Enable(False)
+        wi5.SetBackgroundImage(img)
+        wi5.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.samples, "faces", "BrigitteBigi_Aix2020.png")
+        wi6 = sppasWindow(self, pos=(510, 420), size=(120, 140), name="wi6")
+        wi6.SetBackgroundImage(img)
 
     # -----------------------------------------------------------------------
 

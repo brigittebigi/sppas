@@ -44,7 +44,7 @@ from .buttonbox import sppasToggleBoxPanel
 # ---------------------------------------------------------------------------
 
 
-class PopupToggleBox(wx.Dialog):
+class PopupToggleBox(wx.PopupWindow):
     """A dialog embedding a sppasToggleBoxPanel.
 
     :author:       Brigitte Bigi
@@ -60,13 +60,9 @@ class PopupToggleBox(wx.Dialog):
 
     def __init__(self, parent, choices, name="popup"):
         """Constructor"""
-        super(PopupToggleBox, self).__init__(
-            parent,
-            style=wx.WANTS_CHARS | wx.TAB_TRAVERSAL | wx.RESIZE_BORDER | wx.SIMPLE_BORDER,
-            name=name)
+        wx.PopupWindow.__init__(self, parent)
 
         sizer = wx.BoxSizer()
-
         tglbox = sppasToggleBoxPanel(self, choices=choices, majorDimension=1, name="togglebox")
         tglbox.SetVGap(0)
         tglbox.SetHGap(0)
@@ -104,6 +100,12 @@ class PopupToggleBox(wx.Dialog):
     def SetFont(self, font):
         wx.Dialog.SetFont(self, font)
         self.tglbox.SetFont(font)
+
+    # ------------------------------------------------------------------------
+
+    def UpdateSize(self):
+        size = self.tglbox.GetSize()
+        self.SetSize(size)
 
 # ---------------------------------------------------------------------------
 
@@ -183,7 +185,7 @@ class sppasComboBox(sppasPanel):
         txtbtn = TextButton(self, label=label, name="txtbtn")
         txtbtn.SetAlign(wx.ALIGN_LEFT)
         txtbtn.SetMinSize(wx.Size(-1, h))
-        txtbtn.Enable(False)
+        txtbtn.SetFocusWidth(0)
 
         arrowbtn = BitmapButton(self, name="arrow_combo")
         arrowbtn.SetMinSize(wx.Size(h, h))
@@ -301,12 +303,23 @@ class sppasComboBox(sppasPanel):
     # ------------------------------------------------------------------------
 
     def Append(self, string):
-        return self._popup.tglbox.Append(string)
+        """Append a new entry into the list."""
+        idx = self._popup.tglbox.Append(string)
+        self._popup.UpdateSize()
+        return idx
 
     # ------------------------------------------------------------------------
 
     def Delete(self, n):
+        """Remove entry at index n of the list."""
         self._popup.tglbox.Delete(n)
+        self._popup.UpdateSize()
+
+    # ------------------------------------------------------------------------
+
+    def DeleteAll(self):
+        self._popup.tglbox.DeleteAll()
+        self._popup.UpdateSize()
 
     # ------------------------------------------------------------------------
     # Events management
@@ -333,13 +346,21 @@ class sppasComboBox(sppasPanel):
         if self._popup.IsShown() is True:
             self._popup.Hide()
         else:
-            (w, h) = self.GetClientSize()
-            # Get the absolute position of this panel
-            (x, y) = self.GetScreenPosition()
-            # Show the togglebox at an appropriate place
-            # SHOULD ESTIMATE IF ENOUGH ROOM AT BOTTOM AND DISPLAY AT TOP IF NOT...
-            self._popup.SetSize(wx.Size(w, -1))
-            self._popup.SetPosition(wx.Point(x, y+h))
+            # Show the togglebox at an appropriate place.
+            # Get all sizes (this toggle, screen and popup)
+            w, h = self.GetClientSize()
+            dw, dh = wx.DisplaySize()
+            pw, ph = self._popup.tglbox.DoGetBestSize()
+            self._popup.SetSize(wx.Size(w, ph))
+            # Get the absolute position of this toggle
+            x, y = self.GetScreenPosition()
+            if (y + h + ph) > dh:
+                # popup at top
+                self._popup.SetPosition(wx.Point(x, y - h))
+            else:
+                # popup at bottom
+                self._popup.SetPosition(wx.Point(x, y + h))
+
             self._popup.Layout()
             self._popup.Show()
             self._popup.SetFocus()
@@ -377,15 +398,34 @@ class TestPanelComboBox(wx.Panel):
                            name="c2")
         c2.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
 
-        c3 = sppasComboBox(self,
-                           choices=[],
-                           name="c3")
+        c3 = sppasComboBox(self, choices=[], name="c3")
         c3.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
+
+        c4 = sppasComboBox(self, choices=list(), name="c4")
+        c4.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
+        c4.Append("** A ** 1")
+        c4.Append("** A 2")
+        c4.Append("** A 3")
+        c4.Append("** A 4")
+        c4.Delete(3)
+        c4.Delete(1)
+        c4.SetSelection(1)
+
+        c5 = sppasComboBox(self, choices=list(), name="c5")
+        c5.SetMinSize(wx.Size(sppasPanel.fix_size(80), -1))
+        for i in range(5):
+            c5.Append("Appended %d" % i)
+        c5.SetSelection(1)
+        for i in reversed(range(5)):
+            c5.Delete(i)
+        c5.SetSelection(-1)
 
         s = wx.BoxSizer(wx.HORIZONTAL)
         s.Add(c1, 0, wx.ALL, 2)
         s.Add(c2, 0, wx.ALL, 2)
         s.Add(c3, 0, wx.ALL, 2)
+        s.Add(c4, 0, wx.ALL, 2)
+        s.Add(c5, 0, wx.ALL, 2)
         self.SetSizer(s)
 
         self.Bind(wx.EVT_COMBOBOX, self._process_combobox)

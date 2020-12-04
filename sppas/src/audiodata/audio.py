@@ -448,7 +448,10 @@ class sppasAudioPCM(object):
         if self._audio_fp is None:
             raise AudioError
 
-        self._audio_fp.setpos(pos)
+        try:
+            self._audio_fp.setpos(pos)
+        except:
+            raise Exception("pos {} not in range (0, {}).".format(pos, self.get_nframes()))
 
     # ----------------------------------------------------------------------
 

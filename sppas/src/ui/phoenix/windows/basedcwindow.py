@@ -29,8 +29,8 @@
 
         ---------------------------------------------------------------------
 
-    src.ui.phoenix.windows.basedraw.py
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    src.ui.phoenix.windows.basedcwindow.py
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Description
     ===========
@@ -42,6 +42,11 @@
 
 import wx
 import random
+import os.path
+import logging
+
+from sppas.src.config import paths        # used in the TestPanel only
+from sppas.src.imgdata import sppasImage  # used in the TestPanel only
 
 # ---------------------------------------------------------------------------
 
@@ -101,9 +106,8 @@ class sppasDCWindow(wx.Window):
 
     A very basic window. Can't have the focus.
     In a previous version, the background was transparent by default but
-    it is not properly supported under Windows.
-
-    Under Windows, when changing bg color, a refresh is needed to apply it.
+    it is not properly supported under Windows. Moreover, also under
+    Windows, when changing bg color, a refresh is needed to apply it.
 
     """
 
@@ -124,12 +128,16 @@ class sppasDCWindow(wx.Window):
         :param name: (str) Window name.
 
         """
+        # Border to draw (0=no border)
+        self._vert_border_width = 2
+        self._horiz_border_width = 2
+        self._border_color = wx.WHITE
+        self._border_style = wx.PENSTYLE_SOLID
+
         super(sppasDCWindow, self).__init__(parent, id, pos, size, style, name)
 
-        # Size
+        # Size, colors and font
         self._min_width = 12
-        self._min_height = 12
-
         try:
             settings = wx.GetApp().settings
             wx.Window.SetForegroundColour(self, settings.fg_color)
@@ -138,17 +146,16 @@ class sppasDCWindow(wx.Window):
             self._min_height = settings.get_font_height()
         except AttributeError:
             self.InheritAttributes()
-
-        # Border to draw (0=no border)
-        self._vert_border_width = 2
-        self._horiz_border_width = 2
+            self._min_height = self.get_font_height()
         self._border_color = self.GetForegroundColour()
-        self._border_style = wx.PENSTYLE_SOLID
 
         # Bind the events related to our window
         self.Bind(wx.EVT_PAINT, lambda evt: self.DrawWindow())
         self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvents)
+
+        # So... no transparency, to have the same look on each platform
+        self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
 
     # -----------------------------------------------------------------------
 
@@ -336,12 +343,14 @@ class sppasDCWindow(wx.Window):
         supported under Windows.
 
         :param color: (wx.Color)
-        :param delta: (int)
+        :param delta: (int) percentage of change
         :return: (wx.Colour)
 
         """
-        if delta > 50:
-            delta = 50
+        if delta < 10:
+            delta = 10
+        if delta > 90:
+            delta = 90
 
         # Change transparency. Wont have any effect under Windows.
         r = color.Red()
@@ -350,6 +359,9 @@ class sppasDCWindow(wx.Window):
         a = color.Alpha()
         if a > 128:
             a = max(64, a // 2)
+
+        if r + g + b > 384:
+            return wx.Colour(r, g, b, a).ChangeLightness(100 - delta)
 
         return wx.Colour(r, g, b, a).ChangeLightness(100 + delta)
 
@@ -366,7 +378,7 @@ class sppasDCWindow(wx.Window):
         if self.IsEnabled() is True:
             return color
 
-        return self.GetHighlightedColour(color, 40)
+        return self.GetHighlightedColour(color, 30)
 
     # -----------------------------------------------------------------------
 
@@ -381,7 +393,7 @@ class sppasDCWindow(wx.Window):
         if self.IsEnabled() is True:
             return color
 
-        return self.GetHighlightedColour(color, 40)
+        return self.GetHighlightedColour(color, 30)
 
     # -----------------------------------------------------------------------
 
@@ -395,7 +407,7 @@ class sppasDCWindow(wx.Window):
         if self.IsEnabled() is True:
             return color
 
-        return self.GetHighlightedColour(color, 30)
+        return self.GetHighlightedColour(color, 20)
 
     # -----------------------------------------------------------------------
 
@@ -611,10 +623,10 @@ class sppasDCWindow(wx.Window):
 
     # -----------------------------------------------------------------------
 
-    def OnErase(self, evt):
+    def OnErase(self, event):
         """Trap the erase event to keep the background transparent on Windows.
 
-        :param evt: wx.EVT_ERASE_BACKGROUND
+        :param event: wx.EVT_ERASE_BACKGROUND
 
         """
         pass
@@ -673,6 +685,19 @@ class sppasDCWindow(wx.Window):
         """
         bg_color = self.GetPenBackgroundColour()
         return wx.Brush(bg_color, wx.BRUSHSTYLE_SOLID)
+
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def GetTransparentBrush():
+        """Get a transparent brush.
+
+        :returns: (wx.Brush)
+
+        """
+        if wx.Platform == '__WXMAC__':
+            return wx.TRANSPARENT_BRUSH
+        return wx.Brush(wx.Colour(0, 0, 0, wx.ALPHA_TRANSPARENT), wx.BRUSHSTYLE_TRANSPARENT)
 
     # -----------------------------------------------------------------------
     # Draw methods (private)
@@ -735,7 +760,7 @@ class sppasDCWindow(wx.Window):
     # -----------------------------------------------------------------------
 
     def DrawBackground(self, dc, gc):
-        """Draw the background with a color or transparent."""
+        """Draw the background with a color."""
         w, h = self.GetClientSize()
 
         brush = self.GetBackgroundBrush()
@@ -745,50 +770,36 @@ class sppasDCWindow(wx.Window):
 
         dc.SetPen(wx.TRANSPARENT_PEN)
         dc.SetBrush(brush)
-        dc.DrawRoundedRectangle(
-            self._vert_border_width,
-            self._horiz_border_width,
-            w - (2 * self._vert_border_width),
-            h - (2 * self._horiz_border_width),
-            (self._vert_border_width + self._horiz_border_width) // 2)
+        dc.DrawRectangle(0, 0, w, h)
 
     # -----------------------------------------------------------------------
 
     def DrawBorder(self, dc, gc):
-        """Draw a gradient border with corners that appear slightly rounded.
+        """Draw a solid border.
 
         Notice that the transparency is not supported under Windows so that
         the borders don't have a gradient color!
 
         """
         w, h = self.GetClientSize()
-        border_color = self.GetPenBorderColour()
-        r = border_color.Red()
-        g = border_color.Green()
-        b = border_color.Blue()
-        a = border_color.Alpha()
+        pen = wx.Pen(self.GetPenBorderColour(), 1, self._border_style)
+        dc.SetPen(pen)
 
-        for i in reversed(range(self._vert_border_width)):
-            # gradient border color, using transparency.
-            alpha = max(a - (i * 25), 0)
-            pen = wx.Pen(wx.Colour(r, g, b, alpha), 1, self._border_style)
-            dc.SetPen(pen)
+        shift = 0
+        if wx.Platform != "__WXMAC__":
+            shift = 1
 
+        for i in range(self._vert_border_width):
             # left line
-            dc.DrawLine(i, self._horiz_border_width - i - 1, i, h - self._horiz_border_width + i + 1)
+            dc.DrawLine(i, 0, i, h)
             # right line
-            dc.DrawLine(w - i - 1, self._horiz_border_width - i - 1, w - i - 1, h - self._horiz_border_width + i + 1)
+            dc.DrawLine(w - i - shift, 0, w - i - shift, h)
 
-        for i in reversed(range(self._horiz_border_width)):
-            # gradient border color, using transparency
-            alpha = max(a - (i * 25), 0)
-            pen = wx.Pen(wx.Colour(r, g, b, alpha), 1, self._border_style)
-            dc.SetPen(pen)
-
+        for i in range(self._horiz_border_width):
             # upper line
-            dc.DrawLine(self._vert_border_width - i - 1, i, w - self._vert_border_width + i + 1, i)
+            dc.DrawLine(0, i, w, i)
             # bottom line
-            dc.DrawLine(self._vert_border_width - i - 1, h - i - 1, w - self._vert_border_width + i + 1, h - i - 1)
+            dc.DrawLine(0, h - i - shift, w, h - i - shift)
 
     # -----------------------------------------------------------------------
 
@@ -820,6 +831,13 @@ class sppasDCWindow(wx.Window):
 
     # -----------------------------------------------------------------------
 
+    def get_font_height(self):
+        """Return the height of the in-use font."""
+        font = self.GetFont()
+        return int(float(font.GetPixelSize()[1]))
+
+    # -----------------------------------------------------------------------
+
     def DrawLabel(self, label, dc, gc, x, y):
         font = self.GetFont()
         gc.SetFont(font)
@@ -832,6 +850,117 @@ class sppasDCWindow(wx.Window):
         #    gc.SetTextForeground(color)
         #    gc.DrawText(label, x, y)
 
+# ---------------------------------------------------------------------------
+
+
+class sppasImageDCWindow(sppasDCWindow):
+    """A window with a DC to draw an image as background.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    Does not look nice under Linux if the image has transparency.
+
+    """
+
+    def __init__(self, parent, id=-1,
+                 image=None,
+                 pos=wx.DefaultPosition,
+                 size=wx.DefaultSize,
+                 style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE,
+                 name="imgdcwindow"):
+        """Initialize a new sppasImageDCWindow instance.
+
+        :param parent: (wx.Window) Parent window.
+        :param id: (int) A value of -1 indicates a default value.
+        :param pos: (wx.Point) If the position (-1, -1) is specified
+                       then a default position is chosen.
+        :param size: (wx.Size) If the default size (-1, -1) is specified
+                       then a default size is chosen.
+        :param style: (int)
+        :param name: (str) Window name.
+
+        """
+        self._image = None
+        super(sppasImageDCWindow, self).__init__(parent, id, pos, size, style, name)
+        if image is not None:
+            self.SetBackgroundImage(image)
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundImage(self, img_filename=None):
+        """Set the image filename but do not refresh.
+
+        :param img_filename: (str) None to disable the BG image
+
+        """
+        self._image = None
+        if img_filename is not None:
+            if os.path.exists(img_filename) is True:
+                try:
+                    self._image = wx.Image(img_filename, wx.BITMAP_TYPE_ANY)
+                    return True
+                except Exception as e:
+                    logging.error("Invalid image file {:s}: {:s}".format(img_filename, str(e)))
+            else:
+                logging.error("The image file {:s} does not exist.".format(img_filename))
+
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def SetBackgroundImageArray(self, img):
+        """Set the image from a numpy array but do not refresh.
+
+        :param img: (sppasImage) Numpy array of the image
+
+        """
+        try:
+            width = img.shape[1]
+            height = img.shape[0]
+            self._image = wx.Image(width, height)
+            self._image.SetData(img.tostring())
+            return True
+        except Exception as e:
+            logging.error("Invalid image array: {:s}".format(str(e)))
+
+        self._image = None
+        return False
+
+    # -----------------------------------------------------------------------
+
+    def DrawBackground(self, dc, gc):
+        """Override.
+
+        Draw the background with a color then add the image.
+
+        """
+        x, y, w, h = self.GetClientRect()
+        x += self._vert_border_width
+        y += self._horiz_border_width
+        w -= (2 * self._vert_border_width)
+        h -= (2 * self._horiz_border_width)
+
+        if isinstance(self._image, wx.Image) is True:
+            img = self._image.Copy()
+            img.Rescale(w, h, wx.IMAGE_QUALITY_HIGH)
+            bmp = wx.Bitmap(img)
+            dc.DrawBitmap(bmp, x, y)
+
+        else:
+            brush = self.GetBackgroundBrush()
+            if brush is not None:
+                dc.SetBackground(brush)
+                dc.Clear()
+
+            dc.SetPen(wx.TRANSPARENT_PEN)
+            dc.SetBrush(brush)
+            dc.DrawRectangle(x, y, w, h, )
+
+
 # ----------------------------------------------------------------------------
 # Panels to test
 # ----------------------------------------------------------------------------
@@ -839,12 +968,14 @@ class sppasDCWindow(wx.Window):
 
 class TestPanel(wx.Panel):
 
+    img1 = os.path.join(paths.samples, "faces", "BrigitteBigi_Aix2020.png")
+    img2 = os.path.join(paths.etc, "images", "trbg1.png")
+    img3 = os.path.join(paths.etc, "images", "bg1.png")
+
     def __init__(self, parent):
         super(TestPanel, self).__init__(
             parent,
-            name="Test DCWindow")
-        self.SetBackgroundColour(wx.GetApp().settings.bg_color)
-        self.SetForegroundColour(wx.GetApp().settings.fg_color)
+            name="sppasDCWindow & sppasImageDCWindow")
 
         bgpbtn = wx.Button(self, label="BG-panel", pos=(10, 10), size=(64, 64), name="bgp_color")
         bgbbtn = wx.Button(self, label="BG-buttons", pos=(110, 10), size=(64, 64), name="bgb_color")
@@ -925,6 +1056,41 @@ class TestPanel(wx.Panel):
         w12.SetForegroundColour(wx.Colour(28, 200, 166))
         w12.SetBorderColour(wx.Colour(128, 100, 66))
 
+        wi1 = sppasImageDCWindow(self, pos=(10, 420), size=(50, 110), name="wi1")
+        wi1.Enable(True)
+        wi1.SetBackgroundColour(wx.Colour(28, 200, 166))
+        wi1.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.etc, "images", "bg6.png")
+        wi2 = sppasImageDCWindow(self, image=img, pos=(110, 420), size=(50, 110), name="wi2")
+        wi2.Enable(True)
+        wi2.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.etc, "images", "trbg1.png")
+        wi3 = sppasImageDCWindow(self, image=img, pos=(210, 420), size=(50, 110), name="wi3")
+        wi3.Enable(True)
+        wi3.SetBackgroundColour(wx.Colour(28, 200, 166))
+        wi3.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.etc, "images", "trbg1.png")
+        wi4 = sppasImageDCWindow(self, pos=(310, 420), size=(50, 110), name="wi4")
+        wi4.Enable(True)
+        wi4.SetBackgroundImage(img)
+        wi4.SetBorderColour(wx.Colour(128, 100, 66))
+
+        wi5 = sppasImageDCWindow(self, pos=(410, 420), size=(50, 110), name="wi5")
+        wi5.Enable(False)
+        wi5.SetBackgroundImage(TestPanel.img1)
+        wi5.SetBorderColour(wx.Colour(128, 100, 66))
+
+        wi6 = sppasImageDCWindow(self, pos=(510, 420), size=(120, 140), name="wi6")
+        wi6.SetBackgroundImage(TestPanel.img1)
+
+        self.i = 0
+        self.timerObject = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.change_bitmap, self.timerObject)
+        self.timerObject.Start(1000)
+
     # -----------------------------------------------------------------------
 
     def on_bgp_color(self, event):
@@ -960,3 +1126,19 @@ class TestPanel(wx.Panel):
         for c in self.GetChildren():
             c.SetForegroundColour(color)
         self.Refresh()
+
+    # -----------------------------------------------------------------------
+
+    def change_bitmap(self, evt):
+        img_btn = self.FindWindow("wi6")
+        if img_btn is None:
+            wx.LogError("Can't find the window with name wi6")
+            self.timerObject.Stop()
+            return
+        if self.i % 2 == 0:
+            img_btn.SetBackgroundImage(TestPanel.img2)
+        else:
+            sppas_img = sppasImage(filename=TestPanel.img3)
+            img_btn.SetBackgroundImageArray(sppas_img)
+        self.i += 1
+        img_btn.Refresh()

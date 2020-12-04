@@ -82,7 +82,7 @@ class sppasApp(wx.App):
         wx.App.__init__(self,
                         redirect=False,
                         filename=None,
-                        useBestVisual=True,
+                        useBestVisual=False,  # True => crash with anaconda
                         clearSigInt=True)
 
         self.SetAppName(sg.__name__)
@@ -96,7 +96,7 @@ class sppasApp(wx.App):
         # we have to fix it to not raise an exception under Windows.
         self._locale = wx.Locale(wx.LANGUAGE_ENGLISH)
 
-        # Fix logging. Notice that Settings will be fixed at 'run'.
+        # Fix logging. Notice that the settings will be fixed at 'run'.
         self.settings = None
         self._logging = None
         self.process_command_line_args()
@@ -187,7 +187,7 @@ class sppasApp(wx.App):
 
         """
         self.settings = WxAppSettings()
-        # here, we could be doing something... in future versions.
+        # here, we could do something... in future versions.
 
     # -----------------------------------------------------------------------
 
@@ -248,17 +248,17 @@ class sppasApp(wx.App):
 
             - clicks on the [X] button of the frame manager
             - does "ALT-F4" (Windows) or CTRL+X (Unix)
-            - click on a custom 'exit' button
+            - clicks on a custom 'exit' button
 
         In case of crash or SIGKILL (or bug!) this method is not invoked.
 
         """
+        # Save settings
+        self.settings.save()
+
         if self.HasPendingEvents() is True:
             logging.warning('The application has pending events.')
             self.DeletePendingEvents()
 
-        # Save settings
-        self.settings.save()
-
-        # then it will exit. Nothing special to do. Return the exit status.
+        # then it will exit normally. Return the exit status 0 = normal.
         return 0

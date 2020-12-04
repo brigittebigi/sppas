@@ -372,9 +372,11 @@ class sppasToolbar(sppasPanel):
         if icon is not None:
             btn = ToggleButton(self, label=text, name=icon)
             btn.LabelPosition = wx.RIGHT
+            btn.SetMaxSize(wx.Size(self._h * 2, self._h * 2))
         else:
             btn = ToggleButton(self, label=text)
             btn.LabelPosition = wx.CENTRE
+            btn.SetMaxSize(wx.Size(self._h * 4, self._h * 2))
 
         btn.SetFocusStyle(self._fs)
         btn.SetFocusWidth(self._fw)

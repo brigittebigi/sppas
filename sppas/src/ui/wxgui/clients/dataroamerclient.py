@@ -575,7 +575,7 @@ class DataRoamer(wx.Panel):
         """Change font of all texts."""
 
         wx.Window.SetFont(self, font)
-        # Apply to all anz_panels
+        # Apply to all panels
         for i in range(self._filetrs.GetSize()):
             p = self._filetrs.GetObject(i)
             p.SetFont(font)
@@ -586,7 +586,7 @@ class DataRoamer(wx.Panel):
         """Change background of all texts."""
 
         wx.Window.SetBackgroundColour(self,color)
-        # Apply as background on all anz_panels
+        # Apply as background on all panels
         for i in range(self._filetrs.GetSize()):
             p = self._filetrs.GetObject(i)
             p.SetBackgroundColour(color)
@@ -597,7 +597,7 @@ class DataRoamer(wx.Panel):
         """Change foreground of all texts."""
 
         wx.Window.SetForegroundColour(self, color)
-        # Apply as foreground on all anz_panels
+        # Apply as foreground on all panels
         for i in range(self._filetrs.GetSize()):
             p = self._filetrs.GetObject(i)
             p.SetForegroundColour(color)

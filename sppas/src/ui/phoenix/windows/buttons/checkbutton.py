@@ -74,15 +74,13 @@ class CheckButton(BaseCheckButton):
         :param name: the name.
 
         """
-        super(CheckButton, self).__init__(
-            parent, id, pos, size, name)
-
         self._label = label
         self._radio = False
-
         # Set the spacing between the check bitmap and the label to 6.
         # This can be changed using SetSpacing later.
         self._spacing = 6
+
+        super(CheckButton, self).__init__(parent, id, pos, size, name)
 
     # ------------------------------------------------------------------------
 

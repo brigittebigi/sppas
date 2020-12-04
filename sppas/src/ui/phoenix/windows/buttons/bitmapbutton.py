@@ -74,17 +74,21 @@ class BitmapTextButton(TextButton):
         :param name: the name of the bitmap.
 
         """
-        super(BitmapTextButton, self).__init__(parent, id, label, pos, size, name)
         self._spacing = 4
-        self._default_bitmapcolor = self.GetPenForegroundColour()
+        self._default_bitmapcolor =  wx.WHITE
         self._bitmapcolor = self._default_bitmapcolor
         self._labelpos = wx.CENTER
         self.img_margin = 0.2  # margin all around the image (20% of btn size)
+        super(BitmapTextButton, self).__init__(parent, id, label, pos, size, name)
 
         # The icon image
-        self._image = None
+        self._icon_image = None
         if name != wx.ButtonNameStr:
             self.SetImage(name)
+
+        # Update colors
+        self._default_bitmapcolor = self.GetPenForegroundColour()
+        self._bitmapcolor = self._default_bitmapcolor
 
     # ----------------------------------------------------------------------
 
@@ -105,7 +109,7 @@ class BitmapTextButton(TextButton):
         :param image_name: (str) Name of the image or full filename
 
         """
-        self._image = image_name
+        self._icon_image = image_name
 
     # -----------------------------------------------------------------------
 
@@ -262,12 +266,12 @@ class BitmapTextButton(TextButton):
 
     def _draw_bitmap(self, dc, gc, x, y, btn_size):
         # if no image was given
-        if self._image is None:
+        if self._icon_image is None:
             return False
 
         try:
             # get the image from its name
-            img = sppasSwissKnife.get_image(self._image)
+            img = sppasSwissKnife.get_image(self._icon_image)
             # re-scale the image to the expected size
             sppasSwissKnife.rescale_image(img, btn_size)
             # re-colorize

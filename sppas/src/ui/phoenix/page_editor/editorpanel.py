@@ -46,10 +46,10 @@ from sppas.src.utils import u
 from ..windows import sppasPanel
 from ..windows import sppasSplitterWindow
 
-from .tiersanns import sppasTiersEditWindow
-from .filesedit import sppasTimeEditFilesPanel
-from .editorevent import EVT_TIME_VIEW
-from .editorevent import EVT_LIST_VIEW
+from .listanns.tiersanns import sppasTiersEditWindow
+from .listanns import EVT_LISTANNS_VIEW
+from .timeline import sppasTimelinePanel
+from .timeline import EVT_TIMELINE_VIEW
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
@@ -90,9 +90,9 @@ class EditorPanel(sppasSplitterWindow):
         self._create_content()
 
         # The event emitted by the sppasTimeEditFilesPanel
-        self.Bind(EVT_TIME_VIEW, self._process_time_action)
+        self.Bind(EVT_TIMELINE_VIEW, self._process_timeline_action)
         # The event emitted by the sppasTiersEditWindow
-        self.Bind(EVT_LIST_VIEW, self._process_list_action)
+        self.Bind(EVT_LISTANNS_VIEW, self._process_listanns_action)
 
         # Look&feel
         try:
@@ -129,96 +129,6 @@ class EditorPanel(sppasSplitterWindow):
         self._listview.swap_panels()
 
     # -----------------------------------------------------------------------
-    # Actions to perform on the edited annotation labels
-    # -----------------------------------------------------------------------
-
-    def switch_ann_view(self, mode):
-        """Switch the annotation view to the given mode.
-
-        :param mode: (str) One of: code_review, code_xml, code_json
-
-        """
-        self._listview.switch_ann_mode(mode)
-
-    # -----------------------------------------------------------------------
-
-    def restore_ann(self):
-        """Restore the original annotation."""
-        self._listview.restore_ann()
-
-    # -----------------------------------------------------------------------
-    # Actions to perform on the listview in priority
-    # -----------------------------------------------------------------------
-
-    def list_action_requested(self, action_name):
-        """Do an action on the listview and apply on the timeview.
-
-        :param action_name: (str)
-        :raise: exception if the action can't be performed
-
-        """
-        filename = self._listview.get_filename()
-        if filename is None:
-            wx.LogError("No file/tier selected")
-
-        elif action_name == "delete":
-            ann_del_idx = self._listview.delete_annotation()
-            if ann_del_idx != -1:
-                self._timeview.update_ann(filename, ann_del_idx, what="delete")
-                return True
-
-        elif action_name == "merge_previous":
-            ann_del_idx, ann_modif_idx = self._listview.merge_annotation(-1)
-            if ann_del_idx != -1:
-                self._timeview.update_ann(filename, ann_del_idx, what="delete")
-                self._timeview.update_ann(filename, ann_modif_idx, what="update")
-                return True
-
-        elif action_name == "merge_next":
-            ann_del_idx, ann_modif_idx = self._listview.merge_annotation(1)
-            if ann_del_idx != -1:
-                self._timeview.update_ann(filename, ann_del_idx, what="delete")
-                self._timeview.update_ann(filename, ann_modif_idx, what="update")
-                return True
-
-        elif action_name == "split":
-            ann_new_idx, ann_modif_idx = self._listview.split_annotation(-1)
-            if ann_new_idx != -1:
-                self._timeview.update_ann(filename, ann_new_idx, what="create")
-                self._timeview.update_ann(filename, ann_modif_idx, what="update")
-                return True
-
-        elif action_name == "split_next":
-            ann_new_idx, ann_modif_idx = self._listview.split_annotation(1)
-            if ann_new_idx != -1:
-                self._timeview.update_ann(filename, ann_new_idx, what="create")
-                self._timeview.update_ann(filename, ann_modif_idx, what="update")
-                return True
-
-        elif action_name == "add_before":
-            ann_new_idx = self._listview.add_annotation(-1)
-            if ann_new_idx != -1:
-                self._timeview.update_ann(filename, ann_new_idx, what="create")
-                return True
-
-        elif action_name == "add_after":
-            ann_new_idx = self._listview.add_annotation(1)
-            if ann_new_idx != -1:
-                self._timeview.update_ann(filename, ann_new_idx, what="create")
-                return True
-
-        elif action_name == "edit_metadata":
-            ann_idx = self._listview.edit_annotation_metadata()
-            if ann_idx != -1:
-                self._timeview.update_ann(filename, ann_idx, what="update")
-                return True
-
-        else:
-            wx.LogError("unknown action name {:s}".format(action_name))
-
-        return False
-
-    # -----------------------------------------------------------------------
     # Public methods to manage files and tiers
     # -----------------------------------------------------------------------
 
@@ -237,10 +147,10 @@ class EditorPanel(sppasSplitterWindow):
         :raise: ValueError
 
         """
-        # If the file is a media, we'll receive an action "media_loaded"
-        # If the file is a trs, we'll receive the action "tiers_added".
-        res = self._timeview.append_file(name)
-        return res
+        # If the file is a media, we'll receive an action "media_loaded".
+        # If the file is a trs, we'll receive the action "tiers_added", then
+        # the tiers will be added to the listview.
+        self._timeview.append_file(name)
 
     # -----------------------------------------------------------------------
 
@@ -294,11 +204,11 @@ class EditorPanel(sppasSplitterWindow):
 
         """
         w1 = sppasTiersEditWindow(self, orient=wx.HORIZONTAL, name="tiersanns_panel")
-        w2 = sppasTimeEditFilesPanel(self, name="timeline_panel")
+        w2 = sppasTimelinePanel(self, name="timeline_panel")
 
         # Fix size&layout
         w, h = self.GetSize()
-        self.SetMinimumPaneSize(sppasPanel.fix_size(128))
+        self.SetMinimumPaneSize(sppasPanel.fix_size(100))
         self.SplitHorizontally(w1, w2, sppasPanel.fix_size(h // 2))
         self.SetSashGravity(0.4)
 
@@ -316,51 +226,39 @@ class EditorPanel(sppasSplitterWindow):
 
     # -----------------------------------------------------------------------
 
-    def _process_time_action(self, event):
-        """Process an action event from one of the trs panels.
+    def _process_timeline_action(self, event):
+        """Process an action event from one of the timeline view child panel.
 
         :param event: (wx.Event)
 
         """
-        panel = event.GetEventObject()
         filename = event.filename
         action = event.action
         value = event.value
-        wx.LogDebug("TIME EVENT. {:s} received an event action {:s} of file {:s} with value {:s}"
+        wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
                     "".format(self.GetName(), action, filename, str(value)))
 
-        if action == "select_tier":
-            self._listview.set_selected_tiername(filename, value)
-            self._timeview.set_selected_tiername(filename, value)
+        if action == "tier_selected":
+            # value of the event is the name of the tier
+            ann_index = self._timeview.get_selected_annotation()
+            self._listview.set_selected_tiername(filename, value, ann_index)
 
         elif action == "tiers_added":
             self._listview.add_tiers(filename, value)
 
-        elif action in ("zoomed", "error_collapsed", "error_expanded"):
-            # we just need to layout ourself
-            self.UpdateSize()
-
-        elif action == "media_loaded":
-            if value is True:
-                self.UpdateSize()
-
-        elif action == "ann_selected":
-            self._listview.set_selected_annotation(value)
+        elif action == "save":
+            self.save_file(filename)
 
         else:
-            # we need to layout ourself and our parent could have to perform
-            # some change when panels are expanded/collapsed.
-            if action in ("media_collapsed", "media_expanded", "trs_collapsed", "trs_expanded"):
-                self.UpdateSize()
-
-            if self.GetParent() is not None:
-                wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s} and notify its parent {}."
-                            "".format(self.GetName(), action, filename, str(value), self.GetParent().GetName()))
-                wx.PostEvent(self.GetParent(), event)
+            # we just need to layout ourself
+            self.UpdateSize()
+            # other actions (close) are ignored.
+            # They will be handled by the parent.
+            event.Skip()
 
     # -----------------------------------------------------------------------
 
-    def _process_list_action(self, event):
+    def _process_listanns_action(self, event):
         """Process an action event from the list view.
 
         :param event: (wx.Event)
@@ -370,21 +268,23 @@ class EditorPanel(sppasSplitterWindow):
         filename = event.filename
         action = event.action
         value = event.value
-        wx.LogDebug("LIST EVENT. {:s} received an event action {:s} of file {:s} with value {:s}"
-                    "".format(self.GetName(), action, filename, str(value)))
 
         if action == "ann_selected":
+            tier_name = self._listview.get_selected_tiername()
+            self._timeview.set_selected_tiername(filename, tier_name)
             self._timeview.set_selected_annotation(value)
 
-        elif action == "ann_modified":
+        elif action == "ann_create":
+            self._timeview.update_ann(filename, value, what="create")
+
+        elif action == "ann_delete":
+            self._timeview.update_ann(filename, value, what="delete")
+
+        elif action == "ann_update":
             self._timeview.update_ann(filename, value, what="update")
 
         elif action == "select_tier":
-            self._listview.set_selected_tiername(filename, value)
             self._timeview.set_selected_tiername(filename, value)
-
-        else:
-            event.Skip()
 
 # ----------------------------------------------------------------------------
 # Panel for tests

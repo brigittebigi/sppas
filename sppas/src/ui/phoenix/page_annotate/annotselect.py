@@ -37,20 +37,21 @@
 """
 
 import wx
+import webbrowser
 
 from sppas.src.config import msg
 from sppas.src.config import annots
 from sppas.src.utils import u
 from sppas.src.utils import sppasUnicode
 
-from ..anz_panels import sppasOptionsPanel
+from ..panel_shared import sppasOptionsPanel
 from ..windows import sppasDialog
 from ..windows import sppasPanel
 from ..windows import sppasScrolledPanel
 from ..windows import sppasStaticLine
 from ..windows import sppasStaticText
 from ..windows import sppasTextCtrl
-from ..windows import BitmapTextButton, TextButton
+from ..windows import BitmapTextButton, TextButton, BitmapButton
 from ..windows import sppasComboBox
 
 from .annotevent import PageChangeEvent
@@ -163,7 +164,7 @@ class sppasAnnotationsPanel(sppasPanel):
             if self.__anntype in a.get_types():
                 pa = sppasEnableAnnotation(scrolled, a)
                 sizer_anns.Add(self.HorizLine(scrolled), 0, wx.EXPAND | wx.TOP | wx.RIGHT, btn_size // 8)
-                sizer_anns.Add(pa, 1, wx.EXPAND | wx.RIGHT, btn_size // 8)
+                sizer_anns.Add(pa, 0, wx.EXPAND | wx.RIGHT, btn_size // 8)
                 sizer_anns.Add(self.HorizLine(scrolled), 0, wx.EXPAND | wx.BOTTOM | wx.RIGHT, btn_size // 8)
         scrolled.SetSizer(sizer_anns)
         scrolled.SetupScrolling(scroll_x=True, scroll_y=True)
@@ -277,7 +278,6 @@ class sppasEnableAnnotation(sppasPanel):
 
         self._create_content()
         self._setup_events()
-        self.SetMinSize(wx.Size(-1, sppasPanel.fix_size(96)))
         self.Layout()
 
     # -----------------------------------------------------------------------
@@ -295,13 +295,17 @@ class sppasEnableAnnotation(sppasPanel):
         """Create the main content."""
         es = self.__create_enable_panel()
         ls = self.__create_langchoice_panel()
-        ds = self.__create_description_sizer()
+        ds = self.__create_description_panel()
+        pr = self.__create_references_panel()
+
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(es, 0, wx.ALIGN_CENTRE | wx.RIGHT | wx.LEFT, sppasPanel.fix_size(8))
         sizer.Add(ls, 0, wx.ALIGN_CENTRE | wx.RIGHT | wx.LEFT, sppasPanel.fix_size(8))
         sizer.Add(ds, 1, wx.EXPAND | wx.RIGHT | wx.LEFT, sppasPanel.fix_size(8))
+        sizer.Add(pr, 0, wx.EXPAND | wx.RIGHT | wx.LEFT, sppasPanel.fix_size(8))
 
         self.SetSizer(sizer)
+        self.SetMinSize(wx.Size(-1, sppasPanel.fix_size(96)))
 
     # -----------------------------------------------------------------------
 
@@ -357,7 +361,7 @@ class sppasEnableAnnotation(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def __create_description_sizer(self):
+    def __create_description_panel(self):
         panel = sppasPanel(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
         content = self.__annparam.get_descr()
@@ -375,6 +379,30 @@ class sppasEnableAnnotation(sppasPanel):
             panel, value=content, style=text_style)
 
         sizer.Add(td, 1, wx.EXPAND | wx.TOP | wx.BOTTOM, sppasPanel.fix_size(12))
+        panel.SetSizer(sizer)
+        return panel
+
+    # -----------------------------------------------------------------------
+
+    def __create_references_panel(self):
+        panel = sppasPanel(self, name="references_panel")
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        w = sppasPanel.fix_size(8)
+        h = sppasPanel.fix_size(64)
+
+        for ref_id in self.__annparam.get_reference_identifiers():
+            url = self.__annparam.get_reference_url(ref_id)
+            if url.endswith("pdf"):
+                name = "url_pdf"
+            else:
+                name = "url_www"
+            btn = BitmapButton(panel, name=name)
+            btn.SetName(ref_id)
+            btn_w = sppasPanel.fix_size(48)
+            btn.SetMinSize(wx.Size(btn_w, btn_w))
+            sizer.Add(btn, 1, wx.TOP | wx.BOTTOM, sppasPanel.fix_size(12))
+            w += btn_w
+
         panel.SetSizer(sizer)
         return panel
 
@@ -418,6 +446,15 @@ class sppasEnableAnnotation(sppasPanel):
             if dlg.ShowModal() == wx.ID_OK:
                 self.__annparam = dlg.annparam
             dlg.Destroy()
+
+        else:
+            for ref_id in self.__annparam.get_reference_identifiers():
+                if event_name == ref_id:
+                    url = self.__annparam.get_reference_url(ref_id)
+                    if len(url) > 0:
+                        wx.LogMessage("URL {:s} is opened in the web browser."
+                                      "".format(url))
+                        webbrowser.open(url=url)
 
     # -----------------------------------------------------------------------
 

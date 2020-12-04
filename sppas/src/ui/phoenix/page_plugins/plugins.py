@@ -247,7 +247,7 @@ class sppasPluginsPanel(sppasPanel):
     def _process_data_changed(self, event):
         """Process a change of data.
 
-        Set the data of the event to the other anz_panels.
+        Set the data of the event to the other panels.
 
         :param event: (wx.Event)
 
@@ -294,7 +294,7 @@ class sppasPluginsPanel(sppasPanel):
                 Information(PGS_DELETED.format(plugin_id))
             except Exception as e:
                 message = PGS_ACT_DEL_ERROR.format(plugin_id, str(e))
-                Error(message, PGS_ERR_DEL)
+                Error(message)
 
         dlg.Destroy()
 
@@ -316,6 +316,6 @@ class sppasPluginsPanel(sppasPanel):
 
             except Exception as e:
                 message = PGS_ACT_ADD_ERROR.format(filename, str(e))
-                Error(message, PGS_ERR_ADD)
+                Error(message)
 
         dlg.Destroy()

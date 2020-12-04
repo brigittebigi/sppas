@@ -42,51 +42,77 @@ GOTO EndHeader
 """
 :EndHeader
 
+
+
 @echo off
 color 0F
 SET PYTHONIOENCODING=UTF-8
 
 REM Make sure we have admin right
 set "params=%*"
-cd /d "%~dp0" && ( if exist "%temp%\getadmin.vbs" del "%temp%\getadmin.vbs" ) && fsutil dirty query %systemdrive% 1>nul 2>nul || (  echo Set UAC = CreateObject^("Shell.Application"^) : UAC.ShellExecute "cmd.exe", "/k cd ""%~sdp0"" && %~s0 %params%", "", "runas", 1 >> "%temp%\getadmin.vbs" && "%temp%\getadmin.vbs" && exit /B )
+REM cd /d "%~dp0" && ( if exist "%temp%\getadmin.vbs" del "%temp%\getadmin.vbs" ) && fsutil dirty query %systemdrive% 1>nul 2>nul || (  echo Set UAC = CreateObject^("Shell.Application"^) : UAC.ShellExecute "cmd.exe", "/k cd ""%~sdp0"" && %~s0 %params%", "", "runas", 1 >> "%temp%\getadmin.vbs" && "%temp%\getadmin.vbs" && exit /B )
 
-
-REM Search for pythonw command, ie Python & WxPython are both installed
+echo Search for python3w.exe command
 WHERE pythonw3.exe >nul 2>nul
-if %ERRORLEVEL% EQU 0 (
 
-        color 1E
-        start "" pythonw3.exe .\sppas\bin\preinstallgui.py
-        REM exit
+if %ERRORLEVEL% EQU 0 (
+    echo Command pythonw3.exe was found.
+    color 1E
+    start "" pythonw3.exe .\sppas\bin\preinstallgui.py
+    REM exit
 
 ) else (
+    echo Command pythonw3.exe was not found.
 
-    REM Search for python command, ie Python is installed but not WxPython
-    WHERE python3.exe >nul 2>nul
-    if %ERRORLEVEL% EQU 0 (
+    echo Search for python3.exe command
+    WHERE python3.exe
+    echo %ERRORLEVEL%
 
+    if %ERRORLEVEL% NEQ 9009 (
+        echo Command python3.exe was found.
         color 1E
         start "" python3.exe .\sppas\bin\preinstall.py --wxpython
-        if %ERRORLEVEL% EQU 0 (
+        if %ERRORLEVEL% NEQ 9009 (
+            echo Launch preinstall GUI script
             start "" python3.exe .\sppas\bin\preinstallgui.py
+            REM exit
 
         ) else (
-
             color 04
             echo The setup failed to install wxpython automatically.
             echo See http://www.sppas.org/installation.html to do it manually.
-
         )
 
     ) else (
+        echo Command python3.exe was not found.
 
-        color 4E
-        echo Python version 3 is not an internal command of your operating system.
-        echo Install it first either from the Windows Store or from http://www.python.org.
+        echo Search for python.exe command
+        WHERE python.exe >nul 2>nul
+        if %ERRORLEVEL% NEQ 9009 (
 
+            echo Command python.exe was found.
+            echo Launch checkpy script
+
+            python.exe .\sppas\bin\checkpy.py
+            if %ERRORLEVEL% EQU 0 (
+                echo Launch preinstall script to install wx. Please wait...
+                start "" python.exe .\sppas\bin\preinstall.py --wxpython
+                echo Launch preinstall GUI script
+                start "" python.exe .\sppas\bin\preinstallgui.py
+                REM exit
+            ) else (
+                echo ... but this program requires Python version 3.
+            )
+
+        ) else (
+            echo Command python.exe was not found.
+            color 4E
+            echo Python is not an internal command of your operating system.
+            echo Install it first, preferably from the Windows Store.
+        )
     )
 )
 
-REM Close the windows whiwh was opened to get admin rights
-exit
 
+REM Close the windows which was opened to get admin rights
+timeout /t 20

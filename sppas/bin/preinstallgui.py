@@ -49,17 +49,26 @@ import sys
 import os
 import webbrowser
 
-PROGRAM = os.path.abspath(__file__)
-SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
-sys.path.append(SPPAS)
+print("Start pre-installation procedure...")
 
-from sppas.src.config import cfg
-from sppas.src.config import sppasLogFile
-from sppas.src.exceptions import sppasEnableFeatureError
-from sppas.src.exceptions import sppasPackageFeatureError
-from sppas.src.exceptions import sppasPackageUpdateFeatureError
-from sppas.src.ui.phoenix import sppasInstallApp
+try:
+    PROGRAM = os.path.abspath(__file__)
+    SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
+    sys.path.append(SPPAS)
 
+    from sppas.src.config import cfg
+    from sppas.src.config import sppasLogFile
+    from sppas.src.exceptions import sppasEnableFeatureError
+    from sppas.src.exceptions import sppasPackageFeatureError
+    from sppas.src.exceptions import sppasPackageUpdateFeatureError
+    from sppas.src.ui.phoenix import sppasInstallApp
+except Exception as e:
+    import traceback
+    traceback.print_exc()
+    print(e)
+    sys.exit(-1)
+
+print("Imports passed...")
 
 status = -1
 msg = ""

@@ -165,7 +165,7 @@ class sppasAnnotateBook(sppasSimplebook):
     def _process_data_changed(self, event):
         """Process a change of data.
 
-        Set the data of the event to the other anz_panels.
+        Set the data of the event to the other panels.
 
         :param event: (wx.Event)
 
@@ -190,7 +190,7 @@ class sppasAnnotateBook(sppasSimplebook):
         :param emitted: (wx.Window) The panel the data are coming from
 
         """
-        # Set the data to appropriate children anz_panels
+        # Set the data to appropriate children panels
         for panel in self.GetChildren():
             if emitted != panel:
                 try:

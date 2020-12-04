@@ -183,7 +183,7 @@ class sppasMainWindow(sppasDialog):
     def _create_content(self):
         """Create the content of the frame.
 
-        Content is made of a menu, an area for anz_panels and action buttons.
+        Content is made of a menu, an area for panels and action buttons.
 
         """
         # The content of this main frame is organized in a book
@@ -314,7 +314,7 @@ class sppasMainWindow(sppasDialog):
     def _process_data_changed(self, event):
         """Process a change of data.
 
-        Set the data of the event to the other anz_panels.
+        Set the data of the event to the other panels.
 
         :param event: (wx.Event) An event with a sppasWorkspace()
 
@@ -328,7 +328,7 @@ class sppasMainWindow(sppasDialog):
                         "".format(emitted.GetName()))
             return
 
-        # Set the data to appropriate children anz_panels
+        # Set the data to appropriate children panels
         book = self.FindWindow('content')
         for i in range(book.GetPageCount()):
             page = book.GetPage(i)
@@ -417,10 +417,6 @@ class sppasMainWindow(sppasDialog):
         """Destroy the frame, terminating the application."""
         # Stop redirecting logging to this application log window
         self.log_window.redirect_logging(False)
-
-        # Terminate all frames
-        if wx.Platform == "__WXMSW__":
-            self.DestroyChildren()
 
         try:
             delta = wx.GetApp().settings.fade_out_delta

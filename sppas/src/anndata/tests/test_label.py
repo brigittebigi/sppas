@@ -501,3 +501,12 @@ class TestLabel(unittest.TestCase):
 
         l.append(sppasTag("pata"))
         self.assertTrue(l.match([(t.endswith, u("ta"), False)]))
+
+    # -----------------------------------------------------------------------
+
+    def test_copy(self):
+        label = sppasLabel(sppasTag("tag"), score=0.5)
+        copied = label.copy()
+        self.assertTrue(copied == label)
+        self.assertFalse(copied is label)
+

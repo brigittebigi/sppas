@@ -51,11 +51,12 @@ from ..windows.dialogs import Confirm, Error
 from ..windows.dialogs import sppasFileDialog
 from ..windows.dialogs import sppasProgressDialog
 from ..windows.dialogs import sppasTextEntryDialog
+from ..windows.dialogs import sppasFloatEntryDialog
 
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 from ..main_events import EVT_VIEW
 
-from .fileslistview import ListViewFilesPanel
+from .analyzepanel import ListViewFilesPanel
 
 # ---------------------------------------------------------------------------
 # List of displayed messages:
@@ -203,6 +204,8 @@ class sppasAnalyzePanel(sppasPanel):
                 c.SetForegroundColour(colour)
 
     # -----------------------------------------------------------------------
+    # Files
+    # -----------------------------------------------------------------------
 
     def open_checked_files(self):
         """Add the checked files and display their content.
@@ -235,10 +238,9 @@ class sppasAnalyzePanel(sppasPanel):
 
         # send data to the parent
         if success > 0:
-            self._viewpanel.Layout()
-            self._viewpanel.Refresh()
             wx.LogMessage("{:d} files opened.".format(success))
             self.notify()
+
         self.Layout()
         self.Refresh()
 
@@ -271,8 +273,8 @@ class sppasAnalyzePanel(sppasPanel):
                 else:
                     try:
                         self._viewpanel.create_file(filename)
-                        self._viewpanel.Layout()
-                        self._viewpanel.Refresh()
+                        self.Layout()
+                        self.Refresh()
                     except Exception as e:
                         Error(str(e))
         dlg.Destroy()
@@ -281,13 +283,13 @@ class sppasAnalyzePanel(sppasPanel):
 
     def save_files(self):
         """Save the files on disk."""
-        saved = list()
+        saved = 0
         for filename in self._viewpanel.get_files():
             s = self._viewpanel.save_file(filename)
             if s is True:
                 saved += 1
 
-        if len(saved) > 0:
+        if saved > 0:
             wx.LogMessage("{:d} files saved.".format(saved))
 
     # ------------------------------------------------------------------------
@@ -315,9 +317,73 @@ class sppasAnalyzePanel(sppasPanel):
 
         if len(closed) > 0:
             wx.LogMessage("{:d} files closed.".format(len(closed)))
-            self._viewpanel.Layout()
+            self.Layout()
             self.Refresh()
             self.notify()
+
+    # ------------------------------------------------------------------------
+    # Tiers into transcription files
+    # ------------------------------------------------------------------------
+
+    def check_tiers(self):
+        """Ask for a name and check tiers matching it."""
+        # Ask for the name of a tier
+        dlg = sppasTextEntryDialog(
+            TIER_MSG_ASK_REGEXP, caption=TIER_ACT_CHECK, value="")
+        if dlg.ShowModal() == wx.ID_CANCEL:
+            wx.LogMessage("Check: cancelled by user.")
+            return
+        tier_name = dlg.GetValue()
+        dlg.Destroy()
+
+        # Check the tiers matching the given name
+        wx.LogMessage("Checked tiers with name matching {:s}".format(tier_name))
+        self._viewpanel.check_tiers(tier_name)
+
+    # ------------------------------------------------------------------------
+
+    def rename_tiers(self):
+        """Ask for a name and set it to the checked tiers."""
+        # verify if some tiers are checked
+        nbf, nbt = self._viewpanel.get_checked_nb()
+        if nbt == 0:
+            wx.LogWarning("Rename: no tier checked.")
+            return
+
+        # ask for the new name
+        dlg = sppasTextEntryDialog(
+            TIER_MSG_ASK_NAME, caption=TIER_ACT_RENAME, value="")
+        if dlg.ShowModal() == wx.ID_CANCEL:
+            wx.LogMessage("Rename: cancelled by user.")
+            return
+        tier_name = dlg.GetValue()
+        dlg.Destroy()
+
+        # Set the name to checked tiers
+        wx.LogMessage("Rename checked tiers to {:s}".format(tier_name))
+        self._viewpanel.rename_tiers(tier_name)
+
+    # ------------------------------------------------------------------------
+
+    def delete_tiers(self):
+        """Delete definitively the checked tiers."""
+        # verify how many tiers are checked
+        nbf, nbt = self._viewpanel.get_checked_nb()
+        if nbt == 0:
+            wx.LogWarning("Delete: no tier checked.")
+            return
+
+        # ask for confirmation
+        # User must confirm to really delete
+        response = Confirm(TIER_MSG_CONFIRM_DEL.format(nbt, nbf), MSG_CONFIRM)
+        if response == wx.ID_CANCEL:
+            wx.LogMessage("Delete: cancelled by user.")
+            return
+
+        wx.LogMessage("Delete {:d} checked tiers".format(nbt))
+        self._viewpanel.delete_tiers()
+        self.Layout()
+        self.Refresh()
 
     # ------------------------------------------------------------------------
     # Private methods to construct the panel.
@@ -350,7 +416,7 @@ class sppasAnalyzePanel(sppasPanel):
         line.SetMinSize(wx.Size(-1, 20))
         line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
         line.SetDepth(1)
-        line.SetForegroundColour(self.FILES_COLOUR)
+        line.SetForegroundColour(self.ANN_COLOUR)
         return line
 
     # -----------------------------------------------------------------------
@@ -485,46 +551,16 @@ class sppasAnalyzePanel(sppasPanel):
             self._viewpanel.metadata_tiers()
             
         elif btn_name == "tier_check":
-            # Ask for a name and check tiers.
-            dlg = sppasTextEntryDialog(
-                TIER_MSG_ASK_REGEXP, caption=TIER_ACT_CHECK, value="")
-            if dlg.ShowModal() == wx.ID_CANCEL:
-                wx.LogMessage("Check: cancelled.")
-                return
-            tier_name = dlg.GetValue()
-            dlg.Destroy()
-            self._viewpanel.check_tiers(tier_name)
+            self.check_tiers()
         
         elif btn_name == "tier_uncheck":
             self._viewpanel.uncheck_tiers()
         
         elif btn_name == "tier_rename":
-            # Ask for a new name and set it to the checked tiers.
-            nbf, nbt = self._viewpanel.get_checked_nb()
-            if nbt == 0:
-                wx.LogWarning("Rename: no tier checked.")
-                return
-            dlg = sppasTextEntryDialog(
-                TIER_MSG_ASK_NAME, caption=TIER_ACT_RENAME, value="")
-            if dlg.ShowModal() == wx.ID_CANCEL:
-                wx.LogMessage("Rename: cancelled.")
-                return
-            tier_name = dlg.GetValue()
-            dlg.Destroy()
-            self._viewpanel.rename_tiers(tier_name)
+            self.rename_tiers()
         
         elif btn_name == "tier_delete":
-            # Ask confirmation then delete the checked tiers.
-            nbf, nbt = self._viewpanel.get_checked_nb()
-            if nbt == 0:
-                wx.LogWarning("Delete: no tier checked.")
-                return
-            if nbt > 0:
-                # User must confirm to really delete
-                response = Confirm(TIER_MSG_CONFIRM_DEL.format(nbt, nbf), MSG_CONFIRM)
-                if response == wx.ID_CANCEL:
-                    return
-            self._viewpanel.delete_tiers()
+            self.delete_tiers()
         
         elif btn_name == "tier_cut":
             nbf, nbt = self._viewpanel.get_checked_nb()
@@ -532,7 +568,9 @@ class sppasAnalyzePanel(sppasPanel):
                 wx.LogWarning("Cut: no tier checked.")
                 return
             self._viewpanel.cut_tiers()
-        
+            self.Layout()
+            self.Refresh()
+
         elif btn_name == "tier_copy":
             nbf, nbt = self._viewpanel.get_checked_nb()
             if nbt == 0:
@@ -549,7 +587,9 @@ class sppasAnalyzePanel(sppasPanel):
                 wx.LogWarning("Duplicate: no tier checked.")
                 return
             self._viewpanel.duplicate_tiers()
-        
+            self.Layout()
+            self.Refresh()
+
         elif btn_name == "tier_moveup":
             nbf, nbt = self._viewpanel.get_checked_nb()
             if nbt == 0:
@@ -569,14 +609,15 @@ class sppasAnalyzePanel(sppasPanel):
             if nbt == 0:
                 wx.LogWarning("Radius: no tier checked.")
                 return
-            dlg = sppasTextEntryDialog(
-                TIER_MSG_ASK_RADIUS, caption=TIER_ACT_RADIUS, value="")
+            dlg = sppasFloatEntryDialog(
+                TIER_MSG_ASK_RADIUS, caption=TIER_ACT_RADIUS,
+                value=0.01, min_value=0., max_value=0.2)
             if dlg.ShowModal() == wx.ID_CANCEL:
                 wx.LogMessage("Radius: cancelled.")
                 return
-            radius_str = dlg.GetValue()
+            radius = dlg.GetValue()
             dlg.Destroy()
-            self._viewpanel.radius_tiers(radius_str)
+            self._viewpanel.radius_tiers(radius)
         
         elif btn_name == "tier_stat_view":
             nbf, nbt = self._viewpanel.get_checked_nb()
@@ -665,7 +706,7 @@ class sppasAnalyzePanel(sppasPanel):
     def _process_data_changed(self, event):
         """Process a change of data.
 
-        Set the data of the event to the other anz_panels.
+        Set the data of the event to the other panels.
 
         :param event: (wx.Event)
 
@@ -700,6 +741,7 @@ class sppasAnalyzePanel(sppasPanel):
             try:
                 self.__data.unlock(fns)
                 self.notify()
+                self.Layout()
             except Exception as e:
                 wx.LogError(str(e))
                 return False

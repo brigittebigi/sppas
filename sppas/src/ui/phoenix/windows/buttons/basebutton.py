@@ -60,7 +60,10 @@
 
 """
 
+import os
 import wx
+
+from sppas.src.config import paths   # paths is used in the TestPanel only
 
 from ..basewindow import sppasWindow
 from ..basewindow import WindowState
@@ -171,6 +174,68 @@ class BaseButton(sppasWindow):
         if wx.Platform == '__WXGTK__':
             return dc.GetTextExtent(text)
         return gc.GetTextExtent(text)
+
+    # -----------------------------------------------------------------------
+
+    def DrawBackground(self, dc, gc):
+        """Draw the background with a color or transparent."""
+        w, h = self.GetClientSize()
+
+        brush = self.GetBackgroundBrush()
+        if brush is not None:
+            dc.SetBackground(brush)
+            dc.Clear()
+
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.SetBrush(brush)
+        dc.DrawRoundedRectangle(
+            self._vert_border_width,
+            self._horiz_border_width,
+            w - (2 * self._vert_border_width),
+            h - (2 * self._horiz_border_width),
+            (self._vert_border_width + self._horiz_border_width) // 2)
+
+    # -----------------------------------------------------------------------
+
+    def DrawBorder(self, dc, gc):
+        """Draw a gradient border with corners that appear slightly rounded.
+
+        Notice that the transparency is not supported under Windows so that
+        the borders don't have a gradient color!
+
+        """
+        w, h = self.GetClientSize()
+        border_color = self.GetPenBorderColour()
+        r = border_color.Red()
+        g = border_color.Green()
+        b = border_color.Blue()
+        a = border_color.Alpha()
+
+        shift = 1
+        if wx.Platform == "__WXMAC__":
+            shift = 0
+
+        for i in reversed(range(self._vert_border_width)):
+            # gradient border color, using transparency.
+            alpha = max(a - (i * 25), 0)
+            pen = wx.Pen(wx.Colour(r, g, b, alpha), 1, self._border_style)
+            dc.SetPen(pen)
+
+            # left line
+            dc.DrawLine(i, self._horiz_border_width - i, i, h - self._horiz_border_width + i)
+            # right line
+            dc.DrawLine(w - i - shift, self._horiz_border_width - i, w - i - shift, h - self._horiz_border_width + i)
+
+        for i in reversed(range(self._horiz_border_width)):
+            # gradient border color, using transparency
+            alpha = max(a - (i * 25), 0)
+            pen = wx.Pen(wx.Colour(r, g, b, alpha), 1, self._border_style)
+            dc.SetPen(pen)
+
+            # upper line
+            dc.DrawLine(self._vert_border_width - i, i, w - self._vert_border_width + i, i)
+            # bottom line
+            dc.DrawLine(self._vert_border_width - i, h - i - shift, w - self._vert_border_width + i, h - i - shift)
 
 # ---------------------------------------------------------------------------
 
@@ -330,7 +395,7 @@ class TestPanelBaseButton(wx.Panel):
         super(TestPanelBaseButton, self).__init__(
             parent,
             style=wx.BORDER_NONE | wx.WANTS_CHARS,
-            name="Test BaseButton")
+            name="BaseButton & BaseCheckButton")
 
         st = [wx.PENSTYLE_SHORT_DASH,
               wx.PENSTYLE_LONG_DASH,
@@ -393,6 +458,25 @@ class TestPanelBaseButton(wx.Panel):
         btn4.SetBorderWidth(1)
         btn4.SetBackgroundColour(wx.Colour(222, 222, 200))
         btn4.SetForegroundColour(wx.Colour(22, 22, 20))
+
+        img = os.path.join(paths.etc, "images", "bg6.png")
+        wi2 = BaseButton(self, pos=(10, 300), size=(50, 110), name="wi2")
+        wi2.Enable(True)
+        wi2.SetBackgroundImage(img)
+        wi2.SetBorderColour(wx.Colour(128, 100, 66))
+
+        img = os.path.join(paths.etc, "images", "trbg1.png")
+        wi3 = BaseButton(self, pos=(110, 300), size=(100, 100), name="wi3")
+        wi3.Enable(True)
+        wi3.SetBackgroundColour(wx.Colour(28, 200, 166))
+        wi3.SetBackgroundImage(img)
+        wi3.SetBorderColour(wx.Colour(128, 100, 66))
+        wi3.SetBorderWidth(1)
+
+        img = os.path.join(paths.samples, "faces", "BrigitteBigi_Aix2020.png")
+        wi6 = BaseButton(self, pos=(310, 280), size=(120, 150), name="wi6")
+        wi6.SetBackgroundImage(img)
+        wi6.SetBorderWidth(1)
 
     # -----------------------------------------------------------------------
 

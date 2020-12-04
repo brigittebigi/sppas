@@ -91,7 +91,7 @@ class sppasBaseMessageDialog(sppasDialog):
                                 sppasDialog.fix_size(164)))
         self.LayoutComponents()
         self.CenterOnParent()
-        self.GetSizer().Fit(self)
+        # self.GetSizer().Fit(self)
         self.FadeIn()
 
     # -----------------------------------------------------------------------

@@ -69,10 +69,10 @@ class TextButton(BaseButton):
         :param name: the name of the bitmap.
 
         """
-        super(TextButton, self).__init__(parent, id, pos, size, name)
-
         self._label = label
         self._align = wx.ALIGN_CENTER  # or ALIGN_LEFT or ALIGN_RIGHT
+
+        super(TextButton, self).__init__(parent, id, pos, size, name)
 
     # ------------------------------------------------------------------------
 
@@ -128,6 +128,9 @@ class TextButton(BaseButton):
         dc.SetFont(self.GetFont())
         ret_width, ret_height = dc.GetTextExtent(label)
 
+        ret_width += (2 * self._vert_border_width)
+        ret_height += (2 * self._horiz_border_width)
+
         width = int(max(ret_width, ret_height) * 1.5)
         return wx.Size(width, width)
 
@@ -137,18 +140,22 @@ class TextButton(BaseButton):
         """Draw the button. """
         x, y, w, h = self.GetContentRect()
         tw, th = self.get_text_extend(dc, gc, self._label)
-        if tw < 6 or th < 6:
+
+        # min height to draw the label.
+        # we authorize the font to be 20% truncated in height
+        min_height = int(float(self.get_font_height()) * 0.8)
+        if tw < min_height or th < min_height:
             return
 
         if self._align == wx.ALIGN_LEFT:
-            self._draw_label(dc, gc, 1, (h - th) // 2)
+            self._draw_label(dc, gc, self._vert_border_width, ((h - th) // 2) + self._horiz_border_width)
 
         elif self._align == wx.ALIGN_RIGHT:
-            self._draw_label(dc, gc, w - tw - 1, (h - th) // 2)
+            self._draw_label(dc, gc, w - tw - self._vert_border_width, ((h - th) // 2) + self._horiz_border_width)
 
         else:
             # Center the text.
-            self._draw_label(dc, gc, (w - tw) // 2, (h - th) // 2)
+            self._draw_label(dc, gc, (w - tw) // 2, ((h - th) // 2) + self._horiz_border_width)
 
     # -----------------------------------------------------------------------
 

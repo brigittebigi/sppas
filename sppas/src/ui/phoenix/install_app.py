@@ -74,7 +74,7 @@ class sppasInstallApp(wx.App):
         wx.App.__init__(self,
                         redirect=False,
                         filename=None,
-                        useBestVisual=True,
+                        useBestVisual=False,
                         clearSigInt=True)
 
         # Fix application configuration and settings for look&feel

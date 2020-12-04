@@ -37,6 +37,28 @@
 # Summary: Complete installation: install SPPAS external required programs.
 # ---------------------------------------------------------------------------
 
+
+# ===========================================================================
+# Fix global variables
+# ===========================================================================
+
+# Exit status:
+STATUS_SUCCESS=0
+STATUS_NOPYTHON=1
+STATUS_NOWX=2
+STATUS_FAILED=3
+
+# Fix the locale with a generic value!
+LANG='C'
+
+# Program info
+PROGRAM_DIR=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
+
+# Python info we'll try to find
+PYTHON=""
+v="0"
+
+# Colors
 BLACK='\e[0;30m'
 WHITE='\e[1;37m'
 LIGHT_GRAY='\e[0;37m'
@@ -54,17 +76,6 @@ LIGHT_PURPLE='\e[1;35m'
 BROWN='\e[0;33m'
 YELLOW='\e[1;33m'
 NC='\e[0m' # No Color
-
-
-# ===========================================================================
-# Fix global variables
-# ===========================================================================
-
-# Fix the locale with a generic value!
-LANG='C'
-
-# Program infos
-PROGRAM_DIR=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 
 # ===========================================================================
@@ -94,10 +105,8 @@ function fct_error_message()
 # ===========================================================================
 # MAIN
 # ===========================================================================
-export PYTHONIOENCODING=UTF-8
 
-PYTHON=""
-v="0"
+export PYTHONIOENCODING=UTF-8
 
 echo -n "Search for 'python3' command for Python: "
 for cmd in `which -a python3`;
@@ -129,19 +138,23 @@ echo;
 if [ -z "$PYTHON" ]; then
     echo "not found.";
     fct_error_message "Python version 3 is not an internal command of your operating system. Install it first http://www.python.org.";
-    exit -1;
+    exit $STATUS_NOPYTHON;
 fi
+
+
+# PYTHON 3 IS OK
+# ===========================================================================
 
 # Get the name of the system
 unamestr=`uname | cut -f1 -d'_'`;
 
-echo "Setup starts with: ";
+echo "This setup starts with: ";
 echo "  - Command: '$PYTHON' (version $v)";
 echo "  - System:  $unamestr";
 echo "  - Display:  $DISPLAY";
 echo "  - Location: $PROGRAM_DIR";
 
-if [ -e .deps~ ];  then rm .deps~;  fi
+if [ -e .app~ ];  then rm .app~;  fi
 
 $PYTHON $PROGRAM_DIR/sppas/bin/checkwx.py
 if [ $? -ne 0 ] ; then
@@ -152,21 +165,20 @@ fi
 $PYTHON $PROGRAM_DIR/sppas/bin/checkwx.py
 if [ $? -ne 0 ] ; then
 
-    # Install of wxpython failed.
-    if [ $? -ne 0 ] ; then
-        fct_error_message "This setup failed to install automatically wxpython. See http://www.sppas.org/installation.html to do it manually."
-        exit -1
-    fi
-
-else
-
-    # WxPython is installed. Continue with the GUI for other requirements.
-    $PYTHON $PROGRAM_DIR/sppas/bin/preinstallgui.py
-    if [ $? -ne 0 ] ; then
-        fct_error_message "This setup failed to install automatically the required packages. See http://www.sppas.org/installation.html to do it manually."
-        exit -1
-    fi
+      fct_error_message "This setup failed to install automatically wxpython. See http://www.sppas.org/installation.html to do it manually."
+      exit $STATUS_NOWX
 
 fi
 
-exit 0
+
+# WX library IS OK
+# ===========================================================================
+
+# Continue with the GUI for other requirements.
+$PYTHON $PROGRAM_DIR/sppas/bin/preinstallgui.py
+if [ $? -ne 0 ] ; then
+    fct_error_message "This setup failed to install automatically the required packages. See http://www.sppas.org/installation.html to do it manually."
+    exit $STATUS_FAILED
+fi
+
+exit $STATUS_SUCCESS

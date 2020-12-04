@@ -52,8 +52,7 @@ from ..windows.dialogs import sppasProgressDialog
 from ..main_events import DataChangedEvent, EVT_DATA_CHANGED
 
 from .editorpanel import EditorPanel
-from .editorevent import EVT_TIME_VIEW
-from .editorevent import EVT_LIST_VIEW
+from .timeline import EVT_TIMELINE_VIEW  # to close or save a file
 
 
 # ---------------------------------------------------------------------------
@@ -73,21 +72,7 @@ CLOSE_CONFIRM = _("At least a file contains not saved work that will be "
                   "lost. Are you sure you want to close?")
 CLOSE_FILE_CONFIRM = _("The file contains not saved work that will be lost."
                        "Close anyway?")
-MSG_ANNS = _("Annotations: ")
 MSG_MEDIA = _("Media: ")
-
-METADATA = _("Edit metadata of the annotation")
-RESTORE = _("Restore the label of the annotation")
-DELETE = _("Delete the annotation")
-MERGE_PREVIOUS = _("Merge with the previous annotation")
-MERGE_NEXT = _("Merge with the next annotation")
-SPLIT_ONE = _("Split annotation into 2 and put content to the first")
-SPLIT_TWO = _("Split annotation into 2 and put content to the second")
-ADD_BEFORE = _("Add an annotation in the hole before")
-ADD_AFTER = _("Add an annotation in the hole after")
-LABEL_TEXT = _("Edit label in TEXT mode")
-LABEL_XML = _("Edit label in XML mode")
-LABEL_JSON = _("Edit label in JSON mode")
 
 # ---------------------------------------------------------------------------
 
@@ -210,7 +195,11 @@ class sppasEditorPanel(sppasPanel):
         Lock the files that are successfully opened and notify parent.
 
         """
-        Information("This Editor is still under development. It can be used without any warranty.")
+        Information("This is the first version of the Editor page. "
+                    "Incoming features are: "
+                    "view waveform, adjust annotation boundaries, "
+                    "create annotation, choose the order of files... "
+                    "So, update SPPAS regularly!")
         # Add checked files to the page
         checked = self.__data.get_filename_from_state(States().CHECKED)
         success = 0
@@ -238,7 +227,6 @@ class sppasEditorPanel(sppasPanel):
         if success > 0:
             self._editpanel.Layout()
             self._editpanel.Refresh()
-            wx.LogMessage("{:d} files opened.".format(success))
             self.notify()
 
     # ------------------------------------------------------------------------
@@ -341,8 +329,7 @@ class sppasEditorPanel(sppasPanel):
 
         # The toolbar & the main sizer
         main_sizer = wx.BoxSizer(wx.VERTICAL)
-        main_sizer.Add(self._create_toolbar_one(), 0, wx.EXPAND | wx.BOTTOM, 6)
-        main_sizer.Add(self._create_toolbar_two(), 0, wx.EXPAND, 0)
+        main_sizer.Add(self._create_toolbar(), 0, wx.EXPAND | wx.BOTTOM, 6)
         main_sizer.Add(self._create_hline(), 0, wx.EXPAND, 0)
         main_sizer.Add(main_panel, 1, wx.EXPAND, 0)
         self.SetSizer(main_sizer)
@@ -355,13 +342,13 @@ class sppasEditorPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def _create_toolbar_one(self):
+    def _create_toolbar(self):
         """Create the main toolbar.
 
         :return: (sppasToolbar)
 
         """
-        tb = sppasToolbar(self, name="files_media_toolbar")
+        tb = sppasToolbar(self, name="files_toolbar")
         tb.set_focus_color(sppasEditorPanel.FILES_COLOUR)
         tb.AddTitleText(MSG_FILES, self.FILES_COLOUR, name="files")
 
@@ -378,47 +365,8 @@ class sppasEditorPanel(sppasPanel):
 
     # -----------------------------------------------------------------------
 
-    def _create_toolbar_two(self):
-        """Create a toolbar for actions on annotations. """
-        tb = sppasToolbar(self, name="anns_toolbar")
-        tb.set_height(24)   # default is 32
-        tb.set_focus_color(sppasEditorPanel.ANN_COLOUR)
-
-        tb.AddTitleText(MSG_ANNS, sppasEditorPanel.ANN_COLOUR)
-
-        bcs = tb.AddToggleButton("code_review", value=True, group_name="view_mode")
-        bcs.SetToolTip(LABEL_TEXT)
-        bcx = tb.AddToggleButton("code_xml", group_name="view_mode")
-        bcx.SetToolTip(LABEL_XML)
-        bcj = tb.AddToggleButton("code_json", group_name="view_mode")
-        bcj.SetToolTip(LABEL_JSON)
-        br = tb.AddButton("restore")
-        br.SetToolTip(RESTORE)
-
-        meta = tb.AddButton("tags")
-        meta.SetToolTip(METADATA)
-
-        bd = tb.AddButton("cell_delete")
-        bd.SetToolTip(DELETE)
-        bmp = tb.AddButton("cell_merge_previous")
-        bmp.SetToolTip(MERGE_PREVIOUS)
-        bmn = tb.AddButton("cell_merge_next")
-        bmn.SetToolTip(MERGE_NEXT)
-        bsp = tb.AddButton("cell_split")
-        bsp.SetToolTip(SPLIT_ONE)
-        bsn = tb.AddButton("cell_split_next")
-        bsn.SetToolTip(SPLIT_TWO)
-        bab = tb.AddButton("cell_add_before")
-        bab.SetToolTip(ADD_BEFORE)
-        baa = tb.AddButton("cell_add_after")
-        baa.SetToolTip(ADD_AFTER)
-
-        return tb
-
-    # -----------------------------------------------------------------------
-
     def _create_hline(self):
-        """Create an horizontal line, used to separate the anz_panels."""
+        """Create an horizontal line, used to separate the panels."""
         line = sppasStaticLine(self, orient=wx.LI_HORIZONTAL, name="hline")
         line.SetMinSize(wx.Size(-1, sppasPanel.fix_size(8)))
         line.SetPenStyle(wx.PENSTYLE_SHORT_DASH)
@@ -456,17 +404,15 @@ class sppasEditorPanel(sppasPanel):
         self.Bind(wx.EVT_BUTTON, self._process_toolbar_event)
         self.Bind(wx.EVT_TOGGLEBUTTON, self._process_toolbar_event)
 
-        # The event emitted by the sppasTimeEditFilesPanel
-        self.Bind(EVT_TIME_VIEW, self._process_time_action)
-        # The event emitted by the sppasTiersEditWindow
-        self.Bind(EVT_LIST_VIEW, self._process_list_action)
+        # The event emitted by the Timeline view
+        self._editpanel.Bind(EVT_TIMELINE_VIEW, self._process_time_action)
 
     # -----------------------------------------------------------------------
 
     def _process_data_changed(self, event):
         """Process a change of data.
 
-        Set the data of the event to the other anz_panels.
+        Set the data of the event to the other panels.
 
         :param event: (wx.Event)
 
@@ -483,12 +429,11 @@ class sppasEditorPanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _process_toolbar_event(self, event):
-        """Process a button of the toolbar event.
+        """Process a button event of one of the toolbars.
 
         :param event: (wx.Event)
 
         """
-        wx.LogDebug("Toolbar Event received by {:s}".format(self.GetName()))
         btn = event.GetEventObject()
         btn_name = btn.GetName()
 
@@ -507,18 +452,6 @@ class sppasEditorPanel(sppasPanel):
         elif btn_name == "way_left_right":
             self._editpanel.swap_annlist_panels()
 
-        elif btn_name in ("code_review", "code_xml", "code_json"):
-            self._editpanel.switch_ann_view(btn_name)
-
-        elif btn_name == "restore":
-            self._editpanel.restore_ann()
-
-        elif btn_name.startswith("cell_"):
-            self.__edit_panel_action(what=btn_name[5:])
-
-        elif btn_name == "tags":
-            self.__edit_panel_action(what="edit_metadata")
-
         else:
             event.Skip()
 
@@ -530,38 +463,17 @@ class sppasEditorPanel(sppasPanel):
         :param event: (wx.Event)
 
         """
-        panel = event.GetEventObject()
         filename = event.filename
         action = event.action
         value = event.value
         wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
                     "".format(self.GetName(), action, filename, str(value)))
-        event.Skip()
 
         if action == "close":
             self.close_file(filename)
 
-        elif action == "save":
-            self._editpanel.save_file(filename)
-
         else:
             event.Skip()
-
-    # -----------------------------------------------------------------------
-
-    def _process_list_action(self, event):
-        """Process an action event from the list view.
-
-        :param event: (wx.Event)
-
-        """
-        panel = event.GetEventObject()
-        filename = event.filename
-        action = event.action
-        value = event.value
-        wx.LogDebug("{:s} received an event action {:s} of file {:s} with value {:s}"
-                    "".format(self.GetName(), action, filename, str(value)))
-        event.Skip()
 
     # -----------------------------------------------------------------------
 
@@ -583,14 +495,6 @@ class sppasEditorPanel(sppasPanel):
 
         event.Skip()
 
-    # -----------------------------------------------------------------------
-
-    def __edit_panel_action(self, what=""):
-        try:
-            self._editpanel.list_action_requested(what)
-        except Exception as e:
-            Error(str(e))
-
 # ----------------------------------------------------------------------------
 # Panel for tests
 # ----------------------------------------------------------------------------
@@ -600,10 +504,8 @@ class TestPanel(sppasPanel):
 
     def __init__(self, parent):
         super(TestPanel, self).__init__(parent, name="Editor Page")
-        f1 = os.path.join(paths.samples, "annotation-results", "samples-fra",
-                          "F_F_B003-P8-palign.xra")
-        f2 = os.path.join(paths.samples, "annotation-results", "samples-fra",
-                          "F_F_B003-P9-palign.xra")
+        f1 = os.path.join(paths.samples, "annotation-results", "samples-fra", "F_F_B003-P8-palign.xra")
+        f2 = os.path.join(paths.samples, "annotation-results", "samples-fra",  "F_F_B003-P9-palign.xra")
         f3 = os.path.join(paths.samples, "samples-fra", "F_F_B003-P8.wav")
 
         data = sppasWorkspace()

@@ -163,29 +163,39 @@ class RelationFilterTier(object):
     :license:      GPL, v3
     :copyright:    Copyright (C) 2011-2020 Brigitte Bigi
 
+    Example:
+
+        >>> ft = RelationFilterTier((["overlaps", "overlappedby"], [("overlap_min", 0.04)]), fit=False)
+        >>> res_tier = ft.filter_tier(tier_x, tier_y)
+
     """
 
     functions = ("rel")
 
-    def __init__(self, filters, annot_format=False):
+    def __init__(self, filters, annot_format=False, fit=False):
         """Filter process of a tier.
+
+        "annot_format" has an impact on the labels of the ann results but
+        "fit" has an impact on their localizations.
 
         :param filters: (tuple) ([list of functions], [list of options])
         each option is a tuple with (name, value)
         :param annot_format: (bool) The annotation result contains the
         name of the filter (if True) or the original label (if False)
+        :param fit: (bool) The annotation result fits the other tier.
 
         """
         self.__filters = filters
         self.__annot_format = bool(annot_format)
+        self.__fit = bool(fit)
 
     # -----------------------------------------------------------------------
 
     def filter_tier(self, tier, tier_y, out_tiername="Filtered"):
         """Apply the filters on the given tier.
 
-        :param tier: (sppasTier)
-        :param tier_y: (sppasTier)
+        :param tier: (sppasTier) The tier to filter annotations
+        :param tier_y: (sppasTier) The tier to be in relation with
         :param out_tiername: (str) Name or the filtered tier
 
         """
@@ -198,10 +208,14 @@ class RelationFilterTier(object):
             **{self.__filters[1][i][0]: self.__filters[1][i][1] for i in range(len(self.__filters[1]))})
 
         # convert the set of annotations into a tier
-        filtered_tier = ann_set.to_tier(name=out_tiername,
-                                        annot_value=self.__annot_format)
+        ft = ann_set.to_tier(name=out_tiername, annot_value=self.__annot_format)
 
-        return filtered_tier
+        if self.__fit:
+            result = ft.fit(tier_y)
+            result.set_name(out_tiername)
+            return result
+
+        return ft
 
 # ---------------------------------------------------------------------------
 
@@ -401,9 +415,15 @@ class sppasTierFilters(sppasBaseFilters):
 
         :Example:
 
-            >>> f.rel(other_tier, "equals",
-            >>>                   "overlaps",
-            >>>                   "overlappedby", min_overlap=0.04)
+            >>> f.rel(other_tier, "equals", "overlaps", "overlappedby",
+            >>>       overlap_min=0.04, overlapped_min=0.02)
+
+        kwargs can be:
+
+            - max_delay=value, used by before, after
+            - overlap_min=value, used by overlap,
+            - overlapped_min=value, used by overlappedby
+            - percent=boolean, used by overlap, overlapped_by to define the overlap_min is a percentage
 
         """
         comparator = sppasIntervalCompare()

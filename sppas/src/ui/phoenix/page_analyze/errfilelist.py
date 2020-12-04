@@ -76,6 +76,7 @@ class ErrorFileSummaryPanel(sppasFileSummaryPanel):
         super(ErrorFileSummaryPanel, self).__init__(parent, filename, name)
         self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
         self.Collapse(False)
+        self.SetRandomColours()
 
     # -----------------------------------------------------------------------
     # Override from the parent
@@ -87,12 +88,11 @@ class ErrorFileSummaryPanel(sppasFileSummaryPanel):
 
         style = wx.NO_BORDER | wx.TE_MULTILINE | wx.TE_RICH | \
                 wx.TE_PROCESS_ENTER | wx.TE_BESTWRAP | wx.TE_NO_VSCROLL
-        txtview = sppasTextCtrl(self, style=style)
+        txtview = sppasTextCtrl(self, style=style, name="msg_textctrl")
         txtview.SetFont(wx.GetApp().settings.mono_text_font)
         txtview.SetEditable(False)
-        self.SetPane(txtview)
-
         self.set_error_message(MSG_UNK)
+        self.SetPane(txtview)
 
     # -----------------------------------------------------------------------
 
@@ -103,16 +103,16 @@ class ErrorFileSummaryPanel(sppasFileSummaryPanel):
 
         """
         message = MSG_ERROR.format(self._filename) + "\n" + error_message
-        txtview = self.GetPane()
+        txtview = self.FindWindow("msg_textctrl")
         txtview.SetValue(message)
 
         # required under Windows
         txtview.SetStyle(0, len(message), txtview.GetDefaultStyle())
 
         # Search for the height of the text
-        nblines = len(error_message.split()) + 1
-        view_height = float(self.get_font_height()) * 1.1 * nblines
-        txtview.SetMinSize(wx.Size(sppasPanel.fix_size(420), view_height))
+        nblines = len(message.split("\n")) + 1  # add one for a margin...
+        view_height = float(self.get_font_height()) * 1.1 * float(nblines)
+        txtview.SetMinSize(wx.Size(sppasPanel.fix_size(420), int(view_height)))
 
     # -----------------------------------------------------------------------
 

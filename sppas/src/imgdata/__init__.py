@@ -58,21 +58,26 @@ class sppasImageDataError(object):
     def __init__(self, *args, **kwargs):
         raise sppasEnableFeatureError("video")
 
+# ---------------------------------------------------------------------------
 
-# The feature "video" is enabled. Check if it's really correct!
+
+try:
+    import cv2
+    import numpy
+    cfg.set_feature("video", True)
+except ImportError:
+    # Invalidate the feature because the package is not installed
+    cfg.set_feature("video", False)
+
+
+# The feature "video" is enabled: cv2 is installed.
+# Check version.
 if cfg.feature_installed("video") is True:
-    v = '4'
-    try:
-        import cv2
-    except ImportError:
-        # Invalidate the feature because the package is not installed
-        cfg.set_feature("video", False)
 
-    else:
-        v = cv2.__version__.split(".")[0]
-        if v != '4':
-            # Invalidate the feature because the package is not up-to-date
-            cfg.set_feature("video", False)
+    v = cv2.__version__.split(".")[0]
+    if v != '4':
+        # Invalidate the feature because the package is not up-to-date
+        cfg.set_feature("video", False)
 
     class sppasImageDataError(object):
         def __init__(self, *args, **kwargs):
@@ -80,10 +85,6 @@ if cfg.feature_installed("video") is True:
                 raise sppasPackageUpdateFeatureError("cv2", "video")
             else:
                 raise sppasPackageFeatureError("cv2", "video")
-
-else:
-    # The feature "video" is not enabled or unknown.
-    cfg.set_feature("video", False)
 
 
 # ---------------------------------------------------------------------------
@@ -120,7 +121,7 @@ if cfg.feature_installed("video") is True:
 
     image_extensions.extend(opencv_extensions())
 
-else:
+else:  # The feature "video" is not enabled or cv2 is not installed.
 
     class sppasImage(sppasImageDataError):
         pass

@@ -38,6 +38,7 @@ import wx
 import wx.lib.scrolledpanel as sc
 
 from ..buttons import BitmapButton
+from ..buttons import ToggleButton
 from ..buttons import BitmapTextButton
 from .panel import sppasPanel
 from ..popup import LabelPopup
@@ -179,7 +180,7 @@ class sppasBaseRisePanel(sppasPanel):
 
         # then display our changes
         self.Thaw()
-        self.SetStateChange(self.GetBestSize())
+        self.SetStateChange(self.DoGetBestSize())
 
     # -----------------------------------------------------------------------
 
@@ -304,6 +305,9 @@ class sppasBaseRisePanel(sppasPanel):
     # -----------------------------------------------------------------------
 
     def _create_tool_button(self, icon, label=None):
+        raise NotImplementedError
+
+    def _create_tool_togglebutton(self, icon, label=None):
         raise NotImplementedError
 
     # -----------------------------------------------------------------------
@@ -489,6 +493,19 @@ class sppasHorizontalRisePanel(sppasBaseRisePanel):
         btn.SetMinSize(wx.Size(btn_h, btn_h))
         return btn
 
+    # -----------------------------------------------------------------------
+
+    def _create_tool_togglebutton(self, icon, label=None):
+        btn = ToggleButton(self._tools_panel, name=icon)
+        btn.SetAlign(wx.ALIGN_CENTER)
+        btn.SetFocusWidth(0)
+        btn.SetSpacing(0)
+        btn.SetBorderWidth(0)
+        btn_h = self.GetButtonHeight()
+        btn.SetSize(wx.Size(btn_h, btn_h))
+        btn.SetMinSize(wx.Size(btn_h, btn_h))
+        return btn
+
 # ---------------------------------------------------------------------------
 
 
@@ -565,7 +582,11 @@ class sppasVerticalRisePanel(sppasBaseRisePanel):
 
     def DoGetBestSize(self):
         """Get the size which best suits the window."""
-        tb_w, tb_h = self._tools_panel.GetSize()
+        if self.IsExpanded() is True:
+            tb_w, tb_h = self._tools_panel.DoGetBestSize()
+        else:
+            tb_w, tb_h = self._tools_panel.GetMinSize()
+
         best_w = tb_w
         best_h = tb_h
 
@@ -637,6 +658,19 @@ class sppasVerticalRisePanel(sppasBaseRisePanel):
         btn_w = self.GetButtonWidth()
         btn.SetSize(wx.Size(btn_w, btn_w))
         btn.SetMinSize(wx.Size(btn_w, btn_w))
+        return btn
+
+    # -----------------------------------------------------------------------
+
+    def _create_tool_togglebutton(self, icon, label=None):
+        btn = ToggleButton(self._tools_panel, name=icon)
+        btn.SetAlign(wx.ALIGN_CENTER)
+        btn.SetFocusWidth(0)
+        btn.SetSpacing(0)
+        btn.SetBorderWidth(0)
+        btn_h = self.GetButtonWidth()
+        btn.SetSize(wx.Size(btn_h, btn_h))
+        btn.SetMinSize(wx.Size(btn_h, btn_h))
         return btn
 
     # ------------------------------------------------------------------------

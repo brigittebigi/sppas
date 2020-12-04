@@ -244,7 +244,7 @@ class AssociatePanel(sppasPanel):
 
                 except Exception as e:
                     wx.EndBusyCursor()
-                    Error(ASS_ACT_CHECK_ERROR.format(str(e)), "Check error")
+                    Error(ASS_ACT_CHECK_ERROR.format(str(e)))
 
         dlg.Destroy()
 

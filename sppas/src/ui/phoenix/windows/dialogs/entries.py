@@ -35,9 +35,14 @@
 """
 
 import wx
+try:
+    from agw import floatspin as FS
+except ImportError:
+    import wx.lib.agw.floatspin as FS
 
 from ..panels import sppasPanel
 from ..text import sppasMessageText, sppasStaticText, sppasTextCtrl
+from ..combobox import sppasComboBox
 from .dialog import sppasDialog
 from .messages import sppasBaseMessageDialog
 
@@ -92,15 +97,16 @@ class sppasChoiceDialog(sppasBaseMessageDialog):
 
         p = sppasPanel(self)
         txt = sppasMessageText(p, message)
-        choice = wx.Choice(p, choices=c, name="choices")
-        choice.SetSelection(0)
+
+        choice = sppasComboBox(p, choices=c, name="choices")
+        choice.SetMinSize(wx.Size(-1, sppasPanel.fix_size(self.get_font_height()*2)))
 
         s = wx.BoxSizer(wx.VERTICAL)
-        s.Add(txt, 0, wx.ALL | wx.EXPAND, sppasPanel.fix_size(8))
-        s.Add(choice, 1, wx.ALL | wx.EXPAND, sppasPanel.fix_size(8))
+        s.Add(txt, 0, wx.ALL | wx.EXPAND, sppasPanel.fix_size(4))
+        s.Add(choice, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, sppasPanel.fix_size(4))
 
-        h = p.get_font_height()
         p.SetSizer(s)
+        h = p.get_font_height()
         p.SetMinSize(wx.Size(-1, (len(c)+2) * h * 2))
         self.SetContent(p)
 
@@ -176,8 +182,8 @@ class sppasTextEntryDialog(sppasDialog):
         self._create_buttons()
 
         # Fix frame properties
-        self.SetMinSize(wx.Size(sppasDialog.fix_size(256),
-                                sppasDialog.fix_size(128)))
+        self.SetMinSize(wx.Size(sppasDialog.fix_size(320),
+                                sppasDialog.fix_size(200)))
         self.LayoutComponents()
         self.CenterOnParent()
         self.GetSizer().Fit(self)
@@ -210,7 +216,7 @@ class sppasTextEntryDialog(sppasDialog):
         s.Add(txt, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT, sppasDialog.fix_size(10))
 
         entry = sppasTextCtrl(p, value=value, validator=self.__validator, name="text_value")
-        s.Add(entry, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT, sppasDialog.fix_size(10))
+        s.Add(entry, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT, sppasDialog.fix_size(4))
 
         p.SetSizer(s)
         p.SetName("content")
@@ -240,6 +246,102 @@ class sppasTextEntryDialog(sppasDialog):
             event.Skip()
 
 # ---------------------------------------------------------------------------
+
+
+class sppasFloatEntryDialog(sppasDialog):
+    """A dialog that requests a float value from the user.
+
+    :author:       Brigitte Bigi
+    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
+    :contact:      develop@sppas.org
+    :license:      GPL, v3
+    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
+
+    >>> dlg = sppasFloatEntryDialog("The message", value=0.01, min_value=0., max_value=1.)
+    >>> resp = dlg.ShowModal()
+    >>> value = dlg.GetValue()
+    >>>> dlg.DestroyFadeOut()
+
+    """
+
+    def __init__(self, message="", caption=wx.GetTextFromUserPromptStr, value=0., min_value=0., max_value=1.):
+        """Create a dialog with a float entry.
+
+        :param message: (str)
+        :param value: (float) Default float value
+        :param min_value: (float) Min float value
+        :param max_value: (float) Max float value
+
+        """
+        super(sppasFloatEntryDialog, self).__init__(
+            parent=None,
+            title=caption,
+            style=wx.FRAME_TOOL_WINDOW | wx.RESIZE_BORDER | wx.CLOSE_BOX | wx.STAY_ON_TOP)
+
+        self._create_content(message, value, min_value, max_value)
+        self._create_buttons()
+
+        # Fix frame properties
+        self.SetMinSize(wx.Size(sppasDialog.fix_size(256),
+                                sppasDialog.fix_size(128)))
+        self.LayoutComponents()
+        self.CenterOnParent()
+        self.GetSizer().Fit(self)
+        self.FadeIn()
+
+    # -----------------------------------------------------------------------
+    # Manage the text value
+    # -----------------------------------------------------------------------
+
+    def GetValue(self):
+        """"""
+        return self.FindWindow("spin_value").GetValue()
+
+    # -----------------------------------------------------------------------
+    # Construct the GUI
+    # -----------------------------------------------------------------------
+
+    def _create_content(self, message, value, min_value, max_value):
+        """Create the content of the message dialog."""
+        p = sppasPanel(self)
+        s = wx.BoxSizer(wx.VERTICAL)
+
+        txt = sppasStaticText(p, label=message)
+        s.Add(txt, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT, sppasDialog.fix_size(10))
+
+        inc = round((max_value - min_value) / 20., 3)
+        entry = FS.FloatSpin(p, min_val=min_value, max_val=max_value, increment=inc,
+                             value=value, digits=3, name="spin_value")
+        s.Add(entry, 0, wx.ALL | wx.EXPAND | wx.ALIGN_LEFT, sppasDialog.fix_size(4))
+
+        p.SetSizer(s)
+        p.SetName("content")
+        p.SetMinSize(wx.Size(-1, sppasDialog.fix_size(96)))
+
+    # -----------------------------------------------------------------------
+
+    def _create_buttons(self):
+        self.CreateActions([wx.ID_CANCEL, wx.ID_OK])
+        self.Bind(wx.EVT_BUTTON, self._process_event)
+        self.SetAffirmativeId(wx.ID_OK)
+
+    # -----------------------------------------------------------------------
+
+    def _process_event(self, event):
+        """Process any kind of events.
+
+        :param event: (wx.Event)
+
+        """
+        event_obj = event.GetEventObject()
+        event_id = event_obj.GetId()
+        if event_id == wx.ID_CANCEL:
+            self.SetReturnCode(wx.ID_CANCEL)
+            self.Close()
+        else:
+            event.Skip()
+
+# ----------------------------------------------------------------------------
 
 
 class LengthTextValidator(wx.Validator):
@@ -307,7 +409,10 @@ class TestPanelEntriesDialog(wx.Panel):
         wx.Button(self, label="Choice list", pos=(10, 210), size=(128, 64),
                   name="btn_choice")
         wx.Button(self, label="TextEntry", pos=(210, 10), size=(128, 64),
-                  name="btn_entry")
+                  name="btn_textentry")
+        wx.Button(self, label="FloatEntry", pos=(210, 210), size=(128, 64),
+                  name="btn_floatentry")
+
         self.Bind(wx.EVT_BUTTON, self.process_event)
 
     # -----------------------------------------------------------------------
@@ -324,16 +429,22 @@ class TestPanelEntriesDialog(wx.Panel):
             wx.LogMessage("Response of dialog: {:d}. Selected: {:s}".format(response, value))
 
         elif name == "btn_choice":
-            dlg = sppasChoiceDialog("An empty list of choices:", choices=["apples", "peers", "figs"])
+            dlg = sppasChoiceDialog("An item list of choices:", choices=["apples", "peers", "figs"])
             response = dlg.ShowModal()
             value = dlg.GetStringSelection()
             dlg.DestroyFadeOut()
             wx.LogMessage("Response of dialog: {:d}. Selected: {:s}".format(response, value))
 
-        elif name == "btn_entry":
+        elif name == "btn_textentry":
             dlg = sppasTextEntryDialog("A text to ask an entry:")
             response = dlg.ShowModal()
             entry = dlg.GetValue()
             dlg.DestroyFadeOut()
             wx.LogMessage("Response of dialog: {:d}. Text value: {:s}".format(response, entry))
 
+        elif name == "btn_floatentry":
+            dlg = sppasFloatEntryDialog("A text to ask an entry:", value=0.01, min_value=0., max_value=1.)
+            response = dlg.ShowModal()
+            entry = dlg.GetValue()
+            dlg.DestroyFadeOut()
+            wx.LogMessage("Response of dialog: {:d}. Float value: {:f}".format(response, entry))

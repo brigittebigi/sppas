@@ -52,7 +52,7 @@ from ..windows import sppasPanel
 from ..windows import sppasMessageText, sppasTitleText
 from ..windows import sppasStaticLine
 from ..windows import BitmapTextButton, TextButton
-from ..anz_panels import sppasOptionsPanel
+from ..panel_shared import sppasOptionsPanel
 from ..views import AboutPlugin
 from ..main_events import DataChangedEvent
 
@@ -71,7 +71,7 @@ MSG_ABOUT = _("About")
 
 
 class sppasPluginsList(sppasScrolledPanel):
-    """Create the list of anz_panels with plugins.
+    """Create the list of panels with plugins.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France

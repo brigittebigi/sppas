@@ -34,6 +34,7 @@
 
 """
 
+import random
 import os
 import wx
 
@@ -57,7 +58,7 @@ class sppasFileSummaryPanel(sppasCollapsiblePanel):
 
     """
 
-    def __init__(self, parent, filename, name="baselist_panel"):
+    def __init__(self, parent, filename, name="file_panel"):
         super(sppasFileSummaryPanel, self).__init__(
             parent,
             id=wx.ID_ANY,
@@ -70,13 +71,17 @@ class sppasFileSummaryPanel(sppasCollapsiblePanel):
         self._dirty = False
         self._filename = filename
 
+        # Background color range
+        self._rgb1 = (255, 200, 200)
+        self._rgb2 = (255, 150, 150)
+        self._tools_bg_color = None
+
         # Create the GUI
         self._create_content()
 
         # Look&feel
         try:
             settings = wx.GetApp().settings
-            self.SetBackgroundColour(settings.bg_color)
             self.SetForegroundColour(settings.fg_color)
             self.SetFont(settings.text_font)
         except AttributeError:
@@ -122,6 +127,32 @@ class sppasFileSummaryPanel(sppasCollapsiblePanel):
         sppasCollapsiblePanel.SetFont(self, f)
         self.GetPane().SetFont(font)
         self.Layout()
+
+    # -----------------------------------------------------------------------
+
+    def SetRandomColours(self):
+        """Set background and foreground colors from our range of rgb colors."""
+        # Fix the color of the background
+        r = random.randint(min(self._rgb1[0], self._rgb2[0]), max(self._rgb1[0], self._rgb2[0]))
+        g = random.randint(min(self._rgb1[1], self._rgb2[1]), max(self._rgb1[1], self._rgb2[1]))
+        b = random.randint(min(self._rgb1[2], self._rgb2[2]), max(self._rgb1[2], self._rgb2[2]))
+        color = wx.Colour(r, g, b)
+
+        if (r + g + b) > 384:
+            self._tools_bg_color = color.ChangeLightness(95)
+        else:
+            self._tools_bg_color = color.ChangeLightness(105)
+
+        # Set the BG color to the panel itself and to its children
+        wx.Panel.SetBackgroundColour(self, color)
+        self._child_panel.SetBackgroundColour(color)
+        self._tools_panel.SetBackgroundColour(self._tools_bg_color)
+
+        # Set the FG color to the panel itself and to its children
+        min_i = min(self._rgb1 + self._rgb2 + (150,))
+        fg = wx.Colour(r - min_i, g - min_i, b - min_i)
+        self._child_panel.SetForegroundColour(fg)
+        self._tools_panel.SetForegroundColour(fg)
 
     # -----------------------------------------------------------------------
     # Construct the GUI

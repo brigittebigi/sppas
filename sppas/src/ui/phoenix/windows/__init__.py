@@ -54,9 +54,10 @@ from .text import sppasTextCtrl
 from .text import NotEmptyTextValidator
 
 from .basedcwindow import sppasDCWindow
+from .basedcwindow import sppasImageDCWindow
 from .basedcwindow import sppasWindowEvent
 
-# basewindow requires sppasDCWindow
+# basewindow requires sppasImageDCWindow
 from .basewindow import WindowState
 from .basewindow import sppasWindow
 
@@ -81,7 +82,7 @@ from .buttons import RadioButton
 # panels package requires buttons
 from .panels import sppasPanel
 from .panels import sppasTransparentPanel
-from .panels import sppasImgBgPanel
+from .panels import sppasImagePanel
 from .panels import sppasScrolledPanel
 from .panels import sppasCollapsiblePanel
 
@@ -107,13 +108,11 @@ from .toolbar import sppasToolbar
 # combobox requires panels, buttons and buttonbox
 from .combobox import sppasComboBox
 
-from .media import MediaType
-from .media import MediaEvents
-from .media import sppasMediaCtrl
-from .media import sppasPlayerControlsPanel
-from .media import sppasMultiPlayerPanel
-
 __all__ = (
+    "sppasDCWindow",
+    "sppasImageDCWindow",
+    "sppasWindow",
+    "sppasWindowEvent",
     "sppasSlider",
     "sppasDialog",
     "sppasChoiceDialog",
@@ -134,11 +133,6 @@ __all__ = (
     "CheckButton",
     "RadioButton",
     "ToggleButton",
-    "sppasMediaCtrl",
-    "MediaType",
-    "MediaEvents",
-    "sppasPlayerControlsPanel",
-    "sppasMultiPlayerPanel",
     "sppasSplitterWindow",
     "sppasMultiSplitterPanel",
     "sppasStaticText",
@@ -151,7 +145,7 @@ __all__ = (
     "sppasProgressDialog",
     "sppasPanel",
     "sppasTransparentPanel",
-    "sppasImgBgPanel",
+    "sppasImagePanel",
     "sppasScrolledPanel",
     "sppasCollapsiblePanel",
     "sppasDialog",

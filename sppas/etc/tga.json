@@ -49,5 +49,10 @@
       "value": 0,
       "text": "Duration estimation: Use 0 to estimate syllable durations with midpoint values, use -1 for Radius-, or 1 for Radius+."
     }
-  ]
+  ],
+
+  "refs": {
+    "gibbon2016": "https://wwwhomes.uni-bielefeld.de/gibbon/TGA/Papers/2016-Phonetician_111-112-gibbon-yu.pdf",
+    "yue2013": "https://wwwhomes.uni-bielefeld.de/gibbon/TGA/Papers/TRASP-2013-JueYu-paper-09.pdf"
+  }
 }

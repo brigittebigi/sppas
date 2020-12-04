@@ -43,12 +43,12 @@ from sppas.src.config import paths
 
 import sppas.src.audiodata.aio
 
-from ..views import AudioRoamer
 from ..windows.text import sppasStaticText
 from ..windows.panels import sppasPanel
 from ..windows.panels import sppasCollapsiblePanel
 
 from .basefilelist import sppasFileSummaryPanel
+from .audioroamer import sppasAudioViewDialog
 
 # ---------------------------------------------------------------------------
 
@@ -98,6 +98,10 @@ class AudioSummaryPanel(sppasFileSummaryPanel):
 
         # Finally, display the summary
         self.Expand()
+        self._rgb1 = (190, 205, 250)
+        self._rgb2 = (210, 215, 255)
+        self.SetRandomColours()
+
         self.Bind(wx.EVT_BUTTON, self.__process_tool_event)
 
     # -----------------------------------------------------------------------
@@ -109,6 +113,7 @@ class AudioSummaryPanel(sppasFileSummaryPanel):
         sppasCollapsiblePanel.SetForegroundColour(self, colour)
         if self._audio is not None and len(self._values) > 0:
             self.fix_values()
+            self.Refresh()
 
     # -----------------------------------------------------------------------
 
@@ -126,6 +131,7 @@ class AudioSummaryPanel(sppasFileSummaryPanel):
         for v in self._values:
             v.ChangeValue(NO_INFO_LABEL)
             v.SetForegroundColour(self.GetForegroundColour())
+            self.Refresh()
 
     # -----------------------------------------------------------------------
     # Override from the parent
@@ -172,7 +178,9 @@ class AudioSummaryPanel(sppasFileSummaryPanel):
         name = event_obj.GetName()
 
         if name == "window-more":
-            AudioRoamer(self, self._audio)
+            dialog = sppasAudioViewDialog(self, self._audio)
+            dialog.ShowModal()
+            dialog.DestroyFadeOut()
 
         elif name == "close":
             self.notify("close")
@@ -220,7 +228,7 @@ class AudioSummaryPanel(sppasFileSummaryPanel):
             self._values["channels"].SetForegroundColour(ERROR_COLOUR)
 
 # ----------------------------------------------------------------------------
-# Panel tested by test_glob.py
+# Panel to test the class
 # ----------------------------------------------------------------------------
 
 
@@ -233,7 +241,6 @@ class TestPanel(sppasPanel):
         f2 = os.path.join(paths.samples, "samples-eng", "oriana1.wav")
         p1 = AudioSummaryPanel(self, f1)
         p2 = AudioSummaryPanel(self, f2)
-        p2.SetBackgroundColour(wx.YELLOW)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p1)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnCollapseChanged, p2)
 

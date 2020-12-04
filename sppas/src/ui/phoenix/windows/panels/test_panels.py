@@ -40,7 +40,7 @@ import logging
 from sppas.src.config import sppasAppConfig
 from sppas.src.ui.phoenix.main_settings import WxAppSettings
 
-from sppas.src.ui.phoenix.windows.panels.panel import TestPanelPanels
+import sppas.src.ui.phoenix.windows.panels.panel as panel
 from sppas.src.ui.phoenix.windows.panels.risepanel import TestPanelCollapsiblePanel
 
 # ----------------------------------------------------------------------------
@@ -49,7 +49,7 @@ from sppas.src.ui.phoenix.windows.panels.risepanel import TestPanelCollapsiblePa
 
 
 class TestPanel(wx.Choicebook):
-    """Choicebook to test a bunch of TestPanelXXX() anz_panels.
+    """Choicebook to test a bunch of TestPanelXXX() panels.
 
     :author:       Brigitte Bigi
     :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
@@ -65,12 +65,12 @@ class TestPanel(wx.Choicebook):
             parent,
             style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS)
 
-        # Make the bunch of test anz_panels
+        # Make the bunch of test panels
         panels = list()
-        panels.append(TestPanelPanels(self))
+        panels.append(panel.TestPanel(self))
         panels.append(TestPanelCollapsiblePanel(self))
 
-        # Add such anz_panels to pages of the choice book.
+        # Add such panels to pages of the choice book.
         for p in panels:
             self.AddPage(p, p.GetName())
 

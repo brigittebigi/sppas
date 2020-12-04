@@ -39,7 +39,12 @@ import shutil
 import shlex
 import subprocess
 import os
-import urllib.request
+try:
+    # For Python 3.0 and later
+    import urllib
+except ImportError:
+    # Fall back to Python 2's urllib2
+    import urllib2 as urllib
 import zipfile
 
 from sppas.src.config import cfg

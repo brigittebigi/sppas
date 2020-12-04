@@ -56,5 +56,10 @@
       "text": "Systematically move at right the boundary of the end of an IPU (in seconds)"
     }
 
-  ]
+  ],
+
+  "refs": {
+    "bigi2019ltc": "http://www.lpl-aix.fr/~bigi/Doc/bigi2019ltcpwt.pdf"
+  }
+
 }

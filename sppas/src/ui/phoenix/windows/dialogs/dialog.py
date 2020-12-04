@@ -42,9 +42,11 @@ from sppas.src.utils import u
 
 from sppas.src.ui.phoenix.tools import sppasSwissKnife
 from sppas.src.ui.phoenix.windows.buttons import BitmapTextButton
+from sppas.src.ui.phoenix.windows.buttons import BitmapButton
 from sppas.src.ui.phoenix.windows.panels import sppasPanel
 from sppas.src.ui.phoenix.windows.line import sppasStaticLine
 from sppas.src.ui.phoenix.windows.text import sppasTitleText
+from sppas.src.ui.phoenix.windows.label import sppasLabelHeader
 
 # ----------------------------------------------------------------------------
 
@@ -247,15 +249,15 @@ class sppasDialog(wx.Dialog):
 
         # Add the icon, at left, with its title
         if icon_name is not None:
-            static_bmp = BitmapTextButton(panel, name=icon_name)
+            static_bmp = BitmapButton(panel, name=icon_name)
             static_bmp.SetBorderWidth(0)
             static_bmp.SetFocusWidth(0)
             static_bmp.SetMinSize(wx.Size(min_height - 2, min_height - 2))
             sizer.Add(static_bmp, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, spacing)
 
-        txt = sppasTitleText(panel, value=title)
-        txt.SetMinSize(wx.Size(sppasPanel.fix_size(200), min_height))
-        sizer.Add(txt, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_LEFT | wx.LEFT, spacing)
+        txt = sppasLabelHeader(panel, label=title)
+        txt.SetMinSize(txt.DoGetBestSize())
+        sizer.Add(txt, 1, wx.EXPAND)
 
         # This header panel properties
         panel.SetSizer(sizer)
@@ -358,7 +360,7 @@ class sppasDialog(wx.Dialog):
 
     # ------------------------------------------------------------------------
 
-    def HorizLine(self, parent, depth=2):
+    def HorizLine(self, parent, depth=1):
         """Return an horizontal static line."""
         nid = wx.NewId()
         line = sppasStaticLine(parent, nid, orient=wx.LI_HORIZONTAL,
@@ -381,7 +383,6 @@ class sppasDialog(wx.Dialog):
         header = self.FindWindow("header")
         if header is not None:
             sizer.Add(header, 0, wx.EXPAND, 0)
-            sizer.Add(self.HorizLine(self), 0, wx.ALL | wx.EXPAND, 0)
 
         # Add content
         content = self.FindWindow("content")
@@ -393,8 +394,7 @@ class sppasDialog(wx.Dialog):
         # Add action buttons
         actions = self.FindWindow("actions")
         if actions is not None:
-            sizer.Add(self.HorizLine(self), 0, wx.ALL | wx.EXPAND, 0)
-            # proportion is 0 to ask the sizer to never hide the buttons
+            # proportion is 0 to tell the sizer to never hide the buttons
             sizer.Add(actions, 0, wx.EXPAND, 0)
 
         # Since Layout doesn't happen until there is a size event, you will
