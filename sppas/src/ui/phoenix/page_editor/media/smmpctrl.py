@@ -248,13 +248,13 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
         self.led.SetForegroundColour(wx.Colour(220, 40, 80))
 
         btnr1 = ToggleButton(self.widgets_right_panel, name="tier_infos")
-        btnr1.SetToolTip("Show annotations of tiers or information")
+        btnr1.SetToolTip("Either show annotations of tiers or information")
         self.SetButtonProperties(btnr1)
         self.AddRightWidget(btnr1)
         btnr1.Bind(wx.EVT_TOGGLEBUTTON, self._on_set_visible)
 
         btnr2 = ToggleButton(self.widgets_right_panel, name="sound_wave_lines")
-        btnr2.SetToolTip("Show waveform of audio files")
+        btnr2.SetToolTip("Incoming in next version: Show waveform of audio files")
         self.SetButtonProperties(btnr2)
         self.AddRightWidget(btnr2)
         btnr2.Bind(wx.EVT_TOGGLEBUTTON, self._on_set_visible)

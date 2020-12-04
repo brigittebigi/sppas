@@ -195,7 +195,11 @@ class sppasEditorPanel(sppasPanel):
         Lock the files that are successfully opened and notify parent.
 
         """
-        Information("This Editor is still under development. It can be used without any warranty.")
+        Information("This is the first version of the Editor page. "
+                    "Incoming features are: "
+                    "view waveform, adjust annotation boundaries, "
+                    "create annotation, choose the order of files... "
+                    "So, update SPPAS regularly!")
         # Add checked files to the page
         checked = self.__data.get_filename_from_state(States().CHECKED)
         success = 0
