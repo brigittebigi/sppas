@@ -50,7 +50,7 @@ SET PYTHONIOENCODING=UTF-8
 
 REM Make sure we have admin right
 set "params=%*"
-cd /d "%~dp0" && ( if exist "%temp%\getadmin.vbs" del "%temp%\getadmin.vbs" ) && fsutil dirty query %systemdrive% 1>nul 2>nul || (  echo Set UAC = CreateObject^("Shell.Application"^) : UAC.ShellExecute "cmd.exe", "/k cd ""%~sdp0"" && %~s0 %params%", "", "runas", 1 >> "%temp%\getadmin.vbs" && "%temp%\getadmin.vbs" && exit /B )
+REM cd /d "%~dp0" && ( if exist "%temp%\getadmin.vbs" del "%temp%\getadmin.vbs" ) && fsutil dirty query %systemdrive% 1>nul 2>nul || (  echo Set UAC = CreateObject^("Shell.Application"^) : UAC.ShellExecute "cmd.exe", "/k cd ""%~sdp0"" && %~s0 %params%", "", "runas", 1 >> "%temp%\getadmin.vbs" && "%temp%\getadmin.vbs" && exit /B )
 
 echo Search for python3w.exe command
 WHERE pythonw3.exe >nul 2>nul
@@ -65,13 +65,14 @@ if %ERRORLEVEL% EQU 0 (
     echo Command pythonw3.exe was not found.
 
     echo Search for python3.exe command
-    WHERE python3.exe >nul 2>nul
+    WHERE python3.exe
+    echo %ERRORLEVEL%
 
-    if %ERRORLEVEL% EQU 0 (
+    if %ERRORLEVEL% NEQ 9009 (
         echo Command python3.exe was found.
         color 1E
         start "" python3.exe .\sppas\bin\preinstall.py --wxpython
-        if %ERRORLEVEL% EQU 0 (
+        if %ERRORLEVEL% NEQ 9009 (
             echo Launch preinstall GUI script
             start "" python3.exe .\sppas\bin\preinstallgui.py
             REM exit
@@ -87,7 +88,7 @@ if %ERRORLEVEL% EQU 0 (
 
         echo Search for python.exe command
         WHERE python.exe >nul 2>nul
-        if %ERRORLEVEL% EQU 0 (
+        if %ERRORLEVEL% NEQ 9009 (
 
             echo Command python.exe was found.
             echo Launch checkpy script
