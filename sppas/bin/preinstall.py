@@ -47,9 +47,9 @@ PROGRAM = os.path.abspath(__file__)
 SPPAS = os.path.dirname(os.path.dirname(os.path.dirname(PROGRAM)))
 sys.path.append(SPPAS)
 
-from sppas import sg, cfg
-from sppas import sppasLogSetup
-from sppas import sppasLogFile
+from sppas.src.config import sg, cfg
+from sppas.src.config import sppasLogSetup
+from sppas.src.config import sppasLogFile
 from sppas.src.preinstall import sppasInstallerDeps
 
 from sppas.src.ui.term import ProcessProgressTerminal
@@ -69,7 +69,7 @@ def exit_error(msg="Unknown."):
     :param msg: (str) Message to print on stdout.
 
     """
-    sys.stderr.write("[ ERROR ] {:s}".format(msg))
+    sys.stderr.write("[ ERROR ] {:s}\n".format(msg))
     time.sleep(EXIT_DELAY)
     sys.exit(EXIT_STATUS)
 
