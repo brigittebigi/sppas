@@ -38,9 +38,8 @@ import os
 import wx
 
 from sppas.src.config import paths
-from sppas.src.ui.phoenix.windows.panels import sppasPanel, sppasImagePanel
+from sppas.src.ui.phoenix.windows.panels import sppasPanel
 from sppas.src.ui.phoenix.windows.panels import sppasVerticalRisePanel
-from sppas.src.ui.phoenix.windows.buttons import ToggleButton
 
 from ..media import sppasMMPCtrl
 
@@ -175,7 +174,7 @@ class TestPanel(sppasPanel):
         button1 = wx.Button(self, -1, size=(120, 50), label="Threading LOAD", name="load_button_1")
         button2 = wx.Button(self, -1, size=(120, 50), label="Sequential LOAD", name="load_button_2")
         panel = SMMPCPanel(self, "smmpc_risepanel")
-        player = sppasImagePanel(self, name="player_panel")
+        player = sppasPanel(self, name="player_panel")
 
         s = wx.BoxSizer(wx.VERTICAL)
         s.Add(button1, 0, wx.ALL, 8)

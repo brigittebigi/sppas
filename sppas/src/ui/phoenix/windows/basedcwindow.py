@@ -935,29 +935,31 @@ class sppasImageDCWindow(sppasDCWindow):
     def DrawBackground(self, dc, gc):
         """Override.
 
-        Draw the background with a color or transparent then add the image.
+        Draw the background with a color then add the image.
 
         """
-        brush = self.GetBackgroundBrush()
-        if brush is not None:
-            dc.SetBackground(brush)
-            dc.Clear()
-
         x, y, w, h = self.GetClientRect()
         x += self._vert_border_width
         y += self._horiz_border_width
         w -= (2 * self._vert_border_width)
         h -= (2 * self._horiz_border_width)
 
-        dc.SetPen(wx.TRANSPARENT_PEN)
-        dc.SetBrush(brush)
-        dc.DrawRectangle(x, y, w, h,)
-
         if isinstance(self._image, wx.Image) is True:
             img = self._image.Copy()
             img.Rescale(w, h, wx.IMAGE_QUALITY_HIGH)
-            bmp = wx.Bitmap(img, wx.BITMAP_TYPE_PNG)
+            bmp = wx.Bitmap(img)
             dc.DrawBitmap(bmp, x, y)
+
+        else:
+            brush = self.GetBackgroundBrush()
+            if brush is not None:
+                dc.SetBackground(brush)
+                dc.Clear()
+
+            dc.SetPen(wx.TRANSPARENT_PEN)
+            dc.SetBrush(brush)
+            dc.DrawRectangle(x, y, w, h, )
+
 
 # ----------------------------------------------------------------------------
 # Panels to test

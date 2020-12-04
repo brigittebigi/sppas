@@ -184,4 +184,4 @@ class sppasSwissKnife:
         if height is not None:
             sppasSwissKnife.rescale_image(img, height)
 
-        return wx.Bitmap(img, wx.BITMAP_TYPE_PNG)
+        return wx.Bitmap(img)   # Cause pb under Windows: wx.BITMAP_TYPE_PNG

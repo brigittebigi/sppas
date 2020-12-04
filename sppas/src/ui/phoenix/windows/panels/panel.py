@@ -298,7 +298,7 @@ class sppasImagePanel(sppasPanel):
 
             img = self._image.Copy()
             img.Rescale(w, h, wx.IMAGE_QUALITY_HIGH)
-            bmp = wx.Bitmap(img, wx.BITMAP_TYPE_PNG)
+            bmp = wx.Bitmap(img)
             dc.DrawBitmap(bmp, 0, 0)
 
 # ---------------------------------------------------------------------------

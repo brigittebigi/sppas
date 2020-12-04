@@ -133,7 +133,11 @@ class sppasAudioVista(sppasPanel):
         start_pos = self._time_to_frames(start)
         end_pos = self._time_to_frames(end)
         frames = self.__audio.frames[start_pos:end_pos]
-        self.__waveform.SetData(frames, self.__audio.sampwidth, self.__audio.nchannels)
+        try:
+            self.__waveform.SetData(frames, self.__audio.sampwidth, self.__audio.nchannels)
+        except Exception as e:
+            wx.LogError("The audio can't set frames to waveform: {}"
+                        "".format(str(e)))
 
     # -----------------------------------------------------------------------
 
