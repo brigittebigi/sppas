@@ -91,6 +91,12 @@ class SMMPCPanel(sppasVerticalRisePanel):
 
     # -----------------------------------------------------------------------
 
+    def smmpc(self):
+        """Return the smmpc if it was successfully created or None."""
+        return self.FindWindow("smmpc_panel")
+
+    # -----------------------------------------------------------------------
+
     def SetBackgroundColour(self, colour):
         """Override."""
         sppasVerticalRisePanel.SetBackgroundColour(self, colour)

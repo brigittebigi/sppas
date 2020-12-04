@@ -228,6 +228,8 @@ class sppasTimelinePanel(sppasPanel):
                 panel.load()
                 panel.show_tier_infos(not self.smmpc.is_tiers_annotations())
                 self.smmpc.add_unsupported(name, panel.get_duration())
+                # If no visible part was defined, do it now! or update it.
+                self._update_visible_range()
                 s, e = self.smmpc.get_visible_range()
                 panel.set_visible_period(s, e)
                 self.notify(action="tiers_added", filename=name, value=panel.get_tier_list())

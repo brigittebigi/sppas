@@ -398,6 +398,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
 
         """
         self.__smmps.add_audio(filename)
+        # The media will send an EVT_MEDIA_XXX when loaded
 
     # -----------------------------------------------------------------------
 
@@ -412,6 +413,7 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
 
         """
         self.__smmps.add_video(filename, player)
+        # The media will send an EVT_MEDIA_XXX when loaded
 
     # -----------------------------------------------------------------------
 
@@ -424,6 +426,10 @@ class sppasMMPCtrl(sppasPlayerControlsPanel):
 
         """
         self.__smmps.add_unsupported(filename, duration)
+
+        # Update the duration of the slider with the longest duration
+        duration = self.__smmps.get_duration()
+        self._timeslider.set_duration(duration)
 
     # -----------------------------------------------------------------------
 

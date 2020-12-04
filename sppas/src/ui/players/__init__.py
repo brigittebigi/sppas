@@ -63,6 +63,7 @@ from sppas.src.exceptions import sppasPackageFeatureError
 from .pstate import PlayerState
 from .pstate import PlayerType
 from .baseplayer import sppasBasePlayer
+from .undplayer import sppasUndPlayer
 
 # ---------------------------------------------------------------------------
 # Update features & prepare base classes for exceptions
@@ -101,6 +102,26 @@ else:
     if v != '4':
         # Invalidate the feature because the package is not up-to-date
         cfg.set_feature("video", False)
+
+
+# Test if wxpython is installed
+try:
+    import wx
+    if cfg.feature_installed("wxpython") is False:
+        # WxPython wasn't installed by the SPPAS setup.
+        cfg.set_feature("wxpython", True)
+except ImportError:
+    if cfg.feature_installed("wxpython") is True:
+        # Invalidate the feature because the package is not installed!
+        cfg.set_feature("wxpython", False)
+
+        class sppasWxError(object):
+            def __init__(self, *args, **kwargs):
+                raise sppasPackageFeatureError("wx", "wxpython")
+    else:
+        class sppasWxError(object):
+            def __init__(self, *args, **kwargs):
+                raise sppasEnableFeatureError("wxpython")
 
 
 if cfg.feature_installed("audioplay") is True:
@@ -149,13 +170,11 @@ else:
     class sppasSimpleVideoPlayerWX(sppasVideoPlayerError):
         pass
 
+# ---------------------------------------------------------------------------
 
-if cfg.feature_installed("audioplay") is True and cfg.feature_installed("video") is True:
-    from .mmplayer import sppasMultiMediaPlayer
-else:
-
-    class sppasMultiMediaPlayer(sppasVideoPlayerError):
-        pass
+# If audioplay and video are not available, the media won't be played but
+# the SMMPS can be created in order to use its other functionalities.
+from .mmplayer import sppasMultiMediaPlayer
 
 # ---------------------------------------------------------------------------
 
@@ -164,6 +183,7 @@ __all__ = (
     "PlayerState",
     "PlayerType",
     "sppasBasePlayer",
+    "sppasUndPlayer",
     "sppasSimpleAudioPlayer",       # play an audio file
     "sppasMultiAudioPlayer",        # play several audio files synchronously
     "sppasSimpleVideoPlayer",       # play a video but do not show it

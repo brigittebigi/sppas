@@ -48,9 +48,9 @@
 import logging
 import datetime
 
-from sppas.src.ui.players.baseplayer import sppasBasePlayer
-from sppas.src.ui.players.audioplayer import sppasSimpleAudioPlayer
-from sppas.src.ui.players.videoplayer import sppasSimpleVideoPlayer
+from sppas.src.ui.players import sppasBasePlayer
+from sppas.src.ui.players import sppasSimpleAudioPlayer
+from sppas.src.ui.players import sppasSimpleVideoPlayer
 
 # ---------------------------------------------------------------------------
 
@@ -101,9 +101,15 @@ class sppasMultiMediaPlayer(object):
 
         if self.exists(filename):
             return False
-        new_audio = sppasSimpleAudioPlayer()
-        self._medias[new_audio] = False
-        loaded = new_audio.load(filename)
+
+        try:
+            new_audio = sppasSimpleAudioPlayer()
+            self._medias[new_audio] = False
+            loaded = new_audio.load(filename)
+        except Exception as e:
+            logging.error(str(e))
+            loaded = False
+
         return loaded
 
     # -----------------------------------------------------------------------
@@ -122,9 +128,15 @@ class sppasMultiMediaPlayer(object):
 
         if self.exists(filename):
             return False
-        new_video = sppasSimpleVideoPlayer()
-        self._medias[new_video] = False
-        loaded = new_video.load(filename)
+
+        try:
+            new_video = sppasSimpleVideoPlayer()
+            self._medias[new_video] = False
+            loaded = new_video.load(filename)
+        except Exception as e:
+            logging.error(str(e))
+            loaded = False
+
         return loaded
 
     # -----------------------------------------------------------------------

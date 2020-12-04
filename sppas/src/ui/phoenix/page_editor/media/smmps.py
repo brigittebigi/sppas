@@ -58,83 +58,13 @@ import wx
 import threading
 
 from sppas.src.config import paths
-from sppas.src.ui.players import sppasMultiMediaPlayer
+
+from sppas.src.ui.players import sppasSimpleAudioPlayer
 from sppas.src.ui.players import sppasSimpleVideoPlayerWX
-from sppas.src.ui.players import sppasBasePlayer, PlayerType
+from sppas.src.ui.players import sppasMultiMediaPlayer
+from sppas.src.ui.players import sppasUndPlayer
 
 from .mediaevents import MediaEvents
-
-# ---------------------------------------------------------------------------
-
-
-class sppasUndPlayer(sppasBasePlayer):
-    """A media player that simply store a filename and its duration.
-
-    :author:       Brigitte Bigi
-    :organization: Laboratoire Parole et Langage, Aix-en-Provence, France
-    :contact:      develop@sppas.org
-    :license:      GPL, v3
-    :copyright:    Copyright (C) 2011-2020  Brigitte Bigi
-
-    """
-
-    def __init__(self):
-        super(sppasUndPlayer, self).__init__()
-        self._duration = 0.
-
-    # -----------------------------------------------------------------------
-
-    def load(self, filename):
-        """Store the filename.
-
-        :param filename: (str) Name of a file
-        :return: (bool) True
-
-        """
-        self._filename = filename
-        self._mt = PlayerType().unsupported
-        return True
-
-    # -----------------------------------------------------------------------
-
-    def get_duration(self):
-        return self._duration
-
-    # -----------------------------------------------------------------------
-
-    def set_duration(self, value):
-        """Set the duration of the file."""
-        self._duration = value
-
-    # -----------------------------------------------------------------------
-
-    def stop(self):
-        """Stop to play.
-
-        :return: (bool) False
-
-        """
-        return False
-
-    # -----------------------------------------------------------------------
-
-    def pause(self):
-        """Pause to play the audio.
-
-        :return: (bool) False
-
-        """
-        return False
-
-    # -----------------------------------------------------------------------
-
-    def play(self):
-        """Start to play the audio stream.
-
-        :return: (bool) False
-
-        """
-        return False
 
 # ---------------------------------------------------------------------------
 
@@ -279,7 +209,7 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
     # -----------------------------------------------------------------------
 
     def add_video(self, filename, player=None):
-        """Add a video into the list of media managed by this control.
+        """Override. Add a video into the list of media managed by this control.
 
         The new video is disabled.
 
@@ -401,14 +331,14 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
 
     def tell(self):
         """Return the latest time position in the media streams (float)."""
-        if len(self._medias) > 0:
-            values = list()
-            for media in reversed(list(self._medias.keys())):
-                if media.is_unknown() is False and media.is_unsupported() is False and media.is_loading() is False:
-                    values.append(media.tell())
+        values = list()
+        for media in reversed(list(self._medias.keys())):
+            if media.is_unknown() is False and media.is_unsupported() is False and media.is_loading() is False:
+                values.append(media.tell())
 
-            # In theory, all media should return the same value except
-            # when playing or paused after the max length of some media.
+        # In theory, all media should return the same value except
+        # when playing or paused after the max length of some media.
+        if len(values) > 0:
             return max(values)
 
         return 0
@@ -453,14 +383,27 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
         :param filename: (str)
 
         """
-        value = sppasMultiMediaPlayer.add_audio(self, filename)
-        if value is True:
+        if self.is_playing() or self.is_paused():
+            raise RuntimeError("Can't add audio: at least a media is still playing.")
+
+        if self.exists(filename):
+            return False
+
+        try:
+            new_audio = sppasSimpleAudioPlayer()
+            self._medias[new_audio] = False
+            loaded = new_audio.load(filename)
+        except Exception as e:
+            wx.LogError(str(e))
+            loaded = False
+
+        if loaded is True:
             evt = MediaEvents.MediaLoadedEvent(filename=filename)
         else:
             evt = MediaEvents.MediaNotLoadedEvent(filename=filename)
         evt.SetEventObject(self)
         wx.PostEvent(self, evt)
-        return value
+        return loaded
 
     # -----------------------------------------------------------------------
 
@@ -472,11 +415,19 @@ class sppasMMPS(sppasMultiMediaPlayer, wx.Timer):
         :param filename: (str)
 
         """
-        loaded = False
-        if self.exists(filename) is False:
+        if self.is_playing() or self.is_paused():
+            raise RuntimeError("Can't add video: at least a media is still playing.")
+
+        if self.exists(filename):
+            return False
+
+        try:
             new_video = sppasSimpleVideoPlayerWX(owner=self.GetOwner(), player=player)
             self._medias[new_video] = False
             loaded = new_video.load(filename)
+        except Exception as e:
+            wx.LogError(str(e))
+            loaded = False
 
         if loaded is True:
             evt = MediaEvents.MediaLoadedEvent(filename=filename)
@@ -551,6 +502,8 @@ class TestPanel(wx.Panel):
             ]
         )
         self.ap.add_unsupported("a filename of a file", 65.)
+        duration = self.ap.get_duration()
+        self.slider.SetRange(0, int(duration * 1000.))
 
     # ----------------------------------------------------------------------
 
@@ -559,8 +512,6 @@ class TestPanel(wx.Panel):
         self.ap.enable(filename)
         wx.LogDebug("File loaded successfully: {}. Duration: {}".format(filename, self.ap.get_duration(filename)))
         self.FindWindow("btn_play").Enable(True)
-        duration = self.ap.get_duration()
-        self.slider.SetRange(0, int(duration * 1000.))
 
         # the following line enters in an infinite loop with the message:
         # In file /Users/robind/projects/bb2/dist-osx-py38/build/ext/wxWidgets/src/unix/threadpsx.cpp at line 370: 'pthread_mutex_[timed]lock()' failed with error 0x00000023 (Resource temporarily unavailable).

@@ -55,7 +55,7 @@ if %ERRORLEVEL% EQU 0 (
 ) else (
 
     WHERE python3.exe >nul 2>nul
-    if %ERRORLEVEL% EQU 0 (
+    if %ERRORLEVEL% NEQ 9009 (
         color 1E
         start "" python3.exe -m sppas
         exit
@@ -74,9 +74,9 @@ if %ERRORLEVEL% EQU 0 (
 
                 REM Perhaps python3 was installed with name "python"
                 WHERE python.exe >nul 2>nul
-                if %ERRORLEVEL% EQU 0 (
+                if %ERRORLEVEL% NEQ 9009 (
                     python.exe .\sppas\bin\checkpy.py
-                    if %ERRORLEVEL% EQU 0 (
+                    if %ERRORLEVEL% NEQ 9009 (
                         start "" python.exe -m sppas
                         exit
                     ) else (
@@ -93,4 +93,8 @@ if %ERRORLEVEL% EQU 0 (
         )
     )
 )
+
+REM Close the windows which was opened
+timeout /t 20
+
 
