@@ -1,5 +1,0 @@
-7.887	10.892	Go maith anois a mhac. Anois cé acub?	0
-11.034	12.343	Tá neart ábhair ansin anois agat.	1
-17.694	18.324	Sa mbaile ab ea?	2
-18.854	19.252	Ros Muc?	1
-21.734	26.206	Ar an mbád sibh? Oh ar like mar a dearfá an bád mór.	0

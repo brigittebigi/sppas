@@ -1,5 +1,0 @@
-a [] a
-ab [ab] a b
-abc [] a b c
-abc(2) [] a c
-sil [] s i l

@@ -6,6 +6,7 @@
     ___/  |     |     |   | ___/              of speech
 
     <http://www.sppas.org/>
+    <https://sourceforge.net/projects/sppas/>
 
     * Use of this software is governed by GPL version 3 or any later version.
     * Documentation of this software is governed by GNU Free Documentation License, version 1.3.
@@ -37,14 +38,6 @@
 
     -------------------------------------------------------------------------
 
-    Need help?
-
-    - Tutorials are available on the web site
-    - Explore the "documentation" folder of this package or the documentation
-      on the web
-
-    -------------------------------------------------------------------------
-
     By using SPPAS, you agree to cite a reference in your publications.
     The main references are the followings:
 
@@ -59,5 +52,13 @@
         ISSN 0741-6164, Number 111-112 / 2015-I-II, pages 54-69.
 
     Other references are available in the documentation.
+
+    -------------------------------------------------------------------------
+
+    Help?
+
+    - Tutorials are available on the web site
+    - Explore the "documentation" folder of this package or the documentation
+      on the web
 
     -------------------------------------------------------------------------
